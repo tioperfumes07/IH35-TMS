@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   archiveMaintenanceVendor,
@@ -203,9 +204,13 @@ export function VendorsPage() {
       label: "AP Vendor",
       render: (row) =>
         row.mdata_vendor_id ? (
-          <Link to={`/vendors/${row.mdata_vendor_id}`} className="text-slate-600 underline">
-            {entityLabel(apVendorLabelById.get(row.mdata_vendor_id), row.mdata_vendor_id, "Vendor")}
-          </Link>
+          <EntityLink
+            kind="vendor"
+            id={row.mdata_vendor_id}
+            label={entityLabel(apVendorLabelById.get(row.mdata_vendor_id), row.mdata_vendor_id, "Vendor")}
+            className="text-slate-600 underline"
+            data-testid="maintenance-vendors-ap-vendor-link"
+          />
         ) : (
           "—"
         ),
