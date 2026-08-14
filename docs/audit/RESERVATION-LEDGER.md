@@ -106,3 +106,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14 | Codex | SAFETY-PROFILE-LIST-ERROR-STATUS | preserve HTTP failure status in driver safety profile | DriverSafetyProfilePage; focused guard | ACTIVE |
 | 2026-08-14 | Codex | CASH-FLOW-CUSTOMER-ENTITY-PICKER-KIND | canonical shared customer picker/creator | EntityPicker registry and drawer; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-SYSTEM-PROGRAM-CONFIG | code/R2/git-backed System connectivity applicability | System module; program tracker/matrix routes; focused guard | ACTIVE |
+| 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-MAINTENANCE-DAMAGE-INTAKE | triage damage/WO dual-create connectivity | TriageModal; maintenance routes/API; focused guard | ACTIVE |
