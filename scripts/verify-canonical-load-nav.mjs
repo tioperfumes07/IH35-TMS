@@ -52,10 +52,12 @@
  *
  * WHAT IS DELIBERATELY NOT CLAIMED (stated, not hidden)
  * -----------------------------------------------------
- *   - `/dispatch/map?load_id=` (components/dispatch/LoadLivePositionCell.tsx) is a MAP VIEWPORT
- *     FOCUS, not a record address: MapView.tsx:30 reads it as `focusLoadId` to centre the map.
- *     There is no `/dispatch/loads/:id/map` route and inventing one would be a fabricated link.
- *     Exempt, budgeted at MAP_FOCUS_BUDGET, shrink-only, named in REMAINING.
+ *   - `/dispatch/map?load_id=` (EntityLink kind="load_map") is a MAP VIEWPORT FOCUS, not a record
+ *     address: MapView reads it as `focusLoadId` to centre the map. There is no
+ *     `/dispatch/loads/:id/map` route and inventing one would be a fabricated link.
+ *   - `/dispatch/factoring-queue?load_id=` (EntityLink kind="factoring_queue_load") is a QUEUE
+ *     SURFACE FOCUS — the factoring queue panel, not the office load record address.
+ *     Both are budgeted at SURFACE_FOCUS_BUDGET (shrink-only).
  *   - `searchParams.get("load_id")` READS stay legal forever — old bookmarks and emailed board
  *     links must keep working. This guard forbids WRITING the query form, never reading it.
  *   - Channel D judges `.tsx` only. `pages/reports/runners/runner-config.ts` declares column DATA
@@ -98,12 +100,13 @@ const CANONICAL_ROUTE = '"/dispatch/loads/:id"';
 const PORTAL_CANONICAL_PATH = "/portal/loads/";
 
 /**
- * Map-viewport focus is the single legitimate `?load_id=` writer — see the header. Shrink-only:
- * lower it if `/dispatch/loads/:id/map` is ever built; never raise it to admit a record link.
- *   1. components/dispatch/LoadLivePositionCell.tsx — "View map" → /dispatch/map?load_id=
+ * Surface-focus `?load_id=` writers (not the office load record address) — see the header.
+ * Shrink-only: never raise to admit `/dispatch?load_id=` board bookmarks.
+ *   1. EntityLink kind="load_map" → /dispatch/map?load_id=
+ *   2. EntityLink kind="factoring_queue_load" → /dispatch/factoring-queue?load_id=
  */
-const MAP_FOCUS_BUDGET = 1;
-const MAP_FOCUS_PATHS = ["/dispatch/map"];
+const SURFACE_FOCUS_BUDGET = 2;
+const SURFACE_FOCUS_PATHS = ["/dispatch/map", "/dispatch/factoring-queue"];
 
 // ---------------------------------------------------------------------------------------------
 // Source scanning
@@ -189,7 +192,7 @@ export function scanQueryParamLoadNav(files) {
         line: lineOf(src, m.index),
         navPath,
         snippet: m[0],
-        mapFocus: MAP_FOCUS_PATHS.includes(navPath),
+        surfaceFocus: SURFACE_FOCUS_PATHS.includes(navPath),
       });
     }
   }
@@ -394,18 +397,18 @@ export function contractErrors(src) {
   // A
   const navs = scanQueryParamLoadNav(src.files);
   for (const hit of navs) {
-    if (hit.mapFocus) continue;
+    if (hit.surfaceFocus) continue;
     errors.push(
       `${hit.file}:${hit.line}: navigates to a load by QUERY STRING (\`${hit.snippet}…\`) — use ` +
         `EntityLink kind="load" / \`${CANONICAL_PATH}\${id}\``
     );
   }
-  const mapFocus = navs.filter((h) => h.mapFocus);
-  if (mapFocus.length > MAP_FOCUS_BUDGET) {
+  const surfaceFocus = navs.filter((h) => h.surfaceFocus);
+  if (surfaceFocus.length > SURFACE_FOCUS_BUDGET) {
     errors.push(
-      `map-focus \`?load_id=\` budget exceeded: ${mapFocus.length} > ${MAP_FOCUS_BUDGET} ` +
-        `(${mapFocus.map((h) => `${h.file}:${h.line}`).join(", ")}) — the map-viewport exemption is ` +
-        "shrink-only and must never absorb a record link"
+      `surface-focus \`?load_id=\` budget exceeded: ${surfaceFocus.length} > ${SURFACE_FOCUS_BUDGET} ` +
+        `(${surfaceFocus.map((h) => `${h.file}:${h.line}`).join(", ")}) — map/factoring-queue ` +
+        "exemptions are shrink-only and must never absorb a board bookmark"
     );
   }
 
@@ -447,11 +450,15 @@ export function Manifest() {
 `;
 
 const GOOD_ENTITY_LINK = `
-export type EntityKind = "load" | "bill" | "driver";
+export type EntityKind = "load" | "bill" | "driver" | "load_map" | "factoring_queue_load";
 export function resolveEntityRoute(kind, id) {
   switch (kind) {
     case "load":
       return \`/dispatch/loads/\${id}\`;
+    case "load_map":
+      return \`/dispatch/map?load_id=\${id}\`;
+    case "factoring_queue_load":
+      return \`/dispatch/factoring-queue?load_id=\${id}\`;
     case "bill":
       return \`/accounting/bills/\${id}\`;
     default:
@@ -485,9 +492,10 @@ function goodFixture() {
         <BulkProgressDialog resolveRowHref={(id) => \`/dispatch/loads/\${encodeURIComponent(id)}\`} />`,
       [`${SRC}/pages/dispatch/planners/LoadsPlanner.tsx`]: `
         const openLoad = (loadId) => navigate(\`/dispatch/loads/\${encodeURIComponent(loadId)}\`);`,
-      // the one budgeted exemption
+      // surface-focus call sites (URLs live in EntityLink resolver — budgeted there)
       [`${SRC}/components/dispatch/LoadLivePositionCell.tsx`]: `
-        <Link to={\`/dispatch/map?load_id=\${loadId}\`}>View map</Link>`,
+        <EntityLink kind="load_map" id={loadId} label="View map" />`,
+      [`${SRC}/components/shared/EntityLink.tsx`]: GOOD_ENTITY_LINK,
       // controls the guard must NOT claim
       [`${SRC}/components/dispatch/LoadDetailDriverPayTab.tsx`]: `
         fetch(\`/api/v1/driver-finance/driver-bills?load_id=\${encodeURIComponent(loadId)}\`);`,
@@ -565,9 +573,9 @@ function selftestMutations() {
     /navigates to a load by QUERY STRING/,
   ]);
   M.push([
-    "map-focus budget breached by a second writer",
+    "surface-focus budget breached by an extra writer",
     withFile(`${SRC}/pages/Y.tsx`, "<Link to={`/dispatch/map?load_id=${id}`}>map</Link>"),
-    /map-focus `\?load_id=` budget exceeded: 2 > 1/,
+    /surface-focus `\?load_id=` budget exceeded: 3 > 2/,
   ]);
 
   // ---- channel B ----
@@ -726,7 +734,7 @@ function selftest() {
 
   // Classifier controls — proving the guard refuses these is as important as proving it catches.
   const navs = scanQueryParamLoadNav(good.files);
-  const claimed = navs.filter((h) => !h.mapFocus).map((h) => h.file);
+  const claimed = navs.filter((h) => !h.surfaceFocus).map((h) => h.file);
   for (const mustNot of [
     `${SRC}/components/dispatch/LoadDetailDriverPayTab.tsx`, // /api/ request URL
     `${SRC}/pages/DispatchLegacyReader.tsx`, // reads the legacy param, never writes it
@@ -735,8 +743,8 @@ function selftest() {
   ]) {
     if (claimed.includes(mustNot)) failures.push(`channel A over-claimed: ${mustNot}`);
   }
-  if (navs.filter((h) => h.mapFocus).length !== 1) {
-    failures.push("channel A failed to classify the map-viewport writer as the budgeted exemption");
+  if (navs.filter((h) => h.surfaceFocus).length !== 2) {
+    failures.push("channel A failed to classify map + factoring-queue writers as surface-focus exemptions");
   }
 
   const cols = scanLoadColumns(good.files);
@@ -836,7 +844,7 @@ if (!IS_ENTRY) {
   };
   if (process.env.LOAD_NAV_INVENTORY_PRINT === "1") {
     for (const hit of scanQueryParamLoadNav(files)) {
-      console.log(`${hit.mapFocus ? "exempt " : "QUERY  "} ${hit.file}:${hit.line}  ${hit.snippet}`);
+      console.log(`${hit.surfaceFocus ? "exempt " : "QUERY  "} ${hit.file}:${hit.line}  ${hit.snippet}`);
     }
     for (const col of scanLoadColumns(files)) {
       console.log(`${col.drills ? "drills " : col.honestBlank ? "blank  " : "DEAD   "} ${col.file}:${col.line}`);
@@ -851,7 +859,7 @@ if (!IS_ENTRY) {
   const cols = scanLoadColumns(files);
   console.log(
     `PASS ${LABEL} — every load reference uses the canonical \`${CANONICAL_PATH}:id\` route: ` +
-      `0 query-string load navigations (${navs.length} map-viewport exemption(s), budget ${MAP_FOCUS_BUDGET}), ` +
+      `0 query-string load navigations (${navs.filter((h) => h.surfaceFocus).length} surface-focus exemption(s), budget ${SURFACE_FOCUS_BUDGET}), ` +
       `${cols.length} "Load" column(s) all drill or are honestly blank, the canonical route is not a ` +
       "facade, and Dispatch.tsx opens the load from the route param."
   );

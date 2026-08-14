@@ -10,7 +10,6 @@
  */
 
 import { useCallback, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -20,6 +19,7 @@ import {
 } from "../../api/tasks";
 import { UniversalFilterBar, type FilterState } from "../../components/planner/UniversalFilterBar";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { isOpenTaskStatus } from "./taskDisplay";
@@ -155,12 +155,12 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
             <div className="rounded-sm border border-gray-100 bg-gray-50 p-1.5 text-gray-700 whitespace-pre-wrap">{task.notes}</div>
           </div>
         )}
-        <Link
-          to={`/tasks/chat?taskId=${encodeURIComponent(task.task_id)}`}
+        <EntityLink
+          kind="task"
+          id={task.task_id}
+          label="Open task activity"
           className="inline-flex text-xs font-semibold text-slate-700 hover:underline"
-        >
-          Open task activity
-        </Link>
+        />
       </div>
     </div>
   );

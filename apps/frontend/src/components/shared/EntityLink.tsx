@@ -96,6 +96,10 @@ export type EntityKind =
   | "factoring_queue_load"
   | "load_template"
   | "cash_forecast_entry"
+  // LINK-F5171: TasksTab drills chat by taskId (not a generic office entity).
+  | "task"
+  // LINK-F5171: Live GPS "View map" → /dispatch/map?load_id= (viewport, not kind=load).
+  | "load_map"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -306,6 +310,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/dispatch/planning/calendar?panel=templates&template_id=${id}`;
     case "cash_forecast_entry":
       return `/cash-flow?tab=manual_daily_projections&entry_id=${id}`;
+    case "task":
+      return `/tasks/chat?taskId=${id}`;
+    case "load_map":
+      return `/dispatch/map?load_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 
 export type LivePosition = {
   lat: number;
@@ -17,7 +17,7 @@ export function LoadLivePositionCell({ position, loadId }: { position: LivePosit
         {position.stale ? " (stale)" : ""}
       </span>
       <span className="text-slate-500">{new Date(position.recorded_at).toLocaleTimeString()}</span>
-      <Link to={`/dispatch/map?load_id=${loadId}`} className="text-[#1f2a44] underline">View map</Link>
+      <EntityLink kind="load_map" id={loadId} label="View map" className="text-[#1f2a44] underline" />
     </div>
   );
 }
