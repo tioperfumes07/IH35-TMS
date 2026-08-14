@@ -430,6 +430,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
     if (!q.operating_company_id) return reply.code(400).send({ error: "operating_company_id_required" });
+    await assertCompanyMembership(authUser.uuid, q.operating_company_id);
 
     const payload = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [q.operating_company_id];
@@ -467,6 +468,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
     if (!parsedQuery.data.operating_company_id) return reply.code(400).send({ error: "operating_company_id_required" });
+    await assertCompanyMembership(authUser.uuid, parsedQuery.data.operating_company_id);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
@@ -491,6 +493,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
     if (!parsedQuery.data.operating_company_id) return reply.code(400).send({ error: "operating_company_id_required" });
+    await assertCompanyMembership(authUser.uuid, parsedQuery.data.operating_company_id);
     const parsedBody = createBody.safeParse(req.body ?? {});
     if (!parsedBody.success) return validationError(reply, parsedBody.error);
     const b = parsedBody.data;
@@ -517,6 +520,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
     if (!parsedQuery.data.operating_company_id) return reply.code(400).send({ error: "operating_company_id_required" });
+    await assertCompanyMembership(authUser.uuid, parsedQuery.data.operating_company_id);
     const parsedBody = updateBody.safeParse(req.body ?? {});
     if (!parsedBody.success) return validationError(reply, parsedBody.error);
     const b = parsedBody.data;
@@ -559,6 +563,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
     if (!parsedQuery.data.operating_company_id) return reply.code(400).send({ error: "operating_company_id_required" });
+    await assertCompanyMembership(authUser.uuid, parsedQuery.data.operating_company_id);
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
         `

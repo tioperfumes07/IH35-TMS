@@ -86,3 +86,5 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14T13:06:00-05:00 | Codex | VERTICAL-TRAILER-OEM-REFERENCE | OEM global-reference trailer applicability + guard | RESERVED | codex/vertical-trailer-oem-031 |
 | 2026-08-14T12:58:25-05:00 | Codex | VERTICAL-TRAILER-OEM-REFERENCE | OEM global-reference trailer applicability + guard | RELEASED-ON-MERGE | codex/vertical-trailer-oem-031 |
 | 2026-08-14T13:09:00-05:00 | Codex | VERTICAL-CONNECTIVITY-INLINE-ROUTES | two inline surface route hints + mount guard | RESERVED | codex/vertical-connectivity-inline-032 |
+| 2026-08-14T13:00:06-05:00 | Codex | VERTICAL-CONNECTIVITY-INLINE-ROUTES | two inline surface route hints + mount guard | RELEASED-ON-MERGE | codex/vertical-connectivity-inline-032 |
+| 2026-08-14T13:14:00-05:00 | Codex | VERTICAL-CONNECTIVITY-QBO-CATEGORIES-TMS-CATALOG | product/service category list/create entity membership + guard | RESERVED | codex/vertical-next-033 |
