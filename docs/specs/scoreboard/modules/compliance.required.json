@@ -121,7 +121,6 @@
       "route_hint": "/compliance",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -156,7 +155,6 @@
       "route_hint": "/compliance?tab=hos_viewer",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -168,7 +166,6 @@
       "route_hint": "/compliance?tab=violations",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -180,7 +177,6 @@
       "route_hint": "/compliance?tab=hos_history",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -192,7 +188,6 @@
       "route_hint": "/compliance?tab=required_docs",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -203,7 +198,6 @@
       "route_hint": "/compliance?tab=overview",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -255,7 +249,6 @@
       "sub": "Property tax renditions list",
       "route_hint": "/compliance/property-tax",
       "required": [
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -289,7 +282,6 @@
       "route_hint": "/safety/hos",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -301,7 +293,6 @@
       "route_hint": "/safety/dot-compliance",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -320,7 +311,6 @@
       "sub": "Maintenance compliance 425C",
       "route_hint": "/maintenance/compliance",
       "required": [
-        "unit",
         "connectivity"
       ]
     },
@@ -330,7 +320,6 @@
       "sub": "Fuel compliance panel",
       "route_hint": "/fuel/compliance",
       "required": [
-        "unit",
         "load",
         "connectivity"
       ]
@@ -341,7 +330,6 @@
       "sub": "IFTA preparer",
       "route_hint": "/reports/ifta-preparer",
       "required": [
-        "unit",
         "load",
         "connectivity"
       ]
@@ -678,6 +666,84 @@
           "id": "property_tax.detail",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "12 of 18 compliance leaves are false: tab.filings/hos_viewer/violations/hos_history/required_docs and overview.summary_cards have zero unit_id (driver-scoped or static widgets); property_tax.list's list view has no unit column (only the detail view genuinely shows per-asset unit linkage, kept separately); the 5 hop.* cross-links to safety/maintenance/fuel/reports pages that are themselves driver-scoped or aggregate (already independently confirmed false in those modules) have no unit data on the linking leaf itself. The other 6 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\" confirmed in ComplianceDashboardPage.tsx overview, HosTrackerSection.tsx, ComplianceTable.tsx (credentials), FleetHosBoardSection.tsx, the property_tax detail view's per-asset basis lines, and Form2290Filings.tsx's per-unit HVUT deadlines.",
+      "drops": [
+        {
+          "id": "tab.filings",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "tab.hos_viewer",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "tab.violations",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "tab.hos_history",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "tab.required_docs",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "overview.summary_cards",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "property_tax.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.safety_hos",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.safety_dot",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.maint_compliance",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.fuel_compliance",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.reports_ifta",
+          "removed": [
+            "unit"
           ]
         }
       ]

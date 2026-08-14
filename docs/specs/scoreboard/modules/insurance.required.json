@@ -139,12 +139,20 @@
       "sub": "Policies list",
       "route_hint": "/safety/insurance/policies",
       "required": [
-        "unit",
         "driver",
         "connectivity",
         "reverse_link",
         "picker_law"
-      ]
+      ],
+      "honesty_audit": {
+        "unit_column_2026_08_14_overclaim": {
+          "finding": "FALSE \u2014 PoliciesList.tsx (the policies.list surface itself) renders no unit column, no unit filter, and no unit-scoped drill link; only a vendor_id URL filter exists. The unit relationship lives on policies.detail (Units Assigned table) and policies.create (unit multi-select in both PolicyCreateModal.tsx and PolicyCreateWizard.tsx), not on the list surface.",
+          "note": "Removed false unit claim from policies.list during LINK-F5167 unit-column vertical sweep.",
+          "drops": [
+            "unit"
+          ]
+        }
+      }
     },
     {
       "id": "policies.create",
@@ -290,8 +298,7 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -347,8 +354,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -829,6 +835,24 @@
           "id": "lawsuits.create",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "2 of 13 insurance leaves are false: LawsuitCreateModal.tsx has zero unit references (only an EntityPicker for a pre-existing insurance_claim link). All 11 other leaves (policies, coverage_gaps, claims, and the claim/policy create modals/wizards) KEEP the Required marking \u2014 real listUnits-backed pickers and EntityLink kind=\"unit\" confirmed across PoliciesList.tsx, PolicyDetail.tsx, CoverageGapDashboard.tsx, ClaimsTab.tsx, ClaimCreateModal.tsx, PolicyCreateModal.tsx, and PolicyCreateWizard.tsx.",
+      "drops": [
+        {
+          "id": "insurance.modal.lawsuit_create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "insurance.parity.lawsuit_create",
+          "removed": [
+            "unit"
           ]
         }
       ]

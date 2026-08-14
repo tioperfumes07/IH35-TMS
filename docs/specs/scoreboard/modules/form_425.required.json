@@ -202,7 +202,6 @@
       "sub": "Maintenance compliance 425C",
       "route_hint": "/maintenance/compliance",
       "required": [
-        "unit",
         "connectivity"
       ]
     },
@@ -213,7 +212,6 @@
       "route_hint": "/compliance",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -508,6 +506,24 @@
           "id": "hop.maint_compliance",
           "removed": [
             "work_order"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "both form_425 leaves are false: hop.maint_compliance (Compliance425CPage.tsx) is a raw JSON payload/event-type audit feed with zero unit_id; hop.compliance (ComplianceDashboardPage.tsx) has zero unit_id/vehicle_id on the leaf itself (only a plain-text subtitle mention).",
+      "drops": [
+        {
+          "id": "hop.maint_compliance",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.compliance",
+          "removed": [
+            "unit"
           ]
         }
       ]

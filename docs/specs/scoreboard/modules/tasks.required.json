@@ -145,7 +145,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "connectivity"
       ]
     },
@@ -166,7 +165,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "connectivity"
       ]
     },
@@ -224,7 +222,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "connectivity"
       ]
     },
@@ -470,6 +467,30 @@
           "id": "hop.lists.service_tasks",
           "removed": [
             "work_order"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "3 of 8 tasks leaves are false: nav.calendar/nav.report/hop.daily_tasks have zero unit references. The other 5 leaves KEEP the Required marking \u2014 a real TASK_TARGET_TYPES \"unit\" entry + EntityPicker on create, and TaskSubjectLink's real subject_type=\"unit\" \u2192 EntityLink mapping on the board/mine views.",
+      "drops": [
+        {
+          "id": "nav.calendar",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "nav.report",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.daily_tasks",
+          "removed": [
+            "unit"
           ]
         }
       ]

@@ -182,7 +182,6 @@
       "route_hint": "/home",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -230,7 +229,6 @@
       "route_hint": "/home",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -251,7 +249,6 @@
       "sub": "Fleet restore card",
       "route_hint": "/home",
       "required": [
-        "unit",
         "connectivity"
       ]
     },
@@ -261,7 +258,6 @@
       "sub": "\u2192 Maintenance",
       "route_hint": "/maintenance",
       "required": [
-        "unit",
         "connectivity"
       ]
     },
@@ -290,7 +286,6 @@
       "sub": "\u2192 Fuel",
       "route_hint": "/fuel",
       "required": [
-        "unit",
         "load",
         "connectivity"
       ]
@@ -302,7 +297,6 @@
       "route_hint": "/safety",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -323,7 +317,6 @@
       "route_hint": "/dispatch",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -857,6 +850,54 @@
           "id": "jump.maintenance",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "7 of 8 home leaves are false: role.safety/surface.attention_list/surface.fleet_restore (an aggregate count only, despite the unit-suggestive name) and all 4 jump.* static nav cards have zero unit_id on the leaf itself. role.dispatcher KEEPS the Required marking \u2014 DispatcherHome.tsx mounts DispatcherActiveLoadsPanel.tsx, which renders a real EntityLink kind=\"unit\" per active-load row (same discovery pattern already confirmed for the customer column).",
+      "drops": [
+        {
+          "id": "role.safety",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "surface.attention_list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "surface.fleet_restore",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "jump.maintenance",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "jump.fuel",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "jump.safety",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "jump.dispatch",
+          "removed": [
+            "unit"
           ]
         }
       ]

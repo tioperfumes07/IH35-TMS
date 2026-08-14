@@ -5,16 +5,26 @@
       "task": "LINK-F5131-EXCEPTION-TABLE-IDENTITY-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-exception-table-identity-reverse-links.mjs",
-      "modules": ["system", "fuel"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "system",
+        "fuel"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(system\\.samsara_hos_driver_map|card_overage)$"
     },
     {
       "task": "LINK-F5130-DRIVER-SECONDARY-SURFACE-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-driver-secondary-surface-reverse-links.mjs",
-      "modules": ["safety", "dispatch"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "safety",
+        "dispatch"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(driver_scoring\\.list|safety\\.panel\\.driver_safety_profile|load\\.drawer\\.settlement)$"
     },
     {
@@ -30,7 +40,9 @@
         "settlements",
         "vendors"
       ],
-      "cols": ["ap_bill"],
+      "cols": [
+        "ap_bill"
+      ],
       "leafRe": ".*"
     },
     {
@@ -58,7 +70,9 @@
         "settlements",
         "tasks"
       ],
-      "cols": ["load"],
+      "cols": [
+        "load"
+      ],
       "leafRe": ".*"
     },
     {
@@ -73,7 +87,9 @@
         "maintenance",
         "safety"
       ],
-      "cols": ["trailer"],
+      "cols": [
+        "trailer"
+      ],
       "leafRe": ".*"
     },
     {
@@ -82,7 +98,6 @@
       "guard": "scripts/verify-wave-a-unit-all-modules.mjs",
       "modules": [
         "accounting",
-        "banking",
         "compliance",
         "customers",
         "dispatch",
@@ -91,21 +106,20 @@
         "drivers",
         "factoring",
         "fleet",
-        "form_425",
         "fuel",
         "home",
         "insurance",
         "inventory",
         "legal",
-        "lists",
         "maintenance",
         "reports",
         "safety",
-        "settlements",
-        "tasks",
-        "vendors"
+        "system",
+        "tasks"
       ],
-      "cols": ["unit"],
+      "cols": [
+        "unit"
+      ],
       "leafRe": ".*"
     },
     {
@@ -132,7 +146,9 @@
         "system",
         "vendors"
       ],
-      "cols": ["vendor"],
+      "cols": [
+        "vendor"
+      ],
       "leafRe": ".*"
     },
     {
@@ -155,7 +171,9 @@
         "safety",
         "system"
       ],
-      "cols": ["customer"],
+      "cols": [
+        "customer"
+      ],
       "leafRe": ".*"
     },
     {
@@ -187,7 +205,9 @@
         "tasks",
         "vendors"
       ],
-      "cols": ["driver"],
+      "cols": [
+        "driver"
+      ],
       "leafRe": ".*"
     },
     {
@@ -225,94 +245,167 @@
         "users",
         "vendors"
       ],
-      "cols": ["connectivity"],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": ".*"
     },
     {
       "task": "WAVE-B-vendor-reverse-link",
       "pr": "this PR",
       "guard": "scripts/verify-accounting-vendor-reverse-link-wired.mjs",
-      "modules": ["accounting"],
-      "cols": ["reverse_link", "connectivity"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "reverse_link",
+        "connectivity"
+      ],
       "leafRe": "^(bills\\.|vendors\\.|ap\\.)"
     },
     {
       "task": "WAVE-B-driver-load-reverse-link",
       "pr": "this PR",
       "guard": "scripts/verify-driver-load-reverse-link-wired.mjs",
-      "modules": ["settlements", "dispatch"],
-      "cols": ["reverse_link", "connectivity"],
+      "modules": [
+        "settlements",
+        "dispatch"
+      ],
+      "cols": [
+        "reverse_link",
+        "connectivity"
+      ],
       "leafRe": "^(cash_advances|docs\\.pod|load\\.drawer\\.documents)$"
     },
     {
       "task": "WAVE-B-safety-incidents-reverse-link",
       "pr": "this PR",
       "guard": "scripts/verify-safety-incidents-reverse-link-wired.mjs",
-      "modules": ["safety"],
-      "cols": ["reverse_link", "connectivity"],
+      "modules": [
+        "safety"
+      ],
+      "cols": [
+        "reverse_link",
+        "connectivity"
+      ],
       "leafRe": "^(incidents|accidents)"
     },
     {
       "task": "WAVE-B-customer-reverse-link",
       "pr": "this PR",
       "guard": "scripts/verify-customer-reverse-link-wired.mjs",
-      "modules": ["customers", "insurance", "reports"],
-      "cols": ["reverse_link", "connectivity"],
+      "modules": [
+        "customers",
+        "insurance",
+        "reports"
+      ],
+      "cols": [
+        "reverse_link",
+        "connectivity"
+      ],
       "leafRe": "^(detail\\.(contracts|coi)|md\\.coi_requests|claims\\.|lawsuits\\.|report\\.(customer_profitability|lane_profitability|trip_profitability))"
     },
     {
       "task": "P06",
       "pr": "#5829",
       "guard": "scripts/verify-steps/3072-verify-fk-on-create.mjs",
-      "modules": ["accounting", "insurance"],
-      "cols": ["ap_bill", "vendor", "unit", "load", "driver", "connectivity"],
+      "modules": [
+        "accounting",
+        "insurance"
+      ],
+      "cols": [
+        "ap_bill",
+        "vendor",
+        "unit",
+        "load",
+        "driver",
+        "connectivity"
+      ],
       "leafRe": "^(bills\\.|invoices\\.|claims|settlements|driver)"
     },
     {
       "task": "P38",
       "pr": "#5805",
       "guard": "scripts/verify-steps/3061-verify-bill-wave-a-fk-write-path.mjs",
-      "modules": ["accounting"],
-      "cols": ["ap_bill", "vendor", "unit", "load"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "ap_bill",
+        "vendor",
+        "unit",
+        "load"
+      ],
       "leafRe": "^(bills\\.|ap\\.|bill_payments|vendors|expenses\\.)"
     },
     {
       "task": "P37",
       "pr": "#5810",
       "guard": "scripts/verify-steps/3065-verify-invoice-create-stamps-source-load-id.mjs",
-      "modules": ["accounting"],
-      "cols": ["customer", "load", "connectivity"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "customer",
+        "load",
+        "connectivity"
+      ],
       "leafRe": "^(invoices\\.|payments\\.|collections)"
     },
     {
       "task": "P41",
       "pr": "#5813",
       "guard": "scripts/verify-steps/3059-verify-accident-claim-reverse-fk-synced.mjs",
-      "modules": ["safety"],
-      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "safety"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(accidents|violations|claims|cargo_claims|driver|load)"
     },
     {
       "task": "P34",
       "pr": "#5840",
       "guard": "scripts/verify-steps/917-verify-legal-reverse-drill-fleet-insurance.mjs",
-      "modules": ["legal"],
-      "cols": ["driver", "unit", "connectivity", "reverse_link"],
+      "modules": [
+        "legal"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^matters\\."
     },
     {
       "task": "P36",
       "pr": "#5852",
       "guard": "scripts/verify-steps/3089-verify-settlement-line-binds-load-id.mjs",
-      "modules": ["settlements", "dispatch"],
-      "cols": ["load", "driver", "connectivity", "reverse_link"],
+      "modules": [
+        "settlements",
+        "dispatch"
+      ],
+      "cols": [
+        "load",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(settlements\\.|settlement_close|pre_settlements|secondary\\.settlements|queues\\.)"
     },
     {
       "task": "P39",
       "pr": "#5958",
       "guard": "scripts/verify-steps/3114-verify-book-load-stamps-linkage-fks.mjs",
-      "modules": ["dispatch"],
+      "modules": [
+        "dispatch"
+      ],
       "cols": [
         "customer",
         "driver",
@@ -328,263 +421,471 @@
       "task": "P33",
       "pr": "#5858",
       "guard": "scripts/verify-steps/1223-verify-law-claim-legal-ui-linkage.mjs",
-      "modules": ["insurance"],
-      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "insurance"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^claims\\."
     },
     {
       "task": "P23",
       "pr": "#5847 + #5990",
       "guard": "scripts/verify-steps/2358-verify-lst-picker01-consumer-adoption.mjs",
-      "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker_law"],
+      "modules": [
+        "lists",
+        "dispatch"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law"
+      ],
       "leafRe": "^(hub\\.|catalog\\.|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-dispatch-flag-colors",
       "pr": "#5925",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker_law", "load"],
+      "modules": [
+        "lists",
+        "dispatch"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load"
+      ],
       "leafRe": "^(catalog\\.dispatch\\.dispatch_flag_colors|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-additional-charges",
       "pr": "#5931",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker_law", "load"],
+      "modules": [
+        "lists",
+        "dispatch"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load"
+      ],
       "leafRe": "^(catalog\\.dispatch\\.additional_charges|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-lumper-providers",
       "pr": "#5934",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker_law", "load"],
+      "modules": [
+        "lists",
+        "dispatch"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load"
+      ],
       "leafRe": "^(catalog\\.dispatch\\.lumper_providers|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-load-trailer-equipment",
       "pr": "#5936",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker_law", "load"],
+      "modules": [
+        "lists",
+        "dispatch"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load"
+      ],
       "leafRe": "^(catalog\\.dispatch\\.load_trailer_equipment|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-accident-types",
       "pr": "#5947",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "safety"],
-      "cols": ["connectivity", "picker_law", "load"],
+      "modules": [
+        "lists",
+        "safety"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load"
+      ],
       "leafRe": "^(catalog\\.safety\\.accident_types|accidents\\.)"
     },
     {
       "task": "P44-complaint-types",
       "pr": "#5949",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "safety"],
-      "cols": ["connectivity", "picker_law", "load"],
+      "modules": [
+        "lists",
+        "safety"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load"
+      ],
       "leafRe": "^(catalog\\.safety\\.complaint_types|complaints\\.)"
     },
     {
       "task": "P44-cargo-claim-reasons",
       "pr": "#5951",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "safety", "insurance"],
-      "cols": ["connectivity", "picker_law", "load"],
+      "modules": [
+        "lists",
+        "safety",
+        "insurance"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load"
+      ],
       "leafRe": "^(catalog\\.safety\\.cargo_claim_reasons|cargo_claims\\.|claims\\.)"
     },
     {
       "task": "P43-customers",
       "pr": "#5953",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["customers", "dispatch", "accounting"],
-      "cols": ["connectivity", "picker_law", "load", "customer"],
+      "modules": [
+        "customers",
+        "dispatch",
+        "accounting"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "load",
+        "customer"
+      ],
       "leafRe": "^(list\\.|detail\\.|md\\.|home|secondary\\.book_load|load\\.|invoices\\.)"
     },
     {
       "task": "P42-vendors",
       "pr": "#5957",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": ["vendors", "accounting", "maintenance"],
-      "cols": ["connectivity", "picker_law", "expense", "ap_bill"],
+      "modules": [
+        "vendors",
+        "accounting",
+        "maintenance"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law",
+        "expense",
+        "ap_bill"
+      ],
       "leafRe": "^(list\\.|detail\\.|md\\.|home|bills\\.|expenses\\.|wo\\.)"
     },
     {
       "task": "CATALOG-RLS-SCOPE",
       "pr": "#5961",
       "guard": "scripts/verify-steps/2992-verify-catalog-config-physical-columns.mjs",
-      "modules": ["lists"],
-      "cols": ["connectivity"],
+      "modules": [
+        "lists"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(hub\\.|catalog\\.)"
     },
     {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",
-      "modules": ["settlements", "accounting"],
-      "cols": ["gl_je", "liability", "connectivity"],
+      "modules": [
+        "settlements",
+        "accounting"
+      ],
+      "cols": [
+        "gl_je",
+        "liability",
+        "connectivity"
+      ],
       "leafRe": "^(settlements\\.|settlement_close|pre_settlements|je\\.)"
     },
     {
       "task": "P28",
       "pr": "#5826",
       "guard": "scripts/verify-steps/3077-verify-account-register-orders-by-document-not-line.mjs",
-      "modules": ["accounting"],
-      "cols": ["ap_bill", "gl_je", "connectivity"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "ap_bill",
+        "gl_je",
+        "connectivity"
+      ],
       "leafRe": "^(bills\\.|ap\\.|register|transactions\\.)"
     },
     {
       "task": "P32",
       "pr": "#5886",
       "guard": "scripts/verify-steps/1316-verify-banking-match-entitylink-kinds.mjs",
-      "modules": ["banking"],
-      "cols": ["vendor", "driver", "connectivity", "reverse_link"],
+      "modules": [
+        "banking"
+      ],
+      "cols": [
+        "vendor",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(accounts|transactions\\.)"
     },
     {
       "task": "P47",
       "pr": "#5816",
       "guard": "scripts/verify-steps/1349-verify-fleet-catalog-no-metadata-phantom.mjs",
-      "modules": ["fleet"],
-      "cols": ["connectivity"],
+      "modules": [
+        "fleet"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(home\\.|roster\\.|unit\\.|trailer\\.|catalog\\.)"
     },
     {
       "task": "P46",
       "pr": "#5806",
       "guard": "scripts/verify-steps/2646-verify-no-silent-list-caps.mjs",
-      "modules": ["lists", "maintenance"],
-      "cols": ["connectivity"],
+      "modules": [
+        "lists",
+        "maintenance"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(hub\\.|catalog\\.|wo\\.|parts\\.|vendors\\.)"
     },
     {
       "task": "P22",
       "pr": "#5897",
       "guard": "scripts/verify-steps/3119-verify-banking-matchdrawer-uses-paritydrawer.mjs",
-      "modules": ["banking"],
-      "cols": ["qbo_chrome", "connectivity"],
+      "modules": [
+        "banking"
+      ],
+      "cols": [
+        "qbo_chrome",
+        "connectivity"
+      ],
       "leafRe": "^(accounts|transactions\\.)"
     },
     {
       "task": "P17-system-qbo-recon",
       "pr": "this PR",
       "guard": "scripts/verify-system-module.mjs",
-      "modules": ["system"],
-      "cols": ["qbo_chrome"],
+      "modules": [
+        "system"
+      ],
+      "cols": [
+        "qbo_chrome"
+      ],
       "leafRe": "^tab\\.qbo_recon$"
     },
     {
       "task": "P17-system-qbo-sync",
       "pr": "this PR",
       "guard": "scripts/verify-system-module.mjs",
-      "modules": ["system"],
-      "cols": ["qbo_chrome"],
+      "modules": [
+        "system"
+      ],
+      "cols": [
+        "qbo_chrome"
+      ],
       "leafRe": "^tab\\.qbo_sync$"
     },
     {
       "task": "P43",
       "pr": "#5913",
       "guard": "scripts/verify-steps/2900-verify-customer-create-invoice-email.mjs",
-      "modules": ["customers"],
-      "cols": ["customer", "connectivity"],
+      "modules": [
+        "customers"
+      ],
+      "cols": [
+        "customer",
+        "connectivity"
+      ],
       "leafRe": "^(list\\.|detail\\.|md\\.)"
     },
     {
       "task": "P44",
       "pr": "#5918",
       "guard": "scripts/verify-steps/1510-verify-lst-picker-config-driven.mjs",
-      "modules": ["lists", "dispatch"],
-      "cols": ["load", "connectivity", "picker_law"],
+      "modules": [
+        "lists",
+        "dispatch"
+      ],
+      "cols": [
+        "load",
+        "connectivity",
+        "picker_law"
+      ],
       "leafRe": "^(catalog\\.|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P45",
       "pr": "#4876",
       "guard": "scripts/verify-steps/2853-verify-catalog-column-collision-safe.mjs",
-      "modules": ["lists", "accounting"],
-      "cols": ["connectivity", "picker_law"],
+      "modules": [
+        "lists",
+        "accounting"
+      ],
+      "cols": [
+        "connectivity",
+        "picker_law"
+      ],
       "leafRe": "^(hub\\.|catalog\\.|bills\\.|expenses\\.)"
     },
     {
       "task": "P31",
       "pr": "#5830",
       "guard": "scripts/verify-trailer-profile-sections-complete.mjs",
-      "modules": ["dispatch", "fleet"],
-      "cols": ["load", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch",
+        "fleet"
+      ],
+      "cols": [
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(load\\.|secondary\\.book_load|home\\.|roster\\.|unit\\.|trailer\\.)"
     },
     {
       "task": "P30",
       "pr": "#5979",
       "guard": "scripts/verify-steps/3123-verify-driver-profile-settlement-reverse-link.mjs",
-      "modules": ["settlements", "drivers"],
-      "cols": ["reverse_link", "connectivity", "load"],
+      "modules": [
+        "settlements",
+        "drivers"
+      ],
+      "cols": [
+        "reverse_link",
+        "connectivity",
+        "load"
+      ],
       "leafRe": "^(settlements\\.|settlement_close|pre_settlements|profiles\\.|^settlements$|^pre_settlements$)"
     },
     {
       "task": "F361",
       "pr": "#5919",
       "guard": "scripts/verify-steps/3129-verify-expenses-list-je-memo.mjs",
-      "modules": ["accounting"],
-      "cols": ["gl_je", "connectivity", "reverse_link"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(expenses\\.|register|transactions\\.)"
     },
     {
       "task": "P04-dispatch-queue",
       "pr": "pending",
       "guard": "scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
-      "modules": ["factoring", "dispatch"],
-      "cols": ["customer", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "factoring",
+        "dispatch"
+      ],
+      "cols": [
+        "customer",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(dispatch\\.queue|home\\.|hub\\.)"
     },
     {
       "task": "FACT-RECOURSE-CUSTOMER",
       "pr": "pending",
       "guard": "scripts/verify-recourse-pipeline-table-uses-paritytable.mjs",
-      "modules": ["factoring"],
-      "cols": ["customer", "connectivity", "reverse_link"],
+      "modules": [
+        "factoring"
+      ],
+      "cols": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(home\\.recourse_pipeline|recourse_pipeline)"
     },
     {
       "task": "SETT-FE-REVERSE-02",
       "pr": "pending",
       "guard": "scripts/verify-pre-settlements-reverse-drill.mjs",
-      "modules": ["settlements"],
-      "cols": ["driver", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "settlements"
+      ],
+      "cols": [
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(settlement_close|pre_settlements|escrow|owner_approval)"
     },
     {
       "task": "FACT-FE-BATCH-INVOICES",
       "pr": "pending",
       "guard": "scripts/verify-factoring-batch-detail-uses-paritytable.mjs",
-      "modules": ["factoring"],
-      "cols": ["customer", "connectivity", "reverse_link"],
+      "modules": [
+        "factoring"
+      ],
+      "cols": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^batches\\.detail"
     },
     {
       "task": "CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
-      "modules": ["customers"],
-      "cols": ["driver", "unit", "connectivity", "reverse_link"],
+      "modules": [
+        "customers"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^detail\\.loads$"
     },
     {
       "task": "CLS-VENDOR-WO-UNIT-LINK",
       "pr": "this PR",
       "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
-      "modules": ["vendors"],
-      "cols": ["unit", "connectivity", "reverse_link"],
+      "modules": [
+        "vendors"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^detail\\.profile$"
     },
     {
       "task": "CLS-DISPATCH-AT-RISK-FK-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-steps/1033-verify-at-risk-queue-error-entitylink.mjs",
-      "modules": ["dispatch"],
+      "modules": [
+        "dispatch"
+      ],
       "cols": [
         "customer",
         "driver",
@@ -599,7 +900,9 @@
       "task": "CLS-DISPATCH-LATE-ARRIVALS-FK-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-steps/1024-verify-late-arrivals-error-entitylink.mjs",
-      "modules": ["dispatch"],
+      "modules": [
+        "dispatch"
+      ],
       "cols": [
         "customer",
         "driver",
@@ -614,7 +917,9 @@
       "task": "CLS-DISPATCH-DETENTION-FK-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
-      "modules": ["dispatch"],
+      "modules": [
+        "dispatch"
+      ],
       "cols": [
         "customer",
         "driver",
@@ -629,47 +934,85 @@
       "task": "CLS-DISPATCH-ASSIGNMENT-HISTORY-UNIT-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
-      "modules": ["dispatch"],
-      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^secondary\\.assignments$"
     },
     {
       "task": "CLS-MAINT-VENDOR-AP-LABEL-LINK",
       "pr": "this PR",
       "guard": "scripts/verify-steps/1604-verify-mnt-link-04-maintenance-vendor-ap.mjs",
-      "modules": ["maintenance"],
-      "cols": ["vendor", "connectivity", "reverse_link"],
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^vendors\\.create$"
     },
     {
       "task": "CLS-MAINT-VENDOR-WO-HISTORY-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-steps/61-verify-maint-vendor-master-unify.mjs",
-      "modules": ["maintenance"],
-      "cols": ["vendor", "connectivity", "reverse_link"],
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^vendors\\.create$"
     },
     {
       "task": "CLS-DISPATCH-BORDER-HISTORY-FK-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-history-errors.mjs",
-      "modules": ["dispatch"],
-      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^queues\\.border_history$"
     },
     {
       "task": "CLS-DISPATCH-INTRANSIT-UNIT-LINK",
       "pr": "this PR",
       "guard": "scripts/verify-dispatch-arch-tab-parity.mjs",
-      "modules": ["dispatch"],
-      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^queues\\.in_transit$"
     },
     {
       "task": "CLS-DISPATCH-OVERVIEW-ENTITY-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
-      "modules": ["dispatch"],
+      "modules": [
+        "dispatch"
+      ],
       "cols": [
         "customer",
         "driver",
@@ -684,7 +1027,9 @@
       "task": "CLS-DISPATCH-PLANNER-CUSTOMER-FK-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-dispatch-planner-calendar.mjs",
-      "modules": ["dispatch"],
+      "modules": [
+        "dispatch"
+      ],
       "cols": [
         "customer",
         "driver",
@@ -699,295 +1044,592 @@
       "task": "CLS-DISPATCH-PLANNER-DRIVER-UNIT-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-disp-s27-s31-planners-pack.mjs",
-      "modules": ["dispatch"],
-      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^planning\\.(calendar|loads|timeline)$"
     },
     {
       "task": "CLS-DISPATCH-DRIVER-TRUCK-PLANNER-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-disp-s27-s31-planners-pack.mjs",
-      "modules": ["dispatch"],
-      "cols": ["driver", "unit", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^planning\\.(driver|truck)$"
     },
     {
       "task": "CLS-DISPATCH-TRIP-PROFIT-DRIVER-LINK",
       "pr": "this PR",
       "guard": "scripts/verify-trip-profitability-driver-link.mjs",
-      "modules": ["dispatch"],
-      "cols": ["driver", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^misc\\.trip_profit$"
     },
     {
       "task": "CREATE-PATH-TRIP-TRAILER-PICKER",
       "pr": "#6328",
       "guard": "scripts/verify-expense-accident-create-trailer-picker.mjs",
-      "modules": ["accounting", "safety", "fleet"],
-      "cols": ["trailer", "connectivity", "picker_law", "reverse_link"],
+      "modules": [
+        "accounting",
+        "safety",
+        "fleet"
+      ],
+      "cols": [
+        "trailer",
+        "connectivity",
+        "picker_law",
+        "reverse_link"
+      ],
       "leafRe": "^(expenses\\.|accident|trailer\\.|create)"
     },
     {
       "task": "CREATE-PATH-TRIP-FUEL-OFFICE-CREATE",
       "pr": "#6330",
       "guard": "scripts/verify-fuel-office-create-modal.mjs",
-      "modules": ["fuel", "fleet", "dispatch"],
-      "cols": ["trailer", "unit", "load", "connectivity", "picker_law"],
+      "modules": [
+        "fuel",
+        "fleet",
+        "dispatch"
+      ],
+      "cols": [
+        "trailer",
+        "unit",
+        "load",
+        "connectivity",
+        "picker_law"
+      ],
       "leafRe": "^(history|transactions|trailer\\.|unit\\.|load\\.|create)"
     },
     {
       "task": "CREATE-PATH-TRIP-EXPENSE-DETAIL-TRAILER",
       "pr": "#6332",
       "guard": "scripts/verify-expense-detail-trailer-link.mjs",
-      "modules": ["accounting", "fleet"],
-      "cols": ["trailer", "connectivity", "reverse_link"],
+      "modules": [
+        "accounting",
+        "fleet"
+      ],
+      "cols": [
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(expenses\\.|trailer\\.|detail)"
     },
     {
       "task": "CREATE-PATH-TRIP-TRAILER-FUEL-EXPENSE-REVERSE",
       "pr": "#6343",
       "guard": "scripts/verify-trailer-profile-sections-complete.mjs",
-      "modules": ["fleet", "fuel", "accounting"],
-      "cols": ["trailer", "connectivity", "reverse_link", "load"],
+      "modules": [
+        "fleet",
+        "fuel",
+        "accounting"
+      ],
+      "cols": [
+        "trailer",
+        "connectivity",
+        "reverse_link",
+        "load"
+      ],
       "leafRe": "^(trailer\\.|expenses\\.|fuel|history)"
     },
     {
       "task": "ACCT-F5024-FUEL-CLASS-OWNER-LEASE",
       "pr": "#6354",
       "guard": "scripts/verify-fuel-gl-map-codes-no-silent-alias.mjs",
-      "modules": ["fuel", "accounting", "fleet"],
-      "cols": ["unit", "trailer", "connectivity"],
+      "modules": [
+        "fuel",
+        "accounting",
+        "fleet"
+      ],
+      "cols": [
+        "unit",
+        "trailer",
+        "connectivity"
+      ],
       "leafRe": "^(history|transactions|trailer\\.|unit\\.|expenses\\.|create|gl)"
     },
     {
       "task": "ACCT-F5025-HUB-KPI-NO-FAKE-ZERO",
       "pr": "#6357",
       "guard": "scripts/verify-money-kpi-strip-no-fake-zero-on-error.mjs",
-      "modules": ["accounting"],
-      "cols": ["connectivity"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(home|bills|invoices|expenses)"
     },
     {
       "task": "ACCT-F5026-VOID-ORIGINAL-DATE-ISO",
       "pr": "this PR",
       "guard": "scripts/verify-void-original-date-iso.mjs",
-      "modules": ["accounting"],
-      "cols": ["connectivity"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(payments|void|customer)"
     },
     {
       "task": "INV-LINK-PREFERRED-VENDOR-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-vendor-preferred-parts-linkage.mjs",
-      "modules": ["inventory", "maintenance", "vendors"],
-      "cols": ["vendor", "connectivity", "reverse_link"],
+      "modules": [
+        "inventory",
+        "maintenance",
+        "vendors"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(parts|parts_inventory|detail|profile)"
     },
     {
       "task": "LEGAL-MATTER-TRAILER-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-legal-matter-trailer-linkage.mjs",
-      "modules": ["legal", "fleet"],
-      "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "legal",
+        "fleet"
+      ],
+      "cols": [
+        "trailer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(matters|trailer|detail|profile|create)"
     },
     {
       "task": "MAINT-TRAILER-TIRE-PROGRAM-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-trailer-tire-program-linkage.mjs",
-      "modules": ["maintenance", "fleet"],
-      "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "maintenance",
+        "fleet"
+      ],
+      "cols": [
+        "trailer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(tires|trailer|profile|create)"
     },
     {
       "task": "LEGAL-MATTER-DRIVER-WRITER-INTEGRITY",
       "pr": "this PR",
       "guard": "scripts/verify-legal-matter-driver-linkage.mjs",
-      "modules": ["legal", "drivers"],
-      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "legal",
+        "drivers"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(matters|driver|profile|detail|create)"
     },
     {
       "task": "LEGAL-MATTER-UNIT-WRITER-INTEGRITY",
       "pr": "this PR",
       "guard": "scripts/verify-legal-matter-unit-linkage.mjs",
-      "modules": ["legal", "fleet"],
-      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "legal",
+        "fleet"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(matters|unit|profile|detail|create)"
     },
     {
       "task": "LEGAL-MATTER-LAWSUIT-WRITER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-legal-matter-lawsuit-writer-reverse.mjs",
-      "modules": ["legal", "insurance"],
-      "cols": ["connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "legal",
+        "insurance"
+      ],
+      "cols": [
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(matters|lawsuit|detail|create)"
     },
     {
       "task": "LEGAL-MATTER-CLAIM-WRITER-INTEGRITY",
       "pr": "this PR",
       "guard": "scripts/verify-legal-matter-claim-linkage.mjs",
-      "modules": ["legal", "insurance"],
-      "cols": ["connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "legal",
+        "insurance"
+      ],
+      "cols": [
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(matters|claim|detail|create)"
     },
     {
       "task": "WARRANTY-CLAIM-VENDOR-UPDATE-INTEGRITY",
       "pr": "this PR",
       "guard": "scripts/verify-warranty-claim-linkage.mjs",
-      "modules": ["maintenance", "vendors"],
-      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "maintenance",
+        "vendors"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(warranty|claims|vendor|profile|create|update)"
     },
     {
       "task": "PM-SCHEDULE-UNIT-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-pm-schedule-unit-linkage.mjs",
-      "modules": ["maintenance", "fleet"],
-      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "maintenance",
+        "fleet"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(pm|schedule|unit|profile|create)"
     },
     {
       "task": "BORDER-CROSSING-UNIT-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-unit-linkage.mjs",
-      "modules": ["dispatch", "fleet", "compliance"],
-      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "fleet",
+        "compliance"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(border|crossing|wizard|history|unit|profile|create)"
     },
     {
       "task": "BORDER-CROSSING-DRIVER-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-driver-linkage.mjs",
-      "modules": ["dispatch", "drivers", "compliance"],
-      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "drivers",
+        "compliance"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(border|crossing|wizard|history|driver|profile|create)"
     },
     {
       "task": "BORDER-CROSSING-LOAD-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-load-linkage.mjs",
-      "modules": ["dispatch", "compliance"],
-      "cols": ["load", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "compliance"
+      ],
+      "cols": [
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(border|crossing|wizard|history|load|drawer|customs|create)"
     },
     {
       "task": "BORDER-CROSSING-BROKER-VENDOR-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-broker-linkage.mjs",
-      "modules": ["dispatch", "vendors", "compliance"],
-      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "vendors",
+        "compliance"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(border|crossing|wizard|history|vendor|profile|broker|create)"
     },
     {
       "task": "INTRANSIT-ISSUE-LOAD-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-intransit-issue-load-linkage.mjs",
-      "modules": ["dispatch", "maintenance"],
-      "cols": ["load", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "maintenance"
+      ],
+      "cols": [
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(in.?transit|issue|load|drawer|triage|create)"
     },
     {
       "task": "INTRANSIT-ISSUE-DRIVER-DERIVE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-intransit-issue-driver-linkage.mjs",
-      "modules": ["dispatch", "drivers", "maintenance"],
-      "cols": ["driver", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch",
+        "drivers",
+        "maintenance"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(in.?transit|issue|driver|profile|triage|create)"
     },
     {
       "task": "INTRANSIT-ISSUE-UNIT-DERIVE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-intransit-issue-unit-linkage.mjs",
-      "modules": ["dispatch", "fleet", "maintenance"],
-      "cols": ["unit", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch",
+        "fleet",
+        "maintenance"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(in.?transit|issue|unit|profile|detail|triage|create)"
     },
     {
       "task": "DA-TEST-ACTIVE-DRIVER-WRITER-INTEGRITY",
       "pr": "this PR",
       "guard": "scripts/verify-da-test-driver-linkage.mjs",
-      "modules": ["safety", "drivers", "compliance"],
-      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "drivers",
+        "compliance"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(drug|alcohol|test|schedule|driver|profile|create)"
     },
     {
       "task": "DEFAULT-TRUCK-UNIT-DRIVER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-default-truck-unit-reverse.mjs",
-      "modules": ["drivers", "fleet", "dispatch"],
-      "cols": ["driver", "unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "drivers",
+        "fleet",
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(default|truck|assignment|driver|unit|profile|detail)"
     },
     {
       "task": "TIRE-PROGRAM-UNIT-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-tire-program-unit-reverse.mjs",
-      "modules": ["maintenance", "fleet", "inventory"],
-      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "maintenance",
+        "fleet",
+        "inventory"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(tire|mount|unit|profile|detail|inventory|create)"
     },
     {
       "task": "SEVERE-REPAIR-UNIT-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-severe-repair-unit-reverse.mjs",
-      "modules": ["maintenance", "fleet", "safety"],
-      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "maintenance",
+        "fleet",
+        "safety"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(severe|repair|oos|unit|profile|detail|create)"
     },
     {
       "task": "INSURANCE-POLICY-VENDOR-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-insurance-policy-vendor-reverse.mjs",
-      "modules": ["insurance", "vendors", "safety"],
-      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "insurance",
+        "vendors",
+        "safety"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(insurance|policy|vendor|profile|list|create)"
     },
     {
       "task": "CUSTOMER-NOTIFY-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-customer-notify-linkage.mjs",
-      "modules": ["dispatch", "customers", "notifications"],
-      "cols": ["customer", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "customers",
+        "notifications"
+      ],
+      "cols": [
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(customer|notify|eta|preference|log|profile|create)"
     },
     {
       "task": "TEMP-COVER-DRIVER-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-temp-cover-driver-linkage.mjs",
-      "modules": ["safety", "drivers", "dispatch"],
-      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "drivers",
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(temporary|cover|assignment|driver|scheduler|profile|create)"
     },
     {
       "task": "TEMP-COVER-UNIT-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-temp-cover-unit-linkage.mjs",
-      "modules": ["safety", "fleet", "dispatch"],
-      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "fleet",
+        "dispatch"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(temporary|cover|assignment|unit|scheduler|profile|detail|create)"
     },
     {
       "task": "QUICK-ASSIGN-TRAILER-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-quick-assign-trailer-linkage.mjs",
-      "modules": ["dispatch", "fleet", "drivers"],
-      "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "fleet",
+        "drivers"
+      ],
+      "cols": [
+        "trailer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(quick.?assign|assignment|trailer|load|profile|dispatch|create)"
     },
     {
       "task": "QUICK-ASSIGN-UNIT-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-quick-assign-unit-linkage.mjs",
-      "modules": ["dispatch", "fleet", "drivers"],
-      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "dispatch",
+        "fleet",
+        "drivers"
+      ],
+      "cols": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(quick.?assign|assignment|unit|load|profile|dispatch|create)"
     },
     {
       "task": "EQUIPMENT-TRANSFER-TRAILER-LINKAGE",
       "pr": "this PR",
       "guard": "scripts/verify-equipment-transfer-trailer-linkage.mjs",
-      "modules": ["dispatch", "fleet", "drivers"],
+      "modules": [
+        "dispatch",
+        "fleet",
+        "drivers"
+      ],
       "cols": [
         "trailer",
         "driver",
@@ -1001,23 +1643,46 @@
       "task": "EQUIPMENT-TRANSFER-DRIVER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-equipment-transfer-driver-reverse.mjs",
-      "modules": ["drivers", "dispatch", "fleet"],
-      "cols": ["driver", "trailer", "connectivity", "reverse_link"],
+      "modules": [
+        "drivers",
+        "dispatch",
+        "fleet"
+      ],
+      "cols": [
+        "driver",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(equipment|transfer|trailer|driver|profile|detail|dispatch)"
     },
     {
       "task": "HOS-VIOLATION-DRIVER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-hos-violation-driver-reverse.mjs",
-      "modules": ["safety", "drivers", "dispatch"],
-      "cols": ["driver", "load", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "drivers",
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(hos|violation|driver|load|profile|detail|create)"
     },
     {
       "task": "CARGO-CLAIM-CUSTOMER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-cargo-claim-customer-reverse.mjs",
-      "modules": ["safety", "customers", "dispatch"],
+      "modules": [
+        "safety",
+        "customers",
+        "dispatch"
+      ],
       "cols": [
         "customer",
         "load",
@@ -1031,87 +1696,180 @@
       "task": "EQUIPMENT-TRANSFER-HUMAN-LABEL",
       "pr": "this PR",
       "guard": "scripts/verify-equipment-transfer-human-label.mjs",
-      "modules": ["drivers", "dispatch", "fleet"],
-      "cols": ["trailer", "connectivity", "reverse_link"],
+      "modules": [
+        "drivers",
+        "dispatch",
+        "fleet"
+      ],
+      "cols": [
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(equipment|transfer|trailer|driver|profile|detail)"
     },
     {
       "task": "DRIVER-INCIDENTS-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-driver-incidents-reverse.mjs",
-      "modules": ["safety", "drivers", "dispatch"],
-      "cols": ["driver", "load", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "drivers",
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(damage|trailer|cargo|incident|driver|load|profile|create)"
     },
     {
       "task": "ACCIDENT-DRIVER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-accident-driver-reverse.mjs",
-      "modules": ["safety", "drivers", "dispatch"],
-      "cols": ["driver", "load", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "drivers",
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(accident|driver|load|profile|detail|create)"
     },
     {
       "task": "TRAINING-RECORD-DRIVER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-training-record-driver-reverse.mjs",
-      "modules": ["safety", "drivers"],
-      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "drivers"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(training|driver|profile|detail|create)"
     },
     {
       "task": "PARTS-INVENTORY-VENDOR-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-parts-inventory-vendor-reverse.mjs",
-      "modules": ["maintenance", "inventory", "vendors"],
-      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "maintenance",
+        "inventory",
+        "vendors"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(parts|inventory|vendor|profile|purchase|create)"
     },
     {
       "task": "MAINTENANCE-VENDOR-AP-VENDOR-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-maintenance-vendor-ap-reverse.mjs",
-      "modules": ["maintenance", "lists", "vendors"],
-      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "maintenance",
+        "lists",
+        "vendors"
+      ],
+      "cols": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(maintenance|vendor|catalog|profile|detail|create)"
     },
     {
       "task": "DRIVER-REPORT-DRIVER-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-driver-report-driver-reverse.mjs",
-      "modules": ["driver-hub", "maintenance", "drivers"],
-      "cols": ["driver", "connectivity", "reverse_link"],
+      "modules": [
+        "driver-hub",
+        "maintenance",
+        "drivers"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(driver|report|maintenance|profile|detail|create)"
     },
     {
       "task": "DRIVER-REPORT-LOAD-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-driver-report-load-reverse.mjs",
-      "modules": ["driver-hub", "maintenance", "dispatch"],
-      "cols": ["load", "driver", "connectivity", "reverse_link"],
+      "modules": [
+        "driver-hub",
+        "maintenance",
+        "dispatch"
+      ],
+      "cols": [
+        "load",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(driver|report|load|drawer|detail|create)"
     },
     {
       "task": "INTERNAL-FINE-LOAD-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-internal-fine-load-reverse.mjs",
-      "modules": ["safety", "dispatch", "drivers"],
-      "cols": ["load", "driver", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "dispatch",
+        "drivers"
+      ],
+      "cols": [
+        "load",
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(internal|fine|load|driver|drawer|create)"
     },
     {
       "task": "DRIVER-COMPLIANCE-HISTORY-DOUBLE-ROUTE",
       "pr": "this PR",
       "guard": "scripts/verify-driver-compliance-history-double-route.mjs",
-      "modules": ["safety", "drivers", "compliance"],
-      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "modules": [
+        "safety",
+        "drivers",
+        "compliance"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(background|medical|driver|profile|detail|safety|compliance|create)"
     },
     {
       "task": "UNIT-FINANCE-LINKAGE-GL-JE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-unit-finance-gl-je-reverse.mjs",
-      "modules": ["fleet", "accounting"],
+      "modules": [
+        "fleet",
+        "accounting"
+      ],
       "cols": [
         "unit",
         "ap_bill",
@@ -1153,7 +1911,13 @@
       "task": "LINK-F5132-EMBEDDED-ASSIGNMENT-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-embedded-assignment-reverse-links.mjs",
-      "modules": ["drivers", "fleet", "safety", "dispatch", "maintenance"],
+      "modules": [
+        "drivers",
+        "fleet",
+        "safety",
+        "dispatch",
+        "maintenance"
+      ],
       "cols": [
         "unit",
         "load",
@@ -1168,152 +1932,350 @@
       "task": "LINK-F5133-CARD-TABLE-CANONICAL-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-card-table-canonical-reverse-links.mjs",
-      "modules": ["dispatch", "maintenance", "vendors", "inventory"],
-      "cols": ["vendor", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch",
+        "maintenance",
+        "vendors",
+        "inventory"
+      ],
+      "cols": [
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(home\\.(kanban|round_trips)|arriving_soon\\.convert_to_wo|in_transit\\.promote_to_wo|detail\\.profile|parts\\.roster|parts_inventory\\.record_purchase|vendors\\.create)$"
     },
     {
       "task": "LINK-F5134-PRIMARY-RECORD-SELECTOR-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-primary-record-selector-reverse-links.mjs",
-      "modules": ["dispatch", "insurance", "maintenance"],
-      "cols": ["load", "work_order", "claim", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch",
+        "insurance",
+        "maintenance"
+      ],
+      "cols": [
+        "load",
+        "work_order",
+        "claim",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(planning\\.(loads|timeline)|claims\\.list|lawsuits\\.list|home\\.(rm_status_board|recent_activity))$"
     },
     {
       "task": "LINK-F5135-SELECTED-RECORD-SUMMARY-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-selected-record-summary-reverse-links.mjs",
-      "modules": ["dispatch", "insurance", "maintenance"],
-      "cols": ["driver", "unit", "load", "policy", "connectivity", "reverse_link"],
+      "modules": [
+        "dispatch",
+        "insurance",
+        "maintenance"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "policy",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(home\\.kanban|policies\\.list|pm\\.auto_engine\\.run|pm\\.schedule\\.list)$"
     },
     {
       "task": "LINK-F5138-CONTEXT-IDENTITY-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-context-identity-reverse-links.mjs",
-      "modules": ["fleet", "system", "reports"],
-      "cols": ["customer", "driver", "vendor", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "fleet",
+        "system",
+        "reports"
+      ],
+      "cols": [
+        "customer",
+        "driver",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(unit\\.profile\\.identity|audit\\.trail|report\\.geofence_reconciliation)$"
     },
     {
       "task": "LINK-F5139-PRIMARY-ROSTER-RECORD-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-primary-roster-record-reverse-links.mjs",
-      "modules": ["settlements", "vendors", "maintenance"],
-      "cols": ["ap_bill", "work_order", "liability", "connectivity", "reverse_link"],
+      "modules": [
+        "settlements",
+        "vendors",
+        "maintenance"
+      ],
+      "cols": [
+        "ap_bill",
+        "work_order",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(cash_advances|detail\\.ap\\.bills|wo\\.console\\.list)$"
     },
     {
       "task": "LINK-F5143-DOCUMENT-IDENTITY-DEEP-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-document-identity-deep-links.mjs",
-      "modules": ["docs", "drivers", "vendors", "customers", "dispatch", "fleet"],
-      "cols": ["customer", "driver", "vendor", "unit", "load", "connectivity", "reverse_link"],
+      "modules": [
+        "docs",
+        "drivers",
+        "vendors",
+        "customers",
+        "dispatch",
+        "fleet"
+      ],
+      "cols": [
+        "customer",
+        "driver",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(home|docs\\.modal\\.preview|profiles\\.documents|detail\\.documents|load\\.drawer\\.documents|unit\\.profile\\.documents|trailer\\.profile\\.documents)$"
     },
     {
       "task": "LINK-F5144-OPERATIONAL-CONTEXT-RECORD-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-operational-context-record-links.mjs",
-      "modules": ["fleet", "cash-flow", "settlements"],
-      "cols": ["driver", "unit", "load", "liability", "connectivity", "reverse_link"],
+      "modules": [
+        "fleet",
+        "cash-flow",
+        "settlements"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "load",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(unit\\.profile\\.current_load|tab\\.daily_prediction|liabilities\\.list)$"
     },
     {
       "task": "LINK-F5149-ROSTER-REFERENCE-IDENTITY-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-roster-reference-identity-links.mjs",
-      "modules": ["customers", "vendors", "lists", "users"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "customers",
+        "vendors",
+        "lists",
+        "users"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(home\\.roster|list\\.(view_list|view_master_detail|segment\\.(preferred|watch|factored))|hub\\.names_search|detail)$"
     },
     {
       "task": "LINK-F5150-OPERATIONAL-QUEUE-WORKFLOW-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-operational-queue-workflow-links.mjs",
-      "modules": ["banking", "factoring", "reports"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "banking",
+        "factoring",
+        "reports"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(reconciliation|factoring|driver_escrow|submit\\.queue|batches\\.create|factors\\.admin|faro\\.import|accounting\\.(list|detail|factor_recon)|banking\\.entry|factoring\\.wizard\\.batch|report\\.(management|per_truck_cpm|fuel_reconciliation|dispatch_margin|geofence_dwell))$"
     },
     {
       "task": "LINK-F5151-COMPLIANCE-MAINTENANCE-RECORD-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-compliance-maintenance-record-links.mjs",
-      "modules": ["compliance", "maintenance", "safety"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "compliance",
+        "maintenance",
+        "safety"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(tab\\.hos_tracker|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|idvr\\.list|escrow_record\\.list)$"
     },
     {
       "task": "LINK-F5152-DISPATCH-INVENTORY-VENDOR-WORKFLOW-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-dispatch-inventory-vendor-workflow-links.mjs",
-      "modules": ["dispatch", "inventory", "vendors"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "dispatch",
+        "inventory",
+        "vendors"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(secondary\\.pre_settlements|docs\\.(ocr|equipment_transfers)|misc\\.layover|assignments\\.(wo_link|unit_link|vendor_link)|md\\.(transaction_list|vendor_details|header\\.(edit|new_transaction)))$"
     },
     {
       "task": "LINK-F5153-CROSS-MODULE-CONNECTIVITY-DOORS",
       "pr": "this PR",
       "guard": "scripts/verify-cross-module-connectivity-doors.mjs",
-      "modules": ["cash-flow", "finance", "home"],
-      "cols": ["connectivity"],
+      "modules": [
+        "cash-flow",
+        "finance",
+        "home"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(hop\\.(banking|reports\\.(cash_flow_statement|cash_flow|cash_flow_overview)|cash_advances|accounting|cash_flow|reports)|jump\\.(accounting|banking))$"
     },
     {
       "task": "LINK-F5154-OPERATIONAL-COMPLIANCE-MODULE-DOORS",
       "pr": "this PR",
       "guard": "scripts/verify-operational-compliance-module-doors.mjs",
-      "modules": ["compliance", "driver-hub", "form_425", "tasks"],
-      "cols": ["connectivity"],
+      "modules": [
+        "compliance",
+        "driver-hub",
+        "form_425",
+        "tasks"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(hop\\.(safety_hos|safety_dot|form425c|maint_compliance|fuel_compliance|reports_ifta|drivers|safety_scheduler|safety_audit|compliance|daily_tasks|lists\\.service_tasks))$"
     },
     {
       "task": "LINK-F5155-PRIMARY-MODULE-NAVIGATION-CONNECTIVITY",
       "pr": "this PR",
       "guard": "scripts/verify-primary-module-navigation-connectivity.mjs",
-      "modules": ["compliance", "docs", "driver-hub", "form_425", "tasks", "program", "system"],
-      "cols": ["connectivity"],
+      "modules": [
+        "compliance",
+        "docs",
+        "driver-hub",
+        "form_425",
+        "tasks",
+        "program",
+        "system"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(home|tab\\.(filings|overview|hos_tracker|hos_viewer|violations|hos_history|required_docs|all|driver|customer|vendor|unit|equipment|scheduler|leave_requests|profile|form|merge|history|program|software|claude_coder)|nav\\.(board|mine|calendar|chat|report|scenario|matrix|legacy|tracker|modules|final))$"
     },
     {
       "task": "LINK-F5156-MODULE-HUB-NAVIGATION-CONNECTIVITY",
       "pr": "this PR",
       "guard": "scripts/verify-module-hub-navigation-connectivity.mjs",
-      "modules": ["finance", "fuel", "help", "home", "reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "finance",
+        "fuel",
+        "help",
+        "home",
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(hub(\\.alias)?|nav\\.(overview|statements|ar_ap_aging|projections|scenarios|break_even|calculator|amortization|loan_wizard)|statements\\.(pl|bs|tb)|home|planner|relay_inbox|settings|expense_mapping|loves_prices|compliance|center|overview|runbooks|article|search|cat\\.(getting_started|dispatch|settlements|banking|reports|ops_dispatch|driver_perf|equipment|safety|customers|vendors|accounting|tax_reg|multi_company)|jump\\.(maintenance|fuel|safety|drivers|dispatch|lists)|hub\\.(driver|driver_reporting)|hop\\.program|home\\.(reports|hub|custom_builder)|subnav\\.(reports|category_hub|run_report|cancellations|scheduled_custom|audit))$"
     },
     {
       "task": "LINK-F5157-OPERATOR-RECORD-SURFACE-CONNECTIVITY",
       "pr": "this PR",
       "guard": "scripts/verify-operator-record-surface-connectivity.mjs",
-      "modules": ["compliance", "insurance", "inventory", "legal", "maintenance", "tasks", "users", "driver-hub"],
-      "cols": ["connectivity"],
+      "modules": [
+        "compliance",
+        "insurance",
+        "inventory",
+        "legal",
+        "maintenance",
+        "tasks",
+        "users",
+        "driver-hub"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(overview\\.(summary_cards|credentials_table|notification_rules|notification_log)|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|landing|policies\\.detail|type_catalog\\.list|coverage_gaps|nav\\.(parts_tab|assignments_tab|purchases_tab)|assignments\\.(banner|trail|search|wo_link|unit_link|vendor_link|crosslink_parts|crosslink_purchases|honest_empty)|contracts\\.list|templates\\.(list|detail)|policies|attorney_review|reports|damage_reports\\.intake|road_service\\.active|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|board\\.planner_grid|mine\\.list|chat\\.mentions|list|detail|create|role_change|deactivate|tab\\.all|kpi|inbox)$"
     },
     {
       "task": "LINK-F5158-ANALYTICAL-DASHBOARD-SURFACE-CONNECTIVITY",
       "pr": "this PR",
       "guard": "scripts/verify-analytical-dashboard-surface-connectivity.mjs",
-      "modules": ["cash-flow", "fuel", "home", "program", "reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "cash-flow",
+        "fuel",
+        "home",
+        "program",
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(home|tab\\.(actual_vs_projected|manual_daily_projections)|create\\.manual_projection|card_overage|route\\.(root|home|home_ops)|role\\.(owner|dispatcher|accountant|safety|manager|default)|surface\\.(qbo_style|kpi_cards|attention_list|quick_actions|fleet_restore)|home\\.panel\\.(accounting_pending_approvals|dispatcher_active_loads|dispatcher_pending_actions|driver_manager_attention|fleet_snapshot|safety_alerts)|matrix\\.(module_pill|request_time_feed|live_api)|legacy\\.board|scenario\\.redirect|hop\\.audit_coverage|program\\.parity\\.legacy_audit_scoreboard_page|home\\.kpi_strip|report\\.(management|ifta|ifta_preparer|ar_aging|ap_aging|trial_balance|profit_loss|balance_sheet|cash_flow_statement|cash_flow|per_truck_cpm|cash_flow_overview|settlement_summary|profit_per_truck|cancellations|late_arrival|fuel_reconciliation|maintenance_cost_per_unit|dispatch_margin|geofence_dwell|booking_gap|deadhead|scheduled|scheduled_custom)|runner\\.(profit_truck_mtd|dispatch_board|detention_claims|cash_position|driver_pay_history|driver_settlement|fleet_utilization|fuel_savings|fuel_price_variance|csa_fleet|hos_violations|ifta_quarterly|dot_audit_pack|saved_owner_pack|saved_quarter_close|maint_cost_unit)|audit\\.(activity_by_user|activity_by_module|financial_change_log|maintenance_decision_log|deduction_trail|void_reversal|period_close_history)|reports\\.(modal\\.(lane_detail|schedule_report)|panel\\.(report_flyout|scheduled_reports)|sheet\\.balance_sheet_page|flyout\\.report_flyout))$"
     },
     {
       "task": "LINK-F5159-WORKFLOW-SURFACE-CONNECTIVITY",
       "pr": "this PR",
       "guard": "scripts/verify-workflow-surface-connectivity.mjs",
-      "modules": ["accounting", "docs", "factoring", "finance", "fleet", "form_425", "legal", "lists", "system"],
-      "cols": ["connectivity"],
+      "modules": [
+        "accounting",
+        "docs",
+        "factoring",
+        "finance",
+        "fleet",
+        "form_425",
+        "legal",
+        "lists",
+        "system"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(accounting\\.(modal\\.(manual_je|pay_bill|payment_apply|record_payment|submit_factoring|ccpayment|customer_adjustment|vendor_chargeback|bill_payment|void_reason|record_expense)|drawer\\.(new_account_drawer_form|new_class_drawer_form|new_service_drawer_form)|panel\\.(bill_detail|chart_of_accounts_sync|coa_asymmetry_report)|wizard\\.loan_application|parity\\.(expenses_list_page|factoring_detail_page|pay_bill|payment_apply|receipts_page|record_payment|submit_factoring|vendor_credits_page|ccpayment))|upload|kpi|table\\.entity_link|docs\\.modal\\.(edit_metadata|soft_delete|upload|version_history)|factoring\\.(modal\\.(deactivate_factor_confirm|reserve_dashboard_add_factor)|panel\\.factoring_profile|wizard\\.batch|parity\\.driver_autocomplete)|finance\\.wizard\\.loan_wizard_page|map\\.redirect|fleet\\.modal\\.(edit_vehicle|quick_assign|status_change)|exhibits|redirect\\.form425c|legal\\.(modal|parity)\\.(lease_to_own_creator|send_contract|truck_lease_creator|unified_contract_creator|legal_template_new)|lists\\.(modal\\.(catalog_excel_upload|accounting_catalog|item_editor|catalog_entry|driver_catalog|driver_team|drivers_reference_catalog|fleet_catalog|fuel_catalog|maintenance_catalog|posting_template|cargo_claim_reason|civil_fine_type|complaint_type|dot_violation_type|internal_fine_reason|bulk_action|catalog_edit)|drawer\\.(new_customer_drawer_form|new_vendor_drawer_form|account|accounting_catalog_profile)|flyout\\.domain|parity\\.accounting_catalog_profile|panel\\.(bill_allocation|validation)|dialog\\.(bulk_progress|confirm_discard|part_location_map))|system\\.samsara_hos_driver_map|hop\\.(banking_recon|program_matrix)|system\\.(wizard\\.edi_setup|panel\\.usmcaactivation))$"
     },
     {
       "task": "CLS-LIST-TOOLBAR-GEAR-APPLY",
       "pr": "this PR",
       "guard": "scripts/verify-all-module-list-toolbar-connectivity.mjs",
-      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "finance", "fleet", "form_425", "fuel", "home", "insurance", "inventory", "legal", "lists", "maintenance", "program", "reports", "safety", "settlements", "system", "tasks", "users", "vendors"],
-      "cols": ["connectivity"],
+      "modules": [
+        "accounting",
+        "banking",
+        "cash-flow",
+        "compliance",
+        "customers",
+        "dispatch",
+        "docs",
+        "driver-hub",
+        "drivers",
+        "factoring",
+        "finance",
+        "fleet",
+        "form_425",
+        "fuel",
+        "home",
+        "insurance",
+        "inventory",
+        "legal",
+        "lists",
+        "maintenance",
+        "program",
+        "reports",
+        "safety",
+        "settlements",
+        "system",
+        "tasks",
+        "users",
+        "vendors"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^chrome\\.toolbar_gear$"
     },
     {

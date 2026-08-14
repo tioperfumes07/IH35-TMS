@@ -272,7 +272,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -286,7 +285,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -300,7 +298,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -314,7 +311,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -328,7 +324,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -342,7 +337,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -356,7 +350,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -370,7 +363,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -384,7 +376,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -398,7 +389,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -412,7 +402,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -426,7 +415,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -440,7 +428,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -454,7 +441,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -468,7 +454,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -482,7 +467,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1093,7 +1077,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/labor-rates",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1105,7 +1088,6 @@
       "sub": "+ Create \u2014 Labor Rates",
       "route_hint": "/lists/maintenance/labor-rates",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1117,7 +1099,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1129,7 +1110,6 @@
       "sub": "+ Create \u2014 Labor Rates",
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1141,7 +1121,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1153,7 +1132,6 @@
       "sub": "+ Create \u2014 Labor Rates",
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1165,7 +1143,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1177,7 +1154,6 @@
       "sub": "+ Create \u2014 Labor Rates",
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1189,7 +1165,6 @@
       "sub": "Part Locations",
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1201,7 +1176,6 @@
       "sub": "+ Create \u2014 Part Locations",
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1213,7 +1187,6 @@
       "sub": "Air Bag Catalog",
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1225,7 +1198,6 @@
       "sub": "+ Create \u2014 Air Bag Catalog",
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1237,7 +1209,6 @@
       "sub": "Battery Catalog",
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1249,7 +1220,6 @@
       "sub": "+ Create \u2014 Battery Catalog",
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1261,7 +1231,6 @@
       "sub": "PM Intervals",
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1273,7 +1242,6 @@
       "sub": "+ Create \u2014 PM Intervals",
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1285,7 +1253,6 @@
       "sub": "Repair Locations",
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1297,7 +1264,6 @@
       "sub": "+ Create \u2014 Repair Locations",
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1309,7 +1275,6 @@
       "sub": "Tire Catalog",
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1321,7 +1286,6 @@
       "sub": "+ Create \u2014 Tire Catalog",
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1333,7 +1297,6 @@
       "sub": "Trailer Parts",
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1345,7 +1308,6 @@
       "sub": "+ Create \u2014 Trailer Parts",
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1357,7 +1319,6 @@
       "sub": "Truck Parts",
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1369,7 +1330,6 @@
       "sub": "+ Create \u2014 Truck Parts",
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1381,7 +1341,6 @@
       "sub": "Work Order Templates",
       "route_hint": "/lists/maintenance/parts",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1393,7 +1352,6 @@
       "sub": "+ Create \u2014 Work Order Templates",
       "route_hint": "/lists/maintenance/parts",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1405,7 +1363,6 @@
       "sub": "Maintenance Parts",
       "route_hint": "/lists/maintenance/parts-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1417,7 +1374,6 @@
       "sub": "+ Create \u2014 Maintenance Parts",
       "route_hint": "/lists/maintenance/parts-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1429,7 +1385,6 @@
       "sub": "Parts Catalog",
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1441,7 +1396,6 @@
       "sub": "+ Create \u2014 Parts Catalog",
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1453,7 +1407,6 @@
       "sub": "Parts Catalog",
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1465,7 +1418,6 @@
       "sub": "+ Create \u2014 Parts Catalog",
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1477,7 +1429,6 @@
       "sub": "Parts Catalog",
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1489,7 +1440,6 @@
       "sub": "+ Create \u2014 Parts Catalog",
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1501,7 +1451,6 @@
       "sub": "OEM Parts Reference",
       "route_hint": "/lists/maintenance/services-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1513,7 +1462,6 @@
       "sub": "+ Create \u2014 OEM Parts Reference",
       "route_hint": "/lists/maintenance/services-catalog",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1525,7 +1473,6 @@
       "sub": "Maintenance Priority Levels",
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1537,7 +1484,6 @@
       "sub": "+ Create \u2014 Maintenance Priority Levels",
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1549,7 +1495,6 @@
       "sub": "Maintenance Service Tasks",
       "route_hint": "/lists/maintenance/vendors",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1561,7 +1506,6 @@
       "sub": "+ Create \u2014 Maintenance Service Tasks",
       "route_hint": "/lists/maintenance/vendors",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1573,7 +1517,6 @@
       "sub": "Maintenance Services Catalog",
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1585,7 +1528,6 @@
       "sub": "+ Create \u2014 Maintenance Services Catalog",
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1598,7 +1540,6 @@
       "route_hint": "/lists/fuel/def-stations",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1612,7 +1553,6 @@
       "route_hint": "/lists/fuel/def-stations",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1626,7 +1566,6 @@
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1640,7 +1579,6 @@
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1654,7 +1592,6 @@
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1668,7 +1605,6 @@
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1682,7 +1618,6 @@
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1696,7 +1631,6 @@
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1710,7 +1644,6 @@
       "route_hint": "/lists/fuel/card-types",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1724,7 +1657,6 @@
       "route_hint": "/lists/fuel/card-types",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1738,7 +1670,6 @@
       "route_hint": "/lists/fuel/exception-types",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1752,7 +1683,6 @@
       "route_hint": "/lists/fuel/exception-types",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1766,7 +1696,6 @@
       "route_hint": "/lists/fuel/station-brands",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1780,7 +1709,6 @@
       "route_hint": "/lists/fuel/station-brands",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1794,7 +1722,6 @@
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1808,7 +1735,6 @@
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1822,7 +1748,6 @@
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1836,7 +1761,6 @@
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1850,7 +1774,6 @@
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1864,7 +1787,6 @@
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1878,7 +1800,6 @@
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1892,7 +1813,6 @@
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1906,7 +1826,6 @@
       "route_hint": "/lists/fuel/brands",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1920,7 +1839,6 @@
       "route_hint": "/lists/fuel/brands",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1934,7 +1852,6 @@
       "route_hint": "/lists/fuel/station-states",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1948,7 +1865,6 @@
       "route_hint": "/lists/fuel/station-states",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1962,7 +1878,6 @@
       "route_hint": "/lists/fuel/pump-types",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1976,7 +1891,6 @@
       "route_hint": "/lists/fuel/pump-types",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1990,7 +1904,6 @@
       "route_hint": "/lists/fuel/grades",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2004,7 +1917,6 @@
       "route_hint": "/lists/fuel/grades",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2018,7 +1930,6 @@
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2032,7 +1943,6 @@
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
         "driver",
-        "unit",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2045,7 +1955,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/tractor-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2057,7 +1966,6 @@
       "sub": "+ Create \u2014 Tractor Statuses",
       "route_hint": "/lists/fleet/tractor-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2069,7 +1977,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2081,7 +1988,6 @@
       "sub": "+ Create \u2014 Tractor Statuses",
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2093,7 +1999,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2105,7 +2010,6 @@
       "sub": "+ Create \u2014 Tractor Statuses",
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2117,7 +2021,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2129,7 +2032,6 @@
       "sub": "+ Create \u2014 Tractor Statuses",
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2141,7 +2043,6 @@
       "sub": "Trailer Statuses",
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2153,7 +2054,6 @@
       "sub": "+ Create \u2014 Trailer Statuses",
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2165,7 +2065,6 @@
       "sub": "Condition Codes",
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2177,7 +2076,6 @@
       "sub": "+ Create \u2014 Condition Codes",
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2189,7 +2087,6 @@
       "sub": "Equipment Types",
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2201,7 +2098,6 @@
       "sub": "+ Create \u2014 Equipment Types",
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2213,7 +2109,6 @@
       "sub": "Tire Positions",
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2225,7 +2120,6 @@
       "sub": "+ Create \u2014 Tire Positions",
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2237,7 +2131,6 @@
       "sub": "Ownership Types",
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2249,7 +2142,6 @@
       "sub": "+ Create \u2014 Ownership Types",
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2261,7 +2153,6 @@
       "sub": "Trailer Types",
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2273,7 +2164,6 @@
       "sub": "+ Create \u2014 Trailer Types",
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -6638,6 +6528,672 @@
           "id": "catalog.names_master.brokers.create",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "unit blanket-required on all 110 lists catalog.* leaves (safety/maintenance/fuel/fleet catalog domains). Verified live, same generic MaintenanceCatalogListPage/FleetCatalogModal/useCatalogQuery.ts pattern already confirmed false for the identical catalog set in the trailer-column and vendor-column sweeps this session \u2014 pure catalog-VALUE CRUD (dropdown option management: statuses, condition codes, type labels, reason codes), zero unit_id/EntityLink kind=\"unit\" anywhere, including catalog.fleet.tractor_statuses.* whose name references units but which defines status VALUES, not unit records. Unlike the customer/vendor columns, lists has no unit-equivalent of hub.names_search or a new_unit_drawer_form (units are managed exclusively through the fleet module's own roster, not a Lists master-record hub) \u2014 all 110 lists leaves are false, zero exceptions.",
+      "drops": [
+        {
+          "id": "catalog.safety.accident_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.accident_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.company_violation_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.company_violation_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.complaint_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.complaint_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.dot_violation_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.dot_violation_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.cargo_claim_reasons.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.safety.cargo_claim_reasons.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_rates.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_rates.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.part_locations.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.part_locations.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.air_bag_catalog.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.air_bag_catalog.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.battery_catalog.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.battery_catalog.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.pm_intervals.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.pm_intervals.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.repair_locations.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.repair_locations.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.tire_catalog.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.tire_catalog.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.trailer_parts.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.trailer_parts.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.truck_parts.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.truck_parts.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_templates.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_templates.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.failure_codes.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.failure_codes.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_codes.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_codes.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts_catalog.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts_catalog.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.oem_parts_reference.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.oem_parts_reference.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.priority_levels.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.priority_levels.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.service_tasks.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.service_tasks.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.services_catalog.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.services_catalog.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.shop_locations.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.shop_locations.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.vendors.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.vendors.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_statuses.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_statuses.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.def_stations.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.def_stations.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.fuel_stations.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.fuel_stations.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.relay_accounts.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.relay_accounts.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.toll_providers.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.toll_providers.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.card_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.card_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.exception_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.exception_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_brands.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_brands.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.stop_reason_codes.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.stop_reason_codes.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.mpg_bands.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.mpg_bands.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.expensive_states.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.expensive_states.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.tax_jurisdictions.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.tax_jurisdictions.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.brands.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.brands.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_states.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_states.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.pump_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.pump_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.grades.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.grades.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.dispatch_routes.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fuel.dispatch_routes.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.tractor_statuses.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.tractor_statuses.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_statuses.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_statuses.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.condition_codes.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.condition_codes.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.equipment_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.equipment_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.tire_positions.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.tire_positions.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.ownership_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.ownership_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_types.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_types.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.lease_terms.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.lease_terms.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_statuses.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_statuses.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_locations.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_locations.create",
+          "removed": [
+            "unit"
           ]
         }
       ]

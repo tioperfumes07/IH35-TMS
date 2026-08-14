@@ -349,7 +349,6 @@
       "required": [
         "vendor",
         "driver",
-        "unit",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -864,6 +863,18 @@
           "id": "detail.ap.vendor_credits",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "detail.profile is false \u2014 VendorDetail.tsx's Profile tab has no unit_id field or EntityLink; the only reverse-entity link present is a driver EntityLink when the vendor is also tracked as a driver.",
+      "drops": [
+        {
+          "id": "detail.profile",
+          "removed": [
+            "unit"
           ]
         }
       ]

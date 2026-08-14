@@ -207,7 +207,6 @@
       "route_hint": "/legal/matters",
       "required": [
         "driver",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -282,8 +281,7 @@
       "surface_path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "unit"
+        "reverse_link"
       ]
     },
     {
@@ -342,8 +340,7 @@
       "surface_path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "unit"
+        "reverse_link"
       ]
     },
     {
@@ -713,6 +710,30 @@
           "id": "matters.detail",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "3 of 5 legal leaves are false: matters.list's column set has no unit field despite the underlying matter row carrying unit_id (used only on the detail view); both truck_lease_creator entries (same TruckLeaseCreatorModal.tsx) capture vehicle data as uncontrolled free text, never a real unit_id FK, despite the \"truck lease\" name. matters.create and matters.detail (not touched here \u2014 already correctly not flagged) both genuinely have a real EntityPicker kind=\"unit\"/EntityLink kind=\"unit\".",
+      "drops": [
+        {
+          "id": "matters.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "legal.modal.truck_lease_creator",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "legal.parity.truck_lease_creator",
+          "removed": [
+            "unit"
           ]
         }
       ]

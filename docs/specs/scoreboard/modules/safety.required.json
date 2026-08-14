@@ -199,7 +199,6 @@
       "route_hint": "/safety/hos",
       "required": [
         "driver",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -211,7 +210,6 @@
       "route_hint": "/safety/hos-violations",
       "required": [
         "driver",
-        "unit",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -279,7 +277,6 @@
       "route_hint": "/safety/dot-compliance",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -290,7 +287,6 @@
       "route_hint": "/safety/cert-expiry",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -441,7 +437,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -455,7 +450,6 @@
       "route_hint": "/safety/external-fines",
       "required": [
         "driver",
-        "unit",
         "expense",
         "connectivity"
       ]
@@ -516,7 +510,6 @@
       "route_hint": "/safety/insurance",
       "required": [
         "driver",
-        "unit",
         "scenario.insurance",
         "connectivity",
         "reverse_link"
@@ -1359,6 +1352,54 @@
           "id": "permits.list",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "7 of 19 safety leaves are false: hos.list/hos_violations.list/dot_compliance.list only render EntityLink kind=\"driver\"; cert_expiry.list has zero unit/vehicle/truck references; internal_fines.create only has driver/load pickers, no unit; external_fines.list omits the unit column its own create modal captures; insurance_tab.list (InsuranceLanding.tsx) is an aggregate KPI dashboard with unit linkage only on downstream drill-through pages, not this leaf itself. The other 12 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in IdvrPage.tsx, DOTInspectionsTab.tsx, SafetyEventsPage.tsx, AccidentsPage.tsx/AccidentReportDrawer.tsx, SafetyIncidentsClusterSurface.tsx (damage reports), PhotoComparisonPage.tsx, FineCreateModal.tsx (external_fines.create \u2014 the create modal itself, distinct from its list leaf), GeofenceBreachesTab.tsx, Permits.tsx, and PositionHistoryPage.tsx.",
+      "drops": [
+        {
+          "id": "hos.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hos_violations.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dot_compliance.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "cert_expiry.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "internal_fines.create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "external_fines.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "insurance_tab.list",
+          "removed": [
+            "unit"
           ]
         }
       ]

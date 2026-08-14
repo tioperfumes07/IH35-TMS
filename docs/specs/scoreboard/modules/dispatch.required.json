@@ -179,7 +179,6 @@
       "route_hint": "/dispatch?view=units",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity",
         "reverse_link",
@@ -315,7 +314,6 @@
       "route_hint": "/dispatch/alerts",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity",
         "reverse_link"
@@ -328,7 +326,6 @@
       "route_hint": "/dispatch/geofencing",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -339,7 +336,6 @@
       "route_hint": "/dispatch/map",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -438,7 +434,6 @@
       "route_hint": "/dispatch/planners/loads",
       "required": [
         "driver",
-        "unit",
         "load",
         "customer",
         "connectivity",
@@ -504,7 +499,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -519,7 +513,6 @@
       "required": [
         "driver",
         "customer",
-        "unit",
         "load",
         "qbo_chrome",
         "connectivity",
@@ -532,7 +525,6 @@
       "sub": "Equipment transfers",
       "route_hint": "/dispatch/equipment-transfers",
       "required": [
-        "unit",
         "trailer",
         "driver",
         "connectivity",
@@ -581,7 +573,6 @@
       "route_hint": "/dispatch/borders/geofence-history",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -661,7 +652,6 @@
       "required": [
         "load",
         "driver",
-        "unit",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -687,7 +677,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -713,7 +702,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Customs",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity",
         "reverse_link",
@@ -727,7 +715,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Cargo%20Sensors",
       "required": [
         "load",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -752,7 +739,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Geofence%20Timeline",
       "required": [
         "load",
-        "unit",
         "driver",
         "connectivity",
         "reverse_link"
@@ -765,7 +751,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Assignment%20History",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity",
         "reverse_link"
@@ -805,8 +790,7 @@
       "required": [
         "connectivity",
         "load",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -835,8 +819,7 @@
         "connectivity",
         "picker_law",
         "load",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -926,8 +909,7 @@
       "required": [
         "connectivity",
         "load",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -940,8 +922,7 @@
       "required": [
         "connectivity",
         "driver",
-        "load",
-        "unit"
+        "load"
       ]
     },
     {
@@ -968,8 +949,7 @@
       "surface_path": "pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx",
       "required": [
         "connectivity",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -997,8 +977,7 @@
       "required": [
         "connectivity",
         "driver",
-        "load",
-        "unit"
+        "load"
       ]
     },
     {
@@ -1027,7 +1006,6 @@
       "required": [
         "connectivity",
         "driver",
-        "unit",
         "trailer"
       ]
     },
@@ -1848,6 +1826,144 @@
           "id": "load.drawer.customs",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "22 of 51 dispatch leaves are false: home.round_trips shows unit number as plain text (no EntityLink/picker); several queues/panels/modals (alerts, live_map, map, load-create panels for BOL/optimal-drivers/rate-con, cancel/reassign modals, equipment-transfer) have zero unit_id; most load-drawer sub-tabs (stops/documents/customs/cargo/geofence/assignment_history) are load-only with no unit field. The other 29 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in DispatchOverview.tsx, DispatchKanban.tsx, DispatchList.tsx (InlineUnitPicker), BookLoadEquipmentSection.tsx, AssignmentHistoryPage.tsx, AtRiskQueuePage.tsx, DetentionBoardPage.tsx, BorderCrossingWizardPage.tsx, LateArrivalsPage.tsx, TripPairingBoardPage.tsx, InTransitIssuesPage.tsx, the planners, LoadDetailDrawer.tsx's Overview tab, LoadCreateModal.tsx, QuickAssignModal.tsx, AuthGatePanel.tsx, DeadheadOptimizerPanel.tsx, and PreDispatchValidationPanel.tsx.",
+      "drops": [
+        {
+          "id": "home.round_trips",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "queues.alerts",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "queues.live_map",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "queues.map",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "planning.loads",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "docs.pod",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "docs.ocr",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "docs.equipment_transfers",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "misc.geofence_history",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "load.drawer.stops",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "load.drawer.documents",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "load.drawer.customs",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "load.drawer.cargo",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "load.drawer.geofence",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "load.drawer.assignment_history",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dispatch.modal.cancel_load",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_reassign",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dispatch.panel.load_bol",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dispatch.panel.optimal_drivers",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dispatch.panel.rate_con_upload",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dispatch.parity.assign_driver_dropdown",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "dispatch.modal.equipment_transfer",
+          "removed": [
+            "unit"
           ]
         }
       ]

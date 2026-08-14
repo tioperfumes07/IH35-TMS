@@ -119,7 +119,6 @@
       "route_hint": "/driver-hub",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -131,7 +130,6 @@
       "route_hint": "/driver-hub",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -155,7 +153,6 @@
       "route_hint": "/driver-hub?tab=leave_requests",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -167,7 +164,6 @@
       "route_hint": "/driver-hub/reporting",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -179,7 +175,6 @@
       "route_hint": "/driver-hub",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -191,7 +186,6 @@
       "route_hint": "/drivers",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -410,6 +404,48 @@
           "id": "chrome.toolbar_filter",
           "removed": [
             "qbo_chrome"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "6 of 8 driver-hub leaves are false: home/tab.overview/inbox (all DriverInbox.tsx) and tab.leave_requests/reporting/hop.drivers have zero unit_id \u2014 driver-only surfaces. The other 2 leaves KEEP the Required marking \u2014 tab.scheduler (DriverSchedulerGridPage.tsx, real unit_id + a temp-cover unit picker) and hop.safety_scheduler (SafetyHomeTab.tsx, real subject_unit_id EntityLink).",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "tab.overview",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "tab.leave_requests",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "reporting",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "inbox",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "hop.drivers",
+          "removed": [
+            "unit"
           ]
         }
       ]

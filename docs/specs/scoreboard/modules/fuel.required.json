@@ -138,7 +138,6 @@
       "route_hint": "/fuel",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -150,7 +149,6 @@
       "route_hint": "/fuel/planner",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -162,7 +160,6 @@
       "route_hint": "/fuel/inbox",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -214,7 +211,6 @@
       "sub": "Fuel compliance",
       "route_hint": "/fuel/compliance",
       "required": [
-        "unit",
         "driver",
         "connectivity"
       ]
@@ -229,8 +225,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -263,8 +258,7 @@
         "connectivity",
         "reverse_link",
         "load",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -277,8 +271,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "unit"
+        "driver"
       ]
     },
     {
@@ -429,6 +422,54 @@
           "id": "expense_mapping",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "7 of 10 fuel leaves are false: home/relay_inbox/compliance/import-transactions-modal/upload-loves-prices-modal/savings-panel are all aggregate/fleet-wide surfaces with zero unit_id; planner's unit reference is plain text with a hardcoded-null id, not a real EntityLink. The other 3 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in CardOverageQueuePage.tsx, FuelTransactionsTable.tsx, and CreateFuelTransactionModal.tsx.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "planner",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "relay_inbox",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "compliance",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "fuel.modal.import_fuel_transactions",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "fuel.modal.upload_loves_prices",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "fuel.panel.savings",
+          "removed": [
+            "unit"
           ]
         }
       ]

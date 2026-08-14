@@ -127,7 +127,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "liability",
         "connectivity",
         "reverse_link",
@@ -142,7 +141,6 @@
       "required": [
         "driver",
         "load",
-        "unit",
         "liability",
         "connectivity",
         "reverse_link",
@@ -554,6 +552,24 @@
           "id": "settlements.parity.create_advance",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "both settlements leaves are false: SettlementsPage.tsx/SettlementsTable.tsx and SettlementDetailPage.tsx/SettlementHeader.tsx have zero unit references \u2014 driver/settlement/bill-scoped only, no unit linkage anywhere.",
+      "drops": [
+        {
+          "id": "settlements.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "settlements.detail",
+          "removed": [
+            "unit"
           ]
         }
       ]
