@@ -449,8 +449,11 @@ export type WorkqueueItem = {
   days_until_recourse_expiry: number | null;
 };
 
-export function listSubmissionQueue(companyId: string) {
-  return apiRequest<{ items: SubmissionQueueItem[] }>(`/api/v1/factoring/submission-queue?${q(companyId)}`);
+export function listSubmissionQueue(companyId: string, filters: { customer_id?: string; load_id?: string } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.customer_id) params.set("customer_id", filters.customer_id);
+  if (filters.load_id) params.set("load_id", filters.load_id);
+  return apiRequest<{ items: SubmissionQueueItem[] }>(`/api/v1/factoring/submission-queue?${params.toString()}`);
 }
 
 export function listWorkqueue(companyId: string) {

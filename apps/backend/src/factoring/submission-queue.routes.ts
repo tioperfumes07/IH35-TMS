@@ -8,18 +8,29 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// LINK-F5171/LINK-F5181: reverse_link -- optional filters so a customer/load's own reverse section
+// can query its own submission-queue rows server-side.
+const submissionQueueQuerySchema = companyQuerySchema.extend({
+  customer_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
+});
+
 export async function registerSubmissionQueueRoutes(app: FastifyInstance) {
   // GET /api/v1/factoring/submission-queue
   // Lists invoices eligible for factoring WITH doc-gate status per invoice.
   // An invoice is_submittable only when both POD (approved) + Rate Confirmation are present.
-  app.get("/api/v1/factoring/submission-queue", async (req, reply) => {
+  app.get("/api/v1/factoring/submission-queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = submissionQueueQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
     const items = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      listSubmissionQueueInvoices(query.data.operating_company_id, { client })
+      listSubmissionQueueInvoices(query.data.operating_company_id, {
+        client,
+        customerId: query.data.customer_id,
+        loadId: query.data.load_id,
+      })
     );
     return { items };
   });

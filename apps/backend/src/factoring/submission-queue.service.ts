@@ -52,8 +52,23 @@ function toNumber(v: unknown): number {
 
 export async function listSubmissionQueueInvoices(
   operatingCompanyId: string,
-  deps: { client: Queryable }
+  // LINK-F5171/LINK-F5181: reverse_link -- customerId/loadId are real FKs already selected in this
+  // query (i.customer_id, i.source_load_id AS load_id); this just exposes them as optional filters
+  // so the customer/load's own page can query its own rows server-side, not a client-side filter of
+  // this already-capped result set (LIMIT 500).
+  deps: { client: Queryable; customerId?: string; loadId?: string }
 ): Promise<SubmissionQueueItem[]> {
+  const filterParams: string[] = [operatingCompanyId];
+  let customerFilter = "";
+  if (deps.customerId) {
+    filterParams.push(deps.customerId);
+    customerFilter = `AND i.customer_id = $${filterParams.length}::uuid`;
+  }
+  let loadFilter = "";
+  if (deps.loadId) {
+    filterParams.push(deps.loadId);
+    loadFilter = `AND i.source_load_id = $${filterParams.length}::uuid`;
+  }
   const res = await deps.client.query<Record<string, unknown>>(
     `
       SELECT
@@ -107,10 +122,12 @@ export async function listSubmissionQueueInvoices(
             AND i.id = ANY(b.invoice_ids)
             AND b.status NOT IN ('rejected')
         )
+        ${customerFilter}
+        ${loadFilter}
       ORDER BY i.issue_date ASC NULLS LAST, i.created_at ASC
       LIMIT 500
     `,
-    [operatingCompanyId]
+    filterParams
   );
 
   // Resolve each row's effective-dated factor once per customer (cached), same lookup
