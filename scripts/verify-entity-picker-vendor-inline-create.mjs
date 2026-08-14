@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","fuel","maintenance"],"cols":["vendor","connectivity","picker_law"],"task":"VENDOR-ENTITY-PICKER-INLINE-CREATE-VERTICAL","leafRe":".*vendor.*(create|filter).*"} */
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14: class regression only — NO @matrix-built Box-3 credit.
+ * Former leafRe `.*vendor.*(create|filter).*` was theater.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

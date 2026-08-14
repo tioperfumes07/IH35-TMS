@@ -67,6 +67,7 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/36-claude-serial-ship-sequence.mdc
 !.cursor/rules/37-claim-merge-then-author.mdc
 !.cursor/rules/38-fully-wired-complete-bar.mdc
+!.cursor/rules/39-honest-built-launch-law.mdc
 !.cursor/rules/00-operating-method-LAW.mdc
 !.cursor/rules/ih35-deep-linkage-audit.mdc
 !.cursor/rules/dual-lane-never-idle.mdc

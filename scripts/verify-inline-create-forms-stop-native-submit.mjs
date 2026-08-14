@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["home","tasks","fuel","dispatch","driver-hub","maintenance","safety","compliance","drivers","fleet","insurance","legal","eld","cash-flow","settlements","accounting","banking","factoring","finance","customers","vendors","inventory","form_425","lists","reports","docs","users","help","program","system"],"cols":["picker_law","qbo_chrome"],"leafRe":".*(create|modal|drawer|wizard).*","task":"CLS-NESTED-CREATOR-SUBMIT","vertical":"all-frontend-create-surfaces"} */
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14: class regression only — NO @matrix-built Box-3 credit.
+ * Former leafRe `.*(create|modal|drawer|wizard).*` was theater (painted picker_law/qbo_chrome green).
+ */
 /**
  * GUARD: every modal/drawer <form> must intercept submit — no native GET.
  *

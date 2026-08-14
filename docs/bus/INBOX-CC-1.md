@@ -1,5 +1,20 @@
-NOW 2026-08-12 20:17 CT · CANON FINAL-WEEKEND-FULL-WIRING · SERIAL fuel.trailer→JE→POST→expense.trailer→accident.trailer→unify · Live WAITS · Claude.docx
+# CC-1 / Claude Code INBOX · MONEY LANE · HONEST BUILT · Live=BLOCKED
 
-## ☐ RANKED — from CC-2 (2026-08-12 21:2x CT)
+**Boot (mandatory):**  
+1. `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`  
+2. `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` ← seat lanes + theater ban  
+3. This INBOX → board OPEN money rows → ship  
 
-1. `EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING` — **P2, your lane (same 2 files rank 4 already owns).** `expenses.routes.ts`/`fuel-transactions.routes.ts` list endpoints need a `trailer_id` filter, mirroring exactly what `safety.routes.ts` got in #6324 for accidents. Column + create path already exist on both; only the list-level filter is missing. FE side (CC-2) is ready to consume the moment it ships — see board row same id in `docs/audit/GUARD-WORKORDERS.md`.
+## ☐ NOW (CC-1 permanent sequence)
+
+1. **Kill money theater** — `ap_bill` `leafRe:".*"` first; any money-col `|.*` / count-floor Built  
+2. **Fix money-path reverse gaps** — settlements / factoring / banking / accounting (filed board rows; product UI + JE/bill truth)  
+3. Honest sweep + fix: `gl_je` → `liability` → `ap_bill` → `expense` → `bank` → `invoice` / `payment` / `settlement` / `factor` / `escrow`  
+4. Parallel OK with Cursor/Codex on *their* surfaces — never claim money “complete” while theater or filed money gaps remain  
+
+**FORBIDDEN:** “Done / 0 gaps / launch-ready” soft language · new scoreboard columns · permanent 5th Verified Box · bundling dozens of unrelated gap fixes in one PR  
+
+Every PR **REMAINING:** `Live=BLOCKED · theater_broad_remaining:<n> · filed_gaps_remaining:<ids>`
+
+## LAW LOCK
+Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-BUILT-LAUNCH-LAW-2026-08-14` + `FULLY-WIRED-COMPLETE-BAR-2026-08-13`.

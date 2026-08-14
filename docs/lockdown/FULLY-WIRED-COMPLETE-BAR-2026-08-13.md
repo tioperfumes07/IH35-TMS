@@ -132,6 +132,14 @@ Each of these on the surface must map to a matrix leaf / chrome law (not “list
 
 ---
 
+## Companion — HONEST BUILT + SEAT LANES (2026-08-14)
+
+**Canonical:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
+
+Launch-ready **without** Live Chrome = items **1–11** with **honest** Box 3 Built (no `leafRe:.*`, no `|.*`, no word-blanket Built). Seat lanes + boot order + surface-bar inventory gap live there. Soft “Done” while theater remains = defect.
+
+---
+
 ## Priority scope (current owner sequence)
 
 1. Shared columns vertically across modules that owe them.  

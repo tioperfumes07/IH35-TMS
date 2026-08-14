@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","bank","compliance","customers","dispatch","docs","drivers","factoring","fleet","form_425","fuel","insurance","inventory","legal","lists","maintenance","reports","safety","settlements","tasks","vendors"],"cols":["customer","driver","load","trailer","unit","vendor","connectivity","picker_law"],"task":"SHARED-PICKER-COMPANY-SWITCH-SCOPE","leafRe":".*(picker|create|filter).*"} */
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14: class regression only — NO @matrix-built Box-3 credit.
+ * Former leafRe `.*(picker|create|filter).*` was theater.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

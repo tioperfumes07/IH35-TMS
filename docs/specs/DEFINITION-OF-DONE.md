@@ -1,5 +1,7 @@
 # IH35-TMS — DEFINITION OF DONE (canonical)
 
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+
 **Status: BINDING. Owner-agreed. This file is the single canonical statement of "done."**
 
 **FULLY WIRED (owner 2026-08-13):** for product / module / “includes all” claims, also obey the plain 12-item list in `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (surface bar + Live Chrome **last**). DoD A–E + VERIFY 1–8 remain binding; the Fully-Wired bar makes the owner meaning non-skippable.
