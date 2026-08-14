@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","dispatch","safety"],"cols":["trailer"],"leafRe":".*","task":"WAVE-A-trailer","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch","safety"],"cols":["trailer"],"leafRe":"^(dispatch\\.modal\\.(book_load_modal_v4|quick_assign)|damage_reports\\.(list|create)|cargo_claims\\.create)$","task":"WAVE-A-trailer-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const SELFTEST = process.argv.includes("--selftest");
