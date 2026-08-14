@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useBulkPermission } from "../../hooks/useBulkPermission";
@@ -121,9 +121,13 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
                 {row.name}
               </button>
             ) : (
-              <Link to={`/drivers/${row.driverId}/profile`} className="font-medium text-slate-900 hover:text-slate-700 hover:underline">
-                {row.name}
-              </Link>
+              <EntityLink
+                kind="driver"
+                id={row.driverId}
+                label={row.name}
+                className="font-medium text-slate-900 hover:text-slate-700 hover:underline"
+                data-testid="drivers-table-name-link"
+              />
             ),
         },
         {
@@ -158,9 +162,13 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
                 Open profile
               </button>
             ) : (
-              <Link to={`/drivers/${row.driverId}/profile`} className="text-xs font-semibold text-slate-700 hover:underline">
-                Open profile
-              </Link>
+              <EntityLink
+                kind="driver"
+                id={row.driverId}
+                label="Open profile"
+                className="text-xs font-semibold text-slate-700 hover:underline"
+                data-testid="drivers-table-open-profile-link"
+              />
             ),
         },
       ]}
