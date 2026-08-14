@@ -13,9 +13,9 @@
  * requires BOTH sources, and requires both to be scoped SERVER-side (the internal-fines route caps
  * at LIMIT 500; a client-side filter would silently drop fines once the company crosses that cap).
  *
- * It also pins the honest-link rule: civil fines drill through EntityLink kind "safety_fine" (a
- * route that resolves), while internal fines must NOT be given a fabricated per-id link, because
- * /safety/internal-fines does not honour a per-id query param.
+ * Drill-through: civil → EntityLink kind="safety_fine" (/safety/external-fines?fine_id=);
+ * internal → EntityLink kind="internal_fine" (/safety/internal-fines?fine_id=). Both list pages
+ * honor fine_id highlight (FinesPage / InternalFinesPage).
  *
  * METHOD: comments stripped before asserting; --selftest mutates the real sources so every
  * assertion is proven able to fail.
@@ -67,8 +67,8 @@ function links(s) {
       why: `${SECTION}: civil fines lost their drill-through to the fine record`,
     },
     {
-      ok: !/kind="(internal_fine|civil_fine)"/.test(s[SECTION]),
-      why: `${SECTION}: uses a fabricated EntityLink kind — every declared kind must resolve to a real route`,
+      ok: /kind="internal_fine"/.test(s[SECTION]),
+      why: `${SECTION}: internal fines lost their drill-through to the fine record`,
     },
     {
       ok: /DriverFinesReverseSection/.test(s[PAGE]),
@@ -110,7 +110,7 @@ function selftest() {
     [SECTION, (x) => x.replace("subject_driver_id: driverId", "subject_driver_id: undefined")],
     [SECTION, (x) => x.replace("driver_id: driverId", "driver_id: undefined")],
     [SECTION, (x) => x.replace('kind="safety_fine"', 'kind="driver"')],
-    [SECTION, (x) => x.replace('kind="safety_fine"', 'kind="internal_fine"')],
+    [SECTION, (x) => x.replace('kind="internal_fine"', 'kind="driver"')],
     [PAGE, (x) => x.split("DriverFinesReverseSection").join("SomeOtherSection")],
     [API, (x) => x.replace('qs.set("subject_driver_id"', 'qs.set("ignored"')],
     [API, (x) => {
@@ -145,5 +145,5 @@ if (errors.length > 0) {
 }
 console.log(
   `${LABEL} PASS — driver profile surfaces BOTH civil and internal fines, each scoped server-side, ` +
-    `with no fabricated drill-through.`
+    `with EntityLink drills for safety_fine + internal_fine.`
 );
