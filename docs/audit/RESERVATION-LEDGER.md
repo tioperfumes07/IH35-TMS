@@ -55,5 +55,9 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 ---
 
 ## LEDGER ROWS (append below this line, oldest first — do not reorder, do not edit existing rows)
+| 2026-08-14T12:22:00-05:00 | Codex | WAVE-A-DRIVER-CASH-FORECAST | apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx, apps/frontend/src/api/forecast.ts, apps/backend/src/forecast/cash-forecast-manual.routes.ts, scripts/verify-cash-forecast-driver-linkage.mjs | RESERVED | codex/vertical-driver-inline-019 |
+| 2026-08-14T12:28:00-05:00 | Codex | WAVE-A-DRIVER-INLINE-SURFACES | apps/frontend/src/pages/accounting/DisputeQueuePage.tsx | RESERVED | codex/vertical-driver-inline-019 |
+| 2026-08-14T12:33:00-05:00 | Codex | WAVE-A-DRIVER-INLINE-SURFACES | apps/backend/src/accounting/disputes.routes.ts | RESERVED | codex/vertical-driver-inline-019 |
+| 2026-08-14T12:31:00-05:00 | Codex | WAVE-A-DRIVER-INLINE-SURFACES | cash-flow projection + accounting dispute modal | RELEASED-ON-MERGE | codex/vertical-driver-inline-019 |
 | 2026-08-14T12:01:49-05:00 | Codex | REQUIRED-MAP-INLINE-SURFACES | scripts/verify-required-surface-inventory-complete.mjs, docs/specs/scoreboard/modules/*.required.json, docs/specs/scoreboard/wire-sprint-built.json | RESERVED | codex/vertical-abc-017 |
 | 2026-08-14T12:13:00-05:00 | Codex | REQUIRED-MAP-INLINE-SURFACES | scripts/verify-required-surface-inventory-complete.mjs, docs/specs/scoreboard/modules/*.required.json, docs/specs/scoreboard/wire-sprint-built.json | RELEASED-ON-MERGE | codex/vertical-inline-surfaces-018 |

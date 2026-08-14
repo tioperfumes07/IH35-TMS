@@ -118,7 +118,7 @@ function DecideModal({
       <div className="w-full max-w-lg space-y-3 rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
         <h2 className="text-base font-semibold text-gray-900">Decide dispute</h2>
         <p className="text-xs text-gray-600">
-          {entityLabel(row.driver_name, row.driver_id, "Driver")} ·{" "}
+          <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> ·{" "}
           <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")} /> · claimed{" "}
           {money(row.claimed_adjustment_cents)}
         </p>
