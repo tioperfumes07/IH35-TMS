@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listSpineEvents, type SpineEvent } from "../../api/audit";
+import { listAuditEvents, listSpineEvents, type AuditEventListItem, type SpineEvent } from "../../api/audit";
 import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -9,6 +9,7 @@ import { isoToDateTimeLocalValue } from "../../lib/formatDate";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { Link, useSearchParams } from "react-router-dom";
 
 const PAGE_SIZE = 100;
 
@@ -166,6 +167,15 @@ function ExpandedEventDetail({ row }: { row: SpineEvent }) {
 export function AuditTrailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const auditEventId = searchParams.get("audit_event_id") ?? undefined;
+
+  const exactAuditQuery = useQuery({
+    queryKey: ["audit-trail", "exact-audit-event", companyId, auditEventId ?? null],
+    queryFn: () => listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 }),
+    enabled: Boolean(companyId && auditEventId),
+  });
+  const exactAuditEvent = exactAuditQuery.data?.events[0] as AuditEventListItem | undefined;
 
   const [module, setModule] = useState("");
   const [action, setAction] = useState("");
@@ -216,6 +226,30 @@ export function AuditTrailPage() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader title="Audit Trail" subtitle="Universal spine event log — read-only" />
+
+      {auditEventId ? (
+        <section className="rounded-sm border border-slate-300 bg-slate-50 p-3" data-testid="audit-trail-exact-event">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-900">Selected audit event</h2>
+            <Link className="text-xs font-semibold text-slate-700 underline" to="/audit/trail">Clear event target</Link>
+          </div>
+          {exactAuditQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading selected audit event…</p> : null}
+          {exactAuditQuery.isError ? <p className="mt-2 text-xs text-red-700">Selected audit event unavailable.</p> : null}
+          {!exactAuditQuery.isLoading && !exactAuditQuery.isError && !exactAuditEvent ? <p className="mt-2 text-xs text-gray-500">Audit event not found for this operating company.</p> : null}
+          {exactAuditEvent ? (
+            <div className="mt-2 grid gap-2 text-xs md:grid-cols-2">
+              <div><span className="font-semibold">Event:</span> {exactAuditEvent.event_type}</div>
+              <div><span className="font-semibold">When:</span> {fmtDate(exactAuditEvent.created_at)}</div>
+              <div>
+                <span className="font-semibold">Actor:</span>{" "}
+                <EntityLink kind="user" id={exactAuditEvent.actor_user_id} label={entityLabel(exactAuditEvent.actor_email, exactAuditEvent.actor_user_id, "User")} />
+              </div>
+              <div><span className="font-semibold">Source:</span> {exactAuditEvent.source ?? "—"}</div>
+              <pre className="max-h-56 overflow-auto rounded-sm border bg-white p-2 text-[11px] md:col-span-2">{JSON.stringify(exactAuditEvent.payload, null, 2)}</pre>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       {/* Single outer frame — filter row is border-b only (no nested card above ParityTable). */}
       <section

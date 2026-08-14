@@ -65,6 +65,7 @@ export type AuditEventListItem = {
 
 export type ListAuditEventsParams = {
   operatingCompanyId: string;
+  auditEventId?: string;
   bulkCallId?: string;
   eventType?: string;
   entityType?: string;
@@ -83,6 +84,7 @@ export async function listAuditEvents(params: ListAuditEventsParams) {
   const search = new URLSearchParams({
     operating_company_id: params.operatingCompanyId,
   });
+  if (params.auditEventId) search.set("audit_event_id", params.auditEventId);
   if (params.bulkCallId) search.set("bulk_call_id", params.bulkCallId);
   if (params.eventType) search.set("event_type", params.eventType);
   if (params.entityType) search.set("entity_type", params.entityType);

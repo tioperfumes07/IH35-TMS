@@ -10,6 +10,7 @@ type Queryable = {
 
 export type ListAuditEventsInput = {
   operating_company_id: string;
+  audit_event_id?: string;
   bulk_call_id?: string;
   event_type?: string;
   from?: string;
@@ -40,6 +41,7 @@ type AuditEventListRow = {
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
+  audit_event_id: z.string().uuid().optional(),
   bulk_call_id: z.string().uuid().optional(),
   event_type: z.string().trim().min(1).max(200).optional(),
   from: z.string().datetime({ offset: true }).optional(),
@@ -80,6 +82,11 @@ function summarizePayload(eventClass: string, payload: unknown): string {
 export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: string; values: unknown[] } {
   const values: unknown[] = [input.operating_company_id];
   const filters = [`(e.payload->>'operating_company_id')::uuid = $1::uuid`];
+
+  if (input.audit_event_id) {
+    values.push(input.audit_event_id);
+    filters.push(`e.uuid = $${values.length}::uuid`);
+  }
 
   if (input.bulk_call_id) {
     values.push(input.bulk_call_id);
