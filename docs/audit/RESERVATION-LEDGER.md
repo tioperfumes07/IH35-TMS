@@ -99,3 +99,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-DETENTION-CLAIMS | reports detention claims | Reports detention route/library/runner; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-SAFETY-DRIVER-PROFILE | safety driver profile panel | DriverSafetyProfile page/panel; mdata aggregate API; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-SAFETY-ELD-AUDIT | safety ELD audit list | ELD viewer service/tests; focused guard | ACTIVE |
+| 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-MAINTENANCE-SEVERE-REPAIRS | severe repair work-order lineage | SevereRepairOosTab; trigger migration; focused guard | ACTIVE |
