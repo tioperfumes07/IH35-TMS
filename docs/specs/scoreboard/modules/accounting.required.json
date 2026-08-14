@@ -1090,7 +1090,7 @@
       "route_hint": "/accounting/allocations",
       "surface_kind": "panel",
       "surface_path": "pages/accounting/AllocationsPage.tsx",
-      "required": ["unit", "load", "ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
+      "required": ["load", "ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
     },
     {
       "id": "accounting.modal.decide",
@@ -1108,7 +1108,7 @@
       "route_hint": "/accounting/fixed-assets",
       "surface_kind": "panel",
       "surface_path": "pages/accounting/FixedAssetsPage.tsx",
-      "required": ["unit", "expense", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+      "required": ["expense", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
     },
     {
       "id": "accounting.panel.detail",

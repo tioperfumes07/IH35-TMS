@@ -39,6 +39,7 @@ type RowForm = {
   memo: string;
   ref_kind: "" | ForecastRefKind;
   ref_label: string;
+  ref_external_id: string;
   party_ref_kind: "" | "customer" | "driver" | "vendor";
   party_ref_id: string;
   party_ref_label: string;
@@ -54,6 +55,7 @@ const emptyRow = (): RowForm => ({
   memo: "",
   ref_kind: "",
   ref_label: "",
+  ref_external_id: "",
   party_ref_kind: "",
   party_ref_id: "",
   party_ref_label: "",
@@ -125,6 +127,7 @@ function ProjectionPanel({
         memo: form.memo || null,
         ref_kind: refKind || null,
         ref_label: form.ref_label || null,
+        ref_external_id: form.ref_external_id || null,
         party_ref_kind: direction === "income" && form.party_ref_id ? "customer" : form.party_ref_kind || null,
         party_ref_id: form.party_ref_id || null,
         party_ref_label: form.party_ref_label || null,
@@ -157,6 +160,7 @@ function ProjectionPanel({
       memo: e.memo ?? "",
       ref_kind: e.ref_kind ?? "",
       ref_label: e.ref_label ?? "",
+      ref_external_id: e.ref_external_id ?? "",
       party_ref_kind: e.party_ref_kind === "driver" || e.party_ref_kind === "customer" || e.party_ref_kind === "vendor" ? e.party_ref_kind : "",
       party_ref_id: e.party_ref_id ?? "",
       party_ref_label: e.party_ref_label ?? "",
@@ -191,7 +195,9 @@ function ProjectionPanel({
             <div key={e.id} className="flex items-center gap-2 px-3 py-1.5 text-xs" data-mdp-row={direction}>
               {columns.map((c) => (
                 <span key={c.key} className={`${c.w} shrink-0 truncate ${c.key === columns[0].key ? "font-medium text-gray-700" : ""}`} title={String(cellValue(e, c.key))}>
-                  {c.key === "party_name" && (e.party_ref_kind === "driver" || e.party_ref_kind === "customer" || e.party_ref_kind === "vendor") && e.party_ref_id ? (
+                  {c.key === "ref_label" && e.ref_kind === "unit" && e.ref_external_id ? (
+                    <EntityLink kind="unit" id={e.ref_external_id} label={entityLabel(e.ref_label, e.ref_external_id, "Unit")} />
+                  ) : c.key === "party_name" && (e.party_ref_kind === "driver" || e.party_ref_kind === "customer" || e.party_ref_kind === "vendor") && e.party_ref_id ? (
                     <EntityLink kind={e.party_ref_kind} id={e.party_ref_id} label={entityLabel(e.party_ref_label ?? e.party_name, e.party_ref_id, e.party_ref_kind === "driver" ? "Driver" : e.party_ref_kind === "vendor" ? "Vendor" : "Customer")} />
                   ) : cellValue(e, c.key)}
                 </span>
@@ -220,7 +226,9 @@ function ProjectionPanel({
           </div>
         ) : null}
         <div className="flex items-center gap-1.5">
-          {columns.map((c) => c.key === "party_name" && direction === "income" ? (
+          {columns.map((c) => c.key === "ref_label" && direction === "income" ? (
+            <EntityPicker key={c.key} kind="unit" operatingCompanyId={operatingCompanyId} value={form.ref_external_id || null} onChange={(id) => setForm((f) => ({ ...f, ref_kind: "unit", ref_external_id: id ?? "", ref_label: "" }))} placeholder="Select unit" className={`${c.w} shrink-0`} />
+          ) : c.key === "party_name" && direction === "income" ? (
             <EntityPicker key={c.key} kind="customer" operatingCompanyId={operatingCompanyId} value={form.party_ref_id || null} onChange={(id) => setForm((f) => ({ ...f, party_ref_kind: "customer", party_ref_id: id ?? "", party_name: "" }))} placeholder="Select customer" className={`${c.w} shrink-0`} />
           ) : c.key === "party_name" && direction === "expense" ? (
             <div key={c.key} className={`${c.w} flex shrink-0 gap-1`}>
