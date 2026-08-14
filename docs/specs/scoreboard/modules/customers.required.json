@@ -316,27 +316,21 @@
       "tab": "Customer Detail",
       "sub": "Activity Feed tab",
       "route_hint": "/customers?tab=activity_feed",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "md.statements",
       "tab": "Customer Detail",
       "sub": "Statements tab",
       "route_hint": "/customers?tab=statements",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "md.recurring_transactions",
       "tab": "Customer Detail",
       "sub": "Recurring Transactions tab",
       "route_hint": "/customers?tab=recurring_transactions",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "md.projects",
@@ -344,8 +338,7 @@
       "sub": "Projects tab",
       "route_hint": "/customers?tab=projects",
       "required": [
-        "load",
-        "connectivity"
+        "load"
       ]
     },
     {
@@ -353,18 +346,14 @@
       "tab": "Customer Detail",
       "sub": "Late Fees tab",
       "route_hint": "/customers?tab=late_fees",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "md.notes",
       "tab": "Customer Detail",
       "sub": "Notes tab",
       "route_hint": "/customers?tab=notes",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "md.tasks",
@@ -382,18 +371,14 @@
       "tab": "Customer Detail",
       "sub": "Opportunities tab",
       "route_hint": "/customers?tab=opportunities",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "md.conversations",
       "tab": "Customer Detail",
       "sub": "Conversations tab",
       "route_hint": "/customers?tab=conversations",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "detail.profile",
@@ -919,6 +904,69 @@
           "removed": [
             "vendor"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 8,
+      "drops": [
+        {
+          "id": "md.activity_feed",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
+        },
+        {
+          "id": "md.statements",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
+        },
+        {
+          "id": "md.recurring_transactions",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
+        },
+        {
+          "id": "md.projects",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
+        },
+        {
+          "id": "md.late_fees",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
+        },
+        {
+          "id": "md.notes",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
+        },
+        {
+          "id": "md.opportunities",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
+        },
+        {
+          "id": "md.conversations",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CustomerTabComingState placeholder"
         }
       ]
     }

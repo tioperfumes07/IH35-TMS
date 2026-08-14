@@ -161,7 +161,6 @@
       "sub": "Banking home cash position",
       "route_hint": "/banking",
       "required": [
-        "connectivity",
         "bank"
       ]
     },
@@ -170,36 +169,28 @@
       "tab": "Reports hop",
       "sub": "Cash flow statement report",
       "route_hint": "/reports/cash-flow-statement",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.reports.cash_flow",
       "tab": "Reports hop",
       "sub": "Cash flow report",
       "route_hint": "/reports/cash-flow",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.reports.cash_flow_overview",
       "tab": "Reports hop",
       "sub": "Cash flow overview",
       "route_hint": "/reports/cash-flow-overview",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.cash_advances",
       "tab": "Cash Advances hop",
       "sub": "Cash advances module",
       "route_hint": "/cash-advances",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "create.manual_projection",
@@ -218,9 +209,7 @@
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_range",
@@ -238,9 +227,7 @@
       "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_filter",
@@ -520,6 +507,62 @@
           "removed": [
             "driver"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 7,
+      "drops": [
+        {
+          "id": "hop.banking",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "bare Link"
+        },
+        {
+          "id": "hop.reports.cash_flow_statement",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "bare Link"
+        },
+        {
+          "id": "hop.reports.cash_flow",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "bare Link"
+        },
+        {
+          "id": "hop.reports.cash_flow_overview",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "bare Link"
+        },
+        {
+          "id": "hop.cash_advances",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "bare Link"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no search input present"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no column-gear component present"
         }
       ]
     }

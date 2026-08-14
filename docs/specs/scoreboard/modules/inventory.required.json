@@ -253,7 +253,6 @@
       "sub": "Honest SoR banner (parts_invoice_links)",
       "route_hint": "/inventory/assignments",
       "required": [
-        "connectivity",
         "invoice"
       ]
     },
@@ -274,7 +273,6 @@
       "sub": "Search part / WO / unit / vendor / invoice",
       "route_hint": "/inventory/assignments",
       "required": [
-        "connectivity",
         "invoice"
       ]
     },
@@ -316,18 +314,14 @@
       "tab": "Assignments",
       "sub": "Cross-link \u2192 Parts & Stock",
       "route_hint": "/inventory/assignments",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "assignments.crosslink_purchases",
       "tab": "Assignments",
       "sub": "Cross-link \u2192 Purchase History",
       "route_hint": "/inventory/assignments",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "assignments.honest_empty",
@@ -352,18 +346,14 @@
       "tab": "Purchase History",
       "sub": "Cross-link \u2192 Parts & Stock",
       "route_hint": "/inventory/purchases",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "purchases.crosslink_assignments",
       "tab": "Purchase History",
       "sub": "Cross-link \u2192 Assignments",
       "route_hint": "/inventory/purchases",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "inventory.drawer.part_create",
@@ -383,9 +373,7 @@
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_range",
@@ -393,9 +381,7 @@
       "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_gear",
@@ -403,9 +389,7 @@
       "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_filter",
@@ -413,9 +397,7 @@
       "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     }
   ],
   "honesty_audit": {
@@ -807,6 +789,83 @@
           "removed": [
             "ap_bill"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 10,
+      "drops": [
+        {
+          "id": "assignments.banner",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static informational div"
+        },
+        {
+          "id": "assignments.search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-side useMemo filter"
+        },
+        {
+          "id": "assignments.crosslink_parts",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static Link"
+        },
+        {
+          "id": "assignments.crosslink_purchases",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static Link"
+        },
+        {
+          "id": "purchases.crosslink_parts",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static Link"
+        },
+        {
+          "id": "purchases.crosslink_assignments",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static Link"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "localStorage only"
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no filterBar prop passed"
         }
       ]
     }

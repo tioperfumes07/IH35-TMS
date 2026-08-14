@@ -594,9 +594,7 @@
       "route_hint": "surface://components/maintenance/LocationMapModal.tsx",
       "surface_kind": "modal",
       "surface_path": "components/maintenance/LocationMapModal.tsx",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "maintenance.modal.work_order_detail",
@@ -764,8 +762,7 @@
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -775,8 +772,7 @@
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -786,8 +782,7 @@
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -1672,6 +1667,41 @@
           "removed": [
             "driver"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 4,
+      "drops": [
+        {
+          "id": "maintenance.modal.location_map",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "LocationMapModal.tsx pure client-side"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "WorkOrdersTable.tsx client-side"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable localStorage only"
         }
       ]
     }

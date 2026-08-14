@@ -127,36 +127,28 @@
       "tab": "Module matrix",
       "sub": "Module matrix board",
       "route_hint": "/program/matrix",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "nav.legacy",
       "tab": "Legacy certification",
       "sub": "Legacy audit scoreboard",
       "route_hint": "/program/legacy-scoreboard",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "nav.tracker",
       "tab": "Build progress",
       "sub": "Program tracker / board",
       "route_hint": "/program/tracker",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "nav.modules",
       "tab": "Module completion",
       "sub": "Module completion N of M",
       "route_hint": "/program/modules",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "nav.final",
@@ -172,27 +164,21 @@
       "tab": "Module matrix",
       "sub": "Module pill switcher",
       "route_hint": "/program/matrix",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "matrix.request_time_feed",
       "tab": "Module matrix",
       "sub": "REQUEST-TIME FEED banner",
       "route_hint": "/program/matrix",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "matrix.live_api",
       "tab": "Module matrix",
       "sub": "GET module-matrix API wire",
       "route_hint": "/program/matrix",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "legacy.board",
@@ -209,18 +195,14 @@
       "tab": "Scenario tracker",
       "sub": "/home/scenario-tracker \u2192 /program",
       "route_hint": "/home/scenario-tracker",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.audit_coverage",
       "tab": "Docs hop",
       "sub": "AUDIT-COVERAGE-LIVE ledger",
       "route_hint": "/program",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "program.parity.legacy_audit_scoreboard_page",
@@ -230,7 +212,6 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/program/LegacyAuditScoreboardPage.tsx",
       "required": [
-        "connectivity",
         "reverse_link"
       ]
     },
@@ -240,9 +221,7 @@
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_range",
@@ -250,9 +229,7 @@
       "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_gear",
@@ -260,9 +237,7 @@
       "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_filter",
@@ -270,9 +245,7 @@
       "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "program.panel.thread",
@@ -470,6 +443,111 @@
           "removed": [
             "qbo_chrome"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 14,
+      "drops": [
+        {
+          "id": "nav.matrix",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "readFileSync/execSync only, zero Postgres"
+        },
+        {
+          "id": "nav.legacy",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "markdown+GitHub API, only SELECT now() freshness stamp"
+        },
+        {
+          "id": "nav.tracker",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "file/registry-based, no DB table"
+        },
+        {
+          "id": "nav.modules",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static import from generated file, zero API call"
+        },
+        {
+          "id": "matrix.module_pill",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "only sets URL searchParams, same file-based query"
+        },
+        {
+          "id": "matrix.request_time_feed",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "derived from same file/git-based query meta"
+        },
+        {
+          "id": "matrix.live_api",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "real route but readFileSync/execSync-only impl"
+        },
+        {
+          "id": "scenario.redirect",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "pure client-side Navigate redirect"
+        },
+        {
+          "id": "hop.audit_coverage",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "section no longer exists on /program (moved to /program/legacy-scoreboard)"
+        },
+        {
+          "id": "program.parity.legacy_audit_scoreboard_page",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "build/git-ledger introspection, not Postgres"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no such control exists"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no such control exists"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no such control exists"
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no such control exists"
         }
       ]
     }

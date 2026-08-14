@@ -274,8 +274,7 @@
       "sub": "Safety HOS / violations reverse",
       "route_hint": "/safety/hos",
       "required": [
-        "driver",
-        "connectivity"
+        "driver"
       ]
     },
     {
@@ -284,8 +283,7 @@
       "sub": "DOT compliance reverse",
       "route_hint": "/safety/dot-compliance",
       "required": [
-        "driver",
-        "connectivity"
+        "driver"
       ]
     },
     {
@@ -293,36 +291,28 @@
       "tab": "425C hop",
       "sub": "Form 425C exhibits",
       "route_hint": "/425c",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.maint_compliance",
       "tab": "Maintenance hop",
       "sub": "Maintenance compliance 425C",
       "route_hint": "/maintenance/compliance",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.fuel_compliance",
       "tab": "Fuel hop",
       "sub": "Fuel compliance panel",
       "route_hint": "/fuel/compliance",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.reports_ifta",
       "tab": "Reports hop",
       "sub": "IFTA preparer",
       "route_hint": "/reports/ifta-preparer",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "compliance.panel.notification_log",
@@ -349,42 +339,34 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     }
   ],
   "honesty_audit": {
@@ -400,11 +382,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: fleet.hos_board, form2290, property_tax.detail, property_tax.list, tab.hos_tracker.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: fleet.hos_board, form2290, property_tax.detail, property_tax.list, tab.hos_tracker.",
       "drops": [
         {
           "id": "tab.filings",
@@ -614,7 +596,7 @@
     },
     "money_cells_2026_08_14_ap_bill_overclaim": {
       "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5159",
-      "note": "ap_bill blanket-required on all 3 compliance filing leaves regardless of whether the underlying flow ever creates an accounting.bills row. Verified live: property_tax.list/detail post via apps/backend/src/accounting/property-tax-posting/poster.service.ts, which writes accounting.property_tax_accruals and posts a direct GL JE (Dr property_tax_expense / Cr property_tax_payable, or Dr expense / Cr cash on cash-basis) — zero accounting.bills or vendor_id anywhere in that path. form2290 (form-2290.routes.ts, form-2290-generator.ts, filings-aggregate.service.ts) is a pure filing/deadline tracker with zero bill_id/vendor_id references anywhere in its backend or frontend. None of the 3 leaves ever owed ap_bill.",
+      "note": "ap_bill blanket-required on all 3 compliance filing leaves regardless of whether the underlying flow ever creates an accounting.bills row. Verified live: property_tax.list/detail post via apps/backend/src/accounting/property-tax-posting/poster.service.ts, which writes accounting.property_tax_accruals and posts a direct GL JE (Dr property_tax_expense / Cr property_tax_payable, or Dr expense / Cr cash on cash-basis) \u2014 zero accounting.bills or vendor_id anywhere in that path. form2290 (form-2290.routes.ts, form-2290-generator.ts, filings-aggregate.service.ts) is a pure filing/deadline tracker with zero bill_id/vendor_id references anywhere in its backend or frontend. None of the 3 leaves ever owed ap_bill.",
       "drops": [
         {
           "id": "property_tax.list",
@@ -638,7 +620,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "all 3 compliance leaves are false: tab.filings (FilingsComplianceDueSection) and both property_tax leaves have zero vendor references anywhere in their components — property tax posts a direct GL JE with no vendor concept, matching the pattern already confirmed for the ap_bill column sweep.",
+      "note": "all 3 compliance leaves are false: tab.filings (FilingsComplianceDueSection) and both property_tax leaves have zero vendor references anywhere in their components \u2014 property tax posts a direct GL JE with no vendor concept, matching the pattern already confirmed for the ap_bill column sweep.",
       "drops": [
         {
           "id": "tab.filings",
@@ -662,7 +644,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "12 of 18 compliance leaves are false: tab.filings/hos_viewer/violations/hos_history/required_docs and overview.summary_cards have zero unit_id (driver-scoped or static widgets); property_tax.list's list view has no unit column (only the detail view genuinely shows per-asset unit linkage, kept separately); the 5 hop.* cross-links to safety/maintenance/fuel/reports pages that are themselves driver-scoped or aggregate (already independently confirmed false in those modules) have no unit data on the linking leaf itself. The other 6 leaves KEEP the Required marking — real EntityLink kind=\"unit\" confirmed in ComplianceDashboardPage.tsx overview, HosTrackerSection.tsx, ComplianceTable.tsx (credentials), FleetHosBoardSection.tsx, the property_tax detail view's per-asset basis lines, and Form2290Filings.tsx's per-unit HVUT deadlines.",
+      "note": "12 of 18 compliance leaves are false: tab.filings/hos_viewer/violations/hos_history/required_docs and overview.summary_cards have zero unit_id (driver-scoped or static widgets); property_tax.list's list view has no unit column (only the detail view genuinely shows per-asset unit linkage, kept separately); the 5 hop.* cross-links to safety/maintenance/fuel/reports pages that are themselves driver-scoped or aggregate (already independently confirmed false in those modules) have no unit data on the linking leaf itself. The other 6 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\" confirmed in ComplianceDashboardPage.tsx overview, HosTrackerSection.tsx, ComplianceTable.tsx (credentials), FleetHosBoardSection.tsx, the property_tax detail view's per-asset basis lines, and Form2290Filings.tsx's per-unit HVUT deadlines.",
       "drops": [
         {
           "id": "tab.filings",
@@ -740,7 +722,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 3 compliance leaves. Verified live — FilingsComplianceDueSection.tsx's cross-module aggregator renders row.entity_code as plain text + a generic drill-through Link, no driver_id/EntityLink kind=\"driver\"; RequiredDocumentsSection.tsx's \"driver\" is only a document-type-catalog tab label/filter for configuring required doc TYPES, not a link to any real driver record; SummaryCards.tsx is a pure aggregate severity counter (red/yellow/green), no per-record data at all.",
+      "note": "driver blanket-required on 3 compliance leaves. Verified live \u2014 FilingsComplianceDueSection.tsx's cross-module aggregator renders row.entity_code as plain text + a generic drill-through Link, no driver_id/EntityLink kind=\"driver\"; RequiredDocumentsSection.tsx's \"driver\" is only a document-type-catalog tab label/filter for configuring required doc TYPES, not a link to any real driver record; SummaryCards.tsx is a pure aggregate severity counter (red/yellow/green), no per-record data at all.",
       "drops": [
         {
           "id": "tab.filings",
@@ -807,6 +789,83 @@
           "removed": [
             "load"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 10,
+      "drops": [
+        {
+          "id": "hop.safety_hos",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "hop.safety_dot",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "hop.form425c",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "hop.maint_compliance",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "hop.fuel_compliance",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "hop.reports_ifta",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
         }
       ]
     }

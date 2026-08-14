@@ -184,9 +184,7 @@
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_range",
@@ -194,9 +192,7 @@
       "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_gear",
@@ -204,9 +200,7 @@
       "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_filter",
@@ -214,9 +208,7 @@
       "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     }
   ],
   "honesty_audit": {
@@ -381,6 +373,41 @@
           "removed": [
             "qbo_chrome"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 4,
+      "drops": [
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side, localStorage"
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no filterBar prop passed at all"
         }
       ]
     }

@@ -2,7 +2,7 @@
   "module": "reports",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 13 REPORTS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 13 REPORTS",
     "nav": "apps/frontend/src/pages/reports/ReportsSubNav.tsx REPORTS_SUB_NAV_ITEMS",
     "flyout": "apps/frontend/src/components/reports/CategoryHoverNav.tsx REPORT_CATEGORY_FLYOUT_ITEMS",
     "dedicated": "apps/frontend/src/components/reports/phase6ReportLinks.ts PHASE_6_REPORT_HREFS",
@@ -164,7 +164,7 @@
     {
       "id": "subnav.reports",
       "tab": "Sub-nav",
-      "sub": "Reports · home link",
+      "sub": "Reports \u00b7 home link",
       "route_hint": "/reports",
       "required": [
         "connectivity",
@@ -226,7 +226,6 @@
       "sub": "All hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -236,7 +235,6 @@
       "sub": "Operations hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -246,7 +244,6 @@
       "sub": "Financial hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -256,7 +253,6 @@
       "sub": "Drivers hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -266,7 +262,6 @@
       "sub": "Fleet hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -276,7 +271,6 @@
       "sub": "Fuel hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -286,7 +280,6 @@
       "sub": "Safety hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -296,7 +289,6 @@
       "sub": "Compliance hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -306,7 +298,6 @@
       "sub": "Automation hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -316,7 +307,6 @@
       "sub": "Saved hover flyout",
       "route_hint": "/reports",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -326,7 +316,6 @@
       "sub": "Ops & dispatch",
       "route_hint": "/reports/categories/ops-dispatch",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -336,7 +325,6 @@
       "sub": "Driver performance",
       "route_hint": "/reports/categories/driver-perf",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -346,7 +334,6 @@
       "sub": "Equipment",
       "route_hint": "/reports/categories/equipment",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -356,7 +343,6 @@
       "sub": "Safety",
       "route_hint": "/reports/categories/safety",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -366,7 +352,6 @@
       "sub": "Customers",
       "route_hint": "/reports/categories/customers",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -376,7 +361,6 @@
       "sub": "Vendors",
       "route_hint": "/reports/categories/vendors",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -386,7 +370,6 @@
       "sub": "Accounting",
       "route_hint": "/reports/categories/accounting",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -396,7 +379,6 @@
       "sub": "Tax & regulatory",
       "route_hint": "/reports/categories/tax-reg",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -406,7 +388,6 @@
       "sub": "Multi-company",
       "route_hint": "/reports/categories/multi-company",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -749,7 +730,7 @@
     },
     {
       "id": "runner.profit_truck_mtd",
-      "tab": "Profit per truck · MTD",
+      "tab": "Profit per truck \u00b7 MTD",
       "sub": "Runner MTD margin",
       "route_hint": "/reports/run/profit-truck-mtd",
       "required": [
@@ -1007,9 +988,7 @@
       "route_hint": "surface://components/reports/ReportFlyoutPanel.tsx",
       "surface_kind": "panel",
       "surface_path": "components/reports/ReportFlyoutPanel.tsx",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "reports.panel.scheduled_reports",
@@ -1040,52 +1019,46 @@
       "route_hint": "surface://components/reports/ReportFlyoutPanel.tsx",
       "surface_kind": "flyout",
       "surface_path": "components/reports/ReportFlyoutPanel.tsx",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     }
   ],
@@ -1102,7 +1075,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_reports": {
       "finding": "VERTICAL-REVERSE-LINK-REPORTS-BATCH",
@@ -1652,7 +1625,7 @@
     },
     "picker_law_2026_08_13_custom_builder": {
       "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
-      "note": "Custom report builder chrome — no EntityPicker/+Add new.",
+      "note": "Custom report builder chrome \u2014 no EntityPicker/+Add new.",
       "drops": [
         {
           "id": "home.custom_builder",
@@ -1712,7 +1685,7 @@
     },
     "money_cells_2026_08_14_ap_bill_overclaim": {
       "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5158",
-      "note": "ap_bill was blanket-required on every financial report leaf regardless of whether the report actually surfaces bill/vendor line-item data. Verified live per-leaf (grep against each page component, not assumed): trial_balance/profit_loss/balance_sheet/cash_flow* are GL-account rollups only (rows keyed by account_id, drill to the CoA register — zero vendor_id/bill_id anywhere); settlement_summary/customer_profitability/maintenance_cost_per_unit/runner.cash_position carry zero vendor or bill references at all. None of these ever owed ap_bill. report.ar_aging and report.ap_aging (real vendor+bill drill, verify-aging-report-reverse-leaves.mjs) and report.management (vendor-level AP aging summary table, EntityLink kind=vendor, verify-report-management-ap-aging.mjs) keep it — they are the only reports leaves that genuinely surface AP-bill-adjacent data. report.ar_aging also never owed ap_bill — it's a receivables report (customer/invoice), zero bill_id anywhere in ARAgingPage.tsx; corrected in the same pass.",
+      "note": "ap_bill was blanket-required on every financial report leaf regardless of whether the report actually surfaces bill/vendor line-item data. Verified live per-leaf (grep against each page component, not assumed): trial_balance/profit_loss/balance_sheet/cash_flow* are GL-account rollups only (rows keyed by account_id, drill to the CoA register \u2014 zero vendor_id/bill_id anywhere); settlement_summary/customer_profitability/maintenance_cost_per_unit/runner.cash_position carry zero vendor or bill references at all. None of these ever owed ap_bill. report.ar_aging and report.ap_aging (real vendor+bill drill, verify-aging-report-reverse-leaves.mjs) and report.management (vendor-level AP aging summary table, EntityLink kind=vendor, verify-report-management-ap-aging.mjs) keep it \u2014 they are the only reports leaves that genuinely surface AP-bill-adjacent data. report.ar_aging also never owed ap_bill \u2014 it's a receivables report (customer/invoice), zero bill_id anywhere in ARAgingPage.tsx; corrected in the same pass.",
       "drops": [
         {
           "id": "report.trial_balance",
@@ -2096,7 +2069,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "22 of 29 reports leaves are false: IFTA (aggregate fleet-level filing, not per-unit), cancellations, lane/trip profitability, late-arrival, dispatch-margin, and booking-gap have zero unit_id; most runner.* leaves have no backing RUNNER_CONFIGS entry at all (unavailable-config stub) or a config scoped to driver-financial data only; runner.maint_cost_unit has a real unit_number column but RunnerTable.tsx never renders EntityLink for ANY column — the number is inert text, not a real link, unlike the standalone report.maintenance_cost_per_unit page. The other 7 leaves KEEP the Required marking — real EntityLink kind=\"unit\" confirmed in PerTruckCpmReport.tsx, ProfitPerTruckPage.tsx, FuelReconciliationPage.tsx, MaintenanceCostPerUnitPage.tsx, GeofenceDwellReport.tsx, GeofenceReconciliationReport.tsx, and DeadheadReportPage.tsx.",
+      "note": "22 of 29 reports leaves are false: IFTA (aggregate fleet-level filing, not per-unit), cancellations, lane/trip profitability, late-arrival, dispatch-margin, and booking-gap have zero unit_id; most runner.* leaves have no backing RUNNER_CONFIGS entry at all (unavailable-config stub) or a config scoped to driver-financial data only; runner.maint_cost_unit has a real unit_number column but RunnerTable.tsx never renders EntityLink for ANY column \u2014 the number is inert text, not a real link, unlike the standalone report.maintenance_cost_per_unit page. The other 7 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\" confirmed in PerTruckCpmReport.tsx, ProfitPerTruckPage.tsx, FuelReconciliationPage.tsx, MaintenanceCostPerUnitPage.tsx, GeofenceDwellReport.tsx, GeofenceReconciliationReport.tsx, and DeadheadReportPage.tsx.",
       "drops": [
         {
           "id": "subnav.cancellations",
@@ -2234,7 +2207,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 26 reports leaves. Verified live — ReportsHome.tsx's KPI strip and several report pages (IFTA, per-truck-cpm, cancellations, fuel-reconciliation, maintenance-cost-per-unit, dispatch-margin, geofence-reconciliation, deadhead) are unit/lane/jurisdiction-scoped with zero driver_id/EntityLink kind=\"driver\"; LaneProfitabilityPage.tsx and BookingGapReport.tsx only reference driver pay/count in aggregate/descriptive text, no per-record linkage; LateArrivalReport.tsx's \"By driver\" group-by renders row.entity_label as plain text, no EntityLink; 8 runner.* leaves (profit-truck-mtd, dispatch-board, detention-claims, fleet-utilization, fuel-price-variance, hos-violations, ifta-quarterly, dot-audit-pack) have no entry in RUNNER_CONFIGS at all (unwired stub); runner.driver_settlement and runner.fuel_savings render driver_name as plain text via RunnerTable.tsx, which has no EntityLink capability; runner.csa_fleet and runner.maint_cost_unit have no driver dimension in their columns at all.",
+      "note": "driver blanket-required on 26 reports leaves. Verified live \u2014 ReportsHome.tsx's KPI strip and several report pages (IFTA, per-truck-cpm, cancellations, fuel-reconciliation, maintenance-cost-per-unit, dispatch-margin, geofence-reconciliation, deadhead) are unit/lane/jurisdiction-scoped with zero driver_id/EntityLink kind=\"driver\"; LaneProfitabilityPage.tsx and BookingGapReport.tsx only reference driver pay/count in aggregate/descriptive text, no per-record linkage; LateArrivalReport.tsx's \"By driver\" group-by renders row.entity_label as plain text, no EntityLink; 8 runner.* leaves (profit-truck-mtd, dispatch-board, detention-claims, fleet-utilization, fuel-price-variance, hos-violations, ifta-quarterly, dot-audit-pack) have no entry in RUNNER_CONFIGS at all (unwired stub); runner.driver_settlement and runner.fuel_savings render driver_name as plain text via RunnerTable.tsx, which has no EntityLink capability; runner.csa_fleet and runner.maint_cost_unit have no driver dimension in their columns at all.",
       "drops": [
         {
           "id": "home.kpi_strip",
@@ -2565,6 +2538,188 @@
           "removed": [
             "load"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 25,
+      "drops": [
+        {
+          "id": "filter.all",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded FLYOUT_ITEMS"
+        },
+        {
+          "id": "filter.operations",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.financial",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.drivers",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.fleet",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.fuel",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.safety",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.compliance",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.automation",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "filter.saved",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CategoryHoverNav.tsx hardcoded"
+        },
+        {
+          "id": "cat.ops_dispatch",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.driver_perf",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.equipment",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.safety",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.customers",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.vendors",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.accounting",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.tax_reg",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "cat.multi_company",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static landing page"
+        },
+        {
+          "id": "reports.panel.report_flyout",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "presentational only, no fetch"
+        },
+        {
+          "id": "reports.flyout.report_flyout",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "presentational only, no fetch"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "UniversalListToolbar client-side"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "UniversalListToolbar client-side"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable gear client-side"
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-side UniversalListToolbar"
         }
       ]
     }

@@ -184,7 +184,6 @@
       "route_hint": "/fleet?kind=truck",
       "required": [
         "unit",
-        "connectivity",
         "reverse_link"
       ]
     },
@@ -195,7 +194,6 @@
       "route_hint": "/fleet?kind=trailer",
       "required": [
         "trailer",
-        "connectivity",
         "reverse_link"
       ]
     },
@@ -205,7 +203,6 @@
       "sub": "Kind filter \u00b7 Company Vehicles",
       "route_hint": "/fleet?kind=company",
       "required": [
-        "connectivity",
         "reverse_link"
       ]
     },
@@ -229,7 +226,6 @@
       "required": [
         "unit",
         "trailer",
-        "connectivity",
         "reverse_link"
       ]
     },
@@ -240,7 +236,6 @@
       "route_hint": "/fleet?status=InMaintenance",
       "required": [
         "unit",
-        "connectivity",
         "reverse_link"
       ]
     },
@@ -251,7 +246,6 @@
       "route_hint": "/fleet?status=OutOfService",
       "required": [
         "unit",
-        "connectivity",
         "reverse_link"
       ]
     },
@@ -645,7 +639,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "connectivity",
         "reverse_link",
         "qbo_chrome"
       ]
@@ -1011,8 +1004,7 @@
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -1022,8 +1014,7 @@
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -1033,8 +1024,7 @@
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -1631,6 +1621,83 @@
           "removed": [
             "driver"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 10,
+      "drops": [
+        {
+          "id": "roster.kind.trucks",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FleetTablePage.tsx:174 client-side filter"
+        },
+        {
+          "id": "roster.kind.trailers",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-side filter"
+        },
+        {
+          "id": "roster.kind.company",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-side filter, kind never real"
+        },
+        {
+          "id": "roster.filter.status_active",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-only useMemo filter"
+        },
+        {
+          "id": "roster.filter.status_inshop",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-only useMemo filter"
+        },
+        {
+          "id": "roster.filter.status_oos",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-only useMemo filter"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "useTableController.ts client-side"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "useTableController.ts client-side"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "localStorage only"
+        },
+        {
+          "id": "unit.edit.documents",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "EditVehicleModal.tsx static placeholder"
         }
       ]
     }
