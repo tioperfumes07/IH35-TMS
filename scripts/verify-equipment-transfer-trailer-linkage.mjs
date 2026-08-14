@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,fleet,drivers cols=trailer,driver,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["dispatch","fleet"],"cols":["trailer","driver","connectivity","reverse_link","picker_law"],"leafRe":"^docs\\.equipment_transfers$|^dispatch\\.modal\\.equipment_transfer$|^trailer\\.profile\\.assignment$","task":"THEATER-EQUIPMENT-TRANSFER-TRAILER-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-equipment-transfer-trailer-linkage";
 const files = { creator:"apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx", service:"apps/backend/src/dispatch/equipment-transfer/request.service.ts", routes:"apps/backend/src/dispatch/equipment-transfer/routes.ts", reverse:"apps/frontend/src/components/dispatch/EquipmentTransfersReverseSection.tsx", profile:"apps/frontend/src/pages/fleet/TrailerProfilePage.tsx" };

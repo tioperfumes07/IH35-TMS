@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=safety,drivers,compliance cols=driver,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["drivers"],"cols":["driver","connectivity","reverse_link","picker_law"],"leafRe":"^profiles\\.detail$|^profiles\\.drawer\\.(background_check|medical_card)$","task":"THEATER-DRIVER-COMPLIANCE-HISTORY-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-driver-compliance-history-double-route";

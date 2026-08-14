@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=drivers,fleet,dispatch cols=driver,unit,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["drivers","fleet"],"cols":["driver","unit","connectivity","reverse_link","picker_law"],"leafRe":"^drivers\\.modal\\.assign_truck$|^unit\\.profile\\.driver_assign$|^profiles\\.detail$","task":"THEATER-DEFAULT-TRUCK-UNIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-default-truck-unit-reverse";
 const files = {
