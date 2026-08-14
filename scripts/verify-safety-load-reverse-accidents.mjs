@@ -66,6 +66,9 @@ export function assertLoadSafetyReverse(sources) {
   if (!src[API].includes(`qs.set("load_id", filters.load_id)`)) {
     problems.push(`${API}: listSafetyIncidents does not send load_id — server filter unreachable.`);
   }
+  if (!/kind="accidents_load"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open Accidents must EntityLink accidents_load (filtered queue), not a bare /safety/accidents Link.`);
+  }
 
   return problems;
 }
@@ -113,6 +116,11 @@ if (SELFTEST) {
     "client-incidents-param",
     { ...live, [API]: live[API].replace(/qs\.set\("load_id", filters\.load_id\)/g, "void 0") },
     "listSafetyIncidents does not send load_id"
+  );
+  expectCaught(
+    "open-accidents-queue",
+    { ...live, [SECTION]: live[SECTION].replace(/kind="accidents_load"/g, 'kind="accident"') },
+    "Open Accidents must EntityLink accidents_load"
   );
 
   const liveProblems = assertLoadSafetyReverse(live);

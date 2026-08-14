@@ -57,6 +57,8 @@ const INCIDENT_KINDS: { type: SafetyIncidentType; title: string; route: string; 
 function SectionShell({
   title,
   to,
+  openKind,
+  openId,
   linkLabel,
   testId,
   isLoading,
@@ -67,7 +69,9 @@ function SectionShell({
   children,
 }: {
   title: string;
-  to: string;
+  to?: string;
+  openKind?: "accidents_unit" | "accidents_trailer";
+  openId?: string;
   linkLabel: string;
   testId: string;
   isLoading: boolean;
@@ -84,9 +88,18 @@ function SectionShell({
           {title}
           {count > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({count})</span> : null}
         </h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to={to}>
-          {linkLabel}
-        </Link>
+        {openKind && openId ? (
+          <EntityLink
+            kind={openKind}
+            id={openId}
+            label={linkLabel}
+            className="text-xs font-semibold text-slate-700 underline"
+          />
+        ) : (
+          <Link className="text-xs font-semibold text-slate-700 underline" to={to ?? "#"}>
+            {linkLabel}
+          </Link>
+        )}
       </div>
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {isError ? <p className="text-sm text-red-600">{errorText}</p> : null}
@@ -206,7 +219,8 @@ export function AssetSafetyReverseSection({
 
       <SectionShell
         title="Accidents"
-        to="/safety/accidents"
+        openKind={isUnit ? "accidents_unit" : "accidents_trailer"}
+        openId={assetId}
         linkLabel="Open Accidents"
         testId="asset-safety-reverse-accidents"
         isLoading={accidentsQuery.isLoading}

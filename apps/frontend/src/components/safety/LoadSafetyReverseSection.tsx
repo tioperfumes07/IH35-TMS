@@ -111,12 +111,12 @@ export function LoadSafetyReverseSection({
               </span>
             ) : null}
           </h3>
-          <Link
+          <EntityLink
+            kind="accidents_load"
+            id={loadId}
+            label="Open Accidents"
             className="text-xs font-semibold text-slate-700 underline"
-            to="/safety/accidents"
-          >
-            Open Accidents
-          </Link>
+          />
         </div>
         {accidentsQ.isLoading ? (
           <p className="text-sm text-gray-500">Loading…</p>
@@ -201,12 +201,12 @@ export function LoadSafetyReverseSection({
             HOS Violations
             {hosViolations.length ? ` (${hosViolations.length})` : ""}
           </h3>
-          <Link
+          <EntityLink
+            kind="hos_violations_load"
+            id={loadId}
+            label="Open HOS Violations"
             className="text-xs font-semibold text-slate-700 underline"
-            to="/safety/hos-violations"
-          >
-            Open HOS Violations
-          </Link>
+          />
         </div>
         {hosViolationsQ.isLoading ? (
           <p className="text-sm text-gray-500">Loading…</p>
@@ -252,12 +252,12 @@ export function LoadSafetyReverseSection({
             Internal Fines
             {internalFines.length ? ` (${internalFines.length})` : ""}
           </h3>
-          <Link
+          <EntityLink
+            kind="internal_fines_load"
+            id={loadId}
+            label="Open Internal Fines"
             className="text-xs font-semibold text-slate-700 underline"
-            to="/safety/internal-fines"
-          >
-            Open Internal Fines
-          </Link>
+          />
         </div>
         {internalFinesQ.isLoading ? (
           <p className="text-sm text-gray-500">Loading internal fines…</p>

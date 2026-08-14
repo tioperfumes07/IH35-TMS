@@ -100,6 +100,9 @@ export function assertAssetSafetyReverse(sources) {
   if (!/getSafetyAccidents\(operatingCompanyId, isUnit \? \{ unit_id: assetId \} : \{ trailer_id: assetId \}\)/.test(src[SECTION])) {
     problems.push(`${SECTION}: accidents query must send the active unit_id or trailer_id FK.`);
   }
+  if (!/openKind=\{isUnit \? "accidents_unit" : "accidents_trailer"\}/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open Accidents must EntityLink accidents_unit/accidents_trailer filtered queues.`);
+  }
   if (!/ar\.trailer_id = \$/.test(src[ACCIDENTS_ROUTE])) {
     problems.push(`${ACCIDENTS_ROUTE}: GET accidents does not filter by trailer in SQL.`);
   }
@@ -183,6 +186,17 @@ if (SELFTEST) {
     "active unit_id or trailer_id"
   );
   expectCaught(
+    "open-accidents-queue",
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /openKind=\{isUnit \? "accidents_unit" : "accidents_trailer"\}/g,
+        'to="/safety/accidents"'
+      ),
+    },
+    "Open Accidents must EntityLink"
+  );
+  expectCaught(
     "accidents-trailer-server-filter-removed",
     { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.trailer_id = \$\$\{values\.length\}/g, "") },
     "does not filter by trailer"
@@ -202,7 +216,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 12 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 13 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

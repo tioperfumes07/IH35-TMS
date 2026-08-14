@@ -34,6 +34,8 @@ function toDatetimeLocalValue(iso: string): string {
 export function HOSViolationsTab() {
   const [searchParams] = useSearchParams();
   const highlightedViolationId = searchParams.get("violation_id")?.trim() ?? "";
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -49,8 +51,12 @@ export function HOSViolationsTab() {
   });
 
   const query = useQuery({
-    queryKey: ["safety-v64", "hos-violations", companyId],
-    queryFn: () => listHosViolations(companyId),
+    queryKey: ["safety-v64", "hos-violations", companyId, loadIdFromUrl, driverIdFromUrl],
+    queryFn: () =>
+      listHosViolations(companyId, {
+        load_id: loadIdFromUrl || undefined,
+        driver_id: driverIdFromUrl || undefined,
+      }),
     enabled: Boolean(companyId),
   });
 

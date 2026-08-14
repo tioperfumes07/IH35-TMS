@@ -56,9 +56,38 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const accidentIdParam = searchParams.get("accident_id");
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+  const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
+
+  // Seed picker filters from reverse Open-queue deep links (LINK-F5171).
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  useEffect(() => {
+    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+  }, [unitIdFromUrl]);
+
   const accidentsQuery = useQuery({
-    queryKey: ["safety", "accidents", operatingCompanyId],
-    queryFn: () => getSafetyAccidents(operatingCompanyId),
+    queryKey: [
+      "safety",
+      "accidents",
+      operatingCompanyId,
+      loadIdFromUrl,
+      driverIdFromUrl,
+      unitIdFromUrl,
+      trailerIdFromUrl,
+    ],
+    queryFn: () =>
+      getSafetyAccidents(operatingCompanyId, {
+        load_id: loadIdFromUrl || undefined,
+        driver_id: driverIdFromUrl || undefined,
+        unit_id: unitIdFromUrl || undefined,
+        trailer_id: trailerIdFromUrl || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -66,8 +95,6 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
 
   // SAF-F33 reverse drill-through: another module linking here as
   // /safety/accidents?accident_id=<id> opens that accident's drawer once the list has loaded.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const accidentIdParam = searchParams.get("accident_id");
   useEffect(() => {
     if (!accidentIdParam || allRows.length === 0) return;
     const match = allRows.find((r) => String(r.id) === accidentIdParam);
