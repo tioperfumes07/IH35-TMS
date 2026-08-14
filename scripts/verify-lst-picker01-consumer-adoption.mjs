@@ -1,5 +1,9 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","dispatch"],"cols":["connectivity","picker_law"],"leafRe":"^(hub\\.|catalog\\.|secondary\\.book_load|load\\.)","task":"P23","pr":"#5847 + #5990"} */
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14: class/shared-primitive regression only — NO @matrix-built Box-3 credit.
+ * Former leafRe `^(hub.|catalog.|secondary.book_load|load.)` painted picker_law Built across ~237 leaves
+ * off a registry consumer check — theater. Guard still enforces LST-PICKER-01 adoption.
+ */
 /**
  * LST-PICKER-01 close — every catalogPickerRegistry entry with consumerPath MUST wire
  * ReferenceSelect createKind={key} in each documented consumer file.

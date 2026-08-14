@@ -6,9 +6,12 @@
 /** @matrix-built {"modules":["lists","safety"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.safety\\.accident_types|accidents\\.)","task":"P44-accident-types","pr":"#5947"} */
 /** @matrix-built {"modules":["lists","safety"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.safety\\.complaint_types|complaints\\.)","task":"P44-complaint-types","pr":"#5949"} */
 /** @matrix-built {"modules":["lists","safety","insurance"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.safety\\.cargo_claim_reasons|cargo_claims\\.|claims\\.)","task":"P44-cargo-claim-reasons","pr":"#5951"} */
-/** @matrix-built {"modules":["customers","dispatch","accounting"],"cols":["connectivity","picker_law","load","customer"],"leafRe":"^(list\\.|detail\\.|md\\.|home|secondary\\.book_load|load\\.|invoices\\.)","task":"P43-customers","pr":"#5953"} */
-/** @matrix-built {"modules":["vendors","accounting","maintenance"],"cols":["connectivity","picker_law","expense","ap_bill"],"leafRe":"^(list\\.|detail\\.|md\\.|home|bills\\.|expenses\\.|wo\\.)","task":"P42-vendors","pr":"#5957"} */
-/** @matrix-built {"modules":["lists","dispatch"],"cols":["load","connectivity","picker_law"],"leafRe":"^(catalog\\.|secondary\\.book_load|load\\.)","task":"P44","pr":"#5918"} */
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14: removed umbrella Built tags that painted picker_law across
+ * hundreds of leaves (P44 `^(catalog.|…|load.)`, P43-customers `^(list.|detail.|…)`, P42-vendors
+ * `^(list.|detail.|…|wo.)`). Shared config-driven picker regression remains asserted below; leaf-specific
+ * Built stays only on the exact catalog wiring tags above.
+ */
 /**
  * LST-PICKER-01/03 — the shared picker capability must be CONFIG-DRIVEN, and every wired catalog's
  * inline create must write the SAME canonical table its picker reads.

@@ -3,61 +3,151 @@
   "VERTICAL-REVERSE-LINK-EXISTING-FK-DRILLS": "inventory.assignments.wo_link+tasks.tasks.drawer.task: canonical related-record drills",
   "VERTICAL-REVERSE-LINK-VENDOR-MASTER-DETAIL": "vendors.md.vendor_details: selected canonical vendor identity and profile drill-through",
   "VERTICAL-CONNECTIVITY-INVENTORY-PURCHASE-HOLD": "inventory.nav.purchases_tab+purchases.honest_empty: mounted door and guarded honest HOLD state",
-  "VERTICAL-CONNECTIVITY-MAINTENANCE-DAMAGE-INTAKE": "maintenance.damage_reports.intake: mounted triage→WO or safety.incidents create→invalidate",
+  "VERTICAL-CONNECTIVITY-MAINTENANCE-DAMAGE-INTAKE": "maintenance.damage_reports.intake: mounted triage\u2192WO or safety.incidents create\u2192invalidate",
   "VERTICAL-CONNECTIVITY-SYSTEM-PROGRAM-CONFIG": "system.tab.program+tab.claude_coder+hop.program_matrix: mounted authenticated versioned-config sources",
   "VERTICAL-CONNECTIVITY-DRIVER-PAY-RATE-TEMPLATES": "drivers.pay_rate_templates: mounted canonical company-scoped catalog list/create/reload",
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
-    {"task":"VERTICAL-CONNECTIVITY-MAINTENANCE-WO-CREATE-MODAL","modules":["maintenance"],"cols":["connectivity"],"leafRe":"^maintenance\\.modal\\.work_order_create$","guard":"scripts/verify-maintenance-work-order-create-modal-connectivity.mjs","live":"BLOCKED"},
-    {"task":"VERTICAL-CONNECTIVITY-MAINTENANCE-TIRE-CREATORS","modules":["maintenance"],"cols":["connectivity"],"leafRe":"^tires\\.(create_record|create_brand)$","guard":"scripts/verify-maintenance-tire-creators-connectivity.mjs","live":"BLOCKED"},
-    {"task":"VERTICAL-CONNECTIVITY-MAINTENANCE-SEVERE-REPAIRS","modules":["maintenance"],"cols":["connectivity"],"leafRe":"^severe_repairs\\.convert_to_wo$","guard":"scripts/verify-maintenance-severe-repair-connectivity.mjs","live":"BLOCKED"},
-    {"task":"VERTICAL-CONNECTIVITY-SAFETY-ELD-AUDIT","modules":["safety"],"cols":["connectivity"],"leafRe":"^eld_audit\\.list$","guard":"scripts/verify-safety-eld-audit-connectivity.mjs","live":"BLOCKED"},
-    {"task":"VERTICAL-CONNECTIVITY-SAFETY-DRIVER-PROFILE","modules":["safety"],"cols":["connectivity"],"leafRe":"^safety\\.panel\\.driver_safety_profile$","guard":"scripts/verify-safety-driver-profile-connectivity.mjs","live":"BLOCKED"},
-    {"task":"VERTICAL-CONNECTIVITY-REPORTS-DETENTION-CLAIMS","modules":["reports"],"cols":["connectivity"],"leafRe":"^runner\\.detention_claims$","guard":"scripts/verify-reports-detention-claims-connectivity.mjs","live":"BLOCKED"},
+    {
+      "task": "VERTICAL-CONNECTIVITY-MAINTENANCE-WO-CREATE-MODAL",
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "connectivity"
+      ],
+      "leafRe": "^maintenance\\.modal\\.work_order_create$",
+      "guard": "scripts/verify-maintenance-work-order-create-modal-connectivity.mjs",
+      "live": "BLOCKED"
+    },
+    {
+      "task": "VERTICAL-CONNECTIVITY-MAINTENANCE-TIRE-CREATORS",
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "connectivity"
+      ],
+      "leafRe": "^tires\\.(create_record|create_brand)$",
+      "guard": "scripts/verify-maintenance-tire-creators-connectivity.mjs",
+      "live": "BLOCKED"
+    },
+    {
+      "task": "VERTICAL-CONNECTIVITY-MAINTENANCE-SEVERE-REPAIRS",
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "connectivity"
+      ],
+      "leafRe": "^severe_repairs\\.convert_to_wo$",
+      "guard": "scripts/verify-maintenance-severe-repair-connectivity.mjs",
+      "live": "BLOCKED"
+    },
+    {
+      "task": "VERTICAL-CONNECTIVITY-SAFETY-ELD-AUDIT",
+      "modules": [
+        "safety"
+      ],
+      "cols": [
+        "connectivity"
+      ],
+      "leafRe": "^eld_audit\\.list$",
+      "guard": "scripts/verify-safety-eld-audit-connectivity.mjs",
+      "live": "BLOCKED"
+    },
+    {
+      "task": "VERTICAL-CONNECTIVITY-SAFETY-DRIVER-PROFILE",
+      "modules": [
+        "safety"
+      ],
+      "cols": [
+        "connectivity"
+      ],
+      "leafRe": "^safety\\.panel\\.driver_safety_profile$",
+      "guard": "scripts/verify-safety-driver-profile-connectivity.mjs",
+      "live": "BLOCKED"
+    },
+    {
+      "task": "VERTICAL-CONNECTIVITY-REPORTS-DETENTION-CLAIMS",
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
+      "leafRe": "^runner\\.detention_claims$",
+      "guard": "scripts/verify-reports-detention-claims-connectivity.mjs",
+      "live": "BLOCKED"
+    },
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-SAVED-PRESETS",
-      "modules": ["reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^runner\\.saved_(owner_pack|quarter_close)$",
       "guard": "scripts/verify-reports-saved-preset-connectivity.mjs",
       "live": "BLOCKED"
     },
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-DOT-AUDIT-PACK",
-      "modules": ["reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^runner\\.dot_audit_pack$",
       "guard": "scripts/verify-reports-dot-audit-pack-connectivity.mjs",
       "live": "BLOCKED"
     },
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-HOS-VIOLATIONS",
-      "modules": ["reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^runner\\.hos_violations$",
       "guard": "scripts/verify-reports-hos-violations-connectivity.mjs",
       "live": "BLOCKED"
     },
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-FUEL-PRICE-VARIANCE",
-      "modules": ["reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^runner\\.fuel_price_variance$",
       "guard": "scripts/verify-reports-fuel-price-variance-connectivity.mjs",
       "live": "BLOCKED"
     },
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-FLEET-UTILIZATION",
-      "modules": ["reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^runner\\.fleet_utilization$",
       "guard": "scripts/verify-reports-fleet-utilization-connectivity.mjs",
       "live": "BLOCKED"
     },
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-RUNNER-ALIASES",
-      "modules": ["reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^runner\\.(profit_truck_mtd|dispatch_board|cash_position|ifta_quarterly)$",
       "guard": "scripts/verify-reports-runner-canonical-aliases.mjs",
       "live": "BLOCKED"
@@ -66,48 +156,83 @@
       "task": "WAVE-A-LOAD-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-load-inline-surface-linkage.mjs",
-      "modules": ["accounting", "tasks"],
-      "cols": ["load"],
+      "modules": [
+        "accounting",
+        "tasks"
+      ],
+      "cols": [
+        "load"
+      ],
       "leafRe": "^(accounting\\.panel\\.leakage|tasks\\.drawer\\.task)$"
     },
     {
       "task": "WAVE-A-UNIT-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-unit-inline-surface-linkage.mjs",
-      "modules": ["accounting", "cash-flow"],
-      "cols": ["unit"],
+      "modules": [
+        "accounting",
+        "cash-flow"
+      ],
+      "cols": [
+        "unit"
+      ],
       "leafRe": "^(accounting\\.panel\\.detail|cash-flow\\.panel\\.projection)$"
     },
     {
       "task": "WAVE-A-VENDOR-INLINE-SURFACE",
       "pr": "this PR",
       "guard": "scripts/verify-vendor-inline-surface-linkage.mjs",
-      "modules": ["cash-flow"],
-      "cols": ["vendor"],
+      "modules": [
+        "cash-flow"
+      ],
+      "cols": [
+        "vendor"
+      ],
       "leafRe": "^cash-flow\\.panel\\.projection$"
     },
     {
       "task": "WAVE-A-CUSTOMER-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-customer-inline-surface-linkage.mjs",
-      "modules": ["cash-flow", "dispatch"],
-      "cols": ["customer"],
+      "modules": [
+        "cash-flow",
+        "dispatch"
+      ],
+      "cols": [
+        "customer"
+      ],
       "leafRe": "^(cash-flow\\.panel\\.projection|dispatch\\.modal\\.save_load_template)$"
     },
     {
       "task": "WAVE-A-DRIVER-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-cash-forecast-driver-linkage.mjs",
-      "modules": ["accounting", "cash-flow"],
-      "cols": ["driver"],
+      "modules": [
+        "accounting",
+        "cash-flow"
+      ],
+      "cols": [
+        "driver"
+      ],
       "leafRe": "^(accounting\\.modal\\.decide|cash-flow\\.panel\\.projection)$"
     },
     {
       "task": "REQUIRED-MAP-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-required-surface-inventory-complete.mjs",
-      "modules": ["accounting", "cash-flow", "dispatch", "settlements", "drivers", "lists", "program", "tasks"],
-      "cols": ["connectivity"],
+      "modules": [
+        "accounting",
+        "cash-flow",
+        "dispatch",
+        "settlements",
+        "drivers",
+        "lists",
+        "program",
+        "tasks"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(accounting\\.(panel\\.(reallocate|trk_bulk_register|detail|period_status|class_cost_center_variance|schedule|receipt_detail|leakage)|modal\\.(decide|create))|cash-flow\\.panel\\.projection|dispatch\\.modal\\.save_load_template|settlements\\.panel\\.open_driver_bills|drivers\\.panel\\.(auto_deduction_policies|team_split_config)|lists\\.modal\\.(detail_type|void_cancel_reason|load_cancellation_reason|termination_reason|oem_parts_create)|program\\.panel\\.thread|tasks\\.drawer\\.task)$"
     },
     {
@@ -542,20 +667,6 @@
       "leafRe": "^claims\\."
     },
     {
-      "task": "P23",
-      "pr": "#5847 + #5990",
-      "guard": "scripts/verify-steps/2358-verify-lst-picker01-consumer-adoption.mjs",
-      "modules": [
-        "lists",
-        "dispatch"
-      ],
-      "cols": [
-        "connectivity",
-        "picker_law"
-      ],
-      "leafRe": "^(hub\\.|catalog\\.|secondary\\.book_load|load\\.)"
-    },
-    {
       "task": "P44-dispatch-flag-colors",
       "pr": "#5925",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
@@ -660,40 +771,6 @@
         "load"
       ],
       "leafRe": "^(catalog\\.safety\\.cargo_claim_reasons|cargo_claims\\.|claims\\.)"
-    },
-    {
-      "task": "P43-customers",
-      "pr": "#5953",
-      "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": [
-        "customers",
-        "dispatch",
-        "accounting"
-      ],
-      "cols": [
-        "connectivity",
-        "picker_law",
-        "load",
-        "customer"
-      ],
-      "leafRe": "^(list\\.|detail\\.|md\\.|home|secondary\\.book_load|load\\.|invoices\\.)"
-    },
-    {
-      "task": "P42-vendors",
-      "pr": "#5957",
-      "guard": "scripts/verify-lst-picker-config-driven.mjs",
-      "modules": [
-        "vendors",
-        "accounting",
-        "maintenance"
-      ],
-      "cols": [
-        "connectivity",
-        "picker_law",
-        "expense",
-        "ap_bill"
-      ],
-      "leafRe": "^(list\\.|detail\\.|md\\.|home|bills\\.|expenses\\.|wo\\.)"
     },
     {
       "task": "CATALOG-RLS-SCOPE",
@@ -825,35 +902,6 @@
         "connectivity"
       ],
       "leafRe": "^(list\\.|detail\\.|md\\.)"
-    },
-    {
-      "task": "P44",
-      "pr": "#5918",
-      "guard": "scripts/verify-steps/1510-verify-lst-picker-config-driven.mjs",
-      "modules": [
-        "lists",
-        "dispatch"
-      ],
-      "cols": [
-        "load",
-        "connectivity",
-        "picker_law"
-      ],
-      "leafRe": "^(catalog\\.|secondary\\.book_load|load\\.)"
-    },
-    {
-      "task": "P45",
-      "pr": "#4876",
-      "guard": "scripts/verify-steps/2853-verify-catalog-column-collision-safe.mjs",
-      "modules": [
-        "lists",
-        "accounting"
-      ],
-      "cols": [
-        "connectivity",
-        "picker_law"
-      ],
-      "leafRe": "^(hub\\.|catalog\\.|bills\\.|expenses\\.)"
     },
     {
       "task": "P31",
@@ -1891,7 +1939,6 @@
       "guard": "scripts/verify-maintenance-vendor-ap-reverse.mjs",
       "modules": [
         "maintenance",
-        "lists",
         "vendors"
       ],
       "cols": [
@@ -1900,7 +1947,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(maintenance|vendor|catalog|profile|detail|create)"
+      "leafRe": "^(vendors\\.create|md\\.vendor_details)$"
     },
     {
       "task": "DRIVER-REPORT-DRIVER-REVERSE",
@@ -2448,96 +2495,147 @@
       "task": "WAVE-A-DRIVER-SAMSARA-REMAINDER",
       "pr": "this PR",
       "guard": "scripts/verify-system-samsara-driver-column.mjs",
-      "modules": ["system"],
-      "cols": ["driver"],
+      "modules": [
+        "system"
+      ],
+      "cols": [
+        "driver"
+      ],
       "leafRe": "^system\\.samsara_hos_driver_map$"
     },
     {
       "task": "LINK-F5169-COMPLIANCE-LOAD",
       "pr": "this PR",
       "guard": "scripts/verify-load-column-all-modules.mjs",
-      "modules": ["compliance"],
-      "cols": ["load"],
+      "modules": [
+        "compliance"
+      ],
+      "cols": [
+        "load"
+      ],
       "leafRe": "^tab\\.violations$"
     },
     {
       "task": "LINK-F5169-DOCS-LOAD",
       "pr": "this PR",
       "guard": "scripts/verify-load-column-all-modules.mjs",
-      "modules": ["docs"],
-      "cols": ["load"],
+      "modules": [
+        "docs"
+      ],
+      "cols": [
+        "load"
+      ],
       "leafRe": "^(home|tab\\.all|upload|table\\.entity_link|docs\\.modal\\.upload)$"
     },
     {
       "task": "LINK-F5169-FUEL-LOAD",
       "pr": "this PR",
       "guard": "scripts/verify-load-column-all-modules.mjs",
-      "modules": ["fuel"],
-      "cols": ["load"],
+      "modules": [
+        "fuel"
+      ],
+      "cols": [
+        "load"
+      ],
       "leafRe": "^(home|planner)$"
     },
     {
       "task": "LINK-F5169-HOME-LOAD",
       "pr": "this PR",
       "guard": "scripts/verify-load-column-all-modules.mjs",
-      "modules": ["home"],
-      "cols": ["load"],
+      "modules": [
+        "home"
+      ],
+      "cols": [
+        "load"
+      ],
       "leafRe": "^role\\.(owner|dispatcher)$"
     },
     {
       "task": "LINK-F5169-REPORTS-LOAD",
       "pr": "this PR",
       "guard": "scripts/verify-load-column-all-modules.mjs",
-      "modules": ["reports"],
-      "cols": ["load"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "load"
+      ],
       "leafRe": "^report\\.(lane_profitability|trip_profitability|dispatch_margin)$"
     },
     {
       "task": "LINK-F5169-TASKS-LOAD",
       "pr": "this PR",
       "guard": "scripts/verify-load-column-all-modules.mjs",
-      "modules": ["tasks"],
-      "cols": ["load"],
+      "modules": [
+        "tasks"
+      ],
+      "cols": [
+        "load"
+      ],
       "leafRe": "^(nav\\.(board|mine|calendar)|board\\.(planner_grid|create)|mine\\.list)$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-reverse-link-inline-surface-linkage.mjs",
-      "modules": ["accounting", "cash-flow", "tasks"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "accounting",
+        "cash-flow",
+        "tasks"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(accounting\\.panel\\.(reallocate|detail|class_cost_center_variance|schedule|receipt_detail|leakage)|accounting\\.modal\\.decide|cash-flow\\.panel\\.projection|tasks\\.drawer\\.task)$"
     },
     {
       "task": "VERTICAL-SETTLEMENT-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-settlement-inline-surface-linkage.mjs",
-      "modules": ["accounting"],
-      "cols": ["settlement"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "settlement"
+      ],
       "leafRe": "^accounting\\.modal\\.decide$"
     },
     {
       "task": "VERTICAL-AP-BILL-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-ap-bill-inline-surface-linkage.mjs",
-      "modules": ["accounting", "settlements"],
-      "cols": ["ap_bill"],
+      "modules": [
+        "accounting",
+        "settlements"
+      ],
+      "cols": [
+        "ap_bill"
+      ],
       "leafRe": "^(accounting\\.panel\\.reallocate|settlements\\.panel\\.open_driver_bills)$"
     },
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-HUB",
       "pr": "this PR",
       "guard": "scripts/verify-reports-hub-connectivity.mjs",
-      "modules": ["reports"],
-      "cols": ["connectivity"],
+      "modules": [
+        "reports"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(home\\.hub|subnav\\.(category_hub|run_report))$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-ARRIVING-SOON-WO",
       "pr": "this PR",
       "guard": "scripts/verify-arriving-soon-work-order-reverse.mjs",
-      "modules": ["maintenance"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^arriving_soon\\.convert_to_wo$"
     },
     {
