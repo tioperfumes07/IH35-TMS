@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportCard } from "../../components/reports/ReportCard";
 import { ReportCategoryHoverNav } from "../../components/reports/ReportCategoryHoverNav";
 import { apiRequest } from "../../api/client";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type CatalogCategory = {
   id: string;
@@ -55,12 +55,12 @@ export function ReportsHubPage() {
       />
       {filtered.map((category) => (
         <section key={category.id} className="space-y-2">
-          <Link
-            to={`/reports/categories/${category.id}`}
+          <EntityLink
+            kind="report_category"
+            id={category.id}
+            label={category.label}
             className="block text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-[#1f2a44] hover:underline"
-          >
-            {category.label}
-          </Link>
+          />
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {category.reports.map((report) => (
               <ReportCard
