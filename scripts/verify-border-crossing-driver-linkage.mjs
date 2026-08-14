@@ -27,7 +27,7 @@ function audit(s) {
   if (!/INSERT INTO mdata\.unit_border_crossings[\s\S]{0,180}operating_company_id, unit_id, driver_id/.test(s.writer)) failures.push("writer driver persistence missing");
   if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.driver_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact driver history filter missing");
   if (!/driver_id: driverId/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("profile reverse must request exact driver and show errors");
-  if (!/border-crossing\/history\?crossing_id=/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
+  if (!/kind=["']border_crossing["']/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/DriverBorderCrossingsReverseSection[\s\S]{0,160}driverId=\{id\}/.test(s.profile)) failures.push("driver profile reverse mount missing");
   return failures;
 }
@@ -41,7 +41,7 @@ if (process.argv.includes("--selftest")) {
     ["filter", "historyRoute", /filters\.push\(`ubc\.driver_id = \$\$\{values\.length\}::uuid`\)/, "filters.push(`TRUE`)"],
     ["reverse", "reverse", /driver_id: driverId/, "driver_id: operatingCompanyId"],
     ["error", "reverse", /ListErrorBanner/g, "MissingErrorBanner"],
-    ["drill", "reverse", /history\?crossing_id=/, "history?driver_id="],
+    ["drill", "reverse", /kind=["']border_crossing["']/, 'kind="driver"'],
     ["mount", "profile", /DriverBorderCrossingsReverseSection/g, "MissingDriverBorderReverse"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

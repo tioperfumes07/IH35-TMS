@@ -13,7 +13,7 @@ function failures(s = files) { return [
   ["company-scoped driver filter", s.routes.includes("driver_id: z.string().uuid().optional()") && s.routes.includes("t.primary_driver_id = $${values.length}::uuid OR t.secondary_driver_id = $${values.length}::uuid") && s.hook.includes('params.set("driver_id", filters.driver_id)')],
   ["profile filtered canonical read", s.reverse.includes("listTeamSplitConfigs(operatingCompanyId, { driver_id: driverId })") && s.reverse.includes('queryKey: ["team-split-configs", "driver-profile", operatingCompanyId, driverId]')],
   ["profile reverse mount", s.profile.includes("<DriverTeamSplitConfigReverseSection driverId={id} operatingCompanyId={companyId} />")],
-  ["exact config drill", s.reverse.includes('/drivers/team-splits?team_id=${encodeURIComponent(config.id)}') && s.panel.includes('searchParams.get("team_id")') && s.panel.includes("row.id === teamId")],
+  ["exact config drill", s.reverse.includes('kind="driver_team_split"') && s.reverse.includes('id={config.id}') && s.panel.includes('searchParams.get("team_id")') && s.panel.includes("row.id === teamId")],
   ["driver target preserved", s.reverse.includes('/drivers/team-splits?driver_id=${encodeURIComponent(driverId)}') && s.panel.includes('searchParams.get("driver_id")') && s.panel.includes("row.primary_driver_id === driverId || row.secondary_driver_id === driverId")],
   ["honest panel failure state", s.panel.includes("Team split configurations unavailable.") && s.panel.includes("!isLoading && !isError") && s.panel.includes("void refetch()")],
 ].filter(([, ok]) => !ok).map(([name]) => name); }

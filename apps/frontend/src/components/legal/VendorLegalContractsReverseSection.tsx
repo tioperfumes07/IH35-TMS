@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { legalContractsApi } from "../../api/legal-contracts";
 import { ListErrorState } from "../ListErrorState";
 
@@ -22,7 +23,7 @@ export function VendorLegalContractsReverseSection({ operatingCompanyId, vendorI
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No legal contracts are linked to this vendor.</p> : null}
       {rows.length ? <ul className="space-y-2">{rows.map((contract) => (
         <li key={contract.id} className="rounded-sm border border-gray-200 p-2 text-xs">
-          <Link className="font-semibold text-slate-700 underline" to={`/legal/contracts?contract_id=${contract.id}`}>{contract.display_name_en ?? contract.template_code}</Link>
+          <EntityLink kind="legal_contract" id={contract.id} label={contract.display_name_en ?? contract.template_code} className="font-semibold text-slate-700 underline" />
           <div className="text-gray-500">{contract.status} · {contract.signer_name}</div>
         </li>
       ))}</ul> : null}

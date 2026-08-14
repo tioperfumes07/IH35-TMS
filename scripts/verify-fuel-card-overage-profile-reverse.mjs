@@ -13,7 +13,7 @@ function failures(s = files) { return [
   ["company-scoped driver/unit/event filters", s.routes.includes("driver_id: z.string().uuid().optional()") && s.routes.includes("e.driver_id = $${values.length}::uuid") && s.routes.includes("e.unit_id = $${values.length}::uuid") && s.routes.includes("e.id = $${values.length}::uuid")],
   ["profile-filtered canonical read", s.reverse.includes('listOverageEvents(operatingCompanyId, "all", filter)') && s.reverse.includes('queryKey: ["fuel-card-overage-reverse", operatingCompanyId, filter]')],
   ["driver and unit reverse mounts", s.driver.includes('filter={{ driver_id: id }}') && s.unit.includes('filter={{ unit_id: id }}')],
-  ["exact event drill", s.reverse.includes('/fuel/card-overage?event_id=${encodeURIComponent(event.id)}') && s.queue.includes('searchParams.get("event_id")') && s.queue.includes("event_id: eventId")],
+  ["exact event drill", s.reverse.includes('kind="fuel_card_overage_event"') && s.reverse.includes('id={event.id}') && s.queue.includes('searchParams.get("event_id")') && s.queue.includes("event_id: eventId")],
   ["queue preserves profile target", s.queue.includes('searchParams.get("driver_id")') && s.queue.includes('searchParams.get("unit_id")') && s.queue.includes("driver_id: driverId") && s.queue.includes("unit_id: unitId")],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
@@ -21,7 +21,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, routes: files.routes.replace("e.driver_id = $${values.length}::uuid", "TRUE") }).includes("company-scoped driver/unit/event filters"),
     failures({ ...files, reverse: files.reverse.replace('listOverageEvents(operatingCompanyId, "all", filter)', 'listOverageEvents(operatingCompanyId, "all")') }).includes("profile-filtered canonical read"),
     failures({ ...files, unit: "" }).includes("driver and unit reverse mounts"),
-    failures({ ...files, reverse: files.reverse.replace("event_id=${encodeURIComponent(event.id)}", "") }).includes("exact event drill"),
+    failures({ ...files, reverse: files.reverse.replace('kind="fuel_card_overage_event"', 'kind="unit"') }).includes("exact event drill"),
     failures({ ...files, queue: files.queue.replace('searchParams.get("unit_id")', 'searchParams.get("missing")') }).includes("queue preserves profile target"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-fuel-card-overage-profile-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
