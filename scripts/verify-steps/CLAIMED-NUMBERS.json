@@ -772,10 +772,30 @@
     "claimed_by": "cc-1",
     "purpose": "verify-factoring-dispatch-queue-reverse-section"
   },
+  "3300": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-customer-email-required (renumber from colliding 1000)"
+  },
   "3301": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
     "purpose": "verify-factoring-recourse-chargebacks-reverse-section"
+  },
+  "3302": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-docs-entity-labels (renumber from colliding 1000)"
+  },
+  "3304": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-awaiting-unassigned-not-uuid (renumber from colliding 1002)"
+  },
+  "3306": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-class-picker-limit-respects-backend-cap (renumber from colliding 1004)"
   },
   "_band": {
     "cc-1": "n%4===1",
