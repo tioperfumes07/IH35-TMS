@@ -159,7 +159,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "parts_inventory":
       return `/maintenance/parts-inventory?part_inventory_id=${id}`;
     case "maintenance_vendor":
-      return `/maintenance/vendors?maintenance_vendor_id=${id}`;
+      return `/maintenance/vendors/${id}`;
     case "pm_schedule":
       return `/maintenance/pm-schedule?schedule_id=${id}`;
     case "settlement":

@@ -24,7 +24,7 @@ function check(sources) {
   const expects = [
     ["resolver", /case "inventory_part":[\s\S]{0,100}\/inventory\?part_id=/, "inventory-part route"],
     ["resolver", /case "parts_inventory":[\s\S]{0,120}\/maintenance\/parts-inventory\?part_inventory_id=/, "parts-inventory route"],
-    ["resolver", /case "maintenance_vendor":[\s\S]{0,120}\/maintenance\/vendors\?maintenance_vendor_id=/, "maintenance-vendor route"],
+    ["resolver", /case "maintenance_vendor":[\s\S]{0,120}\/maintenance\/vendors\/\$\{id\}/, "maintenance-vendor route"],
     ["kanban", /<EntityLink kind="load" id=\{load\.id\} label=\{entityLabel\(load\.load_number/, "Kanban load"],
     ["roundTrips", /<EntityLink kind="load" id=\{load\.id\} label=\{entityLabel\(load\.load_number/, "round-trip load"],
     ["arriving", /<EntityLink kind="unit" id=\{card\.unit_id\}/, "arriving-soon unit"],

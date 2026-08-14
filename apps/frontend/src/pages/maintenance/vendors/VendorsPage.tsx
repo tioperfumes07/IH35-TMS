@@ -193,9 +193,12 @@ export function VendorsPage() {
       label: "Vendor",
       sortable: true,
       render: (row) => (
-        <Link to={`/maintenance/vendors/${row.id}`} className="font-semibold text-slate-700 hover:underline">
-          {String(row.display_name ?? row.name ?? "—")}
-        </Link>
+        <EntityLink
+          kind="maintenance_vendor"
+          id={row.id}
+          label={String(row.display_name ?? row.name ?? "—")}
+          className="font-semibold text-slate-700 hover:underline"
+        />
       ),
     },
     { key: "code", label: "Code", sortable: true, render: (row) => String(row.code ?? "—") },
