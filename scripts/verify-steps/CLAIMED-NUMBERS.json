@@ -802,6 +802,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-class-picker-limit-respects-backend-cap (renumber from colliding 1004)"
   },
+  "3308": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-dispatch-detention-reverse-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2646,5 +2651,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1137
+  "total_claimed": 1138
 }
