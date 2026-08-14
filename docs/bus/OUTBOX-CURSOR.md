@@ -1,3 +1,4 @@
+2026-08-14T21:05Z Cursor | SHIPPED #6767 DriversTable EntityLink | Live=BLOCKED | tip=#6767 | NEXT=vehicles master + ELD unidentified unit EntityLink | continuous
 2026-08-14T20:52Z Cursor | SHIPPED #6764 HOS/messages/onboarding EntityLink | Live=BLOCKED | NEXT=maint vendors AP EntityLink · theater | tip=#6764
 2026-08-14T20:50Z Cursor | SHIPPED #6755/#6757/#6759/#6763/#next HOS-MESSAGES | Live=BLOCKED | theater_broad~23 | continuous
 2026-08-14T20:35Z Cursor | SHIPPING THEATER-LEGAL-MAINT-LEAFRE-15 + vehicle-profile/scheduler EntityLink (#next) | Live=BLOCKED | tip=#6755 | theater_broad~39→~24

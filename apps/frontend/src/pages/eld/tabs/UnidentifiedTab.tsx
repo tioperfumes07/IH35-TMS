@@ -1,6 +1,6 @@
 import { entityLabel } from "../../../lib/entity-label";
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEldUnidentifiedDriving, type FleetLocationHosRow } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -30,9 +30,13 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
         sortable: true,
         cellClass: "font-medium",
         render: (row) => (
-          <Link to={`/fleet/units/${row.unit_id}`} className="text-slate-700 hover:underline">
-            {entityLabel(row.unit_number, row.unit_id, "Unit")}
-          </Link>
+          <EntityLink
+            kind="unit"
+            id={row.unit_id}
+            label={entityLabel(row.unit_number, row.unit_id, "Unit")}
+            className="text-slate-700 hover:underline"
+            data-testid="eld-unidentified-unit-link"
+          />
         ),
       },
       {
