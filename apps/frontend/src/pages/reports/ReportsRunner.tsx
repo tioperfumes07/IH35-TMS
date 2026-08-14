@@ -71,6 +71,11 @@ function buildQuery(reportId: string, values: Record<string, unknown>) {
     if (values.to) q.set("to", String(values.to));
     return q;
   }
+  if (reportId === "detention-claims") {
+    if (values.from) q.set("from", String(values.from));
+    if (values.to) q.set("to", String(values.to));
+    return q;
+  }
   return q;
 }
 
@@ -83,9 +88,7 @@ function responseRows(reportId: string, payload: any): Record<string, unknown>[]
   return (payload.rows ?? []) as Record<string, unknown>[];
 }
 
-const STUB_PHASE: Record<string, string> = {
-  "detention-claims": "Phase 4 detention billing",
-};
+const STUB_PHASE: Record<string, string> = {};
 
 // Historical report-runner URLs are still present in saved links and the
 // inventory. Keep those doors useful, but send them to the canonical surface

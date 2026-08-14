@@ -185,6 +185,22 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     ],
     csvFilename: (filters) => `dot-audit-inspections-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
   },
+  "detention-claims": {
+    id: "detention-claims", name: "Detention claims", apiPath: "/api/v1/reports/detention-claims",
+    filters: [{ type: "date_range", key: "date_range", label: "Detention start date", required: true }],
+    columns: [
+      { key: "started_at", label: "Started", align: "left", format: "date", sortable: true },
+      { key: "load_number", label: "Load", align: "left", sortable: true, entityKind: "load", entityIdKey: "load_id" },
+      { key: "customer_name", label: "Customer", align: "left", sortable: true, entityKind: "customer", entityIdKey: "customer_id" },
+      { key: "stop_location", label: "Stop", align: "left", sortable: true },
+      { key: "billable_minutes", label: "Billable min", align: "right", format: "number", sortable: true },
+      { key: "rate_per_hour_cents", label: "Rate/hr", align: "right", format: "currency", sortable: true },
+      { key: "amount_cents", label: "Claim amount", align: "right", format: "currency", sortable: true },
+      { key: "claim_status", label: "Status", align: "left", sortable: true },
+      { key: "invoice_display_id", label: "Invoice", align: "left", entityKind: "invoice", entityIdKey: "invoice_id" },
+    ],
+    csvFilename: (filters) => `detention-claims-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
+  },
   "csa-fleet": {
     id: "csa-fleet",
     name: "Internal inspection-point rollup",

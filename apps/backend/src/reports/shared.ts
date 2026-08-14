@@ -129,7 +129,7 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     name: "Detention claims",
     category: "operations",
     description: "Detention billing outcomes by customer and status.",
-    status: "stub",
+    status: "real",
   },
   {
     id: "driver-pay-history",
