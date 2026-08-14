@@ -1181,9 +1181,12 @@ export function VendorDetailPage() {
                     label: "Credit #",
                     sortable: true,
                     render: (c) => (
-                      <Link to={`/accounting/vendor-credits?credit_id=${encodeURIComponent(c.id)}`} className="text-slate-700 hover:underline">
-                        {entityLabel(c.display_id, c.id, "Vendor credit")}
-                      </Link>
+                      <EntityLink
+                        kind="vendor_credit"
+                        id={c.id}
+                        label={entityLabel(c.display_id, c.id, "Vendor credit")}
+                        className="text-slate-700 hover:underline"
+                      />
                     ),
                   },
                   { key: "issue_date", label: "Issue date", sortable: true, render: (c) => formatDateUS(c.issue_date) },

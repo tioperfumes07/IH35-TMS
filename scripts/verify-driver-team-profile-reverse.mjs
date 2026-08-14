@@ -11,16 +11,16 @@ function failures(reverseSource = reverse, listSource = list, profileSource = pr
     ["profile mount", profileSource.includes('<DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId}')],
     ["company-scoped roster", reverseSource.includes('listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })')],
     ["both driver slots", reverseSource.includes("team.primary_driver_id === driverId") && reverseSource.includes("team.secondary_driver_id === driverId")],
-    ["exact team drill", reverseSource.includes('/lists/driver/teams?team_id=${encodeURIComponent(team.id)}')],
+    ["exact team drill", reverseSource.includes('kind="driver_team"') && reverseSource.includes("id={team.id}")],
     ["deep link honored", listSource.includes('searchParams.get("team_id")') && listSource.includes("candidate.id === teamId")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
 if (process.argv.includes("--selftest")) {
-  const badReverse = reverse.replace("team.secondary_driver_id === driverId", "false");
+  const badReverse = reverse.replace('kind="driver_team"', 'kind="driver"');
   const badList = list.replace("candidate.id === teamId", "candidate.id === companyId");
   const checks = [
-    failures(badReverse, list, profile).includes("both driver slots"),
+    failures(badReverse, list, profile).includes("exact team drill"),
     failures(reverse, badList, profile).includes("deep link honored"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);

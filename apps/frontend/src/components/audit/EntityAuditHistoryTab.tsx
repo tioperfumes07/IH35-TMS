@@ -9,7 +9,6 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink } from "../shared/EntityLink";
-import { Link } from "react-router-dom";
 
 interface EntityAuditHistoryTabProps {
   operatingCompanyId: string;
@@ -86,8 +85,10 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
     label: "Action",
     sortable: true,
     render: (row) => (
-      <Link
-        to={`/audit/trail?audit_event_id=${encodeURIComponent(row.id)}`}
+      <EntityLink
+        kind="audit_event"
+        id={row.id}
+        label={row.event_type}
         className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
           row.severity === "error"
             ? "bg-red-100 text-red-700"
@@ -95,9 +96,7 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
               ? "bg-yellow-100 text-yellow-700"
               : "bg-gray-100 text-gray-700"
         }`}
-      >
-        {row.event_type}
-      </Link>
+      />
     ),
   },
   {

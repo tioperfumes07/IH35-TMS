@@ -123,12 +123,12 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
             {data.fixed_assets.map((row) => (
               <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                 <div>
-                  <Link
-                    to={`/accounting/fixed-assets?asset_id=${encodeURIComponent(row.id)}`}
+                  <EntityLink
+                    kind="fixed_asset"
+                    id={row.id}
+                    label={row.name}
                     className="font-medium text-slate-700 hover:underline"
-                  >
-                    {row.name}
-                  </Link>
+                  />
                   {row.asset_number ? <span className="text-gray-500"> · #{row.asset_number}</span> : null}
                   <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
                 </div>
