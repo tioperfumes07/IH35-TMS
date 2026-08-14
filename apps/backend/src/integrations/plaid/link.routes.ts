@@ -564,6 +564,11 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.is_credit,
           bt.matched_load_id,
           bt.matched_bill_id,
+          -- ACCT-F5153 (OWNER-EXECUTION-PLAN §2 money-cells sweep): matched_bill_id was selected but
+          -- never joined to a human label, so the FE could only ever render a raw UUID or drop the
+          -- reference entirely — same convention already followed for the driver/unit/trailer/load
+          -- joins below.
+          bill.bill_number AS matched_bill_number,
           bt.matched_settlement_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
           bt.notes,
@@ -644,6 +649,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN catalogs.classes cls
           ON cls.id = bt.categorization_class_id
          AND cls.operating_company_id = bt.operating_company_id
+        LEFT JOIN accounting.bills bill
+          ON bill.id = bt.matched_bill_id
+         AND bill.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

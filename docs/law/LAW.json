@@ -593,5 +593,12 @@
     "source_file": "apps/frontend/src/pages/accounting/PayBillModal.tsx",
     "guard": "scripts/verify-acct-ap-bill-surface-wiring.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-ACCT-F5153-BANKING-MATCHED-BILL-DRILL",
+    "title": "banking money-cell gap closed to 0 — matched_bill_id (already selected by /api/v1/banking/plaid/company-transactions) is now joined to accounting.bills for a human label and rendered as a real EntityLink on the transactions surface, matching the load/settlement/journal_entry pattern already present",
+    "source_file": "apps/backend/src/integrations/plaid/link.routes.ts",
+    "guard": "scripts/verify-banking-matched-bill-drill.mjs",
+    "type": "enforced"
   }
 ]

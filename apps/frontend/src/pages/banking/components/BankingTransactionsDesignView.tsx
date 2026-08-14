@@ -1082,6 +1082,15 @@ export function BankingTransactionsDesignView({
                         label={entityLabel(null, tx.matched_settlement_id, "Settlement")}
                       />
                     ) : null}
+                    {/* ACCT-F5153: matched_bill_id was selected server-side but never rendered — the
+                        only matched-entity kind on this row with no drill-through at all. */}
+                    {tx.matched_bill_id ? (
+                      <EntityLink
+                        kind="bill"
+                        id={tx.matched_bill_id}
+                        label={entityLabel(tx.matched_bill_number, tx.matched_bill_id, "Bill")}
+                      />
+                    ) : null}
                   </div>
                 )}
               {tx.matched_journal_entry_id ? (

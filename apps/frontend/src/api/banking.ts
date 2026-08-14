@@ -72,6 +72,9 @@ export type PlaidBankTransaction = {
   is_credit: boolean;
   matched_load_id: string | null;
   matched_bill_id: string | null;
+  /** ACCT-F5153: bill.bill_number joined alongside matched_bill_id so the FE can render a real
+   * EntityLink label instead of a raw UUID or dropping the reference. */
+  matched_bill_number?: string | null;
   matched_settlement_id: string | null;
   /** EXPENSE column-wave: reconciliation.routes.ts now selects this back; previously omitted, so a
    * transaction matched only to an expense showed as unmatched in the Reconciliation Workspace. */
