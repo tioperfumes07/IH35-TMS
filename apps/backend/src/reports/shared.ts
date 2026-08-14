@@ -152,6 +152,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     description: "Company HOS violation timeline with driver, load, source, duration, and severity context.",
     status: "real",
   },
+  {
+    id: "dot-audit-pack",
+    name: "DOT audit inspection packet",
+    category: "safety",
+    description: "Exportable company DOT inspection ledger with driver, unit, outcome, and follow-up work-order context.",
+    status: "real",
+  },
 ];
 
 export function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
