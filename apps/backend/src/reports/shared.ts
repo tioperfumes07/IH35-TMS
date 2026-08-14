@@ -145,6 +145,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     description: "IH35 internal inspection-point rollup from DOT inspections; not an FMCSA BASIC percentile.",
     status: "real",
   },
+  {
+    id: "hos-violations",
+    name: "HOS violations trend",
+    category: "safety",
+    description: "Company HOS violation timeline with driver, load, source, duration, and severity context.",
+    status: "real",
+  },
 ];
 
 export function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
