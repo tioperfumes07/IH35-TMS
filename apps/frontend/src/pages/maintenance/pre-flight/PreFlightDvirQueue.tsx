@@ -44,10 +44,9 @@ export function PreFlightDvirQueue() {
     setSearchParams(params, { replace: true });
   };
 
-  // FLAGGED (QA-sweep): the `/api/v1/maintenance/pre-flight-dvir/*` backend (queue + severity +
-  // route-to-WO) is not built yet — it needs a dedicated maintenance block (auto-WO creation is
-  // non-trivial). Until then this screen degrades to an empty/unavailable state; `retry: false`
-  // avoids hammering the missing endpoint.
+  // Canonical mounted backend: maintenance/pre-flight-dvir.routes.ts owns queue + severity +
+  // route-to-WO. Keep retries disabled because this is a dispatch-blocking compliance queue: a
+  // failed request must remain an explicit unavailable state, never repeated traffic or fake empty.
   const q = useQuery({
     queryKey: ["maintenance", "pre-flight-dvir", operatingCompanyId, tab],
     queryFn: () => listPreFlightDvirQueue(operatingCompanyId, { severity: tab, status: "open" }),
