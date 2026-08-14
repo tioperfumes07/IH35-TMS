@@ -8,10 +8,11 @@ function assertDepositEntityLink(src) {
   // Scope the assertion to the payment deposit field, so other real bank-account
   // links in the frontend remain valid.
   const field = src.slice(Math.max(0, i - 200), i + 250);
-  if (/EntityLink kind="bank_account"[\s\S]{0,120}deposited_to_account_id/.test(field)) {
+  if (/EntityLink[\s\S]{0,80}kind="bank_account"[\s\S]{0,120}deposited_to_account_id/.test(field)) {
     throw new Error("deposit EntityLink still kind=bank_account (must be account / CoA)");
   }
-  if (!/EntityLink kind="account" id=\{payment\.deposited_to_account_id/.test(field)) {
+  // Prettier may put kind/id on separate lines — still require CoA account kind.
+  if (!/EntityLink[\s\S]{0,80}kind="account"[\s\S]{0,80}id=\{payment\.deposited_to_account_id/.test(field)) {
     throw new Error("expected EntityLink kind=account for deposited_to_account_id");
   }
 }
@@ -20,10 +21,7 @@ const src = fs.readFileSync(p, "utf8");
 try {
   assertDepositEntityLink(src);
   if (process.argv.includes("--selftest")) {
-    const broken = src.replace(
-      'EntityLink kind="account" id={payment.deposited_to_account_id',
-      'EntityLink kind="bank_account" id={payment.deposited_to_account_id',
-    );
+    const broken = src.replace(/kind="account"/, 'kind="bank_account"');
     if (broken === src) throw new Error("selftest mutation was inert");
     try {
       assertDepositEntityLink(broken);
