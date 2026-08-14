@@ -581,6 +581,13 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-14-SURFACE-BAR-WIZARD-INVENTORY",
+    "title": "Fully-Wired item 7 surface-bar wizard inventory \u2014 every FE *Wizard*.tsx must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF (steps / shared StepWizard shells)",
+    "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
+    "guard": "scripts/verify-surface-bar-wizard-inventory.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-13-FULLY-WIRED-COMPLETE-BAR",
     "title": "FULLY WIRED = complete 12-item bar (create\u2192canonical \u00b7 money \u00b7 F+R \u00b7 matrix \u00b7 surface bar every control\u2192matrix \u00b7 chrome \u00b7 pickers \u00b7 RLS \u00b7 guard \u00b7 Live Chrome LAST) \u2014 soft yes to owner without this list is a defect",
     "source_file": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md",
