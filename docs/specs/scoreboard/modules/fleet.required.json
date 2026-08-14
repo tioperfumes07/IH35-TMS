@@ -312,7 +312,6 @@
         "unit",
         "trailer",
         "vendor",
-        "ap_bill",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -419,7 +418,6 @@
       "required": [
         "unit",
         "vendor",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -806,7 +804,6 @@
         "trailer",
         "unit",
         "vendor",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -1347,6 +1344,30 @@
           "id": "trailer.profile.maintenance",
           "removed": [
             "scenario.maintenance"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5159",
+      "note": "ap_bill blanket-required on 4 fleet leaves; verified live per leaf, not assumed. unit.detail.finance_linkage genuinely owns it (KEPT, real Built added): UnitFinanceLinkageTab.tsx renders EntityLink kind=\"bill\" per row from listUnitLinkedFinancials, backed by GET /api/v1/accounting/units/:id/linked-financials -> a tenant+unit_id-scoped SELECT against accounting.bills. The other 3 own no accounting.bills data anywhere in their render path: roster.row.edit_unit (CreateUnitModal.tsx, reused for the roster row edit) has zero vendor_id/bill_id fields; unit.profile.maintenance's WO widgets (ServiceTimeline.tsx, UnitPartsHistorySection.tsx) surface work_order/vendor/vendor_invoice_number (a plain string, not an accounting.bills FK) but never a real bill_id or EntityLink kind=\"bill\"; trailer.profile.maintenance (TrailerProfilePage.tsx) has zero bill references at all.",
+      "drops": [
+        {
+          "id": "roster.row.edit_unit",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "unit.profile.maintenance",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "trailer.profile.maintenance",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]

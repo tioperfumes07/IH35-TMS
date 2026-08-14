@@ -607,5 +607,12 @@
     "source_file": "docs/specs/scoreboard/modules/reports.required.json",
     "guard": "scripts/verify-report-management-ap-aging.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-ACCT-F5159-COMPLIANCE-FLEET-AP-BILL-HONEST-MAP",
+    "title": "compliance + fleet money-cell gaps closed to 0/1->0-remaining — compliance's 3 false ap_bill Requireds removed (property_tax.list/detail post a direct GL JE with zero accounting.bills row; form2290 is a pure filing tracker with zero bill_id anywhere); fleet's 3 false ap_bill Requireds removed (roster.row.edit_unit/unit.profile.maintenance/trailer.profile.maintenance surface no accounting.bills data — WO/parts widgets show vendor_invoice_number as a plain string, never a real bill FK) while fleet's genuinely-wired unit.detail.finance_linkage (real Unit->Bill reverse drill, tenant+unit-scoped) gets a real leaf-specific Built guard instead of riding the removed broad claim",
+    "source_file": "docs/specs/scoreboard/modules/fleet.required.json",
+    "guard": "scripts/verify-unit-finance-linkage-ap-bill.mjs",
+    "type": "enforced"
   }
 ]

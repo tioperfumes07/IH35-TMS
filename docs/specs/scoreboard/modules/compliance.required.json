@@ -258,7 +258,6 @@
       "required": [
         "unit",
         "vendor",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -271,7 +270,6 @@
       "required": [
         "unit",
         "vendor",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -283,7 +281,6 @@
       "route_hint": "/compliance",
       "required": [
         "unit",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -636,6 +633,30 @@
           "id": "hop.maint_compliance",
           "removed": [
             "work_order"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5159",
+      "note": "ap_bill blanket-required on all 3 compliance filing leaves regardless of whether the underlying flow ever creates an accounting.bills row. Verified live: property_tax.list/detail post via apps/backend/src/accounting/property-tax-posting/poster.service.ts, which writes accounting.property_tax_accruals and posts a direct GL JE (Dr property_tax_expense / Cr property_tax_payable, or Dr expense / Cr cash on cash-basis) \u2014 zero accounting.bills or vendor_id anywhere in that path. form2290 (form-2290.routes.ts, form-2290-generator.ts, filings-aggregate.service.ts) is a pure filing/deadline tracker with zero bill_id/vendor_id references anywhere in its backend or frontend. None of the 3 leaves ever owed ap_bill.",
+      "drops": [
+        {
+          "id": "property_tax.list",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "property_tax.detail",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "form2290",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]
