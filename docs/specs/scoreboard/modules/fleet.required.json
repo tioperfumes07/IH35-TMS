@@ -527,8 +527,7 @@
         "unit",
         "vendor",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1679,7 +1678,7 @@
     "reverse_link_column_2026_08_14": {
       "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
       "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
-      "leaves_touched": 24,
+      "leaves_touched": 25,
       "drops": [
         {
           "id": "roster.kind.company",
@@ -1722,6 +1721,13 @@
             "reverse_link"
           ],
           "reason": "pure unit-scoped action panel, no FK to external entity"
+        },
+        {
+          "id": "unit.profile.qbo_mapping",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "QBO vendor/class text identifiers are external mapping keys, not canonical TMS FKs; USMCA QBO sync is owner-locked out of scope"
         },
         {
           "id": "unit.edit.identity",
