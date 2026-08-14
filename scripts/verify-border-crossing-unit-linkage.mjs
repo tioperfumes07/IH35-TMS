@@ -1,5 +1,13 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,fleet,compliance cols=unit,connectivity,reverse_link,picker_law */
+/** @matrix-built modules=dispatch cols=unit,connectivity,reverse_link,picker_law leafRe=^(dispatch\.wizard\.border_crossing_wizard_page|queues\.border_history)$ task=BORDER-CROSSING-UNIT-LINKAGE */
+// LINK-THEATER-01 narrowing (2026-08-14): sibling of LINK-F5148 — unit side. Real, tracked leaves:
+// dispatch.wizard.border_crossing_wizard_page (unit picker on the create wizard) and
+// queues.border_history. "compliance" dropped — unjustified, zero compliance file read. "fleet"
+// ALSO dropped, not silently kept: UnitBorderCrossingsReverseSection is genuinely mounted on
+// VehicleProfilePage.tsx (fleet/units/:id), but that mount has NO tracked leaf id in
+// fleet.required.json — every unit.profile.*_reverse id is enumerated there except this one. Real,
+// open inventory gap (third one surfaced this pass, after LINK-F5145/F5146's DriverDetail.tsx gap) —
+// not invented a leaf id to close it artificially.
 import fs from "node:fs";
 const LABEL = "verify-border-crossing-unit-linkage";
 const files = {

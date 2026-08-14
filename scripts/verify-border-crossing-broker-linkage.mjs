@@ -1,5 +1,10 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,vendors,compliance cols=vendor,connectivity,reverse_link,picker_law */
+/** @matrix-built modules=dispatch,vendors cols=vendor,connectivity,reverse_link,picker_law leafRe=^(dispatch\.wizard\.border_crossing_wizard_page|queues\.border_history|detail\.profile)$ task=BORDER-CROSSING-BROKER-LINKAGE */
+// LINK-THEATER-01 narrowing (2026-08-14): sibling of LINK-F5148 (border-crossing-driver-linkage) —
+// same wizard/history surfaces, broker/vendor side instead of driver side. Real leaves:
+// dispatch.wizard.border_crossing_wizard_page, queues.border_history, and VendorDetail.tsx ->
+// detail.profile (/vendors/:id, confirmed in vendors.required.json). "compliance" dropped — zero
+// compliance file is read anywhere in this guard.
 import fs from "node:fs";
 const LABEL = "verify-border-crossing-broker-linkage";
 const files = {
