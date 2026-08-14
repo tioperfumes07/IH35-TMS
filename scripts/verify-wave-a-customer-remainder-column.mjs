@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","safety"],"cols":["customer"],"leafRe":".*","task":"WAVE-A-customer-remainder","vertical":"column-wave"} */
+/** @matrix-built {"modules":["lists","safety"],"cols":["customer"],"leafRe":"^(hub\\.names_search|cargo_claims\\.(list|create)|complaints\\.list)$","task":"WAVE-A-customer-remainder-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const checks = [

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["home","dispatch","driver-hub","reports","factoring","accounting","customers","banking","cash-flow"],"cols":["customer"],"leafRe":".*","task":"WAVE-A-customer","vertical":"column-wave"} */
+/** @matrix-built {"modules":["home","reports","factoring"],"cols":["customer"],"leafRe":"^(role\\.dispatcher|report\\.dispatch_margin|submit\\.queue)$","task":"WAVE-A-customer-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const checks = [
