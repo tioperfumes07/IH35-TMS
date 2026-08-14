@@ -8,6 +8,7 @@ import {
   getPlaidBankAccount,
   getPlaidBankAccounts,
   getPlaidBankTransactions,
+  getReconciliationSessions,
   listTransfers,
   syncPlaidBankAccount,
   type Transfer,
@@ -93,6 +94,24 @@ export function BankAccountDetailPage() {
     enabled: Boolean(id && companyId),
   });
   const transfers: Transfer[] = transfersQuery.data?.transfers ?? [];
+
+  // LINK-F5175 — banking:reconciliation reverse gap. reconciliation_sessions.bank_account_id is a real
+  // FK and the backend read already supported filtering by it in every other caller shape (the sessions
+  // list itself); this account's own detail page never queried it at all, so an operator opening a bank
+  // account had no way to see (or drill into) its own reconciliation history without a manual trip to
+  // the company-wide /banking/reconciliation tab and finding the right row by eye. Server-side
+  // bank_account_id scoping (not a client-side filter) because completed_sessions is capped at LIMIT 5
+  // company-wide — filtering client-side would silently drop this account's own sessions once other
+  // accounts fill that cap.
+  const reconciliationQuery = useQuery({
+    queryKey: ["banking", "reconciliation-sessions", "by-account", id, companyId],
+    queryFn: () => getReconciliationSessions(companyId, id),
+    enabled: Boolean(id && companyId),
+  });
+  const reconciliationSessions = [
+    ...(reconciliationQuery.data?.open_sessions ?? []),
+    ...(reconciliationQuery.data?.completed_sessions ?? []),
+  ];
 
   const account = detailQuery.data?.account;
 
@@ -234,6 +253,51 @@ export function BankAccountDetailPage() {
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+          </div>
+        </div>
+      ) : null}
+
+      {/* LINK-F5175 — reconciliation sessions for THIS account, via the real bank_account_id FK. Never
+      shown here before; only reachable via a manual trip to the company-wide reconciliation tab. */}
+      {reconciliationSessions.length > 0 ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="bank-account-detail-reconciliation-sessions">
+          <h3 className="mb-2 text-sm font-semibold text-gray-800">Reconciliation sessions ({reconciliationSessions.length})</h3>
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
+                <th className="py-1 pr-2">Period</th>
+                <th className="py-1 pr-2">Status</th>
+                <th className="py-1 pr-2 text-right">Statement balance</th>
+                <th className="py-1 pr-2 text-right">Variance</th>
+                <th className="py-1 pr-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {reconciliationSessions.map((s) => (
+                <tr key={s.id} className="border-b border-gray-100 last:border-0">
+                  <td className="py-1 pr-2 text-gray-700">
+                    {formatDateUS(s.period_start)} – {formatDateUS(s.period_end)}
+                  </td>
+                  <td className="py-1 pr-2 text-gray-700 capitalize">{s.status}</td>
+                  <td className="py-1 pr-2 text-right text-gray-900">{formatUsdCents(Number(s.statement_balance_cents))}</td>
+                  <td className="py-1 pr-2 text-right text-gray-900">{formatUsdCents(Number(s.variance_cents))}</td>
+                  <td className="py-1 pr-2 text-right">
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-blue-700 hover:underline"
+                      data-testid={`bank-account-detail-reconciliation-open-${s.id}`}
+                      onClick={() =>
+                        navigate(`/banking/reconciliation-workspace?session_id=${s.id}&bank_account_hint=${s.bank_account_id}`)
+                      }
+                    >
+                      Open
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
           </div>

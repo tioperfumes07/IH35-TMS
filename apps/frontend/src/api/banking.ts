@@ -953,9 +953,11 @@ export function getPlaidCompanyTransactions(
   return apiRequest<{ transactions: PlaidBankTransaction[] }>(`/api/v1/banking/plaid/company-transactions?${params.toString()}`);
 }
 
-export function getReconciliationSessions(operatingCompanyId: string) {
+export function getReconciliationSessions(operatingCompanyId: string, bankAccountId?: string) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (bankAccountId) params.set("bank_account_id", bankAccountId);
   return apiRequest<{ open_sessions: ReconciliationSession[]; completed_sessions: ReconciliationSession[] }>(
-    `/api/v1/banking/reconciliation/sessions?${q(operatingCompanyId)}`
+    `/api/v1/banking/reconciliation/sessions?${params.toString()}`
   );
 }
 
