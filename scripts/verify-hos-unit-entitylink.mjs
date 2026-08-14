@@ -23,7 +23,8 @@ function audit(hosSrc, eldSrc) {
   if (!/data-testid=["']hos-tracker-detail-unit-link["']/.test(hosSrc)) {
     failures.push(`${HOS}: missing data-testid=hos-tracker-detail-unit-link`);
   }
-  if (!/kind=["']unit["']/.test(hosSrc) || !/selectedDriver\.unit_id/.test(hosSrc)) {
+  // Detail (not the table column) must bind selectedDriver.unit_id with kind=unit.
+  if (!/kind=["']unit["'][\s\S]{0,80}id=\{selectedDriver\.unit_id\}/.test(hosSrc)) {
     failures.push(`${HOS}: detail must EntityLink kind=unit with selectedDriver.unit_id`);
   }
   if (/entityLabel\(row\.unit_number,\s*null/.test(eldSrc)) {
@@ -31,6 +32,9 @@ function audit(hosSrc, eldSrc) {
   }
   if (!/data-testid=["']eld-live-duty-unit-link["']/.test(eldSrc)) {
     failures.push(`${ELD}: missing data-testid=eld-live-duty-unit-link`);
+  }
+  if (!/kind=["']unit["'][\s\S]{0,80}id=\{row\.unit_id\}/.test(eldSrc)) {
+    failures.push(`${ELD}: unit column must EntityLink kind=unit with row.unit_id`);
   }
   return failures;
 }
@@ -42,9 +46,14 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — live files should pass`);
     process.exit(1);
   }
-  const broken = hos.replace(/kind=["']unit["']/, 'kind="driver"');
-  if (!audit(broken, eld).length) {
-    console.error(`${LABEL} SELFTEST FAIL — planted kind regression not caught`);
+  const brokenHos = hos.replace(/kind=["']unit["']([\s\S]{0,80}id=\{selectedDriver\.unit_id\})/, 'kind="driver"$1');
+  if (!audit(brokenHos, eld).length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted HOS detail kind regression not caught`);
+    process.exit(1);
+  }
+  const brokenEld = eld.replace(/kind=["']unit["']([\s\S]{0,80}id=\{row\.unit_id\})/, 'kind="driver"$1');
+  if (!audit(hos, brokenEld).length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted ELD unit kind regression not caught`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest OK`);
