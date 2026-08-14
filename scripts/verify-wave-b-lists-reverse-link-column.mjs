@@ -3,10 +3,18 @@ import fs from "node:fs";
 
 const checks = [
   ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /LINKABLE_NAME_KINDS[\s\S]*customer:\s*"customer"[\s\S]*vendor:\s*"vendor"[\s\S]*driver:\s*"driver"/],
-  ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /<EntityLink kind=\{kind\} id=\{row\.entity_id\} label=\{row\.display_name\}/],
-  ["apps/frontend/src/pages/lists/names/BrokersListPage.tsx", /<EntityLink kind="customer" id=\{row\.id\} label=\{row\.name\}/],
+  // Allow attrs (data-testid / className / multiline) between EntityLink and kind/id/label.
+  [
+    "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx",
+    /<EntityLink[\s\S]{0,160}kind=\{kind\}[\s\S]{0,80}id=\{row\.entity_id\}[\s\S]{0,80}label=\{row\.display_name\}/,
+  ],
+  [
+    "apps/frontend/src/pages/lists/names/BrokersListPage.tsx",
+    /<EntityLink[\s\S]{0,120}kind="customer"[\s\S]{0,80}id=\{row\.id\}[\s\S]{0,80}label=\{row\.name\}/,
+  ],
   ["apps/frontend/src/pages/lists/names/BrokersListPage.tsx", /onRowClick=\{\(row\) => navigate\(`\/customers\/\$\{row\.id\}`\)\}/],
 ];
+
 
 const failures = checks
   .filter(([file, pattern]) => !pattern.test(fs.readFileSync(file, "utf8")))
