@@ -178,7 +178,6 @@
       "route_hint": "/fuel/expense-mapping",
       "required": [
         "expense",
-        "gl_je",
         "connectivity"
       ]
     },
@@ -239,8 +238,7 @@
         "unit",
         "trailer",
         "load",
-        "vendor",
-        "gl_je"
+        "vendor"
       ]
     },
     {
@@ -558,6 +556,24 @@
             "reverse_link"
           ],
           "reason": "pre-aggregated numeric KPI props, no id/FK columns"
+        }
+      ]
+    },
+    "gl_je_2026_08_15_secondary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "gl_je Required on leaves that structurally cannot carry a JE link: expense_mapping (FuelGlMappingCoverage.tsx) is a category->account MAPPING coverage checker -- its own code comment states \"This screen does NO GL posting ... It only READS the mapping table so an operator sees coverage gaps before posting runs\"; fuel.modal.create_fuel_transaction is a pure create-form (CreateFuelTransactionModal.tsx) -- no fuel-transaction record (and therefore no posted JE) exists yet at the time this modal is on screen. Verified live: neither file contains any EntityLink or journal_entry reference.",
+      "drops": [
+        {
+          "id": "expense_mapping",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "fuel.modal.create_fuel_transaction",
+          "removed": [
+            "gl_je"
+          ]
         }
       ]
     }

@@ -119,7 +119,6 @@
       "sub": "Form 425C home",
       "route_hint": "/425c",
       "required": [
-        "gl_je",
         "connectivity"
       ]
     },
@@ -146,7 +145,6 @@
       "sub": "Current period form tab",
       "route_hint": "/425c?tab=form",
       "required": [
-        "gl_je",
         "connectivity"
       ]
     },
@@ -165,7 +163,6 @@
       "sub": "Filing history tab",
       "route_hint": "/425c?tab=history",
       "required": [
-        "gl_je",
         "connectivity"
       ]
     },
@@ -212,7 +209,6 @@
       "sub": "Factoring/Escrow excluded from main bank totals (lines 19-23)",
       "route_hint": "/425c",
       "required": [
-        "gl_je",
         "bank"
       ],
       "note": "Connectivity N/A: this law describes excluded QBO/virtual-bank behavior; GL and bank applicability remain independently required."
@@ -587,6 +583,36 @@
             "connectivity"
           ],
           "reason": "no staged Filters-panel present"
+        }
+      ]
+    },
+    "gl_je_2026_08_15_secondary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "gl_je Required on leaves that structurally cannot carry a JE link, same reasoning as the sibling liability/qbo_chrome/reverse_link drops already recorded on these exact leaves: home is a pure page shell; tab.form is a filing-form editor (no record posted yet); tab.history is a filing-history list with zero EntityLink of any kind; law.virtual_banks_excluded documents a computation rule (Form lines 19-23 stay backend Banking import values), not a separately-rendered UI surface a JE link could attach to -- Form425CHome.tsx has no \"law\" tab branch at all. Verified live: none of the underlying files (Form425CHome.tsx, CurrentPeriodTab.tsx, HistoryTab.tsx) contain any EntityLink.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "tab.form",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "tab.history",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "law.virtual_banks_excluded",
+          "removed": [
+            "gl_je"
+          ]
         }
       ]
     }
