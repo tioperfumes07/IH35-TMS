@@ -3,7 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
-import { SubscriptionEditor, type SubscriptionFormValues } from "../../components/reports/SubscriptionEditor";
+import {
+  SubscriptionEditor,
+  type SubscriptionFormValues,
+} from "../../components/reports/SubscriptionEditor";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
@@ -74,29 +77,42 @@ export function SubscriptionManager() {
   const subsQuery = useQuery({
     queryKey: ["gap43-subscriptions", companyId],
     queryFn: () =>
-      apiRequest<{ rows: SubscriptionRow[] }>(withCompany("/api/v1/reports/scheduled/subscriptions", companyId)),
+      apiRequest<{ rows: SubscriptionRow[] }>(
+        withCompany("/api/v1/reports/scheduled/subscriptions", companyId),
+      ),
     enabled: Boolean(companyId),
   });
 
   const logQuery = useQuery({
     queryKey: ["gap43-delivery-log", companyId],
     queryFn: () =>
-      apiRequest<{ rows: DeliveryLogRow[] }>(withCompany("/api/v1/reports/scheduled/delivery-log", companyId)),
+      apiRequest<{ rows: DeliveryLogRow[] }>(
+        withCompany("/api/v1/reports/scheduled/delivery-log", companyId),
+      ),
     enabled: Boolean(companyId),
   });
 
   const saveMut = useMutation({
     mutationFn: async (values: SubscriptionFormValues) => {
       if (editing) {
-        return apiRequest(withCompany(`/api/v1/reports/scheduled/subscriptions/${editing.uuid}`, companyId), {
-          method: "PATCH",
-          body: values,
-        });
+        return apiRequest(
+          withCompany(
+            `/api/v1/reports/scheduled/subscriptions/${editing.uuid}`,
+            companyId,
+          ),
+          {
+            method: "PATCH",
+            body: values,
+          },
+        );
       }
-      return apiRequest(withCompany("/api/v1/reports/scheduled/subscriptions", companyId), {
-        method: "POST",
-        body: values,
-      });
+      return apiRequest(
+        withCompany("/api/v1/reports/scheduled/subscriptions", companyId),
+        {
+          method: "POST",
+          body: values,
+        },
+      );
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["gap43-subscriptions"] });
@@ -109,9 +125,15 @@ export function SubscriptionManager() {
 
   const deactivateMut = useMutation({
     mutationFn: (uuid: string) =>
-      apiRequest(withCompany(`/api/v1/reports/scheduled/subscriptions/${uuid}/deactivate`, companyId), {
-        method: "PATCH",
-      }),
+      apiRequest(
+        withCompany(
+          `/api/v1/reports/scheduled/subscriptions/${uuid}/deactivate`,
+          companyId,
+        ),
+        {
+          method: "PATCH",
+        },
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["gap43-subscriptions"] });
       pushToast("Subscription deactivated", "success");
@@ -125,7 +147,7 @@ export function SubscriptionManager() {
         slug,
         label,
       })),
-    []
+    [],
   );
 
   const rows = subsQuery.data?.rows ?? [];
@@ -155,8 +177,12 @@ export function SubscriptionManager() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
-      {subsQuery.isLoading ? <p className="text-sm text-gray-500">Loading subscriptions…</p> : null}
+      {!companyId ? (
+        <p className="text-sm text-red-600">Select an operating company.</p>
+      ) : null}
+      {subsQuery.isLoading ? (
+        <p className="text-sm text-gray-500">Loading subscriptions…</p>
+      ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-2">
         <MobileOptimizedTable
@@ -171,20 +197,43 @@ export function SubscriptionManager() {
             {
               key: "report",
               header: "Report",
-              render: (row) => REPORT_LABELS[row.report_slug] ?? row.report_slug,
+              render: (row) =>
+                REPORT_LABELS[row.report_slug] ?? row.report_slug,
             },
-            { key: "cadence", header: "Cadence", render: (row) => cadenceLabel(row) },
-            { key: "recipients", header: "Recipients", render: (row) => row.recipient_emails.join(", ") },
-            { key: "format", header: "Format", render: (row) => row.delivery_format.toUpperCase() },
-            { key: "last", header: "Last sent", render: (row) => row.last_sent_at?.slice(0, 19) ?? "—" },
-            { key: "next", header: "Next", render: (row) => row.next_scheduled_at?.slice(0, 19) ?? "—" },
+            {
+              key: "cadence",
+              header: "Cadence",
+              render: (row) => cadenceLabel(row),
+            },
+            {
+              key: "recipients",
+              header: "Recipients",
+              render: (row) => row.recipient_emails.join(", "),
+            },
+            {
+              key: "format",
+              header: "Format",
+              render: (row) => row.delivery_format.toUpperCase(),
+            },
+            {
+              key: "last",
+              header: "Last sent",
+              render: (row) => row.last_sent_at?.slice(0, 19) ?? "—",
+            },
+            {
+              key: "next",
+              header: "Next",
+              render: (row) => row.next_scheduled_at?.slice(0, 19) ?? "—",
+            },
             {
               key: "status",
               header: "Status",
               render: (row) => (
                 <span
                   className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${
-                    row.is_active ? "border-slate-200 bg-slate-100 text-slate-900" : "border-gray-200 bg-gray-100 text-gray-700"
+                    row.is_active
+                      ? "border-slate-200 bg-slate-100 text-slate-900"
+                      : "border-gray-200 bg-gray-100 text-gray-700"
                   }`}
                 >
                   {row.is_active ? "active" : "inactive"}
@@ -228,20 +277,38 @@ export function SubscriptionManager() {
       </div>
 
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-slate-800">Delivery history</h3>
+        <h3 className="text-sm font-semibold text-slate-800">
+          Delivery history
+        </h3>
         <div className="rounded-sm border border-gray-200 bg-white p-2">
           <MobileOptimizedTable
             rows={logRows}
             rowKey={(log) => log.uuid}
-            emptyMessage={logQuery.isSuccess ? "No deliveries logged yet." : "Loading delivery history…"}
+            emptyMessage={
+              logQuery.isSuccess
+                ? "No deliveries logged yet."
+                : "Loading delivery history…"
+            }
             columns={[
-              { key: "sent", header: "Sent at", render: (log) => log.sent_at.slice(0, 19) },
+              {
+                key: "sent",
+                header: "Sent at",
+                render: (log) => log.sent_at.slice(0, 19),
+              },
               { key: "status", header: "Status", render: (log) => log.status },
-              { key: "recipients", header: "Recipients", render: (log) => (log.recipients ?? []).join(", ") || "—" },
+              {
+                key: "recipients",
+                header: "Recipients",
+                render: (log) => (log.recipients ?? []).join(", ") || "—",
+              },
               {
                 key: "error",
                 header: "Error",
-                render: (log) => <span className="text-red-700">{log.error_message ?? "—"}</span>,
+                render: (log) => (
+                  <span className="text-red-700">
+                    {log.error_message ?? "—"}
+                  </span>
+                ),
               },
             ]}
           />
@@ -250,6 +317,7 @@ export function SubscriptionManager() {
 
       <SubscriptionEditor
         open={editorOpen}
+        mode={editing ? "edit" : "create"}
         onClose={() => {
           setEditorOpen(false);
           setEditing(null);
@@ -269,9 +337,10 @@ export function SubscriptionManager() {
                 time_of_day: editing.time_of_day,
                 timezone: editing.timezone,
                 recipient_emails: editing.recipient_emails,
-                delivery_format: editing.delivery_format as SubscriptionFormValues["delivery_format"],
+                delivery_format:
+                  editing.delivery_format as SubscriptionFormValues["delivery_format"],
               }
-            : undefined
+            : { recipient_emails: user?.email ? [user.email] : [] }
         }
       />
     </div>
