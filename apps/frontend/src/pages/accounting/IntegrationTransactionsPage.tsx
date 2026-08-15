@@ -285,6 +285,7 @@ export function IntegrationTransactionsPage() {
           // flight with zero current rows — never renders emptyText mid-fetch.
           loading={isPending || (isFetching && items.length === 0)}
           filterBar={filterBar}
+          suppressToolbarSearch
           storageKey="integration-transactions"
           exportFilename="integration-transactions"
           initialPageSize={50}

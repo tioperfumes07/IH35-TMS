@@ -240,6 +240,7 @@ export function ReceiptsPage() {
           rowKey={(row) => row.id}
           loading={isPending || (isFetching && items.length === 0)}
           filterBar={filterBar}
+          suppressToolbarSearch
           storageKey="receipts-list"
           initialPageSize={limit}
           sortKey={sortKey}

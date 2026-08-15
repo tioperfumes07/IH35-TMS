@@ -311,6 +311,7 @@ export function TransactionRegisterPage() {
           emptyText="No transactions for the selected filters."
           storageKey="transaction-register"
           tableTestId="transaction-register-table"
+          suppressToolbarSearch
           initialPageSize={PAGE_SIZE}
           pageSizeOptions={[PAGE_SIZE]}
         />
