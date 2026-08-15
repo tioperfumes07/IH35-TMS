@@ -43,17 +43,26 @@ if (!src) {
     }
   }
 
-  // 2. Account Type picker grouped by statement (QBO parity).
-  if (!/ACCOUNT_TYPE_GROUPS/.test(src)) failures.push("Account Type picker must be statement-grouped (ACCOUNT_TYPE_GROUPS)");
+  // 2. Account Type picker uses QBO finer types (~15) from live catalog, statement-grouped.
+  if (!/accountTypePickerGroupsFromCatalog/.test(src)) {
+    failures.push("Account Type picker must use accountTypePickerGroupsFromCatalog (QBO finer types)");
+  }
+  if (!/ACCOUNT_TYPE_GROUPS/.test(src)) failures.push("ACCOUNT_TYPE_GROUPS fallback must remain in coa-list");
   if (!/<optgroup/.test(src)) failures.push("Account Type picker must render <optgroup>s");
   if (!/Balance Sheet/.test(src) || !/Profit & Loss/.test(src)) failures.push("Account Type groups must be Balance Sheet + Profit & Loss");
+  if (!/account-type-qbo-finer-select/.test(src)) {
+    failures.push("AccountDrawer must expose data-testid=account-type-qbo-finer-select");
+  }
 
-  // 3. Detail Type select cascades off the account-type-derived list.
-  if (!/detailTypesForType/.test(src)) failures.push("Detail Type select must cascade off detailTypesForType");
+  // 3. Detail Type select cascades off the account-type-derived list (finer code OR legacy enum).
+  if (!/detailTypesForAccountTypeSelection/.test(src) && !/detailTypesForType/.test(src)) {
+    failures.push("Detail Type select must cascade off detailTypesForType / detailTypesForAccountTypeSelection");
+  }
   if (!/detailTypesForType\.map/.test(src)) failures.push("Detail Type <option>s must render from detailTypesForType");
 
   // 4. Changing Account Type resets the Detail Type (no stale cross-type subtype / FK).
-  const onChangeIdx = src.indexOf('setField("account_type"');
+  // Anchor on the <select> onChange (e.target.value) — not the edit-hydrate setField("account_type", resolved).
+  const onChangeIdx = src.indexOf('setField("account_type", e.target.value)');
   const onChangeBlock = onChangeIdx >= 0 ? src.slice(onChangeIdx, onChangeIdx + 280) : "";
   if (!/setField\("account_subtype", ""\)/.test(onChangeBlock)) {
     failures.push("changing Account Type must reset account_subtype (Detail Type)");
@@ -72,4 +81,4 @@ if (failures.length) {
   for (const m of failures) console.error(`- ${m}`);
   process.exit(1);
 }
-console.log(`${LABEL} — OK (8 enums mapped, statement-grouped picker, cascaded Detail Type, reset-on-type-change)`);
+console.log(`${LABEL} — OK (8 enums mapped, QBO finer type picker, cascaded Detail Type, reset-on-type-change)`);
