@@ -3036,7 +3036,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1154,
+  "total_claimed": 1158,
   "3454": {
     "purpose": "verify-parts-inventory-no-dup-search",
     "lane": "cursor",
@@ -3072,9 +3072,29 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3468": {
+    "purpose": "verify-vendors-customers-list-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "3469": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
     "purpose": "verify-pdf-render-date-object-stringify"
+  },
+  "3470": {
+    "purpose": "verify-legal-templates-list-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3472": {
+    "purpose": "verify-legal-contracts-list-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3474": {
+    "purpose": "verify-maint-lists-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
   }
 }
