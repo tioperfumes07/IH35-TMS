@@ -3077,6 +3077,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3469": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "claude-1",
+    "purpose": "verify-pdf-render-date-object-stringify"
+  },
   "3470": {
     "purpose": "verify-legal-templates-list-duplicate-search",
     "lane": "cursor",
