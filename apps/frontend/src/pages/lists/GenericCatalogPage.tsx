@@ -95,7 +95,9 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
     <div className="space-y-3">
       <ListsSubNav />
       <BackArrowHeader
-        backTo="/lists/catalogs"
+        // LST-F3352 — ← must return to the main Lists hub (/lists), never Catalog Index
+        // (/lists/catalogs) or an operating module. Same contract as every bespoke catalog page.
+        backTo="/lists"
         breadcrumb={["Lists & Catalogs", definition.domain, definition.displayName]}
         title={definition.displayName}
         countBadge={total}

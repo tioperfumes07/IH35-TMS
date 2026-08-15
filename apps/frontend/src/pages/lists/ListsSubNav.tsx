@@ -52,11 +52,13 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Names Master", href: "/lists/names" },
   { label: "Catalog Index", href: "/lists/catalogs" },
   {
+    // LST-F3352 — domain picker opens the per-domain Lists hub, not Catalog Index and not a
+    // bare /lists/:domain hop (redirect works, but ← from a leaf must stay Lists-native).
     label: "Catalog domains",
-    href: "/lists/catalogs",
+    href: "/lists",
     children: DOMAIN_ORDER.map((domain) => ({
       label: DOMAIN_LABELS[domain],
-      href: `/lists/${domain}`,
+      href: `/lists/hub/${domain}`,
     })),
   },
   {
@@ -98,6 +100,7 @@ export function listsSubNavActiveHref(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
   if (norm === "/lists") return "/lists";
   if (norm.startsWith("/lists/names")) return "/lists/names";
+  if (norm.startsWith("/lists/hub/")) return "/lists";
   if (norm.startsWith("/lists/catalogs")) return "/lists/catalogs";
   if (norm.startsWith("/lists/maintenance/parts-catalog")) return "/lists/maintenance/parts-catalog";
   for (const child of [...SAFETY_CATALOG_CHILDREN, ...FLEET_CATALOG_CHILDREN, ...DISPATCH_CATALOG_CHILDREN]) {

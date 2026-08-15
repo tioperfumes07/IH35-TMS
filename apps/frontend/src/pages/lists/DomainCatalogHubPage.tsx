@@ -56,10 +56,9 @@ export function DomainCatalogHubPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3">
-        <div className="space-y-2">
-          <DomainCatalogSection domain={domain} onCatalogClick={openCatalog} />
-        </div>
+      {/* LST-F3352 — flat section; no nested bordered card (box-in-box) under ModuleHeader. */}
+      <div className="space-y-2">
+        <DomainCatalogSection domain={domain} onCatalogClick={openCatalog} />
       </div>
     </div>
   );
