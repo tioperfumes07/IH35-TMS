@@ -44,9 +44,10 @@ export type CashAdvanceOfficeCreatePayload = {
 };
 
 export const cashAdvanceRequestsOfficeApi = {
-  listPending(operatingCompanyId: string) {
+  // LINK-F5171/LINK-F5185: settlements:cash_advances reverse — driver-scoped pending queue filter.
+  listPending(operatingCompanyId: string, driverId?: string) {
     return apiRequest<{ requests: CashAdvanceRequestRow[] }>(
-      withCompanyQuery("/api/v1/driver-finance/cash-advance-requests/pending", operatingCompanyId)
+      withCompanyQuery("/api/v1/driver-finance/cash-advance-requests/pending", operatingCompanyId, driverId ? { driver_id: driverId } : {})
     );
   },
 
