@@ -32,11 +32,11 @@ describe("DOT inspection CSA canonical rollup", () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("AS driver_ok") && sql.includes("AS unit_ok")) {
-        return { rows: [{ driver_ok: true, unit_ok: true }], rowCount: 1 };
+        return { rows: [{ driver_ok: true, unit_ok: true, trailer_ok: true }], rowCount: 1 };
       }
       if (sql.includes("INSERT INTO safety.dot_inspections")) {
         return {
-          rows: [{ id: "inspection-1", outcome: "PASS", unit_id: null, csa_points: values?.[9] }],
+          rows: [{ id: "inspection-1", outcome: "PASS", unit_id: null, csa_points: values?.[10] }],
           rowCount: 1,
         };
       }
@@ -118,9 +118,9 @@ describe("DOT inspection CSA canonical rollup", () => {
     const insertCall = mockQuery.mock.calls.find((call) =>
       String(call[0]).includes("INSERT INTO safety.dot_inspections")
     );
-    expect(insertCall?.[1]?.[8]).toEqual(["unsafe_driving", "hos_compliance"]);
-    expect(insertCall?.[1]?.[9]).toBe(8);
-    expect(JSON.parse(String(insertCall?.[1]?.[10]))).toEqual({
+    expect(insertCall?.[1]?.[9]).toEqual(["unsafe_driving", "hos_compliance"]);
+    expect(insertCall?.[1]?.[10]).toBe(8);
+    expect(JSON.parse(String(insertCall?.[1]?.[11]))).toEqual({
       csa_point_breakdown: {
         unsafe_driving: 5,
         hos_compliance: 3,
@@ -131,7 +131,7 @@ describe("DOT inspection CSA canonical rollup", () => {
   it("rejects a driver or unit outside the selected operating company before insert", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("AS driver_ok") && sql.includes("AS unit_ok")) {
-        return { rows: [{ driver_ok: false, unit_ok: true }], rowCount: 1 };
+        return { rows: [{ driver_ok: false, unit_ok: true, trailer_ok: true }], rowCount: 1 };
       }
       return { rows: [], rowCount: 0 };
     });

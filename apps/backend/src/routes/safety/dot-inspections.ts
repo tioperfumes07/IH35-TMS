@@ -42,6 +42,9 @@ const dotInspectionSchema = z.object({
   inspection_date: z.string(),
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  // SAF-F17 / LST-F5163C — trailer is a first-class asset on DOT inspections (column live on
+  // safety.dot_inspections.trailer_id → mdata.equipment). List already filtered it; create must write it.
+  trailer_id: z.string().uuid().optional(),
   inspector_name: z.string().trim().min(1),
   inspection_level: z.number().int().min(1).max(6),
   location: z.string().optional(),
@@ -155,6 +158,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           SELECT di.*,
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                  u.unit_number AS unit_number,
+                 tr.equipment_number AS trailer_number,
                  wo.display_id AS work_order_display_id
           FROM safety.dot_inspections di
           LEFT JOIN mdata.drivers d
@@ -164,6 +168,10 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             ON u.id = di.unit_id
            AND (u.owner_company_id = di.operating_company_id
                 OR u.currently_leased_to_company_id = di.operating_company_id)
+          LEFT JOIN mdata.equipment tr
+            ON tr.id = di.trailer_id
+           AND (tr.owner_company_id = di.operating_company_id
+                OR tr.currently_leased_to_company_id = di.operating_company_id)
           LEFT JOIN maintenance.work_orders wo
             ON wo.id = di.auto_spawned_wo_id
           WHERE di.operating_company_id = $1::uuid
@@ -227,11 +235,25 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
                SELECT 1 FROM mdata.units u
                WHERE u.id = $3::uuid
                  AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
-             )) AS unit_ok`,
-          [query.data.operating_company_id, body.data.driver_id ?? null, body.data.unit_id ?? null]
+             )) AS unit_ok,
+             ($4::uuid IS NULL OR EXISTS (
+               SELECT 1 FROM mdata.equipment e
+               WHERE e.id = $4::uuid
+                 AND (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid)
+             )) AS trailer_ok`,
+          [
+            query.data.operating_company_id,
+            body.data.driver_id ?? null,
+            body.data.unit_id ?? null,
+            body.data.trailer_id ?? null,
+          ]
         );
-        const integrity = links.rows[0] as { driver_ok?: boolean; unit_ok?: boolean } | undefined;
-        if (!integrity?.driver_ok || !integrity.unit_ok) {
+        const integrity = links.rows[0] as {
+          driver_ok?: boolean;
+          unit_ok?: boolean;
+          trailer_ok?: boolean;
+        } | undefined;
+        if (!integrity?.driver_ok || !integrity.unit_ok || !integrity.trailer_ok) {
           await client.query("ROLLBACK");
           return null;
         }
@@ -254,16 +276,17 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         const createdRes = await client.query(
           `
             INSERT INTO safety.dot_inspections (
-              operating_company_id, driver_id, unit_id, inspection_date, inspector_name, fmcsa_level, location, outcome,
+              operating_company_id, driver_id, unit_id, trailer_id, inspection_date, inspector_name, fmcsa_level, location, outcome,
               csa_basic_categories, csa_points, violations_jsonb, auto_spawned_wo_id, created_by, notes
             )
-            VALUES ($1,$2,$3,$4::timestamptz,$5,$6,$7,$8,$9,$10,$11,NULL,$12,$13)
+            VALUES ($1,$2,$3,$4,$5::timestamptz,$6,$7,$8,$9,$10,$11,$12,NULL,$13,$14)
             RETURNING *
           `,
           [
             query.data.operating_company_id,
             body.data.driver_id ?? null,
             body.data.unit_id ?? null,
+            body.data.trailer_id ?? null,
             body.data.inspection_date,
             body.data.inspector_name,
             body.data.inspection_level,
