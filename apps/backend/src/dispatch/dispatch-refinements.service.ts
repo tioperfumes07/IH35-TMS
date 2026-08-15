@@ -560,17 +560,27 @@ export async function listLoadTemplates(userId: string, operatingCompanyId: stri
     const predicates = ["operating_company_id = $1::uuid"];
     if (filters.customer_id) { values.push(filters.customer_id); predicates.push(`template_json->>'customer_id' = $${values.length}`); }
     if (filters.template_id) { values.push(filters.template_id); predicates.push(`id = $${values.length}::uuid`); }
-    const res = await client.query(
+    const scopedAllRows = Boolean(filters.customer_id || filters.template_id);
+    const res = await client.query<{
+      id: string;
+      name: string;
+      template_json: Record<string, unknown>;
+      created_at: string;
+      updated_at: string;
+      total_count: string | number;
+    }>(
       `
-        SELECT id, name, template_json, created_at, updated_at
+        SELECT id, name, template_json, created_at, updated_at, COUNT(*) OVER() AS total_count
         FROM dispatch.load_templates
         WHERE ${predicates.join(" AND ")}
         ORDER BY name ASC
-        LIMIT 500
+        ${scopedAllRows ? "" : "LIMIT 500"}
       `,
       values
     );
-    return { templates: res.rows };
+    const total = Number(res.rows[0]?.total_count ?? 0);
+    const templates = res.rows.map(({ total_count: _totalCount, ...row }) => row);
+    return { templates, total };
   });
 }
 

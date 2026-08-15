@@ -778,7 +778,7 @@ export function listLoadTemplates(operatingCompanyId: string, filters: { custome
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (filters.customer_id) params.set("customer_id", filters.customer_id);
   if (filters.template_id) params.set("template_id", filters.template_id);
-  return apiRequest<{ templates: LoadTemplateRow[] }>(
+  return apiRequest<{ templates: LoadTemplateRow[]; total: number }>(
     `/api/v1/load-templates?${params.toString()}`
   );
 }

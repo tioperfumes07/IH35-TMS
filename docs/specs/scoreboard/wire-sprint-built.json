@@ -2552,6 +2552,14 @@
       "modules": ["tasks", "maintenance", "users"],
       "cols": ["connectivity"],
       "leafRe": "^(nav\\.chat|chat\\.mentions|tasks\\.modal\\.create_task|hop\\.daily_tasks|daily_tasks\\.create|wo\\.create|maintenance\\.modal\\.(work_order_create|create_work_order)|create)$"
+    },
+    {
+      "task": "REVERSE-PROFILE-PREVIEWS-SILENT-FIVE-ROW-CAP",
+      "pr": "this PR",
+      "guard": "scripts/verify-reverse-profile-preview-all-row-access.mjs",
+      "modules": ["cash-flow", "customers", "drivers", "fleet", "vendors", "dispatch"],
+      "cols": ["connectivity", "reverse_link"],
+      "leafRe": "^(cash-flow\\.panel\\.projection|detail\\.profile|profiles\\.detail|unit\\.profile\\.safety_reverse|dispatch\\.modal\\.save_load_template)$"
     }
   ]
 }

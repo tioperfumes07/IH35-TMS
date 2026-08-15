@@ -445,7 +445,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "factoring_vendor_merges_vendor":
       return `/factoring/vendor-merges?vendor_id=${id}`;
     case "load_template":
-      return `/dispatch/planning/calendar?panel=templates&template_id=${id}`;
+      return `/dispatch/planner?panel=templates&template_id=${id}`;
     case "cash_forecast_entry":
       return `/cash-flow?tab=manual_daily_projections&entry_id=${id}`;
     case "task":
