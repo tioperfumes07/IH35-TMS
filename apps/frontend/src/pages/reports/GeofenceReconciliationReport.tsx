@@ -15,7 +15,9 @@ interface Finding {
   uuid: string;
   anomaly_class: "orphan_entry" | "orphan_exit" | "duplicate_fire" | "expected_missing";
   geofence_id: string | null;
+  geofence_label: string | null;
   unit_id: string | null;
+  unit_number: string | null;
   load_uuid: string | null;
   occurred_at: string | null;
   resolved: boolean;
@@ -75,8 +77,8 @@ export function GeofenceReconciliationReport() {
 
   const findingColumns = useMemo<ParityColumn<Finding>[]>(
     () => [
-      { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(null, f.unit_id, "Unit") : "—"} /> },
-      { key: "geofence_id", label: "Geofence", render: (f) => <EntityLink kind="geofence" id={f.geofence_id ?? undefined} label={entityLabel(null, f.geofence_id, "Geofence")} /> },
+      { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(f.unit_number, f.unit_id, "Unit") : "—"} /> },
+      { key: "geofence_id", label: "Geofence", render: (f) => <EntityLink kind="geofence" id={f.geofence_id ?? undefined} label={entityLabel(f.geofence_label, f.geofence_id, "Geofence")} /> },
       { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—") },
       {
         key: "resolved",

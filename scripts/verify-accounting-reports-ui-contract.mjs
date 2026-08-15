@@ -127,7 +127,7 @@ try {
   assertIncludes(geofenceRecon, "setAppliedDate(date)", "Geofence recon must Apply staged report date");
   assertIncludes(scheduleModal, "option.name", "ScheduleReportModal must render report name, not raw id");
   assertIncludes(scheduleModal, "selectedReportName", "ScheduleReportModal must submit a human-readable report name");
-  assertIncludes(geofenceReport, "entityLabel(null, f.geofence_id", "GeofenceReconciliationReport must label geofence_id, not render raw UUID");
+  assertIncludes(geofenceReport, "entityLabel(f.geofence_label, f.geofence_id", "GeofenceReconciliationReport must consume the resolved geofence label, not render raw UUID");
   assertIncludes(iftaPreparer, "STATUS_LABELS[row.status]", "IftaPreparer must map filing status to a human label");
 
   const reportsDir = "apps/frontend/src/pages/reports";

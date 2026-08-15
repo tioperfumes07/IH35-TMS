@@ -270,10 +270,14 @@ export async function getReconciliationReport(
 ) {
   return withLuciaBypass(async (client) => {
     const res = await client.query(
-      `SELECT uuid, anomaly_class, geofence_id, unit_id, load_uuid, occurred_at, details, resolved, resolved_at, resolution_note
-       FROM safety.integrity_findings
-       WHERE operating_company_id = $1::uuid AND report_date = $2::date
-       ORDER BY anomaly_class, occurred_at`,
+      `SELECT f.uuid, f.anomaly_class, f.geofence_id, g.label AS geofence_label,
+              f.unit_id, u.unit_number, f.load_uuid, f.occurred_at, f.details,
+              f.resolved, f.resolved_at, f.resolution_note
+       FROM safety.integrity_findings f
+       LEFT JOIN geo.geofences g ON g.id = f.geofence_id AND g.operating_company_id = f.operating_company_id
+       LEFT JOIN mdata.units u ON u.id = f.unit_id AND u.operating_company_id = f.operating_company_id
+       WHERE f.operating_company_id = $1::uuid AND f.report_date = $2::date
+       ORDER BY f.anomaly_class, f.occurred_at`,
       [operatingCompanyId, date]
     );
     return res.rows;
