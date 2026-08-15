@@ -36,6 +36,8 @@ function failures(s = files) { return [
   ["company violation list EntityPicker driver/unit filters", s.companyPage.includes('dataTestId="company-violations-filter-driver"') && s.companyPage.includes('dataTestId="company-violations-filter-unit"') && s.companyPage.includes('allowCreate={false}')],
   ["company violation list Driver/Unit EntityLink columns", s.companyPage.includes('label: "Driver"') && s.companyPage.includes('label: "Unit"') && s.companyPage.includes('kind="driver"') && s.companyPage.includes('kind="unit"')],
   ["company violation list seeds filters from URL", s.companyPage.includes('searchParams.get("driver_id")') && s.companyPage.includes('searchParams.get("unit_id")') && s.companyPage.includes("setDriverFilter") && s.companyPage.includes("setUnitFilter")],
+  // LST-F5191 — filters must write URL, not local-only.
+  ["company violation list writes filters to URL", s.companyPage.includes("setSearchParams")],
   ["company violation unit forward links", s.companyDrawer.includes("violation.related_unit_ids") && s.companyDrawer.includes('kind="unit" id={unitId}')],
   ["company violation human label projections", (s.companyRoutes.match(/AS related_driver_labels/g) ?? []).length === 2 && (s.companyRoutes.match(/AS related_unit_labels/g) ?? []).length === 2],
   ["company violation driver label tenant joins", (s.companyRoutes.match(/md\.operating_company_id = cv\.operating_company_id/g) ?? []).length === 2],
@@ -56,6 +58,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, companyPage: files.companyPage.replace('dataTestId="company-violations-filter-driver"', 'dataTestId="x"')}).includes("company violation list EntityPicker driver/unit filters"),
     failures({...files, companyPage: files.companyPage.replace('label: "Driver"', 'label: "X"')}).includes("company violation list Driver/Unit EntityLink columns"),
     failures({...files, companyPage: files.companyPage.replaceAll("setDriverFilter", "noop")}).includes("company violation list seeds filters from URL"),
+    failures({...files, companyPage: files.companyPage.replaceAll("setSearchParams", "noop")}).includes("company violation list writes filters to URL"),
     failures({...files, companyDrawer: files.companyDrawer.replace('kind="unit" id={unitId}', 'kind="driver" id={unitId}')}).includes("company violation unit forward links"),
     failures({...files, companyRoutes: files.companyRoutes.replace("AS related_driver_labels", "AS unresolved_driver_labels")}).includes("company violation human label projections"),
     failures({...files, companyRoutes: files.companyRoutes.replace("md.operating_company_id = cv.operating_company_id", "TRUE")}).includes("company violation driver label tenant joins"),
@@ -63,7 +66,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, companyDrawer: files.companyDrawer.replace("driverLabels[driverId]", "undefined")}).includes("company violation drawer consumes labels"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-safety-alert-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-safety-alert-profile-reverse selftest PASS — 17/17 API/profile/label/target mutations red"); process.exit(0);
+  console.log(`verify-safety-alert-profile-reverse selftest PASS — ${checks.length}/${checks.length} API/profile/label/target mutations red`); process.exit(0);
 }
 const missing = failures(); if (missing.length) { console.error(`verify-safety-alert-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
 console.log("verify-safety-alert-profile-reverse PASS — five subject profiles resolve exact safety drawers");

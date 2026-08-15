@@ -31,14 +31,21 @@ type ComplainantType = "external" | "driver" | "employee" | "customer" | "anonym
 type RespondentType = "driver" | "employee";
 
 export function ComplaintsTab() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const highlightedComplaintId = searchParams.get("complaint_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  // LST-F5163I: visible reverse driver filter (allowCreate=false); URL seeds picker.
-  const [driverFilter, setDriverFilter] = useState("");
+  // LST-F5163I + LST-F5191: visible reverse driver filter must write ?driver_id=.
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+    setDriverFilterState(driverIdFromUrl);
   }, [driverIdFromUrl]);
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("driver_id", next);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
   const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();

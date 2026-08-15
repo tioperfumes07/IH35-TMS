@@ -29,25 +29,31 @@ function expiryLabel(expiryDate: string | null | undefined) {
 }
 
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkTrainingId = searchParams.get("training_id")?.trim() || "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() || "";
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState("");
-  // LST-F5163J: list reverse filter separate from create picker (URL seeds both).
-  const [driverFilter, setDriverFilter] = useState("");
+  // LST-F5163J + LST-F5191: list reverse filter must write ?driver_id=.
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
   const [trainingName, setTrainingName] = useState("");
   const [completedAt, setCompletedAt] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
-    if (driverIdFromUrl) {
-      setDriverId(driverIdFromUrl);
-      setDriverFilter(driverIdFromUrl);
-    }
+    setDriverFilterState(driverIdFromUrl);
+    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
   }, [driverIdFromUrl]);
+
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("driver_id", next);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
 
   const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
 
