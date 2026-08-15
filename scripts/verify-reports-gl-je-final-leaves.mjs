@@ -27,7 +27,15 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["management-required", "required", /("id": "report\.management"[\s\S]*?)\s*"gl_je",/, "$1"],
-    ["settlement-required", "required", /("id": "report\.settlement_summary"[\s\S]*?"vendor",)/, '$1\n        "gl_je",'],
+    // REPORTS-GL-JE-SETTLEMENT-SELFTEST-DRIFT (2026-08-15): "vendor" was legitimately dropped from
+    // report.settlement_summary's Required array by an honesty_audit entry (reports.required.json,
+    // "removed": ["vendor"]) after this mutation was written — the old anchor no longer exists
+    // anywhere in the file, so the .replace() was a silent no-op and the mutation-proof check
+    // (candidate === source) tripped a false SELFTEST FAIL. Re-anchored to "settlement", the current
+    // last element of that leaf's Required array (verified live against the current file) — the
+    // no-single-JE rule this mutation proves (settlement summary must never require gl_je) is
+    // unchanged.
+    ["settlement-required", "required", /("id": "report\.settlement_summary"[\s\S]*?"required": \[[\s\S]*?"settlement")/, '$1,\n        "gl_je"'],
     ["management-pnl", "management", /getProfitLossReport/g, "missingProfitLoss"],
     ["management-bs", "management", /getBalanceSheetReport/g, "missingBalanceSheet"],
     ["pnl-je", "pnl", /JOIN accounting\.journal_entries je/g, "JOIN accounting.invoices je"],
