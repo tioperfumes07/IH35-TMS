@@ -43,6 +43,9 @@ export function computeFailures(files) {
   if (!/listPartsAssignments/.test(assignments) || !/parts-assignments/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must load listPartsAssignments / parts-assignments SoR");
   }
+  if (/<code[^>]*>\s*maintenance\.parts_invoice_links\s*<\/code>/.test(assignments)) {
+    errors.push("InventoryAssignmentsPage must not expose its internal database table name to operators");
+  }
   if (!/\/inventory\/purchases/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must cross-link to /inventory/purchases");
   }
@@ -64,6 +67,7 @@ function selftest() {
       <EntityLink kind="work_order" id={r.wo_id} />
       <EntityLink kind="unit" id={r.unit_id} />
       assignmentsQuery.isError ? <ListErrorState /> : null
+      <p>Parts used on work orders appear in this assignment trail.</p>
     `,
     purchases: `
       import { listPartsPurchases } from "../../api/maintenance";
@@ -84,6 +88,11 @@ function selftest() {
     { name: "honest assignments", input: good, expectPass: true },
     { name: "assignments twin of purchases", input: badTwin, expectPass: false },
     { name: "purchases stock twin", input: badPurchasesTwin, expectPass: false },
+    {
+      name: "internal table name leaked in operator copy",
+      input: { ...good, assignments: `${good.assignments}<code>maintenance.parts_invoice_links</code>` },
+      expectPass: false,
+    },
   ];
   let ok = true;
   for (const c of cases) {
