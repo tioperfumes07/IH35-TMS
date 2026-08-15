@@ -375,3 +375,4 @@ exact failure this register exists to prevent.
 | ☐ | `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH` | **P1** | Cursor | — | — | — | Live USMCA inventory assignments renders canonical ParityTable search plus a second page-local search; vertical chrome-class fix pending | — | — |
 | ☐ | `LV-REPORTS-SUBSCRIPTION-CREATE-EDIT-MODE-COLLISION` | **P1** | Codex | — | — | — | Live USMCA Add subscription opened Edit subscription chrome; root mode-contract fix and six-mutation guard in flight | — | — |
 | ☐ | `LV-REPORTS-SCHEDULED-SOR-CROSSWIRED-HUB` | **P1** | Codex | — | — | — | Live USMCA Home custom-schedule count/panel cross-wired to six-default Q8 subscription route; source-label/route fix in flight | — | — |
+| ☐ | `LV-HOVERDROPDOWN-HOVER-CLICK-SELF-CLOSE` | **P1** | Cursor | — | — | — | Live USMCA Reports category trigger self-closes because shared hover-open state is toggled closed by the same pointer click; vertical three-consumer shared-chrome fix pending | — | — |
