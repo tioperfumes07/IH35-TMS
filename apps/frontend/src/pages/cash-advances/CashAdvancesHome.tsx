@@ -5,6 +5,7 @@ import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";
 import { CashAdvancesKpiRow } from "./components/CashAdvancesKpiRow";
@@ -35,8 +36,21 @@ export function CashAdvancesHomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   // LAW OF THE LAND §9 (2026-07-22): EntityLink kind="cash_advance" → /cash-advances?advance_id=
   // and the driver-profile reverse link → /cash-advances?driver_id= (settlement/liability parity).
+  // BANK-F5164 — visible EntityPicker (URL-only banner is not reverse chrome).
   const deepLinkAdvanceId = searchParams.get("advance_id");
   const driverIdFilter = searchParams.get("driver_id");
+  const [driverPickerId, setDriverPickerId] = useState("");
+  useEffect(() => {
+    if (driverIdFilter) setDriverPickerId(driverIdFilter);
+  }, [driverIdFilter]);
+  const setDriverFilter = (driverId: string) => {
+    setDriverPickerId(driverId);
+    const params = new URLSearchParams(searchParams);
+    if (driverId) params.set("driver_id", driverId);
+    else params.delete("driver_id");
+    setSearchParams(params, { replace: true });
+  };
+  const effectiveDriverId = driverPickerId.trim() || driverIdFilter || undefined;
   const tab = parseCashAdvancesTab(searchParams.get("tab"));
   const setTab = (next: CashAdvancesTab) => {
     const params = new URLSearchParams(searchParams);
@@ -62,8 +76,8 @@ export function CashAdvancesHomePage() {
   });
 
   const listQuery = useQuery({
-    queryKey: ["cash-advances", "list", companyId, tab, driverIdFilter],
-    queryFn: () => listCashAdvances(companyId, { view: tab, driver_id: driverIdFilter ?? undefined }),
+    queryKey: ["cash-advances", "list", companyId, tab, effectiveDriverId],
+    queryFn: () => listCashAdvances(companyId, { view: tab, driver_id: effectiveDriverId }),
     enabled: Boolean(companyId),
   });
 
@@ -89,22 +103,21 @@ export function CashAdvancesHomePage() {
         }
       />
 
-      {driverIdFilter ? (
-        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          <span>Filtered to one driver.</span>
-          <button
-            type="button"
-            className="text-slate-700 underline"
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.delete("driver_id");
-              setSearchParams(params, { replace: true });
-            }}
-          >
-            Clear filter
-          </button>
-        </div>
-      ) : null}
+      <div className="flex flex-wrap items-end gap-3" data-testid="cash-advances-filters">
+        <label className="text-[11px] text-slate-600">
+          Driver
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={driverPickerId || null}
+            onChange={(next) => setDriverFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1"
+            dataTestId="cash-advances-filter-driver"
+          />
+        </label>
+      </div>
 
       <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
