@@ -74,7 +74,7 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
     expect(buildCatalogPath("accounting", "chart-of-accounts")).toBe("/lists/accounting/chart-of-accounts");
     expect(buildCatalogPath("accounting", "_create")).toBe("/lists/accounting/chart-of-accounts?create=1");
     expect(buildCatalogPath("drivers", "_create")).toBe("/lists/drivers/termination-reasons?create=1");
-    expect(buildCatalogPath("safety", "_create")).toBe("/lists/safety/accident-types?create=1");
+    expect(buildCatalogPath("safety", "_create")).toBe("/lists/safety/internal-fine-reasons?create=1");
     expect(buildCatalogPath("dispatch", "_create")).toBe("/lists/dispatch/dispatch-flag-colors?create=1");
     expect(buildCatalogPath("customers", "customers-master")).toBe("/customers");
     expect(buildCatalogPath("vendors", "vendors-master")).toBe("/vendors");
