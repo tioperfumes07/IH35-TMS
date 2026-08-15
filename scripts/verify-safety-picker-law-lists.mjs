@@ -15,7 +15,18 @@ const LABEL = "verify-safety-picker-law-lists";
 
 const CHECKS = [
   { name: "HOSViolationsTab", file: "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx" },
-  { name: "IdvrPage", file: "apps/frontend/src/pages/safety/IdvrPage.tsx" },
+  {
+    name: "IdvrPage",
+    file: "apps/frontend/src/pages/safety/IdvrPage.tsx",
+    // LST-F5188 — filter EntityPickers must sync URL.
+    require: [
+      /EntityPicker/,
+      /dataTestId="idvr-filter-driver"/,
+      /allowCreate=\{false\}/,
+      /setSearchParams/,
+      /searchParams\.get\("driver_id"\)/,
+    ],
+  },
   { name: "DOTInspectionsTab", file: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx" },
   { name: "SafetyEventsPage", file: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx" },
   { name: "InternalFinesPage", file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx" },
