@@ -154,7 +154,7 @@ export default function Audit425cPage() {
     queryFn: () =>
       listAuditEvents({
         operatingCompanyId: companyId,
-        eventType: FORM_425C_EVENT_FILTER,
+        eventType: [FORM_425C_EVENT_FILTER],
         actor: actorFilter.trim() || undefined,
         from: fromIso,
         to: toIso,
@@ -256,7 +256,8 @@ export default function Audit425cPage() {
     <main className="space-y-3" data-testid="audit-425c-page">
       <h1 className="text-xl font-semibold text-gray-900">425C Audit Trail</h1>
       <p className="text-sm text-gray-500">
-        Append-only Form 425C filing history for the selected entity. Filter by section, action, actor, or date, and open the source record from any row.
+        Append-only Form 425C filing history for the selected entity, read from{" "}
+        <code>audit.audit_events</code>. Filter by section, action, actor, or date, and open the source record from any row.
       </p>
 
       {!enabled ? (
