@@ -250,12 +250,34 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
       const existing = await client.query(
         `SELECT * FROM maintenance.parts_purchases
          WHERE id = $1::uuid AND operating_company_id = $2::uuid
-         LIMIT 1`,
+         LIMIT 1
+         FOR UPDATE`,
         [params.data.id, query.data.operating_company_id]
       );
       const purchase = existing.rows[0];
       if (!purchase) return { notFound: true as const };
       if (purchase.voided_at) return { alreadyVoided: true as const, row: purchase };
+
+      // Reverse the purchase quantity exactly. Never clamp with GREATEST(0, ...): clamping would
+      // mark the receipt void while removing fewer units than it originally added, permanently
+      // drifting the mutable stock snapshot away from the append-only purchase ledger. Locking the
+      // purchase row serializes duplicate void attempts; the conditional stock update fails closed
+      // when some of the receipt has already been consumed and the full reversal is impossible.
+      const stock = await client.query(
+        `UPDATE maintenance.parts_inventory
+         SET on_hand_qty = COALESCE(on_hand_qty, 0) - $2, updated_at = now()
+         WHERE id = $1::uuid
+           AND operating_company_id = $3::uuid
+           AND COALESCE(on_hand_qty, 0) >= $2
+         RETURNING on_hand_qty`,
+        [purchase.parts_inventory_id, purchase.qty_received, query.data.operating_company_id]
+      );
+      if (!stock.rows[0]) {
+        return {
+          insufficientStock: true as const,
+          qtyReceived: Number(purchase.qty_received),
+        };
+      }
 
       const voided = await client.query(
         `UPDATE maintenance.parts_purchases
@@ -263,12 +285,6 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
          WHERE id = $1::uuid AND operating_company_id = $2::uuid
          RETURNING *`,
         [params.data.id, query.data.operating_company_id, user.uuid, body.data.void_reason]
-      );
-      await client.query(
-        `UPDATE maintenance.parts_inventory
-         SET on_hand_qty = GREATEST(0, COALESCE(on_hand_qty, 0) - $2), updated_at = now()
-         WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
-        [purchase.parts_inventory_id, purchase.qty_received, query.data.operating_company_id]
       );
       await appendCrudAudit(
         client,
@@ -287,6 +303,13 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
 
     if ("notFound" in result) return reply.code(404).send({ error: "parts_purchase_not_found" });
     if ("alreadyVoided" in result) return reply.code(409).send({ error: "parts_purchase_already_voided", row: result.row });
+    if ("insufficientStock" in result) {
+      return reply.code(409).send({
+        error: "parts_purchase_reversal_insufficient_stock",
+        message: "This purchase cannot be voided because its full received quantity is no longer on hand.",
+        qty_received: result.qtyReceived,
+      });
+    }
     return result.row;
   });
 
