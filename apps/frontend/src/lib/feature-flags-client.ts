@@ -19,6 +19,8 @@ type OverrideRecord = {
   flag_key: string;
   operating_company_id: string | null;
   user_uuid: string | null;
+  user_label: string | null;
+  company_label: string | null;
   enabled: boolean;
 };
 

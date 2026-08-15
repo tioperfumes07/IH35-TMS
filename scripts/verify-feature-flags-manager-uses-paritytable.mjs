@@ -59,8 +59,8 @@ function assertMigrated(src) {
   if (!src.includes("Couldn't load feature flags")) {
     errors.push(`${PAGE}: must keep ListErrorState title for feature-flags outage`);
   }
-  if (!src.includes("Tenant override ON")) {
-    errors.push(`${PAGE}: must preserve Tenant override ON action`);
+  if (!src.includes("Tenant override active")) {
+    errors.push(`${PAGE}: must preserve the read-only Tenant override active status`);
   }
   return errors;
 }
@@ -84,7 +84,7 @@ function selftest() {
         emptyText="No flags yet."
       />
       <span data-testid="per-entity-only-notice" />
-      Tenant override ON
+      Tenant override active
     </div>
   `;
   const bad = `

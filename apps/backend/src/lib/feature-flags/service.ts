@@ -22,6 +22,8 @@ export type FeatureFlagOverrideRow = {
   flag_key: string;
   operating_company_id: string | null;
   user_uuid: string | null;
+  user_label: string | null;
+  company_label: string | null;
   enabled: boolean;
   set_by_user_uuid: string;
   set_at: string;
@@ -408,12 +410,17 @@ export async function listFlags(client: Queryable) {
 export async function listOverrides(client: Queryable, flagKey?: string) {
   const res = await client.query<FeatureFlagOverrideRow>(
     `
-      SELECT uuid::text, flag_key, operating_company_id::text, user_uuid::text, enabled,
-             set_by_user_uuid::text, set_at::text, expires_at::text
-      FROM lib.feature_flag_overrides
-      WHERE ($1::text IS NULL OR flag_key = $1)
-        AND (expires_at IS NULL OR expires_at > now())
-      ORDER BY set_at DESC
+      SELECT o.uuid::text, o.flag_key, o.operating_company_id::text, o.user_uuid::text, o.enabled,
+             COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u.email) AS user_label,
+             COALESCE(NULLIF(TRIM(c.short_name), ''), NULLIF(TRIM(c.code), ''),
+                      NULLIF(TRIM(c.legal_name), '')) AS company_label,
+             o.set_by_user_uuid::text, o.set_at::text, o.expires_at::text
+      FROM lib.feature_flag_overrides o
+      LEFT JOIN identity.users u ON u.id = o.user_uuid
+      LEFT JOIN org.companies c ON c.id = o.operating_company_id
+      WHERE ($1::text IS NULL OR o.flag_key = $1)
+        AND (o.expires_at IS NULL OR o.expires_at > now())
+      ORDER BY o.set_at DESC
     `,
     [flagKey ?? null]
   );
