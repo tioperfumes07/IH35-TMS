@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from "../../api/hosTracker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -52,7 +53,7 @@ function driverVerdict(d: HosRosterDriver): { label: string; cls: string } {
 }
 
 export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: string }) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedDriverId = searchParams.get("driver_id");
   const today = laredoToday();
   const strip = useMemo(() => buildDayStrip(today), [today]);
@@ -60,6 +61,20 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
   // AUTO-06: per-driver cycle drawer — uses the roster row's EXISTING verbatim values (clocks + 8-day
   // breakdown from /hos/daily-roster). Never recomputes clocks (§3.15.9.2).
   const [selectedDriver, setSelectedDriver] = useState<HosRosterDriver | null>(null);
+  // LST-F5171 — visible EntityPicker (URL-only selection seed is not reverse chrome).
+  const [driverPickerId, setDriverPickerId] = useState("");
+  useEffect(() => {
+    if (requestedDriverId) setDriverPickerId(requestedDriverId);
+  }, [requestedDriverId]);
+  const setDriverFilter = (driverId: string) => {
+    setDriverPickerId(driverId);
+    const next = new URLSearchParams(searchParams);
+    if (driverId) next.set("driver_id", driverId);
+    else next.delete("driver_id");
+    setSearchParams(next, { replace: true });
+    if (!driverId) setSelectedDriver(null);
+  };
+  const effectiveDriverId = driverPickerId.trim() || requestedDriverId || undefined;
 
   const rosterQ = useQuery({
     queryKey: ["compliance", "hos-roster", operatingCompanyId, selectedDate],
@@ -70,10 +85,15 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
   });
   const roster = rosterQ.data;
   useEffect(() => {
-    if (!requestedDriverId || selectedDriver?.driver_id === requestedDriverId) return;
-    const requested = roster?.drivers.find((driver) => driver.driver_id === requestedDriverId);
+    if (!effectiveDriverId || selectedDriver?.driver_id === effectiveDriverId) return;
+    const requested = roster?.drivers.find((driver) => driver.driver_id === effectiveDriverId);
     if (requested) setSelectedDriver(requested);
-  }, [requestedDriverId, roster?.drivers, selectedDriver?.driver_id]);
+  }, [effectiveDriverId, roster?.drivers, selectedDriver?.driver_id]);
+  const filteredDrivers = useMemo(() => {
+    const all = roster?.drivers ?? [];
+    if (!effectiveDriverId) return all;
+    return all.filter((driver) => driver.driver_id === effectiveDriverId);
+  }, [roster?.drivers, effectiveDriverId]);
   const c = roster?.counts ?? { active: 0, on_duty: 0, driving: 0, low: 0, violation: 0, unavailable: 0 };
   const asOf = roster?.generated_at ? new Date(roster.generated_at).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hour12: false }) : null;
 
@@ -206,6 +226,22 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           ))}
         </div>
 
+        <div className="max-w-sm" data-testid="hos-tracker-filters">
+          <label className="text-[11px] text-slate-600">
+            Driver
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
+              value={driverPickerId || null}
+              onChange={(next) => setDriverFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="mt-1"
+              dataTestId="hos-tracker-filter-driver"
+            />
+          </label>
+        </div>
+
         {rosterQ.isError ? (
           <ListErrorState
             title="Couldn't load HOS roster"
@@ -215,7 +251,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           />
         ) : (
           <ParityTable
-            rows={roster?.drivers ?? []}
+            rows={filteredDrivers}
             columns={columns}
             rowKey={(driver) => driver.driver_id}
             loading={rosterQ.isLoading || (rosterQ.isFetching && !roster)}
@@ -224,7 +260,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               `cursor-pointer hover:bg-slate-50 ${driver.available ? "" : "opacity-70"}`
             }
             storageKey="compliance-hos-tracker"
-            emptyText="No active drivers."
+            emptyText={effectiveDriverId ? "No HOS roster row for this driver on the selected day." : "No active drivers."}
             tableTestId="compliance-hos-tracker-table"
           />
         )}
