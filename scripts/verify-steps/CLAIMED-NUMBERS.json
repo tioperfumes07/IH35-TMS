@@ -1558,6 +1558,11 @@
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3596": {
+    "name": "verify-bill-payment-form-parity-surface-bar",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
