@@ -70,13 +70,28 @@ function Field({ label, value, onChange, placeholder, required, dataField, error
   );
 }
 
+export type VendorCreateSavedResult = { id: string; label: string };
+
 type Props = {
   open: boolean;
   onClose: () => void;
   operatingCompanyId: string;
+  /**
+   * LST-F3364 — when true, render form chrome only (no Modal shell) so nested
+   * +Add new vendor (NewVendorDrawerForm / ParityDrawer) shares ONE QBO create with Lists.
+   */
+  embedded?: boolean;
+  /** Nested create: return id+label to the picker instead of navigating to /vendors/:id. */
+  onSaved?: (result: VendorCreateSavedResult) => void;
 };
 
-export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) {
+export function VendorCreateModal({
+  open,
+  onClose,
+  operatingCompanyId,
+  embedded = false,
+  onSaved,
+}: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -236,10 +251,15 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
     },
     onSuccess: async (vendor) => {
       await queryClient.invalidateQueries({ queryKey: ["vendors"] });
+      const label = name.trim();
       pushToast("Vendor created.", "success");
       reset();
       onClose();
-      if (vendor?.id) navigate(`/vendors/${vendor.id}`);
+      if (vendor?.id && onSaved) {
+        onSaved({ id: String(vendor.id), label });
+        return;
+      }
+      if (vendor?.id && !embedded) navigate(`/vendors/${vendor.id}`);
     },
     onError: (error) => {
       setFormError("");
@@ -266,10 +286,10 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
   // C7: this is the only converted surface that also passed `wide`. The prop is KEPT (additive —
   // C7 removes nothing) but has no effect in the drawer variant, which is a fixed 480px column.
   // Create Vendor was NOT one of the two owner-ratified wide-wizard exceptions.
-  return (
-    <Modal variant="drawer" open={open} onClose={onClose} title="Create Vendor" wide>
+  const formChrome = (
       <form
         className="space-y-4"
+        data-testid={embedded ? "vendor-create-embedded" : undefined}
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -305,7 +325,10 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
                 operatingCompanyId={operatingCompanyId}
                 placeholder="Select vendor type…"
                 addNewLabel="+ Add new vendor type"
-                onOptionCreated={(opt) => setVendorType(opt.label)}
+                onOptionCreated={(opt) => {
+                  setVendorType(opt.label);
+                  void vendorTypesQuery.refetch();
+                }}
               />
             </label>
             <Field label="Email" value={email} onChange={setEmail} />
@@ -407,6 +430,21 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
           </ActionButton>
         </div>
       </form>
+  );
+
+  if (!open) return null;
+
+  if (embedded) {
+    return (
+      <div className="flex h-full flex-col" data-testid="vendor-create-embedded-shell">
+        {formChrome}
+      </div>
+    );
+  }
+
+  return (
+    <Modal variant="drawer" open={open} onClose={onClose} title="Create Vendor" wide>
+      {formChrome}
     </Modal>
   );
 }

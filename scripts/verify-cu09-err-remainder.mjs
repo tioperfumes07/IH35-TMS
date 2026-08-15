@@ -10,9 +10,11 @@ const SELFTEST = process.argv.includes("--selftest");
 const NEW_FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
 const NEW_SERVICE = "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx";
 const NEW_CLASS = "apps/frontend/src/components/parity/drawers/NewClassDrawerForm.tsx";
+const NEW_VENDOR = "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx";
 const DRAWER = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
 const ITEM_EDITOR = "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx";
 const CATALOG_MODAL = "apps/frontend/src/pages/lists/accounting/AccountingCatalogModal.tsx";
+const VENDOR_CREATE = "apps/frontend/src/components/vendors/VendorCreateModal.tsx";
 
 const FILES = [
   "apps/frontend/src/pages/banking/components/PlaidReconnectButton.tsx",
@@ -51,7 +53,15 @@ function newClassEmbedsCatalogModal(classSrc) {
   );
 }
 
-function assertFile(file, src, drawerSrc, itemEditorSrc, catalogModalSrc) {
+function newVendorEmbedsCreateModal(vendorSrc) {
+  return (
+    /<VendorCreateModal[\s>]/.test(vendorSrc) &&
+    (/from ["'].*VendorCreateModal["']|from ["'].*\/VendorCreateModal["']/.test(vendorSrc) ||
+      /import\s*\{\s*VendorCreateModal\s*\}/.test(vendorSrc))
+  );
+}
+
+function assertFile(file, src, drawerSrc, itemEditorSrc, catalogModalSrc, vendorCreateSrc) {
   const problems = [];
   if (file === NEW_FORM && newFormEmbedsAccountDrawer(src)) {
     if (!/userFacingApiError\(/.test(drawerSrc)) {
@@ -80,6 +90,15 @@ function assertFile(file, src, drawerSrc, itemEditorSrc, catalogModalSrc) {
     }
     return problems;
   }
+  if (file === NEW_VENDOR && newVendorEmbedsCreateModal(src)) {
+    if (!/userFacingApiError\(/.test(vendorCreateSrc)) {
+      problems.push(`${VENDOR_CREATE}: missing userFacingApiError (NewVendorDrawerForm embeds VendorCreateModal)`);
+    }
+    if (/String\(\((?:err|error) as Error\)\.message/.test(vendorCreateSrc)) {
+      problems.push(`${VENDOR_CREATE}: still stringifies Error.message (embedded create path)`);
+    }
+    return problems;
+  }
   if (!/userFacingApiError\(/.test(src)) problems.push(`${file}: missing userFacingApiError`);
   if (/String\(\((?:err|error) as Error\)\.message/.test(src)) {
     problems.push(`${file}: still stringifies Error.message`);
@@ -91,9 +110,10 @@ function assertAll(srcs) {
   const drawerSrc = srcs[DRAWER] ?? fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
   const itemEditorSrc = srcs[ITEM_EDITOR] ?? fs.readFileSync(path.join(ROOT, ITEM_EDITOR), "utf8");
   const catalogModalSrc = srcs[CATALOG_MODAL] ?? fs.readFileSync(path.join(ROOT, CATALOG_MODAL), "utf8");
+  const vendorCreateSrc = srcs[VENDOR_CREATE] ?? fs.readFileSync(path.join(ROOT, VENDOR_CREATE), "utf8");
   const problems = [];
   for (const file of FILES) {
-    problems.push(...assertFile(file, srcs[file], drawerSrc, itemEditorSrc, catalogModalSrc));
+    problems.push(...assertFile(file, srcs[file], drawerSrc, itemEditorSrc, catalogModalSrc, vendorCreateSrc));
   }
   return problems;
 }
@@ -103,6 +123,7 @@ const read = () => {
   srcs[DRAWER] = fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
   srcs[ITEM_EDITOR] = fs.readFileSync(path.join(ROOT, ITEM_EDITOR), "utf8");
   srcs[CATALOG_MODAL] = fs.readFileSync(path.join(ROOT, CATALOG_MODAL), "utf8");
+  srcs[VENDOR_CREATE] = fs.readFileSync(path.join(ROOT, VENDOR_CREATE), "utf8");
   return srcs;
 };
 

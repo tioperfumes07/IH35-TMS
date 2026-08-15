@@ -2,9 +2,10 @@
 /**
  * LST-PICKER-01 slice — NewVendorDrawerForm + QuickCreateEntityModal vendor type fields must use
  * ReferenceSelect with createKind=vendor_type (POST catalogs.vendor_types). Guard 1852 wired
- * VendorDetail + VendorCreateModal; these nested vendor-create surfaces still had bare <select>
- * pickers with Lists-only type management — operators hitting "+ Add new vendor" from banking/expense
- * pickers could not inline-create a vendor type.
+ * VendorDetail + VendorCreateModal; nested vendor-create must not regress to bare <select>.
+ *
+ * LST-F3364: NewVendorDrawerForm may thin-wrap VendorCreateModal (embedded). In that case the
+ * vendor_type ratchet is enforced on VendorCreateModal (canonical chrome).
  *
  * Cursor even claim: 1860.
  */
@@ -16,6 +17,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-lst-picker01-new-vendor-drawer-vendor-type-inline-create";
 
 const DRAWER = "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx";
+const CREATE = "apps/frontend/src/components/vendors/VendorCreateModal.tsx";
 const QUICK = "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx";
 const REGISTRY = "apps/frontend/src/components/parity/catalogPickerRegistry.ts";
 
@@ -32,34 +34,46 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
+function embedsVendorCreate(drawerSrc) {
+  const code = stripComments(drawerSrc);
+  return /<VendorCreateModal[\s>]/.test(code) && /\bembedded\b/.test(code);
+}
+
+function assertVendorTypeChrome(rel, code, problems) {
+  if (!/ReferenceSelect/.test(code)) {
+    problems.push(`${rel}: must use ReferenceSelect`);
+  }
+  if (!/createKind=["']vendor_type["']/.test(code)) {
+    problems.push(`${rel}: Vendor type must use createKind=vendor_type`);
+  }
+  if (!/useCatalogQuery/.test(code)) {
+    problems.push(`${rel}: must read vendor types via useCatalogQuery`);
+  }
+  if (!/catalogName:\s*["']vendors\.vendor_types["']/.test(code)) {
+    problems.push(`${rel}: must query catalogName vendors.vendor_types`);
+  }
+  if (!/vendorTypesQuery\.refetch/.test(code)) {
+    problems.push(`${rel}: must refetch vendor types after inline create`);
+  }
+  if (/<select[^>]*aria-label=["']Vendor type["']/.test(code)) {
+    problems.push(`${rel}: must not keep bare <select> for vendor type`);
+  }
+}
+
 /** @returns {string[]} */
 export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
   const drawer = readRel(root, DRAWER, overrides);
+  const create = readRel(root, CREATE, overrides);
   const quick = readRel(root, QUICK, overrides);
   const registry = readRel(root, REGISTRY, overrides);
 
   if (!drawer) problems.push(`missing ${DRAWER}`);
-  else {
-    const code = stripComments(drawer);
-    if (!/import[\s\S]*ReferenceSelect[\s\S]*from\s*["']\.\.\/ReferenceSelect["']/.test(code)) {
-      problems.push(`${DRAWER}: must import ReferenceSelect`);
-    }
-    if (!/createKind=["']vendor_type["']/.test(code)) {
-      problems.push(`${DRAWER}: Vendor type must use createKind=vendor_type`);
-    }
-    if (!/useCatalogQuery/.test(code)) {
-      problems.push(`${DRAWER}: must read vendor types via useCatalogQuery`);
-    }
-    if (!/catalogName:\s*["']vendors\.vendor_types["']/.test(code)) {
-      problems.push(`${DRAWER}: must query catalogName vendors.vendor_types`);
-    }
-    if (!/vendorTypesQuery\.refetch/.test(code)) {
-      problems.push(`${DRAWER}: must refetch vendor types after inline create`);
-    }
-    if (/<select[^>]*aria-label=["']Vendor type["']/.test(code)) {
-      problems.push(`${DRAWER}: must not keep bare <select> for vendor type`);
-    }
+  else if (embedsVendorCreate(drawer)) {
+    if (!create) problems.push(`missing ${CREATE} (NewVendorDrawerForm embeds VendorCreateModal)`);
+    else assertVendorTypeChrome(CREATE, stripComments(create), problems);
+  } else {
+    assertVendorTypeChrome(DRAWER, stripComments(drawer), problems);
   }
 
   if (!quick) problems.push(`missing ${QUICK}`);
@@ -121,15 +135,18 @@ if (process.argv.includes("--selftest")) {
     }
   };
 
+  const drawerLive = readRel(ROOT, DRAWER);
+  const targetRel = drawerLive && embedsVendorCreate(drawerLive) ? CREATE : DRAWER;
+
   expectCaught(
-    "drawer-createKind-removed",
-    DRAWER,
+    "createKind-removed",
+    targetRel,
     (s) => s.replace(/createKind=["']vendor_type["']/, 'createKind="vendor"'),
     "createKind=vendor_type"
   );
   expectCaught(
-    "drawer-bare-select-reintroduced",
-    DRAWER,
+    "bare-select-reintroduced",
+    targetRel,
     (s) => s + '\n<select aria-label="Vendor type" />;\n',
     "bare <select> for vendor type"
   );

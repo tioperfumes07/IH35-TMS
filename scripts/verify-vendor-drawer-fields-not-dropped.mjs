@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * GUARD — 0243-d1-3 / NewVendorDrawerForm must not silently drop captured
+ * GUARD — 0243-d1-3 / vendor create must not silently drop captured
  * QBO-parity fields that the backend already accepts after migration 202607110230.
+ *
+ * LST-F3364: NewVendorDrawerForm may embed VendorCreateModal — then payload keys are
+ * asserted on the canonical modal.
  *
  * Required createVendor() payload keys (backend-backed):
  *   city, state, website, print_on_check_name, postal_code
@@ -17,6 +20,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = process.cwd();
 const DRAWER = "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx";
+const CREATE = "apps/frontend/src/components/vendors/VendorCreateModal.tsx";
 const BACKEND = "apps/backend/src/mdata/vendors.routes.ts";
 
 const REQUIRED_PAYLOAD_KEYS = [
@@ -31,6 +35,10 @@ function read(rel) {
   const abs = path.resolve(ROOT, rel);
   if (!fs.existsSync(abs)) return null;
   return fs.readFileSync(abs, "utf8");
+}
+
+function embedsVendorCreate(src) {
+  return /<VendorCreateModal[\s>]/.test(src) && /\bembedded\b/.test(src);
 }
 
 function extractCreateVendorCall(src) {
@@ -67,48 +75,59 @@ function extractCreateVendorCall(src) {
   return null;
 }
 
+function assertCreatePayload(rel, src, failures) {
+  if (!src.includes("createVendor(")) {
+    failures.push(`${rel}: missing createVendor call`);
+    return;
+  }
+  const call = extractCreateVendorCall(src);
+  if (!call) {
+    failures.push(`${rel}: createVendor call unparseable`);
+    return;
+  }
+  for (const key of REQUIRED_PAYLOAD_KEYS) {
+    const re = new RegExp(`(?:^|[\\s,{])${key}\\s*:`);
+    if (!re.test(call)) {
+      failures.push(`${rel}: drops_${key}`);
+    }
+  }
+  if (/\bmobile\s*:/.test(call)) {
+    failures.push(`${rel}: phantom_writes_mobile_no_backend_column`);
+  }
+  for (const label of ["Website", "City", "State"]) {
+    const present =
+      src.includes(`placeholder="${label}"`) ||
+      src.includes(`>${label}<`) ||
+      src.includes(`label="${label}"`) ||
+      src.includes(`label="${label}"`) ||
+      new RegExp(`label=["']${label}`).test(src) ||
+      src.includes(`"${label}"`) && src.includes(`label=`) ||
+      src.includes(label);
+    if (!present) failures.push(`${rel}: ui_missing_${label.toLowerCase()}`);
+  }
+  // Print-on-check wording differs slightly between surfaces
+  if (!/print on check/i.test(src) && !/Name to print on checks/.test(src)) {
+    failures.push(`${rel}: ui_missing_print_on_check`);
+  }
+}
+
 function run() {
   const failures = [];
   const drawer = read(DRAWER);
+  const create = read(CREATE);
   const backend = read(BACKEND);
 
   if (!drawer) failures.push(`missing:${DRAWER}`);
   if (!backend) failures.push(`missing:${BACKEND}`);
 
   if (drawer) {
-    if (!drawer.includes("createVendor(")) {
-      failures.push("drawer_missing_createVendor_call");
+    if (embedsVendorCreate(drawer)) {
+      if (!create) failures.push(`missing:${CREATE}`);
+      else assertCreatePayload(CREATE, create, failures);
     } else {
-      const call = extractCreateVendorCall(drawer);
-      if (!call) {
-        failures.push("drawer_createVendor_call_unparseable");
-      } else {
-        for (const key of REQUIRED_PAYLOAD_KEYS) {
-          // Match object key form: city:  or "city":
-          const re = new RegExp(`(?:^|[\\s,{])${key}\\s*:`);
-          if (!re.test(call)) {
-            failures.push(`drawer_drops_${key}`);
-          }
-        }
-        // Honesty: never phantom-write mobile
-        if (/\bmobile\s*:/.test(call)) {
-          failures.push("drawer_phantom_writes_mobile_no_backend_column");
-        }
-      }
+      assertCreatePayload(DRAWER, drawer, failures);
     }
 
-    // UI must still capture the backend-backed fields (inputs exist).
-    for (const label of ["Website", "Name to print on checks", "City", "State"]) {
-      // City/State are placeholders; Website / print-on-check are labels.
-      const present =
-        drawer.includes(`placeholder="${label}"`) ||
-        drawer.includes(`>${label}<`) ||
-        drawer.includes(`>${label} *<`) ||
-        drawer.includes(label);
-      if (!present) failures.push(`drawer_ui_missing_${label.replace(/\s+/g, "_").toLowerCase()}`);
-    }
-
-    // Stale "held back until migration 202607110230" comment must not return.
     if (/held back until migration\s+202607110230/i.test(drawer)) {
       failures.push("drawer_stale_held_back_migration_comment");
     }
@@ -119,10 +138,6 @@ function run() {
       if (!backend.includes(`${key}:`)) {
         failures.push(`backend_schema_missing_${key}`);
       }
-    }
-    // Document the intentional mobile gap so a future column can reopen the wire-up.
-    if (/\bmobile\b/.test(backend) && /createVendorBodySchema[\s\S]*mobile/.test(backend)) {
-      // If backend later adds mobile to create schema, guard still passes; no fail.
     }
   }
 
