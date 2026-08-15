@@ -79,6 +79,7 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
     // LST-F13 — mounted orphans must resolve from DOMAIN_CONFIG keys.
     expect(buildCatalogPath("maintenance", "parts-catalog")).toBe("/lists/maintenance/parts-catalog");
     expect(buildCatalogPath("accounting", "abandonment-defaults")).toBe("/lists/accounting/abandonment-defaults");
+    expect(buildCatalogPath("accounting", "account-types-lookup")).toBe("/lists/accounting/account-types");
   });
 
   it("exposes the canonical Customers roster from the Customers domain", () => {
