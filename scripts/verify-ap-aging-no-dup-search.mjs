@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * ACCT-F3464 / LV-AP-AGING-DUPLICATE-SEARCH
- * By-vendor ParityTable must not host a Search vendor TableSearch in filterBar.
+ * ACCT-F3464 / ACCT-F3568 / LV-AP-AGING-DUPLICATE-SEARCH
+ * Both A/P Aging views use ParityTable Search — no page-level TableSearch (duplex).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +16,12 @@ function assert(cond, msg) {
 
 export function checkSource(src, label = "AccountsPayableAgingPage.tsx") {
   assert(src.includes("ParityTable"), `${label}: must use ParityTable`);
-  assert(src.includes("ap-aging-by-vendor-table"), `${label}: by-vendor table test id required`);
+  assert(src.includes('tableTestId="ap-aging-by-vendor-table"'), `${label}: by-vendor table test id required`);
+  assert(src.includes('tableTestId="ap-aging-by-type-table"'), `${label}: by-type table test id required`);
+  assert(src.includes('storageKey="acct-ap-aging-by-type"'), `${label}: by-type storageKey required`);
+  assert(!/<table\b/.test(src), `${label}: must not use raw HTML table`);
+  assert(!/TableSearch/.test(src), `${label}: no page TableSearch (ParityTable owns Search)`);
+  assert(!/placeholder=["']Search vendor…["']/.test(src), `${label}: no duplex Search vendor placeholder`);
   // By-vendor filterBar must not contain Search vendor TableSearch
   const byVendorBlock = src.slice(src.indexOf('tableTestId="ap-aging-by-vendor-table"'), src.indexOf("ap-aging-by-vendor-total"));
   assert(
@@ -24,8 +29,6 @@ export function checkSource(src, label = "AccountsPayableAgingPage.tsx") {
     `${label}: by-vendor filterBar must not include Search vendor (use ParityTable toolbar)`,
   );
   assert(src.includes("vendorTableRows"), `${label}: by-vendor rows must be typeFiltered (vendorTableRows)`);
-  // By-type view may keep TableSearch
-  assert(/placeholder=["']Search vendor…["']/.test(src), `${label}: by-type view TableSearch retained`);
 }
 
 function selftest() {
@@ -57,7 +60,7 @@ if (process.argv.includes("--selftest")) {
 } else {
   try {
     checkSource(fs.readFileSync(TARGET, "utf8"));
-    console.log("verify-ap-aging-no-dup-search PASS — by-vendor uses ParityTable search only");
+    console.log("verify-ap-aging-no-dup-search PASS — both views use ParityTable search only");
   } catch (e) {
     console.error(`verify-ap-aging-no-dup-search FAIL — ${e.message}`);
     process.exit(1);
