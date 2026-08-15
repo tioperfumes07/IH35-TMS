@@ -38,18 +38,34 @@ export function SubmissionQueue() {
 
   // LINK-F5171/LINK-F5181 — reverse_link: CustomerDetail/FactoringTab link here as
   // ?customer_id=/?load_id=; LST-F5163N adds visible EntityPicker filters (URL-only is not reverse chrome).
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
   const deepLinkLoadId = searchParams.get("load_id")?.trim() ?? "";
-  const [customerFilter, setCustomerFilter] = useState("");
-  const [loadFilter, setLoadFilter] = useState("");
+  // LST-F5196 — visible filters write URL.
+  const [customerFilter, setCustomerFilterState] = useState(deepLinkCustomerId);
+  const [loadFilter, setLoadFilterState] = useState(deepLinkLoadId);
 
   useEffect(() => {
-    if (deepLinkCustomerId) setCustomerFilter(deepLinkCustomerId);
+    setCustomerFilterState(deepLinkCustomerId);
   }, [deepLinkCustomerId]);
   useEffect(() => {
-    if (deepLinkLoadId) setLoadFilter(deepLinkLoadId);
+    setLoadFilterState(deepLinkLoadId);
   }, [deepLinkLoadId]);
+
+  function patchSearchParam(key: "customer_id" | "load_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setCustomerFilter(next: string) {
+    setCustomerFilterState(next);
+    patchSearchParam("customer_id", next);
+  }
+  function setLoadFilter(next: string) {
+    setLoadFilterState(next);
+    patchSearchParam("load_id", next);
+  }
 
   const effectiveCustomerId = customerFilter.trim() || deepLinkCustomerId || undefined;
   const effectiveLoadId = loadFilter.trim() || deepLinkLoadId || undefined;

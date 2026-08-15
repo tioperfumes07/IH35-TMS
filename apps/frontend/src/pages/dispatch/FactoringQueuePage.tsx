@@ -106,19 +106,40 @@ export function FactoringQueuePage() {
   // LINK-F5171/LINK-F5179 — reverse_link: CustomerDetail/FactoringTab now link here as
   // ?customer_id=/?queue_record_id=; legacy ?load_id= bookmarks remain readable.
   // LST-F5163O — visible EntityPicker filters (URL-only is not reverse chrome).
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
   const deepLinkLoadId =
     (searchParams.get("queue_record_id") ?? searchParams.get("load_id"))?.trim() ?? "";
-  const [customerFilter, setCustomerFilter] = useState("");
-  const [loadFilter, setLoadFilter] = useState("");
+  // LST-F5196 — visible filters write URL (load_id; still reads queue_record_id).
+  const [customerFilter, setCustomerFilterState] = useState(deepLinkCustomerId);
+  const [loadFilter, setLoadFilterState] = useState(deepLinkLoadId);
 
   useEffect(() => {
-    if (deepLinkCustomerId) setCustomerFilter(deepLinkCustomerId);
+    setCustomerFilterState(deepLinkCustomerId);
   }, [deepLinkCustomerId]);
   useEffect(() => {
-    if (deepLinkLoadId) setLoadFilter(deepLinkLoadId);
+    setLoadFilterState(deepLinkLoadId);
   }, [deepLinkLoadId]);
+
+  function patchSearchParam(key: "customer_id" | "load_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) {
+      p.set(key, next);
+      if (key === "load_id") p.delete("queue_record_id");
+    } else {
+      p.delete(key);
+      if (key === "load_id") p.delete("queue_record_id");
+    }
+    setSearchParams(p, { replace: true });
+  }
+  function setCustomerFilter(next: string) {
+    setCustomerFilterState(next);
+    patchSearchParam("customer_id", next);
+  }
+  function setLoadFilter(next: string) {
+    setLoadFilterState(next);
+    patchSearchParam("load_id", next);
+  }
 
   const effectiveCustomerId = customerFilter.trim() || deepLinkCustomerId || undefined;
   const effectiveLoadId = loadFilter.trim() || deepLinkLoadId || undefined;

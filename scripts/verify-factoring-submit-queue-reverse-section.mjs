@@ -91,6 +91,9 @@ export function assertFactoringSubmitQueueReverse(sources) {
     problems.push(`${SECTION}: must not import react-router Link`);
   }
 
+  if (!/setSearchParams/.test(queuePage)) {
+    problems.push(`${QUEUE_PAGE}: submit queue filters must sync to URL (setSearchParams)`);
+  }
   return problems;
 }
 
@@ -114,6 +117,7 @@ function selftest() {
       })
     `,
     [QUEUE_PAGE]: `
+      const [searchParams, setSearchParams] = useSearchParams();
       const deepLinkCustomerId = searchParams.get("customer_id");
       const deepLinkLoadId = searchParams.get("load_id");
       dataTestId="factoring-submit-filter-customer"
@@ -144,6 +148,7 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace("customer_id: z.string().uuid().optional(),\n        load_id: z.string().uuid().optional(),", "") },
     { ...good, [ROUTES]: good[ROUTES].replace("customerId: query.data.customer_id,", "") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('searchParams.get("customer_id")', '""') },
+    { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('dataTestId="factoring-submit-filter-customer"', 'dataTestId="x"') },
     { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace('kind="factoring_submit_queue_load"', 'kind="factoring_queue_load"') },
     { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace('case "factoring_submit_queue_load":', "// removed") },
