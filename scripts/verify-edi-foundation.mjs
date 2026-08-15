@@ -99,8 +99,8 @@ contains("apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx", log, 
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [
-  { pattern: /\/integrations\/edi\/setup/, label: "setup route" },
-  { pattern: /\/integrations\/edi\/log/, label: "log route" },
+  { pattern: /path="\/integrations\/edi"/, label: "setup route" },
+  { pattern: /path="\/integrations\/edi\/transaction-log"/, label: "transaction-log route" },
   { pattern: /EdiSetupWizard/, label: "wizard imported" },
   { pattern: /EdiTransactionLog/, label: "log imported" },
 ]);
