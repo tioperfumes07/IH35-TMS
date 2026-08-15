@@ -4,7 +4,7 @@
  * Accessible from Safety > Integrity > Position History
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -35,12 +35,35 @@ function actionBadgeClass(action: string) {
 export default function PositionHistoryPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const unitIdFromUrl = searchParams.get("unit_id") || "";
+  const actionFromUrl = (searchParams.get("action") as "" | "installed" | "removed" | "replaced") || "";
 
-  const [unitFilter, setUnitFilter] = useState(searchParams.get("unit_id") || "");
-  const [actionFilter, setActionFilter] = useState<"" | "installed" | "removed" | "replaced">(
-    (searchParams.get("action") as "" | "installed" | "removed" | "replaced") || ""
-  );
+  // LST-F5197 — unit/action filters write URL.
+  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
+  const [actionFilter, setActionFilterState] = useState<"" | "installed" | "removed" | "replaced">(actionFromUrl);
+
+  useEffect(() => {
+    setUnitFilterState(unitIdFromUrl);
+  }, [unitIdFromUrl]);
+  useEffect(() => {
+    setActionFilterState(actionFromUrl);
+  }, [actionFromUrl]);
+
+  function patchSearchParam(key: "unit_id" | "action", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    patchSearchParam("unit_id", next);
+  }
+  function setActionFilter(next: "" | "installed" | "removed" | "replaced") {
+    setActionFilterState(next);
+    patchSearchParam("action", next);
+  }
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
 
@@ -186,7 +209,10 @@ export default function PositionHistoryPage() {
           <label className="text-sm font-medium text-gray-700">Action:</label>
           <select
             value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value as "" | "installed" | "removed" | "replaced")}
+            onChange={(e) => {
+              setActionFilter(e.target.value as "" | "installed" | "removed" | "replaced");
+              setOffset(0);
+            }}
             className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
           >
             <option value="">All</option>

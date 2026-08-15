@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * PositionHistoryPage — unit filter must be EntityPicker (not raw UUID text).
- * Cursor even claim: 2126.
+ * Cursor even claim: 2126. LST-F5197 — filter writes URL via setSearchParams.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -34,6 +34,10 @@ export function collectProblems(root = ROOT) {
   }
   if (/Unit ID:/.test(src) && /type=["']text["']/.test(code)) {
     problems.push(`${FILE}: must not keep raw Unit ID text input`);
+  }
+  // LST-F5197 — unit filter must write URL.
+  if (!/setSearchParams/.test(src) || !/position-history-unit-filter/.test(src)) {
+    problems.push(`${FILE}: unit filter must sync to URL (setSearchParams)`);
   }
   return problems;
 }
