@@ -20,9 +20,14 @@ function audit(s) {
   if (!/subnavTab === "cash_advances"[\s\S]{0,550}<EntityLink kind="driver"/.test(s.drivers) || !/list\(selectedCompanyId!\)/.test(s.drivers)) failures.push("cash-advance driver reverse/scope missing");
   if (!/listSettlementDeductions\(selectedCompanyId!/.test(s.deductions) || !/<EntityLink kind="driver" id=\{row\.driver_id\}/.test(s.deductions)) failures.push("deduction driver reverse/scope missing");
   if (!/query\.isError/.test(s.deductions) || !/No pending settlement deductions\./.test(s.deductions)) failures.push("deduction honest states missing");
-  // LST-F5163M: CappedListNotice promised a driver filter — URL-only is not enough.
-  if (!/dataTestId="settlement-deductions-filter-driver"/.test(s.deductions) || !/allowCreate=\{false\}/.test(s.deductions) || !/setDriverFilter/.test(s.deductions)) {
-    failures.push("deduction list EntityPicker driver filter missing");
+  // LST-F5163M + LST-F5187: CappedListNotice promised a driver filter — URL-only / local-only is not enough.
+  if (
+    !/dataTestId="settlement-deductions-filter-driver"/.test(s.deductions) ||
+    !/allowCreate=\{false\}/.test(s.deductions) ||
+    !/setDriverFilter/.test(s.deductions) ||
+    !/setSearchParams/.test(s.deductions)
+  ) {
+    failures.push("deduction list EntityPicker driver filter missing URL sync");
   }
   if (!/operating_company_id: companyId/.test(s.disputeHook) || !/isError: listQuery\.isError/.test(s.disputeHook) || !/isSuccess: listQuery\.isSuccess/.test(s.disputeHook)) failures.push("dispute scope/status contract missing");
   if (!/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.driver_id\}/.test(s.disputes) || !/<EntityLink[\s\S]{0,100}kind="settlement"/.test(s.disputes)) failures.push("dispute canonical drills missing");
@@ -45,6 +50,7 @@ if (process.argv.includes("--selftest")) {
     ["deduction-drill", "deductions", /kind="driver"/g, 'kind="vendor"'],
     ["deduction-state", "deductions", /No pending settlement deductions\./g, "Loading"],
     ["deduction-list-filter", "deductions", /dataTestId="settlement-deductions-filter-driver"/g, 'dataTestId="x"'],
+    ["deduction-url-write", "deductions", /setSearchParams/g, "setSearchParamsNOPE"],
     ["dispute-scope", "disputeHook", /operating_company_id: companyId/g, "operating_company_id: ''"],
     ["dispute-state", "disputes", /Could not load settlement disputes\./g, "Loading"],
     ["dispute-drill", "disputes", /kind="settlement"/g, 'kind="driver"'],

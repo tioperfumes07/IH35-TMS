@@ -23,13 +23,22 @@ import { CappedListNotice } from "../../components/CappedListNotice";
  */
 export function PendingSettlementDeductionsPanel() {
   const { selectedCompanyId } = useCompanyContext();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5187 — EntityPicker must write ?driver_id= (not local-only filter state).
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  const [driverFilter, setDriverFilter] = useState("");
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+    setDriverFilterState(driverIdFromUrl);
   }, [driverIdFromUrl]);
+
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("driver_id", next);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
 
   const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
 
