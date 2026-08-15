@@ -42,7 +42,7 @@ export function IFTAPreparer() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
       <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        Accrual basis per CPA sign-off. Run Steps 1→4 in order; CSV uploads to secure storage with signed download.
+        Accrual basis under the owner-locked reporting policy. Run Steps 1→4 in order; CSV uploads to secure storage with signed download.
       </p>
 
       {!prepReady ? (
