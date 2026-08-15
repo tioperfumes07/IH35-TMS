@@ -44,7 +44,7 @@ export function CatalogTable({
   onArchive,
   onRestore,
 }: Props) {
-  const [search, setSearch] = useState("");
+  // Free-text search: ParityTable toolbar owns it (LST-F3480) — no page-local filterBar search.
   const [statusFilter, setStatusFilter] = useState<"true" | "false" | "all">("true");
   const [sortKey, setSortKey] = useState(defaultSort.column);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSort.dir);
@@ -53,20 +53,12 @@ export function CatalogTable({
   const [tableResetKey, setTableResetKey] = useState(0);
 
   const filteredRows = useMemo(() => {
-    const needle = search.trim().toLowerCase();
     return rows.filter((row) => {
       if (statusFilter === "true" && row.is_active === false) return false;
       if (statusFilter === "false" && row.is_active !== false) return false;
-      if (!needle) return true;
-      return columns.some((column) => {
-        if (column.filterable === false) return false;
-        const value = row[column.key];
-        return value !== null && value !== undefined && String(value).toLowerCase().includes(needle);
-      });
+      return true;
     });
-  }, [columns, rows, search, statusFilter]);
-
-  const filterableColumns = columns.filter((column) => column.filterable !== false);
+  }, [rows, statusFilter]);
 
   const parityColumns = useMemo((): Array<ParityColumn<CatalogRow>> => {
     return columns.map((column) => ({
@@ -128,16 +120,10 @@ export function CatalogTable({
         maxSelectable={SELECTION_CAP}
         filterBar={
           <div className="grid gap-2 md:grid-cols-3">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={`Search ${filterableColumns.map((column) => column.label.toLowerCase()).join(" or ") || "rows"}`}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-            />
             <SelectCombobox
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as "true" | "false" | "all")}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-1"
             >
               <option value="true">Active</option>
               <option value="false">Inactive</option>
