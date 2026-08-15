@@ -28,6 +28,10 @@ function failures(s = files) { return [
   ["all applicable profile consumers", ["driver", "unit", "vendor", "customer", "invoice"].every((kind) => s.profiles.includes(`subjectKind=\"${kind}\"`))],
   ["exact three record targets", s.section.includes('kind="company_violation"') && s.section.includes('kind="integrity_alert"') && s.section.includes('kind="integrity_anomaly"') && s.entityLink.includes('case "company_violation":') && s.entityLink.includes("/safety/external-fines?record_type=company-violation&violation_id=") && s.entityLink.includes("/safety/integrity-alerts?alert_id=") && s.entityLink.includes("/safety/integrity-reports?anomaly_id=")],
   ["target drawers honor ids", s.companyPage.includes('searchParams.get("violation_id")') && s.integrityPage.includes('searchParams.get("alert_id")') && s.anomalyPage.includes('searchParams.get("anomaly_id")') && s.integrityReports.includes('searchParams.get("anomaly_id")')],
+  // LST-F5163G: list chrome reverse (URL-only driver_id/unit_id is not enough).
+  ["company violation list EntityPicker driver/unit filters", s.companyPage.includes('dataTestId="company-violations-filter-driver"') && s.companyPage.includes('dataTestId="company-violations-filter-unit"') && s.companyPage.includes('allowCreate={false}')],
+  ["company violation list Driver/Unit EntityLink columns", s.companyPage.includes('label: "Driver"') && s.companyPage.includes('label: "Unit"') && s.companyPage.includes('kind="driver"') && s.companyPage.includes('kind="unit"')],
+  ["company violation list seeds filters from URL", s.companyPage.includes('searchParams.get("driver_id")') && s.companyPage.includes('searchParams.get("unit_id")') && s.companyPage.includes("setDriverFilter") && s.companyPage.includes("setUnitFilter")],
   ["company violation unit forward links", s.companyDrawer.includes("violation.related_unit_ids") && s.companyDrawer.includes('kind="unit" id={unitId}')],
   ["company violation human label projections", (s.companyRoutes.match(/AS related_driver_labels/g) ?? []).length === 2 && (s.companyRoutes.match(/AS related_unit_labels/g) ?? []).length === 2],
   ["company violation driver label tenant joins", (s.companyRoutes.match(/md\.operating_company_id = cv\.operating_company_id/g) ?? []).length === 2],
@@ -42,6 +46,9 @@ if (process.argv.includes("--selftest")) {
     failures({...files, profiles: files.profiles.replace('subjectKind="invoice"', 'subjectKind="record"')}).includes("all applicable profile consumers"),
     failures({...files, section: files.section.replace('kind="integrity_alert"', 'kind="unit"')}).includes("exact three record targets"),
     failures({...files, companyPage: files.companyPage.replace('searchParams.get("violation_id")', 'null')}).includes("target drawers honor ids"),
+    failures({...files, companyPage: files.companyPage.replace('dataTestId="company-violations-filter-driver"', 'dataTestId="x"')}).includes("company violation list EntityPicker driver/unit filters"),
+    failures({...files, companyPage: files.companyPage.replace('label: "Driver"', 'label: "X"')}).includes("company violation list Driver/Unit EntityLink columns"),
+    failures({...files, companyPage: files.companyPage.replaceAll("setDriverFilter", "noop")}).includes("company violation list seeds filters from URL"),
     failures({...files, companyDrawer: files.companyDrawer.replace('kind="unit" id={unitId}', 'kind="driver" id={unitId}')}).includes("company violation unit forward links"),
     failures({...files, companyRoutes: files.companyRoutes.replace("AS related_driver_labels", "AS unresolved_driver_labels")}).includes("company violation human label projections"),
     failures({...files, companyRoutes: files.companyRoutes.replace("md.operating_company_id = cv.operating_company_id", "TRUE")}).includes("company violation driver label tenant joins"),
@@ -49,7 +56,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, companyDrawer: files.companyDrawer.replace("driverLabels[driverId]", "undefined")}).includes("company violation drawer consumes labels"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-safety-alert-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-safety-alert-profile-reverse selftest PASS — 11/11 API/profile/label/target mutations red"); process.exit(0);
+  console.log("verify-safety-alert-profile-reverse selftest PASS — 14/14 API/profile/label/target mutations red"); process.exit(0);
 }
 const missing = failures(); if (missing.length) { console.error(`verify-safety-alert-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
 console.log("verify-safety-alert-profile-reverse PASS — five subject profiles resolve exact safety drawers");
