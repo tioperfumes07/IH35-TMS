@@ -909,14 +909,19 @@
     "claimed_by": "cursor",
     "purpose": "verify-surface-bar-paritydrawer-inventory"
   },
+  "3337": {
+    "owner": "cc-1",
+    "purpose": "verify-gl-je-required-honest-false-required-batch (LINK-F5186)"
+  },
   "3338": {
     "claimed_at": "2026-08-15",
     "claimed_by": "cursor",
     "purpose": "verify-tip-static-findings-register-sync"
   },
-  "3337": {
-    "owner": "cc-1",
-    "purpose": "verify-gl-je-required-honest-false-required-batch (LINK-F5186)"
+  "3340": {
+    "purpose": "verify-surface-bar-combobox-inventory",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
   },
   "3341": {
     "owner": "cc-1",
@@ -925,6 +930,21 @@
   "3345": {
     "owner": "cc-1",
     "purpose": "verify-gl-je-required-honest-cluster2 (LINK-F5186)"
+  },
+  "3349": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-liability-required-honest-cluster-b"
+  },
+  "3353": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-liability-required-honest-cluster-a-false-required"
+  },
+  "3357": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-liability-required-honest-cluster-a-genuine"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -2770,20 +2790,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1142,
-  "3349": {
-    "claimed_at": "2026-08-14",
-    "claimed_by": "cc-1",
-    "purpose": "verify-liability-required-honest-cluster-b"
-  },
-  "3353": {
-    "claimed_at": "2026-08-14",
-    "claimed_by": "cc-1",
-    "purpose": "verify-liability-required-honest-cluster-a-false-required"
-  },
-  "3357": {
-    "claimed_at": "2026-08-14",
-    "claimed_by": "cc-1",
-    "purpose": "verify-liability-required-honest-cluster-a-genuine"
-  }
+  "total_claimed": 1142
 }
