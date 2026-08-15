@@ -18,6 +18,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
@@ -75,10 +76,23 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   const reverseTrailerId = searchParams.get("trailer_id")?.trim() || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(deepLinkClaimId);
+  // LST-F5163E: visible list filters (allowCreate=false); reverse ?trailer_id= seeds trailerFilter.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+  const [trailerFilter, setTrailerFilter] = useState("");
 
   useEffect(() => {
     if (deepLinkClaimId) setHighlightedClaimId(deepLinkClaimId);
   }, [deepLinkClaimId]);
+  useEffect(() => {
+    if (reverseDriverId) setDriverFilter(reverseDriverId);
+  }, [reverseDriverId]);
+  useEffect(() => {
+    if (reverseUnitId) setUnitFilter(reverseUnitId);
+  }, [reverseUnitId]);
+  useEffect(() => {
+    if (reverseTrailerId) setTrailerFilter(reverseTrailerId);
+  }, [reverseTrailerId]);
 
   const query = useQuery({
     queryKey: [
@@ -86,9 +100,10 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       companyId || "none",
       policyId ?? "all",
       assetId ?? "all",
-      reverseDriverId,
-      reverseUnitId,
+      driverFilter,
+      unitFilter,
       reverseLoadId,
+      trailerFilter,
       reverseTrailerId,
     ],
     queryFn: () =>
@@ -96,10 +111,10 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         operating_company_id: companyId,
         policy_id: policyId,
         asset_id: assetId,
-        driver_id: reverseDriverId || undefined,
-        unit_id: reverseUnitId || undefined,
+        driver_id: driverFilter.trim() || reverseDriverId || undefined,
+        unit_id: unitFilter.trim() || reverseUnitId || undefined,
         load_id: reverseLoadId || undefined,
-        trailer_id: reverseTrailerId || undefined,
+        trailer_id: trailerFilter.trim() || reverseTrailerId || undefined,
       }).then((result) => result.claims),
     enabled: Boolean(companyId),
   });
@@ -156,6 +171,17 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             kind="unit"
             id={claim.unit_id ?? undefined}
             label={entityLabel(claim.unit_display_id, claim.unit_id, "Unit")}
+          />
+        ),
+      },
+      {
+        key: "trailer_id",
+        label: "Trailer",
+        render: (claim) => (
+          <EntityLink
+            kind="trailer"
+            id={claim.trailer_id ?? undefined}
+            label={entityLabel(claim.trailer_display_id, claim.trailer_id, "Trailer")}
           />
         ),
       },
@@ -283,6 +309,12 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 <EntityLink kind="load" id={graph.claim.load_id} label={entityLabel(graph.claim.load_display_id, graph.claim.load_id, "Load")} />
                 {" · "}
                 <EntityLink kind="unit" id={graph.claim.unit_id} label={entityLabel(graph.claim.unit_display_id, graph.claim.unit_id, "Unit")} />
+                {" · "}
+                <EntityLink
+                  kind="trailer"
+                  id={graph.claim.trailer_id}
+                  label={entityLabel(graph.claim.trailer_display_id, graph.claim.trailer_id, "Trailer")}
+                />
                 {graph.claim.accident_report_id ? (
                   <>
                     {" · "}
@@ -436,6 +468,49 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         storageKey="insurance-claims"
         emptyText="No claims found."
         rowClassName={(claim) => (highlightedClaimId === claim.id ? "bg-slate-100" : "")}
+        filterBar={
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-[11px] text-slate-600">
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={companyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1"
+                dataTestId="insurance-claims-filter-driver"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Unit
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={companyId}
+                value={unitFilter || null}
+                onChange={(next) => setUnitFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All units"
+                className="mt-1"
+                dataTestId="insurance-claims-filter-unit"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Trailer
+              <EntityPicker
+                kind="trailer"
+                operatingCompanyId={companyId}
+                value={trailerFilter || null}
+                onChange={(next) => setTrailerFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All trailers"
+                className="mt-1"
+                dataTestId="insurance-claims-trailer-filter"
+              />
+            </label>
+          </div>
+        }
       />
       <ClaimCreateModal
         open={createOpen}
