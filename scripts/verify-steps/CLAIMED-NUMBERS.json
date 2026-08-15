@@ -1122,6 +1122,11 @@
     "lane": "cursor",
     "claimedAt": "2026-08-15"
   },
+  "3424": {
+    "guard": "verify-settlements-qbo-chrome-surfaces",
+    "lane": "cursor",
+    "claimedAt": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
