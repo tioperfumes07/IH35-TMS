@@ -6,7 +6,7 @@
  * the guard can only assert the shape of:
  *   - the roster is read company-scoped from the canonical list call;
  *   - inline "+ Create ___" is the FIRST ROW INSIDE the dropdown, present before any keystroke;
- *   - picking an option hands the parent the CANONICAL ID, not the label the operator saw;
+ *   - picking an option hands the parent the CANONICAL ID plus its human-labelled roster option;
  *   - a filter (allowCreate={false}) shows no create row;
  *   - a kind that refuses inline create (a transaction) shows no create row even by default;
  *   - a value that is not in the roster stays visible instead of silently blanking.
@@ -124,13 +124,13 @@ describe("EntityPicker (C1 picker law)", () => {
     expect(createRow.compareDocumentPosition(janeRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("hands the parent the CANONICAL ID, not the label", async () => {
+  it("hands the parent the CANONICAL ID plus the human-labelled roster option", async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
     wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={onChange} />);
     await user.click(await screen.findByPlaceholderText("Select driver"));
     await user.click(await screen.findByText("Mecor Lopez"));
-    expect(onChange).toHaveBeenCalledWith("drv-2");
+    expect(onChange).toHaveBeenCalledWith("drv-2", { value: "drv-2", label: "Mecor Lopez" });
   });
 
   it("opens the entity's real create surface in the C7 drawer shell by default", async () => {
