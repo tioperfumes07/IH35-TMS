@@ -29,12 +29,16 @@ export function computeFailures(files) {
   if (/from ["'].*PartsInventoryTable["']/.test(assignments) || /listPartsInventory/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must not use PartsInventoryTable / listPartsInventory (Purchase History twin)");
   }
-  // Purchases door stays; must NOT twin stock (0441-mod13 / HOLD-INVENTORY-PURCHASE-HISTORY-SOR).
+  // Purchases door stays; must NOT twin stock (0441-mod13 / HOLD-INVENTORY-PURCHASE-HISTORY-SOR,
+  // superseded 2026-08-15 by INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT — real SoR now, still no stock twin).
   if (/\blistPartsInventory\b/.test(purchases) || /<PartsInventoryTable\b/.test(purchases) || /from ["'][^"']*PartsInventoryTable["']/.test(purchases)) {
     errors.push("InventoryPurchasesPage must not twin stock via listPartsInventory / PartsInventoryTable");
   }
-  if (!/InventoryPurchasesPage|Purchase History|inventory-purchases-honest-empty|not yet tracked/i.test(purchases)) {
-    errors.push("InventoryPurchasesPage door must remain (honest empty / Purchase History label)");
+  if (!/InventoryPurchasesPage/.test(purchases) || !/Purchase History/.test(purchases)) {
+    errors.push("InventoryPurchasesPage door must remain (Purchase History label)");
+  }
+  if (!/listPartsPurchases/.test(purchases)) {
+    errors.push("InventoryPurchasesPage must load the real purchase-event SoR via listPartsPurchases");
   }
   if (!/listPartsAssignments/.test(assignments) || !/parts-assignments/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must load listPartsAssignments / parts-assignments SoR");
@@ -62,8 +66,9 @@ function selftest() {
       assignmentsQuery.isError ? <ListErrorState /> : null
     `,
     purchases: `
+      import { listPartsPurchases } from "../../api/maintenance";
       export function InventoryPurchasesPage() {
-        return <section data-testid="inventory-purchases-honest-empty">not yet tracked</section>;
+        return <section>Purchase History <ParityTable /></section>;
       }
     `,
   };

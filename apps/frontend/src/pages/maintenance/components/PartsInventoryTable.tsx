@@ -112,6 +112,8 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
       setForm(EMPTY_PURCHASE);
       setLastGlPosting(created.gl_posting ?? null);
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
+      // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT: keep Purchase History fresh for the same session.
+      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-purchases", companyId] });
     },
   });
   const adjustMutation = useMutation({

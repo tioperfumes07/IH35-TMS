@@ -15,16 +15,31 @@ const querySchema = z.object({
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const purchaseSchema = z.object({
   part_description: z.string().trim().min(1).max(250),
+  // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT: optional explicit SKU. When omitted, the route derives
+  // a canonical key from part_description so two purchases of the textually-identical part upsert
+  // the same stock row instead of fragmenting on-hand quantity across duplicate rows (the old bug).
+  part_number: z.string().trim().max(120).optional(),
   vendor_id: z.string().uuid().optional(),
   vendor_invoice_number: z.string().trim().max(120).optional(),
   purchase_amount: z.number().nonnegative().optional(),
   qty_received: z.number().int().positive(),
   location: z.string().trim().max(120).optional(),
+  work_order_id: z.string().uuid().optional(),
 });
 const adjustSchema = z.object({
   delta_qty: z.number().int(),
   reason: z.enum(["used", "discarded", "shrinkage", "recount"]),
 });
+const voidPurchaseSchema = z.object({
+  void_reason: z.string().trim().min(1).max(500),
+});
+
+/** Canonical part identity when the caller doesn't supply an explicit SKU. */
+function canonicalPartNumber(explicit: string | undefined, description: string): string {
+  const trimmed = explicit?.trim();
+  if (trimmed) return trimmed;
+  return description.trim().toUpperCase();
+}
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -65,6 +80,65 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     return { rows };
   });
 
+  // GET purchase history — INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT. The real append-only SoR;
+  // maintenance.parts_inventory (above) stays a mutable on-hand snapshot, never purchase history.
+  app.get("/api/v1/maintenance/parts-inventory/purchases", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = querySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const values: unknown[] = [query.data.operating_company_id];
+      const vendorFilter = query.data.vendor_id ? "AND pp.vendor_id = $2::uuid" : "";
+      if (query.data.vendor_id) values.push(query.data.vendor_id);
+      const res = await client.query(
+        `SELECT pp.*, pi.part_description, pi.part_number,
+                v.vendor_name AS vendor_name,
+                wo.display_id AS work_order_display_id
+         FROM maintenance.parts_purchases pp
+         JOIN maintenance.parts_inventory pi ON pi.id = pp.parts_inventory_id
+         LEFT JOIN mdata.vendors v
+           ON v.id = pp.vendor_id AND v.operating_company_id = pp.operating_company_id
+         LEFT JOIN maintenance.work_orders wo
+           ON wo.id = pp.work_order_id AND wo.operating_company_id = pp.operating_company_id
+         WHERE pp.operating_company_id = $1::uuid
+           ${vendorFilter}
+         ORDER BY pp.purchased_at DESC, pp.created_at DESC`,
+        values
+      );
+      return res.rows;
+    });
+    return { rows };
+  });
+
+  app.get("/api/v1/maintenance/parts-inventory/purchases/:id", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const query = querySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const row = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `SELECT pp.*, pi.part_description, pi.part_number,
+                v.vendor_name AS vendor_name,
+                wo.display_id AS work_order_display_id
+         FROM maintenance.parts_purchases pp
+         JOIN maintenance.parts_inventory pi ON pi.id = pp.parts_inventory_id
+         LEFT JOIN mdata.vendors v
+           ON v.id = pp.vendor_id AND v.operating_company_id = pp.operating_company_id
+         LEFT JOIN maintenance.work_orders wo
+           ON wo.id = pp.work_order_id AND wo.operating_company_id = pp.operating_company_id
+         WHERE pp.operating_company_id = $1::uuid AND pp.id = $2::uuid
+         LIMIT 1`,
+        [query.data.operating_company_id, params.data.id]
+      );
+      return res.rows[0] ?? null;
+    });
+    if (!row) return reply.code(404).send({ error: "parts_purchase_not_found" });
+    return row;
+  });
+
   app.post("/api/v1/maintenance/parts-inventory/purchases", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
@@ -73,34 +147,82 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     const body = purchaseSchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
-    const row = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          INSERT INTO maintenance.parts_inventory (
-            part_description, vendor_id, last_purchase_invoice_number, last_purchase_amount,
-            last_purchase_date, on_hand_qty, location, operating_company_id
-          )
-          VALUES ($1,$2,$3,$4,now()::date,$5,$6,$7)
-          RETURNING *
-        `,
-        [
-          body.data.part_description,
-          body.data.vendor_id ?? null,
-          body.data.vendor_invoice_number ?? null,
-          body.data.purchase_amount ?? null,
-          body.data.qty_received,
-          body.data.location ?? null,
-          query.data.operating_company_id,
-        ]
-      );
-      return res.rows[0];
-    });
+    const partNumber = canonicalPartNumber(body.data.part_number, body.data.part_description);
+
+    // Atomic: stock upsert + append-only purchase-event insert happen on the SAME connection
+    // inside withCompany's transaction (withCurrentUser wraps the whole callback in BEGIN/COMMIT) —
+    // either both land or neither does. Real identity = (operating_company_id, part_number); a
+    // repeat purchase of the SAME part additively upserts on_hand_qty instead of fragmenting stock
+    // across duplicate rows (the pre-fix behavior).
+    const { stockRow, purchaseRow } = await withCompany(
+      user.uuid,
+      query.data.operating_company_id,
+      async (client) => {
+        const stock = await client.query(
+          `
+            INSERT INTO maintenance.parts_inventory (
+              part_description, part_number, vendor_id, last_purchase_invoice_number,
+              last_purchase_amount, last_purchase_date, on_hand_qty, location, operating_company_id
+            )
+            VALUES ($1,$2,$3,$4,$5,now()::date,$6,$7,$8)
+            ON CONFLICT (operating_company_id, part_number) WHERE part_number IS NOT NULL AND part_number <> ''
+            DO UPDATE SET
+              on_hand_qty = maintenance.parts_inventory.on_hand_qty + EXCLUDED.on_hand_qty,
+              last_purchase_invoice_number = EXCLUDED.last_purchase_invoice_number,
+              last_purchase_amount = EXCLUDED.last_purchase_amount,
+              last_purchase_date = EXCLUDED.last_purchase_date,
+              vendor_id = COALESCE(EXCLUDED.vendor_id, maintenance.parts_inventory.vendor_id),
+              location = COALESCE(EXCLUDED.location, maintenance.parts_inventory.location),
+              updated_at = now()
+            RETURNING *
+          `,
+          [
+            body.data.part_description,
+            partNumber,
+            body.data.vendor_id ?? null,
+            body.data.vendor_invoice_number ?? null,
+            body.data.purchase_amount ?? null,
+            body.data.qty_received,
+            body.data.location ?? null,
+            query.data.operating_company_id,
+          ]
+        );
+        const stockRow = stock.rows[0];
+
+        const amountCents =
+          body.data.purchase_amount != null ? Math.round(body.data.purchase_amount * 100) : null;
+        const purchase = await client.query(
+          `
+            INSERT INTO maintenance.parts_purchases (
+              operating_company_id, parts_inventory_id, vendor_id, vendor_invoice_number,
+              purchase_amount_cents, qty_received, work_order_id, created_by_user_id
+            )
+            VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5,$6,$7::uuid,$8::uuid)
+            RETURNING *
+          `,
+          [
+            query.data.operating_company_id,
+            stockRow.id,
+            body.data.vendor_id ?? null,
+            body.data.vendor_invoice_number ?? null,
+            amountCents,
+            body.data.qty_received,
+            body.data.work_order_id ?? null,
+            user.uuid,
+          ]
+        );
+        return { stockRow, purchaseRow: purchase.rows[0] };
+      }
+    );
 
     // MNT-ECON-01 economic hop — A/P bill + balanced JE behind PARTS_PURCHASE_GL_POSTING_ENABLED
-    // (default OFF). Inventory row is already committed; flag_off / zero_amount are honest no-ops.
+    // (default OFF). Inventory + purchase-event rows are already committed; flag_off / zero_amount
+    // are honest no-ops. Latch keys off the purchase EVENT (parts_purchase_id), not the upserted
+    // stock row, so a second purchase of the same part still gets its own posting opportunity.
     const gl = await postPartsInventoryPurchase({
       operating_company_id: query.data.operating_company_id,
-      parts_inventory_id: String(row.id),
+      parts_inventory_id: String(stockRow.id),
+      parts_purchase_id: String(purchaseRow.id),
       actor_user_id: user.uuid,
       entry_date_iso: new Date().toISOString().slice(0, 10),
       part_description: body.data.part_description,
@@ -109,7 +231,63 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
       purchase_amount_dollars: body.data.purchase_amount ?? null,
     });
 
-    return reply.code(201).send({ ...row, gl_posting: gl });
+    return reply.code(201).send({ ...stockRow, purchase: purchaseRow, gl_posting: gl });
+  });
+
+  // Void a purchase event — void-not-delete. Symmetrically decrements the same stock row it
+  // additively upserted, in the same transaction, so on-hand quantity never drifts.
+  app.post("/api/v1/maintenance/parts-inventory/purchases/:id/void", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const query = querySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const body = voidPurchaseSchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const existing = await client.query(
+        `SELECT * FROM maintenance.parts_purchases
+         WHERE id = $1::uuid AND operating_company_id = $2::uuid
+         LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const purchase = existing.rows[0];
+      if (!purchase) return { notFound: true as const };
+      if (purchase.voided_at) return { alreadyVoided: true as const, row: purchase };
+
+      const voided = await client.query(
+        `UPDATE maintenance.parts_purchases
+         SET voided_at = now(), voided_by_user_id = $3::uuid, void_reason = $4
+         WHERE id = $1::uuid AND operating_company_id = $2::uuid
+         RETURNING *`,
+        [params.data.id, query.data.operating_company_id, user.uuid, body.data.void_reason]
+      );
+      await client.query(
+        `UPDATE maintenance.parts_inventory
+         SET on_hand_qty = GREATEST(0, COALESCE(on_hand_qty, 0) - $2), updated_at = now()
+         WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
+        [purchase.parts_inventory_id, purchase.qty_received, query.data.operating_company_id]
+      );
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "maintenance.parts_purchase.voided",
+        {
+          resource_id: params.data.id,
+          resource_type: "maintenance.parts_purchases",
+          void_reason: body.data.void_reason,
+          qty_received: purchase.qty_received,
+        },
+        "warning"
+      );
+      return { row: voided.rows[0] };
+    });
+
+    if ("notFound" in result) return reply.code(404).send({ error: "parts_purchase_not_found" });
+    if ("alreadyVoided" in result) return reply.code(409).send({ error: "parts_purchase_already_voided", row: result.row });
+    return result.row;
   });
 
   app.patch("/api/v1/maintenance/parts-inventory/:id/adjust", async (req, reply) => {

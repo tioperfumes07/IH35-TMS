@@ -333,7 +333,7 @@
     {
       "id": "purchases.honest_empty",
       "tab": "Purchase History",
-      "sub": "Honest empty · purchase SoR not built (HOLD)",
+      "sub": "Purchase SoR — real list (maintenance.parts_purchases, INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT)",
       "route_hint": "/inventory/purchases",
       "required": [
         "connectivity"
