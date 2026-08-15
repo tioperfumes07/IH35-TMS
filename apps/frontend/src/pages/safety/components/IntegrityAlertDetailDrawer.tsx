@@ -16,6 +16,19 @@ type Props = {
 
 const DRAWER_TITLE = "Integrity Alert Detail";
 
+function idList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => String(entry ?? "").trim()).filter(Boolean);
+}
+
+function metricEntries(value: unknown): Array<[string, string]> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.entries(value as Record<string, unknown>).map(([key, metric]) => [
+    key.replaceAll("_", " "),
+    metric && typeof metric === "object" ? JSON.stringify(metric) : String(metric ?? "—"),
+  ]);
+}
+
 export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, onClose, onUpdated }: Props) {
   // SAF-B24: the panel is now a <div> inside ParityDrawer rather than a bespoke <aside>, so the ref
   // element type follows. Focus behaviour is unchanged.
@@ -71,6 +84,10 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
 
   if (!open || !alert) return null;
 
+  const loadIds = idList(alert.related_load_ids);
+  const workOrderIds = idList(alert.related_wo_ids);
+  const metrics = metricEntries(alert.detection_metric);
+
   return (
     <>
       {/* SAF-B24: was a bespoke <aside> with its own backdrop, z-index, width, escape handling and
@@ -120,6 +137,37 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           </div>
           <div><strong>Status:</strong> {String(alert.resolution_status ?? "unresolved")}</div>
           <div><strong>Summary:</strong> {String(alert.detection_summary ?? "—")}</div>
+          <div><strong>Source:</strong> {String(alert.source_view ?? "—")}</div>
+          <div><strong>Created:</strong> {String(alert.created_at ?? "—")}</div>
+          {metrics.length > 0 ? (
+            <div>
+              <strong>Detection metrics:</strong>
+              <dl className="mt-1 grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-3 gap-y-1 rounded-sm bg-slate-50 p-2 text-xs">
+                {metrics.map(([key, value]) => (
+                  <div key={key} className="contents">
+                    <dt className="font-medium capitalize text-slate-600">{key}</dt>
+                    <dd className="break-words text-slate-900">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
+          {loadIds.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <strong>Related loads:</strong>
+              {loadIds.map((id) => (
+                <EntityLink key={id} kind="load" id={id} label={entityLabel(null, id, "Load")} />
+              ))}
+            </div>
+          ) : null}
+          {workOrderIds.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <strong>Related work orders:</strong>
+              {workOrderIds.map((id) => (
+                <EntityLink key={id} kind="work_order" id={id} label={entityLabel(null, id, "Work order")} />
+              ))}
+            </div>
+          ) : null}
         </div>
         <div className="mt-4 flex gap-2">
           <button
