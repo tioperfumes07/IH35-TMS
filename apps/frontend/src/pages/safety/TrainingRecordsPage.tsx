@@ -9,6 +9,7 @@ import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWit
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -34,20 +35,27 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState("");
+  // LST-F5163J: list reverse filter separate from create picker (URL seeds both).
+  const [driverFilter, setDriverFilter] = useState("");
   const [trainingName, setTrainingName] = useState("");
   const [completedAt, setCompletedAt] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
+    if (driverIdFromUrl) {
+      setDriverId(driverIdFromUrl);
+      setDriverFilter(driverIdFromUrl);
+    }
   }, [driverIdFromUrl]);
 
+  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
+
   const recordsQuery = useQuery({
-    queryKey: ["safety", "training-records", operatingCompanyId, driverIdFromUrl],
+    queryKey: ["safety", "training-records", operatingCompanyId, effectiveDriverId],
     queryFn: () =>
       getTrainingCompletions(operatingCompanyId, {
-        driver_id: driverIdFromUrl || undefined,
+        driver_id: effectiveDriverId,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -134,6 +142,23 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           exportFilename="training-records"
           tableTestId="training-records-table"
           rowTestId={(row) => `training-record-row-${String(row.id)}`}
+          filterBar={
+            <div className="relative flex flex-wrap items-center gap-2">
+              <label className="text-[11px] text-slate-600">
+                Driver
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={operatingCompanyId}
+                  value={driverFilter || null}
+                  onChange={(next) => setDriverFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All drivers"
+                  className="mt-1"
+                  dataTestId="training-records-filter-driver"
+                />
+              </label>
+            </div>
+          }
         />
       )}
 
