@@ -551,8 +551,8 @@ export function VendorBillForm({
       />
 
       <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
-        Line amounts post to <code className="text-[10px]">accounting.bill_lines</code> with the bill header
-        (same transaction). Tax shown above is display-only until a tax expense line with a real CoA
+        Line amounts post together with the bill header as one transaction. Tax shown above is
+        display-only until a tax expense line with a real CoA
         account is entered — the bill amount equals the sum of lines (no invented tax GL).
       </div>
       {formError ? <p className="text-sm text-red-600">{formError}</p> : null}

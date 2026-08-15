@@ -1,15 +1,15 @@
 // @archived — DispatchList: superseded by DispatchBoard (pages/dispatch/DispatchBoard.tsx) via DispatchPage.
 // Do not wire into routes/manifest. Enforced by verify-dispatch-list-orphaned.mjs. (0243-c1-4)
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
+import { ParityTable } from "../parity/ParityTable";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents } from "./constants";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
-import { DriverHosClockCells, DriverHosStatusDot } from "./hos/DriverHosClocks";
+import { DriverHosClockValue, DriverHosStatusDot } from "./hos/DriverHosClocks";
 import { HOS_COLUMNS } from "./hos/hosClocks";
-import { TableSelection, TableSelectionHeader } from "../bulk";
 import { InlineUnitPicker } from "./InlineUnitPicker";
 import { InlineDriverPicker } from "./InlineDriverPicker";
 import type { DispatchListProps, SortField } from "./dispatchListTypes";
@@ -133,240 +133,261 @@ export function DispatchList({
         </div>
       </div>
 
-      <div className="hidden overflow-x-auto rounded-sm border border-gray-200 bg-white md:block">
-        <TableSelection
+      {/* DISP-F3600: ParityTable owns Search+Range+gear on archived DispatchList desktop grid. */}
+      <div className="hidden md:block">
+        <ParityTable<DispatchLoadRow>
           rows={effectiveLoads}
-          getId={(load) => load.id}
-          selectedIds={bulkSelection?.selectedIds ?? new Set()}
-          onSelectionChange={bulkSelection?.onSelectionChange ?? (() => undefined)}
-          pageRowIds={bulkSelection?.pageRowIds ?? []}
-          onCapExceeded={bulkSelection?.onCapExceeded}
-        >
-          {(selectCtx) => (
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              {bulkSelection ? (
-                <th className="w-10 px-2 py-2">
-                  <TableSelectionHeader
-                    selectedIds={bulkSelection.selectedIds}
-                    pageRowIds={bulkSelection.pageRowIds}
-                    onSelectionChange={bulkSelection.onSelectionChange}
-                    onCapExceeded={bulkSelection.onCapExceeded}
-                  />
-                </th>
-              ) : null}
-              <th className="px-3 py-2">Flag</th>
-              {[
-                ["load_number", "Load #"],
-                ["customer", "Customer"],
-                ["pickup", "Pickup"],
-                ["delivery", "Delivery"],
-                ["unit", "Unit"],
-                ["driver", "Driver"],
-                // DISPATCH-UI-REFINE-2 ITEM 5 — 6 Samsara-standard HOS columns replace the single HOS
-                // placeholder, in the same block position (after Driver). Net grid widens by +5.
-                ...HOS_COLUMNS.map((c) => [`hos_${c.key}`, c.label] as [string, string]),
-                ["status", "Status"],
-                ["progress", "Progress"],
-                ...(showEtaColumn ? [["eta", "ETA"] as const] : []),
-                ["rate_total_cents", "Rate"],
-                ["created_at", "Created"],
-              ].map(([key, label]) => (
-                <th key={key} className="px-3 py-2">
-                  {key === "load_number" || key === "status" || key === "rate_total_cents" || key === "created_at" ? (
-                    <button type="button" className="inline-flex items-center gap-1" onClick={() => onHeaderClick(key as SortField)}>
-                      {label}
-                      {sortField === key ? (sortDirection === "asc" ? "▲" : "▼") : ""}
-                    </button>
-                  ) : (
-                    label
-                  )}
-                </th>
+          rowKey={(load) => load.id}
+          loading={loading}
+          storageKey="dispatch-list-archived"
+          exportFilename="dispatch-list"
+          tableTestId="dispatch-list-parity-table"
+          emptyText="No loads match your filters."
+          onRowClick={(load) => onRowClick(load.id)}
+          selectable={Boolean(bulkSelection)}
+          selectedKeys={bulkSelection ? [...bulkSelection.selectedIds] : undefined}
+          onSelectionChange={
+            bulkSelection
+              ? (keys) => bulkSelection.onSelectionChange(new Set(keys))
+              : undefined
+          }
+          toolbar={
+            <div className="flex flex-wrap items-center gap-1 text-xs text-gray-600">
+              {(
+                [
+                  ["load_number", "Load #"],
+                  ["status", "Status"],
+                  ["rate_total_cents", "Rate"],
+                  ["created_at", "Created"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className="inline-flex items-center gap-0.5 rounded-sm border border-gray-200 px-1.5 py-0.5 hover:bg-gray-50"
+                  onClick={() => onHeaderClick(key)}
+                >
+                  {label}
+                  {sortField === key ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+                </button>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading
-              ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
-                  <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={(showEtaColumn ? 18 : 17) + (bulkSelection ? 1 : 0)} className="px-3 py-3 text-gray-400">
-                      Loading loads...
-                    </td>
-                  </tr>
-                ))
-              : effectiveLoads.map((load) => {
-                  const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
-                  const openPreSettlement = effectiveDriverId ? openPreSettlements?.get(effectiveDriverId) : undefined;
-                  // Show prompt when this load is NOT the one that opened the pre-settlement
-                  // and the load hasn't already been delivered/cancelled.
-                  const showPreSettlementPrompt = Boolean(
-                    openPreSettlement &&
-                      openPreSettlement.first_load_id !== load.id &&
-                      !["delivered", "delivered_pending_docs", "completed_docs_received", "closed", "paid", "invoiced", "cancelled"].includes(load.status)
-                  );
-                  const colSpan = (showEtaColumn ? 18 : 17) + (bulkSelection ? 1 : 0);
-                  return (
-                  <Fragment key={load.id}>
-                  <tr
-                    onClick={() => onRowClick(load.id)}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+            </div>
+          }
+          columns={[
+            {
+              key: "flag",
+              label: "Flag",
+              alwaysVisible: true,
+              render: (load) =>
+                hasVisibleFlag(load.flag_code) ? (
+                  <span
+                    className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                    style={{ backgroundColor: flagDotColor(load.flag_code) }}
+                    title={flagDotLabel(load.flag_code)}
                   >
-                    {bulkSelection ? (
-                      <td className="px-2 py-2" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          aria-label={`Select load ${load.load_number}`}
-                          checked={selectCtx.isSelected(load.id)}
-                          onChange={() => selectCtx.toggle(load.id)}
-                        />
-                      </td>
-                    ) : null}
-                    <td className="px-3 py-2">
-                      {hasVisibleFlag(load.flag_code) ? (
-                        <span
-                          className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
-                          style={{ backgroundColor: flagDotColor(load.flag_code) }}
-                          title={flagDotLabel(load.flag_code)}
-                        >
-                          {flagDotTag(load.flag_code)}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="code-cell px-3 py-2 font-medium text-gray-800">{entityLabel(load.load_number, load.id, "Load")}</td>
-                    <td className="min-w-0 max-w-[240px] px-3 py-2">
-                      <span title={load.customer_name ?? undefined} className="single-line-name">
-                        {entityLabel(load.customer_name, null, "Customer")}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">{load.first_pickup_city ?? "-"}</td>
-                    <td className="px-3 py-2">{load.first_delivery_city ?? "-"}</td>
-                    <td className="code-cell px-3 py-2">
-                      {inlineQuicksaveEnabled && operatingCompanyId ? (
-                        <InlineUnitPicker
-                          loadId={load.id}
-                          operatingCompanyId={operatingCompanyId}
-                          unitId={load.assigned_unit_id}
-                          displayLabel={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
-                          onAssigned={({ unitId, label }) =>
-                            setRowOverrides((prev) => ({
-                              ...prev,
-                              [load.id]: { ...prev[load.id], unitId, unitLabel: label },
-                            }))
-                          }
-                          onRollback={() =>
-                            setRowOverrides((prev) => {
-                              const next = { ...prev };
-                              delete next[load.id]?.unitId;
-                              return next;
-                            })
-                          }
-                        />
-                      ) : (
-                        load.assigned_unit_number ?? entityLabel(null, load.assigned_unit_id, "Unit")
-                      )}
-                    </td>
-                    <td className="min-w-0 max-w-[240px] px-3 py-2">
-                      {inlineQuicksaveEnabled && operatingCompanyId ? (
-                        <InlineDriverPicker
-                          loadId={load.id}
-                          operatingCompanyId={operatingCompanyId}
-                          driverId={load.assigned_primary_driver_id}
-                          displayLabel={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
-                          onAssigned={({ driverId, label }) =>
-                            setRowOverrides((prev) => ({
-                              ...prev,
-                              [load.id]: { ...prev[load.id], driverId, driverLabel: label },
-                            }))
-                          }
-                          onRollback={() =>
-                            setRowOverrides((prev) => {
-                              const next = { ...prev };
-                              delete next[load.id]?.driverId;
-                              return next;
-                            })
-                          }
-                        />
-                      ) : (
-                        <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name inline-flex items-center gap-1.5">
-                          {/* DISPATCH-UI-REFINE-2 ITEM 5 — HOS duty/health dot next to the driver name. */}
-                          <DriverHosStatusDot driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
-                          {entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
-                        </span>
-                      )}
-                    </td>
-                    {/* DISPATCH-UI-REFINE-2 ITEM 5 — 6 HOS clock cells (Drive/Shift/Break/Cycle/Stop By/
-                        Resume At) from the in-app HOS store; "—" until ingestion lands. */}
-                    <DriverHosClockCells driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1">
-                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
-                          {STATUS_LABEL[load.status]}
-                        </span>
-                        {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-                          <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-semibold ${progressPill(load.progress_status)}`}
-                        title={
-                          load.progress_eta_delta_minutes == null
-                            ? "No live GPS/appointment delta available."
-                            : `ETA delta vs scheduled: ${load.progress_eta_delta_minutes} min`
-                        }
-                      >
-                        {(load.progress_status ?? "unknown").replace("_", " ")}
-                      </span>
-                    </td>
-                    {showEtaColumn ? (
-                      <td className="px-3 py-2 align-middle">
-                        <span className="text-[11px] text-gray-600">
-                          {load.status === "in_transit" && load.samsara_eta_at
-                            ? new Date(load.samsara_eta_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                            : "—"}
-                        </span>
-                      </td>
-                    ) : null}
-                    <td className="px-3 py-2">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</td>
-                    <td className="px-3 py-2">{new Date(load.created_at).toLocaleDateString()}</td>
-                  </tr>
-                  {showPreSettlementPrompt && openPreSettlement ? (
-                    <tr className="border-b border-slate-200 bg-slate-100">
-                      <td colSpan={colSpan} className="px-3 py-1.5">
-                        <div className="flex items-center gap-2 text-xs text-slate-700">
-                          <span className="font-semibold">Driver has open pre-settlement</span>
-                          {openPreSettlement.settlement_number ? (
-                            <span className="font-mono text-slate-700">{entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")}</span>
-                          ) : null}
-                          <span className="text-slate-700">· add this load to it?</span>
-                          <button
-                            type="button"
-                            className="rounded-sm bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onAddToPreSettlement?.(
-                                openPreSettlement.settlement_id,
-                                load.id,
-                                load.operating_company_id
-                              );
-                            }}
-                          >
-                            Add to it
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : null}
-                  </Fragment>
+                    {flagDotTag(load.flag_code)}
+                  </span>
+                ) : null,
+            },
+            {
+              key: "load_number",
+              label: "Load #",
+              cellClass: "code-cell font-medium text-gray-800",
+              render: (load) => {
+                const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
+                const openPreSettlement = effectiveDriverId ? openPreSettlements?.get(effectiveDriverId) : undefined;
+                const showPreSettlementPrompt = Boolean(
+                  openPreSettlement &&
+                    openPreSettlement.first_load_id !== load.id &&
+                    !["delivered", "delivered_pending_docs", "completed_docs_received", "closed", "paid", "invoiced", "cancelled"].includes(
+                      load.status
+                    )
                 );
-              })}
-
-          </tbody>
-        </table>
-          )}
-        </TableSelection>
+                return (
+                  <div className="space-y-1">
+                    <div>{entityLabel(load.load_number, load.id, "Load")}</div>
+                    {showPreSettlementPrompt && openPreSettlement ? (
+                      <div
+                        className="flex flex-wrap items-center gap-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <span className="font-semibold">Driver has open pre-settlement</span>
+                        {openPreSettlement.settlement_number ? (
+                          <span className="font-mono text-slate-700">
+                            {entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")}
+                          </span>
+                        ) : null}
+                        <span className="text-slate-700">· add this load to it?</span>
+                        <button
+                          type="button"
+                          className="rounded-sm bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onAddToPreSettlement?.(openPreSettlement.settlement_id, load.id, load.operating_company_id);
+                          }}
+                        >
+                          Add to it
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              },
+            },
+            {
+              key: "customer",
+              label: "Customer",
+              cellClass: "min-w-0 max-w-[240px]",
+              render: (load) => (
+                <span title={load.customer_name ?? undefined} className="single-line-name">
+                  {entityLabel(load.customer_name, null, "Customer")}
+                </span>
+              ),
+            },
+            {
+              key: "pickup",
+              label: "Pickup",
+              render: (load) => load.first_pickup_city ?? "-",
+            },
+            {
+              key: "delivery",
+              label: "Delivery",
+              render: (load) => load.first_delivery_city ?? "-",
+            },
+            {
+              key: "unit",
+              label: "Unit",
+              cellClass: "code-cell",
+              render: (load) =>
+                inlineQuicksaveEnabled && operatingCompanyId ? (
+                  <span onClick={(event) => event.stopPropagation()}>
+                    <InlineUnitPicker
+                      loadId={load.id}
+                      operatingCompanyId={operatingCompanyId}
+                      unitId={load.assigned_unit_id}
+                      displayLabel={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
+                      onAssigned={({ unitId, label }) =>
+                        setRowOverrides((prev) => ({
+                          ...prev,
+                          [load.id]: { ...prev[load.id], unitId, unitLabel: label },
+                        }))
+                      }
+                      onRollback={() =>
+                        setRowOverrides((prev) => {
+                          const next = { ...prev };
+                          delete next[load.id]?.unitId;
+                          return next;
+                        })
+                      }
+                    />
+                  </span>
+                ) : (
+                  load.assigned_unit_number ?? entityLabel(null, load.assigned_unit_id, "Unit")
+                ),
+            },
+            {
+              key: "driver",
+              label: "Driver",
+              cellClass: "min-w-0 max-w-[240px]",
+              render: (load) =>
+                inlineQuicksaveEnabled && operatingCompanyId ? (
+                  <span onClick={(event) => event.stopPropagation()}>
+                    <InlineDriverPicker
+                      loadId={load.id}
+                      operatingCompanyId={operatingCompanyId}
+                      driverId={load.assigned_primary_driver_id}
+                      displayLabel={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+                      onAssigned={({ driverId, label }) =>
+                        setRowOverrides((prev) => ({
+                          ...prev,
+                          [load.id]: { ...prev[load.id], driverId, driverLabel: label },
+                        }))
+                      }
+                      onRollback={() =>
+                        setRowOverrides((prev) => {
+                          const next = { ...prev };
+                          delete next[load.id]?.driverId;
+                          return next;
+                        })
+                      }
+                    />
+                  </span>
+                ) : (
+                  <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name inline-flex items-center gap-1.5">
+                    <DriverHosStatusDot driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
+                    {entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+                  </span>
+                ),
+            },
+            ...HOS_COLUMNS.map((c) => ({
+              key: `hos_${c.key}`,
+              label: c.label,
+              cellClass: "font-mono text-[11px] text-gray-700",
+              render: (load: DispatchLoadRow) => (
+                <DriverHosClockValue
+                  driverId={load.assigned_primary_driver_id}
+                  operatingCompanyId={load.operating_company_id}
+                  colKey={c.key}
+                />
+              ),
+            })),
+            {
+              key: "status",
+              label: "Status",
+              render: (load) => (
+                <div className="flex items-center gap-1">
+                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
+                    {STATUS_LABEL[load.status]}
+                  </span>
+                  {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
+                    <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+                  ) : null}
+                </div>
+              ),
+            },
+            {
+              key: "progress",
+              label: "Progress",
+              render: (load) => (
+                <span
+                  className={`rounded-full px-2 py-1 text-xs font-semibold ${progressPill(load.progress_status)}`}
+                  title={
+                    load.progress_eta_delta_minutes == null
+                      ? "No live GPS/appointment delta available."
+                      : `ETA delta vs scheduled: ${load.progress_eta_delta_minutes} min`
+                  }
+                >
+                  {(load.progress_status ?? "unknown").replace("_", " ")}
+                </span>
+              ),
+            },
+            ...(showEtaColumn
+              ? [
+                  {
+                    key: "eta",
+                    label: "ETA",
+                    render: (load: DispatchLoadRow) => (
+                      <span className="text-[11px] text-gray-600">
+                        {load.status === "in_transit" && load.samsara_eta_at
+                          ? new Date(load.samsara_eta_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                          : "—"}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
+            {
+              key: "rate_total_cents",
+              label: "Rate",
+              render: (load) => formatMoneyCents(load.rate_total_cents, load.currency_code),
+            },
+            {
+              key: "created_at",
+              label: "Created",
+              render: (load) => new Date(load.created_at).toLocaleDateString(),
+            },
+          ]}
+        />
       </div>
 
       <div className="space-y-2 md:hidden">

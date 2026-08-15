@@ -413,9 +413,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             >
               <p className="font-semibold">Banking account tiles are empty — not a silent healthy $0.</p>
               <p className="mt-1">
-                DIP, Factoring reserve, and Driver Escrow KPIs normally come from{" "}
-                <code className="text-[10px]">views.banking_account_tiles</code>. When that feed returns no rows,
-                zeros here are unproven. Connect Plaid / map Cash GL accounts, or open Factoring and Driver Escrow
+                DIP, Factoring reserve, and Driver Escrow KPIs normally come from the banking account summary
+                feed. When that feed returns no rows, zeros here are unproven. Connect Plaid / map Cash GL
+                accounts, or open Factoring and Driver Escrow
                 tabs for canonical virtual-bank truth.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -876,7 +876,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="max-h-[220px] overflow-y-auto">
                 {(factoringTimelineQuery.data?.timeline ?? []).length === 0 ? (
                   <p className="px-3 py-2 text-xs text-gray-500">
-                    No non-voided advances in <code className="text-[11px]">accounting.factoring_advances</code> for this{" "}
+                    No non-voided factoring advances recorded for this{" "}
                     {deepLinkLoadId ? "load" : "company"} yet.
                   </p>
                 ) : (
