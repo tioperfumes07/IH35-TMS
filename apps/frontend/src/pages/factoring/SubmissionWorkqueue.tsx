@@ -1,8 +1,10 @@
 import { entityLabel } from "../../lib/entity-label";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listWorkqueue, type WorkqueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 
@@ -53,9 +55,94 @@ export function SubmissionWorkqueue() {
 
   const items: WorkqueueItem[] = workqueueQuery.data ?? [];
 
-  if (workqueueQuery.isLoading) {
-    return <div className="py-8 text-center text-xs text-slate-500">Loading workqueue…</div>;
-  }
+  const columns = useMemo<ParityColumn<WorkqueueItem>[]>(
+    () => [
+      {
+        key: "invoice_id",
+        label: "Invoice",
+        render: (item) => (
+          <EntityLink
+            kind="invoice"
+            id={item.invoice_id}
+            label={entityLabel(item.display_id, item.invoice_id, "Invoice")}
+          />
+        ),
+      },
+      {
+        key: "customer_id",
+        label: "Customer",
+        render: (item) => (
+          <EntityLink
+            kind="customer"
+            id={item.customer_id}
+            label={entityLabel(item.customer_name, item.customer_id, "Customer")}
+          />
+        ),
+      },
+      {
+        key: "batch_number",
+        label: "Batch",
+        render: (item) => <span className="font-mono text-slate-500">{item.batch_number ?? "—"}</span>,
+      },
+      {
+        key: "submitted_at",
+        label: "Submitted",
+        sortable: true,
+        render: (item) => (item.submitted_at ? formatDateUS(item.submitted_at.slice(0, 10)) : "—"),
+      },
+      {
+        key: "factoring_status",
+        label: "Status",
+        render: (item) => <StatusPill status={item.factoring_status} />,
+      },
+      {
+        key: "factor_name",
+        label: "Factor",
+        render: (item) => <span className="text-slate-500">{item.factor_name ?? "—"}</span>,
+      },
+      {
+        key: "total_cents",
+        label: "Linehaul",
+        sortable: true,
+        render: (item) => <span className="tabular-nums">{asMoney(item.total_cents)}</span>,
+      },
+      {
+        key: "advance_cents",
+        label: "Advance",
+        sortable: true,
+        render: (item) => <span className="tabular-nums">{asMoney(item.advance_cents)}</span>,
+      },
+      {
+        key: "reserve_cents",
+        label: "Reserve",
+        sortable: true,
+        render: (item) => <span className="tabular-nums">{asMoney(item.reserve_cents)}</span>,
+      },
+      {
+        key: "fee_cents",
+        label: "Fee",
+        sortable: true,
+        render: (item) => <span className="tabular-nums">{asMoney(item.fee_cents)}</span>,
+      },
+      {
+        key: "chargeback_cents",
+        label: "Chargeback",
+        render: (item) =>
+          item.chargeback_cents > 0 ? (
+            <span className="tabular-nums text-red-600">{asMoney(item.chargeback_cents)}</span>
+          ) : (
+            <span className="text-slate-300">—</span>
+          ),
+      },
+      {
+        key: "days_until_recourse_expiry",
+        label: "Recourse Risk",
+        sortable: true,
+        render: (item) => <RecourseRisk item={item} />,
+      },
+    ],
+    [],
+  );
 
   if (workqueueQuery.isError) {
     return (
@@ -68,64 +155,17 @@ export function SubmissionWorkqueue() {
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-400">
-        No invoices in factoring workqueue. Invoices appear here once submitted to a factor.
-      </div>
-    );
-  }
-
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs">
-        <thead>
-          <tr className="border-b border-slate-200 text-left text-[10px] font-semibold uppercase text-slate-400">
-            <th className="py-1.5 pr-3">Invoice</th>
-            <th className="py-1.5 pr-3">Customer</th>
-            <th className="py-1.5 pr-3">Batch</th>
-            <th className="py-1.5 pr-3">Submitted</th>
-            <th className="py-1.5 pr-3">Status</th>
-            <th className="py-1.5 pr-3">Factor</th>
-            <th className="py-1.5 pr-3 text-right">Linehaul</th>
-            <th className="py-1.5 pr-3 text-right">Advance</th>
-            <th className="py-1.5 pr-3 text-right">Reserve</th>
-            <th className="py-1.5 pr-3 text-right">Fee</th>
-            <th className="py-1.5 pr-3 text-right">Chargeback</th>
-            <th className="py-1.5 text-right">Recourse Risk</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.invoice_id} className="border-b border-slate-100 hover:bg-slate-50">
-              <td className="py-1.5 pr-3 font-mono text-slate-700">
-                <EntityLink
-                  kind="invoice"
-                  id={item.invoice_id}
-                  label={entityLabel(item.display_id, item.invoice_id, "Invoice")}
-                />
-              </td>
-              <td className="py-1.5 pr-3"><EntityLink kind="customer" id={item.customer_id} label={entityLabel(item.customer_name, item.customer_id, "Customer")} /></td>
-              <td className="py-1.5 pr-3 font-mono text-slate-500">{item.batch_number ?? "—"}</td>
-              <td className="py-1.5 pr-3 text-slate-500">{item.submitted_at ? formatDateUS(item.submitted_at.slice(0, 10)) : "—"}</td>
-              <td className="py-1.5 pr-3">
-                <StatusPill status={item.factoring_status} />
-              </td>
-              <td className="py-1.5 pr-3 text-slate-500">{item.factor_name ?? "—"}</td>
-              <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.total_cents)}</td>
-              <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.advance_cents)}</td>
-              <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.reserve_cents)}</td>
-              <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.fee_cents)}</td>
-              <td className="py-1.5 pr-3 text-right tabular-nums text-red-600">
-                {item.chargeback_cents > 0 ? asMoney(item.chargeback_cents) : <span className="text-slate-300">—</span>}
-              </td>
-              <td className="py-1.5 text-right">
-                <RecourseRisk item={item} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    // FAC-F3542: always mount ParityTable (Search+Range+gear); raw HTML table + empty early-return skipped surface bar.
+    <ParityTable<WorkqueueItem>
+      columns={columns}
+      rows={items}
+      rowKey={(item) => item.invoice_id}
+      loading={workqueueQuery.isLoading}
+      emptyText="No invoices in factoring workqueue. Invoices appear here once submitted to a factor."
+      storageKey="factoring-submission-workqueue"
+      exportFilename="factoring-submission-workqueue"
+      tableTestId="factoring-submission-workqueue-table"
+    />
   );
 }
