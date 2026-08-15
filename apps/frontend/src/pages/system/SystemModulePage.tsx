@@ -8,7 +8,7 @@ import { resolveApiUrl } from "../../api/client";
 import { getQboReconciliation, type QboReconResponse, type ReconObject } from "../../api/qbo-recon";
 import { getQboSyncHealth, type QboSyncHealthResponse } from "../../api/qbo-integration";
 import { getApAging, type ApAgingSummary } from "../../api/arApAging";
-import { getProgramTracker, type ProgramTracker } from "../../api/program-tracker";
+import { getProgramTracker, type ProgramTracker, type TrackerPhase } from "../../api/program-tracker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 /**
@@ -432,29 +432,35 @@ function ProgramTab({ data }: { data: SystemData }) {
       </Card>
 
       <Card title="Phases" sub="Rollup by phase (from last reconcile sync).">
-        {t && t.phases.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[12px]">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-slate-500">
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-left">Phase</th>
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-right">Total</th>
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-right">Done</th>
-                </tr>
-              </thead>
-              <tbody>
-                {t.phases.map((p) => (
-                  <tr key={p.key}>
-                    <td className="border-b border-gray-100 px-1.5 py-2 text-slate-700">{p.label}</td>
-                    <td className="border-b border-gray-100 px-1.5 py-2 text-right tabular-nums text-slate-600">{p.total}</td>
-                    <td className="border-b border-gray-100 px-1.5 py-2 text-right tabular-nums text-slate-600">{p.completed}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {tracker.isError ? (
+          <p className="text-[12px] text-slate-500">Tracker unavailable.</p>
         ) : (
-          <p className="text-[12px] text-slate-500">{tracker.isError ? "Tracker unavailable." : "Loading…"}</p>
+          <ParityTable<TrackerPhase>
+            rows={t?.phases ?? []}
+            rowKey={(p) => p.key}
+            loading={!t && tracker.isLoading}
+            emptyText="No phase rollup yet."
+            storageKey="system-program-phases"
+            exportFilename="system-program-phases"
+            tableTestId="system-program-phases-table"
+            columns={[
+              { key: "label", label: "Phase", render: (p) => <span className="text-slate-700">{p.label}</span> },
+              {
+                key: "total",
+                label: "Total",
+                className: "text-right",
+                cellClass: "text-right tabular-nums text-slate-600",
+                render: (p) => p.total,
+              },
+              {
+                key: "completed",
+                label: "Done",
+                className: "text-right",
+                cellClass: "text-right tabular-nums text-slate-600",
+                render: (p) => p.completed,
+              },
+            ]}
+          />
         )}
       </Card>
     </div>
@@ -495,29 +501,31 @@ function SoftwareTab({ data }: { data: SystemData }) {
       </Card>
 
       <Card title="Service checks" sub="Deep health checks, live.">
-        {h && h.checks.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[12px]">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-slate-500">
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-left">Check</th>
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-left">Tier</th>
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {h.checks.map((c) => (
-                  <tr key={c.name}>
-                    <td className="border-b border-gray-100 px-1.5 py-2 font-mono text-[11px] text-slate-700">{c.name}</td>
-                    <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">{c.tier}</td>
-                    <td className="border-b border-gray-100 px-1.5 py-2">{c.ok ? <Pill tone="ok">OK</Pill> : <Pill tone="off">DOWN</Pill>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {health.isError ? (
+          <p className="text-[12px] text-slate-500">Health endpoint unreachable.</p>
         ) : (
-          <p className="text-[12px] text-slate-500">{health.isError ? "Health endpoint unreachable." : "Loading…"}</p>
+          <ParityTable<{ name: string; ok: boolean; tier: "critical" | "warning" }>
+            rows={h?.checks ?? []}
+            rowKey={(c) => c.name}
+            loading={!h}
+            emptyText="No health checks returned."
+            storageKey="system-service-checks"
+            exportFilename="system-service-checks"
+            tableTestId="system-service-checks-table"
+            columns={[
+              {
+                key: "name",
+                label: "Check",
+                render: (c) => <span className="font-mono text-[11px] text-slate-700">{c.name}</span>,
+              },
+              { key: "tier", label: "Tier", render: (c) => <span className="text-slate-500">{c.tier}</span> },
+              {
+                key: "ok",
+                label: "Status",
+                render: (c) => (c.ok ? <Pill tone="ok">OK</Pill> : <Pill tone="off">DOWN</Pill>),
+              },
+            ]}
+          />
         )}
       </Card>
     </div>
@@ -557,42 +565,37 @@ function ClaudeCoderTab({ data }: { data: SystemData }) {
         </div>
 
         <div className="mb-1.5 text-[11px] uppercase tracking-wide text-slate-500">Build &amp; agent activity — read only</div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[12px]">
-            <thead>
-              <tr className="text-[11px] uppercase tracking-wide text-slate-500">
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">PR</th>
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Title</th>
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Merged</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentMerged.slice(0, 8).map((p) => (
-                <tr key={p.number}>
-                  <td className="border-b border-gray-100 px-1.5 py-2 font-semibold">
-                    <a
-                      href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-slate-700 underline hover:text-[#1f2a44]"
-                    >
-                      #{p.number}
-                    </a>
-                  </td>
-                  <td className="border-b border-gray-100 px-1.5 py-2 text-slate-700">{p.title}</td>
-                  <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">{ctDateTime(p.mergedAt)}</td>
-                </tr>
-              ))}
-              {recentMerged.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-1.5 py-4 text-center text-slate-400">
-                    {tracker.isError ? "Tracker unavailable." : tracker.isLoading ? "Loading…" : "No recently merged PRs."}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<{ number: number; title: string; mergedAt: string | null }>
+          rows={recentMerged.slice(0, 8)}
+          rowKey={(p) => String(p.number)}
+          loading={tracker.isLoading && recentMerged.length === 0}
+          emptyText={tracker.isError ? "Tracker unavailable." : "No recently merged PRs."}
+          storageKey="system-recent-merged-prs"
+          exportFilename="system-recent-merged-prs"
+          tableTestId="system-recent-merged-prs-table"
+          columns={[
+            {
+              key: "number",
+              label: "PR",
+              render: (p) => (
+                <a
+                  href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-slate-700 underline hover:text-[#1f2a44]"
+                >
+                  #{p.number}
+                </a>
+              ),
+            },
+            { key: "title", label: "Title", render: (p) => <span className="text-slate-700">{p.title}</span> },
+            {
+              key: "mergedAt",
+              label: "Merged",
+              render: (p) => <span className="text-slate-500">{ctDateTime(p.mergedAt)}</span>,
+            },
+          ]}
+        />
         <p className="mt-2 text-[11px] text-slate-400">
           Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}. This is not a
           live GitHub feed; it refreshes when a new reconciliation snapshot is published. The service-health mirror
