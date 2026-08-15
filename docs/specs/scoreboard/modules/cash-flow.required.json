@@ -513,7 +513,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 1 cash-flow leaf. Verified live — CashFlowPage.tsx's \"Related\" section (L70-79) is a static <Link to=\"/drivers?subtab=cash_advances\">Cash advances</Link> nav item — no driver_id/EntityLink/EntityPicker on the hop leaf itself.",
+      "note": "driver blanket-required on 1 cash-flow leaf. Verified live — CashFlowPage.tsx's Related section is a static <Link to=\"/cash-advances\">Cash advances</Link> nav item to the canonical standalone module — no driver_id/EntityLink/EntityPicker on the hop leaf itself.",
       "drops": [
         {
           "id": "hop.cash_advances",
