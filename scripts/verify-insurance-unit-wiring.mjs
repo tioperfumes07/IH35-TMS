@@ -19,6 +19,7 @@ const LABEL = "verify-insurance-unit-wiring";
 const CHECKS = [
   ["apps/frontend/src/pages/insurance/PolicyDetail.tsx", /kind="unit"[\s\S]{0,40}id=\{unitId\}/],
   ["apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx", /kind="unit" id=\{row\.unit_id\}/],
+  ["apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx", /dataTestId="coverage-gap-filter-unit"/],
   ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="unit"[\s\S]{0,40}id=\{claim\.unit_id \?\? undefined\}/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /kind="unit"/],
   ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /const toggleUnit = \(unitId: string\) => \{/],

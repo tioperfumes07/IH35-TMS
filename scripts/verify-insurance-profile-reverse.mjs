@@ -17,7 +17,7 @@ const files = {
 };
 function failures(s = files) { return [
   ["coverage gap company/unit API filter", s.summaryRoutes.includes("coverageGapQuerySchema.safeParse") && s.summaryRoutes.includes("parsed.data.unit_id ?? null") && s.coverageSql.includes("$3::uuid IS NULL OR u.id = $3::uuid")],
-  ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")')],
+  ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")') && s.coveragePage.includes('dataTestId="coverage-gap-filter-unit"') && s.coveragePage.includes("allowCreate={false}")],
   ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
   ["driver and unit reverse consumers", s.driverProfile.includes('filter={{ driver_id: id }} contextLabel="this driver"') && s.unitProfile.includes('filter={{ unit_id: id }} contextLabel="this unit"')],
   ["exact lawsuit drill", s.lawsuitReverse.includes('<EntityLink kind="lawsuit" id={row.id}') && s.lawsuitReverse.includes("listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter })")],
