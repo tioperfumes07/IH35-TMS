@@ -92,6 +92,15 @@ export function assertAssetSafetyReverse(sources) {
   if (!/ds\.trailer_id = \$/.test(src[DVIR_ROUTE])) {
     problems.push(`${DVIR_ROUTE}: GET dvir has no trailer_id filter — a trailer's DVIRs stay unreachable.`);
   }
+  if (!/wo\.display_id AS follow_up_wo_display_id/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: DVIR list does not project the follow-up work-order display identity.`);
+  }
+  if (!/LEFT JOIN maintenance\.work_orders wo ON wo\.id = ds\.follow_up_wo_id[\s\S]{0,120}wo\.operating_company_id = ds\.operating_company_id/.test(src[DVIR_ROUTE])) {
+    problems.push(`${DVIR_ROUTE}: follow-up work-order label join is not explicitly company scoped.`);
+  }
+  if (!/entityLabel\(dvir\.follow_up_wo_display_id, s\(dvir\.follow_up_wo_id\), "Work order"\)/.test(src[SECTION])) {
+    problems.push(`${SECTION}: mounted DVIR reverse link does not consume the canonical work-order display identity.`);
+  }
   if (!/i\.trailer_id = \$/.test(src[INCIDENTS_ROUTE])) {
     problems.push(`${INCIDENTS_ROUTE}: GET incidents has no trailer_id filter — trailer interchanges stay unreachable from the trailer they concern.`);
   }
@@ -189,6 +198,21 @@ if (SELFTEST) {
     "has no trailer_id filter"
   );
   expectCaught(
+    "dvir-wo-label-projection-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/wo\.display_id AS follow_up_wo_display_id/g, "NULL AS follow_up_wo_display_id") },
+    "does not project the follow-up work-order"
+  );
+  expectCaught(
+    "dvir-wo-label-scope-removed",
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/AND wo\.operating_company_id = ds\.operating_company_id/g, "AND TRUE") },
+    "label join is not explicitly company scoped"
+  );
+  expectCaught(
+    "dvir-wo-label-consumer-removed",
+    { ...live, [SECTION]: live[SECTION].replace(/entityLabel\(dvir\.follow_up_wo_display_id, s\(dvir\.follow_up_wo_id\), "Work order"\)/g, 'entityLabel(null, s(dvir.follow_up_wo_id), "Work order")') },
+    "does not consume the canonical work-order"
+  );
+  expectCaught(
     "incidents-trailer-filter-removed",
     { ...live, [INCIDENTS_ROUTE]: live[INCIDENTS_ROUTE].replace(/i\.trailer_id = \$\$\{params\.length\}/g, "TRUE") },
     "trailer interchanges stay unreachable"
@@ -273,7 +297,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 17 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 20 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
