@@ -30,7 +30,9 @@ type BorderCrossingEvent = {
   uuid: string;
   vehicle_id: string;
   driver_uuid: string | null;
+  driver_name: string | null;
   load_uuid: string | null;
+  load_number: string | null;
   crossing_point: string;
   direction: string;
   entered_geofence_at: string;
@@ -391,10 +393,10 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
               <PanelRow
                 key={event.uuid}
                 unit={shortId(event.vehicle_id)}
-                driver={shortId(event.driver_uuid)}
+                driver={<EntityLink kind="driver" id={event.driver_uuid} label={entityLabel(event.driver_name, event.driver_uuid, "Driver")} />}
                 loadCustomer={
                   event.load_uuid
-                    ? shortId(event.load_uuid)
+                    ? <EntityLink kind="load" id={event.load_uuid} label={entityLabel(event.load_number, event.load_uuid, "Load")} />
                     : `${CROSSING_LABELS[event.crossing_point] ?? event.crossing_point} · ${event.direction}`
                 }
                 onClick={event.load_uuid && onLoadClick ? () => onLoadClick(event.load_uuid!) : undefined}
