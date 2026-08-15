@@ -40,22 +40,14 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
   const highlightedTicketId = searchParams.get("ticket_id")?.trim() || "";
   const [statusFilter, setStatusFilter] = useState<RoadServiceStatus | "all">("all");
   const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "all" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
-  const [search, setSearch] = useState("");
+  // Search is ONLY ParityTable UniversalListToolbar (LV-ROAD-SERVICE-DUPLICATE-SEARCH).
   const [createOpen, setCreateOpen] = useState(false);
   const { tickets, isLoading, createWo } = useRoadServiceTickets({
     status: statusFilter === "all" ? undefined : statusFilter,
   });
 
-  const rows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return tickets;
-    return tickets.filter((t) =>
-      [t.ticket_number, t.unit_display_id, t.unit_id, t.vendor_name, t.driver_name, t.location_address].some((v) =>
-        String(v ?? "").toLowerCase().includes(q),
-      ),
-    );
-  }, [tickets, search]);
-  const totalCost = useMemo(() => rows.reduce((sum, row) => sum + Number(row.total_cost_cents ?? 0), 0), [rows]);
+  const rows = tickets;
+  const totalCost = useMemo(() => tickets.reduce((sum, row) => sum + Number(row.total_cost_cents ?? 0), 0), [tickets]);
 
   // Universal-list columns (spec 02 Road Service) — every record cell links to its detail per 00-MASTER-LINK-MAP.
   const columns: Array<ParityColumn<RoadServiceTicket>> = [
@@ -170,14 +162,6 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
         emptyText="No roadside tickets found."
         storageKey="maint-road-service"
         exportFilename="road-service-tickets"
-        filterBar={
-          <input
-            className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-            placeholder="Search ticket / unit / vendor / driver / location…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        }
       />
 
       <RoadServiceTicketModal open={createOpen} onClose={() => setCreateOpen(false)} operatingCompanyId={operatingCompanyId} />
