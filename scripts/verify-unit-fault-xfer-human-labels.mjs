@@ -32,10 +32,10 @@ if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
   planted[FILES[0]] = planted[FILES[0]].replace(
-    /entityLabel\(null,\s*id,\s*"Unit"\)/,
+    /entityLabel\(unitQuery\.data\?\.unit_number,\s*id,\s*"Unit"\)/,
     "`Unit ${id.slice(0, 8)}`",
   );
-  if (!assertAll(planted).length) {
+  if (planted[FILES[0]] === srcs[FILES[0]] || !assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
     process.exit(1);
   }

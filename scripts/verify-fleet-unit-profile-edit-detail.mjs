@@ -45,6 +45,11 @@ export function audit(src) {
   if (!/targetType="unit" targetId=\{id\}/.test(src.unitDetail)) {
     failures.push(`${FILES.unitDetail}: unit.detail.tasks must scope TasksTab to targetType="unit" targetId={id}`);
   }
+  if (!/getUnit\(id, companyId\)/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: detail shell must read canonical company-scoped unit identity`);
+  if (!/entityLabel\(unitQuery\.data\?\.unit_number, id, "Unit"\)/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: detail shell must resolve unit_number`);
+  if (!/breadcrumb=\{\["Fleet", "Units", unitLabel\]\}/.test(src.unitDetail) || !/title=\{unitLabel\}/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: breadcrumb/title must consume resolved unit identity`);
+  if (!/targetLabel=\{unitLabel\}/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: tasks must consume resolved unit identity`);
+  if (!/unitQuery\.isError[\s\S]{0,220}<ListErrorState/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: unit identity outage must be explicit and retryable`);
   if (!/unit\?\.unit_id \?[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}/.test(src.assignment)) {
     failures.push(`${FILES.assignment}: trailer.profile.assignment must render a real EntityLink to the attached unit`);
   }
@@ -68,6 +73,11 @@ if (process.argv.includes("--selftest")) {
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, patchPayload\)/, "patchUnit(undefined, patchPayload)"],
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
     ["unit-detail-tasks", "unitDetail", /targetType="unit" targetId=\{id\}/, 'targetType="load" targetId={id}'],
+    ["unit-detail-query", "unitDetail", /getUnit\(id, companyId\)/, "getUnit(id, '')"],
+    ["unit-detail-label", "unitDetail", /entityLabel\(unitQuery\.data\?\.unit_number, id, "Unit"\)/, 'entityLabel(null, id, "Unit")'],
+    ["unit-detail-title", "unitDetail", /title=\{unitLabel\}/, 'title="Unit"'],
+    ["unit-detail-task-label", "unitDetail", /targetLabel=\{unitLabel\}/, 'targetLabel="Unit"'],
+    ["unit-detail-error", "unitDetail", /unitQuery\.isError/, "false"],
     ["assignment-link", "assignment", /unit\?\.unit_id \?[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}/, 'kind="trailer" id={unit.trailer_id}'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
