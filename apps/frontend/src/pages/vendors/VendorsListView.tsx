@@ -255,7 +255,8 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
                 kind="vendor"
                 id={row.id}
                 label={row.name}
-                className="text-slate-700 hover:underline"
+                className="single-line-name text-slate-700 hover:underline"
+                title={row.name}
               />
             ),
           },

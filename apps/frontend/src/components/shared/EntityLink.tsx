@@ -250,6 +250,11 @@ export interface EntityLinkProps {
   label?: ReactNode;
   className?: string;
   /**
+   * Optional native title (tooltip) — required for §7 single-line ellipsis so hover still
+   * reveals the full label when `className` includes `single-line-name`.
+   */
+  title?: string;
+  /**
    * Optional click handler — passed through to the underlying <Link>. Used by parent rows that
    * also have their own onClick (e.g. a table row that opens a drawer): call
    * `event.stopPropagation()` here so the cell's drill-through link doesn't also fire the row
@@ -650,12 +655,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
  * Renders `id` as a clickable drill-through link when a real detail route exists for `kind`;
  * otherwise renders plain text (no dead link, no fabricated route).
  */
-export function EntityLink({ kind, id, label, className, onClick, "data-testid": testId }: EntityLinkProps) {
+export function EntityLink({ kind, id, label, className, title, onClick, "data-testid": testId }: EntityLinkProps) {
   const display = label ?? id ?? "—";
 
   if (!id) {
     return (
-      <span className={className} data-testid={testId}>
+      <span className={className} title={title} data-testid={testId}>
         {display}
       </span>
     );
@@ -664,7 +669,7 @@ export function EntityLink({ kind, id, label, className, onClick, "data-testid":
   const route = resolveEntityRoute(kind, id);
   if (!route) {
     return (
-      <span className={className} data-testid={testId}>
+      <span className={className} title={title} data-testid={testId}>
         {display}
       </span>
     );
@@ -674,6 +679,7 @@ export function EntityLink({ kind, id, label, className, onClick, "data-testid":
     <Link
       to={route}
       className={className ?? DEFAULT_LINK_CLASSNAME}
+      title={title}
       data-testid={testId}
       onClick={(event) => {
         event.stopPropagation();
