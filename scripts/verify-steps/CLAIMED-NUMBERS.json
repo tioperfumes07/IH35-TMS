@@ -1077,6 +1077,11 @@
     "claimed_by": "claude-1",
     "purpose": "verify-audit-report-je-subject-type"
   },
+  "3406": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-customer-column-orphan-guard-registry-batch"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
