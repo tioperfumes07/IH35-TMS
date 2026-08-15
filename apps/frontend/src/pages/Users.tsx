@@ -136,7 +136,6 @@ export function UsersPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const auth = useAuth();
-  const [search, setSearch] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [roleModalUser, setRoleModalUser] = useState<IdentityUser | null>(null);
   const [inviteRole, setInviteRole] = useState<UserRole | "Viewer">("Manager");
@@ -376,22 +375,13 @@ export function UsersPage() {
   );
 
   const filteredUsers = useMemo(() => {
-    let list = [...allUsers];
-    const keyword = search.trim().toLowerCase();
-    if (keyword) {
-      list = list.filter(
-        (user) =>
-          (user.name ?? "").toLowerCase().includes(keyword) ||
-          (user.email ?? "").toLowerCase().includes(keyword) ||
-          user.role.toLowerCase().includes(keyword) ||
-          (user.auth_method ?? "").toLowerCase().includes(keyword)
-      );
-    }
+    const list = [...allUsers];
+    // Free-text search: ParityTable toolbar owns it (USR-F3494) — tab filter stays page-local.
     if (listTab === "deactivated") return list.filter((u) => u.deactivated_at);
     if (listTab === "pending") return list.filter((u) => userRowCategory(u) === "pending");
     if (listTab === "active") return list.filter((u) => userRowCategory(u) === "active");
     return list;
-  }, [allUsers, search, listTab]);
+  }, [allUsers, listTab]);
 
   const inviteSnapshot = { inviteName, inviteEmail, inviteRole, inviteInitialPassword, provisionMode, overrideReturningWarning };
   const { isDirty: inviteIsDirty } = useUnsavedChanges(inviteSnapshot, inviteBaseline);
@@ -598,16 +588,6 @@ export function UsersPage() {
           { id: "deactivated", label: `Deactivated (${tabCounts.deactivated})` },
         ]}
       />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search users"
-          aria-label="Search users"
-          className="h-8 w-full min-w-0 max-w-sm rounded-md border border-gray-300 px-2 text-[13px]"
-        />
-      </div>
 
       {usersQuery.isError ? <ListErrorBanner onRetry={() => void usersQuery.refetch()} /> : null}
 
