@@ -602,8 +602,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/components/dispatch/DispatchList.tsx",
-    bad: /assigned_primary_driver_name\s*\?\?\s*"Unassigned"|assigned_primary_driver_name\s*\?\?\s*undefined|>\{load\.load_number\}<|load\.customer_name\s*\?\?\s*"-"/,
-    good: /entityLabel\(\s*load\.assigned_primary_driver_name\s*,\s*load\.assigned_primary_driver_id\s*,\s*"Driver"\s*\)/,
+    bad: /\{\s*load\.assigned_primary_driver_name\s*(?:\?\?|\|\|)\s*load\.assigned_primary_driver_id\s*\}|assigned_primary_driver_name\s*\?\?\s*"Unassigned"|>\{load\.load_number\}<|load\.customer_name\s*\?\?\s*"-"/,
+    good: /entityLabel\(\s*load\.assigned_primary_driver_name\s*,\s*load\.assigned_primary_driver_id\s*,\s*"Driver"\s*\)[\s\S]*entityLabel\(\s*load\.assigned_primary_driver_name\s*,\s*load\.assigned_primary_driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
@@ -1881,6 +1881,21 @@ ORDER BY w.opened_at DESC NULLS LAST`;
     )
   ) {
     failures.push("selftest: sibling bad pattern NOT detected");
+  }
+  const dispatchDriverSibling = SIBLINGS.find(
+    (entry) => entry.rel.endsWith("DispatchList.tsx") && entry.good.source.includes("assigned_primary_driver_name")
+  );
+  if (!dispatchDriverSibling) {
+    failures.push("selftest: DispatchList driver-label sibling guard missing");
+  } else {
+    const helper = 'entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")';
+    const visibleRawFallback = `{load.assigned_primary_driver_name ?? load.assigned_primary_driver_id}\n${helper}\n${helper}`;
+    if (!auditSibling(dispatchDriverSibling.rel, visibleRawFallback, dispatchDriverSibling.bad, dispatchDriverSibling.good).some((p) => p.includes("name||id"))) {
+      failures.push("selftest: DispatchList visible driver name??id fallback NOT detected");
+    }
+    if (!auditSibling(dispatchDriverSibling.rel, helper, dispatchDriverSibling.bad, dispatchDriverSibling.good).some((p) => p.includes("must call entityLabel"))) {
+      failures.push("selftest: DispatchList missing second responsive driver label NOT detected");
+    }
   }
   const selectedEquipmentSibling = SIBLINGS.find(
     (entry) => entry.rel.endsWith("FactoringHome.tsx") && entry.bad.test("selectedEquipmentLoan?.equipment_number || selectedEquipmentLoan?.equipment_id")

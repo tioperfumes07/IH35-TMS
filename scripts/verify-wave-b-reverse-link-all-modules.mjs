@@ -37,10 +37,10 @@ const routeSources = [
 ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
 
 if (process.argv.includes("--selftest")) {
-  const target = reverseLeaves.find((leaf) => leaf.module === "users" && leaf.route === "/users");
-  const mutated = routeSources.replace('path="/users"', 'path="/users-removed"');
+  const target = reverseLeaves.find((leaf) => leaf.module === "dispatch" && leaf.route === "/dispatch/assignment-history");
+  const mutated = routeSources.replace('path="/dispatch/assignment-history"', 'path="/dispatch/assignment-history-removed"');
   const failures = auditConnectivity(mutated, [...reverseLeaves, ...collectRequiredConnectivity()]);
-  if (!target || !failures.some((failure) => failure.startsWith(`users:${target.id}:`))) {
+  if (!target || !failures.some((failure) => failure.startsWith(`${target.module}:${target.id}:`))) {
     console.error("verify-wave-b-reverse-link-all-modules SELFTEST FAIL — removed reverse route was not detected");
     process.exit(1);
   }
