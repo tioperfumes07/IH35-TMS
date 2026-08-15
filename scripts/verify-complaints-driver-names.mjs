@@ -24,7 +24,9 @@ function assertComplaints(apiSrc, tabSrc) {
   if (!/complainant_driver_name/.test(apiSrc)) problems.push(`${API}: list query does not resolve complainant_driver_name`);
   if (!/respondent_driver_name/.test(apiSrc)) problems.push(`${API}: list query does not resolve respondent_driver_name`);
 
-  const driverLinks = tabSrc.match(/<EntityLink[\s\S]{0,240}?kind="driver"[\s\S]{0,240}?\/>/g) ?? [];
+  const driverLinks = [...tabSrc.matchAll(/<EntityLink\b[\s\S]*?\/>/g)]
+    .map((m) => m[0])
+    .filter((link) => /kind="driver"/.test(link));
   if (driverLinks.length < 2)
     problems.push(`${TAB}: expected complainant + respondent driver EntityLinks, found ${driverLinks.length}`);
   for (const link of driverLinks) {
