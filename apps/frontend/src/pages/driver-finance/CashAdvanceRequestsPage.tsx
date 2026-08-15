@@ -8,6 +8,7 @@ import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWit
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -146,6 +147,100 @@ export function CashAdvanceRequestsPage() {
     [rows]
   );
 
+  const columns = useMemo<ParityColumn<CashAdvanceRequestRow>[]>(
+    () => [
+      {
+        key: "display_id",
+        label: "Request",
+        sortable: true,
+        render: (row) => <span className="font-mono text-xs">{String(row.display_id ?? "")}</span>,
+      },
+      {
+        key: "driver_id",
+        label: "Driver",
+        render: (row) => {
+          const v = String(row.driver_name ?? "");
+          const driverId = String(row.driver_id ?? "");
+          return (
+            <EntityLink
+              kind="driver"
+              id={driverId}
+              label={entityLabel(v, driverId, "Driver")}
+              className="single-line-name"
+            />
+          );
+        },
+      },
+      {
+        key: "requested_amount_cents",
+        label: "Amount",
+        sortable: true,
+        render: (row) => formatUsdFromCents(row.requested_amount_cents),
+      },
+      {
+        key: "policy",
+        label: "Policy",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          const above = Boolean(row.is_above_policy);
+          const waitingOwner =
+            Boolean(row.owner_approval_required) && Boolean(row.owner_approval_token_expires_at);
+          const ownerUrl = ownerUrlById[id] ?? "";
+          if (waitingOwner) {
+            return (
+              <div className="space-y-1">
+                <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                  Pending Owner Approval
+                </span>
+                {ownerUrl ? (
+                  <div>
+                    <div className="text-[10px] uppercase text-gray-500">Owner link (copy)</div>
+                    <input
+                      readOnly
+                      className="mt-0.5 w-full max-w-xs rounded-sm border border-gray-200 px-1 py-0.5 font-mono text-[10px]"
+                      value={ownerUrl}
+                      onFocus={(e) => e.target.select()}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-gray-500">Link was emailed to Owners. Re-escalate to mint a fresh link.</p>
+                )}
+              </div>
+            );
+          }
+          if (above) {
+            return <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-900">Above policy</span>;
+          }
+          return <span className="text-xs text-gray-500">Within policy</span>;
+        },
+      },
+      {
+        key: "submitted_at",
+        label: "Submitted",
+        sortable: true,
+        render: (row) => (
+          <span className="text-xs text-gray-600">{String(row.submitted_at ?? "").replace("T", " ").slice(0, 19)}</span>
+        ),
+      },
+      {
+        key: "approval_notes",
+        label: "Notes",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          return (
+            <input
+              className="w-40 max-w-full rounded-sm border border-gray-200 px-2 py-1 text-xs"
+              placeholder="Approval notes"
+              value={approveNotesById[id] ?? ""}
+              onChange={(e) => setApproveNotesById((prev) => ({ ...prev, [id]: e.target.value }))}
+            />
+          );
+        },
+      },
+    ],
+    [approveNotesById, ownerUrlById],
+  );
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -231,125 +326,58 @@ export function CashAdvanceRequestsPage() {
 
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company to view requests.</p>
-      ) : pendingQuery.isLoading ? (
-        <p className="text-sm text-gray-600">Loading…</p>
       ) : pendingQuery.isError ? (
         <p className="text-sm text-red-600">Could not load requests.</p>
-      ) : sorted.length === 0 ? (
-        <p className="text-sm text-gray-600">No pending requests.</p>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-              <tr>
-                <th className="px-3 py-2">Request</th>
-                <th className="px-3 py-2">Driver</th>
-                <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Policy</th>
-                <th className="px-3 py-2">Submitted</th>
-                <th className="px-3 py-2">Notes</th>
-                <th className="px-3 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((row) => {
-                const id = String(row.id ?? "");
-                const above = Boolean(row.is_above_policy);
-                const waitingOwner =
-                  Boolean(row.owner_approval_required) && Boolean(row.owner_approval_token_expires_at);
-                const ownerUrl = ownerUrlById[id] ?? "";
-                return (
-                  <tr key={id} className="border-t border-gray-100">
-                    <td className="px-3 py-2 font-mono text-xs">{String(row.display_id ?? "")}</td>
-                    <td className="min-w-0 max-w-[240px] px-3 py-2">
-                      {(() => {
-                        const v = String(row.driver_name ?? "");
-                        const driverId = String(row.driver_id ?? "");
-                        return (
-                          <EntityLink
-                            kind="driver"
-                            id={driverId}
-                            label={entityLabel(v, driverId, "Driver")}
-                            className="single-line-name"
-                          />
-                        );
-                      })()}
-                    </td>
-                    <td className="px-3 py-2">{formatUsdFromCents(row.requested_amount_cents)}</td>
-                    <td className="px-3 py-2">
-                      {waitingOwner ? (
-                        <div className="space-y-1">
-                          <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-                            Pending Owner Approval
-                          </span>
-                          {ownerUrl ? (
-                            <div>
-                              <div className="text-[10px] uppercase text-gray-500">Owner link (copy)</div>
-                              <input
-                                readOnly
-                                className="mt-0.5 w-full max-w-xs rounded-sm border border-gray-200 px-1 py-0.5 font-mono text-[10px]"
-                                value={ownerUrl}
-                                onFocus={(e) => e.target.select()}
-                              />
-                            </div>
-                          ) : (
-                            <p className="text-[10px] text-gray-500">Link was emailed to Owners. Re-escalate to mint a fresh link.</p>
-                          )}
-                        </div>
-                      ) : above ? (
-                        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-900">Above policy</span>
-                      ) : (
-                        <span className="text-xs text-gray-500">Within policy</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-xs text-gray-600">{String(row.submitted_at ?? "").replace("T", " ").slice(0, 19)}</td>
-                    <td className="px-3 py-2">
-                      <input
-                        className="w-40 max-w-full rounded-sm border border-gray-200 px-2 py-1 text-xs"
-                        placeholder="Approval notes"
-                        value={approveNotesById[id] ?? ""}
-                        onChange={(e) => setApproveNotesById((prev) => ({ ...prev, [id]: e.target.value }))}
-                      />
-                    </td>
-                    <td className="space-x-2 px-3 py-2 whitespace-nowrap">
-                      {(() => {
-                        const isMaker = isMakerOfRequest(row, currentUserId);
-                        return (
-                          <Button
-                            size="sm"
-                            disabled={above || isMaker || approveMut.isPending}
-                            onClick={() => approveMut.mutate(row)}
-                            className={busyId === id ? "opacity-70" : ""}
-                            title={isMaker ? "You submitted this request — a different approver is required (maker ≠ checker)." : undefined}
-                          >
-                            Approve
-                          </Button>
-                        );
-                      })()}
-                      {isMakerOfRequest(row, currentUserId) ? (
-                        <div className="mt-1 text-[10px] text-slate-700">You submitted this — needs a different approver.</div>
-                      ) : null}
-                      {above && canEscalateToOwner ? (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          disabled={escalateMut.isPending}
-                          onClick={() => escalateMut.mutate(row)}
-                          className={escalateBusyId === id ? "opacity-70" : ""}
-                        >
-                          {waitingOwner ? "Re-send Owner link" : "Escalate to Owner"}
-                        </Button>
-                      ) : null}
-                      <Button size="sm" variant="secondary" onClick={() => setDenyForId(id)}>
-                        Deny
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        // ACCT-F3532: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
+        <ParityTable<CashAdvanceRequestRow>
+          columns={columns}
+          rows={sorted}
+          rowKey={(row) => String(row.id ?? "")}
+          loading={pendingQuery.isLoading}
+          emptyText="No pending requests."
+          storageKey="cash-advance-requests"
+          exportFilename="cash-advance-requests"
+          rowActions={(row) => {
+            const id = String(row.id ?? "");
+            const above = Boolean(row.is_above_policy);
+            const waitingOwner =
+              Boolean(row.owner_approval_required) && Boolean(row.owner_approval_token_expires_at);
+            const isMaker = isMakerOfRequest(row, currentUserId);
+            return (
+              <div className="space-y-1 whitespace-nowrap">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button
+                    size="sm"
+                    disabled={above || isMaker || approveMut.isPending}
+                    onClick={() => approveMut.mutate(row)}
+                    className={busyId === id ? "opacity-70" : ""}
+                    title={isMaker ? "You submitted this request — a different approver is required (maker ≠ checker)." : undefined}
+                  >
+                    Approve
+                  </Button>
+                  {above && canEscalateToOwner ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={escalateMut.isPending}
+                      onClick={() => escalateMut.mutate(row)}
+                      className={escalateBusyId === id ? "opacity-70" : ""}
+                    >
+                      {waitingOwner ? "Re-send Owner link" : "Escalate to Owner"}
+                    </Button>
+                  ) : null}
+                  <Button size="sm" variant="secondary" onClick={() => setDenyForId(id)}>
+                    Deny
+                  </Button>
+                </div>
+                {isMaker ? (
+                  <div className="text-right text-[10px] text-slate-700">You submitted this — needs a different approver.</div>
+                ) : null}
+              </div>
+            );
+          }}
+        />
       )}
 
       {approveMut.isError ? (
