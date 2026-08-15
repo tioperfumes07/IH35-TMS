@@ -31,6 +31,7 @@ export type DailyTaskEvent = {
   daily_task_id: string;
   event_type: DailyTaskEventType;
   actor_user_id: string;
+  actor_name: string | null;
   payload: Record<string, unknown>;
   created_at: string;
 };
