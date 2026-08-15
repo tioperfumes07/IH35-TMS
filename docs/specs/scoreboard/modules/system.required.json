@@ -147,7 +147,6 @@
       "sub": "TMS↔QBO tie-out (not bank recon)",
       "route_hint": "/system?tab=qbo-recon",
       "required": [
-        "gl_je",
         "qbo_chrome"
       ],
       "note": "Connectivity N/A: QBO reconciliation is excluded from the USMCA TMS-native sprint; its independent GL/chrome requirements remain."
@@ -158,7 +157,6 @@
       "sub": "QBO sync health",
       "route_hint": "/system?tab=qbo-sync",
       "required": [
-        "gl_je",
         "qbo_chrome"
       ],
       "note": "Connectivity N/A: QBO sync is excluded from the USMCA TMS-native sprint; its independent GL/chrome requirements remain."
@@ -488,6 +486,24 @@
       "drops": [
         {
           "id": "law.no_tms_qbo_writeback",
+          "removed": [
+            "gl_je"
+          ]
+        }
+      ]
+    },
+    "gl_je_2026_08_15_tertiary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "tab.qbo_recon / tab.qbo_sync -- reclassified from GENUINE-GAP to FALSE-REQUIRED after reading SystemModulePage.tsx: recon.objects is a list of RECONCILIATION OBJECT TYPES (e.g. \"A/P\"), each row an aggregate tms_count/qbo_count/count_in_sync tie-out across every record of that type -- a genuine categorical rollup, not a single postable event. \"Pulled into TMS (accounting.bills)\" is a KPI total across all bills, same reasoning.",
+      "drops": [
+        {
+          "id": "tab.qbo_recon",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "tab.qbo_sync",
           "removed": [
             "gl_je"
           ]

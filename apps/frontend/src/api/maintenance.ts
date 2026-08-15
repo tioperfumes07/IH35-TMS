@@ -184,6 +184,20 @@ export type PartsInventoryRow = {
   updated_at: string;
 };
 
+/**
+ * LINK-F5186 (parts_inventory.record_purchase): the backend already returns this on
+ * POST /parts-inventory/purchases (MNT-ECON-01 economic hop, PARTS_PURCHASE_GL_POSTING_ENABLED) --
+ * it was simply never typed or consumed on the frontend.
+ */
+export type PartsPurchaseGlPosting = {
+  posted: boolean;
+  reason?: string;
+  bill_id?: string | null;
+  journal_entry_id?: string | null;
+};
+
+export type PartsPurchaseCreateResult = PartsInventoryRow & { gl_posting?: PartsPurchaseGlPosting };
+
 export type SevereRepairEstimate = {
   id: string;
   unit_id: string;
@@ -840,7 +854,7 @@ export function recordPartsPurchase(
     location?: string;
   }
 ) {
-  return apiRequest<PartsInventoryRow>(
+  return apiRequest<PartsPurchaseCreateResult>(
     `/api/v1/maintenance/parts-inventory/purchases?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
     {
       method: "POST",

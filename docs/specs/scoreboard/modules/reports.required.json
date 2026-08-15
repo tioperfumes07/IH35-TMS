@@ -495,7 +495,6 @@
       "sub": "Operating / investing / financing",
       "route_hint": "/reports/cash-flow-statement",
       "required": [
-        "gl_je",
         "connectivity",
         "qbo_chrome"
       ]
@@ -2737,6 +2736,18 @@
         },
         {
           "id": "report.cash_flow_overview",
+          "removed": [
+            "gl_je"
+          ]
+        }
+      ]
+    },
+    "gl_je_2026_08_15_tertiary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "report.cash_flow_statement -- reclassified from GENUINE-GAP to FALSE-REQUIRED after reading cash-flow.service.ts: toLines() groups every posting by \"${account_type}:${account_subtype}\" (e.g. all Liability:Accounts-Payable legs summed into one row) -- a genuine categorical rollup across many accounts and many JEs, with no account_id or single owning JE on the AccountingCashFlowLine type at all. Same structural pattern as the already-dropped cash-flow:tab.actual_vs_projected and accounting.panel.class_cost_center_variance -- a rolled-up category row cannot honestly drill to one JE.",
+      "drops": [
+        {
+          "id": "report.cash_flow_statement",
           "removed": [
             "gl_je"
           ]

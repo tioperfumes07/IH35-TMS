@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow } from "../../../api/maintenance";
+import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow, type PartsPurchaseGlPosting } from "../../../api/maintenance";
 import { listVendors } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
@@ -61,6 +61,9 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
   const [vendorSearch, setVendorSearch] = useState("");
   const [form, setForm] = useState<PurchaseForm>(EMPTY_PURCHASE);
   const [adjustRow, setAdjustRow] = useState<PartsInventoryRow | null>(null);
+  // LINK-F5186 (parts_inventory.record_purchase): surfaces the real gl_posting result the backend
+  // already returns (MNT-ECON-01) but the frontend previously discarded entirely.
+  const [lastGlPosting, setLastGlPosting] = useState<PartsPurchaseGlPosting | null>(null);
   const [deltaQty, setDeltaQty] = useState(0);
   const [reason, setReason] = useState<"used" | "discarded" | "shrinkage" | "recount">("recount");
 
@@ -104,9 +107,10 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
         purchase_amount: form.purchase_amount,
         location: form.location || undefined,
       }),
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       setOpenPurchase(false);
       setForm(EMPTY_PURCHASE);
+      setLastGlPosting(created.gl_posting ?? null);
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
     },
   });
@@ -171,6 +175,34 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
         <h3 className="text-sm font-semibold">Parts Inventory</h3>
         <Button size="sm" onClick={() => setOpenPurchase(true)}>+ Record Purchase</Button>
       </div>
+
+      {/* LINK-F5186 (parts_inventory.record_purchase): the backend already returns gl_posting on
+      every purchase create -- surface it honestly instead of discarding it. */}
+      {lastGlPosting ? (
+        <div
+          className="flex items-center justify-between rounded-sm border border-gray-200 bg-slate-50 px-3 py-2 text-xs"
+          data-testid="parts-purchase-gl-posting-result"
+        >
+          {lastGlPosting.posted && lastGlPosting.journal_entry_id ? (
+            <>
+              <span className="text-gray-600">Purchase posted to GL.</span>
+              <EntityLink
+                kind="journal_entry"
+                id={lastGlPosting.journal_entry_id}
+                label="View journal entry →"
+                className="font-semibold text-slate-700 underline"
+              />
+            </>
+          ) : (
+            <span className="text-gray-500">
+              Not posted to GL{lastGlPosting.reason ? ` (${lastGlPosting.reason.replace(/_/g, " ")})` : ""} — inventory row saved.
+            </span>
+          )}
+          <button type="button" className="ml-3 text-gray-400 hover:text-gray-600" onClick={() => setLastGlPosting(null)}>
+            ✕
+          </button>
+        </div>
+      ) : null}
 
       {isError ? (
         <ListErrorState
