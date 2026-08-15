@@ -30,10 +30,13 @@ describe("customer payments API client", () => {
     );
   });
 
-  it("listCustomerPayments GETs with limit", async () => {
+  // LINK-F5170: the backend's listCustomerPaymentsQuerySchema REQUIRES operating_company_id
+  // (companyQuerySchema, a non-optional uuid) — this test previously asserted a URL with NO
+  // operating_company_id, locking in the bug that made every real call 400 unconditionally.
+  it("listCustomerPayments GETs with operating_company_id and limit", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ payments: [] } as never);
-    await listCustomerPayments("cust-1", { limit: 25 });
-    expect(spy).toHaveBeenCalledWith("/api/v1/customers/cust-1/payments?limit=25");
+    await listCustomerPayments("cust-1", "opco-1", { limit: 25 });
+    expect(spy).toHaveBeenCalledWith("/api/v1/customers/cust-1/payments?operating_company_id=opco-1&limit=25");
   });
 
   it("unapplyCustomerPayment POSTs", async () => {

@@ -508,9 +508,12 @@ export function CustomerDetailPage() {
     enabled: Boolean(id && operatingCompanyId && activeTab === "Billing & Receivables"),
   });
   const customerPaymentsQuery = useQuery({
-    queryKey: ["customer-payments", id],
-    queryFn: () => listCustomerPayments(id, { limit: 50 }),
-    enabled: Boolean(id && activeTab === "Billing & Receivables"),
+    queryKey: ["customer-payments", id, operatingCompanyId],
+    // LINK-F5170: the backend requires operating_company_id (non-optional uuid); omitting it 400'd
+    // every call, which `retry: false` + the empty-array fallback below silently rendered as
+    // "No payments recorded" instead of the real error.
+    queryFn: () => listCustomerPayments(id, operatingCompanyId!, { limit: 50 }),
+    enabled: Boolean(id && operatingCompanyId && activeTab === "Billing & Receivables"),
     retry: false,
   });
   const vendorsQuery = useQuery({
@@ -2252,7 +2255,7 @@ export function CustomerDetailPage() {
                     key: "id",
                     label: "Payment",
                     sortable: true,
-                    render: (p) => <EntityLink kind="payment" id={p.id} label={entityLabel(null, p.id, "Payment")} />,
+                    render: (p) => <EntityLink kind="payment" id={p.id} label={entityLabel(p.display_id, p.id, "Payment")} />,
                   },
                   { key: "date", label: "Date", sortable: true, render: (p) => formatDateUS(p.date) },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => formatCurrencyCents(p.amount_cents) },

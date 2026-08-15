@@ -13,6 +13,8 @@ export type RecordCustomerPaymentPayload = {
 
 export type CustomerPaymentListRow = {
   id: string;
+  /** LINK-F5170: real accounting.payments.display_id (format PMT-YYYY-NNNNN), not derivable from id. */
+  display_id: string;
   date: string;
   amount_cents: number;
   source_kind?: string;
@@ -49,11 +51,15 @@ export function recordCustomerPayment(
   );
 }
 
-export function listCustomerPayments(customerId: string, params: { limit?: number } = {}) {
-  const qs = new URLSearchParams();
+// LINK-F5170: GET /customers/:id/payments requires operating_company_id in the query
+// (listCustomerPaymentsQuerySchema extends the shared companyQuerySchema — non-optional uuid).
+// Every call through this function omitted it, so the request 400'd unconditionally; the query's
+// `retry: false` + the caller's `data?.rows ?? []` fallback rendered that as "No payments recorded"
+// — an always-empty screen that read as legitimately-zero data, not a broken request.
+export function listCustomerPayments(customerId: string, operatingCompanyId: string, params: { limit?: number } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.limit != null) qs.set("limit", String(params.limit));
-  const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiRequest<{ rows: CustomerPaymentListRow[]; total: number }>(`/api/v1/customers/${customerId}/payments${suffix}`);
+  return apiRequest<{ rows: CustomerPaymentListRow[]; total: number }>(`/api/v1/customers/${customerId}/payments?${qs.toString()}`);
 }
 
 export function unapplyCustomerPayment(customerId: string, paymentId: string) {

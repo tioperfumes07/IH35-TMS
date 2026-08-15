@@ -82,6 +82,10 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         `
           SELECT
             p.id,
+            -- LINK-F5170: the real, human-facing payment identity (format PMT-YYYY-NNNNN) was never
+            -- selected, so the customer-detail UI could not render it and fell back to entityLabel's
+            -- raw-uuid path.
+            p.display_id,
             p.payment_date::text AS date,
             p.amount_cents,
             p.payment_source_kind AS source_kind,
