@@ -10,6 +10,18 @@
  * Re-scoped from FORBIDDEN to MUST_KEEP; settlements.required.json's settlements.detail leaf
  * updated to require gl_je + ap_bill to match.
  *
+ * SETTLEMENTS-GL-AP-HONEST-MATRIX-DRIFT (GUARD-WORKORDERS.md, filed by Codex 2026-08-14, fixed
+ * CC-1 2026-08-15): the opposite drift — this guard's own MUST_KEEP still asserted
+ * cash_advances: ["liability"] after a LATER, more careful honesty audit
+ * (settlements.required.json honesty_audit.liability_2026_08_13_secondary) correctly dropped
+ * `liability` from that leaf. Verified live 2026-08-15: CashAdvanceRequestsPage.tsx
+ * (route /driver-finance/cash-advance-requests) only renders EntityLink kind="driver" — this
+ * screen lists PENDING requests, not yet-disbursed advances, so there is no
+ * driver_finance.driver_liabilities row to link to yet (same pre-persistence shape as the
+ * internal_fines.create / FineConvertConfirmModal false-required leaves from LINK-F5187 cluster
+ * A). Removed the stale MUST_KEEP entry so this guard follows the shipped, honesty-audited
+ * required.json instead of contradicting it.
+ *
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(period_close|month_close)$","task":"WAVE-C-gl_je-month-close","vertical":"column-wave"}
  * @matrix-built {"modules":["settlements"],"cols":["gl_je","ap_bill"],"leafRe":"^settlements\\.detail$","task":"CLS-WAVE-C-MATRIX-GL-JE-LIABILITY-STALE","vertical":"column-wave"}
  *
@@ -43,7 +55,6 @@ const MUST_KEEP = {
     // instead of a stale annotation.
     "settlements.detail": ["liability", "gl_je", "ap_bill"],
     settlement_close: ["liability"],
-    cash_advances: ["liability"],
   },
   accounting: {
     "invoices.create": ["gl_je"],
