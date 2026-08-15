@@ -22,6 +22,7 @@ import {
 } from "../../../api/related-party-loans";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -156,55 +157,67 @@ export function LoansAdvancesPage() {
       )}
 
       {companyId && !listQuery.isError && (
-        <div className="mt-4 overflow-x-auto rounded-sm border border-slate-200 bg-white">
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-600">
-                <th className="px-3 py-2 font-medium">Date</th>
-                <th className="px-3 py-2 font-medium">Direction</th>
-                <th className="px-3 py-2 font-medium">Counterparty</th>
-                <th className="px-3 py-2 font-medium">Relationship</th>
-                <th className="px-3 py-2 font-medium">Target</th>
-                <th className="px-3 py-2 font-medium">Account</th>
-                <th className="px-3 py-2 text-right font-medium">Principal</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">JE</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
-                    {listQuery.isLoading
-                      ? "Loading…"
-                      : "No loans or advances recorded for this entity yet. This is an honest empty register, not a failed read."}
-                  </td>
-                </tr>
-              )}
-              {rows.map((r) => (
-                <tr key={r.id} className="border-b border-slate-100">
-                  {/* US date grammar via formatDateUS — a bare ISO string in JSX is locale-ambiguous
-                      (verify:no-native-datetime-input C3). */}
-                  <td className="px-3 py-2">{formatDateUS(r.entry_date)}</td>
-                  <td className="px-3 py-2">{r.direction === "in" ? "To company" : "From company"}</td>
-                  <td className="px-3 py-2">{entityLabel(r.counterparty_name, r.counterparty_id, "Counterparty")}</td>
-                  <td className="px-3 py-2">{r.relationship}</td>
-                  <td className="px-3 py-2">{r.target_type}</td>
-                  <td className="px-3 py-2">
-                    {/* Linkage law §10: an account reference drills through to the account, never a
-                        raw uuid printed as text. Same for the JE below — the loan and its journal
-                        entry must be walkable in both directions from this register. */}
-                    <EntityLink kind="account" id={r.account_id} label={entityLabel(r.account_name, r.account_id, "Account")} />
-                  </td>
-                  <td className="px-3 py-2 text-right">{money(r.principal_cents ?? r.amount_cents)}</td>
-                  <td className="px-3 py-2">{r.status ?? "—"}</td>
-                  <td className="px-3 py-2">
-                    {r.je_id ? <EntityLink kind="journal_entry" id={r.je_id} label={entityLabel(null, r.je_id, "Journal entry")} /> : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-4">
+          {/* ACCT-F3572: ParityTable owns Search+Range+gear on the loans register leaf. */}
+          <ParityTable<RelatedPartyLoanRow>
+            rows={rows}
+            rowKey={(r) => r.id}
+            storageKey="loans-advances-register"
+            exportFilename="loans-advances"
+            tableTestId="loans-advances-register-table"
+            emptyText={
+              listQuery.isLoading
+                ? "Loading…"
+                : "No loans or advances recorded for this entity yet. This is an honest empty register, not a failed read."
+            }
+            columns={[
+              {
+                key: "entry_date",
+                label: "Date",
+                // US date grammar via formatDateUS — bare ISO in JSX is locale-ambiguous
+                // (verify:no-native-datetime-input C3).
+                render: (r) => formatDateUS(r.entry_date),
+              },
+              {
+                key: "direction",
+                label: "Direction",
+                render: (r) => (r.direction === "in" ? "To company" : "From company"),
+              },
+              {
+                key: "counterparty",
+                label: "Counterparty",
+                render: (r) => entityLabel(r.counterparty_name, r.counterparty_id, "Counterparty"),
+              },
+              { key: "relationship", label: "Relationship", render: (r) => r.relationship },
+              { key: "target_type", label: "Target", render: (r) => r.target_type },
+              {
+                key: "account",
+                label: "Account",
+                // Linkage: account + JE drill through — never raw uuid text.
+                render: (r) => (
+                  <EntityLink kind="account" id={r.account_id} label={entityLabel(r.account_name, r.account_id, "Account")} />
+                ),
+              },
+              {
+                key: "principal",
+                label: "Principal",
+                className: "text-right",
+                cellClass: "text-right",
+                render: (r) => money(r.principal_cents ?? r.amount_cents),
+              },
+              { key: "status", label: "Status", render: (r) => r.status ?? "—" },
+              {
+                key: "je",
+                label: "JE",
+                render: (r) =>
+                  r.je_id ? (
+                    <EntityLink kind="journal_entry" id={r.je_id} label={entityLabel(null, r.je_id, "Journal entry")} />
+                  ) : (
+                    "—"
+                  ),
+              },
+            ]}
+          />
         </div>
       )}
 
