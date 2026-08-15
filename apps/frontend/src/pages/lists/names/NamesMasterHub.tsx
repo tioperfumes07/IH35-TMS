@@ -136,6 +136,7 @@ export function NamesMasterHub() {
         subtitle="Cross-module search across customers, vendors, drivers, and contacts (read-only navigator)"
       />
 
+      {/* LST-F3528: server-bound names search — keep; ParityTable toolbar Search suppressed */}
       <form onSubmit={submitSearch} className="flex flex-wrap items-end gap-2 rounded-sm border border-slate-200 bg-white p-3">
         <label className="flex min-w-[240px] flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
           Search
@@ -196,6 +197,8 @@ export function NamesMasterHub() {
           initialPageSize={50}
           storageKey="names-master-hub"
           tableTestId="names-master-hub-table"
+          // LST-F3528: keep API search form above; hide ParityTable toolbar Search
+          suppressToolbarSearch
         />
       )}
 
