@@ -1327,6 +1327,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3505": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "claude-1",
+    "purpose": "verify-reports-scheduled-canonical-sor"
+  },
   "3506": {
     "purpose": "verify-maintenance-services-catalog-suppress-toolbar-search",
     "lane": "cursor",
@@ -1372,10 +1377,10 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
-  "3505": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "claude-1",
-    "purpose": "verify-reports-scheduled-canonical-sor"
+  "3524": {
+    "name": "verify-geofence-recon-surface-bar",
+    "claimedBy": "cursor",
+    "claimedAt": "2026-08-15"
   },
   "_band": {
     "cc-1": "n%4===1",
