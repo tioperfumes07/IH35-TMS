@@ -997,6 +997,7 @@
       "memo",
       "operating_company_id",
       "parts_inventory_id",
+      "parts_purchase_id",
       "status",
       "updated_at",
       "void_reason",
@@ -6199,6 +6200,22 @@
       "vendor_id",
       "vendor_invoice_amount",
       "vendor_invoice_number",
+      "work_order_id"
+    ],
+    "maintenance.parts_purchases": [
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "operating_company_id",
+      "parts_inventory_id",
+      "purchase_amount_cents",
+      "purchased_at",
+      "qty_received",
+      "vendor_id",
+      "vendor_invoice_number",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id",
       "work_order_id"
     ],
     "maintenance.parts_warranty": [
