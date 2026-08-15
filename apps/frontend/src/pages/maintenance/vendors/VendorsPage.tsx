@@ -259,6 +259,7 @@ export function VendorsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* MAINT-F3526: server-bound vendor search — keep; ParityTable toolbar Search suppressed */}
           <input
             className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
             aria-label="Search vendors"
@@ -302,6 +303,8 @@ export function VendorsPage() {
           storageKey="maint-master-data-vendors"
           exportFilename="maintenance-vendors"
           rowActions={rowActions}
+          // MAINT-F3526: keep API search above; hide ParityTable toolbar Search
+          suppressToolbarSearch
         />
         )}
       </div>
