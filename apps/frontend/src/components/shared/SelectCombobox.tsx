@@ -40,6 +40,24 @@ function flattenOptions(children: ReactNode): OptionRow[] {
   return out;
 }
 
+// CLS-BOX-IN-BOX — SelectCombobox is an adapter around the canonical Combobox, whose input shell
+// already owns its border, background, rounding, focus ring, and shadow. Most call sites predate the
+// adapter and still pass native-<select> chrome in className. Applying those tokens to Combobox's
+// OUTER positioning wrapper draws a second box around the real control (especially obvious inside
+// right drawers such as Lists > Accounting > Detail Type). Keep layout/spacing/typography hooks, but
+// discard frame chrome at this one shared boundary so every module gets one control frame.
+const LEGACY_SELECT_FRAME_TOKEN = /^(?:border(?:-.+)?|rounded(?:-.+)?|bg-.+|ring(?:-.+)?|shadow(?:-.+)?)$/;
+
+export function selectComboboxLayoutClassName(className?: string): string | undefined {
+  if (!className) return undefined;
+  const layout = className
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((token) => !LEGACY_SELECT_FRAME_TOKEN.test(token))
+    .join(" ");
+  return layout || undefined;
+}
+
 export function SelectCombobox({
   value,
   defaultValue,
@@ -65,6 +83,7 @@ export function SelectCombobox({
     options.find((opt) => opt.disabled && opt.value === "")?.label ||
     options.find((opt) => opt.value === "")?.label ||
     "Select...";
+  const layoutClassName = selectComboboxLayoutClassName(className);
 
   return (
     <div
@@ -108,7 +127,7 @@ export function SelectCombobox({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
-        className={className}
+        className={layoutClassName}
       />
     </div>
   );
