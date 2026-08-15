@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting","banking","customers","dispatch","docs","drivers","finance","fleet","insurance","legal","lists","maintenance","reports","safety","settlements","vendors"],"cols":["qbo_chrome"],"leafRe":"^chrome\\.toolbar_(search|range|gear)$","task":"CLS-FILTER-GEAR-APPLY","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["lists"],"cols":["connectivity","qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"LINK-F5170-LISTS-TOOLBAR-FILTER-APPLY","vertical":"column-wave"} */
+/** @matrix-built {"modules":["customers","docs","factoring","fleet","maintenance","tasks","vendors"],"cols":["connectivity","qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"CODEX-ZERO-REMAINDER-PROTECTED-CHROME-7","vertical":"class-sweep"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getMe } from "../../api/identity";
@@ -12,13 +14,22 @@ import { TASK_STATUS_BADGE, isOpenTaskStatus, priorityLabel, taskStatusLabel } f
 import { formatDateUS } from "../../lib/formatDate";
 import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 
+type StatusFilter = "all" | "open" | "completed";
+
 // TASK-2: My Tasks — the current user's assigned tasks (was an unbuilt placeholder). Reads the
 // existing /api/v1/tasks/planner endpoint filtered by assigned_to = current user.
+// CODEX-ZERO-REMAINDER-PROTECTED-CHROME-7 — staged Filters Apply triad (chrome.toolbar_filter).
 export function TasksMinePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const meQuery = useQuery({ queryKey: ["identity", "me"], queryFn: getMe });
   const myId = meQuery.data?.user.uuid ?? "";
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const staged = useStagedListFilters({
+    applied: { statusFilter },
+    empty: { statusFilter: "all" as StatusFilter },
+    onApply: (next) => setStatusFilter(next.statusFilter),
+  });
 
   const today = companyToday();
   const date_from = addDaysIso(today, -30);
@@ -33,6 +44,11 @@ export function TasksMinePage() {
   const tasks = [...(query.data?.tasks ?? [])].sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
   const openTasks = tasks.filter((t) => isOpenTaskStatus(t.status));
   const overdue = openTasks.filter((t) => t.scheduled_date < today);
+  const visibleTasks = useMemo(() => {
+    if (statusFilter === "open") return tasks.filter((t) => isOpenTaskStatus(t.status));
+    if (statusFilter === "completed") return tasks.filter((t) => t.status === "completed");
+    return tasks;
+  }, [tasks, statusFilter]);
 
   // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
   // hand-rolled table. Preserves the overdue red-highlight on the Scheduled column.
@@ -99,16 +115,39 @@ export function TasksMinePage() {
         ))}
       </div>
 
+      <CollapsedListFilters
+        activeFilterCount={statusFilter !== "all" ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="tasks-mine"
+        dataAttributes={{ "data-tasks-mine-filter-toolbar": "collapsed" }}
+      >
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Status
+          <SelectCombobox
+            value={staged.draft.statusFilter}
+            onChange={(event) => staged.setDraft({ statusFilter: event.target.value as StatusFilter })}
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+          >
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="completed">Completed</option>
+          </SelectCombobox>
+        </label>
+      </CollapsedListFilters>
+
       {query.isError ? (
         <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
         <ParityTable
-          rows={tasks}
+          rows={visibleTasks}
           columns={columns}
           rowKey={(row) => row.task_id}
           // Settled-only empty (LIST-EMPTY-1 invariant): show loading while pending OR while a
           // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch.
-          loading={query.isPending || (query.isFetching && tasks.length === 0)}
+          loading={query.isPending || (query.isFetching && visibleTasks.length === 0)}
           storageKey="tasks-mine"
           emptyText="No tasks assigned to you in this window."
         />
