@@ -849,10 +849,16 @@ export function assertScoreboardContract(sources) {
     ) {
       problems.push(`${routeRel}: must not rely only on stale recon for recentActivity`);
     }
-    if (!/RECENT_CACHE_MS\s*=\s*60_000|60_000/.test(route)) {
+    const cacheMs = (name) => {
+      const match = route.match(new RegExp(`const\\s+${name}\\s*=\\s*([0-9_]+)`));
+      return match ? Number(match[1].replace(/_/g, "")) : null;
+    };
+    const recentCacheMs = cacheMs("RECENT_CACHE_MS");
+    const scoreboardCacheMs = cacheMs("SCOREBOARD_CACHE_MS");
+    if (recentCacheMs == null || recentCacheMs <= 0 || recentCacheMs > 60_000) {
       problems.push(`${routeRel}: must short-cache recentActivity (~60s)`);
     }
-    if (!/SCOREBOARD_CACHE_MS\s*=\s*60_000/.test(route)) {
+    if (scoreboardCacheMs == null || scoreboardCacheMs <= 0 || scoreboardCacheMs > 60_000) {
       problems.push(`${routeRel}: must short-cache scoreboard payload (~60s) like recentActivity`);
     }
     if (!/buildProgramScoreboardLive|loadScoreboardPayload/.test(route)) {
@@ -903,6 +909,7 @@ if (SELFTEST) {
     [DATA]: read(DATA),
     [FE_PKG]: read(FE_PKG),
     [matrixPageRel]: read(matrixPageRel),
+    ["apps/backend/src/program/audit-scoreboard.routes.ts"]: read("apps/backend/src/program/audit-scoreboard.routes.ts"),
   };
   const failures = [];
   const expect = (name, mutated, needle) => {
@@ -951,6 +958,28 @@ if (SELFTEST) {
       ),
     },
     "must not be labeled SAMPLE",
+  );
+  expect(
+    "recent-cache-too-long",
+    {
+      ...live,
+      ["apps/backend/src/program/audit-scoreboard.routes.ts"]: live["apps/backend/src/program/audit-scoreboard.routes.ts"].replace(
+        "const RECENT_CACHE_MS = 3_000",
+        "const RECENT_CACHE_MS = 120_000",
+      ),
+    },
+    "must short-cache recentActivity",
+  );
+  expect(
+    "scoreboard-cache-too-long",
+    {
+      ...live,
+      ["apps/backend/src/program/audit-scoreboard.routes.ts"]: live["apps/backend/src/program/audit-scoreboard.routes.ts"].replace(
+        "const SCOREBOARD_CACHE_MS = 3_000",
+        "const SCOREBOARD_CACHE_MS = 120_000",
+      ),
+    },
+    "must short-cache scoreboard payload",
   );
   const liveProblems = assertScoreboardContract(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);

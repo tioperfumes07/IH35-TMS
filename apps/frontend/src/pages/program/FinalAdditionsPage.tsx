@@ -15,20 +15,20 @@ function isDone(status: string) {
   return (status || "").toUpperCase() === "DONE";
 }
 
-// Ordering weight for the remaining work: actionable-now first, gated (owner-blocked) last.
+// Every non-DONE row is actionable work. Historical GATED tags are source history, not an owner hold:
+// the permanent operating law removed approval gates, so they sort with Pending instead of being buried last.
 function openRank(status: string) {
   const s = (status || "").toUpperCase();
-  if (s === "PENDING" || s === "OPEN") return 0;
+  if (s === "PENDING" || s === "OPEN" || s.includes("GATED")) return 0;
   if (s === "NEEDS-VERIFY") return 1;
-  if (s.includes("GATED")) return 2;
-  return 3;
+  return 2;
 }
 
 function statusStyle(status: string): { bg: string; fg: string; label: string } {
   const s = (status || "").toUpperCase();
   if (s === "DONE") return { bg: "#DCFCE7", fg: "#166534", label: "Done" };
   if (s === "NEEDS-VERIFY") return { bg: "#FEF3C7", fg: "#854F0B", label: "Needs verify" };
-  if (s.includes("GATED")) return { bg: "#F3F4F6", fg: "#6B7280", label: "Gated" };
+  if (s.includes("GATED")) return { bg: "#E2E8F0", fg: "#334155", label: "Pending" };
   if (s === "PENDING" || s === "OPEN") return { bg: "#E2E8F0", fg: "#334155", label: "Pending" };
   return { bg: "#E2E8F0", fg: "#334155", label: s || "—" };
 }
@@ -39,6 +39,7 @@ function StatusPill({ status }: { status: string }) {
     <span
       className="inline-block rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
       style={{ backgroundColor: st.bg, color: st.fg }}
+      title={(status || "").toUpperCase().includes("GATED") ? "Historical GATED tag; no owner approval required" : undefined}
     >
       {st.label}
     </span>
@@ -129,15 +130,16 @@ export function FinalAdditionsPage() {
       .filter((b) => isDone(b.status))
       .sort((a, b) => (b.pr ?? 0) - (a.pr ?? 0));
     let pending = 0;
-    let gated = 0;
+    let legacyGated = 0;
     let verify = 0;
     for (const b of remaining) {
+      if ((b.status || "").toUpperCase().includes("GATED")) legacyGated += 1;
       const r = openRank(b.status);
       if (r === 0) pending += 1;
       else if (r === 1) verify += 1;
-      else gated += 1;
+      else pending += 1;
     }
-    return { remaining, done, counts: { pending, gated, verify, done: done.length, total: blocks.length } };
+    return { remaining, done, counts: { pending, legacyGated, verify, done: done.length, total: blocks.length } };
   }, [blocks]);
 
   return (
@@ -159,11 +161,16 @@ export function FinalAdditionsPage() {
           <div className="rounded border border-gray-200 bg-white p-3" style={{ borderLeft: "3px solid #1F2A44" }}>
             <ProgressBar done={counts.done} total={counts.total} />
             <div className="mt-3 flex flex-wrap gap-2">
-              <CountChip label="Pending" value={counts.pending} bg="#E2E8F0" fg="#334155" />
+              <CountChip label="Pending (includes legacy GATED tags)" value={counts.pending} bg="#E2E8F0" fg="#334155" />
               <CountChip label="Needs verify" value={counts.verify} bg="#FEF3C7" fg="#854F0B" />
-              <CountChip label="Gated (owner)" value={counts.gated} bg="#F3F4F6" fg="#6B7280" />
               <CountChip label="Done" value={counts.done} bg="#DCFCE7" fg="#166534" />
             </div>
+            {counts.legacyGated > 0 ? (
+              <div className="mt-2 text-[11px] text-slate-600">
+                {counts.legacyGated} pending row{counts.legacyGated === 1 ? " carries" : "s carry"} a historical GATED tag.
+                The tag is retained as source history; no owner approval is required and these rows remain actionable.
+              </div>
+            ) : null}
             {data.live?.snapshot_age_days != null ? (
               <div className="mt-2 text-[11px] text-slate-500">
                 Snapshot {data.live.snapshot_age_days === 0 ? "current" : `${data.live.snapshot_age_days} day(s) old`}
