@@ -22,6 +22,8 @@ These are mirrored from the live Desktop CC-1 queue. The detailed canonical rows
 
 **NEW OWNER-DECIDED:** `INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT` — implement the approved append-only `maintenance.parts_purchases` WORM ledger, company+part-number stock uniqueness/upsert, atomic purchase+stock mutation, symmetric void reversal, scoped read/UI, and preserve the existing flag-gated GL sibling with no QBO write-back. Exact decision, paths, acceptance, and `BLOCKS=LIVE-INVENTORY-PURCHASE-HISTORY` are on the board and in `docs/blocks/HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md`. `OWNER-GATED=no`; approved in chat 2026-08-15.
 
+**NEW LIVE HANDOFF:** `LV-INVENTORY-PURCHASE-HISTORY-CREATOR-UNREACHABLE` — PR #7368 is deployed and guarded, but live USMCA Purchase History directs operators to Inventory Parts & Stock, whose only actions are Create part/Edit. The real money-bearing + Record Purchase creator is stranded in Maintenance's separate `PartsInventoryTable`. Reuse/extract one canonical creator across both surfaces, preserving vendor picker, MoneyInput, scoped POST, stock+history invalidation and flag-gated GL result; mutation-prove both doors and live-prove one labeled USMCA receipt after deploy. Exact paths and acceptance are on the board. `OWNER-GATED=no`; `BLOCKS=LIVE-INVENTORY-PURCHASE-HISTORY-CREATE`.
+
 The prior 7-item handoff queue is closed; see the FIXED notes below and `docs/audit/GUARD-WORKORDERS.md` for full detail. `CLS-BOX-IN-BOX-MONEYINPUT-OUTER-FRAME` is also FIXED in PR #7298.
 
 `REVERSE-SECTIONS-SILENT-LIST-CAPS` — **FIXED (CC-1, 2026-08-15)**, see `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
