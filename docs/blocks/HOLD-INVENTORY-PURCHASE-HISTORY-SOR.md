@@ -1,6 +1,6 @@
 # HOLD — Inventory Purchase History missing SoR
 
-**Status:** `[HOLD-FOR-JORGE]` — **docs only. Do not merge as a feature. No migration. No fake ledger.**  
+**Status:** `OWNER-APPROVED 2026-08-15` — implementation is OPEN in the CC-1 money/WORM migration lane; no fake ledger.
 **Date:** 2026-07-16  
 **Source:** Audit residual after Assignments honesty (#2553 / `feat/inventory-assignments-honesty`)  
 **Surface:** `/inventory/purchases` · label **Purchase History**  
@@ -10,7 +10,7 @@
 
 - The historical statement below that Purchase History “still renders the stock list” is superseded, not erased: `InventoryPurchasesPage` now renders an honest, reachable empty state and `verify-inventory-purchases-honesty.mjs` prevents a stock twin from returning.
 - The requested production search for an alternate source of record was completed on 2026-08-07. No append-only TMS purchase-order ledger exists. `accounting.parts_purchase_postings` is a posting latch and `mdata.qbo_purchases` is an inbound QBO expense/check/card-charge mirror, not Purchase History and not a permitted USMCA sprint target.
-- The HOLD therefore remains open only for the owner-gated additive SoR and stock upsert decisions below. The two current connectivity leaves are satisfied by the mounted door and honest state; they do not authorize schema, GL, or QBO work.
+- The additive SoR and stock-upsert decisions below were approved by the owner in chat on 2026-08-15. The two current connectivity leaves remain satisfied by the mounted door and honest state; implementation is tracked separately on `GUARD-WORKORDERS.md` and does not authorize QBO work.
 
 ---
 
@@ -42,11 +42,11 @@ Purchase History was shipped as a **tab chrome + stock twin**. Recording a purch
 
 ---
 
-## Proposed additive SoR (owner-gated — not in this PR)
+## Approved additive SoR (owner decision 2026-08-15)
 
 ### Table (sketch — owner must approve names / columns)
 
-`maintenance.parts_purchases` (name TBD), append-only / void-not-delete:
+`maintenance.parts_purchases`, append-only / void-not-delete:
 
 | Column | Purpose |
 |--------|---------|
@@ -59,10 +59,10 @@ Purchase History was shipped as a **tab chrome + stock twin**. Recording a purch
 | `qty_received` | units received |
 | `purchased_at` / `created_at` | when |
 | `created_by_user_id` | actor |
-| `voided_at` / `voided_by` | permanent record |
+| `voided_at` / `voided_by_user_id` / `void_reason` | permanent record and symmetric reversal provenance |
 | linkage optional | `work_order_id` only if purchase is WO-tied; else null |
 
-Also: wire `POST …/purchases` to **insert this event row** in the same txn as stock qty update (today’s INSERT-only stock row may need a follow-on upsert design — separate decision).
+Also: wire `POST …/purchases` to **insert this event row** in the same transaction as the stock quantity update. Add a real unique constraint on `(operating_company_id, part_number)` and use `INSERT ... ON CONFLICT ... DO UPDATE SET on_hand_qty = parts_inventory.on_hand_qty + EXCLUDED.on_hand_qty`; the existing plain index does not prevent duplicate stock rows. A void/reversal appends or stamps permanent reversal provenance and decrements the same stock row in the same transaction.
 
 ### API (additive)
 
@@ -106,8 +106,6 @@ REMAINING: none for UI/read; GL/bill posting remains out of scope unless owner o
 
 ---
 
-## Gated for Jorge
+## Owner decision — approved 2026-08-15
 
-1. Approve table name + column set. Production verification is complete: no alternate append-only purchase SoR exists; QBO purchases and the parts-posting latch are explicitly not substitutes.
-2. Approve whether POST continues to INSERT a new stock row vs upsert by SKU.
-3. Authorize implement PR (schema + GET + UI + guards). **This HOLD PR ships docs only.**
+The owner approved the refined model in chat: `maintenance.parts_purchases` is the append-only purchase SoR; stock is uniquely keyed and upserted by operating company + canonical part number; the ledger insert and stock mutation are atomic; void/reversal never deletes and symmetrically decrements stock; the existing flag-gated GL posting remains a separate sibling step; TMS→QBO write-back remains forbidden. Implementation ownership is CC-1 because the migration carries money/WORM semantics and must preserve the existing parts-purchase poster.

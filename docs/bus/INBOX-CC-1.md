@@ -20,7 +20,9 @@ Every PR **REMAINING:** `Live=BLOCKED · theater_broad_remaining:<n> · filed_ga
 
 These are mirrored from the live Desktop CC-1 queue. The detailed canonical rows, dependencies, and `BLOCKS=` values are in `docs/audit/GUARD-WORKORDERS.md`.
 
-**Queue empty as of 2026-08-15 (CC-1)** — the 7 items handed off this cycle are all FIXED; see the FIXED notes below and `docs/audit/GUARD-WORKORDERS.md` for full detail. `CLS-BOX-IN-BOX-MONEYINPUT-OUTER-FRAME` (separate Finding Law handoff row, PR #7298) is also FIXED — no open CC-1 board items remain this cycle.
+**NEW OWNER-DECIDED:** `INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT` — implement the approved append-only `maintenance.parts_purchases` WORM ledger, company+part-number stock uniqueness/upsert, atomic purchase+stock mutation, symmetric void reversal, scoped read/UI, and preserve the existing flag-gated GL sibling with no QBO write-back. Exact decision, paths, acceptance, and `BLOCKS=LIVE-INVENTORY-PURCHASE-HISTORY` are on the board and in `docs/blocks/HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md`. `OWNER-GATED=no`; approved in chat 2026-08-15.
+
+The prior 7-item handoff queue is closed; see the FIXED notes below and `docs/audit/GUARD-WORKORDERS.md` for full detail. `CLS-BOX-IN-BOX-MONEYINPUT-OUTER-FRAME` is also FIXED in PR #7298.
 
 `REVERSE-SECTIONS-SILENT-LIST-CAPS` — **FIXED (CC-1, 2026-08-15)**, see `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
 `LINK-F5170-F5171-CUSTOMER-PAYMENT-HISTORY-SCOPE-LABEL` — **FIXED (ACCT-F5309, CC-1, 2026-08-15, PR #7280)** — `listCustomerPayments` never sent `operating_company_id` against a backend schema that requires it (non-optional uuid), so every call 400'd and rendered as a false-empty "No payments recorded"; backend SELECT now projects `p.display_id`, frontend sends scope and renders `entityLabel(p.display_id, ...)`. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
