@@ -1062,6 +1062,11 @@
     "claimed_by": "codex",
     "purpose": "verify-driver-column-orphan-guard-registry-batch"
   },
+  "3402": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-unit-column-orphan-guard-registry-batch"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
