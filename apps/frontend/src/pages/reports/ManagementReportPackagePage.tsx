@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -33,6 +33,18 @@ const PACKAGES: Record<PackageType, { label: string; description: string; sectio
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+// LINK-F5186 (report.management): same pattern already used by the standalone P&L/Balance Sheet
+// pages -- an account line drills into its own register, which carries the real journal_entry
+// EntityLink per posting.
+function plRegisterHref(accountId: string, fromDate: string, toDate: string, basis: string) {
+  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
+  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
+}
+function bsRegisterHref(accountId: string, asOfDate: string, basis: string) {
+  const params = new URLSearchParams({ from_date: `${asOfDate.slice(0, 7)}-01`, to_date: asOfDate, basis });
+  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
 }
 
 function currentMonthRange() {
@@ -76,7 +88,15 @@ function PLSection({ companyId, fromDate, toDate, basis }: { companyId: string; 
             {lines.map((line) => (
               <tr key={`${line.account_code}-${line.account_name}`} className="border-b border-gray-50">
                 <td className="py-0.5 pl-2 text-slate-600">{line.account_code}</td>
-                <td className="py-0.5 pl-1 text-slate-800">{line.account_name}</td>
+                <td className="py-0.5 pl-1 text-slate-800">
+                  {line.account_id ? (
+                    <Link to={plRegisterHref(line.account_id, fromDate, toDate, basis)} className="hover:underline">
+                      {line.account_name}
+                    </Link>
+                  ) : (
+                    line.account_name
+                  )}
+                </td>
                 <td className="py-0.5 text-right text-slate-800">{money(line.amount)}</td>
               </tr>
             ))}
@@ -123,7 +143,16 @@ function BSSection({ companyId, asOfDate, basis }: { companyId: string; asOfDate
     <div className="mb-3">
       {lines.map((line) => (
         <div key={`${line.account_code}-${line.account_name}`} className="flex justify-between text-xs py-0.5 border-b border-gray-50">
-          <span className="text-slate-600 pl-2">{line.account_code} {line.account_name}</span>
+          <span className="text-slate-600 pl-2">
+            {line.account_code}{" "}
+            {line.account_id ? (
+              <Link to={bsRegisterHref(line.account_id, asOfDate, basis)} className="hover:underline">
+                {line.account_name}
+              </Link>
+            ) : (
+              line.account_name
+            )}
+          </span>
           <span className="text-slate-800">{money(line.amount)}</span>
         </div>
       ))}
