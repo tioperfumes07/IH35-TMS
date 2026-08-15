@@ -2,10 +2,11 @@
 /**
  * CODEX-VERTICAL-NONMONEY-ZERO-REMAINDER-RATCHET
  *
- * Class/census guard only — intentionally carries no Box-3 Built tag. It proves that every
- * canonical identity/connectivity cell outside the explicitly itemized protected money and
- * toolbar lanes already has leaf-specific evidence. A new Required leaf or a removed exact
- * guard therefore becomes red instead of silently reopening Codex's all-module queue.
+ * Class/census guard only — intentionally carries no Box-3 Built tag. It derives every non-money,
+ * non-Chrome, non-scenario column from the module maps (canonical identities plus work_order,
+ * claim, accident, policy, settlement, legal_matter, and future relationship columns) and proves
+ * every cell outside explicitly itemized protected lanes has leaf-specific evidence. A new
+ * Required leaf or removed exact guard therefore becomes red instead of silently reopening the queue.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MATRIX_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
 const SELFTEST = process.argv.includes("--selftest");
-const COLUMNS = new Set(["driver", "customer", "vendor", "unit", "trailer", "load", "connectivity", "reverse_link"]);
+const EXCLUDED_COLUMNS = new Set(["ap_bill", "expense", "gl_je", "inventory", "invoice", "bank", "liability", "picker_law", "qbo_chrome"]);
 const TAG_RE = /@matrix-built\s+(\{[^\n]*\})/g;
 const SHORTHAND_RE = /@matrix-built\s+modules=([^\s]+)(?:\s+cols=([^\s]+))?(?:\s+leafRe=([^\s]+))?/g;
 const CSV_RE = /@matrix-built\s+(?!modules=|\{)([a-z][a-z0-9_-]*(?:,[a-z][a-z0-9_-]*)+)(?=\s|\*|\/|$)/gi;
@@ -117,12 +118,15 @@ function hasBuilt(entries, moduleId, leafId, column) {
 }
 
 export function collectGaps(specs = loadSpecs(), entries = loadEntries()) {
+  const governedColumns = new Set(specs.flatMap((spec) => spec.columns ?? [])
+    .map((column) => column.id)
+    .filter((column) => !EXCLUDED_COLUMNS.has(column) && !column.startsWith("scenario.")));
   const gaps = [];
   for (const spec of specs) {
     const moduleId = spec.module;
     for (const leaf of spec.leaves ?? []) {
       for (const column of leaf.required ?? []) {
-        if (!COLUMNS.has(column) || hasBuilt(entries, moduleId, leaf.id, column)) continue;
+        if (!governedColumns.has(column) || hasBuilt(entries, moduleId, leaf.id, column)) continue;
         gaps.push(`${column}\t${moduleId}:${leaf.id}`);
       }
     }
@@ -141,10 +145,10 @@ if (SELFTEST) {
   planted.find((spec) => spec.module === "safety").leaves.push({
     id: "selftest.unowned_connectivity_gap",
     tab: "Selftest",
-    required: ["connectivity"],
+    required: ["work_order"],
   });
   const problems = collectProblems(planted, entries);
-  if (!problems.includes("connectivity\tsafety:selftest.unowned_connectivity_gap")) {
+  if (!problems.includes("work_order\tsafety:selftest.unowned_connectivity_gap")) {
     console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — planted unowned gap escaped");
     process.exit(1);
   }
@@ -170,4 +174,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  - ${problem}`);
   process.exit(1);
 }
-console.log(`verify-codex-vertical-nonmoney-zero-remainder PASS — Codex remainder=0 across all module maps; protected gaps visible=${gaps.length}`);
+console.log(`verify-codex-vertical-nonmoney-zero-remainder PASS — all non-money/non-Chrome columns across every module map have Codex remainder=0; protected gaps visible=${gaps.length}`);
