@@ -37,6 +37,13 @@ export function collectProblems(root = ROOT) {
     if (/listVendors\(\{[^}]*limit:\s*1000\s*\}\)/.test(code) && !/vendorSearch/.test(code)) {
       problems.push(`${file}: must not keep silent limit:1000 without search`);
     }
+    // LST-F3356 — sell/buy sections must not nest a bordered card (box-in-box) inside the drawer.
+    if (/rounded-sm border border-gray-200 p-3/.test(code)) {
+      problems.push(`${file}: sell/buy sections must not use nested bordered cards (box-in-box)`);
+    }
+    if (!/data-testid=["']item-sell-buy-section["']/.test(code)) {
+      problems.push(`${file}: sell/buy sections must keep data-testid=item-sell-buy-section (flat QBO chrome)`);
+    }
   }
   return problems;
 }
