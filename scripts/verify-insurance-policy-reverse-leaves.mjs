@@ -5,30 +5,48 @@
 
 import fs from "node:fs";
 
-const read = (path) => fs.readFileSync(path, "utf8");
-const policy = read("apps/frontend/src/pages/insurance/PolicyDetail.tsx");
-const gaps = read("apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx");
-const vendor = read("apps/frontend/src/components/insurance/VendorInsurancePoliciesReverseSection.tsx");
-const unit = read("apps/frontend/src/components/vehicle-profile/InsuranceSummarySection.tsx");
-
-const assertions = [
-  [policy, /getInsurancePolicy\(policyId!, companyId\)/, "policy detail read stays company-scoped"],
-  [policy, /kind="unit"/, "policy detail drills to assigned units"],
-  [policy, /Couldn't load policy details[\s\S]*policyQuery\.refetch\(\)/, "policy detail exposes retryable read failures"],
-  [gaps, /getInsuranceCoverageGaps\(companyId(?:,\s*unitId)?\)/, "coverage gaps read stays company-scoped"],
-  [gaps, /kind="unit"/, "coverage gaps drill to affected units"],
-  [gaps, /if \(failedQuery\)[\s\S]*coverageGapsQuery\.refetch\(\)[\s\S]*policiesQuery\.refetch\(\)/, "coverage gaps stop false-zero rendering and retry both reads"],
-  [vendor, /vendor_id: vendorId/, "vendor reverse read uses the vendor FK"],
-  [vendor, /kind="insurance_policy"[\s\S]*id=\{policy\.id\}|policies\/\$\{policy\.id\}/, "vendor rows drill to policy detail"],
-  [vendor, /Couldn't load this vendor's insurance policies[\s\S]*query\.refetch\(\)/, "vendor reverse exposes retryable read failures"],
-  [unit, /kind="insurance_policy"[\s\S]*id=\{policy\.policy_id\}/, "unit profile drills through the policy FK"],
+const files = {
+  policy: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
+  gaps: "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx",
+  vendor: "apps/frontend/src/components/insurance/VendorInsurancePoliciesReverseSection.tsx",
+  unit: "apps/frontend/src/components/vehicle-profile/InsuranceSummarySection.tsx",
+};
+const checks = [
+  ["policy detail company scope", "policy", /getInsurancePolicy\(policyId!, companyId\)/],
+  ["policy assigned-unit drill", "policy", /kind="unit"/],
+  ["policy retryable read failure", "policy", /Couldn't load policy details[\s\S]*policyQuery\.refetch\(\)/],
+  ["coverage gaps company scope", "gaps", /getInsuranceCoverageGaps\(companyId(?:,\s*unitId)?\)/],
+  ["coverage gap unit drill", "gaps", /kind="unit"/],
+  ["coverage gaps honest retry", "gaps", /if \(failedQuery\)[\s\S]*coverageGapsQuery\.refetch\(\)[\s\S]*policiesQuery\.refetch\(\)/],
+  ["vendor reverse FK filter", "vendor", /vendor_id: vendorId/],
+  ["vendor policy drill", "vendor", /kind="insurance_policy"[\s\S]*id=\{policy\.id\}|policies\/\$\{policy\.id\}/],
+  ["vendor reverse retry", "vendor", /Couldn't load this vendor's insurance policies[\s\S]*query\.refetch\(\)/],
+  ["unit profile policy drill", "unit", /kind="insurance_policy"[\s\S]*id=\{policy\.policy_id\}/],
 ];
+const original = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
-for (const [source, pattern, label] of assertions) {
-  if (!pattern.test(source)) {
-    console.error(`verify-insurance-policy-reverse-leaves: FAIL — ${label}`);
-    process.exit(1);
-  }
+function audit(sources) {
+  return checks
+    .filter(([, key, pattern]) => !pattern.test(sources[key]))
+    .map(([name]) => name);
 }
 
-console.log(`verify-insurance-policy-reverse-leaves: PASS — ${assertions.length} policy reverse-link invariants`);
+const failures = audit(original);
+if (failures.length) {
+  console.error(`verify-insurance-policy-reverse-leaves: FAIL\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
+  process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  let caught = 0;
+  for (const [name, key, pattern] of checks) {
+    const allMatches = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
+    const mutated = { ...original, [key]: original[key].replace(allMatches, "__PLANTED_INSURANCE_REVERSE_DEFECT__") };
+    if (audit(mutated).includes(name)) caught += 1;
+    else throw new Error(`selftest failed to catch: ${name}`);
+  }
+  console.log(`verify-insurance-policy-reverse-leaves SELFTEST PASS — ${caught}/${checks.length} exact reverse-link mutations detected`);
+  process.exit(0);
+}
+
+console.log(`verify-insurance-policy-reverse-leaves: PASS — ${checks.length} policy reverse-link invariants`);
