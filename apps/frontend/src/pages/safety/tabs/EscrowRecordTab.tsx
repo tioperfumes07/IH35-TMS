@@ -171,9 +171,8 @@ export function EscrowRecordTab() {
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
         {rows.length > 0 ? (
           <p className="mt-1 text-[11px] text-slate-500" data-testid="escrow-signed-clause-summary">
-            Signed escrow clause on file: {signedClauseCount} of {rows.length} drivers (from{" "}
-            <code className="text-[10px]">legal.contract_instances</code>
-            ). Forfeit stays blocked until the clause is signed.
+            Signed escrow clause on file: {signedClauseCount} of {rows.length} drivers, based on signed contract records.
+            Forfeit stays blocked until the clause is signed.
           </p>
         ) : null}
       </div>

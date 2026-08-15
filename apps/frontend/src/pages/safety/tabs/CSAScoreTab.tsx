@@ -108,7 +108,7 @@ export function CSAScoreTab() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-slate-50 p-3 text-xs text-slate-700">
-        Values below are IH35 internal inspection-point rollups from <code>safety.csa_scores</code>. They are not
+        Values below are IH35 internal inspection-point rollups derived from recorded inspection history. They are not
         FMCSA BASIC measures or percentiles. Missing values remain unavailable and are never displayed as zero.
       </div>
 

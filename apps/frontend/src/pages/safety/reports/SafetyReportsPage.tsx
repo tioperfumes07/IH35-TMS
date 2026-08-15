@@ -219,8 +219,7 @@ export default function SafetyReportsPage() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-slate-50 p-3 text-xs text-slate-700">
-        Values are IH35 internal inspection-point rollups from <code>safety.csa_scores</code> and{" "}
-        <code>safety.dot_inspections</code>. They are not FMCSA BASIC measures or percentiles. A metric with no recorded
+        Values are IH35 internal inspection-point rollups derived from recorded inspections and scoring history. They are not FMCSA BASIC measures or percentiles. A metric with no recorded
         source reads &quot;Not recorded&quot; and is never displayed as zero.
       </div>
 
