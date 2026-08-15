@@ -785,6 +785,9 @@ export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
   displayNameColumn: "description",
   readOnly: true,
   hasUpdatedAt: false,
+  // Physical columns: code, description, severity_default, created_at — NO is_active / updated_at.
+  // softDeleteColumn was wrongly set to "code" → list WHERE t.code = true → Postgres 42883 text=boolean.
+  softDeleteColumn: null,
   allowedColumns: ["code", "display_name"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -793,7 +796,6 @@ export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
   },
   searchableColumns: ["code", "description"],
   defaultSort: { column: "code", dir: "asc" },
-  softDeleteColumn: "code",
   hasDeactivatedAt: false,
 };
 

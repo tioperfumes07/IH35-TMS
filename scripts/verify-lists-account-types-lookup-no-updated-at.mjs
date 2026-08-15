@@ -58,6 +58,19 @@ function audit() {
     "auditEventTypesCatalogConfig must set hasUpdatedAt: false",
   );
   assertSource(
+    routes,
+    /auditEventTypesCatalogConfig[\s\S]*?softDeleteColumn:\s*null/,
+    "auditEventTypesCatalogConfig must set softDeleteColumn: null (table has no is_active; code=true caused 42883)",
+  );
+  if (/auditEventTypesCatalogConfig[\s\S]*?softDeleteColumn:\s*["']code["']/.test(routes)) {
+    fail("auditEventTypesCatalogConfig must NOT use softDeleteColumn: \"code\" (text = boolean 500)");
+  }
+  assertSource(
+    factory,
+    /const softCol = config\.softDeleteColumn\?\.trim\(\)/,
+    "factory list must skip is_active filter when softDeleteColumn is null/empty",
+  );
+  assertSource(
     map,
     /account-types-lookup["']\s*\)\s*return\s*["']\/lists\/accounting\/account-types["']/,
     "buildCatalogPath must send account-types-lookup → /lists/accounting/account-types",
