@@ -5,6 +5,7 @@ import { listVendorBills, type VendorBill } from "../../api/accounting";
 import { recordApBillPayment } from "../../api/ap";
 import { Button } from "../Button";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { ParityTable } from "../parity/ParityTable";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { TaskLinkPicker } from "../tasks/TaskLinkPicker";
 import { EntityLink } from "../shared/EntityLink";
@@ -276,63 +277,67 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           Auto-apply oldest bills first (FIFO)
         </label>
 
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                {!autoApply ? <th className="px-2 py-1.5 font-semibold">Pay</th> : null}
-                <th className="px-2 py-1.5 font-semibold">Bill #</th>
-                <th className="px-2 py-1.5 font-semibold">Open balance</th>
-                <th className="px-2 py-1.5 font-semibold">Apply</th>
-                <th className="px-2 py-1.5 font-semibold">Remaining</th>
-              </tr>
-            </thead>
-            <tbody>
-              {openBills.length === 0 ? (
-                <tr>
-                  <td colSpan={autoApply ? 4 : 5} className="px-2 py-3 text-gray-500">
-                    {billsQuery.isLoading ? "Loading open bills…" : "No open bills for this vendor."}
-                  </td>
-                </tr>
-              ) : null}
-              {openBills.map((bill) => {
+        {/* ACCT-F3590: embedded ParityTable owns Search+Range+gear; selectable when manual apply. */}
+        <ParityTable<VendorBill>
+          embedded
+          rows={openBills}
+          rowKey={(bill) => bill.id}
+          storageKey="bill-payment-modal-open-bills"
+          exportFilename="bill-payment-open-bills"
+          tableTestId="bill-payment-open-bills-table"
+          emptyText={billsQuery.isLoading ? "Loading open bills…" : "No open bills for this vendor."}
+          selectable={!autoApply}
+          selectedKeys={!autoApply ? Object.keys(included).filter((id) => included[id]) : undefined}
+          onSelectionChange={
+            !autoApply
+              ? (keys) => {
+                  const next: Record<string, boolean> = {};
+                  for (const id of keys) next[id] = true;
+                  setIncluded(next);
+                }
+              : undefined
+          }
+          columns={[
+            {
+              key: "bill",
+              label: "Bill #",
+              render: (bill) => entityLabel(bill.bill_number, bill.id, "Record"),
+            },
+            {
+              key: "open",
+              label: "Open balance",
+              render: (bill) => money(billOpenBalanceCents(bill)),
+            },
+            {
+              key: "apply",
+              label: "Apply",
+              render: (bill) => {
+                const row = rows.find((r) => r.bill_id === bill.id);
+                const applyCents = row?.payment_amount_cents ?? 0;
+                if (autoApply) return money(applyCents);
+                return (
+                  <MoneyInput
+                    valueDollars={amounts[bill.id] ?? null}
+                    onChangeDollars={(d) => setAmounts((prev) => ({ ...prev, [bill.id]: d }))}
+                    disabled={!included[bill.id]}
+                    ariaLabel={`Apply to ${entityLabel(bill.bill_number, bill.id, "Record")}`}
+                    className="w-24"
+                  />
+                );
+              },
+            },
+            {
+              key: "remaining",
+              label: "Remaining",
+              render: (bill) => {
                 const open = billOpenBalanceCents(bill);
                 const row = rows.find((r) => r.bill_id === bill.id);
                 const applyCents = row?.payment_amount_cents ?? 0;
-                const remaining = Math.max(0, open - applyCents);
-                return (
-                  <tr key={bill.id} className="border-t border-gray-100">
-                    {!autoApply ? (
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(included[bill.id])}
-                          onChange={(e) => setIncluded((prev) => ({ ...prev, [bill.id]: e.target.checked }))}
-                        />
-                      </td>
-                    ) : null}
-                    <td className="px-2 py-1.5">{entityLabel(bill.bill_number, bill.id, "Record")}</td>
-                    <td className="px-2 py-1.5">{money(open)}</td>
-                    <td className="px-2 py-1.5">
-                      {autoApply ? (
-                        money(applyCents)
-                      ) : (
-                        <MoneyInput
-                          valueDollars={amounts[bill.id] ?? null}
-                          onChangeDollars={(d) => setAmounts((prev) => ({ ...prev, [bill.id]: d }))}
-                          disabled={!included[bill.id]}
-                          ariaLabel={`Apply to ${entityLabel(bill.bill_number, bill.id, "Record")}`}
-                          className="w-24"
-                        />
-                      )}
-                    </td>
-                    <td className="px-2 py-1.5">{money(remaining)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                return money(Math.max(0, open - applyCents));
+              },
+            },
+          ]}
+        />
 
         <div className="text-xs text-gray-600">
           Applied {money(appliedSum)} of {money(totalCents)}
