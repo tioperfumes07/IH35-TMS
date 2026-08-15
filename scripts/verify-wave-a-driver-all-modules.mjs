@@ -53,10 +53,10 @@ const composedGuards = [
 export function auditDriverColumn(sources, leaves) {
   const failures = [];
   const p10Leaves = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10Leaves.length < 129) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
-  if (leaves.length < 196) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
+  if (p10Leaves.length < 139) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
+  if (leaves.length < 209) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
   const modules = new Set(leaves.map((leaf) => leaf.module));
-  if (modules.size < 22) failures.push(`driver module inventory unexpectedly shrank to ${modules.size}`);
+  if (modules.size < 23) failures.push(`driver module inventory unexpectedly shrank to ${modules.size}`);
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of representativeContracts) {
     if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical driver FK picker/link contract missing`);
@@ -71,7 +71,8 @@ const sources = {
 };
 
 if (process.argv.includes("--selftest")) {
-  const p10Mutation = leaves.filter((leaf) => leaf.module !== "lists");
+  const plantedP10Leaf = leaves.find((leaf) => P10.has(leaf.module));
+  const p10Mutation = leaves.filter((leaf) => leaf !== plantedP10Leaf);
   if (!auditDriverColumn(sources, p10Mutation).some((failure) => failure.includes("priority-10"))) {
     console.error("verify-wave-a-driver-all-modules SELFTEST FAIL — P10 inventory mutation escaped");
     process.exit(1);
