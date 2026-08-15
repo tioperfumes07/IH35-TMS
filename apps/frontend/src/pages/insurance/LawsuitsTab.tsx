@@ -105,7 +105,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         label: "Claim",
         render: (lawsuit) =>
           lawsuit.claim_id ? (
-            <EntityLink kind="claim" id={lawsuit.claim_id} label={entityLabel(null, lawsuit.claim_id, "Claim")} />
+            <EntityLink kind="claim" id={lawsuit.claim_id} label={entityLabel(lawsuit.claim_number, lawsuit.claim_id, "Claim")} />
           ) : (
             "-"
           ),
@@ -114,14 +114,14 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         key: "driver_id",
         label: "Driver",
         render: (lawsuit) => (
-          <EntityLink kind="driver" id={lawsuit.driver_id ?? undefined} label={entityLabel(null, lawsuit.driver_id, "Driver")} />
+          <EntityLink kind="driver" id={lawsuit.driver_id ?? undefined} label={entityLabel(lawsuit.driver_name, lawsuit.driver_id, "Driver")} />
         ),
       },
       {
         key: "unit_id",
         label: "Unit",
         render: (lawsuit) => (
-          <EntityLink kind="unit" id={lawsuit.unit_id ?? undefined} label={entityLabel(null, lawsuit.unit_id, "Unit")} />
+          <EntityLink kind="unit" id={lawsuit.unit_id ?? undefined} label={entityLabel(lawsuit.unit_number, lawsuit.unit_id, "Unit")} />
         ),
       },
       { key: "court_name", label: "Court", sortable: true },
