@@ -326,7 +326,7 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
       </div>
 
       {/* SELL SIDE */}
-      <div className="rounded-sm border border-gray-200 p-3">
+      <div className="space-y-2 pt-1" data-testid="item-sell-buy-section">
         <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
           <input
             type="checkbox"
@@ -381,7 +381,7 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
       </div>
 
       {/* BUY SIDE */}
-      <div className="rounded-sm border border-gray-200 p-3">
+      <div className="space-y-2 pt-1" data-testid="item-sell-buy-section">
         <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
           <input
             type="checkbox"
