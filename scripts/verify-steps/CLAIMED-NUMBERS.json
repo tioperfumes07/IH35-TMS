@@ -2815,5 +2815,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1142
+  "total_claimed": 1142,
+  "3365": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-expense-required-honest-batch1"
+  }
 }
