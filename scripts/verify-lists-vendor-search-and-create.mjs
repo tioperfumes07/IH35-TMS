@@ -19,8 +19,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   namesHub: "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx",
   newVendor: "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx",
+  vendorCreate: "apps/frontend/src/components/vendors/VendorCreateModal.tsx",
 };
 const LABEL = "verify-lists-vendor-search-and-create";
+
+function drawerCreatesCanonicalVendor(drawerSrc, createSrc) {
+  if (/createVendor\(/.test(drawerSrc)) return true;
+  // LST-F3364 — nested drawer embeds VendorCreateModal which owns createVendor()
+  return /<VendorCreateModal[\s>]/.test(drawerSrc) && /\bembedded\b/.test(drawerSrc) && /createVendor\(/.test(createSrc);
+}
 
 export function audit(src) {
   const failures = [];
@@ -30,8 +37,8 @@ export function audit(src) {
   if (!/vendor:\s*"vendor"/.test(src.namesHub)) {
     failures.push(`${FILES.namesHub}: names search must have a real vendor entity-type mapping`);
   }
-  if (!/createVendor\(/.test(src.newVendor)) {
-    failures.push(`${FILES.newVendor}: must call the canonical createVendor on submit`);
+  if (!drawerCreatesCanonicalVendor(src.newVendor, src.vendorCreate)) {
+    failures.push(`${FILES.newVendor}: must call canonical createVendor (directly or via embedded VendorCreateModal)`);
   }
   return failures;
 }
@@ -40,6 +47,7 @@ function loadSrc(root) {
   return {
     namesHub: fs.readFileSync(path.join(root, FILES.namesHub), "utf8"),
     newVendor: fs.readFileSync(path.join(root, FILES.newVendor), "utf8"),
+    vendorCreate: fs.readFileSync(path.join(root, FILES.vendorCreate), "utf8"),
   };
 }
 
@@ -52,7 +60,6 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["dynamic-kind-link", "namesHub", /kind=\{kind\}/, 'kind="unit"'],
     ["vendor-mapping", "namesHub", /vendor:\s*"vendor"/, 'vendor: "vendor_unused"'],
-    ["create-call", "newVendor", /createVendor\(/g, "createSomethingElse("],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
@@ -62,6 +69,18 @@ if (process.argv.includes("--selftest")) {
     }
     if (audit(mutated).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}: mutation escaped`);
+      process.exit(1);
+    }
+  }
+  // create path: either drawer createVendor or embedded modal createVendor
+  {
+    const mutated = {
+      ...good,
+      newVendor: good.newVendor.replace(/createVendor\(/g, "createSomethingElse(").replace(/VendorCreateModal/g, "OtherModal"),
+      vendorCreate: good.vendorCreate.replace(/createVendor\(/g, "createSomethingElse("),
+    };
+    if (audit(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — create-call: mutation escaped`);
       process.exit(1);
     }
   }

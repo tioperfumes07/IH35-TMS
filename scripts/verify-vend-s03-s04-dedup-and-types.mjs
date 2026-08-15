@@ -38,8 +38,14 @@ function assert(files) {
   if (!/createKind="vendor_type"/.test(create)) {
     problems.push(`${CREATE}: must use ReferenceSelect createKind=vendor_type`);
   }
-  if (!/createKind="vendor_type"/.test(drawer)) {
+  // LST-F3364 — drawer may embed VendorCreateModal; then createKind lives on the modal.
+  const drawerEmbedsCreate =
+    /<VendorCreateModal[\s>]/.test(drawer) && /\bembedded\b/.test(drawer);
+  if (!drawerEmbedsCreate && !/createKind="vendor_type"/.test(drawer)) {
     problems.push(`${DRAWER}: must use ReferenceSelect createKind=vendor_type`);
+  }
+  if (drawerEmbedsCreate && !/createKind="vendor_type"/.test(create)) {
+    problems.push(`${CREATE}: embedded NewVendorDrawerForm path missing createKind=vendor_type`);
   }
   if (!/vendor_type:\s*\{|key:\s*"vendor_type"/.test(registry) && !/vendor_type: catalogEntry/.test(registry)) {
     // check either style
