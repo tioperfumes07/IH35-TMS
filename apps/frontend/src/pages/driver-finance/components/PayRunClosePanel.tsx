@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../../../api/client";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { PaymentMethodPicker } from "../../../components/driver-finance/PaymentMethodPicker";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -25,6 +26,8 @@ type Props = {
   settlementStatus: string;
   onPosted?: () => void;
 };
+
+type JeLegRow = SettlementPayRunResult["je_preview"][number] & { rowKey: string };
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -61,6 +64,45 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
   const canAct = AUTHORITY_ROLES.has(String(userRole ?? ""));
   const postable = ["locked", "final", "closed", "paid", "approved", "ready"].includes(settlementStatus);
 
+  const jeColumns = useMemo<ParityColumn<JeLegRow>[]>(
+    () => [
+      {
+        key: "debit_or_credit",
+        label: "Side",
+        render: (leg) => <span className="font-semibold uppercase">{leg.debit_or_credit}</span>,
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        render: (leg) => <span className="tabular-nums">{formatCents(leg.amount_cents)}</span>,
+      },
+      {
+        key: "account_id",
+        label: "Account",
+        render: (leg) => (
+          <span className="text-[10px]">
+            <EntityLink kind="account" id={leg.account_id} label={entityLabel(null, leg.account_id, "Account")} />
+          </span>
+        ),
+      },
+      {
+        key: "description",
+        label: "Description",
+        render: (leg) => <span className="text-gray-700">{leg.description}</span>,
+      },
+    ],
+    [],
+  );
+
+  const jeRows = useMemo<JeLegRow[]>(
+    () =>
+      (result?.je_preview ?? []).map((leg, idx) => ({
+        ...leg,
+        rowKey: `${leg.account_id}-${idx}`,
+      })),
+    [result],
+  );
 
   if (!canAct) return null;
 
@@ -278,30 +320,17 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
             </div>
           ) : null}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs" data-testid="payrun-je-legs">
-              <thead>
-                <tr className="border-b border-gray-200 text-[10px] uppercase tracking-wide text-gray-500">
-                  <th className="py-1 pr-2">Side</th>
-                  <th className="py-1 pr-2">Amount</th>
-                  <th className="py-1 pr-2">Account</th>
-                  <th className="py-1">Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.je_preview.map((leg, idx) => (
-                  <tr key={`${leg.account_id}-${idx}`} className="border-b border-gray-50">
-                    <td className="py-1 pr-2 font-semibold uppercase">{leg.debit_or_credit}</td>
-                    <td className="py-1 pr-2 tabular-nums">{formatCents(leg.amount_cents)}</td>
-                    <td className="py-1 pr-2 text-[10px]">
-                      <EntityLink kind="account" id={leg.account_id} label={entityLabel(null, leg.account_id, "Account")} />
-                    </td>
-                    <td className="py-1 text-gray-700">{leg.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* SETL-F3554: ParityTable owns Search+Range+gear for JE legs; raw HTML table skipped surface bar. */}
+          <ParityTable<JeLegRow>
+            columns={jeColumns}
+            rows={jeRows}
+            rowKey={(leg) => leg.rowKey}
+            loading={false}
+            emptyText="No JE legs in this pay-run preview."
+            storageKey="payrun-je-legs"
+            exportFilename="payrun-je-legs"
+            tableTestId="payrun-je-legs"
+          />
         </div>
       ) : null}
     </div>
