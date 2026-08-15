@@ -183,6 +183,7 @@ export function AccountingCatalogListPage({
                   })
               : undefined
           }
+          suppressToolbarSearch
           filterBar={
             <div className="grid gap-2 md:grid-cols-3">
               <input
