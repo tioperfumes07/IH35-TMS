@@ -10,6 +10,8 @@ const files = {
   coveragePage: read("apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx"),
   insuranceSummary: read("apps/frontend/src/components/vehicle-profile/InsuranceSummarySection.tsx"),
   lawsuitReverse: read("apps/frontend/src/components/insurance/InsuranceLawsuitsReverseSection.tsx"),
+  lawsuitPage: read("apps/frontend/src/pages/insurance/LawsuitsTab.tsx"),
+  insuranceApi: read("apps/frontend/src/api/insurance.ts"),
   driverProfile: read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx"),
   unitProfile: read("apps/frontend/src/pages/fleet/VehicleProfilePage.tsx"),
 };
@@ -19,6 +21,9 @@ function failures(s = files) { return [
   ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
   ["driver and unit reverse consumers", s.driverProfile.includes('filter={{ driver_id: id }} contextLabel="this driver"') && s.unitProfile.includes('filter={{ unit_id: id }} contextLabel="this unit"')],
   ["exact lawsuit drill", s.lawsuitReverse.includes('<EntityLink kind="lawsuit" id={row.id}') && s.lawsuitReverse.includes("listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter })")],
+  ["lawsuit human labels projected with entity scope", s.lawsuitRoutes.includes("claim.claim_number") && s.lawsuitRoutes.includes("AS driver_name") && s.lawsuitRoutes.includes("unit.unit_number") && s.lawsuitRoutes.includes("driver.operating_company_id = lawsuit.tenant_id") && s.lawsuitRoutes.includes("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.tenant_id")],
+  ["lawsuit label payload typed", ["claim_number: string | null", "driver_name: string | null", "unit_number: string | null"].every((token) => s.insuranceApi.includes(token))],
+  ["lawsuit links consume human labels", s.lawsuitPage.includes('entityLabel(lawsuit.claim_number, lawsuit.claim_id, "Claim")') && s.lawsuitPage.includes('entityLabel(lawsuit.driver_name, lawsuit.driver_id, "Driver")') && s.lawsuitPage.includes('entityLabel(lawsuit.unit_number, lawsuit.unit_id, "Unit")')],
 ].filter(([,ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   const checks = [
@@ -27,9 +32,12 @@ if (process.argv.includes("--selftest")) {
     failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("claim.driver_id = $${values.length}::uuid", "TRUE")}).includes("lawsuit driver/unit backend filters"),
     failures({...files, driverProfile: ""}).includes("driver and unit reverse consumers"),
     failures({...files, lawsuitReverse: files.lawsuitReverse.replace('kind="lawsuit" id={row.id}', 'kind="claim" id={row.id}')}).includes("exact lawsuit drill"),
+    failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("driver.operating_company_id = lawsuit.tenant_id", "TRUE")}).includes("lawsuit human labels projected with entity scope"),
+    failures({...files, insuranceApi: files.insuranceApi.replace("driver_name: string | null", "")}).includes("lawsuit label payload typed"),
+    failures({...files, lawsuitPage: files.lawsuitPage.replace("lawsuit.unit_number", "null")}).includes("lawsuit links consume human labels"),
   ];
   if (checks.some((ok)=>!ok)) { console.error(`verify-insurance-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-insurance-profile-reverse selftest PASS — 5/5 API/profile/target mutations red"); process.exit(0);
+  console.log("verify-insurance-profile-reverse selftest PASS — 8/8 API/profile/target/label mutations red"); process.exit(0);
 }
 const missing=failures(); if(missing.length){console.error(`verify-insurance-profile-reverse FAIL — ${missing.join(", ")}`);process.exit(1)}
 console.log("verify-insurance-profile-reverse PASS — coverage gaps and lawsuits return to exact unit/driver records");

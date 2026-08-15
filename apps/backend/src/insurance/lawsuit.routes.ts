@@ -58,7 +58,7 @@ function lawsuitSelectColumns(alias = "", includeClaimLinks = false) {
     ${p}attorney_name,
     ${p}attorney_email,
     ${p}notes,
-    ${p}created_at::text${includeClaimLinks ? ",\n    claim.driver_id::text AS driver_id,\n    asset.unit_id::text AS unit_id" : ""}
+    ${p}created_at::text${includeClaimLinks ? ",\n    claim.claim_number,\n    claim.driver_id::text AS driver_id,\n    NULLIF(TRIM(CONCAT(COALESCE(driver.first_name, ''), ' ', COALESCE(driver.last_name, ''))), '') AS driver_name,\n    asset.unit_id::text AS unit_id,\n    unit.unit_number" : ""}
   `;
 }
 
@@ -107,6 +107,12 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.assets AS asset
             ON asset.tenant_id = lawsuit.tenant_id
            AND asset.id = claim.asset_id
+          LEFT JOIN mdata.drivers AS driver
+            ON driver.id = claim.driver_id
+           AND driver.operating_company_id = lawsuit.tenant_id
+          LEFT JOIN mdata.units AS unit
+            ON unit.id = asset.unit_id
+           AND COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.tenant_id
           WHERE ${filters.join(" AND ")}
           ORDER BY lawsuit.filed_date DESC, lawsuit.created_at DESC
         `,
