@@ -406,8 +406,8 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           severity: "error",
           title: "Open critical or overdue PM work orders",
           count: maintenanceCriticalOrOverdue,
-          action_url: "/maintenance",
-          action_label: "Open maintenance",
+          action_url: "/maintenance/work-orders",
+          action_label: "Open work orders",
         });
 
         let safetyOpenDriverIssues = 0;
@@ -433,8 +433,8 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           severity: "warning",
           title: "Open safety driver issues",
           count: safetyOpenDriverIssues,
-          action_url: "/safety",
-          action_label: "Open safety",
+          action_url: "/safety/complaints",
+          action_label: "Open complaints",
         });
 
         let accountingOverdue = 0;
