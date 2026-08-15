@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import {
   FINANCE_HUB_CALCULATOR_FLAG,
   computeCalculator,
@@ -76,12 +77,24 @@ export function CalculatorPage() {
       <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" />
     </label>
   );
+  // ACCT-F5314: see LoanWizardPage — same dollars-string-in-form / MoneyInput DOLLARS-mode seam.
+  const moneyField = (label: string, key: keyof typeof form) => (
+    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
+      <div className="mt-1">
+        <MoneyInput
+          valueDollars={form[key] === "" ? null : Number(form[key])}
+          onChangeDollars={(dollars) => setForm((f) => ({ ...f, [key]: dollars == null ? "" : String(dollars) }))}
+          ariaLabel={label}
+        />
+      </div>
+    </label>
+  );
 
   return (
     <div className="p-6"><FinanceModuleTabs />{header}
       <div className="rounded-sm border border-slate-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {field("Price ($)", "price", "number")}{field("Down payment ($)", "down", "number")}{field("First payment", "firstPaymentDate", "date")}
+          {moneyField("Price ($)", "price")}{moneyField("Down payment ($)", "down")}{field("First payment", "firstPaymentDate", "date")}
           {field("Scenario A rate (%)", "rateA", "number")}{field("Scenario A term (mo)", "termA", "number")}
           {field("Scenario B rate (%) — optional", "rateB", "number")}{field("Scenario B term (mo)", "termB", "number")}
         </div>

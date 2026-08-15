@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -107,6 +108,18 @@ export function AmortizationPage() {
       <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" />
     </label>
   );
+  // ACCT-F5314: see LoanWizardPage — same dollars-string-in-form / MoneyInput DOLLARS-mode seam.
+  const moneyField = (label: string, key: keyof typeof form) => (
+    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
+      <div className="mt-1">
+        <MoneyInput
+          valueDollars={form[key] === "" ? null : Number(form[key])}
+          onChangeDollars={(dollars) => setForm((f) => ({ ...f, [key]: dollars == null ? "" : String(dollars) }))}
+          ariaLabel={label}
+        />
+      </div>
+    </label>
+  );
 
   return (
     <div className="p-6"><FinanceModuleTabs />{header}
@@ -117,7 +130,7 @@ export function AmortizationPage() {
             <div className="px-4 py-3">
               <div className="grid grid-cols-2 gap-3">
                 {field("Name", "name")}{field("Lender", "lender")}
-                {field("Principal ($)", "principal", "number")}{field("Rate (%)", "ratePct", "number")}
+                {moneyField("Principal ($)", "principal")}{field("Rate (%)", "ratePct", "number")}
                 {field("Term (months)", "termMonths", "number")}{field("First payment", "firstPaymentDate", "date")}
               </div>
               <button onClick={onCreate} disabled={busy || !companyId} className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
