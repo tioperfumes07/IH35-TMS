@@ -86,6 +86,10 @@ export function assertFactoringDispatchQueueReverse(sources) {
   if (!/factoring_queue_customer/.test(section)) {
     problems.push(`${SECTION}: View full queue must use EntityLink kind factoring_queue_customer`);
   }
+  // LST-F5196 — filters must write URL.
+  if (!/setSearchParams/.test(queuePage)) {
+    problems.push(`${QUEUE_PAGE}: dispatch queue filters must sync to URL (setSearchParams)`);
+  }
 
   return problems;
 }
@@ -102,7 +106,8 @@ function selftest() {
       let loadFilter = "";
       if (loadId) { loadFilter = \`AND l.id = $\${filterParams.length}::uuid\`; }
     `,
-    [QUEUE_PAGE]: `
+    [QUEUE_PAGE]: `setSearchParams
+
       const deepLinkCustomerId = searchParams.get("customer_id");
       const deepLinkLoadId = searchParams.get("load_id");
       const params = new URLSearchParams();
@@ -130,6 +135,7 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace("load_id: z.string().uuid().optional(),", "") },
     { ...good, [ROUTES]: good[ROUTES].replace('customerFilter = `AND c.id = $${filterParams.length}::uuid`;', "") },
     { ...good, [ROUTES]: good[ROUTES].replace('loadFilter = `AND l.id = $${filterParams.length}::uuid`;', "") },
+    { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('searchParams.get("customer_id")', '""') },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('params.set("customer_id", effectiveCustomerId);', "") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('dataTestId="factoring-dispatch-filter-customer"', 'dataTestId="x"') },
