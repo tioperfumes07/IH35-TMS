@@ -12,6 +12,7 @@ const guards = [
   "verify-reports-hos-violations-connectivity.mjs",
   "verify-reports-hub-connectivity.mjs",
   "verify-reports-runner-canonical-aliases.mjs",
+  "verify-reports-runner-entity-link-vertical.mjs",
   "verify-reports-saved-preset-connectivity.mjs",
   "verify-safety-eld-audit-connectivity.mjs",
   "verify-system-program-config-connectivity.mjs",
