@@ -2544,6 +2544,14 @@
       "modules": ["legal", "dispatch", "docs", "safety"],
       "cols": ["customer", "connectivity"],
       "leafRe": "^(legal\\.(modal|parity)\\.unified_contract_creator|settings\\.notify|docs\\.modal\\.upload|complaints\\.list)$"
+    },
+    {
+      "task": "LINK-F5170-ASSIGNABLE-USER-COMPANY-SCOPE-LABELS",
+      "pr": "this PR",
+      "guard": "scripts/verify-assignable-user-company-scope-labels.mjs",
+      "modules": ["tasks", "maintenance", "users"],
+      "cols": ["connectivity"],
+      "leafRe": "^(nav\\.chat|chat\\.mentions|tasks\\.modal\\.create_task|hop\\.daily_tasks|daily_tasks\\.create|wo\\.create|maintenance\\.modal\\.(work_order_create|create_work_order)|create)$"
     }
   ]
 }

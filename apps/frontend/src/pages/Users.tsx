@@ -260,7 +260,7 @@ export function UsersPage() {
         .filter((user) => user.id !== roleModalUser?.id && user.id !== auth.user?.uuid)
         .map((user) => ({
           value: user.id,
-          label: `${user.name ?? user.email ?? user.id} — ${ROLE_LABEL[user.role as UserRole] ?? user.role}`,
+          label: `${entityLabel(user.name ?? user.email, user.id, "User")} — ${ROLE_LABEL[user.role as UserRole] ?? user.role}`,
         })),
     [allUsers, roleModalUser?.id, auth.user?.uuid]
   );

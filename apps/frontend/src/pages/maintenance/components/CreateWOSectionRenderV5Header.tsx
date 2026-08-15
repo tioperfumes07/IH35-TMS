@@ -4,6 +4,7 @@ import { listAssignableUsers } from "../../../api/identity";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 // render-v5 §header (maintenance-create-wo-render-v5.html) — the WO header fields that persist to LIVE
 // maintenance.work_orders columns: Status, Priority (wo_priority, mig 0310 CHECK routine|urgent|immediate),
@@ -32,9 +33,12 @@ export function CreateWOSectionRenderV5Header({
   watch: UseFormWatch<CreateWOFormValues>;
   setValue: UseFormSetValue<CreateWOFormValues>;
 }) {
+  const { selectedCompanyId } = useCompanyContext();
+  const operatingCompanyId = selectedCompanyId ?? "";
   const usersQuery = useQuery({
-    queryKey: ["identity", "users", "wo-authorized-by"],
-    queryFn: () => listAssignableUsers(),
+    queryKey: ["identity", "users", "wo-authorized-by", operatingCompanyId],
+    queryFn: () => listAssignableUsers(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
   });
   const users = usersQuery.data?.users ?? [];
   const userLabel = (u: { name?: string; first_name?: string | null; last_name?: string | null; email: string | null }) =>

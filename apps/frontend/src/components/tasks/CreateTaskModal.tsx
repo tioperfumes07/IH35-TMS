@@ -21,6 +21,7 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -58,7 +59,7 @@ const ENTITY_KINDS: { value: TaskTargetType; label: string }[] = [
 
 function userLabel(u: IdentityUser): string {
   const full = [u.first_name, u.last_name].filter(Boolean).join(" ").trim();
-  return u.name || full || u.email || u.id;
+  return entityLabel(u.name || full || u.email, u.id, "User");
 }
 
 // Company-local "today" (Central), not UTC — avoids defaulting the scheduled date to tomorrow.
@@ -96,9 +97,9 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   const [newProfileName, setNewProfileName] = useState("");
 
   const usersQuery = useQuery({
-    queryKey: ["identity", "users", "assignable"],
-    queryFn: () => listAssignableUsers(),
-    enabled: open,
+    queryKey: ["identity", "users", "assignable", operatingCompanyId],
+    queryFn: () => listAssignableUsers(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId),
   });
   const users = useMemo(
     () => (usersQuery.data?.users ?? []).filter((u) => !u.deactivated_at).sort((a, b) => userLabel(a).localeCompare(userLabel(b))),

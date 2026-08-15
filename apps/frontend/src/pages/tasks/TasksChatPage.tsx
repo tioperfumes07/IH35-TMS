@@ -84,7 +84,11 @@ export function TasksChatPage() {
     enabled: Boolean(companyId),
   });
 
-  const usersQuery = useQuery({ queryKey: ["identity", "users", "assignable"], queryFn: () => listAssignableUsers() });
+  const usersQuery = useQuery({
+    queryKey: ["identity", "users", "assignable", companyId],
+    queryFn: () => listAssignableUsers(companyId),
+    enabled: Boolean(companyId),
+  });
   const employees: Employee[] = useMemo(
     () =>
       (usersQuery.data?.users ?? [])

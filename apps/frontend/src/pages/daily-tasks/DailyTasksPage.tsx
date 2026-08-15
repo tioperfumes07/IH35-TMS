@@ -14,7 +14,7 @@ import {
   type DailyTask,
   type DailyTaskEvent,
 } from "../../api/dailyTasks";
-import { listUsers } from "../../api/identity";
+import { listAssignableUsers } from "../../api/identity";
 import { useAuth } from "../../auth/useAuth";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
@@ -114,9 +114,9 @@ export function DailyTasksPage() {
   const [dueLocal, setDueLocal] = useState("");
 
   const usersQuery = useQuery({
-    queryKey: ["daily-tasks", "users"],
-    queryFn: () => listUsers(true),
-    enabled: Boolean(auth.user),
+    queryKey: ["daily-tasks", "users", companyId],
+    queryFn: () => listAssignableUsers(companyId),
+    enabled: Boolean(auth.user && companyId),
     staleTime: 60_000,
   });
 
@@ -419,7 +419,7 @@ export function DailyTasksPage() {
                 <option value="">Select employee</option>
                 {activeUsers.map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.email ?? user.id}
+                    {entityLabel(user.name || user.email, user.id, "User")}
                   </option>
                 ))}
               </SelectCombobox>
