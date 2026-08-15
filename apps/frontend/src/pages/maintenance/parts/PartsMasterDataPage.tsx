@@ -178,6 +178,7 @@ export function PartsMasterDataPage() {
           <p className="text-xs text-gray-600">Primary CSV bulk-load path with manual create/edit/void support.</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* MAINT-F3518: server-bound parts search — keep; ParityTable toolbar Search suppressed */}
           <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts" />
           {/* ARCHIVE-not-DELETE (B25): prior header CTA "+ Create" — Sunset: 2026-09. Canonical: + Create Part. */}
           <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
@@ -227,6 +228,8 @@ export function PartsMasterDataPage() {
             storageKey="maint-master-data-parts"
             exportFilename="maintenance-parts"
             rowActions={rowActions}
+            // MAINT-F3518: keep API search above; hide ParityTable toolbar Search
+            suppressToolbarSearch
           />
         )}
       </div>
