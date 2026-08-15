@@ -1,7 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { listMaintenanceParts, type MaintenancePartRow } from "../../api/maintenance";
-import { listVendors } from "../../api/mdata";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "../../components/Button";
@@ -15,7 +14,6 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useSearchParams } from "react-router-dom";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
 import { displayPartInventoryCategory } from "./partInventoryCategories";
-import { CappedListNotice } from "../../components/CappedListNotice";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
@@ -104,14 +102,12 @@ export type InventoryPartRow = {
   status: string;
   voided_at: string | null;
 };
-export function mapMaintenancePartsToInventoryRows(
-  rows: MaintenancePartRow[],
-  vendorNameById: Map<string, string> = new Map(),
-): InventoryPartRow[] {
+export function mapMaintenancePartsToInventoryRows(rows: MaintenancePartRow[]): InventoryPartRow[] {
   return (rows ?? []).map((r) => {
     const qty = Number(r.qty_on_hand ?? 0);
     const reorderThreshold = Number(r.reorder_threshold ?? 0);
     const vendorId = r.vendor_id ?? null;
+    const joinedName = typeof r.vendor_name === "string" ? r.vendor_name.trim() : "";
     return {
       id: r.id,
       name: r.name,
@@ -124,7 +120,8 @@ export function mapMaintenancePartsToInventoryRows(
       unit_cost: r.unit_cost,
       location: r.location,
       vendor_id: vendorId,
-      vendor_label: vendorId ? vendorNameById.get(vendorId) ?? null : null,
+      // Prefer API same-opco join — never a capped FE vendor roster (CLS-SILENT-CAP).
+      vendor_label: vendorId ? joinedName || null : null,
       status: r.voided_at ? "Voided" : qty <= 0 ? "Out of stock" : "In stock",
       voided_at: r.voided_at,
     };
@@ -137,24 +134,6 @@ export function InventoryPartsStockPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<MaintenancePartRow | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", operatingCompanyId, "inventory-parts-stock"],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: 1000,
-      }),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const vendorNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const v of vendorsQuery.data?.vendors ?? []) {
-      map.set(v.id, v.name);
-    }
-    return map;
-  }, [vendorsQuery.data?.vendors]);
 
   const partsQuery = useQuery({
     queryKey: ["inventory", "parts", operatingCompanyId],
@@ -172,10 +151,7 @@ export function InventoryPartsStockPage() {
     const requestedPart = rawParts.find((part) => part.id === requestedPartId);
     if (requestedPart) setEditingPart(requestedPart);
   }, [rawParts, searchParams]);
-  const rows = useMemo(
-    () => mapMaintenancePartsToInventoryRows(rawParts, vendorNameById),
-    [rawParts, vendorNameById],
-  );
+  const rows = useMemo(() => mapMaintenancePartsToInventoryRows(rawParts), [rawParts]);
 
   return (
     <div className="space-y-4">
@@ -192,13 +168,6 @@ export function InventoryPartsStockPage() {
       <InventoryModuleTabs />
       {/* ParityTable is already a self-contained card (own rounded/border/bg-white wrapper) — the extra
           wrapper div here produced a box-in-box double border. Render it directly. */}
-      <CappedListNotice
-        shown={vendorsQuery.data?.vendors?.length ?? 0}
-        limit={1000}
-        total={vendorsQuery.data?.total}
-        hint="Vendor names on this grid are enriched from the first page of active vendors only."
-        className="mb-2 text-xs text-slate-600"
-      />
       {partsQuery.isError ? (
         <ListErrorState
           title="Couldn't load parts inventory"

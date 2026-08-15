@@ -92,7 +92,10 @@ describe("maintenance parts canonical source (B23)", () => {
 
     it("supports an exact tenant-scoped vendor reverse query", () => {
       expect(source).toMatch(/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/);
-      expect(source).toMatch(/filters\.push\(`vendor_id = \$\$\{values\.length\}::uuid`\)/);
+      // Alias pi required for same-opco vendor_name LEFT JOIN on the list path.
+      expect(source).toMatch(/filters\.push\(`pi\.vendor_id = \$\$\{values\.length\}::uuid`\)/);
+      expect(source).toMatch(/v\.name AS vendor_name/);
+      expect(source).toMatch(/LEFT JOIN mdata\.vendors v/);
     });
 
     it("tenant-scopes the update lookup and write independently of RLS", () => {

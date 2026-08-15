@@ -129,38 +129,46 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      const filters = ["operating_company_id = $1::uuid"];
-      if (!query.data.include_voided) filters.push("part_description NOT LIKE '[VOID] %'");
+      const filters = ["pi.operating_company_id = $1::uuid"];
+      if (!query.data.include_voided) filters.push("pi.part_description NOT LIKE '[VOID] %'");
       if (query.data.vendor_id) {
         values.push(query.data.vendor_id);
-        filters.push(`vendor_id = $${values.length}::uuid`);
+        filters.push(`pi.vendor_id = $${values.length}::uuid`);
       }
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
         const idx = values.length;
         // INV-1: search the real SKU + part_number too (not just the raw id/description).
-        filters.push(`(part_number ILIKE $${idx} OR id::text ILIKE $${idx} OR part_description ILIKE $${idx})`);
+        filters.push(
+          `(pi.part_number ILIKE $${idx} OR pi.id::text ILIKE $${idx} OR pi.part_description ILIKE $${idx})`,
+        );
       }
       const result = await client.query(
         `
           SELECT
-            id,
+            pi.id,
             -- INV-1: real, persisted SKU (fallback to a stable derived SKU for any un-backfilled row).
-            COALESCE(part_number, 'PART-' || upper(substr(replace(id::text, '-', ''), 1, 8))) AS part_number,
-            part_description AS name,
-            category,
-            notes,
-            vendor_id::text AS vendor_id,
-            last_purchase_amount AS unit_cost,
-            on_hand_qty AS qty_on_hand,
+            COALESCE(pi.part_number, 'PART-' || upper(substr(replace(pi.id::text, '-', ''), 1, 8))) AS part_number,
+            pi.part_description AS name,
+            pi.category,
+            pi.notes,
+            pi.vendor_id::text AS vendor_id,
+            -- CLS-SILENT-CAP / CLS-UUID-LABEL: same-opco vendor name on the list path so the FE
+            -- never enriches from a capped listVendors(limit:N) roster (drops names past the page).
+            v.name AS vendor_name,
+            pi.last_purchase_amount AS unit_cost,
+            pi.on_hand_qty AS qty_on_hand,
             0::int AS reorder_threshold,
-            location,
+            pi.location,
             'manual'::text AS source,
-            CASE WHEN part_description LIKE '[VOID] %' THEN updated_at ELSE NULL END AS voided_at,
+            CASE WHEN pi.part_description LIKE '[VOID] %' THEN pi.updated_at ELSE NULL END AS voided_at,
             NULL::text AS voided_reason
-          FROM maintenance.parts_inventory
+          FROM maintenance.parts_inventory pi
+          LEFT JOIN mdata.vendors v
+            ON v.id = pi.vendor_id
+           AND v.operating_company_id = pi.operating_company_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY updated_at DESC, created_at DESC
+          ORDER BY pi.updated_at DESC, pi.created_at DESC
         `,
         values
       );

@@ -13,6 +13,7 @@ const base: MaintenancePartRow = {
   category: "Brakes",
   notes: "OEM only",
   vendor_id: "v-11111111-1111-1111-1111-111111111111",
+  vendor_name: "Acme Parts",
   vendor_default: null,
   unit_cost: 42.5,
   qty_on_hand: 7,
@@ -28,12 +29,16 @@ describe("InventoryPartsStockPage read path", () => {
     expect(partsStockPage).not.toMatch(/fetch\s*\(\s*resolveApiUrl/);
     expect(partsStockPage).toMatch(/listMaintenanceParts/);
   });
+
+  it("does not enrich vendor labels from a capped listVendors roster", () => {
+    expect(partsStockPage).not.toMatch(/listVendors/);
+    expect(partsStockPage).not.toMatch(/CappedListNotice/);
+  });
 });
 
 describe("mapMaintenancePartsToInventoryRows", () => {
   it("maps maintenance fields onto the inventory row shape", () => {
-    const vendorMap = new Map([["v-11111111-1111-1111-1111-111111111111", "Acme Parts"]]);
-    const [row] = mapMaintenancePartsToInventoryRows([base], vendorMap);
+    const [row] = mapMaintenancePartsToInventoryRows([base]);
     expect(row).toEqual({
       id: "p1",
       name: "Brake pad",
@@ -51,15 +56,14 @@ describe("mapMaintenancePartsToInventoryRows", () => {
     });
   });
 
-  it("INV-LINK-01: maps vendor_id and resolves vendor_label from catalog", () => {
-    const vendorMap = new Map([["v-11111111-1111-1111-1111-111111111111", "Acme Parts"]]);
-    const [row] = mapMaintenancePartsToInventoryRows([base], vendorMap);
+  it("INV-LINK-01: maps vendor_id and vendor_label from API vendor_name join", () => {
+    const [row] = mapMaintenancePartsToInventoryRows([base]);
     expect(row.vendor_id).toBe("v-11111111-1111-1111-1111-111111111111");
     expect(row.vendor_label).toBe("Acme Parts");
   });
 
   it("INV-LINK-01: null vendor_id yields null vendor_label", () => {
-    const [row] = mapMaintenancePartsToInventoryRows([{ ...base, vendor_id: null }]);
+    const [row] = mapMaintenancePartsToInventoryRows([{ ...base, vendor_id: null, vendor_name: null }]);
     expect(row.vendor_id).toBeNull();
     expect(row.vendor_label).toBeNull();
   });
