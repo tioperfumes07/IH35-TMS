@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^accounting\\.panel\\.detail$","task":"ACCT-F5302-FIXED-ASSET-DETAIL-GL-JE"} */
 /**
  * ACCT-F5302 / FIXED-ASSETS-DEPRECIATION-GL-POSTING-NOT-BUILT — the depreciation GL poster
  * (postDepreciation, "FIN-21", amortization-posting.service.ts) already exists and is already live
