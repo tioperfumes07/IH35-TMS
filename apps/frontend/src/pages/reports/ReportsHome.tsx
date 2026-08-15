@@ -1,14 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
-import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
+import {
+  BasisSelector,
+  type AccountingBasis,
+} from "../../components/accounting/BasisSelector";
 import { CategoryHoverNav } from "../../components/reports/CategoryHoverNav";
 import { PHASE_6_REPORT_HREFS } from "../../components/reports/phase6ReportLinks";
 import { FrequentlyRunTable } from "../../components/reports/FrequentlyRunTable";
 import { ScheduledReportsPanel } from "./ScheduledReportsPanel";
 import { CustomReportBuilder } from "./CustomReportBuilder";
 import { IftaPreparerCard } from "../../components/reports/IftaPreparerCard";
-import { getFrequentlyRun, getIftaStatus, getKpiSummary, getScheduledReports, type FrequentlyRunReport, type ReportCategory } from "../../api/reports";
+import {
+  getFrequentlyRun,
+  getIftaStatus,
+  getKpiSummary,
+  getScheduledReports,
+  type FrequentlyRunReport,
+  type ReportCategory,
+} from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -33,7 +43,7 @@ const BLOCK_W_FREQUENT_ROWS: FrequentlyRunReport[] = [
   },
   {
     id: "scheduled-reports",
-    name: "Scheduled reports",
+    name: "Default report subscriptions",
     filters: "Automation · email queue",
     runs: 0,
     status: "real",
@@ -94,7 +104,7 @@ export function ReportsHomePage() {
       meta: kpiReady ? "categories live" : "Loading…",
     },
     {
-      label: "Scheduled",
+      label: "Custom schedules",
       value: kpiReady ? String(kpiQuery.data?.scheduled ?? 0) : "—",
       meta: kpiReady ? "auto-emailed" : "Loading…",
     },
@@ -104,7 +114,12 @@ export function ReportsHomePage() {
       meta: kpiReady ? "across all users" : "Loading…",
     },
     ifta
-      ? { label: `IFTA ${ifta.quarter} due`, value: `${ifta.daysUntilDue}d`, meta: `${formatDateUS(ifta.dueAt)} — file before`, warn: true }
+      ? {
+          label: `IFTA ${ifta.quarter} due`,
+          value: `${ifta.daysUntilDue}d`,
+          meta: `${formatDateUS(ifta.dueAt)} — file before`,
+          warn: true,
+        }
       : { label: "IFTA due", value: "—", meta: "Loading…", warn: false },
   ];
 
@@ -132,7 +147,12 @@ export function ReportsHomePage() {
   }
 
   function basisForReport(reportId: string) {
-    if (reportId === "trial-balance" || reportId === "profit-loss" || reportId === "balance-sheet") return basis;
+    if (
+      reportId === "trial-balance" ||
+      reportId === "profit-loss" ||
+      reportId === "balance-sheet"
+    )
+      return basis;
     return "accrual";
   }
 
@@ -144,21 +164,38 @@ export function ReportsHomePage() {
         subtitle="Hover a domain category, then open a report to run"
         actions={
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowCustomBuilder((v) => !v)}>+ Custom report</Button>
-            <Button variant="secondary" onClick={() => navigate("/reports/scheduled")}>
+            <Button onClick={() => setShowCustomBuilder((v) => !v)}>
+              + Custom report
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate("/reports/scheduled")}
+            >
               Schedule
             </Button>
           </div>
         }
       />
 
-      <CategoryHoverNav activeCategory={category} onCategoryChange={setCategory} />
+      <CategoryHoverNav
+        activeCategory={category}
+        onCategoryChange={setCategory}
+      />
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {reportsKpis.map((item) => (
-          <div key={item.label} className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#334155]" : "border-slate-200"}`}>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
-            <div className={`text-lg font-semibold ${item.warn ? "text-[#334155]" : "text-slate-900"}`}>{item.value}</div>
+          <div
+            key={item.label}
+            className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#334155]" : "border-slate-200"}`}
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+              {item.label}
+            </div>
+            <div
+              className={`text-lg font-semibold ${item.warn ? "text-[#334155]" : "text-slate-900"}`}
+            >
+              {item.value}
+            </div>
             <div className="text-xs text-slate-500">{item.meta}</div>
           </div>
         ))}
@@ -169,10 +206,14 @@ export function ReportsHomePage() {
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-slate-900">Accounting + financial reports</h3>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Accounting + financial reports
+                </h3>
                 <BasisSelector value={basis} onChange={setBasis} />
               </div>
-              <p className="text-xs text-slate-500">Core accounting statements plus operational finance views</p>
+              <p className="text-xs text-slate-500">
+                Core accounting statements plus operational finance views
+              </p>
             </div>
             {/* Flat grid cells — no nested bordered tiles (Cascade row 205 box-in-box). */}
             <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-slate-100">
@@ -189,7 +230,7 @@ export function ReportsHomePage() {
                   ["fuel-reconciliation", "Fuel reconciliation"],
                   ["maintenance-cost-per-unit", "Maintenance cost per unit"],
                   ["geofence-dwell", "Geofence dwell report"],
-                  ["scheduled-reports", "Scheduled reports"],
+                  ["scheduled-reports", "Default report subscriptions"],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -210,15 +251,32 @@ export function ReportsHomePage() {
           </section>
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
-              <h3 className="text-sm font-semibold text-slate-900">Management reports</h3>
-              <p className="text-xs text-slate-500">QBO-standard branded compilations — lender, insurance, and stakeholder ready</p>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Management reports
+              </h3>
+              <p className="text-xs text-slate-500">
+                QBO-standard branded compilations — lender, insurance, and
+                stakeholder ready
+              </p>
             </div>
             <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-slate-100">
               {(
                 [
-                  ["company-overview", "Company Overview", "P&L + Balance Sheet"],
-                  ["sales-performance", "Sales Performance", "P&L + A/R Aging + Customer Summary"],
-                  ["expenses-performance", "Expenses Performance", "P&L + A/P Aging + Vendor Summary"],
+                  [
+                    "company-overview",
+                    "Company Overview",
+                    "P&L + Balance Sheet",
+                  ],
+                  [
+                    "sales-performance",
+                    "Sales Performance",
+                    "P&L + A/R Aging + Customer Summary",
+                  ],
+                  [
+                    "expenses-performance",
+                    "Expenses Performance",
+                    "P&L + A/P Aging + Vendor Summary",
+                  ],
                 ] as const
               ).map(([type, label, sub]) => (
                 <button
@@ -227,7 +285,9 @@ export function ReportsHomePage() {
                   className="border-t border-slate-100 px-3 py-2 text-left hover:bg-slate-50"
                   onClick={() => navigate(`/reports/management?type=${type}`)}
                 >
-                  <div className="text-xs font-semibold text-slate-800">{label}</div>
+                  <div className="text-xs font-semibold text-slate-800">
+                    {label}
+                  </div>
                   <div className="mt-0.5 text-[10px] text-slate-500">{sub}</div>
                 </button>
               ))}
@@ -244,7 +304,8 @@ export function ReportsHomePage() {
 
       {category === "saved" && !showCustomBuilder ? (
         <section className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-          Open <strong>+ Custom report</strong> to build and save reports — saved definitions appear in the builder list.
+          Open <strong>+ Custom report</strong> to build and save reports —
+          saved definitions appear in the builder list.
         </section>
       ) : null}
     </div>

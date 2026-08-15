@@ -70,6 +70,56 @@ function editorModeContractFailures(managerSource, editorSource) {
   return problems;
 }
 
+function sourceIdentityContractFailures(
+  homeSource,
+  panelSource,
+  categorySource,
+  subNavSource,
+) {
+  const problems = [];
+  const requireMatch = (source, pattern, label) => {
+    if (!pattern.test(source)) problems.push(label);
+  };
+
+  requireMatch(
+    homeSource,
+    /label:\s*"Custom schedules"/,
+    "Home KPI names the custom schedule source",
+  );
+  requireMatch(
+    homeSource,
+    /name:\s*"Default report subscriptions"[\s\S]*?\["scheduled-reports",\s*"Default report subscriptions"\]/,
+    "Home names the governed Q8 source separately",
+  );
+  requireMatch(
+    panelSource,
+    />\s*Custom scheduled reports\s*</,
+    "Home panel names the custom source",
+  );
+  const customRouteUses =
+    panelSource.match(/\/reports\/scheduled-custom/g)?.length ?? 0;
+  if (customRouteUses < 2)
+    problems.push("Home panel Add and Manage both target the custom manager");
+  if (
+    /navigate\("\/reports\/scheduled"\)|<Link\s+to="\/reports\/scheduled"/.test(
+      panelSource,
+    )
+  ) {
+    problems.push("Home custom panel must not target the Q8 default manager");
+  }
+  requireMatch(
+    categorySource,
+    /id:\s*"scheduled-reports",\s*label:\s*"Default subscriptions",\s*hint:\s*"Six governed Q8 schedules"/,
+    "category flyouts name the Q8 default source",
+  );
+  requireMatch(
+    subNavSource,
+    /id:\s*"scheduled-reports",\s*label:\s*"Default subscriptions"/,
+    "runner navigation names the Q8 default source",
+  );
+  return problems;
+}
+
 const migration = read(
   "db/migrations/202606080206_scheduled_report_subscriptions.sql",
 );
@@ -194,6 +244,23 @@ for (const problem of editorModeContractFailures(manager, editor)) {
   fail(`scheduled subscription create/edit contract: ${problem}`);
 }
 
+const reportsHome = read("apps/frontend/src/pages/reports/ReportsHome.tsx");
+const scheduledPanel = read(
+  "apps/frontend/src/pages/reports/ScheduledReportsPanel.tsx",
+);
+const categoryNav = read(
+  "apps/frontend/src/components/reports/CategoryHoverNav.tsx",
+);
+const reportsSubNav = read("apps/frontend/src/pages/reports/ReportsSubNav.tsx");
+for (const problem of sourceIdentityContractFailures(
+  reportsHome,
+  scheduledPanel,
+  categoryNav,
+  reportsSubNav,
+)) {
+  fail(`scheduled report source identity: ${problem}`);
+}
+
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [
   { pattern: /SubscriptionManager/, label: "SubscriptionManager in manifest" },
@@ -281,13 +348,96 @@ if (process.argv.includes("--selftest")) {
       escaped.push(`${name} mutation escaped`);
     }
   }
+  const sourceMutations = [
+    [
+      "custom-kpi-label",
+      reportsHome.replace('label: "Custom schedules"', 'label: "Scheduled"'),
+      scheduledPanel,
+      categoryNav,
+      reportsSubNav,
+    ],
+    [
+      "default-home-label",
+      reportsHome.replaceAll(
+        "Default report subscriptions",
+        "Scheduled reports",
+      ),
+      scheduledPanel,
+      categoryNav,
+      reportsSubNav,
+    ],
+    [
+      "custom-panel-label",
+      reportsHome,
+      scheduledPanel.replace(
+        />\s*Custom scheduled reports\s*</,
+        ">Scheduled auto-emailed<",
+      ),
+      categoryNav,
+      reportsSubNav,
+    ],
+    [
+      "custom-panel-routes",
+      reportsHome,
+      scheduledPanel.replaceAll(
+        "/reports/scheduled-custom",
+        "/reports/scheduled",
+      ),
+      categoryNav,
+      reportsSubNav,
+    ],
+    [
+      "default-category-label",
+      reportsHome,
+      scheduledPanel,
+      categoryNav.replaceAll("Default subscriptions", "Scheduled reports"),
+      reportsSubNav,
+    ],
+    [
+      "default-subnav-label",
+      reportsHome,
+      scheduledPanel,
+      categoryNav,
+      reportsSubNav.replace(
+        'label: "Default subscriptions"',
+        'label: "Scheduled reports"',
+      ),
+    ],
+  ];
+  for (const [
+    name,
+    mutatedHome,
+    mutatedPanel,
+    mutatedCategory,
+    mutatedSubNav,
+  ] of sourceMutations) {
+    if (
+      mutatedHome === reportsHome &&
+      mutatedPanel === scheduledPanel &&
+      mutatedCategory === categoryNav &&
+      mutatedSubNav === reportsSubNav
+    ) {
+      escaped.push(`${name} mutation anchor was inert`);
+      continue;
+    }
+    if (
+      sourceIdentityContractFailures(
+        mutatedHome,
+        mutatedPanel,
+        mutatedCategory,
+        mutatedSubNav,
+      ).length === 0
+    ) {
+      escaped.push(`${name} mutation escaped`);
+    }
+  }
   if (escaped.length > 0) {
     console.error("verify:scheduled-reports SELFTEST FAIL");
     for (const message of escaped) console.error(`  - ${message}`);
     process.exit(1);
   }
   console.log(
-    `verify:scheduled-reports SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`,
+    `verify:scheduled-reports SELFTEST PASS — ${mutations.length + sourceMutations.length}/${mutations.length + sourceMutations.length} planted defects rejected`,
   );
   process.exit(0);
 }
