@@ -28,13 +28,13 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-15T15:13:26-05:00",
-    "sourceSha": "4e3595933",
-    "deployedSha": "ed1c340",
+    "generatedAt": "2026-08-15T18:26:14-05:00",
+    "sourceSha": "3609b372d",
+    "deployedSha": "4c980da",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 826,
-    "failOpen": 14,
-    "defects": 17
+    "ledgerRows": 832,
+    "failOpen": 15,
+    "defects": 18
   },
   "modules": [
     {
@@ -682,7 +682,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "FIX",
         "AUDIT",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "UNV",
         "AUDIT",
@@ -714,7 +714,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           "AUDIT",
           "AUDIT",
           "AUDIT",
-          "AUDIT",
+          "FIX",
           "AUDIT",
           "UNV",
           "AUDIT",
@@ -1051,7 +1051,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -1083,7 +1083,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "USMCA": [
           "AUDIT",
           "AUDIT",
-          "NA",
+          "FAIL",
           "NA",
           "AUDIT",
           "AUDIT",
