@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T13:48:13-05:00",
-    "sourceSha": "38ade0768",
-    "deployedSha": "b31ed30",
+    "generatedAt": "2026-08-15T13:49:44-05:00",
+    "sourceSha": "fbce07e58",
+    "deployedSha": "0514d3a",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 789,
+    "ledgerRows": 790,
     "failOpen": 14,
     "defects": 17
   },
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 7319,
+      "title": "FINDING: CODEX-LIVE-BOARD-STATUS-CLOSE — reconcile exact Live evidence",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 01:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7319",
+      "sha": "10354cdd1",
+      "committedAtIso": "2026-08-15T13:49:52-05:00"
+    },
+    {
+      "number": 7318,
+      "title": "FINDING: LIVE-LEDGER-LISTS-HUBS-790",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 01:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7318",
+      "sha": "fbce07e58",
+      "committedAtIso": "2026-08-15T13:49:44-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 01:49 PM CT",
+      "url": "",
+      "sha": "d7b3829c8",
+      "committedAtIso": "2026-08-15T18:49:16Z"
+    },
+    {
       "number": 7317,
       "title": "FINDING: LIVE-LEDGER-TEAMS-LOADSTATUS-788",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "",
       "sha": "b31ed30da",
       "committedAtIso": "2026-08-15T18:42:03Z"
-    },
-    {
-      "number": 7313,
-      "title": "FINDING: LIVE-LEDGER-DRIVER-CATALOGS-769",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 01:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7313",
-      "sha": "380a81806",
-      "committedAtIso": "2026-08-15T13:40:54-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 01:35 PM CT",
-      "url": "",
-      "sha": "ffc19d51e",
-      "committedAtIso": "2026-08-15T18:35:00Z"
-    },
-    {
-      "number": 7312,
-      "title": "FINDING: LV-LIVE-CHROME-OUTBOX-NOT-LEDGERED",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 01:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7312",
-      "sha": "96eab9247",
-      "committedAtIso": "2026-08-15T13:33:15-05:00"
     }
   ]
 }
