@@ -1,10 +1,11 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -117,6 +118,78 @@ export function SubmissionQueue() {
     .filter((item) => selected.includes(item.invoice_id))
     .reduce((sum, item) => sum + Number(item.expected_reserve_cents ?? 0), 0);
 
+  const columns = useMemo<ParityColumn<SubmissionQueueItem>[]>(
+    () => [
+      {
+        key: "select",
+        label: "Select",
+        render: (item) => (
+          <input
+            type="checkbox"
+            disabled={!item.is_submittable}
+            checked={selected.includes(item.invoice_id)}
+            onChange={() => toggle(item.invoice_id)}
+            aria-label={`Select invoice ${item.display_id ?? item.invoice_id}`}
+          />
+        ),
+      },
+      {
+        key: "invoice_id",
+        label: "Invoice",
+        render: (item) => (
+          <EntityLink
+            kind="invoice"
+            id={item.invoice_id}
+            label={entityLabel(item.display_id, item.invoice_id, "Invoice")}
+          />
+        ),
+      },
+      {
+        key: "customer_id",
+        label: "Customer",
+        render: (item) => (
+          <EntityLink
+            kind="customer"
+            id={item.customer_id}
+            label={entityLabel(item.customer_name, item.customer_id, "Customer")}
+          />
+        ),
+      },
+      {
+        key: "issue_date",
+        label: "Issue Date",
+        sortable: true,
+        render: (item) => (item.issue_date ? formatDateUS(item.issue_date) : "—"),
+      },
+      {
+        key: "total_cents",
+        label: "Amount",
+        sortable: true,
+        render: (item) => <span className="tabular-nums">{asMoney(item.total_cents)}</span>,
+      },
+      {
+        key: "expected_reserve_cents",
+        label: "Expected Reserve",
+        render: (item) => (
+          <span className="tabular-nums text-slate-600">
+            {item.expected_reserve_cents != null ? asMoney(item.expected_reserve_cents) : "—"}
+          </span>
+        ),
+      },
+      {
+        key: "factor_name",
+        label: "Factor",
+        render: (item) => <span className="text-slate-500">{item.factor_name ?? "—"}</span>,
+      },
+      {
+        key: "docs",
+        label: "Docs",
+        render: (item) => <DocGateBadge item={item} />,
+      },
+    ],
+    [selected, submittable.length],
+  );
+
   if (!companyId) {
     return (
       <div className="space-y-3 p-4">
@@ -166,21 +239,22 @@ export function SubmissionQueue() {
 
       {queueQuery.isError ? (
         <ListErrorBanner onRetry={() => void queueQuery.refetch()} />
-      ) : queueQuery.isLoading ? (
-        <div className="py-8 text-center text-xs text-slate-500">Loading eligible invoices…</div>
-      ) : items.length === 0 ? (
-        <div
-          className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-400"
-          data-testid="factoring-submit-honest-empty"
-        >
-          No invoices in submission queue. Invoices appear here when status is <strong>sent</strong>, customer is factor-assigned, and no
-          active batch exists.
-        </div>
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-slate-500">
-              {submittable.length} of {items.length} invoice{items.length !== 1 ? "s" : ""} ready to submit
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span>
+                {submittable.length} of {items.length} invoice{items.length !== 1 ? "s" : ""} ready to submit
+              </span>
+              <label className="inline-flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={selected.length === submittable.length && submittable.length > 0}
+                  onChange={toggleAll}
+                  disabled={submittable.length === 0 || queueQuery.isLoading}
+                />
+                Select all submittable
+              </label>
             </div>
             {selected.length > 0 && (
               <div className="flex items-center gap-3">
@@ -194,71 +268,19 @@ export function SubmissionQueue() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-[10px] font-semibold uppercase text-slate-400">
-                  <th className="py-1.5 pr-2">
-                    <input
-                      type="checkbox"
-                      checked={selected.length === submittable.length && submittable.length > 0}
-                      onChange={toggleAll}
-                      disabled={submittable.length === 0}
-                    />
-                  </th>
-                  <th className="py-1.5 pr-3">Invoice</th>
-                  <th className="py-1.5 pr-3">Customer</th>
-                  <th className="py-1.5 pr-3">Issue Date</th>
-                  <th className="py-1.5 pr-3 text-right">Amount</th>
-                  <th className="py-1.5 pr-3 text-right">Expected Reserve</th>
-                  <th className="py-1.5 pr-3">Factor</th>
-                  <th className="py-1.5">Docs</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => {
-                  const isChecked = selected.includes(item.invoice_id);
-                  return (
-                    <tr
-                      key={item.invoice_id}
-                      className={`border-b border-slate-100 ${item.is_submittable ? "hover:bg-slate-50" : "opacity-60"}`}
-                    >
-                      <td className="py-1.5 pr-2">
-                        <input
-                          type="checkbox"
-                          disabled={!item.is_submittable}
-                          checked={isChecked}
-                          onChange={() => toggle(item.invoice_id)}
-                        />
-                      </td>
-                      <td className="py-1.5 pr-3 font-mono">
-                        <EntityLink
-                          kind="invoice"
-                          id={item.invoice_id}
-                          label={entityLabel(item.display_id, item.invoice_id, "Invoice")}
-                        />
-                      </td>
-                      <td className="py-1.5 pr-3">
-                        <EntityLink
-                          kind="customer"
-                          id={item.customer_id}
-                          label={entityLabel(item.customer_name, item.customer_id, "Customer")}
-                        />
-                      </td>
-                      <td className="py-1.5 pr-3">{item.issue_date ? formatDateUS(item.issue_date) : "—"}</td>
-                      <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.total_cents)}</td>
-                      <td className="py-1.5 pr-3 text-right tabular-nums text-slate-600">
-                        {item.expected_reserve_cents != null ? asMoney(item.expected_reserve_cents) : "—"}
-                      </td>
-                      <td className="py-1.5 pr-3 text-slate-500">{item.factor_name ?? "—"}</td>
-                      <td className="py-1.5">
-                        <DocGateBadge item={item} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* FAC-F3540: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar. */}
+          <div data-testid="factoring-submit-honest-empty">
+            <ParityTable<SubmissionQueueItem>
+              columns={columns}
+              rows={items}
+              rowKey={(item) => item.invoice_id}
+              loading={queueQuery.isLoading}
+              emptyText="No invoices in submission queue. Invoices appear here when status is sent, customer is factor-assigned, and no active batch exists."
+              storageKey="factoring-submission-queue"
+              exportFilename="factoring-submission-queue"
+              rowClassName={(item) => (item.is_submittable ? "" : "opacity-60")}
+              tableTestId="factoring-submission-queue-table"
+            />
           </div>
 
           {submitMutation.isError && (
