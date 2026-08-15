@@ -885,6 +885,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-cursor-driver-column-remainder-drawers-panels"
   },
+  "3330": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-accounting-modal-create-vendor-honesty"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
