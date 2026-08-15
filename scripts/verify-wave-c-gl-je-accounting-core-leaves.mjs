@@ -11,6 +11,7 @@
  *   - accounting.parity.factoring_detail_page
  *
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(bills\\.list|bills\\.detail|expenses\\.list|expenses\\.detail|bill_payments\\.list|bill_payments\\.create|je\\.list|je\\.create|register|accounting\\.panel\\.bill_detail|accounting\\.parity\\.(expense_create_page|expenses_list_page|vendor_bill_create_page|factoring_detail_page))$","task":"WAVE-C-gl_je-accounting-core-leaves","vertical":"column-wave"}
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^accounting\\.parity\\.(expense_create_page|vendor_bill_create_page)$","task":"PROTECTED-ACCT-CONNECTIVITY-CREATE-PAGES","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-c-gl-je-accounting-core-leaves.mjs --selftest
  */

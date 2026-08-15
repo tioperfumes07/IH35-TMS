@@ -25,6 +25,7 @@
  * No code change in this pass — pure verification + tagging.
  *
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(accounting\\.modal|accounting\\.parity)\\.(invoice_create|manual_je|pay_bill|payment_apply|record_payment|submit_factoring|ccpayment|customer_adjustment|driver_damage_invoice|driver_misc_invoice|manual_invoice|vendor_chargeback|bill_payment|invoice_type_modal_base)$","task":"WAVE-C-gl_je-accounting-modals","vertical":"column-wave"}
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^(accounting\\.modal|accounting\\.parity)\\.invoice_create$","task":"PROTECTED-ACCT-CONNECTIVITY-INVOICE-CREATE","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-c-gl-je-accounting-modals.mjs --selftest
  */
