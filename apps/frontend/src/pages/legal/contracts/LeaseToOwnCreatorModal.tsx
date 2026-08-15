@@ -62,7 +62,6 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
     execution_date: "", reference_no: "",
   });
   const [sellerSigner, setSellerSigner] = useState({ signer_name: "Jorge Munoz", signer_title: "Manager" });
-  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Record<string, TruckTerms>>({});
 
   // ensure the canonical template exists + get seller default (TRK) — real backend call
@@ -105,19 +104,14 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
     queryFn: () => legalTemplatesApi.get(templateId, operatingCompanyId),
   });
 
-  const filteredUnits = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return units;
-    return units.filter((u) => [u.unit_number, u.vin, u.make, u.model, String(u.year ?? "")].join(" ").toLowerCase().includes(q));
-  }, [units, search]);
-
+  // Free-text search: ParityTable toolbar owns it (LEG-F3502) — no page-local unit filter.
   const selectedList = useMemo(
     () => units.filter((u) => selected[u.id]).map((u, i) => ({ unit: u, terms: selected[u.id], sort: i })),
     [units, selected],
   );
   const fleetRows = useMemo<FleetPickerRow[]>(
-    () => filteredUnits.map((unit) => ({ ...unit, selected: Boolean(selected[unit.id]) })),
-    [filteredUnits, selected],
+    () => units.map((unit) => ({ ...unit, selected: Boolean(selected[unit.id]) })),
+    [units, selected],
   );
   const fleetColumns = useMemo<ParityColumn<FleetPickerRow>[]>(
     () => [
@@ -353,8 +347,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 2 — Vehicles */}
         {stepIdx === 1 && (
           <div className="space-y-2">
-            <input className="w-full rounded-sm border px-2 py-1 text-sm" placeholder="Search unit #, VIN, make, model…" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <p className="text-xs text-slate-500">{selectedList.length} selected · {filteredUnits.length} shown</p>
+            <p className="text-xs text-slate-500">{selectedList.length} selected · {units.length} eligible</p>
             {fleetQuery.isError ? (
               <ListErrorState title="Couldn't load eligible fleet" status={0} message={(fleetQuery.error as Error)?.message} onRetry={() => void fleetQuery.refetch()} />
             ) : (
