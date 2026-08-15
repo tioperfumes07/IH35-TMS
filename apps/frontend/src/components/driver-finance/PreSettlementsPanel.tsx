@@ -59,6 +59,22 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
                   </span>
                 </>
               ) : null}
+              {/* LINK-F5187: same real driver_finance.driver_liabilities ids the Settlements list's
+                  Debt Flag column now links — this panel reads the identical SettlementListRow shape. */}
+              {(settlement.liability_ids ?? []).length > 0 ? (
+                <>
+                  <span className="text-gray-400">·</span>
+                  {(settlement.liability_ids ?? []).map((id, idx) => (
+                    <EntityLink
+                      key={id}
+                      kind="liability"
+                      id={id}
+                      label={(settlement.liability_ids?.length ?? 0) > 1 ? `debt #${idx + 1}` : "debt →"}
+                      className="text-[10px] text-red-600 hover:underline"
+                    />
+                  ))}
+                </>
+              ) : null}
             </span>
             <span>{formatMoney(Number(settlement.net_pay ?? 0))}</span>
           </DataPanelRow>

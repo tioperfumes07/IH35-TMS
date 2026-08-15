@@ -321,7 +321,6 @@
       "sub": "Factor recon workspace",
       "route_hint": "/accounting/factor-reconciliation",
       "required": [
-        "liability",
         "connectivity",
         "qbo_chrome",
         "bank"
@@ -829,6 +828,18 @@
         },
         {
           "id": "accounting.submit",
+          "removed": [
+            "liability"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_15_cluster_a_recon": {
+      "finding": "LIABILITY-FALSE-REQUIRED-FACTOR-RECON",
+      "note": "accounting.factor_recon (FactorReconciliationPage.tsx / FactorReconciliationItem) reconciles invoice amounts against the factor's statement (invoice_id, factor_amount_cents, ledger_amount_cents, variance_cents) -- verified live 2026-08-15: FactorReconciliationItem (apps/frontend/src/api/accounting.ts) carries no liability-shaped field at all, no id to link. The reconciliation is invoice-vs-statement matching, not a single owning driver_finance.driver_liabilities record. Same structural class as the already-dropped factoring rollups (home.reserve_tracker / reserves.dashboard, this file's liability_2026_08_15_cluster_a entry).",
+      "drops": [
+        {
+          "id": "accounting.factor_recon",
           "removed": [
             "liability"
           ]

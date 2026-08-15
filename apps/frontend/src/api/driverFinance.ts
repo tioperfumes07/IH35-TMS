@@ -20,6 +20,8 @@ export type SettlementListRow = {
   has_pending_acks: boolean;
   live_debt_flag: number | null;
   debt_computed_at: string | null;
+  /** LINK-F5187: real driver_finance.driver_liabilities ids behind live_debt_flag's dollar total. */
+  liability_ids?: string[];
   payment_state?: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid";
   payment_bank_reference?: string | null;
   payment_bounced_reason?: string | null;

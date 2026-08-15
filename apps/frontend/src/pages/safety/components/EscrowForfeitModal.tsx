@@ -5,6 +5,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLiabilitiesByDriver } from "../../../api/liabilities";
 import { driverDeductionTypesCatalogClient } from "../../../api/catalogs-driver";
 import { formatUsd } from "../../../lib/money";
@@ -217,6 +218,15 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
             <span className="mt-1 block text-[11px] text-slate-500">
               This driver has no open liabilities on record.
             </span>
+          ) : null}
+          {/* LINK-F5187: the picker above already selects a real driver_finance.driver_liabilities id
+              (linkedLiabilityId), but a native <option> can't itself be a drill target -- surface a real
+              EntityLink once one is picked, same pattern as the post-create/post-completion links on
+              VendorBillCreatePage / BillPaymentModal. */}
+          {linkedLiabilityId ? (
+            <div className="mt-1" data-testid="escrow-forfeit-liability-link">
+              <EntityLink kind="liability" id={linkedLiabilityId} label="View liability →" className="text-[11px] text-red-600 hover:underline" />
+            </div>
           ) : null}
         </label>
 

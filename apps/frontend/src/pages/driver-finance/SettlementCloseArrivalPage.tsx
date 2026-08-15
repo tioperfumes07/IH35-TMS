@@ -278,6 +278,27 @@ export function SettlementCloseArrivalPage() {
                     </span>
                   </div>
                 </div>
+                {/* LINK-F5187: debtQuery already fetches the driver's real open driver_finance.driver_liabilities
+                    rows (source_liabilities) to compute currentEscrowTotal above -- they were discarded after
+                    the sum, leaving no way to drill from this close screen to what the escrow balance is made of. */}
+                {((debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown; current_balance?: unknown }> | undefined) ?? []).length > 0 ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-1 text-[11px] text-gray-600">
+                    <span>Open liabilities:</span>
+                    {(debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown; current_balance?: unknown }>).map((liability, idx) => {
+                      const id = String(liability.id ?? "");
+                      if (!id) return null;
+                      return (
+                        <EntityLink
+                          key={id}
+                          kind="liability"
+                          id={id}
+                          label={entityLabel(String(liability.type ?? "Liability"), id, `#${idx + 1}`)}
+                          className="text-red-600 hover:underline"
+                        />
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
 
               {/* Advance recoveries */}

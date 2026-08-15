@@ -191,6 +191,13 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             load_count: Number(row.load_count ?? 0),
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
+            // LINK-F5187: debt.source_liabilities already carries the real driver_finance.driver_liabilities
+            // ids behind live_debt_flag's dollar total (recompute_driver_debt's jsonb_agg) — every prior
+            // reader of this endpoint (SettlementsTable's Debt Flag column, PreSettlementsPanel) discarded
+            // them, rendering an honest-looking dollar amount with no drill to what actually makes it up.
+            liability_ids: Array.isArray(debt?.source_liabilities)
+              ? (debt.source_liabilities as Array<{ id?: unknown }>).map((s) => String(s?.id ?? "")).filter(Boolean)
+              : [],
           };
         })
       );
@@ -282,6 +289,11 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             load_count: Number(row.load_count ?? 0),
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
+            // LINK-F5187: same fix as the company-wide list above — thread the real liability ids
+            // through instead of discarding them after the dollar total is computed.
+            liability_ids: Array.isArray(debt?.source_liabilities)
+              ? (debt.source_liabilities as Array<{ id?: unknown }>).map((s) => String(s?.id ?? "")).filter(Boolean)
+              : [],
           };
         })
       );
