@@ -1,0 +1,26 @@
+{
+  "block_id": "tip-static-findings-register-sync-3338",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TIP-STATIC",
+  "branch": "cursor/tip-static-findings-register-sync-3338",
+  "task": "Sync CC-3 findings checklist with OPEN board ids; dedupe; revert empty ☑; ratchet via step 3338.",
+  "allowed_files": [
+    ".block-ready/tip-static-findings-register-sync-3338.json",
+    "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    "scripts/verify-tip-static-findings-register-sync.mjs",
+    "scripts/verify-steps/3338-verify-tip-static-findings-register-sync.mjs"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-tip-static-findings-register-sync.mjs",
+      "assert": "findings-register-signoff PASS; --selftest PASS"
+    }
+  ],
+  "linkage": "GUARD-WORKORDERS OPEN ids → CC-3-FINDINGS-CHECKLIST ☐ rows → owner completion list.",
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": []
+}
