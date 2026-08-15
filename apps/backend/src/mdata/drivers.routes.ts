@@ -1257,7 +1257,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             qbo_class_id,
             default_expense_account_id,
             status, notes, prior_driver_id, rehire_count, is_rehire,
-            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id,
+            (SELECT COALESCE(NULLIF(trim(concat_ws(' ', updater.first_name, updater.last_name)), ''), updater.email)
+             FROM identity.users updater
+             WHERE updater.id = mdata.drivers.updated_by_user_id
+             LIMIT 1) AS updated_by_user_label
           FROM mdata.drivers
           WHERE operating_company_id = $${ociIdx}::uuid
           ${extraAnd}

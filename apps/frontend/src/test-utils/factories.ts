@@ -148,6 +148,7 @@ const DRIVER_DEFAULTS: Driver = {
   deactivated_at: null,
   created_by_user_id: "u1",
   updated_by_user_id: "u1",
+  updated_by_user_label: null,
 };
 
 /** A closed period with no resolvable closing JE — the common case. */

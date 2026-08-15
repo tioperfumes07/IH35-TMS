@@ -125,6 +125,7 @@ export type Driver = {
   deactivated_at: string | null;
   created_by_user_id: string;
   updated_by_user_id: string;
+  updated_by_user_label: string | null;
 };
 
 export type CreateDriverInput = {
