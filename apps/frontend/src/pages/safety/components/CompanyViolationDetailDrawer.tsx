@@ -95,6 +95,12 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
   }, [open, violation]);
 
   if (!open || !violation) return null;
+  const driverLabels = (violation.related_driver_labels && typeof violation.related_driver_labels === "object"
+    ? violation.related_driver_labels
+    : {}) as Record<string, unknown>;
+  const unitLabels = (violation.related_unit_labels && typeof violation.related_unit_labels === "object"
+    ? violation.related_unit_labels
+    : {}) as Record<string, unknown>;
 
   return (
     <>
@@ -118,7 +124,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
                   return (
                     <span key={driverId}>
                       {idx > 0 ? ", " : ""}
-                      <EntityLink kind="driver" id={driverId} label={entityLabel(undefined, driverId, "Driver")} />
+                      <EntityLink kind="driver" id={driverId} label={entityLabel(driverLabels[driverId], driverId, "Driver")} />
                     </span>
                   );
                 })
@@ -133,7 +139,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
                   return (
                     <span key={unitId}>
                       {idx > 0 ? ", " : ""}
-                      <EntityLink kind="unit" id={unitId} label={entityLabel(undefined, unitId, "Unit")} />
+                      <EntityLink kind="unit" id={unitId} label={entityLabel(unitLabels[unitId], unitId, "Unit")} />
                     </span>
                   );
                 })

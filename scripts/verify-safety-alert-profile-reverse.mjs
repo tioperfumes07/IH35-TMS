@@ -29,6 +29,9 @@ function failures(s = files) { return [
   ["exact three record targets", s.section.includes('kind="company_violation"') && s.section.includes('kind="integrity_alert"') && s.section.includes('kind="integrity_anomaly"') && s.entityLink.includes('case "company_violation":') && s.entityLink.includes("/safety/external-fines?record_type=company-violation&violation_id=") && s.entityLink.includes("/safety/integrity-alerts?alert_id=") && s.entityLink.includes("/safety/integrity-reports?anomaly_id=")],
   ["target drawers honor ids", s.companyPage.includes('searchParams.get("violation_id")') && s.integrityPage.includes('searchParams.get("alert_id")') && s.anomalyPage.includes('searchParams.get("anomaly_id")') && s.integrityReports.includes('searchParams.get("anomaly_id")')],
   ["company violation unit forward links", s.companyDrawer.includes("violation.related_unit_ids") && s.companyDrawer.includes('kind="unit" id={unitId}')],
+  ["company violation human label projections", (s.companyRoutes.match(/AS related_driver_labels/g) ?? []).length === 2 && (s.companyRoutes.match(/AS related_unit_labels/g) ?? []).length === 2],
+  ["company violation label tenant joins", (s.companyRoutes.match(/md\.operating_company_id = cv\.operating_company_id/g) ?? []).length === 2 && (s.companyRoutes.match(/mu\.operating_company_id = cv\.operating_company_id/g) ?? []).length === 2],
+  ["company violation drawer consumes labels", s.companyDrawer.includes("entityLabel(driverLabels[driverId], driverId, \"Driver\")") && s.companyDrawer.includes("entityLabel(unitLabels[unitId], unitId, \"Unit\")")],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   const checks = [
@@ -39,9 +42,12 @@ if (process.argv.includes("--selftest")) {
     failures({...files, section: files.section.replace('kind="integrity_alert"', 'kind="unit"')}).includes("exact three record targets"),
     failures({...files, companyPage: files.companyPage.replace('searchParams.get("violation_id")', 'null')}).includes("target drawers honor ids"),
     failures({...files, companyDrawer: files.companyDrawer.replace('kind="unit" id={unitId}', 'kind="driver" id={unitId}')}).includes("company violation unit forward links"),
+    failures({...files, companyRoutes: files.companyRoutes.replace("AS related_driver_labels", "AS unresolved_driver_labels")}).includes("company violation human label projections"),
+    failures({...files, companyRoutes: files.companyRoutes.replace("md.operating_company_id = cv.operating_company_id", "TRUE")}).includes("company violation label tenant joins"),
+    failures({...files, companyDrawer: files.companyDrawer.replace("driverLabels[driverId]", "undefined")}).includes("company violation drawer consumes labels"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-safety-alert-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-safety-alert-profile-reverse selftest PASS — 7/7 API/profile/target mutations red"); process.exit(0);
+  console.log("verify-safety-alert-profile-reverse selftest PASS — 10/10 API/profile/label/target mutations red"); process.exit(0);
 }
 const missing = failures(); if (missing.length) { console.error(`verify-safety-alert-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
 console.log("verify-safety-alert-profile-reverse PASS — five subject profiles resolve exact safety drawers");
