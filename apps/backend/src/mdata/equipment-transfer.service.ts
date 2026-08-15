@@ -264,22 +264,34 @@ export async function listTransfers(
     if (input.operating_company_id) {
       await setScopedCompanyContext(client, userId, input.operating_company_id);
       values.push(input.operating_company_id);
-      filters.push(`operating_company_id = $${values.length}::uuid`);
+      filters.push(`r.operating_company_id = $${values.length}::uuid`);
     }
     if (input.status) {
       values.push(input.status);
-      filters.push(`status = $${values.length}`);
+      filters.push(`r.status = $${values.length}`);
     }
     if (input.to_driver_id) {
       values.push(input.to_driver_id);
-      filters.push(`to_driver_id = $${values.length}`);
+      filters.push(`r.to_driver_id = $${values.length}`);
     }
     const rows = await client.query(
       `
-        SELECT *
-        FROM mdata.equipment_transfers
+        SELECT r.*,
+               e.equipment_number,
+               NULLIF(TRIM(CONCAT(COALESCE(from_driver.first_name, ''), ' ', COALESCE(from_driver.last_name, ''))), '') AS from_driver_name,
+               NULLIF(TRIM(CONCAT(COALESCE(to_driver.first_name, ''), ' ', COALESCE(to_driver.last_name, ''))), '') AS to_driver_name
+        FROM mdata.equipment_transfers r
+        LEFT JOIN mdata.equipment e
+          ON e.id = r.equipment_id
+         AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
+        LEFT JOIN mdata.drivers from_driver
+          ON from_driver.id = r.from_driver_id
+         AND from_driver.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.drivers to_driver
+          ON to_driver.id = r.to_driver_id
+         AND to_driver.operating_company_id = r.operating_company_id
         ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
-        ORDER BY initiated_at DESC
+        ORDER BY r.initiated_at DESC
       `,
       values
     );

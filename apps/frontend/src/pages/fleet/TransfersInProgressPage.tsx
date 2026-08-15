@@ -9,8 +9,11 @@ import { entityLabel } from "../../lib/entity-label";
 type TransferRow = {
   id: string;
   equipment_id: string;
+  equipment_number: string | null;
   from_driver_id: string;
+  from_driver_name: string | null;
   to_driver_id: string;
+  to_driver_name: string | null;
   dual_ack?: { dropoff_ack_at: string | null; pickup_ack_at: string | null } | null;
   dual_ack_complete?: boolean;
 };
@@ -58,15 +61,15 @@ export function TransfersInProgressPage() {
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               <span>
                 Trailer:{" "}
-                <EntityLink kind="trailer" id={row.equipment_id} label={entityLabel(null, row.equipment_id, "Trailer")} />
+                <EntityLink kind="trailer" id={row.equipment_id} label={entityLabel(row.equipment_number, row.equipment_id, "Trailer")} />
               </span>
               <span>
                 From:{" "}
-                <EntityLink kind="driver" id={row.from_driver_id} label={entityLabel(null, row.from_driver_id, "Driver")} />
+                <EntityLink kind="driver" id={row.from_driver_id} label={entityLabel(row.from_driver_name, row.from_driver_id, "Driver")} />
               </span>
               <span>
                 To:{" "}
-                <EntityLink kind="driver" id={row.to_driver_id} label={entityLabel(null, row.to_driver_id, "Driver")} />
+                <EntityLink kind="driver" id={row.to_driver_id} label={entityLabel(row.to_driver_name, row.to_driver_id, "Driver")} />
               </span>
             </div>
             <div className="text-xs text-gray-600">
