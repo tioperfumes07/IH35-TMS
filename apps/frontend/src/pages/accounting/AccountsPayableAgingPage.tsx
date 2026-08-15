@@ -227,10 +227,13 @@ export function AccountsPayableAgingPage() {
     () => (typeFilter === "all" ? vendors : vendors.filter((v) => v.display_group === typeFilter)),
     [vendors, typeFilter]
   );
+  // By-vendor view: ParityTable owns search (ACCT-F3464). By-type view keeps page TableSearch via `search`.
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return q ? typeFiltered.filter((v) => v.vendor_name.toLowerCase().includes(q)) : typeFiltered;
   }, [typeFiltered, search]);
+  const vendorTableRows = typeFiltered;
+  const vendorTotals = useMemo(() => typeFiltered.reduce(addBuckets, emptyBuckets()), [typeFiltered]);
   const totals = useMemo(() => filtered.reduce(addBuckets, emptyBuckets()), [filtered]);
 
   // BANK-SORT-ROLLOUT-ACCT-AP2 — ?sort=/?dir= URL persistence via the shared useUrlSort hook
@@ -359,7 +362,7 @@ export function AccountsPayableAgingPage() {
         <div className="space-y-2">
           <ParityTable<ApAgingVendor>
             columns={VENDOR_COLUMNS}
-            rows={filtered}
+            rows={vendorTableRows}
             rowKey={(v) => v.vendor_id ?? v.vendor_name}
             storageKey="acct-ap-aging-by-vendor"
             tableTestId="ap-aging-by-vendor-table"
@@ -369,12 +372,7 @@ export function AccountsPayableAgingPage() {
             sortDirection={sortDirection}
             onSortChange={onSortChange}
             filterBar={
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="w-56"><TableSearch value={search} onChange={setSearch} placeholder="Search vendor…" /></div>
-                <span className="text-[11px] text-slate-500">
-                  {filtered.length === typeFiltered.length ? `${typeFiltered.length}` : `${filtered.length} of ${typeFiltered.length}`} rows
-                </span>
-              </div>
+              <span className="text-[11px] text-slate-500">{typeFiltered.length} rows</span>
             }
           />
           {/* TOTAL row — same values the former <tfoot> carried (sum of the filtered vendor rows),
@@ -388,7 +386,7 @@ export function AccountsPayableAgingPage() {
             {MONEY_KEYS.map((k) => (
               <span key={k} className="whitespace-nowrap">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
-                <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(totals, k))}</span>
+                <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
               </span>
             ))}
           </div>
