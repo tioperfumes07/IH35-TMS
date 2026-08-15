@@ -22,7 +22,8 @@ function audit(s) {
   if (!/code === "E_UNIT_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("unit rejection route mapping missing");
   if (!/l\.assigned_unit_id = \$1::uuid/.test(s.aggregate) || !/l\.operating_company_id = \$2::uuid/.test(s.aggregate)) failures.push("exact entity-scoped unit reverse query missing");
   if (!/kind="load"/.test(s.reverse) || !/Available — no active load assigned to unit/.test(s.reverse)) failures.push("canonical load drill or honest empty state missing");
-  if (!/CurrentLoadSection currentLoad=\{profile\.current_load\} unitId=\{id\}/.test(s.profile)) failures.push("unit profile reverse mount missing");
+  if (!/unitNumber:\s*string/.test(s.reverse) || !/entityLabel\(unitNumber, unitId, "Unit"\)/.test(s.reverse)) failures.push("empty-state unit reverse must consume canonical unit number");
+  if (!/CurrentLoadSection currentLoad=\{profile\.current_load\} unitId=\{id\} unitNumber=\{unitNumber\}/.test(s.profile)) failures.push("unit profile reverse mount must forward canonical unit number");
   return failures;
 }
 
@@ -38,6 +39,9 @@ if (process.argv.includes("--selftest")) {
     ["route", "routes", /code === "E_UNIT_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /l\.assigned_unit_id = \$1::uuid/g, "TRUE"],
     ["drill", "reverse", /kind="load"/, 'kind="unit"'],
+    ["label-contract", "reverse", /unitNumber:\s*string/, "unitNumber?: string"],
+    ["label-consumer", "reverse", /entityLabel\(unitNumber, unitId, "Unit"\)/, 'entityLabel(null, unitId, "Unit")'],
+    ["label-parent", "profile", / unitNumber=\{unitNumber\}/, ""],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };

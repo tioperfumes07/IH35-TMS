@@ -247,7 +247,7 @@ export function VehicleProfilePage() {
             />
           </div>
           <div data-testid="vp-section-4-load">
-            <CurrentLoadSection currentLoad={profile.current_load} unitId={id} />
+            <CurrentLoadSection currentLoad={profile.current_load} unitId={id} unitNumber={unitNumber} />
             {showBackhaul ? (
               <div className="mt-3">
                 <BackhaulSuggestionsWidget unitId={id} companyId={companyId} unitNumber={unitNumber} />
