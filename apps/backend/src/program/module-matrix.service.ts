@@ -673,6 +673,44 @@ function leafTouchesText(leaf: RequiredLeaf, text: string): boolean {
   return false;
 }
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Box 4 Live leaf match — HONEST numbers only.
+ * Fuzzy stem/sub/route-tail matching (leafTouchesText) inflated Live (~906/3446 from ~26
+ * PROD-VERIFIED rows). Live requires the ledger row to name this leaf explicitly
+ * (backticks, Leaves: list, leaf_id=, or full route_hint path). Audited Box 2 may still
+ * use leafTouchesText. Keep in lockstep with scripts/verify-matrix-live-leaf-explicit.mjs.
+ */
+export function leafExplicitlyNamedInLiveEvidence(leaf: RequiredLeaf, text: string): boolean {
+  const id = leaf.id?.trim();
+  if (!id) return false;
+  const hay = text;
+  if (hay.includes(`\`${id}\``)) return true;
+  const idToken = new RegExp(
+    `(?:^|[\\s·,;/\\|\\(\\[\\{"'])${escapeRegExp(id)}(?:$|[\\s·,;/\\|\\)\\]\\}"'\\.\`])`,
+  );
+  if (/\bLeaves?\s*:/i.test(hay) && idToken.test(hay)) return true;
+  if (
+    new RegExp(
+      `\\bleaf(?:_id|Id|\\s*id)?\\s*[:=]\\s*\`?${escapeRegExp(id)}\`?(?:\\b|$)`,
+      "i",
+    ).test(hay)
+  ) {
+    return true;
+  }
+  const route = leaf.route_hint.replace(/\/:[^/]+/g, "").replace(/\/$/, "");
+  if (route && route.length >= 6) {
+    if (hay.includes(`\`${route}\``)) return true;
+    if (new RegExp(`(?:https?:\\/\\/[^\\s\`"]+)?${escapeRegExp(route)}(?:[?#\\s\`"']|$)`).test(hay)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function cellState(audited: boolean, built: boolean, live: boolean): MatrixCellState {
   if (live) return "live";
   if (built) return "built";
@@ -780,8 +818,11 @@ function leafColumnLiveReason(
     if (!rowTouchesModule(row, moduleId)) continue;
     const hay = moduleHay(row);
     if (!isProdVerifiedBlob(hay)) continue;
-    if (!leafTouchesText(leaf, hay)) continue;
-    if (!columnTouches(colId, hay)) continue;
+    // Explicit leaf only — never stem/sub fan-out (LV-MATRIX-LIVE-KEYWORD-FANOUT).
+    if (!leafExplicitlyNamedInLiveEvidence(leaf, hay)) continue;
+    if (!columnTouches(colId, hay) && !hay.includes(`\`${colId}\``) && !new RegExp(`\\b${escapeRegExp(colId)}\\b`).test(hay)) {
+      continue;
+    }
     return `ledger #${row.num} PROD-VERIFIED`;
   }
   return undefined;
@@ -937,7 +978,7 @@ export async function buildModuleMatrix(
       ],
       doneSources: [
         "Box 3 Built: AUTO — @matrix-built on scripts/verify-*.mjs + wire-sprint-built.json; guard must exist on deployed SHA",
-        "Box 4 Live: AUDIT-COVERAGE-LIVE PROD-VERIFIED leaf×column only",
+        "Box 4 Live: AUDIT-COVERAGE-LIVE PROD-VERIFIED with explicit leaf id (no stem/keyword fan-out)",
         "Probe density: live_scenario_probe → Audited ● only (never Built)",
       ],
       honesty:
