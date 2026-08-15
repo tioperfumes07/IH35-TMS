@@ -435,8 +435,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "customer",
-        "invoice"
+        "customer"
       ]
     },
     {
@@ -2791,6 +2790,18 @@
           "id": "report.management",
           "removed": [
             "expense"
+          ]
+        }
+      ]
+    },
+    "invoice_2026_08_15": {
+      "finding": "INVOICE-FALSE-REQUIRED-AR-AGING",
+      "note": "report.ar_aging (ARAgingPage.tsx): a customer-level aging rollup -- rows keyed by customer_id with bucket-sum columns (bucket_0_30_cents etc), no invoice_id per row at all, same shape as the already-dropped AP-aging pages this session. The page provides only a nav-hop (row click / \"Open invoices\" -> /accounting/invoices?customer_id=...) to a DIFFERENT mounted page (InvoicesListPage.tsx) that does the real per-invoice linking. No single owning invoice record exists on this leaf's own surface -- each row sums N invoices.",
+      "drops": [
+        {
+          "id": "report.ar_aging",
+          "removed": [
+            "invoice"
           ]
         }
       ]

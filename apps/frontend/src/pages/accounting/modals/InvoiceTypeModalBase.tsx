@@ -4,6 +4,8 @@ import { z } from "zod";
 import { AlertTriangle } from "lucide-react";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Button } from "../../../components/Button";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { UploadZone } from "../../../components/UploadZone";
 import { useToast } from "../../../components/Toast";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -85,7 +87,7 @@ type Props = {
     customer_notes?: string;
     attachment_draft_id?: string;
     override_credit_limit?: boolean;
-  }) => Promise<{ id: string }>;
+  }) => Promise<{ id: string; display_id?: string | null }>;
 };
 
 export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEntityType, onClose, onCreated, createInvoice }: Props) {
@@ -105,6 +107,10 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [creditLimitBlock, setCreditLimitBlock] = useState<CreditLimitBlock | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
+  // LINK-F5191: hold the just-created invoice instead of tearing the drawer down in the same
+  // tick as onCreated() fires -- same "hold state -> confirm -> close" pattern already applied
+  // to CreateBillModal.tsx (ap_bill sweep) and CreateExpenseModal.tsx (expense sweep).
+  const [createdInvoice, setCreatedInvoice] = useState<{ id: string; display_id: string | null } | null>(null);
   const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(auth.user?.role ?? "");
 
   const customersQuery = useQuery({
@@ -227,8 +233,11 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           });
         }
 
-        onCreated(created.id);
         pushToast("Invoice created", "success");
+        // LINK-F5191: hold a confirmation step with a real EntityLink instead of firing
+        // onCreated() (which the caller uses to close this drawer and navigate away)
+        // immediately -- onCreated now fires when the operator dismisses the confirmation.
+        setCreatedInvoice({ id: created.id, display_id: created.display_id ?? null });
       } catch (err) {
         if (err instanceof ApiError && err.status === 422) {
           const data = err.data as { error?: string; exposure_cents?: number; limit_cents?: number; credit_limit_source?: string | null; can_override?: boolean };
@@ -261,6 +270,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setDueDate("");
     setCreditLimitBlock(null);
     setOverrideCreditLimit(false);
+    setCreatedInvoice(null);
     resetInvoiceErrors();
     setDraftAttachmentEntityId(crypto.randomUUID());
   }, [open, resetInvoiceErrors]);
@@ -305,6 +315,32 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
 
   return (
     <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
+      {createdInvoice ? (
+        <div
+          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm"
+          data-testid="invoice-type-modal-confirmation"
+        >
+          <p className="text-gray-700">
+            Invoice created:{" "}
+            <EntityLink
+              kind="invoice"
+              id={createdInvoice.id}
+              label={entityLabel(createdInvoice.display_id, createdInvoice.id, "Invoice")}
+              data-testid="invoice-type-modal-view-invoice"
+            />
+          </p>
+          <Button
+            size="sm"
+            onClick={() => {
+              const id = createdInvoice.id;
+              setCreatedInvoice(null);
+              onCreated(id);
+            }}
+          >
+            Done
+          </Button>
+        </div>
+      ) : (
       <form
         className="space-y-3"
         data-invoice-create-form="true"
@@ -563,6 +599,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           <Button type="submit" disabled={creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit)}>Create</Button>
         </div>
       </form>
+      )}
     </ParityDrawer>
   );
 }

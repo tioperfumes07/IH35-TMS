@@ -6,6 +6,7 @@ import { useToast } from "../../components/Toast";
 import { useInvoiceCreateFromLoad, type LoadStatusFilter } from "../../hooks/useInvoiceCreateFromLoad";
 import { InvoiceCreateBlankPage } from "./InvoiceCreateBlankPage";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -25,6 +26,11 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
   const [statusFilter, setStatusFilter] = useState<LoadStatusFilter>("all");
   const [loadPage, setLoadPage] = useState(1);
   const pageSize = 25;
+  // LINK-F5191: hold the just-created invoice instead of firing handleCreated() (which
+  // navigates away) in the same tick -- same "hold state -> confirm -> close" pattern already
+  // applied to InvoiceTypeModalBase.tsx (the "blank" step below inherits its own confirmation
+  // from that fix; this state covers the "from an existing load" step's own direct create call).
+  const [createdFromLoad, setCreatedFromLoad] = useState<{ id: string; display_id: string | null } | null>(null);
 
   const { loads, totalCount, isLoading, isError, error, refetchLoads, createFromLoad, isCreating } = useInvoiceCreateFromLoad(operatingCompanyId, {
     search: loadSearch,
@@ -38,6 +44,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
     setLoadSearch("");
     setStatusFilter("all");
     setLoadPage(1);
+    setCreatedFromLoad(null);
     onClose();
   };
 
@@ -83,7 +90,34 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
           </div>
         ) : null}
 
-        {step === "from_load" ? (
+        {step === "from_load" && createdFromLoad ? (
+          <div
+            className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm"
+            data-testid="invoice-create-from-load-confirmation"
+          >
+            <p className="text-gray-700">
+              Invoice created:{" "}
+              <EntityLink
+                kind="invoice"
+                id={createdFromLoad.id}
+                label={entityLabel(createdFromLoad.display_id, createdFromLoad.id, "Invoice")}
+                data-testid="invoice-create-from-load-view-invoice"
+              />
+            </p>
+            <Button
+              size="sm"
+              onClick={() => {
+                const id = createdFromLoad.id;
+                setCreatedFromLoad(null);
+                handleCreated(id);
+              }}
+            >
+              Done
+            </Button>
+          </div>
+        ) : null}
+
+        {step === "from_load" && !createdFromLoad ? (
           <div className="space-y-3">
             {isError ? (
               <ListErrorBanner
@@ -140,8 +174,8 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                           onClick={async () => {
                             try {
                               const result = await createFromLoad(load.id);
-                              handleCreated(result.invoice.id);
                               pushToast("Invoice created from load.", "success");
+                              setCreatedFromLoad({ id: result.invoice.id, display_id: result.invoice.display_id ?? null });
                             } catch (error) {
                               pushToast(userFacingApiError(error, "Could not create invoice from load."), "error");
                             }

@@ -227,8 +227,7 @@
       "sub": "Quick actions bar",
       "route_hint": "/home",
       "required": [
-        "connectivity",
-        "invoice"
+        "connectivity"
       ]
     },
     {
@@ -1094,6 +1093,18 @@
           "id": "jump.banking",
           "removed": [
             "bank"
+          ]
+        }
+      ]
+    },
+    "invoice_2026_08_15": {
+      "finding": "INVOICE-FALSE-REQUIRED-QUICK-ACTIONS",
+      "note": "surface.quick_actions (QuickActionsBar.tsx): a pure create-chrome launcher bar (Book Load / Create WO / Create Invoice / Record Expense buttons). The Create Invoice action opens ManualInvoiceModal and on success navigates away to the created invoice detail page rather than rendering anything on this surface -- there is no owning invoice record at the quick-actions bar itself, it is a launcher, not a list/detail view.",
+      "drops": [
+        {
+          "id": "surface.quick_actions",
+          "removed": [
+            "invoice"
           ]
         }
       ]

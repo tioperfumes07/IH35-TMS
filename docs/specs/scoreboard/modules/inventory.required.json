@@ -252,9 +252,7 @@
       "tab": "Assignments",
       "sub": "Honest SoR banner (parts_invoice_links)",
       "route_hint": "/inventory/assignments",
-      "required": [
-        "invoice"
-      ]
+      "required": []
     },
     {
       "id": "assignments.trail",
@@ -272,9 +270,7 @@
       "tab": "Assignments",
       "sub": "Search part / WO / unit / vendor / invoice",
       "route_hint": "/inventory/assignments",
-      "required": [
-        "invoice"
-      ]
+      "required": []
     },
     {
       "id": "assignments.wo_link",
@@ -305,7 +301,6 @@
       "required": [
         "vendor",
         "connectivity",
-        "invoice",
         "reverse_link"
       ]
     },
@@ -876,6 +871,30 @@
             "connectivity"
           ],
           "reason": "no filterBar prop passed"
+        }
+      ]
+    },
+    "invoice_2026_08_15": {
+      "finding": "INVOICE-FALSE-REQUIRED-PARTS-ASSIGNMENTS",
+      "note": "assignments.banner / assignments.search / assignments.vendor_link (all three mount InventoryAssignmentsPage.tsx, backed by maintenance.parts_invoice_links): the \"Invoice #\" column shows vendor_invoice_number, a free-text field (declared text NOT NULL in db/migrations/0049_p3_t11_6_1_wo_format_vendor_inventory_integrity.sql:170) with NO foreign key to accounting.invoices -- it is the vendor's own paper/PDF invoice reference number, entered manually when parts consumption is logged on a work order. Confirmed in the type (PartsAssignmentRow has no invoice_id field) and the backend query (parts-invoice-links.routes.ts), which joins only maintenance.work_orders, mdata.units, and mdata.vendors -- never accounting.invoices. No real accounting.invoices row exists anywhere in this data path for any of the three sub-surfaces.",
+      "drops": [
+        {
+          "id": "assignments.banner",
+          "removed": [
+            "invoice"
+          ]
+        },
+        {
+          "id": "assignments.search",
+          "removed": [
+            "invoice"
+          ]
+        },
+        {
+          "id": "assignments.vendor_link",
+          "removed": [
+            "invoice"
+          ]
         }
       ]
     }
