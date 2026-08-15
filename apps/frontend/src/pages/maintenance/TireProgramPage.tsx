@@ -47,9 +47,9 @@ export function TireProgramPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const [assetKind, setAssetKind] = useState<"unit" | "trailer">("unit");
-  const [assetId, setAssetId] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [assetKind, setAssetKindState] = useState<"unit" | "trailer">("unit");
+  const [assetId, setAssetIdState] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<MaintenanceTireRecordRow | null>(null);
   const [mountOpen, setMountOpen] = useState(false);
   const [brandOpen, setBrandOpen] = useState(false);
@@ -63,13 +63,39 @@ export function TireProgramPage() {
     const trailerId = searchParams.get("equipment_id")?.trim();
     const unitId = searchParams.get("unit_id")?.trim();
     if (trailerId) {
-      setAssetKind("trailer");
-      setAssetId(trailerId);
+      setAssetKindState("trailer");
+      setAssetIdState(trailerId);
     } else if (unitId) {
-      setAssetKind("unit");
-      setAssetId(unitId);
+      setAssetKindState("unit");
+      setAssetIdState(unitId);
     }
   }, [searchParams]);
+
+  // LST-F5200 — asset selection writes URL (unit_id / equipment_id).
+  function writeAssetToUrl(kind: "unit" | "trailer", id: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("unit_id");
+        params.delete("equipment_id");
+        if (id) {
+          if (kind === "trailer") params.set("equipment_id", id);
+          else params.set("unit_id", id);
+        }
+        return params;
+      },
+      { replace: true }
+    );
+  }
+  function setAssetKind(kind: "unit" | "trailer") {
+    setAssetKindState(kind);
+    setAssetIdState("");
+    writeAssetToUrl(kind, "");
+  }
+  function setAssetId(next: string) {
+    setAssetIdState(next);
+    writeAssetToUrl(assetKind, next);
+  }
 
   const assetParams = assetKind === "trailer" ? { equipment_id: assetId } : { unit_id: assetId };
 
@@ -317,7 +343,7 @@ export function TireProgramPage() {
               key={kind}
               type="button"
               className={`rounded-sm px-3 py-1 text-xs font-medium ${assetKind === kind ? "bg-slate-800 text-white" : "text-gray-600"}`}
-              onClick={() => { setAssetKind(kind); setAssetId(""); }}
+              onClick={() => setAssetKind(kind)}
             >
               {kind === "unit" ? "Unit" : "Trailer"}
             </button>
