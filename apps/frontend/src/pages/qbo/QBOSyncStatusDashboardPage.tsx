@@ -333,6 +333,8 @@ export function QBOSyncStatusDashboardPage() {
           emptyText="No sync runs found."
           storageKey="qbo-sync-status-runs"
           tableTestId="qbo-sync-runs-table"
+          // ACCT-F3500: server-bound error-text search above — suppress ParityTable toolbar Search.
+          suppressToolbarSearch
           renderExpanded={(r) => (
             <div className="font-mono text-[11px] text-gray-800">
               <div className="mb-1 font-semibold">Payload / diagnostics</div>
