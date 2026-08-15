@@ -173,8 +173,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         <div>
           <div className="text-sm font-semibold text-slate-800">Hours of Service — Compliance</div>
           <div className="text-[11px] text-slate-500">
-            Fleet duty status and FMCSA clocks from <code className="text-[10px]">hos.duty_status_events</code> (CAP-11).
-            Driver self-view remains on Driver HOS detail.
+            Fleet duty status and FMCSA clocks from recorded duty-status events. Driver self-view remains on Driver HOS detail.
           </div>
         </div>
         <button

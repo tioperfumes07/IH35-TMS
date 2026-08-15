@@ -140,9 +140,7 @@ export function InventoryPurchasesPage() {
       <InventoryModuleTabs />
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600">
-        Append-only purchase events (
-        <code className="text-xs">maintenance.parts_purchases</code>
-        ). Stock on-hand lives on{" "}
+        Purchase receipts are preserved as an append-only history. Stock on-hand lives on{" "}
         <Link className="text-slate-700 underline" to="/inventory">
           Parts &amp; Stock
         </Link>{" "}

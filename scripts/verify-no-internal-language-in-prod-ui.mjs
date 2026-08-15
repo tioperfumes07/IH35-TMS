@@ -39,6 +39,30 @@ const forbiddenPatterns = [
   { re: /coming in cycle/i, label: "coming in cycle" },
 ];
 
+// Operator copy must describe records and workflows, not expose physical schema.table names.
+// These exact pre-existing protected-lane instances are separately OPEN on GUARD-WORKORDERS;
+// this baseline is a ratchet (no new file/token pair may appear) and shrinks as their owner fixes them.
+const VISIBLE_SCHEMA_BASELINE = new Set([
+  "apps/frontend/src/components/accounting/VendorBillForm.tsx::accounting.bill_lines",
+  "apps/frontend/src/pages/banking/BankingHome.tsx::views.banking_account_tiles",
+  "apps/frontend/src/pages/banking/BankingHome.tsx::accounting.factoring_advances",
+  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx::documents.attachments",
+  "apps/frontend/src/pages/factoring/FactoringHome.tsx::factoring.factor",
+  // QBO system explanation is outside the USMCA TMS-native sprint; do not expand this exception.
+  "apps/frontend/src/pages/system/SystemModulePage.tsx::accounting.bills",
+]);
+
+export function visibleSchemaNames(source, relativePath) {
+  const matches = [];
+  const elementRe = /<(?:code|span)\b[^>]*>\s*([a-z][a-z0-9_]*\.[a-z][a-z0-9_]*)\s*<\/(?:code|span)>/g;
+  for (const match of source.matchAll(elementRe)) {
+    const token = match[1];
+    const key = `${relativePath}::${token}`;
+    if (!VISIBLE_SCHEMA_BASELINE.has(key)) matches.push({ token, key });
+  }
+  return matches;
+}
+
 /**
  * CLASS RULE (added 2026-08-11) — a screen may not tell an operator to go set an internal feature
  * flag by its identifier.
@@ -112,10 +136,34 @@ if (!fs.existsSync(targetRoot)) {
   process.exit(1);
 }
 
+if (process.argv.includes("--selftest")) {
+  const good = visibleSchemaNames("<p>Recorded work-order parts.</p>", "apps/frontend/src/pages/example.tsx");
+  const bad = visibleSchemaNames("<code>maintenance.parts_purchases</code>", "apps/frontend/src/pages/example.tsx");
+  const protectedExisting = visibleSchemaNames(
+    '<code className="text-xs">accounting.bill_lines</code>',
+    "apps/frontend/src/components/accounting/VendorBillForm.tsx",
+  );
+  if (good.length !== 0 || bad.length !== 1 || bad[0]?.token !== "maintenance.parts_purchases" || protectedExisting.length !== 0) {
+    console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — visible schema-name mutation escaped");
+    process.exit(1);
+  }
+  console.log("[verify-no-internal-language-in-prod-ui] SELFTEST PASS — visible schema-name mutation rejected; exact protected baseline honored");
+  process.exit(0);
+}
+
 const violations = [];
 const files = walk(targetRoot);
 for (const file of files) {
   const content = fs.readFileSync(file, "utf8");
+  const relativeFile = path.relative(repoRoot, file).replace(/\\/g, "/");
+  for (const leak of visibleSchemaNames(content, relativeFile)) {
+    violations.push({
+      file: relativeFile,
+      line: content.slice(0, content.indexOf(leak.token)).split(/\r?\n/).length,
+      term: "internal schema.table name shown to the operator",
+      text: leak.token,
+    });
+  }
   const lines = content.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
