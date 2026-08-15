@@ -719,6 +719,10 @@ export const accountTypesCatalogConfig: GenericCatalogConfig = {
   urlSegment: "account-types-lookup",
   displayName: "Account Types",
   displayNameColumn: "name",
+  // Global QBO-parity taxonomy — view via Lists; no operator CRUD through generic factory
+  // (table has no updated_at / audit user columns).
+  readOnly: true,
+  hasUpdatedAt: false,
   allowedColumns: ["code", "display_name", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -780,6 +784,7 @@ export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
   displayName: "Audit Event Types",
   displayNameColumn: "description",
   readOnly: true,
+  hasUpdatedAt: false,
   allowedColumns: ["code", "display_name"],
   requiredColumns: ["code", "display_name"],
   validators: {

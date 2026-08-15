@@ -75,9 +75,10 @@ export function AccountTypeCatalogPage() {
   const [search, setSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["account-type-catalog", companyId],
+    queryKey: ["account-type-catalog", companyId || "global"],
+    // Taxonomy is global (catalogs.account_types); opco only scopes custom detail_types.
+    // Do not gate the whole page on companyId — that left Lists Account Type blank/failed.
     queryFn: () => getAccountTypeCatalog(companyId || undefined),
-    enabled: Boolean(companyId),
   });
   const { data, isLoading, isError } = query;
   const listState = useListState(query, (data ?? []).length === 0);

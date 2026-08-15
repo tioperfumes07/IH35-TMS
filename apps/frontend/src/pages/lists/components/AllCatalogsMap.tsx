@@ -337,6 +337,12 @@ export function buildCatalogPath(domain: string, catalogKey: string): string {
     const maintenancePath = maintenanceRouteMap[catalogKey];
     if (maintenancePath) return maintenancePath;
   }
+  if (domain === "accounting") {
+    // "Account Types" hub card used account-types-lookup (generic factory) which 500'd because
+    // catalogs.account_types has no updated_at. Prefer the dedicated taxonomy page; lookup API
+    // is still fixed for any deep link to /lists/accounting/account-types-lookup.
+    if (catalogKey === "account-types-lookup") return "/lists/accounting/account-types";
+  }
   return `/lists/${routeDomain}/${catalogKey}`;
 }
 

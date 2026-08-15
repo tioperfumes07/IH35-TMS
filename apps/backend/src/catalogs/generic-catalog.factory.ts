@@ -35,6 +35,12 @@ export type GenericCatalogConfig = {
   softDeleteColumn: string;
   /** Whether the physical table carries a deactivated_at column for soft-delete audit. */
   hasDeactivatedAt: boolean;
+  /**
+   * Whether the physical table carries `updated_at` (and typically `updated_by_user_id`).
+   * Default true. Global taxonomies like catalogs.account_types / audit_event_types only have
+   * created_at — selecting t.updated_at 500s the Lists card (LST Account Types load fail).
+   */
+  hasUpdatedAt?: boolean;
   codeRegex?: RegExp;
   readOnly?: boolean;
   /**
@@ -150,6 +156,7 @@ export function createCatalogRoutes(
     .object(updateShape)
     .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
+  const hasUpdatedAt = config.hasUpdatedAt !== false;
   const selectColumns = [
     "t.id",
     ...config.allowedColumns.map((column) => {
@@ -158,7 +165,9 @@ export function createCatalogRoutes(
       return `t.${dbColumn} AS ${apiColumn}`;
     }),
     "t.created_at",
-    "t.updated_at",
+    // LST-ACCOUNT-TYPES-LOAD: account_types / audit_event_types have created_at only — never
+    // invent a physical updated_at reference (Postgres 42703 → Lists card load failure).
+    hasUpdatedAt ? "t.updated_at" : "NULL::timestamptz AS updated_at",
   ];
 
   const sortColumn = dbColumnForApiColumn(config.defaultSort.column, config);
@@ -241,10 +250,15 @@ export function createCatalogRoutes(
             if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
           }
 
-          const insertColumns = ["created_by_user_id", "updated_by_user_id"];
-          const insertValues: unknown[] = [authUser.uuid, authUser.uuid];
-          const placeholders = ["$1", "$2"];
-          let paramIndex = 3;
+          const insertColumns: string[] = [];
+          const insertValues: unknown[] = [];
+          const placeholders: string[] = [];
+          let paramIndex = 1;
+          if (hasUpdatedAt) {
+            insertColumns.push("created_by_user_id", "updated_by_user_id");
+            insertValues.push(authUser.uuid, authUser.uuid);
+            placeholders.push(`$${paramIndex++}`, `$${paramIndex++}`);
+          }
           if (entityScoped) {
             insertColumns.push("operating_company_id");
             insertValues.push(operatingCompanyId);
@@ -324,8 +338,10 @@ export function createCatalogRoutes(
           if (config.hasDeactivatedAt && config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === true) {
             add("deactivated_at", null);
           }
-          add("updated_at", new Date().toISOString());
-          add("updated_by_user_id", authUser.uuid);
+          if (hasUpdatedAt) {
+            add("updated_at", new Date().toISOString());
+            add("updated_by_user_id", authUser.uuid);
+          }
           values.push(parsedParams.data.id);
 
           const res = await client.query(
@@ -366,7 +382,8 @@ export function createCatalogRoutes(
 
         const result = await withCurrentUser(authUser.uuid, async (client) => {
           const res = await client.query(
-            `
+            hasUpdatedAt
+              ? `
               UPDATE catalogs.${config.tableName}
               SET ${config.softDeleteColumn} = false,
                   ${config.hasDeactivatedAt ? "deactivated_at = now()," : ""}
@@ -374,8 +391,15 @@ export function createCatalogRoutes(
                   updated_by_user_id = $2
               WHERE id = $1
               RETURNING id, code
+            `
+              : `
+              UPDATE catalogs.${config.tableName}
+              SET ${config.softDeleteColumn} = false
+                  ${config.hasDeactivatedAt ? ", deactivated_at = now()" : ""}
+              WHERE id = $1
+              RETURNING id, code
             `,
-            [parsedParams.data.id, authUser.uuid]
+            hasUpdatedAt ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
           );
           if (res.rows.length === 0) return null;
           await appendCrudAudit(client, authUser.uuid, `catalogs.${config.tableName}_deactivated`, {
@@ -404,7 +428,8 @@ export function createCatalogRoutes(
 
       const restored = await withCurrentUser(authUser.uuid, async (client) => {
         const res = await client.query(
-          `
+          hasUpdatedAt
+            ? `
             UPDATE catalogs.${config.tableName}
             SET ${config.softDeleteColumn} = true,
                 ${config.hasDeactivatedAt ? "deactivated_at = NULL," : ""}
@@ -412,8 +437,15 @@ export function createCatalogRoutes(
                 updated_by_user_id = $2
             WHERE id = $1
             RETURNING ${selectColumns.join(", ").replaceAll("t.", "")}
+          `
+            : `
+            UPDATE catalogs.${config.tableName}
+            SET ${config.softDeleteColumn} = true
+                ${config.hasDeactivatedAt ? ", deactivated_at = NULL" : ""}
+            WHERE id = $1
+            RETURNING ${selectColumns.join(", ").replaceAll("t.", "")}
           `,
-          [parsedParams.data.id, authUser.uuid]
+          hasUpdatedAt ? [parsedParams.data.id, authUser.uuid] : [parsedParams.data.id]
         );
         if (res.rows.length === 0) return null;
         const row = res.rows[0];
