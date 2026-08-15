@@ -9,6 +9,8 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { getVendor, listVendors } from "../../../api/mdata";
+import { DatePicker } from "../../../components/forms/DatePicker";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 type Props = {
   open: boolean;
@@ -222,17 +224,39 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
               <div className="grid gap-2 sm:grid-cols-3">
                 {([
                   ["execution_date","Execution Date","date"],["start_date","Start Date","date"],["end_date","End Date","date"],
-                  ["term_months","Term (months)","text"],["monthly_lease_amount","Monthly Lease $ *","text"],
-                  ["payment_due_day","Payment Due Day","text"],["security_deposit","Security Deposit $","text"],
-                  ["late_fee","Late Fee $","text"],["late_fee_grace_days","Grace Days","text"],
+                  ["term_months","Term (months)","text"],["monthly_lease_amount","Monthly Lease $ *","money"],
+                  ["payment_due_day","Payment Due Day","text"],["security_deposit","Security Deposit $","money"],
+                  ["late_fee","Late Fee $","money"],["late_fee_grace_days","Grace Days","text"],
                   ["governing_law","Governing Law","text"],["venue_county","Venue County","text"],
                   ["reference_no","Reference No.","text"],["escrow_agent_name","Escrow Agent","text"],
-                  ["escrow_amount","Escrow $/mo","text"],
+                  ["escrow_amount","Escrow $/mo","money"],
                 ] as [keyof typeof terms, string, string][]).map(([k,l,t]) => (
                   <div key={k}>
                     <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">{l}</label>
-                    <input type={t} value={terms[k]} onChange={(e) => setTerms((p) => ({ ...p, [k]: e.target.value }))}
-                      className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm" />
+                    {t === "date" ? (
+                      <DatePicker
+                        value={terms[k]}
+                        onChange={(next) => setTerms((p) => ({ ...p, [k]: next }))}
+                        className="h-10 w-full"
+                      />
+                    ) : t === "money" ? (
+                      <MoneyInput
+                        valueCents={parseDollars(terms[k])}
+                        onChangeCents={(cents) => setTerms((p) => ({
+                          ...p,
+                          [k]: cents == null ? "" : String(cents / 100),
+                        }))}
+                        className="w-full"
+                        ariaLabel={l}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={terms[k]}
+                        onChange={(e) => setTerms((p) => ({ ...p, [k]: e.target.value }))}
+                        className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                      />
+                    )}
                   </div>
                 ))}
               </div>
