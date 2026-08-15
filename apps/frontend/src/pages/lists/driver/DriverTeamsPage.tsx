@@ -10,7 +10,7 @@
  * ListErrorBanner, ParityTable (loading/empty states), shared Modal for create/edit.
  * Entity scope: operating_company_id from CompanyContext, exactly as sibling Lists pages do it.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { driverTeamMemberName, listMdataDriverTeams, type MdataDriverTeam } from "../../../api/driver-teams";
@@ -94,7 +94,6 @@ export function DriverTeamsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("true");
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedTeam, setSelectedTeam] = useState<MdataDriverTeam | null>(null);
@@ -121,6 +120,8 @@ export function DriverTeamsPage() {
   });
 
   const teams = query.data?.teams ?? [];
+  // Free-text search: ParityTable toolbar owns it (LST-F3490) — status filter stays page-local.
+  const rows = teams;
 
   useEffect(() => {
     const teamId = searchParams.get("team_id");
@@ -131,19 +132,6 @@ export function DriverTeamsPage() {
     setSelectedTeam(team);
     setModalOpen(true);
   }, [modalOpen, searchParams, teams]);
-
-  // Client-side filter only — the mdata roster endpoint exposes no `search` param and this page
-  // must not invent one.
-  const rows = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) return teams;
-    return teams.filter((team) =>
-      [team.team_name, driverTeamMemberName(team, "primary"), driverTeamMemberName(team, "secondary"), team.relationship ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle)
-    );
-  }, [teams, search]);
 
   return (
     <div className="space-y-3">
@@ -175,16 +163,10 @@ export function DriverTeamsPage() {
       ) : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by team or driver name"
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-        />
         <SelectCombobox
           value={status}
           onChange={(event) => setStatus(event.target.value as StatusFilter)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-1"
         >
           <option value="true">Active</option>
           <option value="false">Inactive</option>
