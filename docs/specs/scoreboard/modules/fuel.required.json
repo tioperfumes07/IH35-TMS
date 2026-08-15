@@ -177,7 +177,6 @@
       "sub": "Fuel→expense map",
       "route_hint": "/fuel/expense-mapping",
       "required": [
-        "expense",
         "connectivity"
       ]
     },
@@ -573,6 +572,18 @@
           "id": "fuel.modal.create_fuel_transaction",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-FUEL-MAPPING",
+      "note": "expense_mapping (FuelGlMappingCoverage.tsx): a pure category-to-GL-account coverage checker over 5 fixed category codes -- no single owning accounting.expenses row anywhere on this screen, it is a category/config mapping surface, not a records list.",
+      "drops": [
+        {
+          "id": "expense_mapping",
+          "removed": [
+            "expense"
           ]
         }
       ]

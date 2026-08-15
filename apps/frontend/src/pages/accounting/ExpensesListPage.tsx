@@ -381,7 +381,12 @@ export function ExpensesListPage() {
         open={createOpen}
         operatingCompanyId={companyId}
         onClose={() => setCreateOpen(false)}
-        onCreated={() => void query.refetch()}
+        onCreated={(expenseId) => {
+          void query.refetch();
+          // LINK-F5189: reuse the existing deep-link banner + row-highlight mechanism (the
+          // expense_number column already links kind="expense" per row).
+          if (expenseId) setHighlightedExpenseId(expenseId);
+        }}
       />
       <VoidReasonModal
         open={voidOpen}

@@ -253,7 +253,6 @@
         "customer",
         "vendor",
         "unit",
-        "expense",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -630,6 +629,18 @@
           "id": "tab.actual_vs_projected",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-CASHFLOW",
+      "note": "cash-flow.panel.projection (DailyPredictionTab.tsx): ExpenseLineItem only carries kind: driver_pay|bill_due|adjustment (settlement_id/bill_id, already wired under LINK-F5187) -- cash-flow.service.ts never queries accounting.expenses at all (grepped, zero hits). accounting.expenses.transaction_date is a point-in-time recorded transaction with no due-date/scheduled-payment concept, so it cannot feed a forward cash projection without fabricating a future date.",
+      "drops": [
+        {
+          "id": "cash-flow.panel.projection",
+          "removed": [
+            "expense"
           ]
         }
       ]

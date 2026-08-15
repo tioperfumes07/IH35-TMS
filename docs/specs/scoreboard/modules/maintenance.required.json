@@ -270,7 +270,6 @@
         "vendor",
         "unit",
         "load",
-        "expense",
         "gl_je",
         "picker_law",
         "qbo_chrome",
@@ -1770,6 +1769,18 @@
             "reverse_link"
           ],
           "reason": "company-wide batch run, no unit_id column"
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-ROAD-SERVICE",
+      "note": "wo.source.rs (RoadServiceList.tsx / RoadServiceTicketModal.tsx): the intake modal is a pure ticket form with no accounting write; the row action \"Create WO\" hits createWorkOrderFromRoadServiceTicket (wo-integration.ts), which is hardcoded to call autoCreateBillFromWO -- there is no payment_timing branch and no call to autoCreateExpenseFromWO anywhere in this file. road_service_tickets has a bill_id column but no expense_id column. No expense record is architecturally possible on this surface.",
+      "drops": [
+        {
+          "id": "wo.source.rs",
+          "removed": [
+            "expense"
+          ]
         }
       ]
     }

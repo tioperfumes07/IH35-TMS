@@ -289,6 +289,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   // Transaction-side task completion (TASKS-PLANNER-V2). Set after a WO is created so we can offer a
   // "Tasks" completion button that links the new WO (role='result') to an open task.
   const [createdWO, setCreatedWO] = useState<{ uuid: string; display_id?: string } | null>(null);
+  // LINK-F5189: when payment_timing === "paid_same_day", the backend auto-creates a real
+  // accounting.expenses row (autoCreateExpenseFromWO) and returns its id in response.expense.uuid
+  // -- previously used only to pick a toast string, then discarded.
+  const [createdExpense, setCreatedExpense] = useState<{ uuid: string } | null>(null);
   // Block 8 gap 1 — vendor-invoice reconcile (the invoice SIDE; the WO side is computed from the lines below).
   // Block 8 — asset-location map: serialized parts placed on the unit during this WO.
   const [serializedParts, setSerializedParts] = useState<
@@ -370,6 +374,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     setSuggestionPinned(false);
     setBackendLoadError(null);
     setCreatedWO(null);
+    setCreatedExpense(null);
   }, [form, initialType, initialValues, open]);
 
   // Edit prefill — hydrate the edit header + cost lines from the existing WO each time it opens.
@@ -409,6 +414,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const handleModalClose = () => {
     if (createdWO) {
       setCreatedWO(null);
+      setCreatedExpense(null);
       onCreated();
     }
     onClose();
@@ -689,6 +695,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       // Offer transaction-side task completion before closing. If we can't resolve the new WO id
       // (legacy response shape), fall back to the original close-immediately behaviour.
       const woResult = (response as { wo?: { uuid?: string; display_id?: string } }).wo;
+      const expenseResult = (response as { expense?: { uuid?: string } }).expense;
+      if (expenseResult?.uuid) setCreatedExpense({ uuid: expenseResult.uuid });
       if (woResult?.uuid) {
         setCreatedWO({ uuid: woResult.uuid, display_id: woResult.display_id ?? undefined });
       } else {
@@ -989,6 +997,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         <div className="space-y-3 text-[12.5px] text-sidebar-bg">
           <p className="text-sm text-gray-700">
             Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Record")} className="font-semibold text-slate-700 hover:underline" /> created.
+            {createdExpense ? (
+              <>
+                {" "}Expense auto-created:{" "}
+                <EntityLink kind="expense" id={createdExpense.uuid} label="View expense →" className="font-semibold text-slate-700 hover:underline" />
+              </>
+            ) : null}
           </p>
           <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
             <span className="text-xs text-gray-600">Close an open task this work order fulfils:</span>
