@@ -1342,6 +1342,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3512": {
+    "purpose": "verify-driver-catalog-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "3505": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
