@@ -35,19 +35,21 @@ These are mirrored from the live Desktop CC-1 queue. The detailed canonical rows
 
 Codex owns no implementation in these protected money paths. Each item remains OPEN until its product PR and exact guard are merged.
 
-## ☑ MY OWN 76-ITEM ORPHAN-GUARD SLICE — 76/76 GREEN (fixed 2026-08-15)
+## ☑ MY OWN 76-ITEM ORPHAN-GUARD SLICE — 76/76 GREEN + WIRED (closed 2026-08-15)
 
 `docs/audit/ORPHAN-GUARD-OWNER-HANDOFF-2026-08-15.md` itemizes 76 money/accounting/banking/factoring/settlements
-guards. Ran all 76 live: 71 passed as pure registry hygiene (need `verify-steps/` wiring only, batch
-mechanically like Codex's Wave batches). **5 were genuinely RED — all 5 root-caused and fixed** (see
-`docs/audit/GUARD-WORKORDERS.md` ACCT-F5305/F5306/F5307/F5308 for full detail): stale numeric ceiling
+guards. Ran all 76 live: 71 passed as pure registry hygiene, 5 were genuinely RED — all 5 root-caused and fixed
+(see `docs/audit/GUARD-WORKORDERS.md` ACCT-F5305/F5306/F5307/F5308 for full detail): stale numeric ceiling
 (`verify-accounting-required-linkage-honest.mjs`), stale MUST_KEEP contradicting an already-shipped
 honesty_audit drop (`verify-factoring-required-liability-honest.mjs`), a genuine missing Required restore
 for real Built surfaces (`verify-fleet-gl-je-required-honest.mjs`), a stale text-match anchor after a
 legitimate prop rename (`verify-wave-c-invoice-bank-batch5.mjs`), and the already-tracked
-`LIABILITY-PRE-SETTLEMENT-DROP-GUARD-DRIFT` (`verify-maint-bill-factoring-liab-built.mjs`).
-**Remaining work on this slice: batch-wire the 76 into `verify-steps/` (mechanical, no product change) —
-next up.**
+`LIABILITY-PRE-SETTLEMENT-DROP-GUARD-DRIFT` (`verify-maint-bill-factoring-liab-built.mjs`) — all merged in
+PR #7227. **Batch-wired all 76 into CI 2026-08-15**: `scripts/verify-cc1-money-orphan-guard-registry-batch.mjs`
++ claimed verify-step 3429 (PR #7252 claim-reserve, PR #7256 author), mirroring Cursor's shipped 3422 pattern
+exactly. `verify-guard-wired` orphan census dropped from 77 → 1 repo-wide (the single remainder is
+`verify-wave-c-gl-je-system-qbo-recon.mjs`, explicitly excluded from USMCA sprint scope by owner ruling —
+left deliberately unwired). Slice closed; no remaining work.
 
 ## ☐ CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20 — itemized, NOT yet independently re-verified by me
 
