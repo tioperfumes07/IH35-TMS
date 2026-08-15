@@ -437,7 +437,6 @@
       "required": [
         "driver",
         "load",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -645,8 +644,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/safety/components/FineConvertConfirmModal.tsx",
       "required": [
-        "connectivity",
-        "liability"
+        "connectivity"
       ]
     },
     {
@@ -1539,6 +1537,24 @@
             "reverse_link"
           ],
           "reason": "company-level KPI shell with no FK of its own"
+        }
+      ]
+    },
+    "liability_2026_08_15_cluster_a": {
+      "finding": "LIABILITY-FALSE-REQUIRED-CLUSTER-A",
+      "note": "internal_fines.create and safety.modal.fine_convert_confirm both flagged liability Required, but both are pre-persistence surfaces: internal_fines.create is the +Create form (no fine row exists yet, let alone a liability); FineConvertConfirmModal.tsx line 18 literally reads \"This will create a driver liability for $X\" -- future tense, the liability does not exist until the user confirms. The already-created liability is correctly linked elsewhere (safety.drawer.fine_detail / safety.parity.fine_detail, left Required, untouched).",
+      "drops": [
+        {
+          "id": "internal_fines.create",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "safety.modal.fine_convert_confirm",
+          "removed": [
+            "liability"
+          ]
         }
       ]
     }
