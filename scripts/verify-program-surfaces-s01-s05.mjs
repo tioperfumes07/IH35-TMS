@@ -35,6 +35,7 @@ export function run() {
   const scenario = read("apps/frontend/src/pages/program/AuditScoreboardPage.tsx");
   const moduleComp = read("apps/frontend/src/pages/program/ModuleCompletionPage.tsx");
   const tracker = read("apps/frontend/src/pages/program/ProgramTrackerPage.tsx");
+  const finalAdditions = read("apps/frontend/src/pages/program/FinalAdditionsPage.tsx");
   const board = read("apps/frontend/src/pages/program/ProgramBoardPage.tsx");
   const boardService = read("apps/backend/src/program/program-board.service.ts");
 
@@ -61,6 +62,14 @@ export function run() {
   assert(tracker.includes("BlockTable"), "ProgramTrackerPage must render BlockTable", errors);
   assert(tracker.includes("status") && tracker.includes("pr"), "ProgramTrackerPage must show status and PR", errors);
 
+  // Permanent no-owner-hold law: preserve historical GATED source tags, but never present them as
+  // an active owner block or sort them behind actionable work.
+  assert(!finalAdditions.includes("Gated (owner)"), "Final Additions must not label legacy GATED rows as owner-gated", errors);
+  assert(!finalAdditions.includes("owner-blocked"), "Final Additions must not describe legacy GATED rows as owner-blocked", errors);
+  assert(finalAdditions.includes('s.includes("GATED")) return 0'), "Final Additions must rank legacy GATED rows as actionable Pending", errors);
+  assert(finalAdditions.includes("Pending (includes legacy GATED tags)"), "Final Additions must label the Pending denominator honestly", errors);
+  assert(finalAdditions.includes("no owner approval is required"), "Final Additions must disclose that historical GATED tags require no owner approval", errors);
+
   // S05: program board has merged-PR tab.
   assert(board.includes('id: "merged"') || board.includes("merged"), "ProgramBoardPage must have merged tab", errors);
   assert(board.includes("merged_pr_total") || board.includes("recent_merged"), "ProgramBoardPage must show merged PR data", errors);
@@ -81,7 +90,9 @@ export function run() {
 
 function selftest() {
   const realPath = path.join(ROOT, "apps/frontend/src/pages/program/ProgramModuleNav.tsx");
+  const finalPath = path.join(ROOT, "apps/frontend/src/pages/program/FinalAdditionsPage.tsx");
   const backup = fs.readFileSync(realPath, "utf8");
+  const finalBackup = fs.readFileSync(finalPath, "utf8");
   try {
     fs.writeFileSync(realPath, backup.replace(/to="\/program\/modules"/, 'to="/program/_removed_modules"'), "utf8");
     const planted = run();
@@ -89,9 +100,16 @@ function selftest() {
       console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted route removal not detected");
       process.exit(1);
     }
+    fs.writeFileSync(finalPath, finalBackup.replace("Pending (includes legacy GATED tags)", "Gated (owner)"), "utf8");
+    const ownerGatePlanted = run();
+    if (!ownerGatePlanted.some((e) => e.includes("owner-gated")) || !ownerGatePlanted.some((e) => e.includes("Pending denominator"))) {
+      console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted owner-gate regression not detected");
+      process.exit(1);
+    }
     console.log(`[verify-program-surfaces-s01-s05] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {
     fs.writeFileSync(realPath, backup, "utf8");
+    fs.writeFileSync(finalPath, finalBackup, "utf8");
   }
 }
 
