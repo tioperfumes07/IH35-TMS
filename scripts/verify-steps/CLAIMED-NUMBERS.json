@@ -1107,6 +1107,11 @@
     "claimed_by": "codex",
     "purpose": "verify-nonmoney-residual-linkage-orphan-guard-registry-batch"
   },
+  "3418": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-wiring-law-orphan-guard-registry-batch"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
