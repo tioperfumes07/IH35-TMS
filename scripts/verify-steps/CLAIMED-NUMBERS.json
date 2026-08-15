@@ -1473,6 +1473,11 @@
     "claimedBy": "cursor",
     "name": "verify-customer-detail-invoices-parity-surface-bar"
   },
+  "3562": {
+    "claimedAt": "2026-08-15",
+    "claimedBy": "cursor",
+    "name": "verify-driver-payment-methods-card-parity-surface-bar"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
