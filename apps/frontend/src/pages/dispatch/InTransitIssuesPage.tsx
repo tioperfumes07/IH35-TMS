@@ -23,7 +23,8 @@ export function InTransitIssuesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5186 — visible reverse filters (URL-only ?driver_id=/load_id=/unit_id= is not reverse chrome).
   const reverseLoadId = searchParams.get("load_id")?.trim() || "";
   const reverseDriverId = searchParams.get("driver_id")?.trim() || "";
   const reverseUnitId = searchParams.get("unit_id")?.trim() || "";
@@ -33,6 +34,13 @@ export function InTransitIssuesPage() {
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<"info" | "warning" | "severe">("warning");
   const [error, setError] = useState("");
+
+  function patchSearchParam(key: "driver_id" | "load_id" | "unit_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
 
   const issuesQ = useQuery({
     queryKey: ["dispatch", "intransit-issues", companyId, reverseLoadId, reverseDriverId, reverseUnitId],
@@ -139,6 +147,54 @@ export function InTransitIssuesPage() {
           </div>
         }
       />
+
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Driver
+          <div className="mt-1">
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={companyId}
+              value={reverseDriverId || null}
+              onChange={(next) => patchSearchParam("driver_id", next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="w-full"
+              dataTestId="intransit-issues-filter-driver"
+            />
+          </div>
+        </label>
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Load
+          <div className="mt-1">
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={reverseLoadId || null}
+              onChange={(next) => patchSearchParam("load_id", next ?? "")}
+              allowCreate={false}
+              placeholder="All loads"
+              className="w-full"
+              dataTestId="intransit-issues-filter-load"
+            />
+          </div>
+        </label>
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Unit
+          <div className="mt-1">
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={reverseUnitId || null}
+              onChange={(next) => patchSearchParam("unit_id", next ?? "")}
+              allowCreate={false}
+              placeholder="All units"
+              className="w-full"
+              dataTestId="intransit-issues-filter-unit"
+            />
+          </div>
+        </label>
+      </div>
 
       {issuesQ.isError ? (
         <ListErrorState
