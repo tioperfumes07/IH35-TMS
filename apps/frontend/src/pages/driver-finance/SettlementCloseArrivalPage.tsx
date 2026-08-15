@@ -16,10 +16,13 @@ import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatUsd } from "../../lib/money";
+
+type DraftJeRow = { id: string; account: string; debit: string; credit: string };
 
 // Owner-locked driver-bond/escrow cap (Phase 3 Settlement Pay-Run spec). This is the total escrow
 // balance ceiling shown as a progress indicator on the close screen — NOT a GL posting rule; the
@@ -136,6 +139,75 @@ export function SettlementCloseArrivalPage() {
 
   const canSubmitClose =
     canClose && !isMaker && Boolean(settlement) && ["closed", "open"].includes(String(settlement?.status ?? ""));
+
+  const draftJeRows = useMemo<DraftJeRow[]>(() => {
+    if (!settlement) return [];
+    const rows: DraftJeRow[] = [
+      {
+        id: "gross",
+        account: "Driver pay expense",
+        debit: formatUsd(gross || earnings),
+        credit: "—",
+      },
+    ];
+    if (escrowContributionThisSettlement !== 0) {
+      rows.push({
+        id: "escrow",
+        account: "Driver escrow liability",
+        debit: "—",
+        credit: formatUsd(Math.abs(escrowContributionThisSettlement)),
+      });
+    }
+    if (advanceRecoveryTotal !== 0) {
+      rows.push({
+        id: "advances",
+        account: "Driver advances receivable",
+        debit: "—",
+        credit: formatUsd(Math.abs(advanceRecoveryTotal)),
+      });
+    }
+    if (otherDeductionsTotal !== 0) {
+      rows.push({
+        id: "other-deductions",
+        account: "Other settlement deductions",
+        debit: "—",
+        credit: formatUsd(Math.abs(otherDeductionsTotal)),
+      });
+    }
+    rows.push({
+      id: "cash",
+      account: paymentMethodGlName ?? "Cash / bank (select payment method)",
+      debit: "—",
+      credit: formatUsd(netPay),
+    });
+    return rows;
+  }, [
+    settlement,
+    gross,
+    earnings,
+    escrowContributionThisSettlement,
+    advanceRecoveryTotal,
+    otherDeductionsTotal,
+    paymentMethodGlName,
+    netPay,
+  ]);
+
+  const draftJeColumns = useMemo<ParityColumn<DraftJeRow>[]>(
+    () => [
+      { key: "account", label: "Account", render: (row) => row.account },
+      {
+        key: "debit",
+        label: "Debit",
+        render: (row) => <span className="tabular-nums">{row.debit}</span>,
+      },
+      {
+        key: "credit",
+        label: "Credit",
+        render: (row) => <span className="tabular-nums">{row.credit}</span>,
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4">
@@ -353,55 +425,21 @@ export function SettlementCloseArrivalPage() {
                 </div>
               </div>
 
-              {/* Draft JE preview */}
+              {/* Draft JE preview — SETL-F3552: ParityTable owns Search+Range+gear (raw HTML table skipped surface bar). */}
               <div className="border-t border-gray-100 pt-2">
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Draft JE preview (not posted)</div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-xs">
-                    <thead className="text-[10px] uppercase text-gray-500">
-                      <tr>
-                        <th className="py-1 pr-3">Account</th>
-                        <th className="py-1 pr-3 text-right">Debit</th>
-                        <th className="py-1 text-right">Credit</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-t border-gray-100">
-                        <td className="py-1 pr-3">Driver pay expense</td>
-                        <td className="py-1 pr-3 text-right">{formatUsd(gross || earnings)}</td>
-                        <td className="py-1 text-right">—</td>
-                      </tr>
-                      {escrowContributionThisSettlement !== 0 ? (
-                        <tr className="border-t border-gray-100">
-                          <td className="py-1 pr-3">Driver escrow liability</td>
-                          <td className="py-1 pr-3 text-right">—</td>
-                          <td className="py-1 text-right">{formatUsd(Math.abs(escrowContributionThisSettlement))}</td>
-                        </tr>
-                      ) : null}
-                      {advanceRecoveryTotal !== 0 ? (
-                        <tr className="border-t border-gray-100">
-                          <td className="py-1 pr-3">Driver advances receivable</td>
-                          <td className="py-1 pr-3 text-right">—</td>
-                          <td className="py-1 text-right">{formatUsd(Math.abs(advanceRecoveryTotal))}</td>
-                        </tr>
-                      ) : null}
-                      {otherDeductionsTotal !== 0 ? (
-                        <tr className="border-t border-gray-100">
-                          <td className="py-1 pr-3">Other settlement deductions</td>
-                          <td className="py-1 pr-3 text-right">—</td>
-                          <td className="py-1 text-right">{formatUsd(Math.abs(otherDeductionsTotal))}</td>
-                        </tr>
-                      ) : null}
-                      <tr className="border-t border-gray-100">
-                        <td className="py-1 pr-3">{paymentMethodGlName ?? "Cash / bank (select payment method)"}</td>
-                        <td className="py-1 pr-3 text-right">—</td>
-                        <td className="py-1 text-right">{formatUsd(netPay)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <ParityTable<DraftJeRow>
+                  columns={draftJeColumns}
+                  rows={draftJeRows}
+                  rowKey={(row) => row.id}
+                  loading={false}
+                  emptyText="No draft JE lines for this settlement."
+                  storageKey="settlement-close-draft-je"
+                  exportFilename="settlement-close-draft-je"
+                  tableTestId="settlement-close-draft-je-table"
+                />
                 <p className="mt-1 text-[10px] text-gray-500">
-                  Preview only — computed client-side from this settlement's lines for review before Close. Actual GL
+                  Preview only — computed client-side from this settlement&apos;s lines for review before Close. Actual GL
                   posting reuses the existing settlement posting path (behind SETTLEMENT_GL_POSTING_ENABLED).
                 </p>
               </div>
