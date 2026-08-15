@@ -6,6 +6,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { DriverCatalogModal, type DriverCatalogClient } from "./DriverCatalogModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -113,6 +114,16 @@ export function DriverCatalogListPage({
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<DriverCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
+      setModalMode("create");
+      setSelectedRow(null);
+      setModalOpen(true);
+    },
+  });
 
   const query = useQuery({
     queryKey: ["catalogs", "driver", displayName, companyId, search, status],

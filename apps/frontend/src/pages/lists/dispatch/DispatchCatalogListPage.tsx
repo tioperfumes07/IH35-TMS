@@ -12,6 +12,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { CatalogEntryModal } from "./CatalogEntryModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -93,6 +94,16 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
   const [codeError, setCodeError] = useState<string | null>(null);
 
   const companyId = selectedCompanyId ?? "";
+
+  // LST-F5214 — Lists hub ?create=1 must open Create Entry (accounting catalog parity).
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
+      setCodeError(null);
+      setActiveRow(null);
+      setModalMode("create");
+    },
+  });
 
   const listQuery = useQuery({
     queryKey: ["dispatch-catalog", catalogKey, companyId, search, status],
