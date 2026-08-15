@@ -12,7 +12,7 @@ const failures=(p=page)=>[
  ["company-scoped aggregate",p.includes("getDriverSafetyAggregate(driverId, companyId)")&&api.includes("operating_company_id: operatingCompanyId")],
  ["canonical medical source",backend.includes("FROM safety.medical_cards")&&backend.includes("medical_card")],
  ["canonical training source",backend.includes("FROM safety.training_records")&&backend.includes("training_records")],
- ["real driver identity",p.includes("driver.first_name")&&p.includes("driver.cdl_number")&&!p.includes("DRV-0000")],
+ ["real driver identity",p.includes("driver.first_name")&&p.includes("driver.cdl_number")&&p.includes("CDL not on file")&&!p.includes("driver.id.slice")&&!p.includes("DRV-0000")],
  ["derived safety counts",p.includes("dqMissingCount")&&p.includes("trainingDueCount")],
  ["driver drill-through",panel.includes('<EntityLink kind="driver"')],
  ["dead local upload removed",!p.includes("DriverDocumentUploadField")&&!p.includes("No file selected")],

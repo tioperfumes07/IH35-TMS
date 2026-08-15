@@ -31,7 +31,7 @@ export default function DriverSafetyProfilePage() {
       <DriverSafetyProfilePanel
         driverId={driver.id}
         driverName={`${driver.first_name} ${driver.last_name}`.trim()}
-        driverDisplayId={driver.cdl_number ?? driver.id.slice(0, 8)}
+        driverCredentialLabel={driver.cdl_number ? `CDL ${driver.cdl_number}` : "CDL not on file"}
         medicalExpiryPill={medicalExpiryPill === "yellow" ? "amber" : medicalExpiryPill}
         dqMissingCount={dqMissingCount}
         trainingDueCount={trainingDueCount}
