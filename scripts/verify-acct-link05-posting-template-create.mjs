@@ -82,6 +82,12 @@ export function collectFailures(opts = {}) {
     if (!/PostingTemplateModal/.test(list)) {
       failures.push(`${LIST_PAGE}: must mount PostingTemplateModal (debit/credit CoA pickers)`);
     }
+    if (!/searchParams\.get\("create"\) !== "1"/.test(list) && !/get\("create"\) === "1"/.test(list)) {
+      failures.push(`${LIST_PAGE}: must honor ?create=1 → open New Posting Template modal`);
+    }
+    if (!/setModalOpen\(true\)/.test(list)) {
+      failures.push(`${LIST_PAGE}: must setModalOpen(true) for create path`);
+    }
     if (!/postingTemplatesCatalogClient/.test(list)) {
       failures.push(`${LIST_PAGE}: must use postingTemplatesCatalogClient → catalogs.posting_templates`);
     }
@@ -148,6 +154,8 @@ registerLegacyAccountingCatalogRoutes(app, {
       `import { PostingTemplateModal } from "./PostingTemplateModal";
 import { postingTemplatesCatalogClient } from "../../../api/catalogs-accounting";
 export function PostingTemplatesListPage() {
+  if (searchParams.get("create") !== "1") return null;
+  setModalOpen(true);
   return (
     <>
       <h1 title="Posting Templates">Posting Templates</h1>

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { postingTemplatesCatalogClient } from "../../../api/catalogs-accounting";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
@@ -22,12 +23,24 @@ function statusPillClass(isActive: boolean) {
 export function PostingTemplatesListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"true" | "false" | "all">("true");
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  // LST-F5212 — Live Chrome deep-link: Lists ?create=1 must open New Posting Template (void-cancel / catalog parity).
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || !companyId) return;
+    setModalMode("create");
+    setSelectedRow(null);
+    setModalOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, companyId, setSearchParams]);
 
   const query = useQuery({
     queryKey: ["catalogs", "accounting", "Posting Templates", companyId, search, status],
