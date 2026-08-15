@@ -34,6 +34,12 @@ const TX_TABLE = "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx";
 const BACKEND_LIST_ROUTE = "apps/backend/src/fuel/fuel-transactions.routes.ts";
 const BACKEND_IMPORT_ROUTE = "apps/backend/src/fuel/fuel-transaction-import.routes.ts";
 const BACKEND_INDEX = "apps/backend/src/index.ts";
+const REVERSE_MOUNTS = [
+  ["apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", "load_id"],
+  ["apps/frontend/src/pages/drivers/DriverProfilePage.tsx", "driver_id"],
+  ["apps/frontend/src/pages/fleet/VehicleProfilePage.tsx", "unit_id"],
+  ["apps/frontend/src/pages/fleet/TrailerProfilePage.tsx", "trailer_id"],
+];
 
 function read(rel) {
   const full = path.join(repoRoot, rel);
@@ -119,6 +125,26 @@ function checkBackendEndpointsExist(listRouteSrc, importRouteSrc, indexSrc) {
   return failures;
 }
 
+function checkReverseVendorLabels(apiClientSrc, reverseSrc, listRouteSrc, mountSources) {
+  const failures = [];
+  if (!/v\.vendor_name/.test(listRouteSrc ?? "") || !/vendor_name:\s*row\.vendor_name/.test(listRouteSrc ?? "")) {
+    failures.push("fuel list must project and return the same-company canonical vendor_name");
+  }
+  if (!/vendor_name:\s*string \| null/.test(apiClientSrc ?? "")) {
+    failures.push("FuelTransactionListItem must type vendor_name");
+  }
+  if (!/entityLabel\(row\.vendor_name, row\.vendor_id, "Vendor"\)/.test(reverseSrc ?? "")) {
+    failures.push("shared fuel reverse section must consume vendor_name in the vendor EntityLink");
+  }
+  for (const [file, filter] of REVERSE_MOUNTS) {
+    const src = mountSources[file] ?? "";
+    if (!new RegExp(`<FuelTransactionsReverseSection[\\s\\S]{0,220}?filter=\\{\\{\\s*${filter}:`).test(src)) {
+      failures.push(`${file} must mount the shared fuel reverse section with ${filter}`);
+    }
+  }
+  return failures;
+}
+
 function scan() {
   const plannerSrc = read(PLANNER_HOME);
   const apiClientSrc = read(API_CLIENT);
@@ -128,6 +154,7 @@ function scan() {
   const listRouteSrc = read(BACKEND_LIST_ROUTE);
   const importRouteSrc = read(BACKEND_IMPORT_ROUTE);
   const indexSrc = read(BACKEND_INDEX);
+  const mountSources = Object.fromEntries(REVERSE_MOUNTS.map(([file]) => [file, read(file) ?? ""]));
 
   const failures = [];
   if (plannerSrc === null) {
@@ -143,6 +170,7 @@ function scan() {
   failures.push(...checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc));
   failures.push(...checkImportButtonWired(plannerSrc, importModalSrc));
   failures.push(...checkBackendEndpointsExist(listRouteSrc, importRouteSrc, indexSrc));
+  failures.push(...checkReverseVendorLabels(apiClientSrc, reverseSrc, listRouteSrc, mountSources));
   return failures;
 }
 
@@ -190,6 +218,10 @@ function selftest() {
   const goodListRoute = `app.get("/api/v1/fuel/transactions", async () => {});`;
   const goodImportRoute = `app.post("/api/v1/fuel/transactions/import", async () => {});`;
   const goodIndex = `registerFuelTransactionsRoutes(app); registerFuelTransactionImportRoutes(app);`;
+  const goodVendorApi = `vendor_name: string | null;`;
+  const goodVendorReverse = `entityLabel(row.vendor_name, row.vendor_id, "Vendor")`;
+  const goodVendorRoute = `SELECT v.vendor_name FROM x; vendor_name: row.vendor_name`;
+  const goodMounts = Object.fromEntries(REVERSE_MOUNTS.map(([file, filter]) => [file, `<FuelTransactionsReverseSection filter={{ ${filter}: id }} />`]));
 
   let ok = true;
   const expectPass = (name, failures) => {
@@ -219,6 +251,11 @@ function selftest() {
 
   expectPass("backend endpoints present", checkBackendEndpointsExist(goodListRoute, goodImportRoute, goodIndex));
   expectFail("backend endpoints missing", checkBackendEndpointsExist(null, null, null));
+  expectPass("vendor label across four reverse mounts", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute, goodMounts));
+  expectFail("vendor mapper dropped", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute.replace("vendor_name: row.vendor_name", "vendor_id: row.vendor_id"), goodMounts));
+  expectFail("vendor type dropped", checkReverseVendorLabels("vendor_id: string", goodVendorReverse, goodVendorRoute, goodMounts));
+  expectFail("vendor label unresolved", checkReverseVendorLabels(goodVendorApi, `entityLabel(null, row.vendor_id, "Vendor")`, goodVendorRoute, goodMounts));
+  expectFail("load reverse mount dropped", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute, { ...goodMounts, [REVERSE_MOUNTS[0][0]]: "" }));
 
   if (!ok) process.exit(1);
   console.log("[verify-fuel-history-import-wired] SELFTEST PASS — recognizes wired vs dead-button/hardcoded-empty states.");

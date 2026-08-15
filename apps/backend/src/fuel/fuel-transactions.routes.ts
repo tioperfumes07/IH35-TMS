@@ -224,6 +224,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           load_id: row.load_id,
           load_number: row.load_number,
           vendor_id: row.vendor_id,
+          vendor_name: row.vendor_name,
           fuel_type: row.fuel_type,
           price_per_gallon: row.price_per_gallon === null ? null : Number(row.price_per_gallon),
           source: row.source,
