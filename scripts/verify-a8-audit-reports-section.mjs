@@ -1,100 +1,110 @@
 #!/usr/bin/env node
 /**
- * verify-a8-audit-reports-section.mjs
- * Guards for A8-AUDIT-REPORTS-SECTION.
+ * @matrix-built {"modules":["reports"],"cols":["connectivity","reverse_link"],"leafRe":"^audit\\.(activity_by_user|activity_by_module|financial_change_log|maintenance_decision_log|deduction_trail|void_reversal|period_close_history)$","task":"LV-REPORTS-AUDIT-SUBJECT-IDENTITY-BYPASSES-CANONICAL-RESOLVER","vertical":"class-sweep"}
+ * A8 audit reports — seven mounted, entity-scoped read-only leaves plus canonical typed subject
+ * identity. This guard owns the whole sibling class so a second raw-UUID audit serializer cannot
+ * drift away from System Audit again.
  */
 import fs from "node:fs";
 import path from "node:path";
-import process from "node:process";
 
 const ROOT = process.cwd();
-const LABEL = "verify-a8-audit-reports-section";
-let failed = false;
-
-function fail(msg) { console.error(`[${LABEL}] FAIL: ${msg}`); failed = true; }
-function pass(msg) { console.log(`[${LABEL}] PASS: ${msg}`); }
-function read(rel) {
-  const abs = path.join(ROOT, rel);
-  if (!fs.existsSync(abs)) { fail(`missing file: ${rel}`); return ""; }
-  return fs.readFileSync(abs, "utf8");
-}
-
-const ROUTES_FILE   = "apps/backend/src/audit/audit-reports.routes.ts";
-const INDEX_FILE    = "apps/backend/src/index.ts";
-const API_FILE      = "apps/frontend/src/api/auditReports.ts";
-const SUBNAV_FILE   = "apps/frontend/src/pages/reports/ReportsSubNav.tsx";
-const MANIFEST_FILE = "apps/frontend/src/routes/manifest.tsx";
-
-const routes  = read(ROUTES_FILE);
-const index   = read(INDEX_FILE);
-const api     = read(API_FILE);
-const subnav  = read(SUBNAV_FILE);
-const manifest = read(MANIFEST_FILE);
-
-// 1. All 7 report endpoints exist in routes file
+const FILES = {
+  routes: "apps/backend/src/audit/audit-reports.routes.ts",
+  index: "apps/backend/src/index.ts",
+  api: "apps/frontend/src/api/auditReports.ts",
+  subnav: "apps/frontend/src/pages/reports/ReportsSubNav.tsx",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
+  page: "apps/frontend/src/pages/reports/audit/AuditReportPage.tsx",
+};
 const ENDPOINTS = [
-  "activity-by-user",
-  "activity-by-module",
-  "financial-change-log",
-  "maintenance-decision-log",
-  "deduction-trail",
-  "void-reversal",
-  "period-close-history",
+  "activity-by-user", "activity-by-module", "financial-change-log", "maintenance-decision-log",
+  "deduction-trail", "void-reversal", "period-close-history",
 ];
-for (const ep of ENDPOINTS) {
-  if (!routes.includes(`/api/v1/audit/reports/${ep}`)) fail(`missing route: /api/v1/audit/reports/${ep}`);
-  else pass(`route present: /api/v1/audit/reports/${ep}`);
-}
-
-// 2. Routes are read-only (no INSERT/UPDATE/DELETE)
-if (/\bINSERT\b|\bUPDATE\b|\bDELETE\b/i.test(routes)) fail("audit-reports.routes.ts contains mutation SQL — must be read-only");
-else pass("routes are read-only (no INSERT/UPDATE/DELETE)");
-
-// 3. All routes set the tenant RLS GUC — legacy `SET LOCAL app.operating_company_id` OR the
-//    SQLi-hardened parameterized `set_config('app.operating_company_id', $1, true)` form.
-const rlsCount = (routes.match(/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/g) || []).length;
-if (rlsCount < ENDPOINTS.length) fail(`only ${rlsCount} of ${ENDPOINTS.length} routes apply tenant RLS scope`);
-else pass(`all ${rlsCount} routes apply tenant RLS scope`);
-
-// 4. All routes paginate (LIMIT/OFFSET)
-if (!routes.includes("LIMIT") || !routes.includes("OFFSET")) fail("routes missing LIMIT/OFFSET pagination");
-else pass("pagination present in routes");
-
-// 5. registerAuditReportRoutes registered in index.ts
-if (!index.includes("registerAuditReportRoutes")) fail("registerAuditReportRoutes not registered in index.ts");
-else pass("registerAuditReportRoutes registered in index.ts");
-
-// 6. API client has all 7 endpoint keys
-for (const ep of ENDPOINTS) {
-  const camel = ep.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-  if (!api.includes(camel)) fail(`api/auditReports.ts missing endpoint key: ${camel}`);
-  else pass(`api key present: ${camel}`);
-}
-
-// 7. ReportsSubNav has Audit nav item
-if (!subnav.includes('"Audit"')) fail("ReportsSubNav.tsx missing Audit nav item");
-else pass("ReportsSubNav.tsx has Audit nav item");
-
-// 8. All 7 audit routes in manifest.tsx
-for (const ep of ENDPOINTS) {
-  if (!manifest.includes(`/reports/audit/${ep}`)) fail(`manifest.tsx missing route: /reports/audit/${ep}`);
-  else pass(`manifest route present: /reports/audit/${ep}`);
-}
-
-// 9. All 7 page components exist
 const PAGES = [
-  "apps/frontend/src/pages/reports/audit/AuditActivityByUserPage.tsx",
-  "apps/frontend/src/pages/reports/audit/AuditActivityByModulePage.tsx",
-  "apps/frontend/src/pages/reports/audit/AuditFinancialChangeLogPage.tsx",
-  "apps/frontend/src/pages/reports/audit/AuditMaintenanceDecisionLogPage.tsx",
-  "apps/frontend/src/pages/reports/audit/AuditDeductionTrailPage.tsx",
-  "apps/frontend/src/pages/reports/audit/AuditVoidReversalPage.tsx",
-  "apps/frontend/src/pages/reports/audit/AuditPeriodCloseHistoryPage.tsx",
+  "AuditActivityByUserPage.tsx", "AuditActivityByModulePage.tsx", "AuditFinancialChangeLogPage.tsx",
+  "AuditMaintenanceDecisionLogPage.tsx", "AuditDeductionTrailPage.tsx",
+  "AuditVoidReversalPage.tsx", "AuditPeriodCloseHistoryPage.tsx",
 ];
-for (const p of PAGES) {
-  if (!fs.existsSync(path.join(ROOT, p))) fail(`missing page: ${p}`);
-  else pass(`page exists: ${path.basename(p)}`);
+
+function read(rel) { return fs.readFileSync(path.join(ROOT, rel), "utf8"); }
+function realSources() {
+  return Object.fromEntries(Object.entries(FILES).map(([key, rel]) => [key, read(rel)]));
 }
 
-if (failed) { console.error(`\n[${LABEL}] FAILED`); process.exit(1); }
-console.log(`\n[${LABEL}] ALL CHECKS PASSED`);
+function audit(sources) {
+  const failures = [];
+  const { routes, index, api, subnav, manifest, page } = sources;
+  for (const ep of ENDPOINTS) {
+    if (!routes.includes(`/api/v1/audit/reports/${ep}`)) failures.push(`backend route missing: ${ep}`);
+    if (!manifest.includes(`/reports/audit/${ep}`)) failures.push(`frontend route missing: ${ep}`);
+    const camel = ep.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    if (!api.includes(camel)) failures.push(`API key missing: ${camel}`);
+  }
+  if (/\bINSERT\b|\bUPDATE\b|\bDELETE\b/i.test(routes)) failures.push("audit routes must remain read-only");
+  const rlsCount = (routes.match(/set_config\(\s*['"]app\.operating_company_id['"]/g) || []).length;
+  if (rlsCount < ENDPOINTS.length) failures.push(`only ${rlsCount}/7 routes set tenant RLS context`);
+  if (!routes.includes("LIMIT") || !routes.includes("OFFSET")) failures.push("pagination missing");
+  if (!index.includes("registerAuditReportRoutes")) failures.push("backend routes not mounted");
+  if (!subnav.includes('label: "Audit"')) failures.push("Reports Audit navigation missing");
+  for (const name of PAGES) {
+    if (!fs.existsSync(path.join(ROOT, "apps/frontend/src/pages/reports/audit", name))) failures.push(`page missing: ${name}`);
+  }
+
+  if (!routes.includes("function auditSubjectProjection") || !routes.includes("function auditSubjectJoins")) {
+    failures.push("shared audit subject resolver missing");
+  }
+  const projectionCalls = (routes.match(/auditSubjectProjection\("(?:el|c)"\)/g) || []).length;
+  const joinCalls = (routes.match(/auditSubjectJoins\("(?:el|c)"\)/g) || []).length;
+  if (projectionCalls !== ENDPOINTS.length) failures.push(`typed subject projection covers ${projectionCalls}/7 endpoints`);
+  if (joinCalls !== ENDPOINTS.length) failures.push(`canonical label joins cover ${joinCalls}/7 endpoints`);
+  for (const token of [
+    "END AS subject_kind", "END AS subject_label", "maintenance.work_orders",
+    "accounting.invoices", "accounting.bills",
+    "audit_load.operating_company_id = ${alias}.operating_company_id",
+    "audit_driver.operating_company_id = ${alias}.operating_company_id",
+    "audit_wo.operating_company_id = ${alias}.operating_company_id",
+    "audit_invoice.operating_company_id = ${alias}.operating_company_id",
+    "audit_bill.operating_company_id = ${alias}.operating_company_id",
+    "COALESCE(audit_unit.currently_leased_to_company_id, audit_unit.owner_company_id) = ${alias}.operating_company_id",
+  ]) if (!routes.includes(token)) failures.push(`resolver contract missing: ${token}`);
+
+  if (!/subject_kind:\s*string\s*\|\s*null/.test(api)) failures.push("API omits subject_kind");
+  if (!/subject_label:\s*string\s*\|\s*null/.test(api)) failures.push("API omits subject_label");
+  if (!/row\.subject_kind\s*\?\?\s*row\.subject_type/.test(page)) failures.push("UI does not consume typed subject kind");
+  if (!/entityLabel\(row\.subject_label,\s*row\.subject_id/.test(page)) failures.push("UI does not consume canonical subject label");
+  if (!/load:\s*"load"/.test(page) || !/work_order:\s*"work_order"/.test(page)) failures.push("UI omits load/work-order EntityLink kinds");
+  if (/entityLabel\(null,\s*row\.subject_id/.test(page)) failures.push("raw UUID fallback remains in audit subject rendering");
+  return failures;
+}
+
+if (process.argv.includes("--selftest")) {
+  const base = realSources();
+  const mutations = [
+    ["projection-all", { routes: base.routes.replaceAll('auditSubjectProjection("el")', 'missingProjection("el")').replace('auditSubjectProjection("c")', 'missingProjection("c")') }],
+    ["joins-all", { routes: base.routes.replaceAll('auditSubjectJoins("el")', 'missingJoins("el")').replace('auditSubjectJoins("c")', 'missingJoins("c")') }],
+    ["company-scope", { routes: base.routes.replace("audit_load.operating_company_id = ${alias}.operating_company_id", "TRUE") }],
+    ["api-kind", { api: base.api.replace("subject_kind: string | null", "missing_kind: string | null") }],
+    ["api-label", { api: base.api.replace("subject_label: string | null", "missing_label: string | null") }],
+    ["ui-kind", { page: base.page.replaceAll("row.subject_kind ?? row.subject_type", "row.subject_type") }],
+    ["ui-label", { page: base.page.replace("entityLabel(row.subject_label, row.subject_id", "entityLabel(null, row.subject_id") }],
+    ["load-link", { page: base.page.replace('load: "load"', 'load: "driver"') }],
+    ["work-order-link", { page: base.page.replace('work_order: "work_order"', 'work_order: "task"') }],
+    ["endpoint", { routes: base.routes.replace("/api/v1/audit/reports/activity-by-user", "/missing/activity-by-user") }],
+  ];
+  for (const [name, override] of mutations) {
+    if (!audit({ ...base, ...override }).length) {
+      console.error(`verify-a8-audit-reports-section SELFTEST FAIL — ${name}`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify-a8-audit-reports-section SELFTEST PASS — ${mutations.length}/10 planted regressions caught`);
+  process.exit(0);
+}
+
+const failures = audit(realSources());
+if (failures.length) {
+  console.error(`verify-a8-audit-reports-section FAIL\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+console.log("verify-a8-audit-reports-section PASS — seven scoped audit leaves share typed canonical subject labels and drills");

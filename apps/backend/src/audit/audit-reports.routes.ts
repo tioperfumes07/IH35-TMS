@@ -30,6 +30,64 @@ function buildDateFilter(from: string | undefined, to: string | undefined, value
   return filters;
 }
 
+// Reports audit leaves must resolve the same immutable subject identity as System Audit. Keep the
+// projection and company-safe joins centralized so seven sibling endpoints cannot drift back to
+// raw UUID labels independently.
+function auditSubjectProjection(alias: string) {
+  return `
+    CASE
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'maintenance.work_orders' THEN 'work_order'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.invoices' THEN 'invoice'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.bills' THEN 'bill'
+      ELSE ${alias}.subject_type
+    END AS subject_kind,
+    CASE
+      WHEN ${alias}.subject_type = 'load' THEN NULLIF(TRIM(audit_load.load_number), '')
+      WHEN ${alias}.subject_type = 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', audit_driver.first_name, audit_driver.last_name)), '')
+      WHEN ${alias}.subject_type = 'unit' THEN NULLIF(TRIM(audit_unit.unit_number), '')
+      WHEN ${alias}.subject_type = 'invoice' THEN NULLIF(TRIM(audit_invoice.display_id), '')
+      WHEN ${alias}.subject_type = 'bill' THEN NULLIF(TRIM(COALESCE(audit_bill.display_id, audit_bill.bill_number)), '')
+      WHEN ${alias}.subject_type = 'task' THEN CASE ${alias}.source_table
+        WHEN 'maintenance.work_orders' THEN NULLIF(TRIM(audit_wo.display_id), '')
+        WHEN 'accounting.invoices' THEN NULLIF(TRIM(audit_invoice.display_id), '')
+        WHEN 'accounting.bills' THEN NULLIF(TRIM(COALESCE(audit_bill.display_id, audit_bill.bill_number)), '')
+        ELSE NULL
+      END
+      ELSE NULL
+    END AS subject_label`;
+}
+
+function auditSubjectJoins(alias: string) {
+  return `
+    LEFT JOIN mdata.loads audit_load
+      ON ${alias}.subject_type = 'load'
+     AND audit_load.id = ${alias}.subject_id
+     AND audit_load.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN mdata.drivers audit_driver
+      ON ${alias}.subject_type = 'driver'
+     AND audit_driver.id = ${alias}.subject_id
+     AND audit_driver.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN mdata.units audit_unit
+      ON ${alias}.subject_type = 'unit'
+     AND audit_unit.id = ${alias}.subject_id
+     AND COALESCE(audit_unit.currently_leased_to_company_id, audit_unit.owner_company_id) = ${alias}.operating_company_id
+    LEFT JOIN maintenance.work_orders audit_wo
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'maintenance.work_orders'
+     AND audit_wo.id = ${alias}.source_reference_id
+     AND audit_wo.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.invoices audit_invoice
+      ON (( ${alias}.subject_type = 'invoice' AND audit_invoice.id = ${alias}.subject_id )
+       OR ( ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.invoices'
+            AND audit_invoice.id = ${alias}.source_reference_id ))
+     AND audit_invoice.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.bills audit_bill
+      ON (( ${alias}.subject_type = 'bill' AND audit_bill.id = ${alias}.subject_id )
+       OR ( ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.bills'
+            AND audit_bill.id = ${alias}.source_reference_id ))
+     AND audit_bill.operating_company_id = ${alias}.operating_company_id`;
+}
+
 export async function registerAuditReportRoutes(app: FastifyInstance) {
 
   /** Activity by user — who did what, date range */
@@ -47,9 +105,11 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     values.push(d.offset); const offPos = values.length;
     const sql = `
       SELECT el.actor_user_id::text, u.email AS actor_email, el.event_type, el.subject_type,
-             el.subject_id::text, el.occurred_at::text, el.source, count(*) OVER()::int AS total_count
+             el.subject_id::text, ${auditSubjectProjection("el")},
+             el.occurred_at::text, el.source, count(*) OVER()::int AS total_count
       FROM events.event_log el
       LEFT JOIN identity.users u ON u.id = el.actor_user_id
+      ${auditSubjectJoins("el")}
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
@@ -73,10 +133,11 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     values.push(d.limit); const limPos = values.length;
     values.push(d.offset); const offPos = values.length;
     const sql = `
-      SELECT el.event_type, el.subject_type, el.subject_id::text, el.actor_user_id::text,
+      SELECT el.event_type, el.subject_type, el.subject_id::text, ${auditSubjectProjection("el")}, el.actor_user_id::text,
              u.email AS actor_email, el.occurred_at::text, el.source, count(*) OVER()::int AS total_count
       FROM events.event_log el
       LEFT JOIN identity.users u ON u.id = el.actor_user_id
+      ${auditSubjectJoins("el")}
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
@@ -101,11 +162,12 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     values.push(d.limit); const limPos = values.length;
     values.push(d.offset); const offPos = values.length;
     const sql = `
-      SELECT el.event_type, el.subject_type, el.subject_id::text, el.actor_user_id::text,
+      SELECT el.event_type, el.subject_type, el.subject_id::text, ${auditSubjectProjection("el")}, el.actor_user_id::text,
              u.email AS actor_email, el.occurred_at::text, el.payload, el.source,
              count(*) OVER()::int AS total_count
       FROM events.event_log el
       LEFT JOIN identity.users u ON u.id = el.actor_user_id
+      ${auditSubjectJoins("el")}
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
@@ -130,11 +192,12 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     values.push(d.limit); const limPos = values.length;
     values.push(d.offset); const offPos = values.length;
     const sql = `
-      SELECT el.event_type, el.subject_type, el.subject_id::text, el.actor_user_id::text,
+      SELECT el.event_type, el.subject_type, el.subject_id::text, ${auditSubjectProjection("el")}, el.actor_user_id::text,
              u.email AS actor_email, el.occurred_at::text, el.payload, el.source,
              count(*) OVER()::int AS total_count
       FROM events.event_log el
       LEFT JOIN identity.users u ON u.id = el.actor_user_id
+      ${auditSubjectJoins("el")}
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
@@ -162,11 +225,12 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     values.push(d.limit); const limPos = values.length;
     values.push(d.offset); const offPos = values.length;
     const sql = `
-      SELECT el.event_type, el.subject_type, el.subject_id::text, el.actor_user_id::text,
+      SELECT el.event_type, el.subject_type, el.subject_id::text, ${auditSubjectProjection("el")}, el.actor_user_id::text,
              u.email AS actor_email, el.occurred_at::text, el.payload, el.source,
              count(*) OVER()::int AS total_count
       FROM events.event_log el
       LEFT JOIN identity.users u ON u.id = el.actor_user_id
+      ${auditSubjectJoins("el")}
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
@@ -209,9 +273,10 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
 
     const sql = `
       WITH combined AS (
-        SELECT el.event_type, el.subject_type, el.subject_id::text AS subject_id,
+        SELECT el.event_type, el.subject_type, el.subject_id,
                el.actor_user_id::text AS actor_user_id, el.occurred_at AS occurred_at,
-               el.payload, el.source, 'events.event_log'::text AS audit_source
+               el.payload, el.source, 'events.event_log'::text AS audit_source,
+               el.operating_company_id, el.source_table, el.source_reference_id
         FROM events.event_log el
         WHERE el.operating_company_id = $1::uuid
           AND el.event_type ILIKE ANY(ARRAY['%void%','%revers%','%cancel%'])
@@ -219,20 +284,33 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
         UNION ALL
         SELECT ae.event_class AS event_type,
                (ae.payload->>'resource_type') AS subject_type,
-               COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
-                        ae.payload->>'expense_id', ae.payload->>'entity_id') AS subject_id,
+               CASE WHEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id', '')
+                              ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                    THEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id')::uuid
+                    ELSE NULL END AS subject_id,
                ae.actor_user_uuid::text AS actor_user_id, ae.created_at AS occurred_at,
-               ae.payload, ae.source, 'audit.audit_events'::text AS audit_source
+               ae.payload, ae.source, 'audit.audit_events'::text AS audit_source,
+               $1::uuid AS operating_company_id,
+               (ae.payload->>'resource_type') AS source_table,
+               CASE WHEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id', '')
+                              ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                    THEN COALESCE(ae.payload->>'resource_id', ae.payload->>'reversed_entity_id',
+                                  ae.payload->>'expense_id', ae.payload->>'entity_id')::uuid
+                    ELSE NULL END AS source_reference_id
         FROM audit.audit_events ae
         WHERE ae.event_class ILIKE ANY(ARRAY['%void%','%revers%','%cancel%'])
           AND COALESCE(ae.payload->>'operating_company_id', '') IN ('', $1::text)
           ${aeDate ? `AND ${aeDate}` : ""}
       )
-      SELECT c.event_type, c.subject_type, c.subject_id, c.actor_user_id,
+      SELECT c.event_type, c.subject_type, c.subject_id::text, ${auditSubjectProjection("c")}, c.actor_user_id,
              u.email AS actor_email, c.occurred_at::text AS occurred_at, c.payload, c.source,
              c.audit_source, count(*) OVER()::int AS total_count
       FROM combined c
       LEFT JOIN identity.users u ON u.id = c.actor_user_id::uuid
+      ${auditSubjectJoins("c")}
       ORDER BY c.occurred_at DESC
       LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
@@ -257,11 +335,12 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     values.push(d.limit); const limPos = values.length;
     values.push(d.offset); const offPos = values.length;
     const sql = `
-      SELECT el.event_type, el.subject_type, el.subject_id::text, el.actor_user_id::text,
+      SELECT el.event_type, el.subject_type, el.subject_id::text, ${auditSubjectProjection("el")}, el.actor_user_id::text,
              u.email AS actor_email, el.occurred_at::text, el.payload, el.source,
              count(*) OVER()::int AS total_count
       FROM events.event_log el
       LEFT JOIN identity.users u ON u.id = el.actor_user_id
+      ${auditSubjectJoins("el")}
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {
