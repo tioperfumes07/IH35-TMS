@@ -37,6 +37,11 @@ const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) =>
 export function verify(source) {
   const failures = [];
   const need = (key, token, message) => { if (!source[key].includes(token)) failures.push(message); };
+  const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const needNavItem = (key, label, href, message) => {
+    const item = new RegExp(`\\{\\s*label:\\s*"${escapeRegExp(label)}",\\s*href:\\s*"${escapeRegExp(href)}"`);
+    if (!item.test(source[key])) failures.push(message);
+  };
 
   for (const route of ["/finance", "/finance/hub", "/finance/overview", "/finance/statements", "/finance/ar-ap-aging", "/finance/projections", "/finance/scenarios", "/finance/break-even", "/finance/calculator", "/finance/amortization", "/finance/loan-wizard"]) need("routes", `path="${route}"`, `finance route ${route} must remain mounted`);
   for (const id of ["overview", "projections", "scenarios", "hub", "statements", "ar-ap-aging", "break-even", "loan-wizard", "calculator", "amortization"]) need("finance", `id: "${id}"`, `finance nav ${id} must remain visible when applicable`);
@@ -62,7 +67,7 @@ export function verify(source) {
   for (const route of ["/driver-hub", "/driver-hub/reporting", "/program"]) need("routes", `path="${route}"`, `home destination ${route} must remain mounted`);
 
   for (const [label, href] of [["Reports", "/reports"], ["Category hub", "/reports/hub"], ["Run report", "/reports/hub"], ["Cancellations", "/reports/cancellations"], ["Scheduled (custom)", "/reports/scheduled-custom"], ["Audit", "/reports/audit/activity-by-user"]]) {
-    need("reportsSubnav", `{ label: "${label}", href: "${href}"`, `reports subnav ${label} must remain wired`);
+    needNavItem("reportsSubnav", label, href, `reports subnav ${label} must remain wired`);
   }
   need("reportsHome", "<ReportsSubNav />", "reports home must retain shared subnavigation");
   need("reportsHome", "setShowCustomBuilder", "reports home must retain its custom-builder door");
@@ -100,6 +105,8 @@ if (process.argv.includes("--self-test")) {
     ["helpOverview", 'to: "/help/runbooks"', 'to: "/help"'], ["homeJumps", 'to: "/maintenance"', 'to: "/broken-maintenance"'],
     ["ownerHome", "HOME_QUICK_JUMPS.map", "[].map"], ["ownerHome", 'to="/program"', 'to="/broken-program"'],
     ["reportsSubnav", '{ label: "Reports", href: "/reports"', '{ label: "Reports", href: "/broken"'],
+    ["reportsSubnav", 'label: "Run report"', 'label: "Broken runner"'],
+    ["reportsSubnav", 'label: "Audit"', 'label: "Broken audit"'],
     ["reportsHome", "<ReportsSubNav />", "<div />"], ["reportsHome", "setShowCustomBuilder", "brokenCustomBuilder"],
     ["reportsHub", 'kind="report_category"', 'kind="broken_category"'],
     ["routes", 'path="/finance/statements"', 'path="/broken-finance"'], ["routes", 'path="/fuel/planner"', 'path="/broken-fuel"'],
