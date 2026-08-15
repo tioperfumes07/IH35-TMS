@@ -154,6 +154,20 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
     // wrapper changed.
     <ParityDrawer open={open} title="Match transaction" onClose={onClose}>
       <div data-testid="match-drawer">
+        {/* LINK-F5190: bankTransactionId is the real banking.bank_transactions id being matched
+            (already used throughout getMatchCandidates/acceptBankReconMatch/categorizeBankTransaction
+            below) -- the drawer only ever showed the static title "Match transaction", never a link
+            to the transaction itself. */}
+        {bankTransactionId ? (
+          <p className="mb-1 text-[11px] text-slate-600">
+            Bank transaction:{" "}
+            <EntityLink
+              kind="bank_transaction"
+              id={candidatesQuery.data?.bank_transaction_id ?? bankTransactionId}
+              label="View transaction →"
+            />
+          </p>
+        ) : null}
         <p className="mb-3 text-[11px] text-slate-500">
           Recommended matches (±7 days). If none fit, use <strong>Search all</strong> like QuickBooks to widen the
           window and search by payee / memo / ref. Exact-amount matches can be confirmed to link and clear — no

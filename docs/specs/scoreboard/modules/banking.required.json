@@ -126,8 +126,7 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "qbo_chrome",
-        "bank"
+        "qbo_chrome"
       ]
     },
     {
@@ -160,8 +159,7 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "bank"
+        "reverse_link"
       ]
     },
     {
@@ -184,8 +182,7 @@
       "route_hint": "/banking/factoring",
       "required": [
         "liability",
-        "connectivity",
-        "bank"
+        "connectivity"
       ]
     },
     {
@@ -198,8 +195,7 @@
         "liability",
         "gl_je",
         "connectivity",
-        "reverse_link",
-        "bank"
+        "reverse_link"
       ]
     },
     {
@@ -216,9 +212,7 @@
       "tab": "Reports",
       "sub": "Banking reports",
       "route_hint": "/banking/reports",
-      "required": [
-        "bank"
-      ]
+      "required": []
     },
     {
       "id": "statement_import",
@@ -247,8 +241,7 @@
       "route_hint": "/banking/settings",
       "required": [
         "connectivity",
-        "qbo_chrome",
-        "bank"
+        "qbo_chrome"
       ]
     },
     {
@@ -312,7 +305,6 @@
       "surface_path": "pages/banking/components/ManageAccountsModal.tsx",
       "required": [
         "connectivity",
-        "bank",
         "qbo_chrome"
       ]
     },
@@ -325,7 +317,6 @@
       "surface_path": "pages/banking/components/ManualJEModal.tsx",
       "required": [
         "connectivity",
-        "bank",
         "qbo_chrome"
       ]
     },
@@ -360,7 +351,6 @@
       "surface_path": "pages/banking/components/BankingPlaidConnectionsPanel.tsx",
       "required": [
         "connectivity",
-        "bank",
         "qbo_chrome"
       ]
     },
@@ -434,7 +424,6 @@
       "surface_path": "pages/banking/components/ManualJEModal.tsx",
       "required": [
         "connectivity",
-        "bank",
         "qbo_chrome"
       ]
     },
@@ -694,6 +683,72 @@
             "reverse_link"
           ],
           "reason": "same file as banking.drawer.match"
+        }
+      ]
+    },
+    "bank_2026_08_15": {
+      "finding": "BANK-FALSE-REQUIRED",
+      "note": "accounts (BankingHome.tsx accounts tab): per-account rollup tiles -- views.banking_account_tiles computes last_txn_date via MAX(...), never a transaction id; many transactions per tile, no single owning row. transactions.categorize (BankingTransactionsDesignView.tsx): this IS the canonical page every kind=\"bank_transaction\" EntityLink drills into -- a detail/register page never self-links its own rows (same convention as BillDetailPage.tsx etc), and PlaidBankTransaction carries no cross-leg bank_transaction id to discard. factoring (BankingHome.tsx factoring tab): accounting.factoring_advances has no bank_transaction/bank_account column anywhere, confirmed no bank-feed join in factoring-virtual.routes.ts. driver_escrow (DriverEscrowTabContent.tsx): reads a synthetic virtual account + driver_finance.escrow_ledger, which has no bank_transaction_id column -- a liability sub-ledger, not backed by a real bank_transactions row. reports (BankingReportsTabContent.tsx): pure static list of Link chrome to other report pages, no transaction data fetched. settings (BankingHome.tsx settings tab): pure config-navigation chrome, no transaction rendered. banking.modal.manage_accounts (ManageAccountsModal.tsx): operates on bank-ACCOUNT rows only, no transaction id anywhere. banking.modal.manual_je / banking.parity.manual_je (ManualJEModal.tsx, both the banking-local file and the actually-mounted components/accounting/ManualJEModal.tsx): pure GL journal-entry creators with zero bank-account/bank-transaction concept. banking.panel.banking_plaid_connections (BankingPlaidConnectionsPanel.tsx): Plaid item connect/sync/ disconnect chrome + per-account links (not transaction); a second, dead/unimported component in the same file (BankingCompanyTransactionsPanel) does render real transactions but is never mounted anywhere in the app, so it is not part of this leaf's live surface.",
+      "drops": [
+        {
+          "id": "accounts",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "transactions.categorize",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "factoring",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "driver_escrow",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "reports",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "settings",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "banking.modal.manage_accounts",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "banking.modal.manual_je",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "banking.panel.banking_plaid_connections",
+          "removed": [
+            "bank"
+          ]
+        },
+        {
+          "id": "banking.parity.manual_je",
+          "removed": [
+            "bank"
+          ]
         }
       ]
     }

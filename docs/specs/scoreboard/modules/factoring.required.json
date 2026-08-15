@@ -322,8 +322,7 @@
       "route_hint": "/accounting/factor-reconciliation",
       "required": [
         "connectivity",
-        "qbo_chrome",
-        "bank"
+        "qbo_chrome"
       ]
     },
     {
@@ -842,6 +841,18 @@
           "id": "accounting.factor_recon",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "bank_2026_08_15": {
+      "finding": "BANK-FALSE-REQUIRED",
+      "note": "FactorReconciliationPage.tsx: FactorReconciliationItem/Run types carry invoice_id/factor_amount_cents/ ledger_amount_cents/variance_cents/ledger_match_state -- no bank_account_id/bank_transaction_id field; confirmed zero \"bank\" hits in the backend factor-reconciliation routes/service. Same conclusion as the already-dropped ap_bill flag on this leaf, holds identically for bank.",
+      "drops": [
+        {
+          "id": "accounting.factor_recon",
+          "removed": [
+            "bank"
           ]
         }
       ]

@@ -290,11 +290,25 @@ export function BankReconciliationPage() {
           ) : null}
           <div className="max-h-[520px] space-y-1 overflow-auto">
             {[...(worklistQuery.data?.unmatched_transactions ?? []), ...(worklistQuery.data?.auto_matched_candidates ?? [])].map((row) => (
-              <button
+              // LINK-F5190: row.id is the real banking.bank_transactions id (already used
+              // functionally by acceptBankReconMatch/rejectBankReconMatch/manualBankReconMatch
+              // below) -- surface it as a real drill target to the full register view. A native
+              // <a> (EntityLink) can't legally nest inside a <button>, so this row moved from
+              // <button> to a role="button" <div> (Enter/Space still select it) with the
+              // EntityLink as a genuine sibling anchor; EntityLink's own stopPropagation keeps a
+              // click on the drill icon from also re-selecting the row.
+              <div
                 key={row.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedTxId(row.id)}
-                className={`w-full rounded border px-2 py-2 text-left text-xs ${
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedTxId(row.id);
+                  }
+                }}
+                className={`w-full cursor-pointer rounded border px-2 py-2 text-left text-xs ${
                   selectedTxId === row.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white hover:bg-gray-50"
                 }`}
               >
@@ -302,9 +316,12 @@ export function BankReconciliationPage() {
                   <span className="font-semibold text-gray-900">{formatDateUS(row.transaction_date)}</span>
                   <span className="text-gray-600">{money(row.amount_cents)}</span>
                 </div>
-                <div className="truncate text-gray-700">{row.merchant_name ?? row.description ?? "Bank transaction"}</div>
+                <div className="truncate text-gray-700">
+                  {row.merchant_name ?? row.description ?? "Bank transaction"}{" "}
+                  <EntityLink kind="bank_transaction" id={row.id} label="↗" className="text-slate-500 hover:underline" />
+                </div>
                 {isAutoMatchCandidate(row) ? <div className="text-slate-700">Auto-match candidate: {row.ledger_entry_kind}</div> : <div className="text-gray-500">Unmatched</div>}
-              </button>
+              </div>
             ))}
           </div>
         </div>

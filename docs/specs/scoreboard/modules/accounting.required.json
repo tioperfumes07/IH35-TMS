@@ -1044,7 +1044,6 @@
       "surface_kind": "drawer",
       "surface_path": "pages/accounting/PaymentMethodsCatalogPage.tsx",
       "required": [
-        "bank",
         "connectivity",
         "qbo_chrome",
         "picker_law"
@@ -1668,6 +1667,18 @@
           "id": "accounting.modal.create",
           "removed": [
             "expense"
+          ]
+        }
+      ]
+    },
+    "bank_2026_08_15": {
+      "finding": "BANK-FALSE-REQUIRED",
+      "note": "PaymentMethodsCatalogPage.tsx: creates a catalogs.payment_methods config row (name, gl_account_id, sort_order) -- the only FK is gl_account_id (a GL chart-of-accounts pointer via ReferenceSelect createKind=\"account\"), no bank_transaction_id/bank_account_id field anywhere. Pure reference-data, not a transaction-owning record.",
+      "drops": [
+        {
+          "id": "payment_methods_catalog.create",
+          "removed": [
+            "bank"
           ]
         }
       ]

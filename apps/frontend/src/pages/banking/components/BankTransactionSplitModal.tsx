@@ -252,7 +252,17 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
         <div className="space-y-3 text-xs text-gray-800">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-gray-50 p-2">
             <div>
-              <div className="font-semibold text-gray-900">{transaction.description || "Bank transaction"}</div>
+              {/* LINK-F5190: transaction.id is the real banking.bank_transactions id (already used
+                  throughout this modal's getBankTransactionSplits/save/commit/void calls) -- the
+                  header only ever rendered its description as plain text. */}
+              <div className="font-semibold text-gray-900">
+                <EntityLink
+                  kind="bank_transaction"
+                  id={transaction.id}
+                  label={transaction.description || "Bank transaction"}
+                  className="font-semibold text-gray-900 hover:underline"
+                />
+              </div>
               <div className="text-gray-600">{transaction.is_credit ? "Money in" : "Money out"} · Total {formatUsdCents(totalCents)}</div>
             </div>
             <div className={`rounded-sm px-2 py-1 text-xs font-semibold ${remainingCents === 0 ? "bg-slate-100 text-slate-700" : "bg-red-50 text-red-700"}`}>

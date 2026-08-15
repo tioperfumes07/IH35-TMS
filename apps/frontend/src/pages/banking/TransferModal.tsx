@@ -11,6 +11,7 @@ import {
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { useToast } from "../../components/Toast";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -211,6 +212,14 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
       }
     >
       <div className="space-y-3 text-sm">
+        {/* LINK-F5190: linkBankTransactionId is the real bank-feed row for the outgoing leg
+            (already used functionally in markBankTransactionTransfer below) -- was never rendered. */}
+        {linkBankTransactionId ? (
+          <p className="text-xs text-gray-600">
+            Originating bank transaction:{" "}
+            <EntityLink kind="bank_transaction" id={linkBankTransactionId} label="View transaction →" />
+          </p>
+        ) : null}
         <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs w-fit" data-testid="transfer-scope-toggle">
           {(["intra", "intercompany"] as const).map((tab) => (
             <button

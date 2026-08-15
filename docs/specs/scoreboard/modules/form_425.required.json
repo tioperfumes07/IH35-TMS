@@ -208,9 +208,7 @@
       "tab": "425C Law",
       "sub": "Factoring/Escrow excluded from main bank totals (lines 19-23)",
       "route_hint": "/425c",
-      "required": [
-        "bank"
-      ],
+      "required": [],
       "note": "Connectivity N/A: this law describes excluded QBO/virtual-bank behavior; GL and bank applicability remain independently required."
     },
     {
@@ -618,6 +616,18 @@
           "id": "law.virtual_banks_excluded",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "bank_2026_08_15": {
+      "finding": "BANK-FALSE-REQUIRED",
+      "note": "QBImportTab.tsx: a static compliance note describing a governance rule (which bank account types are excluded from Form 425 lines 19-23), not a record-linking surface -- no per-transaction id to link.",
+      "drops": [
+        {
+          "id": "law.virtual_banks_excluded",
+          "removed": [
+            "bank"
           ]
         }
       ]

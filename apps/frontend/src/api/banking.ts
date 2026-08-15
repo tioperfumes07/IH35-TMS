@@ -411,6 +411,7 @@ export function getMatchCandidates(
     match_candidates_count: number;
     window_days?: number;
     search_query?: string | null;
+    bank_transaction_id?: string;
   }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);
 }
 

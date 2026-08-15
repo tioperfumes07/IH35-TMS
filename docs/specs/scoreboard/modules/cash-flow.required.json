@@ -158,9 +158,7 @@
       "tab": "Banking hop",
       "sub": "Banking home cash position",
       "route_hint": "/banking",
-      "required": [
-        "bank"
-      ]
+      "required": []
     },
     {
       "id": "hop.reports.cash_flow_statement",
@@ -645,6 +643,18 @@
           "id": "cash-flow.panel.projection",
           "removed": [
             "expense"
+          ]
+        }
+      ]
+    },
+    "bank_2026_08_15": {
+      "finding": "BANK-FALSE-REQUIRED",
+      "note": "CashFlowPage.tsx: a bare <Link to=\"/banking\"> nav chip in the \"Related:\" bar, no transaction id involved.",
+      "drops": [
+        {
+          "id": "hop.banking",
+          "removed": [
+            "bank"
           ]
         }
       ]

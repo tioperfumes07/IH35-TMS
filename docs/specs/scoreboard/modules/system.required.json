@@ -208,9 +208,7 @@
       "tab": "Banking hop",
       "sub": "Bank statement recon stays in Banking",
       "route_hint": "/banking",
-      "required": [
-        "bank"
-      ]
+      "required": []
     },
     {
       "id": "hop.program_matrix",
@@ -514,6 +512,18 @@
           "id": "tab.qbo_sync",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "bank_2026_08_15": {
+      "finding": "BANK-FALSE-REQUIRED",
+      "note": "SystemModulePage.tsx QboReconTab: a static Link out of the QBO tie-out table into the separate Banking module (explicit copy: \"This is not bank reconciliation... the two are never combined in one table\"), not a row-level link.",
+      "drops": [
+        {
+          "id": "hop.banking_recon",
+          "removed": [
+            "bank"
           ]
         }
       ]

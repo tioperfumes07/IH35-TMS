@@ -12,6 +12,7 @@ import {
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { useToast } from "../../components/Toast";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -272,6 +273,15 @@ export function RecordTransferModal({
       }
     >
       <div className="space-y-3 text-sm">
+        {/* LINK-F5190: linkBankTransactionId is the real originating banking.bank_transactions id
+            (already used functionally in categorizeBankTransaction/markBankTransactionTransfer
+            below) -- was never rendered. */}
+        {linkBankTransactionId ? (
+          <p className="text-xs text-gray-600">
+            Originating bank transaction:{" "}
+            <EntityLink kind="bank_transaction" id={linkBankTransactionId} label="View transaction →" />
+          </p>
+        ) : null}
         <fieldset className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {transferTypeOptions.map((option) => (
             <label key={option.value} className="flex items-center gap-2 rounded-sm border border-gray-200 px-2 py-1">

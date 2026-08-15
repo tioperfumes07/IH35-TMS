@@ -9,6 +9,7 @@ import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useToast } from "../../components/Toast";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -190,6 +191,14 @@ export function RecordCCPaymentModal({
       }
     >
       <div className="space-y-3 text-sm" data-testid="record-cc-payment-drawer">
+        {/* LINK-F5190: linkBankTransactionId is the real originating banking.bank_transactions id
+            (already used functionally in categorizeBankTransaction below) -- was never rendered. */}
+        {linkBankTransactionId ? (
+          <p className="text-xs text-gray-600">
+            Originating bank transaction:{" "}
+            <EntityLink kind="bank_transaction" id={linkBankTransactionId} label="View transaction →" />
+          </p>
+        ) : null}
         <label className="block text-xs font-semibold text-gray-700">
           Credit card vendor
           <div className="mt-1 font-normal">

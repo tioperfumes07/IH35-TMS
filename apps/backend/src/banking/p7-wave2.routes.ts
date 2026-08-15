@@ -171,7 +171,16 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       search_query: parsed.data.q,
     });
 
-    return { candidates, match_candidates_count: candidates.length, window_days: windowDays ?? 7, search_query: parsed.data.q ?? null };
+    // LINK-F5190: the response never echoed which bank_transaction_id these candidates are FOR --
+    // callers (MatchDrawer.tsx) had to rely entirely on the id they already threaded in as a prop,
+    // with no authoritative confirmation from the response itself. Small, real completeness fix.
+    return {
+      candidates,
+      match_candidates_count: candidates.length,
+      window_days: windowDays ?? 7,
+      search_query: parsed.data.q ?? null,
+      bank_transaction_id: params.data.id,
+    };
   });
 
   app.get("/api/v1/banking/rules", async (req, reply) => {
