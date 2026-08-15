@@ -1,7 +1,7 @@
 import { CronExpressionParser } from "cron-parser";
 import { DateTime } from "luxon";
 
-export type ScheduleFrequency = "daily" | "weekly" | "monthly" | "cron";
+export type ScheduleFrequency = "daily" | "weekly" | "monthly" | "quarterly" | "cron";
 
 export type ScheduleInput = {
   frequency: ScheduleFrequency;
@@ -76,6 +76,21 @@ export function computeNextRunAt(input: ScheduleInput, from: Date = new Date()):
     return cand.toUTC().toJSDate();
   }
 
+  if (input.frequency === "quarterly") {
+    // Last day of the quarter (Mar/Jun/Sep/Dec), at run_time. Equivalent to cron "0 H L 3,6,9,12 *"
+    // but expressed directly so quarterly is a genuine first-class frequency, not a synthetic cron
+    // string (LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED).
+    const quarterEndMonths = [3, 6, 9, 12];
+    const quarterEndFor = (month: number, year: number) => {
+      const m = quarterEndMonths.find((qm) => qm >= month) ?? quarterEndMonths[0];
+      const y = m >= month ? year : year + 1;
+      return nowZ.set({ year: y, month: m }).endOf("month").set({ hour, minute, second: 0, millisecond: 0 });
+    };
+    let cand = quarterEndFor(nowZ.month, nowZ.year);
+    if (cand <= nowZ) cand = quarterEndFor(cand.month + 1, cand.year);
+    return cand.toUTC().toJSDate();
+  }
+
   return null;
 }
 
@@ -121,6 +136,17 @@ export function computeDeliveryPeriod(frequency: ScheduleFrequency, timezone: st
     const end = lastMonth.endOf("month");
     return {
       label: `${start.toFormat("MMMM yyyy")} (monthly)`,
+      startIso: start.toUTC().toISO() ?? start.toISO() ?? "",
+      endIso: end.toUTC().toISO() ?? end.toISO() ?? "",
+    };
+  }
+
+  if (frequency === "quarterly") {
+    const prevQuarterEnd = nowZ.startOf("quarter").minus({ days: 1 });
+    const start = prevQuarterEnd.startOf("quarter");
+    const end = prevQuarterEnd.endOf("day");
+    return {
+      label: `Q${start.quarter} ${start.toFormat("yyyy")} (quarterly)`,
       startIso: start.toUTC().toISO() ?? start.toISO() ?? "",
       endIso: end.toUTC().toISO() ?? end.toISO() ?? "",
     };
