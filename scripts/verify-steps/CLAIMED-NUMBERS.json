@@ -2748,5 +2748,9 @@
   "3333": {
     "owner": "cc-1",
     "purpose": "verify-gl-je-required-honest-cluster3 (LINK-F5186)"
+  },
+  "3337": {
+    "owner": "cc-1",
+    "purpose": "verify-gl-je-required-honest-false-required-batch (LINK-F5186)"
   }
 }
