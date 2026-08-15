@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   getMaintenanceWorkOrderPdfUrl,
   getWoCostContext,
@@ -821,6 +821,21 @@ export function WorkOrderDetailPage() {
                 </p>
               </div>
             </div>
+            {wo.source_intransit_issue_id ? (
+              <div className="mt-3 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="wo-source-intransit-issue">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Source In-Transit Issue</div>
+                <Link
+                  className="font-semibold text-blue-700 hover:underline"
+                  to={`/dispatch/in-transit-issues?issue_id=${encodeURIComponent(String(wo.source_intransit_issue_id))}`}
+                >
+                  View source issue in Dispatch
+                </Link>
+                <div className="mt-1 text-xs text-gray-700">
+                  {String(wo.source_intransit_issue_category ?? "—")} · {String(wo.source_intransit_issue_severity ?? "—")} · {String(wo.source_intransit_issue_reported_at ?? "—")}
+                </div>
+                <div className="text-xs text-gray-700">{String(wo.source_intransit_issue_description ?? "—")}</div>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">

@@ -177,6 +177,7 @@ export type CreateWOFormValues = {
   external_vendor_wo_number: string;
   external_vendor_invoice_number: string;
   load_id: string;
+  source_intransit_issue_id: string;
   load_exemption_reason: string;
   description: string;
   payment_timing: PaymentTiming;
@@ -326,6 +327,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       external_vendor_wo_number: "",
       external_vendor_invoice_number: "",
       load_id: "",
+      source_intransit_issue_id: "",
       load_exemption_reason: "",
       description: "",
       payment_timing: "vendor_invoice",
@@ -628,6 +630,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           equipment_id: values.equipment_id || undefined,
           driver_id: values.driver_id || undefined,
           load_id: values.load_id || undefined,
+          source_intransit_issue_id: values.source_intransit_issue_id || undefined,
           service_date: values.service_date || undefined,
           repair_location: values.repair_location,
           bucket: values.bucket,

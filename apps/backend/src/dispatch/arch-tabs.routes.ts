@@ -13,6 +13,7 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: z.string().trim().optional(),
   load_id: z.string().uuid().optional(),
+  issue_id: z.string().uuid().optional(),
   issue_driver_id: z.string().uuid().optional(),
   issue_unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
@@ -59,6 +60,7 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     return listIntransitIssues(user.uuid, query.data.operating_company_id, {
       status: query.data.status,
+      issue_id: query.data.issue_id,
       load_id: query.data.load_id,
       driver_id: query.data.issue_driver_id,
       unit_id: query.data.issue_unit_id,

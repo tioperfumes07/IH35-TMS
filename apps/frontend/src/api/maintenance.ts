@@ -58,6 +58,12 @@ export type WorkOrder = {
   load_id?: string | null;
   /** Snapshot string written at link time — EntityLink prefers load_id FK. */
   linked_load_number?: string | null;
+  source_intransit_issue_id?: string | null;
+  source_intransit_issue_category?: string | null;
+  source_intransit_issue_description?: string | null;
+  source_intransit_issue_severity?: string | null;
+  source_intransit_issue_reported_at?: string | null;
+  source_intransit_issue_gps_label?: string | null;
   insurance_claim_id?: string | null;
   insurance_claim_number?: string | null;
   repair_location?: string | null;
@@ -277,6 +283,8 @@ export type CreateWorkOrderTwoSectionPayload = {
     equipment_id?: string;
     driver_id?: string;
     load_id?: string;
+    /** Source lineage; the backend validates and stamps both directions atomically. */
+    source_intransit_issue_id?: string;
     load_exemption_reason?: string;
     service_date?: string;
     repair_location: string;

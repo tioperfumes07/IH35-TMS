@@ -16,6 +16,7 @@ import { assertRoadsideFields, listWorkOrdersByBucket } from "./work-orders.serv
 import { emitMaintenanceSpineEvent } from "./maintenance-spine-emit.js";
 import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-validation.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -140,6 +141,7 @@ const createWorkOrderV5Schema = z.object({
     equipment_id: z.string().uuid().optional(),
     driver_id: z.string().uuid().optional(),
     load_id: z.string().uuid().optional(),
+    source_intransit_issue_id: z.string().uuid().optional(),
     load_exemption_reason: z.string().trim().min(20).optional(),
     service_date: z.string().optional(),
     repair_location: z.string().default("in_house"),
@@ -533,7 +535,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                 COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id,
                 v.vendor_name AS resolved_vendor_name,
+                l.load_number AS linked_load_number,
                 rl.load_number AS roadside_breakdown_load_number,
+                si.issue_category AS source_intransit_issue_category,
+                si.issue_description AS source_intransit_issue_description,
+                si.severity AS source_intransit_issue_severity,
+                si.reported_at AS source_intransit_issue_reported_at,
+                si.gps_label AS source_intransit_issue_gps_label,
                 ic.claim_number AS insurance_claim_number
            FROM maintenance.work_orders w
            LEFT JOIN mdata.units u
@@ -542,7 +550,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                  OR u.currently_leased_to_company_id = w.operating_company_id)
            LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id
+           LEFT JOIN dispatch.intransit_issues si ON si.id = w.source_intransit_issue_id AND si.operating_company_id = w.operating_company_id
            LEFT JOIN insurance.claim ic ON ic.id = w.insurance_claim_id AND ic.tenant_id = w.operating_company_id
           WHERE w.id = $1 AND w.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
@@ -660,7 +670,81 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           }
           await client.query("BEGIN");
           try {
+            type SourceIssueRow = { id: string; unit_id: string; driver_id: string | null; load_id: string | null };
+            let sourceIssue: SourceIssueRow | null = null;
+            if (body.header.source_intransit_issue_id) {
+              const sourceIssueRes = await client.query(
+                `SELECT id, unit_id, driver_id, load_id
+                   FROM dispatch.intransit_issues
+                  WHERE id = $1::uuid
+                    AND operating_company_id = $2::uuid
+                    AND promoted_to_wo_id IS NULL
+                    AND promoted_to_damage_report_id IS NULL
+                  FOR UPDATE`,
+                [body.header.source_intransit_issue_id, body.header.operating_company_id]
+              );
+              sourceIssue = (sourceIssueRes.rows[0] as SourceIssueRow | undefined) ?? null;
+              if (!sourceIssue) throw new Error("E_SOURCE_INTRANSIT_ISSUE_UNAVAILABLE");
+              if (sourceIssue.unit_id !== body.header.unit_id) throw new Error("E_SOURCE_INTRANSIT_UNIT_MISMATCH");
+              if (sourceIssue.driver_id && sourceIssue.driver_id !== body.header.driver_id) {
+                throw new Error("E_SOURCE_INTRANSIT_DRIVER_MISMATCH");
+              }
+              if (
+                sourceIssue.load_id &&
+                (sourceIssue.load_id !== body.header.load_id ||
+                  sourceIssue.load_id !== body.header.roadside_breakdown_load_id)
+              ) {
+                throw new Error("E_SOURCE_INTRANSIT_LOAD_MISMATCH");
+              }
+              if (body.header.source_type !== "IT") throw new Error("E_SOURCE_INTRANSIT_TYPE_MISMATCH");
+            }
             const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
+            if (sourceIssue) {
+              const woLineage = await client.query(
+                `UPDATE maintenance.work_orders
+                    SET source_intransit_issue_id = $1::uuid,
+                        updated_at = now()
+                  WHERE id = $2::uuid
+                    AND operating_company_id = $3::uuid`,
+                [sourceIssue.id, created.woUuid, body.header.operating_company_id]
+              );
+              if ((woLineage.rowCount ?? 0) !== 1) throw new Error("E_SOURCE_INTRANSIT_WO_LINEAGE_FAILED");
+
+              const issueLineage = await client.query(
+                `UPDATE dispatch.intransit_issues
+                    SET promoted_to_wo_id = $1::uuid
+                  WHERE id = $2::uuid
+                    AND operating_company_id = $3::uuid
+                    AND promoted_to_wo_id IS NULL
+                    AND promoted_to_damage_report_id IS NULL`,
+                [created.woUuid, sourceIssue.id, body.header.operating_company_id]
+              );
+              if ((issueLineage.rowCount ?? 0) !== 1) throw new Error("E_SOURCE_INTRANSIT_ISSUE_LINEAGE_FAILED");
+
+              await enqueueOutboxEvent(
+                client,
+                "maintenance.triage.converted_to_wo",
+                { aggregate_type: "dispatch.intransit_issues", aggregate_id: sourceIssue.id },
+                {
+                  issue_id: sourceIssue.id,
+                  work_order_id: created.woUuid,
+                  operating_company_id: body.header.operating_company_id,
+                }
+              );
+              await appendCrudAudit(
+                client,
+                user.uuid,
+                "maintenance.triage.converted_to_wo",
+                {
+                  resource_type: "dispatch.intransit_issues",
+                  resource_id: sourceIssue.id,
+                  work_order_id: created.woUuid,
+                  operating_company_id: body.header.operating_company_id,
+                },
+                "info",
+                "WF-049-INTRANSIT-TO-WO"
+              );
+            }
             // Option B: link create-time draft attachments (WO photos/estimates) to the real WO id,
             // atomically in this txn. This is the endpoint the Create WO modal actually posts to.
             await reassignDraftAttachments(client as never, {
@@ -777,6 +861,18 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           return reply.code(422).send({
             error: "E_DIESEL_REQUIRES_LOAD",
             message: "Diesel/over-the-road expenses must link to a load (G18 invariant)",
+          });
+        }
+        if (message.includes("E_SOURCE_INTRANSIT_ISSUE_UNAVAILABLE")) {
+          return reply.code(409).send({
+            error: "E_SOURCE_INTRANSIT_ISSUE_UNAVAILABLE",
+            message: "The in-transit issue is unavailable or was already converted. Refresh the triage queue.",
+          });
+        }
+        if (message.includes("E_SOURCE_INTRANSIT_")) {
+          return reply.code(409).send({
+            error: message,
+            message: "The work-order linkage no longer matches the source in-transit issue. Reopen it from triage.",
           });
         }
         throw error;

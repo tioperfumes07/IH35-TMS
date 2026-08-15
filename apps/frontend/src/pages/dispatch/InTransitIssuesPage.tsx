@@ -26,6 +26,7 @@ export function InTransitIssuesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5186 — visible reverse filters (URL-only ?driver_id=/load_id=/unit_id= is not reverse chrome).
   const reverseLoadId = searchParams.get("load_id")?.trim() || "";
+  const reverseIssueId = searchParams.get("issue_id")?.trim() || "";
   const reverseDriverId = searchParams.get("driver_id")?.trim() || "";
   const reverseUnitId = searchParams.get("unit_id")?.trim() || "";
   const [createOpen, setCreateOpen] = useState(false);
@@ -43,9 +44,10 @@ export function InTransitIssuesPage() {
   }
 
   const issuesQ = useQuery({
-    queryKey: ["dispatch", "intransit-issues", companyId, reverseLoadId, reverseDriverId, reverseUnitId],
+    queryKey: ["dispatch", "intransit-issues", companyId, reverseIssueId, reverseLoadId, reverseDriverId, reverseUnitId],
     queryFn: () =>
       listDispatchIntransitIssues(companyId, {
+        issue_id: reverseIssueId || undefined,
         load_id: reverseLoadId || undefined,
         driver_id: reverseDriverId || undefined,
         unit_id: reverseUnitId || undefined,
