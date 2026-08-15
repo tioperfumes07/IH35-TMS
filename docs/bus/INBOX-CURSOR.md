@@ -7,6 +7,8 @@
 
 ## ☐ NOW (Cursor lane — permanent sequence)
 
+0. **OPEN `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR`** — live USMCA `/reports/geofence-reconciliation`; dynamic anomaly-class ParityTables at `GeofenceReconciliationReport.tsx:85-151` lack Search+Range+gear and disappear entirely at zero rows. Fix once for every class with a leaf-specific mutation guard; preserve date Apply, EntityLinks, resolution, and honest empty state; `BLOCKS=LIVE-REPORTS-GEOFENCE-RECONCILIATION-CHROME`; OWNER-GATED=no.
+
 0. **OPEN `LV-HOVERDROPDOWN-HOVER-CLICK-SELF-CLOSE`** — live USMCA `/reports` `All` trigger becomes active but renders no flyout: shared `HoverDropdown` opens on mouseenter, then the same click sees open state and closes it. Fix once across all three consumers (Reports category nav ×2 + Safety group nav) with pointer/keyboard/outside-dismiss behavior coverage and one mutation-proven guard; `BLOCKS=LIVE-REPORTS-REPORT-FLYOUT,LIVE-SAFETY-GROUP-NAV`; OWNER-GATED=no.
 
 0. **OPEN `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH`** — live USMCA `/inventory/assignments` has canonical ParityTable Search+Range+gear plus a second “Search assignment trail” input (`InventoryAssignmentsPage.tsx:34-60,170-188`). Fix as a vertical `ParityTable filterBar` search-child class sweep with one mutation-proven all-consumer guard; `BLOCKS=LIVE-INVENTORY-ASSIGNMENTS-CHROME`; OWNER-GATED=no.
