@@ -8660,6 +8660,7 @@
       "last_run_status",
       "next_run_at",
       "operating_company_id",
+      "recipient_roles",
       "recipients_bcc",
       "recipients_cc",
       "recipients_to",
@@ -8672,7 +8673,10 @@
       "status",
       "subject_template",
       "timezone",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "reports.custom_report_definitions": [
       "base_view",
