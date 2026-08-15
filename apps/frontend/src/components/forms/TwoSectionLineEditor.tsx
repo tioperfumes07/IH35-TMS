@@ -133,7 +133,11 @@ export function TwoSectionLineEditor({
             : {};
         return {
           id: String(row.id ?? ""),
-          label: `${row.display_name ?? row.code ?? ""}`.trim() || String(row.id ?? ""),
+          // BILL-EXPENSE-CATEGORY-PICKER-RAW-UUID-FALLBACK: when display_name and code are both
+          // absent, the old fallback painted the raw catalog row id as the picker label. entityLabel
+          // resolves the same missing-display-value case to "Category — not visible" instead, so the
+          // real FK/code payload (unchanged below) never gets disguised behind an unreadable uuid.
+          label: entityLabel(row.display_name ?? row.code, row.id, "Category"),
           // Carry code so bill line payloads can set category_kind/code without a second lookup.
           code: String(row.code ?? ""),
           category_kind: String(meta.category_kind ?? "").trim() || undefined,
