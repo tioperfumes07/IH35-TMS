@@ -40,6 +40,14 @@ const read = (rel) => stripComments(readFileSync(join(repoRoot, rel), "utf8"));
 
 const failures = [];
 
+function claimLabelFailures(routeSource, clientSource, detailSource) {
+  return [
+    ["work-order detail must project claim number", routeSource.includes("ic.claim_number AS insurance_claim_number")],
+    ["work-order claim join must use the claim tenant scope", routeSource.includes("ic.tenant_id = w.operating_company_id")],
+    ["typed claim number must reach the mounted claim drill", clientSource.includes("insurance_claim_number?: string | null") && detailSource.includes('entityLabel(wo.insurance_claim_number, wo.insurance_claim_id, "Claim")')],
+  ].filter(([, ok]) => !ok).map(([name]) => name);
+}
+
 const route = read(ROUTE);
 if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(route)) {
   failures.push(`${ROUTE}: listQuerySchema must accept an optional \`load_id\` uuid.`);
@@ -109,6 +117,7 @@ if (!/import\s*\{\s*LoadWorkOrdersReverseSection\s*\}/.test(drawer)) {
 
 // Forward half of the same hop — WO detail / list / modal must drill TO the load (and unit/vendor).
 const woDetail = read(WO_DETAIL);
+failures.push(...claimLabelFailures(route, client, woDetail));
 if (!/wo-detail-linkage-section/.test(woDetail)) {
   failures.push(`${WO_DETAIL}: missing data-testid=wo-detail-linkage-section — WO→load/unit/vendor forward links not addressable.`);
 }
@@ -141,7 +150,16 @@ if (selftest) {
     console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted driver WO load-label defect escaped");
     process.exit(1);
   }
-  console.log("PASS verify-load-reverse-work-orders SELFTEST — planted driver WO load-label defect caught");
+  const claimMutations = [
+    claimLabelFailures(route.replace("ic.claim_number AS insurance_claim_number", "NULL AS insurance_claim_number"), client, woDetail).length > 0,
+    claimLabelFailures(route.replace("ic.tenant_id = w.operating_company_id", "TRUE"), client, woDetail).length > 0,
+    claimLabelFailures(route, client, woDetail.replace('entityLabel(wo.insurance_claim_number, wo.insurance_claim_id, "Claim")', 'entityLabel(null, wo.insurance_claim_id, "Claim")')).length > 0,
+  ];
+  if (claimMutations.some((caught) => !caught)) {
+    console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted claim-label defect escaped");
+    process.exit(1);
+  }
+  console.log("PASS verify-load-reverse-work-orders SELFTEST — driver load label + 3/3 claim-label mutations caught");
   process.exit(0);
 }
 

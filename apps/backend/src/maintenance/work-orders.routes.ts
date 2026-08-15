@@ -533,7 +533,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                 COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id,
                 v.vendor_name AS resolved_vendor_name,
-                rl.load_number AS roadside_breakdown_load_number
+                rl.load_number AS roadside_breakdown_load_number,
+                ic.claim_number AS insurance_claim_number
            FROM maintenance.work_orders w
            LEFT JOIN mdata.units u
              ON u.id = w.unit_id
@@ -542,6 +543,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
            LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id
+           LEFT JOIN insurance.claim ic ON ic.id = w.insurance_claim_id AND ic.tenant_id = w.operating_company_id
           WHERE w.id = $1 AND w.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
       );

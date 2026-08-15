@@ -813,7 +813,7 @@ export function WorkOrderDetailPage() {
                     <EntityLink
                       kind="claim"
                       id={String(wo.insurance_claim_id)}
-                      label={entityLabel(null, wo.insurance_claim_id, "Claim")}
+                      label={entityLabel(wo.insurance_claim_number, wo.insurance_claim_id, "Claim")}
                     />
                   ) : (
                     "—"
