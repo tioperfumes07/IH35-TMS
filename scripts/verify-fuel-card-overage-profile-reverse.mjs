@@ -14,7 +14,8 @@ function failures(s = files) { return [
   ["profile-filtered canonical read", s.reverse.includes('listOverageEvents(operatingCompanyId, "all", filter)') && s.reverse.includes('queryKey: ["fuel-card-overage-reverse", operatingCompanyId, filter]')],
   ["driver and unit reverse mounts", s.driver.includes('filter={{ driver_id: id }}') && s.unit.includes('filter={{ unit_id: id }}')],
   ["exact event drill", s.reverse.includes('kind="fuel_card_overage_event"') && s.reverse.includes('id={event.id}') && s.queue.includes('searchParams.get("event_id")') && s.queue.includes("event_id: eventId")],
-  ["queue preserves profile target", s.queue.includes('searchParams.get("driver_id")') && s.queue.includes('searchParams.get("unit_id")') && s.queue.includes("driver_id: driverId") && s.queue.includes("unit_id: unitId")],
+  ["queue preserves profile target", s.queue.includes('searchParams.get("driver_id")') && s.queue.includes('searchParams.get("unit_id")') && s.queue.includes("driver_id: effectiveDriverId") && s.queue.includes("unit_id: effectiveUnitId")],
+  ["queue EntityPicker filters", s.queue.includes('dataTestId="fuel-card-overage-filter-driver"') && s.queue.includes('dataTestId="fuel-card-overage-filter-unit"') && s.queue.includes("allowCreate={false}")],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   const checks = [
@@ -23,9 +24,10 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, unit: "" }).includes("driver and unit reverse mounts"),
     failures({ ...files, reverse: files.reverse.replace('kind="fuel_card_overage_event"', 'kind="unit"') }).includes("exact event drill"),
     failures({ ...files, queue: files.queue.replace('searchParams.get("unit_id")', 'searchParams.get("missing")') }).includes("queue preserves profile target"),
+    failures({ ...files, queue: files.queue.replace('dataTestId="fuel-card-overage-filter-driver"', 'dataTestId="x"') }).includes("queue EntityPicker filters"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-fuel-card-overage-profile-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-fuel-card-overage-profile-reverse selftest PASS — 5/5 filter/profile/target mutations red"); process.exit(0);
+  console.log("verify-fuel-card-overage-profile-reverse selftest PASS — 6/6 filter/profile/target mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-fuel-card-overage-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }

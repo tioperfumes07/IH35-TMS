@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
@@ -8,6 +8,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -67,18 +68,43 @@ export function CardOverageQueuePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("pending_review");
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("event_id") ?? undefined;
   const driverId = searchParams.get("driver_id") ?? undefined;
   const unitId = searchParams.get("unit_id") ?? undefined;
-  const hasEntityTarget = Boolean(eventId || driverId || unitId);
+  // BANK-F5167 — visible EntityPicker filters (URL-only is not reverse chrome).
+  const [driverPickerId, setDriverPickerId] = useState("");
+  const [unitPickerId, setUnitPickerId] = useState("");
+  useEffect(() => {
+    if (driverId) setDriverPickerId(driverId);
+  }, [driverId]);
+  useEffect(() => {
+    if (unitId) setUnitPickerId(unitId);
+  }, [unitId]);
+  const setDriverFilter = (next: string) => {
+    setDriverPickerId(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("driver_id", next);
+    else params.delete("driver_id");
+    setSearchParams(params, { replace: true });
+  };
+  const setUnitFilter = (next: string) => {
+    setUnitPickerId(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("unit_id", next);
+    else params.delete("unit_id");
+    setSearchParams(params, { replace: true });
+  };
+  const effectiveDriverId = driverPickerId.trim() || driverId || undefined;
+  const effectiveUnitId = unitPickerId.trim() || unitId || undefined;
+  const hasEntityTarget = Boolean(eventId || effectiveDriverId || effectiveUnitId);
 
   const eventsQuery = useQuery({
-    queryKey: ["fuel", "card-overage-events", companyId, statusFilter, eventId ?? null, driverId ?? null, unitId ?? null],
+    queryKey: ["fuel", "card-overage-events", companyId, statusFilter, eventId ?? null, effectiveDriverId ?? null, effectiveUnitId ?? null],
     queryFn: () => listOverageEvents(companyId, hasEntityTarget ? "all" : statusFilter, {
       event_id: eventId,
-      driver_id: driverId,
-      unit_id: unitId,
+      driver_id: effectiveDriverId,
+      unit_id: effectiveUnitId,
     }),
     enabled: Boolean(companyId),
   });
@@ -218,6 +244,35 @@ export function CardOverageQueuePage() {
         <code className="font-mono">FUEL_CARD_OVERAGE_ENGINE_ENABLED</code> is on and events evaluate.
         Approve never invents density — it calls the same poster as the API.
       </p>
+
+      <div className="flex flex-wrap items-end gap-3" data-testid="fuel-card-overage-filters">
+        <label className="text-[11px] text-slate-600">
+          Driver
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={driverPickerId || null}
+            onChange={(next) => setDriverFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1"
+            dataTestId="fuel-card-overage-filter-driver"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={unitPickerId || null}
+            onChange={(next) => setUnitFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1"
+            dataTestId="fuel-card-overage-filter-unit"
+          />
+        </label>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         {hasEntityTarget ? (
