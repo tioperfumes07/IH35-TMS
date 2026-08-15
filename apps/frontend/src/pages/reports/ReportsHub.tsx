@@ -3,25 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportCard } from "../../components/reports/ReportCard";
 import { ReportCategoryHoverNav } from "../../components/reports/ReportCategoryHoverNav";
-import { apiRequest } from "../../api/client";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
-
-type CatalogCategory = {
-  id: string;
-  label: string;
-  reports: Array<{ id: string; label: string; route: string; icon: string; description: string }>;
-};
-
-async function fetchCatalog() {
-  return apiRequest<{ categories: CatalogCategory[] }>("/api/reports/categories/catalog");
-}
+import { fetchReportCategoryCatalog } from "./categories/catalog-api";
 
 export function ReportsHubPage() {
   const [search, setSearch] = useState("");
   const catalogQuery = useQuery({
     queryKey: ["reports", "category-catalog"],
-    queryFn: fetchCatalog,
+    queryFn: fetchReportCategoryCatalog,
   });
 
   const categories = catalogQuery.data?.categories ?? [];
