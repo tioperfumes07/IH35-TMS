@@ -12,6 +12,7 @@ const LABEL = "verify-matrix-metrics-tally";
 const SELFTEST = process.argv.includes("--selftest");
 const TALLY_TS = path.join(ROOT, "apps/backend/src/program/matrix-metrics-tally.ts");
 const MATRIX_SVC = path.join(ROOT, "apps/backend/src/program/module-matrix.service.ts");
+const SYSTEM_VIEW = path.join(ROOT, "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx");
 
 export function emptyTierBucket() {
   return {
@@ -101,6 +102,20 @@ export function simulateBoard(cells) {
   return finalizeTierMetrics(bucket);
 }
 
+export function exactSystemTrackerProblems(source) {
+  const problems = [];
+  if (!/const live = sys\.liveCells;/.test(source)) {
+    problems.push("system tracker must use exact sys.liveCells, never reconstruct Live from rounded boxAbl percentages");
+  }
+  if (!/const builtCum = sys\.builtCells;/.test(source)) {
+    problems.push("system tracker must use exact sys.builtCells, never reconstruct Built from rounded boxAbl percentages");
+  }
+  if (/Math\.round\(\(sys\.boxAbl\.(?:livePct|builtPct) \/ 100\) \* req\)/.test(source)) {
+    problems.push("system tracker exact Built/Live counts must not be reconstructed from rounded percentages");
+  }
+  return problems;
+}
+
 function repoProblems() {
   const problems = [];
   if (!fs.existsSync(TALLY_TS)) problems.push(`MISSING ${TALLY_TS}`);
@@ -123,6 +138,8 @@ function repoProblems() {
       problems.push("module-matrix.service.ts must classify cells with classifyMatrixCellTier");
     }
   }
+  if (!fs.existsSync(SYSTEM_VIEW)) problems.push(`MISSING ${SYSTEM_VIEW}`);
+  else problems.push(...exactSystemTrackerProblems(fs.readFileSync(SYSTEM_VIEW, "utf8")));
   return problems;
 }
 
@@ -151,6 +168,15 @@ if (SELFTEST) {
   bad.liveCells = 2;
   if (assertTierTallyConsistent(bad).length === 0) {
     console.error(`${LABEL} selftest: tally mismatch should fail`);
+    process.exit(1);
+  }
+  const systemView = fs.readFileSync(SYSTEM_VIEW, "utf8");
+  const plantedRoundedReconstruction = systemView.replace(
+    "const live = sys.liveCells;",
+    "const live = Math.round((sys.boxAbl.livePct / 100) * req);",
+  );
+  if (!exactSystemTrackerProblems(plantedRoundedReconstruction).some((p) => p.includes("exact sys.liveCells"))) {
+    console.error(`${LABEL} selftest: rounded-percent tracker mutation escaped`);
     process.exit(1);
   }
   const repo = repoProblems();
