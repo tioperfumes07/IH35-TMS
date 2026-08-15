@@ -76,6 +76,16 @@ const CHECKS = [
     pattern: /searchParams\.get\("load_id"\)/,
   },
   {
+    name: "LST-F5198: BillsPage unit filter writes URL",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern: /dataTestId="bills-filter-unit"/,
+  },
+  {
+    name: "LST-F5198: BillsPage patchEntityFilter",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern: /function patchEntityFilter/,
+  },
+  {
     name: "ACCT-F5049: BillsReverseSection Open Bills keeps filter query",
     file: "apps/frontend/src/components/accounting/BillsReverseSection.tsx",
     pattern: /to=\{`\/accounting\/bills\?\$\{filterKey\}=/,
@@ -115,7 +125,7 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx": '<EntityLink kind="bill" id={result.bill_id} />',
     "apps/frontend/src/pages/accounting/BillDetailPage.tsx": '<EntityLink kind="cash_advance" id={bill.linked_cash_advance_id} />',
     "apps/frontend/src/pages/accounting/BillsPage.tsx":
-      'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id")',
+      'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id") dataTestId="bills-filter-unit" function patchEntityFilter',
     "apps/frontend/src/components/accounting/BillsReverseSection.tsx": "to={`/accounting/bills?${filterKey}=",
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx": 'searchParams.get("source_load_id")',
     "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx":

@@ -18,6 +18,7 @@ import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -230,6 +231,18 @@ export function BillsPage() {
         const params = new URLSearchParams(prev);
         if (next) params.set("vendor_id", next);
         else params.delete("vendor_id");
+        return params;
+      },
+      { replace: true }
+    );
+  }
+  // LST-F5198 — unit/load reverse filters write URL (seed-only was not enough).
+  function patchEntityFilter(key: "unit_id" | "load_id", next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set(key, next);
+        else params.delete(key);
         return params;
       },
       { replace: true }
@@ -492,6 +505,34 @@ export function BillsPage() {
 
   const filterBar = (
     <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-wrap items-end gap-3" data-testid="bills-entity-filters">
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={deepLinkUnitId || null}
+            onChange={(next) => patchEntityFilter("unit_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1"
+            dataTestId="bills-filter-unit"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={deepLinkLoadId || null}
+            onChange={(next) => patchEntityFilter("load_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="bills-filter-load"
+          />
+        </label>
+      </div>
       {vendorsQuery.isError ? (
         <ListErrorBanner
           message={`Failed to load vendor filters: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
