@@ -110,6 +110,7 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
       />
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        {/* LST-F3514: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -147,6 +148,8 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
           emptyText={`No ${displayName.toLowerCase()} found.`}
           storageKey={`drivers-ref-catalog-${catalogKey}`}
           tableTestId="drivers-reference-catalog-table"
+          // LST-F3514: keep API search above; hide ParityTable toolbar Search
+          suppressToolbarSearch
         />
       )}
 
