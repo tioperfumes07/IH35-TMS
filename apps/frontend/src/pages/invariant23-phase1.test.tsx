@@ -138,6 +138,7 @@ const fakeDriver: Driver = {
   status: "Active",
   notes: null,
   prior_driver_id: null,
+  prior_driver_name: null,
   rehire_count: 0,
   is_rehire: false,
   created_at: "2026-01-01",
