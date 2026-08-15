@@ -309,14 +309,30 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const qc = useQueryClient();
   const [searchParams] = useSearchParams();
   const entryId = searchParams.get("entry_id") ?? undefined;
+  const partyRefKindParam = searchParams.get("party_ref_kind");
+  const partyRefKind: "customer" | "driver" | "vendor" | undefined =
+    partyRefKindParam === "customer" || partyRefKindParam === "driver" || partyRefKindParam === "vendor"
+      ? partyRefKindParam
+      : undefined;
+  const partyRefId = searchParams.get("party_ref_id") ?? undefined;
+  const refKind = searchParams.get("ref_kind") === "unit" ? "unit" as const : undefined;
+  const refExternalId = searchParams.get("ref_external_id") ?? undefined;
+  const reverseFilter = {
+    entry_id: entryId,
+    party_ref_kind: partyRefKind,
+    party_ref_id: partyRefId,
+    ref_kind: refKind,
+    ref_external_id: refExternalId,
+  };
+  const hasReverseFilter = Object.values(reverseFilter).some(Boolean);
   // MDP-SINGLE-ROW: ONE projection date (daily projections — one day per entry), not a From/To
   // range. It is the default entry_date for new rows on both panels.
   const [projectionDate, setProjectionDate] = useState("");
   const [openingDraft, setOpeningDraft] = useState<number | null>(null);
 
   const entriesQuery = useQuery({
-    queryKey: ["forecast", "entries", operatingCompanyId, entryId ?? null],
-    queryFn: () => listForecastEntries(operatingCompanyId, undefined, undefined, { entry_id: entryId }),
+    queryKey: ["forecast", "entries", operatingCompanyId, reverseFilter],
+    queryFn: () => listForecastEntries(operatingCompanyId, undefined, undefined, reverseFilter),
     enabled: Boolean(operatingCompanyId),
   });
   const openingQuery = useQuery({
@@ -346,7 +362,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
 
   return (
     <div className="space-y-4">
-      {entryId ? <Link className="text-xs font-semibold text-slate-700 underline" to="/cash-flow?tab=manual_daily_projections">Clear projection target</Link> : null}
+      {hasReverseFilter ? <Link className="text-xs font-semibold text-slate-700 underline" to="/cash-flow?tab=manual_daily_projections">Clear projection filter</Link> : null}
       {(entriesQuery.isError || openingQuery.isError) && (
         <ListErrorBanner
           message={`Failed to load projections: ${((entriesQuery.error ?? openingQuery.error) as Error | undefined)?.message ?? "Request failed"}`}

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { UseFormSetValue } from "react-hook-form";
 import { listLoadTemplates, createLoadTemplate, type LoadTemplateRow } from "../../api/dispatch";
 import { Button } from "../../components/Button";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useSearchParams } from "react-router-dom";
@@ -220,6 +221,7 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
           </option>
         ))}
       </SelectCombobox>
+      <CappedListNotice shown={templates.length} limit={500} total={q.data?.total ?? null} hint="Open Load Templates to review the full catalog." />
     </label>
   );
 }
@@ -234,9 +236,10 @@ type LibraryProps = {
 export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: LibraryProps) {
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get("template_id") ?? undefined;
+  const customerId = searchParams.get("customer_id") ?? undefined;
   const q = useQuery({
-    queryKey: ["load-templates", operatingCompanyId, templateId ?? null],
-    queryFn: () => listLoadTemplates(operatingCompanyId, { template_id: templateId }),
+    queryKey: ["load-templates", operatingCompanyId, templateId ?? null, customerId ?? null],
+    queryFn: () => listLoadTemplates(operatingCompanyId, { template_id: templateId, customer_id: customerId }),
     enabled: Boolean(operatingCompanyId) && open,
   });
   const rows: LoadTemplateRow[] = useMemo(() => q.data?.templates ?? [], [q.data?.templates]);
@@ -252,6 +255,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
             <div className="text-[11px] text-gray-500">Updated {t.updated_at ? new Date(t.updated_at).toLocaleString() : "—"}</div>
           </div>
         ))}
+        <CappedListNotice shown={rows.length} limit={customerId || templateId ? rows.length : 500} total={q.data?.total ?? null} />
       </div>
       <div className="mt-3 flex justify-end">
         <Button type="button" size="sm" variant="secondary" onClick={onClose}>

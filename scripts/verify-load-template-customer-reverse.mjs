@@ -23,7 +23,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, reverse: files.reverse.replace("listLoadTemplates(operatingCompanyId, { customer_id: customerId })", "listLoadTemplates(operatingCompanyId)") }).includes("filtered customer profile read"),
     failures({ ...files, customer: "" }).includes("customer profile mount"),
     failures({ ...files, library: files.library.replace("template_id: templateId", "") }).includes("exact template drill"),
-    failures({ ...files, reverse: files.reverse.replace("!query.isLoading && !query.isError", "!query.isLoading") }).includes("honest reverse states"),
+    failures({ ...files, reverse: files.reverse.split("!query.isLoading && !query.isError").join("!query.isLoading") }).includes("honest reverse states"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-load-template-customer-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
   console.log("verify-load-template-customer-reverse selftest PASS — 5/5 filter/profile/target/state mutations red"); process.exit(0);
