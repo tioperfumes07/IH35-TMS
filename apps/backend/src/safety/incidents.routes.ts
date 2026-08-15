@@ -216,7 +216,8 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                  u.unit_number AS unit_number,
                  eq.equipment_number AS trailer_number,
-                 l.load_number AS load_number
+                 l.load_number AS load_number,
+                 wo.display_id AS work_order_display_id
           FROM safety.incidents i
           LEFT JOIN mdata.drivers d
             ON d.id = i.driver_id
@@ -232,6 +233,9 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.loads l
             ON l.id = i.load_id
            AND l.operating_company_id = i.operating_company_id
+          LEFT JOIN maintenance.work_orders wo
+            ON wo.id = i.work_order_id
+           AND wo.operating_company_id = i.operating_company_id
           WHERE ${filters.join("\n            AND ")}
           ORDER BY i.incident_at DESC
           LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -259,7 +263,8 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                  u.unit_number AS unit_number,
                  eq.equipment_number AS trailer_number,
-                 l.load_number AS load_number
+                 l.load_number AS load_number,
+                 wo.display_id AS work_order_display_id
           FROM safety.incidents i
           LEFT JOIN mdata.drivers d
             ON d.id = i.driver_id
@@ -275,6 +280,9 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.loads l
             ON l.id = i.load_id
            AND l.operating_company_id = i.operating_company_id
+          LEFT JOIN maintenance.work_orders wo
+            ON wo.id = i.work_order_id
+           AND wo.operating_company_id = i.operating_company_id
           WHERE i.id = $1
             AND i.operating_company_id = $2::uuid
           LIMIT 1
