@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { SlidersHorizontal } from "lucide-react";
+import { singleFrameLayoutClassName } from "../../lib/single-frame-classname";
 
 type BaseProps = {
   /** Non-search filters currently applied (drives badge on Filters button). */
@@ -38,6 +39,7 @@ export function CollapsedListFilters({
 }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const layoutClassName = singleFrameLayoutClassName(className);
 
   const cancelAndClose = useCallback(() => {
     onCancel();
@@ -61,7 +63,7 @@ export function CollapsedListFilters({
   }, [cancelAndClose, filtersOpen]);
 
   return (
-    <div ref={ref} className={`relative ${className}`} {...dataAttributes}>
+    <div ref={ref} className={`relative ${layoutClassName ?? ""}`} {...dataAttributes}>
       <div className="flex flex-wrap items-center gap-2">
         {searchSlot}
         <button

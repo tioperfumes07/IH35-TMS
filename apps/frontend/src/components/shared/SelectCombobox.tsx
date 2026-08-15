@@ -1,5 +1,6 @@
 import { Children, isValidElement, useMemo, useState, type ChangeEvent, type FocusEvent, type ReactNode, type SelectHTMLAttributes } from "react";
 import { Combobox } from "./Combobox";
+import { singleFrameLayoutClassName } from "../../lib/single-frame-classname";
 
 type Props = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange" | "value" | "defaultValue"> & {
   value?: string | number | readonly string[];
@@ -46,18 +47,6 @@ function flattenOptions(children: ReactNode): OptionRow[] {
 // OUTER positioning wrapper draws a second box around the real control (especially obvious inside
 // right drawers such as Lists > Accounting > Detail Type). Keep layout/spacing/typography hooks, but
 // discard frame chrome at this one shared boundary so every module gets one control frame.
-const LEGACY_SELECT_FRAME_TOKEN = /^(?:border(?:-.+)?|rounded(?:-.+)?|bg-.+|ring(?:-.+)?|shadow(?:-.+)?)$/;
-
-export function selectComboboxLayoutClassName(className?: string): string | undefined {
-  if (!className) return undefined;
-  const layout = className
-    .split(/\s+/)
-    .filter(Boolean)
-    .filter((token) => !LEGACY_SELECT_FRAME_TOKEN.test(token))
-    .join(" ");
-  return layout || undefined;
-}
-
 export function SelectCombobox({
   value,
   defaultValue,
@@ -83,7 +72,7 @@ export function SelectCombobox({
     options.find((opt) => opt.disabled && opt.value === "")?.label ||
     options.find((opt) => opt.value === "")?.label ||
     "Select...";
-  const layoutClassName = selectComboboxLayoutClassName(className);
+  const layoutClassName = singleFrameLayoutClassName(className);
 
   return (
     <div
