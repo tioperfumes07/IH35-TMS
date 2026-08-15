@@ -941,6 +941,11 @@
     "owner": "cc-1",
     "purpose": "verify-gl-je-required-honest-cluster2 (LINK-F5186)"
   },
+  "3346": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-lists-detail-types-list-cap-le-200"
+  },
   "3349": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
@@ -955,6 +960,11 @@
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
     "purpose": "verify-liability-required-honest-cluster-a-genuine"
+  },
+  "3361": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-ap-bill-required-honest-batch1"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -2800,10 +2810,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1142,
-  "3361": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "cc-1",
-    "purpose": "verify-ap-bill-required-honest-batch1"
-  }
+  "total_claimed": 1142
 }
