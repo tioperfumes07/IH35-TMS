@@ -2826,7 +2826,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1147,
+  "total_claimed": 1148,
   "3369": {
     "claimed_at": "2026-08-15",
     "claimed_by": "cc-1",
@@ -2876,5 +2876,10 @@
     "claimed_at": "2026-08-15",
     "claimed_by": "codex",
     "purpose": "verify-driver-team-member-honest-label"
+  },
+  "3392": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-insurance-policy-unit-honest-label"
   }
 }
