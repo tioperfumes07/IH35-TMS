@@ -1082,6 +1082,11 @@
     "claimed_by": "codex",
     "purpose": "verify-customer-column-orphan-guard-registry-batch"
   },
+  "3408": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-load-column-orphan-guard-registry-batch"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
