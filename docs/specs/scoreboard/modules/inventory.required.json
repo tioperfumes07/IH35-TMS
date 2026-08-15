@@ -391,7 +391,9 @@
       "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {

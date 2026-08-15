@@ -3,13 +3,27 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { GENERIC_CATALOG_REGISTRY } from "../../hooks/useCatalogQuery";
+import { buildCatalogPath, DOMAIN_CONFIG } from "./components/AllCatalogsMap";
 import { ListsSubNav } from "./ListsSubNav";
 
-// Own route-builder (distinct from useCatalogQuery's catalogNameToRoutePath, which points at the
-// legacy hand-rolled per-catalog pages, e.g. /lists/fleet/equipment-types) so this factory index
-// always links into the CATALOG-2 dynamic page namespace and never collides with an existing route.
+// Factory-only namespace (CATALOG-2). Used ONLY when DOMAIN_CONFIG has no live hub card for the
+// same catalogKey — otherwise Open must hit the bespoke /lists/:domain/:key page (CoA, Items, …)
+// so create chrome + data path never diverge from the main Lists hub (LST-F3352).
 function factoryRoutePath(domain: string, catalogKey: string): string {
   return `/lists/catalogs/${domain}/${catalogKey}`;
+}
+
+function hubDomainForRegistry(domain: string): string {
+  return domain === "driver" ? "drivers" : domain;
+}
+
+/** Prefer the live Lists hub / bespoke route when DOMAIN_CONFIG already owns this catalog. */
+export function catalogIndexOpenPath(domain: string, catalogKey: string): string {
+  const hubDomain = hubDomainForRegistry(domain);
+  const domainCfg = DOMAIN_CONFIG.find((d) => d.key === hubDomain);
+  const liveOnHub = domainCfg?.catalogs.some((c) => c.catalogKey === catalogKey && c.live);
+  if (liveOnHub) return buildCatalogPath(hubDomain, catalogKey);
+  return factoryRoutePath(domain, catalogKey);
 }
 
 type DomainGroup = {
@@ -49,7 +63,7 @@ export function CatalogIndex() {
       existing.catalogs.push({
         catalogName: definition.catalogName,
         displayName: definition.displayName,
-        routePath: factoryRoutePath(definition.domain, definition.catalogKey),
+        routePath: catalogIndexOpenPath(definition.domain, definition.catalogKey),
         description: `Generic CRUD for ${definition.catalogName}`,
       });
       byDomain.set(definition.domain, existing);

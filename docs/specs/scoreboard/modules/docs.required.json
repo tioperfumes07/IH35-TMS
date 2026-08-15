@@ -313,7 +313,8 @@
       "route_hint": "/docs",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome"
+        "qbo_chrome",
+        "connectivity"
       ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     },

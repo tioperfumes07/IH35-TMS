@@ -2,7 +2,48 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { TableSearch } from "./TableSearch";
+
+/** QBO-style date range presets — same set as Account Register (This Month / Last Month / …). */
+export function applyUniversalDatePreset(preset: string): { from: string; to: string } | null {
+  const today = companyToday();
+  const [y, m] = today.split("-").map(Number);
+  switch (preset) {
+    case "this_month": {
+      const b = monthBoundsIso(today);
+      return { from: b.start, to: b.end };
+    }
+    case "last_month": {
+      const ly = m === 1 ? y - 1 : y;
+      const lm = m === 1 ? 12 : m - 1;
+      const b = monthBoundsIso(`${ly}-${String(lm).padStart(2, "0")}-01`);
+      return { from: b.start, to: b.end };
+    }
+    case "this_quarter": {
+      const qStartMonth = Math.floor((m - 1) / 3) * 3 + 1;
+      const qEndMonth = qStartMonth + 2;
+      const from = `${y}-${String(qStartMonth).padStart(2, "0")}-01`;
+      const end = monthBoundsIso(`${y}-${String(qEndMonth).padStart(2, "0")}-01`).end;
+      return { from, to: end };
+    }
+    case "this_year":
+      return { from: `${y}-01-01`, to: `${y}-12-31` };
+    case "ytd":
+      return { from: `${y}-01-01`, to: today };
+    default:
+      return null;
+  }
+}
+
+const QBO_DATE_PRESETS: Array<{ value: string; label: string }> = [
+  { value: "this_month", label: "This Month" },
+  { value: "last_month", label: "Last Month" },
+  { value: "this_quarter", label: "This Quarter" },
+  { value: "this_year", label: "This Year" },
+  { value: "ytd", label: "Year to date" },
+  { value: "custom", label: "Custom" },
+];
 
 export type UniversalToolbarColumn = {
   key: string;
@@ -149,25 +190,48 @@ export function UniversalListToolbar({
               </select>
             </label>
             {selected ? (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <label className="text-[11px] font-semibold text-gray-600">From
-                  {selected.kind === "date" ? (
-                    <DatePicker value={draft?.from ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, from: value } : current)} className="mt-1 w-full" />
-                  ) : selected.kind === "amount" ? (
-                    <MoneyInput valueDollars={draft?.from ? Number(draft.from) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, from: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range from amount" />
-                  ) : (
-                    <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
-                  )}
-                </label>
-                <label className="text-[11px] font-semibold text-gray-600">To
-                  {selected.kind === "date" ? (
-                    <DatePicker value={draft?.to ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, to: value } : current)} className="mt-1 w-full" />
-                  ) : selected.kind === "amount" ? (
-                    <MoneyInput valueDollars={draft?.to ? Number(draft.to) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, to: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range to amount" />
-                  ) : (
-                    <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
-                  )}
-                </label>
+              <div className="space-y-2">
+                {selected.kind === "date" ? (
+                  <label className="block text-[11px] font-semibold text-gray-600">
+                    Date range (QBO)
+                    <select
+                      aria-label="QBO date range preset"
+                      className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+                      defaultValue="custom"
+                      onChange={(event) => {
+                        const preset = event.target.value;
+                        if (preset === "custom") return;
+                        const bounds = applyUniversalDatePreset(preset);
+                        if (!bounds || !draft?.key) return;
+                        setDraft({ key: draft.key, kind: "date", from: bounds.from, to: bounds.to });
+                      }}
+                    >
+                      {QBO_DATE_PRESETS.map((p) => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <label className="text-[11px] font-semibold text-gray-600">From
+                    {selected.kind === "date" ? (
+                      <DatePicker value={draft?.from ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, from: value } : current)} className="mt-1 w-full" />
+                    ) : selected.kind === "amount" ? (
+                      <MoneyInput valueDollars={draft?.from ? Number(draft.from) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, from: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range from amount" />
+                    ) : (
+                      <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                    )}
+                  </label>
+                  <label className="text-[11px] font-semibold text-gray-600">To
+                    {selected.kind === "date" ? (
+                      <DatePicker value={draft?.to ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, to: value } : current)} className="mt-1 w-full" />
+                    ) : selected.kind === "amount" ? (
+                      <MoneyInput valueDollars={draft?.to ? Number(draft.to) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, to: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range to amount" />
+                    ) : (
+                      <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                    )}
+                  </label>
+                </div>
               </div>
             ) : (
               <p className="text-[12px] text-gray-500">This list has no date or amount column to range-filter.</p>
