@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-edi-transaction-log-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx";
+const ROUTE = "apps/backend/src/integrations/edi/edi.routes.ts";
 
 const REQUIRED_LABELS = ["Type", "Dir", "Status", "Control #", "Received"];
 
@@ -72,6 +73,17 @@ function assertMigrated(src) {
   return errors;
 }
 
+function assertLoadLabelWiring(src, route) {
+  const errors = [];
+  if (!/related_load_number:\s*string \| null/.test(src)) errors.push(`${PAGE}: EDI message contract must type related_load_number`);
+  if (!/entityLabel\(selected\.related_load_number, selected\.related_load_uuid, "Load"\)/.test(src)) {
+    errors.push(`${PAGE}: selected load link must consume related_load_number`);
+  }
+  if (!/l\.load_number AS related_load_number/.test(route)) errors.push(`${ROUTE}: messages query must project related_load_number`);
+  if (!/l\.operating_company_id = em\.operating_company_id/.test(route)) errors.push(`${ROUTE}: load label join must remain same-company scoped`);
+  return errors;
+}
+
 function selftest() {
   const good = `
     import { ListErrorState } from "../../../components/ListErrorState";
@@ -105,6 +117,8 @@ function selftest() {
       );
     }
   `;
+  const goodWiring = `${good}\ntype EdiMessage = { related_load_number: string | null };\nentityLabel(selected.related_load_number, selected.related_load_uuid, "Load");`;
+  const goodRoute = `SELECT l.load_number AS related_load_number FROM integrations.edi_messages em LEFT JOIN mdata.loads l ON l.id = em.related_load_uuid AND l.operating_company_id = em.operating_company_id`;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
   if (goodErrors.length) {
@@ -113,6 +127,16 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const wiringMutations = [
+    [goodWiring.replace("related_load_number: string | null", "related_load_number: unknown"), goodRoute],
+    [goodWiring.replace("selected.related_load_number", "null"), goodRoute],
+    [goodWiring, goodRoute.replace("l.load_number AS related_load_number", "NULL AS related_load_number")],
+    [goodWiring, goodRoute.replace("l.operating_company_id = em.operating_company_id", "TRUE")],
+  ];
+  if (assertLoadLabelWiring(goodWiring, goodRoute).length || wiringMutations.some(([src, route]) => !assertLoadLabelWiring(src, route).length)) {
+    console.error(`${LABEL} --selftest FAIL load-label wiring mutations`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
@@ -124,7 +148,8 @@ function main() {
     return;
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const errors = assertMigrated(src);
+  const route = fs.readFileSync(path.join(ROOT, ROUTE), "utf8");
+  const errors = [...assertMigrated(src), ...assertLoadLabelWiring(src, route)];
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);

@@ -91,20 +91,24 @@ export async function registerEdiRoutes(app: FastifyInstance) {
       await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       const values: unknown[] = [q.data.operating_company_id];
       let sql = `
-        SELECT uuid, partner_uuid, transaction_type, direction, control_number,
-               status, error_message, related_load_uuid, received_at::text, processed_at::text
-        FROM integrations.edi_messages
-        WHERE operating_company_id = $1::uuid
+        SELECT em.uuid, em.partner_uuid, em.transaction_type, em.direction, em.control_number,
+               em.status, em.error_message, em.related_load_uuid, l.load_number AS related_load_number,
+               em.received_at::text, em.processed_at::text
+        FROM integrations.edi_messages em
+        LEFT JOIN mdata.loads l
+          ON l.id = em.related_load_uuid
+         AND l.operating_company_id = em.operating_company_id
+        WHERE em.operating_company_id = $1::uuid
       `;
       if (q.data.partner_uuid) {
         values.push(q.data.partner_uuid);
-        sql += ` AND partner_uuid = $${values.length}`;
+        sql += ` AND em.partner_uuid = $${values.length}`;
       }
       if (q.data.status) {
         values.push(q.data.status);
-        sql += ` AND status = $${values.length}`;
+        sql += ` AND em.status = $${values.length}`;
       }
-      sql += ` ORDER BY received_at DESC LIMIT 200`;
+      sql += ` ORDER BY em.received_at DESC LIMIT 200`;
       const res = await client.query(sql, values);
       return res.rows;
     });

@@ -8,6 +8,7 @@ const sources = {
   status: fs.readFileSync("apps/frontend/src/pages/driver/StatusSuggestionPrompt.tsx", "utf8"),
   settlement: fs.readFileSync("apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx", "utf8"),
   edi: fs.readFileSync("apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx", "utf8"),
+  ediRoute: fs.readFileSync("apps/backend/src/integrations/edi/edi.routes.ts", "utf8"),
   routes: fs.readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8"),
   entityLink: fs.readFileSync("apps/frontend/src/components/shared/EntityLink.tsx", "utf8"),
 };
@@ -17,6 +18,9 @@ const checks = [
   ["status", /kind=["']driver_app_load["'][\s\S]{0,120}id=\{active\.load_id\}/, "status prompt drills to driver load detail"],
   ["settlement", /kind="load" id=\{leg\.load_id\}/, "settlement-chain leg drills to office load detail"],
   ["edi", /kind="load" id=\{selected\.related_load_uuid\}/, "EDI transaction drills to office load detail"],
+  ["edi", /entityLabel\(selected\.related_load_number, selected\.related_load_uuid, "Load"\)/, "EDI load drill consumes the human load number"],
+  ["ediRoute", /l\.load_number AS related_load_number/, "EDI messages project the related load number"],
+  ["ediRoute", /l\.operating_company_id = em\.operating_company_id/, "EDI load label join remains same-company scoped"],
   ["routes", /<Route path="\/driver" element=\{<DriverShell \/>\}>[\s\S]*?<Route path="loads\/:id" element=\{<DriverLoadDetailPage \/>\}/, "driver load detail route is mounted"],
   ["entityLink", /case "load":[\s\S]*?return `\/dispatch\/loads\/\$\{id\}`/, "office load resolver targets mounted dispatch detail"],
   ["entityLink", /case "driver_app_load":[\s\S]*?return `\/driver\/loads\/\$\{id\}`/, "driver-app load resolver targets /driver/loads/:id"],

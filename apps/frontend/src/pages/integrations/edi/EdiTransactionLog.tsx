@@ -18,6 +18,7 @@ type EdiMessage = {
   status: string;
   error_message: string | null;
   related_load_uuid: string | null;
+  related_load_number: string | null;
   received_at: string;
 };
 
@@ -144,7 +145,7 @@ export function EdiTransactionLog() {
                   {selected.related_load_uuid && (
                     <p>
                       <span className="font-medium">Load:</span>{" "}
-                      <EntityLink kind="load" id={selected.related_load_uuid} label={entityLabel(null, selected.related_load_uuid, "Load")} />
+                      <EntityLink kind="load" id={selected.related_load_uuid} label={entityLabel(selected.related_load_number, selected.related_load_uuid, "Load")} />
                     </p>
                   )}
                   <button
