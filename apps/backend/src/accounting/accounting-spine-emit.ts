@@ -5,9 +5,12 @@ type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
-// events.event_log's `valid_subject_type` CHECK allowlist (db/migrations/202606111050_w1a_event_log_spine.sql).
+// events.event_log's `valid_subject_type` CHECK allowlist (db/migrations/202606111050_w1a_event_log_spine.sql,
+// widened by db/migrations/202612540000_widen_event_log_subject_type_je.sql — ACCT-F5303: invoice/bill/
+// journal_entry added so JE-related money events stop falling back to the generic 'task' subject).
 const VALID_SUBJECT_TYPES = new Set([
   "load", "driver", "unit", "geofence", "document", "assignment", "status", "broker", "task", "alert",
+  "invoice", "bill", "journal_entry",
 ]);
 
 export type AccountingSpineEvent =
@@ -61,7 +64,11 @@ export async function emitAccountingSpineEvent(
   // "payment", "customer_payment") that are NOT members of events.event_log's valid_subject_type
   // allowlist — those emits would still have failed even after the event_type rename above. ("driver" /
   // "unit", used by the FIN-18/FIN-21/FIN-22 blocks, ARE allowlisted, per the comments already on those
-  // union members — left untouched.) Fix: use entity_type as subject_type only when it's a valid member,
+  // union members — left untouched.) ACCT-F5303 (2026-08-15): "invoice"/"bill" are now ALSO allowlisted
+  // (they still route through this same generic check; no call-site change needed — they simply stop
+  // falling into the "task" bucket below). "bill_payment"/"customer_payment" remain unallowlisted and
+  // still fall back to 'task' — out of scope for this fix; add them the same way if a future need arises.
+  // Fix: use entity_type as subject_type only when it's a valid member,
   // otherwise fall back to 'task' (the same allowed bucket maintenance-spine-emit.ts /
   // driver-request-spine-emit.ts already use for process/action-lifecycle events with no bespoke
   // subject_type). entity_type itself is never dropped — it's carried in payload.entity_type either way.

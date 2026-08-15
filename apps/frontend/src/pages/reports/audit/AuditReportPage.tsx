@@ -8,9 +8,26 @@ import { Button } from "../../../components/Button";
 import { fetchAuditReport, type AuditReportParams, type AuditReportRow } from "../../../api/auditReports";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 
 const PAGE_SIZE = 100;
+
+// ACCT-F5303: events.event_log.subject_type is a free-text column (see valid_subject_type CHECK,
+// db/migrations/202606111050_w1a_event_log_spine.sql widened by 202612540000). Only map the subset
+// that is BOTH allowlisted there AND a real EntityLink kind — everything else (e.g. 'task', 'status',
+// 'assignment') stays plain text rather than guessing a drill-through route that may not exist.
+const SUBJECT_TYPE_TO_ENTITY_KIND: Partial<Record<string, EntityKind>> = {
+  invoice: "invoice",
+  bill: "bill",
+  journal_entry: "journal_entry",
+  driver: "driver",
+  unit: "unit",
+};
+
+function subjectTypeToEntityLinkKind(subjectType: string | null | undefined): EntityKind | null {
+  if (!subjectType) return null;
+  return SUBJECT_TYPE_TO_ENTITY_KIND[subjectType] ?? null;
+}
 
 function formatDate(iso: string) {
   try { return new Date(iso).toLocaleString(); } catch { return iso; }
@@ -37,12 +54,26 @@ const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
     label: "Subject",
     sortable: true,
     sortValue: (row) => `${row.subject_type ?? ""}:${row.subject_id ?? ""}`,
-    render: (row) => (
-      <span className="text-gray-500">
-        {row.subject_type ?? "—"}
-        {row.subject_id ? ` · ${entityLabel(null, row.subject_id, "Subject")}` : ""}
-      </span>
-    ),
+    render: (row) => {
+      const kind = subjectTypeToEntityLinkKind(row.subject_type);
+      return (
+        <span className="text-gray-500">
+          {row.subject_type ?? "—"}
+          {row.subject_id ? (
+            kind ? (
+              <>
+                {" · "}
+                <EntityLink kind={kind} id={row.subject_id} label={entityLabel(null, row.subject_id, "Subject")} />
+              </>
+            ) : (
+              ` · ${entityLabel(null, row.subject_id, "Subject")}`
+            )
+          ) : (
+            ""
+          )}
+        </span>
+      );
+    },
   },
   {
     key: "actor_email",
