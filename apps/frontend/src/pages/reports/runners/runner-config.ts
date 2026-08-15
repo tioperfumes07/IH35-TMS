@@ -37,7 +37,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
       { type: "unit_select", key: "unit_id", label: "Unit" },
     ],
     columns: [
-      { key: "unit_number", label: "Unit", align: "left", sortable: true },
+      { key: "unit_number", label: "Unit", align: "left", sortable: true, entityKind: "unit", entityIdKey: "unit_id" },
       { key: "revenue_cents", label: "Revenue", align: "right", format: "currency", sortable: true },
       { key: "wo_cost_cents", label: "WO Cost", align: "right", format: "currency", sortable: true },
       { key: "profit_cents", label: "Profit", align: "right", format: "currency", sortable: true },
@@ -50,7 +50,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     apiPath: "/api/v1/reports/driver-settlement-summary",
     filters: [{ type: "date_range", key: "date_range", label: "Date range", required: true }],
     columns: [
-      { key: "driver_name", label: "Driver", align: "left", sortable: true },
+      { key: "driver_name", label: "Driver", align: "left", sortable: true, entityKind: "driver", entityIdKey: "driver_id" },
       { key: "gross_cents", label: "Gross", align: "right", format: "currency", sortable: true },
       { key: "advances_cents", label: "Advances", align: "right", format: "currency", sortable: true },
       { key: "deductions_cents", label: "Deductions", align: "right", format: "currency", sortable: true },
@@ -66,7 +66,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     apiPath: "/api/v1/reports/ar-aging",
     filters: [{ type: "date_range", key: "as_of", label: "As of date", required: true }],
     columns: [
-      { key: "customer_name", label: "Customer", align: "left", format: "text", sortable: true },
+      { key: "customer_name", label: "Customer", align: "left", format: "text", sortable: true, entityKind: "customer", entityIdKey: "customer_id" },
       { key: "invoice_count", label: "Invoices", align: "right", format: "number", sortable: true },
       { key: "bucket_0_30_cents", label: "Current", align: "right", format: "currency", sortable: true },
       { key: "bucket_31_60_cents", label: "31-60", align: "right", format: "currency", sortable: true },
@@ -82,8 +82,8 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     apiPath: "/api/v1/reports/dispatch-margin",
     filters: [{ type: "date_range", key: "date_range", label: "Date range", required: true }],
     columns: [
-      { key: "load_number", label: "Load", align: "left", sortable: true },
-      { key: "customer_name", label: "Customer", align: "left", sortable: true },
+      { key: "load_number", label: "Load", align: "left", sortable: true, entityKind: "load", entityIdKey: "load_id" },
+      { key: "customer_name", label: "Customer", align: "left", sortable: true, entityKind: "customer", entityIdKey: "customer_id" },
       { key: "revenue_cents", label: "Revenue", align: "right", format: "currency", sortable: true },
       { key: "direct_cost_cents", label: "Direct cost", align: "right", format: "currency", sortable: true },
       { key: "margin_cents", label: "Margin", align: "right", format: "currency", sortable: true },
@@ -114,7 +114,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     apiPath: "/api/v1/reports/maintenance-cost-per-unit",
     filters: [{ type: "date_range", key: "date_range", label: "Date range", required: true }],
     columns: [
-      { key: "unit_number", label: "Unit", align: "left", sortable: true },
+      { key: "unit_number", label: "Unit", align: "left", sortable: true, entityKind: "unit", entityIdKey: "unit_id" },
       { key: "total_cost_cents", label: "Total Cost", align: "right", format: "currency", sortable: true },
       { key: "wo_count", label: "WO Count", align: "right", format: "number", sortable: true },
       { key: "avg_cost_per_wo_cents", label: "Avg / WO", align: "right", format: "currency", sortable: true },
@@ -127,7 +127,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     apiPath: "/api/v1/reports/fuel-savings",
     filters: [{ type: "date_range", key: "date_range", label: "Date range", required: true }],
     columns: [
-      { key: "driver_name", label: "Driver", align: "left", sortable: true },
+      { key: "driver_name", label: "Driver", align: "left", sortable: true, entityKind: "driver", entityIdKey: "driver_id" },
       { key: "recommended_savings_dollars", label: "Recommended", align: "right", format: "number", sortable: true },
       { key: "actual_savings_dollars", label: "Actual", align: "right", format: "number", sortable: true },
       { key: "missed_savings_dollars", label: "Missed", align: "right", format: "number", sortable: true },
@@ -143,7 +143,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     columns: [
       { key: "transaction_date", label: "Date", align: "left", format: "date", sortable: true },
       { key: "station", label: "Station", align: "left", sortable: true },
-      { key: "unit_number", label: "Unit", align: "left", sortable: true },
+      { key: "unit_number", label: "Unit", align: "left", sortable: true, entityKind: "unit", entityIdKey: "unit_id" },
       { key: "gallons", label: "Gallons", align: "right", format: "number", sortable: true },
       { key: "actual_price_per_gallon", label: "Actual $/gal", align: "right", format: "number", sortable: true },
       { key: "benchmark_price_per_gallon", label: "Benchmark $/gal", align: "right", format: "number", sortable: true },

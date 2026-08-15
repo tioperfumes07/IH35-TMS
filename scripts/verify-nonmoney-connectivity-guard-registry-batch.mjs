@@ -17,6 +17,7 @@ const REQUIRED = [
   "verify-reports-hos-violations-connectivity.mjs",
   "verify-reports-hub-connectivity.mjs",
   "verify-reports-runner-canonical-aliases.mjs",
+  "verify-reports-runner-entity-link-vertical.mjs",
   "verify-reports-saved-preset-connectivity.mjs",
   "verify-safety-eld-audit-connectivity.mjs",
   "verify-system-program-config-connectivity.mjs",
@@ -43,4 +44,4 @@ if (problems.length) {
   console.error(`${LABEL} FAIL\n${problems.join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — 15 non-money connectivity guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — 16 non-money connectivity guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
