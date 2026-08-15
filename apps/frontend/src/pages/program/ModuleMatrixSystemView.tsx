@@ -165,13 +165,15 @@ export function ModuleMatrixSystemView() {
   const priorityRows = orderedRows.filter((r) => isPriority10Module(r.module));
   const restRows = orderedRows.filter((r) => !isPriority10Module(r.module));
 
-  // Feed 4-box tracker with cumulative counts reconstructed from boxAbl %
+  // Feed the tracker with the API's exact integer tallies. Reconstructing counts from rounded
+  // percentages can paint 3444/3446 as 3446/3446 and contradict the exact Software total row.
   const trackerMetrics: TierMetrics = useMemo(() => {
     if (!sys?.boxAbl) return EMPTY_METRICS;
     const req = sys.boxAbl.requiredCells || sys.requiredCells || 0;
-    const live = Math.round((sys.boxAbl.livePct / 100) * req);
-    const builtCum = Math.round((sys.boxAbl.builtPct / 100) * req);
-    const auditedCum = Math.round((sys.boxAbl.auditedPct / 100) * req);
+    const live = sys.liveCells;
+    const builtCum = sys.builtCells;
+    const auditedCum =
+      sys.liveCells + sys.builtOnlyCells + sys.probeOnlyCells + sys.auditedOnlyCells;
     const builtOnly = Math.max(0, builtCum - live);
     const auditedOnly = Math.max(0, auditedCum - builtCum);
     return {
