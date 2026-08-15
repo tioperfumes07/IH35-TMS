@@ -104,6 +104,7 @@ function makeDriver(p: Pick<Driver, "id" | "first_name" | "last_name" | "status"
     status: p.status,
     notes: null,
     prior_driver_id: null,
+    prior_driver_name: null,
     rehire_count: 0,
     is_rehire: false,
     created_at: "2020-01-01T00:00:00.000Z",
