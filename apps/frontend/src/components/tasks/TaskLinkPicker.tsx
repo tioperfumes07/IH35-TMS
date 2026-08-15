@@ -6,6 +6,7 @@ import { createTaskLink, fetchTasks, type Task, type TaskTargetType } from "../.
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { CappedListNotice } from "../CappedListNotice";
+import { ParityTable } from "../parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
@@ -71,43 +72,58 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
           </p>
           {tasksQuery.isLoading ? (
             <p className="text-xs text-gray-500">Loading open tasks…</p>
-          ) : openTasks.length === 0 ? (
-            <p className="text-xs text-gray-500">No open tasks.</p>
           ) : (
-            <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-500">
-                  <th className="py-1.5 pr-3 font-semibold">Task</th>
-                  <th className="py-1.5 pr-3 font-semibold">Due</th>
-                  <th className="py-1.5 pr-3 font-semibold">Assignee</th>
-                  <th className="py-1.5 pr-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {openTasks.map((t) => (
-                  <tr key={t.task_id} className="border-b border-gray-100">
-                    <td className="py-1.5 pr-3 text-gray-800">
+            /* TASK-F3582: embedded ParityTable owns Search+Range+gear inside the link-task modal. */
+            <ParityTable<Task>
+              embedded
+              rows={openTasks}
+              rowKey={(t) => t.task_id}
+              storageKey="task-link-picker-open"
+              exportFilename="task-link-picker-open"
+              tableTestId="task-link-picker-table"
+              emptyText="No open tasks."
+              columns={[
+                {
+                  key: "title",
+                  label: "Task",
+                  cellClass: "text-gray-800",
+                  render: (t) => (
+                    <>
                       {t.title}
-                      {t.anticipated_category ? <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span> : null}
-                    </td>
-                    <td className="py-1.5 pr-3 text-gray-600">{formatDateUS(t.scheduled_date) || "—"}</td>
-                    <td className="py-1.5 pr-3 text-gray-600">{t.assigned_to_name ?? "—"}</td>
-                    <td className="py-1.5 pr-3">
-                      <button
-                        type="button"
-                        disabled={linkMutation.isPending}
-                        className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
-                        onClick={() => linkMutation.mutate(t)}
-                      >
-                        Link &amp; complete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
+                      {t.anticipated_category ? (
+                        <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span>
+                      ) : null}
+                    </>
+                  ),
+                },
+                {
+                  key: "due",
+                  label: "Due",
+                  cellClass: "text-gray-600",
+                  render: (t) => formatDateUS(t.scheduled_date) || "—",
+                },
+                {
+                  key: "assignee",
+                  label: "Assignee",
+                  cellClass: "text-gray-600",
+                  render: (t) => t.assigned_to_name ?? "—",
+                },
+                {
+                  key: "link",
+                  label: " ",
+                  render: (t) => (
+                    <button
+                      type="button"
+                      disabled={linkMutation.isPending}
+                      className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                      onClick={() => linkMutation.mutate(t)}
+                    >
+                      Link & complete
+                    </button>
+                  ),
+                },
+              ]}
+            />
           )}
           <CappedListNotice
             shown={(tasksQuery.data?.tasks ?? []).length}
