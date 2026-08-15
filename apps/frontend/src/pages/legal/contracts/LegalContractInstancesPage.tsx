@@ -228,6 +228,7 @@ export function LegalContractInstancesPage() {
         columns={columns}
         rowKey={(row) => row.id}
         onRowClick={(row) => setActiveDetailId(row.id)}
+        suppressToolbarSearch
         selectable
         batchActions={(selected) => (
           <>
