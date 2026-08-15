@@ -2826,5 +2826,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1142
+  "total_claimed": 1142,
+  "3369": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bank-required-honest-false-required"
+  },
+  "3373": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bank-required-honest-genuine"
+  }
 }
