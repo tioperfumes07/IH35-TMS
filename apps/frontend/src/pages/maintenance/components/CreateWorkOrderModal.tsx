@@ -31,6 +31,7 @@ import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
@@ -918,53 +919,108 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
           {/* ── Cost lines (routed through the line-item endpoints; posted-bill guarded server-side) ── */}
           <SectionCard badge="C" title="Cost lines" right="add · adjust · remove — blocked once the bill posts" testid="edit-wo-cost-lines">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-[12px]">
-                <thead className="text-[10.5px] uppercase tracking-wide text-inactive">
-                  <tr>
-                    <th className="px-1.5 py-1">Type</th>
-                    <th className="px-1.5 py-1">Description</th>
-                    <th className="px-1.5 py-1 text-right">Qty</th>
-                    <th className="px-1.5 py-1 text-right">Unit cost</th>
-                    <th className="px-1.5 py-1 text-right">Amount</th>
-                    <th className="px-1.5 py-1" />
-                  </tr>
-                </thead>
-                <tbody data-testid="edit-wo-lines-body">
-                  {editLines.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-1.5 py-3 text-[11px] text-[#94a3b8]">No cost lines. Add one to record parts / labor / other cost.</td>
-                    </tr>
-                  ) : (
-                    editLines.map((line, i) => (
-                      <tr key={line.id ?? `new-${i}`} className="border-t border-[#eef1f5]">
-                        <td className="px-1.5 py-1">
-                          <select value={line.line_type} onChange={(e) => patchEditLine(i, { line_type: e.target.value as EditWorkOrderLine["line_type"] })} className={FLD}>
-                            <option value="parts">Parts</option>
-                            <option value="labor">Labor</option>
-                            <option value="other">Other</option>
-                          </select>
-                        </td>
-                        <td className="px-1.5 py-1">
-                          <input value={line.description} onChange={(e) => patchEditLine(i, { description: e.target.value })} className={FLD} />
-                        </td>
-                        <td className="px-1.5 py-1">
-                          <input type="number" step="1" min="0" value={line.quantity} onChange={(e) => patchEditLine(i, { quantity: Number(e.target.value) })} className={`${FLD} text-right`} />
-                        </td>
-                        <td className="px-1.5 py-1">
-                          <MoneyInput valueDollars={line.unit_cost ?? null} onChangeDollars={(d) => patchEditLine(i, { unit_cost: d ?? 0 })} ariaLabel="Unit cost (USD)" className="w-full" />
-                        </td>
-                        <td className="px-1.5 py-1">
-                          <MoneyInput valueDollars={line.amount ?? null} onChangeDollars={(d) => patchEditLine(i, { amount: d ?? 0 })} ariaLabel="Amount (USD)" className="w-full" />
-                        </td>
-                        <td className="px-1.5 py-1 text-right">
-                          <button type="button" data-testid={`edit-wo-remove-line-${i}`} onClick={() => removeEditLine(i)} className="rounded-sm border border-[#d6dae1] px-2 py-0.5 text-[11px] text-[#b91c1c]">Remove</button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            {/* MAINT-F3598: embedded ParityTable owns Search+Range+gear on edit-WO cost lines. */}
+            <div data-testid="edit-wo-lines-body">
+              <ParityTable<EditWorkOrderLine & { _idx: number }>
+                embedded
+                rows={editLines.map((line, i) => ({ ...line, _idx: i }))}
+                rowKey={(row) => row.id ?? `new-${row._idx}`}
+                storageKey="create-wo-modal-edit-cost-lines"
+                exportFilename="wo-edit-cost-lines"
+                tableTestId="create-wo-edit-cost-lines-table"
+                emptyText="No cost lines. Add one to record parts / labor / other cost."
+                columns={[
+                  {
+                    key: "line_type",
+                    label: "Type",
+                    alwaysVisible: true,
+                    render: (row) => (
+                      <select
+                        value={row.line_type}
+                        onChange={(e) =>
+                          patchEditLine(row._idx, { line_type: e.target.value as EditWorkOrderLine["line_type"] })
+                        }
+                        className={FLD}
+                      >
+                        <option value="parts">Parts</option>
+                        <option value="labor">Labor</option>
+                        <option value="other">Other</option>
+                      </select>
+                    ),
+                  },
+                  {
+                    key: "description",
+                    label: "Description",
+                    alwaysVisible: true,
+                    render: (row) => (
+                      <input
+                        value={row.description}
+                        onChange={(e) => patchEditLine(row._idx, { description: e.target.value })}
+                        className={FLD}
+                      />
+                    ),
+                  },
+                  {
+                    key: "quantity",
+                    label: "Qty",
+                    className: "text-right",
+                    alwaysVisible: true,
+                    render: (row) => (
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={row.quantity}
+                        onChange={(e) => patchEditLine(row._idx, { quantity: Number(e.target.value) })}
+                        className={`${FLD} text-right`}
+                      />
+                    ),
+                  },
+                  {
+                    key: "unit_cost",
+                    label: "Unit cost",
+                    className: "text-right",
+                    alwaysVisible: true,
+                    render: (row) => (
+                      <MoneyInput
+                        valueDollars={row.unit_cost ?? null}
+                        onChangeDollars={(d) => patchEditLine(row._idx, { unit_cost: d ?? 0 })}
+                        ariaLabel="Unit cost (USD)"
+                        className="w-full"
+                      />
+                    ),
+                  },
+                  {
+                    key: "amount",
+                    label: "Amount",
+                    className: "text-right",
+                    alwaysVisible: true,
+                    render: (row) => (
+                      <MoneyInput
+                        valueDollars={row.amount ?? null}
+                        onChangeDollars={(d) => patchEditLine(row._idx, { amount: d ?? 0 })}
+                        ariaLabel="Amount (USD)"
+                        className="w-full"
+                      />
+                    ),
+                  },
+                  {
+                    key: "remove",
+                    label: "",
+                    alwaysVisible: true,
+                    render: (row) => (
+                      <button
+                        type="button"
+                        data-testid={`edit-wo-remove-line-${row._idx}`}
+                        onClick={() => removeEditLine(row._idx)}
+                        className="rounded-sm border border-[#d6dae1] px-2 py-0.5 text-[11px] text-[#b91c1c]"
+                      >
+                        Remove
+                      </button>
+                    ),
+                  },
+                ]}
+              />
             </div>
             <div className="mt-2 flex items-center gap-2">
               <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-[11px] font-semibold text-white">+ Create line</button>
