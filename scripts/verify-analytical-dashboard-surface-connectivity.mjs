@@ -22,6 +22,7 @@ const FILES = {
   legacy: "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
   reportsHome: "apps/frontend/src/pages/reports/ReportsHome.tsx",
   reportCategories: "apps/frontend/src/components/reports/CategoryHoverNav.tsx",
+  reportsRunner: "apps/frontend/src/pages/reports/ReportsRunner.tsx",
   runnerConfig: "apps/frontend/src/pages/reports/runners/runner-config.ts",
   reportLaneModal: "apps/frontend/src/components/reports/LaneDetailModal.tsx",
   reportScheduleModal: "apps/frontend/src/pages/reports/ScheduleReportModal.tsx",
@@ -93,6 +94,9 @@ export function verify(source) {
   for (const id of RUNNER_IDS.filter((runnerId) => runnerId !== "maint-cost-unit")) need("reportCategories", `id: "${id}"`, `runner ${id} must remain discoverable in report categories`);
   need("runnerConfig", '"maint-cost-unit": {', "maintenance-cost runner must remain registered");
   need("routes", 'path="/reports/run/:reportId"', "generic report runner route must remain mounted");
+  if (/Save \(available soon\)|<button[^>]*\bdisabled\b[^>]*>[\s\S]{0,80}?Save/.test(source.reportsRunner)) {
+    failures.push("shared report runner must not render a disabled/dead Save control");
+  }
   for (let i = 0; i < AUDIT_ROUTES.length; i += 1) need("routes", `path="/reports/audit/${AUDIT_ROUTES[i]}"`, `audit report ${AUDIT_IDS[i]} must remain mounted`);
   need("reportLaneModal", "export function LaneDetailModal", "lane detail modal must remain implemented");
   need("reportScheduleModal", "export function ScheduleReportModal", "schedule report modal must remain implemented");
@@ -130,6 +134,7 @@ if (process.argv.includes("--self-test")) {
     ["matrix", 'data-testid="module-matrix-live-banner"', 'data-testid="broken-live"'], ["tracker", 'href="/program/legacy-board"', 'href="/broken"'],
     ["programNav", 'to="/program/legacy-scoreboard"', 'to="/broken"'], ["legacy", 'data-testid="program-scoreboard-module-table"', 'data-testid="broken"'],
     ["reportsHome", "reportsKpis.map", "[].map"], ["reportCategories", 'id: "profit-truck-mtd"', 'id: "broken-runner"'], ["runnerConfig", '"maint-cost-unit": {', '"broken-runner": {'],
+    ["reportsRunner", "<RunnerFilters", '<button disabled aria-label="Save (available soon)">Save</button><RunnerFilters'],
     ["reportLaneModal", "export function LaneDetailModal", "function BrokenLaneModal"], ["reportScheduleModal", "export function ScheduleReportModal", "function BrokenScheduleModal"],
     ["reportFlyout", "export function ReportFlyoutPanel", "function BrokenFlyout"], ["scheduledPanel", "export function ScheduledReportsPanel", "function BrokenScheduledPanel"],
     ["balanceSheet", "export function BalanceSheetPage", "function BrokenBalanceSheet"], ["routes", 'path="/cash-flow"', 'path="/broken-cash-flow"'],
