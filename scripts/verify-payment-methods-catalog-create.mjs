@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Rule-17 guard: payment methods catalog GL picker uses ReferenceSelect +Create account.
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^payment_methods_catalog\\.create$","task":"PROTECTED-ACCT-CONNECTIVITY-PAYMENT-METHODS","vertical":"column-wave"}
  */
 import fs from "node:fs";
 import path from "node:path";

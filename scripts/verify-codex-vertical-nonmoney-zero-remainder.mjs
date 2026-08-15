@@ -70,12 +70,9 @@ function loadEntries() {
 // These are exact, shrinking lane boundaries—not exemptions and never Built credit. CC-1 owns the
 // accounting/banking money surfaces; Cursor owns toolbar chrome. Removing a completed key is safe.
 const PROTECTED = new Set([
+  // Accounting create/parity connectivity closed ACCT-F5209 (invoice/expense/vendor_bill/
+  // payment_methods matrix-built on wave-c + payment-methods guards). Escrow reverse stays.
   "reverse_link\taccounting:escrow",
-  "connectivity\taccounting:accounting.modal.invoice_create",
-  "connectivity\taccounting:accounting.parity.expense_create_page",
-  "connectivity\taccounting:accounting.parity.invoice_create",
-  "connectivity\taccounting:accounting.parity.vendor_bill_create_page",
-  "connectivity\taccounting:payment_methods_catalog.create",
 ]);
 
 const CLOSED_CLAIM_IDS = [
