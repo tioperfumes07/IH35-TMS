@@ -25,6 +25,7 @@ type SpineEventRow = {
   actor_id: string | null;
   actor_email: string | null;
   subject_type: string | null;
+  subject_kind: string | null;
   subject_id: string | null;
   subject_label: string | null;
   payload: unknown;
@@ -101,10 +102,24 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
         u.email                      AS actor_email,
         el.subject_type              AS subject_type,
         el.subject_id::text          AS subject_id,
-        CASE el.subject_type
-          WHEN 'load' THEN NULLIF(TRIM(l.load_number), '')
-          WHEN 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
-          WHEN 'unit' THEN NULLIF(TRIM(un.unit_number), '')
+        CASE
+          WHEN el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'
+          WHEN el.subject_type = 'task' AND el.source_table = 'accounting.invoices' THEN 'invoice'
+          WHEN el.subject_type = 'task' AND el.source_table = 'accounting.bills' THEN 'bill'
+          ELSE el.subject_type
+        END                          AS subject_kind,
+        CASE
+          WHEN el.subject_type = 'load' THEN NULLIF(TRIM(l.load_number), '')
+          WHEN el.subject_type = 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
+          WHEN el.subject_type = 'unit' THEN NULLIF(TRIM(un.unit_number), '')
+          WHEN el.subject_type = 'invoice' THEN NULLIF(TRIM(i.display_id), '')
+          WHEN el.subject_type = 'bill' THEN NULLIF(TRIM(COALESCE(b.display_id, b.bill_number)), '')
+          WHEN el.subject_type = 'task' THEN CASE el.source_table
+            WHEN 'maintenance.work_orders' THEN NULLIF(TRIM(wo.display_id), '')
+            WHEN 'accounting.invoices' THEN NULLIF(TRIM(i.display_id), '')
+            WHEN 'accounting.bills' THEN NULLIF(TRIM(COALESCE(b.display_id, b.bill_number)), '')
+            ELSE NULL
+          END
           ELSE NULL
         END                          AS subject_label,
         el.payload                   AS payload,
@@ -128,6 +143,23 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
         ON el.subject_type = 'unit'
        AND un.id = el.subject_id
        AND COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id
+      LEFT JOIN maintenance.work_orders wo
+        ON el.subject_type = 'task'
+       AND el.source_table = 'maintenance.work_orders'
+       AND wo.id = el.source_reference_id
+       AND wo.operating_company_id = el.operating_company_id
+      LEFT JOIN accounting.invoices i
+        ON (
+          (el.subject_type = 'invoice' AND i.id = el.subject_id)
+          OR (el.subject_type = 'task' AND el.source_table = 'accounting.invoices' AND i.id = el.source_reference_id)
+        )
+       AND i.operating_company_id = el.operating_company_id
+      LEFT JOIN accounting.bills b
+        ON (
+          (el.subject_type = 'bill' AND b.id = el.subject_id)
+          OR (el.subject_type = 'task' AND el.source_table = 'accounting.bills' AND b.id = el.source_reference_id)
+        )
+       AND b.operating_company_id = el.operating_company_id
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC, el.event_id DESC
       LIMIT $${limitPos}
@@ -148,6 +180,7 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
           actor_id: r.actor_id,
           actor_email: r.actor_email,
           subject_type: r.subject_type,
+          subject_kind: r.subject_kind,
           subject_id: r.subject_id,
           subject_label: r.subject_label,
           payload: r.payload,

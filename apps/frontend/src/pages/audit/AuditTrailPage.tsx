@@ -20,6 +20,8 @@ const SUBJECT_ENTITY_KINDS: Readonly<Record<string, EntityKind>> = {
   customer: "customer",
   vendor: "vendor",
   work_order: "work_order",
+  invoice: "invoice",
+  bill: "bill",
   claim: "claim",
   safety_event: "safety_event",
 };
@@ -95,10 +97,11 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
     sortable: true,
     sortValue: (row) => `${row.subject_type ?? ""}:${row.subject_id ?? ""}`,
     render: (row) => {
-      const kind = row.subject_type ? SUBJECT_ENTITY_KINDS[row.subject_type] : undefined;
+      const subjectKind = row.subject_kind ?? row.subject_type;
+      const kind = subjectKind ? SUBJECT_ENTITY_KINDS[subjectKind] : undefined;
       return (
         <span className="text-gray-600">
-          {row.subject_type ?? "—"}
+          {subjectKind ?? "—"}
           {row.subject_id ? (
             kind ? (
               <EntityLink kind={kind} id={row.subject_id} label={entityLabel(row.subject_label, row.subject_id, "Subject")} className="ml-1 text-gray-500" />

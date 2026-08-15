@@ -23,6 +23,10 @@ function failures(s = files) { return [
   ["honest selected-record states", s.page.includes("Selected audit event unavailable.") && s.page.includes("Audit event not found for this operating company.")],
   ["selected actor canonical drill", s.page.includes('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}')],
   ["spine subject human labels", s.spine.includes("END                          AS subject_label") && s.api.includes("subject_label: string | null") && s.page.includes("entityLabel(row.subject_label, row.subject_id, \"Subject\")") && s.page.includes('row.subject_label ?? "Subject label unavailable"') && s.page.includes('"subject_label"') && s.page.includes('e.subject_label ?? ""')],
+  ["historical task subjects derive canonical kind", s.spine.includes("el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'") && s.spine.includes("el.subject_type = 'task' AND el.source_table = 'accounting.invoices' THEN 'invoice'") && s.spine.includes("el.subject_type = 'task' AND el.source_table = 'accounting.bills' THEN 'bill'") && s.api.includes("subject_kind: string | null") && s.page.includes("row.subject_kind ?? row.subject_type")],
+  ["work-order subject same-company label", s.spine.includes("wo.id = el.source_reference_id") && s.spine.includes("wo.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(wo.display_id), '')") && s.page.includes('work_order: "work_order"')],
+  ["invoice subject same-company label", s.spine.includes("i.id = el.source_reference_id") && s.spine.includes("i.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(i.display_id), '')") && s.page.includes('invoice: "invoice"')],
+  ["bill subject same-company label", s.spine.includes("b.id = el.source_reference_id") && s.spine.includes("b.operating_company_id = el.operating_company_id") && s.spine.includes("COALESCE(b.display_id, b.bill_number)") && s.page.includes('bill: "bill"')],
   ["load subject same-company join", s.spine.includes("l.operating_company_id = el.operating_company_id")],
   ["driver subject same-company join", s.spine.includes("d.operating_company_id = el.operating_company_id")],
   ["unit subject effective-company join", s.spine.includes("COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id")],
@@ -36,13 +40,17 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, page: files.page.replace("Audit event not found for this operating company.", "No events") }).includes("honest selected-record states"),
     failures({ ...files, page: files.page.replace('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}', '<span data-user={exactAuditEvent.actor_user_id}') }).includes("selected actor canonical drill"),
     failures({ ...files, page: files.page.replaceAll("entityLabel(row.subject_label, row.subject_id, \"Subject\")", "entityLabel(null, row.subject_id, \"Subject\")") }).includes("spine subject human labels"),
+    failures({ ...files, spine: files.spine.replace("el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'", "FALSE THEN 'work_order'") }).includes("historical task subjects derive canonical kind"),
+    failures({ ...files, spine: files.spine.replace("wo.operating_company_id = el.operating_company_id", "TRUE") }).includes("work-order subject same-company label"),
+    failures({ ...files, spine: files.spine.replace("i.operating_company_id = el.operating_company_id", "TRUE") }).includes("invoice subject same-company label"),
+    failures({ ...files, spine: files.spine.replace("b.operating_company_id = el.operating_company_id", "TRUE") }).includes("bill subject same-company label"),
     failures({ ...files, spine: files.spine.replace("l.operating_company_id = el.operating_company_id", "TRUE") }).includes("load subject same-company join"),
     failures({ ...files, spine: files.spine.replace("d.operating_company_id = el.operating_company_id", "TRUE") }).includes("driver subject same-company join"),
     failures({ ...files, spine: files.spine.replace("COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id", "TRUE") }).includes("unit subject effective-company join"),
     failures({ ...files, load: "" }).includes("all canonical history mounts remain"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 10/10 filter/profile/target/state/subject-label mutations red"); process.exit(0);
+  console.log("verify-system-audit-record-reverse selftest PASS — 14/14 filter/profile/target/state/subject-label mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
