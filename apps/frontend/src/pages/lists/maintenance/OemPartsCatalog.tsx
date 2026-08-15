@@ -215,6 +215,7 @@ export function OemPartsCatalog() {
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
+        {/* MAINT-F3508: server-bound OEM search (q) — keep; ParityTable toolbar Search suppressed */}
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -260,6 +261,8 @@ export function OemPartsCatalog() {
         emptyText="No OEM part templates found."
         storageKey="lists-oem-parts-catalog"
         tableTestId="oem-parts-catalog-table"
+        // MAINT-F3508: keep API search above; hide ParityTable toolbar Search
+        suppressToolbarSearch
       />
 
       <OemPartsCreateModal
