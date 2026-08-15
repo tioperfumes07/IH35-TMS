@@ -101,10 +101,10 @@ const MIGRATED = [
   // SETL-S01 / SETL-S02 — settlements + cash advances honest empty (settled-only).
   {
     file: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
-    empties: ["No settlements found — none created for this entity yet (or no rows match the current filter)."],
+    empties: ["No settlements found."],
   },
   {
-    file: "apps/frontend/src/pages/cash-advances/CashAdvancesHome.tsx",
+    file: "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
     empties: ["No cash advances found — none created for this entity yet (or no rows match the current filter)."],
   },
   { file: "apps/frontend/src/pages/insurance/ClaimsTab.tsx", empties: ["No claims found."] },

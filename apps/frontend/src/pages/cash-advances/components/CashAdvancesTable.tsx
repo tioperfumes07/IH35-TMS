@@ -1,11 +1,15 @@
+import { useMemo } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 
+type CashAdvanceRow = Record<string, unknown>;
+
 type Props = {
-  rows: Array<Record<string, unknown>>;
-  onOpenDetail: (row: Record<string, unknown>) => void;
-  onMarkDisbursed: (row: Record<string, unknown>) => void;
-  /** SETL-S02 — show spinner row while parent useListState is loading. */
+  rows: Array<CashAdvanceRow>;
+  onOpenDetail: (row: CashAdvanceRow) => void;
+  onMarkDisbursed: (row: CashAdvanceRow) => void;
+  /** SETL-S02 — show spinner while parent useListState is loading. */
   isLoading?: boolean;
 };
 
@@ -19,80 +23,108 @@ function statusPill(status: string) {
 }
 
 export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoading = false }: Props) {
+  const columns = useMemo<ParityColumn<CashAdvanceRow>[]>(
+    () => [
+      {
+        key: "display_id",
+        label: "Display ID",
+        render: (row) => (
+          <EntityLink
+            kind="cash_advance"
+            id={String(row.id)}
+            label={entityLabel(row.display_id != null ? String(row.display_id) : null, String(row.id), "Advance")}
+            data-testid="cash-advance-roster-record-link"
+          />
+        ),
+      },
+      {
+        key: "driver_id",
+        label: "Driver",
+        render: (row) => (
+          <EntityLink
+            kind="driver"
+            id={row.driver_id ? String(row.driver_id) : null}
+            label={entityLabel(
+              row.driver_full_name ? String(row.driver_full_name) : null,
+              row.driver_id ? String(row.driver_id) : null,
+              "Driver",
+            )}
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        sortable: true,
+        render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}`,
+      },
+      {
+        key: "purpose",
+        label: "Purpose",
+        render: (row) => String(row.purpose ?? "—"),
+      },
+      {
+        key: "disbursement_method",
+        label: "Method",
+        render: (row) => String(row.disbursement_method ?? "—"),
+      },
+      {
+        key: "disbursement_status",
+        label: "Disbursement Status",
+        render: (row) => {
+          const status = String(row.disbursement_status ?? "pending_approval");
+          return <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span>;
+        },
+      },
+      {
+        key: "outstanding_balance",
+        label: "Outstanding",
+        sortable: true,
+        render: (row) => `$${Number(row.outstanding_balance ?? 0).toFixed(2)}`,
+      },
+      {
+        key: "created_at",
+        label: "Created",
+        sortable: true,
+        render: (row) => String(row.created_at ?? "").slice(0, 10) || "—",
+      },
+      {
+        key: "action",
+        label: "Action",
+        render: (row) => {
+          const status = String(row.disbursement_status ?? "pending_approval");
+          return (
+            <div className="flex gap-2">
+              <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>
+                View Detail
+              </button>
+              {status !== "disbursed" && status !== "reversed" ? (
+                <button type="button" className="text-slate-700 underline" onClick={() => onMarkDisbursed(row)}>
+                  Mark Disbursed
+                </button>
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ],
+    [onOpenDetail, onMarkDisbursed],
+  );
+
   return (
-    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="min-w-[1200px] w-full text-left text-xs">
-        <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-          <tr>
-            <th className="px-2 py-1">Display ID</th>
-            <th className="px-2 py-1">Driver</th>
-            <th className="px-2 py-1">Amount</th>
-            <th className="px-2 py-1">Purpose</th>
-            <th className="px-2 py-1">Method</th>
-            <th className="px-2 py-1">Disbursement Status</th>
-            <th className="px-2 py-1">Outstanding</th>
-            <th className="px-2 py-1">Created</th>
-            <th className="px-2 py-1">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {isLoading ? (
-            <tr>
-              <td colSpan={9} className="px-2 py-3 text-center text-gray-500">
-                Loading cash advances…
-              </td>
-            </tr>
-          ) : (
-            rows.map((row) => {
-              const status = String(row.disbursement_status ?? "pending_approval");
-              return (
-                <tr key={String(row.id)} className="border-t border-gray-100">
-                  <td className="px-2 py-1 font-medium">
-                    <EntityLink
-                      kind="cash_advance"
-                      id={String(row.id)}
-                      label={entityLabel(row.display_id != null ? String(row.display_id) : null, String(row.id), "Advance")}
-                      data-testid="cash-advance-roster-record-link"
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <EntityLink
-                      kind="driver"
-                      id={row.driver_id ? String(row.driver_id) : null}
-                      label={entityLabel(
-                        row.driver_full_name ? String(row.driver_full_name) : null,
-                        row.driver_id ? String(row.driver_id) : null,
-                        "Driver"
-                      )}
-                      onClick={(event) => event.stopPropagation()}
-                    />
-                  </td>
-                  <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>
-                  <td className="px-2 py-1">{String(row.purpose ?? "—")}</td>
-                  <td className="px-2 py-1">{String(row.disbursement_method ?? "—")}</td>
-                  <td className="px-2 py-1">
-                    <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span>
-                  </td>
-                  <td className="px-2 py-1">${Number(row.outstanding_balance ?? 0).toFixed(2)}</td>
-                  <td className="px-2 py-1">{String(row.created_at ?? "").slice(0, 10) || "—"}</td>
-                  <td className="px-2 py-1">
-                    <div className="flex gap-2">
-                      <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>
-                        View Detail
-                      </button>
-                      {status !== "disbursed" && status !== "reversed" ? (
-                        <button type="button" className="text-slate-700 underline" onClick={() => onMarkDisbursed(row)}>
-                          Mark Disbursed
-                        </button>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+    // SETL-F3544: ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar.
+    <div data-testid="cash-advances-empty">
+      <ParityTable<CashAdvanceRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.id)}
+        loading={isLoading}
+        emptyText="No cash advances found — none created for this entity yet (or no rows match the current filter)."
+        storageKey="cash-advances-roster"
+        exportFilename="cash-advances"
+        tableTestId="cash-advances-table"
+      />
     </div>
   );
 }

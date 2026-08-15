@@ -152,14 +152,8 @@ export function CashAdvancesHomePage() {
           message={(listQuery.error as Error)?.message}
           onRetry={() => void listQuery.refetch()}
         />
-      ) : listState.isEmpty ? (
-        <p
-          className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-center text-xs text-slate-600"
-          data-testid="cash-advances-empty"
-        >
-          No cash advances found — none created for this entity yet (or no rows match the current filter).
-        </p>
       ) : (
+        /* SETL-F3544: always mount table chrome (empty/loading via ParityTable) — empty early-return skipped surface bar. */
         <CashAdvancesTable
           rows={rows}
           isLoading={listState.isLoading}
