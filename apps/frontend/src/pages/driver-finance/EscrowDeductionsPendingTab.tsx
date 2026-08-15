@@ -2,6 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   approvePendingEscrowDeduction,
   listPendingEscrowDeductions,
@@ -107,6 +108,59 @@ export function EscrowDeductionsPendingTab() {
     return selected.proposed_amount_cents / 100;
   }, [selected]);
 
+  const columns = useMemo<ParityColumn<EscrowPendingDeduction>[]>(
+    () => [
+      {
+        key: "driver_id",
+        label: "Driver Name",
+        render: (row) => (
+          <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+        ),
+      },
+      {
+        key: "load_id",
+        label: "Load #",
+        render: (row) =>
+          row.load_id ? (
+            <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "proposed_amount_cents",
+        label: "Proposed Amount",
+        sortable: true,
+        render: (row) => <span className="font-medium">{formatMoney(row.proposed_amount_cents)}</span>,
+      },
+      {
+        key: "proposed_reason",
+        label: "Reason",
+        render: (row) => (
+          <span className="max-w-[320px] truncate" title={row.proposed_reason}>
+            {row.proposed_reason}
+          </span>
+        ),
+      },
+      {
+        key: "proposed_at",
+        label: "Proposed At",
+        sortable: true,
+        render: (row) => formatDateTime(row.proposed_at),
+      },
+      {
+        key: "expires_at",
+        label: "Expires At",
+        sortable: true,
+        render: (row) => {
+          const nearExpiry = daysUntil(row.expires_at) <= 3;
+          return <span className={nearExpiry ? "font-semibold text-red-600" : ""}>{formatDateTime(row.expires_at)}</span>;
+        },
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3">
       <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
@@ -125,77 +179,32 @@ export function EscrowDeductionsPendingTab() {
         />
       ) : null}
 
-      <div className="rounded-sm border border-gray-200 bg-white">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-              <tr>
-                <th className="px-3 py-2">Driver Name</th>
-                <th className="px-3 py-2">Load #</th>
-                <th className="px-3 py-2">Proposed Amount</th>
-                <th className="px-3 py-2">Reason</th>
-                <th className="px-3 py-2">Proposed At</th>
-                <th className="px-3 py-2">Expires At</th>
-                <th className="px-3 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const nearExpiry = daysUntil(row.expires_at) <= 3;
-                return (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-3 py-2">
-                      <EntityLink
-                        kind="driver"
-                        id={row.driver_id}
-                        label={entityLabel(row.driver_name, row.driver_id, "Driver")}
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      {row.load_id ? (
-                        <EntityLink
-                          kind="load"
-                          id={row.load_id}
-                          label={entityLabel(row.load_number, row.load_id, "Load")}
-                        />
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="px-3 py-2 font-medium">{formatMoney(row.proposed_amount_cents)}</td>
-                    <td className="max-w-[320px] truncate px-3 py-2" title={row.proposed_reason}>
-                      {row.proposed_reason}
-                    </td>
-                    <td className="px-3 py-2">{formatDateTime(row.proposed_at)}</td>
-                    <td className={`px-3 py-2 ${nearExpiry ? "font-semibold text-red-600" : ""}`}>{formatDateTime(row.expires_at)}</td>
-                    <td className="px-3 py-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setSelected(row);
-                          setOverrideAmount(row.proposed_amount_cents / 100);
-                          setReviewNotes("");
-                          setErrorMessage("");
-                        }}
-                      >
-                        Review
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {!pendingQuery.isError && rows.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-8 text-center text-sm text-gray-500" colSpan={7}>
-                    No pending escrow deductions
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {!pendingQuery.isError ? (
+        // ACCT-F3534: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
+        <ParityTable<EscrowPendingDeduction>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={pendingQuery.isLoading}
+          emptyText="No pending escrow deductions"
+          storageKey="escrow-deductions-pending"
+          exportFilename="escrow-deductions-pending"
+          rowActions={(row) => (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setSelected(row);
+                setOverrideAmount(row.proposed_amount_cents / 100);
+                setReviewNotes("");
+                setErrorMessage("");
+              }}
+            >
+              Review
+            </Button>
+          )}
+        />
+      ) : null}
 
       <Modal
         open={Boolean(selected)}
