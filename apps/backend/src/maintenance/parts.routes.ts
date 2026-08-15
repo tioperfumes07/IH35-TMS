@@ -155,7 +155,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             pi.vendor_id::text AS vendor_id,
             -- CLS-SILENT-CAP / CLS-UUID-LABEL: same-opco vendor name on the list path so the FE
             -- never enriches from a capped listVendors(limit:N) roster (drops names past the page).
-            v.name AS vendor_name,
+            v.vendor_name AS vendor_name,
             pi.last_purchase_amount AS unit_cost,
             pi.on_hand_qty AS qty_on_hand,
             0::int AS reorder_threshold,

@@ -50,7 +50,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
       const vendorFilter = query.data.vendor_id ? "AND pi.vendor_id = $2::uuid" : "";
       if (query.data.vendor_id) values.push(query.data.vendor_id);
       const res = await client.query(
-        `SELECT pi.*, v.name AS vendor_name
+        `SELECT pi.*, v.vendor_name AS vendor_name
          FROM maintenance.parts_inventory pi
          LEFT JOIN mdata.vendors v
            ON v.id = pi.vendor_id
