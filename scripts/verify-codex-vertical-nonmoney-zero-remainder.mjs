@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MATRIX_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
+const WORKORDERS = path.join(ROOT, "docs/audit/GUARD-WORKORDERS.md");
 const SELFTEST = process.argv.includes("--selftest");
 const EXCLUDED_COLUMNS = new Set(["ap_bill", "expense", "gl_je", "inventory", "invoice", "bank", "liability", "picker_law", "qbo_chrome"]);
 const TAG_RE = /@matrix-built\s+(\{[^\n]*\})/g;
@@ -100,6 +101,33 @@ const PROTECTED = new Set([
   "connectivity\tvendors:chrome.toolbar_filter",
 ]);
 
+const CLOSED_CLAIM_IDS = [
+  "tasks:tasks.drawer.task",
+  "compliance:tab.hos_tracker",
+  "inventory:assignments.wo_link",
+  "safety:training_records.list",
+  "LINK-F5153/55/56/57/58/59-CONNECTIVITY-GUARD-MATRIX-DRIFT",
+  "lists:lists.modal.oem_parts_create",
+  "drivers:teams.create",
+  "maintenance:master.vehicles.create",
+  "VERTICAL-LOAD-ALL-MODULES-REMAINDER",
+  "VERTICAL-CONNECTIVITY-NONMONEY-CREATE-REMAINDER",
+  "VERTICAL-CONNECTIVITY-USER-VENDOR-REMAINDER",
+  "REVERSE-GUARD-RED-SWEEP-150",
+  "WAVE-A-GUARD-RED-SWEEP-143",
+  "OPERATIONAL-MODULE-DOOR-BUILT-INFLATION",
+  "PICKER-EXACT-GUARD-RED-SWEEP-368",
+  "CODEX-VERTICAL-NONMONEY-ZERO-REMAINDER-RATCHET",
+  "CODEX-VERTICAL-ALL-NONMONEY-ZERO-REMAINDER",
+];
+
+export function collectStaleClaimProblems(board = fs.readFileSync(WORKORDERS, "utf8")) {
+  const claimingRows = board.split("\n").filter((line) => line.startsWith("| **CLAIMING:**"));
+  return CLOSED_CLAIM_IDS
+    .filter((id) => claimingRows.some((line) => line.includes(`\`${id}\``)))
+    .map((id) => `merged Codex work remains CLAIMING: ${id}`);
+}
+
 function loadSpecs() {
   return fs.readdirSync(MATRIX_DIR)
     .filter((name) => name.endsWith(".required.json"))
@@ -163,12 +191,18 @@ if (SELFTEST) {
     console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — removed exact evidence escaped");
     process.exit(1);
   }
-  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new Required leaf and removed exact evidence caught");
+  const board = fs.readFileSync(WORKORDERS, "utf8");
+  const regressedBoard = board.replace("| **FIXED (#6912):** `WAVE-A-GUARD-RED-SWEEP-143`", "| **CLAIMING:** `WAVE-A-GUARD-RED-SWEEP-143`");
+  if (!collectStaleClaimProblems(regressedBoard).some((problem) => problem.includes("WAVE-A-GUARD-RED-SWEEP-143"))) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — reopened merged claim escaped");
+    process.exit(1);
+  }
+  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, and reopened merged claim caught");
   process.exit(0);
 }
 
 const gaps = collectGaps();
-const problems = gaps.filter((gap) => !PROTECTED.has(gap));
+const problems = [...gaps.filter((gap) => !PROTECTED.has(gap)), ...collectStaleClaimProblems()];
 if (problems.length) {
   console.error("verify-codex-vertical-nonmoney-zero-remainder FAIL — unowned canonical-column gaps:");
   for (const problem of problems) console.error(`  - ${problem}`);
