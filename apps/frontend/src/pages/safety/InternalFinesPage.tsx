@@ -33,6 +33,9 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   const linkedFineId = searchParams.get("fine_id");
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  // LST-F5163L: visible reverse filters (allowCreate=false); URL seeds pickers.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [loadFilter, setLoadFilter] = useState("");
   // SAF-F12: which fine a lifecycle action is open for, and which action.
   const [lifecycleTarget, setLifecycleTarget] = useState<{ row: InternalFineRow; action: "dispute" | "void" } | null>(null);
   const [form, setForm] = useState({
@@ -46,6 +49,16 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   });
   /** Preserve an operator-selected load after the active-trip resolver has populated the field. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  useEffect(() => {
+    if (loadIdFromUrl) setLoadFilter(loadIdFromUrl);
+  }, [loadIdFromUrl]);
+
+  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
+  const effectiveLoadId = loadFilter.trim() || loadIdFromUrl || undefined;
 
   const suggestionQuery = useQuery({
     queryKey: ["safety", "internal-fine-create", "suggest-load", operatingCompanyId, form.driver_uuid, form.imposed_date],
@@ -71,11 +84,11 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   }, [form.related_load_uuid, suggestionPinned, suggestionQuery.data]);
 
   const query = useQuery({
-    queryKey: ["safety", "internal-fines", operatingCompanyId, loadIdFromUrl, driverIdFromUrl],
+    queryKey: ["safety", "internal-fines", operatingCompanyId, effectiveLoadId, effectiveDriverId],
     queryFn: () =>
       getInternalFines(operatingCompanyId, {
-        load_id: loadIdFromUrl || undefined,
-        driver_id: driverIdFromUrl || undefined,
+        load_id: effectiveLoadId,
+        driver_id: effectiveDriverId,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -316,6 +329,36 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           emptyText="No internal fines found."
           storageKey="safety-internal-fines"
           exportFilename="internal-fines"
+          filterBar={
+            <div className="relative flex flex-wrap items-center gap-2">
+              <label className="text-[11px] text-slate-600">
+                Driver
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={operatingCompanyId}
+                  value={driverFilter || null}
+                  onChange={(next) => setDriverFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All drivers"
+                  className="mt-1"
+                  dataTestId="internal-fines-filter-driver"
+                />
+              </label>
+              <label className="text-[11px] text-slate-600">
+                Load
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={operatingCompanyId}
+                  value={loadFilter || null}
+                  onChange={(next) => setLoadFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All loads"
+                  className="mt-1"
+                  dataTestId="internal-fines-filter-load"
+                />
+              </label>
+            </div>
+          }
           rowClassName={(row) => String(row.id ?? "") === linkedFineId ? "bg-slate-100 ring-1 ring-inset ring-slate-300" : ""}
           rowTestId={(row) => String(row.id ?? "") === linkedFineId ? "linked-internal-fine" : `internal-fine-${String(row.id ?? "")}`}
         />
