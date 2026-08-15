@@ -169,6 +169,7 @@ export type SpineEvent = {
   actor_email: string | null;
   subject_type: string | null;
   subject_id: string | null;
+  subject_label: string | null;
   payload: unknown;
   source: string | null;
   source_table: string | null;

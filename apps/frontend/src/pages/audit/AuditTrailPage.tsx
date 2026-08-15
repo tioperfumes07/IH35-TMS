@@ -52,10 +52,10 @@ function sourceLink(ev: SpineEvent): string | null {
 }
 
 function downloadCSV(events: SpineEvent[]) {
-  const cols = ["occurred_at", "event_type", "actor_email", "subject_type", "subject_id", "source_table", "source_reference_id", "correlation_id"];
+  const cols = ["occurred_at", "event_type", "actor_email", "subject_type", "subject_id", "subject_label", "source_table", "source_reference_id", "correlation_id"];
   const header = cols.join(",");
   const rows = events.map((e) =>
-    [e.occurred_at, e.event_type, entityLabel(e.actor_email, e.actor_user_id, "User"), e.subject_type ?? "", e.subject_id ?? "", e.source_table ?? "", e.source_reference_id ?? "", e.correlation_id ?? ""]
+    [e.occurred_at, e.event_type, entityLabel(e.actor_email, e.actor_user_id, "User"), e.subject_type ?? "", e.subject_id ?? "", e.subject_label ?? "", e.source_table ?? "", e.source_reference_id ?? "", e.correlation_id ?? ""]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(",")
   );
@@ -101,9 +101,9 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
           {row.subject_type ?? "—"}
           {row.subject_id ? (
             kind ? (
-              <EntityLink kind={kind} id={row.subject_id} label={entityLabel(null, row.subject_id, "Subject")} className="ml-1 text-gray-500" />
+              <EntityLink kind={kind} id={row.subject_id} label={entityLabel(row.subject_label, row.subject_id, "Subject")} className="ml-1 text-gray-500" />
             ) : (
-              <span className="ml-1 text-gray-400">{entityLabel(null, row.subject_id, "Subject")}</span>
+              <span className="ml-1 text-gray-400">{row.subject_label ?? "Subject label unavailable"}</span>
             )
           ) : null}
         </span>
