@@ -31,22 +31,30 @@ export function checkSvc(svc) {
   if (!/block_ready_key\s*\?\?\s*b\.id/.test(svc) && !/block_ready_key\s*\?\?\s*blk\.id/.test(svc)) {
     errs.push("Sequence/phase lookups must bridge authored↔recon ids via block_ready_key");
   }
+  if (!/tracked_total:\s*rows\.length/.test(svc)) {
+    errs.push("status views must expose their registry+recon UNION denominator as tracked_total");
+  }
   return errs;
 }
 
 export function checkPage(page) {
   const errs = [];
   if (/Upper bounds|cross-audit duplication/i.test(page)) errs.push("the false 'upper bounds / cross-audit duplication' caption must be removed");
+  if (!/data\.tracked_total/.test(page) || !/Tracked status rows/.test(page) || !/recon-only legacy rows/.test(page)) {
+    errs.push("Program Tracker must distinguish registry-only Registered from tracked registry+legacy status rows");
+  }
   return errs;
 }
 
 function selftest() {
-  const goodSvc = 'function deriveModule(a,m){return "uncategorized";}\n module: deriveModule(entry?.allowedFiles ?? "", null),\n reconByNorm.get(normId(blk.block_ready_key ?? blk.id))';
+  const goodSvc = 'function deriveModule(a,m){return "uncategorized";}\n module: deriveModule(entry?.allowedFiles ?? "", null),\n reconByNorm.get(normId(blk.block_ready_key ?? blk.id))\ntracked_total: rows.length';
   const badSvc = 'module: crossModule[0] ?? "x",';
   if (checkSvc(goodSvc).length) { console.error(`${LABEL} --selftest FAILED: good svc should pass`, checkSvc(goodSvc)); process.exit(1); }
   if (checkSvc(badSvc).length === 0) { console.error(`${LABEL} --selftest FAILED: crossModule[0] module must be caught`); process.exit(1); }
   if (checkPage("Upper bounds — residual cross-audit duplication").length === 0) { console.error(`${LABEL} --selftest FAILED: false caption must be caught`); process.exit(1); }
-  if (checkPage("Each block counted once, by module").length) { console.error(`${LABEL} --selftest FAILED: clean caption should pass`); process.exit(1); }
+  const goodPage = 'data.tracked_total Tracked status rows recon-only legacy rows';
+  if (checkPage(goodPage).length) { console.error(`${LABEL} --selftest FAILED: source-distinct caption should pass`, checkPage(goodPage)); process.exit(1); }
+  if (checkPage('data.registered_total Pending In Progress Completed').length === 0) { console.error(`${LABEL} --selftest FAILED: missing tracked denominator disclosure must be caught`); process.exit(1); }
   console.log(`${LABEL} --selftest — OK`);
 }
 
