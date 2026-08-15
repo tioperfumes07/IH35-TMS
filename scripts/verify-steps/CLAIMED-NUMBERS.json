@@ -2765,5 +2765,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1141
+  "total_claimed": 1141,
+  "3349": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-liability-required-honest-cluster-b"
+  }
 }
