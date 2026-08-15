@@ -594,7 +594,9 @@ function ClaudeCoderTab({ data }: { data: SystemData }) {
           </table>
         </div>
         <p className="mt-2 text-[11px] text-slate-400">
-          Live feed of the most recently merged PRs (from the Program Tracker's GitHub sync); the terminal mirror below injects live health/QBO values.
+          Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}. This is not a
+          live GitHub feed; it refreshes when a new reconciliation snapshot is published. The service-health mirror
+          below remains live.
         </p>
 
         <div className="mt-3.5 overflow-auto rounded-[10px] bg-[#0f1729] px-4 py-3.5 font-mono text-[11.5px] leading-[1.7] text-[#cbd5e1]">
