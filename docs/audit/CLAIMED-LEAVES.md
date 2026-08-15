@@ -121,6 +121,8 @@ the leaf stays OPEN.
 | `settlements:modal.liability_breakdown` | CC-1 (pre-existing chain, pinned) | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
 | `settlements:panel.pay_run_close` | CC-1 (pre-existing chain, pinned) | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
 | `settlements:drawer.liability_detail` | CC-1 (pre-existing chain from #6740, pinned) | #6927 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
+| `cash-flow:tab.daily_prediction` (liability fallback) | CC-1 | #6970 | `verify-liability-required-honest-cluster-b.mjs` |
+| `drivers:cash_advances` (liability drill, debt-alert rows) | CC-1 | #6970 | `verify-liability-required-honest-cluster-b.mjs` |
 
 ## Uncertain — empty (Cursor confirm 2026-08-14 night)
 
@@ -131,12 +133,30 @@ All prior Uncertain rows moved to Done after independent guard PASS on tip `orig
 | Leaf | Lane owner |
 |---|---|
 | `accounting:reverse.open_entitylink` | CC-1 / Rule 23 — EntityLink-only Open on Invoices/Bills/Expenses reverse is money theater without write path; skip Cursor |
+| `drivers:panel.auto_deduction_policies` | CC-1 (LINK-F5187) — `driver_finance.auto_deduction_policies` runs parallel to `driver_finance.driver_liabilities` with an undocumented, never-read `source_ref` column of unclear intent; left untouched (no drop, no build) pending an owner/architecture ruling on whether they're meant to reference each other |
 
 ## Reclassified — not a fix, Required-flag correction
 
 | Leaf | Note |
 |---|---|
 | `fleet:unit.profile.qbo_mapping` | Codex scope-corrected: dropped from Required (was never a real gap) |
+| `fleet:unit.profile.insurance_summary` | CC-1 (LINK-F5187 #6970): dropped `liability` — categorical rollup panel, not a single owning record; already covers per-policy links via `insurance:policies` |
+| `fleet:unit.profile.insurance_claims_reverse` | CC-1 (LINK-F5187 #6970): dropped `liability` — same rollup shape, covered by `insurance:claims` |
+| `fleet:unit.edit.insurance` | CC-1 (LINK-F5187 #6970): dropped `liability` — edit form for the insurance summary panel above |
+| `fleet:trailer.profile.insurance_claims_reverse` | CC-1 (LINK-F5187 #6970): dropped `liability` — same rollup shape as unit-side |
+| `finance:nav.statements` | CC-1 (LINK-F5187 #6970): dropped `liability` — nav entry into aggregate financial statements, not a record |
+| `finance:statements.pl` | CC-1 (LINK-F5187 #6970): dropped `liability` — P&L is an aggregate statement, no single owning liability |
+| `finance:statements.bs` | CC-1 (LINK-F5187 #6970): dropped `liability` — Balance Sheet is an aggregate statement |
+| `finance:statements.tb` | CC-1 (LINK-F5187 #6970): dropped `liability` — Trial Balance is an aggregate statement |
+| `insurance:policies.create` | CC-1 (LINK-F5187 #6970): dropped `liability` — pure create-form; the policy itself is the owning entity until a separate accrual step |
+| `insurance:claims.create` | CC-1 (LINK-F5187 #6970): dropped `liability` — pure create-form, same shape |
+| `insurance:lawsuits.create` | CC-1 (LINK-F5187 #6970): dropped `liability` — pure create-form, same shape |
+| `cash-flow:home` | CC-1 (LINK-F5187 #6970): dropped `liability` — KPI-strip rollup view, same shape as its already-dropped `gl_je` flag (#6936) |
+| `cash-flow:tab.actual_vs_projected` | CC-1 (LINK-F5187 #6970): dropped `liability` — variance-by-category rollup, same shape as its already-dropped `gl_je` flag (#6936) |
+| `accounting:accounting.modal.decide` | CC-1 (LINK-F5187 #6970): dropped `liability` — factoring-decision modal owns a factoring_advance/invoice record, not a liability row |
+| `legal:matters.create` | CC-1 (LINK-F5187 #6970): dropped `liability` — a matter doesn't always produce a liability; `matters.detail`'s own litigation-reserve column already covers the cases that do |
+| `legal:matters.detail` | CC-1 (LINK-F5187 #6970): dropped `liability` — redundant/sometimes-vacuous alongside the matter's own reserve sub-panel column |
+| `reports:report.settlement_summary` | CC-1 (LINK-F5187 #6970): dropped `liability` — aggregate report across many settlements/liabilities, not a single owning record |
 
 ---
 
