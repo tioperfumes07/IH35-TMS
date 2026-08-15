@@ -16,5 +16,17 @@
 
 Every PR **REMAINING:** `Live=BLOCKED · theater_broad_remaining:<n> · filed_gaps_remaining:<ids>`
 
+## ☐ CODEX HANDOFFS · VERIFIED OPEN
+
+These are mirrored from the live Desktop CC-1 queue. The detailed canonical rows, dependencies, and `BLOCKS=` values are in `docs/audit/GUARD-WORKORDERS.md`.
+
+1. `REVERSE-SECTIONS-SILENT-LIST-CAPS` — `apps/frontend/src/components/accounting/BillsReverseSection.tsx`; `apps/frontend/src/components/accounting/InvoicesReverseSection.tsx`; `scripts/verify-no-silent-list-caps.mjs` is red on exactly these two capped lists. Add an honest server total/range or an uncapped scoped read.
+2. `FIXED-ASSETS-DEPRECIATION-GL-POSTING-NOT-BUILT` — `apps/frontend/src/pages/accounting/FixedAssetsPage.tsx`; no depreciation posting engine or canonical JE exists. Build the real posting path before mounting the JE drill-through.
+3. `AUDIT-REPORT-JE-SUBJECT-TYPE-MISCATEGORIZED` — `db/migrations/202606111050_w1a_event_log_spine.sql:26`; `apps/backend/src/accounting/accounting-spine-emit.ts:65`; `apps/frontend/src/pages/reports/audit/AuditReportPage.tsx`. Widen the subject-type constraint, emit `journal_entry`, then mount the exact JE link.
+4. `HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID` — `apps/frontend/src/pages/driver-finance/components/HoldDeductionModal.tsx`; `DeductionsSection.tsx`; `SettlementDetailPage.tsx:50-61`; `apps/backend/src/driver-finance/deductions.routes.ts:112-155`; `db/migrations/0138_p8b_j_pr3_driver_finance_stack.sql:57-71`. Trace the posting source of truth across the three deduction tables; the current settlement-line UUID cannot identify a deduction-schedule row.
+5. `LINK-F5170-F5171-CUSTOMER-PAYMENT-HISTORY-SCOPE-LABEL` — `apps/frontend/src/api/customers.ts:52-56` omits required `operating_company_id`; `apps/backend/src/accounting/customer-payments.routes.ts:30,57-112` omits `p.display_id`; `apps/frontend/src/pages/CustomerDetail.tsx:2251-2256` consequently cannot render canonical payment identity. Fix scope and display identity together; do not change posting.
+
+Codex owns no implementation in these protected money paths. Each item remains OPEN until its product PR and exact guard are merged.
+
 ## LAW LOCK
 Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-BUILT-LAUNCH-LAW-2026-08-14` + `FULLY-WIRED-COMPLETE-BAR-2026-08-13`.
