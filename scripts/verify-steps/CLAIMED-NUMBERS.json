@@ -909,6 +909,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-surface-bar-paritydrawer-inventory"
   },
+  "3338": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cursor",
+    "purpose": "verify-tip-static-findings-register-sync"
+  },
   "3337": {
     "owner": "cc-1",
     "purpose": "verify-gl-je-required-honest-false-required-batch (LINK-F5186)"
@@ -2765,7 +2770,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1141,
+  "total_claimed": 1142,
   "3349": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
