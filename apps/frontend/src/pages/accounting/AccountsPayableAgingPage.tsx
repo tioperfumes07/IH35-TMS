@@ -6,7 +6,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
@@ -76,14 +76,9 @@ function amount(b: Buckets | ApAgingVendor, key: string): number {
     default: return 0;
   }
 }
-const moneyCellClass = (key: string) => `px-2 py-1.5 text-right tabular-nums ${RED_KEYS.has(key) ? "text-red-600" : ""}`;
 
-// By Vendor grid — shared ParityTable grammar (display-only migration). Same 8 columns, same
-// order, same cell renderers (vendor + Open bills deep-links, type chip, money buckets with the
-// 61-90 / 91+ red flags) the former hand-rolled table markup carried; 61-90 and 91+ stay red per the
-// QBO-grade spec. ParityTable's padding comes from its density style, so the cell classes here
-// carry only alignment/color (moneyCellClass keeps padding for the hand-rolled By Vendor Type
-// rollup below).
+// By Vendor / By Vendor Type grids — shared ParityTable grammar (display-only). Same columns,
+// vendor + Open bills deep-links, type chip, money buckets with 61-90 / 91+ red flags.
 const parityMoneyCellClass = (key: string) => `text-right tabular-nums ${RED_KEYS.has(key) ? "text-red-600" : ""}`;
 const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
   {
@@ -175,9 +170,8 @@ export function AccountsPayableAgingPage() {
     else params.set("view", next);
     setSearchParams(params, { replace: true });
   };
-  const [typeFilter, setTypeFilter] = useState<ApAgingDisplayGroup | "all">("all");  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<ApAgingDisplayGroup | "all">("all");
   const staged = useStagedListFilters({ applied: { asOf, typeFilter }, empty: { asOf: today(), typeFilter: "all" as const }, onApply: (next) => { setAsOf(next.asOf); setTypeFilter(next.typeFilter); } });
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(GROUP_ORDER));
 
   const query = useQuery({
     queryKey: ["ap-aging-by-vendor", companyId, asOf],
@@ -227,14 +221,9 @@ export function AccountsPayableAgingPage() {
     () => (typeFilter === "all" ? vendors : vendors.filter((v) => v.display_group === typeFilter)),
     [vendors, typeFilter]
   );
-  // By-vendor view: ParityTable owns search (ACCT-F3464). By-type view keeps page TableSearch via `search`.
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return q ? typeFiltered.filter((v) => v.vendor_name.toLowerCase().includes(q)) : typeFiltered;
-  }, [typeFiltered, search]);
+  // Both views: ParityTable owns Search+Range+gear (ACCT-F3464 / ACCT-F3568).
   const vendorTableRows = typeFiltered;
   const vendorTotals = useMemo(() => typeFiltered.reduce(addBuckets, emptyBuckets()), [typeFiltered]);
-  const totals = useMemo(() => filtered.reduce(addBuckets, emptyBuckets()), [filtered]);
 
   // BANK-SORT-ROLLOUT-ACCT-AP2 — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (same contract as FleetTable / dispatch board), now feeding ParityTable's controlled-sort
@@ -242,32 +231,9 @@ export function AccountsPayableAgingPage() {
   // and ParityTable performs the row sort via each column's sortValue.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
-  // By Vendor Type — grouped rollups with subtotals.
-  const groups = useMemo(() => {
-    const byGroup = new Map<ApAgingDisplayGroup, ApAgingVendor[]>();
-    for (const v of filtered) {
-      const list = byGroup.get(v.display_group) ?? [];
-      list.push(v);
-      byGroup.set(v.display_group, list);
-    }
-    return GROUP_ORDER.filter((g) => byGroup.has(g)).map((g) => {
-      const rows = (byGroup.get(g) ?? []).slice().sort((a, b) => b.total_outstanding - a.total_outstanding);
-      return { group: g, rows, subtotal: rows.reduce(addBuckets, emptyBuckets()) };
-    });
-  }, [filtered]);
-
-  function toggleGroup(g: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(g)) next.delete(g);
-      else next.add(g);
-      return next;
-    });
-  }
-
   function exportCsv() {
     const header = ["Vendor", "Vendor type", "Current", "1-30", "31-60", "61-90", "91+", "Total"];
-    const lines = filtered.map((v) =>
+    const lines = typeFiltered.map((v) =>
       [v.vendor_name, v.display_group, v.current, v.d1_30, v.d31_60, v.d61_90, v.d90_plus, v.total_outstanding]
         .map((c) => (typeof c === "number" ? (c / 100).toFixed(2) : `"${String(c).replace(/"/g, '""')}"`))
         .join(",")
@@ -393,66 +359,36 @@ export function AccountsPayableAgingPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          <div className="w-56"><TableSearch value={search} onChange={setSearch} placeholder="Search vendor…" /></div>
-          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-            <table className="w-full text-left text-xs">
-              <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-2 py-2">Vendor type</th>
-                  {["Current", "1-30", "31-60", "61-90", "91+", "Total"].map((h, i) => (
-                    <th key={h} className={`px-2 py-2 text-right ${i === 3 || i === 4 ? "text-red-600" : ""}`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {groups.map(({ group, rows, subtotal }) => (
-                  <GroupBlock key={group} group={group} rows={rows} subtotal={subtotal} open={expanded.has(group)} onToggle={() => toggleGroup(group)} />
-                ))}
-                {groups.length === 0 ? <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">{emptyMessage}</td></tr> : null}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-slate-300 bg-slate-50 font-semibold">
-                  <td className="px-2 py-2">TOTAL</td>
-                  {MONEY_KEYS.map((k) => <td key={k} className={moneyCellClass(k)}>{money(amount(totals, k))}</td>)}
-                </tr>
-              </tfoot>
-            </table>
+          {/* ACCT-F3568: By Vendor Type uses the same ParityTable surface bar as By Vendor (type column + typeFilter). */}
+          <ParityTable<ApAgingVendor>
+            columns={VENDOR_COLUMNS}
+            rows={vendorTableRows}
+            rowKey={(v) => `type-${v.vendor_id ?? v.vendor_name}`}
+            storageKey="acct-ap-aging-by-type"
+            tableTestId="ap-aging-by-type-table"
+            initialPageSize={100}
+            emptyText={emptyMessage}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={onSortChange}
+            filterBar={
+              <span className="text-[11px] text-slate-500">{typeFiltered.length} rows</span>
+            }
+          />
+          <div
+            data-testid="ap-aging-by-type-total"
+            className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border border-slate-200 border-t-2 border-t-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold"
+          >
+            <span className="mr-auto">TOTAL</span>
+            {MONEY_KEYS.map((k) => (
+              <span key={k} className="whitespace-nowrap">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
+              </span>
+            ))}
           </div>
         </div>
       )}
     </AccountingSubNavWrapper>
-  );
-}
-
-function GroupBlock({ group, rows, subtotal, open, onToggle }: { group: ApAgingDisplayGroup; rows: ApAgingVendor[]; subtotal: Buckets; open: boolean; onToggle: () => void }) {
-  return (
-    <>
-      <tr className="cursor-pointer border-t border-slate-200 bg-slate-50/70 font-semibold hover:bg-slate-100" onClick={onToggle}>
-        <td className="px-2 py-2">
-          <span className="mr-1 inline-block w-3 text-slate-500">{open ? "▾" : "▸"}</span>
-          {group} <span className="font-normal text-slate-500">({rows.length})</span>
-        </td>
-        {MONEY_KEYS.map((k) => <td key={k} className={moneyCellClass(k)}>{money(amount(subtotal, k))}</td>)}
-      </tr>
-      {open
-        ? rows.map((v) => (
-            <tr key={v.vendor_id ?? v.vendor_name} className="border-t border-slate-100 hover:bg-slate-50">
-              <td className="px-2 py-1.5 pl-7">
-                {v.vendor_id ? (
-                  <span className="inline-flex flex-col gap-0.5">
-                    <EntityLink kind="vendor" id={v.vendor_id} label={entityLabel(v.vendor_name, v.vendor_id, "Vendor")} className="text-slate-700" />
-                    <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
-                      Open bills
-                    </Link>
-                  </span>
-                ) : (
-                  entityLabel(v.vendor_name, v.vendor_id, "Vendor")
-                )}
-              </td>
-              {MONEY_KEYS.map((k) => <td key={k} className={moneyCellClass(k)}>{money(amount(v, k))}</td>)}
-            </tr>
-          ))
-        : null}
-    </>
   );
 }
