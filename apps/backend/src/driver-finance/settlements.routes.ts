@@ -10,6 +10,7 @@ import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
 import { notifySettlementAvailable } from "../services/push-notification.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
 
 const settlementStatusSchema = z.enum([
   "draft",
@@ -353,16 +354,36 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           -- COALESCE(db.load_id, sl.load_id) AS load_id overrides sl.*'s raw load_id column (later
           -- columns win by name in the driver's row object) so the existing frontend read of
           -- line.load_id resolves correctly with zero UI changes — no data mutation, read-path only.
-          SELECT sl.*, l.load_number, COALESCE(db.load_id, sl.load_id) AS load_id
+          -- HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: a 'deduction' line's real backing record is
+          -- driver_finance.driver_settlement_deductions, reachable through source_table/
+          -- source_reference_id (stamped at apply-time by settlement-deduction-cap.service.ts, same
+          -- PR). Joined here, entity-pinned via dsd.operating_company_id = $2, so the UI's Hold
+          -- action can target the real deduction id instead of this line's own id, and can show its
+          -- REAL held state (dsd.is_held) instead of a column that never existed on this table.
+          SELECT
+            sl.*,
+            l.load_number,
+            COALESCE(db.load_id, sl.load_id) AS load_id,
+            dsd.id AS source_deduction_id,
+            dsd.is_held AS deduction_is_held,
+            dsd.hold_until_period AS deduction_hold_until_period,
+            dsd.hold_reason AS deduction_hold_reason,
+            dsd.held_by_user_id AS deduction_held_by_user_id,
+            hu.email AS deduction_held_by_user_email
           FROM driver_finance.settlement_lines sl
           LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
           LEFT JOIN mdata.loads l
             ON l.id = COALESCE(db.load_id, sl.load_id)
            AND l.operating_company_id = $2::uuid
+          LEFT JOIN driver_finance.driver_settlement_deductions dsd
+            ON dsd.id = sl.source_reference_id
+           AND sl.source_table = $3
+           AND dsd.operating_company_id = $2::uuid
+          LEFT JOIN identity.users hu ON hu.id = dsd.held_by_user_id
           WHERE sl.settlement_id = $1
           ORDER BY sl.created_at ASC
         `,
-        [params.data.id, companyId]
+        [params.data.id, companyId, SETTLEMENT_DEDUCTION_SOURCE_TABLE]
       );
       const debt = await recomputeDebtSync(client, String(row.driver_id));
       // AP_BILL / GL_JE column-wave: settlement-bill-payment-posting.service.ts (flag

@@ -1,5 +1,14 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
+/**
+ * HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: the canonical value settlement_lines.source_table
+ * carries when a 'deduction' line was generated from a driver_finance.driver_settlement_deductions
+ * row (settlement-deduction-cap.service.ts's applyPendingDeductionsToSettlementWithNetFloor). A
+ * shared constant so the writer (the apply engine) and every reader (settlement detail GET, any
+ * future consumer) can never drift on the literal string.
+ */
+export const SETTLEMENT_DEDUCTION_SOURCE_TABLE = "driver_finance.driver_settlement_deductions";
+
 export type Queryable = {
   query: <T extends Record<string, unknown> = Record<string, unknown>>(
     sql: string,

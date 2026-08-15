@@ -199,6 +199,105 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     return result.row;
   });
 
+  // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: the settlement-detail Hold Deduction modal's real
+  // target is a driver_finance.driver_settlement_deductions row (the live, GL-posted deduction
+  // ledger — see settlement-deduction-cap.service.ts / settlement-posting.service.ts), reached via
+  // the settlement line's source_reference_id (see settlements.routes.ts GET detail). The
+  // pre-existing /deduction-schedules/:id/hold routes above are LEFT UNCHANGED — they correctly
+  // serve the separate cash-advance/liability recurring-schedule feature (driver_finance.
+  // deduction_schedule) and have their own callers elsewhere; this is a distinct table with its
+  // own hold semantics, not a repoint of those routes.
+  app.patch("/api/v1/driver-finance/settlement-deductions/:id/hold", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = deductionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = holdBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const updateRes = await client.query(
+        `
+          UPDATE driver_finance.driver_settlement_deductions
+          SET is_held = true,
+              hold_until_period = $2::date,
+              hold_reason = $3,
+              held_by_user_id = $4,
+              updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $5::uuid
+            -- An already-applied (GL-posted) deduction is historical fact, not future-holdable.
+            AND status <> 'applied'
+          RETURNING *
+        `,
+        [params.data.id, body.data.hold_until_period, body.data.reason, user.uuid, query.data.operating_company_id]
+      );
+      if (updateRes.rowCount === 0) return { notFound: true as const };
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "driver_finance.settlement_deduction_held",
+        {
+          resource_type: "driver_finance.driver_settlement_deductions",
+          resource_id: params.data.id,
+          hold_until_period: body.data.hold_until_period,
+          reason: body.data.reason,
+          held_by_user_id: user.uuid,
+        },
+        "info",
+        "HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID"
+      );
+      return { row: updateRes.rows[0] };
+    });
+    if ("notFound" in result)
+      return reply.code(404).send({ error: "settlement_deduction_not_found_or_already_applied" });
+    return result.row;
+  });
+
+  app.patch("/api/v1/driver-finance/settlement-deductions/:id/resume", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = deductionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const updateRes = await client.query(
+        `
+          UPDATE driver_finance.driver_settlement_deductions
+          SET is_held = false,
+              hold_until_period = NULL,
+              hold_reason = NULL,
+              held_by_user_id = NULL,
+              updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+          RETURNING *
+        `,
+        [params.data.id, query.data.operating_company_id]
+      );
+      if (updateRes.rowCount === 0) return { notFound: true as const };
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "driver_finance.settlement_deduction_resumed",
+        {
+          resource_type: "driver_finance.driver_settlement_deductions",
+          resource_id: params.data.id,
+          resumed_by_user_id: user.uuid,
+        },
+        "info",
+        "HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID"
+      );
+      return { row: updateRes.rows[0] };
+    });
+    if ("notFound" in result) return reply.code(404).send({ error: "settlement_deduction_not_found" });
+    return result.row;
+  });
+
   app.get("/api/v1/driver-finance/drivers/:id/escrow-timeline", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
