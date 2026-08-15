@@ -1162,6 +1162,11 @@
     "claimed_by": "claude-1",
     "purpose": "verify-moneyinput-single-frame-vertical"
   },
+  "3445": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "claude-1",
+    "purpose": "verify-accounting-genuine-tagged-gl-je-expense"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
