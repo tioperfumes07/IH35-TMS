@@ -3071,5 +3071,10 @@
     "purpose": "verify-items-list-suppress-toolbar-search",
     "lane": "cursor",
     "claimed_at": "2026-08-15"
+  },
+  "3469": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "claude-1",
+    "purpose": "verify-pdf-render-date-object-stringify"
   }
 }
