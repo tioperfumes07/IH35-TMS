@@ -133,7 +133,6 @@
       "route_hint": "/factoring/reserve-tracker",
       "required": [
         "load",
-        "liability",
         "connectivity"
       ]
     },
@@ -211,7 +210,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -227,7 +225,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -241,7 +238,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -265,7 +261,6 @@
       "sub": "Reserve dashboard summary",
       "route_hint": "/factoring/reserves",
       "required": [
-        "liability",
         "connectivity"
       ]
     },
@@ -300,7 +295,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -796,6 +790,48 @@
             "reverse_link"
           ],
           "reason": "identical component to batches.create, creation wizard"
+        }
+      ]
+    },
+    "liability_2026_08_15_cluster_a": {
+      "finding": "LIABILITY-FALSE-REQUIRED-CLUSTER-A",
+      "note": "CORRECTS the pre-existing liability_surfaces_built_2026_08_12 entry: that entry claimed home.reserve_tracker and reserves.dashboard were LIABILITY-SURFACES-BUILT citing \"ReserveTracker getReserveBalances\" / \"ReserveDashboard getReserveBalances\" as proof -- verified live 2026-08-15: neither file contains any EntityLink kind=\"liability\" (only kind=\"factor\"); getReserveBalances is a data-fetch, not a link. Both are reserve-balance rollup views (categorical aggregate across many reserve movements), not a single owning liability record -- same shape as the already-dropped gl_je flags on cash-flow rollups (PR #6936). submit.queue / batches.create / accounting.submit are pre-persistence preview/create surfaces (WAVE-C-liability-* comments confirm: \"preview of the reserve/liability\", computed Net-Fee-Advance, no persisted liability row exists at create/submit time). batches.detail shows the same computed Net-Fee-Advance derivation as a header summary, not a link to a single liability row (the real per-movement ledger lives in reserve_tracker/reserves.dashboard, both rollups). Dropping liability Required from all 6; leaving liability_surfaces_built_2026_08_12 in place append-only per WORM (not deleted), this entry supersedes it as the corrected record.",
+      "drops": [
+        {
+          "id": "home.reserve_tracker",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "submit.queue",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "batches.create",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "batches.detail",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "reserves.dashboard",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "accounting.submit",
+          "removed": [
+            "liability"
+          ]
         }
       ]
     }
