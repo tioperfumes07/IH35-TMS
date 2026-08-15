@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -31,7 +30,6 @@ function formatWhen(iso: string | null | undefined) {
 export function InventoryAssignmentsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
 
   const assignmentsQuery = useQuery({
     queryKey: ["maintenance", "parts-assignments", companyId],
@@ -39,25 +37,8 @@ export function InventoryAssignmentsPage() {
     enabled: Boolean(companyId),
   });
 
+  // Search is ONLY the canonical ParityTable UniversalListToolbar (LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH).
   const rows = assignmentsQuery.data ?? [];
-  const filteredRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) => {
-      const hay = [
-        row.part_description,
-        row.part_number,
-        row.work_order_display_id,
-        row.unit_number,
-        row.vendor_name,
-        row.vendor_invoice_number,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    });
-  }, [rows, search]);
 
   const columns: Array<ParityColumn<PartsAssignmentRow>> = [
     {
@@ -171,20 +152,11 @@ export function InventoryAssignmentsPage() {
           <h3 className="text-sm font-semibold">Assignment trail</h3>
           <ParityTable<PartsAssignmentRow>
             columns={columns}
-            rows={filteredRows}
+            rows={rows}
             rowKey={(row) => row.id}
             emptyText="No part assignments yet. Parts linked on a work order appear here (qty used → unit via WO)."
             storageKey="inventory-assignments-trail"
             exportFilename="inventory-assignments"
-            filterBar={
-              <input
-                className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                placeholder="Search part / WO / unit / vendor / invoice…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search assignment trail"
-              />
-            }
           />
         </div>
       )}
