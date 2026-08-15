@@ -38,7 +38,7 @@ export function DispatcherSafetyEventsReverseBlock({
       {query.isError ? <p className="text-sm text-red-600">Could not load dispatcher safety events.</p> : null}
       {!query.isLoading && !query.isError && events.length === 0 ? <p className="text-sm text-gray-500">None linked.</p> : null}
       {events.map((event) => (
-        <article key={event.id} className="rounded-sm border border-gray-100 px-2 py-1.5 text-sm">
+        <article key={event.id} className="px-2 py-1.5 text-sm">
           <div className="font-medium text-slate-900">{event.summary}</div>
           <div className="text-xs text-gray-600">
             {formatDateUS(event.event_date)} · {event.severity} · Dispatcher{" "}

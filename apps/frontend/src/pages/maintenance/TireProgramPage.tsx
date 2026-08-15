@@ -311,7 +311,7 @@ export function TireProgramPage() {
       </div>
 
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[auto_1fr_auto]">
-        <div className="flex self-end rounded-sm border border-gray-200 p-1" aria-label="Tire asset type">
+        <div className="flex self-end p-1" aria-label="Tire asset type">
           {(["unit", "trailer"] as const).map((kind) => (
             <button
               key={kind}

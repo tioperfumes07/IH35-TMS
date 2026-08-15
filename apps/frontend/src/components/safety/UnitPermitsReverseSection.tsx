@@ -36,7 +36,7 @@ export function UnitPermitsReverseSection({
       {permits.map((permit) => {
         const id = String(permit.id ?? "");
         return (
-          <div key={id} className="flex items-center justify-between gap-3 rounded-sm border border-gray-100 px-2 py-1.5 text-xs">
+          <div key={id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
             <EntityLink
               kind="permit"
               id={id}

@@ -42,7 +42,7 @@ export function ComplaintsReverseSection({
         <p className="text-xs text-gray-500">No complaints linked to {contextLabel}.</p>
       ) : null}
       {rows.map((row) => (
-        <div key={String(row.id)} className="flex items-center justify-between gap-3 rounded-sm border border-gray-100 px-2 py-1.5 text-xs">
+        <div key={String(row.id)} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
           <EntityLink
             kind="complaint"
             id={String(row.id)}

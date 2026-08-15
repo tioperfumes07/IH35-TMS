@@ -27,7 +27,7 @@ export function UnitMaintenanceInspectionsReverseSection({
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No maintenance inspections linked to this unit.</p> : null}
       {rows.map((row) => (
-        <div key={row.id} className="rounded-sm border border-gray-100 px-2 py-1.5 text-sm">
+        <div key={row.id} className="px-2 py-1.5 text-sm">
           <EntityLink kind="maintenance_inspection" id={row.id} label={humanizeEnumLabel(row.inspection_type_label ?? row.inspection_type)} />
           <span className="ml-2 text-xs text-gray-600">{formatDateUS(row.inspection_date ?? row.scheduled_date)} · {row.status}</span>
         </div>

@@ -26,7 +26,7 @@ export function WarrantyClaimsReverseSection({ operatingCompanyId, filter, conte
       {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No warranty claims linked to {contextLabel}.</p> : null}
       {rows.map((row) => (
-        <div key={row.id} className="flex items-center justify-between gap-3 rounded-sm border border-gray-100 px-2 py-1.5 text-xs">
+        <div key={row.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
           <EntityLink kind="warranty_claim" id={row.id} label={entityLabel(row.claim_number || row.part_description, row.id, "Warranty claim")} />
           <span className="text-gray-500">{row.status_label ?? row.status}</span>
         </div>
