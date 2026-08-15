@@ -27,6 +27,10 @@ function audit(s) {
   if (!/listState\.isError/.test(s.banking) || !/No escrow ledger rows found for this filter\./.test(s.banking)) failures.push("bank escrow honest states missing");
   if (!/listEscrowRecords\(operatingCompanyId\)/.test(s.safety) || !/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.id \|\| null\}/.test(s.safety)) failures.push("safety escrow driver reverse/scope missing");
   if (!/escrowQuery\.isError/.test(s.safety) || !/No escrow records available for the selected company\./.test(s.safety)) failures.push("safety escrow honest states missing");
+  // LST-F5163K: list chrome reverse (URL-only open-drawer is not a visible filter).
+  if (!/dataTestId="escrow-records-filter-driver"/.test(s.safety) || !/allowCreate=\{false\}/.test(s.safety) || !/setDriverFilter/.test(s.safety)) {
+    failures.push("safety escrow list EntityPicker driver filter missing");
+  }
   return failures;
 }
 
@@ -43,6 +47,7 @@ if (process.argv.includes("--selftest")) {
     ["bank-state", "banking", /No escrow ledger rows found for this filter\./g, "Loading"],
     ["safety-drill", "safety", /id=\{row\.id \|\| null\}/g, "id={null}"],
     ["safety-scope", "safety", /listEscrowRecords\(operatingCompanyId\)/g, "listEscrowRecords('')"],
+    ["safety-list-filter", "safety", /dataTestId="escrow-records-filter-driver"/g, 'dataTestId="x"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const candidate = { ...source, [key]: source[key].replace(pattern, replacement) };
