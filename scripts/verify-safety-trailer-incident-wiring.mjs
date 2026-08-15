@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["safety"],"cols":["trailer","picker_law","reverse_link","connectivity"],"leafRe":"^(accidents\\.(list|create)|damage_reports\\.(list|create)|trailer_interchanges\\.list)$","task":"LINK-F5163-SAFETY-TRAILER-INCIDENTS"} */
+/** @matrix-built {"modules":["safety"],"cols":["trailer","picker_law","reverse_link","connectivity"],"leafRe":"^(accidents\\.(list|create)|damage_reports\\.(list|create)|trailer_interchanges\\.list|idvr\\.list)$","task":"LINK-F5163-SAFETY-TRAILER-INCIDENTS"} */
 /**
  * OWNER-EXECUTION-PLAN vertical trailer-column sweep (2026-08-14): accidents.create captures a real
- * trailer_id via AccidentReportDrawer.tsx's EntityPicker. accidents.list must filter + show Trailer
- * (EntityPicker allowCreate=false + EntityLink) so reverse deep-links ?trailer_id= seed a visible
- * filter (LINK-F5171). damage_reports / trailer_interchanges share SafetyIncidentsClusterSurface.
+ * trailer_id via AccidentReportDrawer.tsx's EntityPicker. accidents.list + idvr.list must filter +
+ * show Trailer so reverse deep-links ?trailer_id= seed a visible filter (LINK-F5171).
+ * damage_reports / trailer_interchanges share SafetyIncidentsClusterSurface.
  *
  * Self-test: node scripts/verify-safety-trailer-incident-wiring.mjs --selftest
  */
@@ -16,6 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   accident: "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
   accidentsList: "apps/frontend/src/pages/safety/AccidentsPage.tsx",
+  idvrList: "apps/frontend/src/pages/safety/IdvrPage.tsx",
   cluster: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
   interchanges: "apps/frontend/src/pages/safety/TrailerInterchangesPage.tsx",
 };
@@ -35,6 +36,15 @@ export function audit(src) {
   if (!/trailerIdFromUrl/.test(src.accidentsList) || !/setTrailerFilter\(trailerIdFromUrl\)/.test(src.accidentsList)) {
     failures.push(`${FILES.accidentsList}: ?trailer_id= reverse deep-link must seed trailerFilter`);
   }
+  if (!/dataTestId="idvr-filter-trailer"/.test(src.idvrList)) {
+    failures.push(`${FILES.idvrList}: DVIR list must render EntityPicker trailer filter (idvr-filter-trailer)`);
+  }
+  if (!/kind="trailer"/.test(src.idvrList) || !/key:\s*"trailer_id"/.test(src.idvrList)) {
+    failures.push(`${FILES.idvrList}: DVIR list must show Trailer column EntityLink kind=trailer`);
+  }
+  if (!/setTrailerFilter\(trailerIdFromUrl\)/.test(src.idvrList)) {
+    failures.push(`${FILES.idvrList}: ?trailer_id= reverse deep-link must seed trailerFilter`);
+  }
   if (!/kind="trailer"/.test(src.cluster)) {
     failures.push(`${FILES.cluster}: damage-report/trailer-interchange surface must render a real kind="trailer" picker/link`);
   }
@@ -51,6 +61,7 @@ function loadSrc(root) {
   return {
     accident: fs.readFileSync(path.join(root, FILES.accident), "utf8"),
     accidentsList: fs.readFileSync(path.join(root, FILES.accidentsList), "utf8"),
+    idvrList: fs.readFileSync(path.join(root, FILES.idvrList), "utf8"),
     cluster: fs.readFileSync(path.join(root, FILES.cluster), "utf8"),
     interchanges: fs.readFileSync(path.join(root, FILES.interchanges), "utf8"),
   };
@@ -67,6 +78,9 @@ if (process.argv.includes("--selftest")) {
     ["list-filter", "accidentsList", /dataTestId="accidents-trailer-filter"/, 'dataTestId="accidents-unit-filter"'],
     ["list-column", "accidentsList", /key:\s*"trailer_id"/, 'key: "unit_id"'],
     ["list-seed", "accidentsList", /setTrailerFilter\(trailerIdFromUrl\)/, "setUnitFilter(trailerIdFromUrl)"],
+    ["idvr-filter", "idvrList", /dataTestId="idvr-filter-trailer"/, 'dataTestId="idvr-filter-unit"'],
+    ["idvr-column", "idvrList", /key:\s*"trailer_id"/, 'key: "unit_id"'],
+    ["idvr-seed", "idvrList", /setTrailerFilter\(trailerIdFromUrl\)/, "setUnitFilter(trailerIdFromUrl)"],
     ["cluster-kind", "cluster", /kind="trailer"/g, 'kind="unit"'],
     ["cluster-required-check", "cluster", /requiredExtraFields\.includes\("trailer_id"\)/g, "false"],
     ["interchanges-required", "interchanges", /requiredExtraFields:\s*\["trailer_id"\]/, "requiredExtraFields: []"],
@@ -91,4 +105,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — safety accident list+create / damage-report / trailer-interchange are trailer-scoped`);
+console.log(`${LABEL} PASS — safety accident/DVIR list+create / damage-report / trailer-interchange are trailer-scoped`);
