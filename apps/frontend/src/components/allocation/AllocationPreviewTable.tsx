@@ -1,3 +1,4 @@
+import { ParityTable } from "../parity/ParityTable";
 import type { AllocationPreviewRow } from "./types";
 
 type Props = {
@@ -22,36 +23,44 @@ export function AllocationPreviewTable({ rows, totalCents, isLoading }: Props) {
           {isLoading ? "Calculating…" : balanced ? "Penny-exact" : `Delta ${money(totalCents - allocated)}`}
         </span>
       </div>
-      <div className="overflow-auto">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Unit</th>
-              <th className="px-3 py-2">Method</th>
-              <th className="px-3 py-2 text-right">%</th>
-              <th className="px-3 py-2 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-4 text-gray-500">
-                  Select assets to preview allocation rows.
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => (
-                <tr key={row.asset_id} className="border-t border-gray-100">
-                  <td className="px-3 py-2 font-medium text-gray-900">{row.unit_code}</td>
-                  <td className="px-3 py-2 text-gray-700">{row.allocation_method.replaceAll("_", " ")}</td>
-                  <td className="px-3 py-2 text-right font-mono">{row.allocation_pct.toFixed(4)}</td>
-                  <td className="px-3 py-2 text-right font-mono">{money(row.allocated_amount_cents)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* ACCT-F3584: embedded ParityTable owns Search+Range+gear inside the preview frame. */}
+      <ParityTable<AllocationPreviewRow>
+        embedded
+        rows={rows}
+        rowKey={(row) => row.asset_id}
+        storageKey="allocation-preview-rows"
+        exportFilename="allocation-preview"
+        tableTestId="allocation-preview-table"
+        emptyText="Select assets to preview allocation rows."
+        columns={[
+          {
+            key: "unit",
+            label: "Unit",
+            cellClass: "font-medium text-gray-900",
+            render: (row) => row.unit_code,
+          },
+          {
+            key: "method",
+            label: "Method",
+            cellClass: "text-gray-700",
+            render: (row) => row.allocation_method.replaceAll("_", " "),
+          },
+          {
+            key: "pct",
+            label: "%",
+            className: "text-right",
+            cellClass: "text-right font-mono",
+            render: (row) => row.allocation_pct.toFixed(4),
+          },
+          {
+            key: "amount",
+            label: "Amount",
+            className: "text-right",
+            cellClass: "text-right font-mono",
+            render: (row) => money(row.allocated_amount_cents),
+          },
+        ]}
+      />
     </section>
   );
 }
