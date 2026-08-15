@@ -12,6 +12,8 @@ type OverrideRow = {
   flag_key: string;
   operating_company_id: string | null;
   user_uuid: string | null;
+  user_label: string | null;
+  company_label: string | null;
   enabled: boolean;
 };
 
@@ -105,8 +107,8 @@ export function FeatureFlagsManager() {
               <li key={override.uuid} className="flex items-center gap-2">
                 <span>
                   {override.user_uuid
-                    ? entityLabel(null, override.user_uuid, "User")
-                    : entityLabel(null, override.operating_company_id, "Tenant")}
+                    ? entityLabel(override.user_label, override.user_uuid, "User")
+                    : entityLabel(override.company_label, override.operating_company_id, "Tenant")}
                   {" → "}
                   {override.enabled ? "on" : "off"}
                 </span>
@@ -121,7 +123,7 @@ export function FeatureFlagsManager() {
         label: "Actions",
         render: (row) => (
           <span className="text-xs text-gray-500">
-            {row.per_entity_only ? "Tenant override ON" : "—"}
+            {row.per_entity_only ? "Tenant override active" : "—"}
           </span>
         ),
       },
