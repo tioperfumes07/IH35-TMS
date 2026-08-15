@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/CustomerDetail.tsx";
+const FMCSA_MODAL = "apps/frontend/src/components/customers/FMCSAVerificationModal.tsx";
 const LABEL = "verify-customer-detail-page-self-referential";
 
 const CHECKS = [
@@ -37,18 +38,28 @@ const CHECKS = [
   ["fmcsa_verify", /mutationFn: \(\) => verifyCustomerFmcsa\(id\)/],
 ];
 
-export function audit(src) {
+export function audit(src, fmcsaSrc = "") {
   const failures = [];
   for (const [name, pattern] of CHECKS) {
     if (!pattern.test(src)) failures.push(`${FILE}: ${name} tab is missing its self-referential customer scoping`);
+  }
+  // LST-F3366 — FMCSA verify chrome: flat sections, no nested bordered cards inside Modal.
+  if (fmcsaSrc) {
+    if (!/data-testid=["']fmcsa-verify-flat["']/.test(fmcsaSrc)) {
+      failures.push(`${FMCSA_MODAL}: must expose data-testid=fmcsa-verify-flat`);
+    }
+    if (/rounded-sm border border-gray-200 p-3/.test(fmcsaSrc)) {
+      failures.push(`${FMCSA_MODAL}: must not nest bordered cards (box-in-box)`);
+    }
   }
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
   const good = fs.readFileSync(path.join(ROOT, FILE), "utf8");
-  if (audit(good).length) {
-    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good).join("\n- ")}`);
+  const fmcsaGood = fs.readFileSync(path.join(ROOT, FMCSA_MODAL), "utf8");
+  if (audit(good, fmcsaGood).length) {
+    console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good, fmcsaGood).join("\n- ")}`);
     process.exit(1);
   }
   let caught = 0;
@@ -58,18 +69,28 @@ if (process.argv.includes("--selftest")) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}: pattern did not match source, re-anchor`);
       process.exit(1);
     }
-    const failures = audit(mutated);
+    const failures = audit(mutated, fmcsaGood);
     if (!failures.some((f) => f.includes(name))) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}: mutation escaped`);
       process.exit(1);
     }
     caught++;
   }
+  const fmcsaPlanted = fmcsaGood.replace(/data-testid=["']fmcsa-verify-flat["']/, 'data-testid="x"') +
+    '\n<div className="rounded-sm border border-gray-200 p-3" />\n';
+  if (!audit(good, fmcsaPlanted).some((f) => f.includes("box-in-box") || f.includes("fmcsa-verify-flat"))) {
+    console.error(`${LABEL} SELFTEST FAIL — fmcsa box-in-box mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
   console.log(`${LABEL} SELFTEST PASS — ${caught} mutations detected`);
   process.exit(0);
 }
 
-const failures = audit(fs.readFileSync(path.join(ROOT, FILE), "utf8"));
+const failures = audit(
+  fs.readFileSync(path.join(ROOT, FILE), "utf8"),
+  fs.readFileSync(path.join(ROOT, FMCSA_MODAL), "utf8"),
+);
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
