@@ -27,6 +27,12 @@ const SITES = [
   {
     rel: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx",
     refresh: /invalidateQueries.*payment-term|paymentTermsQuery\.refetch/,
+    // PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT / LST-F3368: when kind === "vendor" now
+    // early-returns to the embedded canonical VendorCreateModal (already a SITES entry above),
+    // the residual QuickCreateEntityModal form has no vendor payment-terms field of its own —
+    // checking VendorCreateModal already covers the real inline-create surface.
+    skipIfEmbeds: (src) =>
+      /kind\s*===\s*["']vendor["']/.test(src) && /<VendorCreateModal[\s>]/.test(src) && /\bembedded\b/.test(src),
   },
 ];
 
@@ -110,6 +116,7 @@ export function collectProblems(root = ROOT, registryOverride = null) {
       continue;
     }
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    if (site.skipIfEmbeds?.(code)) continue;
     if (!/createKind=["']payment_term["']/.test(code)) {
       problems.push(`${site.rel}: must use createKind=payment_term`);
     }

@@ -19,6 +19,7 @@ const FILES = {
   vendorCreate: "apps/frontend/src/components/vendors/VendorCreateModal.tsx",
   customer: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
   quickCreate: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx",
+  itemEditor: "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx",
 };
 
 function readRel(root, rel, overrides) {
@@ -69,7 +70,21 @@ export function collectProblems(root = ROOT, overrides = null) {
     if (/<Combobox[\s>]/.test(blk)) problems.push(`${FILES.customer}: must not use bare Combobox`);
   }
 
-  if (qc && !/createKind=["']account["']/.test(qc)) {
+  // PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT / LST-F3368: when QuickCreate's kind === "item"
+  // early-returns to the embedded canonical ItemEditorModal (already the parity anchor for
+  // account income/expense inline-create — see verify-lst-picker01-quickcreate-item-account-
+  // inline-create.mjs), the residual QuickCreate form no longer carries its own literal
+  // createKind="account" — the anchor lives on ItemEditorModal instead.
+  const qcCode = qc ? stripComments(qc) : "";
+  const embedsItemEditor =
+    /kind\s*===\s*["']item["']/.test(qcCode) && /<ItemEditorModal[\s>]/.test(qcCode) && /\bembedded\b/.test(qcCode);
+  if (embedsItemEditor) {
+    const ie = readRel(root, FILES.itemEditor, overrides);
+    if (!ie) problems.push(`missing ${FILES.itemEditor} (QuickCreateEntityModal embeds ItemEditorModal)`);
+    else if (!/createKind=["']account["']/.test(ie)) {
+      problems.push(`${FILES.itemEditor}: must keep createKind=account (parity anchor, embedded via QuickCreateEntityModal)`);
+    }
+  } else if (qc && !/createKind=["']account["']/.test(qc)) {
     problems.push(`${FILES.quickCreate}: must keep createKind=account (parity anchor)`);
   }
 

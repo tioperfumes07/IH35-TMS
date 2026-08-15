@@ -365,10 +365,12 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.vendor_types",
     endpoint: "/api/v1/catalogs/vendors/vendor-types",
     evidence: "apps/backend/src/catalogs/generic-catalog.factory.ts:143 (SELECT) and :188 (INSERT) — both catalogs.${config.tableName} from vendorTypesCatalogConfig",
+    // LST-F3364 consolidated NewVendorDrawerForm into a thin delegate that renders the SAME
+    // embedded VendorCreateModal (no form of its own) — VendorCreateModal below is that
+    // consumer's real ReferenceSelect wiring; listing the delegate too demanded a dead literal.
     consumerPath: [
       "apps/frontend/src/pages/VendorDetail.tsx",
       "apps/frontend/src/components/vendors/VendorCreateModal.tsx",
-      "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx",
     ],
   }),
 
