@@ -95,6 +95,14 @@ async function postingEnabled(client: DbClient, operatingCompanyId: string): Pro
 export type PostPartsInventoryPurchaseInput = {
   operating_company_id: string;
   parts_inventory_id: string;
+  /**
+   * INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT: the immutable maintenance.parts_purchases event id.
+   * The idempotency latch keys off THIS, not parts_inventory_id — the stock row is now upserted
+   * (reused across repeat purchases of the same part), so keying the latch off it would silently
+   * cap GL posting at the first purchase of any given part forever. Optional only for legacy
+   * callers that predate the purchase-event ledger; always pass it from the route going forward.
+   */
+  parts_purchase_id?: string | null;
   actor_user_id: string;
   entry_date_iso: string; // YYYY-MM-DD
   part_description: string;
@@ -136,12 +144,20 @@ export async function postPartsInventoryPurchase(
     );
     if (!row.rows[0]?.id) return { gate: "parts_row_not_found" as const };
 
+    // Latch keys off parts_purchase_id (the immutable event) when present — parts_inventory_id
+    // alone would collide across every repeat purchase of the same upserted stock row. Legacy
+    // callers with no parts_purchase_id fall back to the old stock-row key.
     const existing = await client.query<{ id: string; bill_id: string | null; expense_je_id: string | null }>(
-      `SELECT id::text, bill_id::text, expense_je_id::text
-       FROM accounting.parts_purchase_postings
-       WHERE operating_company_id = $1::uuid AND parts_inventory_id = $2::uuid AND is_active
-       LIMIT 1`,
-      [input.operating_company_id, input.parts_inventory_id]
+      input.parts_purchase_id
+        ? `SELECT id::text, bill_id::text, expense_je_id::text
+           FROM accounting.parts_purchase_postings
+           WHERE operating_company_id = $1::uuid AND parts_purchase_id = $2::uuid AND is_active
+           LIMIT 1`
+        : `SELECT id::text, bill_id::text, expense_je_id::text
+           FROM accounting.parts_purchase_postings
+           WHERE operating_company_id = $1::uuid AND parts_inventory_id = $2::uuid AND parts_purchase_id IS NULL AND is_active
+           LIMIT 1`,
+      [input.operating_company_id, input.parts_purchase_id ?? input.parts_inventory_id]
     );
     if (existing.rows[0]?.id) {
       return {
@@ -157,7 +173,7 @@ export async function postPartsInventoryPurchase(
       "maintenance_parts_expense"
     );
     const entryDate = input.entry_date_iso.slice(0, 10);
-    const memo = `Parts purchase — ${input.part_description} [${input.parts_inventory_id}]`;
+    const memo = `Parts purchase — ${input.part_description} [${input.parts_purchase_id ?? input.parts_inventory_id}]`;
 
     return {
       gate: "post" as const,
@@ -273,17 +289,32 @@ export async function postPartsInventoryPurchase(
       input.operating_company_id,
     ]);
     await client.query(
+      input.parts_purchase_id
+        ? `
+        INSERT INTO accounting.parts_purchase_postings (
+          operating_company_id, parts_inventory_id, parts_purchase_id, bill_id, expense_je_id,
+          amount_cents, entry_date, memo, status, created_by_user_id
+        )
+        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6, $7::date, $8, 'posted', $9::uuid)
+        ON CONFLICT (operating_company_id, parts_purchase_id) WHERE is_active AND parts_purchase_id IS NOT NULL DO NOTHING
       `
+        : // Legacy no-parts_purchase_id shape: the "already_posted" read above is this path's only
+          // dedup gate — the stock-row-keyed unique index this used to rely on
+          // (uq_parts_purchase_postings_parts_active) was dropped in
+          // 202612560000_inv_purchase_ledger_sor_stock_upsert.sql in favor of the
+          // parts_purchase_id-keyed index above. Dead in practice: every current caller
+          // (parts-inventory.routes.ts) always passes parts_purchase_id.
+          `
         INSERT INTO accounting.parts_purchase_postings (
           operating_company_id, parts_inventory_id, bill_id, expense_je_id,
           amount_cents, entry_date, memo, status, created_by_user_id
         )
-        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6::date, $7, 'posted', $8::uuid)
-        ON CONFLICT (operating_company_id, parts_inventory_id) WHERE is_active DO NOTHING
+        VALUES ($1::uuid, $2::uuid, $4::uuid, $5::uuid, $6, $7::date, $8, 'posted', $9::uuid)
       `,
       [
         input.operating_company_id,
         input.parts_inventory_id,
+        input.parts_purchase_id ?? null,
         billId ?? null,
         journalEntryId,
         prepared.amountCents,
