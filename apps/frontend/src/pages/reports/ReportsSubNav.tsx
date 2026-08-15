@@ -2,9 +2,24 @@ import { useLocation } from "react-router-dom";
 import type { ReportCategory } from "../../api/reports";
 import { REPORT_CATEGORY_FLYOUT_ITEMS } from "../../components/reports/CategoryHoverNav";
 import { phase6ReportHref } from "../../components/reports/phase6ReportLinks";
-import { HoverDropdownNav, type NavChild, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import {
+  HoverDropdownNav,
+  type NavChild,
+  type NavItem,
+} from "../../components/forms/shared/HoverDropdownNav";
 
-const CATEGORY_ORDER: ReportCategory[] = ["all", "operations", "financial", "drivers", "fleet", "fuel", "safety", "compliance", "automation", "saved"];
+const CATEGORY_ORDER: ReportCategory[] = [
+  "all",
+  "operations",
+  "financial",
+  "drivers",
+  "fleet",
+  "fuel",
+  "safety",
+  "compliance",
+  "automation",
+  "saved",
+];
 
 /** Phase 6 report ids — hrefs from phase6ReportLinks (Block U + W). */
 const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
@@ -21,7 +36,7 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
   { id: "geofence-dwell", label: "Geofence dwell report" },
   { id: "deadhead", label: "Deadhead optimization" },
-  { id: "scheduled-reports", label: "Scheduled reports" },
+  { id: "scheduled-reports", label: "Default subscriptions" },
 ];
 
 function flattenReportRunLinks(): NavChild[] {
@@ -34,7 +49,11 @@ function flattenReportRunLinks(): NavChild[] {
       const dedicated = phase6ReportHref(item.id);
       const href =
         dedicated ??
-        (item.id === "ar-aging" ? "/reports/ar-aging" : item.id === "ap-aging" ? "/reports/ap-aging" : `/reports/run/${encodeURIComponent(item.id)}`);
+        (item.id === "ar-aging"
+          ? "/reports/ar-aging"
+          : item.id === "ap-aging"
+            ? "/reports/ap-aging"
+            : `/reports/run/${encodeURIComponent(item.id)}`);
       out.push({ label: item.label, href });
     }
   }
@@ -50,23 +69,40 @@ function flattenReportRunLinks(): NavChild[] {
 
 /** Top /reports sub-nav (invariant #20). Runner links deduped in same order as CategoryHoverNav flyouts. */
 const AUDIT_REPORT_CHILDREN: NavChild[] = [
-  { label: "Activity by user",           href: "/reports/audit/activity-by-user" },
-  { label: "Activity by module",          href: "/reports/audit/activity-by-module" },
-  { label: "Financial change log",        href: "/reports/audit/financial-change-log" },
-  { label: "Maintenance decision log",    href: "/reports/audit/maintenance-decision-log" },
-  { label: "Deduction trail",             href: "/reports/audit/deduction-trail" },
-  { label: "Void & reversal",             href: "/reports/audit/void-reversal" },
-  { label: "Period close history",        href: "/reports/audit/period-close-history" },
+  { label: "Activity by user", href: "/reports/audit/activity-by-user" },
+  { label: "Activity by module", href: "/reports/audit/activity-by-module" },
+  {
+    label: "Financial change log",
+    href: "/reports/audit/financial-change-log",
+  },
+  {
+    label: "Maintenance decision log",
+    href: "/reports/audit/maintenance-decision-log",
+  },
+  { label: "Deduction trail", href: "/reports/audit/deduction-trail" },
+  { label: "Void & reversal", href: "/reports/audit/void-reversal" },
+  {
+    label: "Period close history",
+    href: "/reports/audit/period-close-history",
+  },
 ];
 
 export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Reports", href: "/reports" },
   { label: "Category hub", href: "/reports/hub" },
   // Label navigates to hub; chevron lists every runner (nav-split — same class as Accounting).
-  { label: "Run report", href: "/reports/hub", children: flattenReportRunLinks() },
+  {
+    label: "Run report",
+    href: "/reports/hub",
+    children: flattenReportRunLinks(),
+  },
   { label: "Cancellations", href: "/reports/cancellations" },
   { label: "Scheduled (custom)", href: "/reports/scheduled-custom" },
-  { label: "Audit", href: "/reports/audit/activity-by-user", children: AUDIT_REPORT_CHILDREN },
+  {
+    label: "Audit",
+    href: "/reports/audit/activity-by-user",
+    children: AUDIT_REPORT_CHILDREN,
+  },
 ];
 
 export function reportsSubNavActiveHref(pathname: string): string {
@@ -101,5 +137,10 @@ export function reportsSubNavActiveHref(pathname: string): string {
 
 export function ReportsSubNav() {
   const { pathname } = useLocation();
-  return <HoverDropdownNav items={[...REPORTS_SUB_NAV_ITEMS]} activeHref={reportsSubNavActiveHref(pathname)} />;
+  return (
+    <HoverDropdownNav
+      items={[...REPORTS_SUB_NAV_ITEMS]}
+      activeHref={reportsSubNavActiveHref(pathname)}
+    />
+  );
 }
