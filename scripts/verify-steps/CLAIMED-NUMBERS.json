@@ -1438,6 +1438,11 @@
     "claimedBy": "cursor",
     "name": "verify-bank-account-visibility-parity-surface-bar"
   },
+  "3548": {
+    "claimedAt": "2026-08-15",
+    "claimedBy": "cursor",
+    "name": "verify-property-tax-rendition-parity-surface-bar"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
