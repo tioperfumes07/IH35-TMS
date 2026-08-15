@@ -253,7 +253,7 @@ function ProjectionPanel({
                   driverRoster="active_or_probation"
                 />
               ) : form.party_ref_kind === "vendor" ? (
-                <EntityPicker kind="vendor" operatingCompanyId={operatingCompanyId} value={form.party_ref_id || null} onChange={(id) => setForm((f) => ({ ...f, party_ref_id: id ?? "" }))} placeholder="Select vendor" className="min-w-0 flex-1" />
+                <EntityPicker kind="vendor" operatingCompanyId={operatingCompanyId} value={form.party_ref_id || null} onChange={(id) => setForm((f) => ({ ...f, party_ref_id: id ?? "" }))} placeholder="Select vendor" className="min-w-0 flex-1" allowCreate />
               ) : (
                 <input aria-label={c.label} placeholder={c.label} className="h-7 min-w-0 flex-1 rounded-sm border border-gray-300 px-2" value={form.party_name} onChange={(ev) => setForm((f) => ({ ...f, party_name: ev.target.value }))} />
               )}

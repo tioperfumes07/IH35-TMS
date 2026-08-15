@@ -40,7 +40,7 @@ export function collectProblems(overrides = {}) {
   // complete create-return-reload contract or every adopted consumer regresses at once.
   const primitiveContracts = [
     [/allowAddNew=\{\{[\s\S]*?onAdd:\s*\(\)\s*=>\s*setCreateOpen\(true\)/, "must keep + Add new inside the Combobox dropdown"],
-    [/const comboOptions[^;]*\[\.\.\.options,\s*\.\.\.created\]/, "must retain newly-created options while the canonical list refetches"],
+    [/const comboOptions[^;]*mergePickerOptionsByValue\(options,\s*created\)/, "must retain and deduplicate newly-created options while the canonical list refetches"],
     [/setCreated\(\(prev\)\s*=>\s*\[\.\.\.prev,\s*opt\]\)/, "must append the created canonical row to the picker options"],
     [/onOptionCreated\?\.\(opt\)/, "must notify the consumer so its canonical query can refetch"],
     [/onChange\(selected\)/, "must return with the created row selected"],
@@ -97,7 +97,7 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   const mutations = [
     ["first-row create", referenceSelect.replace("allowAddNew={{", "externalAddButton={{")],
     ["create-return selection", referenceSelect.replace("onChange(selected);", "onChange(null);")],
-    ["reload/refetch retention", referenceSelect.replace("[...options, ...created]", "[...options]")],
+    ["reload/refetch retention", referenceSelect.replace("mergePickerOptionsByValue(options, created)", "mergePickerOptionsByValue(options, [])")],
     ["canonical refetch notification", referenceSelect.replace("onOptionCreated?.(opt);", "")],
     ["entity scope", referenceSelect.replaceAll("operatingCompanyId={operatingCompanyId}", "operatingCompanyId={undefined}")],
   ];
