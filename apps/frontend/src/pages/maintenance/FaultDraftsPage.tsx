@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -9,8 +9,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { getUnit } from "../../api/mdata";
 
 type FaultDraft = {
   id: string;
@@ -36,20 +36,28 @@ export function FaultDraftsPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Vehicle profile "View fault history" → ?unit_id= (MaintenanceSnapshotSection).
+  // LST-F5169 — visible EntityPicker (URL-only banner is not reverse chrome).
   const deepLinkUnitId = searchParams.get("unit_id");
+  const [unitPickerId, setUnitPickerId] = useState("");
+  useEffect(() => {
+    if (deepLinkUnitId) setUnitPickerId(deepLinkUnitId);
+  }, [deepLinkUnitId]);
+  const setUnitFilter = (unitId: string) => {
+    setUnitPickerId(unitId);
+    const params = new URLSearchParams(searchParams);
+    if (unitId) params.set("unit_id", unitId);
+    else params.delete("unit_id");
+    setSearchParams(params, { replace: true });
+  };
+  const effectiveUnitId = unitPickerId.trim() || deepLinkUnitId || undefined;
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const draftsQuery = useQuery({
     queryKey: ["maintenance", "fault-drafts", companyId],
     queryFn: () => fetchDrafts(companyId),
     enabled: Boolean(companyId),
-  });
-  const deepLinkUnitQuery = useQuery({
-    queryKey: ["mdata", "unit", companyId, deepLinkUnitId],
-    queryFn: () => getUnit(String(deepLinkUnitId), companyId),
-    enabled: Boolean(companyId) && Boolean(deepLinkUnitId),
   });
 
   const confirmMutation = useMutation({
@@ -71,9 +79,9 @@ export function FaultDraftsPage() {
 
   const drafts = useMemo(() => {
     const all = draftsQuery.data?.drafts ?? [];
-    if (!deepLinkUnitId) return all;
-    return all.filter((d) => d.unit_id === deepLinkUnitId);
-  }, [draftsQuery.data?.drafts, deepLinkUnitId]);
+    if (!effectiveUnitId) return all;
+    return all.filter((d) => d.unit_id === effectiveUnitId);
+  }, [draftsQuery.data?.drafts, effectiveUnitId]);
   const selected = drafts.find((d) => d.id === selectedId) ?? null;
 
   const columns = useMemo<ParityColumn<FaultDraft>[]>(
@@ -120,15 +128,21 @@ export function FaultDraftsPage() {
 
       {draftsQuery.isError ? <p className="text-sm text-red-600">Failed to load fault-driven drafts.</p> : null}
 
-      {deepLinkUnitId ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          Filtered to unit <EntityLink kind="unit" id={deepLinkUnitId} label={entityLabel(deepLinkUnitQuery.data?.unit_number, deepLinkUnitId, "Unit")} className="font-semibold" />
-          {" — "}
-          <Link to="/maintenance/fault-drafts" className="underline">
-            clear filter
-          </Link>
-        </p>
-      ) : null}
+      <div className="flex flex-wrap items-end gap-3" data-testid="fault-drafts-filters">
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={unitPickerId || null}
+            onChange={(next) => setUnitFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1"
+            dataTestId="fault-drafts-filter-unit"
+          />
+        </label>
+      </div>
 
       <ParityTable
         rows={drafts}
@@ -137,7 +151,7 @@ export function FaultDraftsPage() {
         loading={draftsQuery.isLoading}
         storageKey="maintenance-fault-drafts"
         emptyText={
-          deepLinkUnitId
+          effectiveUnitId
             ? "No fault-driven drafts for this unit."
             : "No fault-driven draft work orders pending review."
         }
