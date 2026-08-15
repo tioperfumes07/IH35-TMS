@@ -69,14 +69,20 @@ export function GeofenceReconciliationReport() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["geofence-recon"] }),
   });
 
+  // RPT-F3524: always feed one ParityTable (never green-only bypass) so Search+Range+gear mount on 0-row too.
   const findings = data?.data ?? [];
-  const byClass = findings.reduce((acc, f) => {
-    (acc[f.anomaly_class] = acc[f.anomaly_class] ?? []).push(f);
-    return acc;
-  }, {} as Record<string, Finding[]>);
 
   const findingColumns = useMemo<ParityColumn<Finding>[]>(
     () => [
+      {
+        key: "anomaly_class",
+        label: "Class",
+        render: (f) => (
+          <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${ANOMALY_COLORS[f.anomaly_class] ?? "bg-slate-100 text-slate-700"}`}>
+            {ANOMALY_LABELS[f.anomaly_class] ?? f.anomaly_class}
+          </span>
+        ),
+      },
       { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(f.unit_number, f.unit_id, "Unit") : "—"} /> },
       { key: "geofence_id", label: "Geofence", render: (f) => <EntityLink kind="geofence" id={f.geofence_id ?? undefined} label={entityLabel(f.geofence_label, f.geofence_id, "Geofence")} /> },
       { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—") },
@@ -116,7 +122,6 @@ export function GeofenceReconciliationReport() {
           Apply
         </button>
       </div>
-      {isLoading && <p className="text-gray-500">Loading...</p>}
       {isError && (
         <ListErrorState
           title="Couldn't load reconciliation"
@@ -125,40 +130,28 @@ export function GeofenceReconciliationReport() {
           onRetry={() => void refetch()}
         />
       )}
-      {!isLoading && !isError && findings.length === 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-sm p-4 text-green-700">
-          No anomalies found for {appliedDate}.
-        </div>
+      {!isError && (
+        <ParityTable
+          rows={findings}
+          columns={findingColumns}
+          rowKey={(f) => f.uuid}
+          loading={isLoading}
+          storageKey="geofence-recon"
+          emptyText={`No anomalies found for ${appliedDate}.`}
+          exportFilename={`geofence-recon-${appliedDate}`}
+          rowClassName={(f) => (f.resolved ? "opacity-50" : "")}
+          rowActions={(f) =>
+            !f.resolved ? (
+              <button
+                onClick={() => resolveMutation.mutate({ uuid: f.uuid, note: "Resolved via UI" })}
+                className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-sm"
+              >
+                Mark Resolved
+              </button>
+            ) : null
+          }
+        />
       )}
-      {Object.entries(byClass).map(([cls, items]) => (
-        <div key={cls} className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${ANOMALY_COLORS[cls]}`}>
-              {ANOMALY_LABELS[cls] ?? cls}
-            </span>
-            <span className="text-sm text-gray-500">{items.length} finding{items.length !== 1 ? "s" : ""}</span>
-          </div>
-          <ParityTable
-            rows={items}
-            columns={findingColumns}
-            rowKey={(f) => f.uuid}
-            loading={false}
-            storageKey={`geofence-recon-${cls}`}
-            emptyText="No findings."
-            rowClassName={(f) => (f.resolved ? "opacity-50" : "")}
-            rowActions={(f) =>
-              !f.resolved ? (
-                <button
-                  onClick={() => resolveMutation.mutate({ uuid: f.uuid, note: "Resolved via UI" })}
-                  className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-sm"
-                >
-                  Mark Resolved
-                </button>
-              ) : null
-            }
-          />
-        </div>
-      ))}
     </div>
   );
 }
