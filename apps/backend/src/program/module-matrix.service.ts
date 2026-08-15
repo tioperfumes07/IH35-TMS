@@ -406,9 +406,21 @@ function columnTouches(colId: string, text: string): boolean {
   return re.test(text);
 }
 
+/**
+ * LIVE-TIER-CREDIT-FROM-SUPERSEDED-ROW: a row can be SUPERSEDED/FAIL as its own verdict while its
+ * evidence narrative still mentions "PROD-VERIFIED" in passing (citing a DIFFERENT sub-row's proof,
+ * e.g. row #598 = FAIL/SUPERSEDED but its evidence text cites "rows 619/633 PROD-VERIFIED"). That
+ * substring must never grant tier credit for row #598 itself — the row is not live evidence, it's a
+ * stale citation of proof that lives elsewhere. Shared by both the Audited-tier and Live-tier matchers
+ * so neither can be tricked into crediting a superseded row.
+ */
+function isSupersededRow(row: Pick<LedgerRow, "status" | "verdict">): boolean {
+  return /^SUPERSEDED\b/i.test(row.status) || /^SUPERSEDED\b/i.test(row.verdict);
+}
+
 function isAuditSignalVerdict(verdict: string, status: string): boolean {
   const blob = `${verdict} ${status}`.replace(/\*\*/g, "");
-  if (/^SUPERSEDED\b/i.test(status) || /^SUPERSEDED\b/i.test(verdict)) return false;
+  if (isSupersededRow({ verdict, status })) return false;
   return /\b(FAIL|OPEN|FIXED|CODE-VERIFIED|PASS|UNVERIFIED|UNVERIFIABLE|PROD-VERIFIED)\b/i.test(blob);
 }
 
@@ -655,6 +667,23 @@ function columnsFromCompletionItem(item: CompletionItem): Set<string> {
   return cols;
 }
 
+/**
+ * SCOREBOARD-LEDGER-LEAF-MATCH-OVERBROAD: this used to fall back to `leaf.id.split(".")[0]` (the
+ * leaf's stem) when none of the specific signals below matched. For the overwhelming majority of
+ * leaves that stem IS the module id (e.g. "accounting.panel.detail" -> "accounting"), so the
+ * fallback regex degenerated into "does this ledger row's text mention the module name at all" —
+ * true for nearly every row in that module. Any PROD-VERIFIED row anywhere in a module (e.g. the
+ * expense->GL-chain row #639) could therefore grant Live-tier credit to EVERY leaf in that module
+ * needing a loosely-matched column, regardless of whether that row said anything about that leaf.
+ * Measured live 2026-08-15: removing this fallback drops system-wide liveCells 906->147 (accounting
+ * 158->6) — the true, leaf-specific Live count. This is the same "leafRe:.*" / word-blanket match
+ * class HONEST-BUILT-LAUNCH-LAW (2026-08-14) already banned for the Built tier's @matrix-built tags
+ * (see isLeafSpecific() above) — this closes the equivalent hole on the ledger-based Audited/Live
+ * path, which fed both leafColumnAuditedReason and leafColumnLiveReason via this shared function.
+ * No stand-in fallback is needed: a cell that loses its (false) Live/Audited credit here simply
+ * reclassifies down to Built (verified above it never reads a plain 0/NA) as long as a real
+ * @matrix-built tag or module-completion item still covers it — it does not go unaudited.
+ */
 function leafTouchesText(leaf: RequiredLeaf, text: string): boolean {
   const hay = text.toLowerCase();
   if (leaf.id && hay.includes(leaf.id.toLowerCase())) return true;
@@ -665,10 +694,6 @@ function leafTouchesText(leaf: RequiredLeaf, text: string): boolean {
   if (leaf.sub) {
     const sub = leaf.sub.toLowerCase().replace(/^\+\s*/, "");
     if (sub.length >= 4 && hay.includes(sub)) return true;
-  }
-  const stem = leaf.id.split(".")[0];
-  if (stem && stem.length >= 4 && new RegExp(`\\b${stem.replace(/_/g, "[\\\\s_-]?")}\\b`, "i").test(text)) {
-    return true;
   }
   return false;
 }
@@ -816,6 +841,7 @@ function leafColumnLiveReason(
 ): string | undefined {
   for (const row of ledger) {
     if (!rowTouchesModule(row, moduleId)) continue;
+    if (isSupersededRow(row)) continue;
     const hay = moduleHay(row);
     if (!isProdVerifiedBlob(hay)) continue;
     // Explicit leaf only — never stem/sub fan-out (LV-MATRIX-LIVE-KEYWORD-FANOUT).
