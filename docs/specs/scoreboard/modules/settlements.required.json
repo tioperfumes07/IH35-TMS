@@ -404,7 +404,7 @@
       "required": [
         "qbo_chrome"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/parity/ParityTable.tsx"
     },
     {
       "id": "settlements.panel.open_driver_bills",

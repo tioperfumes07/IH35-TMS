@@ -15,8 +15,18 @@ import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
+type PaymentStateFilter =
+  | ""
+  | "unpaid"
+  | "queued"
+  | "sent_to_bank"
+  | "cleared"
+  | "bounced"
+  | "manual_paid";
 
 function parseFocus(raw: string | null): FocusFilter {
   if (raw === "debt" || raw === "pending_acks" || raw === "held") return raw;
@@ -44,16 +54,20 @@ export function SettlementsPage() {
     setSearchParams(next, { replace: true });
   };
   const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
-  const selectedPaymentState = searchParams.get("payment_state") as
-    | "unpaid"
-    | "queued"
-    | "sent_to_bank"
-    | "cleared"
-    | "bounced"
-    | "manual_paid"
-    | null;
+  const selectedPaymentState = (searchParams.get("payment_state") as PaymentStateFilter | null) || null;
   // B-A3: KPI focus filter — same predicates as the KPI counts (not a guess-route).
   const focusFilter = parseFocus(searchParams.get("focus"));
+  // BANK-F5210 — chrome.toolbar_filter: staged Filters Apply triad (EntityPicker stays outside panel).
+  const staged = useStagedListFilters({
+    applied: { paymentState: (selectedPaymentState ?? "") as PaymentStateFilter },
+    empty: { paymentState: "" as PaymentStateFilter },
+    onApply: (next) => {
+      const params = new URLSearchParams(searchParams);
+      if (next.paymentState) params.set("payment_state", next.paymentState);
+      else params.delete("payment_state");
+      setSearchParams(params, { replace: true });
+    },
+  });
 
   const listQuery = useQuery({
     queryKey: ["driver-finance", "settlements", companyId, selectedPaymentState ?? ""],
@@ -227,6 +241,34 @@ export function SettlementsPage() {
           />
         </label>
       </div>
+      <CollapsedListFilters
+        activeFilterCount={selectedPaymentState ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="settlements"
+        dataAttributes={{ "data-settlements-filter-toolbar": "collapsed" }}
+      >
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Payment state
+          <SelectCombobox
+            value={staged.draft.paymentState}
+            onChange={(event) =>
+              staged.setDraft({ paymentState: event.target.value as PaymentStateFilter })
+            }
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+          >
+            <option value="">All</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="queued">Queued</option>
+            <option value="sent_to_bank">Sent</option>
+            <option value="cleared">Cleared</option>
+            <option value="bounced">Bounced</option>
+            <option value="manual_paid">Manual Paid</option>
+          </SelectCombobox>
+        </label>
+      </CollapsedListFilters>
       {/* B-A3: Total Unpaid / This Period / YTD → payment_state routes; Debt / Pending Acks / Held →
           ?focus= predicates matching the KPI counts on this same list (real data, not guess-routes).
           SETL-OPEN-BILLS: Open Driver Bills is a distinct KPI — unsettled driver pay that is not yet

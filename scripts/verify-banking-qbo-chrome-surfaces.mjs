@@ -14,6 +14,13 @@
  * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.modal\\.manage_accounts$","task":"PROTECTED-BANKING-CONNECTIVITY-MANAGE","vertical":"column-wave"}
  * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.panel\\.(banking_plaid_connections|plaid_sync_status)$","task":"PROTECTED-BANKING-CONNECTIVITY-PLAID","vertical":"column-wave"}
  * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.panel\\.linked_bank_transactions$","task":"PROTECTED-BANKING-CONNECTIVITY-LINKED","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^statement_import$","task":"VERTICAL-QBO-CHROME-banking-statement-import","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^plaid$","task":"VERTICAL-QBO-CHROME-banking-plaid","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^settings$","task":"VERTICAL-QBO-CHROME-banking-settings","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^banking\\.modal\\.manage_accounts$","task":"VERTICAL-QBO-CHROME-banking-manage-accounts","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^banking\\.panel\\.(banking_plaid_connections|plaid_sync_status)$","task":"VERTICAL-QBO-CHROME-banking-plaid-panels","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^banking\\.panel\\.linked_bank_transactions$","task":"VERTICAL-QBO-CHROME-banking-linked-tx","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"VERTICAL-QBO-CHROME-banking-toolbar-filter","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-banking-qbo-chrome-surfaces.mjs --selftest
  */
@@ -94,6 +101,50 @@ const CHECKS = [
     name: "LinkedBankTransactionsPanel is mounted on VendorDetail (connectivity leaf)",
     file: "apps/frontend/src/pages/VendorDetail.tsx",
     pattern: /LinkedBankTransactionsPanel/,
+  },
+  {
+    name: "statement_import: BankingHome StatementUpload + honesty banner",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    pattern:
+      /activeTab === "statement_import"[\s\S]*data-testid="banking-statement-import-not-recon-proof-banner"[\s\S]*StatementUpload/,
+  },
+  {
+    name: "plaid: BankingHome mounts BankingPlaidConnectionsPanel + PlaidSyncStatusPanel",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    pattern:
+      /activeTab === "plaid_connections"[\s\S]*BankingPlaidConnectionsPanel[\s\S]*PlaidSyncStatusPanel/,
+  },
+  {
+    name: "plaid panel: ParityTable on BankingPlaidConnectionsPanel",
+    file: "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx",
+    pattern: /ParityTable[\s\S]*PlaidBankTransaction/,
+  },
+  {
+    name: "settings: BankingHome settings honesty banner + ActionButton nav",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    pattern:
+      /activeTab === "settings"[\s\S]*data-testid="banking-settings-not-ops-complete-banner"[\s\S]*ActionButton[\s\S]*Cash GL setup/,
+  },
+  {
+    name: "manage_accounts: ManageAccountsModal Modal shell",
+    file: "apps/frontend/src/pages/banking/components/ManageAccountsModal.tsx",
+    pattern: /<Modal[\s\S]*title="Manage Accounts"[\s\S]*modalKind="banking-manage-accounts"/,
+  },
+  {
+    name: "plaid_sync_status: PlaidSyncStatusPanel test id",
+    file: "apps/frontend/src/components/banking/PlaidSyncStatusPanel.tsx",
+    pattern: /data-testid="plaid-sync-status-panel"/,
+  },
+  {
+    name: "linked_bank_transactions: EntityLink bank_transaction + journal_entry reverse",
+    file: "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx",
+    pattern: /kind="bank_transaction"[\s\S]*kind="journal_entry"/,
+  },
+  {
+    name: "chrome.toolbar_filter: TransfersListPage CollapsedListFilters Apply triad + ParityTable",
+    file: "apps/frontend/src/pages/banking/TransfersListPage.tsx",
+    pattern:
+      /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}[\s\S]*ParityTable/,
   },
 ];
 
