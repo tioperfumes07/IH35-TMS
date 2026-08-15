@@ -400,7 +400,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "expense",
         "connectivity",
         "reverse_link",
@@ -449,7 +448,6 @@
       "required": [
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -2761,6 +2759,24 @@
           "id": "report.settlement_summary",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "ap_bill_2026_08_15": {
+      "finding": "AP-BILL-FALSE-REQUIRED-REPORTS",
+      "note": "report.management (ManagementReportPackagePage.tsx APAgingSection/VendorExpenseSummarySection) and report.ap_aging (APAgingPage.tsx) both source rows from getApAgingReport() -> APAgingRow (api/reports.ts), a per-vendor aggregate (vendor_id, open_bill_count, age-bucket totals, no bill id field) -- same shape as accounting:ap.aging (this session, same finding class). Both pages already link the row-owned entity (vendor) and drill to a filtered bills list on row click, not a fabricated single-bill EntityLink. Verified live 2026-08-15.",
+      "drops": [
+        {
+          "id": "report.management",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.ap_aging",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]

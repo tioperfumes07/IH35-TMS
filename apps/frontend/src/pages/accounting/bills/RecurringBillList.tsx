@@ -41,6 +41,7 @@ export function RecurringBillList() {
   const queryClient = useQueryClient();
   const [showInactive, setShowInactive] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState<{ uuid: string; name: string } | null>(null);
+  const [lastGeneratedBillId, setLastGeneratedBillId] = useState<string | null>(null);
 
   const templatesQuery = useQuery({
     queryKey: ["accounting", "recurring-bills", "templates", companyId, showInactive],
@@ -64,6 +65,10 @@ export function RecurringBillList() {
       pushToast(`Bill generated: ${entityLabel(null, result.billUuid, "Bill")}`, "success");
       void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "recurring-bills"] });
+      // LINK-F5188: result.billUuid is the real freshly-created accounting.bills id -- it was
+      // rendered as plain text inside the toast string above and then discarded. Surface a real
+      // drill target instead of just an announcement.
+      setLastGeneratedBillId(result.billUuid);
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Generate failed", "error"),
   });
@@ -184,6 +189,25 @@ export function RecurringBillList() {
         <span>/</span>
         <span className="text-gray-700">Recurring Bills</span>
       </div>
+
+      {lastGeneratedBillId ? (
+        <div
+          className="flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          data-testid="recurring-bill-generated-banner"
+        >
+          <span>
+            Bill generated: <EntityLink kind="bill" id={lastGeneratedBillId} label="View bill →" />
+          </span>
+          <button
+            type="button"
+            onClick={() => setLastGeneratedBillId(null)}
+            className="text-gray-400 hover:text-gray-600"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

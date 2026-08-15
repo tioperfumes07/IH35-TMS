@@ -4,6 +4,8 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 
 type BillSummary = {
+  /** LINK-F5188: real accounting.bills row id — the caller always has it (selectedBill.id). */
+  id?: string | null;
   bill_number?: string | null;
   vendor_name?: string | null;
   vendor_id?: string | null;
@@ -37,7 +39,14 @@ export function BillDetailPanel({ bill }: Props) {
       <FlatFieldGrid
         columns={3}
         fields={[
-          { label: "Bill #", value: bill.bill_number ?? "—" },
+          {
+            label: "Bill #",
+            value: bill.id ? (
+              <EntityLink kind="bill" id={bill.id} label={bill.bill_number ?? entityLabel(null, bill.id, "Bill")} />
+            ) : (
+              bill.bill_number ?? "—"
+            ),
+          },
           { label: "Vendor", value: entityLabel(bill.vendor_name, bill.vendor_id, "Vendor") },
           { label: "Status", value: bill.status ?? "—" },
           { label: "Amount", value: money.format(amount) },

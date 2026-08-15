@@ -7,8 +7,11 @@ import {
 } from "../../../components/accounting/VendorBillForm";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import type { BillTypeId } from "../../../components/forms/shared/TypeTabBar";
+import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
@@ -55,11 +58,16 @@ export function CreateBillModal({
   const queryClient = useQueryClient();
   const [pickedWoId, setPickedWoId] = useState<string | null>(null);
   const [pickedUnitId, setPickedUnitId] = useState<string | null>(null);
+  // LINK-F5188: hold the just-created bill instead of auto-closing straight past it — every
+  // caller (BillsPage.tsx, WorkOrderDetailPage.tsx, MaintenanceHome.tsx, LegalMatterDetailPage.tsx)
+  // discarded res.bill.id the moment onSuccess fired onClose() in the same tick.
+  const [createdBill, setCreatedBill] = useState<{ id: string; bill_number: string | null } | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setPickedWoId(linkedWoId ?? null);
     setPickedUnitId(linkedUnitId ?? null);
+    setCreatedBill(null);
   }, [open, linkedWoId, linkedUnitId]);
 
   const showLinkPickers = requireWoLink && !linkedWoId;
@@ -79,7 +87,13 @@ export function CreateBillModal({
       void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-unpaid"] });
       void queryClient.invalidateQueries({ queryKey: ["maintenance"] });
       onCreated?.(res?.bill?.id ?? null);
-      onClose();
+      // LINK-F5188: hold a confirmation step with a real EntityLink instead of closing straight
+      // past the just-created bill; onClose() now fires when the operator dismisses it below.
+      if (res?.bill?.id) {
+        setCreatedBill({ id: res.bill.id, bill_number: res.bill.bill_number ?? null });
+      } else {
+        onClose();
+      }
     },
     onError: (error) => {
       pushToast(userFacingApiError(error, "Failed to create bill"), "error");
@@ -126,7 +140,31 @@ export function CreateBillModal({
           ) : null}
         </div>
       ) : null}
-      {linkReady ? (
+      {createdBill ? (
+        <div
+          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm"
+          data-testid="create-bill-modal-confirmation"
+        >
+          <p className="text-gray-700">
+            Bill created:{" "}
+            <EntityLink
+              kind="bill"
+              id={createdBill.id}
+              label={entityLabel(createdBill.bill_number, createdBill.id, "Bill")}
+              data-testid="create-bill-modal-view-bill"
+            />
+          </p>
+          <Button
+            size="sm"
+            onClick={() => {
+              setCreatedBill(null);
+              onClose();
+            }}
+          >
+            Done
+          </Button>
+        </div>
+      ) : linkReady ? (
         <VendorBillForm
           operatingCompanyId={operatingCompanyId}
           submitting={createMutation.isPending}

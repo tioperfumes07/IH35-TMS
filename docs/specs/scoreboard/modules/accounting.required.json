@@ -335,7 +335,6 @@
       "route_hint": "/accounting/accounts-payable",
       "required": [
         "vendor",
-        "ap_bill",
         "connectivity"
       ]
     },
@@ -1618,6 +1617,18 @@
           "id": "accounting.modal.decide",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "ap_bill_2026_08_15": {
+      "finding": "AP-BILL-FALSE-REQUIRED",
+      "note": "accounting:ap.aging (AccountsPayableAgingPage.tsx) is a per-vendor rollup: ApAgingVendor (api/accounting.ts) carries vendor_id + age-bucket totals, no bill_id/bill_number field at all -- verified live 2026-08-15. Forcing EntityLink kind=\"bill\" on a row that sums N open bills for a vendor would fabricate a single-bill relationship. The page correctly links what IS single-owned per row (vendor) and offers a filtered bills-list hop, not a fake per-bill link -- the honest surface for a rollup.",
+      "drops": [
+        {
+          "id": "ap.aging",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]
