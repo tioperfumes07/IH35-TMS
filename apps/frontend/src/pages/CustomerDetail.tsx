@@ -1716,7 +1716,7 @@ export function CustomerDetailPage() {
                       <EntityLink
                         kind="invoice"
                         id={event.related_invoice_id}
-                        label={entityLabel(null, event.related_invoice_id, "Invoice")}
+                        label={entityLabel(event.related_invoice_display_id, event.related_invoice_id, "Invoice")}
                         className="text-slate-700 hover:underline"
                         data-testid="customer-quality-related-invoice-link"
                       />

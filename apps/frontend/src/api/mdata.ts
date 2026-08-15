@@ -845,6 +845,7 @@ export type CustomerQualityEvent = {
   related_load_id: string | null;
   related_load_number: string | null;
   related_invoice_id: string | null;
+  related_invoice_display_id: string | null;
   document_ids: string[] | null;
   voided_at: string | null;
   voided_by_user_id: string | null;
