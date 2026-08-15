@@ -452,6 +452,7 @@
     "maintenance.maintenance_settings",
     "maintenance.parts_inventory",
     "maintenance.parts_invoice_links",
+    "maintenance.parts_purchases",
     "maintenance.parts_warranty",
     "maintenance.pm_alerts",
     "maintenance.pm_auto_engine_settings",
