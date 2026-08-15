@@ -207,7 +207,9 @@
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
@@ -216,7 +218,9 @@
       "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
@@ -236,7 +240,9 @@
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
