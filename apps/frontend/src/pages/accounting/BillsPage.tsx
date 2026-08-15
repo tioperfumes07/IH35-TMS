@@ -620,8 +620,14 @@ export function BillsPage() {
       operatingCompanyId={companyId}
       initialBillType={createBillType}
       onClose={() => setCreateOpen(false)}
-      onCreated={() => {
+      onCreated={(billId) => {
         void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
+        // LINK-F5188: CreateBillModal already hands back the real created accounting.bills id —
+        // this callback used to discard it. Reuse the existing deep-link banner + row-highlight
+        // mechanism (driven by highlightedBillId) instead of inventing new UI: the Bill # column
+        // below already renders a real EntityLink kind="bill" per row, so highlighting the new
+        // row makes it immediately drillable.
+        if (billId) setHighlightedBillId(billId);
       }}
     />
     <div className="space-y-3">
