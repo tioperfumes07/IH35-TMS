@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MyAccountantPage } from "./MyAccountantPage";
 import * as maApi from "../../api/my-accountant";
+import { makeAccountingPeriod } from "../../test-utils/factories";
 import * as flagHook from "../../hooks/useFeatureFlag";
 
 vi.mock("../../contexts/CompanyContext", () => ({
@@ -45,18 +46,7 @@ describe("MyAccountantPage", () => {
   it("renders period status, report links, and CPA export when the flag is enabled", async () => {
     vi.mocked(flagHook.useFeatureFlag).mockReturnValue({ enabled: true, loading: false, error: null });
     vi.mocked(maApi.getAccountingPeriods).mockResolvedValue({
-      periods: [
-        {
-          id: "p1",
-          period_label: "FY2026 January",
-          period_start: "2026-01-01",
-          period_end: "2026-01-31",
-          fiscal_year: 2026,
-          status: "closed",
-          closed_at: "2026-02-05",
-          closing_journal_entry_id: null,
-        },
-      ],
+      periods: [makeAccountingPeriod()],
     });
 
     render(wrap(<MyAccountantPage />));
@@ -67,6 +57,29 @@ describe("MyAccountantPage", () => {
     expect(await screen.findByText("Export for CPA")).toBeTruthy();
   });
 
+
+  // LINK-F5186 (PR #6946) shipped the non-null branch at MyAccountantPage.tsx:80-86 with no
+  // coverage -- no fixture anywhere set closing_journal_entry_id to a value, so the drill-through
+  // to the real fiscal-year-close JE was never exercised. Asserts the resolved href, not just the
+  // label, so a wrong EntityLink kind (which would silently route to /accounting/bills/:id) fails.
+  it("drills through to the real closing journal entry when the period resolves one", async () => {
+    vi.mocked(flagHook.useFeatureFlag).mockReturnValue({ enabled: true, loading: false, error: null });
+    vi.mocked(maApi.getAccountingPeriods).mockResolvedValue({
+      periods: [makeAccountingPeriod({ closing_journal_entry_id: "9e1c0f22-4b7a-4d2e-9c31-8a5f6b0d7e44" })],
+    });
+
+    render(wrap(<MyAccountantPage />));
+
+    // findByRole("link") -- NOT findByText. EntityLink degrades to a plain <span> when the id is
+    // missing or the kind has no mounted route (EntityLink.tsx:656-671), and a text query would
+    // pass against that span. Requiring role=link means the drill-through must really be clickable.
+    const link = await screen.findByRole("link", { name: "View closing entry →" });
+    expect(link.getAttribute("href")).toBe(
+      "/accounting/journal-entries/9e1c0f22-4b7a-4d2e-9c31-8a5f6b0d7e44",
+    );
+    // and the month-close fallback must NOT render when a real JE was resolved
+    expect(screen.queryByText("View closing entries →")).toBeNull();
+  });
   it("invite-accountant affordance is rendered disabled (no permission write)", async () => {
     vi.mocked(flagHook.useFeatureFlag).mockReturnValue({ enabled: true, loading: false, error: null });
     vi.mocked(maApi.getAccountingPeriods).mockResolvedValue({ periods: [] });
