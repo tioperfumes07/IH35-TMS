@@ -45,14 +45,10 @@ const GUARDED = [
   // Add catalogs.items / catalogs.classes here when they cross ~200; both are close.
 ];
 
-/** Regression pins — pages that already breached the cap and must not regress. */
-const PINNED = [
-  {
-    rel: "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx",
-    fn: "listVendors",
-    entity: "mdata.vendors",
-  },
-];
+/** Regression pins — pages that already breached the cap and must not regress.
+ *  InventoryPartsStockPage previously pinned here; it no longer calls listVendors
+ *  (vendor_name comes from GET /maintenance/parts). Keep empty unless a new breach lands. */
+const PINNED = [];
 
 export function findCappedCalls(source, fn) {
   const out = [];
@@ -131,11 +127,10 @@ function selftest() {
   t("mutation: unrelated source yields nothing", findCappedCalls("const x = 1;", "listVendors").length === 0);
   t("mutation: the actual limit value is reported",
     findCappedCalls("listVendors({ limit: 200 })", "listVendors")[0] === 200);
-  t("pinned inventory page passes at MIN_LIMIT",
-    findCappedCalls(
-      readFileSync(path.join(ROOT, PINNED[0].rel), "utf8"),
-      "listVendors"
-    ).length === 0);
+  t("inventory parts stock no longer calls listVendors for label enrich",
+    !/\blistVendors\b/.test(
+      readFileSync(path.join(ROOT, "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx"), "utf8"),
+    ));
   return bad;
 }
 
@@ -143,7 +138,7 @@ const DIRECT = process.argv[1] && process.argv[1].endsWith("verify-entity-picker
 if (DIRECT) {
   if (process.argv.includes("--selftest")) {
     const bad = selftest();
-    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 9 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 9 cases (incl. inventory no-listVendors)` : `${LABEL} SELFTEST FAILED (${bad})`);
     process.exit(bad === 0 ? 0 : 1);
   }
   const r = run();

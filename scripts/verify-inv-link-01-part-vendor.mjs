@@ -48,9 +48,21 @@ export function verifyInvLink01PartVendor(root = ROOT) {
     errs.push("InventoryPartsStockPage: roster must render EntityLink kind=vendor");
   }
   if (!/PartEditDrawer/.test(stock)) errs.push("InventoryPartsStockPage: must mount PartEditDrawer");
+  if (/\blistVendors\b/.test(stock)) {
+    errs.push("InventoryPartsStockPage: must not enrich vendor labels via listVendors (use API vendor_name)");
+  }
+  if (!/vendor_name/.test(stock) || !/mapMaintenancePartsToInventoryRows/.test(stock)) {
+    errs.push("InventoryPartsStockPage: must map vendor_label from API vendor_name");
+  }
 
   if (!/vendor_id::text AS vendor_id/.test(routes)) {
     errs.push("parts.routes GET must SELECT vendor_id (not hardcoded null vendor_default)");
+  }
+  if (!/v\.name AS vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors v/.test(routes)) {
+    errs.push("parts.routes GET must LEFT JOIN mdata.vendors (same-opco) AS vendor_name");
+  }
+  if (!/v\.operating_company_id = pi\.operating_company_id/.test(routes)) {
+    errs.push("parts.routes vendor join must be entity-scoped (pi.operating_company_id)");
   }
   if (/NULL::text AS vendor_default/.test(routes)) {
     errs.push("parts.routes must not hardcode NULL::text AS vendor_default on read");

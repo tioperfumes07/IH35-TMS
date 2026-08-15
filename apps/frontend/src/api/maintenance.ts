@@ -1680,6 +1680,8 @@ export type MaintenancePartRow = {
   category: string | null;
   notes: string | null;
   vendor_id: string | null;
+  /** Same-opco join from GET /maintenance/parts — prefer over a capped FE vendor roster. */
+  vendor_name?: string | null;
   vendor_default: string | null;
   unit_cost: number | null;
   qty_on_hand: number;
