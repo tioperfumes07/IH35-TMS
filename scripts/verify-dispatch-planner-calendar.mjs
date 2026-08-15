@@ -1,90 +1,69 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^planning\\.(calendar|loads|timeline)$","task":"CLS-DISPATCH-PLANNER-CUSTOMER-FK-LINKS"} */
-/**
- * Block B21-D4: Dispatch planner calendar week view with drag-drop reschedule + HOS overlay.
- */
+/** Block B21-D4: Dispatch planner calendar week view with drag-drop reschedule + HOS overlay. */
 import fs from "node:fs";
-import path from "node:path";
-import process from "node:process";
 
-const ROOT = process.cwd();
-const paths = {
-  page: path.join(ROOT, "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx"),
-  pageTest: path.join(ROOT, "apps/frontend/src/pages/dispatch/__tests__/PlannerCalendarPage.test.tsx"),
-  routes: path.join(ROOT, "apps/backend/src/dispatch/planner.routes.ts"),
-  service: path.join(ROOT, "apps/backend/src/dispatch/planner.service.ts"),
-  routeTest: path.join(ROOT, "apps/backend/src/dispatch/__tests__/planner.routes.test.ts"),
-  index: path.join(ROOT, "apps/backend/src/index.ts"),
-  dispatchApi: path.join(ROOT, "apps/frontend/src/api/dispatch.ts"),
-  manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
-  sidebar: path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts"),
-  archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
+const files = {
+  page: "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx",
+  pageTest: "apps/frontend/src/pages/dispatch/__tests__/PlannerCalendarPage.test.tsx",
+  routes: "apps/backend/src/dispatch/planner.routes.ts",
+  service: "apps/backend/src/dispatch/planner.service.ts",
+  routeTest: "apps/backend/src/dispatch/__tests__/planner.routes.test.ts",
+  index: "apps/backend/src/index.ts",
+  dispatchApi: "apps/frontend/src/api/dispatch.ts",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
+  sidebar: "apps/frontend/src/components/layout/sidebar-config.ts",
+  archDesign: "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
 };
+const original = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+const dispatchFlyout = (source) => source.split('case "dispatch"')[1]?.split("case ")[0] ?? "";
+const has = (needle) => (source) => source.includes(needle);
+const matches = (pattern) => (source) => pattern.test(source);
+const remove = (needle) => (source) => source.replaceAll(needle, "__PLANTED_DISPATCH_PLANNER_DEFECT__");
+const removeTests = (source) => source.replace(/\bit\(/g, "__PLANTED_TEST__(");
 
-function read(filePath) {
-  if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
-  return fs.readFileSync(filePath, "utf8");
+const contracts = [
+  ["planner page identity", "page", has("dispatch-planner-calendar-page"), remove("dispatch-planner-calendar-page")],
+  ["HOS overlay control", "page", has("HOS overlay"), remove("HOS overlay")],
+  ["drag-drop reschedule", "page", has("DndContext"), remove("DndContext")],
+  ["planner page test floor", "pageTest", (source) => (source.match(/\bit\(/g) ?? []).length >= 5, removeTests],
+  ["planner route test floor", "routeTest", (source) => (source.match(/\bit\(/g) ?? []).length >= 3, removeTests],
+  ["planner week API route", "routes", has("/api/v1/dispatch/planner/week"), remove("/api/v1/dispatch/planner/week")],
+  ["planner reschedule API route", "routes", has("/api/v1/dispatch/planner/loads/:id/start_at"), remove("/api/v1/dispatch/planner/loads/:id/start_at")],
+  ["planner conflict detection", "service", has("detectPlannerConflict"), remove("detectPlannerConflict")],
+  ["planner HOS blackout read", "service", has("hos.duty_status_events"), remove("hos.duty_status_events")],
+  ["planner customer FK projection", "service", has("l.customer_id::text AS customer_id"), remove("l.customer_id::text AS customer_id")],
+  ["planner unit FK projection", "service", has("l.assigned_unit_id::text AS unit_id"), remove("l.assigned_unit_id::text AS unit_id")],
+  ["planner customer drill", "page", matches(/<EntityLink kind="customer" id=\{load\.customer_id\}/), remove('<EntityLink kind="customer" id={load.customer_id}')],
+  ["planner driver drill", "page", matches(/<EntityLink kind="driver" id=\{driver\.id\}/), remove('<EntityLink kind="driver" id={driver.id}')],
+  ["planner unit drill", "page", matches(/<EntityLink kind="unit" id=\{driver\.unit_id \?\? null\}/), remove('<EntityLink kind="unit" id={driver.unit_id ?? null}')],
+  ["backend planner registration", "index", has("registerDispatchPlannerRoutes"), remove("registerDispatchPlannerRoutes")],
+  ["planner week frontend API", "dispatchApi", has("getDispatchPlannerWeek"), remove("getDispatchPlannerWeek")],
+  ["planner reschedule frontend API", "dispatchApi", has("patchDispatchPlannerLoadStartAt"), remove("patchDispatchPlannerLoadStartAt")],
+  ["planner mounted manifest route", "manifest", has('path="/dispatch/planner"'), remove('path="/dispatch/planner"')],
+  ["planner Dispatch flyout link", "sidebar", (source) => dispatchFlyout(source).includes("/dispatch/planner"), remove("/dispatch/planner")],
+  ["planner architecture registration", "archDesign", has("verify:dispatch-planner-calendar"), remove("verify:dispatch-planner-calendar")],
+];
+
+function audit(sources) {
+  return contracts.filter(([, key, test]) => !test(sources[key])).map(([name]) => name);
 }
 
-function fail(msg) {
-  console.error(`verify:dispatch-planner-calendar FAIL: ${msg}`);
+const failures = audit(original);
+if (failures.length) {
+  console.error(`verify:dispatch-planner-calendar FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
 }
 
-function main() {
-  const page = read(paths.page);
-  const pageTest = read(paths.pageTest);
-  const routes = read(paths.routes);
-  const service = read(paths.service);
-  const routeTest = read(paths.routeTest);
-  const index = read(paths.index);
-  const dispatchApi = read(paths.dispatchApi);
-  const manifest = read(paths.manifest);
-  const sidebar = read(paths.sidebar);
-  const archDesign = read(paths.archDesign);
-  const failures = [];
-
-  if (!page.includes("dispatch-planner-calendar-page")) failures.push("PlannerCalendarPage must expose test id");
-  if (!page.includes("HOS overlay")) failures.push("PlannerCalendarPage must expose HOS overlay toggle");
-  if (!page.includes("DndContext")) failures.push("PlannerCalendarPage must use drag-drop reschedule");
-  if ((pageTest.match(/\bit\(/g) ?? []).length < 5) failures.push("PlannerCalendarPage tests must cover at least 5 cases");
-  if ((routeTest.match(/\bit\(/g) ?? []).length < 3) failures.push("planner.routes tests must cover at least 3 cases");
-
-  if (!routes.includes("/api/v1/dispatch/planner/week")) failures.push("planner routes must expose week endpoint");
-  if (!routes.includes("/api/v1/dispatch/planner/loads/:id/start_at")) {
-    failures.push("planner routes must patch load start_at");
+if (process.argv.includes("--selftest")) {
+  let caught = 0;
+  for (const [name, key, , mutate] of contracts) {
+    const mutated = { ...original, [key]: mutate(original[key]) };
+    if (audit(mutated).includes(name)) caught += 1;
+    else throw new Error(`selftest failed to catch: ${name}`);
   }
-  if (!service.includes("detectPlannerConflict")) failures.push("planner service must detect schedule conflicts");
-  if (!service.includes("hos.duty_status_events")) failures.push("planner service must read HOS blackout events");
-  if (!service.includes("l.customer_id::text AS customer_id") || !service.includes("l.assigned_unit_id::text AS unit_id")) {
-    failures.push("planner week payload must carry canonical customer and unit FKs");
-  }
-  if (!/<EntityLink kind="customer" id=\{load\.customer_id\}/.test(page)) {
-    failures.push("planner calendar must link each load customer through its canonical FK");
-  }
-  if (!/<EntityLink kind="driver" id=\{driver\.id\}/.test(page)) failures.push("planner calendar must link driver rows");
-  if (!/<EntityLink kind="unit" id=\{driver\.unit_id \?\? null\}/.test(page)) failures.push("planner calendar must link assigned units");
-  if (!index.includes("registerDispatchPlannerRoutes")) failures.push("backend index must register planner routes");
-
-  if (!dispatchApi.includes("getDispatchPlannerWeek")) failures.push("dispatch API must export getDispatchPlannerWeek");
-  if (!dispatchApi.includes("patchDispatchPlannerLoadStartAt")) {
-    failures.push("dispatch API must export patchDispatchPlannerLoadStartAt");
-  }
-  if (!manifest.includes('path="/dispatch/planner"')) failures.push("manifest must route /dispatch/planner");
-
-  const dispatchFlyout = sidebar.split('case "dispatch"')[1]?.split("case ")[0] ?? "";
-  if (!dispatchFlyout.includes("/dispatch/planner")) failures.push("sidebar flyout must link planner calendar");
-
-  if (!archDesign.includes("verify:dispatch-planner-calendar")) {
-    failures.push("ARCHITECTURAL_DESIGN must reference verify:dispatch-planner-calendar");
-  }
-
-  if (failures.length) {
-    for (const f of failures) console.error(` - ${f}`);
-    fail(failures.join("; "));
-  }
-
-  console.log("verify:dispatch-planner-calendar PASS");
+  console.log(`verify:dispatch-planner-calendar SELFTEST PASS — ${caught}/${contracts.length} exact planner mutations detected`);
+  process.exit(0);
 }
 
-main();
+console.log("verify:dispatch-planner-calendar PASS");
