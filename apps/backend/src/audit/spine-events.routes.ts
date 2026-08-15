@@ -26,6 +26,7 @@ type SpineEventRow = {
   actor_email: string | null;
   subject_type: string | null;
   subject_id: string | null;
+  subject_label: string | null;
   payload: unknown;
   source: string | null;
   source_table: string | null;
@@ -36,7 +37,7 @@ type SpineEventRow = {
 };
 
 export async function registerSpineEventsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/audit/spine-events", async (req, reply) => {
+  app.get("/api/v1/audit/spine-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const role = String(req.user?.role ?? "");
     if (!["Owner", "Administrator", "Manager", "Accountant"].includes(role)) {
@@ -100,6 +101,12 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
         u.email                      AS actor_email,
         el.subject_type              AS subject_type,
         el.subject_id::text          AS subject_id,
+        CASE el.subject_type
+          WHEN 'load' THEN NULLIF(TRIM(l.load_number), '')
+          WHEN 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
+          WHEN 'unit' THEN NULLIF(TRIM(un.unit_number), '')
+          ELSE NULL
+        END                          AS subject_label,
         el.payload                   AS payload,
         el.source                    AS source,
         el.source_table              AS source_table,
@@ -109,6 +116,18 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
         count(*) OVER ()::int        AS total_count
       FROM events.event_log el
       LEFT JOIN identity.users u ON u.id = el.actor_user_id
+      LEFT JOIN mdata.loads l
+        ON el.subject_type = 'load'
+       AND l.id = el.subject_id
+       AND l.operating_company_id = el.operating_company_id
+      LEFT JOIN mdata.drivers d
+        ON el.subject_type = 'driver'
+       AND d.id = el.subject_id
+       AND d.operating_company_id = el.operating_company_id
+      LEFT JOIN mdata.units un
+        ON el.subject_type = 'unit'
+       AND un.id = el.subject_id
+       AND COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id
       WHERE ${filters.join(" AND ")}
       ORDER BY el.occurred_at DESC, el.event_id DESC
       LIMIT $${limitPos}
@@ -130,6 +149,7 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
           actor_email: r.actor_email,
           subject_type: r.subject_type,
           subject_id: r.subject_id,
+          subject_label: r.subject_label,
           payload: r.payload,
           source: r.source,
           source_table: r.source_table,
