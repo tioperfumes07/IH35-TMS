@@ -2329,37 +2329,42 @@ export function CustomerDetailPage() {
                 View all
               </button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-gray-200 text-gray-600">
-                    <th className="px-2 py-1.5 font-semibold">Invoice</th>
-                    <th className="px-2 py-1.5 font-semibold">Issue</th>
-                    <th className="px-2 py-1.5 font-semibold">Status</th>
-                    <th className="px-2 py-1.5 font-semibold">Total</th>
-                    <th className="px-2 py-1.5 font-semibold">Open</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentInvoices.map((invoice) => (
-                    <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                      <td className="px-2 py-1.5 text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="invoice" id={invoice.id} label={entityLabel(invoice.display_id, invoice.id, "Invoice")} /></td>
-                      <td className="px-2 py-1.5 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
-                      <td className="px-2 py-1.5 text-gray-700">{invoice.status}</td>
-                      <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.total_cents ?? 0) / 100).toFixed(2)}</td>
-                      <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                  {recentInvoicesListState.isEmpty ? (
-                    <tr>
-                      <td className="px-2 py-2 text-gray-500" colSpan={5}>
-                        No invoices yet for this customer.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            {/* CUST-F3560: ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar. */}
+            <ParityTable<Invoice>
+              rows={recentInvoices}
+              rowKey={(invoice) => invoice.id}
+              loading={recentInvoicesListState.isLoading}
+              storageKey="customer-detail-recent-invoices"
+              emptyText="No invoices yet for this customer."
+              exportFilename="customer-recent-invoices"
+              tableTestId="customer-detail-recent-invoices-table"
+              onRowClick={(invoice) => navigate(`/accounting/invoices/${invoice.id}`)}
+              columns={[
+                {
+                  key: "display_id",
+                  label: "Invoice",
+                  render: (invoice) => (
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <EntityLink kind="invoice" id={invoice.id} label={entityLabel(invoice.display_id, invoice.id, "Invoice")} />
+                    </span>
+                  ),
+                },
+                { key: "issue_date", label: "Issue", render: (invoice) => formatDateUS(invoice.issue_date) },
+                { key: "status", label: "Status", render: (invoice) => invoice.status },
+                {
+                  key: "total_cents",
+                  label: "Total",
+                  cellClass: "tabular-nums",
+                  render: (invoice) => (Number(invoice.total_cents ?? 0) / 100).toFixed(2),
+                },
+                {
+                  key: "amount_open_cents",
+                  label: "Open",
+                  cellClass: "tabular-nums",
+                  render: (invoice) => (Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2),
+                },
+              ]}
+            />
           </div>
         </div>
         </div>
