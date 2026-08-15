@@ -44,8 +44,8 @@ export function collectProblems(root = ROOT, overrides = null) {
   if (!/createKind=["']account["']/.test(blk)) problems.push(`${PAGE}: parent must use createKind=account`);
   if (/<Combobox[\s>]/.test(blk)) problems.push(`${PAGE}: parent must not use bare Combobox`);
   if (!/parent_account_id/.test(page)) problems.push(`${PAGE}: must still persist parent_account_id`);
-  if (neu && !/createKind=["']account["']/.test(neu)) {
-    problems.push(`${NEW}: must keep createKind=account (1884 parity anchor)`);
+  if (neu && !/<AccountDrawer[\s>]/.test(neu) && !/createKind=["']account["']/.test(neu)) {
+    problems.push(`${NEW}: must render AccountDrawer (LST-F3354 single chrome) or keep createKind=account`);
   }
   return problems;
 }

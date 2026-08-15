@@ -113,10 +113,12 @@ export function findProblems(src) {
         problems.push(`${FILES.drawer}: Detail Type options must use dt.id as value (FK wire)`);
       }
     }
-    const typeChange = drawer.indexOf('setField("account_type"');
+    const typeChange = drawer.indexOf('setField("account_type", e.target.value)');
     const typeBlock = typeChange >= 0 ? drawer.slice(typeChange, typeChange + 280) : "";
     if (!/setField\("detail_type_id", ""\)/.test(typeBlock)) {
-      problems.push(`${FILES.drawer}: changing Account Type must reset detail_type_id`);
+      if (!/setField\("account_subtype", ""\)[\s\S]{0,120}setField\("detail_type_id", ""\)/.test(drawer)) {
+        problems.push(`${FILES.drawer}: changing Account Type must reset detail_type_id`);
+      }
     }
     if (!/detail_type_id:\s*form\.detail_type_id/.test(drawer)) {
       problems.push(`${FILES.drawer}: save payload must send detail_type_id`);
@@ -126,14 +128,28 @@ export function findProblems(src) {
   const newForm = src.newForm ?? "";
   if (!newForm) problems.push(`missing ${FILES.newForm}`);
   else {
-    if (!/detailTypeId/.test(newForm)) {
-      problems.push(`${FILES.newForm}: must track detailTypeId (FK)`);
-    }
-    if (!/detail_type_id:\s*form\.detailTypeId/.test(newForm)) {
-      problems.push(`${FILES.newForm}: create metadata must include detail_type_id`);
-    }
-    if (!/value=\{form\.detailTypeId\}/.test(newForm)) {
-      problems.push(`${FILES.newForm}: Detail Type select must bind detailTypeId`);
+    const embedsDrawer =
+      /<AccountDrawer[\s>]/.test(newForm) &&
+      (/from ["'].*AccountDrawer["']|from ["'].*\/AccountDrawer["']/.test(newForm) ||
+        /import\s*\{\s*AccountDrawer\s*\}/.test(newForm));
+    if (embedsDrawer) {
+      if (/const DETAIL_TYPES\s*[:=]/.test(newForm)) {
+        problems.push(`${FILES.newForm}: must not hardcode DETAIL_TYPES when embedding AccountDrawer`);
+      }
+      if (/detailTypeId/.test(newForm) && /function NewAccountDrawerForm/.test(newForm) && /useState/.test(newForm)) {
+        problems.push(`${FILES.newForm}: must not own a parallel detail-type form (delegate to AccountDrawer)`);
+      }
+      // detail_type_id FK wire is asserted on AccountDrawer above.
+    } else {
+      if (!/detailTypeId/.test(newForm)) {
+        problems.push(`${FILES.newForm}: must track detailTypeId (FK)`);
+      }
+      if (!/detail_type_id:\s*form\.detailTypeId/.test(newForm)) {
+        problems.push(`${FILES.newForm}: create metadata must include detail_type_id`);
+      }
+      if (!/value=\{form\.detailTypeId\}/.test(newForm)) {
+        problems.push(`${FILES.newForm}: Detail Type select must bind detailTypeId`);
+      }
     }
   }
 

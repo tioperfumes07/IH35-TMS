@@ -23,10 +23,25 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-account-create-no-silent-field-drop";
-const FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
+const NEW_FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
+const DRAWER = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
+}
+
+/** LST-F3354 — thin wrapper delegates create chrome to AccountDrawer. */
+function newFormEmbedsAccountDrawer(newFormSrc) {
+  return (
+    /<AccountDrawer[\s>]/.test(newFormSrc) &&
+    (/from ["'].*AccountDrawer["']|from ["'].*\/AccountDrawer["']/.test(newFormSrc) ||
+      /import\s*\{\s*AccountDrawer\s*\}/.test(newFormSrc))
+  );
+}
+
+/** Which file owns the create payload under test. */
+function createChromeRel(newFormSrc) {
+  return newFormEmbedsAccountDrawer(newFormSrc) ? DRAWER : NEW_FORM;
 }
 
 /**
@@ -34,40 +49,54 @@ function read(rel) {
  * stripped. Stripping matters: a comment inside the call that merely NAMES a field (e.g. explaining
  * what parent_account_id is) would otherwise satisfy the "payload sends it" check and let the real
  * assignment be deleted undetected.
+ *
+ * LST-F3354: AccountDrawer uses `const body = {…}` + createCatalogAccount(body).
  */
 function createBodyOf(source) {
-  const start = source.indexOf("chartOfAccountsCatalogClient.create(");
-  if (start === -1) return null;
-  const end = source.indexOf("});", start);
-  if (end === -1) return null;
-  return source
-    .slice(start, end)
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/[^\n]*/g, "");
+  const stripComments = (s) =>
+    s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+
+  const legacyStart = source.indexOf("chartOfAccountsCatalogClient.create(");
+  if (legacyStart !== -1) {
+    const end = source.indexOf("});", legacyStart);
+    if (end !== -1) return stripComments(source.slice(legacyStart, end));
+  }
+
+  const bodyStart = source.indexOf("const body = {");
+  if (bodyStart !== -1) {
+    const end = source.indexOf("};", bodyStart);
+    if (end !== -1) return stripComments(source.slice(bodyStart, end + 2));
+  }
+
+  return null;
 }
 
 export function assertNoSilentFieldDrop(source) {
   const errors = [];
   const body = createBodyOf(source);
   if (!body) {
-    errors.push("could not locate the chartOfAccountsCatalogClient.create(...) call — guard cannot verify the payload");
+    errors.push(
+      "could not locate create payload (chartOfAccountsCatalogClient.create or const body + createCatalogAccount) — guard cannot verify the payload",
+    );
     return errors;
   }
 
   // field in state -> what the create payload must carry for it to survive the save
   const MUST_PERSIST = [
-    ["description", "description:", "Description textarea"],
-    ["parentAccount", "parent_account_id", "Parent account picker"],
-    ["lockAccount", "is_locked", "Lock account checkbox (§7 KEEP-listed control)"],
+    { collect: /form\.description|setField\("description"/, payload: "description:", label: "Description textarea" },
+    { collect: /form\.notes|setField\("notes"/, payload: "notes:", label: "Description textarea (AccountDrawer notes field)" },
+    { collect: /form\.parentAccount|setField\("parentAccount"/, payload: "parent_account_id", label: "Parent account picker" },
+    { collect: /form\.parent_account_id|setField\("parent_account_id"/, payload: "parent_account_id", label: "Parent account FK (AccountDrawer)" },
+    { collect: /form\.lockAccount|setField\("lockAccount"/, payload: "is_locked", label: "Lock account checkbox (§7 KEEP-listed control)" },
+    { collect: /form\.is_locked|setField\("is_locked"/, payload: "is_locked", label: "Lock account checkbox (AccountDrawer)" },
     // Storage landed in migration 202607750000 (catalogs.accounts.is_billable_expense) and the
-    // catalogs accounting factory now maps it, so this field must be SENT — it is no longer
-    // allowed to be a disabled placeholder.
-    ["billableExpenses", "is_billable_expense", "Use-for-billable-expenses checkbox"],
+    // catalogs accounting factory now maps it, so this field must be SENT when the UI collects it.
+    { collect: /form\.billableExpenses|setField\("billableExpenses"/, payload: "is_billable_expense", label: "Use-for-billable-expenses checkbox" },
   ];
-  for (const [stateField, payloadToken, label] of MUST_PERSIST) {
-    if (!source.includes(stateField)) continue; // field removed entirely — nothing to drop
-    if (!body.includes(payloadToken)) {
-      errors.push(`${label}: form collects \`${stateField}\` but the create payload never sends \`${payloadToken}\` — silently discarded on save`);
+  for (const { collect, payload, label } of MUST_PERSIST) {
+    if (!collect.test(source)) continue; // field removed entirely — nothing to drop
+    if (!body.includes(payload)) {
+      errors.push(`${label}: form collects the field but the create payload never sends \`${payload.replace(":", "")}\` — silently discarded on save`);
     }
   }
 
@@ -98,19 +127,25 @@ export function assertNoSilentFieldDrop(source) {
  */
 function selftest() {
   const problems = [];
-  const live = read(FORM);
+  const newFormLive = read(NEW_FORM);
+  const chromeRel = createChromeRel(newFormLive);
+  const live = read(chromeRel);
 
   const liveErrors = assertNoSilentFieldDrop(live);
-  if (liveErrors.length) problems.push(`live source rejected: ${liveErrors.join("; ")}`);
+  if (liveErrors.length) problems.push(`live source rejected (${chromeRel}): ${liveErrors.join("; ")}`);
 
   const cases = [
-    ["description dropped from payload", live.replace(/description:\s*form\.description[^\n]*\n/, ""), "never sends `description:`"],
-    ["parent_account_id dropped from payload", live.replace(/parent_account_id:\s*form\.isSubaccount[^\n]*\n/, ""), "never sends `parent_account_id`"],
-    ["is_locked dropped from payload", live.replace(/is_locked:\s*form\.lockAccount[^\n]*\n/, ""), "never sends `is_locked`"],
-    ["is_billable_expense dropped from payload", live.replace(/is_billable_expense:\s*form\.billableExpenses[^\n]*\n/, ""), "never sends `is_billable_expense`"],
-    ["parent reverted to free text", live.replace(/<select/, '<input placeholder="Parent account name or number"'), "free-text input again"],
-    ["billable checkbox disabled again", live.replace(/checked=\{form\.billableExpenses\}/, "checked={form.billableExpenses} disabled"), "is disabled again"],
+    ["notes dropped from payload", live.replace(/notes:\s*form\.notes[^\n]*\n/, ""), "never sends `notes`"],
+    ["parent_account_id dropped from payload", live.replace(/parent_account_id:\s*mode === "create"[^\n]*\n/, ""), "never sends `parent_account_id`"],
+    ["is_locked dropped from payload", live.replace(/is_locked:\s*form\.is_locked[^\n]*\n/, ""), "never sends `is_locked`"],
+    ["parent reverted to free text", live.replace(/<ReferenceSelect/, '<input placeholder="Parent account name or number"'), "free-text input again"],
   ];
+  if (/billableExpenses/.test(live)) {
+    cases.push(
+      ["is_billable_expense dropped from payload", live.replace(/is_billable_expense:\s*form\.billableExpenses[^\n]*\n/, ""), "never sends `is_billable_expense`"],
+      ["billable checkbox disabled again", live.replace(/checked=\{form\.billableExpenses\}/, "checked={form.billableExpenses} disabled"), "is disabled again"],
+    );
+  }
 
   for (const [name, mutated, expectFragment] of cases) {
     if (mutated === live) {
@@ -136,7 +171,13 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const errors = assertNoSilentFieldDrop(read(FORM));
+const newFormSrc = read(NEW_FORM);
+if (newFormEmbedsAccountDrawer(newFormSrc) && /const DETAIL_TYPES\s*[:=]/.test(newFormSrc)) {
+  console.error(`${LABEL} FAIL`);
+  console.error("  NewAccountDrawerForm must not hardcode DETAIL_TYPES when embedding AccountDrawer");
+  process.exit(1);
+}
+const errors = assertNoSilentFieldDrop(read(createChromeRel(newFormSrc)));
 if (errors.length) {
   console.error(`${LABEL} FAIL`);
   for (const e of errors) console.error(`  ${e}`);
