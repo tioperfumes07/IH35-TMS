@@ -47,6 +47,16 @@ const CHECKS = [
     pattern: /searchParams\.get\("unit_id"\)/,
   },
   {
+    name: "LST-F5195: ExpensesListPage entity filters write URL",
+    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    pattern: /dataTestId="expenses-filter-driver"/,
+  },
+  {
+    name: "LST-F5195: ExpensesListPage patchEntityFilter",
+    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    pattern: /function patchEntityFilter/,
+  },
+  {
     name: "ACCT-F5048: ExpensesListPage Trailer column EntityLink",
     file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
     pattern: /kind="trailer"[\s\S]{0,80}?r\.trailer_id/,
@@ -101,7 +111,7 @@ export function checkAll(readFile) {
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/frontend/src/pages/accounting/ExpensesListPage.tsx":
-      'searchParams.get("load_id") searchParams.get("trailer_id") searchParams.get("unit_id") kind="trailer" id={r.trailer_id}',
+      'searchParams.get("load_id") searchParams.get("trailer_id") searchParams.get("unit_id") kind="trailer" id={r.trailer_id} dataTestId="expenses-filter-driver" function patchEntityFilter',
     "apps/frontend/src/components/accounting/ExpensesReverseSection.tsx":
       "to={`/accounting/expenses?${filterKey}=",
     "apps/backend/src/banking/reconciliation.routes.ts": "t.matched_settlement_id || t.matched_expense_id",
