@@ -164,6 +164,7 @@ export function DriverCatalogListPage({
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        {/* LST-F3512: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -189,6 +190,8 @@ export function DriverCatalogListPage({
         emptyText={`No ${displayName.toLowerCase()} found.`}
         storageKey="driver-catalog-list"
         tableTestId="driver-catalog-list-table"
+        // LST-F3512: keep API search above; hide ParityTable toolbar Search
+        suppressToolbarSearch
         onRowClick={(row) => {
           setModalMode("edit");
           setSelectedRow(row);
