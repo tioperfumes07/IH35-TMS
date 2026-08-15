@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T15:09:06-05:00",
-    "sourceSha": "531d8cefd",
-    "deployedSha": "9628108",
+    "generatedAt": "2026-08-15T15:13:26-05:00",
+    "sourceSha": "4e3595933",
+    "deployedSha": "ed1c340",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 825,
+    "ledgerRows": 826,
     "failOpen": 14,
     "defects": 17
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7366,
+      "title": "FINDING: LIVE-LEDGER-SETTLEMENTS-REPORTS-826",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 03:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7366",
+      "sha": "4e3595933",
+      "committedAtIso": "2026-08-15T15:13:26-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 03:10 PM CT",
+      "url": "",
+      "sha": "ccbd9e9db",
+      "committedAtIso": "2026-08-15T20:10:33Z"
+    },
+    {
       "number": 7365,
       "title": "FINDING: LIVE-LEDGER-SAFETY-PARITY-825",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "9cd07d2ae",
       "committedAtIso": "2026-08-15T19:59:35Z"
-    },
-    {
-      "number": 7358,
-      "title": "FINDING: LIVE-LEDGER-FAULT-RULE-PARITY-822",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7358",
-      "sha": "e364bb8cd",
-      "committedAtIso": "2026-08-15T14:58:23-05:00"
-    },
-    {
-      "number": 7355,
-      "title": "Claude-1-FINDING: CLAIM-RESERVE-3449-MATRIX-LEDGER-LEAF-MATCH-HONEST",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7355",
-      "sha": "ffb950ba2",
-      "committedAtIso": "2026-08-15T14:57:55-05:00"
     }
   ]
 }
