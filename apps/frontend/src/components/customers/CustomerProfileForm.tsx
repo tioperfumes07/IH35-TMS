@@ -458,8 +458,13 @@ type Props = {
 
 export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, onParentCustomerCreated, parentCustomerOptions, customerId }: Props) {
   const queryClient = useQueryClient();
+  // LV-CUSTOMER-FULL-EDIT-CRASH: live prod crash "o.map is not a function" — this was the one memo
+  // in this file with no defensive fallback on its prop-sourced array (every sibling below it, e.g.
+  // parentOptions/incomeAccountOptions, already guards with `?? []`). A caller passing anything other
+  // than a live array (undefined during an in-flight refetch, a stale/mismatched cache entry) took the
+  // whole "Full Edit" modal down with it. Guard at the consumption point, not just at each call site.
   const termOptions = useMemo(
-    () => paymentTermOptions.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
+    () => (paymentTermOptions ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
     [paymentTermOptions]
   );
 
