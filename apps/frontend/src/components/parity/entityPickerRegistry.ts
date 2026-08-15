@@ -43,6 +43,7 @@ import { listWorkOrders } from "../../api/maintenance";
 import { listInsuranceClaims, listInsuranceLawsuits, listInsurancePolicies } from "../../api/insurance";
 import { listFactoringAdvances } from "../../api/accounting";
 import { legalMattersApi } from "../../api/legal-matters";
+import { entityLabel } from "../../lib/entity-label";
 
 export type EntityPickerKind =
   | "driver"
@@ -176,7 +177,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
           seen.add(d.id);
           out.push({
             value: d.id,
-            label: nonEmpty(d.first_name, d.last_name) || String(d.id),
+            label: entityLabel(nonEmpty(d.first_name, d.last_name), d.id, "Driver"),
           });
         }
       }
@@ -212,7 +213,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         };
         return {
           value: e.id,
-          label: nonEmpty(e.equipment_number) || String(e.id),
+          label: entityLabel(nonEmpty(e.equipment_number), e.id, "Trailer"),
           sublabel: [e.equipment_type, e.make, e.model].filter(Boolean).join(" · ") || undefined,
         };
       });
@@ -249,7 +250,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         const u = row as { id: string; unit_number?: string | null; display_id?: string | null };
         return {
           value: u.id,
-          label: nonEmpty(u.unit_number) || nonEmpty(u.display_id) || String(u.id),
+          label: entityLabel(nonEmpty(u.unit_number) || nonEmpty(u.display_id), u.id, "Unit"),
         };
       });
     },
@@ -330,7 +331,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       const res = await listWorkOrders(operatingCompanyId);
       return (res.work_orders ?? []).map((w) => ({
         value: w.id,
-        label: nonEmpty(w.display_id) || String(w.id),
+        label: entityLabel(nonEmpty(w.display_id), w.id, "Work order"),
         sublabel: nonEmpty(w.unit_number, w.status ? `· ${w.status}` : null) || undefined,
       }));
     },
