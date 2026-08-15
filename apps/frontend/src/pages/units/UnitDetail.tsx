@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { entityLabel } from "../../lib/entity-label";
@@ -15,6 +16,8 @@ import { UnitDefaultDriversReverseSection } from "../../components/fleet/UnitDef
 import { UnitTireProgramReverseSection } from "../../components/maintenance/UnitTireProgramReverseSection";
 import { UnitSevereRepairsReverseSection } from "../../components/maintenance/UnitSevereRepairsReverseSection";
 import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
+import { getUnit } from "../../api/mdata";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type UnitDetailTab = "permits" | "toll-tags" | "tasks" | "brakes" | "tires" | "finance";
 
@@ -24,6 +27,12 @@ export function UnitDetail() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [activeTab, setActiveTab] = useState<UnitDetailTab>("permits");
+  const unitQuery = useQuery({
+    queryKey: ["mdata", "unit-detail", companyId, id],
+    queryFn: () => getUnit(id, companyId),
+    enabled: Boolean(companyId) && Boolean(id),
+  });
+  const unitLabel = entityLabel(unitQuery.data?.unit_number, id, "Unit");
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -43,11 +52,14 @@ export function UnitDetail() {
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
       <PageHeader
         backHref="/units"
-        breadcrumb={["Fleet", "Units", entityLabel(null, id, "Unit")]}
-        title={entityLabel(null, id, "Unit")}
+        breadcrumb={["Fleet", "Units", unitLabel]}
+        title={unitLabel}
         subtitle="Permits, toll tags, and finance linkage"
       />
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {unitQuery.isError ? (
+        <ListErrorState title="Couldn't load unit identity" status={0} message={(unitQuery.error as Error)?.message} onRetry={() => void unitQuery.refetch()} />
+      ) : null}
       {companyId ? <UnitMaintenanceInspectionsReverseSection operatingCompanyId={companyId} unitId={id} data-testid="unit-detail-maintenance-inspections" /> : null}
       {companyId ? <UnitInTransitIssuesReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitDefaultDriversReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
@@ -81,7 +93,7 @@ export function UnitDetail() {
       {activeTab === "permits" ? <UnitPermitsTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "toll-tags" ? <UnitTollTagsTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "tasks" ? (
-        <TasksTab operatingCompanyId={companyId} targetType="unit" targetId={id} targetLabel={entityLabel(null, id, "Unit")} />
+        <TasksTab operatingCompanyId={companyId} targetType="unit" targetId={id} targetLabel={unitLabel} />
       ) : null}
       {activeTab === "brakes" ? <UnitBrakesTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "tires" ? <UnitTiresTab unitId={id} companyId={companyId} /> : null}
