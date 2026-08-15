@@ -76,20 +76,6 @@ const PROTECTED = new Set([
   "connectivity\taccounting:accounting.parity.invoice_create",
   "connectivity\taccounting:accounting.parity.vendor_bill_create_page",
   "connectivity\taccounting:payment_methods_catalog.create",
-  "connectivity\tbanking:banking.modal.record_ccpayment",
-  "connectivity\tbanking:banking.modal.record_transfer",
-  "connectivity\tbanking:banking.modal.transfer",
-  "connectivity\tbanking:banking.modal.manage_accounts",
-  "connectivity\tbanking:banking.modal.manual_je",
-  "connectivity\tbanking:banking.drawer.match",
-  "connectivity\tbanking:banking.panel.banking_plaid_connections",
-  "connectivity\tbanking:banking.parity.record_ccpayment",
-  "connectivity\tbanking:banking.parity.record_transfer",
-  "connectivity\tbanking:banking.parity.transfer",
-  "connectivity\tbanking:banking.parity.manual_je",
-  "connectivity\tbanking:banking.parity.match",
-  "connectivity\tbanking:banking.panel.linked_bank_transactions",
-  "connectivity\tbanking:banking.panel.plaid_sync_status",
 ]);
 
 const CLOSED_CLAIM_IDS = [
