@@ -849,10 +849,15 @@ export function recordPartsPurchase(
   body: {
     part_description: string;
     qty_received: number;
+    // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT: optional explicit SKU — when omitted the backend
+    // derives a canonical key from part_description so repeat purchases of the same part upsert
+    // stock instead of fragmenting it.
+    part_number?: string;
     vendor_id?: string;
     vendor_invoice_number?: string;
     purchase_amount?: number;
     location?: string;
+    work_order_id?: string;
   }
 ) {
   return apiRequest<PartsPurchaseCreateResult>(
@@ -860,6 +865,52 @@ export function recordPartsPurchase(
     {
       method: "POST",
       body,
+    }
+  );
+}
+
+/**
+ * INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT (owner-approved 2026-08-15) — the real append-only
+ * Purchase History source of record. maintenance.parts_purchases, distinct from the mutable
+ * parts_inventory snapshot above.
+ */
+export type PartsPurchaseRow = {
+  id: string;
+  operating_company_id: string;
+  parts_inventory_id: string;
+  part_description: string;
+  part_number: string | null;
+  vendor_id: string | null;
+  vendor_name: string | null;
+  vendor_invoice_number: string | null;
+  purchase_amount_cents: number | null;
+  qty_received: number;
+  work_order_id: string | null;
+  work_order_display_id: string | null;
+  purchased_at: string;
+  created_at: string;
+  created_by_user_id: string | null;
+  voided_at: string | null;
+  voided_by_user_id: string | null;
+  void_reason: string | null;
+};
+
+export function listPartsPurchases(operatingCompanyId: string, filters?: { vendor_id?: string }) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (filters?.vendor_id) query.set("vendor_id", filters.vendor_id);
+  return apiRequest<{ rows: PartsPurchaseRow[] }>(
+    `/api/v1/maintenance/parts-inventory/purchases?${query.toString()}`
+  ).then((result) => result.rows);
+}
+
+export function voidPartsPurchase(id: string, operatingCompanyId: string, voidReason: string) {
+  return apiRequest<PartsPurchaseRow>(
+    `/api/v1/maintenance/parts-inventory/purchases/${encodeURIComponent(id)}/void?operating_company_id=${encodeURIComponent(
+      operatingCompanyId
+    )}`,
+    {
+      method: "POST",
+      body: { void_reason: voidReason },
     }
   );
 }
