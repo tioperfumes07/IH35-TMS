@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCoaAsymmetryReport } from "../../api/coaAsymmetryReport";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -37,26 +38,32 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
 
       {data ? (
         <div className="space-y-4 text-sm text-slate-800">
-          <div className="overflow-x-auto">
-            <table className="w-full max-w-xl border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase text-slate-600">
-                  <th className="py-1 pr-4">Entity</th>
-                  <th className="py-1 pr-4 text-right">Postable</th>
-                  <th className="py-1 text-right">Active total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.postable_by_entity.map((row) => (
-                  <tr key={row.entity_code} className="border-b border-slate-200">
-                    <td className="py-1 pr-4 font-medium">{row.entity_code}</td>
-                    <td className="py-1 pr-4 text-right tabular-nums">{row.postable}</td>
-                    <td className="py-1 text-right tabular-nums">{row.total_active}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* ACCT-F3574: ParityTable owns Search+Range+gear on postable-by-entity summary leaf. */}
+          <ParityTable<(typeof data.postable_by_entity)[number]>
+            rows={data.postable_by_entity}
+            rowKey={(r) => r.entity_code}
+            storageKey="coa-asymmetry-postable-by-entity"
+            exportFilename="coa-asymmetry-postable-by-entity"
+            tableTestId="coa-asymmetry-postable-by-entity-table"
+            emptyText="No entity postable counts to display."
+            columns={[
+              { key: "entity_code", label: "Entity", render: (r) => <span className="font-medium">{r.entity_code}</span> },
+              {
+                key: "postable",
+                label: "Postable",
+                className: "text-right",
+                cellClass: "text-right tabular-nums",
+                render: (r) => r.postable,
+              },
+              {
+                key: "total_active",
+                label: "Active total",
+                className: "text-right",
+                cellClass: "text-right tabular-nums",
+                render: (r) => r.total_active,
+              },
+            ]}
+          />
 
           <div className="grid gap-2 sm:grid-cols-2">
             <p>
