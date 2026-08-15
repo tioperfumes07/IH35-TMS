@@ -142,6 +142,11 @@ export function Form425CHome() {
     queryFn: () => listForm425CProfiles(companyId),
   });
 
+  const availableCompanies = useMemo<CompanyKey[]>(() => {
+    const keys = profilesQuery.data?.profiles.map((row) => row.company_key) ?? [];
+    return keys.length > 0 ? [...new Set(keys)] : [activeCompany];
+  }, [activeCompany, profilesQuery.data?.profiles]);
+
   const reportsQuery = useQuery({
     queryKey: ["form-425c", "reports", companyId],
     enabled: Boolean(companyId),
@@ -182,6 +187,8 @@ export function Form425CHome() {
       };
     }
     setProfiles(merged);
+    const filingCompany = profilesQuery.data.profiles[0]?.company_key;
+    if (filingCompany) setActiveCompany(filingCompany);
   }, [profilesQuery.data?.profiles]);
 
   // Hydrate petition date from the earliest existing report (case SoR) — never invent a literal.
@@ -333,7 +340,7 @@ export function Form425CHome() {
       </div>
       <div className="flex items-center justify-between gap-2 bg-[#1f2a44] px-5 py-3 text-white">
         <div>
-          <div className="text-lg font-extrabold">IH 35 GROUP</div>
+          <div className="text-lg font-extrabold">{profiles[activeCompany].name || "Form 425C"}</div>
           <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
         </div>
         <Link to="/425c/exhibits" className="shrink-0 text-xs font-semibold text-white hover:underline">
@@ -362,6 +369,7 @@ export function Form425CHome() {
         <ProfilesTab
           profiles={profiles}
           activeCompany={activeCompany}
+          availableCompanies={availableCompanies}
           setActiveCompany={setActiveCompany}
           onChange={(company, updater) => {
             setProfiles((prev) => ({ ...prev, [company]: updater(prev[company]) }));

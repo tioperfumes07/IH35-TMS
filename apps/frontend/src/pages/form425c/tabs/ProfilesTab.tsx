@@ -5,18 +5,19 @@ import { QUESTIONNAIRE } from "../lib/constants";
 type Props = {
   profiles: CompanyProfiles;
   activeCompany: CompanyKey;
+  availableCompanies: CompanyKey[];
   setActiveCompany: (company: CompanyKey) => void;
   onChange: (company: CompanyKey, updater: (draft: CompanyProfiles[CompanyKey]) => CompanyProfiles[CompanyKey]) => void;
   onSave: () => void;
   saving: boolean;
 };
 
-export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChange, onSave, saving }: Props) {
+export function ProfilesTab({ profiles, activeCompany, availableCompanies, setActiveCompany, onChange, onSave, saving }: Props) {
   const profile = profiles[activeCompany];
   return (
     <div className="space-y-4 p-4">
       <div className="flex gap-2">
-        {(["trucking", "transportation"] as const).map((k) => (
+        {availableCompanies.map((k) => (
           <button
             key={k}
             type="button"
@@ -149,4 +150,3 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
     </div>
   );
 }
-
