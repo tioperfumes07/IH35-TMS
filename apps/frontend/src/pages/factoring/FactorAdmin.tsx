@@ -168,7 +168,7 @@ export function FactorAdmin() {
   // page previously never read that param, so a reverse link into a factor landed on the list with
   // nothing selected. selectedFactor needs the FULL Factor object (used by every mutation below), so
   // the effect waits for factorsQuery to resolve and looks the id up rather than setting a bare id.
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkFactorId = searchParams.get("factor_id");
   useEffect(() => {
     if (!deepLinkFactorId || !factorsQuery.data) return;
@@ -186,6 +186,27 @@ export function FactorAdmin() {
     if (!deepLinkCustomerId) return;
     setDetailCustomerId(deepLinkCustomerId);
   }, [deepLinkCustomerId]);
+
+  // LST-F5201 — selection writes URL so reverse deep-links round-trip.
+  function patchSearchParam(key: "customer_id" | "factor_id", next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set(key, next);
+        else params.delete(key);
+        return params;
+      },
+      { replace: true }
+    );
+  }
+  function selectFactor(factor: Factor | null) {
+    setSelectedFactor(factor);
+    patchSearchParam("factor_id", factor?.id ?? "");
+  }
+  function selectDetailCustomer(next: string) {
+    setDetailCustomerId(next);
+    patchSearchParam("customer_id", next);
+  }
 
   const customersQuery = useQuery({
     queryKey: ["factoring", "factor-admin", "customers", companyId, customerSearch],
@@ -373,7 +394,7 @@ export function FactorAdmin() {
           rows={factorRows}
           rowKey={(factor) => factor.id}
           loading={factorsListState.isLoading}
-          onRowClick={(factor) => setSelectedFactor(factor)}
+          onRowClick={(factor) => selectFactor(factor)}
           rowClassName={(factor) => (selectedFactor?.id === factor.id ? "bg-slate-100" : "")}
           // Settled-only empty text (LIST-EMPTY-1): supplied once the query resolves to "empty".
           emptyText={factorsListState.isEmpty ? "No factors configured yet." : undefined}
@@ -453,10 +474,10 @@ export function FactorAdmin() {
           ) : null}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* CLS-CUST-BARE-SELECT: ReferenceSelect createKind=customer (EntityPicker has no customer kind). */}
-            <div className="w-80">
+            <div className="w-80" data-testid="factor-admin-filter-customer">
               <ReferenceSelect
                 value={detailCustomerId || null}
-                onChange={(next) => setDetailCustomerId(next ?? "")}
+                onChange={(next) => selectDetailCustomer(next ?? "")}
                 options={customerOptions}
                 createKind="customer"
                 operatingCompanyId={companyId}
