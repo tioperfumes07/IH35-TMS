@@ -20,6 +20,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   fleetTable: "apps/frontend/src/components/FleetTable.tsx",
   transfers: "apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx",
+  transferService: "apps/backend/src/mdata/equipment-transfer.service.ts",
 };
 const LABEL = "verify-fleet-roster-trailer-edit-and-transfer-link";
 
@@ -34,6 +35,17 @@ export function audit(src) {
   if (!/EntityLink kind="trailer" id=\{row\.equipment_id\}/.test(src.transfers)) {
     failures.push(`${FILES.transfers}: transfer rows must render EntityLink kind="trailer" for equipment_id (mdata.equipment is trailer/chassis, never units)`);
   }
+  if (!/e\.equipment_number/.test(src.transferService) || !/e\.owner_company_id = r\.operating_company_id OR e\.currently_leased_to_company_id = r\.operating_company_id/.test(src.transferService)) {
+    failures.push(`${FILES.transferService}: transfer payload must resolve trailer number through the owning/leased company`);
+  }
+  if (!/AS from_driver_name/.test(src.transferService) || !/from_driver\.operating_company_id = r\.operating_company_id/.test(src.transferService) || !/AS to_driver_name/.test(src.transferService) || !/to_driver\.operating_company_id = r\.operating_company_id/.test(src.transferService)) {
+    failures.push(`${FILES.transferService}: transfer payload must resolve both driver names within the transfer company`);
+  }
+  for (const token of [
+    'entityLabel(row.equipment_number, row.equipment_id, "Trailer")',
+    'entityLabel(row.from_driver_name, row.from_driver_id, "Driver")',
+    'entityLabel(row.to_driver_name, row.to_driver_id, "Driver")',
+  ]) if (!src.transfers.includes(token)) failures.push(`${FILES.transfers}: missing human label consumer ${token}`);
   return failures;
 }
 
@@ -41,6 +53,7 @@ function loadSrc(root) {
   return {
     fleetTable: fs.readFileSync(path.join(root, FILES.fleetTable), "utf8"),
     transfers: fs.readFileSync(path.join(root, FILES.transfers), "utf8"),
+    transferService: fs.readFileSync(path.join(root, FILES.transferService), "utf8"),
   };
 }
 
@@ -54,6 +67,9 @@ if (process.argv.includes("--selftest")) {
     ["edit-trailer-branch", "fleetTable", /open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/, 'open={false}'],
     ["edit-vehicle-branch", "fleetTable", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, 'open={editingUnitId !== null}'],
     ["transfer-entitylink", "transfers", /EntityLink kind="trailer" id=\{row\.equipment_id\}/, 'EntityLink kind="unit" id={row.equipment_id}'],
+    ["equipment-scope", "transferService", /e\.owner_company_id = r\.operating_company_id OR e\.currently_leased_to_company_id = r\.operating_company_id/, "TRUE"],
+    ["driver-scope", "transferService", /from_driver\.operating_company_id = r\.operating_company_id/, "TRUE"],
+    ["human-label", "transfers", /row\.to_driver_name/, "null"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
