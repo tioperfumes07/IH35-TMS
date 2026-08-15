@@ -2584,6 +2584,14 @@
       "modules": ["dispatch", "drivers", "factoring", "fleet", "insurance", "safety", "banking", "settlements", "maintenance"],
       "cols": ["driver", "unit", "trailer", "connectivity", "picker_law"],
       "leafRe": "^(dispatch\\.(modal\\.(equipment_transfer|quick_assign)|parity\\.book_load_equipment_section)|drivers\\.parity\\.driver_picker_with_create|factoring\\.parity\\.driver_autocomplete|fleet\\.modal\\.edit_vehicle|insurance\\.(modal|parity)\\.claim_create|safety\\.(drawer|parity)\\.accident_report|banking\\.(modal|parity)\\.bank_transaction_split|settlements\\.(modal|parity)\\.create_advance|maintenance\\.(modal|parity)\\.(road_service_ticket|create_bill|create_expense)|safety\\.(modal|parity)\\.fine_create|safety\\.panel\\.test_scheduling)$"
+    },
+    {
+      "task": "DRIVER-TEAM-MEMBER-RAW-UUID-LABEL",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-team-member-honest-label.mjs",
+      "modules": ["lists", "drivers"],
+      "cols": ["driver", "connectivity", "reverse_link"],
+      "leafRe": "^(catalog\\.drivers\\.teams\\.(list|create)|lists\\.modal\\.driver_team|profiles\\.detail)$"
     }
   ]
 }

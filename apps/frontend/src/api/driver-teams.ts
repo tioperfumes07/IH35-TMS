@@ -16,6 +16,7 @@
  * There is NO hard-delete endpoint and this client must never add one: removal is a DEACTIVATE.
  */
 import { apiRequest, ApiError } from "./client";
+import { entityLabel } from "../lib/entity-label";
 
 export type MdataDriverTeam = {
   id: string;
@@ -100,7 +101,8 @@ export function driverTeamMemberName(team: MdataDriverTeam, slot: MdataDriverTea
   const first = slot === "primary" ? team.primary_driver_first_name : team.secondary_driver_first_name;
   const last = slot === "primary" ? team.primary_driver_last_name : team.secondary_driver_last_name;
   const name = [first, last].filter(Boolean).join(" ").trim();
-  return name || (slot === "primary" ? team.primary_driver_id : team.secondary_driver_id);
+  const driverId = slot === "primary" ? team.primary_driver_id : team.secondary_driver_id;
+  return entityLabel(name, driverId, "Driver");
 }
 
 const DRIVER_TEAM_ERROR_COPY: Record<string, string> = {
