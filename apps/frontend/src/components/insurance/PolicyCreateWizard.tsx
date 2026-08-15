@@ -101,7 +101,7 @@ const ALLOCATION_LABELS: Record<AllocationMethod, string> = {
 const UNIT_TYPE_CHIPS = ["All", "Tractor", "Trailer", "Reefer", "TRK", "TRANSP"] as const;
 
 function unitLabel(unit: UnitRow) {
-  return unit.unit_code ?? entityLabel(unit.unit_number, unit.id, "Record");
+  return unit.unit_code ?? entityLabel(unit.unit_number, unit.id, "Unit");
 }
 
 function unitMatchesChip(unit: UnitRow, chip: string): boolean {
