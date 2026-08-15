@@ -424,7 +424,6 @@
       "route_hint": "/customers/:id?tab=billing",
       "required": [
         "customer",
-        "load",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -477,7 +476,6 @@
       "route_hint": "/customers/:id?tab=lanes",
       "required": [
         "customer",
-        "load",
         "connectivity",
         "picker_law"
       ]
@@ -489,7 +487,6 @@
       "route_hint": "/customers/:id",
       "required": [
         "customer",
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -527,7 +524,6 @@
       "route_hint": "/customers/:id?tab=contracts",
       "required": [
         "customer",
-        "load",
         "connectivity",
         "picker_law"
       ]
@@ -576,7 +572,6 @@
       "route_hint": "/customers/:id?tab=pnl",
       "required": [
         "customer",
-        "load",
         "connectivity"
       ]
     },
@@ -1050,6 +1045,46 @@
             "load"
           ],
           "reason": "static placeholder with no data source or load-bearing record"
+        }
+      ]
+    },
+    "load_column_2026_08_14_customers_remainder": {
+      "finding": "CURSOR-CUSTOMERS-LOAD-COLUMN-REMAINDER",
+      "note": "Keep load Required only where CustomerDetail renders EntityLink kind=load (detail.quality related_load_id; detail.loads list). Drop load from billing/lanes/contracts/pnl chrome without a load FK drill.",
+      "keep": [
+        "detail.quality",
+        "detail.loads"
+      ],
+      "drops": [
+        {
+          "id": "detail.billing",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "detail.lanes",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "detail.lanes.create",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "detail.contracts",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "detail.pnl",
+          "removed": [
+            "load"
+          ]
         }
       ]
     }
