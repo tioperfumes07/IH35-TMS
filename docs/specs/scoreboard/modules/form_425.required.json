@@ -219,7 +219,9 @@
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/425c",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
@@ -228,7 +230,9 @@
       "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/425c",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {

@@ -207,7 +207,9 @@
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
