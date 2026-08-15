@@ -40,7 +40,7 @@
  * @matrix-built {"modules":["program"],"cols":["qbo_chrome"],"leafRe":"^(program)(\\.|$)","task":"CURSOR-VERTICAL-program-qbo","vertical":"column-wave"}
  * @matrix-built {"modules":["safety"],"cols":["qbo_chrome"],"leafRe":"^(accidents|cargo_claims|chrome|damage_reports|dot_inspections|drug_alcohol|escrow_record|external_fines|internal_fines|leave_requests|permits|safety_meetings|training_programs|training_records)(\\.|$)","task":"CURSOR-VERTICAL-safety-qbo","vertical":"column-wave"}
  * @matrix-built {"modules":["safety"],"cols":["picker_law"],"leafRe":"^(damage_reports\\.|external_fines\\.|safety\\.|training_programs\\.)","task":"CURSOR-VERTICAL-safety-picker","vertical":"column-wave"}
- * @matrix-built {"modules":["settlements"],"cols":["qbo_chrome"],"leafRe":"^(cash_advances|chrome|settlement_close|settlements)(\\.|$)","task":"CURSOR-VERTICAL-settlements-qbo","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements"],"cols":["qbo_chrome"],"leafRe":"^(cash_advances|settlement_close|settlements\.panel\.open_driver_bills)$","task":"CURSOR-VERTICAL-settlements-qbo","vertical":"column-wave"}
  * @matrix-built {"modules":["settlements"],"cols":["picker_law"],"leafRe":"^(settlements\\.)","task":"CURSOR-VERTICAL-settlements-picker","vertical":"column-wave"}
  * @matrix-built {"modules":["system"],"cols":["picker_law"],"leafRe":"^(system\\.)","task":"CURSOR-VERTICAL-system-picker","vertical":"column-wave"}
  * @matrix-built {"modules":["tasks"],"cols":["qbo_chrome"],"leafRe":"^(daily_tasks|tasks)(\\.|$)","task":"CURSOR-VERTICAL-tasks-qbo","vertical":"column-wave"}
