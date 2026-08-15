@@ -267,6 +267,8 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             exportFilename="hos-fleet-status"
             tableTestId="safety-hos-fleet-table"
             rowTestId={(row) => `safety-hos-row-${row.driverId}`}
+            // SAF-F3486: server-bound fleetSearch input above — suppress ParityTable toolbar Search.
+            suppressToolbarSearch
           />
           )}
           <CappedListNotice
