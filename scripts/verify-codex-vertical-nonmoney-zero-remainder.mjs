@@ -123,7 +123,12 @@ const CLOSED_CLAIM_IDS = [
 
 export function collectStaleClaimProblems(board = fs.readFileSync(WORKORDERS, "utf8")) {
   const claimingRows = board.split("\n").filter((line) => line.startsWith("| **CLAIMING:**"));
-  return CLOSED_CLAIM_IDS
+  const fixedIds = new Set(board.split("\n")
+    .filter((line) => /^\| \*\*FIXED/.test(line))
+    .map((line) => line.match(/`([^`]+)`/)?.[1])
+    .filter(Boolean));
+  const closedIds = new Set([...CLOSED_CLAIM_IDS, ...fixedIds]);
+  return [...closedIds]
     .filter((id) => claimingRows.some((line) => line.includes(`\`${id}\``)))
     .map((id) => `merged Codex work remains CLAIMING: ${id}`);
 }
@@ -195,6 +200,11 @@ if (SELFTEST) {
   const regressedBoard = board.replace("| **FIXED (#6912):** `WAVE-A-GUARD-RED-SWEEP-143`", "| **CLAIMING:** `WAVE-A-GUARD-RED-SWEEP-143`");
   if (!collectStaleClaimProblems(regressedBoard).some((problem) => problem.includes("WAVE-A-GUARD-RED-SWEEP-143"))) {
     console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — reopened merged claim escaped");
+    process.exit(1);
+  }
+  const duplicateClaimBoard = `${board}\n| **CLAIMING:** \`SELFTEST-DUPLICATE-CLAIM\` | x | B | Codex | x | none | CLAIMING |\n| **FIXED:** \`SELFTEST-DUPLICATE-CLAIM\` | x | B | Codex | x | #1 | FIXED |`;
+  if (!collectStaleClaimProblems(duplicateClaimBoard).some((problem) => problem.includes("SELFTEST-DUPLICATE-CLAIM"))) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — duplicate fixed/claim row escaped");
     process.exit(1);
   }
   console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, and reopened merged claim caught");
