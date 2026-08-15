@@ -55,9 +55,10 @@
  *   - `/dispatch/map?load_id=` (EntityLink kind="load_map") is a MAP VIEWPORT FOCUS, not a record
  *     address: MapView reads it as `focusLoadId` to centre the map. There is no
  *     `/dispatch/loads/:id/map` route and inventing one would be a fabricated link.
- *   - `/dispatch/factoring-queue?load_id=` (EntityLink kind="factoring_queue_load") is a QUEUE
- *     SURFACE FOCUS — the factoring queue panel, not the office load record address.
- *     Both are budgeted at SURFACE_FOCUS_BUDGET (shrink-only).
+ *   - `/dispatch/factoring-queue?load_id=` (EntityLink kind="factoring_queue_load") and
+ *     `/dispatch/in-transit-issues?load_id=` (EntityLink kind="intransit_issues_load") are QUEUE
+ *     SURFACE FOCUSES — filtered workflow lists, not the office load record address.
+ *     All three are budgeted at SURFACE_FOCUS_BUDGET (shrink-only).
  *   - `searchParams.get("load_id")` READS stay legal forever — old bookmarks and emailed board
  *     links must keep working. This guard forbids WRITING the query form, never reading it.
  *   - Channel D judges `.tsx` only. `pages/reports/runners/runner-config.ts` declares column DATA
@@ -104,9 +105,10 @@ const PORTAL_CANONICAL_PATH = "/portal/loads/";
  * Shrink-only: never raise to admit `/dispatch?load_id=` board bookmarks.
  *   1. EntityLink kind="load_map" → /dispatch/map?load_id=
  *   2. EntityLink kind="factoring_queue_load" → /dispatch/factoring-queue?load_id=
+ *   3. EntityLink kind="intransit_issues_load" → /dispatch/in-transit-issues?load_id=
  */
-const SURFACE_FOCUS_BUDGET = 2;
-const SURFACE_FOCUS_PATHS = ["/dispatch/map", "/dispatch/factoring-queue"];
+const SURFACE_FOCUS_BUDGET = 3;
+const SURFACE_FOCUS_PATHS = ["/dispatch/map", "/dispatch/factoring-queue", "/dispatch/in-transit-issues"];
 
 // ---------------------------------------------------------------------------------------------
 // Source scanning
@@ -407,7 +409,7 @@ export function contractErrors(src) {
   if (surfaceFocus.length > SURFACE_FOCUS_BUDGET) {
     errors.push(
       `surface-focus \`?load_id=\` budget exceeded: ${surfaceFocus.length} > ${SURFACE_FOCUS_BUDGET} ` +
-        `(${surfaceFocus.map((h) => `${h.file}:${h.line}`).join(", ")}) — map/factoring-queue ` +
+        `(${surfaceFocus.map((h) => `${h.file}:${h.line}`).join(", ")}) — map/factoring/in-transit ` +
         "exemptions are shrink-only and must never absorb a board bookmark"
     );
   }
@@ -450,7 +452,7 @@ export function Manifest() {
 `;
 
 const GOOD_ENTITY_LINK = `
-export type EntityKind = "load" | "bill" | "driver" | "load_map" | "factoring_queue_load";
+export type EntityKind = "load" | "bill" | "driver" | "load_map" | "factoring_queue_load" | "intransit_issues_load";
 export function resolveEntityRoute(kind, id) {
   switch (kind) {
     case "load":
@@ -459,6 +461,8 @@ export function resolveEntityRoute(kind, id) {
       return \`/dispatch/map?load_id=\${id}\`;
     case "factoring_queue_load":
       return \`/dispatch/factoring-queue?load_id=\${id}\`;
+    case "intransit_issues_load":
+      return \`/dispatch/in-transit-issues?load_id=\${id}\`;
     case "bill":
       return \`/accounting/bills/\${id}\`;
     default:
@@ -575,7 +579,7 @@ function selftestMutations() {
   M.push([
     "surface-focus budget breached by an extra writer",
     withFile(`${SRC}/pages/Y.tsx`, "<Link to={`/dispatch/map?load_id=${id}`}>map</Link>"),
-    /surface-focus `\?load_id=` budget exceeded: 3 > 2/,
+    /surface-focus `\?load_id=` budget exceeded: 4 > 3/,
   ]);
 
   // ---- channel B ----
@@ -743,8 +747,8 @@ function selftest() {
   ]) {
     if (claimed.includes(mustNot)) failures.push(`channel A over-claimed: ${mustNot}`);
   }
-  if (navs.filter((h) => h.surfaceFocus).length !== 2) {
-    failures.push("channel A failed to classify map + factoring-queue writers as surface-focus exemptions");
+  if (navs.filter((h) => h.surfaceFocus).length !== 3) {
+    failures.push("channel A failed to classify map + factoring-queue + in-transit writers as surface-focus exemptions");
   }
 
   const cols = scanLoadColumns(good.files);
