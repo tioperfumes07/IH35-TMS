@@ -3,6 +3,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import {
   FINANCE_HUB_LOAN_WIZARD_FLAG,
   previewLoanWizard,
@@ -149,6 +150,23 @@ export function LoanWizardPage() {
     </label>
   );
 
+  // ACCT-F5314: dollar fields go through the shared MoneyInput seam (not the generic `field()`
+  // helper above, whose value={form[key]} binding is invisible to verify-money-fields-use-moneyinput
+  // — the field name only ever appears as a runtime key, never as source text). DOLLARS mode: the
+  // form keeps storing a plain string, unchanged submit contract (toCents(form.key) on Preview).
+  const moneyField = (label: string, key: keyof typeof form) => (
+    <label className="block">
+      <span className="text-xs font-medium text-slate-600">{label}</span>
+      <div className="mt-1">
+        <MoneyInput
+          valueDollars={form[key] === "" ? null : Number(form[key])}
+          onChangeDollars={(dollars) => setForm((f) => ({ ...f, [key]: dollars == null ? "" : String(dollars) }))}
+          ariaLabel={label}
+        />
+      </div>
+    </label>
+  );
+
   return (
     <div className="p-6">
       <FinanceModuleTabs />
@@ -165,15 +183,15 @@ export function LoanWizardPage() {
               <div className="grid grid-cols-2 gap-3">
                 {field("Asset name", "assetName", "text", "Peterbilt 579")}
                 {field("VIN / serial", "vin")}
-                {field("Purchase price ($)", "purchasePrice", "number")}
-                {field("Down payment ($)", "downPayment", "number")}
-                {field("Loan amount ($)", "loanAmount", "number")}
+                {moneyField("Purchase price ($)", "purchasePrice")}
+                {moneyField("Down payment ($)", "downPayment")}
+                {moneyField("Loan amount ($)", "loanAmount")}
                 {field("Annual rate (%)", "annualRatePct", "number")}
                 {field("Term (months)", "termMonths", "number")}
                 {field("First payment date", "firstPaymentDate", "date")}
                 {field("Lender", "lender", "text", "Commercial Credit Group")}
                 {field("Useful life (months)", "usefulLifeMonths", "number")}
-                {field("Salvage value ($)", "salvageValue", "number")}
+                {moneyField("Salvage value ($)", "salvageValue")}
               </div>
               <button
                 onClick={onPreview}

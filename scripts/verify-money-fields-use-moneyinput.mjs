@@ -19,6 +19,17 @@
  * NOTE: a misleading placeholder must NOT cause a false-NEGATIVE. The Internal Fines amount had
  * placeholder "Show 25" yet was the fine amount — so detection keys on the value BINDING, never the
  * placeholder text, for the money signal.
+ *
+ * ACCT-F5314 (2026-08-15): a SECOND, distinct false-negative class — a generic per-page `field(label,
+ * key, type)` helper (LoanWizardPage, CalculatorPage, AmortizationPage) renders `value={form[key]}`.
+ * The scanner above is binding-based and `form[key]` is a runtime lookup, not a `*Cents`/`Amount`/
+ * `*Price`-shaped literal — so the money signal invisible to MONEY_VALUE_RE, no matter how the field
+ * was rendered. All seven affected dollar fields (Purchase price/Down payment/Loan amount/Salvage
+ * value on the Loan Wizard, Price/Down payment on the Calculator, Principal on Amortization) DID carry
+ * a visible signal, just not on the `<input>` tag: their call-site LABEL literally says "($)". This
+ * second pass catches that shape product-wide — any `field("...($)...", ...)` (or a bare "$" in the
+ * label) call that is not the money-safe `moneyField(...)` helper — so a future page cannot reintroduce
+ * the exact same helper-hides-the-binding bug under a new file name.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -62,38 +73,135 @@ function walk(dir, out = []) {
   return out;
 }
 
-const offenders = [];
-for (const file of walk(ROOT)) {
-  const src = readFileSync(file, "utf8");
-  const lines = src.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    if (!/<input\b/.test(lines[i])) continue;
-    let tag = lines[i];
-    let j = i;
-    while (j < lines.length && !/\/>|><\/input>|>\s*$/.test(tag) && j - i < 14) {
-      j++;
-      tag += "\n" + (lines[j] ?? "");
+export function findRawInputOffenders(files, readFile = readFileSync) {
+  const offenders = [];
+  for (const file of files) {
+    const src = readFile(file, "utf8");
+    const lines = src.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      if (!/<input\b/.test(lines[i])) continue;
+      let tag = lines[i];
+      let j = i;
+      while (j < lines.length && !/\/>|><\/input>|>\s*$/.test(tag) && j - i < 14) {
+        j++;
+        tag += "\n" + (lines[j] ?? "");
+      }
+      const typeMatch = tag.match(/type=["'](\w+)["']/);
+      const inputType = typeMatch ? typeMatch[1] : "text";
+      if (["date", "time", "datetime-local", "checkbox", "radio", "hidden", "file", "email", "tel", "url", "password", "color", "range", "search", "month", "week"].includes(inputType)) continue;
+      if (EXCLUDE_RE.test(tag)) continue;
+      const moneyBound = MONEY_VALUE_RE.test(tag) || MONEY_PLACEHOLDER_RE.test(tag);
+      if (!moneyBound) continue;
+      if (NON_MONEY_RE.test(tag)) continue;
+      const rel = file.replace(process.cwd() + "/", "");
+      if (ALLOWLIST.has(rel)) continue; // tracked, intentionally-deferred (see ALLOWLIST notes)
+      offenders.push({ file: rel, line: i + 1, snippet: lines[i].trim().slice(0, 110) });
     }
-    const typeMatch = tag.match(/type=["'](\w+)["']/);
-    const inputType = typeMatch ? typeMatch[1] : "text";
-    if (["date", "time", "datetime-local", "checkbox", "radio", "hidden", "file", "email", "tel", "url", "password", "color", "range", "search", "month", "week"].includes(inputType)) continue;
-    if (EXCLUDE_RE.test(tag)) continue;
-    const moneyBound = MONEY_VALUE_RE.test(tag) || MONEY_PLACEHOLDER_RE.test(tag);
-    if (!moneyBound) continue;
-    if (NON_MONEY_RE.test(tag)) continue;
-    const rel = file.replace(process.cwd() + "/", "");
-    if (ALLOWLIST.has(rel)) continue; // tracked, intentionally-deferred (see ALLOWLIST notes)
-    offenders.push({ file: rel, line: i + 1, snippet: lines[i].trim().slice(0, 110) });
   }
+  return offenders;
 }
 
+// ACCT-F5314 — a generic `field(label, key, type)` helper call whose LABEL literally says it is a
+// dollar amount ("($)" or a bare "$"), but whose call name is not the money-safe `moneyField(`. The
+// negative lookbehind requires the call name to be exactly `field(`, not a suffix like `moneyField(`.
+const HELPER_DOLLAR_FIELD_RE = /(?<![A-Za-z])field\(\s*(["'])((?:(?!\1).)*\$[^"']*)\1/g;
+
+export function findHelperGeneratedDollarFieldOffenders(files, readFile = readFileSync) {
+  const offenders = [];
+  for (const file of files) {
+    const src = readFile(file, "utf8");
+    const lines = src.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      HELPER_DOLLAR_FIELD_RE.lastIndex = 0;
+      const match = HELPER_DOLLAR_FIELD_RE.exec(lines[i]);
+      if (!match) continue;
+      const rel = file.replace(process.cwd() + "/", "");
+      if (ALLOWLIST.has(rel)) continue;
+      offenders.push({ file: rel, line: i + 1, snippet: lines[i].trim().slice(0, 110) });
+    }
+  }
+  return offenders;
+}
+
+function selftest() {
+  const fixtures = {
+    "apps/frontend/src/pages/example/GoodPage.tsx": `
+      const moneyField = (label, key) => <MoneyInput valueDollars={form[key]} ariaLabel={label} />;
+      {moneyField("Purchase price ($)", "purchasePrice")}
+      {field("Term (months)", "termMonths", "number")}
+    `,
+    "apps/frontend/src/pages/example/BadRawInputPage.tsx": `
+      <input value={amountCents} onChange={set("amountCents")} />
+    `,
+    "apps/frontend/src/pages/example/BadHelperPage.tsx": `
+      {field("Purchase price ($)", "purchasePrice", "number")}
+    `,
+  };
+  const files = Object.keys(fixtures);
+  const readFile = (f) => fixtures[f];
+
+  const rawGood = findRawInputOffenders(files, readFile);
+  if (rawGood.length !== 1 || !rawGood[0].file.endsWith("BadRawInputPage.tsx")) {
+    console.error("verify:money-fields-use-moneyinput SELFTEST FAIL — raw <input> detector mismatch");
+    process.exit(1);
+  }
+  const helperGood = findHelperGeneratedDollarFieldOffenders(files, readFile);
+  if (helperGood.length !== 1 || !helperGood[0].file.endsWith("BadHelperPage.tsx")) {
+    console.error("verify:money-fields-use-moneyinput SELFTEST FAIL — helper-field detector mismatch (good/bad fixtures)");
+    process.exit(1);
+  }
+
+  // Mutation-prove each of the 7 real dollar consumers this finding fixed: taking the ACTUAL current
+  // source of the 3 finance pages and reverting exactly one moneyField(...) call back to the old
+  // field(...,"number") shape must be caught, independently, for every field.
+  const REAL_FILES = [
+    "apps/frontend/src/pages/finance/LoanWizardPage.tsx",
+    "apps/frontend/src/pages/finance/CalculatorPage.tsx",
+    "apps/frontend/src/pages/finance/AmortizationPage.tsx",
+  ].map((rel) => join(process.cwd(), rel));
+  const MUTATIONS = [
+    { file: REAL_FILES[0], from: 'moneyField("Purchase price ($)", "purchasePrice")', to: 'field("Purchase price ($)", "purchasePrice", "number")' },
+    { file: REAL_FILES[0], from: 'moneyField("Down payment ($)", "downPayment")', to: 'field("Down payment ($)", "downPayment", "number")' },
+    { file: REAL_FILES[0], from: 'moneyField("Loan amount ($)", "loanAmount")', to: 'field("Loan amount ($)", "loanAmount", "number")' },
+    { file: REAL_FILES[0], from: 'moneyField("Salvage value ($)", "salvageValue")', to: 'field("Salvage value ($)", "salvageValue", "number")' },
+    { file: REAL_FILES[1], from: 'moneyField("Price ($)", "price")', to: 'field("Price ($)", "price", "number")' },
+    { file: REAL_FILES[1], from: 'moneyField("Down payment ($)", "down")', to: 'field("Down payment ($)", "down", "number")' },
+    { file: REAL_FILES[2], from: 'moneyField("Principal ($)", "principal")', to: 'field("Principal ($)", "principal", "number")' },
+  ];
+  for (const [i, mutation] of MUTATIONS.entries()) {
+    const realSrc = readFileSync(mutation.file, "utf8");
+    if (!realSrc.includes(mutation.from)) {
+      console.error(`verify:money-fields-use-moneyinput SELFTEST FAIL — mutation ${i} anchor not found in ${mutation.file}: ${mutation.from}`);
+      process.exit(1);
+    }
+    const mutatedSrc = realSrc.replace(mutation.from, mutation.to);
+    const mutatedRead = (f) => (f === mutation.file ? mutatedSrc : readFileSync(f, "utf8"));
+    const found = findHelperGeneratedDollarFieldOffenders([mutation.file], mutatedRead);
+    if (found.length === 0) {
+      console.error(`verify:money-fields-use-moneyinput SELFTEST FAIL — mutation ${i} escaped detection: ${mutation.file} (${mutation.from})`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:money-fields-use-moneyinput SELFTEST PASS — raw-input + helper-field detectors correct; ${MUTATIONS.length}/7 real dollar-field mutations independently caught`);
+  process.exit(0);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+
+const files = walk(ROOT);
+const offenders = [
+  ...findRawInputOffenders(files),
+  ...findHelperGeneratedDollarFieldOffenders(files),
+];
+
 if (offenders.length > 0) {
-  console.error(`verify:money-fields-use-moneyinput FAIL — ${offenders.length} raw money <input>(s) must use MoneyInput:`);
+  console.error(`verify:money-fields-use-moneyinput FAIL — ${offenders.length} money field(s) must use MoneyInput:`);
   for (const o of offenders) console.error(`  ${o.file}:${o.line}  ${o.snippet}`);
   console.error("\nEvery dollar/cents entry field (modal OR inline-create row) must go through components/forms/MoneyInput:");
   console.error("  dollar-denominated column -> <MoneyInput valueDollars=.. onChangeDollars=..>");
   console.error("  *_cents column            -> <MoneyInput valueCents=.. onChangeCents=..>");
   console.error("Detection keys on the value BINDING (not placeholder) so a misleading placeholder can't hide a money field.");
+  console.error("A generic field(label, key, type) helper whose label says \"($)\" must route through a MoneyInput-backed moneyField(...) helper instead.");
   process.exit(1);
 }
 console.log("verify:money-fields-use-moneyinput PASS — no raw money <input> outside MoneyInput (modal + inline)");
