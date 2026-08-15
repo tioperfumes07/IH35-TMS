@@ -80,7 +80,7 @@ export function CashFlowPage() {
         <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/cash-flow-overview">
           Cash flow overview
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/drivers?subtab=cash_advances">
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/cash-advances">
           Cash advances
         </Link>
       </nav>
