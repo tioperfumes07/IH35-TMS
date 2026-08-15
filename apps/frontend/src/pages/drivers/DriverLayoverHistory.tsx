@@ -12,7 +12,9 @@ interface LayoverRow {
   uuid: string;
   driver_uuid: string;
   previous_load_uuid: string;
+  previous_load_number: string;
   next_load_uuid: string | null;
+  next_load_number: string | null;
   layover_started_at: string;
   layover_ended_at: string | null;
   duration_hours: number | null;
@@ -66,13 +68,13 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         key: "previous_load_uuid",
         label: "Previous load",
         sortable: true,
-        render: (row) => <EntityLink kind="load" id={row.previous_load_uuid} label={entityLabel(null, row.previous_load_uuid, "Load")} />,
+        render: (row) => <EntityLink kind="load" id={row.previous_load_uuid} label={entityLabel(row.previous_load_number, row.previous_load_uuid, "Load")} />,
       },
       {
         key: "next_load_uuid",
         label: "Next load",
         sortable: true,
-        render: (row) => <EntityLink kind="load" id={row.next_load_uuid} label={row.next_load_uuid ? entityLabel(null, row.next_load_uuid, "Load") : "—"} />,
+        render: (row) => <EntityLink kind="load" id={row.next_load_uuid} label={row.next_load_uuid ? entityLabel(row.next_load_number, row.next_load_uuid, "Load") : "—"} />,
       },
       {
         key: "layover_started_at",
