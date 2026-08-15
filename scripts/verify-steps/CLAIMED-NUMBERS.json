@@ -890,6 +890,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-accounting-modal-create-vendor-honesty"
   },
+  "3332": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-surface-bar-modal-inventory"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
