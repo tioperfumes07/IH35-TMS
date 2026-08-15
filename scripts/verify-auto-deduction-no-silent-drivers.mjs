@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
  * AutoDeductionPolicies — no silent listDrivers(limit:200) name map; EntityLink resolves labels.
+ * LST-F5184 — list reverse filter is EntityPicker + URL sync (create form keeps DriverPickerWithCreate).
  * Cursor even claim: 2138.
+ *
+ * @matrix-built {"modules":["drivers"],"cols":["picker_law","reverse_link","connectivity"],"leafRe":"^drivers\\.tab\\.auto_deductions$","task":"LST-F5184-auto-deduction-driver-filter","vertical":"column-wave"}
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -34,6 +37,16 @@ export function collectProblems(root = ROOT) {
   }
   if (!/EntityLink/.test(code) || !/kind=["']driver["']/.test(code)) {
     problems.push(`${FILE}: list must EntityLink kind=driver (no capped name map)`);
+  }
+  // LST-F5184 — reverse list filter
+  if (
+    !/dataTestId="auto-deduction-policies-filter-driver"/.test(src) ||
+    !/allowCreate=\{false\}/.test(src) ||
+    !/searchParams\.get\("driver_id"\)/.test(src) ||
+    !/setSearchParams/.test(src) ||
+    !/EntityPicker/.test(src)
+  ) {
+    problems.push(`${FILE}: must render EntityPicker driver filter (allowCreate=false) synced to ?driver_id=`);
   }
   return problems;
 }
