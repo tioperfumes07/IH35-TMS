@@ -70,7 +70,7 @@ export function ExhibitsViewer() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-lg font-semibold text-slate-900">Form 425C Exhibits A–F</h1>
-          <p className="text-sm text-slate-600">Auto-build court-ready supporting exhibits for TRANSP monthly DIP filings.</p>
+          <p className="text-sm text-slate-600">Auto-build court-ready supporting exhibits for the selected operating company.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#1f2a44]">
           <Link to="/accounting/reconciliation" className="hover:underline">Bank reconciliation</Link>
