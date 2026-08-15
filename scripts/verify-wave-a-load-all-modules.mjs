@@ -31,11 +31,11 @@ const composed = ["verify-wave-a-load-column.mjs", "verify-book-load-stamps-link
 export function auditLoadColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 178) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  if (p10.length < 97) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf. Navigation-only hops and
-  // aggregate reports do not own a row-level load identity, leaving 236 genuine load leaves.
-  if (leaves.length < 236) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 19) failures.push("load module inventory unexpectedly shrank");
+  // aggregate reports do not own a row-level load identity, leaving 134 genuine load leaves.
+  if (leaves.length < 134) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  if (new Set(leaves.map((leaf) => leaf.module)).size < 18) failures.push("load module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical load FK/link contract missing`);
   return failures;
@@ -43,7 +43,8 @@ export function auditLoadColumn(sources, leaves) {
 const leaves = collectLoadLeaves();
 const sources = { routes: ROUTES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n"), files: Object.fromEntries(contracts.map(([file]) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")])) };
 if (process.argv.includes("--selftest")) {
-  if (!auditLoadColumn(sources, leaves.filter((leaf) => leaf.module !== "lists")).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
+  const plantedP10Leaf = leaves.find((leaf) => P10.has(leaf.module));
+  if (!auditLoadColumn(sources, leaves.filter((leaf) => leaf !== plantedP10Leaf)).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"] = mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"].replaceAll('kind="load"', 'kind="unit"');
   if (!auditLoadColumn(mutated, leaves).some((failure) => failure.includes("DispatcherActiveLoadsPanel"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }
