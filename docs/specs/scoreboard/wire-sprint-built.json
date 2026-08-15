@@ -2536,6 +2536,14 @@
       "modules": ["system"],
       "cols": ["reverse_link"],
       "leafRe": "^audit\\.trail$"
+    },
+    {
+      "task": "LINK-F5170-CUSTOMER-PICKER-CANONICAL-LABELS",
+      "pr": "this PR",
+      "guard": "scripts/verify-customer-picker-canonical-labels.mjs",
+      "modules": ["legal", "dispatch", "docs", "safety"],
+      "cols": ["customer", "connectivity"],
+      "leafRe": "^(legal\\.(modal|parity)\\.unified_contract_creator|settings\\.notify|docs\\.modal\\.upload|complaints\\.list)$"
     }
   ]
 }

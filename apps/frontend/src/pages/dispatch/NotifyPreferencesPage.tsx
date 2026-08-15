@@ -183,8 +183,8 @@ export function NotifyPreferencesPage() {
     () =>
       (customersQuery.data?.customers ?? []).map((c) => ({
         value: c.id,
-        label: c.name ?? c.id,
-        type: c.customer_code ?? undefined,
+        label: entityLabel(c.name, c.id, "Customer"),
+        type: c.customer_code ?? c.customer_type ?? "Customer",
       })),
     [customersQuery.data?.customers]
   );
