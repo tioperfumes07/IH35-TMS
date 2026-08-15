@@ -18,6 +18,7 @@ function failures(source = files) {
     ["Form 2290 company/unit filter", source.formRoutes.includes("filingListQuery.safeParse") && source.formRoutes.includes("v.operating_company_id = compliance.form_2290_filings.operating_company_id") && source.formRoutes.includes("v.vehicle_id = $2::uuid")],
     ["unit profile reverse section", source.profile.includes("<UnitTaxFilingsReverseSection operatingCompanyId={companyId} unitId={id} />")],
     ["property-tax list and detail drills", source.section.includes('kind="property_tax_unit"') && source.section.includes("id={unitId}") && source.section.includes('kind="property_tax_rendition"') && source.section.includes("id={rendition.id}") && source.propertyPage.includes('searchParams.get("unit_id")') && source.propertyPage.includes('kind="property_tax_rendition"')],
+    ["property-tax EntityPicker unit filter", source.propertyPage.includes('dataTestId="property-tax-filter-unit"') && source.propertyPage.includes('kind="unit"') && source.propertyPage.includes("allowCreate={false}") && source.propertyPage.includes("effectiveUnitId")],
     ["Form 2290 exact filing drill", source.section.includes('kind="form_2290_filing"') && source.section.includes("id={filing.id}") && source.formPage.includes('searchParams.get("filing_id")') && source.formPage.includes("String(filing.id) === filingId")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -28,6 +29,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, formRoutes: files.formRoutes.replace("v.vehicle_id = $2::uuid", "TRUE") }).includes("Form 2290 company/unit filter"),
     failures({ ...files, profile: files.profile.replace("<UnitTaxFilingsReverseSection", "<MissingTaxReverseSection") }).includes("unit profile reverse section"),
     failures({ ...files, section: files.section.replace('kind="property_tax_rendition"', 'kind="unit"') }).includes("property-tax list and detail drills"),
+    failures({ ...files, propertyPage: files.propertyPage.replace('dataTestId="property-tax-filter-unit"', 'dataTestId="broken"') }).includes("property-tax EntityPicker unit filter"),
     failures({ ...files, formPage: files.formPage.replace("String(filing.id) === filingId", "true") }).includes("Form 2290 exact filing drill"),
     failures({ ...files, section: files.section.replace('kind="form_2290_filing"', 'kind="unit"') }).includes("Form 2290 exact filing drill"),
   ];
@@ -35,7 +37,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-compliance-tax-filings-unit-reverse selftest FAIL — mutations ${checks.map((ok, index) => ok ? null : index + 1).filter(Boolean).join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-compliance-tax-filings-unit-reverse selftest PASS — 6/6 API/profile/target mutations red");
+  console.log("verify-compliance-tax-filings-unit-reverse selftest PASS — 7/7 API/profile/target mutations red");
   process.exit(0);
 }
 
