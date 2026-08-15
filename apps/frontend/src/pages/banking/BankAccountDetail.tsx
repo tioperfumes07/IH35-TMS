@@ -287,7 +287,7 @@ export function BankAccountDetailPage() {
                   <td className="py-1 pr-2 text-right">
                     <button
                       type="button"
-                      className="text-xs font-medium text-blue-700 hover:underline"
+                      className="text-xs font-medium text-slate-700 hover:underline"
                       data-testid={`bank-account-detail-reconciliation-open-${s.id}`}
                       onClick={() =>
                         navigate(`/banking/reconciliation-workspace?session_id=${s.id}&bank_account_hint=${s.bank_account_id}`)
