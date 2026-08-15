@@ -9,8 +9,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
 const PAGE = "apps/frontend/src/pages/safety/tabs/IntegrityReportsTab.tsx";
+const ROUTE = "apps/backend/src/routes/safety/integrity.ts";
+const API = "apps/frontend/src/api/safetyV64.ts";
 
-function assert(src) {
+function assert(src, route, api) {
   const problems = [];
   if (!/EntityLink/.test(src)) problems.push(`${PAGE}: must import/use EntityLink`);
   if (!/kind=\"driver\"/.test(src) || !/kind=\"unit\"/.test(src) || !/kind=\"vendor\"/.test(src)) {
@@ -19,20 +21,44 @@ function assert(src) {
   if (/String\(row\.unit_id\s*\?\?\s*row\.driver_id/.test(src)) {
     problems.push(`${PAGE}: must not stringify raw unit_id/driver_id as the Entity cell`);
   }
+  if (!/entityLabel\(row\.driver_name, driverId, "Driver"\)/.test(src) || !/entityLabel\(row\.unit_number, unitId, "Unit"\)/.test(src)) {
+    problems.push(`${PAGE}: mounted entity links must consume typed driver/unit labels`);
+  }
+  if (!/export type IntegrityReportRow/.test(api) || !/driver_name\?: string \| null/.test(api) || !/unit_number\?: string \| null/.test(api)) {
+    problems.push(`${API}: four integrity payloads must share a typed human-label contract`);
+  }
+  const driverJoins = route.match(/LEFT JOIN mdata\.drivers d ON d\.id = o\.driver_id AND d\.operating_company_id = o\.operating_company_id/g) ?? [];
+  const unitJoins = route.match(/LEFT JOIN mdata\.units u ON u\.id = o\.unit_id AND u\.operating_company_id = o\.operating_company_id/g) ?? [];
+  if (driverJoins.length !== 3 || unitJoins.length !== 2) {
+    problems.push(`${ROUTE}: every applicable outlier view must resolve labels with exact same-company joins`);
+  }
+  if ((route.match(/AS driver_name/g) ?? []).length !== 3 || (route.match(/u\.unit_number/g) ?? []).length < 2) {
+    problems.push(`${ROUTE}: applicable view projections must expose driver_name/unit_number`);
+  }
   return problems;
 }
 
 const live = readFileSync(path.join(ROOT, PAGE), "utf8");
+const liveRoute = readFileSync(path.join(ROOT, ROUTE), "utf8");
+const liveApi = readFileSync(path.join(ROOT, API), "utf8");
 if (SELFTEST) {
   const planted = live.replace(/IntegrityEntityCell[\s\S]*?function IntegrityReportsTab/, "function IntegrityReportsTab")
     .replace(/render: \(row\) => <IntegrityEntityCell row=\{row\} \/>/, 'render: (row) => String(row.unit_id ?? row.driver_id ?? row.vendor_id ?? row.subject_id ?? "—")')
     .replace(/import \{ EntityLink \}[^\n]+\n/, "");
-  const caught = assert(planted);
+  const mutations = [
+    [planted, liveRoute, liveApi],
+    [live, liveRoute.replace("d.operating_company_id = o.operating_company_id", "TRUE"), liveApi],
+    [live, liveRoute.replace("AS driver_name", "AS unresolved_driver"), liveApi],
+    [live, liveRoute, liveApi.replace("driver_name?: string | null", "driver_name?: unknown")],
+    [live.replace("row.unit_number, unitId", "null, unitId"), liveRoute, liveApi],
+  ];
+  const escaped = mutations.find(([page, route, api]) => !assert(page, route, api).length);
+  const caught = escaped ? [] : ["caught"];
   if (!caught.length) {
     console.error("SELFTEST FAIL — planted raw-UUID cell not caught");
     process.exit(1);
   }
-  const ok = assert(live);
+  const ok = assert(live, liveRoute, liveApi);
   if (ok.length) {
     console.error("SELFTEST FAIL — live unclean:\n" + ok.join("\n"));
     process.exit(1);
@@ -41,7 +67,7 @@ if (SELFTEST) {
   process.exit(0);
 }
 
-const problems = assert(live);
+const problems = assert(live, liveRoute, liveApi);
 if (problems.length) {
   console.error("verify-saf-integrity-reports-entitylink FAIL\n" + problems.map((p) => ` - ${p}`).join("\n"));
   process.exit(1);

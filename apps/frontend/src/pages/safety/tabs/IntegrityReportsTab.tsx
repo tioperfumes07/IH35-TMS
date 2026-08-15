@@ -10,6 +10,7 @@ import {
   getIntegrityObservations,
   getIntegrityWoCostOutliers,
   reviewIntegrityObservation,
+  type IntegrityReportRow,
 } from "../../../api/safetyV64";
 import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
 import { DriverVendorMappingTab } from "../integrity-reports/DriverVendorMappingTab";
@@ -19,7 +20,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 
-type IntegrityRow = Record<string, unknown> & { _rowKey: string };
+type IntegrityRow = IntegrityReportRow & { _rowKey: string };
 
 type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts" | "anomalies";
 
@@ -28,9 +29,9 @@ function IntegrityEntityCell({ row }: { row: IntegrityRow }) {
   const unitId = String(row.unit_id ?? row.subject_unit_id ?? "").trim();
   const vendorId = String(row.vendor_id ?? row.subject_vendor_id ?? "").trim();
   const links: ReactNode[] = [];
-  if (driverId) links.push(<EntityLink key="d" kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />);
-  if (unitId) links.push(<EntityLink key="u" kind="unit" id={unitId} label={entityLabel(null, unitId, "Unit")} />);
-  if (vendorId) links.push(<EntityLink key="v" kind="vendor" id={vendorId} label={entityLabel(null, vendorId, "Vendor")} />);
+  if (driverId) links.push(<EntityLink key="d" kind="driver" id={driverId} label={entityLabel(row.driver_name, driverId, "Driver")} />);
+  if (unitId) links.push(<EntityLink key="u" kind="unit" id={unitId} label={entityLabel(row.unit_number, unitId, "Unit")} />);
+  if (vendorId) links.push(<EntityLink key="v" kind="vendor" id={vendorId} label={entityLabel(row.vendor_name, vendorId, "Vendor")} />);
   if (!links.length) {
     return <>{entityLabel(null, row.subject_id, "Record") ?? "—"}</>;
   }
