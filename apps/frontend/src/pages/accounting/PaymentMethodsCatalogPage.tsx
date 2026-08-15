@@ -5,6 +5,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Button } from "../../components/Button";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Modal } from "../../components/Modal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
@@ -50,10 +51,11 @@ export function PaymentMethodsCatalogPage() {
     enabled: Boolean(companyId),
   });
 
+  // ACCT-F3530: load CoA for list GL labels + create/edit pickers (always on catalog company).
   const accountsQuery = useQuery({
     queryKey: ["catalogs", "accounts", "for-payment-methods-catalog", companyId],
     queryFn: () => getCoaAccounts(companyId),
-    enabled: (createOpen || Boolean(editId)) && Boolean(companyId),
+    enabled: Boolean(companyId),
   });
   const accountOptions = useMemo(
     () => (accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name, type: a.account_type ?? undefined })),
@@ -66,6 +68,33 @@ export function PaymentMethodsCatalogPage() {
   }, [accountsQuery.data]);
 
   const rows = methodsQuery.data ?? [];
+
+  const columns = useMemo<ParityColumn<PaymentMethod>[]>(
+    () => [
+      { key: "sort_order", label: "Sort", sortable: true, render: (row) => <span className="text-xs text-gray-600">{row.sort_order}</span> },
+      { key: "name", label: "Name", sortable: true, render: (row) => <span className="font-medium text-gray-900">{row.name}</span> },
+      {
+        key: "gl_account_id",
+        label: "GL account",
+        render: (row) => (
+          <span className="text-xs text-gray-600">
+            {row.gl_account_id ? entityLabel(accountNameById.get(row.gl_account_id), row.gl_account_id, "Account") : "Unassigned"}
+          </span>
+        ),
+      },
+      {
+        key: "is_active",
+        label: "Status",
+        render: (row) =>
+          row.is_active ? (
+            <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Active</span>
+          ) : (
+            <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-900">Inactive / Voided</span>
+          ),
+      },
+    ],
+    [accountNameById],
+  );
 
   const invalidate = () => void qc.invalidateQueries({ queryKey: ["catalogs", "payment-methods", companyId] });
 
@@ -139,72 +168,45 @@ export function PaymentMethodsCatalogPage() {
         Show inactive / voided
       </label>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Sort</th>
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">GL account</th>
-              <th className="px-3 py-2">Status</th>
-              {canWrite ? <th className="px-3 py-2">Actions</th> : null}
-            </tr>
-          </thead>
-          <tbody>
-            {methodsQuery.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-xs text-gray-500" colSpan={5}>Loading…</td>
-              </tr>
-            ) : null}
-            {!methodsQuery.isLoading && rows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-3 text-xs text-gray-500" colSpan={5}>No payment methods yet.</td>
-              </tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-3 py-2 text-xs text-gray-600">{row.sort_order}</td>
-                <td className="px-3 py-2 font-medium text-gray-900">{row.name}</td>
-                <td className="px-3 py-2 text-xs text-gray-600">
-                  {row.gl_account_id ? entityLabel(accountNameById.get(row.gl_account_id), row.gl_account_id, "Account") : "Unassigned"}
-                </td>
-                <td className="px-3 py-2">
-                  {row.is_active ? (
-                    <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Active</span>
-                  ) : (
-                    <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-900">Inactive / Voided</span>
-                  )}
-                </td>
-                {canWrite ? (
-                  <td className="space-x-2 px-3 py-2 whitespace-nowrap">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        setEditId(row.id);
-                        setEditForm({ name: row.name, gl_account_id: row.gl_account_id, sort_order: row.sort_order });
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={setActiveMut.isPending}
-                      onClick={() => setActiveMut.mutate({ id: row.id, is_active: !row.is_active })}
-                    >
-                      {row.is_active ? "Set inactive" : "Set active"}
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => setVoidTarget(row)}>
-                      Void
-                    </Button>
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* ACCT-F3530: ParityTable mounts Search+Range+gear (raw HTML table had no surface bar). */}
+      <ParityTable<PaymentMethod>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={methodsQuery.isLoading}
+        emptyText="No payment methods yet."
+        storageKey="payment-methods-catalog"
+        exportFilename="payment-methods-catalog"
+        rowActions={
+          canWrite
+            ? (row) => (
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setEditId(row.id);
+                      setEditForm({ name: row.name, gl_account_id: row.gl_account_id, sort_order: row.sort_order });
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={setActiveMut.isPending}
+                    onClick={() => setActiveMut.mutate({ id: row.id, is_active: !row.is_active })}
+                  >
+                    {row.is_active ? "Set inactive" : "Set active"}
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => setVoidTarget(row)}>
+                    Void
+                  </Button>
+                </div>
+              )
+            : undefined
+        }
+      />
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
         <div className="space-y-3 text-sm">
