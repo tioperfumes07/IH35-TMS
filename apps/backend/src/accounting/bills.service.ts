@@ -732,6 +732,62 @@ export async function listBillsByVendor(
   return rows;
 }
 
+/**
+ * REVERSE-SECTIONS-SILENT-LIST-CAPS: shared WHERE-clause builder for the "all bills" (no vendor
+ * identity) filter set, used by BOTH listAllBillsForCompany's row query and
+ * countAllBillsForCompany's total query — extracted so the two can never drift apart (a filter
+ * added to one and not the other would make the total lie about what the list actually shows).
+ * Excludes limit/offset — callers append those to `values` themselves after this returns.
+ */
+function buildAllBillsWhereClause(
+  operatingCompanyId: string,
+  options: Omit<ListBillsOptions, "limit" | "offset">
+): { where: string[]; values: unknown[] } {
+  const where: string[] = ["b.operating_company_id = $1::uuid"];
+  const values: unknown[] = [operatingCompanyId];
+  if (options.fromDate) {
+    values.push(options.fromDate);
+    where.push(`b.bill_date >= $${values.length}::date`);
+  }
+  if (options.toDate) {
+    values.push(options.toDate);
+    where.push(`b.bill_date <= $${values.length}::date`);
+  }
+  if (options.status) {
+    if (options.status === "open") where.push("b.status IN ('open','unpaid')");
+    if (options.status === "partial") where.push("b.status IN ('partial','partially_paid')");
+    if (options.status === "paid") where.push("b.status = 'paid'");
+    if (options.status === "voided") where.push("(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)");
+    if (options.status !== "voided") where.push("b.revoked_at IS NULL");
+  } else {
+    where.push("b.revoked_at IS NULL");
+  }
+  if (options.hasBalance) {
+    // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
+    where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
+    where.push("b.status NOT IN ('void', 'voided')");
+  }
+  if (options.insuranceClaimId) {
+    values.push(options.insuranceClaimId);
+    where.push(`b.insurance_claim_id = $${values.length}::uuid`);
+  }
+  if (options.unitId) {
+    values.push(options.unitId);
+    where.push(`b.unit_id = $${values.length}::uuid`);
+  }
+  if (options.loadId) {
+    values.push(options.loadId);
+    where.push(
+      `EXISTS (
+         SELECT 1 FROM accounting.bill_lines bl
+          WHERE bl.bill_id = b.id
+            AND bl.load_id = $${values.length}::uuid
+       )`
+    );
+  }
+  return { where, values };
+}
+
 export async function listAllBillsForCompany(
   userId: string,
   operatingCompanyId: string,
@@ -739,48 +795,7 @@ export async function listAllBillsForCompany(
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = ["b.operating_company_id = $1::uuid"];
-    const values: unknown[] = [operatingCompanyId];
-    if (options.fromDate) {
-      values.push(options.fromDate);
-      where.push(`b.bill_date >= $${values.length}::date`);
-    }
-    if (options.toDate) {
-      values.push(options.toDate);
-      where.push(`b.bill_date <= $${values.length}::date`);
-    }
-    if (options.status) {
-      if (options.status === "open") where.push("b.status IN ('open','unpaid')");
-      if (options.status === "partial") where.push("b.status IN ('partial','partially_paid')");
-      if (options.status === "paid") where.push("b.status = 'paid'");
-      if (options.status === "voided") where.push("(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)");
-      if (options.status !== "voided") where.push("b.revoked_at IS NULL");
-    } else {
-      where.push("b.revoked_at IS NULL");
-    }
-    if (options.hasBalance) {
-      // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
-      where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
-      where.push("b.status NOT IN ('void', 'voided')");
-    }
-    if (options.insuranceClaimId) {
-      values.push(options.insuranceClaimId);
-      where.push(`b.insurance_claim_id = $${values.length}::uuid`);
-    }
-    if (options.unitId) {
-      values.push(options.unitId);
-      where.push(`b.unit_id = $${values.length}::uuid`);
-    }
-    if (options.loadId) {
-      values.push(options.loadId);
-      where.push(
-        `EXISTS (
-           SELECT 1 FROM accounting.bill_lines bl
-            WHERE bl.bill_id = b.id
-              AND bl.load_id = $${values.length}::uuid
-         )`
-      );
-    }
+    const { where, values } = buildAllBillsWhereClause(operatingCompanyId, options);
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
@@ -804,6 +819,33 @@ export async function listAllBillsForCompany(
     vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
     balance_cents: computeBillBalanceCents(r),
   }));
+}
+
+/**
+ * REVERSE-SECTIONS-SILENT-LIST-CAPS: honest total for the "all bills" (no vendor identity) filter
+ * set — same shape as invoices.routes.ts's inline COUNT-before-LIMIT pattern, extracted here so
+ * bills.routes.ts can surface it without listAllBillsForCompany's array return changing (a real
+ * Postgres integration test — bills-reconciliation-status.db.test.ts — depends on listBills()
+ * resolving to a plain array, so that contract is left untouched; this is purely additive).
+ */
+export async function countAllBillsForCompany(
+  userId: string,
+  operatingCompanyId: string,
+  options: Omit<ListBillsOptions, "limit" | "offset">
+): Promise<number> {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const { where, values } = buildAllBillsWhereClause(operatingCompanyId, options);
+    const res = await client.query(
+      `
+        SELECT COUNT(*)::int AS total
+        FROM accounting.bills b
+        WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
+      `,
+      values
+    );
+    return Number(res.rows[0]?.total ?? 0);
+  });
 }
 
 export async function listBillPaymentsForBill(userId: string, operatingCompanyId: string, billId: string) {
