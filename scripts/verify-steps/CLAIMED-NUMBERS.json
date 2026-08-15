@@ -1287,6 +1287,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3490": {
+    "purpose": "verify-driver-teams-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
