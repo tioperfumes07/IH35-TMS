@@ -69,8 +69,14 @@ for (const marker of REQUIRED_GENERIC_MARKERS) {
   }
 }
 
-if (!catalogIndex.includes("GenericCatalogPage") && !catalogIndex.includes("catalogNameToRoutePath")) {
-  fail("CatalogIndex.tsx must link factory catalogs via catalogNameToRoutePath");
+if (
+  !catalogIndex.includes("GenericCatalogPage") &&
+  !catalogIndex.includes("catalogNameToRoutePath") &&
+  !catalogIndex.includes("catalogIndexOpenPath")
+) {
+  fail(
+    "CatalogIndex.tsx must link factory catalogs via catalogIndexOpenPath (or catalogNameToRoutePath / GenericCatalogPage)"
+  );
 }
 
 for (const catalog of FACTORY_CATALOGS) {
