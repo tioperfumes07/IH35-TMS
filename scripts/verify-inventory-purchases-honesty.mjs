@@ -2,8 +2,10 @@
 /**
  * verify-inventory-purchases-honesty.mjs
  *
- * 0441-mod13-inventory-purchases-not-built — Purchase History must not twin Parts & Stock.
- * Until purchase-event SoR ships: honest empty state only (no listPartsInventory / PartsInventoryTable).
+ * 0441-mod13-inventory-purchases-not-built (superseded 2026-08-15 by
+ * INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT, owner-approved) — Purchase History must not twin Parts &
+ * Stock, and must be backed by the real append-only maintenance.parts_purchases SoR (not a stock
+ * projection, not a hand-rolled fake list).
  *
  * Self-test: node scripts/verify-inventory-purchases-honesty.mjs --selftest
  */
@@ -27,8 +29,14 @@ export function computeFailures(source) {
   if (/<PartsInventoryTable\b/.test(source)) {
     errors.push("InventoryPurchasesPage must not render PartsInventoryTable (stock twin)");
   }
-  if (!/inventory-purchases-honest-empty|not yet tracked/i.test(source)) {
-    errors.push("InventoryPurchasesPage must expose an honest empty / not-yet-tracked state");
+  if (!/listPartsPurchases/.test(source)) {
+    errors.push("InventoryPurchasesPage must load the real purchase-event SoR via listPartsPurchases (maintenance.parts_purchases)");
+  }
+  if (!/<ParityTable\b/.test(source)) {
+    errors.push("InventoryPurchasesPage must render the real purchase list via ParityTable");
+  }
+  if (!/emptyText=/.test(source)) {
+    errors.push("InventoryPurchasesPage must expose an honest empty state (ParityTable emptyText) for the zero-purchases case");
   }
   if (!/InventoryPurchasesPage/.test(source)) {
     errors.push("InventoryPurchasesPage export must remain (never delete the door)");
@@ -38,8 +46,9 @@ export function computeFailures(source) {
 
 function selftest() {
   const good = `
+    import { listPartsPurchases } from "../../api/maintenance";
     export function InventoryPurchasesPage() {
-      return <section data-testid="inventory-purchases-honest-empty">not yet tracked</section>;
+      return <ParityTable rows={rows} emptyText="No purchases recorded yet." />;
     }
   `;
   const bad = `
@@ -48,7 +57,7 @@ function selftest() {
     export function InventoryPurchasesPage() { return <PartsInventoryTable />; }
   `;
   const cases = [
-    { name: "honest empty", input: good, expectPass: true },
+    { name: "real SoR list", input: good, expectPass: true },
     { name: "stock twin", input: bad, expectPass: false },
   ];
   let ok = true;
@@ -74,7 +83,7 @@ function run() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — Purchase History is honest (no stock twin)`);
+  console.log(`[${LABEL}] OK — Purchase History uses the real append-only SoR (no stock twin)`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
