@@ -2841,5 +2841,10 @@
     "claimed_at": "2026-08-15",
     "claimed_by": "cc-1",
     "purpose": "verify-invoice-required-honest"
+  },
+  "3378": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-legal-contract-customer-picker-label"
   }
 }
