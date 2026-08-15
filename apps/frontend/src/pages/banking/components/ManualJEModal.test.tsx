@@ -22,11 +22,18 @@ function wrap(ui: ReactElement) {
   );
 }
 
-function accountSelectElements() {
-  return screen.getAllByRole("combobox").filter((el) => {
-    const sel = el as HTMLSelectElement;
-    return sel.options[0]?.textContent?.trim() === "Account";
-  });
+// ManualJEModal.tsx's account field is the shared Combobox component (typeahead input +
+// findByRole("option")), not a native <select> -- account_number/account_name.map(a => ({
+// value: a.id, label: a.account_name })) means the option label is the plain account name
+// ("Cash", "A/P"), no number prefix.
+function accountComboboxes() {
+  return screen.getAllByPlaceholderText("Account");
+}
+
+async function selectAccount(user: ReturnType<typeof userEvent.setup>, lineIndex: number, optionName: RegExp | string) {
+  const comboboxes = accountComboboxes();
+  await user.click(comboboxes[lineIndex]);
+  await user.click(await screen.findByRole("option", { name: optionName }));
 }
 
 describe("ManualJEModal", () => {
@@ -66,16 +73,15 @@ describe("ManualJEModal", () => {
     await waitFor(() => expect(accountingApi.listCoaAccountsForJe).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByRole("button", { name: /Continue to Confirm/i })).toBeDisabled());
 
-    await waitFor(() => expect(accountSelectElements().length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(accountComboboxes().length).toBeGreaterThanOrEqual(2));
 
-    const accounts = accountSelectElements();
     const debitBoxes = screen.getAllByPlaceholderText("Debit");
     const creditBoxes = screen.getAllByPlaceholderText("Credit");
 
-    await user.selectOptions(accounts[0], "acc-cash");
+    await selectAccount(user, 0, /^Cash$/);
     await user.clear(debitBoxes[0]);
     await user.type(debitBoxes[0], "100");
-    await user.selectOptions(accounts[1], "acc-apy");
+    await selectAccount(user, 1, /^A\/P$/);
     await user.clear(creditBoxes[1]);
     await user.type(creditBoxes[1], "100");
 
@@ -88,16 +94,15 @@ describe("ManualJEModal", () => {
     render(wrap(<ManualJEModal open operatingCompanyId={companyId} onClose={vi.fn()} onSaved={onSaved} />));
 
     await waitFor(() => expect(accountingApi.listCoaAccountsForJe).toHaveBeenCalled());
-    await waitFor(() => expect(accountSelectElements().length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(accountComboboxes().length).toBeGreaterThanOrEqual(2));
 
-    const accounts = accountSelectElements();
     const debitBoxes = screen.getAllByPlaceholderText("Debit");
     const creditBoxes = screen.getAllByPlaceholderText("Credit");
 
-    await user.selectOptions(accounts[0], "acc-cash");
+    await selectAccount(user, 0, /^Cash$/);
     await user.clear(debitBoxes[0]);
     await user.type(debitBoxes[0], "75");
-    await user.selectOptions(accounts[1], "acc-apy");
+    await selectAccount(user, 1, /^A\/P$/);
     await user.clear(creditBoxes[1]);
     await user.type(creditBoxes[1], "75");
 

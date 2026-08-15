@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { chartOfAccountsCatalogClient } from "../../../../api/catalogs-accounting";
 import { fetchAccountBalances, fetchAccountTypeCatalog } from "../../../../api/coa-list";
 import { getPlaidBankAccounts } from "../../../../api/banking";
+import { ToastProvider } from "../../../../components/Toast";
 import { ChartOfAccountsListPage } from "../ChartOfAccountsListPage";
 
 vi.mock("../../../../contexts/CompanyContext", () => ({
@@ -100,15 +101,19 @@ describe("ChartOfAccountsListPage", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ChartOfAccountsListPage />
-        </MemoryRouter>
+        <ToastProvider>
+          <MemoryRouter>
+            <ChartOfAccountsListPage />
+          </MemoryRouter>
+        </ToastProvider>
       </QueryClientProvider>
     );
 
     await waitFor(() => expect(screen.getByText("Cash Operating")).toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "Chart of Accounts" })).toBeInTheDocument();
-    expect(screen.getByText("NUMBER")).toBeInTheDocument();
+    // NUMBER is deliberately hidden by default (Owner 2026-07-23: "QBO/CoA numbers junk — hidden
+    // unless toggle ON", ChartOfAccountsListPage.tsx:114 `visible: showAccountNumbers`) — not
+    // asserted here since the default render correctly omits it.
     expect(screen.getByText("ACCOUNT TYPE")).toBeInTheDocument();
     expect(screen.getByText("DETAIL TYPE")).toBeInTheDocument();
     expect(screen.getByText("QUICKBOOKS BALANCE")).toBeInTheDocument();

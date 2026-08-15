@@ -136,7 +136,15 @@ describe("SettlementSummaryPage", () => {
     vi.spyOn(reportsApi, "getSettlementSummary").mockResolvedValue(samplePayload);
     render(wrap(<SettlementSummaryPage />));
     await waitFor(() => expect(screen.getByText("Alpha")).toBeInTheDocument());
-    await user.click(screen.getByText("Alpha"));
+    // The driver-name cell migrated to EntityLink kind="driver" (LINK-F5171-era adoption sweep),
+    // which stopPropagation()s its own click so it can navigate to the driver's general profile
+    // (/drivers/d1) without also firing the row's onRowClick. That's a real, deliberate split, not
+    // a regression: clicking the name goes to the driver, clicking anywhere else in the row goes to
+    // the settlements-scoped view this test actually exercises. Click a non-EntityLink cell instead
+    // of the driver name to drive the real remaining control.
+    const row = screen.getByText("Alpha").closest("tr");
+    if (!row) throw new Error("expected a table row for Alpha");
+    await user.click(within(row).getByText("10")); // load_count cell, plain text — not an EntityLink
     expect(mockNavigate).toHaveBeenCalledWith("/drivers/d1?tab=settlements");
   });
 });
