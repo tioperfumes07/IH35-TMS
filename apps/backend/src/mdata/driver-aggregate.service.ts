@@ -42,8 +42,12 @@ export async function buildDriverAggregate(
 
   const driverRes = await client.query(
     `
-      SELECT d.*
+      SELECT d.*,
+             NULLIF(trim(concat_ws(' ', prior.first_name, prior.last_name)), '') AS prior_driver_name
       FROM mdata.drivers d
+      LEFT JOIN mdata.drivers prior
+        ON prior.id = d.prior_driver_id
+       AND prior.operating_company_id = d.operating_company_id
       WHERE d.id = $1::uuid
         AND (
           d.operating_company_id = $2::uuid

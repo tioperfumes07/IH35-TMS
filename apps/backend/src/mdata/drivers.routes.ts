@@ -1360,6 +1360,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             status, notes, prior_driver_id, rehire_count, is_rehire,
+            (SELECT NULLIF(trim(concat_ws(' ', prior.first_name, prior.last_name)), '')
+             FROM mdata.drivers prior
+             WHERE prior.id = mdata.drivers.prior_driver_id
+               AND prior.operating_company_id = mdata.drivers.operating_company_id
+             LIMIT 1) AS prior_driver_name,
           operating_company_id,
             qbo_vendor_id, qbo_class_id,
             default_expense_account_id,

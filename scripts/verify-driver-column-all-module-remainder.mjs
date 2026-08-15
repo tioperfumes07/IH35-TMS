@@ -12,6 +12,10 @@ const FILES = {
   maintenancePage: "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx",
   maintenanceApi: "apps/frontend/src/api/maintenance.ts",
   maintenanceRoutes: "apps/backend/src/maintenance/drivers.routes.ts",
+  driverAggregate: "apps/backend/src/mdata/driver-aggregate.service.ts",
+  driverRoutes: "apps/backend/src/mdata/drivers.routes.ts",
+  driverDetail: "apps/frontend/src/pages/DriverDetail.tsx",
+  apiTypes: "apps/frontend/src/types/api.ts",
   driversMatrix: "docs/specs/scoreboard/modules/drivers.required.json",
   maintenanceMatrix: "docs/specs/scoreboard/modules/maintenance.required.json",
 };
@@ -46,6 +50,12 @@ export function verify(source) {
   need("mdataApi", "settlement_history?: DriverTeamSettlementHistory[]", "team split history labels must remain typed");
   need("driversPage", 'entityLabel(row.load_number, row.load_id, "Load")', "team drawer must consume human load numbers");
   need("driversPage", 'entityLabel(row.driver_name, row.driver_id, "Driver")', "team drawer must consume human driver names");
+  need("driverAggregate", "prior.operating_company_id = d.operating_company_id", "aggregate prior-driver label join must remain company scoped");
+  need("driverAggregate", "AS prior_driver_name", "aggregate response must resolve the prior driver name");
+  need("driverRoutes", "prior.operating_company_id = mdata.drivers.operating_company_id", "flat detail prior-driver label lookup must remain company scoped");
+  need("driverRoutes", "AS prior_driver_name", "flat detail response must resolve the prior driver name");
+  need("apiTypes", "prior_driver_name: string | null", "Driver contract must type the prior driver name");
+  need("driverDetail", 'entityLabel(driver.prior_driver_name, driver.prior_driver_id, "Driver")', "mounted rehire self-link must consume the prior driver name");
 
   need("maintenancePage", "createMaintenanceDriver(companyId, {", "maintenance creator must forward company scope to the canonical client");
   need("maintenancePage", 'queryKey: ["maintenance", "master-data", "drivers", companyId]', "maintenance creator must reload the same scoped driver roster");
@@ -78,6 +88,12 @@ if (process.argv.includes("--selftest")) {
     ["mdataApi", "settlement_history?: DriverTeamSettlementHistory[]"],
     ["driversPage", 'entityLabel(row.load_number, row.load_id, "Load")'],
     ["driversPage", 'entityLabel(row.driver_name, row.driver_id, "Driver")'],
+    ["driverAggregate", "prior.operating_company_id = d.operating_company_id"],
+    ["driverAggregate", "AS prior_driver_name"],
+    ["driverRoutes", "prior.operating_company_id = mdata.drivers.operating_company_id"],
+    ["driverRoutes", "AS prior_driver_name"],
+    ["apiTypes", "prior_driver_name: string | null"],
+    ["driverDetail", 'entityLabel(driver.prior_driver_name, driver.prior_driver_id, "Driver")'],
     ["maintenancePage", "createMaintenanceDriver(companyId, {"],
     ["maintenancePage", 'kind="driver"'],
     ["maintenanceApi", "/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],

@@ -1207,7 +1207,7 @@ export function DriverDetailPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
                 <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-sm py-2">
-                  <EntityLink kind="driver" id={driver.prior_driver_id} label={entityLabel(null, driver.prior_driver_id, "Driver")} />
+                  <EntityLink kind="driver" id={driver.prior_driver_id} label={entityLabel(driver.prior_driver_name, driver.prior_driver_id, "Driver")} />
                 </div>
               </div>
             ) : null}
