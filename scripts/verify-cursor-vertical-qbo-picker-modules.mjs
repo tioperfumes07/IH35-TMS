@@ -12,7 +12,7 @@
  * @matrix-built {"modules":["maintenance"],"cols":["picker_law"],"leafRe":"^(wo\\.|maintenance\\.(modal|drawer|parity)|parts\\.|vendors\\.|inspections\\.|fault_|tires\\.|master\\.|warranty\\.)","task":"CURSOR-VERTICAL-maintenance-picker","vertical":"column-wave"}
  *
  * Wave B — remaining Cursor-lane modules
- * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^(banking|chrome|plaid|reconciliation|settings|statement_import)(\\.|$)","task":"CURSOR-VERTICAL-banking-qbo","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^(accounts|transactions\.categorize|reconciliation|banking\.(modal|parity)\.(record_transfer|transfer|record_ccpayment|bank_transaction_split|manual_je)|banking\.(drawer|parity)\.match)$","task":"CURSOR-VERTICAL-banking-qbo","vertical":"column-wave"}
  * @matrix-built {"modules":["cash-flow"],"cols":["qbo_chrome"],"leafRe":"^(cash-flow|create)(\\.|$)","task":"CURSOR-VERTICAL-cash-flow-qbo","vertical":"column-wave"}
  * @matrix-built {"modules":["cash-flow"],"cols":["picker_law"],"leafRe":"^(create\\.|cash-flow\\.)","task":"CURSOR-VERTICAL-cash-flow-picker","vertical":"column-wave"}
  * @matrix-built {"modules":["customers"],"cols":["qbo_chrome"],"leafRe":"^(chrome|customers|detail|home|list|md)(\\.|$)","task":"CURSOR-VERTICAL-customers-qbo","vertical":"column-wave"}
