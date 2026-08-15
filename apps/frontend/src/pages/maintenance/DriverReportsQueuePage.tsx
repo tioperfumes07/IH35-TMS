@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { listDriverReports, updateDriverReportStatus, type DriverReportRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -26,19 +28,45 @@ export function DriverReportsQueuePage({
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // BANK-F5168 — visible EntityPicker (URL/prop-only filter is not reverse chrome).
+  const [driverPickerId, setDriverPickerId] = useState(filterDriverId);
+  const [loadPickerId, setLoadPickerId] = useState(filterLoadId);
+  useEffect(() => {
+    if (filterDriverId) setDriverPickerId(filterDriverId);
+  }, [filterDriverId]);
+  useEffect(() => {
+    if (filterLoadId) setLoadPickerId(filterLoadId);
+  }, [filterLoadId]);
+  const setDriverFilter = (next: string) => {
+    setDriverPickerId(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("driver_id", next);
+    else params.delete("driver_id");
+    setSearchParams(params, { replace: true });
+  };
+  const setLoadFilter = (next: string) => {
+    setLoadPickerId(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("load_id", next);
+    else params.delete("load_id");
+    setSearchParams(params, { replace: true });
+  };
+  const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
+  const effectiveLoadId = loadPickerId.trim() || filterLoadId || undefined;
   const [statusFilter, setStatusFilter] = useState<"" | DriverReportRow["status"]>("");
   const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
   const [search, setSearch] = useState("");
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
 
   const q = useQuery({
-    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter, filterDriverId, filterLoadId],
+    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter, effectiveDriverId, effectiveLoadId],
     queryFn: () =>
       listDriverReports({
         operating_company_id: operatingCompanyId,
         status: statusFilter || undefined,
-        driver_id: filterDriverId || undefined,
-        load_id: filterLoadId || undefined,
+        driver_id: effectiveDriverId,
+        load_id: effectiveLoadId,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -148,6 +176,35 @@ export function DriverReportsQueuePage({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Driver Reports Queue</h2>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-3" data-testid="driver-reports-entity-filters">
+        <label className="text-[11px] text-slate-600">
+          Driver
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
+            value={driverPickerId || null}
+            onChange={(next) => setDriverFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1"
+            dataTestId="driver-reports-filter-driver"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={operatingCompanyId}
+            value={loadPickerId || null}
+            onChange={(next) => setLoadFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="driver-reports-filter-load"
+          />
+        </label>
       </div>
 
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No driver reports found." — an outage presenting as
