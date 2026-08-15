@@ -43,6 +43,8 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // ACCT-F5035 — claim→bill reverse (create stamps insurance_claim_id; list never filtered).
   insurance_claim_id: z.string().uuid().optional(),
+  // LINK-F5171 — legal matter→bill reverse (create stamps legal_matter_id; list never filtered).
+  legal_matter_id: z.string().uuid().optional(),
   // ACCT-F5036 — unit→bill reverse (create stamps unit_id; list never filtered).
   unit_id: z.string().uuid().optional(),
   // ACCT-F5037 — load→bill reverse via accounting.bill_lines.load_id (header has no load_id).
@@ -153,6 +155,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       toDate: query.data.date_to,
       hasBalance: query.data.has_balance,
       insuranceClaimId: query.data.insurance_claim_id,
+      legalMatterId: query.data.legal_matter_id,
       unitId: query.data.unit_id,
       loadId: query.data.load_id,
     };

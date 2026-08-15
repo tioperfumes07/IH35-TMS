@@ -76,6 +76,31 @@ const CHECKS = [
     pattern: /searchParams\.get\("load_id"\)/,
   },
   {
+    name: "LINK-F5171: BillsPage reads legal_matter_id from the URL",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern: /searchParams\.get\("legal_matter_id"\)/,
+  },
+  {
+    name: "LINK-F5171: listBills API forwards legal_matter_id",
+    file: "apps/frontend/src/api/accounting.ts",
+    pattern: /legal_matter_id\?:\s*string;[\s\S]*?if \(params\.legal_matter_id\) query\.set\("legal_matter_id"/,
+  },
+  {
+    name: "LINK-F5171: listBillsQuerySchema accepts legal_matter_id",
+    file: "apps/backend/src/accounting/bills.routes.ts",
+    pattern: /legal_matter_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/,
+  },
+  {
+    name: "LINK-F5171: list filters by legal_matter_id",
+    file: "apps/backend/src/accounting/bills.service.ts",
+    pattern: /b\.legal_matter_id = \$\$\{values\.length\}::uuid/,
+  },
+  {
+    name: "LINK-F5171: LegalMatterCostsReverseSection Open Bills keeps legal_matter_id",
+    file: "apps/frontend/src/components/accounting/LegalMatterCostsReverseSection.tsx",
+    pattern: /to=\{`\/accounting\/bills\?legal_matter_id=\$\{encodeURIComponent\(legalMatterId\)\}`\}/,
+  },
+  {
     name: "LST-F5198: BillsPage unit filter writes URL",
     file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
     pattern: /dataTestId="bills-filter-unit"/,
@@ -136,7 +161,16 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx": '<EntityLink kind="bill" id={result.bill_id} />',
     "apps/frontend/src/pages/accounting/BillDetailPage.tsx": '<EntityLink kind="cash_advance" id={bill.linked_cash_advance_id} />',
     "apps/frontend/src/pages/accounting/BillsPage.tsx":
-      'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id") dataTestId="bills-filter-unit" function patchEntityFilter',
+      'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id") searchParams.get("legal_matter_id") dataTestId="bills-filter-unit" function patchEntityFilter',
+    "apps/frontend/src/api/accounting.ts":
+      'legal_matter_id?: string;\n  if (params.legal_matter_id) query.set("legal_matter_id", params.legal_matter_id);',
+    "apps/backend/src/accounting/bills.routes.ts": "legal_matter_id: z.string().uuid().optional(),",
+    "apps/backend/src/accounting/bills.service.ts":
+      "const X = `\n  COALESCE(\n    bp.source_bank_transaction_id::text,\n    (SELECT 1)\n  )\n`;\n" +
+      "linked_cash_advance_id: linkedCashAdvanceId,\n" +
+      "b.legal_matter_id = $${values.length}::uuid",
+    "apps/frontend/src/components/accounting/LegalMatterCostsReverseSection.tsx":
+      "to={`/accounting/bills?legal_matter_id=${encodeURIComponent(legalMatterId)}`}",
     "apps/frontend/src/components/accounting/BillsReverseSection.tsx": "to={`/accounting/bills?${filterKey}=",
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx": 'searchParams.get("source_load_id") dataTestId="invoices-filter-load" function setSourceLoadId',
     "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx":

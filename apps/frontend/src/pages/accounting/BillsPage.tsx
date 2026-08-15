@@ -220,7 +220,9 @@ export function BillsPage() {
   // Keep vendor_id URL-synced for aging drill same-route / back-forward.
   const vendorId = searchParams.get("vendor_id") ?? "";
   // ACCT-F5049 — reverse Open Bills carries claim/unit/load; listBills already accepts these.
+  // LINK-F5171 — legal matter Open Bills carries legal_matter_id.
   const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
+  const deepLinkLegalMatterId = searchParams.get("legal_matter_id");
   const deepLinkUnitId = searchParams.get("unit_id");
   const deepLinkLoadId = searchParams.get("load_id");
   const [allocationBillId, setAllocationBillId] = useState<string | null>(() => deepLinkBillId);
@@ -281,6 +283,7 @@ export function BillsPage() {
       dateTo,
       vendorId,
       deepLinkInsuranceClaimId,
+      deepLinkLegalMatterId,
       deepLinkUnitId,
       deepLinkLoadId,
     ],
@@ -293,6 +296,7 @@ export function BillsPage() {
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         insurance_claim_id: deepLinkInsuranceClaimId || undefined,
+        legal_matter_id: deepLinkLegalMatterId || undefined,
         unit_id: deepLinkUnitId || undefined,
         load_id: deepLinkLoadId || undefined,
         limit: 200,
