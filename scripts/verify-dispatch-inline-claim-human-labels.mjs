@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = [
   "apps/frontend/src/components/parity/EntityPicker.tsx",
+  "apps/frontend/src/components/drivers/CreateDriverModal.tsx",
+  "apps/frontend/src/components/fleet/CreateUnitModal.tsx",
+  "apps/frontend/src/components/fleet/CreateTrailerModal.tsx",
   "apps/frontend/src/components/dispatch/InlineUnitPicker.tsx",
   "apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx",
   "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx",
@@ -33,6 +36,19 @@ function assertAll(srcs) {
   if (!/onChange\(next, next \? options\.find\(\(option\) => option\.value === next\) \?\? null : null\)/.test(picker)) {
     problems.push("EntityPicker: roster selection must return the matching human-labelled option");
   }
+  const creatorContracts = [
+    ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", /onCreated\?: \(driverId: string, displayName: string\)/, /onCreated\(created\.id, displayName\)/, "driver"],
+    ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", /onCreated\?: \(unitId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), draft\.unit_number\.trim\(\)\)/, "unit"],
+    ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", /onCreated\?: \(equipmentId: string, displayName: string\)/, /onCreated\?\.\(String\(created\.id\), draft\.equipment_number\.trim\(\)\)/, "trailer"],
+  ];
+  for (const [file, signature, callback, noun] of creatorContracts) {
+    if (!signature.test(srcs[file]) || !callback.test(srcs[file])) {
+      problems.push(`${file}: canonical ${noun} creator must return id plus its human display label`);
+    }
+  }
+  if ((picker.match(/onCreated=\{\(id, label\) => handleCreated\(id, label\)\}/g) ?? []).length !== 3) {
+    problems.push("EntityPicker: driver, unit, and trailer creators must each preserve the returned human label");
+  }
   for (const [file, noun] of [
     ["apps/frontend/src/components/dispatch/InlineUnitPicker.tsx", "Unit"],
     ["apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx", "Trailer"],
@@ -58,6 +74,9 @@ function assertAll(srcs) {
   }
   if (!/label:\s*d\.hos_safe \? d\.display_name : `\$\{d\.display_name\}/.test(assign)) {
     problems.push("AssignDriverDropdown: roster options must consume canonical driver display names");
+  }
+  if (!/onCreated=\{\(createdId, displayName\) =>[\s\S]{0,160}?display_name: displayName/.test(assign)) {
+    problems.push("AssignDriverDropdown: a newly created driver must retain the creator's human label");
   }
   const claim = srcs["apps/frontend/src/components/insurance/ClaimCreateModal.tsx"];
   for (const kind of ["insurance_policy", "unit", "load", "trailer"]) {
@@ -90,6 +109,9 @@ if (SELFTEST) {
   const srcs = read();
   const mutations = [
     ["apps/frontend/src/components/parity/EntityPicker.tsx", "onChange(next, next ? options.find((option) => option.value === next) ?? null : null)", "onChange(next)", "picker option return"],
+    ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", "onCreated(created.id, displayName)", "onCreated(created.id)", "created driver label"],
+    ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", "onCreated?.(String(created.id), draft.unit_number.trim())", "onCreated?.(String(created.id))", "created unit label"],
+    ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "onCreated?.(String(created.id), draft.equipment_number.trim())", "onCreated?.(String(created.id))", "created trailer label"],
     ["apps/frontend/src/components/dispatch/InlineUnitPicker.tsx", "const label = option?.label", "const label = next.slice(0, 8) || option?.label", "unit roster label"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", "onRetry={() => void activeQuery.refetch()}", "", "driver retry"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'userFacingApiError(activeQuery.error, "Could not load available drivers")', 'String(activeQuery.error)', "safe driver error"],

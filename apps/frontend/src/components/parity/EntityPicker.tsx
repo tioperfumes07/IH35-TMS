@@ -229,7 +229,7 @@ export function EntityPicker({
           companyId={operatingCompanyId}
           shell={nestedInDrawer ? "drawer" : "modal"}
           onClose={() => setCreateOpen(false)}
-          onCreated={(id) => handleCreated(id)}
+          onCreated={(id, label) => handleCreated(id, label)}
         />
       ) : null}
 
@@ -238,7 +238,7 @@ export function EntityPicker({
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
           onClose={() => setCreateOpen(false)}
-          onCreated={(id) => handleCreated(id)}
+          onCreated={(id, label) => handleCreated(id, label)}
         />
       ) : null}
 
@@ -248,7 +248,7 @@ export function EntityPicker({
           operatingCompanyId={operatingCompanyId}
           equipmentKind={effectiveEquipmentKind}
           onClose={() => setCreateOpen(false)}
-          onCreated={(id) => handleCreated(id)}
+          onCreated={(id, label) => handleCreated(id, label)}
         />
       ) : null}
 

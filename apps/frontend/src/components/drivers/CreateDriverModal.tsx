@@ -147,7 +147,7 @@ type CreateDriverModalProps = {
    * profile. When omitted (Drivers module), the success summary modal's "View Driver" routes to
    * /drivers/:id instead.
    */
-  onCreated?: (driverId: string) => void;
+  onCreated?: (driverId: string, displayName: string) => void;
   /**
    * CHROME-11: this is the SAME single canonical driver creator (Blueprint 4.2.2.1) for every call
    * site — only the outer chrome changes. Top-level entry points (Drivers module, Safety Driver
@@ -175,6 +175,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const [inviteSent, setInviteSent] = useState(false);
   const [createSummary, setCreateSummary] = useState<{
     driver_id: string;
+    display_name: string;
     phone: string;
     invite_url: string;
     linked_user_event_type: "existing_user" | "new_user_created";
@@ -329,6 +330,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const createMutation = useMutation({
     mutationFn: createDriver,
     onSuccess: (created) => {
+      const displayName = [form.first_name, form.last_name].filter(Boolean).join(" ").trim() || "Driver unavailable";
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
       if (saveModeRef.current === "add_another") {
         pushToast("Driver created. No invite sent yet.", "success");
@@ -345,6 +347,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       onClose();
       setCreateSummary({
         driver_id: created.id,
+        display_name: displayName,
         phone: created.phone,
         invite_url: created.invite_url,
         linked_user_event_type: created.linked_user_event_type,
@@ -358,7 +361,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       setRehireAction("rehire");
       setSelectedPriorDriverId(null);
       // Surface-specific landing (Safety Driver Files → open the new DQF profile in place).
-      if (onCreated) onCreated(created.id);
+      if (onCreated) onCreated(created.id, displayName);
     },
   });
 
@@ -918,7 +921,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             if (!createSummary?.driver_id) return;
             const nextDriverId = createSummary.driver_id;
             setCreateSummary(null);
-            if (onCreated) onCreated(nextDriverId);
+            if (onCreated) onCreated(nextDriverId, createSummary.display_name);
             else navigate(`/drivers/${nextDriverId}`);
           }}
         >
