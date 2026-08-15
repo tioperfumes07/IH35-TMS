@@ -14,6 +14,7 @@ import {
   startReconciliationSession,
 } from "../../api/banking";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -57,11 +58,23 @@ type Props = {
 export function BankingHomePage({ initialTab }: Props = {}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkTxnId = searchParams.get("txn_id");
   // LINK-F5171/LINK-F5184: factoring:banking.entry reverse — a load can filter this tab's "Recent
   // Faro advances" timeline down to its own advance(s) via ?load_id=.
+  // LST-F5203 — visible Load EntityPicker must also write ?load_id= (seed-only was not enough).
   const deepLinkLoadId = searchParams.get("load_id");
+  function patchLoadFilter(next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("load_id", next);
+        else params.delete("load_id");
+        return params;
+      },
+      { replace: true },
+    );
+  }
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const { user } = useAuth();
   const canSeeEmailQueue = user?.role === "Owner" || user?.role === "Administrator";
@@ -838,11 +851,26 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             className="rounded-sm border border-slate-300 bg-white"
             data-testid="banking-factoring-faro-advances-panel"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
               <span>{deepLinkLoadId ? "Faro advances for this load" : "Recent Faro advances"}</span>
-              <Link to="/accounting/factoring" className="text-[10px] font-semibold normal-case text-slate-800 hover:underline">
-                All advances →
-              </Link>
+              <div className="flex flex-wrap items-center gap-2 normal-case">
+                <label className="text-[11px] font-medium text-slate-600">
+                  Load
+                  <EntityPicker
+                    kind="load"
+                    operatingCompanyId={companyId}
+                    value={deepLinkLoadId || null}
+                    onChange={(next) => patchLoadFilter(next ?? "")}
+                    allowCreate={false}
+                    placeholder="All loads"
+                    className="mt-1 min-w-[12rem]"
+                    dataTestId="banking-factoring-filter-load"
+                  />
+                </label>
+                <Link to="/accounting/factoring" className="text-[10px] font-semibold text-slate-800 hover:underline">
+                  All advances →
+                </Link>
+              </div>
             </div>
             {factoringTimelineQuery.isSuccess ? (
               <div className="max-h-[220px] overflow-y-auto">

@@ -16,8 +16,10 @@
  *      join pattern.
  *   3. apps/frontend/src/api/accounting.ts's listFactoringAdvances forwards load_id.
  *   4. apps/frontend/src/api/banking.ts's getFactoringVirtualTimeline accepts and forwards loadId.
- *   5. FactoringListPage.tsx reads ?load_id= from the URL and forwards it.
- *   6. BankingHome.tsx reads ?load_id= from the URL and forwards it to the Faro timeline query.
+ *   5. FactoringListPage.tsx reads ?load_id= from the URL and forwards it, AND exposes a visible
+ *      Load EntityPicker that writes ?load_id= (LST-F5203 — seed-only was not enough).
+ *   6. BankingHome.tsx reads ?load_id= from the URL and forwards it to the Faro timeline query, AND
+ *      exposes a visible Load EntityPicker that writes ?load_id=.
  *   7. FactoringTab.tsx (load drawer) links directly to the load's own advance batch
  *      (kind="factoring_advance") and to the Banking (Faro) tab filtered to this load.
  */
@@ -81,11 +83,27 @@ export function assertLoadFactoringReverse(sources) {
   if (!/load_id:\s*deepLinkLoadId\s*\?\?\s*undefined/.test(listPage)) {
     problems.push(`${LIST_PAGE}: must forward deepLinkLoadId to listFactoringAdvances`);
   }
+  if (!/setSearchParams/.test(listPage) || !/params\.set\("load_id"/.test(listPage)) {
+    problems.push(`${LIST_PAGE}: must write load_id via setSearchParams (visible reverse filter)`);
+  }
+  if (!/kind="load"/.test(listPage) || !/dataTestId="factoring-filter-load"/.test(listPage) || !/allowCreate=\{false\}/.test(listPage)) {
+    problems.push(`${LIST_PAGE}: must render Load EntityPicker allowCreate={false} dataTestId=factoring-filter-load`);
+  }
   if (!/deepLinkLoadId\s*=\s*searchParams\.get\("load_id"\)/.test(bankingHome)) {
     problems.push(`${BANKING_HOME}: must read load_id from URL search params`);
   }
   if (!/getFactoringVirtualTimeline\(companyId,\s*deepLinkLoadId\s*\?\?\s*undefined\)/.test(bankingHome)) {
     problems.push(`${BANKING_HOME}: must forward deepLinkLoadId to getFactoringVirtualTimeline`);
+  }
+  if (!/setSearchParams/.test(bankingHome) || !/params\.set\("load_id"/.test(bankingHome)) {
+    problems.push(`${BANKING_HOME}: must write load_id via setSearchParams (visible reverse filter)`);
+  }
+  if (
+    !/kind="load"/.test(bankingHome) ||
+    !/dataTestId="banking-factoring-filter-load"/.test(bankingHome) ||
+    !/allowCreate=\{false\}/.test(bankingHome)
+  ) {
+    problems.push(`${BANKING_HOME}: must render Load EntityPicker allowCreate={false} dataTestId=banking-factoring-filter-load`);
   }
   if (!/kind="factoring_advance"[\s\S]{0,120}id=\{linkedInvoice\.factoring_advance_id\}/.test(factoringTab)) {
     problems.push(`${FACTORING_TAB}: must EntityLink kind=factoring_advance to the load's own advance batch`);
@@ -145,16 +163,36 @@ function selftest() {
       }
     `,
     [LIST_PAGE]: `
+      const [searchParams, setSearchParams] = useSearchParams();
       const deepLinkLoadId = searchParams.get("load_id");
+      function patchLoadFilter(next: string) {
+        setSearchParams((prev) => {
+          const params = new URLSearchParams(prev);
+          if (next) params.set("load_id", next);
+          else params.delete("load_id");
+          return params;
+        }, { replace: true });
+      }
       listFactoringAdvances(selectedCompanyId!, {
         load_id: deepLinkLoadId ?? undefined,
       })
+      <EntityPicker kind="load" allowCreate={false} dataTestId="factoring-filter-load" onChange={(next) => patchLoadFilter(next ?? "")} />
     `,
     [BANKING_HOME]: `
+      const [searchParams, setSearchParams] = useSearchParams();
       const deepLinkLoadId = searchParams.get("load_id");
+      function patchLoadFilter(next: string) {
+        setSearchParams((prev) => {
+          const params = new URLSearchParams(prev);
+          if (next) params.set("load_id", next);
+          else params.delete("load_id");
+          return params;
+        }, { replace: true });
+      }
       const factoringTimelineQuery = useQuery({
         queryFn: () => getFactoringVirtualTimeline(companyId, deepLinkLoadId ?? undefined),
       });
+      <EntityPicker kind="load" allowCreate={false} dataTestId="banking-factoring-filter-load" onChange={(next) => patchLoadFilter(next ?? "")} />
     `,
     [FACTORING_TAB]: `
       <EntityLink
@@ -184,6 +222,8 @@ function selftest() {
     { ...good, [BANK_API]: good[BANK_API].replace("load_id=${encodeURIComponent(loadId)}", "") },
     { ...good, [LIST_PAGE]: good[LIST_PAGE].replace('searchParams.get("load_id")', '""') },
     { ...good, [LIST_PAGE]: good[LIST_PAGE].replace("load_id: deepLinkLoadId ?? undefined,", "") },
+    { ...good, [LIST_PAGE]: good[LIST_PAGE].replace(/setSearchParams/g, "setUrlParams") },
+    { ...good, [LIST_PAGE]: good[LIST_PAGE].replace('dataTestId="factoring-filter-load"', "") },
     { ...good, [BANKING_HOME]: good[BANKING_HOME].replace('deepLinkLoadId = searchParams.get("load_id")', 'deepLinkLoadId = null') },
     {
       ...good,
@@ -192,6 +232,8 @@ function selftest() {
         "getFactoringVirtualTimeline(companyId)"
       ),
     },
+    { ...good, [BANKING_HOME]: good[BANKING_HOME].replace(/setSearchParams/g, "setUrlParams") },
+    { ...good, [BANKING_HOME]: good[BANKING_HOME].replace('dataTestId="banking-factoring-filter-load"', "") },
     { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace('kind="factoring_advance"', 'kind="factoring_batch"') },
     {
       ...good,
