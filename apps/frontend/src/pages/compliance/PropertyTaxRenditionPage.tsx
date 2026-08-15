@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -8,8 +8,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import {
-  addRenditionLine,
   createAppraisalDistrict,
   createRendition,
   fetchAppraisalDistricts,
@@ -37,7 +37,15 @@ const STATUS_LABEL: Record<RenditionStatus, string> = {
 };
 
 // ── LIST VIEW ─────────────────────────────────────────────────────────────────────────────────────
-function RenditionListView({ companyId, unitId }: { companyId: string; unitId?: string }) {
+function RenditionListView({
+  companyId,
+  unitId,
+  onUnitFilterChange,
+}: {
+  companyId: string;
+  unitId?: string;
+  onUnitFilterChange: (next: string) => void;
+}) {
   const queryClient = useQueryClient();
   const now = new Date();
   const [taxYear, setTaxYear] = useState<number>(now.getUTCMonth() < 3 ? now.getUTCFullYear() : now.getUTCFullYear());
@@ -137,11 +145,21 @@ function RenditionListView({ companyId, unitId }: { companyId: string; unitId?: 
         subtitle={unitId ? "Renditions containing this unit" : "Texas business personal-property tax renditions (Form 50-144) per entity + appraisal district"}
       />
 
-      {unitId ? (
-        <Link className="text-xs text-slate-700 underline" to="/compliance/property-tax">
-          Clear unit filter
-        </Link>
-      ) : null}
+      <div className="max-w-sm" data-testid="property-tax-filters">
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={unitId || null}
+            onChange={(next) => onUnitFilterChange(next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1"
+            dataTestId="property-tax-filter-unit"
+          />
+        </label>
+      </div>
 
       {/* + Create rendition */}
       <section className="rounded-sm border border-slate-200 bg-white p-3">
@@ -458,17 +476,33 @@ export function PropertyTaxRenditionPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { id } = useParams<{ id?: string }>();
-  const [searchParams] = useSearchParams();
-  const unitId = searchParams.get("unit_id") ?? undefined;
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5180 — visible EntityPicker (URL-only unit_id is not reverse chrome).
+  const deepLinkUnitId = searchParams.get("unit_id")?.trim() ?? "";
+  const [unitFilter, setUnitFilterState] = useState(deepLinkUnitId);
+  useEffect(() => {
+    setUnitFilterState(deepLinkUnitId);
+  }, [deepLinkUnitId]);
+  const effectiveUnitId = unitFilter || deepLinkUnitId;
+  const setUnitFilter = useCallback(
+    (next: string) => {
+      setUnitFilterState(next);
+      const p = new URLSearchParams(searchParams);
+      if (next) p.set("unit_id", next);
+      else p.delete("unit_id");
+      setSearchParams(p, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
 
   const content = useMemo(() => {
     if (!companyId) return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
     return id ? (
       <RenditionDetailView companyId={companyId} renditionId={id} />
     ) : (
-      <RenditionListView companyId={companyId} unitId={unitId} />
+      <RenditionListView companyId={companyId} unitId={effectiveUnitId || undefined} onUnitFilterChange={setUnitFilter} />
     );
-  }, [companyId, id, unitId]);
+  }, [companyId, id, effectiveUnitId, setUnitFilter]);
 
   return <div className="space-y-4 p-4">{content}</div>;
 }
