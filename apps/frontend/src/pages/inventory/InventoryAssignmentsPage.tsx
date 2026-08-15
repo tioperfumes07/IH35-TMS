@@ -124,9 +124,7 @@ export function InventoryAssignmentsPage() {
       <InventoryModuleTabs />
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600">
-        Part consumptions linked to work orders (
-        <code className="text-xs">maintenance.parts_invoice_links</code>
-        ). Stock on-hand and purchases stay on{" "}
+        Parts used on work orders appear in this assignment trail. Stock on-hand and purchase receipts stay on{" "}
         <Link className="text-slate-700 underline" to="/inventory">
           Parts &amp; Stock
         </Link>{" "}
