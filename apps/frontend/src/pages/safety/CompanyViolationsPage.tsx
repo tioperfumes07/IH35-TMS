@@ -4,7 +4,10 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCompanyViolations } from "../../api/safety";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { CompanyViolationCreateModal } from "./components/CompanyViolationCreateModal";
 import { CompanyViolationDetailDrawer } from "./components/CompanyViolationDetailDrawer";
 
@@ -14,19 +17,48 @@ type Props = {
 
 type CompanyViolationRow = Record<string, unknown>;
 
+function asIdList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((id) => String(id)).filter(Boolean);
+}
+
+function asLabelMap(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object") return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === "string" && v.trim()) out[k] = v.trim();
+  }
+  return out;
+}
+
 export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
-  const driverIdFilter = searchParams.get("driver_id") ?? undefined;
-  const unitIdFilter = searchParams.get("unit_id") ?? undefined;
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+  // LST-F5163G: visible reverse filters (allowCreate=false); URL seeds pickers.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  useEffect(() => {
+    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+  }, [unitIdFromUrl]);
+
+  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
+  const effectiveUnitId = unitFilter.trim() || unitIdFromUrl || undefined;
 
   const query = useQuery({
-    queryKey: ["safety", "company-violations", operatingCompanyId, driverIdFilter, unitIdFilter],
-    queryFn: () => driverIdFilter || unitIdFilter
-      ? getCompanyViolations(operatingCompanyId, { driver_id: driverIdFilter, unit_id: unitIdFilter })
-      : getCompanyViolations(operatingCompanyId),
+    queryKey: ["safety", "company-violations", operatingCompanyId, effectiveDriverId, effectiveUnitId],
+    queryFn: () =>
+      getCompanyViolations(operatingCompanyId, {
+        driver_id: effectiveDriverId,
+        unit_id: effectiveUnitId,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
   const rows = query.data?.company_violations ?? [];
@@ -37,12 +69,44 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
     if (match) setSelected(match);
   }, [rows, violationId]);
 
-  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" detail action
-  // are preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<CompanyViolationRow>> = [
     { key: "reported_date", label: "Reported", sortable: true, render: (row) => formatDateUS(row.reported_date) },
     { key: "violation_type", label: "Type", sortable: true, render: (row) => String(row.violation_type ?? "—") },
     { key: "violation_severity", label: "Severity", sortable: true, render: (row) => String(row.violation_severity ?? "—") },
+    {
+      key: "related_driver_ids",
+      label: "Driver",
+      render: (row) => {
+        const ids = asIdList(row.related_driver_ids);
+        const labels = asLabelMap(row.related_driver_labels);
+        if (ids.length === 0) return <span className="text-slate-400">—</span>;
+        return (
+          <span className="flex flex-wrap gap-1">
+            {ids.slice(0, 2).map((id) => (
+              <EntityLink key={id} kind="driver" id={id} label={entityLabel(labels[id], id, "Driver")} />
+            ))}
+            {ids.length > 2 ? <span className="text-slate-500">+{ids.length - 2}</span> : null}
+          </span>
+        );
+      },
+    },
+    {
+      key: "related_unit_ids",
+      label: "Unit",
+      render: (row) => {
+        const ids = asIdList(row.related_unit_ids);
+        const labels = asLabelMap(row.related_unit_labels);
+        if (ids.length === 0) return <span className="text-slate-400">—</span>;
+        return (
+          <span className="flex flex-wrap gap-1">
+            {ids.slice(0, 2).map((id) => (
+              <EntityLink key={id} kind="unit" id={id} label={entityLabel(labels[id], id, "Unit")} />
+            ))}
+            {ids.length > 2 ? <span className="text-slate-500">+{ids.length - 2}</span> : null}
+          </span>
+        );
+      },
+    },
     { key: "description", label: "Description", render: (row) => String(row.description ?? "—") },
     { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
     {
@@ -85,6 +149,36 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           storageKey="safety-company-violations"
           exportFilename="company-violations"
           tableTestId="company-violations-table"
+          filterBar={
+            <div className="relative flex flex-wrap items-center gap-2">
+              <label className="text-[11px] text-slate-600">
+                Driver
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={operatingCompanyId}
+                  value={driverFilter || null}
+                  onChange={(next) => setDriverFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All drivers"
+                  className="mt-1"
+                  dataTestId="company-violations-filter-driver"
+                />
+              </label>
+              <label className="text-[11px] text-slate-600">
+                Unit
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={operatingCompanyId}
+                  value={unitFilter || null}
+                  onChange={(next) => setUnitFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All units"
+                  className="mt-1"
+                  dataTestId="company-violations-filter-unit"
+                />
+              </label>
+            </div>
+          }
         />
       )}
 
