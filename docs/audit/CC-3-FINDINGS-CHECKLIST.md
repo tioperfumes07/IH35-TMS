@@ -373,3 +373,4 @@ exact failure this register exists to prevent.
 | ☐ | `LV-TRANSP-AR-INVOICE-SYNC-PIPELINE-BROKEN` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-TRIP-PAIRING-COLLAPSES-N-LEGS-TO-ONE-SIGNAL` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH` | **P1** | Cursor | — | — | — | Live USMCA inventory assignments renders canonical ParityTable search plus a second page-local search; vertical chrome-class fix pending | — | — |
+| ☐ | `LV-REPORTS-SUBSCRIPTION-CREATE-EDIT-MODE-COLLISION` | **P1** | Codex | — | — | — | Live USMCA Add subscription opened Edit subscription chrome; root mode-contract fix and six-mutation guard in flight | — | — |

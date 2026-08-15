@@ -16,6 +16,7 @@ export type SubscriptionFormValues = {
 
 type Props = {
   open: boolean;
+  mode: "create" | "edit";
   onClose: () => void;
   onSave: (values: SubscriptionFormValues) => Promise<void>;
   initial?: Partial<SubscriptionFormValues>;
@@ -35,17 +36,39 @@ const WEEKDAYS = [
   { value: 6, label: "Saturday" },
 ];
 
-export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptions, saving }: Props) {
-  const [reportSlug, setReportSlug] = useState(initial?.report_slug ?? reportOptions[0]?.slug ?? "");
-  const [cadence, setCadence] = useState<SubscriptionFormValues["cadence"]>(initial?.cadence ?? "weekly");
-  const [dayOfWeek, setDayOfWeek] = useState<number | null>(initial?.day_of_week ?? 1);
-  const [dayOfMonth, setDayOfMonth] = useState<number | null>(initial?.day_of_month ?? 1);
-  const [timeOfDay, setTimeOfDay] = useState(initial?.time_of_day?.slice(0, 5) ?? "07:00");
-  const [timezone, setTimezone] = useState(initial?.timezone ?? "America/Chicago");
-  const [recipientsText, setRecipientsText] = useState((initial?.recipient_emails ?? []).join(", "));
-  const [deliveryFormat, setDeliveryFormat] = useState<SubscriptionFormValues["delivery_format"]>(
-    initial?.delivery_format ?? "pdf"
+export function SubscriptionEditor({
+  open,
+  mode,
+  onClose,
+  onSave,
+  initial,
+  reportOptions,
+  saving,
+}: Props) {
+  const [reportSlug, setReportSlug] = useState(
+    initial?.report_slug ?? reportOptions[0]?.slug ?? "",
   );
+  const [cadence, setCadence] = useState<SubscriptionFormValues["cadence"]>(
+    initial?.cadence ?? "weekly",
+  );
+  const [dayOfWeek, setDayOfWeek] = useState<number | null>(
+    initial?.day_of_week ?? 1,
+  );
+  const [dayOfMonth, setDayOfMonth] = useState<number | null>(
+    initial?.day_of_month ?? 1,
+  );
+  const [timeOfDay, setTimeOfDay] = useState(
+    initial?.time_of_day?.slice(0, 5) ?? "07:00",
+  );
+  const [timezone, setTimezone] = useState(
+    initial?.timezone ?? "America/Chicago",
+  );
+  const [recipientsText, setRecipientsText] = useState(
+    (initial?.recipient_emails ?? []).join(", "),
+  );
+  const [deliveryFormat, setDeliveryFormat] = useState<
+    SubscriptionFormValues["delivery_format"]
+  >(initial?.delivery_format ?? "pdf");
 
   useEffect(() => {
     if (!open) return;
@@ -79,9 +102,14 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex overflow-y-auto bg-black/40 p-4" data-testid="subscription-editor">
+    <div
+      className="fixed inset-0 z-50 flex overflow-y-auto bg-black/40 p-4"
+      data-testid="subscription-editor"
+    >
       <div className="mx-auto w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
-        <h2 className="text-lg font-semibold text-slate-900">Edit subscription</h2>
+        <h2 className="text-lg font-semibold text-slate-900">
+          {mode === "edit" ? "Edit subscription" : "Add subscription"}
+        </h2>
         <div className="mt-4 space-y-3 text-sm">
           <label className="block">
             <span className="font-medium text-slate-700">Report</span>
@@ -90,7 +118,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={reportSlug}
               onChange={(e) => setReportSlug(e.target.value)}
-              disabled={Boolean(initial?.report_slug)}
+              disabled={mode === "edit"}
             >
               {reportOptions.map((opt) => (
                 <option key={opt.slug} value={opt.slug}>
@@ -105,7 +133,9 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={cadence}
-              onChange={(e) => setCadence(e.target.value as SubscriptionFormValues["cadence"])}
+              onChange={(e) =>
+                setCadence(e.target.value as SubscriptionFormValues["cadence"])
+              }
             >
               {CADENCE_OPTIONS.map((c) => (
                 <option key={c} value={c}>
@@ -181,7 +211,11 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={deliveryFormat}
-              onChange={(e) => setDeliveryFormat(e.target.value as SubscriptionFormValues["delivery_format"])}
+              onChange={(e) =>
+                setDeliveryFormat(
+                  e.target.value as SubscriptionFormValues["delivery_format"],
+                )
+              }
             >
               {FORMAT_OPTIONS.map((f) => (
                 <option key={f} value={f}>
@@ -197,7 +231,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
             Cancel
           </Button>
           <Button loading={saving} onClick={() => void handleSubmit()}>
-            Save
+            {mode === "edit" ? "Save changes" : "Add subscription"}
           </Button>
         </div>
       </div>
