@@ -146,7 +146,7 @@ export function VehicleProfilePage() {
 
   const profile = profileQuery.data;
   const unit = profile?.unit;
-  const unitNumber = String(entityLabel(unit?.unit_number, id, "Record"));
+  const unitNumber = String(entityLabel(unit?.unit_number, id, "Unit"));
 
   useEffect(() => {
     const tab = searchParams.get("tab");

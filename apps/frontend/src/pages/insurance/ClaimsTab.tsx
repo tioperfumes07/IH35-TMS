@@ -344,7 +344,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                   />
                 ))}
                 {graph.reverse.matters.map((m) => (
-                  <EntityLink key={m.id} kind="matter" id={m.id} label={entityLabel(m.matter_number, m.id, "Record")} className="mr-2 text-slate-700 underline" />
+                  <EntityLink key={m.id} kind="matter" id={m.id} label={entityLabel(m.matter_number, m.id, "Legal matter")} className="mr-2 text-slate-700 underline" />
                 ))}
                 {graph.reverse.accidents.map((a) => (
                   <EntityLink
@@ -373,7 +373,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                           : "damage_report"
                     }
                     id={i.id}
-                    label={`Incident ${entityLabel(i.incident_type, i.id, "Record")}`}
+                    label={entityLabel(i.incident_type ? `Incident ${i.incident_type}` : null, i.id, "Incident")}
                     className="mr-2 text-slate-700 underline"
                     data-testid={`claim-reverse-incident-${i.id}`}
                   />

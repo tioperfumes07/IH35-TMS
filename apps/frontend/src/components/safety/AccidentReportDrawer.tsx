@@ -171,7 +171,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         .map((row) => {
           const rec = row as { id?: unknown; display_id?: unknown };
           const id = typeof rec.id === "string" ? rec.id : "";
-          const display_id = entityLabel(typeof rec.display_id === "string" ? rec.display_id : null, id, "Record");
+          const display_id = entityLabel(typeof rec.display_id === "string" ? rec.display_id : null, id, "Work order");
           return id ? { id, display_id } : null;
         })
         .filter((r): r is { id: string; display_id: string } => r != null)
@@ -608,12 +608,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                     ? (payload.spawned_work_orders as Array<{ id?: unknown; display_id?: unknown }>)
                         .map((row) => {
                           const rid = typeof row.id === "string" ? row.id : "";
-                          const d = entityLabel(typeof row.display_id === "string" ? row.display_id : null, rid, "Record");
+                          const d = entityLabel(typeof row.display_id === "string" ? row.display_id : null, rid, "Work order");
                           return rid ? { id: rid, display_id: d } : null;
                         })
                         .filter((r): r is { id: string; display_id: string } => r != null)
                     : woId
-                      ? [{ id: woId, display_id: entityLabel(displayId, woId, "Wo") }]
+                      ? [{ id: woId, display_id: entityLabel(displayId, woId, "Work order") }]
                       : [];
                   if (list.length) setSpawnedWorkOrders(list);
                   pushToast(

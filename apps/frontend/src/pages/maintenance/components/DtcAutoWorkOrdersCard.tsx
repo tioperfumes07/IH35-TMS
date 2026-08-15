@@ -41,7 +41,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
                   <div className="truncate text-gray-500">{row.description ?? "DTC fault"}</div>
                   {onOpen ? (
                     <button type="button" onClick={() => onOpen(row.id)} className="mt-1 font-semibold text-slate-700 hover:underline">Open work order</button>
-                  ) : <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Record")} className="mt-1 inline-block font-semibold" />}
+                  ) : <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="mt-1 inline-block font-semibold" />}
                 </li>
               );
             })}
@@ -65,7 +65,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
             <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">
-                  <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Record")} /> · Unit <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"} />
+                  <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} /> · Unit <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
                 </span>
                 <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">{row.status}</span>
               </div>

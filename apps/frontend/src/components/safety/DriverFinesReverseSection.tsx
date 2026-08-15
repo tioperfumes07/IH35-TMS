@@ -73,7 +73,7 @@ export function DriverFinesReverseSection({
           <ul className="mt-1 space-y-2">
             {civil.map((f: Record<string, unknown>) => {
               const id = String(f.id ?? "");
-              const label = entityLabel(f.violation_code ?? f.jurisdiction, id, "Record") ?? "Record — not visible";
+              const label = entityLabel(f.violation_code ?? f.jurisdiction, id, "Fine");
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                   <EntityLink kind="safety_fine" id={id} label={label} className="font-semibold text-slate-700" />
@@ -91,7 +91,7 @@ export function DriverFinesReverseSection({
           <ul className="mt-1 space-y-2">
             {internal.map((f: Record<string, unknown>) => {
               const id = String(f.id ?? "");
-              const label = String(f.reason_name ?? entityLabel(f.reason_code, id, "Record"));
+              const label = String(f.reason_name ?? entityLabel(f.reason_code, id, "Internal fine"));
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                   <EntityLink kind="internal_fine" id={id} label={label} className="font-semibold text-slate-700" />

@@ -79,7 +79,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           ? "text-slate-600"
           : "text-red-700";
 
-  const displayId = entityLabel(workOrder.display_id, workOrder.id, "Record") ?? "—";
+  const displayId = entityLabel(workOrder.display_id, workOrder.id, "Work order");
   const modalTitle = displayId !== "—" ? `Work Order Details · ${displayId}` : "Work Order Details";
 
   return (
