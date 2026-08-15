@@ -186,13 +186,13 @@ function run() {
   for (const g of c.pkgOnly) {
     failures.push(
       `${g}: package.json-only — not executed by any CI workflow (or verify-steps via verify:pre-commit). ` +
-        `Wire into locked-guards.yml / ci.yml, or add to ${EXEMPT_REL} with a reviewed reason.`,
+        `Wire through a claimed verify-step, or add to ${EXEMPT_REL} with a reviewed reason.`,
     );
   }
   // wf-only no longer fails — CI execution alone is fully wired (2026-07-17).
   for (const g of c.orphan) {
     failures.push(
-      `${g}: orphan — neither package.json nor CI. Wire both, or add to ${EXEMPT_REL} with a reviewed reason.`,
+      `${g}: orphan — neither package.json nor CI. Wire through a claimed verify-step, or add to ${EXEMPT_REL} with a reviewed reason.`,
     );
   }
   return failures;
@@ -200,7 +200,9 @@ function run() {
 
 export { run };
 
-if (process.argv.includes("--selftest")) {
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain && process.argv.includes("--selftest")) {
   // Synthetic classification logic (mirrors isExecutedInCi; package.json optional).
   const cases = [
     {
@@ -303,7 +305,6 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const failures = run();
   if (failures.length) {
