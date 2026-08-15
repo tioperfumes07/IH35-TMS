@@ -37,7 +37,7 @@ export function audit(src) {
   if (!/<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: list.sync must mount the real sync panel`);
   }
-  if (!/navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)/.test(src.vendors)) {
+  if (!/onClick=\{\(\) => navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)\}\s*data-testid="vendor-header-edit"/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: md.header.edit must navigate to the real selected vendor's own record`);
   }
   if (!/vendor_id=\$\{selectedVendor\.id\}/.test(src.vendors)) {
@@ -71,7 +71,7 @@ if (process.argv.includes("--selftest")) {
     ["category-filter", "vendors", /vendor\.vendor_type === categoryFilter/g, "false"],
     ["create-modal", "vendors", /<VendorCreateModal/g, "<div"],
     ["sync-panel", "vendors", /<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>/, "null"],
-    ["header-edit-nav", "vendors", /navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)/, "navigate(`/vendors`)"],
+    ["header-edit-nav", "vendors", /onClick=\{\(\) => navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)\}\s*data-testid="vendor-header-edit"/, 'onClick={() => navigate(`/vendors`)} data-testid="vendor-header-edit"'],
     ["header-new-tx-nav", "vendors", /vendor_id=\$\{selectedVendor\.id\}/, "vendor_id=none"],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "vendors"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],
     ["export-fn", "listView", /function exportVendorsCsv/, "function exportSomethingElse"],
