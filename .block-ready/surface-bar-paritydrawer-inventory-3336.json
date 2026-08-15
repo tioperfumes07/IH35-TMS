@@ -1,0 +1,29 @@
+{
+  "block_id": "surface-bar-paritydrawer-inventory-3336",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "SURFACE-BAR",
+  "branch": "cursor/surface-bar-paritydrawer-inventory-3336",
+  "task": "Fully-Wired item 7 ParityDrawer host inventory ratchet — every FE ParityDrawer open= host maps to required.json surface_path or FILE_OWNED_BY_LEAF/ALLOWED_NESTED.",
+  "allowed_files": [
+    ".block-ready/surface-bar-paritydrawer-inventory-3336.json",
+    "scripts/verify-surface-bar-paritydrawer-inventory.mjs",
+    "scripts/verify-steps/3336-verify-surface-bar-paritydrawer-inventory.mjs",
+    "docs/law/LAW.json",
+    "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
+    "apps/frontend/src/pages/drivers/__tests__/DriversPage.tabs.test.tsx",
+    "apps/frontend/src/pages/invariant23-phase1.test.tsx"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-surface-bar-paritydrawer-inventory.mjs",
+      "assert": "48 ParityDrawer hosts mapped; --selftest PASS"
+    }
+  ],
+  "linkage": "ParityDrawer surface inventory → required.json leaf.surface_path or FILE_OWNED_BY_LEAF → Fully-Wired item 7; no Box3 Built claim.",
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": []
+}
