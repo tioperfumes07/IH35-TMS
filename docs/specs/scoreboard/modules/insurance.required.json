@@ -236,7 +236,6 @@
         "load",
         "liability",
         "expense",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -982,6 +981,18 @@
             "reverse_link"
           ],
           "reason": "confirmed creation-only inputs"
+        }
+      ]
+    },
+    "gl_je_2026_08_15_secondary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "gl_je Required on claims.create -- ClaimCreateModal.tsx is a pure create-form (useMutation submit); no claim record (and therefore no posted JE) exists yet at the time this modal is on screen. Verified live: file contains no EntityLink or journal_entry reference.",
+      "drops": [
+        {
+          "id": "claims.create",
+          "removed": [
+            "gl_je"
+          ]
         }
       ]
     }
