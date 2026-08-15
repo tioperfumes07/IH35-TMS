@@ -932,6 +932,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3344": {
+    "purpose": "verify-lists-account-types-lookup-no-updated-at",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "3345": {
     "owner": "cc-1",
     "purpose": "verify-gl-je-required-honest-cluster2 (LINK-F5186)"
