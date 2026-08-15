@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
 import { PlaidLink } from "../../components/banking/PlaidLink";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
@@ -270,35 +271,53 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             </div>
 
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Apply to bill</div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-gray-50 text-gray-600">
-                  <tr>
-                    <th className="px-2 py-1.5 font-semibold">Bill #</th>
-                    <th className="px-2 py-1.5 font-semibold">Total</th>
-                    <th className="px-2 py-1.5 font-semibold">Paid</th>
-                    <th className="px-2 py-1.5 font-semibold">Open</th>
-                    <th className="px-2 py-1.5 font-semibold">Apply</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-t border-gray-100">
-                    <td className="px-2 py-1.5"><EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} /></td>
-                    <td className="px-2 py-1.5">{money(bill.amount_cents)}</td>
-                    <td className="px-2 py-1.5">{money(bill.paid_cents)}</td>
-                    <td className="px-2 py-1.5 font-semibold text-red-700">{money(remainingCents)}</td>
-                    <td className="px-2 py-1.5">
-                      <MoneyInput
-                        valueCents={amountCents}
-                        onChangeCents={setAmountCents}
-                        ariaLabel="Payment amount"
-                        className="w-24"
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {/* ACCT-F3588: embedded ParityTable owns Search+Range+gear inside the pay-bill drawer. */}
+            <ParityTable<VendorBill>
+              embedded
+              rows={[bill]}
+              rowKey={(row) => row.id}
+              storageKey="pay-bill-modal-apply"
+              exportFilename="pay-bill-apply"
+              tableTestId="pay-bill-apply-table"
+              emptyText="No bill selected."
+              columns={[
+                {
+                  key: "bill",
+                  label: "Bill #",
+                  render: (row) => (
+                    <EntityLink kind="bill" id={row.id} label={entityLabel(row.bill_number, row.id, "Bill")} />
+                  ),
+                },
+                {
+                  key: "total",
+                  label: "Total",
+                  render: (row) => money(row.amount_cents),
+                },
+                {
+                  key: "paid",
+                  label: "Paid",
+                  render: (row) => money(row.paid_cents),
+                },
+                {
+                  key: "open",
+                  label: "Open",
+                  cellClass: "font-semibold text-red-700",
+                  render: () => money(remainingCents),
+                },
+                {
+                  key: "apply",
+                  label: "Apply",
+                  render: () => (
+                    <MoneyInput
+                      valueCents={amountCents}
+                      onChangeCents={setAmountCents}
+                      ariaLabel="Payment amount"
+                      className="w-24"
+                    />
+                  ),
+                },
+              ]}
+            />
           </form>
         )}
       </ParityDrawer>
