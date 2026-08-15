@@ -895,6 +895,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-surface-bar-modal-inventory"
   },
+  "3334": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-codex-vertical-nonmoney-zero-remainder"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
