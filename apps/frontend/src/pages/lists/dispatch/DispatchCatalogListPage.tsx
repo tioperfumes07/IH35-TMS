@@ -180,6 +180,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
       <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
+          {/* LST-F3510: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -208,6 +209,8 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
           emptyText="No entries match these filters"
           storageKey={`dispatch-catalog-${catalogKey}`}
           tableTestId="dispatch-catalog-list-table"
+          // LST-F3510: keep API search above; hide ParityTable toolbar Search
+          suppressToolbarSearch
           onRowClick={(row) => {
             navigate(`/lists/dispatch/${catalogKey}`);
             setCodeError(null);
