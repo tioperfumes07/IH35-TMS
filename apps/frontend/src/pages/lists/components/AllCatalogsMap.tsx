@@ -294,7 +294,14 @@ function normalizeListsDomain(domain: string): string {
 // the two surfaces.
 export function buildCatalogPath(domain: string, catalogKey: string): string {
   const routeDomain = normalizeListsDomain(domain);
-  if (catalogKey === "_create") return `/lists/hub/${domain}`;
+  // Accounting flyout "+ Create new catalog" must open CoA AccountDrawer chrome — not the domain
+  // hub card list (CURSOR-LISTS-LIVE-CHROME-2026-08-15 step 3 FAIL: hub Create → dialogCount=0).
+  if (catalogKey === "_create") {
+    if (domain === "accounting" || routeDomain === "accounting") {
+      return "/lists/accounting/chart-of-accounts?create=1";
+    }
+    return `/lists/hub/${domain}`;
+  }
   if (domain === "customers" && catalogKey === "customers-master") return "/customers";
   if (domain === "vendors" && catalogKey === "vendors-master") return "/vendors";
   if (domain === "dispatch") {

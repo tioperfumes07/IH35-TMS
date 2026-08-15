@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import type { CatalogAccount } from "../../../api/catalog-accounts";
@@ -235,12 +235,24 @@ export function ChartOfAccountsListPage() {
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
   const [drawerAccount, setDrawerAccount] = useState<CatalogAccount | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   // QBO-SYNC-1 (orphan-triage F1): drift-only filter, driven by ChartOfAccountsSyncPanel's own
   // "Drift" toggle (previously wired to nothing — see the retired standalone ChartOfAccounts.tsx
   // wrapper). Rows whose catalog metadata carries the reconciler's `drift_detected` sync status
   // (set by qbo-sync/chart-of-accounts-reconciler.ts) are shown; all other rows are hidden.
   const [driftOnly, setDriftOnly] = useState(false);
   const [showAccountNumbers, setShowAccountNumbers] = useShowAccountNumbers();
+
+  // Deep-link from Lists Accounting flyout "+ Create new catalog" (?create=1).
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || !companyId) return;
+    setDrawerMode("create");
+    setDrawerAccount(null);
+    setDrawerOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, companyId, setSearchParams]);
 
   const asOfDate = useMemo(() => companyToday(), []);
 
