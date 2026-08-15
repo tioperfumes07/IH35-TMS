@@ -163,7 +163,7 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
            AND l.operating_company_id = wo.operating_company_id
           LEFT JOIN mdata.units u
             ON u.id = wo.unit_id
-           AND u.operating_company_id = wo.operating_company_id
+           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
           WHERE ii.promoted_to_wo_id IS NOT NULL
             AND wo.opened_at >= now() - interval '7 days'
           ORDER BY wo.opened_at DESC

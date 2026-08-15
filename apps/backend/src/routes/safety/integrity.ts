@@ -45,7 +45,8 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
       const res = await client.query(
         `SELECT o.*, u.unit_number
          FROM safety.v_wo_cost_outliers o
-         LEFT JOIN mdata.units u ON u.id = o.unit_id AND u.operating_company_id = o.operating_company_id
+         LEFT JOIN mdata.units u ON u.id = o.unit_id
+                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = o.operating_company_id
          WHERE o.operating_company_id = $1::uuid ORDER BY o.created_at DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
@@ -64,7 +65,8 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
         `SELECT o.*, u.unit_number,
                 NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
          FROM safety.v_fuel_mpg_anomalies o
-         LEFT JOIN mdata.units u ON u.id = o.unit_id AND u.operating_company_id = o.operating_company_id
+         LEFT JOIN mdata.units u ON u.id = o.unit_id
+                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = o.operating_company_id
          LEFT JOIN mdata.drivers d ON d.id = o.driver_id AND d.operating_company_id = o.operating_company_id
          WHERE o.operating_company_id = $1::uuid ORDER BY o.transaction_date DESC LIMIT 200`,
         [query.data.operating_company_id]
