@@ -1,0 +1,24 @@
+{
+  "block_id": "matrix-ledger-leaf-match-honest-claim-3449",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "CLAIM-RESERVE",
+  "branch": "claude/claim-reserve-3449",
+  "task": "Claim verify-step 3449 (CC-1 band, n%4==1) for the upcoming verify-matrix-ledger-leaf-match-honest.mjs guard per Rule 37 claim-before-write. No guard/service code in this PR.",
+  "allowed_files": [
+    ".block-ready/matrix-ledger-leaf-match-honest-claim-3449.json",
+    "scripts/verify-steps/CLAIMED-NUMBERS.json"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "node -e \"JSON.parse(require('fs').readFileSync('scripts/verify-steps/CLAIMED-NUMBERS.json','utf8'))\"",
+      "assert": "CLAIMED-NUMBERS.json remains valid JSON with 3449 present"
+    }
+  ],
+  "linkage": "Follow-up PR (claude/matrix-ledger-leaf-match-honest) authors scripts/verify-matrix-ledger-leaf-match-honest.mjs + scripts/verify-steps/3449-*.mjs against this claim once merged to main.",
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
