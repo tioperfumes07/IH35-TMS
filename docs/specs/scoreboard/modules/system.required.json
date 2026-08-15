@@ -228,9 +228,7 @@
       "tab": "Law",
       "sub": "No TMS→QBO write-back",
       "route_hint": "/system?tab=qbo-sync",
-      "required": [
-        "gl_je"
-      ],
+      "required": [],
       "note": "Connectivity N/A: no TMS-to-QBO write-back is an exclusion law, not a USMCA TMS-native navigation surface."
     },
     {
@@ -481,6 +479,18 @@
             "reverse_link"
           ],
           "reason": "admin ID-reconciliation utility, not a persisted independently-identified record"
+        }
+      ]
+    },
+    "gl_je_2026_08_15_secondary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "law.no_tms_qbo_writeback -- renders as a static policy Row/Pill inside SystemModulePage.tsx (\"QBO write-back: OFF (by design)\") documenting a system rule, not a financial event/record -- there is no journal entry a \"law\" statement could ever post or link to.",
+      "drops": [
+        {
+          "id": "law.no_tms_qbo_writeback",
+          "removed": [
+            "gl_je"
+          ]
         }
       ]
     }

@@ -1178,7 +1178,6 @@
       "surface_path": "pages/accounting/PeriodComparisonPage.tsx",
       "required": [
         "expense",
-        "gl_je",
         "connectivity",
         "qbo_chrome"
       ]
@@ -1596,6 +1595,18 @@
           "id": "accounting.modal.create",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "gl_je_2026_08_15_secondary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "accounting.panel.class_cost_center_variance -- PeriodComparisonPage.tsx is an aggregate class/cost-center variance rollup by account across two periods, with no per-row FK-bearing owned record -- the exact same leaf the reverse_link_column_2026_08_14 audit already dropped reverse_link from with the stated reason \"class/cost-center rollups linking only to classes catalog.\" No single record here owns a JE; the report aggregates postings across many. Verified live: zero EntityLink/journal_entry reference in the file.",
+      "drops": [
+        {
+          "id": "accounting.panel.class_cost_center_variance",
+          "removed": [
+            "gl_je"
           ]
         }
       ]
