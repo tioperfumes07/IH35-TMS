@@ -137,6 +137,18 @@ export function InvoicesListPage() {
       { replace: true }
     );
   }
+  // LST-F5199 — source_load reverse filter writes URL.
+  function setSourceLoadId(next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("source_load_id", next);
+        else params.delete("source_load_id");
+        return params;
+      },
+      { replace: true }
+    );
+  }
 
   function setStatus(next: InvoiceListFilter) {
     setSearchParams(
@@ -379,6 +391,21 @@ export function InvoicesListPage() {
 
   const filterBar = (
     <div className="space-y-2">
+      <div className="flex flex-wrap items-end gap-3" data-testid="invoices-entity-filters">
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={selectedCompanyId ?? ""}
+            value={deepLinkSourceLoadId || null}
+            onChange={(next) => setSourceLoadId(next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="invoices-filter-load"
+          />
+        </label>
+      </div>
       {customersQuery.isError ? (
         <ListErrorBanner
           message={`Failed to load customer filters: ${(customersQuery.error as Error)?.message ?? "Request failed"}`}

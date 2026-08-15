@@ -96,6 +96,17 @@ const CHECKS = [
     pattern: /searchParams\.get\("source_load_id"\)/,
   },
   {
+    name: "LST-F5199: InvoicesListPage load filter writes URL",
+    file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    pattern: /dataTestId="invoices-filter-load"/,
+  },
+  {
+    name: "LST-F5199: InvoicesListPage setSourceLoadId",
+    file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    pattern: /function setSourceLoadId/,
+  },
+
+  {
     name: "ACCT-F5049: InvoicesReverseSection Open Invoices keeps filter query",
     file: "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx",
     pattern: /to=\{`\/accounting\/invoices\?\$\{filterKey\}=/,
@@ -127,7 +138,7 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/accounting/BillsPage.tsx":
       'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id") dataTestId="bills-filter-unit" function patchEntityFilter',
     "apps/frontend/src/components/accounting/BillsReverseSection.tsx": "to={`/accounting/bills?${filterKey}=",
-    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx": 'searchParams.get("source_load_id")',
+    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx": 'searchParams.get("source_load_id") dataTestId="invoices-filter-load" function setSourceLoadId',
     "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx":
       "to={`/accounting/invoices?${filterKey}=",
   };
