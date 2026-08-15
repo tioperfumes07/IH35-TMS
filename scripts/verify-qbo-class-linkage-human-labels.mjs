@@ -30,6 +30,12 @@ function assertAll(srcs) {
   if (/font-mono text-xs text-gray-900">\{row\.actor_id\}/.test(pos)) {
     problems.push(`${FILES[1]}: actor_id still raw font-mono`);
   }
+  const disputes = srcs[FILES[2]];
+  if (!/useCompanyContext\(\)/.test(disputes)) problems.push(`${FILES[2]}: must consume canonical company context`);
+  if (/getOperatingCompanyId\(\)/.test(disputes)) problems.push(`${FILES[2]}: must not read stale token company scope`);
+  if (!/entityLabel\(selectedCompany\.short_name \?\? selectedCompany\.legal_name, selectedCompany\.id, "Company"\)/.test(disputes)) {
+    problems.push(`${FILES[2]}: must render selected company human label`);
+  }
   return problems;
 }
 
@@ -37,6 +43,15 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 
 if (SELFTEST) {
   const srcs = read();
+  const disputesPlanted = { ...srcs };
+  disputesPlanted[FILES[2]] = disputesPlanted[FILES[2]].replace(
+    /entityLabel\(selectedCompany\.short_name \?\? selectedCompany\.legal_name, selectedCompany\.id, "Company"\)/,
+    'entityLabel(null, selectedCompany.id, "Company")',
+  );
+  if (disputesPlanted[FILES[2]] === srcs[FILES[2]] || !assertAll(disputesPlanted).length) {
+    console.error(`${LABEL} SELFTEST FAILED: disputes company-label defect not caught`);
+    process.exit(1);
+  }
   const planted = { ...srcs };
   planted[FILES[0]] = planted[FILES[0]]
     .replace(/entityLabel\(classNameById\.get\(row\.qbo_class_id\),\s*row\.qbo_class_id,\s*"Class"\)/, "row.qbo_class_id")
