@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leafRe":"^catalog\.drivers\.teams\.list$","task":"VERTICAL-REVERSE-LINK-DRIVER-TEAMS"} */
+/** @matrix-built {"modules":["lists","drivers"],"cols":["driver","connectivity","reverse_link"],"leafRe":"^(catalog\.drivers\.teams\.list|profiles\.detail)$","task":"VERTICAL-REVERSE-LINK-DRIVER-TEAMS"} */
 import fs from "node:fs";
 
 const profile = fs.readFileSync("apps/frontend/src/pages/drivers/DriverProfilePage.tsx", "utf8");
