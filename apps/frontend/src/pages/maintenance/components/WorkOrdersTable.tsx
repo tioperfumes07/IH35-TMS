@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import type { WorkOrder } from "../../../api/maintenance";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -87,21 +86,11 @@ export function WorkOrdersTable({
   onExternalVendorChange,
 }: Props) {
   const { pushToast } = useToast();
-  const [search, setSearch] = useState("");
+  // Free-text search: ParityTable toolbar owns it (MAINT-F3474) — no page-local searchSlot.
   const staged = useStagedListFilters({
     applied: { sourceTypeFilter, externalVendorFilter }, empty: { sourceTypeFilter: "", externalVendorFilter: "" },
     onApply: (next) => { onSourceTypeChange(next.sourceTypeFilter); onExternalVendorChange(next.externalVendorFilter); },
   });
-
-  const filteredRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      [r.display_id, r.id, r.unit_number, r.driver_name, r.resolved_vendor_name, r.status, r.source_type].some((v) =>
-        String(v ?? "").toLowerCase().includes(q),
-      ),
-    );
-  }, [rows, search]);
 
   // Universal-list columns — every record cell links to its detail per 00-MASTER-LINK-MAP.
   // external_vendor_id is a QBO id (no internal /vendors route) → shown as text, not a dead link.
@@ -163,7 +152,7 @@ export function WorkOrdersTable({
     <div className="space-y-2">
       <ParityTable<WorkOrder>
         columns={columns}
-        rows={filteredRows}
+        rows={rows}
         rowKey={(row) => row.id}
         loading={loading}
         emptyText="No work orders found — none open for this entity yet (or no rows match the current filter)."
@@ -200,15 +189,6 @@ export function WorkOrdersTable({
               activeFilterCount={(sourceTypeFilter ? 1 : 0) + (externalVendorFilter ? 1 : 0)}
               onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="work-orders"
-              searchSlot={
-                <input
-                  aria-label="Search work orders by WO, unit, driver, or status"
-                  className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search WO / unit / driver / status…"
-                />
-              }
             >
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 <label className="space-y-1 text-xs text-gray-600">

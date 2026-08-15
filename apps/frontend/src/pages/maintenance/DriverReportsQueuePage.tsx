@@ -56,7 +56,7 @@ export function DriverReportsQueuePage({
   const effectiveLoadId = loadPickerId.trim() || filterLoadId || undefined;
   const [statusFilter, setStatusFilter] = useState<"" | DriverReportRow["status"]>("");
   const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
-  const [search, setSearch] = useState("");
+  // Free-text search: ParityTable toolbar owns it (MAINT-F3474) — no page-local searchSlot.
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
 
   const q = useQuery({
@@ -71,16 +71,7 @@ export function DriverReportsQueuePage({
     enabled: Boolean(operatingCompanyId),
   });
 
-  const allRows = useMemo(() => q.data?.rows ?? [], [q.data?.rows]);
-  const rows = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    if (!s) return allRows;
-    return allRows.filter((r) =>
-      [r.report_type, r.driver_name, r.driver_id, r.load_number, r.description, r.status].some((v) =>
-        String(v ?? "").toLowerCase().includes(s),
-      ),
-    );
-  }, [allRows, search]);
+  const rows = useMemo(() => q.data?.rows ?? [], [q.data?.rows]);
 
   const mut = useMutation({
     mutationFn: (args: { id: string; status: "under_review" | "resolved" | "dismissed"; resolution_notes?: string }) =>
@@ -233,14 +224,6 @@ export function DriverReportsQueuePage({
               activeFilterCount={statusFilter ? 1 : 0}
               onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="driver-reports"
-              searchSlot={
-                <input
-                  className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                  placeholder="Search type / driver / load / description…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              }
             >
               <label className="space-y-1 text-xs text-gray-600">
                 <span>Status</span>
