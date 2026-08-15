@@ -97,8 +97,14 @@ export function assertSettlementsClusterReverse(sources) {
   if (!/searchParams\.get\("driver_id"\)/.test(carPage)) {
     problems.push(`${CAR_PAGE}: must read driver_id from URL search params`);
   }
-  if (!/listPending\(companyId,\s*deepLinkDriverId\s*\?\?\s*undefined\)/.test(carPage)) {
-    problems.push(`${CAR_PAGE}: must forward deepLinkDriverId to listPending`);
+  if (!/listPending\(companyId,\s*(deepLinkDriverId\s*\?\?\s*undefined|effectiveDriverId)\)/.test(carPage)) {
+    problems.push(`${CAR_PAGE}: must forward deepLinkDriverId/effectiveDriverId to listPending`);
+  }
+  if (
+    !/dataTestId="cash-advance-requests-filter-driver"/.test(carPage) ||
+    !/allowCreate=\{false\}/.test(carPage)
+  ) {
+    problems.push(`${CAR_PAGE}: must render EntityPicker driver filter (allowCreate=false)`);
   }
 
   // -- drawer.advance_detail / modal.mark_disbursed (pre-existing backend, missing FE wrapping) --
@@ -202,8 +208,10 @@ function selftest() {
     [CAR_PAGE]: `
       const deepLinkDriverId = searchParams.get("driver_id");
       const pendingQuery = useQuery({
-        queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, deepLinkDriverId ?? undefined),
+        queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, effectiveDriverId),
       });
+      dataTestId="cash-advance-requests-filter-driver"
+      allowCreate={false}
     `,
     [CA_HOME]: `
       const driverIdFilter = searchParams.get("driver_id");
@@ -262,7 +270,8 @@ function selftest() {
     { ...good, [CAR_ROUTES]: good[CAR_ROUTES].replace("driverId: parsed.data.driver_id,", "") },
     { ...good, [CAR_API]: good[CAR_API].replace("driverId?: string", "") },
     { ...good, [CAR_PAGE]: good[CAR_PAGE].replace('searchParams.get("driver_id")', '""') },
-    { ...good, [CAR_PAGE]: good[CAR_PAGE].replace("deepLinkDriverId ?? undefined", "undefined") },
+    { ...good, [CAR_PAGE]: good[CAR_PAGE].replace("listPending(companyId, effectiveDriverId)", "listPending(companyId)") },
+    { ...good, [CAR_PAGE]: good[CAR_PAGE].replace('dataTestId="cash-advance-requests-filter-driver"', 'dataTestId="x"') },
     { ...good, [CA_HOME]: good[CA_HOME].replace('searchParams.get("driver_id")', '""') },
     { ...good, [CA_HOME]: good[CA_HOME].replace('dataTestId="cash-advances-filter-driver"', 'dataTestId="x"') },
     { ...good, [CA_HOME]: good[CA_HOME].replace("onMarkDisbursed={() => setMarkDisbursedOpen(true)}", "") },
