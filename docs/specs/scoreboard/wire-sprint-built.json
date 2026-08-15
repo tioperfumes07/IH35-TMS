@@ -270,14 +270,13 @@
         "banking",
         "fleet",
         "maintenance",
-        "reports",
         "settlements",
         "vendors"
       ],
       "cols": [
         "ap_bill"
       ],
-      "leafRe": ".*"
+      "leafRe": "^(accounting\\.modal\\.bill_payment|accounting\\.modal\\.ccpayment|accounting\\.modal\\.pay_bill|accounting\\.panel\\.bill_detail|accounting\\.panel\\.reallocate|accounting\\.parity\\.ccpayment|accounting\\.parity\\.pay_bill|accounting\\.parity\\.vendor_bill_create_page|bill_payments\\.create|bill_payments\\.list|bills\\.create\\.driver|bills\\.create\\.fuel|bills\\.create\\.maintenance|bills\\.create\\.vendor|bills\\.detail|bills\\.list|bills\\.multiple|bills\\.recurring|detail\\.ap|detail\\.ap\\.bill_payments|detail\\.ap\\.bills|detail\\.ap\\.record_bill_payment|detail\\.ap\\.vendor_credits|detail\\.profile\\.payment_terms|detail\\.w9_1099|home\\.roster|list\\.export_csv|list\\.filter_chips|maintenance\\.modal\\.create_bill|md\\.header\\.new_transaction|md\\.transaction_list|md\\.txn\\.filters|settlements\\.detail|settlements\\.panel\\.open_driver_bills|transactions\\.categorize|transactions\\.list|unit\\.detail\\.finance_linkage|wo\\.create_bill)$"
     },
     {
       "task": "WAVE-B-vendor-reverse-link",
