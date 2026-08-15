@@ -50,6 +50,11 @@ export function verify(source) {
   need("preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "pre-flight queue must not claim its mounted backend is missing");
   need("faultDrafts", 'kind="unit" id={row.unit_id}', "fault drafts must drill to units");
   need("faultDrafts", 'kind="work_order"', "fault draft review must drill to work-order detail");
+  need(
+    "faultDrafts",
+    'selected.wo_title ?? selected.display_id ?? "Draft WO"',
+    "fault draft review title must prefer the canonical WO display ID without exposing a UUID fallback",
+  );
   need("idvr", 'kind="work_order"', "iDVIR list must drill to follow-up work orders");
   need("idvr", 'navigate(`/safety/idvr/${encodeURIComponent(id)}`)', "iDVIR rows must drill to inspection detail");
   need("escrow", 'data-testid={`escrow-driver-link-${row.id}`}', "escrow roster must drill to canonical drivers");
@@ -86,6 +91,7 @@ if (process.argv.includes("--self-test")) {
     ["preFlight", 'kind="work_order"', 'kind="unit"'],
     ["preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "backend is not built"],
     ["faultDrafts", 'kind="work_order"', 'kind="unit"'],
+    ["faultDrafts", 'selected.wo_title ?? selected.display_id ?? "Draft WO"', 'selected.wo_title ?? entityLabel(null, selected.display_id, "Work order") ?? "Draft WO"'],
     ["idvr", 'kind="work_order"', 'kind="unit"'],
     ["idvr", 'navigate(`/safety/idvr/${encodeURIComponent(id)}`)', 'navigate("/safety/idvr")'],
     ["escrow", 'data-testid={`escrow-driver-link-${row.id}`}', 'data-testid="broken-escrow-link"'],

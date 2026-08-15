@@ -147,7 +147,7 @@ export function FaultDraftsPage() {
       {selected ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
-            <h3 className="text-base font-semibold">{selected.wo_title ?? entityLabel(null, selected.display_id, "Work order") ?? "Draft WO"}</h3>
+            <h3 className="text-base font-semibold">{selected.wo_title ?? selected.display_id ?? "Draft WO"}</h3>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{selected.description}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <EntityLink
