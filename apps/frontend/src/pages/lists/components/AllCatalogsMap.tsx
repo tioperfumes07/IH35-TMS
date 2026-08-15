@@ -300,6 +300,14 @@ export function buildCatalogPath(domain: string, catalogKey: string): string {
     if (domain === "accounting" || routeDomain === "accounting") {
       return "/lists/accounting/chart-of-accounts?create=1";
     }
+    // LST-F5216 — non-accounting flyout "+ Create new catalog" must open a real create surface
+    // (first live catalog + ?create=1), not the hub card grid with dialogCount=0.
+    const cfg = DOMAIN_CONFIG.find((d) => d.key === domain || d.key === routeDomain);
+    const firstLive = cfg?.catalogs.find((c) => c.live && c.catalogKey);
+    if (firstLive?.catalogKey) {
+      const base = buildCatalogPath(domain, firstLive.catalogKey);
+      return base.includes("?") ? `${base}&create=1` : `${base}?create=1`;
+    }
     return `/lists/hub/${domain}`;
   }
   if (domain === "customers" && catalogKey === "customers-master") return "/customers";

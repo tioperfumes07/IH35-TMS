@@ -119,9 +119,16 @@ export function collectProblems(sources = {}) {
       fail('buildCatalogPath accounting "_create" must return /lists/accounting/chart-of-accounts?create=1')
     );
   }
-  // Non-accounting domains still use the domain hub (never bare /lists/:domain).
-  if (!/return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
-    errors.push(fail('buildCatalogPath non-accounting "_create" must return /lists/hub/${domain}'));
+  // Non-accounting domains: flyout Create deep-links first live catalog ?create=1 (LST-F5216).
+  if (!/firstLive|first live catalog/.test(catalogsMap) && !/firstLive\?\.catalogKey/.test(catalogsMap)) {
+    // Prefer explicit create=1 append for non-accounting _create.
+    if (!/create=1/.test(catalogsMap.split('catalogKey === "_create"')[1]?.slice(0, 800) ?? "")) {
+      errors.push(fail('buildCatalogPath non-accounting "_create" must deep-link a catalog with ?create=1'));
+    }
+  }
+  // Must not unconditionally return hub-only for every domain's _create (accounting CoA carve-out stays).
+  if (/if \(catalogKey === "_create"\) \{\s*return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
+    errors.push(fail('"_create" must not unconditionally return /lists/hub/${domain} for all domains'));
   }
   if (/if \(catalogKey === "_create"\) return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
     errors.push(
@@ -203,6 +210,10 @@ if (catalogKey === "_create") {
   if (domain === "accounting" || routeDomain === "accounting") {
     return "/lists/accounting/chart-of-accounts?create=1";
   }
+  const firstLive = { catalogKey: "termination-reasons" };
+  if (firstLive?.catalogKey) {
+    return "/lists/drivers/termination-reasons?create=1";
+  }
   return \`/lists/hub/\${domain}\`;
 }
 `;
@@ -243,7 +254,7 @@ function ListsDomainRoute() {
     process.exit(1);
   }
 
-  const badMap = `if (catalogKey === "_create") return \`/lists/hub/\${domain}\`;`;
+  const badMap = `if (catalogKey === "_create") { return \`/lists/hub/\${domain}\`; }`;
   const badMapErrors = collectProblems({
     manifest: goodManifest,
     catalogsMap: badMap,
@@ -253,7 +264,7 @@ function ListsDomainRoute() {
     skipSharedCreateRatchet: true,
   });
   if (!badMapErrors.some((e) => e.includes("create=1") || e.includes("_create"))) {
-    console.error(`${LABEL} --selftest FAIL: unconditional hub _create should fail`, badMapErrors);
+    console.error(`${LABEL} --selftest FAIL: hub-only _create should fail`, badMapErrors);
     process.exit(1);
   }
 
