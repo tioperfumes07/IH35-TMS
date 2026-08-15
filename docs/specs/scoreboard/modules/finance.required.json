@@ -261,7 +261,6 @@
       "sub": "Loan wizard",
       "route_hint": "/finance/loan-wizard",
       "required": [
-        "gl_je",
         "picker_law",
         "connectivity"
       ]
@@ -751,6 +750,18 @@
             "connectivity"
           ],
           "reason": "ParityTable client-side"
+        }
+      ]
+    },
+    "gl_je_2026_08_15_secondary": {
+      "finding": "LINK-F5186-GL-JE-COLUMN-HONESTY",
+      "note": "nav.loan_wizard -- backend loan-wizard routes are PREVIEW ONLY (Tier 3): only a POST /preview endpoint exists, no commit/create route. LoanWizardPage.tsx's opening_journal_entry table is a computed draft (never posted) -- no real JE exists yet for this leaf to link to. Verified live: file has zero EntityLink usage; the 3 \"journal_entry\" hits are plain data references to the unposted preview object, not a link.",
+      "drops": [
+        {
+          "id": "nav.loan_wizard",
+          "removed": [
+            "gl_je"
+          ]
         }
       ]
     }
