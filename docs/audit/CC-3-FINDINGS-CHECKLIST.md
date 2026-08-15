@@ -374,6 +374,7 @@ exact failure this register exists to prevent.
 | ☐ | `LV-TRIP-PAIRING-COLLAPSES-N-LEGS-TO-ONE-SIGNAL` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☑ | `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH` | **P1** | Cursor | #7373 | `2bf26bd6d` | FIXED | #7373 @ 2bf26bd6d removed page-local search; ParityTable toolbar only; guard 3452 | — | — |
 | ☑ | `LV-PARTS-INVENTORY-DUPLICATE-SEARCH` | **P1** | Cursor | #7377 | `6e7d47667` | FIXED | PartsInventoryTable dup search removed; guard 3454 | — | — |
+| ☑ | `LV-SEVERE-REPAIR-OOS-DUPLICATE-SEARCH` | **P1** | Cursor | #7381 | `94102bd5e` | FIXED | SevereRepairOosTab dup search removed; guard 3456 | — | — |
 | ☐ | `LV-REPORTS-SUBSCRIPTION-CREATE-EDIT-MODE-COLLISION` | **P1** | Codex | — | — | — | Live USMCA Add subscription opened Edit subscription chrome; root mode-contract fix and six-mutation guard in flight | — | — |
 | ☐ | `LV-REPORTS-SCHEDULED-SOR-CROSSWIRED-HUB` | **P1** | Codex | — | — | — | Live USMCA Home custom-schedule count/panel cross-wired to six-default Q8 subscription route; source-label/route fix in flight | — | — |
 | ☑ | `LV-HOVERDROPDOWN-HOVER-CLICK-SELF-CLOSE` | **P1** | Cursor | Cursor | #7370 | 2026-08-15 | hover→click stay-open; guard 3450 selftest 3/3; merge 091e2019f | `scripts/verify-hoverdropdown-click-after-hover.mjs` + step **3450** | — |
