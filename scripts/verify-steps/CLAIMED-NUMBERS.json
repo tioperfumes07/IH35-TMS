@@ -880,6 +880,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-customers-load-column-remainder (honest Built+drops)"
   },
+  "3328": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-cursor-driver-column-remainder-drawers-panels"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
