@@ -2,7 +2,7 @@ type ExpiryPill = "green" | "amber" | "red" | "unknown";
 
 type DriverSafetyProfilePanelProps = {
   driverName: string;
-  driverDisplayId: string;
+  driverCredentialLabel: string;
   driverId: string;
   medicalExpiryPill: ExpiryPill;
   dqMissingCount: number;
@@ -11,7 +11,7 @@ type DriverSafetyProfilePanelProps = {
 
 export function DriverSafetyProfilePanel({
   driverName,
-  driverDisplayId,
+  driverCredentialLabel,
   driverId,
   medicalExpiryPill,
   dqMissingCount,
@@ -22,7 +22,7 @@ export function DriverSafetyProfilePanel({
       <header className="mb-3">
         <h2 className="text-lg font-semibold text-gray-900">Driver Safety Profile</h2>
         <p className="text-sm text-gray-500">
-          <EntityLink kind="driver" id={driverId} label={driverName} /> ({driverDisplayId})
+          <EntityLink kind="driver" id={driverId} label={driverName} /> ({driverCredentialLabel})
         </p>
       </header>
       <div className="grid gap-3 text-sm sm:grid-cols-3">
