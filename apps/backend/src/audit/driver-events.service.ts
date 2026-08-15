@@ -8,13 +8,15 @@ type Queryable = {
 export type ListDriverAuditEventsInput = {
   operating_company_id: string;
   driver_id: string;
-  event_type?: string;
   from?: string;
   to?: string;
   /** SAF-B29 — server-side filters (UI had these; 200-cap made client filter a silent lie). */
   actor?: string;
-  status?: string;
-  source?: string;
+  // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: arrays (OR'd) — same fix as the entity-audit
+  // endpoint, mirrored here since this is the driver-specific audit tab's own separate route.
+  event_type?: string[];
+  status?: string[];
+  source?: string[];
   voids_only?: boolean;
   limit: number;
   offset: number;
@@ -71,9 +73,9 @@ export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): 
     )`,
   ];
 
-  if (input.event_type) {
-    values.push(`%${input.event_type}%`);
-    filters.push(`e.event_class ILIKE $${values.length}`);
+  if (input.event_type && input.event_type.length > 0) {
+    values.push(input.event_type.map((v) => `%${v}%`));
+    filters.push(`e.event_class ILIKE ANY($${values.length}::text[])`);
   }
   if (input.from) {
     values.push(input.from);
@@ -87,13 +89,13 @@ export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): 
     values.push(`%${input.actor}%`);
     filters.push(`(u.email ILIKE $${values.length} OR e.actor_user_uuid::text ILIKE $${values.length})`);
   }
-  if (input.status) {
+  if (input.status && input.status.length > 0) {
     values.push(input.status);
-    filters.push(`e.payload->>'status' = $${values.length}`);
+    filters.push(`e.payload->>'status' = ANY($${values.length}::text[])`);
   }
-  if (input.source) {
+  if (input.source && input.source.length > 0) {
     values.push(input.source);
-    filters.push(`e.source = $${values.length}`);
+    filters.push(`e.source = ANY($${values.length}::text[])`);
   }
   if (input.voids_only) {
     filters.push(
