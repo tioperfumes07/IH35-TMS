@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
@@ -61,11 +61,24 @@ export function AccountingCatalogListPage({
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   // Remount key: bumping it resets ParityTable's internal selection after a bulk action
   // (density/columns/per-page survive the remount via storageKey persistence).
   const [tableKey, setTableKey] = useState(0);
   const bulkEnabled = enableBulkSelect && Boolean(bulkBar);
   const clearSelection = () => setTableKey((k) => k + 1);
+
+  // Deep-link ?create=1 opens AccountingCatalogModal (Classes / Expense Categories / etc.).
+  useEffect(() => {
+    if (readOnly) return;
+    if (searchParams.get("create") !== "1" || !companyId) return;
+    setModalMode("create");
+    setSelectedRow(null);
+    setModalOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, companyId, readOnly, setSearchParams]);
 
   const query = useQuery({
     queryKey: ["catalogs", "accounting", displayName, companyId, search, status],

@@ -72,7 +72,7 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
     expect(buildCatalogPath("drivers", "pay-types")).toBe("/lists/driver/pay-types"); // normalized + default
     expect(buildCatalogPath("names_master", "brokers")).toBe("/lists/names/brokers");
     expect(buildCatalogPath("accounting", "chart-of-accounts")).toBe("/lists/accounting/chart-of-accounts");
-    expect(buildCatalogPath("accounting", "_create")).toBe("/lists/hub/accounting");
+    expect(buildCatalogPath("accounting", "_create")).toBe("/lists/accounting/chart-of-accounts?create=1");
     expect(buildCatalogPath("drivers", "_create")).toBe("/lists/hub/drivers");
     expect(buildCatalogPath("customers", "customers-master")).toBe("/customers");
     expect(buildCatalogPath("vendors", "vendors-master")).toBe("/vendors");

@@ -68,15 +68,15 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 
 | Metric | Value | As of |
 |---|---|---|
-| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-12 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **16 / 30** | 2026-08-12 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-12 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **65 / 150** | 2026-08-12 |
-| Rows in this file | **705** | 2026-08-12 |
-| Rows `FAIL` + `OPEN` | **14** | 2026-08-12 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-12 |
-| Rows `VERIFIED` by GUARD | **5** | 2026-08-12 |
-| Verdict tally (all rows) | FAIL=72 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=7 · OTHER=189 | 2026-08-12 |
+| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-15 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-15 |
+| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-15 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **65 / 150** | 2026-08-15 |
+| Rows in this file | **711** | 2026-08-15 |
+| Rows `FAIL` + `OPEN` | **17** | 2026-08-15 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-15 |
+| Rows `VERIFIED` by GUARD | **5** | 2026-08-15 |
+| Verdict tally (all rows) | FAIL=75 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=7 · OTHER=192 | 2026-08-15 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -793,3 +793,9 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 703 | settlements · driver_finance | C | USMCA | UNVERIFIED | **PR #5841 (P36-CLAIM-RESERVE) is on main**: reserves verify-step 3089 for the `settlement_lines.load_id` wiring guard. Reservation row; no live exercise performed in this pass. | MERGED (PR #5841) | #5841 | NO | 2026-08-11 | CASCADE |
 | 704 | settlements · driver_finance | C | USMCA | UNVERIFIED | **PR #5842 (P36) is on main**: fixes `settlement_lines.load_id` unwritten by the earnings-line writer. Money-path settlement fix; not independently live-exercised or GL-proven in this pass. | MERGED (PR #5842) | #5842 | NO | 2026-08-11 | CASCADE |
 | 705 | program | C | USMCA | PASS | **PR #5843 (P06-BUILT-FEED) is on main and live in the USMCA matrix.** BuiltReasons now cite `P06 #5829 · 3072-verify-fk-on-create.mjs` across accounting (bills.* leaves, tipSha `98044a5`), safety (driver_files/accident-related leaves, tipSha `98044a5`), and insurance (claims.* leaves, tipSha `d5455a3`). Built metrics: accounting 119/185=64%, safety 17/203=8%, insurance 19/86=22%. | MERGED (PR #5843) | #5843 | NO | 2026-08-11 | CASCADE |
+| 706 | lists · hub | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **CURSOR live browser on prod** `app.ih35dispatch.com` @ healthz `0f9b768` (session pack `~/Desktop/IH35-CURSOR-AUDIT/USMCA-WEEKEND-LEAD-2026-08-07/screenshots-lists-2026-08-15/`). **Leaves:** `hub.home` · `hub.domain.accounting` · `chrome.toolbar_search` · `chrome.toolbar_range`. **Proven:** entity switcher Current=USMCA Freight; Lists hub Accounting domain card present; Search rows… + Range toolbar controls render (qbo_chrome + connectivity wiring). Evidence: `results.json` steps 1–2 PASS · `00-lists-hub.png` · `02-hub.png`. **Not claimed:** full 266-leaf module Live / Fully-Wired item 12 complete. | LIVE-LEDGERED | screenshots-lists-2026-08-15 | NO | 2026-08-15 | CURSOR |
+| 707 | lists · catalog_index | C | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-3 connectivity) | **CURSOR live browser.** Leaf `hub.catalog_index` route `/lists/catalogs`. Back nav "Lists & Catalogs" lands on canonical `/lists` (not `/lists/catalogs` dual-path). Evidence: `results.json` step 8 PASS · `08-catalog-back.png` · afterBack=`https://app.ih35dispatch.com/lists`. Connectivity / route wiring proven live. | LIVE-LEDGERED | screenshots-lists-2026-08-15 | NO | 2026-08-15 | CURSOR |
+| 708 | lists · items | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 qbo_chrome · VERIFY-3) | **CURSOR live browser.** Leaves `catalog.accounting.items.list` · `catalog.accounting.items.create` · route `/lists/accounting/items`. Opened Products & Services (QBO Items); **+ Create** control present (qbo_chrome). Evidence: `results.json` step 4 PASS · `04-items-create.png` · headings "Products & Services (QBO Items)". | LIVE-LEDGERED | screenshots-lists-2026-08-15 | NO | 2026-08-15 | CURSOR |
+| 709 | lists · coa_create | E | USMCA | FAIL → FIX IN FLIGHT — Cursor Live Chrome 2026-08-15 (VERIFY-1) | **ROOT:** Accounting DomainFlyout `+ Create new catalog` called `buildCatalogPath(domain,"_create")` → `/lists/hub/accounting` (no AccountDrawer). Live pack step 3 clicked hub Create → `dialogCount=0` / stayed Lists hub. **FIX:** `_create` accounting → `/lists/accounting/chart-of-accounts?create=1`; CoA + AccountingCatalogListPage honor `?create=1`. Guard `verify-lists-domain-hub-dead-click` ratchet. Evidence pack `screenshots-lists-2026-08-15` + CURSOR-LISTS-LIVE-CHROME-2026-08-15. Re-verify Live after deploy. | OPEN | this PR | NO | 2026-08-15 | CURSOR |
+| 710 | lists · classes_create | E | USMCA | FAIL → FIX IN FLIGHT — Cursor Live Chrome 2026-08-15 | Classes list uses AccountingCatalogListPage `?create=1` (same modal path). Hub Create was wrong surface. Same flyout `_create` dead-path as #709. Evidence: `results.json` FAIL on hub URL. Fix + guard in this PR; Live re-verify after deploy. | OPEN | this PR | NO | 2026-08-15 | CURSOR |
+| 711 | lists · expense_psc_create | E | USMCA | FAIL → FIX IN FLIGHT — Cursor Live Chrome 2026-08-15 | Expense Categories / PSC list pages share AccountingCatalogListPage `?create=1`. Hub Create was wrong surface; Accounting flyout now lands CoA create (primary). Same flyout `_create` dead-path as #709. Evidence: `results.json` FAIL on hub URL. Fix + guard in this PR; Live re-verify after deploy. | OPEN | this PR | NO | 2026-08-15 | CURSOR |

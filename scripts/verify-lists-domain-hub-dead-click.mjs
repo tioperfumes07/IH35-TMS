@@ -7,8 +7,11 @@
  *
  * Proves:
  *   1. ListsDomainRoute Navigate-redirects known domain params to /lists/hub/:key before fallback.
- *   2. buildCatalogPath(domain, "_create") lands on /lists/hub/:domain (not bare /lists/:domain).
+ *   2. buildCatalogPath(domain, "_create"):
+ *        - accounting → /lists/accounting/chart-of-accounts?create=1 (AccountDrawer deep-link)
+ *        - other domains → /lists/hub/:domain (not bare /lists/:domain)
  *   3. /lists/hub/:domain still mounts DomainCatalogHubPage (Rule 07 — additive only).
+ *   4. ChartOfAccountsListPage + AccountingCatalogListPage honor ?create=1.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,6 +23,11 @@ const ROOT = process.cwd();
 const PATHS = {
   manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
   catalogsMap: path.join(ROOT, "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx"),
+  coaPage: path.join(ROOT, "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx"),
+  catalogListPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx"
+  ),
 };
 
 const KNOWN_DOMAIN_KEYS = [
@@ -46,10 +54,14 @@ function fail(msg) {
 export function collectProblems(sources = {}) {
   const manifest = sources.manifest ?? read(PATHS.manifest);
   const catalogsMap = sources.catalogsMap ?? read(PATHS.catalogsMap);
+  const coaPage = sources.coaPage ?? read(PATHS.coaPage);
+  const catalogListPage = sources.catalogListPage ?? read(PATHS.catalogListPage);
   const errors = [];
 
   if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
   if (!catalogsMap) errors.push(fail("missing apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx"));
+  if (!coaPage) errors.push(fail("missing ChartOfAccountsListPage.tsx"));
+  if (!catalogListPage) errors.push(fail("missing AccountingCatalogListPage.tsx"));
   if (errors.length) return errors;
 
   if (!/function ListsDomainRoute\(\)/.test(manifest)) {
@@ -72,8 +84,30 @@ export function collectProblems(sources = {}) {
     errors.push(fail("AllCatalogsMap must export resolveListsDomainHubKey"));
   }
 
-  if (!/if \(catalogKey === "_create"\) return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
-    errors.push(fail('buildCatalogPath("_create") must return /lists/hub/${domain}, not bare /lists/:domain'));
+  // Accounting flyout Create must deep-link CoA create chrome (Live Chrome residual #709).
+  if (!/chart-of-accounts\?create=1/.test(catalogsMap)) {
+    errors.push(
+      fail('buildCatalogPath accounting "_create" must return /lists/accounting/chart-of-accounts?create=1')
+    );
+  }
+  // Non-accounting domains still use the domain hub (never bare /lists/:domain).
+  if (!/return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
+    errors.push(fail('buildCatalogPath non-accounting "_create" must return /lists/hub/${domain}'));
+  }
+  if (/if \(catalogKey === "_create"\) return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
+    errors.push(
+      fail('accounting "_create" must not unconditionally return /lists/hub/${domain} (AccountDrawer dead-click)')
+    );
+  }
+
+  if (!/searchParams\.get\("create"\) !== "1"/.test(coaPage) && !/get\("create"\) === "1"/.test(coaPage)) {
+    errors.push(fail("ChartOfAccountsListPage must honor ?create=1 → AccountDrawer"));
+  }
+  if (!/setDrawerOpen\(true\)/.test(coaPage)) {
+    errors.push(fail("ChartOfAccountsListPage must open AccountDrawer on create deep-link"));
+  }
+  if (!/searchParams\.get\("create"\) !== "1"/.test(catalogListPage) && !/get\("create"\) === "1"/.test(catalogListPage)) {
+    errors.push(fail("AccountingCatalogListPage must honor ?create=1 → AccountingCatalogModal"));
   }
 
   if (!/path="\/lists\/hub\/:domain"[\s\S]{0,200}?DomainCatalogHubPage/.test(manifest)) {
@@ -107,10 +141,24 @@ function ListsDomainRoute() {
 `;
   const goodMap = `
 export function resolveListsDomainHubKey(routeDomain) { return routeDomain; }
-if (catalogKey === "_create") return \`/lists/hub/\${domain}\`;
+if (catalogKey === "_create") {
+  if (domain === "accounting" || routeDomain === "accounting") {
+    return "/lists/accounting/chart-of-accounts?create=1";
+  }
+  return \`/lists/hub/\${domain}\`;
+}
 `;
+  const goodCoa = `useEffect(() => { if (searchParams.get("create") !== "1") return; setDrawerOpen(true); }, [searchParams]);`;
+  const goodCatalogList = `useEffect(() => { if (searchParams.get("create") !== "1") return; setModalOpen(true); }, [searchParams]);`;
 
-  if (collectProblems({ manifest: goodManifest, catalogsMap: goodMap }).length) {
+  if (
+    collectProblems({
+      manifest: goodManifest,
+      catalogsMap: goodMap,
+      coaPage: goodCoa,
+      catalogListPage: goodCatalogList,
+    }).length
+  ) {
     console.error(`${LABEL} --selftest FAIL: good fixture should pass`);
     process.exit(1);
   }
@@ -121,16 +169,26 @@ function ListsDomainRoute() {
 }
 <Route path="/lists/hub/:domain" element={<ProtectedRoute><DomainCatalogHubPage /></ProtectedRoute>} />
 `;
-  const badErrors = collectProblems({ manifest: badManifest, catalogsMap: goodMap });
+  const badErrors = collectProblems({
+    manifest: badManifest,
+    catalogsMap: goodMap,
+    coaPage: goodCoa,
+    catalogListPage: goodCatalogList,
+  });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
     console.error(`${LABEL} --selftest FAIL: bad ListsDomainRoute should fail`, badErrors);
     process.exit(1);
   }
 
-  const badMap = `if (catalogKey === "_create") return \`/lists/\${routeDomain}\`;`;
-  const badMapErrors = collectProblems({ manifest: goodManifest, catalogsMap: badMap });
-  if (!badMapErrors.some((e) => e.includes("_create"))) {
-    console.error(`${LABEL} --selftest FAIL: bad buildCatalogPath _create should fail`, badMapErrors);
+  const badMap = `if (catalogKey === "_create") return \`/lists/hub/\${domain}\`;`;
+  const badMapErrors = collectProblems({
+    manifest: goodManifest,
+    catalogsMap: badMap,
+    coaPage: goodCoa,
+    catalogListPage: goodCatalogList,
+  });
+  if (!badMapErrors.some((e) => e.includes("create=1") || e.includes("_create"))) {
+    console.error(`${LABEL} --selftest FAIL: unconditional hub _create should fail`, badMapErrors);
     process.exit(1);
   }
 
@@ -146,7 +204,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — /lists/:domain known domains redirect to /lists/hub/:key; _create uses hub path; DomainCatalogHubPage route intact`
+    `${LABEL} OK — /lists/:domain → hub; accounting _create → CoA?create=1; DomainCatalogHubPage intact`
   );
 }
 
