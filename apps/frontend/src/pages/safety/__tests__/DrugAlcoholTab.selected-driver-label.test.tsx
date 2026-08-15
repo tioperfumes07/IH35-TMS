@@ -10,13 +10,8 @@ import { pickCombo } from "../../../test-utils/pickCombo";
 import { ToastProvider } from "../../../components/Toast";
 
 /**
- * SAF-B24-residual: the "Selected:" driver preview rendered `<EntityLink kind="driver"
- * id={driverId} />` with NO label — DriverPickerWithCreate's onChange only returns the id, so the
- * raw uuid was the visible link text right next to the picker that already shows the driver's name.
- *
- * pickCombo (fireEvent-based, not userEvent.setup()) drives the DriverPickerWithCreate combobox —
- * avoids this environment's pre-existing userEvent.setup() break (documented in
- * SafetyMeetingsPage.attendee-labels.test.tsx).
+ * SAF-B24-residual: the "Selected:" driver preview must show the resolved driver name, not the raw uuid.
+ * pickCombo drives the EntityPicker combobox (fireEvent-based — avoids userEvent.setup() break).
  */
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
@@ -62,7 +57,7 @@ describe("DrugAlcoholTab selected-driver label (SAF-B24-residual)", () => {
 
   it("shows the driver's resolved name in the 'Selected:' preview, not the raw uuid", async () => {
     render(wrap(<DrugAlcoholTab />));
-    const driverPicker = await screen.findByPlaceholderText("Select driver…");
+    const driverPicker = await screen.findByPlaceholderText("All drivers");
     // EntityPicker's roster is a server-search query — open the listbox, then wait for it to
     // resolve before picking (pickCombo's own open+pick is synchronous and would race the fetch).
     fireEvent.focus(driverPicker);

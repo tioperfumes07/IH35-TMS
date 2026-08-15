@@ -4,7 +4,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useDriverLabels } from "../../../hooks/useDriverLabels";
-import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
@@ -82,9 +82,10 @@ export function DrugAlcoholTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  const [driverId, setDriverId] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5183 — visible EntityPicker + URL write (URL-only / create-picker without URL sync is not reverse chrome).
+  const deepLinkDriverId = searchParams.get("driver_id")?.trim() ?? "";
+  const [driverId, setDriverIdState] = useState(deepLinkDriverId);
   const [testType, setTestType] = useState<(typeof TEST_TYPES)[number]>("random");
   const [testResult, setTestResult] = useState<(typeof TEST_RESULTS)[number]>("negative");
   const [testDate, setTestDate] = useState(() => companyToday());
@@ -96,8 +97,18 @@ export function DrugAlcoholTab() {
   const [filterTo, setFilterTo] = useState("");
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
-  }, [driverIdFromUrl]);
+    setDriverIdState(deepLinkDriverId);
+  }, [deepLinkDriverId]);
+
+  function setDriverId(next: string) {
+    setDriverIdState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("driver_id", next);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
+
+  const effectiveDriverId = driverId || deepLinkDriverId;
 
   const activeDriverTotalQ = useQuery({
     queryKey: ["drivers", "drug-ui-active-total", companyId],
@@ -108,7 +119,7 @@ export function DrugAlcoholTab() {
       ),
   });
 
-  const { byId: driverNameById } = useDriverLabels(companyId, [driverId]);
+  const { byId: driverNameById } = useDriverLabels(companyId, [effectiveDriverId]);
 
   const testsQ = useQuery({
     queryKey: ["safety", "drug-program", "tests", companyId],
@@ -129,36 +140,36 @@ export function DrugAlcoholTab() {
   });
 
   const drugStatusQ = useQuery({
-    queryKey: ["safety", "drug-status", companyId, driverId],
-    enabled: Boolean(companyId && driverId),
-    queryFn: () => getDriverDrugProgramStatus(driverId, companyId),
+    queryKey: ["safety", "drug-status", companyId, effectiveDriverId],
+    enabled: Boolean(companyId && effectiveDriverId),
+    queryFn: () => getDriverDrugProgramStatus(effectiveDriverId, companyId),
   });
 
   const rtdCaseQ = useQuery({
-    queryKey: ["safety", "rtd-case", companyId, driverId],
-    enabled: Boolean(companyId && driverId),
-    queryFn: () => getDriverRtdCase(driverId, companyId).then((r) => r.case),
+    queryKey: ["safety", "rtd-case", companyId, effectiveDriverId],
+    enabled: Boolean(companyId && effectiveDriverId),
+    queryFn: () => getDriverRtdCase(effectiveDriverId, companyId).then((r) => r.case),
   });
 
   const eligibilityQ = useQuery({
-    queryKey: ["dispatch", "eligibility", companyId, driverId],
-    enabled: Boolean(companyId && driverId),
-    queryFn: () => getDriverDispatchEligibility(driverId, companyId),
+    queryKey: ["dispatch", "eligibility", companyId, effectiveDriverId],
+    enabled: Boolean(companyId && effectiveDriverId),
+    queryFn: () => getDriverDispatchEligibility(effectiveDriverId, companyId),
   });
 
   const createTestMutation = useMutation({
     mutationFn: () =>
       createDrugProgramTest(companyId, {
-        driver_id: driverId,
+        driver_id: effectiveDriverId,
         test_type: testType,
         result: testResult,
         test_date: testDate,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["safety", "drug-program", "tests", companyId] });
-      if (driverId) {
-        await queryClient.invalidateQueries({ queryKey: ["safety", "drug-status", companyId, driverId] });
-        await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, driverId] });
+      if (effectiveDriverId) {
+        await queryClient.invalidateQueries({ queryKey: ["safety", "drug-status", companyId, effectiveDriverId] });
+        await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, effectiveDriverId] });
       }
     },
   });
@@ -183,10 +194,10 @@ export function DrugAlcoholTab() {
   }
 
   const openRtdMutation = useMutation({
-    mutationFn: () => createRtdCase(companyId, { driver_id: driverId }),
+    mutationFn: () => createRtdCase(companyId, { driver_id: effectiveDriverId }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", companyId, driverId] });
-      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, driverId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", companyId, effectiveDriverId] });
+      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, effectiveDriverId] });
     },
   });
 
@@ -200,15 +211,15 @@ export function DrugAlcoholTab() {
       });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", companyId, driverId] });
-      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, driverId] });
+      await queryClient.invalidateQueries({ queryKey: ["safety", "rtd-case", companyId, effectiveDriverId] });
+      await queryClient.invalidateQueries({ queryKey: ["dispatch", "eligibility", companyId, effectiveDriverId] });
     },
   });
 
   const filteredTests = useMemo(() => {
     const rows = testsQ.data ?? [];
     return rows.filter((row) => {
-      if (driverId && String(row.driver_id) !== driverId) return false;
+      if (effectiveDriverId && String(row.driver_id) !== effectiveDriverId) return false;
       if (filterType && String(row.test_type) !== filterType) return false;
       if (filterResult && String(row.result) !== filterResult) return false;
       const testDateStr = String(row.test_date ?? "").slice(0, 10);
@@ -216,7 +227,7 @@ export function DrugAlcoholTab() {
       if (filterTo && (!testDateStr || testDateStr > filterTo)) return false;
       return true;
     });
-  }, [testsQ.data, driverId, filterType, filterResult, filterFrom, filterTo]);
+  }, [testsQ.data, effectiveDriverId, filterType, filterResult, filterFrom, filterTo]);
 
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
@@ -236,27 +247,31 @@ export function DrugAlcoholTab() {
           <label className="block min-w-[240px] text-xs text-slate-600">
             Driver
             <div className="mt-1">
-              <DriverPickerWithCreate
+              <EntityPicker
+                kind="driver"
                 operatingCompanyId={companyId}
-                value={driverId || null}
+                value={effectiveDriverId || null}
                 onChange={(next) => setDriverId(next ?? "")}
-                placeholder="Select driver…"
+                allowCreate={false}
+                placeholder="All drivers"
+                className="w-full"
+                dataTestId="drug-alcohol-filter-driver"
               />
             </div>
           </label>
-          {driverId ? (
+          {effectiveDriverId ? (
             <div className="text-xs text-slate-600">
               Selected:{" "}
               <EntityLink
                 kind="driver"
-                id={driverId}
-                label={entityLabel(driverNameById.get(driverId), driverId, "Driver")}
+                id={effectiveDriverId}
+                label={entityLabel(driverNameById.get(effectiveDriverId), effectiveDriverId, "Driver")}
               />
             </div>
           ) : null}
         </div>
 
-        {driverId ? (
+        {effectiveDriverId ? (
           <div className="mt-3 grid gap-3 md:grid-cols-3">
             <div className="rounded-sm border border-gray-100 p-3 text-xs">
               <div className="font-medium text-slate-800">Drug status</div>
@@ -320,7 +335,7 @@ export function DrugAlcoholTab() {
           </div>
           <button
             type="button"
-            disabled={!driverId || createTestMutation.isPending}
+            disabled={!effectiveDriverId || createTestMutation.isPending}
             className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             onClick={() => createTestMutation.mutate()}
           >
@@ -333,7 +348,7 @@ export function DrugAlcoholTab() {
           {!rtdCase ? (
             <button
               type="button"
-              disabled={!driverId || openRtdMutation.isPending}
+              disabled={!effectiveDriverId || openRtdMutation.isPending}
               className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
               onClick={() => openRtdMutation.mutate()}
             >
