@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { EntityPickerKind } from "../parity/entityPickerRegistry";
+import { entityLabel } from "../../lib/entity-label";
 
 type StandaloneLinkType = "driver" | "unit" | "vendor" | "customer" | "load";
 
@@ -139,7 +140,7 @@ export function UploadModal({
     () =>
       (customersQuery.data?.customers ?? []).map((customer) => ({
         value: customer.id,
-        label: customer.name ?? customer.customer_code ?? customer.id,
+        label: entityLabel(customer.name ?? customer.customer_code, customer.id, "Customer"),
       })),
     [customersQuery.data]
   );

@@ -13,6 +13,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { entityLabel } from "../../../lib/entity-label";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
 // Flow: doc category -> template+version (active) -> EN/ES -> fill from variable_schema
@@ -26,7 +27,7 @@ type Props = {
   onSaved: (contractId: string) => void | Promise<void>;
 };
 
-type Party = { id: string; label: string; email?: string | null; phone?: string | null };
+type Party = { id: string; label: string; type?: string | null; email?: string | null; phone?: string | null };
 
 const SIGNER_TYPES: Array<{ value: LegalSignerType; label: string }> = [
   { value: "driver", label: "Driver" },
@@ -143,16 +144,18 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
     if (signerType !== "customer") return [];
     return (customersQuery.data?.customers ?? []).map((c) => ({
       id: String(c.id),
-      label: (c as { customer_name?: string }).customer_name ?? String(c.id),
-      email: (c as { email?: string | null }).email ?? null,
-      phone: (c as { phone?: string | null }).phone ?? null,
+      label: entityLabel(c.name, c.id, "Customer"),
+      type: c.customer_code ?? c.customer_type ?? "Customer",
+      email: c.email ?? null,
+      phone: c.phone ?? null,
     }));
   }, [signerType, customersQuery.data]);
   const vendorPartyOptions: Party[] = useMemo(() => {
     if (signerType !== "vendor") return [];
     return (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
       id: String(vendor.id),
-      label: vendor.name,
+      label: entityLabel(vendor.name, vendor.id, "Vendor"),
+      type: vendor.vendor_code ?? vendor.vendor_type,
       email: vendor.email ?? null,
       phone: vendor.phone ?? null,
     }));
@@ -530,7 +533,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                         setSignerPhone("");
                       }
                     }}
-                    options={customerPartyOptions.map((p) => ({ value: p.id, label: p.label, type: p.id }))}
+                    options={customerPartyOptions.map((p) => ({ value: p.id, label: p.label, type: p.type ?? undefined }))}
                     createKind="customer"
                     operatingCompanyId={operatingCompanyId}
                     placeholder="Search customer…"
@@ -559,7 +562,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                         setSignerPhone("");
                       }
                     }}
-                    options={vendorPartyOptions.map((vendor) => ({ value: vendor.id, label: vendor.label, type: vendor.id }))}
+                    options={vendorPartyOptions.map((vendor) => ({ value: vendor.id, label: vendor.label, type: vendor.type ?? undefined }))}
                     createKind="vendor"
                     operatingCompanyId={operatingCompanyId}
                     placeholder="Search vendor…"

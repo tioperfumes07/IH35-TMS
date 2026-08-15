@@ -99,7 +99,7 @@ export function ComplaintsTab() {
   const customerOptions = useMemo(
     () =>
       (customersQuery.data?.customers ?? [])
-        .map((c) => ({ value: String(c.id), label: String(c.name ?? c.id) }))
+        .map((c) => ({ value: String(c.id), label: entityLabel(c.name, c.id, "Customer") }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [customersQuery.data]
   );
@@ -128,7 +128,7 @@ export function ComplaintsTab() {
         .filter((u) => !u.deactivated_at)
         .map((u) => ({
           value: String(u.id),
-          label: String(u.name || u.email || u.id),
+          label: entityLabel(u.name || u.email, u.id, "User"),
         })),
     [usersQuery.data]
   );
