@@ -14,6 +14,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
@@ -40,12 +41,40 @@ function money(cents: number) {
 
 export function AutoDeductionPoliciesPanel() {
   const { selectedCompanyId } = useCompanyContext();
-  const [searchParams] = useSearchParams();
-  const driverIdFilter = searchParams.get("driver_id") ?? undefined;
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5184 — visible EntityPicker reverse filter (URL-only ?driver_id= is not reverse chrome).
+  const deepLinkDriverId = searchParams.get("driver_id")?.trim() ?? "";
+  function setDriverFilter(next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("driver_id", next);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
   if (!selectedCompanyId) {
     return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to manage auto-deduction policies.</p>;
   }
-  return <AutoDeductionPolicies operatingCompanyId={selectedCompanyId} driverId={driverIdFilter} />;
+  return (
+    <div className="space-y-3">
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
+        <label className="block min-w-[240px] text-xs text-slate-600">
+          Driver
+          <div className="mt-1">
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={selectedCompanyId}
+              value={deepLinkDriverId || null}
+              onChange={(next) => setDriverFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="w-full"
+              dataTestId="auto-deduction-policies-filter-driver"
+            />
+          </div>
+        </label>
+      </div>
+      <AutoDeductionPolicies operatingCompanyId={selectedCompanyId} driverId={deepLinkDriverId || undefined} />
+    </div>
+  );
 }
 
 export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriverId }: Props) {
