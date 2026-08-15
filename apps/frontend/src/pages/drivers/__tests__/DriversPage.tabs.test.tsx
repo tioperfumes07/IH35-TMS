@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../components/Toast";
 import type { Driver } from "../../../types/api";
+import { makeDriver as sharedMakeDriver } from "../../../test-utils/factories";
 import { DriversPage } from "../../Drivers";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -53,66 +54,22 @@ vi.mock("../../../api/mdata", () => ({
 }));
 
 function makeDriver(p: Pick<Driver, "id" | "first_name" | "last_name" | "status">): Driver {
-  return {
+  // Delegates to the shared factory (src/test-utils/factories.ts) so a new REQUIRED field on
+  // Driver breaks one default object there, not this fixture. Overrides below are the values
+  // this suite historically used and that its assertions depend on -- preserved exactly.
+  return sharedMakeDriver({
     id: p.id,
-    operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
-    identity_user_id: null,
     first_name: p.first_name,
     last_name: p.last_name,
-    phone: "5555555555",
-    email: null,
-    cdl_number: null,
-    cdl_state: null,
-    cdl_class: "A",
-    cdl_expires_at: null,
-    hire_date: null,
-    pay_basis: "short_miles",
-    termination_date: null,
-    dot_medical_expires_at: null,
-    hazmat_endorsement_expires_at: null,
-    endorsement_h: false,
-    visa_type: null,
-    visa_number: null,
-    visa_expires_at: null,
-    passport_number: null,
-    passport_expires_at: null,
-    fast_card_number: null,
-    fast_card_expiration: null,
-    sentri_member: false,
-    sentri_expiration: null,
-    twic_card_number: null,
-    twic_expiration: null,
-    mexican_license_number: null,
-    mexican_license_expiration: null,
-    ine_number: null,
-    curp: null,
-    mx_address_line1: null,
-    mx_address_line2: null,
-    mx_city: null,
-    mx_state: null,
-    mx_postal_code: null,
-    emergency_contact_name: null,
-    emergency_contact_relationship: null,
-    emergency_contact_phone_primary: null,
-    emergency_contact_phone_alternate: null,
-    emergency_contact_address: null,
-    emergency_contact_notes: null,
-    preferred_language: "en",
-    qbo_vendor_id: null,
-    qbo_vendor_linked_at: null,
-    qbo_vendor_linked_by_user_id: null,
     status: p.status,
-    notes: null,
-    prior_driver_id: null,
-    prior_driver_name: null,
-    rehire_count: 0,
-    is_rehire: false,
+    operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+    cdl_class: "A",
+    pay_basis: "short_miles",
     created_at: "2020-01-01T00:00:00.000Z",
     updated_at: "2020-01-01T00:00:00.000Z",
-    deactivated_at: null,
     created_by_user_id: "u",
     updated_by_user_id: "u",
-  };
+  });
 }
 
 function renderDriversAt(initialPath: string) {
