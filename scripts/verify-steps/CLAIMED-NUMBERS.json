@@ -1543,6 +1543,11 @@
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3590": {
+    "name": "verify-bill-payment-modal-parity-surface-bar",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
