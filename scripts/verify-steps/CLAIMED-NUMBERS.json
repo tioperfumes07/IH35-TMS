@@ -3036,7 +3036,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1157,
+  "total_claimed": 1158,
   "3454": {
     "purpose": "verify-parts-inventory-no-dup-search",
     "lane": "cursor",
@@ -3084,6 +3084,11 @@
   },
   "3472": {
     "purpose": "verify-legal-contracts-list-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3474": {
+    "purpose": "verify-maint-lists-duplicate-search",
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   }
