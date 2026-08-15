@@ -190,6 +190,7 @@ export function VehiclesMasterDataPage() {
           <p className="text-xs text-gray-600">Create, edit, void, and review projected source status.</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* MAINT-F3520: server-bound vehicles search — keep; ParityTable toolbar Search suppressed */}
           <input
             className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
             aria-label="Search vehicles"
@@ -234,6 +235,8 @@ export function VehiclesMasterDataPage() {
             storageKey="maint-master-data-vehicles"
             exportFilename="maintenance-vehicles"
             rowActions={rowActions}
+            // MAINT-F3520: keep API search above; hide ParityTable toolbar Search
+            suppressToolbarSearch
           />
         )}
       </div>
