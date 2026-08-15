@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(cash_advances|drawer\\.advance_detail|modal\\.mark_disbursed|modal\\.hold_deduction|modal\\.liability_breakdown|panel\\.pay_run_close)$","task":"LINK-F5185-settlements-reverse-cluster"} */
+/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(cash_advances|drawer\\.advance_detail|drawer\\.liability_detail|modal\\.mark_disbursed|modal\\.hold_deduction|modal\\.liability_breakdown|panel\\.pay_run_close)$","task":"LINK-F5185-settlements-reverse-cluster"} */
 /**
- * GUARD: closes the last 6 of the original 7 open LINK-F5171 settlements reverse_link leaves
+ * GUARD: closes all 7 of the original open LINK-F5171 settlements reverse_link leaves
  * (settlements:disputes/liabilities.list were already closed in PR #6740).
  *
  * TWO leaves genuinely needed new code (driver_finance.cash_advance_requests.driver_id was never
@@ -12,7 +12,7 @@
  *     LAND §9, 2026-07-22) and its AdvanceDetailDrawer already wires onMarkDisbursed to
  *     MarkDisbursedModal; only the driver-profile reverse section was missing.
  *
- * THREE leaves were already fully reverse-wired end to end before this guard — this guard PINS
+ * FOUR leaves were already fully reverse-wired end to end before this guard — this guard PINS
  * that pre-existing chain rather than rebuilding it (verified live in the current tree, not
  * assumed from an older claim):
  *   - settlements:modal.hold_deduction, settlements:modal.liability_breakdown,
@@ -21,6 +21,12 @@
  *     EntityLink kind="settlement" -> /driver-finance/settlements?settlement_id=<id> ->
  *     SettlementsPage.tsx renders <SettlementDetailPage /> on that param -> SettlementDetailPage
  *     unconditionally imports+mounts PayRunClosePanel and the Liability/HoldDeduction modal pair.
+ *   - settlements:drawer.liability_detail — DriverProfilePage.tsx's pre-existing
+ *     DriverSettlementFinanceReverseSection (PR #6740) already EntityLinks each driver liability
+ *     (kind="liability" -> /liabilities?liability_id=<id>); LiabilitiesHome.tsx already reads
+ *     liability_id and opens LiabilityDetailDrawer. That code existed since #6740 but had no
+ *     guard proving/locking it, so the scoreboard's matrix-built system never counted it Built —
+ *     pinned here, not rebuilt.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -37,6 +43,8 @@ const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const SETTLEMENTS_SECTION = "apps/frontend/src/components/driver-profile/SettlementsSection.tsx";
 const SETTLEMENTS_PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
 const SETTLEMENT_DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const SETTLEMENT_FINANCE_SECTION = "apps/frontend/src/components/driver-profile/DriverSettlementFinanceReverseSection.tsx";
+const LIABILITIES_HOME = "apps/frontend/src/pages/liabilities/LiabilitiesHome.tsx";
 const FILES = [
   CAR_SERVICE,
   CAR_ROUTES,
@@ -48,6 +56,8 @@ const FILES = [
   SETTLEMENTS_SECTION,
   SETTLEMENTS_PAGE,
   SETTLEMENT_DETAIL,
+  SETTLEMENT_FINANCE_SECTION,
+  LIABILITIES_HOME,
 ];
 const LABEL = "verify-driver-cash-advances-settlement-modal-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
@@ -68,6 +78,8 @@ export function assertSettlementsClusterReverse(sources) {
   const settlementsSection = src[SETTLEMENTS_SECTION];
   const settlementsPage = src[SETTLEMENTS_PAGE];
   const settlementDetail = src[SETTLEMENT_DETAIL];
+  const settlementFinanceSection = src[SETTLEMENT_FINANCE_SECTION];
+  const liabilitiesHome = src[LIABILITIES_HOME];
 
   // -- cash_advances (new build) --
   if (!/AND r\.driver_id = \$/.test(carService)) {
@@ -137,6 +149,17 @@ export function assertSettlementsClusterReverse(sources) {
     problems.push(`${SETTLEMENT_DETAIL}: must import and mount HoldDeductionModal (pre-existing chain)`);
   }
 
+  // -- settlements:drawer.liability_detail (pin pre-existing chain, #6740) --
+  if (!/kind="liability"/.test(settlementFinanceSection)) {
+    problems.push(`${SETTLEMENT_FINANCE_SECTION}: liability rows must EntityLink kind=liability (pre-existing chain, #6740)`);
+  }
+  if (!/deepLinkLiabilityId\s*=\s*searchParams\.get\("liability_id"\)/.test(liabilitiesHome)) {
+    problems.push(`${LIABILITIES_HOME}: must read liability_id from URL search params (pre-existing chain)`);
+  }
+  if (!/setSelectedLiabilityId\(deepLinkLiabilityId\)/.test(liabilitiesHome) || !/setDetailOpen\(true\)/.test(liabilitiesHome)) {
+    problems.push(`${LIABILITIES_HOME}: must open LiabilityDetailDrawer on deepLinkLiabilityId (pre-existing chain)`);
+  }
+
   return problems;
 }
 
@@ -197,6 +220,15 @@ function selftest() {
       <LiabilityBreakdownModal open={liabilityOpen} settlementId={settlementId} />
       <HoldDeductionModal open={Boolean(holdTarget)} settlementId={settlementId} />
     `,
+    [SETTLEMENT_FINANCE_SECTION]: `kind="liability"`,
+    [LIABILITIES_HOME]: `
+      const deepLinkLiabilityId = searchParams.get("liability_id");
+      useEffect(() => {
+        if (!deepLinkLiabilityId) return;
+        setSelectedLiabilityId(deepLinkLiabilityId);
+        setDetailOpen(true);
+      }, [deepLinkLiabilityId]);
+    `,
   };
   const goodProblems = assertSettlementsClusterReverse(good);
   if (goodProblems.length) {
@@ -226,6 +258,10 @@ function selftest() {
     { ...good, [SETTLEMENT_DETAIL]: good[SETTLEMENT_DETAIL].replace("<PayRunClosePanel settlementId={settlementId} />", "") },
     { ...good, [SETTLEMENT_DETAIL]: good[SETTLEMENT_DETAIL].replace("import { LiabilityBreakdownModal }", "// removed") },
     { ...good, [SETTLEMENT_DETAIL]: good[SETTLEMENT_DETAIL].replace("import { HoldDeductionModal }", "// removed") },
+    { ...good, [SETTLEMENT_FINANCE_SECTION]: good[SETTLEMENT_FINANCE_SECTION].replace('kind="liability"', "") },
+    { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace('searchParams.get("liability_id")', '""') },
+    { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace("setSelectedLiabilityId(deepLinkLiabilityId);", "") },
+    { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace("setDetailOpen(true);\n      }, [deepLinkLiabilityId]);", "}, [deepLinkLiabilityId]);") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertSettlementsClusterReverse(mutated).length === 0) {
