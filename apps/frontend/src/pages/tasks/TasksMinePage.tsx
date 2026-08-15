@@ -42,7 +42,7 @@ export function TasksMinePage() {
       {
         key: "subject_id",
         label: "About",
-        render: (row) => <TaskSubjectLink subjectType={row.subject_type} subjectId={row.subject_id} />,
+        render: (row) => <TaskSubjectLink subjectType={row.subject_type} subjectId={row.subject_id} subjectLabel={row.subject_label} />,
       },
       { key: "category", label: "Category", sortable: true, cellClass: "capitalize text-slate-600" },
       {

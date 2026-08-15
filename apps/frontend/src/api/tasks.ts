@@ -45,6 +45,7 @@ export type Task = {
   assigned_to_name: string | null;
   subject_type: string | null;
   subject_id: string | null;
+  subject_label: string | null;
   estimated_minutes: number | null;
   actual_minutes: number | null;
   progress_pct: number;
