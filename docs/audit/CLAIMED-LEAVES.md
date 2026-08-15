@@ -123,6 +123,13 @@ the leaf stays OPEN.
 | `settlements:drawer.liability_detail` | CC-1 (pre-existing chain from #6740, pinned) | #6927 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
 | `cash-flow:tab.daily_prediction` (liability fallback) | CC-1 | #6970 | `verify-liability-required-honest-cluster-b.mjs` |
 | `drivers:cash_advances` (liability drill, debt-alert rows) | CC-1 | #6970 | `verify-liability-required-honest-cluster-b.mjs` |
+| `accounting:accounting.modal.driver_damage_invoice` | CC-1 (LINK-F5191) | direct-to-main `defb69c94` | `verify-invoice-required-honest.mjs` |
+| `accounting:accounting.modal.driver_misc_invoice` | CC-1 (LINK-F5191) | direct-to-main `defb69c94` | `verify-invoice-required-honest.mjs` |
+| `accounting:accounting.modal.manual_invoice` | CC-1 (LINK-F5191) | direct-to-main `defb69c94` | `verify-invoice-required-honest.mjs` |
+| `accounting:accounting.parity.invoice_type_modal_base` | CC-1 (LINK-F5191) | direct-to-main `defb69c94` | `verify-invoice-required-honest.mjs` |
+| `accounting:accounting.modal.invoice_create` | CC-1 (LINK-F5191) | direct-to-main `defb69c94` | `verify-invoice-required-honest.mjs` |
+| `accounting:accounting.parity.invoice_create` | CC-1 (LINK-F5191) | direct-to-main `defb69c94` | `verify-invoice-required-honest.mjs` |
+| `accounting:invoices.create` | CC-1 (LINK-F5191) | direct-to-main `defb69c94` | `verify-invoice-required-honest.mjs` |
 
 ## Uncertain — empty (Cursor confirm 2026-08-14 night)
 
@@ -157,6 +164,11 @@ All prior Uncertain rows moved to Done after independent guard PASS on tip `orig
 | `legal:matters.create` | CC-1 (LINK-F5187 #6970): dropped `liability` — a matter doesn't always produce a liability; `matters.detail`'s own litigation-reserve column already covers the cases that do |
 | `legal:matters.detail` | CC-1 (LINK-F5187 #6970): dropped `liability` — redundant/sometimes-vacuous alongside the matter's own reserve sub-panel column |
 | `reports:report.settlement_summary` | CC-1 (LINK-F5187 #6970): dropped `liability` — aggregate report across many settlements/liabilities, not a single owning record |
+| `home:surface.quick_actions` | CC-1 (LINK-F5191 `defb69c94`): dropped `invoice` — pure launcher chrome, navigates away on create, never holds an owning invoice id |
+| `inventory:assignments.banner` | CC-1 (LINK-F5191 `defb69c94`): dropped `invoice` — `vendor_invoice_number` is free text, no FK to `accounting.invoices` |
+| `inventory:assignments.search` | CC-1 (LINK-F5191 `defb69c94`): dropped `invoice` — same free-text `vendor_invoice_number`, no owning invoice row |
+| `inventory:assignments.vendor_link` | CC-1 (LINK-F5191 `defb69c94`): dropped `invoice` — same free-text `vendor_invoice_number`; `vendor`/`connectivity`/`reverse_link` kept |
+| `reports:report.ar_aging` | CC-1 (LINK-F5191 `defb69c94`): dropped `invoice` — customer-bucket rollup, no invoice_id per row |
 
 ---
 
