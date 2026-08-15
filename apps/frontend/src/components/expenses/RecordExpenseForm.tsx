@@ -121,7 +121,10 @@ export function RecordExpenseForm({
     setValues((prev) => ({
       ...prev,
       loadId: suggested.load_id,
-      loadLabel: suggested.load_number || suggested.load_id,
+      // RECORD-EXPENSE-SUGGESTED-LOAD-RAW-UUID-LABEL: loadLabel is folded into the persisted expense
+      // memo (buildRecordExpenseMemo) — a raw load_id there is a permanent unreadable memo, not just a
+      // UI glitch. entityLabel keeps the real load_number when present and never paints the id.
+      loadLabel: entityLabel(suggested.load_number, suggested.load_id, "Load"),
     }));
     setSuggestionPinned(true);
   }, [suggestionPinned, suggestionQuery.data, values.loadId]);
@@ -428,11 +431,14 @@ export function RecordExpenseForm({
             kind="load"
             operatingCompanyId={operatingCompanyId}
             value={values.loadId || null}
-            onChange={(next) =>
+            onChange={(next, option) =>
               setValues((prev) => ({
                 ...prev,
                 loadId: next ?? "",
-                loadLabel: next ?? "",
+                // RECORD-EXPENSE-SUGGESTED-LOAD-RAW-UUID-LABEL: manual override via the picker hit the
+                // same bug — EntityPicker already resolves a human option.label for the row the user
+                // just clicked; use it instead of re-painting the raw id the same way the FK is stored.
+                loadLabel: next ? entityLabel(option?.label, next, "Load") : "",
               }))
             }
             placeholder="Search trip / load…"

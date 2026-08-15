@@ -296,6 +296,13 @@ const SIBLINGS = [
     good: /entityLabel\(\s*entry\.account_number\s*,\s*entry\.id\s*\?\?\s*entry\.qbo_id\s*,\s*"Account"\s*\)/,
   },
   {
+    // BILL-EXPENSE-CATEGORY-PICKER-RAW-UUID-FALLBACK — the separate bill-mode expense-category
+    // fallback on the same file/component; the CoA entry above only covered the non-bill path.
+    rel: "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
+    bad: /\.trim\(\)\s*\|\|\s*String\(row\.id\s*\?\?\s*""\)/,
+    good: /entityLabel\(\s*row\.display_name\s*\?\?\s*row\.code\s*,\s*row\.id\s*,\s*"Category"\s*\)/,
+  },
+  {
     rel: "apps/frontend/src/pages/factoring/BatchWizard.tsx",
     bad: /display_id\s*\?\?\s*invoice\.id/,
     good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
@@ -1304,6 +1311,21 @@ const SIBLINGS = [
     rel: "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
     bad: /label=\{linkedWoDisplayId\}/,
     good: /entityLabel\(linkedWoDisplayId, workOrderId, "Work order"\)/,
+  },
+  {
+    // RECORD-EXPENSE-SUGGESTED-LOAD-RAW-UUID-LABEL — auto-suggested load: loadLabel is folded into
+    // the persisted expense memo (buildRecordExpenseMemo), so a raw load_id fallback here is a
+    // permanent unreadable memo, not just a UI glitch.
+    rel: "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+    bad: /loadLabel:\s*suggested\.load_number\s*\|\|\s*suggested\.load_id/,
+    good: /loadLabel:\s*entityLabel\(suggested\.load_number,\s*suggested\.load_id,\s*"Load"\)/,
+  },
+  {
+    // RECORD-EXPENSE-SUGGESTED-LOAD-RAW-UUID-LABEL — manual override via EntityPicker hit the same
+    // bug: the picker's onChange already resolves a human option.label for the row just clicked.
+    rel: "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+    bad: /loadLabel:\s*next\s*\?\?\s*""/,
+    good: /loadLabel:\s*next\s*\?\s*entityLabel\(option\?\.label,\s*next,\s*"Load"\)\s*:\s*""/,
   },
   {
     rel: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx",

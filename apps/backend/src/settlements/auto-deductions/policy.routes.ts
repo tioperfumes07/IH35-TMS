@@ -56,6 +56,11 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
           SELECT
             p.*,
             NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
+            -- AUTO-DEDUCTION-POLICY-HISTORY-NO-HUMAN-LABEL: the deduction-type join already existed
+            -- (default_recovery_rail/may_draw_escrow/survives_separation), but never selected the
+            -- one column a human reads — display_name — so the completed-policy history card had
+            -- nothing but policy.id to label a row with.
+            ddt.display_name AS deduction_type_display_name,
             ddt.default_recovery_rail,
             ddt.may_draw_escrow,
             ddt.survives_separation

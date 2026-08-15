@@ -322,7 +322,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
             return (
               <div key={policy.id} className="flex justify-between text-xs text-gray-600">
                 <span className="truncate pr-2" title={policy.memo ?? undefined}>
-                  Fine policy {entityLabel(null, policy.id, "Policy")}{policy.memo ? ` · ${policy.memo}` : ""}
+                  Fine policy {entityLabel(policy.deduction_type_display_name, policy.id, "Policy")}{policy.memo ? ` · ${policy.memo}` : ""}
                 </span>
                 <span className="shrink-0 font-medium text-gray-800">
                   {formatMoney(deducted)} / {formatMoney(owed)}

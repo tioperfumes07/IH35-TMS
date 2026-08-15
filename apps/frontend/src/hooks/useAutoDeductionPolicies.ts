@@ -14,6 +14,8 @@ export type AutoDeductionPolicy = {
   driver_name?: string | null;
   deduction_type: AutoDeductionDeductionType;
   /** SETL-LINK-01 — joined from catalogs.driver_deduction_types */
+  /** AUTO-DEDUCTION-POLICY-HISTORY-NO-HUMAN-LABEL — the canonical type label; never raw uuid. */
+  deduction_type_display_name?: string | null;
   default_recovery_rail?: string | null;
   may_draw_escrow?: boolean | null;
   survives_separation?: boolean | null;
