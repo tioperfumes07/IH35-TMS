@@ -151,7 +151,6 @@
       "route_hint": "/finance/statements",
       "required": [
         "gl_je",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -163,7 +162,6 @@
       "route_hint": "/finance/statements",
       "required": [
         "gl_je",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -175,7 +173,6 @@
       "route_hint": "/finance/statements?tab=bs",
       "required": [
         "gl_je",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -187,7 +184,6 @@
       "route_hint": "/finance/statements?tab=tb",
       "required": [
         "gl_je",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -761,6 +757,36 @@
           "id": "nav.loan_wizard",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_15": {
+      "finding": "LINK-F5187-LIABILITY-COLUMN-HONESTY",
+      "note": "liability Required on FinancialStatementsPage.tsx (nav.statements/statements.pl/bs/tb) -- zero EntityLink/liability reference in the 641-line file; each drill (registerHref) routes to a GL account register, a categorical account-balance rollup, never a specific liability record. Same false-positive shape already found for this leaf's sibling gl_je column.",
+      "drops": [
+        {
+          "id": "nav.statements",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "statements.pl",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "statements.bs",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "statements.tb",
+          "removed": [
+            "liability"
           ]
         }
       ]

@@ -370,13 +370,17 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const debtAlertRows = useMemo(() => {
     const aggregates = new Map<
       string,
-      { driver_id: string; driver_name: string; total: number; reasons: string[] }
+      // LINK-F5187 (drivers:cash_advances): liabilityIds carries the real
+      // driver_finance.driver_liabilities ids through the aggregation -- they were fetched by
+      // liabilitiesQuery below and then discarded before reaching the render.
+      { driver_id: string; driver_name: string; total: number; reasons: string[]; liabilityIds: string[] }
     >();
-    const upsertDebt = (driverId: string, driverName: string, amount: number, reason: string) => {
+    const upsertDebt = (driverId: string, driverName: string, amount: number, reason: string, liabilityId?: string) => {
       if (!driverId || amount <= 0) return;
-      const current = aggregates.get(driverId) ?? { driver_id: driverId, driver_name: driverName, total: 0, reasons: [] };
+      const current = aggregates.get(driverId) ?? { driver_id: driverId, driver_name: driverName, total: 0, reasons: [], liabilityIds: [] };
       current.total += amount;
       current.reasons.push(reason);
+      if (liabilityId) current.liabilityIds.push(liabilityId);
       aggregates.set(driverId, current);
     };
 
@@ -406,7 +410,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       const amount = Number(liability.current_balance ?? liability.balance ?? 0);
       const driverId = String(liability.driver_id ?? liability.driver_full_name ?? "");
       const driverName = String(liability.driver_full_name ?? liability.driver_name ?? "Unknown driver");
-      upsertDebt(driverId, driverName, amount, source || type || "liability");
+      const liabilityId = liability.id != null ? String(liability.id) : undefined;
+      upsertDebt(driverId, driverName, amount, source || type || "liability", liabilityId);
     }
 
     return Array.from(aggregates.values())
@@ -759,6 +764,19 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                     <span>
                       <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
                       {row.reasons.slice(0, 2).join(" + ")}
+                      {/* LINK-F5187 (drivers:cash_advances) -- the real driver_finance.driver_liabilities
+                      ids were already fetched by liabilitiesQuery and discarded during aggregation. */}
+                      {row.liabilityIds.length > 0 ? (
+                        <span className="ml-1">
+                          {row.liabilityIds.map((id, idx) => (
+                            <span key={id}>
+                              {idx > 0 ? ", " : " ("}
+                              <EntityLink kind="liability" id={id} label={`#${idx + 1}`} className="text-red-600 hover:underline" />
+                            </span>
+                          ))}
+                          {")"}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="text-red-600">-{formatMoney(row.total)}</span>
                   </DataPanelRow>
@@ -834,6 +852,18 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                     <span>
                       <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
                       {row.reasons.slice(0, 2).join(" + ")}
+                      {/* LINK-F5187 (drivers:cash_advances) -- see debtAlertRows.liabilityIds above. */}
+                      {row.liabilityIds.length > 0 ? (
+                        <span className="ml-1">
+                          {row.liabilityIds.map((id, idx) => (
+                            <span key={id}>
+                              {idx > 0 ? ", " : " ("}
+                              <EntityLink kind="liability" id={id} label={`#${idx + 1}`} className="text-red-600 hover:underline" />
+                            </span>
+                          ))}
+                          {")"}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="text-red-600">-{formatMoney(row.total)}</span>
                   </DataPanelRow>

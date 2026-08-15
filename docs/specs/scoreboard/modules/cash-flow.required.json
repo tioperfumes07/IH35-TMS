@@ -119,7 +119,6 @@
       "sub": "Cash Flow page shell",
       "route_hint": "/cash-flow",
       "required": [
-        "liability",
         "connectivity"
       ]
     },
@@ -142,7 +141,6 @@
       "sub": "Actual vs projected tab",
       "route_hint": "/cash-flow?tab=actual_vs_projected",
       "required": [
-        "liability",
         "connectivity"
       ]
     },
@@ -614,6 +612,24 @@
           "id": "tab.actual_vs_projected",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_15": {
+      "finding": "LINK-F5187-LIABILITY-COLUMN-HONESTY",
+      "note": "liability Required on home (pure tab-shell, zero content of its own) and tab.actual_vs_projected (a pure day-level income/expense/net rollup table, zero per-record rows, zero EntityLink) -- same false-positive shapes already found for this module's sibling gl_je column.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "tab.actual_vs_projected",
+          "removed": [
+            "liability"
           ]
         }
       ]

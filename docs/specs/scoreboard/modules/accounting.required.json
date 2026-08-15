@@ -1120,7 +1120,6 @@
       "required": [
         "driver",
         "settlement",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -1607,6 +1606,18 @@
           "id": "accounting.panel.class_cost_center_variance",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_15": {
+      "finding": "LINK-F5187-LIABILITY-COLUMN-HONESTY",
+      "note": "liability Required on accounting.modal.decide (DisputeQueuePage.tsx) -- driver_finance.driver_settlement_disputes (db/migrations/0124_p6_active_drift_reconciliation.sql:877-902) has no FK to driver_finance.driver_liabilities at all; dispute_category is a free-text CHECK-constrained tag, not a foreign key to a specific liability row. No owning liability record is modeled for a dispute.",
+      "drops": [
+        {
+          "id": "accounting.modal.decide",
+          "removed": [
+            "liability"
           ]
         }
       ]

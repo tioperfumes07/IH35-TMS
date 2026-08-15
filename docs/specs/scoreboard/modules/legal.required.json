@@ -217,7 +217,6 @@
       "required": [
         "driver",
         "unit",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -232,7 +231,6 @@
       "required": [
         "driver",
         "unit",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -843,6 +841,24 @@
             "load"
           ],
           "reason": "legal matter schema and create path have no load_id relationship"
+        }
+      ]
+    },
+    "liability_2026_08_15": {
+      "finding": "LINK-F5187-LIABILITY-COLUMN-HONESTY",
+      "note": "liability Required on matters.create/matters.detail -- legal.matters carries financial_reserve_cents/amount_claimed_against_us as plain numeric estimate columns; no FK to driver_finance.driver_liabilities or accounting.bills was ever added. A legal matter's financial exposure is a standalone estimate field, not a posted liability record.",
+      "drops": [
+        {
+          "id": "matters.create",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "matters.detail",
+          "removed": [
+            "liability"
+          ]
         }
       ]
     }

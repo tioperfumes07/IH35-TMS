@@ -161,7 +161,6 @@
       "required": [
         "vendor",
         "unit",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -234,7 +233,6 @@
         "unit",
         "trailer",
         "load",
-        "liability",
         "expense",
         "picker_law",
         "qbo_chrome",
@@ -258,7 +256,6 @@
       "sub": "+ Create Lawsuit",
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -992,6 +989,30 @@
           "id": "claims.create",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_15": {
+      "finding": "LINK-F5187-LIABILITY-COLUMN-HONESTY",
+      "note": "liability Required on policies.create/claims.create/lawsuits.create -- all three are pure create-forms (zero EntityLink/liability reference); no record exists yet at creation time for a liability link to attach to. Same create-modal false-positive class already found for gl_je.",
+      "drops": [
+        {
+          "id": "policies.create",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "liability"
           ]
         }
       ]
