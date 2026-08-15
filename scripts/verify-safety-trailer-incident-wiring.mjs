@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["safety"],"cols":["trailer","picker_law","reverse_link","connectivity"],"leafRe":"^(accidents\\.(list|create)|damage_reports\\.(list|create)|trailer_interchanges\\.list|idvr\\.list|dot_inspections\\.(list|create))$","task":"LINK-F5163-SAFETY-TRAILER-INCIDENTS"} */
+/** @matrix-built {"modules":["safety"],"cols":["trailer","picker_law","reverse_link","connectivity"],"leafRe":"^(accidents\\.(list|create)|damage_reports\\.(list|create)|trailer_interchanges\\.list|idvr\\.list|dot_inspections\\.(list|create)|cargo_claims\\.list)$","task":"LINK-F5163-SAFETY-TRAILER-INCIDENTS"} */
 /**
  * OWNER-EXECUTION-PLAN vertical trailer-column sweep (2026-08-14): accidents.create captures a real
  * trailer_id via AccidentReportDrawer.tsx's EntityPicker. accidents.list + idvr.list +
- * dot_inspections.list/create must filter + show Trailer so reverse deep-links ?trailer_id= seed a
- * visible filter (LINK-F5171 / LST-F5163C).
+ * dot_inspections.list/create + cargo_claims.list must filter + show Trailer so reverse deep-links
+ * ?trailer_id= seed a visible filter (LINK-F5171 / LST-F5163C / LST-F5163D).
  * damage_reports / trailer_interchanges share SafetyIncidentsClusterSurface.
  *
  * Self-test: node scripts/verify-safety-trailer-incident-wiring.mjs --selftest
@@ -22,6 +22,7 @@ const FILES = {
   interchanges: "apps/frontend/src/pages/safety/TrailerInterchangesPage.tsx",
   dotInspections: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
   dotInspectionsApi: "apps/backend/src/routes/safety/dot-inspections.ts",
+  cargoClaims: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
 };
 const LABEL = "verify-safety-trailer-incident-wiring";
 
@@ -85,6 +86,16 @@ export function audit(src) {
   if (!/LEFT JOIN mdata\.equipment tr/.test(src.dotInspectionsApi)) {
     failures.push(`${FILES.dotInspectionsApi}: list must join mdata.equipment for trailer_number`);
   }
+  // LST-F5163D — cargo claims list reverse
+  if (!/dataTestId=\{`\$\{pageTestId\}-trailer-filter`\}/.test(src.cargoClaims) && !/dataTestId="[^"]*-trailer-filter"/.test(src.cargoClaims)) {
+    failures.push(`${FILES.cargoClaims}: list must render EntityPicker trailer filter (*-trailer-filter)`);
+  }
+  if (!/key:\s*"trailer_id"/.test(src.cargoClaims) || !/kind="trailer"/.test(src.cargoClaims)) {
+    failures.push(`${FILES.cargoClaims}: list must show Trailer EntityLink column`);
+  }
+  if (!/setTrailerFilter\(trailerIdFromUrl\)/.test(src.cargoClaims)) {
+    failures.push(`${FILES.cargoClaims}: ?trailer_id= reverse deep-link must seed trailerFilter`);
+  }
   return failures;
 }
 
@@ -97,6 +108,7 @@ function loadSrc(root) {
     interchanges: fs.readFileSync(path.join(root, FILES.interchanges), "utf8"),
     dotInspections: fs.readFileSync(path.join(root, FILES.dotInspections), "utf8"),
     dotInspectionsApi: fs.readFileSync(path.join(root, FILES.dotInspectionsApi), "utf8"),
+    cargoClaims: fs.readFileSync(path.join(root, FILES.cargoClaims), "utf8"),
   };
 }
 
@@ -125,6 +137,9 @@ if (process.argv.includes("--selftest")) {
     ["dot-api-insert", "dotInspectionsApi", /unit_id, trailer_id, inspection_date/, "unit_id, inspection_date"],
     ["dot-api-bind", "dotInspectionsApi", /body\.data\.trailer_id \?\? null/g, "body.data.unit_id ?? null"],
     ["dot-api-join", "dotInspectionsApi", /LEFT JOIN mdata\.equipment tr/, "LEFT JOIN mdata.units tr"],
+    ["cargo-filter", "cargoClaims", /dataTestId=\{`\$\{pageTestId\}-trailer-filter`\}/, 'dataTestId={`${pageTestId}-filter-unit`}'],
+    ["cargo-column", "cargoClaims", /key:\s*"trailer_id"/, 'key: "load_id"'],
+    ["cargo-seed", "cargoClaims", /setTrailerFilter\(trailerIdFromUrl\)/, "setUnitFilter(trailerIdFromUrl)"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
@@ -146,4 +161,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — safety accident/DVIR/DOT list+create / damage-report / trailer-interchange are trailer-scoped`);
+console.log(`${LABEL} PASS — safety accident/DVIR/DOT/cargo-claim list+create / damage-report / trailer-interchange are trailer-scoped`);

@@ -129,6 +129,20 @@ export function CargoClaimIntakeSurface({
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
+  // LST-F5163D: visible list filters (allowCreate=false); reverse ?trailer_id= seeds trailerFilter.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+  const [trailerFilter, setTrailerFilter] = useState("");
+
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  useEffect(() => {
+    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+  }, [unitIdFromUrl]);
+  useEffect(() => {
+    if (trailerIdFromUrl) setTrailerFilter(trailerIdFromUrl);
+  }, [trailerIdFromUrl]);
 
   const suggestionQuery = useQuery({
     queryKey: [
@@ -173,16 +187,17 @@ export function CargoClaimIntakeSurface({
       "cargo_claim",
       operatingCompanyId,
       loadIdFromUrl,
-      driverIdFromUrl,
-      unitIdFromUrl,
+      driverFilter,
+      unitFilter,
+      trailerFilter,
       trailerIdFromUrl,
     ],
     queryFn: () =>
       listSafetyIncidents(operatingCompanyId, "cargo_claim", {
         load_id: loadIdFromUrl || undefined,
-        driver_id: driverIdFromUrl || undefined,
-        unit_id: unitIdFromUrl || undefined,
-        trailer_id: trailerIdFromUrl || undefined,
+        driver_id: driverFilter.trim() || driverIdFromUrl || undefined,
+        unit_id: unitFilter.trim() || unitIdFromUrl || undefined,
+        trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
       }),
     enabled: companyEnabled,
   });
@@ -296,6 +311,21 @@ export function CargoClaimIntakeSurface({
           ) : (
             "—"
           ),
+      },
+      {
+        key: "trailer_id",
+        label: "Trailer",
+        render: (row) => (
+          <EntityLink
+            kind="trailer"
+            id={row.trailer_id as string | undefined}
+            label={entityLabel(
+              (row.trailer_number as string | undefined)?.trim(),
+              row.trailer_id as string | undefined,
+              "Trailer"
+            )}
+          />
+        ),
       },
       { key: "damage_amount_cents", label: "Claimed", sortable: true, render: (row) => formatCents(row.damage_amount_cents) },
       { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
@@ -692,6 +722,49 @@ export function CargoClaimIntakeSurface({
         exportFilename="cargo-claims"
         tableTestId={`${pageTestId}-table`}
         rowTestId={(row) => `${pageTestId}-row-${String(row.id ?? "")}`}
+        filterBar={
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-[11px] text-slate-600">
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={operatingCompanyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1"
+                dataTestId={`${pageTestId}-filter-driver`}
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Unit
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={operatingCompanyId}
+                value={unitFilter || null}
+                onChange={(next) => setUnitFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All units"
+                className="mt-1"
+                dataTestId={`${pageTestId}-filter-unit`}
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Trailer
+              <EntityPicker
+                kind="trailer"
+                operatingCompanyId={operatingCompanyId}
+                value={trailerFilter || null}
+                onChange={(next) => setTrailerFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All trailers"
+                className="mt-1"
+                dataTestId={`${pageTestId}-trailer-filter`}
+              />
+            </label>
+          </div>
+        }
       />
       )}
 
