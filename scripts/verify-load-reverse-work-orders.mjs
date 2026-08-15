@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const selftest = process.argv.includes("--selftest");
 
 const ROUTE = "apps/backend/src/maintenance/work-orders.routes.ts";
 const CLIENT = "apps/frontend/src/api/maintenance.ts";
@@ -79,6 +80,10 @@ if (!/listWorkOrdersFiltered\s*\(/.test(drvSection) || !/driver_id:\s*driverId/.
 if (!/kind=["']work_order["']/.test(drvSection)) {
   failures.push(`${driverWoSection}: must EntityLink kind="work_order".`);
 }
+const driverLoadLabelPattern = /entityLabel\(\s*wo\.linked_load_number\s*,\s*wo\.load_id\s*,\s*["']Load["']\s*\)/;
+if (!driverLoadLabelPattern.test(drvSection)) {
+  failures.push(`${driverWoSection}: load EntityLink must consume the persisted linked_load_number instead of exposing an unresolved UUID.`);
+}
 const drvDetail = read(driverDetail);
 if (!/<DriverWorkOrdersReverseSection(?![A-Za-z0-9_])/.test(drvDetail)) {
   failures.push(`${driverDetail}: must mount <DriverWorkOrdersReverseSection …/>.`);
@@ -128,6 +133,16 @@ if (failures.length > 0) {
   console.error("FAIL verify-load-reverse-work-orders");
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
+}
+
+if (selftest) {
+  const planted = drvSection.replace("wo.linked_load_number", "null");
+  if (planted === drvSection || driverLoadLabelPattern.test(planted)) {
+    console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted driver WO load-label defect escaped");
+    process.exit(1);
+  }
+  console.log("PASS verify-load-reverse-work-orders SELFTEST — planted driver WO load-label defect caught");
+  process.exit(0);
 }
 
 console.log("PASS verify-load-reverse-work-orders — load↔WO both ways: drawer lists WOs; WO detail/table/modal EntityLink load/unit/vendor/claim");

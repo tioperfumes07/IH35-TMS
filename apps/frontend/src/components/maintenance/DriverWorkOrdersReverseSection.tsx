@@ -70,7 +70,11 @@ export function DriverWorkOrdersReverseSection({
                   />
                 ) : null}
                 {wo.load_id ? (
-                  <EntityLink kind="load" id={String(wo.load_id)} label={entityLabel(null, wo.load_id, "Load")} />
+                  <EntityLink
+                    kind="load"
+                    id={String(wo.load_id)}
+                    label={entityLabel(wo.linked_load_number, wo.load_id, "Load")}
+                  />
                 ) : null}
                 <span className="text-xs text-slate-500">{String(wo.status ?? "")}</span>
               </li>
