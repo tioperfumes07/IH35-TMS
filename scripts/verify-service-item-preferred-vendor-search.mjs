@@ -18,10 +18,38 @@ function readRel(root, rel) {
   return fs.readFileSync(p, "utf8");
 }
 
+function newServiceEmbedsItemEditor(serviceSrc) {
+  return (
+    /<ItemEditorModal[\s>]/.test(serviceSrc) &&
+    (/from ["'].*ItemEditorModal["']|from ["'].*\/ItemEditorModal["']/.test(serviceSrc) ||
+      /import\s*\{\s*ItemEditorModal\s*\}/.test(serviceSrc))
+  );
+}
+
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+}
+
 /** @returns {string[]} */
 export function collectProblems(root = ROOT) {
   const problems = [];
-  for (const file of [SERVICE, ITEM]) {
+  const serviceSrc = readRel(root, SERVICE);
+  const itemSrc = readRel(root, ITEM);
+
+  if (!serviceSrc) problems.push(`missing ${SERVICE}`);
+  else if (newServiceEmbedsItemEditor(serviceSrc)) {
+    if (!/^\s*embedded\s*$/m.test(stripComments(serviceSrc))) {
+      problems.push(`${SERVICE}: must pass embedded so ParityDrawer is not double-shelled`);
+    }
+    if (/function NewServiceDrawerForm/.test(serviceSrc) && /useState/.test(serviceSrc)) {
+      problems.push(`${SERVICE}: must not own a parallel item form (delegate to ItemEditorModal)`);
+    }
+  }
+
+  const filesToCheck = [ITEM];
+  if (serviceSrc && !newServiceEmbedsItemEditor(serviceSrc)) filesToCheck.push(SERVICE);
+
+  for (const file of filesToCheck) {
     const src = readRel(root, file);
     if (!src) {
       problems.push(`missing ${file}`);

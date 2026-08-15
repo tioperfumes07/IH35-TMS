@@ -26,35 +26,77 @@ function readRel(root, rel, overrides) {
   return fs.readFileSync(p, "utf8");
 }
 
+function newServiceEmbedsItemEditor(drawerSrc) {
+  return (
+    /<ItemEditorModal[\s>]/.test(drawerSrc) &&
+    (/from ["'].*ItemEditorModal["']|from ["'].*\/ItemEditorModal["']/.test(drawerSrc) ||
+      /import\s*\{\s*ItemEditorModal\s*\}/.test(drawerSrc))
+  );
+}
+
+function vendorPickerSource(root = ROOT, overrides = null) {
+  const drawer = readRel(root, DRAWER, overrides);
+  if (!drawer) return { rel: DRAWER, src: null };
+  if (newServiceEmbedsItemEditor(drawer)) {
+    return { rel: EDITOR, src: readRel(root, EDITOR, overrides) };
+  }
+  return { rel: DRAWER, src: drawer };
+}
+
 function block(src, testid) {
   const m = src.match(new RegExp(`data-testid=["']${testid}["'][\\s\\S]{0,1400}`));
   return m ? m[0] : "";
+}
+
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
 /** @returns {string[]} */
 export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
   const drawer = readRel(root, DRAWER, overrides);
+  const { rel: pickerRel, src: pickerSrc } = vendorPickerSource(root, overrides);
   const editor = readRel(root, EDITOR, overrides);
   const backend = readRel(root, BACKEND, overrides);
 
   if (!drawer) problems.push(`missing ${DRAWER}`);
-  else {
-    if (!/data-testid=["']service-preferred-vendor-select["']/.test(drawer)) {
+  else if (newServiceEmbedsItemEditor(drawer)) {
+    if (!/^\s*embedded\s*$/m.test(stripComments(drawer))) {
+      problems.push(`${DRAWER}: must pass embedded (LST-F3360 single chrome)`);
+    }
+  }
+
+  if (!pickerSrc) problems.push(`missing ${pickerRel}`);
+  else if (pickerRel === DRAWER) {
+    if (!/data-testid=["']service-preferred-vendor-select["']/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must use data-testid=service-preferred-vendor-select`);
     }
-    const b = block(drawer, "service-preferred-vendor-select");
+    const b = block(pickerSrc, "service-preferred-vendor-select");
     if (!/createKind=["']vendor["']/.test(b)) {
       problems.push(`${DRAWER}: preferred vendor must use createKind=vendor`);
     }
-    if (/preferredVendor[^I]|value=\{form\.preferredVendor\}/.test(drawer) && /<input[\s\S]{0,200}preferredVendor/.test(drawer)) {
+    if (/preferredVendor[^I]|value=\{form\.preferredVendor\}/.test(pickerSrc) && /<input[\s\S]{0,200}preferredVendor/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must not keep free-text preferredVendor input`);
     }
-    if (!/preferred_vendor_id/.test(drawer)) {
+    if (!/preferred_vendor_id/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must persist preferred_vendor_id in create metadata`);
     }
-    if (!/listVendors/.test(drawer)) {
+    if (!/listVendors/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must load vendors from listVendors (mdata.vendors)`);
+    }
+  } else {
+    if (!/createKind=["']vendor["']/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: preferred vendor must use createKind=vendor`);
+    }
+    if (!/preferred_vendor_id/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: must persist preferred_vendor_id in create metadata`);
+    }
+    if (!/listVendors/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: must load vendors from listVendors (mdata.vendors)`);
+    }
+    if (!/onSearch=\{setVendorSearch\}/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: preferred vendor must wire onSearch for server search`);
     }
   }
 
@@ -105,28 +147,24 @@ if (process.argv.includes("--selftest")) {
   expectCaught(
     "testid-removed",
     DRAWER,
-    (s) => s.replace(/data-testid=["']service-preferred-vendor-select["']/, 'data-testid="gone"'),
-    "service-preferred-vendor-select"
+    (s) => s.replace(/^\s*embedded\s*$/m, ""),
+    "embedded"
   );
   expectCaught(
     "createKind-removed",
-    DRAWER,
-    (s) =>
-      s.replace(
-        /(data-testid=["']service-preferred-vendor-select["'][\s\S]{0,1400}?)createKind=["']vendor["']/,
-        '$1createKind="customer"'
-      ),
+    EDITOR,
+    (s) => s.replace(/createKind=["']vendor["']/g, 'createKind="customer"'),
     "createKind=vendor"
   );
   expectCaught(
     "persist-removed",
-    DRAWER,
+    EDITOR,
     (s) => s.replace(/preferred_vendor_id/g, "preferred_vendor_gone"),
     "preferred_vendor_id"
   );
   expectCaught(
     "listVendors-removed",
-    DRAWER,
+    EDITOR,
     (s) => s.replace(/listVendors/g, "listGone"),
     "listVendors"
   );

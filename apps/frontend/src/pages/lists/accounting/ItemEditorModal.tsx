@@ -47,6 +47,8 @@ const CATALOG_PICKER_CAP = 200;
 const VENDOR_PICKER_CAP = 200;
 const VENDOR_OPEN_CAP = 1000;
 
+export type ItemEditorSavedResult = { id: string; label: string };
+
 type Props = {
   open: boolean;
   mode: "create" | "edit";
@@ -54,7 +56,9 @@ type Props = {
   operatingCompanyId: string;
   client: AccountingCatalogClient;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (result?: ItemEditorSavedResult) => void;
+  /** When true, render form chrome only (no Modal shell) for ParityDrawer nested create. */
+  embedded?: boolean;
 };
 
 type FormState = {
@@ -99,7 +103,16 @@ function rowToForm(row: AccountingCatalogRow | null): FormState {
   };
 }
 
-export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, onClose, onSaved }: Props) {
+export function ItemEditorModal({
+  open,
+  mode,
+  row,
+  operatingCompanyId,
+  client,
+  onClose,
+  onSaved,
+  embedded = false,
+}: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(rowToForm(null));
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -240,9 +253,15 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
       metadata,
     };
     try {
-      if (mode === "create") await client.create(operatingCompanyId, body);
-      else if (row) await client.update(row.id, operatingCompanyId, body);
-      onSaved();
+      if (mode === "create") {
+        const created = await client.create(operatingCompanyId, body);
+        onSaved({ id: String(created.id), label: form.displayName.trim() });
+      } else if (row) {
+        await client.update(row.id, operatingCompanyId, body);
+        onSaved({ id: row.id, label: form.displayName.trim() });
+      } else {
+        onSaved();
+      }
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -273,16 +292,10 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     }
   }
 
-  return (
-    <>
-    <Modal
-      variant="drawer"
-      open={open}
-      onClose={onClose}
-      title={mode === "create" ? "New product/service" : `Edit: ${row?.display_name ?? ""}`}
-      sizePreset="lg"
-    >
-      <div className="flex max-h-[80vh] flex-col gap-3 overflow-y-auto text-sm">
+  if (!open) return null;
+
+  const formChrome = (
+      <div className={`flex flex-col gap-3 text-sm ${embedded ? "" : "max-h-[80vh] overflow-y-auto"}`}>
         {/* Basic fields */}
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
@@ -545,7 +558,25 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="flex h-full flex-col" data-testid="item-editor-embedded">
+        {formChrome}
+      </div>
+    );
+  }
+
+  return (
+    <Modal
+      variant="drawer"
+      open={open}
+      onClose={onClose}
+      title={mode === "create" ? "New product/service" : `Edit: ${row?.display_name ?? ""}`}
+      sizePreset="lg"
+    >
+      {formChrome}
     </Modal>
-    </>
   );
 }

@@ -27,36 +27,81 @@ function readRel(root, rel, overrides) {
   return fs.readFileSync(p, "utf8");
 }
 
+function newServiceEmbedsItemEditor(drawerSrc) {
+  return (
+    /<ItemEditorModal[\s>]/.test(drawerSrc) &&
+    (/from ["'].*ItemEditorModal["']|from ["'].*\/ItemEditorModal["']/.test(drawerSrc) ||
+      /import\s*\{\s*ItemEditorModal\s*\}/.test(drawerSrc))
+  );
+}
+
+/** Account/income/expense picker assertions live in ItemEditorModal when drawer is a thin embed wrapper. */
+function accountPickerSource(root = ROOT, overrides = null) {
+  const drawer = readRel(root, DRAWER, overrides);
+  if (!drawer) return { rel: DRAWER, src: null };
+  if (newServiceEmbedsItemEditor(drawer)) {
+    return { rel: EDITOR, src: readRel(root, EDITOR, overrides) };
+  }
+  return { rel: DRAWER, src: drawer };
+}
+
 function block(src, testid) {
   const m = src.match(new RegExp(`data-testid=["']${testid}["'][\\s\\S]{0,1200}`));
   return m ? m[0] : "";
+}
+
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
 /** @returns {string[]} */
 export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
   const drawer = readRel(root, DRAWER, overrides);
+  const { rel: pickerRel, src: pickerSrc } = accountPickerSource(root, overrides);
   const editor = readRel(root, EDITOR, overrides);
   const routes = readRel(root, ROUTES, overrides);
 
   if (!drawer) problems.push(`missing ${DRAWER}`);
-  else {
+  else if (newServiceEmbedsItemEditor(drawer)) {
+    if (!/^\s*embedded\s*$/m.test(stripComments(drawer))) {
+      problems.push(`${DRAWER}: must pass embedded (LST-F3360 single chrome)`);
+    }
+    if (/function NewServiceDrawerForm/.test(drawer) && /useState/.test(drawer)) {
+      problems.push(`${DRAWER}: must not own a parallel item form when embedding ItemEditorModal`);
+    }
+  }
+
+  if (!pickerSrc) problems.push(`missing ${pickerRel}`);
+  else if (pickerRel === DRAWER) {
     for (const id of ["service-income-account-select", "service-expense-account-select"]) {
-      if (!new RegExp(`data-testid=["']${id}["']`).test(drawer)) {
+      if (!new RegExp(`data-testid=["']${id}["']`).test(pickerSrc)) {
         problems.push(`${DRAWER}: must use data-testid=${id}`);
-      } else if (!/createKind=["']account["']/.test(block(drawer, id))) {
+      } else if (!/createKind=["']account["']/.test(block(pickerSrc, id))) {
         problems.push(`${DRAWER}: ${id} must use createKind=account`);
       }
     }
-    // Bare Combobox as primary income/expense control (regression)
-    if (/Income account[\s\S]{0,400}<Combobox/.test(drawer)) {
+    if (/Income account[\s\S]{0,400}<Combobox/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must not keep bare Combobox for income account`);
     }
-    if (/Expense account[\s\S]{0,400}<Combobox/.test(drawer)) {
+    if (/Expense account[\s\S]{0,400}<Combobox/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must not keep bare Combobox for expense account`);
     }
-    if (!/default_income_account_id/.test(drawer) || !/default_expense_account_id/.test(drawer)) {
+    if (!/default_income_account_id/.test(pickerSrc) || !/default_expense_account_id/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must keep FIX-03 persist of default_*_account_id`);
+    }
+  } else {
+    if (!/createKind=["']account["']/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: ItemEditorModal must keep createKind=account (parity anchor)`);
+    }
+    if (/Income account[\s\S]{0,500}<Combobox/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: must not keep bare Combobox for income account`);
+    }
+    if (/Expense account[\s\S]{0,500}<Combobox/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: must not keep bare Combobox for expense account`);
+    }
+    if (!/default_income_account_id/.test(pickerSrc) || !/default_expense_account_id/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: must persist default_*_account_id in create metadata`);
     }
   }
 
@@ -107,35 +152,29 @@ if (process.argv.includes("--selftest")) {
   expectCaught(
     "income-testid-removed",
     DRAWER,
-    (s) => s.replace(/data-testid=["']service-income-account-select["']/, 'data-testid="gone"'),
-    "service-income-account-select"
+    (s) => s.replace(/^\s*embedded\s*$/m, ""),
+    "embedded"
   );
   expectCaught(
     "expense-createKind-removed",
-    DRAWER,
-    (s) =>
-      s.replace(
-        /(data-testid=["']service-expense-account-select["'][\s\S]{0,1200}?)createKind=["']account["']/,
-        '$1createKind="vendor"'
-      ),
+    EDITOR,
+    (s) => s.replace(/createKind=["']account["']/g, 'createKind="vendor"'),
     "createKind=account"
   );
   expectCaught(
     "income-combobox-reintroduced",
-    DRAWER,
+    EDITOR,
     (s) =>
       s.replace(
-        /data-testid=["']service-income-account-select["'][\s\S]*?<\/label>/,
-        `data-testid="service-income-account-select">
-              <span>Income account *</span>
-              <Combobox options={incomeOptions} value={form.incomeAccountId} onChange={() => {}} />
-            </label>`
+        /Income account \*[\s\S]{0,500}?<ReferenceSelect/,
+        `Income account *
+                <Combobox options={incomeOptions} value={form.incomeAccountId} onChange={() => {}} />`
       ),
     "Combobox"
   );
   expectCaught(
     "persist-removed",
-    DRAWER,
+    EDITOR,
     (s) => s.replace(/default_income_account_id/g, "default_income_gone"),
     "default_*_account_id"
   );
