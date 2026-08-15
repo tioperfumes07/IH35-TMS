@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import {
@@ -59,12 +60,24 @@ export function VoidCancelReasonsListPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<VoidCancelReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
+
+  // LST-F5211 — Live Chrome deep-link: hub / Lists ?create=1 must open Create Entry (Payment Methods parity).
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || !companyId) return;
+    setModalMode("create");
+    setActiveRow(null);
+    setConflictError(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, companyId, setSearchParams]);
 
   const listQuery = useQuery({
     queryKey: ["void-cancel-reasons", companyId],

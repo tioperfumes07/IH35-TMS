@@ -12,6 +12,7 @@
  *        - other domains → /lists/hub/:domain (not bare /lists/:domain)
  *   3. /lists/hub/:domain still mounts DomainCatalogHubPage (Rule 07 — additive only).
  *   4. ChartOfAccountsListPage + AccountingCatalogListPage honor ?create=1.
+ *   5. VoidCancelReasonsListPage honors ?create=1 → Create Entry modal (LST-F5211).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -27,6 +28,10 @@ const PATHS = {
   catalogListPage: path.join(
     ROOT,
     "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx"
+  ),
+  voidCancelPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx"
   ),
 };
 
@@ -56,12 +61,14 @@ export function collectProblems(sources = {}) {
   const catalogsMap = sources.catalogsMap ?? read(PATHS.catalogsMap);
   const coaPage = sources.coaPage ?? read(PATHS.coaPage);
   const catalogListPage = sources.catalogListPage ?? read(PATHS.catalogListPage);
+  const voidCancelPage = sources.voidCancelPage ?? read(PATHS.voidCancelPage);
   const errors = [];
 
   if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
   if (!catalogsMap) errors.push(fail("missing apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx"));
   if (!coaPage) errors.push(fail("missing ChartOfAccountsListPage.tsx"));
   if (!catalogListPage) errors.push(fail("missing AccountingCatalogListPage.tsx"));
+  if (!voidCancelPage) errors.push(fail("missing VoidCancelReasonsListPage.tsx"));
   if (errors.length) return errors;
 
   if (!/function ListsDomainRoute\(\)/.test(manifest)) {
@@ -109,6 +116,12 @@ export function collectProblems(sources = {}) {
   if (!/searchParams\.get\("create"\) !== "1"/.test(catalogListPage) && !/get\("create"\) === "1"/.test(catalogListPage)) {
     errors.push(fail("AccountingCatalogListPage must honor ?create=1 → AccountingCatalogModal"));
   }
+  if (!/searchParams\.get\("create"\) !== "1"/.test(voidCancelPage) && !/get\("create"\) === "1"/.test(voidCancelPage)) {
+    errors.push(fail("VoidCancelReasonsListPage must honor ?create=1 → Create Entry modal"));
+  }
+  if (!/setModalMode\("create"\)/.test(voidCancelPage)) {
+    errors.push(fail("VoidCancelReasonsListPage must setModalMode(create) on create deep-link"));
+  }
 
   if (!/path="\/lists\/hub\/:domain"[\s\S]{0,200}?DomainCatalogHubPage/.test(manifest)) {
     errors.push(fail("/lists/hub/:domain must still mount DomainCatalogHubPage (Rule 07)"));
@@ -150,6 +163,7 @@ if (catalogKey === "_create") {
 `;
   const goodCoa = `useEffect(() => { if (searchParams.get("create") !== "1") return; setDrawerOpen(true); }, [searchParams]);`;
   const goodCatalogList = `useEffect(() => { if (searchParams.get("create") !== "1") return; setModalOpen(true); }, [searchParams]);`;
+  const goodVoidCancel = `useEffect(() => { if (searchParams.get("create") !== "1") return; setModalMode("create"); }, [searchParams]);`;
 
   if (
     collectProblems({
@@ -157,6 +171,7 @@ if (catalogKey === "_create") {
       catalogsMap: goodMap,
       coaPage: goodCoa,
       catalogListPage: goodCatalogList,
+      voidCancelPage: goodVoidCancel,
     }).length
   ) {
     console.error(`${LABEL} --selftest FAIL: good fixture should pass`);
@@ -174,6 +189,7 @@ function ListsDomainRoute() {
     catalogsMap: goodMap,
     coaPage: goodCoa,
     catalogListPage: goodCatalogList,
+    voidCancelPage: goodVoidCancel,
   });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
     console.error(`${LABEL} --selftest FAIL: bad ListsDomainRoute should fail`, badErrors);
@@ -186,9 +202,22 @@ function ListsDomainRoute() {
     catalogsMap: badMap,
     coaPage: goodCoa,
     catalogListPage: goodCatalogList,
+    voidCancelPage: goodVoidCancel,
   });
   if (!badMapErrors.some((e) => e.includes("create=1") || e.includes("_create"))) {
     console.error(`${LABEL} --selftest FAIL: unconditional hub _create should fail`, badMapErrors);
+    process.exit(1);
+  }
+
+  const badVoid = collectProblems({
+    manifest: goodManifest,
+    catalogsMap: goodMap,
+    coaPage: goodCoa,
+    catalogListPage: goodCatalogList,
+    voidCancelPage: `// no create deep-link`,
+  });
+  if (!badVoid.some((e) => e.includes("VoidCancelReasonsListPage must honor"))) {
+    console.error(`${LABEL} --selftest FAIL: void-cancel missing ?create=1 should fail`, badVoid);
     process.exit(1);
   }
 
