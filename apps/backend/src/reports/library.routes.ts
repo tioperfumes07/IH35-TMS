@@ -368,8 +368,8 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           severity: "critical",
           title: "In-flight loads running late",
           count: lateInFlightLoads,
-          action_url: "/dispatch",
-          action_label: "Open dispatch",
+          action_url: "/dispatch/alerts/late-arrivals",
+          action_label: "Open late arrivals",
         });
 
         let maintenanceCriticalOrOverdue = 0;

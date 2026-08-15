@@ -31,14 +31,15 @@ describe("AttentionList", () => {
           severity: "warning",
           title: "Loads need review",
           count: 3,
-          action_url: "/dispatch",
-          action_label: "Open dispatch",
+          action_url: "/dispatch/alerts/late-arrivals",
+          action_label: "Open late arrivals",
         },
       ],
     });
     renderAttentionList("co-1");
     await waitFor(() => expect(screen.getByText("Loads need review")).toBeInTheDocument());
     expect(screen.getByText(/Count 3/)).toBeInTheDocument();
+    expect(screen.getByText(/Open late arrivals/)).toBeInTheDocument();
   });
 
   it("shows empty message when no countable items", async () => {
