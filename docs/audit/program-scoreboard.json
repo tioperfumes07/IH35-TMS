@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T14:45:59-05:00",
-    "sourceSha": "f37cb236c",
+    "generatedAt": "2026-08-15T14:50:14-05:00",
+    "sourceSha": "18dd808e7",
     "deployedSha": "2072f02",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 815,
+    "ledgerRows": 818,
     "failOpen": 14,
     "defects": 17
   },
@@ -2121,6 +2121,42 @@
   },
   "recentActivity": [
     {
+      "number": 7353,
+      "title": "FINDING: LIVE-LEDGER-FLEET-CREATE-UNIT-TRAILER-818",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7353",
+      "sha": "18dd808e7",
+      "committedAtIso": "2026-08-15T14:50:14-05:00"
+    },
+    {
+      "number": 7352,
+      "title": "FINDING: LIVE-LEDGER-FUEL-COMPLIANCE-SAVINGS-817",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7352",
+      "sha": "f82871f8f",
+      "committedAtIso": "2026-08-15T14:48:56-05:00"
+    },
+    {
+      "number": 7351,
+      "title": "FINDING: LIVE-LEDGER-DRIVERS-SUSPEND-TERMINATE-IMPORT-816",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7351",
+      "sha": "1a0f74897",
+      "committedAtIso": "2026-08-15T14:47:39-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:47 PM CT",
+      "url": "",
+      "sha": "f677efc10",
+      "committedAtIso": "2026-08-15T19:47:18Z"
+    },
+    {
       "number": 7350,
       "title": "FINDING: LIVE-LEDGER-DRIVERS-TRAINING-W8BEN-DQF-815",
       "state": "merged",
@@ -2173,42 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7347",
       "sha": "2072f0203",
       "committedAtIso": "2026-08-15T14:39:41-05:00"
-    },
-    {
-      "number": 7346,
-      "title": "FINDING: LV-HOME-LATE-ATTENTION-GENERIC-DISPATCH-ROUTE — preserve late drill",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7346",
-      "sha": "4705b0a2c",
-      "committedAtIso": "2026-08-15T14:39:32-05:00"
-    },
-    {
-      "number": 7345,
-      "title": "FINDING: LIVE-LEDGER-DRIVER-SAFETY-PROFILE-812",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7345",
-      "sha": "ee32acb23",
-      "committedAtIso": "2026-08-15T14:39:01-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:38 PM CT",
-      "url": "",
-      "sha": "552abf899",
-      "committedAtIso": "2026-08-15T19:38:20Z"
-    },
-    {
-      "number": 7344,
-      "title": "FINDING: LIVE-LEDGER-ESCROW-FORFEIT-811",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7344",
-      "sha": "06abdaf16",
-      "committedAtIso": "2026-08-15T14:37:02-05:00"
     }
   ]
 }
