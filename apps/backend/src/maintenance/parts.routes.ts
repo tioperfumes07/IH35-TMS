@@ -61,6 +61,7 @@ type CsvPartRow = {
   name: string;
   unit_cost: number | null;
   qty_on_hand: number;
+  reorder_threshold: number;
   location: string | null;
   category: string | null;
 };
@@ -89,6 +90,7 @@ function parsePartsCsv(text: string): CsvPartRow[] {
       name: get("name"),
       unit_cost: get("unit_cost") ? Number(get("unit_cost")) : null,
       qty_on_hand: Number(get("qty_on_hand") || "0"),
+      reorder_threshold: Number(get("reorder_threshold") || "0"),
       location: get("location") || null,
       // INV-1: category is an optional CSV column; persisted when present.
       category: headers.includes("category") ? (get("category") || null) : null,
@@ -158,7 +160,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             v.vendor_name AS vendor_name,
             pi.last_purchase_amount AS unit_cost,
             pi.on_hand_qty AS qty_on_hand,
-            0::int AS reorder_threshold,
+            pi.reorder_threshold,
             pi.location,
             'manual'::text AS source,
             CASE WHEN pi.part_description LIKE '[VOID] %' THEN pi.updated_at ELSE NULL END AS voided_at,
@@ -187,7 +189,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
         `
           SELECT
             COUNT(*)::int AS total_parts,
-            COUNT(*) FILTER (WHERE on_hand_qty <= 2)::int AS low_stock_count,
+            COUNT(*) FILTER (WHERE on_hand_qty <= reorder_threshold)::int AS low_stock_count,
             COALESCE(SUM(COALESCE(last_purchase_amount, 0) * COALESCE(on_hand_qty, 0)), 0)::numeric AS total_inventory_value
           FROM maintenance.parts_inventory
           WHERE operating_company_id = $1::uuid
@@ -222,7 +224,8 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             part_number,
             category,
             notes,
-            vendor_id
+            vendor_id,
+            reorder_threshold
           )
           VALUES (
             $1,$2,$3,$4,$5,
@@ -230,11 +233,12 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             COALESCE(NULLIF(btrim($6), ''), 'PART-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))),
             $7,
             $8,
-            $9
+            $9,
+            $10
           )
           RETURNING
             id, part_number, part_description AS name, category, notes, vendor_id::text AS vendor_id, last_purchase_amount AS unit_cost, on_hand_qty AS qty_on_hand,
-            0::int AS reorder_threshold, location, 'manual'::text AS source, CASE WHEN part_description LIKE '[VOID] %' THEN updated_at ELSE NULL END AS voided_at, NULL::text AS voided_reason
+            reorder_threshold, location, 'manual'::text AS source, CASE WHEN part_description LIKE '[VOID] %' THEN updated_at ELSE NULL END AS voided_at, NULL::text AS voided_reason
         `,
         [
           companyId,
@@ -246,12 +250,14 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
           body.data.category ?? null,
           body.data.notes ?? null,
           body.data.vendor_id ?? null,
+          body.data.reorder_threshold,
         ]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.parts.created", {
         resource_id: result.rows[0].id,
         part_number: result.rows[0].part_number,
         category: body.data.category ?? null,
+        reorder_threshold: body.data.reorder_threshold,
       });
       return result.rows[0];
     });
@@ -289,6 +295,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       }
       if ("unit_cost" in body.data) add("last_purchase_amount", body.data.unit_cost ?? null);
       if ("qty_on_hand" in body.data) add("on_hand_qty", body.data.qty_on_hand ?? null);
+      if ("reorder_threshold" in body.data) add("reorder_threshold", body.data.reorder_threshold);
       if ("location" in body.data) add("location", body.data.location ?? null);
       // INV-1: part_number/category/notes are now real, editable columns.
       if ("part_number" in body.data) add("part_number", body.data.part_number ?? null);
@@ -324,9 +331,9 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
           notes: newRow.notes ?? null,
           vendor_id: newRow.vendor_id ?? null,
           unit_cost: newRow.last_purchase_amount,
-        qty_on_hand: newRow.on_hand_qty,
-          reorder_threshold: 0,
-        location: newRow.location,
+          qty_on_hand: newRow.on_hand_qty,
+          reorder_threshold: newRow.reorder_threshold,
+          location: newRow.location,
           source: "manual",
           voided_at: String(newRow.part_description ?? "").startsWith("[VOID] ") ? newRow.updated_at : null,
           voided_reason: null,
@@ -403,13 +410,13 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             await client.query(
               `
                 INSERT INTO maintenance.parts_inventory (
-                  operating_company_id, part_description, last_purchase_amount, on_hand_qty, location, part_number, category
+                  operating_company_id, part_description, last_purchase_amount, on_hand_qty, reorder_threshold, location, part_number, category
                 )
                 VALUES (
-                  $1,$2,$3,$4,$5,
+                  $1,$2,$3,$4,$5,$6,
                   -- INV-1: persist the CSV part_number as the real SKU (generate a stable one if blank).
-                  COALESCE(NULLIF(btrim($6), ''), 'PART-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))),
-                  $7
+                  COALESCE(NULLIF(btrim($7), ''), 'PART-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))),
+                  $8
                 )
               `,
               [
@@ -417,6 +424,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
                 row.name,
                 row.unit_cost,
                 row.qty_on_hand,
+                row.reorder_threshold,
                 row.location,
                 row.part_number,
                 row.category,

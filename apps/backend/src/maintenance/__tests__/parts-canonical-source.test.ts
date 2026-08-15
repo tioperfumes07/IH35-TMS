@@ -75,6 +75,15 @@ describe("maintenance parts canonical source (B23)", () => {
       expect(source).toMatch(/add\("notes"/);
     });
 
+    it("persists reorder_threshold on create, list, update, and CSV import", () => {
+      expect(source).toMatch(/pi\.reorder_threshold/);
+      expect(source).toMatch(/add\("reorder_threshold"/);
+      expect(source).toMatch(/reorder_threshold: newRow\.reorder_threshold/);
+      expect(source).not.toMatch(/0::int AS reorder_threshold/);
+      expect(source).not.toMatch(/reorder_threshold:\s*0,/);
+      expect(source.match(/INSERT INTO maintenance\.parts_inventory[\s\S]*?reorder_threshold/g)?.length).toBeGreaterThanOrEqual(2);
+    });
+
     it("INV-LINK-01: persists vendor_id on create, read and update", () => {
       expect(source).toMatch(/vendor_id:\s*z\.string\(\)\.uuid\(\)/);
       const insert = source.match(/INSERT INTO maintenance\.parts_inventory[\s\S]*?RETURNING/);
@@ -94,7 +103,7 @@ describe("maintenance parts canonical source (B23)", () => {
       expect(source).toMatch(/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/);
       // Alias pi required for same-opco vendor_name LEFT JOIN on the list path.
       expect(source).toMatch(/filters\.push\(`pi\.vendor_id = \$\$\{values\.length\}::uuid`\)/);
-      expect(source).toMatch(/v\.name AS vendor_name/);
+      expect(source).toMatch(/v\.vendor_name AS vendor_name/);
       expect(source).toMatch(/LEFT JOIN mdata\.vendors v/);
     });
 

@@ -6184,6 +6184,7 @@
       "operating_company_id",
       "part_description",
       "part_number",
+      "reorder_threshold",
       "updated_at",
       "vendor_id"
     ],
