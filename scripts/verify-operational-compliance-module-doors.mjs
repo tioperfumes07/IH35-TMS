@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["compliance","driver-hub","form_425","tasks"],"cols":["connectivity"],"leafRe":"^(hop\.(safety_hos|safety_dot|form425c|maint_compliance|fuel_compliance|reports_ifta|drivers|safety_scheduler|safety_audit|compliance|daily_tasks|lists\.service_tasks))$","task":"LINK-F5154-OPERATIONAL-COMPLIANCE-MODULE-DOORS","vertical":"class-sweep"} */
+/** Navigation-existence guard only. Route hops do not earn API→canonical connectivity Built credit. */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -10,20 +10,9 @@ const FILES = {
   form425: "apps/frontend/src/pages/form425c/Form425CHome.tsx",
   tasks: "apps/frontend/src/pages/tasks/TasksModuleTabs.tsx",
   routes: "apps/frontend/src/routes/manifest.tsx",
-  complianceMatrix: "docs/specs/scoreboard/modules/compliance.required.json",
-  driverHubMatrix: "docs/specs/scoreboard/modules/driver-hub.required.json",
-  form425Matrix: "docs/specs/scoreboard/modules/form_425.required.json",
-  tasksMatrix: "docs/specs/scoreboard/modules/tasks.required.json",
 };
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
-const REQUIRED_LEAVES = {
-  complianceMatrix: ["hop.safety_hos", "hop.safety_dot", "hop.form425c", "hop.maint_compliance", "hop.fuel_compliance", "hop.reports_ifta"],
-  driverHubMatrix: ["hop.drivers", "hop.safety_scheduler"],
-  form425Matrix: ["hop.safety_audit", "hop.maint_compliance", "hop.compliance"],
-  tasksMatrix: ["hop.daily_tasks", "hop.lists.service_tasks"],
-};
-
 export function verify(source) {
   const failures = [];
   const need = (key, text, message) => { if (!source[key].includes(text)) failures.push(message); };
@@ -45,14 +34,6 @@ export function verify(source) {
   for (const route of ["/safety/hos", "/safety/dot-compliance", "/425c", "/maintenance/compliance", "/fuel/compliance", "/reports/ifta-preparer", "/drivers", "/safety/driver-scheduler", "/safety/audit-425c", "/compliance", "/daily-tasks", "/lists/maintenance/service-tasks"]) {
     const path = route.startsWith("/safety/") ? `path="${route.slice("/safety/".length)}"` : `path="${route}"`;
     need("routes", path, `route ${route} must remain mounted`);
-  }
-  for (const [key, ids] of Object.entries(REQUIRED_LEAVES)) {
-    let matrix;
-    try { matrix = JSON.parse(source[key]); } catch (error) { failures.push(`${key} must parse: ${error.message}`); continue; }
-    for (const id of ids) {
-      const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
-      if (!leaf?.required?.includes("connectivity")) failures.push(`${key}:${id} must inventory connectivity`);
-    }
   }
   return failures;
 }
@@ -82,10 +63,6 @@ if (process.argv.includes("--self-test")) {
     ["tasks", 'to: "/daily-tasks"', 'to: "/tasks"'],
     ["tasks", 'to: "/lists/maintenance/service-tasks"', 'to: "/tasks"'],
     ["routes", 'path="hos"', 'path="hos-broken"'],
-    ["complianceMatrix", '"id": "hop.safety_hos"', '"id": "hop.safety_hos.broken"'],
-    ["driverHubMatrix", '"id": "hop.drivers"', '"id": "hop.drivers.broken"'],
-    ["form425Matrix", '"id": "hop.safety_audit"', '"id": "hop.safety_audit.broken"'],
-    ["tasksMatrix", '"id": "hop.daily_tasks"', '"id": "hop.daily_tasks.broken"'],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);
