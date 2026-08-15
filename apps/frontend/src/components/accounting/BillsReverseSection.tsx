@@ -5,6 +5,9 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { CappedListNotice } from "../CappedListNotice";
+
+const BILLS_REVERSE_LIST_LIMIT = 200;
 
 /**
  * FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 — Built reverse_link for bills.
@@ -35,7 +38,7 @@ export function BillsReverseSection({
   const filterValue = Object.values(filter)[0] as string;
   const billsQ = useQuery({
     queryKey: ["accounting", "bills", "reverse", operatingCompanyId, filter],
-    queryFn: () => listBills(operatingCompanyId, { ...filter, limit: 200 }),
+    queryFn: () => listBills(operatingCompanyId, { ...filter, limit: BILLS_REVERSE_LIST_LIMIT }),
     enabled: Boolean(operatingCompanyId) && Boolean(filterValue),
   });
   const rows = billsQ.data?.rows ?? [];
@@ -72,6 +75,12 @@ export function BillsReverseSection({
           ))}
         </ul>
       ) : null}
+      <CappedListNotice
+        shown={rows.length}
+        limit={BILLS_REVERSE_LIST_LIMIT}
+        total={billsQ.data?.total}
+        hint={`Open the full Bills list filtered by ${contextLabel} to see the rest.`}
+      />
     </div>
   );
 }

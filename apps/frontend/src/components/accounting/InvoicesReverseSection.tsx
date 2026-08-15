@@ -5,6 +5,9 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { CappedListNotice } from "../CappedListNotice";
+
+const INVOICES_REVERSE_LIST_LIMIT = 200;
 
 /**
  * Rank 6 reverse_link — invoices.
@@ -30,7 +33,7 @@ export function InvoicesReverseSection({
   const filterValue = Object.values(filter)[0] as string;
   const invoicesQ = useQuery({
     queryKey: ["accounting", "invoices", "reverse", operatingCompanyId, filter],
-    queryFn: () => listInvoices(operatingCompanyId, { ...filter, limit: 200 }),
+    queryFn: () => listInvoices(operatingCompanyId, { ...filter, limit: INVOICES_REVERSE_LIST_LIMIT }),
     enabled: Boolean(operatingCompanyId) && Boolean(filterValue),
   });
   const rows = invoicesQ.data?.invoices ?? [];
@@ -71,6 +74,12 @@ export function InvoicesReverseSection({
           ))}
         </ul>
       ) : null}
+      <CappedListNotice
+        shown={rows.length}
+        limit={INVOICES_REVERSE_LIST_LIMIT}
+        total={invoicesQ.data?.total}
+        hint={`Open the full Invoices list filtered by ${contextLabel} to see the rest.`}
+      />
     </div>
   );
 }

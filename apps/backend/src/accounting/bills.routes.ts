@@ -4,6 +4,7 @@ import { z } from "zod";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { resolveAllocation } from "./allocation.js";
 import {
+  countAllBillsForCompany,
   createBill,
   getBillDetail,
   getBillPaymentDetail,
@@ -139,26 +140,37 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/accounting/bills", async (req, reply) => {
+  app.get("/api/v1/accounting/bills", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = listBillsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const rows = await listBills(String(user.uuid), query.data.operating_company_id, {
-      vendorId: query.data.vendor_id,
-      status: query.data.status === "unpaid" ? "open" : query.data.status,
+    const listOptions = {
+      status: query.data.status === "unpaid" ? ("open" as const) : query.data.status,
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
-      limit: query.data.limit,
-      offset: query.data.offset,
       hasBalance: query.data.has_balance,
       insuranceClaimId: query.data.insurance_claim_id,
       unitId: query.data.unit_id,
       loadId: query.data.load_id,
+    };
+    const rows = await listBills(String(user.uuid), query.data.operating_company_id, {
+      ...listOptions,
+      vendorId: query.data.vendor_id,
+      limit: query.data.limit,
+      offset: query.data.offset,
     });
-    return { rows };
+    // REVERSE-SECTIONS-SILENT-LIST-CAPS: an honest total for the no-vendor-identity filter set —
+    // exact same WHERE clause as listAllBillsForCompany, so it can never disagree with `rows`.
+    // vendor_id goes through listBillsByVendor (a separate, un-counted query path; no reverse-drill
+    // consumer passes vendor_id today) — total stays undefined there and the FE falls back to the
+    // honest "Showing the first N" disclosure rather than a false count.
+    const total = query.data.vendor_id
+      ? undefined
+      : await countAllBillsForCompany(String(user.uuid), query.data.operating_company_id, listOptions);
+    return { rows, total, limit: query.data.limit, offset: query.data.offset };
   });
 
   // Reverse drill-through for the WO↔bill/expense HARD link: list the bills + expenses that FK-reference

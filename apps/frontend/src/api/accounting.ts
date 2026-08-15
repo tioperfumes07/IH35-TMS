@@ -813,7 +813,12 @@ export function listBills(
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ rows: VendorBill[] }>(withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId));
+  // REVERSE-SECTIONS-SILENT-LIST-CAPS: `total` is honest-optional — populated for the no-vendor_id
+  // filter set (countAllBillsForCompany), undefined when vendor_id is set (no counted path yet;
+  // consumers fall back to CappedListNotice's "Showing the first N" disclosure).
+  return apiRequest<{ rows: VendorBill[]; total?: number; limit?: number; offset?: number }>(
+    withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId)
+  );
 }
 
 export function listBillPayments(
