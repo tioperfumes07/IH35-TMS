@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-15 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-15 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **65 / 150** | 2026-08-15 |
-| Rows in this file | **801** | 2026-08-15 |
+| Rows in this file | **802** | 2026-08-15 |
 | Rows `FAIL` + `OPEN` | **14** | 2026-08-15 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-15 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-15 |
-| Verdict tally (all rows) | FAIL=75 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=7 · OTHER=282 | 2026-08-15 |
+| Verdict tally (all rows) | FAIL=75 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=7 · OTHER=283 | 2026-08-15 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -889,3 +889,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 799 | fleet · trailer_status_edit | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Cursor Live Chrome 2026-08-15** prod USMCA. **Leaves:** `trailer.status_change` · `fleet.modal.status_change` · `trailer.edit`. **Proven:** trailer **010101** profile → "Change status…" opens dialog "Change trailer status" (Active/OOS/In Maintenance/Damaged/Sold/Transferred + reason/dates; closed without save) · Edit opens "Edit trailer" Identity/Specs. (`trailer.profile.reefer` not claimed — DryVan profile has no ReeferTelemetrySection). Scope VERIFY-1/3 mount only. | LIVE-LEDGERED | OUTBOX-CURSOR LIVE#71 | NO | 2026-08-15 | CURSOR |
 | 800 | lists · confirm_discard | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Cursor Live Chrome 2026-08-15** prod USMCA. **Leaves:** `lists.dialog.confirm_discard`. **Proven:** `/dispatch` → "+ Book Load" → fill Customer WO # "DIRTY-TEST-WO" → Close Book load → ConfirmDiscardDialog heading "Discard unsaved changes?" + "Your edits will be lost." with Cancel/Discard; Discard closed the wizard. Scope VERIFY-1/3 mount only. | LIVE-LEDGERED | OUTBOX-CURSOR LIVE#72 | NO | 2026-08-15 | CURSOR |
 | 801 | fleet · unit_quick_assign_detail | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Cursor Live Chrome 2026-08-15** prod USMCA. **Leaves:** `fleet.modal.quick_assign` · `unit.detail.permits` · `unit.detail.toll_tags` · `unit.detail.tasks` · `unit.detail.brakes` · `unit.detail.tires` · `unit.detail.finance_linkage`. **Proven:** `/fleet/units/395352db-…` Unit T120 → Quick assign opens "Quick assign T120" (Select driver / Confirm assign; closed) · detail hop `/detail?tab=` permits · toll_tags · tasks · brakes · tires · finance (h1 T120 each). Scope VERIFY-1/3 mount only. | LIVE-LEDGERED | OUTBOX-CURSOR LIVE#73 | NO | 2026-08-15 | CURSOR |
+| 802 | fleet · map_redirect | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Cursor Live Chrome 2026-08-15** prod USMCA. **Leaves:** `map.redirect`. **Proven:** navigated `/fleet/map` → PreserveSearchNavigate landed on canonical `/dispatch/map`; h1 Active Load Map; honest empty 'Map provider not configured' + '3 active loads with GPS — positions are not shown here until map rendering is enabled (no fake map pins).' Scope VERIFY-1/3 mount only (Mapbox not configured — connectivity of redirect proven). | LIVE-LEDGERED | OUTBOX-CURSOR LIVE#74 | NO | 2026-08-15 | CURSOR |
