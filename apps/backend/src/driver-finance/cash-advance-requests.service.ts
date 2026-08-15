@@ -457,7 +457,20 @@ export async function cancelMyCashAdvanceRequest(
   return row;
 }
 
-export async function listPendingCashAdvanceRequests(client: QueryableClient, operatingCompanyId: string) {
+// LINK-F5171/LINK-F5185: settlements:cash_advances reverse — a driver can find their own pending
+// cash-advance requests via ?driver_id= (driver_finance.cash_advance_requests.driver_id is a real
+// FK, never used as a query filter before this).
+export async function listPendingCashAdvanceRequests(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  filter: { driverId?: string | undefined } = {}
+) {
+  const args: unknown[] = [operatingCompanyId];
+  let where = `r.operating_company_id = $1::uuid AND r.status IN ('pending', 'under_review')`;
+  if (filter.driverId) {
+    args.push(filter.driverId);
+    where += ` AND r.driver_id = $${args.length}::uuid`;
+  }
   const res = await client.query(
     `
       SELECT
@@ -466,12 +479,11 @@ export async function listPendingCashAdvanceRequests(client: QueryableClient, op
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = r.operating_company_id
-      WHERE r.operating_company_id = $1::uuid
-        AND r.status IN ('pending', 'under_review')
+      WHERE ${where}
       ORDER BY r.is_above_policy ASC, r.submitted_at ASC
       LIMIT 500
     `,
-    [operatingCompanyId]
+    args
   );
   return res.rows;
 }

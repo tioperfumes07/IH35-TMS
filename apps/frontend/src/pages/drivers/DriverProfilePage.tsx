@@ -21,6 +21,7 @@ import { LoadsSection } from "../../components/driver-profile/LoadsSection";
 import { DriverTeamsReverseSection } from "../../components/driver-profile/DriverTeamsReverseSection";
 import { DriverTeamSplitConfigReverseSection } from "../../components/driver-profile/DriverTeamSplitConfigReverseSection";
 import { DriverSettlementFinanceReverseSection } from "../../components/driver-profile/DriverSettlementFinanceReverseSection";
+import { DriverCashAdvancesReverseSection } from "../../components/driver-profile/DriverCashAdvancesReverseSection";
 import { DriverVendorMergesReverseSection } from "../../components/driver-profile/DriverVendorMergesReverseSection";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
@@ -597,6 +598,17 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           operatingCompanyId={companyId}
           driverId={id}
           data-testid="driver-profile-settlement-finance-reverse"
+        />
+      </div>
+      {/* LINK-F5171/LINK-F5185 (settlements:cash_advances, settlements:drawer.advance_detail,
+          settlements:modal.mark_disbursed) — driver_finance.cash_advance_requests +
+          views.cash_advances_with_context both already had real driver_id FKs but no reverse
+          surface anywhere on the driver's own profile. */}
+      <div data-testid="dp-section-cash-advances-reverse">
+        <DriverCashAdvancesReverseSection
+          operatingCompanyId={companyId}
+          driverId={id}
+          data-testid="driver-profile-cash-advances-reverse"
         />
       </div>
       <div data-testid="dp-section-vendor-merges-reverse">

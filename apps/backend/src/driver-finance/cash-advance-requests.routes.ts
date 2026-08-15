@@ -36,6 +36,11 @@ const listQuerySchema = companyQuerySchema.extend({
     .optional(),
 });
 
+// LINK-F5171/LINK-F5185: settlements:cash_advances reverse — driver-scoped pending queue filter.
+const pendingQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+});
+
 const uuidParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -127,18 +132,20 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return { request: row };
   });
 
-  app.get("/api/v1/driver-finance/cash-advance-requests/pending", async (req, reply) => {
+  app.get("/api/v1/driver-finance/cash-advance-requests/pending", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
       return reply.code(403).send({ error: "forbidden" });
     }
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = pendingQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsed.data.operating_company_id);
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsed.data.operating_company_id]);
-      return listPendingCashAdvanceRequests(client, parsed.data.operating_company_id);
+      return listPendingCashAdvanceRequests(client, parsed.data.operating_company_id, {
+        driverId: parsed.data.driver_id,
+      });
     });
     return { requests: rows };
   });

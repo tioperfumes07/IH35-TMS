@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi, type CashAdvanceRequestRow } from "../../api/cashAdvanceRequests";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
@@ -32,6 +33,10 @@ export function CashAdvanceRequestsPage() {
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
+  // LINK-F5171/LINK-F5185: settlements:cash_advances reverse — driver's profile can drill into
+  // their own pending cash-advance requests.
+  const [searchParams] = useSearchParams();
+  const deepLinkDriverId = searchParams.get("driver_id");
   const [denyForId, setDenyForId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const [approveNotesById, setApproveNotesById] = useState<Record<string, string>>({});
@@ -71,8 +76,8 @@ export function CashAdvanceRequestsPage() {
   const canCreate = Boolean(newDriverId) && (newAmountCents ?? 0) > 0 && newReason.trim().length >= 10;
 
   const pendingQuery = useQuery({
-    queryKey: ["driver-finance", "cash-advance-requests", "pending", companyId],
-    queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId),
+    queryKey: ["driver-finance", "cash-advance-requests", "pending", companyId, deepLinkDriverId],
+    queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, deepLinkDriverId ?? undefined),
     enabled: Boolean(companyId),
   });
 
@@ -131,7 +136,11 @@ export function CashAdvanceRequestsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Cash advance requests"
-        subtitle="Driver-submitted + office-created requests pending action"
+        subtitle={
+          deepLinkDriverId
+            ? "This driver's own pending requests"
+            : "Driver-submitted + office-created requests pending action"
+        }
         actions={
           companyId ? (
             <Button onClick={() => setCreateOpen((v) => !v)}>{createOpen ? "Cancel" : "+ Create"}</Button>
