@@ -15,6 +15,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-detail-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/DriverDetail.tsx";
+const AGGREGATE = "apps/backend/src/mdata/driver-aggregate.service.ts";
+const ROUTES = "apps/backend/src/mdata/drivers.routes.ts";
+const TYPES = "apps/frontend/src/types/api.ts";
 
 const REQUIRED_LABELS = ["Date range", "Amount", "Reason", "Notes", "Changed by", "Changed at"];
 
@@ -70,6 +73,23 @@ function assertMigrated(src) {
   return errors;
 }
 
+function assertUpdater(srcs) {
+  const errors = [];
+  if (!/AS updated_by_user_label/.test(srcs.aggregate)) errors.push(`${AGGREGATE}: aggregate must project updater label`);
+  if (!/LEFT JOIN identity\.users updater ON updater\.id = d\.updated_by_user_id/.test(srcs.aggregate)) errors.push(`${AGGREGATE}: aggregate must join canonical updater`);
+  if (!/WHERE updater\.id = mdata\.drivers\.updated_by_user_id[\s\S]{0,80}AS updated_by_user_label/.test(srcs.routes)) errors.push(`${ROUTES}: flat driver read must project canonical updater label`);
+  if (!/updated_by_user_label: string \| null/.test(srcs.types)) errors.push(`${TYPES}: Driver must type updater label`);
+  if (!/entityLabel\(driver\.updated_by_user_label, driver\.updated_by_user_id, "User"\)/.test(srcs.page)) errors.push(`${PAGE}: footer must consume updater label`);
+  return errors;
+}
+
+const readUpdater = () => ({
+  page: fs.readFileSync(path.join(ROOT, PAGE), "utf8"),
+  aggregate: fs.readFileSync(path.join(ROOT, AGGREGATE), "utf8"),
+  routes: fs.readFileSync(path.join(ROOT, ROUTES), "utf8"),
+  types: fs.readFileSync(path.join(ROOT, TYPES), "utf8"),
+});
+
 function selftest() {
   const good = `
     import { ListErrorState } from "../components/ListErrorState";
@@ -110,6 +130,20 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
+  const live = readUpdater();
+  const mutations = [
+    ["aggregate", "AS updated_by_user_label", "AS missing_updater_label"],
+    ["aggregate", "LEFT JOIN identity.users updater ON updater.id = d.updated_by_user_id", "LEFT JOIN identity.users updater ON FALSE"],
+    ["routes", "WHERE updater.id = mdata.drivers.updated_by_user_id", "WHERE FALSE"],
+    ["types", "updated_by_user_label: string | null", "updated_by_user_label?: string | null"],
+    ["page", 'entityLabel(driver.updated_by_user_label, driver.updated_by_user_id, "User")', 'entityLabel(null, driver.updated_by_user_id, "User")'],
+  ];
+  for (const [key, from, to] of mutations) {
+    if (!live[key].includes(from) || !assertUpdater({ ...live, [key]: live[key].replace(from, to) }).length) {
+      console.error(`${LABEL} --selftest FAIL updater mutation: ${key} ${from}`);
+      process.exit(1);
+    }
+  }
   console.log(`${LABEL} --selftest PASS`);
 }
 
@@ -119,7 +153,7 @@ function main() {
     return;
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const errors = assertMigrated(src);
+  const errors = [...assertMigrated(src), ...assertUpdater(readUpdater())];
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);

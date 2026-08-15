@@ -43,11 +43,13 @@ export async function buildDriverAggregate(
   const driverRes = await client.query(
     `
       SELECT d.*,
-             NULLIF(trim(concat_ws(' ', prior.first_name, prior.last_name)), '') AS prior_driver_name
+             NULLIF(trim(concat_ws(' ', prior.first_name, prior.last_name)), '') AS prior_driver_name,
+             COALESCE(NULLIF(trim(concat_ws(' ', updater.first_name, updater.last_name)), ''), updater.email) AS updated_by_user_label
       FROM mdata.drivers d
       LEFT JOIN mdata.drivers prior
         ON prior.id = d.prior_driver_id
        AND prior.operating_company_id = d.operating_company_id
+      LEFT JOIN identity.users updater ON updater.id = d.updated_by_user_id
       WHERE d.id = $1::uuid
         AND (
           d.operating_company_id = $2::uuid
