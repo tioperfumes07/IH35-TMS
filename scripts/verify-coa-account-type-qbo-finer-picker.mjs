@@ -4,6 +4,8 @@
  * from the live account-type catalog — not only the 8 GAAP enums.
  *
  * Surfaces: AccountDrawer, NewAccountDrawerForm, QuickCreateEntityModal (category).
+ * LST-F3370: QuickCreate kind="category" embeds NewAccountDrawerForm → AccountDrawer (single chrome);
+ * picker assertions then live on AccountDrawer, not a residual thin form in QuickCreate.
  *
  * Run: node scripts/verify-coa-account-type-qbo-finer-picker.mjs [--selftest]
  */
@@ -25,6 +27,13 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+function quickCreateEmbedsAccountDrawer(quick) {
+  return (
+    /kind\s*===\s*["']category["']/.test(quick) &&
+    (/<NewAccountDrawerForm[\s>]/.test(quick) || /<AccountDrawer[\s>]/.test(quick))
+  );
+}
+
 function problems(srcs) {
   const out = [];
   const { api, drawer, newForm, quick } = srcs;
@@ -42,16 +51,28 @@ function problems(srcs) {
     out.push("coa-list must export catalogCodeToCoaEnum (parent filter maps Bank→Asset)");
   }
 
-  for (const [name, src] of [
-    ["AccountDrawer", drawer],
-    ["QuickCreateEntityModal", quick],
-  ]) {
-    if (!/accountTypePickerGroupsFromCatalog/.test(src)) {
-      out.push(`${name} must call accountTypePickerGroupsFromCatalog`);
+  // AccountDrawer always owns the QBO finer Account Type picker.
+  if (!/accountTypePickerGroupsFromCatalog/.test(drawer)) {
+    out.push("AccountDrawer must call accountTypePickerGroupsFromCatalog");
+  }
+  if (!/data-testid="account-type-qbo-finer-select"/.test(drawer)) {
+    out.push("AccountDrawer must expose data-testid=account-type-qbo-finer-select");
+  }
+
+  // QuickCreate: either still owns the picker inline, OR embeds NewAccountDrawerForm/AccountDrawer
+  // (LST-F3370 single chrome) — then the drawer assertions above cover category create.
+  if (!quickCreateEmbedsAccountDrawer(quick)) {
+    if (!/accountTypePickerGroupsFromCatalog/.test(quick)) {
+      out.push("QuickCreateEntityModal must call accountTypePickerGroupsFromCatalog (or embed AccountDrawer)");
     }
-    if (!/data-testid="account-type-qbo-finer-select"/.test(src)) {
-      out.push(`${name} must expose data-testid=account-type-qbo-finer-select`);
+    if (!/data-testid="account-type-qbo-finer-select"/.test(quick)) {
+      out.push("QuickCreateEntityModal must expose data-testid=account-type-qbo-finer-select (or embed AccountDrawer)");
     }
+    if (!/resolveAccountTypeCatalogEntry/.test(quick)) {
+      out.push("QuickCreateEntityModal category create must resolve catalog code (or embed AccountDrawer)");
+    }
+  } else if (!/<NewAccountDrawerForm[\s>]/.test(quick) && !/<AccountDrawer[\s>]/.test(quick)) {
+    out.push("QuickCreateEntityModal category branch must render NewAccountDrawerForm or AccountDrawer");
   }
 
   // LST-F3354 — nested +Add new account MUST reuse AccountDrawer (single QBO chrome), not a second form.
@@ -74,8 +95,8 @@ function problems(srcs) {
   if (!/previewEntry\?\.code\s*\?\?\s*form\.account_type/.test(drawer)) {
     out.push("AccountDrawer save must prefer previewEntry.code (catalog code)");
   }
-  if (!/resolveAccountTypeCatalogEntry/.test(quick)) {
-    out.push("QuickCreateEntityModal category create must resolve catalog code");
+  if (!/resolveAccountTypeCatalogEntry/.test(drawer)) {
+    out.push("AccountDrawer must resolve catalog code via resolveAccountTypeCatalogEntry");
   }
 
   return out;

@@ -34,6 +34,8 @@ const QUICK_CREATE = "apps/frontend/src/components/forms/shared/QuickCreateEntit
 const NEW_SERVICE = "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx";
 const ITEM_EDITOR = "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx";
 const VENDOR_CREATE_MODAL = "apps/frontend/src/components/vendors/VendorCreateModal.tsx";
+const ACCOUNT_DRAWER = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
+const NEW_ACCOUNT_FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
 
 function newServiceEmbedsItemEditor(src) {
   return (
@@ -50,6 +52,13 @@ function quickCreateEmbedsVendorModal(src) {
 }
 function quickCreateEmbedsItemEditor(src) {
   return /kind\s*===\s*["']item["']/.test(src) && /<ItemEditorModal[\s>]/.test(src) && /\bembedded\b/.test(src);
+}
+// LST-F3370 — category embeds NewAccountDrawerForm → AccountDrawer (createCatalogAccount).
+function quickCreateEmbedsAccountCreate(src) {
+  return (
+    /kind\s*===\s*["']category["']/.test(src) &&
+    (/<NewAccountDrawerForm[\s>]/.test(src) || /<AccountDrawer[\s>]/.test(src))
+  );
 }
 
 // Files whose inline-create submit paths must remain canonical, with the canonical anchor each must keep.
@@ -85,6 +94,16 @@ const QUICK_CREATE_EMBED_ANCHORS = [
     embedsCheck: quickCreateEmbedsItemEditor,
     embedFile: ITEM_EDITOR,
     embedAnchor: /\bclient\.create\s*\(/,
+  },
+  {
+    label: "createCatalogAccount",
+    directAnchor: /\b(?:createCatalogAccount|chartOfAccountsCatalogClient\.create)\s*\(/,
+    embedsCheck: quickCreateEmbedsAccountCreate,
+    embedFile: ACCOUNT_DRAWER,
+    embedAnchor: /\bcreateCatalogAccount\s*\(/,
+    // When QuickCreate embeds NewAccountDrawerForm, that form must still render AccountDrawer.
+    preEmbedFile: NEW_ACCOUNT_FORM,
+    preEmbedCheck: (src) => /<AccountDrawer[\s>]/.test(src) && /\bembedded\b/.test(src),
   },
 ];
 
@@ -122,6 +141,26 @@ export function assertInlineCreateCanonical(sources = {}) {
       for (const embedAnchor of QUICK_CREATE_EMBED_ANCHORS) {
         if (embedAnchor.directAnchor.test(src)) continue;
         if (embedAnchor.embedsCheck(src)) {
+          if (embedAnchor.preEmbedFile && typeof embedAnchor.preEmbedCheck === "function") {
+            const preOverridden = Object.prototype.hasOwnProperty.call(sources, embedAnchor.preEmbedFile);
+            const preRaw = preOverridden
+              ? sources[embedAnchor.preEmbedFile]
+              : fs.existsSync(path.join(repoRoot, embedAnchor.preEmbedFile))
+                ? fs.readFileSync(path.join(repoRoot, embedAnchor.preEmbedFile), "utf8")
+                : null;
+            if (preRaw == null) {
+              failures.push(
+                `${embedAnchor.preEmbedFile} — MISSING (${QUICK_CREATE} embeds it for canonical ${embedAnchor.label})`,
+              );
+              continue;
+            }
+            if (!embedAnchor.preEmbedCheck(stripComments(preRaw))) {
+              failures.push(
+                `${surface.file} — embeds ${path.basename(embedAnchor.preEmbedFile)} but ${embedAnchor.preEmbedFile} lost AccountDrawer embedded chrome`,
+              );
+              continue;
+            }
+          }
           const embedOverridden = Object.prototype.hasOwnProperty.call(sources, embedAnchor.embedFile);
           const embedRaw = embedOverridden
             ? sources[embedAnchor.embedFile]
@@ -268,6 +307,16 @@ function selftest() {
       itemEditorRealSrc?.replace(/\bclient\.create\s*\(/, "legacyClientCreate("),
       "lost canonical create anchor"
     );
+    const accountDrawerRealSrc = fs.existsSync(path.join(repoRoot, ACCOUNT_DRAWER))
+      ? fs.readFileSync(path.join(repoRoot, ACCOUNT_DRAWER), "utf8")
+      : null;
+    plantEmbed(
+      "category-embed-createCatalogAccount-removed",
+      ACCOUNT_DRAWER,
+      accountDrawerRealSrc,
+      accountDrawerRealSrc?.replace(/\bcreateCatalogAccount\s*\(/, "legacyCreateCatalogAccount("),
+      "lost canonical create anchor"
+    );
     // Neither direct anchor nor a genuine embed present — the "create vanished entirely" shape.
     plant(
       "vendor-anchor-and-embed-both-lost",
@@ -301,7 +350,7 @@ function selftest() {
     process.exit(1);
   }
   console.log(
-    "[verify-inline-create-writes-canonical] SELFTEST PASS — real sources clean; 6 planted regressions all caught"
+    "[verify-inline-create-writes-canonical] SELFTEST PASS — real sources clean; 7 planted regressions all caught"
   );
 }
 
