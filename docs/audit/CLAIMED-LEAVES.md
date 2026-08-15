@@ -114,6 +114,13 @@ the leaf stays OPEN.
 | `maintenance:pre_flight_dvir.queue` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-preflight-dvir-tabs-url-sync.mjs` · `verify-maintenance-hidden-surface-reverse-links.mjs` PASS |
 | `maintenance:panel.pm_alerts` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-pm-alert-work-order-picker.mjs` PASS |
 | `factoring:home.vendor_merges` | Cursor (EntityLink janitor) · #6895 surface | #6899 | `verify-vendor-merges-reverse-section.mjs` |
+| `settlements:cash_advances` | CC-1 | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
+| `settlements:drawer.advance_detail` | CC-1 | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
+| `settlements:modal.mark_disbursed` | CC-1 | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
+| `settlements:modal.hold_deduction` | CC-1 (pre-existing chain, pinned) | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
+| `settlements:modal.liability_breakdown` | CC-1 (pre-existing chain, pinned) | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
+| `settlements:panel.pay_run_close` | CC-1 (pre-existing chain, pinned) | #6922 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
+| `settlements:drawer.liability_detail` | CC-1 (pre-existing chain from #6740, pinned) | #6927 | `verify-driver-cash-advances-settlement-modal-reverse-section.mjs` |
 
 ## Uncertain — empty (Cursor confirm 2026-08-14 night)
 
@@ -123,13 +130,6 @@ All prior Uncertain rows moved to Done after independent guard PASS on tip `orig
 
 | Leaf | Lane owner |
 |---|---|
-| `settlements:cash_advances` | CC-1 |
-| `settlements:modal.mark_disbursed` | CC-1 |
-| `settlements:modal.hold_deduction` | CC-1 (honestly un-built by LINK-F5174, was false-green before) |
-| `settlements:modal.liability_breakdown` | CC-1 (same) |
-| `settlements:drawer.advance_detail` | CC-1 (same) |
-| `settlements:drawer.liability_detail` | CC-1 (same) |
-| `settlements:panel.pay_run_close` | CC-1 (same) |
 | `accounting:reverse.open_entitylink` | CC-1 / Rule 23 — EntityLink-only Open on Invoices/Bills/Expenses reverse is money theater without write path; skip Cursor |
 
 ## Reclassified — not a fix, Required-flag correction
