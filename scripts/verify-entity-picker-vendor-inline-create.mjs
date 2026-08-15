@@ -39,7 +39,7 @@ export function collectProblems({ picker, registry, files }) {
   if (!/kind === ["']vendor["'][\s\S]{0,300}<InlineCreateDrawer/.test(cleanPicker)) {
     problems.push("EntityPicker vendor kind must delegate to InlineCreateDrawer");
   }
-  if (!/onCreated=\{\(record\) => handleCreated\(record\.id, record\.label\)\}/.test(cleanPicker)) {
+  if (!/kind=["']vendor["'][\s\S]{0,300}onCreated=\{\(record\) => handleCreated\(record\.id, record\.label\)\}/.test(cleanPicker)) {
     problems.push("vendor create must return canonical id+label through EntityPicker selection");
   }
 
