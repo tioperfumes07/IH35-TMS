@@ -29,6 +29,10 @@ export type DepreciationScheduleRow = {
   accumulated_to_date_cents: number;
   book_value_end_cents: number;
   method_snapshot: string;
+  /** ACCT-F5302: whether the already-built poster (postDepreciation, "FIN-21") has actually posted
+   * this period's JE — as opposed to this row being only a computed, unposted preview. */
+  posted: boolean;
+  posted_journal_entry_id: string | null;
 };
 
 export type FixedAssetDisposal = {
@@ -52,8 +56,13 @@ export type FixedAssetDetail = FixedAssetListItem & {
   schedule: DepreciationScheduleRow[];
   schedule_note: string | null;
   disposal: FixedAssetDisposal | null;
+  last_posted_journal_entry_id: string | null;
+  last_posted_period_number: number | null;
   je_preview: {
+    /** @deprecated ambiguous — kept for back-compat, equals autopost_enabled. Use manual_posting_enabled. */
     posting_enabled: boolean;
+    autopost_enabled: boolean;
+    manual_posting_enabled: boolean;
     depreciation_je_template: { lines: FixedAssetJeLine[]; balanced: boolean } | null;
   };
 };
