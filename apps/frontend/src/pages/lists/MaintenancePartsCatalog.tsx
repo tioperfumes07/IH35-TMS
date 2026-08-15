@@ -98,6 +98,7 @@ export function MaintenancePartsCatalog() {
       />
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
+        {/* MAINT-F3516: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <input
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -129,6 +130,8 @@ export function MaintenancePartsCatalog() {
           tableTestId="maintenance-parts-catalog-table"
           emptyText="No parts found."
           initialPageSize={50}
+          // MAINT-F3516: keep API search above; hide ParityTable toolbar Search
+          suppressToolbarSearch
         />
       )}
 
