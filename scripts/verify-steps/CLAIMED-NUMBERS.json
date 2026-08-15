@@ -1312,6 +1312,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3500": {
+    "purpose": "verify-qbo-sync-dashboard-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
