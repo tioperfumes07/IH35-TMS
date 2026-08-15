@@ -44,6 +44,10 @@ export type ExpenseLineItem = {
   kind: "driver_pay" | "bill_due" | "adjustment";
   load_id?: string;
   adjustment_id?: string;
+  /** LINK-F5187 (cash-flow:tab.daily_prediction) -- real driver_finance.driver_settlements id. */
+  settlement_id?: string;
+  /** LINK-F5187 (cash-flow:tab.daily_prediction) -- real accounting.bills id. */
+  bill_id?: string;
 };
 
 export type DailyPredictionResult = {
@@ -258,6 +262,9 @@ export async function getDailyPrediction(
         amount_cents: row.amount_cents,
         kind: "driver_pay",
         load_id: row.load_id ?? undefined,
+        // LINK-F5187 (cash-flow:tab.daily_prediction) -- the real settlement id was already
+        // selected above; it was simply never carried into the response.
+        settlement_id: row.id,
       });
     }
   } catch {
@@ -295,6 +302,9 @@ export async function getDailyPrediction(
       label: `Bill — ${bill.vendor_name}`,
       amount_cents: bill.remaining_balance_cents,
       kind: "bill_due",
+      // LINK-F5187 (cash-flow:tab.daily_prediction) -- the real bill id was already selected
+      // above; it was simply never carried into the response.
+      bill_id: bill.id,
     });
   }
 

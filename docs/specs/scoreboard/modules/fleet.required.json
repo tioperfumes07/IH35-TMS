@@ -421,7 +421,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -480,7 +479,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -560,7 +558,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "liability",
         "connectivity"
       ]
     },
@@ -767,7 +764,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -1860,6 +1856,36 @@
             "reverse_link"
           ],
           "reason": "EditTrailerModal.tsx zero EntityPicker/EntityLink usage"
+        }
+      ]
+    },
+    "liability_2026_08_15": {
+      "finding": "LINK-F5187-LIABILITY-COLUMN-HONESTY",
+      "note": "liability Required on leaves that structurally cannot carry a liability link: unit.profile.insurance_summary / unit.edit.insurance -- an insurance policy is not a driver_finance.driver_liabilities row (zero accounting.bills rows are ever keyed to insurance.policy.id). unit.profile.insurance_claims_reverse / trailer.profile.insurance_claims_reverse -- insurance.claim.liability_id exists as a capability-only FK (db/migrations/202611130000_insurance_claim_full_linkage.sql: \"CAPABILITY ONLY -- NO ROUTING POLICY\") that no code path has ever written; no claim in the system has a liability_id set, so there is no real record to link to yet -- this is an owner routing-policy decision, not a UI wiring gap.",
+      "drops": [
+        {
+          "id": "unit.profile.insurance_summary",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "unit.profile.insurance_claims_reverse",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "unit.edit.insurance",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "trailer.profile.insurance_claims_reverse",
+          "removed": [
+            "liability"
+          ]
         }
       ]
     }

@@ -316,6 +316,26 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                             className="text-gray-700 hover:underline"
                             data-testid="cash-flow-predicted-expense-load-link"
                           />
+                        ) : item.settlement_id ? (
+                          // LINK-F5187 (cash-flow:tab.daily_prediction) -- driver-pay rows without
+                          // a first_load_id still have a real settlement to drill into.
+                          <EntityLink
+                            kind="settlement"
+                            id={item.settlement_id}
+                            label={item.label}
+                            className="text-gray-700 hover:underline"
+                            data-testid="cash-flow-predicted-expense-settlement-link"
+                          />
+                        ) : item.bill_id ? (
+                          // LINK-F5187 (cash-flow:tab.daily_prediction) -- bill_due rows have a
+                          // real accounting.bills id.
+                          <EntityLink
+                            kind="bill"
+                            id={item.bill_id}
+                            label={item.label}
+                            className="text-gray-700 hover:underline"
+                            data-testid="cash-flow-predicted-expense-bill-link"
+                          />
                         ) : (
                           <span className="text-gray-700">{item.label}</span>
                         )}

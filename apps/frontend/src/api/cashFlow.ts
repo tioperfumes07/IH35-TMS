@@ -18,6 +18,10 @@ export type ExpenseLineItem = {
   kind: "driver_pay" | "bill_due" | "adjustment";
   load_id?: string;
   adjustment_id?: string;
+  /** LINK-F5187 (cash-flow:tab.daily_prediction) -- real driver_finance.driver_settlements id. */
+  settlement_id?: string;
+  /** LINK-F5187 (cash-flow:tab.daily_prediction) -- real accounting.bills id. */
+  bill_id?: string;
 };
 
 export type SevenDayEntry = {

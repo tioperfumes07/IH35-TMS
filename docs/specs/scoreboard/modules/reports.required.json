@@ -541,7 +541,6 @@
         "connectivity",
         "qbo_chrome",
         "driver",
-        "liability",
         "settlement"
       ]
     },
@@ -2750,6 +2749,18 @@
           "id": "report.cash_flow_statement",
           "removed": [
             "gl_je"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_15": {
+      "finding": "LINK-F5187-LIABILITY-COLUMN-HONESTY",
+      "note": "liability Required on report.settlement_summary -- a per-driver, date-range aggregate report (loads/settlements count, gross/deductions/chargebacks/net SUMS); each row spans potentially many settlements and many underlying liability/deduction records. Categorical rollup, same false-positive shape already found for report.cash_flow_statement.",
+      "drops": [
+        {
+          "id": "report.settlement_summary",
+          "removed": [
+            "liability"
           ]
         }
       ]
