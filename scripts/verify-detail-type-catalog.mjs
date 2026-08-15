@@ -36,14 +36,20 @@ const manifest = read("apps/frontend/src/routes/manifest.tsx");
 if (!/path="\/lists\/accounting\/account-types"/.test(manifest)) failures.push("manifest must route /lists/accounting/account-types");
 if (!/path="\/lists\/accounting\/detail-types"/.test(manifest) || !/<DetailTypesListPage \/>/.test(manifest)) failures.push("manifest must route /lists/accounting/detail-types → DetailTypesListPage");
 
-// Dual-path lock: JE/inline New Account drawer must NOT keep a hardcoded DETAIL_TYPES array —
-// create pickers must use the live account-type catalog (same as CoA AccountDrawer).
+// Dual-path lock: JE/inline New Account must use the live account-type catalog (CoA AccountDrawer).
+// LST-F3354 — NewAccountDrawerForm may be a thin embedded AccountDrawer wrapper (single chrome).
 const newAccount = read("apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx");
+const accountDrawer = read("apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx");
 if (/const DETAIL_TYPES\s*[:=]/.test(newAccount)) {
   failures.push("NewAccountDrawerForm must not hardcode DETAIL_TYPES — use fetchAccountTypeCatalog / detailTypesForAccountType");
 }
-if (!/fetchAccountTypeCatalog|detailTypesForAccountType/.test(newAccount)) {
-  failures.push("NewAccountDrawerForm must call fetchAccountTypeCatalog / detailTypesForAccountType");
+const newFormUsesLiveCatalog =
+  /fetchAccountTypeCatalog|detailTypesForAccountType/.test(newAccount) ||
+  (/<AccountDrawer[\s>]/.test(newAccount) && /fetchAccountTypeCatalog|detailTypesForAccountType/.test(accountDrawer));
+if (!newFormUsesLiveCatalog) {
+  failures.push(
+    "NewAccountDrawerForm must call fetchAccountTypeCatalog / detailTypesForAccountType OR embed AccountDrawer that does",
+  );
 }
 
 const subnav = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");

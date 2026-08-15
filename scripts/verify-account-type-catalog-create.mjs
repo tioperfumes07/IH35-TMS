@@ -14,6 +14,15 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+/** LST-F3354 — NewAccountDrawerForm may embed AccountDrawer (single create chrome). */
+function newFormEmbedsAccountDrawer(newFormSrc) {
+  return (
+    /<AccountDrawer[\s>]/.test(newFormSrc) &&
+    (/from ["'].*AccountDrawer["']|from ["'].*\/AccountDrawer["']/.test(newFormSrc) ||
+      /import\s*\{\s*AccountDrawer\s*\}/.test(newFormSrc))
+  );
+}
+
 
 // COA-DETAIL-TYPE-VOCAB-MISMATCH — the CoA create must post a catalogs.account_types CODE, not the UI enum.
 // The backend resolves account_type against catalogs.account_types.code|name; the picker's value is the
@@ -44,7 +53,7 @@ export function assertCoaCreateTranslatesAccountType(drawerSrc, label = "Account
         "the resolved catalog entry's .code.",
     );
   }
-  if (!/previewEntry\.code/.test(src)) {
+  if (!/previewEntry\??\.code/.test(src)) {
     problems.push(
       label +
         ": no longer derives account_type from the resolved catalog entry (previewEntry.code). Asset and " +
@@ -130,21 +139,24 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const errors = [
-  ...assertAccountTypeCatalogCreate(),
-  // ACCT-F189 — BOTH CoA create callers. #4868 fixed the list-page drawer and #4874 the quick-create drawer;
-  // the guard must cover both or the regression can return through whichever one is left unwatched. Extended
-  // only AFTER #4874 landed: asserting the second file while it still posted the raw enum would have turned
-  // main red on purpose, which is the self-inflicted MAIN-RED class REF cleared in #4848.
+const newFormSrc = read("apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx");
+const coaCreateChecks = [
   ...assertCoaCreateTranslatesAccountType(
     read("apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx"),
     "AccountDrawer.tsx",
   ),
-  ...assertCoaCreateTranslatesAccountType(
-    read("apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx"),
-    "NewAccountDrawerForm.tsx",
-  ),
 ];
+if (!newFormEmbedsAccountDrawer(newFormSrc)) {
+  coaCreateChecks.push(
+    ...assertCoaCreateTranslatesAccountType(newFormSrc, "NewAccountDrawerForm.tsx"),
+  );
+} else if (/accountTypePickerGroupsFromCatalog/.test(newFormSrc) && /useState/.test(newFormSrc)) {
+  coaCreateChecks.push(
+    "NewAccountDrawerForm must not own a parallel account-type form when embedding AccountDrawer",
+  );
+}
+
+const errors = [...assertAccountTypeCatalogCreate(), ...coaCreateChecks];
 if (errors.length) {
   console.error(`${LABEL} FAIL`);
   for (const e of errors) console.error(`  ${e}`);

@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cu09-err-remainder";
 const SELFTEST = process.argv.includes("--selftest");
+const NEW_FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
+const DRAWER = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
 
 const FILES = [
   "apps/frontend/src/pages/banking/components/PlaidReconnectButton.tsx",
@@ -14,25 +16,53 @@ const FILES = [
   "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
   "apps/frontend/src/components/parity/drawers/NewClassDrawerForm.tsx",
   "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
-  "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx",
+  NEW_FORM,
   "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx",
   "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx",
   "apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx",
   "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx",
 ];
 
-function assertAll(srcs) {
+function newFormEmbedsAccountDrawer(newFormSrc) {
+  return (
+    /<AccountDrawer[\s>]/.test(newFormSrc) &&
+    (/from ["'].*AccountDrawer["']|from ["'].*\/AccountDrawer["']/.test(newFormSrc) ||
+      /import\s*\{\s*AccountDrawer\s*\}/.test(newFormSrc))
+  );
+}
+
+function assertFile(file, src, drawerSrc) {
   const problems = [];
-  for (const [file, src] of Object.entries(srcs)) {
-    if (!/userFacingApiError\(/.test(src)) problems.push(`${file}: missing userFacingApiError`);
-    if (/String\(\((?:err|error) as Error\)\.message/.test(src)) {
-      problems.push(`${file}: still stringifies Error.message`);
+  if (file === NEW_FORM && newFormEmbedsAccountDrawer(src)) {
+    if (!/userFacingApiError\(/.test(drawerSrc)) {
+      problems.push(`${DRAWER}: missing userFacingApiError (NewAccountDrawerForm embeds AccountDrawer)`);
     }
+    if (/String\(\((?:err|error) as Error\)\.message/.test(drawerSrc)) {
+      problems.push(`${DRAWER}: still stringifies Error.message (embedded create path)`);
+    }
+    return problems;
+  }
+  if (!/userFacingApiError\(/.test(src)) problems.push(`${file}: missing userFacingApiError`);
+  if (/String\(\((?:err|error) as Error\)\.message/.test(src)) {
+    problems.push(`${file}: still stringifies Error.message`);
   }
   return problems;
 }
 
-const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.join(ROOT, f), "utf8")]));
+function assertAll(srcs) {
+  const drawerSrc = srcs[DRAWER] ?? fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
+  const problems = [];
+  for (const file of FILES) {
+    problems.push(...assertFile(file, srcs[file], drawerSrc));
+  }
+  return problems;
+}
+
+const read = () => {
+  const srcs = Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.join(ROOT, f), "utf8")]));
+  srcs[DRAWER] = fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
+  return srcs;
+};
 
 if (SELFTEST) {
   const srcs = read();
