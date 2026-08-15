@@ -12,7 +12,6 @@ export type ListAuditEventsInput = {
   operating_company_id: string;
   audit_event_id?: string;
   bulk_call_id?: string;
-  event_type?: string;
   from?: string;
   to?: string;
   limit: number;
@@ -20,8 +19,12 @@ export type ListAuditEventsInput = {
   entity_type?: string;
   entity_id?: string;
   actor?: string;
-  status?: string;
-  source?: string;
+  // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: these were single-value exact/ILIKE filters — a
+  // QuickBooks-style single picker can only isolate one status/source/type at a time. Now accepted
+  // as arrays (OR'd together) so the frontend's checkbox multi-select can filter on several at once.
+  event_type?: string[];
+  status?: string[];
+  source?: string[];
   voids_only?: boolean;
 };
 
@@ -39,11 +42,29 @@ type AuditEventListRow = {
   total_count: number;
 };
 
+// LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: query params stay comma-separated strings (simplest
+// wire format for a GET query param) and are transformed into arrays for the multi-value filters.
+const commaListSchema = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .transform((v) => {
+      if (!v) return undefined;
+      const parts = v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, max);
+      return parts.length > 0 ? parts : undefined;
+    });
+
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   audit_event_id: z.string().uuid().optional(),
   bulk_call_id: z.string().uuid().optional(),
-  event_type: z.string().trim().min(1).max(200).optional(),
+  event_type: commaListSchema(20),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
@@ -51,8 +72,8 @@ const querySchema = z.object({
   entity_type: z.string().trim().min(1).max(100).optional(),
   entity_id: z.string().uuid().optional(),
   actor: z.string().trim().min(1).max(300).optional(),
-  status: z.string().trim().min(1).max(100).optional(),
-  source: z.string().trim().min(1).max(100).optional(),
+  status: commaListSchema(20),
+  source: commaListSchema(20),
   voids_only: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
 });
 
@@ -92,9 +113,9 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
     values.push(input.bulk_call_id);
     filters.push(`e.payload->>'bulk_call_id' = $${values.length}`);
   }
-  if (input.event_type) {
-    values.push(`%${input.event_type}%`);
-    filters.push(`e.event_class ILIKE $${values.length}`);
+  if (input.event_type && input.event_type.length > 0) {
+    values.push(input.event_type.map((v) => `%${v}%`));
+    filters.push(`e.event_class ILIKE ANY($${values.length}::text[])`);
   }
   if (input.entity_type) {
     values.push(input.entity_type);
@@ -108,13 +129,13 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
     values.push(`%${input.actor}%`);
     filters.push(`(u.email ILIKE $${values.length} OR e.actor_user_uuid::text = $${values.length})`);
   }
-  if (input.status) {
+  if (input.status && input.status.length > 0) {
     values.push(input.status);
-    filters.push(`e.payload->>'status' = $${values.length}`);
+    filters.push(`e.payload->>'status' = ANY($${values.length}::text[])`);
   }
-  if (input.source) {
+  if (input.source && input.source.length > 0) {
     values.push(input.source);
-    filters.push(`e.source = $${values.length}`);
+    filters.push(`e.source = ANY($${values.length}::text[])`);
   }
   if (input.voids_only) {
     filters.push(`(e.event_class ILIKE '%void%' OR e.event_class ILIKE '%reverse%' OR e.event_class ILIKE '%delete%')`);
