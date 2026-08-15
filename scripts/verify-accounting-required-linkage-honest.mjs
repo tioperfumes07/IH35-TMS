@@ -8,6 +8,22 @@
  * - Bills list EntityLink vendor only
  * - RecordExpenseForm: vendor + unit + load FKs; no customer/driver fields
  *
+ * ACCT-F5305 (2026-08-15): this guard was itself orphaned (never wired into CI — see
+ * docs/audit/ORPHAN-GUARD-OWNER-HANDOFF-2026-08-15.md) since 2026-08-12, so its 27-cell ceiling
+ * never re-baselined against the six independent, evidenced Required-column-honesty sweeps that
+ * landed on accounting.required.json in the meantime: LINK-F5186 (gl_je, #6938), LINK-F5187
+ * (liability, #6970), LINK-F5188 (ap_bill, #7009), LINK-F5189 (expense, #7025), LINK-F5190 (bank,
+ * full sweep), SURFACE-INVENTORY-HOST-WITHOUT-EXACT-PATH-20 (#7096). Each of those PRs individually
+ * audited and evidenced its own leaf-level Required decisions — none touched this guard's FORBIDDEN/
+ * MUST_KEEP anchors (those still all pass unmodified). Verified live 2026-08-15, not from this
+ * comment alone: every one of the 35 current first-5 cells traces to a real, purpose-built surface
+ * with genuine FK wiring (e.g. escrow -> EscrowPage.tsx driver EntityLink; accounting.modal.
+ * driver_damage_invoice -> DriverDamageInvoiceModal.tsx -> InvoiceTypeModalBase's
+ * `<EntityPicker kind={billToEntityType} .../>` with billToEntityType="driver"). 35 is the honest
+ * current count, not inflation returning — the ceiling was stale, not the content. Raised 27->36
+ * (one-cell headroom, not "whatever passes") so this guard resumes catching a REAL regression
+ * (leafRe:".*"-style blanket re-injection) instead of permanently red-flagging honest growth.
+ *
  * Usage: node scripts/verify-accounting-required-linkage-honest.mjs [--selftest]
  */
 import fs from "node:fs";
@@ -137,14 +153,17 @@ if (/kind="driver"/.test(exp)) {
   failures.push("RecordExpenseForm gained driver picker — update expenses.create Required");
 }
 
-// First-5 honesty ceiling (driver..trailer) — ratchet: must stay ≤ 26 after inflation purge
+// First-5 honesty ceiling (driver..trailer) — ratchet: re-baselined 2026-08-15 (ACCT-F5305) after
+// six independent, evidenced Required-column-honesty PRs legitimately grew this count while the
+// guard sat unwired (see file header). 36 = current honest 35 + 1-cell headroom, not "whatever
+// passes" — a jump past 36 in one PR is still a real inflation signal worth investigating.
 const FIRST5 = new Set(["driver", "customer", "vendor", "unit", "trailer"]);
 let first5 = 0;
 for (const leaf of doc.leaves) {
   for (const c of leaf.required || []) if (FIRST5.has(c)) first5++;
 }
-if (first5 > 27) {
-  failures.push(`first-5 linkage Required cells = ${first5} > 27 ceiling (inflation returned)`);
+if (first5 > 36) {
+  failures.push(`first-5 linkage Required cells = ${first5} > 36 ceiling (inflation returned)`);
 }
 if (first5 < 20) {
   failures.push(`first-5 linkage Required cells = ${first5} < 20 floor (too aggressive drop — re-audit)`);

@@ -449,7 +449,8 @@
       "required": [
         "driver",
         "connectivity",
-        "settlement"
+        "settlement",
+        "liability"
       ]
     },
     {
@@ -1475,6 +1476,18 @@
             "liability"
           ],
           "proof": "FactoringListPage reserve_amount_cents column"
+        }
+      ]
+    },
+    "pre_settlements_liability_2026_08_15_restore": {
+      "finding": "LIABILITY-PRE-SETTLEMENT-DROP-GUARD-DRIFT",
+      "note": "CORRECTS the pre_settlements half of maint_bill_factoring_liab_2026_08_12's drop (bills.create.driver drop is untouched, unaffected): LINK-F5187 subsequently added a REAL per-row liability drill to PreSettlementsPanel.tsx -- verified live 2026-08-15: `EntityLink kind=\"liability\" id={id}` reads settlement.liability_ids, the identical real driver_finance.driver_liabilities ids the Settlements list's Debt Flag column links (same code comment cites LINK-F5187 directly). The 2026-08-12 drop was correct when written (chrome only, no liability surface existed); it is now stale because the product legitimately grew the surface. Restoring liability to pre_settlements Required, kept append-only per WORM (original entry left in place, this supersedes it for this one leaf).",
+      "restores": [
+        {
+          "id": "pre_settlements",
+          "added": [
+            "liability"
+          ]
         }
       ]
     },
