@@ -58,6 +58,10 @@ export function assertVendorCreditsUiLinkage() {
   if (!page.includes("vendor_id") || !/searchParams|URLSearchParams|useSearchParams/.test(page)) {
     errors.push(`${PAGE}: must honor vendor_id query param for vendor-detail reverse drill`);
   }
+  // LST-F5202 — visible vendor filter must write URL.
+  if (!/setSearchParams/.test(page) || !/vendor-credits-filter-vendor/.test(page)) {
+    errors.push(`${PAGE}: vendor filter must sync to URL (setSearchParams + EntityPicker)`);
+  }
   if (!vendorDetail.includes("listVendorCredits")) {
     errors.push("VendorDetail: must list vendor credits filtered by vendor_id (reverse drill)");
   }
