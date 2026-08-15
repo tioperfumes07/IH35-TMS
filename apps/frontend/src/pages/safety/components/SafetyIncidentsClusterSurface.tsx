@@ -128,36 +128,68 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [savedHint, setSavedHint] = useState(false);
   // S-08 + s-04: list filters (driver/unit/from–to) — AccidentsPage-parity local state;
   // date range is sent as date_from/date_to query params (backend list route).
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+  // LST-F5194 — list filters write driver_id/unit_id/load_id/trailer_id to URL.
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
+  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
+  const [loadFilter, setLoadFilterState] = useState(loadIdFromUrl);
+  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+    setDriverFilterState(driverIdFromUrl);
   }, [driverIdFromUrl]);
   useEffect(() => {
-    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+    setUnitFilterState(unitIdFromUrl);
   }, [unitIdFromUrl]);
+  useEffect(() => {
+    setLoadFilterState(loadIdFromUrl);
+  }, [loadIdFromUrl]);
+  useEffect(() => {
+    setTrailerFilterState(trailerIdFromUrl);
+  }, [trailerIdFromUrl]);
+
+  function patchListSearchParam(key: "driver_id" | "unit_id" | "load_id" | "trailer_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    patchListSearchParam("driver_id", next);
+  }
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    patchListSearchParam("unit_id", next);
+  }
+  function setLoadFilter(next: string) {
+    setLoadFilterState(next);
+    patchListSearchParam("load_id", next);
+  }
+  function setTrailerFilter(next: string) {
+    setTrailerFilterState(next);
+    patchListSearchParam("trailer_id", next);
+  }
 
   const typedFields = config.typedFields;
   const has = (key: IncidentFieldKey) => COMMON_FIELDS.includes(key) || typedFields.includes(key);
 
   const listFilters = useMemo(
     () => ({
-      driver_id: driverFilter.trim() || undefined,
-      unit_id: unitFilter.trim() || undefined,
-      load_id: loadIdFromUrl || undefined,
-      trailer_id: trailerIdFromUrl || undefined,
+      driver_id: driverFilter.trim() || driverIdFromUrl || undefined,
+      unit_id: unitFilter.trim() || unitIdFromUrl || undefined,
+      load_id: loadFilter.trim() || loadIdFromUrl || undefined,
+      trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
       date_from: fromDate || undefined,
       date_to: toDate || undefined,
     }),
-    [driverFilter, unitFilter, loadIdFromUrl, trailerIdFromUrl, fromDate, toDate]
+    [driverFilter, unitFilter, loadFilter, trailerFilter, driverIdFromUrl, unitIdFromUrl, loadIdFromUrl, trailerIdFromUrl, fromDate, toDate]
   );
 
   const listQuery = useQuery({
@@ -519,6 +551,32 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           />
         </label>
         <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={operatingCompanyId}
+            value={loadFilter || null}
+            onChange={(next) => setLoadFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1 block min-w-[8rem]"
+            dataTestId={`${config.pageTestId}-filter-load`}
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Trailer
+          <EntityPicker
+            kind="trailer"
+            operatingCompanyId={operatingCompanyId}
+            value={trailerFilter || null}
+            onChange={(next) => setTrailerFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All trailers"
+            className="mt-1 block min-w-[8rem]"
+            dataTestId={`${config.pageTestId}-filter-trailer`}
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
           From
           <DatePicker
             value={fromDate}
@@ -538,7 +596,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             data-testid="safety-incidents-to-date"
           />
         </label>
-        {driverFilter || unitFilter || fromDate || toDate ? (
+        {driverFilter || unitFilter || loadFilter || trailerFilter || fromDate || toDate ? (
           <button
             type="button"
             className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] text-slate-500 hover:bg-gray-100"
@@ -546,6 +604,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             onClick={() => {
               setDriverFilter("");
               setUnitFilter("");
+              setLoadFilter("");
+              setTrailerFilter("");
               setFromDate("");
               setToDate("");
             }}

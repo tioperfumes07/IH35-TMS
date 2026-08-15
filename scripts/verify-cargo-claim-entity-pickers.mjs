@@ -29,6 +29,10 @@ export function collectProblems(src) {
   if (/listDrivers|listUnits\(/.test(code)) {
     problems.push(`${TARGET}: must not local-fetch driver/unit roster for form pickers`);
   }
+  // LST-F5194 — list filters must write URL.
+  if (!/setSearchParams/.test(src) || !/-filter-driver/.test(src)) {
+    problems.push(`${TARGET}: list filters must sync to URL (setSearchParams)`);
+  }
   return problems;
 }
 
@@ -40,6 +44,8 @@ if (SELFTEST) {
     <Combobox options={loads} />
   `;
   const good = `
+    setSearchParams
+    dataTestId="cargo-claims-filter-driver"
     <EntityPicker kind="load" />
     <EntityPicker kind="driver" allowCreate />
     <EntityPicker kind="unit" />

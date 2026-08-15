@@ -124,25 +124,52 @@ export function CargoClaimIntakeSurface({
 
   const companyEnabled = Boolean(operatingCompanyId);
   const pickersEnabled = companyEnabled && (creating || Boolean(selectedId));
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
-  // LST-F5163D: visible list filters (allowCreate=false); reverse ?trailer_id= seeds trailerFilter.
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [trailerFilter, setTrailerFilter] = useState("");
+  // LST-F5163D + LST-F5194: visible list filters write URL params.
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
+  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
+  const [loadFilter, setLoadFilterState] = useState(loadIdFromUrl);
+  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+    setDriverFilterState(driverIdFromUrl);
   }, [driverIdFromUrl]);
   useEffect(() => {
-    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+    setUnitFilterState(unitIdFromUrl);
   }, [unitIdFromUrl]);
   useEffect(() => {
-    if (trailerIdFromUrl) setTrailerFilter(trailerIdFromUrl);
+    setLoadFilterState(loadIdFromUrl);
+  }, [loadIdFromUrl]);
+  useEffect(() => {
+    setTrailerFilter(trailerIdFromUrl);
   }, [trailerIdFromUrl]);
+
+  function patchSearchParam(key: "driver_id" | "unit_id" | "load_id" | "trailer_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    patchSearchParam("driver_id", next);
+  }
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    patchSearchParam("unit_id", next);
+  }
+  function setLoadFilter(next: string) {
+    setLoadFilterState(next);
+    patchSearchParam("load_id", next);
+  }
+  function setTrailerFilter(next: string) {
+    setTrailerFilterState(next);
+    patchSearchParam("trailer_id", next);
+  }
 
   const suggestionQuery = useQuery({
     queryKey: [
@@ -186,15 +213,14 @@ export function CargoClaimIntakeSurface({
       "incidents",
       "cargo_claim",
       operatingCompanyId,
-      loadIdFromUrl,
+      loadFilter,
       driverFilter,
       unitFilter,
       trailerFilter,
-      trailerIdFromUrl,
     ],
     queryFn: () =>
       listSafetyIncidents(operatingCompanyId, "cargo_claim", {
-        load_id: loadIdFromUrl || undefined,
+        load_id: loadFilter.trim() || loadIdFromUrl || undefined,
         driver_id: driverFilter.trim() || driverIdFromUrl || undefined,
         unit_id: unitFilter.trim() || unitIdFromUrl || undefined,
         trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
@@ -748,6 +774,19 @@ export function CargoClaimIntakeSurface({
                 placeholder="All units"
                 className="mt-1"
                 dataTestId={`${pageTestId}-filter-unit`}
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Load
+              <EntityPicker
+                kind="load"
+                operatingCompanyId={operatingCompanyId}
+                value={loadFilter || null}
+                onChange={(next) => setLoadFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All loads"
+                className="mt-1"
+                dataTestId={`${pageTestId}-filter-load`}
               />
             </label>
             <label className="text-[11px] text-slate-600">
