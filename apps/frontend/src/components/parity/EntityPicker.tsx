@@ -53,7 +53,8 @@ export type EntityPickerProps = {
   kind: EntityPickerKind;
   operatingCompanyId: string;
   value: string | null;
-  onChange: (value: string | null) => void;
+  /** The selected canonical roster option accompanies its FK so inline consumers never rebuild a label from a UUID. */
+  onChange: (value: string | null, option?: EntityPickerOption | null) => void;
   /**
    * Offer the inline "+ Create ___" first row. Default true for kinds whose registry entry allows
    * it. FILTER call sites pass false — a filter narrows existing rows and must not create one.
@@ -182,7 +183,7 @@ export function EntityPicker({
     setInvalidatedValue(null);
     const option: EntityPickerOption = { value: id, label: label ?? id };
     setCreated((prev) => [...prev, option]);
-    onChange(id); // return to the parent with the new record already selected
+    onChange(id, option); // return the canonical FK and human option to the parent
     onCreated?.(id);
     setCreateOpen(false);
     void rosterQuery.refetch();
@@ -207,7 +208,7 @@ export function EntityPicker({
           value={scopedValue}
           onChange={(next) => {
             setInvalidatedValue(null);
-            onChange(next);
+            onChange(next, next ? options.find((option) => option.value === next) ?? null : null);
           }}
           onSearch={config.serverSearch ? setRosterSearch : undefined}
           placeholder={placeholder ?? `Select ${config.label}`}

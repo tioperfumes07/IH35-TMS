@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { entityLabel } from "../../lib/entity-label";
 import { patchAssignDriver } from "../../api/dispatch";
 import { EntityPicker } from "../parity/EntityPicker";
 import { optimisticPatch } from "../../lib/optimisticPatch";
@@ -45,9 +44,9 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
         placeholder="Type driver…"
         allowClear={false}
         className="h-8 w-full text-xs"
-        onChange={async (next) => {
+        onChange={async (next, option) => {
           if (!next) return;
-          const label = displayLabel && driverId === next ? displayLabel : entityLabel(null, next, "Driver");
+          const label = option?.label ?? (driverId === next ? displayLabel : "Driver unavailable");
           const prior = { driverId, label: displayLabel };
           const result = await optimisticPatch({
             applyOptimistic: () => onAssigned({ driverId: next, label }),

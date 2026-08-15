@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { entityLabel } from "../../lib/entity-label";
 import { patchAssignUnit } from "../../api/dispatch";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityPicker } from "../parity/EntityPicker";
@@ -46,9 +45,9 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
         placeholder="Type unit…"
         allowClear={false}
         dataTestId={`inline-unit-picker-${loadId}`}
-        onChange={async (next) => {
+        onChange={async (next, option) => {
           if (!next) return;
-          const label = entityLabel(null, next, "Unit");
+          const label = option?.label ?? (unitId === next ? displayLabel : "Unit unavailable");
           const prior = { unitId, label: displayLabel };
           const result = await optimisticPatch({
             applyOptimistic: () => onAssigned({ unitId: next, label }),
