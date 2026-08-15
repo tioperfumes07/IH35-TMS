@@ -64,6 +64,10 @@ export function assertFactoringSubmitQueueReverse(sources) {
   if (!/searchParams\.get\("customer_id"\)/.test(queuePage) || !/searchParams\.get\("load_id"\)/.test(queuePage)) {
     problems.push(`${QUEUE_PAGE}: must read customer_id and load_id from URL search params`);
   }
+  // LST-F5163N: visible reverse filters (URL-only is not list chrome).
+  if (!/dataTestId="factoring-submit-filter-customer"/.test(queuePage) || !/dataTestId="factoring-submit-filter-load"/.test(queuePage) || !/allowCreate=\{false\}/.test(queuePage)) {
+    problems.push(`${QUEUE_PAGE}: must render EntityPicker customer+load filters (allowCreate=false)`);
+  }
   if (!/kind="factoring_submit_queue_load"/.test(factoringTab)) {
     problems.push(`${FACTORING_TAB}: must render EntityLink kind="factoring_submit_queue_load"`);
   }
@@ -112,6 +116,9 @@ function selftest() {
     [QUEUE_PAGE]: `
       const deepLinkCustomerId = searchParams.get("customer_id");
       const deepLinkLoadId = searchParams.get("load_id");
+      dataTestId="factoring-submit-filter-customer"
+      dataTestId="factoring-submit-filter-load"
+      allowCreate={false}
     `,
     [FACTORING_TAB]: `<EntityLink kind="factoring_submit_queue_load" id={loadId} label="View" />`,
     [ENTITY_LINK]: `
@@ -137,6 +144,7 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace("customer_id: z.string().uuid().optional(),\n        load_id: z.string().uuid().optional(),", "") },
     { ...good, [ROUTES]: good[ROUTES].replace("customerId: query.data.customer_id,", "") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('searchParams.get("customer_id")', '""') },
+    { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('dataTestId="factoring-submit-filter-customer"', 'dataTestId="x"') },
     { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace('kind="factoring_submit_queue_load"', 'kind="factoring_queue_load"') },
     { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace('case "factoring_submit_queue_load":', "// removed") },
     { ...good, [SECTION]: good[SECTION].replace("customer_id: customerId", "") },
