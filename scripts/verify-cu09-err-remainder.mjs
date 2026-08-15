@@ -9,8 +9,10 @@ const LABEL = "verify-cu09-err-remainder";
 const SELFTEST = process.argv.includes("--selftest");
 const NEW_FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
 const NEW_SERVICE = "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx";
+const NEW_CLASS = "apps/frontend/src/components/parity/drawers/NewClassDrawerForm.tsx";
 const DRAWER = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
 const ITEM_EDITOR = "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx";
+const CATALOG_MODAL = "apps/frontend/src/pages/lists/accounting/AccountingCatalogModal.tsx";
 
 const FILES = [
   "apps/frontend/src/pages/banking/components/PlaidReconnectButton.tsx",
@@ -41,7 +43,15 @@ function newServiceEmbedsItemEditor(serviceSrc) {
   );
 }
 
-function assertFile(file, src, drawerSrc, itemEditorSrc) {
+function newClassEmbedsCatalogModal(classSrc) {
+  return (
+    /<AccountingCatalogModal[\s>]/.test(classSrc) &&
+    (/from ["'].*AccountingCatalogModal["']|from ["'].*\/AccountingCatalogModal["']/.test(classSrc) ||
+      /import\s*\{\s*AccountingCatalogModal\s*\}/.test(classSrc))
+  );
+}
+
+function assertFile(file, src, drawerSrc, itemEditorSrc, catalogModalSrc) {
   const problems = [];
   if (file === NEW_FORM && newFormEmbedsAccountDrawer(src)) {
     if (!/userFacingApiError\(/.test(drawerSrc)) {
@@ -61,6 +71,15 @@ function assertFile(file, src, drawerSrc, itemEditorSrc) {
     }
     return problems;
   }
+  if (file === NEW_CLASS && newClassEmbedsCatalogModal(src)) {
+    if (!/userFacingApiError\(/.test(catalogModalSrc)) {
+      problems.push(`${CATALOG_MODAL}: missing userFacingApiError (NewClassDrawerForm embeds AccountingCatalogModal)`);
+    }
+    if (/String\(\((?:err|error) as Error\)\.message/.test(catalogModalSrc)) {
+      problems.push(`${CATALOG_MODAL}: still stringifies Error.message (embedded create path)`);
+    }
+    return problems;
+  }
   if (!/userFacingApiError\(/.test(src)) problems.push(`${file}: missing userFacingApiError`);
   if (/String\(\((?:err|error) as Error\)\.message/.test(src)) {
     problems.push(`${file}: still stringifies Error.message`);
@@ -71,9 +90,10 @@ function assertFile(file, src, drawerSrc, itemEditorSrc) {
 function assertAll(srcs) {
   const drawerSrc = srcs[DRAWER] ?? fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
   const itemEditorSrc = srcs[ITEM_EDITOR] ?? fs.readFileSync(path.join(ROOT, ITEM_EDITOR), "utf8");
+  const catalogModalSrc = srcs[CATALOG_MODAL] ?? fs.readFileSync(path.join(ROOT, CATALOG_MODAL), "utf8");
   const problems = [];
   for (const file of FILES) {
-    problems.push(...assertFile(file, srcs[file], drawerSrc, itemEditorSrc));
+    problems.push(...assertFile(file, srcs[file], drawerSrc, itemEditorSrc, catalogModalSrc));
   }
   return problems;
 }
@@ -82,6 +102,7 @@ const read = () => {
   const srcs = Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.join(ROOT, f), "utf8")]));
   srcs[DRAWER] = fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
   srcs[ITEM_EDITOR] = fs.readFileSync(path.join(ROOT, ITEM_EDITOR), "utf8");
+  srcs[CATALOG_MODAL] = fs.readFileSync(path.join(ROOT, CATALOG_MODAL), "utf8");
   return srcs;
 };
 

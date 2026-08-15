@@ -20,6 +20,8 @@ export type AccountingMetadataField = {
   options?: Array<{ value: string; label: string }>;
 };
 
+export type AccountingCatalogSavedResult = { id: string; label: string };
+
 type Props = {
   open: boolean;
   readOnly?: boolean;
@@ -33,7 +35,13 @@ type Props = {
   // Default sort order for a NEW row = max(existing)+1, computed by the list page.
   nextSortOrder?: number;
   onClose: () => void;
-  onSaved: () => void;
+  /** Called after successful create/update/deactivate. Create passes id+label for nested pickers. */
+  onSaved: (result?: AccountingCatalogSavedResult) => void;
+  /**
+   * LST-F3362 — when true, render only the form body/footer (no second overlay/aside).
+   * Used by NewClassDrawerForm inside ParityDrawer so Lists Classes and nested +Add new share ONE chrome.
+   */
+  embedded?: boolean;
 };
 
 type FormState = {
@@ -58,6 +66,7 @@ export function AccountingCatalogModal({
   nextSortOrder,
   onClose,
   onSaved,
+  embedded = false,
 }: Props) {
   const [form, setForm] = useState<FormState>({ code: "", display_name: "", description: "", is_active: true, sort_order: 0, metadata: {} });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -113,9 +122,15 @@ export function AccountingCatalogModal({
       metadata: form.metadata,
     };
     try {
-      if (mode === "create") await client.create(operatingCompanyId, body);
-      else if (row) await client.update(row.id, operatingCompanyId, body);
-      onSaved();
+      if (mode === "create") {
+        const created = await client.create(operatingCompanyId, body);
+        onSaved({ id: String(created.id), label: form.display_name.trim() });
+      } else if (row) {
+        await client.update(row.id, operatingCompanyId, body);
+        onSaved({ id: row.id, label: form.display_name.trim() });
+      } else {
+        onSaved();
+      }
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
@@ -147,143 +162,155 @@ export function AccountingCatalogModal({
     }
   }
 
-  return (
-    <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}>
-      <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
-          {codeLabel}
-          <input
-            data-testid="catalog-code-input"
-            value={form.code}
-            disabled={readOnly || mode === "edit"}
-            onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
-          />
-          {mode === "edit" ? (
-            <span className="mt-1 block text-[10px] font-normal text-slate-400">Stable identifier — immutable after create.</span>
-          ) : null}
-          {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
-        </label>
+  const formChrome = (
+    <div className="space-y-3">
+      <label className="block text-xs font-semibold text-gray-600">
+        {codeLabel}
+        <input
+          data-testid="catalog-code-input"
+          value={form.code}
+          disabled={readOnly || mode === "edit"}
+          onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+        />
+        {mode === "edit" ? (
+          <span className="mt-1 block text-[10px] font-normal text-slate-400">Stable identifier — immutable after create.</span>
+        ) : null}
+        {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
+      </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
-          Display Name
-          <input
-            data-testid="catalog-name-input"
-            value={form.display_name}
-            disabled={readOnly}
-            onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
-          />
-          {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
-        </label>
+      <label className="block text-xs font-semibold text-gray-600">
+        Display Name
+        <input
+          data-testid="catalog-name-input"
+          value={form.display_name}
+          disabled={readOnly}
+          onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+        />
+        {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
+      </label>
 
-        {metadataFields.map((field) => {
-          const value = form.metadata[field.key];
-          if (field.type === "select") {
-            return (
-              <label key={field.key} className="block text-xs font-semibold text-gray-600">
-                {field.label}
-                <SelectCombobox
-                  value={String(value ?? "")}
-                  disabled={readOnly}
-                  onChange={(event) => setForm((current) => ({ ...current, metadata: { ...current.metadata, [field.key]: event.target.value } }))}
-                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
-                >
-                  <option value="">Select...</option>
-                  {(field.options ?? []).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </SelectCombobox>
-                {errors[`metadata.${field.key}`] ? <div className="mt-1 text-[11px] text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
-              </label>
-            );
-          }
+      {metadataFields.map((field) => {
+        const value = form.metadata[field.key];
+        if (field.type === "select") {
           return (
             <label key={field.key} className="block text-xs font-semibold text-gray-600">
               {field.label}
-              <input
-                type={field.type === "number" ? "number" : "text"}
-                value={value === undefined || value === null ? "" : String(value)}
+              <SelectCombobox
+                value={String(value ?? "")}
                 disabled={readOnly}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    metadata: {
-                      ...current.metadata,
-                      [field.key]: field.type === "number" ? Number(event.target.value || 0) : event.target.value,
-                    },
-                  }))
-                }
+                onChange={(event) => setForm((current) => ({ ...current, metadata: { ...current.metadata, [field.key]: event.target.value } }))}
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
-              />
+              >
+                <option value="">Select...</option>
+                {(field.options ?? []).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </SelectCombobox>
               {errors[`metadata.${field.key}`] ? <div className="mt-1 text-[11px] text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
             </label>
           );
-        })}
+        }
+        return (
+          <label key={field.key} className="block text-xs font-semibold text-gray-600">
+            {field.label}
+            <input
+              type={field.type === "number" ? "number" : "text"}
+              value={value === undefined || value === null ? "" : String(value)}
+              disabled={readOnly}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  metadata: {
+                    ...current.metadata,
+                    [field.key]: field.type === "number" ? Number(event.target.value || 0) : event.target.value,
+                  },
+                }))
+              }
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+            />
+            {errors[`metadata.${field.key}`] ? <div className="mt-1 text-[11px] text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
+          </label>
+        );
+      })}
 
-        <label className="block text-xs font-semibold text-gray-600">
-          Description
-          <textarea
-            value={form.description}
-            disabled={readOnly}
-            onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
-            rows={3}
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:bg-slate-100"
-          />
-        </label>
+      <label className="block text-xs font-semibold text-gray-600">
+        Description
+        <textarea
+          value={form.description}
+          disabled={readOnly}
+          onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
+          rows={3}
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:bg-slate-100"
+        />
+      </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
-          Sort order
-          <input
-            type="number"
-            value={form.sort_order}
-            disabled={readOnly}
-            onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
-          />
-          <span className="mt-1 block text-[10px] font-normal text-slate-400">Dropdown display order (lower = earlier). Defaults to next available.</span>
-        </label>
+      <label className="block text-xs font-semibold text-gray-600">
+        Sort order
+        <input
+          type="number"
+          value={form.sort_order}
+          disabled={readOnly}
+          onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))}
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+        />
+        <span className="mt-1 block text-[10px] font-normal text-slate-400">Dropdown display order (lower = earlier). Defaults to next available.</span>
+      </label>
 
-        <label className="flex items-center gap-2 text-xs text-gray-700">
-          <input
-            type="checkbox"
-            checked={form.is_active}
-            disabled={readOnly}
-            onChange={(event) => setForm((value) => ({ ...value, is_active: event.target.checked }))}
-          />
-          Active
-        </label>
+      <label className="flex items-center gap-2 text-xs text-gray-700">
+        <input
+          type="checkbox"
+          checked={form.is_active}
+          disabled={readOnly}
+          onChange={(event) => setForm((value) => ({ ...value, is_active: event.target.checked }))}
+        />
+        Active
+      </label>
 
-        {mode === "edit" && row ? (
-          <div className="border-t border-gray-100 pt-2 text-[10px] text-slate-400">
-            Created {new Date(row.created_at).toLocaleString()} · Updated {new Date(row.updated_at).toLocaleString()}
-          </div>
-        ) : null}
+      {mode === "edit" && row ? (
+        <div className="border-t border-gray-100 pt-2 text-[10px] text-slate-400">
+          Created {new Date(row.created_at).toLocaleString()} · Updated {new Date(row.updated_at).toLocaleString()}
+        </div>
+      ) : null}
 
-        {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
+      {submitError ? <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800">{submitError}</div> : null}
 
-        <div className="flex items-center justify-between">
-          <div>
-            {!readOnly && mode === "edit" ? (
-              <Button type="button" variant="secondary" disabled={isSaving} onClick={() => void deactivate()}>
-                Deactivate
-              </Button>
-            ) : null}
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>
-              Close
+      <div className="flex items-center justify-between">
+        <div>
+          {!readOnly && mode === "edit" ? (
+            <Button type="button" variant="secondary" disabled={isSaving} onClick={() => void deactivate()}>
+              Deactivate
             </Button>
-            {!readOnly ? (
-              <Button type="button" data-testid="catalog-submit" onClick={() => void submit()} disabled={isSaving || !canSubmit}>
-                {mode === "create" ? "Create" : "Save Changes"}
-              </Button>
-            ) : null}
-          </div>
+          ) : null}
+        </div>
+        <div className="flex gap-2">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>
+            Close
+          </Button>
+          {!readOnly ? (
+            <Button type="button" data-testid="catalog-submit" onClick={() => void submit()} disabled={isSaving || !canSubmit}>
+              {mode === "create" ? "Create" : "Save Changes"}
+            </Button>
+          ) : null}
         </div>
       </div>
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="flex h-full flex-col" data-testid="accounting-catalog-embedded">
+        {formChrome}
+      </div>
+    );
+  }
+
+  return (
+    <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}>
+      {formChrome}
     </Modal>
   );
 }
