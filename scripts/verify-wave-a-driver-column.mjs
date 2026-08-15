@@ -16,30 +16,57 @@ for (const root of roots) {
   walk(root);
 }
 
-const targeted = [
-  ["apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx", /<EntityLink kind="driver" id=\{session\.driver_uuid\}/],
-  ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage.tsx", /<EntityLink kind="driver" id=\{String\(req\.driver_id/],
-  ["apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx", /<EntityLink kind="driver" id=\{String\(req\?\.driver_id/],
-  ["apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /<EntityLink kind="driver" id=\{u\.driver_id\}/],
-  ["apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", /<EntityLink kind="driver" id=\{entry\.driver_id\}/],
+const required = [
+  ["photo comparison driver drill", "apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx", /<EntityLink kind="driver" id=\{session\.driver_uuid\}/],
+  ["scheduler request driver drill", "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage.tsx", /<EntityLink kind="driver" id=\{String\(req\.driver_id/],
+  ["owner approval driver drill", "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx", /<EntityLink kind="driver" id=\{String\(req\?\.driver_id/],
+  ["trip pairing driver drill", "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /<EntityLink kind="driver" id=\{u\.driver_id\}/],
+  ["escrow record driver drill", "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", /<EntityLink kind="driver" id=\{entry\.driver_id\}/],
 ];
-const failures = [];
-for (const [file, required] of targeted) {
-  const src = fs.readFileSync(file, "utf8");
-  if (!required.test(src)) failures.push(`${file}: canonical driver EntityLink missing`);
-}
-
 const forbidden = [
-  /entityLabel\(\s*(?:session|entry|row)\.driver_name\s*,\s*null\s*,\s*["']Driver["']\s*\)/,
-  /<span[^>]*>\{entityLabel\(u\.driver_name,\s*u\.driver_id,\s*["']Driver["']\)\}<\/span>/,
+  ["driver FK discarded from generic row", /entityLabel\(\s*(?:session|entry|row)\.driver_name\s*,\s*null\s*,\s*["']Driver["']\s*\)/],
+  ["trip pairing driver label not linked", /<span[^>]*>\{entityLabel\(u\.driver_name,\s*u\.driver_id,\s*["']Driver["']\)\}<\/span>/],
 ];
-for (const file of files) {
-  const src = fs.readFileSync(file, "utf8");
-  for (const pattern of forbidden) if (pattern.test(src)) failures.push(`${file}: driver FK is discarded or label is not linked`);
+const original = new Map(files.map((file) => [file, fs.readFileSync(file, "utf8")]));
+
+function audit(sources) {
+  const failures = [];
+  for (const [name, file, pattern] of required) {
+    if (!pattern.test(sources.get(file) ?? "")) failures.push(name);
+  }
+  for (const [name, pattern] of forbidden) {
+    if ([...sources.values()].some((source) => pattern.test(source))) failures.push(name);
+  }
+  return failures;
 }
 
+const failures = audit(original);
 if (failures.length) {
-  console.error(`verify-wave-a-driver-column FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
+  console.error(`verify-wave-a-driver-column FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
 }
+
+if (process.argv.includes("--selftest")) {
+  let caught = 0;
+  for (const [name, file, pattern] of required) {
+    const mutated = new Map(original);
+    mutated.set(file, original.get(file).replace(pattern, "__PLANTED_DRIVER_LINK_DEFECT__"));
+    if (audit(mutated).includes(name)) caught += 1;
+    else throw new Error(`selftest failed to catch: ${name}`);
+  }
+  const injectionFile = required[0][1];
+  const forbiddenSamples = [
+    'entityLabel(row.driver_name, null, "Driver")',
+    '<span>{entityLabel(u.driver_name, u.driver_id, "Driver")}</span>',
+  ];
+  forbidden.forEach(([name], index) => {
+    const mutated = new Map(original);
+    mutated.set(injectionFile, `${original.get(injectionFile)}\n${forbiddenSamples[index]}`);
+    if (audit(mutated).includes(name)) caught += 1;
+    else throw new Error(`selftest failed to catch: ${name}`);
+  });
+  console.log(`verify-wave-a-driver-column SELFTEST PASS — ${caught}/${required.length + forbidden.length} exact driver mutations detected`);
+  process.exit(0);
+}
+
 console.log(`verify-wave-a-driver-column PASS — ${files.length} production TSX files scanned; vertical driver links ratcheted`);
