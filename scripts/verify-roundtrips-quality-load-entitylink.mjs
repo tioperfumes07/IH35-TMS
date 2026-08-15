@@ -49,12 +49,34 @@ function auditQuality(src, api, route) {
     failures.push(`${QUAL}: missing data-testid=customer-quality-related-invoice-link`);
   }
   if (!/related_load_number:\s*string \| null/.test(api)) failures.push(`${API}: must type related_load_number`);
+  if (!/related_invoice_display_id:\s*string \| null/.test(api)) failures.push(`${API}: must type related_invoice_display_id`);
   if (!/rl\.load_number AS related_load_number/.test(route)) failures.push(`${ROUTE}: must project related_load_number`);
-  if (!/LEFT JOIN mdata\.loads rl[\s\S]{0,120}rl\.id = e\.related_load_id AND rl\.operating_company_id = \$2::uuid/.test(route)) {
+  if (!/ri\.display_id AS related_invoice_display_id/.test(route)) failures.push(`${ROUTE}: must project related_invoice_display_id`);
+  if (!/LEFT JOIN mdata\.loads rl[\s\S]{0,120}rl\.id = e\.related_load_id\s+AND rl\.operating_company_id = \$2::uuid/.test(route)) {
     failures.push(`${ROUTE}: load label join must enforce the caller company`);
+  }
+  if (!/LEFT JOIN mdata\.loads rl[\s\S]{0,180}rl\.customer_id = e\.customer_id/.test(route)) {
+    failures.push(`${ROUTE}: load label join must enforce the event customer`);
+  }
+  if (!/LEFT JOIN accounting\.invoices ri[\s\S]{0,220}ri\.operating_company_id = \$2::uuid[\s\S]{0,100}ri\.customer_id = e\.customer_id/.test(route)) {
+    failures.push(`${ROUTE}: invoice label join must enforce caller company and event customer`);
   }
   if (!/entityLabel\(event\.related_load_number, event\.related_load_id, "Load"\)/.test(src)) {
     failures.push(`${QUAL}: related load link must consume related_load_number`);
+  }
+  if (!/entityLabel\(event\.related_invoice_display_id, event\.related_invoice_id, "Invoice"\)/.test(src)) {
+    failures.push(`${QUAL}: related invoice link must consume related_invoice_display_id`);
+  }
+  if (!/FROM mdata\.loads l[\s\S]{0,180}l\.operating_company_id = \$2::uuid[\s\S]{0,100}l\.customer_id = \$3::uuid/.test(route) ||
+      !/invalid_related_load_id/.test(route)) {
+    failures.push(`${ROUTE}: create must reject a related load outside the caller company/customer`);
+  }
+  if (!/FROM accounting\.invoices i[\s\S]{0,180}i\.operating_company_id = \$2::uuid[\s\S]{0,100}i\.customer_id = \$3::uuid/.test(route) ||
+      !/invalid_related_invoice_id/.test(route)) {
+    failures.push(`${ROUTE}: create must reject a related invoice outside the caller company/customer`);
+  }
+  if (!/related_load_number:\s*relatedLoadNumber/.test(route) || !/related_invoice_display_id:\s*relatedInvoiceDisplayId/.test(route)) {
+    failures.push(`${ROUTE}: create response must return the same resolved labels the list read returns`);
   }
   return failures;
 }
@@ -79,6 +101,16 @@ if (process.argv.includes("--selftest")) {
     [round, qual, api.replace("related_load_number: string | null", "related_load_number?: string | null"), route],
     [round, qual, api, route.replace("rl.load_number AS related_load_number", "NULL AS related_load_number")],
     [round, qual, api, route.replace("AND rl.operating_company_id = $2::uuid", "")],
+    [round, qual.replace("event.related_invoice_display_id", "null"), api, route],
+    [round, qual, api.replace("related_invoice_display_id: string | null", "related_invoice_display_id?: string | null"), route],
+    [round, qual, api, route.replace("ri.display_id AS related_invoice_display_id", "NULL AS related_invoice_display_id")],
+    [round, qual, api, route.replace("AND ri.operating_company_id = $2::uuid", "")],
+    [round, qual, api, route.replace("AND ri.customer_id = e.customer_id", "")],
+    [round, qual, api, route.replace("AND rl.customer_id = e.customer_id", "")],
+    [round, qual, api, route.replace("AND l.customer_id = $3::uuid", "")],
+    [round, qual, api, route.replace("AND i.customer_id = $3::uuid", "")],
+    [round, qual, api, route.replace("invalid_related_invoice_id", "invalid_related_record_id")],
+    [round, qual, api, route.replace("related_invoice_display_id: relatedInvoiceDisplayId", "related_invoice_display_id: null")],
   ];
   if (mutations.some((args) => !audit(...args).length)) {
     console.error(`${LABEL} SELFTEST FAIL — planted RoundTrips regression not caught`);

@@ -185,7 +185,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
             e.reason_id, r.code AS reason_code, r.label AS reason_label,
             e.dollar_impact_amount, e.dollar_currency, e.days_late,
             e.related_load_id, rl.load_number AS related_load_number,
-            e.related_invoice_id, e.document_ids,
+            e.related_invoice_id, ri.display_id AS related_invoice_display_id, e.document_ids,
             e.voided_at, e.voided_by_user_id, vu.email AS voided_by_user_email, e.void_reason,
             e.created_at, e.updated_at
           FROM mdata.customer_quality_events e
@@ -193,7 +193,13 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
           LEFT JOIN catalogs.customer_quality_event_reasons r ON r.id = e.reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
           LEFT JOIN mdata.loads rl
-            ON rl.id = e.related_load_id AND rl.operating_company_id = $2::uuid
+            ON rl.id = e.related_load_id
+           AND rl.operating_company_id = $2::uuid
+           AND rl.customer_id = e.customer_id
+          LEFT JOIN accounting.invoices ri
+            ON ri.id = e.related_invoice_id
+           AND ri.operating_company_id = $2::uuid
+           AND ri.customer_id = e.customer_id
           WHERE ${filters.join(" AND ")}
           ORDER BY e.event_date DESC, e.created_at DESC
         `,
@@ -231,6 +237,36 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
         [parsedParams.data.customer_id, companyId]
       );
       if (!customerRes.rows[0]) return { error: "mdata_customer_not_found" as const };
+
+      let relatedLoadNumber: string | null = null;
+      if (body.related_load_id) {
+        const relatedLoadRes = await client.query<{ id: string; load_number: string | null }>(
+          `SELECT l.id, l.load_number
+             FROM mdata.loads l
+            WHERE l.id = $1::uuid
+              AND l.operating_company_id = $2::uuid
+              AND l.customer_id = $3::uuid
+            LIMIT 1`,
+          [body.related_load_id, companyId, parsedParams.data.customer_id],
+        );
+        if (!relatedLoadRes.rows[0]) return { error: "invalid_related_load_id" as const };
+        relatedLoadNumber = relatedLoadRes.rows[0].load_number ?? null;
+      }
+
+      let relatedInvoiceDisplayId: string | null = null;
+      if (body.related_invoice_id) {
+        const relatedInvoiceRes = await client.query<{ id: string; display_id: string | null }>(
+          `SELECT i.id, i.display_id
+             FROM accounting.invoices i
+            WHERE i.id = $1::uuid
+              AND i.operating_company_id = $2::uuid
+              AND i.customer_id = $3::uuid
+            LIMIT 1`,
+          [body.related_invoice_id, companyId, parsedParams.data.customer_id],
+        );
+        if (!relatedInvoiceRes.rows[0]) return { error: "invalid_related_invoice_id" as const };
+        relatedInvoiceDisplayId = relatedInvoiceRes.rows[0].display_id ?? null;
+      }
 
       let normalizedSeverity = body.severity;
       if (body.reason_id) {
@@ -309,7 +345,11 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
         "BT-1-CUSTOMER-QUALITY-FLAGS"
       );
 
-      return row;
+      return {
+        ...row,
+        related_load_number: relatedLoadNumber,
+        related_invoice_display_id: relatedInvoiceDisplayId,
+      };
     });
 
     if ("error" in created) {
