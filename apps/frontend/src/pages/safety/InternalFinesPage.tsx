@@ -29,13 +29,13 @@ type Props = {
 export function InternalFinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const linkedFineId = searchParams.get("fine_id");
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  // LST-F5163L: visible reverse filters (allowCreate=false); URL seeds pickers.
-  const [driverFilter, setDriverFilter] = useState("");
-  const [loadFilter, setLoadFilter] = useState("");
+  // LST-F5163L + LST-F5191: visible reverse filters must write URL params.
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
+  const [loadFilter, setLoadFilterState] = useState(loadIdFromUrl);
   // SAF-F12: which fine a lifecycle action is open for, and which action.
   const [lifecycleTarget, setLifecycleTarget] = useState<{ row: InternalFineRow; action: "dispute" | "void" } | null>(null);
   const [form, setForm] = useState({
@@ -51,11 +51,26 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   const [suggestionPinned, setSuggestionPinned] = useState(false);
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+    setDriverFilterState(driverIdFromUrl);
   }, [driverIdFromUrl]);
   useEffect(() => {
-    if (loadIdFromUrl) setLoadFilter(loadIdFromUrl);
+    setLoadFilterState(loadIdFromUrl);
   }, [loadIdFromUrl]);
+
+  function patchSearchParam(key: "driver_id" | "load_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    patchSearchParam("driver_id", next);
+  }
+  function setLoadFilter(next: string) {
+    setLoadFilterState(next);
+    patchSearchParam("load_id", next);
+  }
 
   const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
   const effectiveLoadId = loadFilter.trim() || loadIdFromUrl || undefined;

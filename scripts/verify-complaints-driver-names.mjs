@@ -34,8 +34,8 @@ function assertComplaints(apiSrc, tabSrc) {
       problems.push(`${TAB}: a driver EntityLink has no label= — it will render the raw uuid`);
   }
 
-  if (!/dataTestId="complaints-filter-driver"/.test(tabSrc) || !/allowCreate=\{false\}/.test(tabSrc)) {
-    problems.push(`${TAB}: missing EntityPicker driver reverse filter (complaints-filter-driver, allowCreate=false)`);
+  if (!/dataTestId="complaints-filter-driver"/.test(tabSrc) || !/allowCreate=\{false\}/.test(tabSrc) || !/setSearchParams/.test(tabSrc)) {
+    problems.push(`${TAB}: missing EntityPicker driver reverse filter (complaints-filter-driver) synced to ?driver_id= (LST-F5191)`);
   }
   if (!/setDriverFilter/.test(tabSrc) || !/searchParams\.get\("driver_id"\)/.test(tabSrc)) {
     problems.push(`${TAB}: ?driver_id= reverse deep-link must seed driverFilter`);

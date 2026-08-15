@@ -33,21 +33,36 @@ function asLabelMap(value: unknown): Record<string, string> {
 
 export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
-  // LST-F5163G: visible reverse filters (allowCreate=false); URL seeds pickers.
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
+  // LST-F5163G + LST-F5191: visible reverse filters must write URL params.
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
+  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+    setDriverFilterState(driverIdFromUrl);
   }, [driverIdFromUrl]);
   useEffect(() => {
-    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+    setUnitFilterState(unitIdFromUrl);
   }, [unitIdFromUrl]);
+
+  function patchSearchParam(key: "driver_id" | "unit_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    patchSearchParam("driver_id", next);
+  }
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    patchSearchParam("unit_id", next);
+  }
 
   const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
   const effectiveUnitId = unitFilter.trim() || unitIdFromUrl || undefined;
