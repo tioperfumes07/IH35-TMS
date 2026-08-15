@@ -51,6 +51,13 @@ export function assertBankingDriverEscrowReverse(sources) {
   if (!/setSearchParams/.test(tabContent)) {
     problems.push(`${TAB_CONTENT}: must keep the URL in sync (setSearchParams) when the driver filter changes`);
   }
+  if (
+    !/dataTestId="banking-escrow-filter-driver"/.test(tabContent) ||
+    !/kind=["']driver["']/.test(tabContent) ||
+    !/allowCreate=\{false\}/.test(tabContent)
+  ) {
+    problems.push(`${TAB_CONTENT}: must render EntityPicker kind=driver filter (allowCreate=false)`);
+  }
   return problems;
 }
 
@@ -68,6 +75,9 @@ function selftest() {
         setSelectedDriverIdState(driverId);
         setSearchParams((prev) => prev);
       };
+      kind="driver"
+      dataTestId="banking-escrow-filter-driver"
+      allowCreate={false}
     `,
   };
   const goodProblems = assertBankingDriverEscrowReverse(good);
@@ -81,6 +91,7 @@ function selftest() {
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace(/useSearchParams/g, "useState") },
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace('searchParams.get("driver_id")', '""') },
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace(/setSearchParams/g, "") },
+    { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace('dataTestId="banking-escrow-filter-driver"', 'dataTestId="x"') },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertBankingDriverEscrowReverse(mutated).length === 0) {

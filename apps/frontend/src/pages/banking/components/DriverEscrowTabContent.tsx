@@ -7,10 +7,10 @@ import {
   getEscrowDriverTimeline,
   type EscrowDriverTimelineRow,
 } from "../../../api/banking";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { RegisterToolbar } from "./RegisterToolbar";
@@ -70,9 +70,8 @@ function registerToEscrowRow(row: Record<string, unknown>): Record<string, unkno
 export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance }: Props) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  // LINK-F5171/LINK-F5177 — reverse_link deep-link: the driver's own profile (EscrowHistoryView) can
-  // jump straight to this driver's escrow ledger via /banking/driver-escrow?driver_id=<id> instead of
-  // landing on the account-wide ledger and forcing a manual re-select in the combobox below.
+  // LINK-F5171/LINK-F5177 — reverse_link deep-link: EscrowHistoryView → ?driver_id=.
+  // LST-F5163P — EntityPicker (not SelectCombobox of balance rows) is reverse chrome.
   const [selectedDriverId, setSelectedDriverIdState] = useState(() => searchParams.get("driver_id") ?? "");
   const setSelectedDriverId = (driverId: string) => {
     setSelectedDriverIdState(driverId);
@@ -222,7 +221,17 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
             <p className="mt-1 text-sm font-semibold text-gray-900">
               {selectedDriver ? (
                 <>
-                  Driver: <Link to={`/drivers/${selectedDriver.driver_id}`} className="text-slate-700 hover:underline">{entityLabel(selectedDriver.driver_name, selectedDriver.driver_id, "Driver")}</Link>
+                  Driver:{" "}
+                  <Link to={`/drivers/${selectedDriver.driver_id}`} className="text-slate-700 hover:underline">
+                    {entityLabel(selectedDriver.driver_name, selectedDriver.driver_id, "Driver")}
+                  </Link>
+                </>
+              ) : selectedDriverId ? (
+                <>
+                  Driver:{" "}
+                  <Link to={`/drivers/${selectedDriverId}`} className="text-slate-700 hover:underline">
+                    {entityLabel(undefined, selectedDriverId, "Driver")}
+                  </Link>
                 </>
               ) : (
                 "Account-level ledger"
@@ -236,19 +245,17 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
         <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <label className="text-xs font-semibold text-gray-700">
             Driver filter
-            <SelectCombobox
-              value={selectedDriverId}
-              onChange={(event) => setSelectedDriverId(event.target.value)}
-              className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              disabled={!supportsPerDriverBreakdown || driverRows.length === 0}
-            >
-              <option value="">All drivers (escrow account ledger)</option>
-              {driverRows.map((driver) => (
-                <option key={driver.driver_id} value={driver.driver_id}>
-                  {entityLabel(driver.driver_name, driver.driver_id, "Driver")} - ${Number(driver.escrow_balance ?? 0).toFixed(2)}
-                </option>
-              ))}
-            </SelectCombobox>
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
+              value={selectedDriverId || null}
+              onChange={(next) => setSelectedDriverId(next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers (escrow account ledger)"
+              className="mt-1"
+              dataTestId="banking-escrow-filter-driver"
+              disabled={!supportsPerDriverBreakdown}
+            />
           </label>
         </div>
 
