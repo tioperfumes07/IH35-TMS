@@ -7,6 +7,8 @@
 
 ## ☐ NOW (Cursor lane — permanent sequence)
 
+0. **OPEN `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH`** — live USMCA `/inventory/assignments` has canonical ParityTable Search+Range+gear plus a second “Search assignment trail” input (`InventoryAssignmentsPage.tsx:34-60,170-188`). Fix as a vertical `ParityTable filterBar` search-child class sweep with one mutation-proven all-consumer guard; `BLOCKS=LIVE-INVENTORY-ASSIGNMENTS-CHROME`; OWNER-GATED=no.
+
 1. **Theater purge:** `qbo_chrome` + `picker_law` — no `leafRe:.*` / `|.*` / word-blanket Built  
 2. **Surface-bar leaf-existence audit** (Fully-Wired item 7) — **confirmed green live this session** (all 6 inventory ratchets PASS: create-drawer, toolbar, wizard, modal, ParityDrawer, Combobox)  
 3. **qbo_chrome + picker_law leaf-specific honesty** (your own next-ranked item) — verify no `leafRe:.*`/`|.*` remains on these two specifically; fix any found  
