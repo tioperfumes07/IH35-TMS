@@ -54,6 +54,7 @@ describe("MyAccountantPage", () => {
           fiscal_year: 2026,
           status: "closed",
           closed_at: "2026-02-05",
+          closing_journal_entry_id: null,
         },
       ],
     });
