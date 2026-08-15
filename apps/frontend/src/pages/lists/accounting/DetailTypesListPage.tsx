@@ -18,7 +18,8 @@ type StatusFilter = "true" | "false" | "all";
 type FormState = { account_type_id: string; name: string; code: string; description: string; sort_order: number };
 
 const EMPTY: FormState = { account_type_id: "", name: "", code: "", description: "", sort_order: 100 };
-const DETAIL_TYPES_LIST_CAP = 500;
+// Backend listQuerySchema.max(200) — 500 caused live HTTP 400 validation_error on this page.
+const DETAIL_TYPES_LIST_CAP = 200;
 
 // Detail Type catalog (Block 4). Account Type is the fixed global taxonomy (read-only); detail types
 // are canonical system rows (immutable, shared) + this entity's custom rows. Create/edit writes only
