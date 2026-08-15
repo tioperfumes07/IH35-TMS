@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listSettlementDeductions } from "../../api/driverFinance";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -15,17 +17,27 @@ import { CappedListNotice } from "../../components/CappedListNotice";
  * FAIL-DD2 — pending rows from driver_finance.driver_settlement_deductions.
  * Auto-deduction policies are a different table; without this panel a $100 cash-advance
  * recovery stays invisible on /drivers/deductions while the ledger row is correct.
+ *
+ * LST-F5163M: CappedListNotice already told operators to "narrow with the driver filter"
+ * while the only filter was a silent ?driver_id= URL — visible EntityPicker closes that gap.
  */
 export function PendingSettlementDeductionsPanel() {
   const { selectedCompanyId } = useCompanyContext();
   const [searchParams] = useSearchParams();
-  const driverIdFilter = searchParams.get("driver_id") ?? undefined;
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const [driverFilter, setDriverFilter] = useState("");
+
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+
+  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
 
   const query = useQuery({
-    queryKey: ["driver-finance", "settlement-deductions", selectedCompanyId, driverIdFilter],
+    queryKey: ["driver-finance", "settlement-deductions", selectedCompanyId, effectiveDriverId],
     queryFn: () =>
       listSettlementDeductions(selectedCompanyId!, {
-        driver_id: driverIdFilter,
+        driver_id: effectiveDriverId,
         // Open recoveries only — applied/voided stay out of the working queue.
         status: "pending",
         limit: 200,
@@ -42,6 +54,21 @@ export function PendingSettlementDeductionsPanel() {
   return (
     <div data-testid="drivers-pending-settlement-deductions">
       <DataPanel title="Pending settlement deductions" accentColor={colors.crit.strong}>
+        <div className="mb-2 px-2">
+          <label className="text-[11px] text-slate-600">
+            Driver
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={selectedCompanyId}
+              value={driverFilter || null}
+              onChange={(next) => setDriverFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="mt-1"
+              dataTestId="settlement-deductions-filter-driver"
+            />
+          </label>
+        </div>
         {query.isLoading ? <p className="px-2 py-2 text-xs text-gray-500">Loading…</p> : null}
         {query.isError ? (
           <p className="px-2 py-2 text-xs text-red-700">Could not load pending deductions.</p>
