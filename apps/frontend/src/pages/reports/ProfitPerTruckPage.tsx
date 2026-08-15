@@ -46,7 +46,6 @@ export function ProfitPerTruckPage() {
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentQuarterRange);
   const [applied, setApplied] = useState(currentQuarterRange);
-  const [search, setSearch] = useState("");
   const [flagFilter, setFlagFilter] = useState<FlagFilter>("all");
 
   const query = useQuery({
@@ -61,19 +60,11 @@ export function ProfitPerTruckPage() {
     retry: false,
   });
 
+  // Free-text search: ParityTable toolbar owns it (RPT-F3488) — flag filter stays page-local.
   const filteredRows = useMemo(() => {
     const rows = query.data?.by_truck ?? [];
-    const term = search.trim().toLowerCase();
-    return rows.filter((row) => {
-      const matchesSearch =
-        term.length === 0 ||
-        row.unit_number.toLowerCase().includes(term) ||
-        row.truck_type.toLowerCase().includes(term) ||
-        (row.primary_driver_name ?? "").toLowerCase().includes(term);
-      const matchesFlag = flagFilter === "all" || row.flags.includes(flagFilter);
-      return matchesSearch && matchesFlag;
-    });
-  }, [flagFilter, query.data?.by_truck, search]);
+    return rows.filter((row) => flagFilter === "all" || row.flags.includes(flagFilter));
+  }, [flagFilter, query.data?.by_truck]);
 
   const sorted = filteredRows;
 
@@ -250,15 +241,6 @@ export function ProfitPerTruckPage() {
         >
           Apply
         </Button>
-        <label className="text-xs text-gray-600">
-          Search truck/driver
-          <input
-            className="mt-1 block h-9 w-52 rounded-sm border border-gray-300 px-2"
-            value={search}
-            placeholder="e.g. 102 or Pat"
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
         <label className="text-xs text-gray-600">
           Flag
           <select
