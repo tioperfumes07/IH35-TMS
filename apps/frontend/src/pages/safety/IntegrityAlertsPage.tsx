@@ -13,6 +13,9 @@ import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDra
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -42,6 +45,13 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
   const [category, setCategory] = useState("");
   const [severity, setSeverity] = useState("");
   const [status, setStatus] = useState("");
+  const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
+  const subjectUnitFromUrl = searchParams.get("subject_unit_id")?.trim() ?? "";
+  const subjectVendorFromUrl = searchParams.get("subject_vendor_id")?.trim() ?? "";
+  // LST-F5163H: visible reverse subject filters (allowCreate=false); URL seeds pickers.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+  const [vendorFilter, setVendorFilter] = useState("");
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const [editingRule, setEditingRule] = useState<Record<string, unknown> | null>(null);
   const [createRuleOpen, setCreateRuleOpen] = useState(false);
@@ -55,13 +65,40 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
     enabled: true,
   });
 
+  useEffect(() => {
+    if (subjectDriverFromUrl) setDriverFilter(subjectDriverFromUrl);
+  }, [subjectDriverFromUrl]);
+  useEffect(() => {
+    if (subjectUnitFromUrl) setUnitFilter(subjectUnitFromUrl);
+  }, [subjectUnitFromUrl]);
+  useEffect(() => {
+    if (subjectVendorFromUrl) setVendorFilter(subjectVendorFromUrl);
+  }, [subjectVendorFromUrl]);
+
+  const effectiveDriverId = driverFilter.trim() || subjectDriverFromUrl || undefined;
+  const effectiveUnitId = unitFilter.trim() || subjectUnitFromUrl || undefined;
+  const effectiveVendorId = vendorFilter.trim() || subjectVendorFromUrl || undefined;
+
   const alertsQuery = useQuery({
-    queryKey: ["safety", "integrity-alerts", operatingCompanyId, category, severity, status],
+    queryKey: [
+      "safety",
+      "integrity-alerts",
+      operatingCompanyId,
+      category,
+      severity,
+      status,
+      effectiveDriverId,
+      effectiveUnitId,
+      effectiveVendorId,
+    ],
     queryFn: () =>
       getIntegrityAlerts(operatingCompanyId, {
         alert_category: category,
         severity,
         resolution_status: status,
+        subject_driver_id: effectiveDriverId,
+        subject_unit_id: effectiveUnitId,
+        subject_vendor_id: effectiveVendorId,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -116,6 +153,40 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
     { key: "alert_category", label: "Category", sortable: true, render: (row) => String(row.alert_category ?? "—") },
     { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "—") },
     { key: "subject_type", label: "Subject", render: (row) => String(row.subject_type ?? "—") },
+    {
+      key: "subject_link",
+      label: "Linked to",
+      render: (row) => {
+        if (row.subject_driver_id) {
+          return (
+            <EntityLink
+              kind="driver"
+              id={String(row.subject_driver_id)}
+              label={entityLabel(row.subject_driver_name, String(row.subject_driver_id), "Driver")}
+            />
+          );
+        }
+        if (row.subject_unit_id) {
+          return (
+            <EntityLink
+              kind="unit"
+              id={String(row.subject_unit_id)}
+              label={entityLabel(row.subject_unit_number, String(row.subject_unit_id), "Unit")}
+            />
+          );
+        }
+        if (row.subject_vendor_id) {
+          return (
+            <EntityLink
+              kind="vendor"
+              id={String(row.subject_vendor_id)}
+              label={entityLabel(row.subject_vendor_name, String(row.subject_vendor_id), "Vendor")}
+            />
+          );
+        }
+        return <span className="text-slate-400">—</span>;
+      },
+    },
     { key: "resolution_status", label: "Status", sortable: true, render: (row) => String(row.resolution_status ?? "unresolved") },
     {
       key: "action",
@@ -243,6 +314,45 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 <option value="confirmed_action_taken">Confirmed action taken</option>
                 <option value="dismissed">Dismissed</option>
               </SelectCombobox>
+              <label className="text-[11px] text-slate-600">
+                Driver
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={operatingCompanyId}
+                  value={driverFilter || null}
+                  onChange={(next) => setDriverFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All drivers"
+                  className="mt-1"
+                  dataTestId="integrity-alerts-filter-driver"
+                />
+              </label>
+              <label className="text-[11px] text-slate-600">
+                Unit
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={operatingCompanyId}
+                  value={unitFilter || null}
+                  onChange={(next) => setUnitFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All units"
+                  className="mt-1"
+                  dataTestId="integrity-alerts-filter-unit"
+                />
+              </label>
+              <label className="text-[11px] text-slate-600">
+                Vendor
+                <EntityPicker
+                  kind="vendor"
+                  operatingCompanyId={operatingCompanyId}
+                  value={vendorFilter || null}
+                  onChange={(next) => setVendorFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All vendors"
+                  className="mt-1"
+                  dataTestId="integrity-alerts-filter-vendor"
+                />
+              </label>
             </div>
           }
         />

@@ -24,6 +24,10 @@ const files = {
 function failures(s = files) { return [
   ["company violation driver/unit reverse filters", s.companyRoutes.includes("companyViolationListQuerySchema.safeParse") && s.companyRoutes.includes("d.driver_id = $2::uuid") && s.companyRoutes.includes("u.unit_id = $3::uuid")],
   ["integrity alert subject FK filters", s.integrityRoutes.includes('for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"]') && s.integrityRoutes.includes("filters.push(`${column} = $${values.length}::uuid`)")],
+  // LST-F5163H: list chrome reverse for integrity alerts (API filters alone are not reverse).
+  ["integrity alerts list EntityPicker subject filters", s.integrityPage.includes('dataTestId="integrity-alerts-filter-driver"') && s.integrityPage.includes('dataTestId="integrity-alerts-filter-unit"') && s.integrityPage.includes('dataTestId="integrity-alerts-filter-vendor"') && s.integrityPage.includes('allowCreate={false}')],
+  ["integrity alerts list Linked-to EntityLink column", s.integrityPage.includes('label: "Linked to"') && s.integrityPage.includes('kind="driver"') && s.integrityPage.includes('kind="unit"') && s.integrityPage.includes('kind="vendor"')],
+  ["integrity alerts list seeds subject filters from URL", s.integrityPage.includes('searchParams.get("subject_driver_id")') && s.integrityPage.includes('searchParams.get("subject_unit_id")') && s.integrityPage.includes("setDriverFilter")],
   ["anomaly subject id filter", s.anomalyRoutes.includes("subject_id: z.string().uuid().optional()") && s.anomalyRoutes.includes("subject_id = $${values.length}::uuid")],
   ["all applicable profile consumers", ["driver", "unit", "vendor", "customer", "invoice"].every((kind) => s.profiles.includes(`subjectKind=\"${kind}\"`))],
   ["exact three record targets", s.section.includes('kind="company_violation"') && s.section.includes('kind="integrity_alert"') && s.section.includes('kind="integrity_anomaly"') && s.entityLink.includes('case "company_violation":') && s.entityLink.includes("/safety/external-fines?record_type=company-violation&violation_id=") && s.entityLink.includes("/safety/integrity-alerts?alert_id=") && s.entityLink.includes("/safety/integrity-reports?anomaly_id=")],
@@ -42,6 +46,9 @@ if (process.argv.includes("--selftest")) {
   const checks = [
     failures({...files, companyRoutes: files.companyRoutes.replace("d.driver_id = $2::uuid", "TRUE")}).includes("company violation driver/unit reverse filters"),
     failures({...files, integrityRoutes: files.integrityRoutes.replace('"subject_driver_id", "subject_unit_id", "subject_vendor_id"', '"subject_type"')}).includes("integrity alert subject FK filters"),
+    failures({...files, integrityPage: files.integrityPage.replace('dataTestId="integrity-alerts-filter-driver"', 'dataTestId="x"')}).includes("integrity alerts list EntityPicker subject filters"),
+    failures({...files, integrityPage: files.integrityPage.replace('label: "Linked to"', 'label: "X"')}).includes("integrity alerts list Linked-to EntityLink column"),
+    failures({...files, integrityPage: files.integrityPage.replaceAll("setDriverFilter", "noop")}).includes("integrity alerts list seeds subject filters from URL"),
     failures({...files, anomalyRoutes: files.anomalyRoutes.replace("subject_id = $${values.length}::uuid", "TRUE")}).includes("anomaly subject id filter"),
     failures({...files, profiles: files.profiles.replace('subjectKind="invoice"', 'subjectKind="record"')}).includes("all applicable profile consumers"),
     failures({...files, section: files.section.replace('kind="integrity_alert"', 'kind="unit"')}).includes("exact three record targets"),
@@ -56,7 +63,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, companyDrawer: files.companyDrawer.replace("driverLabels[driverId]", "undefined")}).includes("company violation drawer consumes labels"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-safety-alert-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-safety-alert-profile-reverse selftest PASS — 14/14 API/profile/label/target mutations red"); process.exit(0);
+  console.log("verify-safety-alert-profile-reverse selftest PASS — 17/17 API/profile/label/target mutations red"); process.exit(0);
 }
 const missing = failures(); if (missing.length) { console.error(`verify-safety-alert-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
 console.log("verify-safety-alert-profile-reverse PASS — five subject profiles resolve exact safety drawers");
