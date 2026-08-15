@@ -9,7 +9,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -32,10 +32,6 @@ function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null
   if (tier === "watch") return { label: "Watch", className: "bg-slate-100 text-slate-700" };
   if (tier === "at_risk") return { label: "At Risk", className: "bg-red-100 text-red-800" };
   return { label: "Unknown", className: "bg-gray-100 text-gray-700" };
-}
-
-function customerSearchText(c: Customer): string {
-  return [c.name, c.customer_code, c.main_contact_name].filter(Boolean).join(" ");
 }
 
 // Enriched with flat sort keys ParityTable can read directly (String(row[key])) — "open_balance",
@@ -70,7 +66,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [filter, setFilter] = useState<FilterChip>("all");
   const staged = useStagedListFilters({ applied: { filter }, empty: { filter: "all" as FilterChip }, onApply: (next) => setFilter(next.filter) });
-  const [search, setSearch] = useState("");
+  // Free-text search: ParityTable toolbar owns it (LST-F3468) — no page-local TableSearch.
   // Remount key: bumping this after a successful bulk mutation resets ParityTable's internal
   // selection state (mirrors the old selection.clear() call — ParityTable has no controlled/
   // external selection API to clear imperatively).
@@ -93,7 +89,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     [atRiskQuery.data?.customers]
   );
 
-  // Chip pre-filter, then free-text search — ParityTable owns sort/paging/column-visibility/selection.
+  // Chip pre-filter only — ParityTable owns free-text search + sort/paging/column-visibility/selection.
   const filtered = useMemo(() => {
     return customers.filter((customer) => {
       const badge = qualityBadge(customer);
@@ -107,15 +103,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     });
   }, [customers, filter, openByCustomerId]);
 
-  const searchedRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return filtered;
-    return filtered.filter((c) => customerSearchText(c).toLowerCase().includes(q));
-  }, [filtered, search]);
-
   const enrichedRows = useMemo<CustomerRow[]>(
     () =>
-      searchedRows.map((c) => ({
+      filtered.map((c) => ({
         ...c,
         open_balance: openByCustomerId.get(c.id) ?? 0,
         health_tier_label: relationshipTierBadge(c.relationship_health_tier ?? (atRiskCustomerIds.has(c.id) ? "at_risk" : null)).label,
@@ -123,7 +113,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         // Promote the heuristic "overdue" chip (open balance + Late-pay) to a real, sortable column.
         overdue_label: (openByCustomerId.get(c.id) ?? 0) > 0 && qualityBadge(c).label === "Late-pay" ? "Yes" : "No",
       })),
-    [searchedRows, openByCustomerId, atRiskCustomerIds]
+    [filtered, openByCustomerId, atRiskCustomerIds]
   );
 
   // LIST-EMPTY-1: empty row renders only once the roster fetch settles.
@@ -226,9 +216,6 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             onCancel={staged.cancel}
             applyDisabled={!staged.dirty}
             dataAttributes={{ "data-customers-filter-toolbar": "collapsed" }}
-            searchSlot={
-              <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, contact…" className="w-56" />
-            }
           >
             <div className="space-y-1.5">
               <div className="text-xs font-semibold text-gray-600">Quality / status</div>

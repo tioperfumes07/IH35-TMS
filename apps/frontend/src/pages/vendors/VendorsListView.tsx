@@ -10,7 +10,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 function fmtMoney(cents: number) {
@@ -22,10 +22,6 @@ function vendorQualityLabel(notes: string | null | undefined) {
   const kind = vendorQualityKind(notes);
   const label = kind === "good" ? "Good" : kind === "medium" ? "Medium" : kind === "bad" ? "Bad" : "No history";
   return { label, className: vendorQualityClass(kind) };
-}
-
-function vendorSearchText(v: VendorOption): string {
-  return [v.name, v.email, v.vendor_code].filter(Boolean).join(" ");
 }
 
 function isCarrier(v: VendorOption): boolean {
@@ -89,10 +85,10 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
   // ASC/DESC; sort persists in the URL (?sort=&dir=) so it survives reload / is shareable, same
   // contract as Bills/Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const [search, setSearch] = useState("");
   // QBO-PARITY-VENDORS — additive client-side filter chips over data already loaded on the row
   // (deactivated_at, eligible_1099, open balance). Independent toggles, all default OFF so the
   // unfiltered roster still shows by default. Non-financial: display filtering only.
+  // Free-text search: ParityTable toolbar owns it (LST-F3468) — no page-local TableSearch.
   const [activeOnly, setActiveOnly] = useState(false);
   const [only1099, setOnly1099] = useState(false);
   const [withOpen, setWithOpen] = useState(false);
@@ -106,21 +102,15 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
   // external selection API to clear imperatively).
   const [tableResetKey, setTableResetKey] = useState(0);
 
-  const searchedRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return vendors;
-    return vendors.filter((v) => vendorSearchText(v).toLowerCase().includes(q));
-  }, [vendors, search]);
-
   const enrichedRows = useMemo<VendorRow[]>(
     () =>
-      searchedRows.map((v) => ({
+      vendors.map((v) => ({
         ...v,
         open_balance: openByVendorId.get(v.id) ?? 0,
         quality_label: vendorQualityLabel(v.notes).label,
         fmcsa_label: isCarrier(v) ? "Carrier" : "—",
       })),
-    [searchedRows, openByVendorId]
+    [vendors, openByVendorId]
   );
 
   // QBO-PARITY-VENDORS — apply the filter chips (Active / 1099-eligible / With open).
@@ -177,9 +167,6 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             applyDisabled={!staged.dirty}
             testIdPrefix="vendors"
             dataAttributes={{ "data-vendors-filter-toolbar": "collapsed" }}
-            searchSlot={
-              <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, email…" className="w-56" />
-            }
           >
             <div className="space-y-1.5">
               <div className="text-xs font-semibold text-gray-600">Vendor filters</div>
