@@ -251,6 +251,17 @@ export async function triggerIncidentAutoWorkflow(
 
   if (input.type === "equipment" || input.type === "breakdown") {
     maintenanceWorkOrderId = await spawnMaintenanceDraftWorkOrder(client, input);
+    // MAINTENANCE-DAMAGE-REGISTER-CANONICAL-WO-FK: stamp the FK back onto the incident that spawned
+    // this WO so the Maintenance Damage Register can mount a real "Linked WO" drill-through instead
+    // of leaving the relationship undiscoverable outside the audit-log JSON.
+    if (maintenanceWorkOrderId) {
+      await client
+        .query(`UPDATE safety.incidents SET work_order_id = $1::uuid WHERE id = $2::uuid AND work_order_id IS NULL`, [
+          maintenanceWorkOrderId,
+          input.incident_id,
+        ])
+        .catch(() => null);
+    }
   }
   if (input.type === "accident") {
     if (await relationExists(client, REL_SAFETY_ACCIDENTS)) {
