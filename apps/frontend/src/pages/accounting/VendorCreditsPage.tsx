@@ -18,6 +18,7 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -42,11 +43,23 @@ export function VendorCreditsPage() {
   const { user } = useAuth();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const companyId = selectedCompanyId ?? "";
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
 
   const vendorFilter = searchParams.get("vendor_id") ?? "";
+  // LST-F5202 — visible vendor filter writes URL.
+  function setVendorFilter(next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("vendor_id", next);
+        else params.delete("vendor_id");
+        return params;
+      },
+      { replace: true }
+    );
+  }
   const deepLinkCreditId = searchParams.get("credit_id");
   const [statusFilter, setStatusFilter] = useState<VendorCreditStatus | "">("");
   const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
@@ -196,7 +209,20 @@ export function VendorCreditsPage() {
   }, [creditsQuery.data?.credits, vendorFilter]);
 
   const filterBar = (
-    <div className="flex flex-wrap items-center gap-2" data-vendor-credits-filter-toolbar="collapsed">
+    <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
+      <label className="text-[11px] text-slate-600">
+        Vendor
+        <EntityPicker
+          kind="vendor"
+          operatingCompanyId={companyId}
+          value={vendorFilter || null}
+          onChange={(next) => setVendorFilter(next ?? "")}
+          allowCreate={false}
+          placeholder="All vendors"
+          className="mt-1"
+          dataTestId="vendor-credits-filter-vendor"
+        />
+      </label>
       <CollapsedListFilters activeFilterCount={(statusFilter ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <select
           value={staged.draft.statusFilter}
