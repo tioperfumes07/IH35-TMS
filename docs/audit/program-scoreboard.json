@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T13:33:15-05:00",
-    "sourceSha": "96eab9247",
-    "deployedSha": "239e38b",
+    "generatedAt": "2026-08-15T13:40:54-05:00",
+    "sourceSha": "380a81806",
+    "deployedSha": "ffc19d5",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 768,
+    "ledgerRows": 779,
     "failOpen": 14,
     "defects": 17
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7313,
+      "title": "FINDING: LIVE-LEDGER-DRIVER-CATALOGS-769",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 01:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7313",
+      "sha": "380a81806",
+      "committedAtIso": "2026-08-15T13:40:54-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 01:35 PM CT",
+      "url": "",
+      "sha": "ffc19d51e",
+      "committedAtIso": "2026-08-15T18:35:00Z"
+    },
+    {
       "number": 7312,
       "title": "FINDING: LV-LIVE-CHROME-OUTBOX-NOT-LEDGERED",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7306",
       "sha": "8e103eef5",
       "committedAtIso": "2026-08-15T13:23:03-05:00"
-    },
-    {
-      "number": 7305,
-      "title": "FINDING: LV-INVENTORY-REORDER-THRESHOLD-NOT-PERSISTED",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 01:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7305",
-      "sha": "3431395e1",
-      "committedAtIso": "2026-08-15T13:20:24-05:00"
-    },
-    {
-      "number": 7304,
-      "title": "FINDING: ACCT-LEAF-COVERAGE-GENUINE-TAGS-BATCH1",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 01:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7304",
-      "sha": "c273c082c",
-      "committedAtIso": "2026-08-15T13:13:18-05:00"
     }
   ]
 }
