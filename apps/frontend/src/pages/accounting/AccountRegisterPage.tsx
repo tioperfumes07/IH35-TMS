@@ -537,6 +537,8 @@ export function AccountRegisterPage() {
           sortKey={sortKey}
           sortDirection={sortDirection}
           onSortChange={onSortChange}
+          // ACCT-F3498: server-bound memo/ref search above — suppress ParityTable toolbar Search.
+          suppressToolbarSearch
           toolbar={
             <>
               <button
@@ -576,6 +578,7 @@ export function AccountRegisterPage() {
           loading={auditQuery.isLoading}
           emptyText="No audit events for this account."
           storageKey="account-register-audit"
+          suppressToolbarSearch
         />
       )}
     </AccountingSubNavWrapper>
