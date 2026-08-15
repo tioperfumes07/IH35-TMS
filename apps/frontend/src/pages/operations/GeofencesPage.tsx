@@ -158,7 +158,7 @@ export function GeofencesPage() {
 
   const toggleActive = useCallback(
     async (id: string, isActive: boolean) => {
-      await updateGeofence(id, { is_active: !isActive });
+      await updateGeofence(id, { operating_company_id: operatingCompanyId, is_active: !isActive });
       await queryClient.invalidateQueries({ queryKey: ["telematics", "geofences", operatingCompanyId] });
     },
     [operatingCompanyId, queryClient],
@@ -195,12 +195,12 @@ export function GeofencesPage() {
         render: (item) => {
           if (!item.location_ref_id) return "—";
           if (item.location_kind === "customer_site") {
-            return <EntityLink kind="customer" id={item.location_ref_id} label={entityLabel(null, item.location_ref_id, "Customer")} />;
+            return <EntityLink kind="customer" id={item.location_ref_id} label={entityLabel(item.location_ref_label, item.location_ref_id, "Customer")} />;
           }
           if (item.location_kind === "vendor_site") {
-            return <EntityLink kind="vendor" id={item.location_ref_id} label={entityLabel(null, item.location_ref_id, "Vendor")} />;
+            return <EntityLink kind="vendor" id={item.location_ref_id} label={entityLabel(item.location_ref_label, item.location_ref_id, "Vendor")} />;
           }
-          return entityLabel(null, item.location_ref_id, "Location");
+          return entityLabel(item.location_ref_label, item.location_ref_id, "Location");
         },
       },
       {

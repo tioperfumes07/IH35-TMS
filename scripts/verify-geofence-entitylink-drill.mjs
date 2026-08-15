@@ -23,6 +23,8 @@ const LABEL = "verify-geofence-entitylink-drill";
 const ENTITY_LINK_FILE = "apps/frontend/src/components/shared/EntityLink.tsx";
 const GEOFENCES_PAGE_FILE = "apps/frontend/src/pages/operations/GeofencesPage.tsx";
 const BREACHES_TAB_FILE = "apps/frontend/src/pages/safety/tabs/GeofenceBreachesTab.tsx";
+const GEOFENCE_ROUTE_FILE = "apps/backend/src/telematics/geofences.routes.ts";
+const GEOFENCE_API_FILE = "apps/frontend/src/api/geofencing.ts";
 
 export function auditEntityLinkSource(source) {
   const problems = [];
@@ -60,7 +62,52 @@ export function auditBreachesTabSource(source) {
   return problems;
 }
 
+export function auditLocationReferenceContract(route, api, page) {
+  const problems = [];
+  if (!/async function assertLocationReference/.test(route) || !/operating_company_id = \$2::uuid/.test(route)) {
+    problems.push(`${GEOFENCE_ROUTE_FILE}: customer/vendor/yard references must be validated in the owning company`);
+  }
+  for (const table of ["customers", "vendors", "locations"]) {
+    const join = new RegExp(`LEFT JOIN mdata\\.${table}[^\\n]*operating_company_id = g\\.operating_company_id`);
+    if (!join.test(route)) problems.push(`${GEOFENCE_ROUTE_FILE}: ${table} label join must be company-scoped`);
+  }
+  if (!/END AS location_ref_label/.test(route)) problems.push(`${GEOFENCE_ROUTE_FILE}: list payload must project location_ref_label`);
+  if (!/setScopedCompanyContext\(client, user\.uuid, body\.data\.operating_company_id\)/.test(route)) {
+    problems.push(`${GEOFENCE_ROUTE_FILE}: PATCH must establish explicit company context`);
+  }
+  if (!/WHERE id = \$\$\{idIndex\}::uuid AND operating_company_id = \$\$\{idIndex \+ 1\}::uuid/.test(route)) {
+    problems.push(`${GEOFENCE_ROUTE_FILE}: PATCH target must be company-scoped`);
+  }
+  if (!/location_ref_label:\s*string \| null/.test(api)) problems.push(`${GEOFENCE_API_FILE}: typed payload must expose location_ref_label`);
+  if (!/entityLabel\(item\.location_ref_label, item\.location_ref_id, "Customer"\)/.test(page)) {
+    problems.push(`${GEOFENCES_PAGE_FILE}: customer drill must consume location_ref_label`);
+  }
+  if (!/entityLabel\(item\.location_ref_label, item\.location_ref_id, "Vendor"\)/.test(page)) {
+    problems.push(`${GEOFENCES_PAGE_FILE}: vendor drill must consume location_ref_label`);
+  }
+  return problems;
+}
+
 if (process.argv.includes("--selftest")) {
+  const liveRoute = fs.readFileSync(path.join(ROOT, GEOFENCE_ROUTE_FILE), "utf8");
+  const liveApi = fs.readFileSync(path.join(ROOT, GEOFENCE_API_FILE), "utf8");
+  const livePage = fs.readFileSync(path.join(ROOT, GEOFENCES_PAGE_FILE), "utf8");
+  if (auditLocationReferenceContract(liveRoute, liveApi, livePage).length) {
+    console.error(`${LABEL} SELFTEST FAIL — live location-reference contract rejected`);
+    process.exit(1);
+  }
+  const mutations = [
+    [liveRoute.replace("END AS location_ref_label", "END AS unresolved_ref"), liveApi, livePage],
+    [liveRoute.replace("c.operating_company_id = g.operating_company_id", "TRUE"), liveApi, livePage],
+    [liveRoute, liveApi.replace("location_ref_label: string | null", "location_ref_label: unknown"), livePage],
+    [liveRoute, liveApi, livePage.replace("item.location_ref_label, item.location_ref_id, \"Customer\"", "null, item.location_ref_id, \"Customer\"")],
+  ];
+  for (const [route, api, page] of mutations) {
+    if (!auditLocationReferenceContract(route, api, page).length) {
+      console.error(`${LABEL} SELFTEST FAIL — planted location-reference defect escaped`);
+      process.exit(1);
+    }
+  }
   const goodEntityLink = 'export type EntityKind =\n  | "user"\n  | "geofence";\nexport function resolveEntityRoute(kind, id) {\n  switch (kind) {\n    case "user":\n      return `/users/${id}`;\n    case "geofence":\n      return `/dispatch/geofencing?geofence_id=${id}`;\n    default:\n      return null;\n  }\n}';
   if (auditEntityLinkSource(goodEntityLink).length) {
     console.error(`${LABEL} SELFTEST FAIL — real EntityLink geofence support rejected`);
@@ -102,6 +149,11 @@ const failures = [
   ...auditEntityLinkSource(fs.readFileSync(path.join(ROOT, ENTITY_LINK_FILE), "utf8")),
   ...auditGeofencesPageSource(fs.readFileSync(path.join(ROOT, GEOFENCES_PAGE_FILE), "utf8")),
   ...auditBreachesTabSource(fs.readFileSync(path.join(ROOT, BREACHES_TAB_FILE), "utf8")),
+  ...auditLocationReferenceContract(
+    fs.readFileSync(path.join(ROOT, GEOFENCE_ROUTE_FILE), "utf8"),
+    fs.readFileSync(path.join(ROOT, GEOFENCE_API_FILE), "utf8"),
+    fs.readFileSync(path.join(ROOT, GEOFENCES_PAGE_FILE), "utf8"),
+  ),
 ];
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
