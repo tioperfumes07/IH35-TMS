@@ -8,6 +8,7 @@ import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -37,6 +38,16 @@ export function FinesPage({ operatingCompanyId }: Props) {
   const relatedLoadFromUrl = searchParams.get("related_load_id")?.trim() ?? "";
   const relatedUnitFromUrl = searchParams.get("related_unit_id")?.trim() ?? "";
   const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
+  // LST-F5163F: visible reverse filters (allowCreate=false); URL seeds pickers.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+
+  useEffect(() => {
+    if (subjectDriverFromUrl) setDriverFilter(subjectDriverFromUrl);
+  }, [subjectDriverFromUrl]);
+  useEffect(() => {
+    if (relatedUnitFromUrl) setUnitFilter(relatedUnitFromUrl);
+  }, [relatedUnitFromUrl]);
 
   const finesQuery = useQuery({
     queryKey: [
@@ -46,6 +57,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
       statusFilter,
       subjectTypeFilter,
       relatedLoadFromUrl,
+      unitFilter,
+      driverFilter,
       relatedUnitFromUrl,
       subjectDriverFromUrl,
     ],
@@ -54,8 +67,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
         status: statusFilter || undefined,
         subject_type: subjectTypeFilter ? (subjectTypeFilter as "driver" | "company") : undefined,
         related_load_id: relatedLoadFromUrl || undefined,
-        related_unit_id: relatedUnitFromUrl || undefined,
-        subject_driver_id: subjectDriverFromUrl || undefined,
+        related_unit_id: unitFilter.trim() || relatedUnitFromUrl || undefined,
+        subject_driver_id: driverFilter.trim() || subjectDriverFromUrl || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -65,7 +78,18 @@ export function FinesPage({ operatingCompanyId }: Props) {
     onSuccess: (payload) => {
       const fineId = String(payload.fine?.id ?? "");
       queryClient.setQueryData(
-        ["safety", "fines", operatingCompanyId, statusFilter, subjectTypeFilter, relatedLoadFromUrl, relatedUnitFromUrl, subjectDriverFromUrl],
+        [
+          "safety",
+          "fines",
+          operatingCompanyId,
+          statusFilter,
+          subjectTypeFilter,
+          relatedLoadFromUrl,
+          unitFilter,
+          driverFilter,
+          relatedUnitFromUrl,
+          subjectDriverFromUrl,
+        ],
         (old: { fines?: Array<Record<string, unknown>> } | undefined) => {
           if (!old?.fines) return old;
           return {
@@ -125,6 +149,20 @@ export function FinesPage({ operatingCompanyId }: Props) {
             kind="driver"
             id={String(row.subject_driver_id)}
             label={entityLabel(row.subject_driver_name, String(row.subject_driver_id), "Driver")}
+          />
+        ) : (
+          <span className="text-slate-400">—</span>
+        ),
+    },
+    {
+      key: "related_unit_id",
+      label: "Unit",
+      render: (row) =>
+        row.related_unit_id ? (
+          <EntityLink
+            kind="unit"
+            id={String(row.related_unit_id)}
+            label={entityLabel(row.related_unit_number, String(row.related_unit_id), "Unit")}
           />
         ) : (
           <span className="text-slate-400">—</span>
@@ -226,6 +264,32 @@ export function FinesPage({ operatingCompanyId }: Props) {
               <option value="driver">Driver</option>
               <option value="company">Company</option>
             </SelectCombobox>
+            <label className="text-[11px] text-slate-600">
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={operatingCompanyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1"
+                dataTestId="fines-filter-driver"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Unit
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={operatingCompanyId}
+                value={unitFilter || null}
+                onChange={(next) => setUnitFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All units"
+                className="mt-1"
+                dataTestId="fines-filter-unit"
+              />
+            </label>
           </div>
         }
       />

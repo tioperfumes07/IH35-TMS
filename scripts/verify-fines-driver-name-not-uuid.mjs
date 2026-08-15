@@ -8,10 +8,14 @@
  * convert-confirm modal said "…from <uuid>'s next settlement". An operator saw a raw uuid where a
  * person's name belongs.
  *
- * Fix contract (all three must hold, or a name can silently regress to a uuid):
+ * Fix contract (all must hold, or a name / reverse filter can silently regress):
  *   - backend list + detail JOIN mdata.drivers and return subject_driver_name (entity-scoped),
  *   - FinesPage renders a Driver column via EntityLink kind="driver",
- *   - FineDetailDrawer's convert driverLabel prefers subject_driver_name over the raw uuid.
+ *   - FineDetailDrawer's convert driverLabel prefers subject_driver_name over the raw uuid,
+ *   - LST-F5163F: FinesPage filterBar has visible EntityPicker driver+unit (allowCreate=false)
+ *     + Unit EntityLink column (URL-only subject_driver_id/related_unit_id is not reverse).
+ *
+ * @matrix-built leafRe:safety\\.fines\\.list|safety\\.external.fines
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -54,6 +58,20 @@ export function assertFinesDriverName(sources) {
     problems.push(`${PAGE}: the Driver column does not drill through via EntityLink kind="driver".`);
   }
 
+  // LST-F5163F: visible reverse filters (URL query alone is not reverse).
+  if (!/dataTestId="fines-filter-driver"/.test(page) || !/kind="driver"[\s\S]{0,200}allowCreate=\{false\}/.test(page)) {
+    problems.push(`${PAGE}: missing EntityPicker kind=driver allowCreate=false filter (fines-filter-driver).`);
+  }
+  if (!/dataTestId="fines-filter-unit"/.test(page) || !/kind="unit"[\s\S]{0,200}allowCreate=\{false\}/.test(page)) {
+    problems.push(`${PAGE}: missing EntityPicker kind=unit allowCreate=false filter (fines-filter-unit).`);
+  }
+  if (!/label:\s*"Unit"/.test(page) || !/EntityLink[\s\S]{0,120}kind="unit"/.test(page)) {
+    problems.push(`${PAGE}: no Unit EntityLink column — related_unit reverse is incomplete.`);
+  }
+  if (!/subject_driver_id/.test(page) || !/related_unit_id/.test(page)) {
+    problems.push(`${PAGE}: list query must pass subject_driver_id and related_unit_id filters.`);
+  }
+
   // The convert-confirm driverLabel must prefer the name over the raw uuid.
   if (/driverLabel=\{String\(fine\.subject_driver_id\b/.test(drawer)) {
     problems.push(`${DRAWER}: driverLabel still passes the raw subject_driver_id uuid — prefer subject_driver_name.`);
@@ -93,6 +111,18 @@ if (SELFTEST) {
   );
   // 2. the Driver column is removed.
   expectCaught("no-driver-column", { ...live, [PAGE]: live[PAGE].replace(/label:\s*"Driver"/, 'label: "X"') }, 'no "Driver" column');
+  // 2b. reverse driver filter removed.
+  expectCaught(
+    "no-driver-filter",
+    { ...live, [PAGE]: live[PAGE].replace(/dataTestId="fines-filter-driver"/g, 'dataTestId="x"') },
+    "fines-filter-driver",
+  );
+  // 2c. Unit column removed.
+  expectCaught(
+    "no-unit-column",
+    { ...live, [PAGE]: live[PAGE].replace(/label:\s*"Unit"/, 'label: "X"') },
+    "Unit EntityLink column",
+  );
   // 3. the drawer reverts to the raw uuid label.
   expectCaught(
     "drawer-raw-uuid",
@@ -119,7 +149,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 3 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
