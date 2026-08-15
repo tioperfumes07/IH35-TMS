@@ -169,6 +169,8 @@ export function AccountTypeCatalogPage() {
                 emptyText="No account types found."
                 storageKey="account-type-catalog"
                 tableTestId="account-type-catalog-table"
+                // ACCT-F3492: page-local search filters nested detailTypes — suppress ParityTable toolbar Search.
+                suppressToolbarSearch
               />
             </section>
           ))}
