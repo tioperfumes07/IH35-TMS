@@ -7,6 +7,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { ListsSubNav } from "../ListsSubNav";
 import { DriversReferenceCatalogModal, type DriversReferenceCatalogClient } from "./DriversReferenceCatalogModal";
 
@@ -28,6 +29,12 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
   const [search, setSearch] = useState("");
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("active");
   const [modalOpen, setModalOpen] = useState(false);
+
+  // LST-F5215 — Lists hub ?create=1 must open reference create modal (org-wide catalog).
+  useCreateQueryParam({
+    companyId: "_",
+    onOpenCreate: () => setModalOpen(true),
+  });
 
   const includeArchived = archiveFilter !== "active";
 

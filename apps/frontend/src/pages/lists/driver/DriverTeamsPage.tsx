@@ -21,6 +21,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { formatDateUS } from "../../../lib/formatDate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { DriverTeamModal } from "./DriverTeamModal";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
@@ -98,6 +99,16 @@ export function DriverTeamsPage() {
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedTeam, setSelectedTeam] = useState<MdataDriverTeam | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // LST-F5215 — Lists hub ?create=1 must open DriverTeamModal (shared catalog create parity).
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
+      setModalMode("create");
+      setSelectedTeam(null);
+      setModalOpen(true);
+    },
+  });
 
   const query = useQuery({
     queryKey: ["mdata", "driver-teams", companyId, status],
