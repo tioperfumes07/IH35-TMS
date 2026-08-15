@@ -295,6 +295,9 @@
       "tab": "Safety Events",
       "sub": "Events",
       "route_hint": "/safety/safety-events",
+      "owned_surface_paths": [
+        "pages/safety/SafetyEventsPage.tsx"
+      ],
       "required": [
         "driver",
         "unit",
@@ -421,6 +424,9 @@
       "tab": "Internal Fines",
       "sub": "List",
       "route_hint": "/safety/internal-fines",
+      "owned_surface_paths": [
+        "components/dispatch/tabs/FinesDeductionsCard.tsx"
+      ],
       "required": [
         "driver",
         "liability",
@@ -564,6 +570,9 @@
       "tab": "Driver Scheduler",
       "sub": "Schedule",
       "route_hint": "/safety/driver-scheduler",
+      "owned_surface_paths": [
+        "pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx"
+      ],
       "required": [
         "driver",
         "connectivity",

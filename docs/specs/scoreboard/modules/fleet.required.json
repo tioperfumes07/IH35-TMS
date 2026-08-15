@@ -964,6 +964,9 @@
       "route_hint": "surface://components/trailer-profile/StatusChangeModal.tsx",
       "surface_kind": "modal",
       "surface_path": "components/trailer-profile/StatusChangeModal.tsx",
+      "owned_surface_paths": [
+        "components/vehicle-profile/StatusChangeModal.tsx"
+      ],
       "required": [
         "connectivity",
         "qbo_chrome"

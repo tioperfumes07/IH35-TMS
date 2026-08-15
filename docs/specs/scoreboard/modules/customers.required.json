@@ -522,6 +522,9 @@
       "tab": "Contracts",
       "sub": "Customer contracts",
       "route_hint": "/customers/:id?tab=contracts",
+      "owned_surface_paths": [
+        "components/customers/CustomerContractsTab.tsx"
+      ],
       "required": [
         "customer",
         "connectivity",

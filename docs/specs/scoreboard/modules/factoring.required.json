@@ -119,6 +119,9 @@
       "tab": "Factoring home",
       "sub": "KPI strip + sub-nav hub",
       "route_hint": "/factoring",
+      "owned_surface_paths": [
+        "pages/factoring/FactoringHome.tsx"
+      ],
       "required": [
         "customer",
         "load",

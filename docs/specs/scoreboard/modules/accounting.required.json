@@ -468,6 +468,9 @@
       "tab": "Journal Entries",
       "sub": "+ Create Manual JE",
       "route_hint": "/accounting/journal-entries",
+      "owned_surface_paths": [
+        "pages/banking/components/ManualJEModal.tsx"
+      ],
       "required": [
         "gl_je",
         "picker_law",
@@ -500,6 +503,9 @@
       "tab": "Chart of Accounts",
       "sub": "CoA",
       "route_hint": "/lists/accounting/chart-of-accounts",
+      "owned_surface_paths": [
+        "pages/lists/accounting/CoaBatchActions.tsx"
+      ],
       "required": [
         "gl_je",
         "connectivity",
@@ -577,6 +583,9 @@
       "route_hint": "surface://pages/accounting/ManualJEModal.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/accounting/ManualJEModal.tsx",
+      "owned_surface_paths": [
+        "components/accounting/ManualJEModal.tsx"
+      ],
       "required": [
         "connectivity",
         "gl_je",

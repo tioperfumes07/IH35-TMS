@@ -420,6 +420,10 @@
       "tab": "IFTA",
       "sub": "Tax-regulatory IFTA preparer",
       "route_hint": "/reports/ifta-preparer",
+      "owned_surface_paths": [
+        "components/reports/IftaPreparerCard.tsx",
+        "components/reports/ifta/Step4FinalReview.tsx"
+      ],
       "required": [
         "connectivity",
         "qbo_chrome"
@@ -619,6 +623,7 @@
       "tab": "Fuel reconciliation",
       "sub": "Card vs WO reconcile",
       "route_hint": "/reports/fuel-reconciliation",
+      "surface_path": "pages/reports/FuelReconciliationPage.tsx",
       "required": [
         "unit",
         "connectivity",

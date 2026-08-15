@@ -4,8 +4,8 @@
  *
  * Every FE file that mounts `<ParityDrawer … open={…}>` (or re-exports a ParityDrawer shell)
  * must either:
- *   (a) appear as some required.json leaf.surface_path, OR
- *   (b) be listed in FILE_OWNED_BY_LEAF, OR
+ *   (a) appear as some required.json leaf.surface_path or owned_surface_paths (EXACT match), OR
+ *   (b) be listed in FILE_OWNED_BY_LEAF with the owning leaf mapping that exact path, OR
  *   (c) be listed in ALLOWED_NESTED (shared picker / Modal shell / InlineCreate).
  *
  * Does NOT claim Box3 Built — inventory completeness only.
@@ -44,6 +44,10 @@ const FILE_OWNED_BY_LEAF = {
   "pages/dispatch/AssignDriverDropdown.tsx": "dispatch.parity.assign_driver_dropdown",
 };
 
+function normalizePath(p) {
+  return String(p).replace(/\\/g, "/");
+}
+
 function walk(dir, out = []) {
   for (const name of fs.readdirSync(dir)) {
     const p = path.join(dir, name);
@@ -63,17 +67,25 @@ function isParityDrawerHost(src) {
 function loadInventory() {
   const surfacePaths = new Set();
   const leafIds = new Set();
+  const leafById = new Map();
   const dir = path.join(ROOT, "docs/specs/scoreboard/modules");
   for (const name of fs.readdirSync(dir)) {
     if (!name.endsWith(".required.json")) continue;
     const j = JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
     for (const leaf of j.leaves || []) {
       if (!leaf || typeof leaf !== "object") continue;
-      if (leaf.id) leafIds.add(String(leaf.id));
-      if (leaf.surface_path) surfacePaths.add(String(leaf.surface_path).replace(/\\/g, "/"));
+      if (leaf.id) {
+        const id = String(leaf.id);
+        leafIds.add(id);
+        leafById.set(id, leaf);
+      }
+      if (leaf.surface_path) surfacePaths.add(normalizePath(leaf.surface_path));
+      for (const owned of leaf.owned_surface_paths || []) {
+        surfacePaths.add(normalizePath(owned));
+      }
     }
   }
-  return { surfacePaths, leafIds };
+  return { surfacePaths, leafIds, leafById };
 }
 
 export function collectParityDrawerHosts(listFiles = () => walk(FE)) {
@@ -90,21 +102,37 @@ export function collectParityDrawerHosts(listFiles = () => walk(FE)) {
 function surfaceMapped(rel, surfacePaths) {
   if (surfacePaths.has(rel)) return true;
   const alt = rel.replace(/^pages\//, "");
-  for (const sp of surfacePaths) {
-    if (sp === alt || sp.endsWith("/" + alt) || sp.endsWith(rel) || rel.endsWith(sp)) return true;
+  return surfacePaths.has(alt);
+}
+
+function leafOwnsPath(leaf, rel) {
+  if (!leaf) return false;
+  if (leaf.surface_path && normalizePath(leaf.surface_path) === rel) return true;
+  for (const p of leaf.owned_surface_paths || []) {
+    if (normalizePath(p) === rel) return true;
   }
   return false;
+}
+
+function auditFileOwned(rel, ownerId, inv) {
+  if (!inv.leafIds.has(ownerId)) {
+    return `${rel}: FILE_OWNED_BY_LEAF → ${ownerId} but leaf missing from required.json`;
+  }
+  const leaf = inv.leafById.get(ownerId);
+  if (!leafOwnsPath(leaf, rel)) {
+    return `${rel}: FILE_OWNED_BY_LEAF → ${ownerId} but neither surface_path nor owned_surface_paths includes ${rel}`;
+  }
+  return null;
 }
 
 export function audit(hosts = collectParityDrawerHosts(), inv = loadInventory()) {
   const failures = [];
   for (const rel of hosts) {
     if (ALLOWED_NESTED.has(rel)) continue;
-    if (FILE_OWNED_BY_LEAF[rel]) {
-      const owner = FILE_OWNED_BY_LEAF[rel];
-      if (!inv.leafIds.has(owner)) {
-        failures.push(`${rel}: FILE_OWNED_BY_LEAF → ${owner} but leaf missing from required.json`);
-      }
+    const owner = FILE_OWNED_BY_LEAF[rel];
+    if (owner) {
+      const ownedFail = auditFileOwned(rel, owner, inv);
+      if (ownedFail) failures.push(ownedFail);
       continue;
     }
     if (surfaceMapped(rel, inv.surfacePaths)) continue;
@@ -124,6 +152,12 @@ if (process.argv.includes("--selftest")) {
       "accounting.modal.manual_je",
       "dispatch.parity.assign_driver_dropdown",
     ]),
+    leafById: new Map([
+      ["catalog.accounting.journal_entry_types.create", { owned_surface_paths: ["components/accounting/JournalEntryTypePicker.tsx"] }],
+      ["accounting.modal.manual_je", { surface_path: "pages/accounting/ManualJEModal.tsx", owned_surface_paths: ["components/accounting/ManualJEModal.tsx"] }],
+      ["je.create", { owned_surface_paths: ["pages/banking/components/ManualJEModal.tsx"] }],
+      ["dispatch.parity.assign_driver_dropdown", { surface_path: "pages/dispatch/AssignDriverDropdown.tsx" }],
+    ]),
   };
   if (audit(["pages/accounting/InvoiceCreateModal.tsx"], inv).length) {
     console.error(`${LABEL} SELFTEST FAIL — surface_path mapped host rejected`);
@@ -139,6 +173,25 @@ if (process.argv.includes("--selftest")) {
   }
   if (audit(["pages/dispatch/AssignDriverDropdown.tsx"], inv).length) {
     console.error(`${LABEL} SELFTEST FAIL — AssignDriver FILE_OWNED rejected`);
+    process.exit(1);
+  }
+  const fuzzyInv = {
+    ...inv,
+    surfacePaths: new Set(["pages/accounting/XInvoiceCreateModal.tsx"]),
+  };
+  if (!audit(["pages/accounting/InvoiceCreateModal.tsx"], fuzzyInv).length) {
+    console.error(`${LABEL} SELFTEST FAIL — fuzzy endsWith alone accepted host`);
+    process.exit(1);
+  }
+  const badOwned = {
+    ...inv,
+    leafById: new Map([
+      ...inv.leafById,
+      ["catalog.accounting.journal_entry_types.create", { surface_path: "pages/lists/other/JournalEntryTypePicker.tsx" }],
+    ]),
+  };
+  if (!audit(["components/accounting/JournalEntryTypePicker.tsx"], badOwned).length) {
+    console.error(`${LABEL} SELFTEST FAIL — FILE_OWNED without path match escaped`);
     process.exit(1);
   }
   if (!audit(["pages/ghost/GhostParityDrawer.tsx"], inv).length) {

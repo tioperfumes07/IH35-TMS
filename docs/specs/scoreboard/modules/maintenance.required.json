@@ -361,6 +361,9 @@
       "tab": "Severe Repairs",
       "sub": "Convert to WO",
       "route_hint": "/maintenance/severe-repairs",
+      "owned_surface_paths": [
+        "pages/maintenance/components/SevereRepairOosTab.tsx"
+      ],
       "required": [
         "unit",
         "picker_law",
@@ -486,6 +489,9 @@
       "tab": "Inspections",
       "sub": "+ Create Inspection",
       "route_hint": "/maintenance/inspections",
+      "owned_surface_paths": [
+        "pages/maintenance/inspections/InspectionsPage.tsx"
+      ],
       "required": [
         "unit",
         "picker_law",
