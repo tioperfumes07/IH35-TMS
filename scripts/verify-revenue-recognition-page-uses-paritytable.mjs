@@ -2,14 +2,11 @@
 /**
  * verify-revenue-recognition-page-uses-paritytable — qbo-parity (RevenueRecognitionPage)
  *
- * The ASC 606 revenue-contracts list must use the shared ParityTable grammar
- * (sort/resize/gear), not a hand-rolled <table>. Display-only migration: the
- * detail-open button stays inside a cell renderer, the server-side offset pager
- * (Prev/Next) is preserved, and load failures surface ListErrorState (never a
- * silent false-empty). The ONE small read-only schedule table inside the
- * ObligationBlock detail-modal card is explicitly retained (FixedAssetsPage
- * precedent — no gear/pager chrome or card-in-card inside the modal); the page
- * section (RevenueRecognitionPage function) must contain NO hand-rolled table.
+ * The ASC 606 revenue-contracts list AND the ObligationBlock schedule leaf must use
+ * ParityTable (Search+Range+gear), not hand-rolled <table>. ACCT-F3570 closed the
+ * retained-modal-schedule carve-out: zero raw HTML tables remain on this page.
+ * Display-only: detail-open stays in a cell renderer; server offset pager preserved;
+ * load failures surface ListErrorState (never a silent false-empty).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -38,32 +35,17 @@ function assertMigrated(src) {
   if (!src.includes("ListErrorState")) {
     errors.push(`${PAGE}: must render ListErrorState on load failure`);
   }
-  if ((src.match(/<ParityTable\b/g) ?? []).length < 1) {
-    errors.push(`${PAGE}: expected ≥1 <ParityTable> (revenue-contracts list)`);
+  if ((src.match(/<ParityTable\b/g) ?? []).length < 2) {
+    errors.push(`${PAGE}: expected ≥2 <ParityTable> (contracts list + obligation schedule)`);
   }
-  // The list section (page component) must have no hand-rolled table. The single
-  // retained <table> is the read-only per-obligation schedule inside ObligationBlock
-  // (detail modal) — allowed, and it must stay the ONLY one.
-  const pageStart = src.indexOf("export function RevenueRecognitionPage");
-  if (pageStart === -1) {
-    errors.push(`${PAGE}: expected export function RevenueRecognitionPage`);
-  } else {
-    const listSection = src.slice(pageStart);
-    if (/<table[\s>]/.test(listSection) || /<thead[\s>]/.test(listSection)) {
-      errors.push(`${PAGE}: RevenueRecognitionPage must not contain a hand-rolled <table>/<thead>`);
-    }
+  if (/<table\b/.test(src)) {
+    errors.push(`${PAGE}: must not contain a hand-rolled <table> (ACCT-F3570 — schedule is ParityTable)`);
   }
-  const tableCount = (src.match(/<table[\s>]/g) ?? []).length;
-  if (tableCount > 1) {
-    errors.push(`${PAGE}: at most ONE retained <table> allowed (ObligationBlock modal schedule); found ${tableCount}`);
+  if (!src.includes("revenue-obligation-schedule-")) {
+    errors.push(`${PAGE}: ObligationBlock schedule must use revenue-obligation-schedule- storageKey/testId`);
   }
-  if (tableCount === 1) {
-    const obligationStart = src.indexOf("function ObligationBlock");
-    const obligationEnd = src.indexOf("function DetailPanel");
-    const tableIdx = src.search(/<table[\s>]/);
-    if (obligationStart === -1 || obligationEnd === -1 || tableIdx < obligationStart || tableIdx > obligationEnd) {
-      errors.push(`${PAGE}: the retained <table> must live inside ObligationBlock (detail-modal schedule)`);
-    }
+  if (!src.includes("function ObligationBlock")) {
+    errors.push(`${PAGE}: must keep ObligationBlock`);
   }
   for (const label of COLUMN_LABELS) {
     if (!src.includes(`label: "${label}"`)) {
@@ -82,7 +64,6 @@ function assertMigrated(src) {
   if (!src.includes("Failed to load revenue contracts.")) {
     errors.push(`${PAGE}: must keep ListErrorState title for contracts load failure`);
   }
-  // Detail-open action must remain inside a cell renderer; server offset pager preserved.
   if (!src.includes("setDetailId(row.id)")) {
     errors.push(`${PAGE}: must keep the detail-open button inside a cell renderer`);
   }
@@ -98,7 +79,7 @@ function selftest() {
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     function ObligationBlock({ ob }) {
       return (
-        <table className="min-w-full"><thead><tr><th>Period</th></tr></thead></table>
+        <ParityTable storageKey={\`revenue-obligation-schedule-\${ob.obligation_number}\`} tableTestId={\`revenue-obligation-schedule-\${ob.obligation_number}\`} />
       );
     }
     function DetailPanel() { return null; }
@@ -124,7 +105,9 @@ function selftest() {
     }
   `;
   const bad = `
-    function ObligationBlock() { return null; }
+    function ObligationBlock() {
+      return <table><thead><tr><th>Period</th></tr></thead></table>;
+    }
     function DetailPanel() { return null; }
     export function RevenueRecognitionPage() {
       return (
@@ -159,7 +142,7 @@ function main() {
     for (const e of errors) console.error(`  - ${e}`);
     process.exit(1);
   }
-  console.log(`OK ${LABEL}: ${PAGE} contracts list uses ParityTable + ListErrorState; modal schedule table retained; pager + detail action preserved.`);
+  console.log(`OK ${LABEL}: ${PAGE} contracts + obligation schedule use ParityTable; zero raw tables; pager + detail action preserved.`);
 }
 
 main();

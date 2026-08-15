@@ -42,26 +42,38 @@ function ObligationBlock({ ob }: { ob: RevenueObligation }) {
       </div>
       {ob.schedule_note && <p className="px-3 py-2 text-xs text-gray-500">{ob.schedule_note}</p>}
       {ob.schedule.length > 0 && (
-        <div className="overflow-x-auto">
-        <table className="min-w-full text-xs divide-y divide-gray-200">
-          <thead className="bg-white">
-            <tr>
-              {["#", "Period", "Recognized", "Remaining Deferred"].map((h) => (
-                <th key={h} className="px-3 py-1.5 text-left font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {ob.schedule.map((r) => (
-              <tr key={r.period_number} className="hover:bg-gray-50">
-                <td className="px-3 py-1.5 text-gray-500">{r.period_number}</td>
-                <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(r.period_date)}</td>
-                <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(r.recognized_amount_cents)}</td>
-                <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{fmtCents(r.remaining_deferred_cents)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="px-1 pb-2">
+          {/* ACCT-F3570: ParityTable owns Search+Range+gear on obligation schedule leaf. */}
+          <ParityTable<(typeof ob.schedule)[number]>
+            rows={ob.schedule}
+            rowKey={(r) => `${ob.obligation_number}-${r.period_number}`}
+            storageKey={`revenue-obligation-schedule-${ob.obligation_number}`}
+            exportFilename={`revenue-obligation-${ob.obligation_number}-schedule`}
+            tableTestId={`revenue-obligation-schedule-${ob.obligation_number}`}
+            emptyText="No schedule to display."
+            columns={[
+              { key: "period_number", label: "#", render: (r) => <span className="text-gray-500">{r.period_number}</span> },
+              {
+                key: "period_date",
+                label: "Period",
+                render: (r) => <span className="whitespace-nowrap">{fmtDate(r.period_date)}</span>,
+              },
+              {
+                key: "recognized_amount_cents",
+                label: "Recognized",
+                className: "text-right",
+                cellClass: "text-right tabular-nums",
+                render: (r) => fmtCents(r.recognized_amount_cents),
+              },
+              {
+                key: "remaining_deferred_cents",
+                label: "Remaining Deferred",
+                className: "text-right",
+                cellClass: "text-right tabular-nums text-gray-500",
+                render: (r) => fmtCents(r.remaining_deferred_cents),
+              },
+            ]}
+          />
         </div>
       )}
     </div>
