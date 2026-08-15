@@ -56,6 +56,7 @@ const SHARED_CREATE_DEEPLINK_FILES = [
   "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx",
   "apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx",
   "apps/frontend/src/pages/lists/dispatch/DispatchFlagColorsCatalog.tsx",
+  "apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx",
 ];
 
 const KNOWN_DOMAIN_KEYS = [

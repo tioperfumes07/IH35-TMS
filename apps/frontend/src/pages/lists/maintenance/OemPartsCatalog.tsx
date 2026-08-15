@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useQuery } from "@tanstack/react-query";
 import {
   OEM_PART_CATEGORIES,
@@ -159,6 +160,12 @@ export function OemPartsCatalog() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [fleetOnly, setFleetOnly] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // LST-F5218 — Lists hub ?create=1 must open OEM part create modal.
+  useCreateQueryParam({
+    companyId: "_",
+    onOpenCreate: () => setModalOpen(true),
+  });
 
   const query = useQuery({
     queryKey: ["lists", "oem-parts", search, brandFilter, categoryFilter, fleetOnly],
