@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { getHosDailyRoster, getHosEvents, DUTY_LABEL, DUTY_COLOR } from "../../api/hosTracker";
 import { companyToday, addDaysIso, formatInCompanyTimeZone } from "../../lib/businessDate";
@@ -57,6 +58,52 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
     (rosterQ.data?.drivers ?? []).find((d) => d.driver_id === driverId)?.driver_name?.trim() || null;
   const selectedName = rosterName || "driver";
   const events = eventsQ.data?.events ?? [];
+
+  type HosEventRow = (typeof events)[number];
+
+  const columns = useMemo<ParityColumn<HosEventRow>[]>(
+    () => [
+      {
+        key: "duty_status",
+        label: "Duty status",
+        render: (ev) => (
+          <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+            <span className="inline-block h-[8px] w-[8px] rounded-full" style={{ background: DUTY_COLOR[ev.duty_status] }} />
+            {DUTY_LABEL[ev.duty_status]}
+          </span>
+        ),
+      },
+      {
+        key: "started_at",
+        label: "Started (CT)",
+        sortable: true,
+        render: (ev) => (
+          <span className="font-mono tabular-nums">
+            {formatInCompanyTimeZone(ev.started_at, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+          </span>
+        ),
+      },
+      {
+        key: "ended_at",
+        label: "Ended (CT)",
+        render: (ev) => (
+          <span className="font-mono tabular-nums">
+            {ev.ended_at
+              ? formatInCompanyTimeZone(ev.ended_at, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+              : "—"}
+          </span>
+        ),
+      },
+      {
+        key: "duration",
+        label: "Duration",
+        render: (ev) => (
+          <span className="font-mono tabular-nums">{hmm(durationMinutes(ev.started_at, ev.ended_at))}</span>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <section data-testid="compliance-section-hos-history">
@@ -115,40 +162,18 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
             <div className="text-sm font-semibold text-slate-700">HOS History</div>
             <div className="mt-1 text-xs text-slate-500">Pick a driver above to view their duty-status event history.</div>
           </div>
-        ) : eventsQ.isLoading ? (
-          <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-slate-100" />)}</div>
-        ) : events.length === 0 ? (
-          <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-            <div className="text-sm font-semibold text-slate-700">No HOS history in this range.</div>
-            <div className="mt-1 text-xs text-slate-500">No duty-status events for {selectedName} between {fromDate} and {toDate}.</div>
-          </div>
         ) : (
-          <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-            <table className="w-full text-left text-[11px]" data-testid="hos-history-table">
-              <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                <tr>
-                  {["Duty status", "Started (CT)", "Ended (CT)", "Duration"].map((h) => (
-                    <th key={h} className="whitespace-nowrap px-2 py-1.5">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((ev, i) => (
-                  <tr key={`${ev.started_at}-${i}`} className="border-t border-slate-100">
-                    <td className="px-2 py-1.5">
-                      <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
-                        <span className="inline-block h-[8px] w-[8px] rounded-full" style={{ background: DUTY_COLOR[ev.duty_status] }} />
-                        {DUTY_LABEL[ev.duty_status]}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 font-mono tabular-nums">{formatInCompanyTimeZone(ev.started_at, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
-                    <td className="px-2 py-1.5 font-mono tabular-nums">{ev.ended_at ? formatInCompanyTimeZone(ev.ended_at, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}</td>
-                    <td className="px-2 py-1.5 text-right font-mono tabular-nums">{hmm(durationMinutes(ev.started_at, ev.ended_at))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          // COMP-F3538: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
+          <ParityTable<HosEventRow>
+            columns={columns}
+            rows={events}
+            rowKey={(ev) => `${ev.started_at}-${ev.duty_status}-${ev.ended_at ?? "open"}`}
+            loading={eventsQ.isLoading}
+            emptyText={`No duty-status events for ${selectedName} between ${fromDate} and ${toDate}.`}
+            storageKey="hos-history-events"
+            exportFilename={`hos-history-${fromDate}-${toDate}`}
+            tableTestId="hos-history-table"
+          />
         )}
       </div>
     </section>
