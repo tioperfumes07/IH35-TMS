@@ -895,10 +895,31 @@
     "claimed_by": "cursor",
     "purpose": "verify-surface-bar-modal-inventory"
   },
+  "3333": {
+    "owner": "cc-1",
+    "purpose": "verify-gl-je-required-honest-cluster3 (LINK-F5186)"
+  },
   "3334": {
     "claimed_at": "2026-08-14",
     "claimed_by": "codex",
     "purpose": "verify-codex-vertical-nonmoney-zero-remainder"
+  },
+  "3336": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-surface-bar-paritydrawer-inventory"
+  },
+  "3337": {
+    "owner": "cc-1",
+    "purpose": "verify-gl-je-required-honest-false-required-batch (LINK-F5186)"
+  },
+  "3341": {
+    "owner": "cc-1",
+    "purpose": "verify-accounting-gl-je-genuine-gaps (LINK-F5186)"
+  },
+  "3345": {
+    "owner": "cc-1",
+    "purpose": "verify-gl-je-required-honest-cluster2 (LINK-F5186)"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -2744,21 +2765,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1141,
-  "3333": {
-    "owner": "cc-1",
-    "purpose": "verify-gl-je-required-honest-cluster3 (LINK-F5186)"
-  },
-  "3337": {
-    "owner": "cc-1",
-    "purpose": "verify-gl-je-required-honest-false-required-batch (LINK-F5186)"
-  },
-  "3341": {
-    "owner": "cc-1",
-    "purpose": "verify-accounting-gl-je-genuine-gaps (LINK-F5186)"
-  },
-  "3345": {
-    "owner": "cc-1",
-    "purpose": "verify-gl-je-required-honest-cluster2 (LINK-F5186)"
-  }
+  "total_claimed": 1141
 }
