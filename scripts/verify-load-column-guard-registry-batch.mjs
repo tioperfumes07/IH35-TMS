@@ -5,6 +5,7 @@ const LABEL = "verify-load-column-guard-registry-batch";
 const MAX_REMAINING = 166;
 const REQUIRED = [
   "verify-border-crossing-load-linkage.mjs", "verify-dispatch-required-load-honest.mjs",
+  "verify-book-load-no-crew-not-assigned.mjs",
   "verify-dispatch-trailer-board-and-book-load.mjs", "verify-internal-fine-load-reverse.mjs",
   "verify-intransit-issue-load-linkage.mjs", "verify-load-drill-route-vertical-sweep.mjs",
   "verify-load-inline-surface-linkage.mjs", "verify-roundtrips-quality-load-entitylink.mjs",
@@ -22,4 +23,4 @@ if (process.argv.includes("--selftest")) {
 }
 const problems = failures(classifyGuards());
 if (problems.length) { console.error(`${LABEL} FAIL\n${problems.join("\n")}`); process.exit(1); }
-console.log(`${LABEL} PASS — 8 load-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — 9 load-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);

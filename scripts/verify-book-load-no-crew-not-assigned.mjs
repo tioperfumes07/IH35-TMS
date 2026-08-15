@@ -29,6 +29,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
+const BOARD = "apps/frontend/src/pages/dispatch/DispatchBoard.tsx";
 const LABEL = "verify-book-load-no-crew-not-assigned";
 
 const read = (rel) => {
@@ -39,10 +40,12 @@ const read = (rel) => {
 /** Strip line comments so the long rationale note above the fix cannot satisfy the checks. */
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
-export function collectProblems(src) {
+export function collectProblems(src, boardSrc = read(BOARD)) {
   const problems = [];
   if (!src) return [`${SERVICE} not found`];
+  if (!boardSrc) return [`${BOARD} not found`];
   const code = strip(src);
+  const boardCode = strip(boardSrc);
 
   const anchor = code.indexOf("statusForInsert");
   if (anchor === -1) {
@@ -74,6 +77,19 @@ export function collectProblems(src) {
       "the crewless branch routes 'unassigned' through toMdataStatus(), which maps it to 'draft' and would hide a booked load from dispatch"
     );
   }
+  const predicate = boardCode.match(/function isBookedReserved\([\s\S]*?\n\}/)?.[0] ?? "";
+  if (!predicate) {
+    problems.push("isBookedReserved is gone from DispatchBoard.tsx — re-point the Quick Assign entry-path guard");
+  } else {
+    if (!/["']unassigned["']/.test(predicate)) {
+      problems.push(
+        "DispatchBoard excludes canonical 'unassigned' loads from Booked Loads, starving the + Quick Assign modal despite valid crewless bookings"
+      );
+    }
+    if (!/assigned_unit_id/.test(predicate) || !/assigned_primary_driver_id/.test(predicate)) {
+      problems.push("Quick Assign entry-path predicate no longer proves both unit and primary-driver absence");
+    }
+  }
   return problems;
 }
 
@@ -82,35 +98,52 @@ function selftest() {
     {
       name: "current source passes",
       src: read(SERVICE),
+      boardSrc: read(BOARD),
       expect: 0,
     },
     {
       name: "pre-fix form is caught",
       src: `const statusForInsert = input.save_mode === "draft" ? "draft" : toMdataStatus(input.status);`,
+      boardSrc: read(BOARD),
       expectAtLeast: 1,
     },
     {
       name: "driver checked but team ignored is caught",
       src: `const statusForInsert = input.save_mode === "draft" ? "draft" : !input.assigned_primary_driver_id ? "unassigned" : toMdataStatus(input.status);`,
+      boardSrc: read(BOARD),
       expectAtLeast: 1,
     },
     {
       name: "crewless branch that stores something other than 'unassigned' is caught",
       src: `const hasCrew = Boolean(input.assigned_primary_driver_id) || Boolean(input.team_id);
             const statusForInsert = input.save_mode === "draft" ? "draft" : !hasCrew ? "draft" : toMdataStatus(input.status);`,
+      boardSrc: read(BOARD),
       expectAtLeast: 1,
     },
     {
       name: "comment-only mention does not satisfy the guard",
       src: `// assigned_primary_driver_id team_id 'unassigned'
             const statusForInsert = input.save_mode === "draft" ? "draft" : toMdataStatus(input.status);`,
+      boardSrc: read(BOARD),
+      expectAtLeast: 1,
+    },
+    {
+      name: "Quick Assign entry path dropping canonical unassigned is caught",
+      src: read(SERVICE),
+      boardSrc: read(BOARD)?.replace(', "unassigned"', ""),
+      expectAtLeast: 1,
+    },
+    {
+      name: "Quick Assign entry path no longer requiring driver absence is caught",
+      src: read(SERVICE),
+      boardSrc: read(BOARD)?.replace(" || load.assigned_primary_driver_id", ""),
       expectAtLeast: 1,
     },
   ];
 
   let pass = 0;
   for (const c of cases) {
-    const problems = collectProblems(c.src);
+    const problems = collectProblems(c.src, c.boardSrc);
     const ok = c.expect === 0 ? problems.length === 0 : problems.length >= (c.expectAtLeast ?? 1);
     if (ok) pass += 1;
     else console.error(`  selftest FAIL: ${c.name} -> ${JSON.stringify(problems)}`);
