@@ -34,9 +34,17 @@ const composed = [
 export function auditLiabilityColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 32) failures.push(`priority-10 liability inventory unexpectedly shrank to ${p10.length}`);
-  if (leaves.length < 80) failures.push(`all-module liability inventory unexpectedly shrank to ${leaves.length}`);
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 13) failures.push("liability module inventory unexpectedly shrank");
+  // LINK-F5187 (2026-08-15, CC-1): a full-repo liability Required-column honesty sweep
+  // (cluster A + cluster B, PRs #6970/#6976/#6987) legitimately dropped the honest inventory
+  // from these stale floors (32/80/13) to 25/26/7 -- each drop individually verified against
+  // live code (no fabricated EntityLink kind="liability" for the leaf's actual record) and
+  // documented in the relevant required.json's honesty_audit['liability_2026_08_15*']
+  // entries. This guard's floor was never updated to match; reset here to the exact verified
+  // honest counts, same convention as the ACCT-F5083-style corrections on the sibling
+  // expense/ap_bill inventory guards this session.
+  if (p10.length < 25) failures.push(`priority-10 liability inventory unexpectedly shrank to ${p10.length}`);
+  if (leaves.length < 26) failures.push(`all-module liability inventory unexpectedly shrank to ${leaves.length}`);
+  if (new Set(leaves.map((leaf) => leaf.module)).size < 7) failures.push("liability module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: liability FE navigation/surface contract missing`);
   return failures;
@@ -44,7 +52,7 @@ export function auditLiabilityColumn(sources, leaves) {
 const leaves = collectLiabilityLeaves();
 const sources = { routes: ROUTES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n"), files: Object.fromEntries(contracts.map(([file]) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")])) };
 if (process.argv.includes("--selftest")) {
-  const p10Shrunk = [...leaves.filter((leaf) => !P10.has(leaf.module)), ...leaves.filter((leaf) => P10.has(leaf.module)).slice(0, 31)];
+  const p10Shrunk = [...leaves.filter((leaf) => !P10.has(leaf.module)), ...leaves.filter((leaf) => P10.has(leaf.module)).slice(0, 24)];
   if (!auditLiabilityColumn(sources, p10Shrunk).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-c-liability-fe-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx"] = mutated.files["apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx"].replaceAll('kind="liability"', 'kind="expense"');
