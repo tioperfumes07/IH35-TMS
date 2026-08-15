@@ -6,7 +6,12 @@ import { useCatalogQuery } from "../../../hooks/useCatalogQuery";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
 import { createVendor, createCustomer } from "../../../api/mdata";
 import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
-import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
+import {
+  accountTypePickerGroupsFromCatalog,
+  detailTypesForAccountTypeSelection,
+  fetchAccountTypeCatalog,
+  resolveAccountTypeCatalogEntry,
+} from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { type ComboboxOption } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -61,8 +66,8 @@ const schema = z.object({
   taxId: z.string().trim().optional(),
   track1099: z.boolean().optional(),
   defaultExpenseAccountId: z.string().uuid().optional().nullable(),
-  // category: full COA classification — account_type is the 8-value COA group enum, account_subtype
-  // is the chosen Detail Type name (both persisted to catalogs.accounts.metadata).
+  // category: full COA classification — account_type is the QBO catalog code (BANK/EXP/…) when
+  // the live taxonomy is loaded; account_subtype is the chosen Detail Type name.
   accountType: z.string().trim().optional(),
   detailType: z.string().trim().optional(),
 });
@@ -137,8 +142,12 @@ export function QuickCreateEntityModal({
     enabled: open && kind === "category" && Boolean(operatingCompanyId),
   });
   const detailTypeOptions = useMemo(
-    () => detailTypesForAccountType(accountTypeCatalogQuery.data, selectedAccountType),
+    () => detailTypesForAccountTypeSelection(accountTypeCatalogQuery.data, selectedAccountType),
     [accountTypeCatalogQuery.data, selectedAccountType],
+  );
+  const accountTypePickerGroups = useMemo(
+    () => accountTypePickerGroupsFromCatalog(accountTypeCatalogQuery.data),
+    [accountTypeCatalogQuery.data],
   );
   // FIX-03 (item only): populate + persist the income/expense GL account link that was previously
   // DROPPED at create. Held in local state (Combobox isn't a native input) alongside react-hook-form.
@@ -289,10 +298,8 @@ export function QuickCreateEntityModal({
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "category") {
-        // FIX-02: full QBO COA classification — persist the CHOSEN account_type (8-value COA group
-        // enum) + Detail Type, never a hard-coded Expense. Writes to catalogs.accounts (canonical) —
-        // same table getCoaAccounts reads via /api/v1/catalogs/accounts. chartOfAccountsCatalogClient
-        // maps to tableName:"accounts" in the factory (NOT the gated NewAccountDrawerForm path).
+        // FIX-02: full QBO COA classification — persist catalog CODE (BANK/EXP/…) + Detail Type.
+        // Writes to catalogs.accounts (canonical) — same table getCoaAccounts reads.
         if (!parsed.data.accountType) {
           pushToast("Account type is required.", "error");
           return;
@@ -301,11 +308,17 @@ export function QuickCreateEntityModal({
         const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
         // Timestamp suffix avoids account_number unique-constraint violations on same-name creates.
         const accountCode = `${safeSlug}${String(Date.now()).slice(-6)}`;
+        const typeCode =
+          resolveAccountTypeCatalogEntry(
+            accountTypeCatalogQuery.data,
+            parsed.data.accountType,
+            parsed.data.detailType?.trim() || undefined,
+          )?.code ?? parsed.data.accountType;
         const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
           code: accountCode,
           display_name: parsed.data.name,
           metadata: {
-            account_type: parsed.data.accountType,
+            account_type: typeCode,
             account_subtype: parsed.data.detailType?.trim() || undefined,
           },
         });
@@ -538,13 +551,14 @@ export function QuickCreateEntityModal({
               <select
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 aria-label="Quick create account type"
+                data-testid="account-type-qbo-finer-select"
                 {...form.register("accountType", { onChange: () => form.setValue("detailType", "") })}
               >
                 <option value="">Select a type…</option>
-                {ACCOUNT_TYPE_GROUPS.map((group) => (
+                {accountTypePickerGroups.map((group) => (
                   <optgroup key={group.label} label={group.label}>
-                    {group.types.map((t) => (
-                      <option key={t} value={t}>{t}</option>
+                    {group.options.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </optgroup>
                 ))}

@@ -11,9 +11,11 @@ import {
 } from "../../../api/catalog-accounts";
 import {
   fetchAccountTypeCatalog,
-  detailTypesForAccountType,
-  ACCOUNT_TYPE_GROUPS,
-  COA_ENUM_TO_CATALOG_CODES,
+  detailTypesForAccountTypeSelection,
+  accountTypePickerGroupsFromCatalog,
+  catalogCodeToCoaEnum,
+  resolveAccountTypeCatalogEntry,
+  resolveAccountTypePickerValue,
   type AccountTypeCatalogEntry,
 } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
@@ -70,7 +72,7 @@ function emptyForm(): FormState {
   return {
     account_name: "",
     account_number: "",
-    account_type: "Expense",
+    account_type: "",
     account_subtype: "",
     detail_type_id: "",
     notes: "",
@@ -140,14 +142,18 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
   });
 
   const detailTypesForType = useMemo<AccountTypeCatalogEntry["detailTypes"]>(
-    () => detailTypesForAccountType(typeCatalogQuery.data, form.account_type),
+    () => detailTypesForAccountTypeSelection(typeCatalogQuery.data, form.account_type),
     [typeCatalogQuery.data, form.account_type],
+  );
+
+  const accountTypePickerGroups = useMemo(
+    () => accountTypePickerGroupsFromCatalog(typeCatalogQuery.data),
+    [typeCatalogQuery.data],
   );
 
   // Parent-account candidates for the subaccount picker. getCoaAccounts is entity-scoped server-side
   // (passes operating_company_id → af1 RLS), so this NEVER lists another entity's accounts. We further
-  // filter to the SAME account_type as the one being created (an Expense subaccount only nests under an
-  // Expense parent) and exclude self (edit mode) so an account cannot parent itself.
+  // filter to the SAME COA group as the selected QBO type (Bank → Asset parents) and exclude self.
   const parentAccountsQuery = useQuery({
     queryKey: ["coa-accounts-for-parent", operatingCompanyId],
     queryFn: () => getCoaAccounts(operatingCompanyId),
@@ -155,10 +161,12 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     staleTime: 60 * 1000,
   });
 
+  const parentCoaGroup = catalogCodeToCoaEnum(form.account_type);
+
   const parentOptions = useMemo<ComboboxOption[]>(() => {
     const rows = parentAccountsQuery.data?.accounts ?? [];
     return rows
-      .filter((a) => a.account_type === form.account_type)
+      .filter((a) => a.account_type === parentCoaGroup || a.account_type === form.account_type)
       .filter((a) => !a.deactivated_at)
       .filter((a) => a.id !== account?.id)
       .map((a) => ({
@@ -166,25 +174,13 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         label: a.account_name,
         sublabel: a.account_number || undefined,
       }));
-  }, [parentAccountsQuery.data, form.account_type, account?.id]);
+  }, [parentAccountsQuery.data, parentCoaGroup, form.account_type, account?.id]);
 
-  // Live preview metadata — sourced from the fetched account_types catalog, NOT hardcoded. Find the
-  // catalog entry the selected COA group enum maps to; when a Detail Type is chosen, prefer the exact
-  // entry that owns that detail type (e.g. Asset+Checking → the "Bank" entry → BS / Debit / Register).
-  const previewEntry = useMemo<AccountTypeCatalogEntry | null>(() => {
-    const data = typeCatalogQuery.data;
-    if (!data || !form.account_type) return null;
-    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.account_type] ?? []);
-    const matches = data.filter(
-      (e) => codes.has(e.code) || e.accountType === form.account_type || e.code === form.account_type,
-    );
-    if (matches.length === 0) return null;
-    if (form.account_subtype) {
-      const withDetail = matches.find((e) => e.detailTypes.some((dt) => dt.name === form.account_subtype));
-      if (withDetail) return withDetail;
-    }
-    return matches[0];
-  }, [typeCatalogQuery.data, form.account_type, form.account_subtype]);
+  // Live preview metadata — sourced from the fetched account_types catalog, NOT hardcoded.
+  const previewEntry = useMemo<AccountTypeCatalogEntry | null>(
+    () => resolveAccountTypeCatalogEntry(typeCatalogQuery.data, form.account_type, form.account_subtype),
+    [typeCatalogQuery.data, form.account_type, form.account_subtype],
+  );
 
   // Hydrate detail_type_id from legacy text subtype when FK not yet populated.
   useEffect(() => {
@@ -200,6 +196,18 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     setSubmitError("");
     setConfirmArchive(false);
   }, [open, account]);
+
+  // Edit rows often store the 8 GAAP enum; map to the QBO catalog CODE once taxonomy loads.
+  useEffect(() => {
+    if (!open || !typeCatalogQuery.data?.length || !form.account_type) return;
+    const resolved = resolveAccountTypePickerValue(
+      typeCatalogQuery.data,
+      form.account_type,
+      form.detail_type_id || undefined,
+      form.account_subtype || undefined,
+    );
+    if (resolved && resolved !== form.account_type) setField("account_type", resolved);
+  }, [open, typeCatalogQuery.data, form.account_type, form.detail_type_id, form.account_subtype]);
 
   const isLocked = mode === "edit" && (account?.is_locked === true);
   const isArchived = mode === "edit" && Boolean(account?.deactivated_at);
@@ -247,8 +255,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         // (Asset → BANK|AR|OCA|FA|OA, Liability → CC|AP|OCL|LTL) that no flat enum→code map could.
         // Only applied when a detail type is actually selected; the cleared-detail-type path already
         // succeeded and is left untouched.
-        account_type:
-          form.detail_type_id.trim() && previewEntry ? previewEntry.code : form.account_type,
+        account_type: previewEntry?.code ?? form.account_type,
         account_number: form.account_number.trim() || null,
         // account_subtype + notes are .optional() (not .nullable()) on the create schema, so an empty value
         // must be omitted (undefined), NOT sent as null — sending null was the "validation_error" on save.
@@ -390,26 +397,27 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               <FieldError msg={errors.account_number} />
             </FieldLabel>
 
-            {/* Account Type */}
+            {/* Account Type — QBO finer types (Bank, A/R, …) from live account-type catalog */}
             <FieldLabel label="Account Type" required>
               <select
                 value={form.account_type}
                 disabled={readOnly}
+                data-testid="account-type-qbo-finer-select"
                 onChange={(e) => {
                   setField("account_type", e.target.value);
                   setField("account_subtype", "");
                   setField("detail_type_id", "");
-                  // A parent must share the new account_type, so clear any stale same-type selection.
+                  // A parent must share the new account_type group, so clear any stale selection.
                   setField("parent_account_id", "");
                 }}
                 className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
                 <option value="">Select type…</option>
-                {ACCOUNT_TYPE_GROUPS.map((group) => (
+                {accountTypePickerGroups.map((group) => (
                   <optgroup key={group.label} label={group.label}>
-                    {group.types.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    {group.options.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
                   </optgroup>
@@ -496,7 +504,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                     operatingCompanyId={operatingCompanyId}
                     placeholder={
                       parentOptions.length === 0 && !parentAccountsQuery.isLoading
-                        ? `No other ${form.account_type} accounts to nest under`
+                        ? `No other ${parentCoaGroup || form.account_type || "matching"} accounts to nest under`
                         : "Select parent account"
                     }
                     loading={parentAccountsQuery.isLoading}

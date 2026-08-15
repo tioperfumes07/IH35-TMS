@@ -43,11 +43,10 @@ export function fetchAccountTypeCatalog(operatingCompanyId?: string | null) {
 }
 
 // ── Shared COA account-type taxonomy ────────────────────────────────────────────────────────────
-// Single source of truth for the Chart-of-Accounts type/detail-type pickers. catalogs.accounts
-// .account_type is the 8-value COA group enum below; the finer Detail Type list is fetched LIVE from
-// catalogs.account_types (fetchAccountTypeCatalog) and matched to the chosen enum via
-// COA_ENUM_TO_CATALOG_CODES. Consumed by both AccountDrawer (COA list page) and the category
-// quick-create so the two never drift (§9).
+// catalogs.accounts.account_type is often the 8-value COA group enum on historical rows; create UIs
+// pick the ~15 QBO finer types (codes BANK/AR/EXP/…) from fetchAccountTypeCatalog and persist the
+// catalog code. Parent filters map code → 8-enum via catalogCodeToCoaEnum. Shared by AccountDrawer,
+// NewAccountDrawerForm, and QuickCreate category so the three never drift (§9).
 export const ACCOUNT_TYPES = [
   "Asset",
   "Liability",
@@ -101,6 +100,106 @@ export function detailTypesForAccountType(
     }
   }
   return out;
+}
+
+/** Map a QBO catalog code (BANK) or legacy 8-enum (Asset) → the 8-value group used on catalogs.accounts rows. */
+export function catalogCodeToCoaEnum(codeOrEnum: string): string {
+  if ((ACCOUNT_TYPES as readonly string[]).includes(codeOrEnum)) return codeOrEnum;
+  for (const [enumVal, codes] of Object.entries(COA_ENUM_TO_CATALOG_CODES)) {
+    if (codes.includes(codeOrEnum)) return enumVal;
+  }
+  return codeOrEnum;
+}
+
+/**
+ * QBO Account Type picker groups — Balance Sheet / P&L optgroups of the ~15 finer types
+ * (Bank, Accounts receivable, …) from the live account-type catalog. Falls back to the
+ * 8 GAAP enums only when the catalog has not loaded yet.
+ */
+export function accountTypePickerGroupsFromCatalog(
+  catalog: AccountTypeCatalogEntry[] | undefined,
+): Array<{ label: string; options: Array<{ value: string; label: string }> }> {
+  if (!catalog?.length) {
+    return ACCOUNT_TYPE_GROUPS.map((group) => ({
+      label: group.label,
+      options: group.types.map((t) => ({ value: t, label: t })),
+    }));
+  }
+  const statementLabel = (statement: string) =>
+    statement === "BS" || /balance/i.test(statement) ? "Balance Sheet" : "Profit & Loss";
+  const buckets = new Map<string, Array<{ value: string; label: string }>>();
+  for (const entry of [...catalog].sort((a, b) => a.sortOrder - b.sortOrder || a.accountType.localeCompare(b.accountType))) {
+    const label = statementLabel(entry.statement || "");
+    const list = buckets.get(label) ?? [];
+    list.push({ value: entry.code, label: entry.accountType || entry.code });
+    buckets.set(label, list);
+  }
+  return ["Balance Sheet", "Profit & Loss"]
+    .filter((label) => buckets.has(label))
+    .map((label) => ({ label, options: buckets.get(label)! }));
+}
+
+/** Detail types for a picker selection that is either a catalog code (BANK) or a legacy 8-enum. */
+export function detailTypesForAccountTypeSelection(
+  catalog: AccountTypeCatalogEntry[] | undefined,
+  selection: string,
+): AccountTypeCatalogEntry["detailTypes"] {
+  if (!catalog || !selection) return [];
+  const exact = catalog.find((e) => e.code === selection || e.accountType === selection);
+  if (exact) return exact.detailTypes;
+  return detailTypesForAccountType(catalog, selection);
+}
+
+/** Resolve the catalog row for a picker selection (+ optional detail name). */
+export function resolveAccountTypeCatalogEntry(
+  catalog: AccountTypeCatalogEntry[] | undefined,
+  selection: string,
+  detailName?: string,
+): AccountTypeCatalogEntry | null {
+  if (!catalog || !selection) return null;
+  const exact = catalog.find((e) => e.code === selection || e.accountType === selection);
+  if (exact) return exact;
+  const codes = new Set(COA_ENUM_TO_CATALOG_CODES[selection] ?? []);
+  const matches = catalog.filter(
+    (e) => codes.has(e.code) || e.accountType === selection || e.code === selection,
+  );
+  if (matches.length === 0) return null;
+  if (detailName) {
+    const withDetail = matches.find((e) => e.detailTypes.some((dt) => dt.name === detailName));
+    if (withDetail) return withDetail;
+  }
+  return matches[0];
+}
+
+/**
+ * Normalize a stored catalogs.accounts.account_type (often the 8-enum) to the catalog CODE
+ * the QBO picker uses, preferring the row that owns detailTypeId when present.
+ */
+export function resolveAccountTypePickerValue(
+  catalog: AccountTypeCatalogEntry[] | undefined,
+  storedAccountType: string,
+  detailTypeId?: string,
+  detailName?: string,
+): string {
+  if (!storedAccountType) return "";
+  if (!catalog?.length) return storedAccountType;
+  if (catalog.some((e) => e.code === storedAccountType)) return storedAccountType;
+  if (detailTypeId) {
+    for (const e of catalog) {
+      if (e.detailTypes.some((dt) => dt.id === detailTypeId)) return e.code;
+    }
+  }
+  if (detailName) {
+    for (const e of catalog) {
+      if (e.detailTypes.some((dt) => dt.name === detailName)) return e.code;
+    }
+  }
+  const codes = COA_ENUM_TO_CATALOG_CODES[storedAccountType];
+  if (codes?.length) {
+    const hit = catalog.find((e) => codes.includes(e.code));
+    if (hit) return hit.code;
+  }
+  return storedAccountType;
 }
 
 export function fetchAccountBalances(operatingCompanyId: string, asOfDate: string) {

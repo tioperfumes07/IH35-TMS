@@ -1,7 +1,7 @@
 /**
  * BK7 — New Account drawer form (two-column + cascade + lock flag).
  *
- * LEFT: Account name, Account number, Account type (8-value COA enum, statement-grouped),
+ * LEFT: Account name, Account number, Account type (QBO ~15 finer types from live catalog),
  *   Detail type (LIVE from catalogs.detail_types via account-type-catalog — no hardcoded arrays),
  *   sub-account toggle → parent selector, description, billable + lock flags.
  * RIGHT: Live BS/P&L preview from the fetched account-type catalog.
@@ -17,13 +17,12 @@ import { Lock } from "lucide-react";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
 import { getCoaAccounts } from "../../../api/banking";
 import {
-  ACCOUNT_TYPE_GROUPS,
-  ACCOUNT_TYPES,
-  COA_ENUM_TO_CATALOG_CODES,
-  detailTypesForAccountType,
+  accountTypePickerGroupsFromCatalog,
+  catalogCodeToCoaEnum,
+  detailTypesForAccountTypeSelection,
   fetchAccountTypeCatalog,
+  resolveAccountTypeCatalogEntry,
   type AccountTypeCatalogEntry,
-  type CoaAccountType,
 } from "../../../api/coa-list";
 import { useToast } from "../../Toast";
 import { ReferenceSelect } from "../ReferenceSelect";
@@ -35,7 +34,8 @@ const ACCOUNT_CREATE_GATED = false; // Owner GO 2026-07-22 — all companies
 type FormState = {
   name: string;
   accountNumber: string;
-  accountType: CoaAccountType | "";
+  /** QBO catalog code (BANK) or legacy 8-enum fallback before catalog loads. */
+  accountType: string;
   /** Detail type display name (cache). */
   detailType: string;
   detailTypeId: string;
@@ -77,8 +77,13 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
   });
 
   const detailOptions = useMemo(
-    () => detailTypesForAccountType(typeCatalogQuery.data, form.accountType),
+    () => detailTypesForAccountTypeSelection(typeCatalogQuery.data, form.accountType),
     [typeCatalogQuery.data, form.accountType],
+  );
+
+  const accountTypePickerGroups = useMemo(
+    () => accountTypePickerGroupsFromCatalog(typeCatalogQuery.data),
+    [typeCatalogQuery.data],
   );
 
   // Parent-account roster for the sub-account picker — entity-scoped (catalogs.accounts is per-entity
@@ -90,25 +95,20 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
     enabled: Boolean(operatingCompanyId) && form.isSubaccount,
   });
 
+  const parentCoaGroup = catalogCodeToCoaEnum(form.accountType);
+
   const parentOptions = useMemo(
-    () => (parentAccountsQuery.data?.accounts ?? []).filter((a) => !a.deactivated_at),
-    [parentAccountsQuery.data],
+    () =>
+      (parentAccountsQuery.data?.accounts ?? [])
+        .filter((a) => !a.deactivated_at)
+        .filter((a) => !form.accountType || a.account_type === parentCoaGroup || a.account_type === form.accountType),
+    [parentAccountsQuery.data, form.accountType, parentCoaGroup],
   );
 
-  const previewEntry = useMemo<AccountTypeCatalogEntry | null>(() => {
-    const data = typeCatalogQuery.data;
-    if (!data || !form.accountType) return null;
-    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.accountType] ?? []);
-    const matches = data.filter(
-      (e) => codes.has(e.code) || e.accountType === form.accountType || e.code === form.accountType,
-    );
-    if (matches.length === 0) return null;
-    if (form.detailType) {
-      const withDetail = matches.find((e) => e.detailTypes.some((dt) => dt.name === form.detailType));
-      if (withDetail) return withDetail;
-    }
-    return matches[0];
-  }, [typeCatalogQuery.data, form.accountType, form.detailType]);
+  const previewEntry = useMemo<AccountTypeCatalogEntry | null>(
+    () => resolveAccountTypeCatalogEntry(typeCatalogQuery.data, form.accountType, form.detailType),
+    [typeCatalogQuery.data, form.accountType, form.detailType],
+  );
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({
@@ -135,7 +135,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
       pushToast("Account type is required.", "error");
       return;
     }
-    if (!ACCOUNT_TYPES.includes(form.accountType)) {
+    if (!previewEntry && typeCatalogQuery.data?.length) {
       pushToast("Account type is invalid.", "error");
       return;
     }
@@ -163,7 +163,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           // the exact catalog row, preferring the one that OWNS the chosen detail type, so its .code
           // disambiguates the one-to-many enums (Asset -> BANK|AR|OCA|FA|OA, Liability -> CC|AP|OCL|LTL)
           // that no flat enum->code map could. Same boundary translation as AccountDrawer.tsx.
-          account_type: form.detailTypeId && previewEntry ? previewEntry.code : form.accountType,
+          account_type: previewEntry?.code ?? form.accountType,
           account_subtype: form.detailType || undefined,
           detail_type_id: form.detailTypeId || undefined,
           // Only send a parent when the sub-account toggle is on, so unticking it cannot leave a
@@ -213,13 +213,17 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
               value={form.accountType}
-              onChange={(e) => set("accountType", e.target.value as CoaAccountType | "")}
+              data-testid="account-type-qbo-finer-select"
+              onChange={(e) => {
+                set("accountType", e.target.value);
+                set("parentAccount", "");
+              }}
             >
               <option value="">Select a type…</option>
-              {ACCOUNT_TYPE_GROUPS.map((group) => (
+              {accountTypePickerGroups.map((group) => (
                 <optgroup key={group.label} label={group.label}>
-                  {group.types.map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                  {group.options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </optgroup>
               ))}
@@ -351,7 +355,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Where this lands</p>
           {previewEntry ? (
             <div className="mt-2 space-y-1">
-              <p className="font-medium text-gray-900">{form.accountType}</p>
+              <p className="font-medium text-gray-900">{previewEntry.accountType || form.accountType}</p>
               {form.detailType && (
                 <p className="mt-0.5 text-gray-500">Detail type: {form.detailType}</p>
               )}
