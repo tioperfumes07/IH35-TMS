@@ -92,7 +92,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
       ) : (
         <ul className="space-y-2">
           {alerts.map((alert: MaintenancePmAlert) => (
-            <li key={alert.id} className="rounded-sm border border-gray-200 p-2">
+            <li key={alert.id} className="p-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-gray-900">
                   Unit <EntityLink kind="unit" id={alert.unit_id} label={entityLabel(alert.unit_number, alert.unit_id, "Unit")} /> · {alert.schedule_label}
@@ -122,7 +122,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                 </button>
               </div>
               {schedulingAlertId === alert.id ? (
-                <div className="mt-2 rounded-sm border border-slate-200 bg-slate-50 p-2" data-testid={`pm-alert-wo-picker-${alert.id}`}>
+                <div className="mt-2 bg-slate-50 p-2" data-testid={`pm-alert-wo-picker-${alert.id}`}>
                   <label className="text-[11px] font-semibold text-gray-700">Work order</label>
                   <EntityPicker
                     kind="work_order"

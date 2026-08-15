@@ -28,7 +28,7 @@ export function DvirMaintenanceInspectionsReverseSection({
       {query.isError ? <p className="text-sm text-red-600">Could not load linked maintenance inspections.</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No maintenance inspection links this DVIR.</p> : null}
       {rows.map((inspection) => (
-        <div key={inspection.id} className="rounded-sm border border-gray-100 px-2 py-1.5 text-sm">
+        <div key={inspection.id} className="px-2 py-1.5 text-sm">
           <EntityLink
             kind="maintenance_inspection"
             id={inspection.id}

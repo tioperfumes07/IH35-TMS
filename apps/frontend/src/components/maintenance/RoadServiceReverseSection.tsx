@@ -33,7 +33,7 @@ export function RoadServiceReverseSection({
         <p className="text-xs text-gray-500">No road-service tickets linked to {contextLabel}.</p>
       ) : null}
       {tickets.map((ticket) => (
-        <div key={ticket.id} className="flex items-center justify-between gap-3 rounded-sm border border-gray-100 px-2 py-1.5 text-xs">
+        <div key={ticket.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
           <EntityLink
             kind="road_service_ticket"
             id={ticket.id}

@@ -180,7 +180,7 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
       every purchase create -- surface it honestly instead of discarding it. */}
       {lastGlPosting ? (
         <div
-          className="flex items-center justify-between rounded-sm border border-gray-200 bg-slate-50 px-3 py-2 text-xs"
+          className="flex items-center justify-between bg-slate-50 px-3 py-2 text-xs"
           data-testid="parts-purchase-gl-posting-result"
         >
           {lastGlPosting.posted && lastGlPosting.journal_entry_id ? (
