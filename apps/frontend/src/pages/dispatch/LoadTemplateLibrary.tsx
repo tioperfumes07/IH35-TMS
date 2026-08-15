@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { UseFormSetValue } from "react-hook-form";
 import { listLoadTemplates, createLoadTemplate, type LoadTemplateRow } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { Modal } from "../../components/Modal";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useSearchParams } from "react-router-dom";
 
@@ -234,12 +235,25 @@ type LibraryProps = {
 
 /** Simple library modal: list names + hint to use Book Load picker */
 export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: LibraryProps) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const templateId = searchParams.get("template_id") ?? undefined;
-  const customerId = searchParams.get("customer_id") ?? undefined;
+  const deepLinkCustomerId = searchParams.get("customer_id") ?? undefined;
+  // LST-F5174 — visible EntityPicker (URL-only customer seed is not reverse chrome).
+  const [customerPickerId, setCustomerPickerId] = useState("");
+  useEffect(() => {
+    if (deepLinkCustomerId) setCustomerPickerId(deepLinkCustomerId);
+  }, [deepLinkCustomerId]);
+  const setCustomerFilter = (customerId: string) => {
+    setCustomerPickerId(customerId);
+    const next = new URLSearchParams(searchParams);
+    if (customerId) next.set("customer_id", customerId);
+    else next.delete("customer_id");
+    setSearchParams(next, { replace: true });
+  };
+  const effectiveCustomerId = customerPickerId.trim() || deepLinkCustomerId || undefined;
   const q = useQuery({
-    queryKey: ["load-templates", operatingCompanyId, templateId ?? null, customerId ?? null],
-    queryFn: () => listLoadTemplates(operatingCompanyId, { template_id: templateId, customer_id: customerId }),
+    queryKey: ["load-templates", operatingCompanyId, templateId ?? null, effectiveCustomerId ?? null],
+    queryFn: () => listLoadTemplates(operatingCompanyId, { template_id: templateId, customer_id: effectiveCustomerId }),
     enabled: Boolean(operatingCompanyId) && open,
   });
   const rows: LoadTemplateRow[] = useMemo(() => q.data?.templates ?? [], [q.data?.templates]);
@@ -247,6 +261,19 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
   return (
     <Modal open={open} onClose={onClose} title="Load templates">
       <div className="max-h-[360px] space-y-2 overflow-y-auto text-sm">
+        <label className="block text-[11px] text-slate-600" data-testid="load-template-library-filters">
+          Customer
+          <EntityPicker
+            kind="customer"
+            operatingCompanyId={operatingCompanyId}
+            value={customerPickerId || null}
+            onChange={(next) => setCustomerFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All customers"
+            className="mt-1"
+            dataTestId="load-template-library-filter-customer"
+          />
+        </label>
         {q.isLoading ? <div className="text-gray-500">Loading…</div> : null}
         {!q.isLoading && rows.length === 0 ? <div className="text-gray-500">No saved templates. Use “Save as template” on a load.</div> : null}
         {rows.map((t) => (
@@ -255,7 +282,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
             <div className="text-[11px] text-gray-500">Updated {t.updated_at ? new Date(t.updated_at).toLocaleString() : "—"}</div>
           </div>
         ))}
-        <CappedListNotice shown={rows.length} limit={customerId || templateId ? rows.length : 500} total={q.data?.total ?? null} />
+        <CappedListNotice shown={rows.length} limit={effectiveCustomerId || templateId ? rows.length : 500} total={q.data?.total ?? null} />
       </div>
       <div className="mt-3 flex justify-end">
         <Button type="button" size="sm" variant="secondary" onClick={onClose}>
