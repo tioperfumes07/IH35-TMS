@@ -57,7 +57,7 @@ const EMPTY_PURCHASE: PurchaseForm = {
 export function PartsInventoryTable({ companyId, rows, loading = false, isError = false, onRetry, highlightedRowId = "" }: Props) {
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
-  const [search, setSearch] = useState("");
+  // Search is ONLY ParityTable UniversalListToolbar (LV-PARTS-INVENTORY-DUPLICATE-SEARCH).
   const [vendorSearch, setVendorSearch] = useState("");
   const [form, setForm] = useState<PurchaseForm>(EMPTY_PURCHASE);
   const [adjustRow, setAdjustRow] = useState<PartsInventoryRow | null>(null);
@@ -127,16 +127,6 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
     },
   });
-
-  const filteredRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      [r.part_description, r.last_purchase_invoice_number, r.location, r.vendor_id, vendorNameById.get(r.vendor_id ?? "")].some(
-        (v) => String(v ?? "").toLowerCase().includes(q),
-      ),
-    );
-  }, [rows, search, vendorNameById]);
 
   const columns: Array<ParityColumn<PartsInventoryRow>> = [
     // Part # is its OWN column, matching how McLeod and NetSuite parts grids are laid out: a scannable
@@ -214,7 +204,7 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
       ) : (
       <ParityTable<PartsInventoryRow>
         columns={columns}
-        rows={filteredRows}
+        rows={rows}
         rowKey={(row) => row.id}
         rowClassName={(row) => highlightedRowId && row.id === highlightedRowId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
         loading={loading}
@@ -222,14 +212,6 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
         storageKey="maint-parts-inventory"
         exportFilename="parts-inventory"
         rowActions={rowActions}
-        filterBar={
-          <input
-            className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-            placeholder="Search part / vendor / invoice / location…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        }
       />
       )}
 
