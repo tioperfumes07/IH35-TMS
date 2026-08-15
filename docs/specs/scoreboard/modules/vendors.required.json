@@ -389,7 +389,6 @@
       "route_hint": "/vendors/:id",
       "required": [
         "vendor",
-        "expense",
         "picker_law",
         "connectivity"
       ]
@@ -413,7 +412,6 @@
       "route_hint": "/vendors/:id",
       "required": [
         "vendor",
-        "expense",
         "connectivity"
       ]
     },
@@ -952,6 +950,24 @@
             "reverse_link"
           ],
           "reason": "vendor's own native document tab; module's own honesty_audit already concluded this, required array was never updated"
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-VENDOR-PROFILE",
+      "note": "detail.profile.default_expense_account / detail.profile.category_save (VendorDetail.tsx Profile tab, same component): both pure vendor-attribute editors -- default_expense_account writes vendor.default_expense_account_id (a GL chart-of-accounts id that pre-fills the expense account on future new bills, never itself an expense record); category_save writes vendor.vendor_category, an enum + lock flag. No single owning expense record for either. (detail.ap / detail.ap.expenses, the SAME file's A/P tab, are correctly left Required -- already-built via a real per-vendor expenses panel, verified this session.)",
+      "drops": [
+        {
+          "id": "detail.profile.default_expense_account",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "detail.profile.category_save",
+          "removed": [
+            "expense"
+          ]
         }
       ]
     }

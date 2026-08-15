@@ -233,7 +233,6 @@
         "unit",
         "trailer",
         "load",
-        "expense",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1013,6 +1012,18 @@
           "id": "lawsuits.create",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-CLAIMS-CREATE",
+      "note": "claims.create (ClaimCreateModal.tsx): pure create form. repair_books_treatment is only a treatment-choice enum on the claim, not an expense record -- no expense exists until (and unless) downstream posting creates one; zero EntityLink usage in this modal.",
+      "drops": [
+        {
+          "id": "claims.create",
+          "removed": [
+            "expense"
           ]
         }
       ]

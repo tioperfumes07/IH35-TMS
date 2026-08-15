@@ -160,7 +160,6 @@
         "vendor",
         "unit",
         "ap_bill",
-        "expense",
         "gl_je",
         "picker_law",
         "qbo_chrome",
@@ -1132,7 +1131,6 @@
       "surface_kind": "panel",
       "surface_path": "pages/accounting/FixedAssetsPage.tsx",
       "required": [
-        "expense",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -1147,7 +1145,6 @@
       "surface_path": "pages/accounting/FixedAssetsPage.tsx",
       "required": [
         "unit",
-        "expense",
         "gl_je",
         "connectivity",
         "reverse_link",
@@ -1175,7 +1172,6 @@
       "surface_kind": "panel",
       "surface_path": "pages/accounting/PeriodComparisonPage.tsx",
       "required": [
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -1188,7 +1184,6 @@
       "surface_kind": "panel",
       "surface_path": "pages/accounting/PrepaidExpensesPage.tsx",
       "required": [
-        "expense",
         "gl_je",
         "connectivity",
         "reverse_link",
@@ -1203,7 +1198,6 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/PrepaidExpensesPage.tsx",
       "required": [
-        "expense",
         "gl_je",
         "connectivity",
         "picker_law",
@@ -1629,6 +1623,48 @@
           "id": "ap.aging",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED",
+      "note": "bills.create.vendor (VendorBillCreatePage.tsx): no INSERT INTO accounting.expenses anywhere in bills.service.ts -- a vendor bill persists accounting.bills + bill_lines and auto-posts a GL JE debiting a chart-of-accounts EXPENSE ACCOUNT, not a row in the accounting.expenses table. EntityLink kind=\"expense\" resolves to /accounting/expenses/:id, a table this flow never writes to. accounting.panel.trk_bulk_register / accounting.panel.detail (FixedAssetsPage.tsx): same root blocker already filed for gl_je (FIXED-ASSETS-DEPRECIATION-GL-POSTING-NOT-BUILT) -- depreciation posts straight to a GL expense account, never through accounting.expenses, and no posting engine exists yet. accounting.panel.class_cost_center_variance: CostCenterClassVarianceRow carries only class_id + aggregate period totals, no expense_id field -- same rollup shape already dropped for gl_je/reverse_link. accounting.panel.schedule / accounting.modal.create (PrepaidExpensesPage.tsx): amortization posts straight to a GL expense account (detail.expense_account_id), never creating an accounting.expenses row; the create modal creates a prepaid_asset record (its own EntityLink kind), not an expense.",
+      "drops": [
+        {
+          "id": "bills.create.vendor",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "accounting.panel.trk_bulk_register",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "accounting.panel.detail",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "accounting.panel.class_cost_center_variance",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "accounting.panel.schedule",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "accounting.modal.create",
+          "removed": [
+            "expense"
           ]
         }
       ]

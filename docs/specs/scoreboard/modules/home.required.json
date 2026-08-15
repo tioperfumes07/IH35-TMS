@@ -164,7 +164,6 @@
       "sub": "Accounting home",
       "route_hint": "/home",
       "required": [
-        "expense",
         "connectivity"
       ]
     },
@@ -1066,6 +1065,18 @@
             "reverse_link"
           ],
           "reason": "computed ad-hoc aggregate rollup, not a persisted record type"
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-HOME-ROLE",
+      "note": "role.accountant (AccountingHome.tsx): pure aggregate dashboard -- AR/AP aging buckets, KPI bar drilling only to rollup routes, and a pending-approvals panel that never surfaces an \"expense\" kind item. No per-expense record anywhere on this role dashboard.",
+      "drops": [
+        {
+          "id": "role.accountant",
+          "removed": [
+            "expense"
+          ]
         }
       ]
     }

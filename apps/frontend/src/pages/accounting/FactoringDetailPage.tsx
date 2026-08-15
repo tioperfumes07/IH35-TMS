@@ -163,7 +163,12 @@ export function FactoringDetailPage() {
       key: "customer_name",
       label: "Customer",
       sortable: true,
-      render: (invoice) => entityLabel(invoice.customer_name, invoice.customer_id, "Customer"),
+      // LINK-F5131: customer_id was a real canonical FK rendered as inert entityLabel() text.
+      render: (invoice) => (
+        <span onClick={(e) => e.stopPropagation()}>
+          <EntityLink kind="customer" id={invoice.customer_id} label={entityLabel(invoice.customer_name, invoice.customer_id, "Customer")} />
+        </span>
+      ),
     },
     { key: "issue_date", label: "Issue Date", sortable: true, render: (invoice) => formatDateUS(invoice.issue_date) },
     { key: "total_cents", label: "Total", sortable: true, render: (invoice) => money(invoice.total_cents) },

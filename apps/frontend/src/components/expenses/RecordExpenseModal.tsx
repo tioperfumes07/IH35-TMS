@@ -6,7 +6,8 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated?: () => void;
+  /** LINK-F5189: fired with the real created accounting.expenses id (was previously discarded). */
+  onCreated?: (expenseId: string | null) => void;
 };
 
 /**
@@ -24,8 +25,8 @@ export function RecordExpenseModal({ open, operatingCompanyId, onClose, onCreate
           operatingCompanyId={operatingCompanyId}
           idPrefix="record-expense-modal"
           submitLabel="Record expense"
-          onSubmitted={() => {
-            onCreated?.();
+          onSubmitted={(created) => {
+            onCreated?.(created?.targetId ?? null);
             onClose();
           }}
         />

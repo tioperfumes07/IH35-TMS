@@ -43,14 +43,27 @@ const composed = [
 export function auditExpenseColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  // ACCT-F5083 removed four proven-false P10 cells (Book/Reserve/Detention/Relay); 13 is the honest floor.
-  if (p10.length < 13) failures.push(`priority-10 expense inventory unexpectedly shrank to ${p10.length}`);
-  // ACCT-F5085/F5086 removed sixteen proven-false compliance/home/insurance/legal/fuel identity cells.
-  // Fleet's eight unrelated trip-cost/edit/toll/bank leaves were removed and two explicit
-  // unit/trailer expense-reverse leaves were added by FLEET-EXPENSE-REVERSE-LEAVES.
-  if (leaves.length < 57) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
-  // Dispatch, compliance, and legal left the expense inventory after their navigation/GL-only cells were removed.
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 11) failures.push("expense module inventory unexpectedly shrank");
+  // ACCT-F5083 removed four proven-false P10 cells (Book/Reserve/Detention/Relay); 13 was the
+  // honest floor at the time.
+  // LINK-F5189 (2026-08-15, CC-1): a full 3-agent read-only re-investigation of every leaf then
+  // Required for expense (36 total) found this floor had gone stale -- prior legitimate
+  // honesty_audit corrections (expense_2026_08_13_secondary, dated BEFORE this floor was last
+  // set: 6 inventory + 4 maintenance + 17 reports leaves) had already dropped the true count to
+  // 36 with no floor update, and this session's own re-investigation found 15 MORE genuinely
+  // false-required leaves (6 accounting: bills.create.vendor/trk_bulk_register/detail/
+  // class_cost_center_variance/schedule/modal.create -- all either GL-account-only postings with
+  // no accounting.expenses row, or a prepaid-asset/fixed-asset create with no expense angle;
+  // 1 maintenance: wo.source.rs, a bill-only road-service flow; 8 more across cash-flow/fuel/
+  // home/insurance/reports/safety/vendors, each a rollup, category picker, vendor-attribute
+  // editor, or create-form with no single owning expense record -- each with a live-verified
+  // "no INSERT INTO accounting.expenses in this flow" citation in
+  // docs/specs/scoreboard/modules/*.required.json honesty_audit.expense_2026_08_15). 10 genuine
+  // gaps were also found and BUILT (not dropped) in the same sweep. Verified live 2026-08-15:
+  // p10=9, total=21, module diversity=5 -- all three floors below reset to those exact honest
+  // counts, same convention as the ACCT-F5083/F5085/F5086 corrections above.
+  if (p10.length < 9) failures.push(`priority-10 expense inventory unexpectedly shrank to ${p10.length}`);
+  if (leaves.length < 21) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
+  if (new Set(leaves.map((leaf) => leaf.module)).size < 5) failures.push("expense module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: non-posting expense FE contract missing`);
   return failures;

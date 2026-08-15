@@ -400,7 +400,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "expense",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -2777,6 +2776,18 @@
           "id": "report.ap_aging",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-REPORT-MANAGEMENT",
+      "note": "report.management (ManagementReportPackagePage.tsx): \"Operating Expenses\" section is a per-GL-account rollup drilling to the chart-of-accounts register, not a per-expense id; VendorExpenseSummarySection is the same vendor-level AP-aging rollup already dropped for ap_bill this session (same file, same underlying getApAgingReport source). No per-expense drill exists anywhere on this page.",
+      "drops": [
+        {
+          "id": "report.management",
+          "removed": [
+            "expense"
           ]
         }
       ]

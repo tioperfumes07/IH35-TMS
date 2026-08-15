@@ -449,7 +449,6 @@
       "route_hint": "/safety/external-fines",
       "required": [
         "driver",
-        "expense",
         "connectivity"
       ]
     },
@@ -1554,6 +1553,18 @@
           "id": "safety.modal.fine_convert_confirm",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_15": {
+      "finding": "EXPENSE-FALSE-REQUIRED-EXTERNAL-FINES",
+      "note": "external_fines.list (FineDetailDrawer.tsx): the fine posts its expense leg directly to the GL via a journal entry (EntityLink kind=\"journal_entry\" on fine.journal_entry_id) -- confirmed server-side, safety-fine-posting/poster.service.ts inserts into accounting.civil_fine_postings and posts the JE directly, no INSERT INTO accounting.expenses anywhere in that poster. No real expense record exists to link.",
+      "drops": [
+        {
+          "id": "external_fines.list",
+          "removed": [
+            "expense"
           ]
         }
       ]

@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { RecordExpenseForm } from "../../../components/expenses/RecordExpenseForm";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -39,11 +41,15 @@ export function CreateExpenseModal({
   const queryClient = useQueryClient();
   const [pickedWoId, setPickedWoId] = useState<string | null>(null);
   const [pickedUnitId, setPickedUnitId] = useState<string | null>(null);
+  // LINK-F5189: hold the just-created expense instead of auto-closing straight past it, same
+  // "hold state -> confirm -> close" pattern already applied to CreateBillModal.tsx (ap_bill sweep).
+  const [createdExpenseId, setCreatedExpenseId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setPickedWoId(linkedWoId ?? null);
     setPickedUnitId(linkedUnitId ?? null);
+    setCreatedExpenseId(null);
   }, [open, linkedWoId, linkedUnitId]);
 
   const showLinkPickers = requireWoLink && !linkedWoId;
@@ -89,7 +95,31 @@ export function CreateExpenseModal({
           ) : null}
         </div>
       ) : null}
-      {linkReady ? (
+      {createdExpenseId ? (
+        <div
+          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm"
+          data-testid="create-expense-modal-confirmation"
+        >
+          <p className="text-gray-700">
+            Expense recorded:{" "}
+            <EntityLink
+              kind="expense"
+              id={createdExpenseId}
+              label="View expense →"
+              data-testid="create-expense-modal-view-expense"
+            />
+          </p>
+          <Button
+            size="sm"
+            onClick={() => {
+              setCreatedExpenseId(null);
+              onClose();
+            }}
+          >
+            Done
+          </Button>
+        </div>
+      ) : linkReady ? (
         <RecordExpenseForm
           operatingCompanyId={operatingCompanyId}
           idPrefix="maintenance-create-expense"
@@ -107,7 +137,14 @@ export function CreateExpenseModal({
             void queryClient.invalidateQueries({ queryKey: ["accounting", "expenses"] });
             void queryClient.invalidateQueries({ queryKey: ["maintenance"] });
             onCreated?.(created?.targetId ?? null);
-            onClose();
+            // LINK-F5189: hold a confirmation step with a real EntityLink instead of closing
+            // straight past the just-created expense; onClose() now fires when the operator
+            // dismisses it above.
+            if (created?.targetId) {
+              setCreatedExpenseId(created.targetId);
+            } else {
+              onClose();
+            }
           }}
         />
       ) : null}
