@@ -1665,8 +1665,12 @@ export type MdataUnit = Record<string, unknown> & {
   qbo_class_id?: string | null;
 };
 
-export function getUnit(id: string) {
-  return apiRequest<MdataUnit>(`/api/v1/mdata/units/${id}`);
+export async function getUnit(id: string, operatingCompanyId: string): Promise<MdataUnit> {
+  const payload = await apiRequest<MdataUnit | { unit: MdataUnit }>(
+    `/api/v1/mdata/units/${id}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+  const envelope = payload as { unit?: MdataUnit };
+  return envelope.unit ?? (payload as MdataUnit);
 }
 
 export type CreateUnitInput = {

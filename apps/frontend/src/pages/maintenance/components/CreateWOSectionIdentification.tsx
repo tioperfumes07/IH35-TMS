@@ -99,9 +99,9 @@ export function CreateWOSectionIdentification({
   const [vendorSearch, setVendorSearch] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const selectedUnitQuery = useQuery({
-    queryKey: ["maintenance", "master-data", "unit", unitId],
-    queryFn: () => getUnit(String(unitId)),
-    enabled: Boolean(unitId),
+    queryKey: ["maintenance", "master-data", "unit", operatingCompanyId, unitId],
+    queryFn: () => getUnit(String(unitId), String(operatingCompanyId)),
+    enabled: Boolean(operatingCompanyId) && Boolean(unitId),
     staleTime: 60_000,
   });
   const selectedDriverQuery = useQuery({

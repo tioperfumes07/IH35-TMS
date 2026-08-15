@@ -10,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { getUnit } from "../../api/mdata";
 
 type FaultDraft = {
   id: string;
@@ -44,6 +45,11 @@ export function FaultDraftsPage() {
     queryKey: ["maintenance", "fault-drafts", companyId],
     queryFn: () => fetchDrafts(companyId),
     enabled: Boolean(companyId),
+  });
+  const deepLinkUnitQuery = useQuery({
+    queryKey: ["mdata", "unit", companyId, deepLinkUnitId],
+    queryFn: () => getUnit(String(deepLinkUnitId), companyId),
+    enabled: Boolean(companyId) && Boolean(deepLinkUnitId),
   });
 
   const confirmMutation = useMutation({
@@ -116,7 +122,7 @@ export function FaultDraftsPage() {
 
       {deepLinkUnitId ? (
         <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          Filtered to unit <EntityLink kind="unit" id={deepLinkUnitId} label={entityLabel(null, deepLinkUnitId, "Unit")} className="font-semibold" />
+          Filtered to unit <EntityLink kind="unit" id={deepLinkUnitId} label={entityLabel(deepLinkUnitQuery.data?.unit_number, deepLinkUnitId, "Unit")} className="font-semibold" />
           {" — "}
           <Link to="/maintenance/fault-drafts" className="underline">
             clear filter
