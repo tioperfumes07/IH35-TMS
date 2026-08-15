@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { RecordExpenseForm } from "../../components/expenses/RecordExpenseForm";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -51,14 +52,29 @@ export function ExpenseCreatePage() {
               }}
             />
             {lastExpenseId ? (
-              <div className="flex items-center justify-between border-t border-gray-200 pt-3">
-                <span className="text-xs text-gray-600">Close an open task this expense fulfils:</span>
-                <TaskLinkPicker
-                  operatingCompanyId={companyId}
-                  targetType="expense"
-                  targetId={lastExpenseId}
-                  onLinked={() => setLastExpenseId(null)}
-                />
+              <div className="space-y-2 border-t border-gray-200 pt-3">
+                {/* LINK-F5186 (accounting.parity.expense_create_page): the created expense's own
+                detail page carries the real GL journal entry -- surface it here so the operator
+                isn't left in a drawer with no path to it. */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Expense recorded.</span>
+                  <EntityLink
+                    kind="expense"
+                    id={lastExpenseId}
+                    label="View expense →"
+                    className="text-xs font-semibold text-slate-700 underline"
+                    data-testid="expense-create-view-expense"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Close an open task this expense fulfils:</span>
+                  <TaskLinkPicker
+                    operatingCompanyId={companyId}
+                    targetType="expense"
+                    targetId={lastExpenseId}
+                    onLinked={() => setLastExpenseId(null)}
+                  />
+                </div>
               </div>
             ) : null}
           </div>

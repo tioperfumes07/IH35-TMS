@@ -8,6 +8,8 @@ export type AccountingPeriod = {
   fiscal_year: number;
   status: string;
   closed_at: string | null;
+  /** LINK-F5186: the real fiscal-year-close JE for this period, when the backend can resolve one. */
+  closing_journal_entry_id: string | null;
 };
 
 export type AccountingPeriodsResponse = { periods: AccountingPeriod[] };

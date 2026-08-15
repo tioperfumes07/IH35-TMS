@@ -7,6 +7,7 @@ import { Button } from "../Button";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { TaskLinkPicker } from "../tasks/TaskLinkPicker";
+import { EntityLink } from "../shared/EntityLink";
 import { useToast } from "../Toast";
 import { MoneyInput } from "../forms/MoneyInput";
 import { DatePicker } from "../forms/DatePicker";
@@ -145,6 +146,16 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-600">Payment recorded. Close an open task it fulfils:</span>
             <div className="flex items-center gap-2">
+              {/* LINK-F5186 (accounting.modal.bill_payment): the recorded payment's own detail page
+              carries the real GL journal entry -- surface it here so this modal doesn't leave the
+              operator with no path to it. */}
+              <EntityLink
+                kind="bill_payment"
+                id={completedPaymentId}
+                label="View payment →"
+                className="text-xs font-semibold text-slate-700 underline"
+                data-testid="bill-payment-modal-view-payment"
+              />
               <TaskLinkPicker
                 operatingCompanyId={operatingCompanyId}
                 targetType="bill_payment"
