@@ -184,13 +184,16 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
             e.id, e.customer_id, e.event_type, e.event_date, e.severity, e.summary, e.details,
             e.reason_id, r.code AS reason_code, r.label AS reason_label,
             e.dollar_impact_amount, e.dollar_currency, e.days_late,
-            e.related_load_id, e.related_invoice_id, e.document_ids,
+            e.related_load_id, rl.load_number AS related_load_number,
+            e.related_invoice_id, e.document_ids,
             e.voided_at, e.voided_by_user_id, vu.email AS voided_by_user_email, e.void_reason,
             e.created_at, e.updated_at
           FROM mdata.customer_quality_events e
           JOIN mdata.customers c ON c.id = e.customer_id
           LEFT JOIN catalogs.customer_quality_event_reasons r ON r.id = e.reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
+          LEFT JOIN mdata.loads rl
+            ON rl.id = e.related_load_id AND rl.operating_company_id = $2::uuid
           WHERE ${filters.join(" AND ")}
           ORDER BY e.event_date DESC, e.created_at DESC
         `,

@@ -843,6 +843,7 @@ export type CustomerQualityEvent = {
   dollar_currency: string;
   days_late: number | null;
   related_load_id: string | null;
+  related_load_number: string | null;
   related_invoice_id: string | null;
   document_ids: string[] | null;
   voided_at: string | null;
