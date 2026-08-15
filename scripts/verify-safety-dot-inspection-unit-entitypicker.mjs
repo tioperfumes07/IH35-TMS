@@ -49,6 +49,14 @@ export function collectProblems(root = ROOT) {
   if (!/DriverPickerWithCreate/.test(code)) {
     problems.push(`${FILE}: driver creator must still use DriverPickerWithCreate`);
   }
+  // LST-F5189 — list reverse filters must sync URL.
+  if (
+    !/dataTestId="dot-inspections-filter-driver"/.test(src) ||
+    !/setSearchParams/.test(src) ||
+    !/searchParams\.get\("driver_id"\)/.test(src)
+  ) {
+    problems.push(`${FILE}: list driver filter must EntityPicker + setSearchParams ?driver_id=`);
+  }
 
   return problems;
 }
