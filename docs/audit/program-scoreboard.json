@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T14:50:14-05:00",
-    "sourceSha": "18dd808e7",
-    "deployedSha": "2072f02",
+    "generatedAt": "2026-08-15T14:52:15-05:00",
+    "sourceSha": "324545f82",
+    "deployedSha": "f37cb23",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 818,
+    "ledgerRows": 819,
     "failOpen": 14,
     "defects": 17
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7354,
+      "title": "FINDING: LIVE-LEDGER-MAINT-WO-BILL-EXPENSE-819",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7354",
+      "sha": "324545f82",
+      "committedAtIso": "2026-08-15T14:52:15-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:51 PM CT",
+      "url": "",
+      "sha": "40a562428",
+      "committedAtIso": "2026-08-15T19:51:41Z"
+    },
+    {
       "number": 7353,
       "title": "FINDING: LIVE-LEDGER-FLEET-CREATE-UNIT-TRAILER-818",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7348",
       "sha": "3b9bbf4df",
       "committedAtIso": "2026-08-15T14:43:19-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:42 PM CT",
-      "url": "",
-      "sha": "34e87a98d",
-      "committedAtIso": "2026-08-15T19:42:29Z"
-    },
-    {
-      "number": 7347,
-      "title": "FINDING: LIVE-LEDGER-BORDER-CROSSING-813",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7347",
-      "sha": "2072f0203",
-      "committedAtIso": "2026-08-15T14:39:41-05:00"
     }
   ]
 }
