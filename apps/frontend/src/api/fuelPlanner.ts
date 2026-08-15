@@ -188,6 +188,7 @@ export type FuelTransactionListItem = {
   load_id: string | null;
   load_number: string | null;
   vendor_id: string | null;
+  vendor_name: string | null;
 };
 
 export type FuelTransactionListResponse = {

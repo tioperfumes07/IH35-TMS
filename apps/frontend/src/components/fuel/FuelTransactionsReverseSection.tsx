@@ -107,7 +107,7 @@ export function FuelTransactionsReverseSection({
                 {row.vendor_id ? (
                   <>
                     {" · "}
-                    <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(null, row.vendor_id, "Vendor")} />
+                    <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
                   </>
                 ) : null}
               </span>
