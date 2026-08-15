@@ -24,6 +24,7 @@ import { useToast } from "../../components/Toast";
 import { ManualJEModal } from "./components/ManualJEModal";
 import { TransferModal } from "./TransferModal";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { formatUsdCents } from "../../lib/money";
 
@@ -186,6 +187,14 @@ export function BankTxCategorizationPage() {
     })),
   });
 
+  const suggestionByTxId = useMemo(() => {
+    const map = new Map<string, (typeof suggestionQueries)[number]>();
+    txs.forEach((tx, idx) => {
+      map.set(String(tx.id ?? ""), suggestionQueries[idx]);
+    });
+    return map;
+  }, [txs, suggestionQueries]);
+
   const mergedMeta = mergeMeta(uncQuery.data?.meta, kpiQuery.data);
   const selectedTx = txs.find((t) => String(t.id) === selectedRowId) ?? null;
 
@@ -247,11 +256,14 @@ export function BankTxCategorizationPage() {
     void uncQuery.refetch();
   };
 
-  const toggleBulk = (txId: string) => {
-    setBulkSelected((prev) => ({ ...prev, [txId]: !prev[txId] }));
-  };
-
   const bulkIds = Object.keys(bulkSelected).filter((id) => bulkSelected[id]);
+  const bulkSelectedKeys = bulkIds;
+
+  const setBulkFromKeys = (keys: string[]) => {
+    const next: Record<string, boolean> = {};
+    for (const id of keys) next[id] = true;
+    setBulkSelected(next);
+  };
 
   const applyBulkSuggestions = async () => {
     for (const txId of bulkIds) {
@@ -402,140 +414,162 @@ export function BankTxCategorizationPage() {
               </button>
             </div>
           ) : null}
-          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-xs">
-              <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-                <tr>
-                  <th className="px-2 py-2"> </th>
-                  <th className="px-2 py-2">Date</th>
-                  <th className="px-2 py-2">Account</th>
-                  <th className="px-2 py-2">Description</th>
-                  <th className="px-2 py-2 text-right">Amount</th>
-                  <th className="px-2 py-2">Suggested</th>
-                  <th className="px-2 py-2">Quick actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {txs.map((tx, idx) => {
+          {/* BANK-F3578: ParityTable owns Search+Range+gear + selectable bulk on archived Workflow-B leaf. */}
+          <ParityTable<Record<string, unknown>>
+            rows={txs}
+            rowKey={(tx) => String(tx.id ?? "")}
+            storageKey="bank-tx-categorization-uncategorized"
+            exportFilename="bank-tx-uncategorized"
+            tableTestId="bank-tx-categorization-table"
+            emptyText={
+              uncQuery.isLoading
+                ? "Loading…"
+                : backendPending
+                  ? "Backend pending — uncategorized endpoints unavailable."
+                  : "No uncategorized transactions for these filters."
+            }
+            selectable
+            selectedKeys={bulkSelectedKeys}
+            onSelectionChange={setBulkFromKeys}
+            onRowClick={(tx) => setSelectedRowId(String(tx.id ?? ""))}
+            columns={[
+              {
+                key: "date",
+                label: "Date",
+                cellClass: "whitespace-nowrap text-gray-800",
+                render: (tx) => txDate(tx) || "—",
+              },
+              {
+                key: "account",
+                label: "Account",
+                cellClass: "text-gray-700",
+                render: (tx) => txBankLabel(tx),
+              },
+              {
+                key: "description",
+                label: "Description",
+                cellClass: "max-w-[200px] truncate text-gray-800",
+                render: (tx) => txDescription(tx),
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                className: "text-right",
+                cellClass: "text-right font-medium",
+                render: (tx) => formatMoneyCents(txAmountCents(tx)),
+              },
+              {
+                key: "suggested",
+                label: "Suggested",
+                cellClass: "align-top text-gray-700",
+                render: (tx) => {
                   const id = String(tx.id ?? "");
-                  const suggs = suggestionQueries[idx]?.data?.suggestions ?? [];
+                  const suggs = suggestionByTxId.get(id)?.data?.suggestions ?? [];
                   const top = suggs[0] as Record<string, unknown> | undefined;
-                  const selected = selectedRowId === id;
                   return (
-                    <tr
-                      key={id || idx}
-                      className={`cursor-pointer border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
-                      onClick={() => setSelectedRowId(id)}
-                    >
-                      <td className="px-2 py-1.5" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                        <input type="checkbox" checked={Boolean(bulkSelected[id])} onChange={() => toggleBulk(id)} />
-                      </td>
-                      <td className="whitespace-nowrap px-2 py-1.5 text-gray-800">{txDate(tx) || "—"}</td>
-                      <td className="px-2 py-1.5 text-gray-700">{txBankLabel(tx)}</td>
-                      <td className="max-w-[200px] truncate px-2 py-1.5 text-gray-800">{txDescription(tx)}</td>
-                      <td className="px-2 py-1.5 text-right font-medium">{formatMoneyCents(txAmountCents(tx))}</td>
-                      <td className="px-2 py-1.5 align-top text-gray-700">
-                        <div className="space-y-0.5">
-                          {suggs.slice(0, 3).map((s) => {
-                            const rec = s as Record<string, unknown>;
-                            const conf = suggestionConfidence(rec);
-                            return (
-                              <div key={String(rec.id ?? suggestionLabel(rec))} className="truncate text-[11px]">
-                                {suggestionLabel(rec)}
-                                {conf != null ? ` (${conf}%)` : ""}
-                              </div>
-                            );
-                          })}
-                          {suggs.length === 0 && !backendPending ? <span className="text-gray-400">…</span> : null}
-                        </div>
-                        {top ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="mt-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void applySuggestion(id, top);
-                            }}
-                          >
-                            Apply suggestion
-                          </Button>
-                        ) : null}
-                      </td>
-                      <td className="px-2 py-1.5 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                        <div className="flex flex-col gap-1">
-                          <div className="flex flex-wrap gap-1">
-                            <div className="max-w-[160px] flex-1">
-                              <ReferenceSelect
-                                value={coaPickByTx[id] ?? null}
-                                onChange={(next) => setCoaPickByTx((p) => ({ ...p, [id]: next ?? "" }))}
-                                options={coaOptions}
-                                createKind="account"
-                                operatingCompanyId={companyId}
-                                placeholder="Categorize as…"
-                                onOptionCreated={() => void coaQuery.refetch()}
-                              />
-                            </div>
-                            <Button
-                              size="sm"
-                              disabled={!coaPickByTx[id]}
-                              onClick={() => categorizeMut.mutate({ txId: id, accountId: coaPickByTx[id]! })}
-                            >
-                              Apply
-                            </Button>
+                    <div className="space-y-0.5">
+                      {suggs.slice(0, 3).map((s) => {
+                        const rec = s as Record<string, unknown>;
+                        const conf = suggestionConfidence(rec);
+                        return (
+                          <div key={String(rec.id ?? suggestionLabel(rec))} className="truncate text-[11px]">
+                            {suggestionLabel(rec)}
+                            {conf != null ? ` (${conf}%)` : ""}
                           </div>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              setManualPrefill({
-                                date: txDate(tx) || undefined,
-                                memo: `Bank tx ${id}: ${txDescription(tx)}`,
-                              });
-                              setManualJeOpen(true);
-                            }}
-                          >
-                            Create manual JE
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              setTransferLinkId(id);
-                              const cents = Math.abs(txAmountCents(tx));
-                              setTransferPrefill({
-                                from_account_id: String(tx.bank_account_id ?? tx.plaid_bank_account_id ?? ""),
-                                amount_cents: cents > 0 ? cents : undefined,
-                                transfer_date: txDate(tx) || undefined,
-                                memo: txDescription(tx),
-                              });
-                              setTransferOpen(true);
-                            }}
-                          >
-                            Mark as transfer
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              setSkipTx(tx);
-                              setSkipNote("");
-                            }}
-                          >
-                            Skip / investigate
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                        );
+                      })}
+                      {suggs.length === 0 && !backendPending ? <span className="text-gray-400">…</span> : null}
+                      {top ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="mt-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void applySuggestion(id, top);
+                          }}
+                        >
+                          Apply suggestion
+                        </Button>
+                      ) : null}
+                    </div>
                   );
-                })}
-              </tbody>
-            </table>
-            {txs.length === 0 && !uncQuery.isLoading && !backendPending ? (
-              <div className="p-4 text-sm text-gray-600">No uncategorized transactions for these filters.</div>
-            ) : null}
-            {uncQuery.isLoading ? <div className="p-4 text-sm text-gray-500">Loading…</div> : null}
-          </div>
+                },
+              },
+              {
+                key: "quick_actions",
+                label: "Quick actions",
+                cellClass: "align-top",
+                render: (tx) => {
+                  const id = String(tx.id ?? "");
+                  return (
+                    <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-wrap gap-1">
+                        <div className="max-w-[160px] flex-1">
+                          <ReferenceSelect
+                            value={coaPickByTx[id] ?? null}
+                            onChange={(next) => setCoaPickByTx((p) => ({ ...p, [id]: next ?? "" }))}
+                            options={coaOptions}
+                            createKind="account"
+                            operatingCompanyId={companyId}
+                            placeholder="Categorize as…"
+                            onOptionCreated={() => void coaQuery.refetch()}
+                          />
+                        </div>
+                        <Button
+                          size="sm"
+                          disabled={!coaPickByTx[id]}
+                          onClick={() => categorizeMut.mutate({ txId: id, accountId: coaPickByTx[id]! })}
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setManualPrefill({
+                            date: txDate(tx) || undefined,
+                            memo: `Bank tx ${id}: ${txDescription(tx)}`,
+                          });
+                          setManualJeOpen(true);
+                        }}
+                      >
+                        Create manual JE
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setTransferLinkId(id);
+                          const cents = Math.abs(txAmountCents(tx));
+                          setTransferPrefill({
+                            from_account_id: String(tx.bank_account_id ?? tx.plaid_bank_account_id ?? ""),
+                            amount_cents: cents > 0 ? cents : undefined,
+                            transfer_date: txDate(tx) || undefined,
+                            memo: txDescription(tx),
+                          });
+                          setTransferOpen(true);
+                        }}
+                      >
+                        Mark as transfer
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setSkipTx(tx);
+                          setSkipNote("");
+                        }}
+                      >
+                        Skip / investigate
+                      </Button>
+                    </div>
+                  );
+                },
+              },
+            ]}
+          />
         </main>
 
         <aside className="shrink-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3 lg:w-72">
