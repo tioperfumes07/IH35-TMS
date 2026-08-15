@@ -117,6 +117,7 @@ export type Driver = {
   status: DriverStatus;
   notes: string | null;
   prior_driver_id: string | null;
+  prior_driver_name: string | null;
   rehire_count: number;
   is_rehire: boolean;
   created_at: string;
