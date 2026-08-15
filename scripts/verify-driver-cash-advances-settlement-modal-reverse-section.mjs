@@ -105,6 +105,13 @@ export function assertSettlementsClusterReverse(sources) {
   if (!/driverIdFilter\s*=\s*searchParams\.get\("driver_id"\)/.test(caHome)) {
     problems.push(`${CA_HOME}: must read driver_id from URL search params (pre-existing contract)`);
   }
+  if (
+    !/dataTestId="cash-advances-filter-driver"/.test(caHome) ||
+    !/kind=["']driver["']/.test(caHome) ||
+    !/allowCreate=\{false\}/.test(caHome)
+  ) {
+    problems.push(`${CA_HOME}: must render EntityPicker kind=driver filter (allowCreate=false)`);
+  }
   if (!/onMarkDisbursed=\{\(\)\s*=>\s*setMarkDisbursedOpen\(true\)\}/.test(caHome)) {
     problems.push(`${CA_HOME}: AdvanceDetailDrawer must wire onMarkDisbursed to MarkDisbursedModal (pre-existing contract)`);
   }
@@ -193,6 +200,9 @@ function selftest() {
     `,
     [CA_HOME]: `
       const driverIdFilter = searchParams.get("driver_id");
+      dataTestId="cash-advances-filter-driver"
+      kind="driver"
+      allowCreate={false}
       <AdvanceDetailDrawer onMarkDisbursed={() => setMarkDisbursedOpen(true)} />
     `,
     [DRIVER_SECTION]: `
@@ -244,6 +254,7 @@ function selftest() {
     { ...good, [CAR_PAGE]: good[CAR_PAGE].replace('searchParams.get("driver_id")', '""') },
     { ...good, [CAR_PAGE]: good[CAR_PAGE].replace("deepLinkDriverId ?? undefined", "undefined") },
     { ...good, [CA_HOME]: good[CA_HOME].replace('searchParams.get("driver_id")', '""') },
+    { ...good, [CA_HOME]: good[CA_HOME].replace('dataTestId="cash-advances-filter-driver"', 'dataTestId="x"') },
     { ...good, [CA_HOME]: good[CA_HOME].replace("onMarkDisbursed={() => setMarkDisbursedOpen(true)}", "") },
     { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("cashAdvanceRequestsOfficeApi.listPending(operatingCompanyId, driverId)", "") },
     { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("{ driver_id: driverId }", "{}") },
