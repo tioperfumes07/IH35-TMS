@@ -15,7 +15,19 @@ const LABEL = "verify-dispatch-picker-law-queues";
 
 const CHECKS = [
   { name: "AssignmentHistoryPage", file: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx", re: /EntityPicker/ },
-  { name: "InTransitIssuesPage", file: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx", re: /EntityPicker/ },
+  {
+    name: "InTransitIssuesPage",
+    file: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
+    // LST-F5186 — list reverse filters must be EntityPicker + URL sync (not URL-only).
+    require: [
+      /dataTestId="intransit-issues-filter-driver"/,
+      /dataTestId="intransit-issues-filter-load"/,
+      /dataTestId="intransit-issues-filter-unit"/,
+      /allowCreate=\{false\}/,
+      /setSearchParams/,
+      /searchParams\.get\("driver_id"\)/,
+    ],
+  },
   { name: "PodReviewPage", file: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx", re: /EntityPicker/ },
   { name: "NotifyPreferencesPage", file: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx", re: /ReferenceSelect/ },
   { name: "BookLoadEquipmentSection", file: "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx", re: /EntityPicker/ },
@@ -29,7 +41,14 @@ function run(root = ROOT) {
       fails.push(`${c.name}: missing`);
       continue;
     }
-    if (!c.re.test(fs.readFileSync(abs, "utf8"))) fails.push(`${c.name}: no picker`);
+    const src = fs.readFileSync(abs, "utf8");
+    if (c.require) {
+      for (const re of c.require) {
+        if (!re.test(src)) fails.push(`${c.name}: missing ${re}`);
+      }
+    } else if (!c.re.test(src)) {
+      fails.push(`${c.name}: no picker`);
+    }
   }
   return fails;
 }
