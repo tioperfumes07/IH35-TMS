@@ -1177,6 +1177,11 @@
     "claimed_by": "claude-1",
     "purpose": "verify-matrix-ledger-leaf-match-honest"
   },
+  "3450": {
+    "purpose": "verify-hoverdropdown-click-after-hover",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "3453": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
