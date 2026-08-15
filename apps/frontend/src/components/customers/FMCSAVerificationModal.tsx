@@ -94,10 +94,10 @@ export function FMCSAVerificationModal({
 
   return (
     <Modal open={open} onClose={resetAndClose} title="Verify FMCSA Authority">
-      <div className="space-y-3">
-        <div className="rounded-sm border border-gray-200 p-3">
-          <div className="text-xs font-semibold text-gray-600">Lookup Type</div>
-          <div className="mt-2 flex gap-3 text-sm">
+      <div className="space-y-4" data-testid="fmcsa-verify-flat">
+        <section className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Lookup</h3>
+          <div className="flex gap-3 text-sm">
             <label className="flex items-center gap-2">
               <input
                 type="radio"
@@ -124,7 +124,7 @@ export function FMCSAVerificationModal({
             </label>
           </div>
 
-          <div className="mt-3">
+          <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">{lookupType === "usdot" ? "USDOT Number" : "MC Number"}</label>
             <input
               value={lookupValue}
@@ -134,18 +134,19 @@ export function FMCSAVerificationModal({
             />
           </div>
 
-          {inputError ? <div className="mt-2 text-xs text-red-600">{inputError}</div> : null}
-          {displayLookupValue ? <div className="mt-1 text-[11px] text-gray-500">Searching: {lookupType.toUpperCase()} {displayLookupValue}</div> : null}
-          <div className="mt-3">
+          {inputError ? <div className="text-xs text-red-600">{inputError}</div> : null}
+          {displayLookupValue ? <div className="text-[11px] text-gray-500">Searching: {lookupType.toUpperCase()} {displayLookupValue}</div> : null}
+          <div>
             <Button onClick={() => void runLookup()} loading={lookupMutation.isPending}>
               Verify
             </Button>
           </div>
-        </div>
+        </section>
 
         {result ? (
-          <div className="rounded-sm border border-gray-200 p-3">
-            <div className="mb-2 flex items-center gap-2">
+          <section className="space-y-2" data-testid="fmcsa-verify-result">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Result</h3>
+            <div className="flex items-center gap-2">
               <StatusBadge variant={authorityVariant(result.authority_status)}>{`Authority: ${result.authority_status}`}</StatusBadge>
               {result.cached ? <StatusBadge variant="info">Cached</StatusBadge> : null}
             </div>
@@ -159,8 +160,8 @@ export function FMCSAVerificationModal({
               <div><strong>Insurance Status:</strong> {result.insurance_status ?? "-"}</div>
               <div><strong>Safety Rating:</strong> {result.safety_rating ?? "NONE"}</div>
             </div>
-            <div className="mt-2 text-[11px] text-gray-500">Fetched at {new Date(result.fetched_at).toLocaleString()}</div>
-          </div>
+            <div className="text-[11px] text-gray-500">Fetched at {new Date(result.fetched_at).toLocaleString()}</div>
+          </section>
         ) : null}
 
         <div className="flex flex-wrap justify-end gap-2">
