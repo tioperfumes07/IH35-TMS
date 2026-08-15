@@ -7,6 +7,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EscrowForfeitModal } from "../components/EscrowForfeitModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 
@@ -18,6 +19,14 @@ export function EscrowRecordTab() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const isOwner = auth.user?.role === "Owner";
   const [selected, setSelected] = useState<EscrowRecordRow | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const escrowDriverIdParam = searchParams.get("driver_id")?.trim() ?? "";
+  // LST-F5163K: visible reverse filter (allowCreate=false); URL seeds picker + opens matching row.
+  const [driverFilter, setDriverFilter] = useState("");
+
+  useEffect(() => {
+    if (escrowDriverIdParam) setDriverFilter(escrowDriverIdParam);
+  }, [escrowDriverIdParam]);
 
   const escrowQuery = useQuery({
     queryKey: ["safety", "escrow-records", operatingCompanyId],
@@ -53,15 +62,20 @@ export function EscrowRecordTab() {
     },
   });
 
-  const rows = escrowQuery.data?.records ?? [];
+  const rowsAll = escrowQuery.data?.records ?? [];
+  const effectiveDriverId = driverFilter.trim() || escrowDriverIdParam || "";
+  const rows = useMemo(() => {
+    if (!effectiveDriverId) return rowsAll;
+    return rowsAll.filter(
+      (r) => String((r as { driver_id?: unknown }).driver_id ?? r.id) === effectiveDriverId
+    );
+  }, [rowsAll, effectiveDriverId]);
 
   // SAF-B30: EntityLink kind "escrow_record" routes here with ?driver_id=<id> and nothing read it,
   // so the escrow drill-through was a facade. Opens that driver's record once the list has loaded.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const escrowDriverIdParam = searchParams.get("driver_id");
   useEffect(() => {
-    if (!escrowDriverIdParam || rows.length === 0) return;
-    const match = rows.find(
+    if (!escrowDriverIdParam || rowsAll.length === 0) return;
+    const match = rowsAll.find(
       (r) => String((r as { driver_id?: unknown }).driver_id ?? r.id) === escrowDriverIdParam
     );
     if (match) {
@@ -70,7 +84,7 @@ export function EscrowRecordTab() {
       next.delete("driver_id");
       setSearchParams(next, { replace: true });
     }
-  }, [escrowDriverIdParam, rows, searchParams, setSearchParams]);
+  }, [escrowDriverIdParam, rowsAll, searchParams, setSearchParams]);
   const attempts = escrowQuery.data?.forfeit_attempts ?? [];
   // SAF-ORPH-03: surface per-driver timeline failures — silent catch left the Forfeiture Audit empty forever.
   const timelineErrors = escrowQuery.data?.timeline_errors ?? [];
@@ -178,6 +192,23 @@ export function EscrowRecordTab() {
         exportFilename="escrow-records"
         tableTestId="escrow-record-table"
         rowTestId={(row) => `escrow-record-row-${row.id}`}
+        filterBar={
+          <div className="relative flex flex-wrap items-center gap-2">
+            <label className="text-[11px] text-slate-600">
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={operatingCompanyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1"
+                dataTestId="escrow-records-filter-driver"
+              />
+            </label>
+          </div>
+        }
       />
 
       {timelineErrors.length > 0 ? (
