@@ -36,14 +36,17 @@ async function withCompany<T>(userId: string, role: string, companyId: string, f
 }
 
 export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/integrity/wo-cost-outliers", async (req, reply) => {
+  app.get("/api/v1/safety/integrity/wo-cost-outliers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_wo_cost_outliers WHERE operating_company_id = $1::uuid ORDER BY created_at DESC LIMIT 200`,
+        `SELECT o.*, u.unit_number
+         FROM safety.v_wo_cost_outliers o
+         LEFT JOIN mdata.units u ON u.id = o.unit_id AND u.operating_company_id = o.operating_company_id
+         WHERE o.operating_company_id = $1::uuid ORDER BY o.created_at DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -51,14 +54,19 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     return { outliers: rows };
   });
 
-  app.get("/api/v1/safety/integrity/fuel-mpg-anomalies", async (req, reply) => {
+  app.get("/api/v1/safety/integrity/fuel-mpg-anomalies", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_fuel_mpg_anomalies WHERE operating_company_id = $1::uuid ORDER BY transaction_date DESC LIMIT 200`,
+        `SELECT o.*, u.unit_number,
+                NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
+         FROM safety.v_fuel_mpg_anomalies o
+         LEFT JOIN mdata.units u ON u.id = o.unit_id AND u.operating_company_id = o.operating_company_id
+         LEFT JOIN mdata.drivers d ON d.id = o.driver_id AND d.operating_company_id = o.operating_company_id
+         WHERE o.operating_company_id = $1::uuid ORDER BY o.transaction_date DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -66,14 +74,17 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     return { anomalies: rows };
   });
 
-  app.get("/api/v1/safety/integrity/driver-dwell-outliers", async (req, reply) => {
+  app.get("/api/v1/safety/integrity/driver-dwell-outliers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_driver_dwell_outliers WHERE operating_company_id = $1::uuid ORDER BY minutes_over_avg DESC LIMIT 200`,
+        `SELECT o.*, NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
+         FROM safety.v_driver_dwell_outliers o
+         LEFT JOIN mdata.drivers d ON d.id = o.driver_id AND d.operating_company_id = o.operating_company_id
+         WHERE o.operating_company_id = $1::uuid ORDER BY o.minutes_over_avg DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -81,14 +92,17 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     return { outliers: rows };
   });
 
-  app.get("/api/v1/safety/integrity/hos-pattern-breaks", async (req, reply) => {
+  app.get("/api/v1/safety/integrity/hos-pattern-breaks", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_hos_pattern_breaks WHERE operating_company_id = $1::uuid ORDER BY violations_30d DESC LIMIT 200`,
+        `SELECT o.*, NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
+         FROM safety.v_hos_pattern_breaks o
+         LEFT JOIN mdata.drivers d ON d.id = o.driver_id AND d.operating_company_id = o.operating_company_id
+         WHERE o.operating_company_id = $1::uuid ORDER BY o.violations_30d DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -96,7 +110,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     return { pattern_breaks: rows };
   });
 
-  app.get("/api/v1/safety/integrity/observations", async (req, reply) => {
+  app.get("/api/v1/safety/integrity/observations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -117,7 +131,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     return { observations: rows };
   });
 
-  app.post("/api/v1/safety/integrity/observations/:id/review", async (req, reply) => {
+  app.post("/api/v1/safety/integrity/observations/:id/review", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

@@ -5,6 +5,19 @@ function companyQuery(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
 
+export type IntegrityReportRow = Record<string, unknown> & {
+  id?: string;
+  driver_id?: string | null;
+  unit_id?: string | null;
+  vendor_id?: string | null;
+  subject_driver_id?: string | null;
+  subject_unit_id?: string | null;
+  subject_vendor_id?: string | null;
+  driver_name?: string | null;
+  unit_number?: string | null;
+  vendor_name?: string | null;
+};
+
 export function listHosViolations(
   companyId: string,
   filters: { driver_id?: string; load_id?: string; from?: string; to?: string; source?: string } = {}
@@ -116,19 +129,19 @@ export function voidComplaintV64(companyId: string, id: string, voidReason: stri
 }
 
 export function getIntegrityWoCostOutliers(companyId: string) {
-  return apiRequest<{ outliers: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity/wo-cost-outliers?${companyQuery(companyId)}`);
+  return apiRequest<{ outliers: IntegrityReportRow[] }>(`/api/v1/safety/integrity/wo-cost-outliers?${companyQuery(companyId)}`);
 }
 
 export function getIntegrityFuelMpgAnomalies(companyId: string) {
-  return apiRequest<{ anomalies: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity/fuel-mpg-anomalies?${companyQuery(companyId)}`);
+  return apiRequest<{ anomalies: IntegrityReportRow[] }>(`/api/v1/safety/integrity/fuel-mpg-anomalies?${companyQuery(companyId)}`);
 }
 
 export function getIntegrityDriverDwellOutliers(companyId: string) {
-  return apiRequest<{ outliers: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity/driver-dwell-outliers?${companyQuery(companyId)}`);
+  return apiRequest<{ outliers: IntegrityReportRow[] }>(`/api/v1/safety/integrity/driver-dwell-outliers?${companyQuery(companyId)}`);
 }
 
 export function getIntegrityHosPatternBreaks(companyId: string) {
-  return apiRequest<{ pattern_breaks: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity/hos-pattern-breaks?${companyQuery(companyId)}`);
+  return apiRequest<{ pattern_breaks: IntegrityReportRow[] }>(`/api/v1/safety/integrity/hos-pattern-breaks?${companyQuery(companyId)}`);
 }
 
 export function getIntegrityObservations(companyId: string) {
