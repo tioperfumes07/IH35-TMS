@@ -1,5 +1,6 @@
 import { SelectCombobox } from "../../shared/SelectCombobox";
 import { MoneyInput } from "../MoneyInput";
+import { ParityTable } from "../../parity/ParityTable";
 import { ReferenceSelect } from "../../parity/ReferenceSelect";
 
 export type CategoryLine = {
@@ -139,181 +140,180 @@ export function CostBreakdownBox({
             Section A - Category lines
           </div>
           <div className="p-2">
-            <div className="overflow-x-auto bg-white">
-              <table className="min-w-full text-xs">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-2 py-1 text-left">{col.category}</th>
-                    <th className="px-2 py-1 text-left">
-                      {col.description}
-                      {variant === "wo" ? <span className="ml-0.5 text-red-600" aria-hidden="true">*</span> : null}
-                    </th>
-                    <th className="px-2 py-1 text-left">{col.qty}</th>
-                    <th className="px-2 py-1 text-left">{col.cost}</th>
-                    <th className="px-2 py-1 text-left">{col.total}</th>
-                    <th className="px-2 py-1" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sectionA.lines.map((line) => (
-                    <tr key={line.id} className="border-t border-gray-100">
-                      <td className="px-2 py-1">
-                        {operatingCompanyId && !readOnly ? (
-                          <ReferenceSelect
-                            value={line.expense_category_uuid ?? null}
-                            onChange={(next) => {
-                              const match = expenseCategoryOptions.find((o) => o.id === next);
-                              onSectionAChange(
-                                sectionA.lines.map((entry) =>
-                                  entry.id === line.id
-                                    ? {
-                                        ...entry,
-                                        expense_category_uuid: next ?? undefined,
-                                        expense_category_code: match?.code,
-                                        expense_category_kind: match?.category_kind,
-                                        expense_category_map_code: match?.category_map_code,
-                                      }
-                                    : entry
-                                )
-                              );
-                            }}
-                            options={expenseCategoryOptions.map((option) => ({
-                              value: option.id,
-                              label: option.label,
-                            }))}
-                            createKind={categoryCreateKind}
-                            operatingCompanyId={operatingCompanyId}
-                            placeholder="Select category…"
-                            addNewLabel="+ Add new category"
-                            onOptionCreated={(opt) => {
-                              onSectionAChange(
-                                sectionA.lines.map((entry) =>
-                                  entry.id === line.id
-                                    ? {
-                                        ...entry,
-                                        expense_category_uuid: opt.value,
-                                        // Inline create returns id+label; code lands after catalog refetch.
-                                        expense_category_code: undefined,
-                                      }
-                                    : entry
-                                )
-                              );
-                              onCategoryOptionCreated?.(line.id, { id: opt.value, label: opt.label });
-                              // LST-PICKER-03: the external "+ Create" button that used to call this is
-                              // gone, but the callback is part of the component's contract and callers
-                              // still pass it — so it now fires on INLINE create instead of being
-                              // silently dropped. Removing the prop would have broken those callers.
-                              onQuickCreateCategory?.(line.id);
-                            }}
-                          />
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <SelectCombobox
-                              disabled={readOnly}
-                              value={line.expense_category_uuid ?? ""}
-                              onChange={(event) =>
-                                onSectionAChange(
-                                  sectionA.lines.map((entry) =>
-                                    entry.id === line.id ? { ...entry, expense_category_uuid: event.target.value } : entry
-                                  )
-                                )
-                              }
-                              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                            >
-                              <option value="">Select category...</option>
-                              {expenseCategoryOptions.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </SelectCombobox>
-                            {/* LST-PICKER-03: no external "+ Create" here either. This branch renders only
-                                when operatingCompanyId is absent, and a catalog row cannot be created
-                                without an operating company to scope it to — so the honest UI is no create
-                                control at all, rather than a button that sits outside the picker and would
-                                have nowhere to write. With an operating company the ReferenceSelect above
-                                provides inline create as the first row inside the dropdown. */}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
+            {/* ACCT-F3586: embedded ParityTable owns Search+Range+gear on Section A lines. */}
+            <ParityTable<(typeof sectionA.lines)[number]>
+              embedded
+              rows={sectionA.lines}
+              rowKey={(line) => line.id}
+              storageKey={`cost-breakdown-section-a-${variant}`}
+              exportFilename="cost-breakdown-section-a"
+              tableTestId="cost-breakdown-section-a-table"
+              emptyText="No Section A lines"
+              columns={[
+                {
+                  key: "category",
+                  label: col.category,
+                  render: (line) =>
+                    operatingCompanyId && !readOnly ? (
+                      <ReferenceSelect
+                        value={line.expense_category_uuid ?? null}
+                        onChange={(next) => {
+                          const match = expenseCategoryOptions.find((o) => o.id === next);
+                          onSectionAChange(
+                            sectionA.lines.map((entry) =>
+                              entry.id === line.id
+                                ? {
+                                    ...entry,
+                                    expense_category_uuid: next ?? undefined,
+                                    expense_category_code: match?.code,
+                                    expense_category_kind: match?.category_kind,
+                                    expense_category_map_code: match?.category_map_code,
+                                  }
+                                : entry
+                            )
+                          );
+                        }}
+                        options={expenseCategoryOptions.map((option) => ({
+                          value: option.id,
+                          label: option.label,
+                        }))}
+                        createKind={categoryCreateKind}
+                        operatingCompanyId={operatingCompanyId}
+                        placeholder="Select category…"
+                        addNewLabel="+ Add new category"
+                        onOptionCreated={(opt) => {
+                          onSectionAChange(
+                            sectionA.lines.map((entry) =>
+                              entry.id === line.id
+                                ? {
+                                    ...entry,
+                                    expense_category_uuid: opt.value,
+                                    expense_category_code: undefined,
+                                  }
+                                : entry
+                            )
+                          );
+                          onCategoryOptionCreated?.(line.id, { id: opt.value, label: opt.label });
+                          onQuickCreateCategory?.(line.id);
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <SelectCombobox
                           disabled={readOnly}
-                          required={variant === "wo"}
-                          aria-required={variant === "wo" ? true : undefined}
-                          aria-label={variant === "wo" ? "Part # / Task" : "Description"}
-                          data-testid={variant === "wo" ? "wo-section-a-part-task" : undefined}
-                          placeholder={variant === "wo" ? "Part # / Task (required)" : undefined}
-                          value={line.description}
-                          onChange={(event) =>
-                            onSectionAChange(sectionA.lines.map((entry) => (entry.id === line.id ? { ...entry, description: event.target.value } : entry)))
-                          }
-                          className={`w-full rounded-sm border px-2 py-1 ${
-                            variant === "wo" && !String(line.description ?? "").trim()
-                              ? "border-red-400"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          disabled={readOnly}
-                          type="number"
-                          min={0}
-                          value={line.quantity}
+                          value={line.expense_category_uuid ?? ""}
                           onChange={(event) =>
                             onSectionAChange(
-                              sectionA.lines.map((entry) => {
-                                if (entry.id !== line.id) return entry;
-                                const quantity = Number(event.target.value || 0);
-                                return { ...entry, quantity, amount: quantity * Number(entry.unit_cost || 0) };
-                              })
+                              sectionA.lines.map((entry) =>
+                                entry.id === line.id ? { ...entry, expense_category_uuid: event.target.value } : entry
+                              )
                             )
                           }
-                          className="w-20 rounded-sm border border-gray-300 px-2 py-1"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        {/* M-1 dollars-mode: QBO display ($ + .00), unit_cost stays a DOLLAR number — payload byte-for-byte unchanged. */}
-                        <MoneyInput
-                          disabled={readOnly}
-                          valueDollars={line.unit_cost}
-                          onChangeDollars={(d) =>
-                            onSectionAChange(
-                              sectionA.lines.map((entry) => {
-                                if (entry.id !== line.id) return entry;
-                                const unitCost = d ?? 0;
-                                return { ...entry, unit_cost: unitCost, amount: unitCost * Number(entry.quantity || 0) };
-                              })
-                            )
-                          }
-                          className="w-24"
-                          ariaLabel={col.cost}
-                        />
-                      </td>
-                      <td className="px-2 py-1">${Number(line.amount || 0).toFixed(2)}</td>
-                      <td className="px-2 py-1 text-right">
-                        <button
-                          disabled={readOnly}
-                          type="button"
-                          onClick={() => onSectionAChange(sectionA.lines.filter((entry) => entry.id !== line.id))}
-                          className="text-red-600"
+                          className="w-full rounded-sm border border-gray-300 px-2 py-1"
                         >
-                          x
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {sectionA.lines.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-2 py-2 text-center text-gray-500">
-                        No Section A lines
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+                          <option value="">Select category...</option>
+                          {expenseCategoryOptions.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </SelectCombobox>
+                      </div>
+                    ),
+                },
+                {
+                  key: "description",
+                  label: col.description,
+                  render: (line) => (
+                    <input
+                      disabled={readOnly}
+                      required={variant === "wo"}
+                      aria-required={variant === "wo" ? true : undefined}
+                      aria-label={variant === "wo" ? "Part # / Task" : "Description"}
+                      data-testid={variant === "wo" ? "wo-section-a-part-task" : undefined}
+                      placeholder={variant === "wo" ? "Part # / Task (required)" : undefined}
+                      value={line.description}
+                      onChange={(event) =>
+                        onSectionAChange(
+                          sectionA.lines.map((entry) =>
+                            entry.id === line.id ? { ...entry, description: event.target.value } : entry
+                          )
+                        )
+                      }
+                      className={`w-full rounded-sm border px-2 py-1 ${
+                        variant === "wo" && !String(line.description ?? "").trim()
+                          ? "border-red-400"
+                          : "border-gray-300"
+                      }`}
+                    />
+                  ),
+                },
+                {
+                  key: "qty",
+                  label: col.qty,
+                  render: (line) => (
+                    <input
+                      disabled={readOnly}
+                      type="number"
+                      min={0}
+                      value={line.quantity}
+                      onChange={(event) =>
+                        onSectionAChange(
+                          sectionA.lines.map((entry) => {
+                            if (entry.id !== line.id) return entry;
+                            const quantity = Number(event.target.value || 0);
+                            return { ...entry, quantity, amount: quantity * Number(entry.unit_cost || 0) };
+                          })
+                        )
+                      }
+                      className="w-20 rounded-sm border border-gray-300 px-2 py-1"
+                    />
+                  ),
+                },
+                {
+                  key: "cost",
+                  label: col.cost,
+                  render: (line) => (
+                    <MoneyInput
+                      disabled={readOnly}
+                      valueDollars={line.unit_cost}
+                      onChangeDollars={(d) =>
+                        onSectionAChange(
+                          sectionA.lines.map((entry) => {
+                            if (entry.id !== line.id) return entry;
+                            const unitCost = d ?? 0;
+                            return { ...entry, unit_cost: unitCost, amount: unitCost * Number(entry.quantity || 0) };
+                          })
+                        )
+                      }
+                      className="w-24"
+                      ariaLabel={col.cost}
+                    />
+                  ),
+                },
+                {
+                  key: "total",
+                  label: col.total,
+                  render: (line) => `$${Number(line.amount || 0).toFixed(2)}`,
+                },
+                {
+                  key: "remove",
+                  label: " ",
+                  className: "text-right",
+                  cellClass: "text-right",
+                  render: (line) => (
+                    <button
+                      disabled={readOnly}
+                      type="button"
+                      onClick={() => onSectionAChange(sectionA.lines.filter((entry) => entry.id !== line.id))}
+                      className="text-red-600"
+                    >
+                      x
+                    </button>
+                  ),
+                },
+              ]}
+            />
             <div className="mt-2 flex items-center justify-between">
               <button
                 disabled={readOnly}
