@@ -17,12 +17,13 @@ function read(rel) {
   return readFileSync(join(ROOT, rel), "utf8");
 }
 
-export function verifyInvLink01PartVendor(root = ROOT) {
+export function verifyInvLink01PartVendor(root = ROOT, overrides = {}) {
   const errs = [];
   const create = read("apps/frontend/src/pages/inventory/PartCreateDrawer.tsx");
   const edit = read("apps/frontend/src/pages/inventory/PartEditDrawer.tsx");
   const stock = read("apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx");
-  const routes = read("apps/backend/src/maintenance/parts.routes.ts");
+  const routes = overrides.routes ?? read("apps/backend/src/maintenance/parts.routes.ts");
+  const inventoryRoutes = overrides.inventoryRoutes ?? read("apps/backend/src/maintenance/parts-inventory.routes.ts");
 
   if (!existsSync(join(root, "apps/frontend/src/pages/inventory/PartEditDrawer.tsx"))) {
     errs.push("missing PartEditDrawer.tsx");
@@ -58,8 +59,8 @@ export function verifyInvLink01PartVendor(root = ROOT) {
   if (!/vendor_id::text AS vendor_id/.test(routes)) {
     errs.push("parts.routes GET must SELECT vendor_id (not hardcoded null vendor_default)");
   }
-  if (!/v\.name AS vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors v/.test(routes)) {
-    errs.push("parts.routes GET must LEFT JOIN mdata.vendors (same-opco) AS vendor_name");
+  if (!/v\.vendor_name AS vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors v/.test(routes)) {
+    errs.push("parts.routes GET must LEFT JOIN mdata.vendors.vendor_name (same-opco) AS vendor_name");
   }
   if (!/v\.operating_company_id = pi\.operating_company_id/.test(routes)) {
     errs.push("parts.routes vendor join must be entity-scoped (pi.operating_company_id)");
@@ -76,6 +77,12 @@ export function verifyInvLink01PartVendor(root = ROOT) {
   if (/vendor_default:\s*null/.test(routes)) {
     errs.push("parts.routes must not hardcode vendor_default: null on update response");
   }
+  if (!/v\.vendor_name AS vendor_name/.test(inventoryRoutes)) {
+    errs.push("parts-inventory.routes GET must select the real mdata.vendors.vendor_name column");
+  }
+  if (/\bv\.name\s+AS\s+vendor_name\b/.test(`${routes}\n${inventoryRoutes}`)) {
+    errs.push("inventory routes must not query phantom mdata.vendors.name");
+  }
 
   return errs;
 }
@@ -86,11 +93,14 @@ if (SELFTEST) {
     console.error(`${LABEL} --selftest FAIL:`, errs);
     process.exit(1);
   }
-  const badRoutes = read("apps/backend/src/maintenance/parts.routes.ts").replace(/vendor_id::text AS vendor_id/g, "NULL::text AS vendor_default");
-  const planted = verifyInvLink01PartVendor();
-  // Re-run with planted miss — export can't inject; verify negative inline
-  if (!/NULL::text AS vendor_default/.test(badRoutes)) {
-    console.error(`${LABEL} --selftest FAIL: fixture setup`);
+  const goodRoutes = read("apps/backend/src/maintenance/parts.routes.ts");
+  const goodInventoryRoutes = read("apps/backend/src/maintenance/parts-inventory.routes.ts");
+  const planted = verifyInvLink01PartVendor(ROOT, {
+    routes: goodRoutes.replace(/v\.vendor_name AS vendor_name/, "v.name AS vendor_name"),
+    inventoryRoutes: goodInventoryRoutes.replace(/v\.vendor_name AS vendor_name/, "v.name AS vendor_name"),
+  });
+  if (!planted.some((error) => error.includes("phantom mdata.vendors.name"))) {
+    console.error(`${LABEL} --selftest FAIL: planted phantom vendor column escaped`, planted);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest OK`);
