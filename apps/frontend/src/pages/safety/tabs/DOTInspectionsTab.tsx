@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../../lib/formatDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -26,10 +26,15 @@ export function DOTInspectionsTab() {
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
+  // LST-F5163C: list filters are EntityPickers (allowCreate=false); reverse ?trailer_id= seeds trailerFilter.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+  const [trailerFilter, setTrailerFilter] = useState("");
   const [form, setForm] = useState({
     inspection_date: companyToday(),
     driver_id: "",
     unit_id: "",
+    trailer_id: "",
     inspector_name: "",
     inspection_level: 1,
     outcome: "PASS" as "PASS" | "WARNING" | "OOS",
@@ -38,20 +43,34 @@ export function DOTInspectionsTab() {
     csa_points: 0,
   });
 
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  useEffect(() => {
+    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+  }, [unitIdFromUrl]);
+  useEffect(() => {
+    if (trailerIdFromUrl) {
+      setTrailerFilter(trailerIdFromUrl);
+      setForm((prev) => (prev.trailer_id ? prev : { ...prev, trailer_id: trailerIdFromUrl }));
+    }
+  }, [trailerIdFromUrl]);
+
   const query = useQuery({
     queryKey: [
       "safety-v64",
       "dot-inspections",
       companyId,
-      driverIdFromUrl,
-      unitIdFromUrl,
+      driverFilter,
+      unitFilter,
+      trailerFilter,
       trailerIdFromUrl,
     ],
     queryFn: () =>
       listDotInspections(companyId, {
-        driver_id: driverIdFromUrl || undefined,
-        unit_id: unitIdFromUrl || undefined,
-        trailer_id: trailerIdFromUrl || undefined,
+        driver_id: driverFilter.trim() || driverIdFromUrl || undefined,
+        unit_id: unitFilter.trim() || unitIdFromUrl || undefined,
+        trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
       }),
     enabled: Boolean(companyId),
   });
@@ -66,6 +85,7 @@ export function DOTInspectionsTab() {
         inspection_date: form.inspection_date,
         driver_id: form.driver_id || undefined,
         unit_id: form.unit_id || undefined,
+        trailer_id: form.trailer_id || undefined,
         inspector_name: form.inspector_name,
         inspection_level: form.inspection_level,
         outcome: form.outcome,
@@ -75,7 +95,7 @@ export function DOTInspectionsTab() {
       });
     },
     onSuccess: async () => {
-      setForm((prev) => ({ ...prev, inspector_name: "", notes: "", csa_points: 0 }));
+      setForm((prev) => ({ ...prev, inspector_name: "", notes: "", csa_points: 0, trailer_id: trailerIdFromUrl || "" }));
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", companyId] });
     },
   });
@@ -121,6 +141,21 @@ export function DOTInspectionsTab() {
           kind="unit"
           id={row.unit_id as string | undefined}
           label={entityLabel((row.unit_number as string | undefined)?.trim(), row.unit_id as string | undefined, "Unit")}
+        />
+      ),
+    },
+    {
+      key: "trailer_id",
+      label: "Trailer",
+      render: (row) => (
+        <EntityLink
+          kind="trailer"
+          id={row.trailer_id as string | undefined}
+          label={entityLabel(
+            (row.trailer_number as string | undefined)?.trim(),
+            row.trailer_id as string | undefined,
+            "Trailer"
+          )}
         />
       ),
     },
@@ -193,6 +228,7 @@ export function DOTInspectionsTab() {
 
   // SAF-F14 / S-A10: driver uses DriverPickerWithCreate; unit uses EntityPicker kind="unit" with
   // inline "+ Create unit" via EntityPicker allowCreate (server search — no silent roster page cap).
+  // LST-F5163C: trailer create + list filter use EntityPicker kind="trailer".
 
   return (
     <div className="space-y-3">
@@ -200,7 +236,7 @@ export function DOTInspectionsTab() {
         <h2 className="text-sm font-semibold text-slate-900">DOT Inspections</h2>
         <InspectionScoreBadge companyId={companyId} />
       </div>
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-9">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5 lg:grid-cols-10">
         <DatePicker className="" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
         <div data-testid="dot-inspection-driver-picker">
           <DriverPickerWithCreate
@@ -220,6 +256,16 @@ export function DOTInspectionsTab() {
             allowCreate
           />
         </div>
+        <div data-testid="dot-inspection-trailer-picker">
+          <EntityPicker
+            kind="trailer"
+            operatingCompanyId={companyId}
+            value={form.trailer_id || null}
+            onChange={(next) => setForm((v) => ({ ...v, trailer_id: next ?? "" }))}
+            placeholder="Search trailer…"
+            allowCreate
+          />
+        </div>
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Inspector" value={form.inspector_name} onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} />
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="number" min={1} max={6} value={form.inspection_level} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} />
         <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value as typeof form.outcome }))}>
@@ -234,14 +280,14 @@ export function DOTInspectionsTab() {
         </button>
       </div>
 
-      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No DOT inspections found." — an outage presenting
-          as a carrier with no DOT inspection history. */}
-      {openEventsQuery.isError ? (
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed list query must not fall through to emptyText
+          "No DOT inspections found." — that presents an outage as a clean carrier history. */}
+      {listState.isError ? (
         <ListErrorState
           title="Couldn't load DOT inspections"
           status={0}
-          message={(openEventsQuery.error as Error)?.message}
-          onRetry={() => void openEventsQuery.refetch()}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
         />
       ) : (
       <ParityTable<Record<string, unknown>>
@@ -252,6 +298,49 @@ export function DOTInspectionsTab() {
         emptyText="No DOT inspections found."
         storageKey="safety-dot-inspections"
         exportFilename="dot-inspections"
+        filterBar={
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-[11px] text-slate-600">
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={companyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1"
+                dataTestId="dot-inspections-filter-driver"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Unit
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={companyId}
+                value={unitFilter || null}
+                onChange={(next) => setUnitFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All units"
+                className="mt-1"
+                dataTestId="dot-inspections-filter-unit"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Trailer
+              <EntityPicker
+                kind="trailer"
+                operatingCompanyId={companyId}
+                value={trailerFilter || null}
+                onChange={(next) => setTrailerFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All trailers"
+                className="mt-1"
+                dataTestId="dot-inspections-trailer-filter"
+              />
+            </label>
+          </div>
+        }
       />
       )}
 
