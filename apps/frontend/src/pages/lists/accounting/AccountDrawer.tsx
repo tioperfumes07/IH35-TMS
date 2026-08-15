@@ -26,13 +26,21 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Mode = "create" | "edit";
 
+export type AccountDrawerSavedResult = { id: string; label: string };
+
 type Props = {
   open: boolean;
   mode: Mode;
   account: CatalogAccount | null;
   operatingCompanyId: string;
   onClose: () => void;
-  onSaved: () => void;
+  /** Called after successful create/update/archive. Create passes id+label for nested pickers. */
+  onSaved: (result?: AccountDrawerSavedResult) => void;
+  /**
+   * LST-F3354 — when true, render only the form body/footer (no second overlay/aside).
+   * Used by NewAccountDrawerForm inside ParityDrawer so Lists CoA and nested +Add new share ONE chrome.
+   */
+  embedded?: boolean;
 };
 
 // ACCOUNT_TYPES / ACCOUNT_TYPE_GROUPS / COA_ENUM_TO_CATALOG_CODES now live in ../../../api/coa-list
@@ -126,7 +134,15 @@ function FieldError({ msg }: { msg?: string }) {
   return <div className="mt-1 text-[11px] text-red-700">{msg}</div>;
 }
 
-export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose, onSaved }: Props) {
+export function AccountDrawer({
+  open,
+  mode,
+  account,
+  operatingCompanyId,
+  onClose,
+  onSaved,
+  embedded = false,
+}: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(emptyForm());
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -269,11 +285,14 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
         operating_company_id: operatingCompanyId || undefined,
       };
       if (mode === "create") {
-        await createCatalogAccount(body);
+        const created = await createCatalogAccount(body);
+        onSaved({ id: String(created.id), label: String(created.account_name ?? body.account_name) });
       } else if (account) {
         await updateCatalogAccount(account.id, body);
+        onSaved({ id: account.id, label: body.account_name });
+      } else {
+        onSaved();
       }
-      onSaved();
       onClose();
     } catch (err) {
       const data = (err as { data?: Record<string, unknown> }).data ?? {};
@@ -300,7 +319,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     setSubmitError("");
     try {
       await deactivateCatalogAccountById(account.id);
-      onSaved();
+      onSaved({ id: account.id, label: account.account_name });
       onClose();
     } catch (err) {
       const data = (err as { data?: Record<string, unknown> }).data ?? {};
@@ -318,21 +337,9 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
 
   if (!open) return null;
 
-  return (
+  const formChrome = (
     <>
-      <div
-        className="fixed inset-0 z-40 bg-black/20"
-        aria-hidden="true"
-        onClick={onClose}
-      />
-
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label={mode === "create" ? "New Account" : "Edit Account"}
-        className="fixed right-0 top-0 z-50 flex h-full w-[480px] flex-col border-l border-gray-200 bg-white shadow-xl"
-      >
-        {/* Header */}
+        {!embedded ? (
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-gray-900">
@@ -360,6 +367,7 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
             </svg>
           </button>
         </div>
+        ) : null}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -460,8 +468,8 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               </select>
             </FieldLabel>
 
-            {/* Make this a subaccount (§ additive) — reveals a same-type, per-entity parent picker. */}
-            <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-3" data-testid="subaccount-section">
+            {/* Make this a subaccount — flat (no nested bordered card / box-in-box). */}
+            <div data-testid="subaccount-section">
               <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
@@ -605,8 +613,8 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
               </FieldLabel>
             </div>
 
-            {/* Is Locked toggle */}
-            <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-3">
+            {/* Is Locked toggle — flat (no nested bordered card). */}
+            <div>
               <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
@@ -665,6 +673,31 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
             </div>
           </div>
         </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="flex h-full flex-col" data-testid="account-drawer-embedded">
+        {formChrome}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/20"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={mode === "create" ? "New Account" : "Edit Account"}
+        className="fixed right-0 top-0 z-50 flex h-full w-[480px] flex-col border-l border-gray-200 bg-white shadow-xl"
+      >
+        {formChrome}
       </aside>
     </>
   );

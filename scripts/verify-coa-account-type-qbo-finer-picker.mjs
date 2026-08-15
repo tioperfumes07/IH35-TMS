@@ -44,7 +44,6 @@ function problems(srcs) {
 
   for (const [name, src] of [
     ["AccountDrawer", drawer],
-    ["NewAccountDrawerForm", newForm],
     ["QuickCreateEntityModal", quick],
   ]) {
     if (!/accountTypePickerGroupsFromCatalog/.test(src)) {
@@ -55,14 +54,25 @@ function problems(srcs) {
     }
   }
 
+  // LST-F3354 — nested +Add new account MUST reuse AccountDrawer (single QBO chrome), not a second form.
+  if (!/from ["'].*AccountDrawer["']|from ["'].*\/AccountDrawer["']/.test(newForm) && !/AccountDrawer/.test(newForm)) {
+    out.push("NewAccountDrawerForm must import AccountDrawer (single create chrome)");
+  }
+  if (!/<AccountDrawer[\s>]/.test(newForm)) {
+    out.push("NewAccountDrawerForm must render <AccountDrawer (no dual form)");
+  }
+  if (!/\bembedded\b/.test(newForm)) {
+    out.push("NewAccountDrawerForm must pass embedded so ParityDrawer is not double-shelled");
+  }
+  if (/accountTypePickerGroupsFromCatalog/.test(newForm) && /function NewAccountDrawerForm/.test(newForm) && /useState/.test(newForm)) {
+    out.push("NewAccountDrawerForm must not own a parallel account-type form (delegate to AccountDrawer)");
+  }
+
   if (!/detailTypesForAccountTypeSelection/.test(drawer)) {
     out.push("AccountDrawer must cascade detail types via detailTypesForAccountTypeSelection");
   }
   if (!/previewEntry\?\.code\s*\?\?\s*form\.account_type/.test(drawer)) {
     out.push("AccountDrawer save must prefer previewEntry.code (catalog code)");
-  }
-  if (!/previewEntry\?\.code\s*\?\?\s*form\.accountType/.test(newForm)) {
-    out.push("NewAccountDrawerForm save must prefer previewEntry.code");
   }
   if (!/resolveAccountTypeCatalogEntry/.test(quick)) {
     out.push("QuickCreateEntityModal category create must resolve catalog code");
