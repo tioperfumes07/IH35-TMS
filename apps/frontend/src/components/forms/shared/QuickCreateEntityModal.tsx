@@ -20,6 +20,9 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { listPaymentTermOptions } from "../../../api/mdata";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
+import { VendorCreateModal } from "../../vendors/VendorCreateModal";
+import { ItemEditorModal } from "../../../pages/lists/accounting/ItemEditorModal";
+import { AccountingCatalogModal } from "../../../pages/lists/accounting/AccountingCatalogModal";
 
 // FIX-03: an item's income/expense account is a REFERENCED catalogs.accounts record (QBO parity), not
 // text. Mirror ItemEditorModal's type filters + carrier default so quick-create + full editor agree.
@@ -361,6 +364,61 @@ export function QuickCreateEntityModal({
   });
 
   // CHROME-11: nest create in a right ParityDrawer — never a centered Modal stacked on money drawers.
+  // LST-F3368 — vendor / item / class share ONE chrome with Lists (VendorCreateModal / ItemEditorModal /
+  // AccountingCatalogModal). Residual thin forms for those kinds are dual-chrome defects.
+  if (kind === "vendor") {
+    return (
+      <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="Create Vendor" stackAboveModal>
+        <VendorCreateModal
+          open={open}
+          operatingCompanyId={operatingCompanyId}
+          embedded
+          onClose={onClose}
+          onSaved={(created) => {
+            onCreated({ id: created.id, label: created.label });
+          }}
+        />
+      </ParityDrawer>
+    );
+  }
+  if (kind === "item") {
+    return (
+      <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="New product/service" stackAboveModal>
+        <ItemEditorModal
+          open={open}
+          mode="create"
+          row={null}
+          operatingCompanyId={operatingCompanyId}
+          client={itemsCatalogClient}
+          embedded
+          onClose={onClose}
+          onSaved={(created) => {
+            if (created?.id) onCreated({ id: created.id, label: created.label });
+          }}
+        />
+      </ParityDrawer>
+    );
+  }
+  if (kind === "class") {
+    return (
+      <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="Create Class" stackAboveModal>
+        <AccountingCatalogModal
+          open={open}
+          operatingCompanyId={operatingCompanyId}
+          displayName="Class"
+          client={classesCatalogClient}
+          mode="create"
+          row={null}
+          embedded
+          onClose={onClose}
+          onSaved={(created) => {
+            if (created?.id) onCreated({ id: created.id, label: created.label ?? "" });
+          }}
+        />
+      </ParityDrawer>
+    );
+  }
+
   return (
     <ParityDrawer open={open} onClose={onClose} onBack={onClose} title={titleFor(kind)} stackAboveModal>
       <form

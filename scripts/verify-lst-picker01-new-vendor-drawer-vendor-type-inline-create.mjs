@@ -79,17 +79,24 @@ export function collectProblems(root = ROOT, overrides = null) {
   if (!quick) problems.push(`missing ${QUICK}`);
   else {
     const code = stripComments(quick);
-    if (!/createKind=["']vendor_type["']/.test(code)) {
-      problems.push(`${QUICK}: vendor quick-create must use createKind=vendor_type`);
-    }
-    if (!/ReferenceSelect/.test(code)) {
-      problems.push(`${QUICK}: must use ReferenceSelect for vendor type`);
-    }
-    if (/<select[^>]*aria-label=["']Quick create vendor type["']/.test(code)) {
-      problems.push(`${QUICK}: must not keep bare <select> for vendor type`);
-    }
-    if (!/vendorTypesQuery\.refetch/.test(code)) {
-      problems.push(`${QUICK}: must refetch vendor types after inline create`);
+    const embedsVendor = /<VendorCreateModal[\s>]/.test(code) && /\bembedded\b/.test(code);
+    if (embedsVendor) {
+      // LST-F3368 — QuickCreate vendor path thin-wraps VendorCreateModal (canonical Lists chrome).
+      if (!create) problems.push(`missing ${CREATE} (QuickCreateEntityModal embeds VendorCreateModal)`);
+      else assertVendorTypeChrome(CREATE, stripComments(create), problems);
+    } else {
+      if (!/createKind=["']vendor_type["']/.test(code)) {
+        problems.push(`${QUICK}: vendor quick-create must use createKind=vendor_type`);
+      }
+      if (!/ReferenceSelect/.test(code)) {
+        problems.push(`${QUICK}: must use ReferenceSelect for vendor type`);
+      }
+      if (/<select[^>]*aria-label=["']Quick create vendor type["']/.test(code)) {
+        problems.push(`${QUICK}: must not keep bare <select> for vendor type`);
+      }
+      if (!/vendorTypesQuery\.refetch/.test(code)) {
+        problems.push(`${QUICK}: must refetch vendor types after inline create`);
+      }
     }
   }
 
@@ -150,12 +157,27 @@ if (process.argv.includes("--selftest")) {
     (s) => s + '\n<select aria-label="Vendor type" />;\n',
     "bare <select> for vendor type"
   );
-  expectCaught(
-    "quick-bare-select-reintroduced",
-    QUICK,
-    (s) => s + '\n<select aria-label="Quick create vendor type" />;\n',
-    "bare <select> for vendor type"
-  );
+  // QuickCreate vendor path embeds VendorCreateModal — plant on CREATE; else plant on QUICK.
+  const quickLive = readRel(ROOT, QUICK);
+  const quickEmbeds =
+    quickLive &&
+    /<VendorCreateModal[\s>]/.test(stripComments(quickLive)) &&
+    /\bembedded\b/.test(stripComments(quickLive));
+  if (quickEmbeds) {
+    expectCaught(
+      "quick-embed-createKind-removed",
+      CREATE,
+      (s) => s.replace(/createKind=["']vendor_type["']/, 'createKind="vendor"'),
+      "createKind=vendor_type"
+    );
+  } else {
+    expectCaught(
+      "quick-bare-select-reintroduced",
+      QUICK,
+      (s) => s + '\n<select aria-label="Quick create vendor type" />;\n',
+      "bare <select> for vendor type"
+    );
+  }
   expectCaught(
     "registry-table-changed",
     REGISTRY,
