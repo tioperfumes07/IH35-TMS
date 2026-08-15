@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-15 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-15 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **65 / 150** | 2026-08-15 |
-| Rows in this file | **767** | 2026-08-15 |
+| Rows in this file | **768** | 2026-08-15 |
 | Rows `FAIL` + `OPEN` | **14** | 2026-08-15 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-15 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-15 |
-| Verdict tally (all rows) | FAIL=75 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=7 · OTHER=248 | 2026-08-15 |
+| Verdict tally (all rows) | FAIL=75 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=7 · OTHER=249 | 2026-08-15 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -855,3 +855,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 765 | inventory · residual | E | USMCA | PROD-VERIFIED — Codex Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Codex Live Chrome 2026-08-15** prod USMCA. **Leaves:** `nav.assignments_tab` · `nav.purchases_tab` · `assignments.banner` · `assignments.trail` · `assignments.search` · `assignments.wo_link` · `assignments.unit_link` · `assignments.vendor_link` · `assignments.crosslink_purchases` · `assignments.honest_empty` · `purchases.honest_empty` · `purchases.crosslink_parts` · `purchases.crosslink_assignments` · `inventory.drawer.part_create`. Chrome+connectivity `/inventory/*`.  Scope VERIFY-1/3 only. OUTBOX-CODEX. | LIVE-LEDGERED | OUTBOX-CODEX 2026-08-15 | NO | 2026-08-15 | CODEX |
 | 766 | cash-flow · residual | E | USMCA | PROD-VERIFIED — Codex Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Codex Live Chrome 2026-08-15** prod USMCA. **Leaves:** `cash-flow.panel.projection`. Chrome+connectivity `/cash-flow/*`.  Scope VERIFY-1/3 only. OUTBOX-CODEX. | LIVE-LEDGERED | OUTBOX-CODEX 2026-08-15 | NO | 2026-08-15 | CODEX |
 | 767 | home · residual | E | USMCA | PROD-VERIFIED — Codex Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Codex Live Chrome 2026-08-15** prod USMCA. **Leaves:** `surface.quick_actions` · `surface.fleet_restore` · `jump.maintenance` · `jump.accounting` · `jump.banking` · `jump.fuel` · `jump.safety` · `jump.drivers` · `jump.dispatch` · `jump.lists` · `hub.driver` · `hub.driver_reporting`. Chrome+connectivity `/home`.  Scope VERIFY-1/3 only. OUTBOX-CODEX. | LIVE-LEDGERED | OUTBOX-CODEX 2026-08-15 | NO | 2026-08-15 | CODEX |
+| 768 | lists · driver_deduction_types | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Cursor Live Chrome 2026-08-15** on prod `app.ih35dispatch.com` (USMCA). **Leaves:** `catalog.drivers.deduction_types.list` · `catalog.drivers.deduction_types.create`. **Proven:** opened `/lists/drivers/deduction-types` (canonical `/lists/catalogs/driver/deduction-types`); h1 Driver Deduction Types; + Create present. Scope VERIFY-1/3 only. | LIVE-LEDGERED | OUTBOX-CURSOR LIVE#48 | NO | 2026-08-15 | CURSOR |
