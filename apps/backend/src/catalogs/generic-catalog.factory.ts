@@ -32,7 +32,12 @@ export type GenericCatalogConfig = {
   validators: Record<string, ZodSchema>;
   searchableColumns: string[];
   defaultSort: { column: string; dir: "asc" | "desc" };
-  softDeleteColumn: string;
+  /**
+   * Boolean soft-active column (usually `is_active`). Omit / null when the table has no active flag
+   * (e.g. catalogs.audit_event_types — only code/description/severity_default/created_at). A text
+   * placeholder here caused live `text = boolean` 500s (operator 42883).
+   */
+  softDeleteColumn?: string | null;
   /** Whether the physical table carries a deactivated_at column for soft-delete audit. */
   hasDeactivatedAt: boolean;
   /**
@@ -136,7 +141,12 @@ export function createCatalogRoutes(
   const entityScoped = isEntityScopedCatalog(config);
   if (!tableNameGuard.test(config.tableName)) throw new Error(`invalid_table_name_for_catalog_factory: ${config.tableName}`);
   if (!urlSegmentGuard.test(config.urlSegment)) throw new Error(`invalid_url_segment_for_catalog_factory: ${config.urlSegment}`);
-  for (const column of [...config.allowedColumns, ...config.searchableColumns, config.defaultSort.column, config.softDeleteColumn]) {
+  for (const column of [
+    ...config.allowedColumns,
+    ...config.searchableColumns,
+    config.defaultSort.column,
+    ...(config.softDeleteColumn ? [config.softDeleteColumn] : []),
+  ]) {
     if (!columnGuard.test(column) && column !== "display_name") {
       throw new Error(`invalid_column_for_catalog_factory: ${column}`);
     }
@@ -189,8 +199,23 @@ export function createCatalogRoutes(
             values.push(q.operating_company_id);
             where.push(`t.operating_company_id = $${values.length}::uuid`);
           }
-          if (q.is_active === "true") where.push(config.hasDeactivatedAt ? `t.${config.softDeleteColumn} = true AND t.deactivated_at IS NULL` : `t.${config.softDeleteColumn} = true`);
-          if (q.is_active === "false") where.push(config.hasDeactivatedAt ? `(t.${config.softDeleteColumn} = false OR t.deactivated_at IS NOT NULL)` : `t.${config.softDeleteColumn} = false`);
+          const softCol = config.softDeleteColumn?.trim();
+          if (softCol) {
+            if (q.is_active === "true") {
+              where.push(
+                config.hasDeactivatedAt
+                  ? `t.${softCol} = true AND t.deactivated_at IS NULL`
+                  : `t.${softCol} = true`,
+              );
+            }
+            if (q.is_active === "false") {
+              where.push(
+                config.hasDeactivatedAt
+                  ? `(t.${softCol} = false OR t.deactivated_at IS NOT NULL)`
+                  : `t.${softCol} = false`,
+              );
+            }
+          }
           if (q.search && config.searchableColumns.length > 0) {
             values.push(`%${q.search}%`);
             const searchClauses = config.searchableColumns.map((column) => {
@@ -332,10 +357,20 @@ export function createCatalogRoutes(
             if (!(column in body)) continue;
             add(dbColumnForApiColumn(column, config), body[column as keyof typeof body]);
           }
-          if (config.hasDeactivatedAt && config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === false) {
+          if (
+            config.hasDeactivatedAt &&
+            config.softDeleteColumn &&
+            config.softDeleteColumn in body &&
+            body[config.softDeleteColumn as keyof typeof body] === false
+          ) {
             add("deactivated_at", new Date().toISOString());
           }
-          if (config.hasDeactivatedAt && config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === true) {
+          if (
+            config.hasDeactivatedAt &&
+            config.softDeleteColumn &&
+            config.softDeleteColumn in body &&
+            body[config.softDeleteColumn as keyof typeof body] === true
+          ) {
             add("deactivated_at", null);
           }
           if (hasUpdatedAt) {
@@ -374,7 +409,9 @@ export function createCatalogRoutes(
         const authUser = currentAuthUser(req, reply);
         if (!authUser) return;
         if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
+        if (!config.softDeleteColumn) return reply.code(405).send({ error: "catalog_no_soft_delete" });
         if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+        const softCol = config.softDeleteColumn;
         const parsedParams = idParamSchema.safeParse(req.params ?? {});
         if (!parsedParams.success) return validationError(reply, parsedParams.error);
         const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -385,7 +422,7 @@ export function createCatalogRoutes(
             hasUpdatedAt
               ? `
               UPDATE catalogs.${config.tableName}
-              SET ${config.softDeleteColumn} = false,
+              SET ${softCol} = false,
                   ${config.hasDeactivatedAt ? "deactivated_at = now()," : ""}
                   updated_at = now(),
                   updated_by_user_id = $2
@@ -394,7 +431,7 @@ export function createCatalogRoutes(
             `
               : `
               UPDATE catalogs.${config.tableName}
-              SET ${config.softDeleteColumn} = false
+              SET ${softCol} = false
                   ${config.hasDeactivatedAt ? ", deactivated_at = now()" : ""}
               WHERE id = $1
               RETURNING id, code
@@ -420,7 +457,9 @@ export function createCatalogRoutes(
       const authUser = currentAuthUser(req, reply);
       if (!authUser) return;
       if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
+      if (!config.softDeleteColumn) return reply.code(405).send({ error: "catalog_no_soft_delete" });
       if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+      const softCol = config.softDeleteColumn;
       const parsedParams = idParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return validationError(reply, parsedParams.error);
       const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -431,7 +470,7 @@ export function createCatalogRoutes(
           hasUpdatedAt
             ? `
             UPDATE catalogs.${config.tableName}
-            SET ${config.softDeleteColumn} = true,
+            SET ${softCol} = true,
                 ${config.hasDeactivatedAt ? "deactivated_at = NULL," : ""}
                 updated_at = now(),
                 updated_by_user_id = $2
@@ -440,7 +479,7 @@ export function createCatalogRoutes(
           `
             : `
             UPDATE catalogs.${config.tableName}
-            SET ${config.softDeleteColumn} = true
+            SET ${softCol} = true
                 ${config.hasDeactivatedAt ? ", deactivated_at = NULL" : ""}
             WHERE id = $1
             RETURNING ${selectColumns.join(", ").replaceAll("t.", "")}
