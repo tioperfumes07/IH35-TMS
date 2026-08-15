@@ -140,6 +140,7 @@ export function PostingTemplatesListPage() {
             setSelectedRow(row);
             setProfileOpen(true);
           }}
+          suppressToolbarSearch
           filterBar={
             <div className="grid gap-2 md:grid-cols-3">
               <input
