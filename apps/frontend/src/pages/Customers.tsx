@@ -459,7 +459,7 @@ export function CustomersPage() {
         // dead click. Same canonical drill as every other load reference.
         render: (r) =>
           r.source_load_id ? (
-            <EntityLink kind="load" id={r.source_load_id} label={entityLabel(null, r.source_load_id, "Load")} />
+            <EntityLink kind="load" id={r.source_load_id} label={entityLabel(r.source_load_number, r.source_load_id, "Load")} />
           ) : (
             "—"
           ),
