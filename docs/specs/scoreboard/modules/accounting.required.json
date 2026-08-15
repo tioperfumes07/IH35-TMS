@@ -1206,7 +1206,6 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/PrepaidExpensesPage.tsx",
       "required": [
-        "vendor",
         "expense",
         "gl_je",
         "connectivity",
@@ -1586,6 +1585,18 @@
             "reverse_link"
           ],
           "reason": "class/cost-center rollups linking only to classes catalog"
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_modal_create": {
+      "finding": "CURSOR-ACCOUNTING-MODAL-CREATE-VENDOR-HONESTY",
+      "note": "PrepaidExpensesPage (accounting.modal.create surface) has no vendor EntityLink/picker — drop false vendor Required. expense/gl_je remain for money lane.",
+      "drops": [
+        {
+          "id": "accounting.modal.create",
+          "removed": [
+            "vendor"
+          ]
         }
       ]
     }
