@@ -1293,7 +1293,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
     bad: /const displayId = String\(workOrder\.display_id/,
-    good: /entityLabel\(workOrder\.display_id, workOrder\.id, "Record"\)/,
+    good: /entityLabel\(workOrder\.display_id, workOrder\.id, "Work order"\)/,
   },
   {
     rel: "apps/frontend/src/components/accounting/VendorBillForm.tsx",
@@ -1323,17 +1323,17 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/safety/DriverFinesReverseSection.tsx",
     bad: /const label = String\(f\.violation_code/,
-    good: /entityLabel\(f\.violation_code \?\? f\.jurisdiction, id, "Record"\)/,
+    good: /entityLabel\(f\.violation_code \?\? f\.jurisdiction, id, "Fine"\)/,
   },
   {
     rel: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
     bad: /label=\{String\(row\.matter_number/,
-    good: /entityLabel\(row\.matter_number, row\.id, "Record"\)/,
+    good: /entityLabel\(row\.matter_number, row\.id, "Legal matter"\)/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
     bad: /label=\{m\.matter_number\}/,
-    good: /entityLabel\(m\.matter_number, m\.id, "Record"\)/,
+    good: /entityLabel\(m\.matter_number, m\.id, "Legal matter"\)/,
   },
   {
     rel: "apps/frontend/src/pages/liabilities/components/LiabilityDetailDrawer.tsx",
