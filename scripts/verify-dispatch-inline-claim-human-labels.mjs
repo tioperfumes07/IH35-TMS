@@ -63,6 +63,15 @@ function assertAll(srcs) {
     }
   }
   const assign = srcs["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx"];
+  if (!assign.includes('import { entityLabel } from "../../lib/entity-label"')) {
+    problems.push("AssignDriverDropdown: pre-create roster must use the shared honest-label contract");
+  }
+  if (!/display_name:\s*entityLabel\(\[d\.first_name, d\.last_name\]\.filter\(Boolean\)\.join\(" "\)\.trim\(\), d\.id, "Driver"\)/.test(assign)) {
+    problems.push("AssignDriverDropdown: nameless pre-create drivers must not fall back to a raw UUID");
+  }
+  if (/display_name:[^\n]*\|\|\s*d\.id/.test(assign)) {
+    problems.push("AssignDriverDropdown: raw driver UUID remains a visible label fallback");
+  }
   if (!assign.includes('userFacingApiError(activeQuery.error, "Could not load available drivers")')) {
     problems.push("AssignDriverDropdown: active load/roster query failure must use operator-safe copy");
   }
@@ -115,6 +124,7 @@ if (SELFTEST) {
     ["apps/frontend/src/components/dispatch/InlineUnitPicker.tsx", "const label = option?.label", "const label = next.slice(0, 8) || option?.label", "unit roster label"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", "onRetry={() => void activeQuery.refetch()}", "", "driver retry"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'userFacingApiError(activeQuery.error, "Could not load available drivers")', 'String(activeQuery.error)', "safe driver error"],
+    ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'entityLabel([d.first_name, d.last_name].filter(Boolean).join(" ").trim(), d.id, "Driver")', '[d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id', "raw driver UUID fallback"],
     ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", 'kind="insurance_policy"', 'kind="load"', "claim policy picker"],
     ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", 'label: `Accident — ${when}`', 'label: value', "claim accident label"],
   ];

@@ -2568,6 +2568,14 @@
       "modules": ["safety"],
       "cols": ["driver", "connectivity"],
       "leafRe": "^safety\\.panel\\.driver_safety_profile$"
+    },
+    {
+      "task": "DISPATCH-ASSIGN-DRIVER-PICKER-RAW-UUID-FALLBACK",
+      "pr": "this PR",
+      "guard": "scripts/verify-dispatch-assign-driver-honest-label.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "connectivity"],
+      "leafRe": "^dispatch\\.parity\\.assign_driver_dropdown$"
     }
   ]
 }

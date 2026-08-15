@@ -7,6 +7,7 @@ import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
 
 /** Pre-create roster page size. Named so the cap and its disclosure can never drift apart. */
 const ROSTER_LIMIT = 200;
@@ -75,7 +76,7 @@ export function AssignDriverDropdown({
     driver_id: d.id,
     customer_id: "",
     unit_id: null,
-    display_name: [d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id,
+    display_name: entityLabel([d.first_name, d.last_name].filter(Boolean).join(" ").trim(), d.id, "Driver"),
     display_id: null,
     hours_remaining_today: 0,
     hours_remaining_week: 0,
