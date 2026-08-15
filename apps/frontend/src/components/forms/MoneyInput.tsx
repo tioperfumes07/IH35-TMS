@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { singleFrameLayoutClassName } from "../../lib/single-frame-classname";
 
 // Shared QuickBooks-style money entry: leading $, thousands separators, 2 decimals, right-aligned,
 // no spinner. TWO modes — each with exactly ONE conversion seam (documented so a future agent does not
@@ -74,8 +75,15 @@ export function MoneyInput({
     if (!focused) setText(display);
   }, [display, focused]);
 
+  // CLS-BOX-IN-BOX-MONEYINPUT-OUTER-FRAME: the <input> below already owns its full visual frame
+  // (border/rounded/etc., hardcoded). Forwarding the caller's className straight onto this
+  // positioning wrapper let border/rounded/bg/ring/shadow tokens land on a SECOND element around an
+  // already-bordered input — the same box-within-box class of bug already fixed for SelectCombobox
+  // and CollapsedListFilters. Strip those tokens; keep layout (h-9/w-full/etc.) on the wrapper.
+  const layoutClassName = singleFrameLayoutClassName(className);
+
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${layoutClassName ?? ""}`}>
       {/* SYS-MONEY root: the $ sits immediately before the value (pl-4 clears the glyph, text-left keeps
           the number hugging it) so every money INPUT renders "$0.00" — no gap — matching the QBO/McLeod
           display token. Previously text-right + pl-5 floated the value to the far edge, reading "$   0.00". */}
