@@ -11,7 +11,9 @@ export interface LayoverRow {
   uuid: string;
   driver_uuid: string;
   previous_load_uuid: string;
+  previous_load_number: string;
   next_load_uuid: string | null;
+  next_load_number: string | null;
   layover_started_at: string;
   layover_ended_at: string | null;
   duration_hours: number | null;
@@ -167,13 +169,20 @@ export async function getLayoversForDriver(
       dateFilter = `AND layover_started_at BETWEEN $${params.length - 1}::date AND ($${params.length}::date + INTERVAL '1 day')`;
     }
     const res = await client.query<LayoverRow>(
-      `SELECT uuid, driver_uuid, previous_load_uuid, next_load_uuid,
-              layover_started_at, layover_ended_at, duration_hours,
-              layover_location, billable_to_customer, per_diem_eligible
-       FROM dispatch.driver_layovers
-       WHERE operating_company_id = $1::uuid AND driver_uuid = $2
+      `SELECT dl.uuid, dl.driver_uuid, dl.previous_load_uuid, previous_load.load_number AS previous_load_number,
+              dl.next_load_uuid, next_load.load_number AS next_load_number,
+              dl.layover_started_at, dl.layover_ended_at, dl.duration_hours,
+              dl.layover_location, dl.billable_to_customer, dl.per_diem_eligible
+       FROM dispatch.driver_layovers dl
+       JOIN mdata.loads previous_load
+         ON previous_load.id = dl.previous_load_uuid
+        AND previous_load.operating_company_id = dl.operating_company_id
+       LEFT JOIN mdata.loads next_load
+         ON next_load.id = dl.next_load_uuid
+        AND next_load.operating_company_id = dl.operating_company_id
+       WHERE dl.operating_company_id = $1::uuid AND dl.driver_uuid = $2
          ${dateFilter}
-       ORDER BY layover_started_at DESC
+       ORDER BY dl.layover_started_at DESC
        LIMIT 100`,
       params
     );
