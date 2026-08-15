@@ -83,7 +83,6 @@ export function AssetsWorkspacePage() {
   const [loadError, setLoadError] = useState<FetchError | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [lifecycle, setLifecycle] = useState<AssetLifecycle | "all">("all");
-  const [search, setSearch] = useState("");
 
   const retry = useCallback(() => setReloadToken((n) => n + 1), []);
 
@@ -115,23 +114,13 @@ export function AssetsWorkspacePage() {
     };
   }, [companyId, reloadToken]);
 
+  // Lifecycle chip filter only — ParityTable owns free-text search (ASSET-F3482).
   const visibleRows = useMemo(() => {
-    const query = search.trim().toLowerCase();
     return rows.filter((row) => {
       if (lifecycle !== "all" && row.lifecycle !== lifecycle) return false;
-      if (!query) return true;
-      const haystack = [
-        row.unit_number,
-        row.vin || "",
-        row.assigned_driver_name || "",
-        row.location_label || "",
-        row.assigned_load_display || "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(query);
+      return true;
     });
-  }, [rows, lifecycle, search]);
+  }, [rows, lifecycle]);
 
   const summary = useMemo(() => summarize(rows), [rows]);
 
@@ -168,7 +157,7 @@ export function AssetsWorkspacePage() {
       ) : (
         <>
           <AssetSummaryCards summary={rows.length ? summary : EMPTY_SUMMARY} />
-          <AssetFiltersBar lifecycle={lifecycle} search={search} onLifecycleChange={setLifecycle} onSearchChange={setSearch} />
+          <AssetFiltersBar lifecycle={lifecycle} onLifecycleChange={setLifecycle} />
           <AssetListTable rows={visibleRows} isLoading={isLoading} />
         </>
       )}
