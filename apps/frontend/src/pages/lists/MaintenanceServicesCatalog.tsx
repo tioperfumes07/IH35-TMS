@@ -117,6 +117,7 @@ export function MaintenanceServicesCatalog() {
       />
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
+        {/* MAINT-F3506: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
         <input
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -146,6 +147,8 @@ export function MaintenanceServicesCatalog() {
           tableTestId="maintenance-services-catalog-table"
           initialPageSize={PAGE_SIZE}
           pageSizeOptions={[PAGE_SIZE]}
+          // MAINT-F3506: keep API search above; hide ParityTable toolbar Search
+          suppressToolbarSearch
         />
       )}
 
