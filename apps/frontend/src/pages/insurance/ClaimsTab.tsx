@@ -68,7 +68,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkClaimId = searchParams.get("claim_id");
   const reverseDriverId = searchParams.get("driver_id")?.trim() || "";
   const reverseUnitId = searchParams.get("unit_id")?.trim() || "";
@@ -76,23 +76,50 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   const reverseTrailerId = searchParams.get("trailer_id")?.trim() || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(deepLinkClaimId);
-  // LST-F5163E: visible list filters (allowCreate=false); reverse ?trailer_id= seeds trailerFilter.
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [trailerFilter, setTrailerFilter] = useState("");
+  // LST-F5163E + LST-F5192: visible list filters must write URL params.
+  const [driverFilter, setDriverFilterState] = useState(reverseDriverId);
+  const [unitFilter, setUnitFilterState] = useState(reverseUnitId);
+  const [loadFilter, setLoadFilterState] = useState(reverseLoadId);
+  const [trailerFilter, setTrailerFilterState] = useState(reverseTrailerId);
 
   useEffect(() => {
     if (deepLinkClaimId) setHighlightedClaimId(deepLinkClaimId);
   }, [deepLinkClaimId]);
   useEffect(() => {
-    if (reverseDriverId) setDriverFilter(reverseDriverId);
+    setDriverFilterState(reverseDriverId);
   }, [reverseDriverId]);
   useEffect(() => {
-    if (reverseUnitId) setUnitFilter(reverseUnitId);
+    setUnitFilterState(reverseUnitId);
   }, [reverseUnitId]);
   useEffect(() => {
-    if (reverseTrailerId) setTrailerFilter(reverseTrailerId);
+    setLoadFilterState(reverseLoadId);
+  }, [reverseLoadId]);
+  useEffect(() => {
+    setTrailerFilter(reverseTrailerId);
   }, [reverseTrailerId]);
+
+  function patchSearchParam(key: "driver_id" | "unit_id" | "load_id" | "trailer_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    patchSearchParam("driver_id", next);
+  }
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    patchSearchParam("unit_id", next);
+  }
+  function setLoadFilter(next: string) {
+    setLoadFilterState(next);
+    patchSearchParam("load_id", next);
+  }
+  function setTrailerFilter(next: string) {
+    setTrailerFilterState(next);
+    patchSearchParam("trailer_id", next);
+  }
 
   const query = useQuery({
     queryKey: [
@@ -102,9 +129,8 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       assetId ?? "all",
       driverFilter,
       unitFilter,
-      reverseLoadId,
+      loadFilter,
       trailerFilter,
-      reverseTrailerId,
     ],
     queryFn: () =>
       listInsuranceClaims({
@@ -113,7 +139,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         asset_id: assetId,
         driver_id: driverFilter.trim() || reverseDriverId || undefined,
         unit_id: unitFilter.trim() || reverseUnitId || undefined,
-        load_id: reverseLoadId || undefined,
+        load_id: loadFilter.trim() || reverseLoadId || undefined,
         trailer_id: trailerFilter.trim() || reverseTrailerId || undefined,
       }).then((result) => result.claims),
     enabled: Boolean(companyId),
@@ -494,6 +520,19 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 placeholder="All units"
                 className="mt-1"
                 dataTestId="insurance-claims-filter-unit"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Load
+              <EntityPicker
+                kind="load"
+                operatingCompanyId={companyId}
+                value={loadFilter || null}
+                onChange={(next) => setLoadFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All loads"
+                className="mt-1"
+                dataTestId="insurance-claims-filter-load"
               />
             </label>
             <label className="text-[11px] text-slate-600">
