@@ -1,0 +1,43 @@
+const guards = [
+  "verify-driver-column-guard-registry-batch.mjs",
+  "verify-accident-driver-reverse.mjs",
+  "verify-border-crossing-driver-linkage.mjs",
+  "verify-cash-forecast-driver-linkage.mjs",
+  "verify-compliance-driver-wiring.mjs",
+  "verify-da-test-driver-linkage.mjs",
+  "verify-dispatch-driver-wiring.mjs",
+  "verify-driver-compliance-history-double-route.mjs",
+  "verify-driver-customer-hidden-surface-reverse-links.mjs",
+  "verify-driver-incidents-reverse.mjs",
+  "verify-driver-load-reverse-link-wired.mjs",
+  "verify-driver-report-driver-reverse.mjs",
+  "verify-driver-report-load-reverse.mjs",
+  "verify-driver-team-profile-reverse.mjs",
+  "verify-driver-team-split-config-reverse.mjs",
+  "verify-drivers-module-driver-wiring.mjs",
+  "verify-drivers-pay-rate-templates-connectivity.mjs",
+  "verify-equipment-transfer-driver-reverse.mjs",
+  "verify-fleet-driver-wiring.mjs",
+  "verify-fuel-planner-unit-driver-entitylink.mjs",
+  "verify-home-driver-reverse-leaves.mjs",
+  "verify-hos-violation-driver-reverse.mjs",
+  "verify-insurance-driver-wiring.mjs",
+  "verify-intransit-issue-driver-linkage.mjs",
+  "verify-legal-matter-driver-linkage.mjs",
+  "verify-lists-driver-search-and-teams.mjs",
+  "verify-load-driver-pay-bill-entitylink.mjs",
+  "verify-maintenance-driver-wiring.mjs",
+  "verify-reports-driver-wiring.mjs",
+  "verify-road-service-driver-picker.mjs",
+  "verify-road-service-driver-reverse.mjs",
+  "verify-safety-driver-profile-connectivity.mjs",
+  "verify-safety-driver-wiring.mjs",
+  "verify-temp-cover-driver-linkage.mjs",
+];
+
+export default {
+  name: "verify-driver-column-orphan-guard-registry-batch",
+  async run(ctx) {
+    for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+  },
+};
