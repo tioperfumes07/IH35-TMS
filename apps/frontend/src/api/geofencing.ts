@@ -8,6 +8,7 @@ export type Geofence = {
   label: string;
   location_kind: GeofenceLocationKind;
   location_ref_id: string | null;
+  location_ref_label: string | null;
   is_active: boolean;
   polygon_geojson: {
     type: "Polygon";
@@ -54,12 +55,13 @@ export function createGeofence(body: {
 export function updateGeofence(
   id: string,
   body: Partial<{
+    operating_company_id: string;
     label: string;
     location_kind: GeofenceLocationKind;
     location_ref_id: string | null;
     is_active: boolean;
     polygon_geojson: Geofence["polygon_geojson"];
-  }>
+  }> & { operating_company_id: string }
 ) {
   return apiRequest<Geofence>(`/api/v1/telematics/geofences/${id}`, { method: "PATCH", body });
 }

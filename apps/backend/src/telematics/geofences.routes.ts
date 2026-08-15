@@ -1,5 +1,6 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { PoolClient } from "pg";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -28,6 +29,7 @@ const createBodySchema = z.object({
 
 const patchBodySchema = z
   .object({
+    operating_company_id: z.string().uuid(),
     label: z.string().trim().min(1).max(200).optional(),
     location_kind: locationKindSchema.optional(),
     location_ref_id: z.string().uuid().nullable().optional(),
@@ -57,6 +59,7 @@ type GeofenceRow = {
   label: string;
   location_kind: string;
   location_ref_id: string | null;
+  location_ref_label?: string | null;
   is_active: boolean;
   source: "manual" | "auto_dispatch" | string;
   vertices_json: unknown;
@@ -119,6 +122,7 @@ function mapGeofenceRow(row: GeofenceRow) {
     label: row.label,
     location_kind: row.location_kind,
     location_ref_id: row.location_ref_id,
+    location_ref_label: row.location_ref_label ?? null,
     is_active: row.is_active,
     source: row.source,
     polygon_geojson: polygonGeoJsonFromVertices(row.vertices_json),
@@ -127,6 +131,28 @@ function mapGeofenceRow(row: GeofenceRow) {
     updated_at: row.updated_at,
     updated_by_user_uuid: row.updated_by_user_uuid,
   };
+}
+
+async function assertLocationReference(
+  client: PoolClient,
+  operatingCompanyId: string,
+  locationKind: z.infer<typeof locationKindSchema>,
+  locationRefId: string | null | undefined,
+) {
+  if (!locationRefId || locationKind === "custom" || locationKind === "dot_inspection_station") return;
+  const source =
+    locationKind === "customer_site"
+      ? { table: "mdata.customers", type: "customer_site" }
+      : locationKind === "vendor_site"
+        ? { table: "mdata.vendors", type: "vendor_site" }
+        : { table: "mdata.locations", type: "yard" };
+  const ref = await client.query(
+    `SELECT 1 FROM ${source.table} WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [locationRefId, operatingCompanyId],
+  );
+  if (!ref.rows[0]) {
+    throw Object.assign(new Error(`invalid_${source.type}_location_ref`), { statusCode: 400 });
+  }
 }
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -170,6 +196,12 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             g.label,
             g.location_kind,
             g.location_ref_id::text,
+            CASE
+              WHEN g.location_kind = 'customer_site' THEN c.customer_name
+              WHEN g.location_kind = 'vendor_site' THEN v.vendor_name
+              WHEN g.location_kind = 'yard' THEN loc.location_name
+              ELSE NULL
+            END AS location_ref_label,
             g.is_active,
             g.source,
             g.vertices_json,
@@ -178,6 +210,9 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             g.updated_at::text,
             g.updated_by_user_uuid::text
           FROM geo.geofences g
+          LEFT JOIN mdata.customers c ON g.location_kind = 'customer_site' AND c.id = g.location_ref_id AND c.operating_company_id = g.operating_company_id
+          LEFT JOIN mdata.vendors v ON g.location_kind = 'vendor_site' AND v.id = g.location_ref_id AND v.operating_company_id = g.operating_company_id
+          LEFT JOIN mdata.locations loc ON g.location_kind = 'yard' AND loc.id = g.location_ref_id AND loc.operating_company_id = g.operating_company_id
           ${whereSql}
           ORDER BY g.created_at DESC
         `,
@@ -205,6 +240,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
 
     const created = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
+      await assertLocationReference(client, parsed.data.operating_company_id, parsed.data.location_kind, parsed.data.location_ref_id);
       const res = await client.query<GeofenceRow>(
         `
           INSERT INTO geo.geofences (
@@ -259,7 +295,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/telematics/geofences/:id", async (req, reply) => {
+  app.patch("/api/v1/telematics/geofences/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -293,11 +329,20 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
     const idIndex = values.length;
 
     const updated = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
+      const current = await client.query<{ location_kind: z.infer<typeof locationKindSchema>; location_ref_id: string | null }>(
+        `SELECT location_kind, location_ref_id::text FROM geo.geofences WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [params.data.id, body.data.operating_company_id],
+      );
+      if (!current.rows[0]) return null;
+      const nextKind = body.data.location_kind ?? current.rows[0].location_kind;
+      const nextRef = "location_ref_id" in body.data ? body.data.location_ref_id : current.rows[0].location_ref_id;
+      await assertLocationReference(client, body.data.operating_company_id, nextKind, nextRef);
       const res = await client.query<GeofenceRow>(
         `
           UPDATE geo.geofences
           SET ${setParts.join(", ")}
-          WHERE id = $${idIndex}::uuid
+          WHERE id = $${idIndex}::uuid AND operating_company_id = $${idIndex + 1}::uuid
           RETURNING
             id::text,
             operating_company_id::text,
@@ -312,7 +357,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             updated_at::text,
             updated_by_user_uuid::text
         `,
-        values
+        [...values, body.data.operating_company_id]
       );
       return res.rows[0] ? mapGeofenceRow(res.rows[0]) : null;
     });
