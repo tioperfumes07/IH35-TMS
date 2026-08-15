@@ -381,3 +381,6 @@ exact failure this register exists to prevent.
 | ☐ | `LV-HOME-ATTENTION-SIBLING-GENERIC-ROUTES` | **P1** | Codex | — | — | — | Home maintenance and safety attention siblings discarded their record classes at generic module hubs; canonical deep-route continuation in flight | — | — |
 | ☐ | `LV-AUDIT-TRAIL-SUBJECT-KIND-MISCLASSIFIED` | **P1** | Codex | — | — | — | Live USMCA audit rows exposed historical task-bucket work orders/invoices without typed labels; canonical read projection + EntityLink class fix in flight | — | — |
 | ☐ | `LV-CASH-FLOW-CASH-ADVANCES-HOP-STALE-ALIAS` | **P1** | Codex | — | — | — | Live Cash Flow related door used stale drivers query-tab alias instead of mounted canonical `/cash-advances`; door+guard fix in flight | — | — |
+| ☐ | `LV-BOX4-MONEY-CHROME-LEAVES-BACKLOG` | **P1** | CC-1 | — | — | — | ~51 unmatched accounting/banking Box4 Leaves after Cursor Live #7366; CC-1 mount walks with explicit Leaves | — | — |
+| ☐ | `LV-USMCA-NO-ACTIVE-FACTOR-BLOCKS-PROFILE` | **P1** | CC-1 | — | — | — | USMCA Factoring has no active factor; blocks profile + deactivate confirm Live Chrome | — | — |
+| ☐ | `LV-BOX4-STARVED-OPS-FIXTURES` | **P1** | Codex | — | — | — | quick_assign / triage+convert / integrity_alert_detail starved on USMCA; fixtures or honest N/A-PRE-OP | — | — |
