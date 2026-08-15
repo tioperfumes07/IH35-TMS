@@ -4,82 +4,65 @@
  * Block B21-D2: Dispatch arch tab parity phase 1 — At-Risk, In-Transit Issues, Assignment History.
  */
 import fs from "node:fs";
-import path from "node:path";
-import process from "node:process";
 
-const ROOT = process.cwd();
-const paths = {
-  atRiskPage: path.join(ROOT, "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx"),
-  intransitPage: path.join(ROOT, "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx"),
-  historyPage: path.join(ROOT, "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx"),
-  routes: path.join(ROOT, "apps/backend/src/dispatch/arch-tabs.routes.ts"),
-  service: path.join(ROOT, "apps/backend/src/dispatch/arch-tabs.service.ts"),
-  index: path.join(ROOT, "apps/backend/src/index.ts"),
-  manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
-  sidebar: path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts"),
-  dispatchApi: path.join(ROOT, "apps/frontend/src/api/dispatch.ts"),
-  archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
+const files = {
+  atRiskPage: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
+  intransitPage: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
+  historyPage: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+  routes: "apps/backend/src/dispatch/arch-tabs.routes.ts",
+  service: "apps/backend/src/dispatch/arch-tabs.service.ts",
+  index: "apps/backend/src/index.ts",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
+  sidebar: "apps/frontend/src/components/layout/sidebar-config.ts",
+  dispatchApi: "apps/frontend/src/api/dispatch.ts",
+  archDesign: "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
 };
+const original = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+const dispatchFlyout = (source) => source.split('case "dispatch"')[1]?.split("case ")[0] ?? "";
+const hasAll = (...needles) => (source) => needles.every((needle) => source.includes(needle));
+const matches = (pattern) => (source) => pattern.test(source);
+const remove = (needle) => (source) => source.replaceAll(needle, "__PLANTED_DISPATCH_ARCH_DEFECT__");
 
-function read(filePath) {
-  if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
-  return fs.readFileSync(filePath, "utf8");
+const contracts = [
+  ["at-risk page identity", "atRiskPage", hasAll("dispatch-at-risk-page"), remove("dispatch-at-risk-page")],
+  ["in-transit create flow", "intransitPage", hasAll("+ Create Issue"), remove("+ Create Issue")],
+  ["in-transit canonical unit drill", "intransitPage", matches(/<EntityLink kind="unit" id=\{issue\.unit_id \?\? undefined\}/), remove('<EntityLink kind="unit" id={issue.unit_id ?? undefined}')],
+  ["in-transit honest error retry", "intransitPage", hasAll("issuesQ.isError", "ListErrorState", "issuesQ.refetch()"), remove("issuesQ.isError")],
+  ["assignment-history page identity", "historyPage", hasAll("dispatch-assignment-history-page"), remove("dispatch-assignment-history-page")],
+  ["at-risk API route", "routes", hasAll("/api/v1/dispatch/at-risk-loads"), remove("/api/v1/dispatch/at-risk-loads")],
+  ["in-transit API route", "routes", hasAll("/api/v1/dispatch/intransit-issues"), remove("/api/v1/dispatch/intransit-issues")],
+  ["assignment-history API route", "routes", hasAll("/api/v1/dispatch/assignment-history"), remove("/api/v1/dispatch/assignment-history")],
+  ["assignment-history canonical service table", "service", hasAll("dispatch.load_assignment_history"), remove("dispatch.load_assignment_history")],
+  ["backend route registration", "index", hasAll("registerDispatchArchTabsRoutes"), remove("registerDispatchArchTabsRoutes")],
+  ["at-risk mounted manifest route", "manifest", hasAll('path="/dispatch/at-risk"'), remove('path="/dispatch/at-risk"')],
+  ["in-transit mounted manifest route", "manifest", hasAll('path="/dispatch/in-transit-issues"'), remove('path="/dispatch/in-transit-issues"')],
+  ["assignment-history mounted manifest route", "manifest", hasAll('path="/dispatch/assignment-history"'), remove('path="/dispatch/assignment-history"')],
+  ["at-risk Dispatch flyout link", "sidebar", (source) => dispatchFlyout(source).includes("/dispatch/at-risk"), remove("/dispatch/at-risk")],
+  ["in-transit Dispatch flyout link", "sidebar", (source) => dispatchFlyout(source).includes("/dispatch/in-transit-issues"), remove("/dispatch/in-transit-issues")],
+  ["assignment-history Dispatch flyout link", "sidebar", (source) => dispatchFlyout(source).includes("/dispatch/assignment-history"), remove("/dispatch/assignment-history")],
+  ["at-risk frontend API export", "dispatchApi", hasAll("listAtRiskDispatchLoads"), remove("listAtRiskDispatchLoads")],
+  ["architecture guard registration", "archDesign", hasAll("verify:dispatch-arch-tab-parity"), remove("verify:dispatch-arch-tab-parity")],
+];
+
+function audit(sources) {
+  return contracts.filter(([, key, test]) => !test(sources[key])).map(([name]) => name);
 }
 
-function fail(msg) {
-  console.error(`[verify-dispatch-arch-tab-parity] ${msg}`);
+const failures = audit(original);
+if (failures.length) {
+  console.error(`[verify-dispatch-arch-tab-parity] FAILED\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
 }
 
-function main() {
-  const atRiskPage = read(paths.atRiskPage);
-  const intransitPage = read(paths.intransitPage);
-  const historyPage = read(paths.historyPage);
-  const routes = read(paths.routes);
-  const service = read(paths.service);
-  const index = read(paths.index);
-  const manifest = read(paths.manifest);
-  const sidebar = read(paths.sidebar);
-  const dispatchApi = read(paths.dispatchApi);
-  const archDesign = read(paths.archDesign);
-  const failures = [];
-
-  if (!atRiskPage.includes("dispatch-at-risk-page")) failures.push("AtRiskQueuePage must expose test id");
-  if (!intransitPage.includes("+ Create Issue")) failures.push("InTransitIssuesPage must expose create flow");
-  if (!/<EntityLink kind="unit" id=\{issue\.unit_id \?\? undefined\}/.test(intransitPage)) {
-    failures.push("InTransitIssuesPage must link each issue to its canonical unit FK");
+if (process.argv.includes("--selftest")) {
+  let caught = 0;
+  for (const [name, key, , mutate] of contracts) {
+    const mutated = { ...original, [key]: mutate(original[key]) };
+    if (audit(mutated).includes(name)) caught += 1;
+    else throw new Error(`selftest failed to catch: ${name}`);
   }
-  if (!intransitPage.includes("issuesQ.isError") || !intransitPage.includes("ListErrorState") || !intransitPage.includes("issuesQ.refetch()")) {
-    failures.push("InTransitIssuesPage must distinguish list failure from an honest empty issue queue and expose retry");
-  }
-  if (!historyPage.includes("dispatch-assignment-history-page")) failures.push("AssignmentHistoryPage must expose test id");
-
-  if (!routes.includes("/api/v1/dispatch/at-risk-loads")) failures.push("arch-tabs routes must expose at-risk endpoint");
-  if (!routes.includes("/api/v1/dispatch/intransit-issues")) failures.push("arch-tabs routes must list intransit issues");
-  if (!routes.includes("/api/v1/dispatch/assignment-history")) failures.push("arch-tabs routes must list assignment history");
-  if (!service.includes("dispatch.load_assignment_history")) failures.push("service must query assignment history table");
-  if (!index.includes("registerDispatchArchTabsRoutes")) failures.push("backend index must register arch tab routes");
-
-  if (!manifest.includes('path="/dispatch/at-risk"')) failures.push("manifest must route /dispatch/at-risk");
-  if (!manifest.includes('path="/dispatch/in-transit-issues"')) failures.push("manifest must route in-transit issues");
-  if (!manifest.includes('path="/dispatch/assignment-history"')) failures.push("manifest must route assignment history");
-
-  const dispatchFlyout = sidebar.split('case "dispatch"')[1]?.split("case ")[0] ?? "";
-  if (!dispatchFlyout.includes("/dispatch/at-risk")) failures.push("sidebar flyout must link at-risk tab");
-  if (!dispatchFlyout.includes("/dispatch/in-transit-issues")) failures.push("sidebar flyout must link in-transit issues");
-  if (!dispatchFlyout.includes("/dispatch/assignment-history")) failures.push("sidebar flyout must link assignment history");
-
-  if (!dispatchApi.includes("listAtRiskDispatchLoads")) failures.push("dispatch API must export listAtRiskDispatchLoads");
-  if (!archDesign.includes("verify:dispatch-arch-tab-parity")) {
-    failures.push("ARCHITECTURAL_DESIGN must reference verify:dispatch-arch-tab-parity");
-  }
-
-  if (failures.length) {
-    for (const f of failures) console.error(` - ${f}`);
-    fail("FAILED");
-  }
-
-  console.log("[verify-dispatch-arch-tab-parity] OK");
+  console.log(`[verify-dispatch-arch-tab-parity] SELFTEST PASS — ${caught}/${contracts.length} exact architecture mutations detected`);
+  process.exit(0);
 }
 
-main();
+console.log("[verify-dispatch-arch-tab-parity] OK");
