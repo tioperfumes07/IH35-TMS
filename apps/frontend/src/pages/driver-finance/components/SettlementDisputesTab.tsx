@@ -14,8 +14,8 @@ import {
   type SettlementDisputeStatus,
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
-import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
@@ -34,16 +34,26 @@ function statusBadgeClass(status: SettlementDisputeStatus) {
 }
 
 export function SettlementDisputesTab({ companyId }: { companyId: string }) {
-  const [searchParams] = useSearchParams();
-  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5182 — visible EntityPicker (URL seed + DriverPickerWithCreate without URL write is not reverse chrome).
+  const deepLinkDriverId = searchParams.get("driver_id")?.trim() ?? "";
   const [status, setStatus] = useState<"open" | "all">("open");
-  const [driverId, setDriverId] = useState(driverIdFromUrl);
+  const [driverId, setDriverIdState] = useState(deepLinkDriverId);
   const [selected, setSelected] = useState<SettlementDisputeRow | null>(null);
 
-  // LINK-F5171: driver profile "Open Disputes" → /settlements?tab=disputes&driver_id=…
   useEffect(() => {
-    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
-  }, [driverIdFromUrl]);
+    setDriverIdState(deepLinkDriverId);
+  }, [deepLinkDriverId]);
+
+  function setDriverId(next: string) {
+    setDriverIdState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("driver_id", next);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
+
+  const effectiveDriverId = driverId || deepLinkDriverId;
   const [resolution, setResolution] = useState<"in_favor" | "rejected" | "partial">("in_favor");
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [resolutionAmount, setResolutionAmount] = useState("");
@@ -51,8 +61,8 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   const { pushToast } = useToast();
 
   const disputesQuery = useQuery({
-    queryKey: ["driver-finance", "settlement-disputes", companyId, status, driverId],
-    queryFn: () => listSettlementDisputes(companyId, { status, driver_id: driverId.trim() || undefined }),
+    queryKey: ["driver-finance", "settlement-disputes", companyId, status, effectiveDriverId],
+    queryFn: () => listSettlementDisputes(companyId, { status, driver_id: effectiveDriverId.trim() || undefined }),
     enabled: Boolean(companyId),
   });
 
@@ -124,13 +134,15 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           </label>
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Driver</div>
-            <DriverPickerWithCreate
+            <EntityPicker
+              kind="driver"
               operatingCompanyId={companyId}
-              value={driverId || null}
+              value={effectiveDriverId || null}
               onChange={(next) => setDriverId(next ?? "")}
-              placeholder="Optional driver filter"
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              disabled={!companyId}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="w-full"
+              dataTestId="settlement-disputes-filter-driver"
             />
           </label>
           <div className="flex items-end">

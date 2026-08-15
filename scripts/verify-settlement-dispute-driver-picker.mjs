@@ -13,6 +13,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-dispute-driver-picker";
 const MODAL = "apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx";
 const DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const TAB = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
 const SHARED = "apps/frontend/src/pages/driver-finance/settlementDisputeCategories.ts";
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -57,6 +58,19 @@ export function collectProblems(root = ROOT) {
     problems.push(`${DETAIL}: must import settlementDisputeCategories (SETL-PICK-03)`);
   } else if (!/SETTLEMENT_DISPUTE_CATEGORY_OPTIONS/.test(detail)) {
     problems.push(`${DETAIL}: must render SETTLEMENT_DISPUTE_CATEGORY_OPTIONS`);
+  }
+
+  // LST-F5182 — disputes list reverse filter must be EntityPicker + URL sync.
+  const tab = readRel(root, TAB);
+  if (!tab) problems.push(`missing ${TAB}`);
+  else if (
+    !/dataTestId="settlement-disputes-filter-driver"/.test(tab) ||
+    !/kind="driver"/.test(tab) ||
+    !/allowCreate=\{false\}/.test(tab) ||
+    !/searchParams\.get\("driver_id"\)/.test(tab) ||
+    !/setSearchParams/.test(tab)
+  ) {
+    problems.push(`${TAB}: must render EntityPicker driver filter (allowCreate=false) synced to ?driver_id=`);
   }
   return problems;
 }
