@@ -18,25 +18,39 @@ type DvirRow = Record<string, unknown>;
 
 export function IdvrPage({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5188 — EntityPicker filters must write URL params (not local-only state).
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [trailerFilter, setTrailerFilter] = useState("");
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
+  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
+  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-  useEffect(() => {
-    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
-  }, [unitIdFromUrl]);
-  useEffect(() => {
-    if (trailerIdFromUrl) setTrailerFilter(trailerIdFromUrl);
-  }, [trailerIdFromUrl]);
+  useEffect(() => { setDriverFilterState(driverIdFromUrl); }, [driverIdFromUrl]);
+  useEffect(() => { setUnitFilterState(unitIdFromUrl); }, [unitIdFromUrl]);
+  useEffect(() => { setTrailerFilterState(trailerIdFromUrl); }, [trailerIdFromUrl]);
+
+  function patchSearchParam(key: "driver_id" | "unit_id" | "trailer_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    patchSearchParam("driver_id", next);
+  }
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    patchSearchParam("unit_id", next);
+  }
+  function setTrailerFilter(next: string) {
+    setTrailerFilterState(next);
+    patchSearchParam("trailer_id", next);
+  }
 
   const queryParams = useMemo(
     () => ({
