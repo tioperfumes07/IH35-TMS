@@ -148,13 +148,22 @@ export async function getDriverTeam(userId: string, operatingCompanyId: string, 
     if (!team) return null;
     const historyRes = await client.query(
       `
-        SELECT *
-        FROM driver_finance.team_settlement_splits
-        WHERE team_id = $1
-        ORDER BY computed_at DESC
+        SELECT split.*,
+               load.load_number,
+               NULLIF(TRIM(CONCAT(COALESCE(driver.first_name, ''), ' ', COALESCE(driver.last_name, ''))), '') AS driver_name
+        FROM driver_finance.team_settlement_splits split
+        JOIN mdata.loads load
+          ON load.id = split.load_id
+         AND load.operating_company_id = split.operating_company_id
+        JOIN mdata.drivers driver
+          ON driver.id = split.driver_id
+         AND driver.operating_company_id = split.operating_company_id
+        WHERE split.team_id = $1
+          AND split.operating_company_id = $2::uuid
+        ORDER BY split.computed_at DESC
         LIMIT 100
       `,
-      [teamId]
+      [teamId, operatingCompanyId]
     );
     return { ...team, settlement_history: historyRes.rows };
   });

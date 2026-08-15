@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["drivers"],"cols":["driver"],"leafRe":"^teams\\.create$","task":"VERTICAL-DRIVER-ALL-MODULES-REMAINDER","vertical":"last-hotfile-slice"} */
 /** @matrix-built {"modules":["maintenance"],"cols":["driver"],"leafRe":"^master\\.drivers\\.create$","task":"VERTICAL-DRIVER-ALL-MODULES-REMAINDER","vertical":"last-hotfile-slice"} */
+/** @matrix-built {"modules":["drivers"],"cols":["driver"],"leafRe":"^team_splits$","task":"LINK-F5171-DRIVER-TEAM-SPLIT-HUMAN-LABELS","vertical":"column-depth"} */
 import fs from "node:fs";
 
 const FILES = {
@@ -28,6 +29,7 @@ export function verify(source) {
   };
 
   matrixNeeds("driversMatrix", "teams.create");
+  matrixNeeds("driversMatrix", "team_splits");
   matrixNeeds("maintenanceMatrix", "master.drivers.create");
 
   need("driversPage", "<DriverPickerWithCreate", "team creator must use the canonical driver picker");
@@ -38,6 +40,12 @@ export function verify(source) {
   need("teamService", "await assertDriverCompany(client, input.primary_driver_id, input.operating_company_id)", "primary driver must be company validated");
   need("teamService", "await assertDriverCompany(client, input.co_driver_id, input.operating_company_id)", "co-driver must be company validated");
   need("teamService", "operating_company_id, team_name, primary_driver_id, secondary_driver_id", "team writer must persist both canonical driver FKs");
+  need("teamService", "load.operating_company_id = split.operating_company_id", "team split history load label join must remain company scoped");
+  need("teamService", "driver.operating_company_id = split.operating_company_id", "team split history driver label join must remain company scoped");
+  need("teamService", "AND split.operating_company_id = $2::uuid", "team split history read must bind the selected company");
+  need("mdataApi", "settlement_history?: DriverTeamSettlementHistory[]", "team split history labels must remain typed");
+  need("driversPage", 'entityLabel(row.load_number, row.load_id, "Load")', "team drawer must consume human load numbers");
+  need("driversPage", 'entityLabel(row.driver_name, row.driver_id, "Driver")', "team drawer must consume human driver names");
 
   need("maintenancePage", "createMaintenanceDriver(companyId, {", "maintenance creator must forward company scope to the canonical client");
   need("maintenancePage", 'queryKey: ["maintenance", "master-data", "drivers", companyId]', "maintenance creator must reload the same scoped driver roster");
@@ -64,12 +72,19 @@ if (process.argv.includes("--selftest")) {
     ["teamService", "await assertDriverCompany(client, input.primary_driver_id, input.operating_company_id)"],
     ["teamService", "await assertDriverCompany(client, input.co_driver_id, input.operating_company_id)"],
     ["teamService", "operating_company_id, team_name, primary_driver_id, secondary_driver_id"],
+    ["teamService", "load.operating_company_id = split.operating_company_id"],
+    ["teamService", "driver.operating_company_id = split.operating_company_id"],
+    ["teamService", "AND split.operating_company_id = $2::uuid"],
+    ["mdataApi", "settlement_history?: DriverTeamSettlementHistory[]"],
+    ["driversPage", 'entityLabel(row.load_number, row.load_id, "Load")'],
+    ["driversPage", 'entityLabel(row.driver_name, row.driver_id, "Driver")'],
     ["maintenancePage", "createMaintenanceDriver(companyId, {"],
     ["maintenancePage", 'kind="driver"'],
     ["maintenanceApi", "/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
     ["maintenanceRoutes", "const result = await createDriverCanonical("],
     ["maintenanceRoutes", "{ assignCompanyId: companyId, provisionSubAccounts: false }"],
     ["driversMatrix", '"id": "teams.create"'],
+    ["driversMatrix", '"id": "team_splits"'],
     ["maintenanceMatrix", '"id": "master.drivers.create"'],
   ];
   mutations.forEach(([key, token], index) => {

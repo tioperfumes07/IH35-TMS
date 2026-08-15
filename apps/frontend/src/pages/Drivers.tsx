@@ -1027,20 +1027,20 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 <p className="text-gray-500">No split history yet.</p>
               ) : (
                 (teamDetailQuery.data.settlement_history ?? []).slice(0, 20).map((row, index) => (
-                  <div key={`${index}-${String((row as Record<string, unknown>).id ?? "")}`} className="border-t border-gray-100 py-1">
+                  <div key={`${index}-${row.id}`} className="border-t border-gray-100 py-1">
                     Load{" "}
                     <EntityLink
                       kind="load"
-                      id={(row as Record<string, unknown>).load_id as string | null}
-                      label={entityLabel(null, (row as Record<string, unknown>).load_id, "Load")}
+                      id={row.load_id}
+                      label={entityLabel(row.load_number, row.load_id, "Load")}
                     />{" "}
                     · Driver{" "}
                     <EntityLink
                       kind="driver"
-                      id={(row as Record<string, unknown>).driver_id as string | null}
-                      label={entityLabel(null, (row as Record<string, unknown>).driver_id, "Driver")}
+                      id={row.driver_id}
+                      label={entityLabel(row.driver_name, row.driver_id, "Driver")}
                     />{" "}
-                    · Pay {formatUsdCents(Number((row as Record<string, unknown>).driver_pay_cents ?? 0) || 0)}
+                    · Pay {formatUsdCents(Number(row.driver_pay_cents ?? 0) || 0)}
                   </div>
                 ))
               )}
