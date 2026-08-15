@@ -71,8 +71,9 @@ function loadEntries() {
 // accounting/banking money surfaces; Cursor owns toolbar chrome. Removing a completed key is safe.
 const PROTECTED = new Set([
   // Accounting create/parity connectivity closed ACCT-F5209 (invoice/expense/vendor_bill/
-  // payment_methods matrix-built on wave-c + payment-methods guards). Escrow reverse stays.
-  "reverse_link\taccounting:escrow",
+  // payment_methods matrix-built on wave-c + payment-methods guards). Escrow reverse closed
+  // ACCT-F5313 (verify-accounting-escrow-holder-reverse-link) — CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20
+  // is now fully drained.
 ]);
 
 const CLOSED_CLAIM_IDS = [
