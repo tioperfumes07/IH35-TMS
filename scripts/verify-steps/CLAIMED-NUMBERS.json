@@ -2756,5 +2756,9 @@
   "3341": {
     "owner": "cc-1",
     "purpose": "verify-accounting-gl-je-genuine-gaps (LINK-F5186)"
+  },
+  "3345": {
+    "owner": "cc-1",
+    "purpose": "verify-gl-je-required-honest-cluster2 (LINK-F5186)"
   }
 }
