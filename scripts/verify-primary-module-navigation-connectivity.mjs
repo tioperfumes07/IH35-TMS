@@ -8,6 +8,7 @@ const FILES = {
   docs: "apps/frontend/src/pages/docs/DocsHomePage.tsx",
   driverHub: "apps/frontend/src/pages/home/DriverHubPage.tsx",
   form425: "apps/frontend/src/pages/form425c/Form425CHome.tsx",
+  form425Exhibits: "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx",
   tasks: "apps/frontend/src/pages/tasks/TasksModuleTabs.tsx",
   program: "apps/frontend/src/pages/program/ProgramModuleNav.tsx",
   system: "apps/frontend/src/pages/system/SystemModulePage.tsx",
@@ -61,6 +62,8 @@ export function verify(source) {
   need("driverHub", "<SecondaryNavTabs tabs={TABS}", "driver-hub tabs must render through shared navigation");
   for (const id of EXPECTED.form425) need("form425", `id: "${id}"`, `form 425C tab ${id} must remain visible`);
   need("form425", "tabs={TABS.map", "form 425C tabs must render through shared navigation");
+  need("form425Exhibits", "for the selected operating company", "form 425C exhibits must describe the active company scope");
+  if (/\bTRANSP\b/.test(source.form425Exhibits)) failures.push("form 425C exhibits must not hardcode TRANSP while another company is active");
   for (const id of EXPECTED.tasks) need("tasks", `id: "${id}"`, `tasks nav ${id} must remain visible`);
   need("tasks", "onClick={() => navigate(tab.to)}", "tasks navigation must open its mounted routes");
   for (const id of EXPECTED.program) need("program", `program-nav-${id}`, `program nav ${id} must remain visible`);
@@ -97,6 +100,7 @@ if (process.argv.includes("--self-test")) {
     ["driverHub", "<SecondaryNavTabs tabs={TABS}", "<SecondaryNavTabs tabs={[]}"],
     ["form425", 'id: "form"', 'id: "form-broken"'],
     ["form425", "tabs={TABS.map", "tabs={[].map"],
+    ["form425Exhibits", "for the selected operating company", "for TRANSP monthly DIP filings"],
     ["tasks", 'id: "board"', 'id: "board-broken"'],
     ["tasks", "onClick={() => navigate(tab.to)}", "onClick={() => undefined}"],
     ["program", "program-nav-matrix", "broken-program-matrix"],
