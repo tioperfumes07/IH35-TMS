@@ -43,7 +43,7 @@ function failures(current = files, overrides = new Map()) {
     ["receipt source drill", current.receipts.includes('kind={receiptEntityKind(data)}') && current.receipts.includes('id={data.entity_id}')],
     ["leakage load drill", current.revenue.includes('<EntityLink kind="load" id={row.load_id}')],
     ["cash-flow party drills", current.cashFlow.includes('<EntityLink kind="unit" id={e.ref_external_id}') && current.cashFlow.includes('<EntityLink kind={e.party_ref_kind} id={e.party_ref_id}') && current.cashFlow.includes('e.party_ref_kind === "driver"') && current.cashFlow.includes('e.party_ref_kind === "customer"') && current.cashFlow.includes('e.party_ref_kind === "vendor"')],
-    ["task drawer subject drill", current.tasks.includes('<TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} />')],
+    ["task drawer subject drill", current.tasks.includes('<TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} subjectLabel={task.subject_label} />')],
     ["task subject maps load", current.subjects.includes('load: "load"')],
   ];
   for (const [module, leaves] of requiredDrops) {

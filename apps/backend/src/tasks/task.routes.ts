@@ -143,11 +143,32 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         SELECT t.task_id, t.category, t.status, t.title, t.description,
           t.priority, t.scheduled_date, t.due_date, t.assigned_to_user_id,
           coalesce(u.first_name || ' ' || u.last_name, u.email) as assigned_to_name,
-          t.subject_type, t.subject_id, t.estimated_minutes, t.actual_minutes,
+          t.subject_type, t.subject_id,
+          CASE t.subject_type
+            WHEN 'load' THEN subject_load.load_number
+            WHEN 'unit' THEN subject_unit.unit_number
+            WHEN 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', subject_driver.first_name, subject_driver.last_name)), '')
+            WHEN 'customer' THEN subject_customer.customer_name
+            WHEN 'maintenance_order' THEN subject_wo.display_id
+            WHEN 'work_order' THEN subject_wo.display_id
+            ELSE NULL
+          END AS subject_label,
+          t.estimated_minutes, t.actual_minutes,
           t.started_at, t.completed_at, t.created_at, t.updated_at,
           t.alarm_at, t.anticipated_category, t.task_type_id
         FROM tasks.task t
         LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
+        LEFT JOIN mdata.loads subject_load ON t.subject_type = 'load'
+          AND subject_load.id = t.subject_id AND subject_load.operating_company_id = t.operating_company_id
+        LEFT JOIN mdata.units subject_unit ON t.subject_type = 'unit'
+          AND subject_unit.id = t.subject_id
+          AND COALESCE(subject_unit.currently_leased_to_company_id, subject_unit.owner_company_id) = t.operating_company_id
+        LEFT JOIN mdata.drivers subject_driver ON t.subject_type = 'driver'
+          AND subject_driver.id = t.subject_id AND subject_driver.operating_company_id = t.operating_company_id
+        LEFT JOIN mdata.customers subject_customer ON t.subject_type = 'customer'
+          AND subject_customer.id = t.subject_id AND subject_customer.operating_company_id = t.operating_company_id
+        LEFT JOIN maintenance.work_orders subject_wo ON t.subject_type IN ('maintenance_order', 'work_order')
+          AND subject_wo.id = t.subject_id AND subject_wo.operating_company_id = t.operating_company_id
         WHERE t.operating_company_id = $1::uuid AND t.is_active = true
       `;
       const params: (string | number)[] = [input.operating_company_id];
@@ -197,12 +218,33 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         SELECT t.task_id, t.category, t.status, t.title, t.priority, t.scheduled_date,
           t.assigned_to_user_id, u.email as assigned_to_email,
           coalesce(u.first_name || ' ' || u.last_name, u.email) as assigned_to_name,
-          t.subject_type, t.subject_id, t.estimated_minutes, t.actual_minutes,
+          t.subject_type, t.subject_id,
+          CASE t.subject_type
+            WHEN 'load' THEN subject_load.load_number
+            WHEN 'unit' THEN subject_unit.unit_number
+            WHEN 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', subject_driver.first_name, subject_driver.last_name)), '')
+            WHEN 'customer' THEN subject_customer.customer_name
+            WHEN 'maintenance_order' THEN subject_wo.display_id
+            WHEN 'work_order' THEN subject_wo.display_id
+            ELSE NULL
+          END AS subject_label,
+          t.estimated_minutes, t.actual_minutes,
           t.progress_pct, t.task_type_id, tt.name as task_type_name,
           t.start_time, t.location, t.notes
         FROM tasks.task t
         LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
         LEFT JOIN tasks.task_type tt ON tt.id = t.task_type_id
+        LEFT JOIN mdata.loads subject_load ON t.subject_type = 'load'
+          AND subject_load.id = t.subject_id AND subject_load.operating_company_id = t.operating_company_id
+        LEFT JOIN mdata.units subject_unit ON t.subject_type = 'unit'
+          AND subject_unit.id = t.subject_id
+          AND COALESCE(subject_unit.currently_leased_to_company_id, subject_unit.owner_company_id) = t.operating_company_id
+        LEFT JOIN mdata.drivers subject_driver ON t.subject_type = 'driver'
+          AND subject_driver.id = t.subject_id AND subject_driver.operating_company_id = t.operating_company_id
+        LEFT JOIN mdata.customers subject_customer ON t.subject_type = 'customer'
+          AND subject_customer.id = t.subject_id AND subject_customer.operating_company_id = t.operating_company_id
+        LEFT JOIN maintenance.work_orders subject_wo ON t.subject_type IN ('maintenance_order', 'work_order')
+          AND subject_wo.id = t.subject_id AND subject_wo.operating_company_id = t.operating_company_id
         WHERE t.operating_company_id = $1::uuid AND t.is_active = true
           AND (
             t.scheduled_date BETWEEN $2 AND $3
@@ -585,4 +627,3 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     });
   });
 }
-

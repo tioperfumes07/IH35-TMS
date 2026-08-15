@@ -136,7 +136,7 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
         {task.subject_id && (
           <div>
             <span className="text-gray-500">About: </span>
-            <TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} />
+            <TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} subjectLabel={task.subject_label} />
           </div>
         )}
         <div><span className="text-gray-500">Category: </span>{task.category}</div>

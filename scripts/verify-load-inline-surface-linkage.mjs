@@ -6,7 +6,7 @@ const task=fs.readFileSync("apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx","
 const subject=fs.readFileSync("apps/frontend/src/components/tasks/TaskSubjectLink.tsx","utf8");
 const fail=(r,t,s)=>[
  ["leakage load drill",r.includes('<EntityLink kind="load" id={row.load_id}')],
- ["drawer subject mounted",t.includes('<TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} />')],
+ ["drawer subject mounted",t.includes('<TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} subjectLabel={task.subject_label} />')],
  ["subject maps load",s.includes('load: "load"')],
 ].filter(([,ok])=>!ok).map(([n])=>n);
 if(process.argv.includes("--selftest")){if(!fail(revenue,task,subject.replace('load: "load"','load: "broken"')).includes("subject maps load"))process.exit(1);console.log("verify-load-inline-surface-linkage selftest PASS — load mapping mutation red");}

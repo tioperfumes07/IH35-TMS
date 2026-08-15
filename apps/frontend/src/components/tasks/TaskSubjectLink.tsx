@@ -17,13 +17,14 @@ const TASK_SUBJECT_ENTITY_KIND: Partial<Record<string, EntityKind>> = {
   bill: "bill",
   bill_payment: "bill_payment",
   work_order: "work_order",
+  maintenance_order: "work_order",
   load: "load",
   settlement: "settlement",
 };
 
-export function TaskSubjectLink({ subjectType, subjectId }: { subjectType: string | null; subjectId: string | null }) {
+export function TaskSubjectLink({ subjectType, subjectId, subjectLabel }: { subjectType: string | null; subjectId: string | null; subjectLabel: string | null }) {
   if (!subjectType || !subjectId) return null;
   const kind = TASK_SUBJECT_ENTITY_KIND[subjectType];
   if (!kind) return <span className="capitalize">{subjectType}</span>;
-  return <EntityLink kind={kind} id={subjectId} label={entityLabel(null, subjectId, subjectType)} />;
+  return <EntityLink kind={kind} id={subjectId} label={entityLabel(subjectLabel, subjectId, subjectType)} />;
 }
