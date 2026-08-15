@@ -956,6 +956,12 @@
     "claimed_by": "cursor",
     "purpose": "verify-coa-account-type-qbo-finer-picker"
   },
+  "3352": {
+    "guard": "verify-lists-back-to-main-hub",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15",
+    "note": "LST-F3352 Lists back-arrow + Catalog Index dual-path"
+  },
   "3353": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
@@ -970,6 +976,11 @@
     "claimed_at": "2026-08-15",
     "claimed_by": "cc-1",
     "purpose": "verify-ap-bill-required-honest-batch1"
+  },
+  "3365": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-expense-required-honest-batch1"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -2815,10 +2826,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1142,
-  "3365": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "cc-1",
-    "purpose": "verify-expense-required-honest-batch1"
-  }
+  "total_claimed": 1142
 }
