@@ -97,8 +97,16 @@ export function collectProblems(root = ROOT, overrides = null) {
       // grant check above, which is the authoritative append-only control)
       if (!/voided_at = now\(\)/.test(routes)) problems.push(`${ROUTES}: void route must set voided_at (never DELETE)`);
     }
-    if (!/on_hand_qty = GREATEST\(0, COALESCE\(on_hand_qty, 0\) - \$2\)/.test(routes)) {
-      problems.push(`${ROUTES}: void route must symmetrically decrement the same stock row it incremented`);
+    if (!/on_hand_qty = COALESCE\(on_hand_qty, 0\) - \$2/.test(routes)) {
+      problems.push(`${ROUTES}: void route must exactly decrement the same stock row it incremented (no clamp)`);
+    }
+    if (!/AND COALESCE\(on_hand_qty, 0\) >= \$2[\s\S]{0,120}RETURNING on_hand_qty/.test(routes)
+        || !/parts_purchase_reversal_insufficient_stock/.test(routes)) {
+      problems.push(`${ROUTES}: void route must fail closed when the full purchase quantity is no longer on hand`);
+    }
+    const voidHandler = routes.match(/app\.post\("\/api\/v1\/maintenance\/parts-inventory\/purchases\/:id\/void",[\s\S]*?\n  \}\);/);
+    if (!voidHandler || !/SELECT \* FROM maintenance\.parts_purchases[\s\S]{0,180}FOR UPDATE/.test(voidHandler[0])) {
+      problems.push(`${ROUTES}: void route must lock the purchase event before checking/reversing stock`);
     }
   }
 
@@ -169,8 +177,18 @@ function selftest() {
   );
   plant(
     "route-drops-void-stock-symmetry",
-    { [ROUTES]: routesReal.replace("on_hand_qty = GREATEST(0, COALESCE(on_hand_qty, 0) - $2)", "on_hand_qty = on_hand_qty") },
-    "must symmetrically decrement"
+    { [ROUTES]: routesReal.replace("on_hand_qty = COALESCE(on_hand_qty, 0) - $2", "on_hand_qty = on_hand_qty") },
+    "must exactly decrement"
+  );
+  plant(
+    "route-drops-insufficient-stock-fail-closed",
+    { [ROUTES]: routesReal.replace("AND COALESCE(on_hand_qty, 0) >= $2", "") },
+    "must fail closed"
+  );
+  plant(
+    "route-drops-purchase-row-lock",
+    { [ROUTES]: routesReal.replace("FOR UPDATE`,", "`,") },
+    "must lock the purchase event"
   );
   plant(
     "poster-drops-purchase-id-param",
@@ -178,7 +196,7 @@ function selftest() {
     "must accept optional parts_purchase_id"
   );
 
-  console.log(`${LABEL} SELFTEST PASS — 6 planted regressions all caught`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted regressions all caught`);
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);
