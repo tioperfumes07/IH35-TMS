@@ -372,7 +372,7 @@ exact failure this register exists to prevent.
 | ☐ | `LV-SETTLEMENT-LOAD-FK-SET-BUT-UI-CANNOT-RESOLVE-IT` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-TRANSP-AR-INVOICE-SYNC-PIPELINE-BROKEN` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-TRIP-PAIRING-COLLAPSES-N-LEGS-TO-ONE-SIGNAL` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
-| ☐ | `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH` | **P1** | Cursor | — | — | — | Live USMCA inventory assignments renders canonical ParityTable search plus a second page-local search; vertical chrome-class fix pending | — | — |
+| ☑ | `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH` | **P1** | Cursor | #7373 | `2bf26bd6d` | FIXED | #7373 @ 2bf26bd6d removed page-local search; ParityTable toolbar only; guard 3452 | — | — |
 | ☐ | `LV-REPORTS-SUBSCRIPTION-CREATE-EDIT-MODE-COLLISION` | **P1** | Codex | — | — | — | Live USMCA Add subscription opened Edit subscription chrome; root mode-contract fix and six-mutation guard in flight | — | — |
 | ☐ | `LV-REPORTS-SCHEDULED-SOR-CROSSWIRED-HUB` | **P1** | Codex | — | — | — | Live USMCA Home custom-schedule count/panel cross-wired to six-default Q8 subscription route; source-label/route fix in flight | — | — |
 | ☑ | `LV-HOVERDROPDOWN-HOVER-CLICK-SELF-CLOSE` | **P1** | Cursor | Cursor | #7370 | 2026-08-15 | hover→click stay-open; guard 3450 selftest 3/3; merge 091e2019f | `scripts/verify-hoverdropdown-click-after-hover.mjs` + step **3450** | — |
