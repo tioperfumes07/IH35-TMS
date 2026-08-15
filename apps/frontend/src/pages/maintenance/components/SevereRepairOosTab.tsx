@@ -57,7 +57,9 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
   const [oosLocation, setOosLocation] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnEstimate, setReturnEstimate] = useState<SevereRepairEstimate | null>(null);
-  const [search, setSearch] = useState(""), unitId = useSearchParams()[0].get("unit_id") ?? undefined;
+  const [searchParams] = useSearchParams();
+  const unitId = searchParams.get("unit_id") ?? undefined;
+  // Search is ONLY ParityTable UniversalListToolbar (LV-SEVERE-REPAIR-OOS-DUPLICATE-SEARCH).
 
   const estimatesQuery = useQuery({
     queryKey: ["maintenance", "severe-estimates", operatingCompanyId, unitId],
@@ -146,15 +148,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
     return map;
   }, [estimates]);
 
-  const rows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return estimates;
-    return estimates.filter((e) =>
-      [e.unit_number, e.unit_id, e.description, e.estimate_location, e.damage_severity, e.estimate_status].some((v) =>
-        String(v ?? "").toLowerCase().includes(q),
-      ),
-    );
-  }, [estimates, search]);
+  const rows = estimates;
 
   // Universal-list columns (spec 02 Severe Repairs). Estimate-backed; links go to existing detail routes
   // (no driver field on an estimate → omitted, no fabrication). Action buttons live in rowActions.
@@ -302,14 +296,6 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         storageKey="maint-severe-repairs"
         exportFilename="severe-repairs"
         rowActions={rowActions}
-        filterBar={
-          <input
-            className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-            placeholder="Search unit / issue / location / severity…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        }
       />
       )}
 
