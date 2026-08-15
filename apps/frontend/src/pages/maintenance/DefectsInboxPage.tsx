@@ -74,6 +74,18 @@ export function DefectsInboxPage() {
       },
       { key: "triage_status", label: "Status", sortable: true, render: (row) => row.triage_status },
       {
+        key: "follow_up_wo_id",
+        label: "Work order",
+        render: (row) => row.follow_up_wo_id ? (
+          <EntityLink
+            kind="work_order"
+            id={row.follow_up_wo_id}
+            label={entityLabel(row.follow_up_wo_display_id, row.follow_up_wo_id, "Work order")}
+            data-testid={`defect-work-order-link-${row.id}`}
+          />
+        ) : "—",
+      },
+      {
         key: "actions",
         label: "Actions",
         alwaysVisible: true,
@@ -92,9 +104,11 @@ export function DefectsInboxPage() {
             <Button size="sm" variant="secondary" onClick={() => triageMut.mutate({ id: row.id, action: "escalate" })}>
               Escalate
             </Button>
-            <Button size="sm" onClick={() => triageMut.mutate({ id: row.id, action: "convert_to_wo" })}>
-              Convert to WO
-            </Button>
+            {!row.follow_up_wo_id ? (
+              <Button size="sm" onClick={() => triageMut.mutate({ id: row.id, action: "convert_to_wo" })}>
+                Convert to WO
+              </Button>
+            ) : null}
           </div>
         ),
       },
