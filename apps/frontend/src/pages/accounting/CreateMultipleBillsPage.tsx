@@ -11,6 +11,7 @@ import { useToast } from "../../components/Toast";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -302,156 +303,195 @@ export function CreateMultipleBillsPage() {
         </div>
       </div>
 
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-2">Source tx</th>
-              <th className="px-2 py-2">Vendor</th>
-              <th className="px-2 py-2">Bill date</th>
-              <th className="px-2 py-2">Terms</th>
-              <th className="px-2 py-2">Due date</th>
-              <th className="px-2 py-2">Bill #</th>
-              <th className="px-2 py-2 text-right">Amount (USD)</th>
-              <th className="px-2 py-2">A/P account</th>
-              <th className="px-2 py-2">Expense account</th>
-              <th className="px-2 py-2">Unit</th>
-              <th className="px-2 py-2">Driver</th>
-              <th className="px-2 py-2">Memo</th>
-              <th className="px-2 py-2"> </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-gray-100">
-                <td className="px-2 py-1.5 font-mono text-[11px] text-gray-600">
-                  {row.bank_transaction_id ? entityLabel(null, row.bank_transaction_id, "Bank transaction") : "manual"}
-                </td>
-                <td className="px-2 py-1.5">
-                  <div className="min-w-[180px]">
-                    <ReferenceSelect
-                      value={row.vendor_id || null}
-                      onChange={(next) => updateRow(row.id, { vendor_id: next ?? "" })}
-                      options={vendorOptions}
-                      createKind="vendor"
-                      operatingCompanyId={companyId}
-                      placeholder="Select vendor…"
-                      disabled={!companyId}
-                    />
-                  </div>
-                </td>
-                <td className="px-2 py-1.5">
-                  <DatePicker className="w-28" value={row.bill_date} onChange={(next) => updateRow(row.id, { bill_date: next })} />
-                </td>
-                <td className="px-2 py-1.5">
-                  <select
-                    className="h-8 w-24 rounded-sm border border-gray-300 bg-white px-1 text-xs"
-                    value={row.terms}
-                    onChange={(event) => updateRow(row.id, { terms: event.target.value })}
-                    aria-label="Terms"
-                  >
-                    <option value="net_30">Net 30</option>
-                    <option value="net_15">Net 15</option>
-                    <option value="net_7">Net 7</option>
-                    <option value="due_on_receipt">Due on receipt</option>
-                  </select>
-                </td>
-                <td className="px-2 py-1.5">
-                  <DatePicker
-                    className="w-28"
-                    value={row.due_date}
-                    onChange={(next) => updateRow(row.id, { due_date: next, due_date_touched: true })}
-                  />
-                </td>
-                <td className="px-2 py-1.5">
-                  <input
-                    className="h-8 rounded-sm border border-gray-300 px-2"
-                    value={row.bill_number}
-                    onChange={(event) => updateRow(row.id, { bill_number: event.target.value })}
-                  />
-                </td>
-                <td className="px-2 py-1.5">
-                  <MoneyInput
-                    valueDollars={row.amount}
-                    onChangeDollars={(d) => updateRow(row.id, { amount: d })}
-                    ariaLabel="Bill amount (USD)"
-                    className="w-28"
-                  />
-                </td>
-                <td className="px-2 py-1.5">
-                  <div className="min-w-[160px]">
-                    <ReferenceSelect
-                      value={row.coa_account_id || null}
-                      onChange={(next) => updateRow(row.id, { coa_account_id: next ?? "" })}
-                      options={apAccountOptions}
-                      createKind="account"
-                      addNewLabel="+ Add new account"
-                      operatingCompanyId={companyId}
-                      placeholder="A/P account *"
-                      onOptionCreated={() => void coaQuery.refetch()}
-                    />
-                  </div>
-                </td>
-                <td className="px-2 py-1.5">
-                  <div className="min-w-[160px]">
-                    <ReferenceSelect
-                      value={row.expense_account_id || null}
-                      onChange={(next) => updateRow(row.id, { expense_account_id: next ?? "" })}
-                      options={expenseAccountOptions}
-                      createKind="account"
-                      addNewLabel="+ Add new account"
-                      operatingCompanyId={companyId}
-                      placeholder="Expense account *"
-                      onOptionCreated={() => void coaQuery.refetch()}
-                    />
-                  </div>
-                </td>
-                <td className="px-2 py-1.5">
-                  <div className="min-w-[120px]">
-                    <EntityPicker
-                      kind="unit"
-                      operatingCompanyId={companyId}
-                      value={row.unit_id || null}
-                      onChange={(next) => updateRow(row.id, { unit_id: next ?? "" })}
-                      placeholder="Select unit…"
-                      disabled={!companyId}
-                    />
-                  </div>
-                </td>
-                <td className="px-2 py-1.5">
-                  <div className="min-w-[140px]">
-                    <EntityPicker
-                      kind="driver"
-                      operatingCompanyId={companyId}
-                      value={row.driver_id || null}
-                      onChange={(next) => updateRow(row.id, { driver_id: next ?? "" })}
-                      placeholder="Select driver…"
-                      allowClear
-                    />
-                  </div>
-                </td>
-                <td className="px-2 py-1.5">
-                  <input
-                    className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2"
-                    value={row.memo}
-                    onChange={(event) => updateRow(row.id, { memo: event.target.value })}
-                  />
-                </td>
-                <td className="px-2 py-1.5 text-right">
-                  <button
-                    type="button"
-                    className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700 hover:bg-gray-50"
-                    onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}
-                    disabled={rows.length <= 1}
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* ACCT-F3580: ParityTable owns Search+Range+gear on multi-bill draft grid. */}
+      <ParityTable<BillDraftRow>
+        rows={rows}
+        rowKey={(row) => row.id}
+        storageKey="create-multiple-bills-draft"
+        exportFilename="create-multiple-bills-draft"
+        tableTestId="create-multiple-bills-table"
+        emptyText="No bill draft rows."
+        columns={[
+          {
+            key: "source",
+            label: "Source tx",
+            cellClass: "font-mono text-[11px] text-gray-600",
+            render: (row) =>
+              row.bank_transaction_id ? entityLabel(null, row.bank_transaction_id, "Bank transaction") : "manual",
+          },
+          {
+            key: "vendor",
+            label: "Vendor",
+            render: (row) => (
+              <div className="min-w-[180px]">
+                <ReferenceSelect
+                  value={row.vendor_id || null}
+                  onChange={(next) => updateRow(row.id, { vendor_id: next ?? "" })}
+                  options={vendorOptions}
+                  createKind="vendor"
+                  operatingCompanyId={companyId}
+                  placeholder="Select vendor…"
+                  disabled={!companyId}
+                />
+              </div>
+            ),
+          },
+          {
+            key: "bill_date",
+            label: "Bill date",
+            render: (row) => (
+              <DatePicker className="w-28" value={row.bill_date} onChange={(next) => updateRow(row.id, { bill_date: next })} />
+            ),
+          },
+          {
+            key: "terms",
+            label: "Terms",
+            render: (row) => (
+              <select
+                className="h-8 w-24 rounded-sm border border-gray-300 bg-white px-1 text-xs"
+                value={row.terms}
+                onChange={(event) => updateRow(row.id, { terms: event.target.value })}
+                aria-label="Terms"
+              >
+                <option value="net_30">Net 30</option>
+                <option value="net_15">Net 15</option>
+                <option value="net_7">Net 7</option>
+                <option value="due_on_receipt">Due on receipt</option>
+              </select>
+            ),
+          },
+          {
+            key: "due_date",
+            label: "Due date",
+            render: (row) => (
+              <DatePicker
+                className="w-28"
+                value={row.due_date}
+                onChange={(next) => updateRow(row.id, { due_date: next, due_date_touched: true })}
+              />
+            ),
+          },
+          {
+            key: "bill_number",
+            label: "Bill #",
+            render: (row) => (
+              <input
+                className="h-8 rounded-sm border border-gray-300 px-2"
+                value={row.bill_number}
+                onChange={(event) => updateRow(row.id, { bill_number: event.target.value })}
+              />
+            ),
+          },
+          {
+            key: "amount",
+            label: "Amount (USD)",
+            className: "text-right",
+            render: (row) => (
+              <MoneyInput
+                valueDollars={row.amount}
+                onChangeDollars={(d) => updateRow(row.id, { amount: d })}
+                ariaLabel="Bill amount (USD)"
+                className="w-28"
+              />
+            ),
+          },
+          {
+            key: "ap",
+            label: "A/P account",
+            render: (row) => (
+              <div className="min-w-[160px]">
+                <ReferenceSelect
+                  value={row.coa_account_id || null}
+                  onChange={(next) => updateRow(row.id, { coa_account_id: next ?? "" })}
+                  options={apAccountOptions}
+                  createKind="account"
+                  addNewLabel="+ Add new account"
+                  operatingCompanyId={companyId}
+                  placeholder="A/P account *"
+                  onOptionCreated={() => void coaQuery.refetch()}
+                />
+              </div>
+            ),
+          },
+          {
+            key: "expense",
+            label: "Expense account",
+            render: (row) => (
+              <div className="min-w-[160px]">
+                <ReferenceSelect
+                  value={row.expense_account_id || null}
+                  onChange={(next) => updateRow(row.id, { expense_account_id: next ?? "" })}
+                  options={expenseAccountOptions}
+                  createKind="account"
+                  addNewLabel="+ Add new account"
+                  operatingCompanyId={companyId}
+                  placeholder="Expense account *"
+                  onOptionCreated={() => void coaQuery.refetch()}
+                />
+              </div>
+            ),
+          },
+          {
+            key: "unit",
+            label: "Unit",
+            render: (row) => (
+              <div className="min-w-[120px]">
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={companyId}
+                  value={row.unit_id || null}
+                  onChange={(next) => updateRow(row.id, { unit_id: next ?? "" })}
+                  placeholder="Select unit…"
+                  disabled={!companyId}
+                />
+              </div>
+            ),
+          },
+          {
+            key: "driver",
+            label: "Driver",
+            render: (row) => (
+              <div className="min-w-[140px]">
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={companyId}
+                  value={row.driver_id || null}
+                  onChange={(next) => updateRow(row.id, { driver_id: next ?? "" })}
+                  placeholder="Select driver…"
+                  allowClear
+                />
+              </div>
+            ),
+          },
+          {
+            key: "memo",
+            label: "Memo",
+            render: (row) => (
+              <input
+                className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2"
+                value={row.memo}
+                onChange={(event) => updateRow(row.id, { memo: event.target.value })}
+              />
+            ),
+          },
+          {
+            key: "remove",
+            label: " ",
+            className: "text-right",
+            cellClass: "text-right",
+            render: (row) => (
+              <button
+                type="button"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700 hover:bg-gray-50"
+                onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}
+                disabled={rows.length <= 1}
+              >
+                Remove
+              </button>
+            ),
+          },
+        ]}
+      />
 
       {lastResult ? (
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
