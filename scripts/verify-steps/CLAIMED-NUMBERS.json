@@ -3036,9 +3036,14 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1148,
+  "total_claimed": 1149,
   "3454": {
     "purpose": "verify-parts-inventory-no-dup-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3456": {
+    "purpose": "verify-severe-repair-oos-no-dup-search",
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   }
