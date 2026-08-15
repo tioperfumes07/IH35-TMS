@@ -34,6 +34,10 @@ describe("accounting/legal-matters ACCT-F5041-LINKED-COSTS-REVERSE", () => {
     expect(page).toContain("LegalMatterCostsReverseSection");
     expect(section).toContain("listLegalMatterLinkedCosts");
   });
+
+  it("LINK-F5171 Open Bills keeps legal_matter_id filter", () => {
+    expect(section).toContain("/accounting/bills?legal_matter_id=${encodeURIComponent(legalMatterId)}");
+  });
 });
 
 describe("accounting/bills ACCT-F5042-LEGAL-MATTER-FORWARD-WRITE", () => {

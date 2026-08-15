@@ -42,7 +42,11 @@ export function LegalMatterCostsReverseSection({
             </span>
           ) : null}
         </h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/accounting/bills">
+        <Link
+          className="text-xs font-semibold text-slate-700 underline"
+          to={`/accounting/bills?legal_matter_id=${encodeURIComponent(legalMatterId)}`}
+          data-testid="legal-matter-open-bills"
+        >
           Open Bills
         </Link>
       </div>
