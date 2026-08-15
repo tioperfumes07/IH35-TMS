@@ -12,7 +12,7 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated?: (unitId: string) => void;
+  onCreated?: (unitId: string, displayName: string) => void;
 };
 
 const inputClass = "min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs";
@@ -64,7 +64,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       pushToast("Unit created", "success");
-      onCreated?.(String(created.id));
+      onCreated?.(String(created.id), draft.unit_number.trim());
       resetAndClose();
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to create unit"), "error"),

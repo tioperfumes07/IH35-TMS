@@ -288,7 +288,7 @@ export function DispatchList({
                           }
                         />
                       ) : (
-                        <span title={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")} className="single-line-name inline-flex items-center gap-1.5">
+                        <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name inline-flex items-center gap-1.5">
                           {/* DISPATCH-UI-REFINE-2 ITEM 5 — HOS duty/health dot next to the driver name. */}
                           <DriverHosStatusDot driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
                           {entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
@@ -402,7 +402,7 @@ export function DispatchList({
                 {load.first_pickup_city ?? "-"} {"->"} {load.first_delivery_city ?? "-"}
               </div>
               <div className="mt-2 flex min-w-0 items-center justify-between text-xs">
-                <span title={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")} className="single-line-name">
+                <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
                   {entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
                 </span>
                 <span>{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>

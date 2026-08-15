@@ -32,7 +32,7 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated?: (equipmentId: string) => void;
+  onCreated?: (equipmentId: string, displayName: string) => void;
   /** Constrain nested picker create so the created row remains visible after roster reload. */
   equipmentKind?: "trailer" | "chassis";
 };
@@ -94,7 +94,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       pushToast("Trailer created", "success");
-      onCreated?.(String(created.id));
+      onCreated?.(String(created.id), draft.equipment_number.trim());
       resetAndClose();
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to create trailer"), "error"),

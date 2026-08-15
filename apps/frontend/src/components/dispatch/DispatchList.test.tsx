@@ -93,9 +93,9 @@ describe("DispatchList single-line names (invariant #23)", () => {
     );
 
     const marks = [...container.querySelectorAll(".single-line-name")];
-    const dash = marks.filter((el) => el.textContent === "-");
-    expect(dash.length).toBe(2);
-    for (const el of dash) {
+    const unavailableDriver = marks.filter((el) => el.textContent === "Driver — not visible");
+    expect(unavailableDriver.length).toBe(2);
+    for (const el of unavailableDriver) {
       expect(el.getAttribute("title")).toBeNull();
     }
     const unassigned = marks.filter((el) => el.textContent === "Unassigned");
