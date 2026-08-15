@@ -23,6 +23,8 @@ type DamageIncidentRow = {
   unit_number: string | null;
   unit_id: string | null;
   photo_keys: string[] | null;
+  work_order_id: string | null;
+  work_order_display_id: string | null;
 };
 
 function asDate(value: string | null | undefined) {
@@ -53,6 +55,8 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       unit_number: (row.unit_number as string | null) ?? null,
       unit_id: (row.unit_id as string | null) ?? null,
       photo_keys: (row.photo_keys as string[] | null) ?? null,
+      work_order_id: (row.work_order_id as string | null) ?? null,
+      work_order_display_id: (row.work_order_display_id as string | null) ?? null,
     }));
   }, [incidentsQuery.data]);
 
@@ -88,7 +92,19 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       label: "Description",
       render: (row) => row.description || "—",
     },
-    // Linked WO — DEFERRED: safety.incidents has no work_order link column (gated additive migration later).
+    {
+      // MAINTENANCE-DAMAGE-REGISTER-CANONICAL-WO-FK: safety.incidents.work_order_id (additive migration
+      // 202612580000) is stamped by the incident auto-workflow when it spawns a draft repair WO for
+      // equipment/breakdown incidents. Only those rows carry a value — others honestly show "—".
+      key: "work_order_id",
+      label: "Linked WO",
+      render: (row) =>
+        row.work_order_id ? (
+          <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "WO")} />
+        ) : (
+          "—"
+        ),
+    },
     {
       key: "status",
       label: "Status",
