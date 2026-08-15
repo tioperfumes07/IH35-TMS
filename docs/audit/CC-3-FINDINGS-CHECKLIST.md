@@ -372,3 +372,4 @@ exact failure this register exists to prevent.
 | ☐ | `LV-SETTLEMENT-LOAD-FK-SET-BUT-UI-CANNOT-RESOLVE-IT` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-TRANSP-AR-INVOICE-SYNC-PIPELINE-BROKEN` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-TRIP-PAIRING-COLLAPSES-N-LEGS-TO-ONE-SIGNAL` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
+| ☐ | `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH` | **P1** | Cursor | — | — | — | Live USMCA inventory assignments renders canonical ParityTable search plus a second page-local search; vertical chrome-class fix pending | — | — |
