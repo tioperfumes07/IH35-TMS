@@ -2846,5 +2846,10 @@
     "claimed_at": "2026-08-15",
     "claimed_by": "codex",
     "purpose": "verify-legal-contract-customer-picker-label"
+  },
+  "3380": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-assignable-user-company-scope-labels"
   }
 }
