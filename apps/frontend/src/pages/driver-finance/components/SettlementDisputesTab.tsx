@@ -16,6 +16,7 @@ import {
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
@@ -117,6 +118,62 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
     resolutionNotes.trim().length >= 20 &&
     (resolution === "rejected" || resolutionAmountPreviewCents > 0);
 
+  const columns = useMemo<ParityColumn<SettlementDisputeRow>[]>(
+    () => [
+      {
+        key: "driver_id",
+        label: "Driver Name",
+        render: (row) => (
+          <EntityLink
+            kind="driver"
+            id={row.driver_id}
+            label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+            className="single-line-name"
+          />
+        ),
+      },
+      {
+        key: "period",
+        label: "Settlement Period",
+        render: (row) => (
+          <span>
+            {row.period_start ? formatDateUS(row.period_start) : "—"} to {row.period_end ? formatDateUS(row.period_end) : "—"}
+          </span>
+        ),
+      },
+      { key: "dispute_category", label: "Category", render: (row) => row.dispute_category },
+      {
+        key: "dispute_description",
+        label: "Description",
+        render: (row) => (
+          <span className="max-w-[240px] truncate" title={row.dispute_description}>
+            {row.dispute_description}
+          </span>
+        ),
+      },
+      {
+        key: "disputed_amount_cents",
+        label: "Disputed Amount",
+        sortable: true,
+        render: (row) => money(row.disputed_amount_cents),
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (row) => (
+          <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(row.status)}`}>{row.status}</span>
+        ),
+      },
+      {
+        key: "opened_at",
+        label: "Opened",
+        sortable: true,
+        render: (row) => `${Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 86400000))}d ago`,
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -153,71 +210,30 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Driver Name</th>
-              <th className="px-3 py-2">Settlement Period</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Description</th>
-              <th className="px-3 py-2">Disputed Amount</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Opened</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="min-w-0 max-w-[240px] px-3 py-2">
-                  <EntityLink
-                    kind="driver"
-                    id={row.driver_id}
-                    label={entityLabel(row.driver_name, row.driver_id, "Driver")}
-                    className="single-line-name"
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  {row.period_start ? formatDateUS(row.period_start) : "—"} to{" "}
-                  {row.period_end ? formatDateUS(row.period_end) : "—"}
-                </td>
-                <td className="px-3 py-2">{row.dispute_category}</td>
-                <td className="max-w-[240px] truncate px-3 py-2" title={row.dispute_description}>
-                  {row.dispute_description}
-                </td>
-                <td className="px-3 py-2">{money(row.disputed_amount_cents)}</td>
-                <td className="px-3 py-2">
-                  <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(row.status)}`}>{row.status}</span>
-                </td>
-                <td className="px-3 py-2">{Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 86400000))}d ago</td>
-                <td className="px-3 py-2">
-                  <Button size="sm" variant="secondary" onClick={() => setSelected(row)}>
-                    Open
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            {listState.isError ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-red-600">
-                  Couldn't load disputes.{" "}
-                  <button type="button" className="underline" onClick={() => void disputesQuery.refetch()}>
-                    Retry
-                  </button>
-                </td>
-              </tr>
-            ) : null}
-            {listState.isLoading || listState.isEmpty ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-gray-500">
-                  {disputesQuery.isLoading ? "Loading disputes..." : "No disputes found for current filter."}
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {listState.isError ? (
+        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          Couldn't load disputes.{" "}
+          <button type="button" className="underline" onClick={() => void disputesQuery.refetch()}>
+            Retry
+          </button>
+        </p>
+      ) : (
+        // ACCT-F3536: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
+        <ParityTable<SettlementDisputeRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={listState.isLoading}
+          emptyText="No disputes found for current filter."
+          storageKey="settlement-disputes"
+          exportFilename="settlement-disputes"
+          rowActions={(row) => (
+            <Button size="sm" variant="secondary" onClick={() => setSelected(row)}>
+              Open
+            </Button>
+          )}
+        />
+      )}
 
       {detail ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
