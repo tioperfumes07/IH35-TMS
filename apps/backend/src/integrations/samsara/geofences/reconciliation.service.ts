@@ -275,7 +275,8 @@ export async function getReconciliationReport(
               f.resolved, f.resolved_at, f.resolution_note
        FROM safety.integrity_findings f
        LEFT JOIN geo.geofences g ON g.id = f.geofence_id AND g.operating_company_id = f.operating_company_id
-       LEFT JOIN mdata.units u ON u.id = f.unit_id AND u.operating_company_id = f.operating_company_id
+       LEFT JOIN mdata.units u ON u.id = f.unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = f.operating_company_id
        WHERE f.operating_company_id = $1::uuid AND f.report_date = $2::date
        ORDER BY f.anomaly_class, f.occurred_at`,
       [operatingCompanyId, date]

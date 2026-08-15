@@ -184,7 +184,8 @@ export async function registerSafetyCompanyViolationsRoutes(
                             WHERE u.violation_id = cv.id AND u.is_active), '{}') AS related_unit_ids,
                  COALESCE((SELECT jsonb_object_agg(u.unit_id::text, mu.unit_number)
                            FROM safety.company_violation_units u
-                           JOIN mdata.units mu ON mu.id = u.unit_id AND mu.operating_company_id = cv.operating_company_id
+                           JOIN mdata.units mu ON mu.id = u.unit_id
+                                              AND COALESCE(mu.currently_leased_to_company_id, mu.owner_company_id) = cv.operating_company_id
                            WHERE u.violation_id = cv.id AND u.is_active), '{}'::jsonb) AS related_unit_labels,
                  COALESCE((SELECT array_agg(f.fine_id) FROM safety.company_violation_fines f
                             WHERE f.violation_id = cv.id AND f.is_active), '{}') AS related_civil_fine_ids
@@ -242,7 +243,8 @@ export async function registerSafetyCompanyViolationsRoutes(
                            WHERE u.violation_id = cv.id AND u.is_active), '{}') AS related_unit_ids,
                 COALESCE((SELECT jsonb_object_agg(u.unit_id::text, mu.unit_number)
                           FROM safety.company_violation_units u
-                          JOIN mdata.units mu ON mu.id = u.unit_id AND mu.operating_company_id = cv.operating_company_id
+                          JOIN mdata.units mu ON mu.id = u.unit_id
+                                             AND COALESCE(mu.currently_leased_to_company_id, mu.owner_company_id) = cv.operating_company_id
                           WHERE u.violation_id = cv.id AND u.is_active), '{}'::jsonb) AS related_unit_labels,
                 COALESCE((SELECT array_agg(f.fine_id) FROM safety.company_violation_fines f
                            WHERE f.violation_id = cv.id AND f.is_active), '{}') AS related_civil_fine_ids
