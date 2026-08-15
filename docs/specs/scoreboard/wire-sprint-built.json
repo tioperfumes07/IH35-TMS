@@ -2600,6 +2600,14 @@
       "modules": ["insurance"],
       "cols": ["unit", "connectivity"],
       "leafRe": "^(policies\\.create|insurance\\.(modal|parity|wizard)\\.policy_create)$"
+    },
+    {
+      "task": "NONMONEY-ENTITY-LABEL-GENERIC-RECORD-NOUN",
+      "pr": "this PR",
+      "guard": "scripts/verify-nonmoney-exact-entity-nouns.mjs",
+      "modules": ["compliance", "safety", "drivers", "insurance", "dispatch", "fleet", "legal", "maintenance"],
+      "cols": ["driver", "unit", "work_order", "connectivity", "reverse_link"],
+      "leafRe": "^(tab\\.violations|safety\\.(drawer|parity)\\.accident_report|profiles\\.detail|claims\\.list|load\\.detail|unit\\.profile\\.(identity|legal_reverse|insurance_claims_reverse)|trailer\\.profile\\.(legal_reverse|insurance_claims_reverse)|matters\\.list|wo\\.console\\.list|home\\.rm_status_board|maintenance\\.modal\\.(work_order_detail|work_order_create|create_work_order))$"
     }
   ]
 }

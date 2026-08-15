@@ -426,7 +426,7 @@ export function WorkOrderDetailPage() {
     };
   }, [wo, id, severeEstimatesQ.data]);
 
-  const woNumber = String(entityLabel(wo?.display_id, id, "Record") ?? "—");
+  const woNumber = String(entityLabel(wo?.display_id, id, "Work order"));
   // Edit target — map the loaded WO detail into the modal's edit shape (header + persisted cost lines).
   const editTarget = useMemo<EditWorkOrderTarget | null>(() => {
     if (!wo || !id) return null;

@@ -107,7 +107,7 @@ export function LegalMattersListPage() {
           <EntityLink
             kind="matter"
             id={String(row.id ?? "")}
-            label={entityLabel(row.matter_number, row.id, "Record")}
+            label={entityLabel(row.matter_number, row.id, "Legal matter")}
             className="font-mono text-xs"
           />
         ),

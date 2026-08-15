@@ -30,7 +30,7 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
           if (!id) return "—";
           return (
             <Link to={`/drivers/${id}/hos`} className="font-medium text-slate-700 hover:underline">
-              {String(row.driver_display_id ?? entityLabel(row.driver_name, id, "Record"))}
+              {String(row.driver_display_id ?? entityLabel(row.driver_name, id, "Driver"))}
             </Link>
           );
         },

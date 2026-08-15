@@ -177,7 +177,7 @@ export function InsuranceClaimsReverseSection({
               <EntityLink
                 kind="claim"
                 id={claim.id}
-                label={entityLabel(claim.claim_number, claim.id, "Record")}
+                label={entityLabel(claim.claim_number, claim.id, "Claim")}
                 className="font-semibold text-slate-700"
               />
               <span className="ml-2 text-gray-600">{claim.status}</span>
