@@ -33,7 +33,7 @@ function IntegrityEntityCell({ row }: { row: IntegrityRow }) {
   if (unitId) links.push(<EntityLink key="u" kind="unit" id={unitId} label={entityLabel(row.unit_number, unitId, "Unit")} />);
   if (vendorId) links.push(<EntityLink key="v" kind="vendor" id={vendorId} label={entityLabel(row.vendor_name, vendorId, "Vendor")} />);
   if (!links.length) {
-    return <>{entityLabel(null, row.subject_id, "Record") ?? "—"}</>;
+    return <>—</>;
   }
   return <span className="inline-flex flex-wrap items-center gap-2">{links}</span>;
 }
