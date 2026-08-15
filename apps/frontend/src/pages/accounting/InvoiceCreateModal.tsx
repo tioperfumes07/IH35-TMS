@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useInvoiceCreateFromLoad, type LoadStatusFilter } from "../../hooks/useInvoiceCreateFromLoad";
@@ -148,54 +149,70 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                 <option value="in_transit">In transit</option>
               </select>
             </div>
-            <div className="max-h-[360px] overflow-y-auto rounded-sm border border-gray-200">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-                  <tr>
-                    <th className="px-2 py-1">Load #</th>
-                    <th className="px-2 py-1">Customer</th>
-                    <th className="px-2 py-1">Status</th>
-                    <th className="px-2 py-1">Route</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loads.map((load) => (
-                    <tr key={load.id} className="border-t border-gray-100">
-                      <td className="px-2 py-2 font-medium">{entityLabel(load.load_number, load.id, "Load")}</td>
-                      <td className="px-2 py-2">{entityLabel(load.customer_name, load.customer_id, "Customer")}</td>
-                      <td className="px-2 py-2">{load.status}</td>
-                      <td className="px-2 py-2 text-xs text-gray-600">
-                        {load.first_pickup_city ?? "—"} → {load.first_delivery_city ?? "—"}
-                      </td>
-                      <td className="px-2 py-2 text-right">
-                        <Button
-                          size="sm"
-                          disabled={isCreating}
-                          onClick={async () => {
-                            try {
-                              const result = await createFromLoad(load.id);
-                              pushToast("Invoice created from load.", "success");
-                              setCreatedFromLoad({ id: result.invoice.id, display_id: result.invoice.display_id ?? null });
-                            } catch (error) {
-                              pushToast(userFacingApiError(error, "Could not create invoice from load."), "error");
-                            }
-                          }}
-                        >
-                          Select
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                  {!isLoading && !isError && loads.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-2 py-4 text-center text-sm text-gray-500">
-                        No loads match the current filters.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            {/* ACCT-F3594: embedded ParityTable owns Search+Range+gear on from-load pick list. */}
+            <ParityTable
+              embedded
+              rows={loads}
+              rowKey={(load) => load.id}
+              storageKey="invoice-create-modal-from-load"
+              exportFilename="invoice-create-from-load"
+              tableTestId="invoice-create-from-load-table"
+              emptyText={
+                isLoading
+                  ? "Loading loads…"
+                  : isError
+                    ? "Could not load loads."
+                    : "No loads match the current filters."
+              }
+              columns={[
+                {
+                  key: "load",
+                  label: "Load #",
+                  cellClass: "font-medium",
+                  render: (load) => entityLabel(load.load_number, load.id, "Load"),
+                },
+                {
+                  key: "customer",
+                  label: "Customer",
+                  render: (load) => entityLabel(load.customer_name, load.customer_id, "Customer"),
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (load) => load.status,
+                },
+                {
+                  key: "route",
+                  label: "Route",
+                  cellClass: "text-xs text-gray-600",
+                  render: (load) => `${load.first_pickup_city ?? "—"} → ${load.first_delivery_city ?? "—"}`,
+                },
+                {
+                  key: "select",
+                  label: "Select",
+                  className: "text-right",
+                  cellClass: "text-right",
+                  alwaysVisible: true,
+                  render: (load) => (
+                    <Button
+                      size="sm"
+                      disabled={isCreating}
+                      onClick={async () => {
+                        try {
+                          const result = await createFromLoad(load.id);
+                          pushToast("Invoice created from load.", "success");
+                          setCreatedFromLoad({ id: result.invoice.id, display_id: result.invoice.display_id ?? null });
+                        } catch (error) {
+                          pushToast(userFacingApiError(error, "Could not create invoice from load."), "error");
+                        }
+                      }}
+                    >
+                      Select
+                    </Button>
+                  ),
+                },
+              ]}
+            />
             <div className="flex items-center justify-between text-xs text-gray-600">
               <span>
                 Showing {loads.length} of {totalCount} loads
