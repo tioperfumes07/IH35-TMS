@@ -982,6 +982,71 @@
     "claimed_by": "cc-1",
     "purpose": "verify-expense-required-honest-batch1"
   },
+  "3369": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bank-required-honest-false-required"
+  },
+  "3373": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bank-required-honest-genuine"
+  },
+  "3377": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-invoice-required-honest"
+  },
+  "3378": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-legal-contract-customer-picker-label"
+  },
+  "3380": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-assignable-user-company-scope-labels"
+  },
+  "3382": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-reverse-profile-preview-all-row-access"
+  },
+  "3384": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-safety-driver-profile-honest-identity"
+  },
+  "3386": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-dispatch-assign-driver-honest-label"
+  },
+  "3388": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-entity-picker-registry-honest-labels"
+  },
+  "3390": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-driver-team-member-honest-label"
+  },
+  "3391": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "claude-1",
+    "purpose": "verify-fixed-asset-depreciation-je-reverse-link"
+  },
+  "3392": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-insurance-policy-unit-honest-label"
+  },
+  "3394": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-nonmoney-exact-entity-nouns"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2826,65 +2891,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1149,
-  "3369": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "cc-1",
-    "purpose": "verify-bank-required-honest-false-required"
-  },
-  "3373": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "cc-1",
-    "purpose": "verify-bank-required-honest-genuine"
-  },
-  "3377": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "cc-1",
-    "purpose": "verify-invoice-required-honest"
-  },
-  "3378": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-legal-contract-customer-picker-label"
-  },
-  "3380": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-assignable-user-company-scope-labels"
-  },
-  "3382": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-reverse-profile-preview-all-row-access"
-  },
-  "3384": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-safety-driver-profile-honest-identity"
-  },
-  "3386": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-dispatch-assign-driver-honest-label"
-  },
-  "3388": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-entity-picker-registry-honest-labels"
-  },
-  "3390": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-driver-team-member-honest-label"
-  },
-  "3392": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-insurance-policy-unit-honest-label"
-  },
-  "3394": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "codex",
-    "purpose": "verify-nonmoney-exact-entity-nouns"
-  }
+  "total_claimed": 1147
 }
