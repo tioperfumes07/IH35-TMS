@@ -21,6 +21,9 @@ function assert(src, route, api) {
   if (/String\(row\.unit_id\s*\?\?\s*row\.driver_id/.test(src)) {
     problems.push(`${PAGE}: must not stringify raw unit_id/driver_id as the Entity cell`);
   }
+  if (/entityLabel\(null,\s*row\.subject_id/.test(src)) {
+    problems.push(`${PAGE}: must not render an unproven polymorphic subject_id as entity identity`);
+  }
   if (!/entityLabel\(row\.driver_name, driverId, "Driver"\)/.test(src) || !/entityLabel\(row\.unit_number, unitId, "Unit"\)/.test(src)) {
     problems.push(`${PAGE}: mounted entity links must consume typed driver/unit labels`);
   }
@@ -28,7 +31,7 @@ function assert(src, route, api) {
     problems.push(`${API}: four integrity payloads must share a typed human-label contract`);
   }
   const driverJoins = route.match(/LEFT JOIN mdata\.drivers d ON d\.id = o\.driver_id AND d\.operating_company_id = o\.operating_company_id/g) ?? [];
-  const unitJoins = route.match(/LEFT JOIN mdata\.units u ON u\.id = o\.unit_id AND u\.operating_company_id = o\.operating_company_id/g) ?? [];
+  const unitJoins = route.match(/LEFT JOIN mdata\.units u ON u\.id = o\.unit_id\s+AND COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = o\.operating_company_id/g) ?? [];
   if (driverJoins.length !== 3 || unitJoins.length !== 2) {
     problems.push(`${ROUTE}: every applicable outlier view must resolve labels with exact same-company joins`);
   }
@@ -51,6 +54,7 @@ if (SELFTEST) {
     [live, liveRoute.replace("AS driver_name", "AS unresolved_driver"), liveApi],
     [live, liveRoute, liveApi.replace("driver_name?: string | null", "driver_name?: unknown")],
     [live.replace("row.unit_number, unitId", "null, unitId"), liveRoute, liveApi],
+    [live.replace("return <>—</>;", 'return <>{entityLabel(null, row.subject_id, "Record") ?? "—"}</>;'), liveRoute, liveApi],
   ];
   const escaped = mutations.find(([page, route, api]) => !assert(page, route, api).length);
   const caught = escaped ? [] : ["caught"];
