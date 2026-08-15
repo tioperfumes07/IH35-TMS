@@ -2592,6 +2592,14 @@
       "modules": ["lists", "drivers"],
       "cols": ["driver", "connectivity", "reverse_link"],
       "leafRe": "^(catalog\\.drivers\\.teams\\.(list|create)|lists\\.modal\\.driver_team|profiles\\.detail)$"
+    },
+    {
+      "task": "INSURANCE-POLICY-UNIT-FALLBACK-WRONG-NOUN",
+      "pr": "this PR",
+      "guard": "scripts/verify-insurance-policy-unit-honest-label.mjs",
+      "modules": ["insurance"],
+      "cols": ["unit", "connectivity"],
+      "leafRe": "^(policies\\.create|insurance\\.(modal|parity|wizard)\\.policy_create)$"
     }
   ]
 }

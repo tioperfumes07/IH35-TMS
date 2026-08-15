@@ -22,7 +22,9 @@ const CHECKS = [
   ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="unit"[\s\S]{0,40}id=\{claim\.unit_id \?\? undefined\}/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /kind="unit"/],
   ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /const toggleUnit = \(unitId: string\) => \{/],
+  ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /entityLabel\(unit\.unit_number, unit\.id, "Unit"\)/],
   ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /const \[selectedUnitIds, setSelectedUnitIds\] = useState<string\[\]>\(\[\]\)/],
+  ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /entityLabel\(unit\.unit_number, unit\.id, "Unit"\)/],
 ];
 
 export function audit(files) {

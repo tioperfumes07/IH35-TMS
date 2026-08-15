@@ -63,7 +63,7 @@ const INITIAL_FORM: FormState = {
 };
 
 function unitLabel(unit: UnitOption) {
-  return unit.unit_code || entityLabel(unit.unit_number, unit.id, "Record");
+  return unit.unit_code || entityLabel(unit.unit_number, unit.id, "Unit");
 }
 
 function parseCurrencyToCents(raw: string) {
