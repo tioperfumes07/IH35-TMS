@@ -357,20 +357,13 @@ export function createCatalogRoutes(
             if (!(column in body)) continue;
             add(dbColumnForApiColumn(column, config), body[column as keyof typeof body]);
           }
-          if (
-            config.hasDeactivatedAt &&
-            config.softDeleteColumn &&
-            config.softDeleteColumn in body &&
-            body[config.softDeleteColumn as keyof typeof body] === false
-          ) {
+          // CLS-SCHEMA-DRIFT / LV-CAT-500: keep `config.hasDeactivatedAt` on the SAME if-line as
+          // the `add("deactivated_at", …)` call so verify-catalog-config-physical-columns GATE_WINDOW
+          // still sees the gate (multi-line if bodies pushed the flag outside the 3-line lookback).
+          if (config.hasDeactivatedAt && config.softDeleteColumn && config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === false) {
             add("deactivated_at", new Date().toISOString());
           }
-          if (
-            config.hasDeactivatedAt &&
-            config.softDeleteColumn &&
-            config.softDeleteColumn in body &&
-            body[config.softDeleteColumn as keyof typeof body] === true
-          ) {
+          if (config.hasDeactivatedAt && config.softDeleteColumn && config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === true) {
             add("deactivated_at", null);
           }
           if (hasUpdatedAt) {
