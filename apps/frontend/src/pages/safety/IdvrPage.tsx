@@ -24,6 +24,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const [driverFilter, setDriverFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
+  const [trailerFilter, setTrailerFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
@@ -33,16 +34,19 @@ export function IdvrPage({ operatingCompanyId }: Props) {
   useEffect(() => {
     if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
   }, [unitIdFromUrl]);
+  useEffect(() => {
+    if (trailerIdFromUrl) setTrailerFilter(trailerIdFromUrl);
+  }, [trailerIdFromUrl]);
 
   const queryParams = useMemo(
     () => ({
       driver_id: driverFilter.trim() || undefined,
       unit_id: unitFilter.trim() || undefined,
-      trailer_id: trailerIdFromUrl || undefined,
+      trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
       from: fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined,
       to: toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined,
     }),
-    [driverFilter, unitFilter, trailerIdFromUrl, fromDate, toDate]
+    [driverFilter, unitFilter, trailerFilter, trailerIdFromUrl, fromDate, toDate]
   );
 
   const listQuery = useQuery({
@@ -75,6 +79,17 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         label: "Unit",
         render: (row) => (
           <EntityLink kind="unit" id={row.unit_id as string | undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+        ),
+      },
+      {
+        key: "trailer_id",
+        label: "Trailer",
+        render: (row) => (
+          <EntityLink
+            kind="trailer"
+            id={row.trailer_id as string | undefined}
+            label={entityLabel(row.trailer_number ?? row.equipment_number, row.trailer_id, "Trailer")}
+          />
         ),
       },
       { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "—").replace("_", " ") },
@@ -178,6 +193,20 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 className="mt-1"
                 dataField="idvr-filter-unit"
                 dataTestId="idvr-filter-unit"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Trailer
+              <EntityPicker
+                kind="trailer"
+                operatingCompanyId={operatingCompanyId}
+                value={trailerFilter || null}
+                onChange={(next) => setTrailerFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All trailers"
+                className="mt-1"
+                dataField="idvr-filter-trailer"
+                dataTestId="idvr-filter-trailer"
               />
             </label>
           </div>
