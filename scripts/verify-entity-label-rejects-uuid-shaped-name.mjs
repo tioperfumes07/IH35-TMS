@@ -1393,7 +1393,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
     bad: /<EntityLink kind="claim" id=\{String\(wo\.insurance_claim_id\)\} \/>/,
-    good: /entityLabel\(null, wo\.insurance_claim_id, "Claim"\)/,
+    good: /entityLabel\(wo\.insurance_claim_number, wo\.insurance_claim_id, "Claim"\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",

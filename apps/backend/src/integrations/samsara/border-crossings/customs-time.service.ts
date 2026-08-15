@@ -67,16 +67,23 @@ export async function getHistoryForPeriod(
     let vehicleFilter = "";
     if (vehicleId) {
       params.push(vehicleId);
-      vehicleFilter = `AND vehicle_id = $${params.length}`;
+      vehicleFilter = `AND e.vehicle_id = $${params.length}`;
     }
     const res = await client.query(
-      `SELECT uuid, vehicle_id, driver_uuid, load_uuid, crossing_point, direction,
-              entered_geofence_at, exited_geofence_at, customs_clearance_minutes, created_at
-       FROM dispatch.border_crossing_events
-       WHERE operating_company_id = $1::uuid
-         AND entered_geofence_at BETWEEN $2::date AND ($3::date + INTERVAL '1 day')
+      `SELECT e.uuid, e.vehicle_id, e.driver_uuid, e.load_uuid,
+              NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name,
+              l.load_number,
+              e.crossing_point, e.direction, e.entered_geofence_at, e.exited_geofence_at,
+              e.customs_clearance_minutes, e.created_at
+       FROM dispatch.border_crossing_events e
+       LEFT JOIN mdata.drivers d
+         ON d.id = e.driver_uuid AND d.operating_company_id = e.operating_company_id
+       LEFT JOIN mdata.loads l
+         ON l.id = e.load_uuid AND l.operating_company_id = e.operating_company_id
+       WHERE e.operating_company_id = $1::uuid
+         AND e.entered_geofence_at BETWEEN $2::date AND ($3::date + INTERVAL '1 day')
          ${vehicleFilter}
-       ORDER BY entered_geofence_at DESC
+       ORDER BY e.entered_geofence_at DESC
        LIMIT 500`,
       params
     );

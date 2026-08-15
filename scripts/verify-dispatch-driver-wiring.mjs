@@ -21,6 +21,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-dispatch-driver-wiring";
 
 const CHECKS = [
+  ["apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts", /NULLIF\(trim\(concat_ws\(' ', d\.first_name, d\.last_name\)\), ''\) AS driver_name/],
+  ["apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts", /d\.id = e\.driver_uuid AND d\.operating_company_id = e\.operating_company_id/],
+  ["apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts", /l\.load_number/],
+  ["apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts", /l\.id = e\.load_uuid AND l\.operating_company_id = e\.operating_company_id/],
+  ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /kind="driver" id=\{event\.driver_uuid\} label=\{entityLabel\(event\.driver_name, event\.driver_uuid, "Driver"\)\}/],
+  ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /kind="load" id=\{event\.load_uuid\} label=\{entityLabel\(event\.load_number, event\.load_uuid, "Load"\)\}/],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /kind="driver" id=\{unit\.driver_id\}/],
   ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind="driver" id=\{load\.assigned_primary_driver_id\}/],
   ["apps/frontend/src/components/dispatch/DispatchList.tsx", /<InlineDriverPicker/],
