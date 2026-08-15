@@ -8,6 +8,7 @@ import {
   type FleetLocationHosRow,
 } from "../../api/reports";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatClockTimeCT } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -246,8 +247,21 @@ const OFFLINE_FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
 export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyId: string }) {
   const companyId = operatingCompanyId;
   const navigate = useNavigate(); // AUTO-07: row click → unit detail (clickable sweep)
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedUnitId = searchParams.get("unit_id");
+  // LST-F5173 — visible EntityPicker (URL-only unit seed is not reverse chrome).
+  const [unitPickerId, setUnitPickerId] = useState("");
+  useEffect(() => {
+    if (requestedUnitId) setUnitPickerId(requestedUnitId);
+  }, [requestedUnitId]);
+  const setUnitFilter = (unitId: string) => {
+    setUnitPickerId(unitId);
+    const next = new URLSearchParams(searchParams);
+    if (unitId) next.set("unit_id", unitId);
+    else next.delete("unit_id");
+    setSearchParams(next, { replace: true });
+  };
+  const effectiveUnitId = unitPickerId.trim() || requestedUnitId || undefined;
 
   const query = useQuery({
     queryKey: ["compliance", "fleet-location-hos", companyId],
@@ -265,15 +279,15 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   // stale (or never-reported) units are segregated into the collapsible group below.
   const { live: liveRows, offline: offlineRows } = useMemo(() => {
     const partitioned = partitionFleetByFreshness(allRows);
-    if (!requestedUnitId) return partitioned;
+    if (!effectiveUnitId) return partitioned;
     return {
-      live: partitioned.live.filter((row) => row.unit_id === requestedUnitId),
-      offline: partitioned.offline.filter((row) => row.unit_id === requestedUnitId),
+      live: partitioned.live.filter((row) => row.unit_id === effectiveUnitId),
+      offline: partitioned.offline.filter((row) => row.unit_id === effectiveUnitId),
     };
-  }, [allRows, requestedUnitId]);
+  }, [allRows, effectiveUnitId]);
   useEffect(() => {
-    if (requestedUnitId && offlineRows.length > 0) setShowOffline(true);
-  }, [offlineRows.length, requestedUnitId]);
+    if (effectiveUnitId && offlineRows.length > 0) setShowOffline(true);
+  }, [offlineRows.length, effectiveUnitId]);
   const filteredLiveRows = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return needle
@@ -309,6 +323,17 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           tableTestId="compliance-fleet-hos-table"
           filterBar={
             <div className="flex flex-wrap items-center gap-2">
+              <div className="min-w-[220px]" data-testid="fleet-hos-unit-filter">
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={companyId}
+                  value={unitPickerId || null}
+                  onChange={(next) => setUnitFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All units"
+                  dataTestId="fleet-hos-filter-unit"
+                />
+              </div>
               <input
                 type="search"
                 value={search}
