@@ -75,8 +75,13 @@ export function verify(source) {
   need("insuranceGaps", "Coverage Gap Dashboard", "insurance coverage gaps must remain rendered");
 
   for (const route of ["/inventory", "/inventory/assignments", "/inventory/purchases"]) need("inventoryTabs", `to: "${route}"`, `inventory navigation must expose ${route}`);
-  for (const token of ["listPartsAssignments", 'kind="work_order"', 'kind="unit"', 'kind="vendor"', 'placeholder="Search part / WO / unit / vendor / invoice…"', 'to="/inventory"', 'to="/inventory/purchases"']) need("inventoryAssignments", token, `inventory assignments must retain ${token}`);
-  need("inventoryPurchases", 'data-testid="inventory-purchases-honest-empty"', "inventory purchases must remain an honest empty surface until its SoR ships");
+  // LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH (Cursor, 2026-08-15): the page-local search input
+  // was removed in favor of ParityTable's own canonical Search+Range+gear toolbar — the literal
+  // placeholder assertion this used to check is now permanently gone by design, not a regression.
+  for (const token of ["listPartsAssignments", 'kind="work_order"', 'kind="unit"', 'kind="vendor"', "canonical ParityTable UniversalListToolbar", 'to="/inventory"', 'to="/inventory/purchases"']) need("inventoryAssignments", token, `inventory assignments must retain ${token}`);
+  // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT (owner-approved 2026-08-15): the honest-empty placeholder
+  // is superseded by the real append-only SoR — assert the real list load instead.
+  need("inventoryPurchases", "listPartsPurchases", "inventory purchases must load the real append-only SoR via listPartsPurchases");
   for (const route of ["/inventory", "/inventory/assignments", "/inventory/purchases"]) need("routes", `path="${route}"`, `inventory route ${route} must remain mounted`);
 
   for (const [id, route] of [["contracts", "/legal/contracts"], ["templates", "/legal/templates"], ["policies", "/legal/policies"], ["attorney-review", "/legal/attorney-review"], ["reports", "/legal/reports"]]) need("legalTabs", `{ id: "${id}", label:`, `legal tab ${id} must remain visible`), need("legalTabs", `to: "${route}"`, `legal tab ${id} must retain its destination`);
