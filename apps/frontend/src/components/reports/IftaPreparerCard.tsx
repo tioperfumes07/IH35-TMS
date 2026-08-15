@@ -42,7 +42,7 @@ export function IftaPreparerCard({ status }: Props) {
 
       <div className="space-y-2 px-3 py-3 text-xs">
         <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">
-          This report is always accrual basis per CPA sign-off.
+          This report is always accrual basis under the owner-locked reporting policy.
         </p>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">1</span>

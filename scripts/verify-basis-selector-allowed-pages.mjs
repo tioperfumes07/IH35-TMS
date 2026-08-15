@@ -25,6 +25,26 @@ const deniedPages = [
   "apps/frontend/src/pages/reports/APAgingPage.tsx",
 ];
 
+const ownerPolicySurfaces = [
+  ...deniedPages,
+  "apps/frontend/src/components/reports/IftaPreparerCard.tsx",
+  "apps/frontend/src/pages/reports/ifta/IFTAPreparer.tsx",
+];
+
+export function auditOwnerPolicyCopy(sources) {
+  const problems = [];
+  for (const rel of ownerPolicySurfaces) {
+    const source = sources[rel] ?? "";
+    if (!/accrual basis under the owner-locked reporting policy/i.test(source)) {
+      problems.push(`Missing owner-locked accrual-basis note in: ${rel}`);
+    }
+    if (/CPA\s+(?:sign-?off|approval|tie-?out)/i.test(source)) {
+      problems.push(`Stale CPA authority copy remains in: ${rel}`);
+    }
+  }
+  return problems;
+}
+
 function fail(messages) {
   console.error("verify:basis-selector-allowed-pages — FAILED");
   for (const msg of messages) console.error(`- ${msg}`);
@@ -70,9 +90,6 @@ for (const denied of deniedPages) {
   if (/<BasisSelector\b|from\s+["'][^"']*BasisSelector["']/.test(source)) {
     failures.push(`BasisSelector must not be used in accrual-only report page: ${denied}`);
   }
-  if (!/always accrual basis per CPA sign-off/i.test(source)) {
-    failures.push(`Missing accrual-only note in: ${denied}`);
-  }
 }
 
 const iftaCard = path.join(process.cwd(), "apps/frontend/src/components/reports/IftaPreparerCard.tsx");
@@ -81,10 +98,32 @@ if (fs.existsSync(iftaCard)) {
   if (/<BasisSelector\b|from\s+["'][^"']*BasisSelector["']/.test(source)) {
     failures.push("BasisSelector must not be used in IFTA report/card surface");
   }
-  if (!/always accrual basis per CPA sign-off/i.test(source)) {
-    failures.push("Missing accrual-only note in IFTA report/card surface");
+}
+
+const ownerPolicySources = Object.fromEntries(
+  ownerPolicySurfaces.map((rel) => [rel, fs.readFileSync(path.join(process.cwd(), rel), "utf8")]),
+);
+failures.push(...auditOwnerPolicyCopy(ownerPolicySources));
+
+if (process.argv.includes("--selftest")) {
+  for (const rel of ownerPolicySurfaces) {
+    const mutant = {
+      ...ownerPolicySources,
+      [rel]: ownerPolicySources[rel].replace(
+        /accrual basis under the owner-locked reporting policy/gi,
+        "accrual basis per CPA sign-off",
+      ),
+    };
+    const planted = auditOwnerPolicyCopy(mutant);
+    if (!planted.some((problem) => problem.includes(rel))) {
+      failures.push(`SELFTEST inert — stale CPA mutation escaped for ${rel}`);
+    }
   }
 }
 
 if (failures.length > 0) fail(failures);
-console.log("verify:basis-selector-allowed-pages — OK");
+console.log(
+  process.argv.includes("--selftest")
+    ? `verify:basis-selector-allowed-pages — SELFTEST OK (${ownerPolicySurfaces.length} stale-authority mutations rejected)`
+    : "verify:basis-selector-allowed-pages — OK",
+);
