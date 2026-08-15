@@ -1047,6 +1047,11 @@
     "claimed_by": "codex",
     "purpose": "verify-nonmoney-exact-entity-nouns"
   },
+  "3396": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "codex",
+    "purpose": "verify-wave-a-orphan-guard-registry-batch"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
