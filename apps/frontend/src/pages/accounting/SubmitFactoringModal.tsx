@@ -5,6 +5,7 @@ import { listFactoringCandidateInvoices, submitFactoringBatch } from "../../api/
 import { getFactoringSummary, listFactors } from "../../api/factoring";
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -108,10 +109,6 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     if (reservePctValue) setReservePct(reservePctValue);
     if (feePct) setFactorFeePct(feePct);
   }, [activeFactor, factoringSummaryQuery.data?.active_factor_id, open, vendorId]);
-
-  function toggleInvoice(invoiceId: string) {
-    setSelectedInvoiceIds((current) => (current.includes(invoiceId) ? current.filter((id) => id !== invoiceId) : [...current, invoiceId]));
-  }
 
   async function onSubmit() {
     setError(null);
@@ -234,39 +231,53 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
               />
             </div>
           ) : null}
-          <div className="max-h-64 overflow-y-auto rounded-sm border border-gray-200">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold">Pick</th>
-                  <th className="px-2 py-1.5 font-semibold">Invoice</th>
-                  <th className="px-2 py-1.5 font-semibold">Customer</th>
-                  <th className="px-2 py-1.5 font-semibold">Total</th>
-                  <th className="px-2 py-1.5 font-semibold">Recourse</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(invoicesQuery.data ?? []).map((row) => (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-2 py-1.5">
-                      <input type="checkbox" checked={selectedInvoiceIds.includes(row.id)} onChange={() => toggleInvoice(row.id)} />
-                    </td>
-                    <td className="px-2 py-1.5 text-gray-900"><EntityLink kind="invoice" id={row.id} label={entityLabel(row.display_id, row.id, "Invoice")} /></td>
-                    <td className="px-2 py-1.5 text-gray-700">{entityLabel(row.customer_name, row.customer_id, "Customer")}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{money(row.total_cents)}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{row.customer_recourse_type}</td>
-                  </tr>
-                ))}
-                {!invoicesQuery.isLoading && !invoicesQuery.isError && (invoicesQuery.data ?? []).length === 0 ? (
-                  <tr>
-                    <td className="px-2 py-2 text-gray-500" colSpan={5}>
-                      No sent, eligible invoices available.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          {/* ACCT-F3592: embedded ParityTable owns Search+Range+gear + selectable invoice pick. */}
+          <ParityTable
+            embedded
+            rows={invoicesQuery.data ?? []}
+            rowKey={(row) => row.id}
+            storageKey="submit-factoring-modal-candidates"
+            exportFilename="factoring-candidate-invoices"
+            tableTestId="submit-factoring-candidates-table"
+            emptyText={
+              invoicesQuery.isLoading
+                ? "Loading eligible invoices…"
+                : invoicesQuery.isError
+                  ? "Could not load invoices."
+                  : "No sent, eligible invoices available."
+            }
+            selectable
+            selectedKeys={selectedInvoiceIds}
+            onSelectionChange={setSelectedInvoiceIds}
+            columns={[
+              {
+                key: "invoice",
+                label: "Invoice",
+                cellClass: "text-gray-900",
+                render: (row) => (
+                  <EntityLink kind="invoice" id={row.id} label={entityLabel(row.display_id, row.id, "Invoice")} />
+                ),
+              },
+              {
+                key: "customer",
+                label: "Customer",
+                cellClass: "text-gray-700",
+                render: (row) => entityLabel(row.customer_name, row.customer_id, "Customer"),
+              },
+              {
+                key: "total",
+                label: "Total",
+                cellClass: "text-gray-700",
+                render: (row) => money(row.total_cents),
+              },
+              {
+                key: "recourse",
+                label: "Recourse",
+                cellClass: "text-gray-700",
+                render: (row) => row.customer_recourse_type,
+              },
+            ]}
+          />
         </div>
 
         {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}
