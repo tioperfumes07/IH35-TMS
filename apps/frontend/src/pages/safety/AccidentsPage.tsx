@@ -42,6 +42,7 @@ function createDraftAccident(): Record<string, unknown> {
     notes: "",
     driver_id: "",
     unit_id: "",
+    trailer_id: "",
   };
 }
 
@@ -49,10 +50,10 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedAccident, setSelectedAccident] = useState<Record<string, unknown> | null>(null);
-  // S-08 / S-04 + SAF-F26: driver/unit filters are EntityPickers (allowCreate=false) — operators
-  // pick a real driver/unit; we match the selected id (plus name/number fallback for joined rows).
+  // S-08 / S-04 + SAF-F26: driver/unit/trailer filters are EntityPickers (allowCreate=false).
   const [driverFilter, setDriverFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
+  const [trailerFilter, setTrailerFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
@@ -70,6 +71,9 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   useEffect(() => {
     if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
   }, [unitIdFromUrl]);
+  useEffect(() => {
+    if (trailerIdFromUrl) setTrailerFilter(trailerIdFromUrl);
+  }, [trailerIdFromUrl]);
 
   const accidentsQuery = useQuery({
     queryKey: [
@@ -122,12 +126,18 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         const needle = unitFilter.trim().toLowerCase();
         if (id !== unitFilter && !num.includes(needle) && id.toLowerCase() !== needle) return false;
       }
+      if (trailerFilter) {
+        const id = String(row.trailer_id ?? "");
+        const num = String(row.trailer_number ?? row.equipment_number ?? "").toLowerCase();
+        const needle = trailerFilter.trim().toLowerCase();
+        if (id !== trailerFilter && !num.includes(needle) && id.toLowerCase() !== needle) return false;
+      }
       const accidentDate = String(row.accident_at ?? "").slice(0, 10);
       if (fromDate && accidentDate && accidentDate < fromDate) return false;
       if (toDate && accidentDate && accidentDate > toDate) return false;
       return true;
     });
-  }, [allRows, driverFilter, unitFilter, fromDate, toDate]);
+  }, [allRows, driverFilter, unitFilter, trailerFilter, fromDate, toDate]);
   const createMode = String(selectedAccident?.id ?? "") === "__create__";
 
   const openAccident = (row: Record<string, unknown>) => {
@@ -146,6 +156,21 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     { key: "accident_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.accident_at) },
     { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel((row.driver_name as string | undefined)?.trim(), row.driver_id as string | undefined, "Driver")} /> },
     { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} label={entityLabel((row.unit_number as string | undefined)?.trim(), row.unit_id as string | undefined, "Unit")} /> },
+    {
+      key: "trailer_id",
+      label: "Trailer",
+      render: (row) => (
+        <EntityLink
+          kind="trailer"
+          id={row.trailer_id as string | undefined}
+          label={entityLabel(
+            ((row.trailer_number as string | undefined) ?? (row.equipment_number as string | undefined))?.trim(),
+            row.trailer_id as string | undefined,
+            "Trailer",
+          )}
+        />
+      ),
+    },
     // SAF-B25: the load leg of the accident. safety.accident_reports.load_id has FKed mdata.loads
     // since the table existed and appeared on no list and in no join, so an accident could not be
     // read against the trip it happened on — the link an insurer, attorney or claims adjuster asks
@@ -268,17 +293,32 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 dataTestId="accidents-unit-filter"
               />
             </label>
+            <label className="text-[11px] text-slate-600">
+              Trailer
+              <EntityPicker
+                kind="trailer"
+                operatingCompanyId={operatingCompanyId}
+                value={trailerFilter || null}
+                onChange={(next) => setTrailerFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All trailers"
+                className="mt-1 w-48"
+                dataField="accidents-trailer-filter"
+                dataTestId="accidents-trailer-filter"
+              />
+            </label>
             <span className="font-semibold text-slate-500">From:</span>
             <DatePicker value={fromDate} onChange={setFromDate} className="w-32" max={toDate || undefined} data-testid="accidents-from-date" />
             <span className="font-semibold text-slate-500">To:</span>
             <DatePicker value={toDate} onChange={setToDate} className="w-32" min={fromDate || undefined} data-testid="accidents-to-date" />
-            {driverFilter || unitFilter || fromDate || toDate ? (
+            {driverFilter || unitFilter || trailerFilter || fromDate || toDate ? (
               <button
                 type="button"
                 className="rounded-full border border-gray-300 px-2 py-0.5 text-slate-500 hover:bg-gray-100"
                 onClick={() => {
                   setDriverFilter("");
                   setUnitFilter("");
+                  setTrailerFilter("");
                   setFromDate("");
                   setToDate("");
                 }}
