@@ -17,11 +17,13 @@ const PAGE_SIZE = 100;
 // that is BOTH allowlisted there AND a real EntityLink kind — everything else (e.g. 'task', 'status',
 // 'assignment') stays plain text rather than guessing a drill-through route that may not exist.
 const SUBJECT_TYPE_TO_ENTITY_KIND: Partial<Record<string, EntityKind>> = {
+  load: "load",
   invoice: "invoice",
   bill: "bill",
   journal_entry: "journal_entry",
   driver: "driver",
   unit: "unit",
+  work_order: "work_order",
 };
 
 function subjectTypeToEntityLinkKind(subjectType: string | null | undefined): EntityKind | null {
@@ -53,20 +55,22 @@ const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
     key: "subject_type",
     label: "Subject",
     sortable: true,
-    sortValue: (row) => `${row.subject_type ?? ""}:${row.subject_id ?? ""}`,
+    sortValue: (row) => `${row.subject_kind ?? row.subject_type ?? ""}:${row.subject_label ?? row.subject_id ?? ""}`,
     render: (row) => {
-      const kind = subjectTypeToEntityLinkKind(row.subject_type);
+      const subjectKind = row.subject_kind ?? row.subject_type;
+      const kind = subjectTypeToEntityLinkKind(subjectKind);
+      const label = entityLabel(row.subject_label, row.subject_id, "Subject");
       return (
         <span className="text-gray-500">
-          {row.subject_type ?? "—"}
+          {subjectKind ?? "—"}
           {row.subject_id ? (
             kind ? (
               <>
                 {" · "}
-                <EntityLink kind={kind} id={row.subject_id} label={entityLabel(null, row.subject_id, "Subject")} />
+                <EntityLink kind={kind} id={row.subject_id} label={label} />
               </>
             ) : (
-              ` · ${entityLabel(null, row.subject_id, "Subject")}`
+              ` · ${label}`
             )
           ) : (
             ""
@@ -91,14 +95,16 @@ const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
 ];
 
 function rowsToCsv(rows: AuditReportRow[], title: string): string {
-  const headers = ["occurred_at", "event_type", "subject_type", "subject_id", "actor_email", "source"];
+  const headers = ["occurred_at", "event_type", "subject_type", "subject_kind", "subject_id", "subject_label", "actor_email", "source"];
   const lines = [headers.join(",")];
   for (const r of rows) {
     lines.push([
       JSON.stringify(r.occurred_at ?? ""),
       JSON.stringify(r.event_type ?? ""),
       JSON.stringify(r.subject_type ?? ""),
+      JSON.stringify(r.subject_kind ?? ""),
       JSON.stringify(r.subject_id ?? ""),
+      JSON.stringify(r.subject_label ?? ""),
       JSON.stringify(r.actor_email ?? ""),
       JSON.stringify(r.source ?? ""),
     ].join(","));

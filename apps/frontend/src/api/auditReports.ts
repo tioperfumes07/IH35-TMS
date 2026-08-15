@@ -3,7 +3,9 @@ import { apiRequest } from "./client";
 export type AuditReportRow = {
   event_type: string;
   subject_type: string | null;
+  subject_kind: string | null;
   subject_id: string | null;
+  subject_label: string | null;
   actor_user_id: string | null;
   actor_email: string | null;
   occurred_at: string;
