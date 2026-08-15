@@ -7,6 +7,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { Link, useSearchParams } from "react-router-dom";
 
 type Props = {
@@ -29,9 +30,10 @@ export function TeamSplitConfigPanel() {
 
 export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const { data, isLoading, isError, refetch, create, endConfig } = useTeamSplits(operatingCompanyId);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const teamId = searchParams.get("team_id");
-  const driverId = searchParams.get("driver_id");
+  // LST-F5185 — visible EntityPicker (URL-only ?driver_id= is not reverse chrome).
+  const driverId = searchParams.get("driver_id")?.trim() ?? "";
 
   const [createOpen, setCreateOpen] = useState(false);
   const [primaryDriverId, setPrimaryDriverId] = useState("");
@@ -40,6 +42,13 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const [secondaryRatio, setSecondaryRatio] = useState(0.4);
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  function setDriverId(next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("driver_id", next);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
 
   const configs = data?.configs ?? [];
   const active = useMemo(
@@ -72,8 +81,25 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3 px-2" data-testid="team-split-config-panel">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-900">Team split configs</h2>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-gray-900">Team split configs</h2>
+          <label className="block min-w-[240px] text-xs text-slate-600">
+            Driver
+            <div className="mt-1">
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={operatingCompanyId}
+                value={driverId || null}
+                onChange={(next) => setDriverId(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="w-full"
+                dataTestId="team-split-config-filter-driver"
+              />
+            </div>
+          </label>
+        </div>
         <Button type="button" onClick={() => setCreateOpen(true)}>
           Create config
         </Button>
