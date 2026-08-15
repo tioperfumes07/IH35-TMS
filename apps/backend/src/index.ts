@@ -172,6 +172,12 @@ import { registerScheduledSubscriptionRoutes } from "./reports/scheduled/routes.
 import { registerCustomReportBuilderRoutes } from "./reports/custom-report-builder.routes.js";
 import { initializeReportsRoleScheduler, stopReportsRoleScheduler } from "./reports/scheduler.js";
 import { initializeScheduledReportsEmailer } from "./jobs/scheduled-reports-emailer.js";
+// LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED (owner-locked §9.6): reporting.scheduled_reports
+// is the canonical scheduled-report engine — fully built (routes + worker) but never mounted until now.
+// registerReportsScheduledCrudRoutes (reports.scheduled_reports, legacy) stays mounted for
+// ScheduledReportsPanel's read path and archive-only continuity; it is superseded, not deleted.
+import { registerScheduledReportsRoutes } from "./scheduled-reports/scheduled-reports.routes.js";
+import { initializeScheduledReportsWorker } from "./scheduled-reports/scheduled-reports-worker.js";
 import { registerIftaQuarterlyPreparerRoutes } from "./ifta/ifta-quarterly-preparer.routes.js";
 import { registerFleetTrailerRoutes } from "./fleet/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
@@ -947,6 +953,7 @@ async function main() {
   await registerDriverManagerRoleHomeRoutes(app);
   await registerReportsRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
+  await registerScheduledReportsRoutes(app);
   await registerScheduledSubscriptionRoutes(app);
   await registerCustomReportBuilderRoutes(app);
   await registerIftaQuarterlyPreparerRoutes(app);
@@ -1559,6 +1566,8 @@ async function main() {
     app.log.info("[STARTUP] reports-role-scheduler initialized");
     initializeScheduledReportsEmailer(app);
     app.log.info("[STARTUP] scheduled-reports-emailer initialized");
+    initializeScheduledReportsWorker(app);
+    app.log.info("[STARTUP] scheduled-reports-worker (canonical, reporting.scheduled_reports) initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] reports-role-scheduler failed");
   }
