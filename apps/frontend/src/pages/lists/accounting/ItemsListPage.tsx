@@ -255,6 +255,7 @@ export function ItemsListPage() {
           loading={query.isLoading}
           rowActions={rowActions}
           filterBar={filterBar}
+          suppressToolbarSearch
           storageKey="items-list"
           emptyText="No items found."
           sortKey={sortKey}
