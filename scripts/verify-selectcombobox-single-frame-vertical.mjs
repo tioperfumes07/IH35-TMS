@@ -13,6 +13,7 @@ import process from "node:process";
 
 const ROOT = process.cwd();
 const TARGET = "apps/frontend/src/components/shared/SelectCombobox.tsx";
+const POLICY = "apps/frontend/src/lib/single-frame-classname.ts";
 const FRONTEND = path.join(ROOT, "apps/frontend/src");
 
 function fail(message) {
@@ -31,15 +32,15 @@ function productionFiles(dir) {
   return out;
 }
 
-function verify(source, files) {
+function verify(source, policySource, files) {
   const errors = [];
   const require = (condition, message) => { if (!condition) errors.push(message); };
 
-  require(source.includes("const LEGACY_SELECT_FRAME_TOKEN"), "missing centralized legacy-frame token policy");
+  require(policySource.includes("const OUTER_FRAME_TOKEN"), "missing centralized legacy-frame token policy");
   for (const token of ["border(?:-.+)?", "rounded(?:-.+)?", "bg-.+", "ring(?:-.+)?", "shadow(?:-.+)?"]) {
-    require(source.includes(token), `frame policy must cover exact token pattern ${token}`);
+    require(policySource.includes(token), `frame policy must cover exact token pattern ${token}`);
   }
-  require(source.includes("selectComboboxLayoutClassName(className)"), "adapter must sanitize caller className");
+  require(source.includes("singleFrameLayoutClassName(className)"), "adapter must sanitize caller className");
   require(source.includes("className={layoutClassName}"), "canonical Combobox must receive sanitized layout classes only");
   require(!source.includes("className={className}\n      />"), "raw caller className still reaches the outer Combobox wrapper");
 
@@ -56,18 +57,19 @@ function verify(source, files) {
 }
 
 const source = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
+const policySource = fs.readFileSync(path.join(ROOT, POLICY), "utf8");
 const files = productionFiles(FRONTEND);
-const normal = verify(source, files);
+const normal = verify(source, policySource, files);
 for (const error of normal.errors) fail(error);
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["raw className bypass", source.replace("className={layoutClassName}", "className={className}")],
-    ["border policy removed", source.replace("border(?:-.+)?|", "")],
-    ["trigger leaf removed", source, files.filter((file) => !file.endsWith("pages/lists/accounting/DetailTypesListPage.tsx"))],
+    ["raw className bypass", source.replace("className={layoutClassName}", "className={className}"), policySource],
+    ["border policy removed", source, policySource.replace("border(?:-.+)?|", "")],
+    ["trigger leaf removed", source, policySource, files.filter((file) => !file.endsWith("pages/lists/accounting/DetailTypesListPage.tsx"))],
   ];
-  for (const [name, mutated, mutatedFiles = files] of mutations) {
-    if (verify(mutated, mutatedFiles).errors.length === 0) fail(`planted defect survived: ${name}`);
+  for (const [name, mutated, mutatedPolicy, mutatedFiles = files] of mutations) {
+    if (verify(mutated, mutatedPolicy, mutatedFiles).errors.length === 0) fail(`planted defect survived: ${name}`);
   }
 }
 
