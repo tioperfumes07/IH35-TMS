@@ -24,6 +24,7 @@ const wrappers = [
 
 function failures(overrides = {}) {
   const h = overrides.hub ?? hub;
+  const c = overrides.catalog ?? catalog;
   const ca = overrides.catalogApi ?? catalogApi;
   const cp = overrides.categoryPage ?? categoryPage;
   const ws = overrides.wrappers ?? wrappers;
@@ -31,7 +32,10 @@ function failures(overrides = {}) {
     ["shared authenticated registry fetch", ca.includes('apiRequest<{ categories: CatalogCategory[] }>("/api/reports/categories/catalog")')],
     ["hub consumes shared registry fetch", h.includes('fetchReportCategoryCatalog') && h.includes("category.reports.map") && h.includes("route={report.route}")],
     ["backend route authenticated", api.includes('app.get("/api/reports/categories/catalog"') && api.includes("requireAuth(req, reply)")],
-    ["registry is canonical code definition", catalog.includes("export const REPORT_CATEGORIES") && catalog.includes("allCatalogReportIds")],
+    ["registry is canonical code definition", c.includes("export const REPORT_CATEGORIES") && c.includes("allCatalogReportIds")],
+    ["catalog card routes mounted", [...c.matchAll(/route:\s*"([^"]+)"/g)].map((match) => match[1]).every((route) =>
+      manifest.includes(`path="${route}"`) || (route.startsWith("/reports/run/") && manifest.includes('path="/reports/run/:reportId"'))
+    )],
     ["shared page selects exact category", cp.includes("categories.find((value) => value.id === categoryId)")],
     ["shared page renders canonical cards", cp.includes("category.reports.map") && cp.includes("route={report.route}") && cp.includes("icon={report.icon}")],
     ["shared page honest states", cp.includes("Loading report category") && cp.includes("Couldn't load report category") && cp.includes("Report category not found")],
@@ -52,6 +56,7 @@ if (process.argv.includes("--selftest")) {
     ["shared authenticated registry fetch", { catalogApi: catalogApi.replace("/api/reports/categories/catalog", "/api/reports/categories/missing") }],
     ["shared page renders canonical cards", { categoryPage: categoryPage.replace("route={report.route}", 'route="/reports"') }],
     ["shared page honest states", { categoryPage: categoryPage.replace("Report category not found", "Unavailable") }],
+    ["catalog card routes mounted", { catalog: catalog.replace('/reports/cancellations', '/reports/load-cancellations') }],
     ...wrappers.map(([id, file, source], index) => [
       `${id} canonical wrapper`,
       { wrappers: wrappers.map((entry, entryIndex) => entryIndex === index ? [id, file, source.replace(`categoryId="${id}"`, 'categoryId="missing"')] : entry) },

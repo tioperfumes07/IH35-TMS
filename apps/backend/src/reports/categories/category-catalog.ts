@@ -18,7 +18,7 @@ export const REPORT_CATEGORIES: ReportCategoryDef[] = [
     label: "Operations & Dispatch",
     reports: [
       { id: "profit-per-truck", label: "Profit per truck", route: "/reports/profit-per-truck", icon: "truck", description: "Unit economics" },
-      { id: "load-cancellations", label: "Load cancellations", route: "/reports/load-cancellations", icon: "x", description: "Volume by reason" },
+      { id: "load-cancellations", label: "Load cancellations", route: "/reports/cancellations", icon: "x", description: "Volume by reason" },
       { id: "geofence-dwell", label: "Geofence dwell", route: "/reports/geofence-dwell", icon: "pin", description: "Yard dwell windows" },
     ],
   },
