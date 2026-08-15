@@ -1137,6 +1137,11 @@
     "claimed_by": "claude-1",
     "purpose": "verify-cc1-money-orphan-guard-registry-batch"
   },
+  "3433": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "claude-1",
+    "purpose": "verify-hold-deduction-real-target"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
