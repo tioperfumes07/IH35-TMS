@@ -2,7 +2,7 @@
 /**
  * Safety picker_law — Built for list surfaces with EntityPicker.
  *
- * @matrix-built {"modules":["safety"],"cols":["picker_law"],"leafRe":"^(hos_violations\\.list|idvr\\.list|dot_inspections\\.list|safety_events\\.list|internal_fines\\.list|permits\\.list|driver_scheduler\\.list)$","task":"VERTICAL-PICKER-LAW-safety-lists","vertical":"column-wave"}
+ * @matrix-built {"modules":["safety"],"cols":["picker_law","reverse_link","connectivity"],"leafRe":"^(hos_violations\\.list|idvr\\.list|dot_inspections\\.list|safety_events\\.list|internal_fines\\.list|permits\\.list|driver_scheduler\\.list|drug_alcohol\\.list)$","task":"VERTICAL-PICKER-LAW-safety-lists","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-safety-picker-law-lists.mjs --selftest
  */
@@ -21,6 +21,19 @@ const CHECKS = [
   { name: "InternalFinesPage", file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx" },
   { name: "PermitsPage", file: "apps/frontend/src/pages/safety/PermitsPage.tsx" },
   { name: "DriverSchedulerGridPage", file: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx" },
+  {
+    name: "DrugAlcoholTab",
+    file: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
+    // LST-F5183 — reverse filter must be EntityPicker + URL sync (not DriverPickerWithCreate without URL write).
+    require: [
+      /EntityPicker/,
+      /kind="driver"/,
+      /allowCreate=\{false\}/,
+      /dataTestId="drug-alcohol-filter-driver"/,
+      /searchParams\.get\("driver_id"\)/,
+      /setSearchParams/,
+    ],
+  },
 ];
 
 function run(root = ROOT) {
@@ -29,7 +42,14 @@ function run(root = ROOT) {
     const abs = path.join(root, c.file);
     if (!fs.existsSync(abs)) { fails.push(`${c.name}: missing`); continue; }
     const src = fs.readFileSync(abs, "utf8");
-    if (!/EntityPicker|ReferenceSelect/.test(src)) fails.push(`${c.name}: no picker`);
+    if (c.require) {
+      for (const re of c.require) {
+        if (!re.test(src)) fails.push(`${c.name}: missing ${re}`);
+      }
+      if (/<DriverPickerWithCreate[\s>]/.test(src)) fails.push(`${c.name}: must not use DriverPickerWithCreate on reverse filter`);
+    } else if (!/EntityPicker|ReferenceSelect/.test(src)) {
+      fails.push(`${c.name}: no picker`);
+    }
   }
   return fails;
 }
