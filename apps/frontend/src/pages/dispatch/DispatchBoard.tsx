@@ -197,7 +197,10 @@ function isUnassignedLoad(load: DispatchLoadRow) {
 
 function isBookedReserved(load: DispatchLoadRow) {
   if (load.assigned_unit_id || load.assigned_primary_driver_id) return false;
-  return ["draft", "booked", "planned"].includes(load.status);
+  // `book-load.service.ts` deliberately persists a booked load with no crew as the canonical
+  // `unassigned` mdata status. Keep that status in this entry-path predicate or valid booked loads
+  // disappear from the only table that exposes + Quick Assign.
+  return ["draft", "booked", "planned", "unassigned"].includes(load.status);
 }
 
 function isAssignedLoad(load: DispatchLoadRow) {
