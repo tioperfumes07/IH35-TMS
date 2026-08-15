@@ -24,6 +24,17 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 
+const NEW_SERVICE = "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx";
+const ITEM_EDITOR = "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx";
+
+function newServiceEmbedsItemEditor(src) {
+  return (
+    /<ItemEditorModal[\s>]/.test(src) &&
+    (/from ["'].*ItemEditorModal["']|from ["'].*\/ItemEditorModal["']/.test(src) ||
+      /import\s*\{\s*ItemEditorModal\s*\}/.test(src))
+  );
+}
+
 // Files whose inline-create submit paths must remain canonical, with the canonical anchor each must keep.
 const CANONICAL_SURFACES = [
   {
@@ -31,8 +42,10 @@ const CANONICAL_SURFACES = [
     anchors: [/\bcreateVendor\s*\(/, /\bcreateCustomer\s*\(/, /itemsCatalogClient\.create\s*\(/],
   },
   {
-    file: "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx",
-    anchors: [/itemsCatalogClient\.create\s*\(/],
+    file: NEW_SERVICE,
+    anchors: [/itemsCatalogClient\.create\s*\(/, /itemsCatalogClient/, /<ItemEditorModal[\s>]/],
+    embedEditor: ITEM_EDITOR,
+    embedAnchor: /\bclient\.create\s*\(/,
   },
 ];
 
@@ -66,9 +79,40 @@ export function assertInlineCreateCanonical(sources = {}) {
       continue;
     }
     const src = stripComments(raw);
-    for (const anchor of surface.anchors) {
-      if (!anchor.test(src)) {
-        failures.push(`${surface.file} — lost canonical create anchor ${anchor} (create must write the canonical master table, not a qbo_* mirror)`);
+    if (surface.file === NEW_SERVICE) {
+      let anchorMatched = false;
+      for (const anchor of surface.anchors) {
+        if (anchor.test(src)) {
+          anchorMatched = true;
+          break;
+        }
+      }
+      if (!anchorMatched && surface.embedEditor && newServiceEmbedsItemEditor(src)) {
+        const editorRaw = Object.prototype.hasOwnProperty.call(sources, surface.embedEditor)
+          ? sources[surface.embedEditor]
+          : fs.existsSync(path.join(repoRoot, surface.embedEditor))
+            ? fs.readFileSync(path.join(repoRoot, surface.embedEditor), "utf8")
+            : null;
+        if (editorRaw == null) {
+          failures.push(`${surface.embedEditor} — MISSING (NewServiceDrawerForm embeds ItemEditorModal for canonical create)`);
+        } else if (!surface.embedAnchor.test(stripComments(editorRaw))) {
+          failures.push(
+            `${surface.file} — embeds ItemEditorModal but ${surface.embedEditor} lost canonical create anchor ${surface.embedAnchor}`,
+          );
+        } else {
+          anchorMatched = true;
+        }
+      }
+      if (!anchorMatched) {
+        failures.push(
+          `${surface.file} — lost canonical create anchor (create must write the canonical master table, not a qbo_* mirror)`,
+        );
+      }
+    } else {
+      for (const anchor of surface.anchors) {
+        if (!anchor.test(src)) {
+          failures.push(`${surface.file} — lost canonical create anchor ${anchor} (create must write the canonical master table, not a qbo_* mirror)`);
+        }
       }
     }
     if (FORBIDDEN_MIRROR_CREATE.test(src)) {

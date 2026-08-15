@@ -8,7 +8,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cu09-err-remainder";
 const SELFTEST = process.argv.includes("--selftest");
 const NEW_FORM = "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx";
+const NEW_SERVICE = "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx";
 const DRAWER = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
+const ITEM_EDITOR = "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx";
 
 const FILES = [
   "apps/frontend/src/pages/banking/components/PlaidReconnectButton.tsx",
@@ -31,7 +33,15 @@ function newFormEmbedsAccountDrawer(newFormSrc) {
   );
 }
 
-function assertFile(file, src, drawerSrc) {
+function newServiceEmbedsItemEditor(serviceSrc) {
+  return (
+    /<ItemEditorModal[\s>]/.test(serviceSrc) &&
+    (/from ["'].*ItemEditorModal["']|from ["'].*\/ItemEditorModal["']/.test(serviceSrc) ||
+      /import\s*\{\s*ItemEditorModal\s*\}/.test(serviceSrc))
+  );
+}
+
+function assertFile(file, src, drawerSrc, itemEditorSrc) {
   const problems = [];
   if (file === NEW_FORM && newFormEmbedsAccountDrawer(src)) {
     if (!/userFacingApiError\(/.test(drawerSrc)) {
@@ -39,6 +49,15 @@ function assertFile(file, src, drawerSrc) {
     }
     if (/String\(\((?:err|error) as Error\)\.message/.test(drawerSrc)) {
       problems.push(`${DRAWER}: still stringifies Error.message (embedded create path)`);
+    }
+    return problems;
+  }
+  if (file === NEW_SERVICE && newServiceEmbedsItemEditor(src)) {
+    if (!/userFacingApiError\(/.test(itemEditorSrc)) {
+      problems.push(`${ITEM_EDITOR}: missing userFacingApiError (NewServiceDrawerForm embeds ItemEditorModal)`);
+    }
+    if (/String\(\((?:err|error) as Error\)\.message/.test(itemEditorSrc)) {
+      problems.push(`${ITEM_EDITOR}: still stringifies Error.message (embedded create path)`);
     }
     return problems;
   }
@@ -51,9 +70,10 @@ function assertFile(file, src, drawerSrc) {
 
 function assertAll(srcs) {
   const drawerSrc = srcs[DRAWER] ?? fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
+  const itemEditorSrc = srcs[ITEM_EDITOR] ?? fs.readFileSync(path.join(ROOT, ITEM_EDITOR), "utf8");
   const problems = [];
   for (const file of FILES) {
-    problems.push(...assertFile(file, srcs[file], drawerSrc));
+    problems.push(...assertFile(file, srcs[file], drawerSrc, itemEditorSrc));
   }
   return problems;
 }
@@ -61,6 +81,7 @@ function assertAll(srcs) {
 const read = () => {
   const srcs = Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.join(ROOT, f), "utf8")]));
   srcs[DRAWER] = fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
+  srcs[ITEM_EDITOR] = fs.readFileSync(path.join(ROOT, ITEM_EDITOR), "utf8");
   return srcs;
 };
 

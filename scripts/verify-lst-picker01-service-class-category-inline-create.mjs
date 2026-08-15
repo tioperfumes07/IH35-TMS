@@ -27,38 +27,79 @@ function readRel(root, rel, overrides) {
   return fs.readFileSync(p, "utf8");
 }
 
+function newServiceEmbedsItemEditor(drawerSrc) {
+  return (
+    /<ItemEditorModal[\s>]/.test(drawerSrc) &&
+    (/from ["'].*ItemEditorModal["']|from ["'].*\/ItemEditorModal["']/.test(drawerSrc) ||
+      /import\s*\{\s*ItemEditorModal\s*\}/.test(drawerSrc))
+  );
+}
+
+function classCategorySource(root = ROOT, overrides = null) {
+  const drawer = readRel(root, DRAWER, overrides);
+  if (!drawer) return { rel: DRAWER, src: null };
+  if (newServiceEmbedsItemEditor(drawer)) {
+    return { rel: EDITOR, src: readRel(root, EDITOR, overrides) };
+  }
+  return { rel: DRAWER, src: drawer };
+}
+
 function block(src, testid) {
   const m = src.match(new RegExp(`data-testid=["']${testid}["'][\\s\\S]{0,1600}`));
   return m ? m[0] : "";
+}
+
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
 /** @returns {string[]} */
 export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
   const drawer = readRel(root, DRAWER, overrides);
+  const { rel: pickerRel, src: pickerSrc } = classCategorySource(root, overrides);
   const editor = readRel(root, EDITOR, overrides);
   const backend = readRel(root, BACKEND, overrides);
 
   if (!drawer) problems.push(`missing ${DRAWER}`);
-  else {
-    if (!/data-testid=["']service-class-select["']/.test(drawer)) {
+  else if (newServiceEmbedsItemEditor(drawer)) {
+    if (!/^\s*embedded\s*$/m.test(stripComments(drawer))) {
+      problems.push(`${DRAWER}: must pass embedded (LST-F3360 single chrome)`);
+    }
+  }
+
+  if (!pickerSrc) problems.push(`missing ${pickerRel}`);
+  else if (pickerRel === DRAWER) {
+    if (!/data-testid=["']service-class-select["']/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must use data-testid=service-class-select`);
     }
-    if (!/createKind=["']class["']/.test(block(drawer, "service-class-select"))) {
+    if (!/createKind=["']class["']/.test(block(pickerSrc, "service-class-select"))) {
       problems.push(`${DRAWER}: class picker must use createKind=class`);
     }
-    if (!/data-testid=["']service-category-select["']/.test(drawer)) {
+    if (!/data-testid=["']service-category-select["']/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must use data-testid=service-category-select`);
     }
-    if (!/qboCategoriesCatalogClient\.create/.test(drawer)) {
+    if (!/qboCategoriesCatalogClient\.create/.test(pickerSrc)) {
       problems.push(`${DRAWER}: category inline create must use qboCategoriesCatalogClient.create`);
     }
-    // Ban createKind=category as a live JSX prop (comments may mention the CoA trap).
-    if (/createKind=["']category["']/.test(drawer.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, ""))) {
+    if (/createKind=["']category["']/.test(pickerSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, ""))) {
       problems.push(`${DRAWER}: must NOT use createKind=category (writes CoA accounts, wrong catalog)`);
     }
-    if (!/default_class_id/.test(drawer) || !/category_id/.test(drawer)) {
+    if (!/default_class_id/.test(pickerSrc) || !/category_id/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must persist default_class_id + category_id in metadata`);
+    }
+  } else {
+    if (!/createKind=["']class["']/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: class picker must use createKind=class`);
+    }
+    if (!/qboCategoriesCatalogClient\.create/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: category inline create must use qboCategoriesCatalogClient.create`);
+    }
+    if (/createKind=["']category["']/.test(pickerSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, ""))) {
+      problems.push(`${EDITOR}: must NOT use createKind=category (writes CoA accounts, wrong catalog)`);
+    }
+    if (!/default_class_id/.test(pickerSrc) || !/category_id/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: must persist default_class_id + category_id in metadata`);
     }
   }
 
@@ -111,34 +152,30 @@ if (process.argv.includes("--selftest")) {
   expectCaught(
     "class-testid-removed",
     DRAWER,
-    (s) => s.replace(/data-testid=["']service-class-select["']/, 'data-testid="gone"'),
-    "service-class-select"
+    (s) => s.replace(/^\s*embedded\s*$/m, ""),
+    "embedded"
   );
   expectCaught(
     "class-createKind-removed",
-    DRAWER,
-    (s) =>
-      s.replace(
-        /(data-testid=["']service-class-select["'][\s\S]{0,1600}?)createKind=["']class["']/,
-        '$1createKind="vendor"'
-      ),
+    EDITOR,
+    (s) => s.replace(/createKind=["']class["']/g, 'createKind="vendor"'),
     "createKind=class"
   );
   expectCaught(
     "category-client-removed",
-    DRAWER,
+    EDITOR,
     (s) => s.replace(/qboCategoriesCatalogClient\.create/g, "gone.create"),
     "qboCategoriesCatalogClient.create"
   );
   expectCaught(
     "wrong-category-kind",
-    DRAWER,
+    EDITOR,
     (s) => s.replace(/createKind=["']class["']/, 'createKind="category"'),
     "createKind=category"
   );
   expectCaught(
     "persist-removed",
-    DRAWER,
+    EDITOR,
     (s) => s.replace(/default_class_id/g, "default_class_gone").replace(/category_id/g, "category_gone"),
     "default_class_id"
   );
