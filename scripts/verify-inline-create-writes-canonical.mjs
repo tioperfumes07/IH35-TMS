@@ -14,6 +14,12 @@
  * refetch (the split-brain "nothing gets created" bug). This guard FAILS on that, and FAILS if the canonical
  * create anchor is missing — so the fix "stays fixed" (LINKAGE LAW §10(b): never write/FK a RETIRE mirror).
  *
+ * PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT / LST-F3368: QuickCreateEntityModal's vendor/item kinds now
+ * early-return to the embedded canonical Lists creators (VendorCreateModal / ItemEditorModal) instead of
+ * calling createVendor()/itemsCatalogClient.create() inline — so those two anchors are embed-aware (checked
+ * on the surface file directly first, falling back to the embedded creator when the surface genuinely
+ * delegates that kind), same shape as NEW_SERVICE's existing embedEditor fallback below.
+ *
  * Usage:
  *   node scripts/verify-inline-create-writes-canonical.mjs            # scan
  *   node scripts/verify-inline-create-writes-canonical.mjs --selftest # inject a regression -> must FAIL
@@ -24,8 +30,10 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 
+const QUICK_CREATE = "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx";
 const NEW_SERVICE = "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx";
 const ITEM_EDITOR = "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx";
+const VENDOR_CREATE_MODAL = "apps/frontend/src/components/vendors/VendorCreateModal.tsx";
 
 function newServiceEmbedsItemEditor(src) {
   return (
@@ -35,16 +43,47 @@ function newServiceEmbedsItemEditor(src) {
   );
 }
 
+// PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT / LST-F3368: vendor/item early-return to the embedded
+// canonical Lists creators (same "embeds → check the embedded file instead" shape as newServiceEmbedsItemEditor).
+function quickCreateEmbedsVendorModal(src) {
+  return /kind\s*===\s*["']vendor["']/.test(src) && /<VendorCreateModal[\s>]/.test(src) && /\bembedded\b/.test(src);
+}
+function quickCreateEmbedsItemEditor(src) {
+  return /kind\s*===\s*["']item["']/.test(src) && /<ItemEditorModal[\s>]/.test(src) && /\bembedded\b/.test(src);
+}
+
 // Files whose inline-create submit paths must remain canonical, with the canonical anchor each must keep.
 const CANONICAL_SURFACES = [
   {
-    file: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx",
-    anchors: [/\bcreateVendor\s*\(/, /\bcreateCustomer\s*\(/, /itemsCatalogClient\.create\s*\(/],
+    file: QUICK_CREATE,
+    // createVendor / itemsCatalogClient.create are embed-aware (see QUICK_CREATE_EMBED_ANCHORS below);
+    // createCustomer stays a direct, always-required literal — customer create never delegated out.
+    anchors: [/\bcreateCustomer\s*\(/],
   },
   {
     file: NEW_SERVICE,
     anchors: [/itemsCatalogClient\.create\s*\(/, /itemsCatalogClient/, /<ItemEditorModal[\s>]/],
     embedEditor: ITEM_EDITOR,
+    embedAnchor: /\bclient\.create\s*\(/,
+  },
+];
+
+// Embed-aware anchors for QUICK_CREATE only: each checks the surface file directly first, and — if the
+// surface delegates that kind to its canonical embedded Lists creator — falls back to asserting the
+// anchor lives there instead (same file the picker registry / vendor-type guards already point at).
+const QUICK_CREATE_EMBED_ANCHORS = [
+  {
+    label: "createVendor",
+    directAnchor: /\bcreateVendor\s*\(/,
+    embedsCheck: quickCreateEmbedsVendorModal,
+    embedFile: VENDOR_CREATE_MODAL,
+    embedAnchor: /\bcreateVendor\s*\(/,
+  },
+  {
+    label: "itemsCatalogClient.create",
+    directAnchor: /itemsCatalogClient\.create\s*\(/,
+    embedsCheck: quickCreateEmbedsItemEditor,
+    embedFile: ITEM_EDITOR,
     embedAnchor: /\bclient\.create\s*\(/,
   },
 ];
@@ -79,6 +118,30 @@ export function assertInlineCreateCanonical(sources = {}) {
       continue;
     }
     const src = stripComments(raw);
+    if (surface.file === QUICK_CREATE) {
+      for (const embedAnchor of QUICK_CREATE_EMBED_ANCHORS) {
+        if (embedAnchor.directAnchor.test(src)) continue;
+        if (embedAnchor.embedsCheck(src)) {
+          const embedOverridden = Object.prototype.hasOwnProperty.call(sources, embedAnchor.embedFile);
+          const embedRaw = embedOverridden
+            ? sources[embedAnchor.embedFile]
+            : fs.existsSync(path.join(repoRoot, embedAnchor.embedFile))
+              ? fs.readFileSync(path.join(repoRoot, embedAnchor.embedFile), "utf8")
+              : null;
+          if (embedRaw == null) {
+            failures.push(`${embedAnchor.embedFile} — MISSING (${QUICK_CREATE} embeds it for canonical ${embedAnchor.label})`);
+          } else if (!embedAnchor.embedAnchor.test(stripComments(embedRaw))) {
+            failures.push(
+              `${surface.file} — embeds ${path.basename(embedAnchor.embedFile)} but ${embedAnchor.embedFile} lost canonical create anchor ${embedAnchor.embedAnchor}`,
+            );
+          }
+        } else {
+          failures.push(
+            `${surface.file} — lost canonical create anchor ${embedAnchor.directAnchor} (create must write the canonical master table, not a qbo_* mirror)`,
+          );
+        }
+      }
+    }
     if (surface.file === NEW_SERVICE) {
       let anchorMatched = false;
       for (const anchor of surface.anchors) {
@@ -152,7 +215,7 @@ function selftest() {
     problems.push(`unmutated real sources should pass, got: ${goodFailures.join(" | ")}`);
   }
 
-  const target = "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx";
+  const target = QUICK_CREATE;
   const realSrc = realSources[target];
   if (realSrc == null) {
     problems.push(`${target} missing on disk — cannot plant a mutation against it`);
@@ -168,11 +231,48 @@ function selftest() {
       }
     };
 
-    // The regression this guard exists for: the vendor create swapped for the qbo_* mirror.
+    // PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT: vendor/item create live on the EMBEDDED canonical Lists
+    // creator now (VendorCreateModal / ItemEditorModal), not inline in QuickCreateEntityModal.tsx — so the
+    // regression this guard exists for is planted on the embed target, exercised via the sources override.
+    const plantEmbed = (label, embedFile, embedRealSrc, mutated, expectFragment) => {
+      if (embedRealSrc == null) {
+        problems.push(`${embedFile} missing on disk — cannot plant a mutation against it`);
+        return;
+      }
+      if (mutated === embedRealSrc) {
+        problems.push(`planted regression "${label}" did not mutate the source — selftest is inert`);
+        return;
+      }
+      const failures = assertInlineCreateCanonical({ ...realSources, [embedFile]: mutated });
+      if (!failures.some((f) => f.includes(expectFragment))) {
+        problems.push(`planted regression "${label}" was NOT caught — assertion is ineffective`);
+      }
+    };
+    const vendorModalRealSrc = fs.existsSync(path.join(repoRoot, VENDOR_CREATE_MODAL))
+      ? fs.readFileSync(path.join(repoRoot, VENDOR_CREATE_MODAL), "utf8")
+      : null;
+    plantEmbed(
+      "vendor-embed-create-swapped-for-mirror",
+      VENDOR_CREATE_MODAL,
+      vendorModalRealSrc,
+      vendorModalRealSrc?.replace(/\bcreateVendor\s*\(/, "createQboVendor("),
+      "lost canonical create anchor"
+    );
+    const itemEditorRealSrc = fs.existsSync(path.join(repoRoot, ITEM_EDITOR))
+      ? fs.readFileSync(path.join(repoRoot, ITEM_EDITOR), "utf8")
+      : null;
+    plantEmbed(
+      "item-embed-create-anchor-removed",
+      ITEM_EDITOR,
+      itemEditorRealSrc,
+      itemEditorRealSrc?.replace(/\bclient\.create\s*\(/, "legacyClientCreate("),
+      "lost canonical create anchor"
+    );
+    // Neither direct anchor nor a genuine embed present — the "create vanished entirely" shape.
     plant(
-      "vendor-create-swapped-for-mirror",
-      realSrc.replace(/\bcreateVendor\s*\(/, "createQboVendor("),
-      "writes a qbo_* MIRROR"
+      "vendor-anchor-and-embed-both-lost",
+      realSrc.replace(/<VendorCreateModal[\s>]/, "<VendorCreateModalRenamed "),
+      "lost canonical create anchor"
     );
     // The customer canonical anchor disappears (e.g. renamed/refactored away) with nothing replacing it.
     plant(
@@ -201,7 +301,7 @@ function selftest() {
     process.exit(1);
   }
   console.log(
-    "[verify-inline-create-writes-canonical] SELFTEST PASS — real sources clean; 4 planted regressions all caught"
+    "[verify-inline-create-writes-canonical] SELFTEST PASS — real sources clean; 6 planted regressions all caught"
   );
 }
 
