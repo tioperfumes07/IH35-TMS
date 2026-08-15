@@ -63,6 +63,10 @@ export function assertCustomerFactoringReverse(sources) {
   if (!/setDetailCustomerId\(deepLinkCustomerId\)/.test(factorAdmin)) {
     problems.push(`${FACTOR_ADMIN}: must set detailCustomerId from the deep-linked customer_id`);
   }
+  // LST-F5201 — selection must write URL.
+  if (!/setSearchParams/.test(factorAdmin) || !/selectDetailCustomer/.test(factorAdmin)) {
+    problems.push(`${FACTOR_ADMIN}: customer/factor selection must sync to URL (setSearchParams)`);
+  }
   if (!/kind="factoring_batch"/.test(factorAdmin)) {
     problems.push(`${FACTOR_ADMIN}: batch rows must use EntityLink kind="factoring_batch"`);
   }
@@ -95,6 +99,9 @@ function selftest() {
       <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
     `,
     [FACTOR_ADMIN]: `
+      setSearchParams
+      selectDetailCustomer
+
       const deepLinkCustomerId = searchParams.get("customer_id");
       useEffect(() => { if (!deepLinkCustomerId) return; setDetailCustomerId(deepLinkCustomerId); }, [deepLinkCustomerId]);
       <EntityLink kind="factoring_batch" id={row.id} label={entityLabel(row.batch_number, row.id, "Batch")} />
@@ -116,6 +123,7 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace("getCustomerFactor(customerId, operatingCompanyId)", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringReverseSection }", "// removed") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("customerId={id}", "") },
+    { ...good, [FACTOR_ADMIN]: good[FACTOR_ADMIN].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [FACTOR_ADMIN]: good[FACTOR_ADMIN].replace('searchParams.get("customer_id")', '""') },
     { ...good, [FACTOR_ADMIN]: good[FACTOR_ADMIN].replace("setDetailCustomerId(deepLinkCustomerId)", "") },
     { ...good, [FACTOR_ADMIN]: good[FACTOR_ADMIN].replace('kind="factoring_batch"', 'kind="factoring_advance"') },
