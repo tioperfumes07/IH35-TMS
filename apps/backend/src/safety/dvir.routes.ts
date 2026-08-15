@@ -90,6 +90,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
             ds.has_major_defect,
             ds.has_any_defect,
             ds.follow_up_wo_id,
+            wo.display_id AS follow_up_wo_display_id,
             ds.driver_id,
             ds.unit_id,
             ds.load_id,
@@ -109,6 +110,8 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
                                    AND d.operating_company_id = ds.operating_company_id
           LEFT JOIN mdata.units u ON u.id = ds.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ds.operating_company_id
+          LEFT JOIN maintenance.work_orders wo ON wo.id = ds.follow_up_wo_id
+                                               AND wo.operating_company_id = ds.operating_company_id
           LEFT JOIN LATERAL (
             SELECT COUNT(*)::int AS defect_count
             FROM safety.dvir_defects dd

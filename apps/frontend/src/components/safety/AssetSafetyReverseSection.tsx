@@ -331,7 +331,7 @@ export function AssetSafetyReverseSection({
                 <EntityLink
                   kind="work_order"
                   id={s(dvir.follow_up_wo_id) || null}
-                  label={entityLabel(null, s(dvir.follow_up_wo_id), "Work order")}
+                  label={entityLabel(dvir.follow_up_wo_display_id, s(dvir.follow_up_wo_id), "Work order")}
                   className="font-semibold text-slate-700"
                 />
               </div>
