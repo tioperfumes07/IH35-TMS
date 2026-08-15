@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   driverPaymentMethodsApi,
@@ -6,6 +6,7 @@ import {
   type DriverPaymentMethod,
 } from "../../api/driverPaymentMethods";
 import { useAuth } from "../../auth/useAuth";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 function canManage(role: string | undefined) {
   return role === "Owner" || role === "Administrator";
@@ -80,6 +81,63 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
 
   const methods = methodsQuery.data?.payment_methods ?? [];
   const achValid = form.method !== "ach" || Boolean(form.account_token?.trim());
+
+  // DRV-F3562 — ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar.
+  const columns = useMemo<ParityColumn<DriverPaymentMethod>[]>(() => {
+    const cols: ParityColumn<DriverPaymentMethod>[] = [
+      {
+        key: "method",
+        label: "Method",
+        render: (m) => methodLabel(m),
+      },
+      {
+        key: "account_holder_name",
+        label: "Holder",
+        render: (m) => m.account_holder_name ?? "—",
+      },
+      {
+        key: "is_default",
+        label: "Default",
+        render: (m) =>
+          m.is_default ? (
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 font-medium text-slate-700">Default</span>
+          ) : (
+            "—"
+          ),
+      },
+    ];
+    if (manage) {
+      cols.push({
+        key: "actions",
+        label: "Actions",
+        className: "text-right",
+        cellClass: "text-right",
+        render: (m) => (
+          <div className="flex justify-end gap-2">
+            {!m.is_default ? (
+              <button
+                type="button"
+                disabled={setDefaultMutation.isPending}
+                onClick={() => setDefaultMutation.mutate(m.id)}
+                className="text-slate-700 underline disabled:opacity-50"
+              >
+                Make default
+              </button>
+            ) : null}
+            <button
+              type="button"
+              disabled={voidMutation.isPending}
+              onClick={() => voidMutation.mutate(m.id)}
+              className="text-red-700 underline disabled:opacity-50"
+            >
+              Remove
+            </button>
+          </div>
+        ),
+      });
+    }
+    return cols;
+  }, [manage, setDefaultMutation.isPending, voidMutation.isPending]);
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
@@ -164,7 +222,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
             />
             Set as default
           </label>
-          {error ? <p className="text-red-600">{error}</p> : null}
+          {error ? <p className="text-red-700">{error}</p> : null}
           <div className="flex justify-end">
             <button
               type="button"
@@ -178,70 +236,17 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
         </div>
       ) : null}
 
-      <div className="mt-3 overflow-x-auto">
-      <table className="w-full text-left text-xs">
-        <thead>
-          <tr className="text-gray-500">
-            <th className="py-1">Method</th>
-            <th>Holder</th>
-            <th>Default</th>
-            {manage ? <th className="text-right">Actions</th> : null}
-          </tr>
-        </thead>
-        <tbody>
-          {methodsQuery.isLoading ? (
-            <tr>
-              <td colSpan={manage ? 4 : 3} className="py-2 text-gray-500">
-                Loading…
-              </td>
-            </tr>
-          ) : methods.length === 0 ? (
-            <tr>
-              <td colSpan={manage ? 4 : 3} className="py-2 text-gray-500">
-                No payment methods on file.
-              </td>
-            </tr>
-          ) : (
-            methods.map((m) => (
-              <tr key={m.id} className="border-t border-gray-100">
-                <td className="py-1">{methodLabel(m)}</td>
-                <td>{m.account_holder_name ?? "—"}</td>
-                <td>
-                  {m.is_default ? (
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">Default</span>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                {manage ? (
-                  <td className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {!m.is_default ? (
-                        <button
-                          type="button"
-                          disabled={setDefaultMutation.isPending}
-                          onClick={() => setDefaultMutation.mutate(m.id)}
-                          className="text-slate-700 underline disabled:opacity-50"
-                        >
-                          Make default
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        disabled={voidMutation.isPending}
-                        onClick={() => voidMutation.mutate(m.id)}
-                        className="text-red-600 underline disabled:opacity-50"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </td>
-                ) : null}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="mt-3">
+        <ParityTable<DriverPaymentMethod>
+          columns={columns}
+          rows={methods}
+          rowKey={(m) => m.id}
+          loading={methodsQuery.isLoading}
+          emptyText="No payment methods on file."
+          storageKey="driver-payment-methods-card"
+          exportFilename="driver-payment-methods"
+          tableTestId="driver-payment-methods-card-table"
+        />
       </div>
     </section>
   );
