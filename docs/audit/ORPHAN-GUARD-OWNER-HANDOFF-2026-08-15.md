@@ -85,6 +85,8 @@ Codex-safe guard enforcement is drained. The remaining 91 files are itemized bel
 
 ## Cursor — picker/chrome/surface bar (14)
 
+**Status (2026-08-15):** enrolled via `verify-cursor-picker-chrome-orphan-guard-registry-batch` + verify-step **3422** (orphan census ratchet ≤77). No Built credit.
+
 - `scripts/verify-collapsed-list-filters-apply.mjs`
 - `scripts/verify-dispatch-picker-law-queues.mjs`
 - `scripts/verify-factoring-qbo-chrome-surfaces.mjs`
