@@ -9,6 +9,11 @@
  * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^reconciliation$","task":"VERTICAL-QBO-CHROME-banking-recon","vertical":"column-wave"}
  * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^banking\\.(modal|parity)\\.(record_transfer|transfer|record_ccpayment|bank_transaction_split|manual_je)$","task":"VERTICAL-QBO-CHROME-banking-modals","vertical":"column-wave"}
  * @matrix-built {"modules":["banking"],"cols":["qbo_chrome"],"leafRe":"^banking\\.(drawer|parity)\\.match$","task":"VERTICAL-QBO-CHROME-banking-match","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.(modal|parity)\\.(record_ccpayment|record_transfer|transfer|manual_je)$","task":"PROTECTED-BANKING-CONNECTIVITY-MODALS","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.(drawer|parity)\\.match$","task":"PROTECTED-BANKING-CONNECTIVITY-MATCH","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.modal\\.manage_accounts$","task":"PROTECTED-BANKING-CONNECTIVITY-MANAGE","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.panel\\.(banking_plaid_connections|plaid_sync_status)$","task":"PROTECTED-BANKING-CONNECTIVITY-PLAID","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["connectivity"],"leafRe":"^banking\\.panel\\.linked_bank_transactions$","task":"PROTECTED-BANKING-CONNECTIVITY-LINKED","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-banking-qbo-chrome-surfaces.mjs --selftest
  */
@@ -69,6 +74,26 @@ const CHECKS = [
     name: "MatchDrawer ParityDrawer (no hand-rolled fixed aside)",
     file: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
     pattern: /import\s*\{\s*ParityDrawer\s*\}[\s\S]*<ParityDrawer\b/,
+  },
+  {
+    name: "BankingHome mounts manage/transfer/cc/manual JE connectivity chrome",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    pattern: /ManageAccountsModal[\s\S]*ManualJEModal[\s\S]*TransferModal[\s\S]*RecordCCPaymentModal/,
+  },
+  {
+    name: "BankingHome mounts Plaid panels",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    pattern: /BankingPlaidConnectionsPanel[\s\S]*PlaidSyncStatusPanel|PlaidSyncStatusPanel[\s\S]*BankingPlaidConnectionsPanel/,
+  },
+  {
+    name: "Transactions design view mounts MatchDrawer + RecordTransferModal",
+    file: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    pattern: /<MatchDrawer[\s\S]*<RecordTransferModal|<RecordTransferModal[\s\S]*<MatchDrawer/,
+  },
+  {
+    name: "LinkedBankTransactionsPanel is mounted on VendorDetail (connectivity leaf)",
+    file: "apps/frontend/src/pages/VendorDetail.tsx",
+    pattern: /LinkedBankTransactionsPanel/,
   },
 ];
 
