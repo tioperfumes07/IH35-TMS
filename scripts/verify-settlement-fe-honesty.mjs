@@ -30,6 +30,14 @@ export function run() {
     "SettlementsPage KPIs must use kpiSettlements (not the table slice)",
     errors
   );
+  assert(
+    page.includes('dataTestId="settlements-filter-driver"') &&
+      page.includes('kind="driver"') &&
+      page.includes("allowCreate={false}") &&
+      page.includes('searchParams.get("driver_id")'),
+    "SettlementsPage must render EntityPicker kind=driver filter (allowCreate=false) and honor ?driver_id=",
+    errors
+  );
 
   assert(
     detail.includes("const settlementDisplayId =") && detail.includes("`Settlement ${settlementDisplayId}`"),
@@ -48,7 +56,8 @@ export function run() {
   );
 
   assert(
-    header.includes("settlementDisplayId?: string | null") && header.includes("{settlementDisplayId}"),
+    header.includes("settlementDisplayId?: string | null") &&
+      (header.includes("{settlementDisplayId}") || header.includes("settlementDisplayId,") || /label=\{entityLabel\(settlementDisplayId/.test(header)),
     "SettlementHeader must accept and render settlementDisplayId",
     errors
   );

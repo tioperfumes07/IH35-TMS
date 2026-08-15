@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -13,6 +13,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
@@ -29,7 +30,20 @@ export function SettlementsPage() {
   const activeTab = searchParams.get("tab") === "disputes" ? "disputes" : "settlements";
   const selectedSettlementId = searchParams.get("settlement_id");
   // Driver profile "Full settlements" → /settlements?driver_id= (PreserveSearchNavigate keeps param).
+  // BANK-F5165 — visible EntityPicker (URL-only client filter is not reverse chrome).
   const filterDriverId = searchParams.get("driver_id");
+  const [driverPickerId, setDriverPickerId] = useState("");
+  useEffect(() => {
+    if (filterDriverId) setDriverPickerId(filterDriverId);
+  }, [filterDriverId]);
+  const setDriverFilter = (driverId: string) => {
+    setDriverPickerId(driverId);
+    const next = new URLSearchParams(searchParams);
+    if (driverId) next.set("driver_id", driverId);
+    else next.delete("driver_id");
+    setSearchParams(next, { replace: true });
+  };
+  const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
   const selectedPaymentState = searchParams.get("payment_state") as
     | "unpaid"
     | "queued"
@@ -60,10 +74,10 @@ export function SettlementsPage() {
   });
 
   const settlements = (listQuery.data?.settlements ?? []).filter((s) =>
-    filterDriverId ? s.driver_id === filterDriverId : true,
+    effectiveDriverId ? s.driver_id === effectiveDriverId : true,
   );
   const kpiSettlements = (kpiBaseQuery.data?.settlements ?? []).filter((s) =>
-    filterDriverId ? s.driver_id === filterDriverId : true,
+    effectiveDriverId ? s.driver_id === effectiveDriverId : true,
   );
   const openBillsSummary = openBillsQuery.data?.open_driver_bills ?? { total_count: 0, total_gross_cents: 0, items: [] as OpenDriverBill[] };
   const now = new Date();
@@ -198,6 +212,21 @@ export function SettlementsPage() {
 
       {activeTab === "settlements" ? (
         <>
+      <div className="flex flex-wrap items-end gap-3" data-testid="settlements-filters">
+        <label className="text-[11px] text-slate-600">
+          Driver
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={driverPickerId || null}
+            onChange={(next) => setDriverFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1"
+            dataTestId="settlements-filter-driver"
+          />
+        </label>
+      </div>
       {/* B-A3: Total Unpaid / This Period / YTD → payment_state routes; Debt / Pending Acks / Held →
           ?focus= predicates matching the KPI counts on this same list (real data, not guess-routes).
           SETL-OPEN-BILLS: Open Driver Bills is a distinct KPI — unsettled driver pay that is not yet
