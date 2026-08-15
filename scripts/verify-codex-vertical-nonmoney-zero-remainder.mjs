@@ -90,13 +90,6 @@ const PROTECTED = new Set([
   "connectivity\tbanking:banking.parity.match",
   "connectivity\tbanking:banking.panel.linked_bank_transactions",
   "connectivity\tbanking:banking.panel.plaid_sync_status",
-  "connectivity\tcustomers:chrome.toolbar_filter",
-  "connectivity\tdocs:chrome.toolbar_filter",
-  "connectivity\tfactoring:chrome.toolbar_filter",
-  "connectivity\tfleet:chrome.toolbar_filter",
-  "connectivity\tmaintenance:chrome.toolbar_filter",
-  "connectivity\ttasks:chrome.toolbar_filter",
-  "connectivity\tvendors:chrome.toolbar_filter",
 ]);
 
 const CLOSED_CLAIM_IDS = [

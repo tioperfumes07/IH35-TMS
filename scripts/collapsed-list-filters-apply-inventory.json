@@ -2,7 +2,7 @@
   "note": "CLS-FILTER-GEAR-APPLY full canonical sidebar audit. COVERED means at least one CollapsedListFilters consumer is governed by Apply/Cancel/Reset; N/A means this module has no consumer of that class. QBO sync remains owner-ruled out of scope.",
   "modules": {
     "home": { "status": "N/A", "reason": "No CollapsedListFilters consumer" },
-    "tasks": { "status": "N/A", "reason": "No CollapsedListFilters consumer" },
+    "tasks": { "status": "COVERED", "evidence": "apps/frontend/src/pages/tasks/TasksMinePage.tsx" },
     "fuel": { "status": "N/A", "reason": "No CollapsedListFilters consumer" },
     "dispatch": { "status": "COVERED", "evidence": "apps/frontend/src/components/dispatch/FilterBar.tsx" },
     "driver-hub": { "status": "N/A", "reason": "No CollapsedListFilters consumer" },

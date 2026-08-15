@@ -207,58 +207,60 @@ export function LegalMattersListPage() {
           storageKey="legal-matters"
           emptyText="No matters match filters."
           filterBar={
-            <CollapsedListFilters
-              activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type ? 1 : 0)}
-              onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
-              testIdPrefix="legal-matters"
-              dataAttributes={{ "data-legal-matters-filter-toolbar": "collapsed" }}
-            >
-              <div className="flex flex-wrap gap-2">
-                <div className="min-w-[14rem]">
-                  <EntityPicker
-                    kind="unit"
-                    operatingCompanyId={companyId}
-                    value={unitId || null}
-                    onChange={(next) => setUnitFilter(next ?? "")}
-                    allowCreate={false}
-                    placeholder="All units"
-                    dataTestId="legal-matters-filter-unit"
-                  />
-                </div>
-                <SelectCombobox
-                  className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                  value={staged.draft.status}
-                  onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value })}
-                >
-                  <option value="">All statuses</option>
-                  {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </SelectCombobox>
-                <SelectCombobox
-                  className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                  value={staged.draft.severity}
-                  onChange={(e) => staged.setDraft({ ...staged.draft, severity: e.target.value })}
-                >
-                  <option value="">All severity</option>
-                  {["critical", "high", "medium", "low"].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </SelectCombobox>
-                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value })}>
-                  <option value="">All types</option>
-                  {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </SelectCombobox>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="min-w-[14rem]" data-testid="legal-matters-entity-filters">
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={companyId}
+                  value={unitId || null}
+                  onChange={(next) => setUnitFilter(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All units"
+                  dataTestId="legal-matters-filter-unit"
+                />
               </div>
-            </CollapsedListFilters>
+              <CollapsedListFilters
+                activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type ? 1 : 0)}
+                onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
+                testIdPrefix="legal-matters"
+                dataAttributes={{ "data-legal-matters-filter-toolbar": "collapsed" }}
+              >
+                <div className="flex flex-wrap gap-2">
+                  <SelectCombobox
+                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                    value={staged.draft.status}
+                    onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value })}
+                  >
+                    <option value="">All statuses</option>
+                    {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                  <SelectCombobox
+                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                    value={staged.draft.severity}
+                    onChange={(e) => staged.setDraft({ ...staged.draft, severity: e.target.value })}
+                  >
+                    <option value="">All severity</option>
+                    {["critical", "high", "medium", "low"].map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                  <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value })}>
+                    <option value="">All types</option>
+                    {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                </div>
+              </CollapsedListFilters>
+            </div>
           }
         />
         </>
