@@ -35,5 +35,32 @@ These are mirrored from the live Desktop CC-1 queue. The detailed canonical rows
 
 Codex owns no implementation in these protected money paths. Each item remains OPEN until its product PR and exact guard are merged.
 
+## ☐ MY OWN 76-ITEM ORPHAN-GUARD SLICE — 5 CONFIRMED RED (verified live 2026-08-15, after #7208)
+
+`docs/audit/ORPHAN-GUARD-OWNER-HANDOFF-2026-08-15.md` itemizes 76 money/accounting/banking/factoring/settlements
+guards that exist but never run in CI (registry hygiene, no Built credit either way). I ran all 76 live: 71
+pass silently (just need `verify-steps/` wiring, batch that mechanically like Codex's Wave batches — no
+product work). **5 are actually RED — real defects, not just unwired:**
+
+1. `verify-accounting-required-linkage-honest.mjs` — first-5 linkage Required cells = 35, ceiling is 27
+   (Required-column inflation is back — find what re-added the false cells)
+2. `verify-factoring-required-liability-honest.mjs` — `factoring.home.reserve_tracker` lost its required `liability`
+3. `verify-fleet-gl-je-required-honest.mjs` — 3 leaves lost required `gl_je`: `unit.profile.bank_txns`,
+   `unit.detail.finance_linkage`, `trailer.profile.bank_txns`
+4. `verify-wave-c-invoice-bank-batch5.mjs` — `DriverEscrowTabContent.tsx` no longer renders a real
+   `escrow_balance` — this is a genuine UI/data regression, not Required-JSON drift
+5. `verify-maint-bill-factoring-liab-built.mjs` — duplicate of item 4 above in the CODEX HANDOFFS list
+
+**Priority: these 5 rank ABOVE the 8-item Codex-handoff queue** — they're live regressions found this session,
+not filed-and-waiting. Fix root cause, ratchet the wiring into `verify-steps/` in the same PR, then batch-wire
+the remaining 71 mechanically.
+
+## ☐ CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20 — itemized, NOT yet independently re-verified by me
+
+`CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20` (board, filed by Codex audit) lists 20 exact money-bearing
+Required leaves across `accounting.required.json` / `banking.required.json` still missing their owed
+connectivity/reverse obligation. I have not personally re-run each of the 20 live yet — do that before fixing,
+not after (verify-everything-never-guess law). Full leaf list is on the board row itself.
+
 ## LAW LOCK
-Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-BUILT-LAUNCH-LAW-2026-08-14` + `FULLY-WIRED-COMPLETE-BAR-2026-08-13`.
+Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-BUILT-LAUNCH-LAW-2026-08-14` + `FULLY-WIRED-COMPLETE-BAR-2026-08-13`. Live Chrome (item 12) is Cursor-led with Codex assisting per owner directive 2026-08-15 — CC-1 stays on Built-honest (items 1–11); do not get pulled into item-12 clicking.
