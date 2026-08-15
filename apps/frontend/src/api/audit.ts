@@ -67,12 +67,14 @@ export type ListAuditEventsParams = {
   operatingCompanyId: string;
   auditEventId?: string;
   bulkCallId?: string;
-  eventType?: string;
+  // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: arrays so the checkbox multi-select can filter
+  // "Active OR Inactive" / "Dispatch OR Safety" in one request instead of one value at a time.
+  eventType?: string[];
   entityType?: string;
   entityId?: string;
   actor?: string;
-  status?: string;
-  source?: string;
+  status?: string[];
+  source?: string[];
   voidsOnly?: boolean;
   from?: string;
   to?: string;
@@ -86,12 +88,12 @@ export async function listAuditEvents(params: ListAuditEventsParams) {
   });
   if (params.auditEventId) search.set("audit_event_id", params.auditEventId);
   if (params.bulkCallId) search.set("bulk_call_id", params.bulkCallId);
-  if (params.eventType) search.set("event_type", params.eventType);
+  if (params.eventType?.length) search.set("event_type", params.eventType.join(","));
   if (params.entityType) search.set("entity_type", params.entityType);
   if (params.entityId) search.set("entity_id", params.entityId);
   if (params.actor) search.set("actor", params.actor);
-  if (params.status) search.set("status", params.status);
-  if (params.source) search.set("source", params.source);
+  if (params.status?.length) search.set("status", params.status.join(","));
+  if (params.source?.length) search.set("source", params.source.join(","));
   if (params.voidsOnly) search.set("voids_only", "true");
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
