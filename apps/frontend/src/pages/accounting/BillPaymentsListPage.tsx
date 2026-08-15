@@ -368,6 +368,7 @@ export function BillPaymentsListPage() {
         rowKey={(row) => row.id}
         loading={paymentsQuery.isPending || (paymentsQuery.isFetching && rows.length === 0)}
         filterBar={filterBar}
+        suppressToolbarSearch
         exportFilename="bill-payments"
         storageKey="bill-payments-list"
         initialPageSize={50}

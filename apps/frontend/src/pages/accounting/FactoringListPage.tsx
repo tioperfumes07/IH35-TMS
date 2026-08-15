@@ -196,6 +196,7 @@ export function FactoringListPage() {
         rowKey={(row) => row.id}
         loading={query.isPending || (query.isFetching && rows.length === 0)}
         onRowClick={(row) => navigate(`/accounting/factoring/${row.id}`)}
+        suppressToolbarSearch
         exportFilename="factoring-advances"
         storageKey="factoring-list"
         initialPageSize={50}

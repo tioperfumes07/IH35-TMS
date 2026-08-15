@@ -518,6 +518,7 @@ export function InvoicesListPage() {
         loading={query.isPending || (query.isFetching && invoices.length === 0)}
         onRowClick={(row) => navigate(`/accounting/invoices/${row.id}`)}
         filterBar={filterBar}
+        suppressToolbarSearch
         exportFilename="invoices"
         storageKey="invoices-list"
         initialPageSize={50}

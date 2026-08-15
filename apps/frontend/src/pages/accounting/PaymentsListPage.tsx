@@ -271,6 +271,7 @@ export function PaymentsListPage() {
         loading={query.isPending || (query.isFetching && rows.length === 0)}
         onRowClick={(row) => navigate(`/accounting/payments/${row.id}`)}
         filterBar={filterBar}
+        suppressToolbarSearch
         exportFilename="payments"
         storageKey="payments-list"
         initialPageSize={50}
