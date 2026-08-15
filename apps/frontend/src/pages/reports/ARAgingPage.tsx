@@ -15,6 +15,7 @@ import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrill
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -24,29 +25,35 @@ type ARAgingRowWithBucket = ARAgingRow & { bucket_0_30_cents: number };
 
 export function ARAgingPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply (BalanceSheet pattern).
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
-  const [search, setSearch] = useState("");
   const [minBal, setMinBal] = useState("");
   const [bucketFilter, setBucketFilter] = useState<"all" | "61+">("all");
+
+  // LST-F5179 — visible EntityPicker (URL-only name seed is not reverse chrome).
+  const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
+  const [customerFilter, setCustomerFilterState] = useState(deepLinkCustomerId);
+  useEffect(() => {
+    setCustomerFilterState(deepLinkCustomerId);
+  }, [deepLinkCustomerId]);
+  const effectiveCustomerId = customerFilter || deepLinkCustomerId;
+  function setCustomerFilter(next: string) {
+    setCustomerFilterState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("customer_id", next);
+    else p.delete("customer_id");
+    setSearchParams(p, { replace: true });
+  }
 
   const query = useQuery({
     queryKey: ["reports", "ar-aging", companyId, appliedAsOf],
     queryFn: () => getArAgingReport(companyId, appliedAsOf),
     enabled: Boolean(companyId),
   });
-
-  const focusCustomerId = searchParams.get("customer_id");
-
-  useEffect(() => {
-    if (!focusCustomerId || !query.data) return;
-    const row = query.data.rows.find((r) => r.customer_id === focusCustomerId);
-    if (row) setSearch(row.customer_name);
-  }, [focusCustomerId, query.data]);
 
   const rows = query.data?.rows ?? [];
 
@@ -63,7 +70,7 @@ export function ARAgingPage() {
   const filtered = useMemo<ARAgingRowWithBucket[]>(() => {
     return rows
       .filter((r) => {
-        if (search.trim() && !r.customer_name.toLowerCase().includes(search.trim().toLowerCase())) return false;
+        if (effectiveCustomerId && r.customer_id !== effectiveCustomerId) return false;
         if (r.total_open_cents < minCents) return false;
         if (bucketFilter === "61+") {
           const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
@@ -72,7 +79,7 @@ export function ARAgingPage() {
         return true;
       })
       .map((r) => ({ ...r, bucket_0_30_cents: r.current_cents + r.bucket_1_30_cents }));
-  }, [rows, search, minCents, bucketFilter]);
+  }, [rows, effectiveCustomerId, minCents, bucketFilter]);
 
   const columns = useMemo<ParityColumn<ARAgingRowWithBucket>[]>(
     () => [
@@ -174,8 +181,17 @@ export function ARAgingPage() {
           <DatePicker className="mt-1 h-9 w-full" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <label className="text-xs text-gray-600">
-          Customer contains
-          <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={search} onChange={(e) => setSearch(e.target.value)} />
+          Customer
+          <EntityPicker
+            kind="customer"
+            operatingCompanyId={companyId}
+            value={effectiveCustomerId || null}
+            onChange={(next) => setCustomerFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All customers"
+            className="mt-1"
+            dataTestId="ar-aging-filter-customer"
+          />
         </label>
         <label className="text-xs text-gray-600">
           Min balance ($)

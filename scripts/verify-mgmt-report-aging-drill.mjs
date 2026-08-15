@@ -192,6 +192,16 @@ export function check(sources) {
   if (!/Select an operating company/.test(arTest)) {
     f.push(`${PATHS.arTest}: entity-scoping coverage missing`);
   }
+  // LST-F5179 — reverse customer filter must be visible EntityPicker (not URL→name-seed only).
+  if (
+    !/dataTestId="ar-aging-filter-customer"/.test(ar) ||
+    !/kind="customer"/.test(ar) ||
+    !/allowCreate=\{false\}/.test(ar) ||
+    !/searchParams\.get\("customer_id"\)/.test(ar) ||
+    !/effectiveCustomerId/.test(ar)
+  ) {
+    f.push(`${PATHS.ar}: must render EntityPicker customer filter (allowCreate=false) synced to ?customer_id=`);
+  }
 
   // ── A/P aging page ───────────────────────────────────────────────────────
   if (!/apAgingBillsListHref/.test(ap)) {
@@ -211,6 +221,16 @@ export function check(sources) {
   }
   if (!/keyboard|\{Enter\}|toHaveFocus|["'] ["']/.test(apTest)) {
     f.push(`${PATHS.apTest}: keyboard/a11y coverage missing`);
+  }
+  // LST-F5179 — reverse vendor filter must be visible EntityPicker synced to ?vendor_id=.
+  if (
+    !/dataTestId="ap-aging-filter-vendor"/.test(ap) ||
+    !/kind="vendor"/.test(ap) ||
+    !/allowCreate=\{false\}/.test(ap) ||
+    !/searchParams\.get\("vendor_id"\)/.test(ap) ||
+    !/effectiveVendorId/.test(ap)
+  ) {
+    f.push(`${PATHS.ap}: must render EntityPicker vendor filter (allowCreate=false) synced to ?vendor_id=`);
   }
 
   // ── Bills list consumes has_balance deep-link ────────────────────────────
@@ -278,6 +298,9 @@ function selftest() {
     <Button>Customer profile</Button>
     arAgingCustomerProfileHref(r.customer_id)
     arAgingInvoiceListHref(r.customer_id)
+    searchParams.get("customer_id")
+    effectiveCustomerId
+    <EntityPicker kind="customer" allowCreate={false} dataTestId="ar-aging-filter-customer" />
   `;
   good.ap = `
     import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
@@ -286,6 +309,9 @@ function selftest() {
     Vendor profile
     apAgingBillsListHref(r.vendor_id)
     apAgingVendorProfileHref(r.vendor_id)
+    searchParams.get("vendor_id")
+    effectiveVendorId
+    <EntityPicker kind="vendor" allowCreate={false} dataTestId="ap-aging-filter-vendor" />
   `;
   good.drill = `
     export function arAgingInvoiceListHref(id) {
