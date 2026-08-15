@@ -303,6 +303,9 @@
       "route_hint": "/tasks",
       "surface_kind": "drawer",
       "surface_path": "pages/tasks/TaskPlannerGrid.tsx",
+      "owned_surface_paths": [
+        "components/tasks/TaskLinkPicker.tsx"
+      ],
       "required": [
         "load",
         "connectivity",

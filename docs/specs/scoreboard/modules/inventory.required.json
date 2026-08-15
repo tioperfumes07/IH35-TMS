@@ -145,6 +145,9 @@
       "tab": "Parts & Stock",
       "sub": "Roster · ParityTable from maintenance.parts_inventory",
       "route_hint": "/inventory",
+      "owned_surface_paths": [
+        "pages/maintenance/components/PartsInventoryTable.tsx"
+      ],
       "required": [
         "vendor",
         "inventory",

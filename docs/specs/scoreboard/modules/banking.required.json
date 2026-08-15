@@ -150,6 +150,9 @@
       "tab": "Transactions",
       "sub": "Match / Categorize",
       "route_hint": "/banking/transactions",
+      "owned_surface_paths": [
+        "pages/banking/BankTxCategorizationPage.tsx"
+      ],
       "required": [
         "vendor",
         "customer",
@@ -190,6 +193,9 @@
       "tab": "Driver Escrow",
       "sub": "Escrow virtual bank",
       "route_hint": "/banking/driver-escrow",
+      "owned_surface_paths": [
+        "pages/driver-finance/EscrowDeductionsPendingTab.tsx"
+      ],
       "required": [
         "driver",
         "liability",

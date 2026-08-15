@@ -206,6 +206,9 @@ function isCovered(row, blob, byMod) {
   for (const leaf of doc.leaves || []) {
     if (leaf.id === row.id) return true;
     if (leaf.surface_path && leaf.surface_path.replace(/\\/g, "/") === row.rel) return true;
+    for (const owned of leaf.owned_surface_paths || []) {
+      if (String(owned).replace(/\\/g, "/") === row.rel) return true;
+    }
     const hay = `${leaf.id} ${leaf.sub || ""} ${leaf.surface_path || ""}`.toLowerCase();
     if (slug && slug.length > 6 && hay.includes(slug.replace(/_/g, ""))) return true;
     if (row.stem.length > 8 && hay.includes(row.stem.toLowerCase())) return true;

@@ -3,8 +3,8 @@
  * HONEST-BUILT / Fully-Wired item 7 — surface-bar Modal inventory ratchet.
  *
  * Every FE file that mounts `<Modal open={...}>` must either:
- *   (a) appear as some required.json leaf.surface_path, OR
- *   (b) be listed in FILE_OWNED_BY_LEAF (nested / section modal owned by an existing leaf), OR
+ *   (a) appear as some required.json leaf.surface_path or owned_surface_paths (EXACT match), OR
+ *   (b) be listed in FILE_OWNED_BY_LEAF with the owning leaf mapping that exact path, OR
  *   (c) be listed in ALLOWED_NESTED (shared Confirm / picker / wizard-step shells).
  *
  * This does NOT claim Box3 Built. Inventory completeness only.
@@ -22,10 +22,6 @@ const FE = path.join(ROOT, "apps/frontend/src");
 /** Shared Confirm / nested picker / wizard-step shells — not top-level matrix leaves. */
 const ALLOWED_NESTED = new Set([
   "components/shared/ConfirmModal.tsx",
-  "components/driver-finance/PaymentMethodPicker.tsx",
-  "components/tasks/TaskLinkPicker.tsx",
-  "components/reports/IftaPreparerCard.tsx",
-  "components/reports/ifta/Step4FinalReview.tsx",
   "components/parity/drawers/NewAccountDrawerForm.tsx",
   "components/parity/drawers/NewClassDrawerForm.tsx",
   "components/parity/drawers/NewServiceDrawerForm.tsx",
@@ -39,23 +35,32 @@ const ALLOWED_NESTED = new Set([
 
 /**
  * Section / page modals owned by an existing leaf (surface may point at a sibling file).
- * File → owning leaf id.
+ * File → owning leaf id. Owning leaf must list the host in surface_path or owned_surface_paths.
  */
 const FILE_OWNED_BY_LEAF = {
   "components/dispatch/tabs/FinesDeductionsCard.tsx": "internal_fines.list",
   "components/driver-profile/BorderCredentialsSection.tsx": "dispatch.wizard.border_crossing_wizard_page",
   "components/vehicle-profile/StatusChangeModal.tsx": "fleet.modal.status_change",
+  "components/driver-finance/PaymentMethodPicker.tsx": "catalog.accounting.payment_methods.create",
+  "components/reports/IftaPreparerCard.tsx": "report.ifta_preparer",
+  "components/reports/ifta/Step4FinalReview.tsx": "report.ifta_preparer",
+  "components/tasks/TaskLinkPicker.tsx": "tasks.drawer.task",
+  "components/customers/CustomerContractsTab.tsx": "detail.contracts",
   "pages/banking/BankTxCategorizationPage.tsx": "transactions.categorize",
   "pages/driver-finance/EscrowDeductionsPendingTab.tsx": "driver_escrow",
-  "pages/factoring/FactoringHome.tsx": "factoring",
+  "pages/factoring/FactoringHome.tsx": "home.summary",
   "pages/lists/accounting/CoaBatchActions.tsx": "coa",
   "pages/maintenance/components/PartsInventoryTable.tsx": "parts.roster",
   "pages/maintenance/components/SevereRepairOosTab.tsx": "severe_repairs.convert_to_wo",
   "pages/maintenance/inspections/InspectionsPage.tsx": "inspections.create",
-  "pages/reports/FuelReconciliationPage.tsx": "reconciliation",
+  "pages/reports/FuelReconciliationPage.tsx": "report.fuel_reconciliation",
   "pages/safety/SafetyEventsPage.tsx": "safety_events.list",
   "pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx": "driver_scheduler.list",
 };
+
+function normalizePath(p) {
+  return String(p).replace(/\\/g, "/");
+}
 
 function walk(dir, out = []) {
   for (const name of fs.readdirSync(dir)) {
@@ -76,17 +81,25 @@ function isModalHost(src) {
 function loadInventory() {
   const surfacePaths = new Set();
   const leafIds = new Set();
+  const leafById = new Map();
   const dir = path.join(ROOT, "docs/specs/scoreboard/modules");
   for (const name of fs.readdirSync(dir)) {
     if (!name.endsWith(".required.json")) continue;
     const j = JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
     for (const leaf of j.leaves || []) {
       if (!leaf || typeof leaf !== "object") continue;
-      if (leaf.id) leafIds.add(String(leaf.id));
-      if (leaf.surface_path) surfacePaths.add(String(leaf.surface_path).replace(/\\/g, "/"));
+      if (leaf.id) {
+        const id = String(leaf.id);
+        leafIds.add(id);
+        leafById.set(id, leaf);
+      }
+      if (leaf.surface_path) surfacePaths.add(normalizePath(leaf.surface_path));
+      for (const owned of leaf.owned_surface_paths || []) {
+        surfacePaths.add(normalizePath(owned));
+      }
     }
   }
-  return { surfacePaths, leafIds };
+  return { surfacePaths, leafIds, leafById };
 }
 
 export function collectModalHosts(listFiles = () => walk(FE)) {
@@ -100,21 +113,43 @@ export function collectModalHosts(listFiles = () => walk(FE)) {
   return out.sort();
 }
 
+function surfaceMapped(rel, surfacePaths) {
+  if (surfacePaths.has(rel)) return true;
+  const alt = rel.replace(/^pages\//, "");
+  return surfacePaths.has(alt);
+}
+
+function leafOwnsPath(leaf, rel) {
+  if (!leaf) return false;
+  if (leaf.surface_path && normalizePath(leaf.surface_path) === rel) return true;
+  for (const p of leaf.owned_surface_paths || []) {
+    if (normalizePath(p) === rel) return true;
+  }
+  return false;
+}
+
+function auditFileOwned(rel, ownerId, inv) {
+  if (!inv.leafIds.has(ownerId)) {
+    return `${rel}: FILE_OWNED_BY_LEAF → ${ownerId} but leaf missing from required.json`;
+  }
+  const leaf = inv.leafById.get(ownerId);
+  if (!leafOwnsPath(leaf, rel)) {
+    return `${rel}: FILE_OWNED_BY_LEAF → ${ownerId} but neither surface_path nor owned_surface_paths includes ${rel}`;
+  }
+  return null;
+}
+
 export function audit(hosts = collectModalHosts(), inv = loadInventory()) {
   const failures = [];
   for (const rel of hosts) {
     if (ALLOWED_NESTED.has(rel)) continue;
-    if (FILE_OWNED_BY_LEAF[rel]) {
-      const owner = FILE_OWNED_BY_LEAF[rel];
-      if (!inv.leafIds.has(owner)) {
-        failures.push(`${rel}: FILE_OWNED_BY_LEAF → ${owner} but leaf missing from required.json`);
-      }
+    const owner = FILE_OWNED_BY_LEAF[rel];
+    if (owner) {
+      const ownedFail = auditFileOwned(rel, owner, inv);
+      if (ownedFail) failures.push(ownedFail);
       continue;
     }
-    if (inv.surfacePaths.has(rel)) continue;
-    // also accept pages/ prefix variants stored without pages/
-    const alt = rel.replace(/^pages\//, "");
-    if ([...inv.surfacePaths].some((sp) => sp === alt || sp.endsWith("/" + alt) || sp.endsWith(rel))) continue;
+    if (surfaceMapped(rel, inv.surfacePaths)) continue;
 
     failures.push(
       `${rel}: Modal host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it`,
@@ -127,13 +162,35 @@ if (process.argv.includes("--selftest")) {
   const inv = {
     surfacePaths: new Set(["pages/vendors/VendorsListView.tsx"]),
     leafIds: new Set(["internal_fines.list", "fleet.modal.status_change"]),
+    leafById: new Map([
+      ["internal_fines.list", { surface_path: "pages/safety/InternalFinesPage.tsx" }],
+      [
+        "fleet.modal.status_change",
+        {
+          surface_path: "components/trailer-profile/StatusChangeModal.tsx",
+          owned_surface_paths: ["components/vehicle-profile/StatusChangeModal.tsx"],
+        },
+      ],
+    ]),
   };
   if (audit(["pages/vendors/VendorsListView.tsx"], inv).length) {
     console.error(`${LABEL} SELFTEST FAIL — surface_path mapped host rejected`);
     process.exit(1);
   }
-  if (audit(["components/dispatch/tabs/FinesDeductionsCard.tsx"], inv).length) {
-    console.error(`${LABEL} SELFTEST FAIL — FILE_OWNED_BY_LEAF rejected`);
+  if (audit(["components/vehicle-profile/StatusChangeModal.tsx"], inv).length) {
+    console.error(`${LABEL} SELFTEST FAIL — owned_surface_paths host rejected`);
+    process.exit(1);
+  }
+  if (!audit(["components/dispatch/tabs/FinesDeductionsCard.tsx"], inv).length) {
+    console.error(`${LABEL} SELFTEST FAIL — FILE_OWNED without path match escaped`);
+    process.exit(1);
+  }
+  const fuzzyInv = {
+    ...inv,
+    surfacePaths: new Set(["pages/dispatch/tabs/XFinesDeductionsCard.tsx"]),
+  };
+  if (!audit(["components/dispatch/tabs/FinesDeductionsCard.tsx"], fuzzyInv).length) {
+    console.error(`${LABEL} SELFTEST FAIL — fuzzy endsWith alone accepted host`);
     process.exit(1);
   }
   if (!audit(["pages/ghost/GhostModalHost.tsx"], inv).length) {

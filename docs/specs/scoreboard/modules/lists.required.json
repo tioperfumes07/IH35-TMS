@@ -2180,6 +2180,9 @@
       "tab": "Accounting",
       "sub": "+ Create — Classes",
       "route_hint": "/lists/accounting/journal-entry-types",
+      "owned_surface_paths": [
+        "components/accounting/JournalEntryTypePicker.tsx"
+      ],
       "required": [
         "picker_law",
         "qbo_chrome",
@@ -2334,6 +2337,9 @@
       "tab": "Accounting",
       "sub": "+ Create — Account Role Bindings",
       "route_hint": "/lists/accounting/payment-methods",
+      "owned_surface_paths": [
+        "components/driver-finance/PaymentMethodPicker.tsx"
+      ],
       "required": [
         "picker_law",
         "qbo_chrome",

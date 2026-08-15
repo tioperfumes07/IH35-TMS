@@ -930,6 +930,9 @@
       "route_hint": "surface://pages/dispatch/BorderCrossingWizardPage.tsx",
       "surface_kind": "wizard",
       "surface_path": "pages/dispatch/BorderCrossingWizardPage.tsx",
+      "owned_surface_paths": [
+        "components/driver-profile/BorderCredentialsSection.tsx"
+      ],
       "required": [
         "connectivity",
         "picker_law",
