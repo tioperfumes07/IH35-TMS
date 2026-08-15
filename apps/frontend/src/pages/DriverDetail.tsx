@@ -1,4 +1,5 @@
 import { entityLabel } from "../lib/entity-label";
+import { formatPhoneAsTyped } from "../lib/formatPhoneAsTyped";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/inputClass";
@@ -319,7 +320,11 @@ export function DriverDetailPage() {
         qbo_class_id: qboClassTmsId || null,
       }),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["driver", id], updated);
+      // LV-DRIVER-EDIT-SAVE-DISPLAY-STALE: the read query key is ["driver", id, companyId] (L252),
+      // but this wrote to the 2-part key ["driver", id] — setQueryData does an EXACT key match, so
+      // that write landed in a phantom cache entry nothing reads. The save genuinely persisted
+      // server-side; the screen just never refreshed. Write to the real key.
+      queryClient.setQueryData(["driver", id, companyId], updated);
       pushToast("QBO fields updated", "success");
     },
     onError: () => pushToast("Failed to update QBO fields", "error"),
@@ -459,7 +464,12 @@ export function DriverDetailPage() {
         preferred_language: (hydratedForm.preferred_language as "en" | "es") || "en",
       }),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["driver", id], updated);
+      // LV-DRIVER-EDIT-SAVE-DISPLAY-STALE: same root cause as saveDriverQboMutation above — the
+      // detail page reads ["driver", id, companyId] but this wrote to ["driver", id], a phantom
+      // key setQueryData's exact-match semantics never surface. Every field edited here (phone,
+      // hire_date, everything) persisted correctly server-side; the screen just kept showing the
+      // pre-edit value because it was never actually told the data changed.
+      queryClient.setQueryData(["driver", id, companyId], updated);
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
       setForm({});
       setEditMode(false);
@@ -921,7 +931,14 @@ export function DriverDetailPage() {
                   type={type}
                   value={hydratedForm[key] ?? ""}
                   disabled={!editMode}
-                  onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      // LV-DRIVER-PHONE-NO-LIVE-FORMAT: only a display-only mask existed
+                      // (`maskedPhone` below), never applied while actually typing.
+                      [key]: key === "phone" ? formatPhoneAsTyped(event.target.value) : event.target.value,
+                    }))
+                  }
                   className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                 />
               )}
@@ -1129,7 +1146,12 @@ export function DriverDetailPage() {
                   <input
                     value={hydratedForm[key] ?? ""}
                     disabled={!editMode}
-                    onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        [key]: key.includes("phone") ? formatPhoneAsTyped(event.target.value) : event.target.value,
+                      }))
+                    }
                     className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
                   />
                 </div>
