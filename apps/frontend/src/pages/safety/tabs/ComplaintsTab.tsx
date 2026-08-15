@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { createComplaintV64, listComplaints, patchComplaintV64, voidComplaintV64 } from "../../../api/safetyV64";
@@ -16,6 +16,7 @@ import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal"
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -33,6 +34,12 @@ export function ComplaintsTab() {
   const [searchParams] = useSearchParams();
   const highlightedComplaintId = searchParams.get("complaint_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  // LST-F5163I: visible reverse driver filter (allowCreate=false); URL seeds picker.
+  const [driverFilter, setDriverFilter] = useState("");
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -54,10 +61,10 @@ export function ComplaintsTab() {
   });
 
   const complaintsQuery = useQuery({
-    queryKey: ["safety-v64", "complaints", companyId, driverIdFromUrl],
+    queryKey: ["safety-v64", "complaints", companyId, effectiveDriverId],
     queryFn: () =>
       listComplaints(companyId, {
-        driver_id: driverIdFromUrl || undefined,
+        driver_id: effectiveDriverId,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -516,6 +523,23 @@ export function ComplaintsTab() {
         emptyText="No complaints found."
         storageKey="safety-complaints"
         exportFilename="complaints"
+        filterBar={
+          <div className="relative flex flex-wrap items-center gap-2">
+            <label className="text-[11px] text-slate-600">
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={companyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1"
+                dataTestId="complaints-filter-driver"
+              />
+            </label>
+          </div>
+        }
         rowClassName={(row) =>
           highlightedComplaintId && String(row.id) === highlightedComplaintId
             ? "bg-slate-100 ring-1 ring-inset ring-slate-300"
