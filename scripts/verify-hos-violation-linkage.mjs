@@ -29,6 +29,15 @@ function audit(s) {
   if (!/case "hos_violations_load":[\s\S]{0,80}hos-violations\?load_id=/.test(s.link) || !/case "hos_violations_driver":[\s\S]{0,80}hos-violations\?driver_id=/.test(s.link)) failures.push("HOS Open-queue EntityLinks must resolve filtered list routes");
   if (!/searchParams\.get\("load_id"\)/.test(s.tab) || !/searchParams\.get\("driver_id"\)/.test(s.tab) || !/listHosViolations\(companyId, \{[\s\S]{0,120}load_id: loadIdFromUrl/.test(s.tab)) failures.push("HOS list must honor load_id/driver_id Open-queue URL filters");
   if (!/rowClassName=\{\(row\)[\s\S]{0,180}highlightedViolationId/.test(s.tab)) failures.push("canonical list must highlight violation_id");
+  // LST-F5190 — visible list reverse filters
+  if (
+    !/dataTestId="hos-violations-filter-driver"/.test(s.tab) ||
+    !/dataTestId="hos-violations-filter-load"/.test(s.tab) ||
+    !/allowCreate=\{false\}/.test(s.tab) ||
+    !/setSearchParams/.test(s.tab)
+  ) {
+    failures.push("HOS list must render EntityPicker driver/load filters synced to URL");
+  }
   return failures;
 }
 
@@ -53,6 +62,7 @@ if (process.argv.includes("--selftest")) {
     ["open queue kinds", "link", /case "hos_violations_load":/, 'case "hos_violations_gone":'],
     ["url filters", "tab", /loadIdFromUrl/g, "missingLoadFromUrl"],
     ["highlight", "tab", /highlightedViolationId/g, "missingViolationId"],
+    ["list filter chrome", "tab", /dataTestId="hos-violations-filter-driver"/g, 'dataTestId="gone"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
