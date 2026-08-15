@@ -2775,5 +2775,10 @@
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
     "purpose": "verify-liability-required-honest-cluster-a-false-required"
+  },
+  "3357": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-liability-required-honest-cluster-a-genuine"
   }
 }
