@@ -250,13 +250,15 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             sortable: true,
             cellClass: "font-medium",
             render: (row) => (
-              <EntityLink
-                data-testid="vendor-roster-record-link"
-                kind="vendor"
-                id={row.id}
-                label={row.name}
-                className="text-slate-700 hover:underline"
-              />
+              <span className="single-line-name" title={row.name}>
+                <EntityLink
+                  data-testid="vendor-roster-record-link"
+                  kind="vendor"
+                  id={row.id}
+                  label={row.name}
+                  className="text-slate-700 hover:underline"
+                />
+              </span>
             ),
           },
           { key: "email", label: "Email", sortable: true, render: (row) => row.email ?? "—" },

@@ -313,13 +313,15 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             cellClass: "font-medium",
             render: (row) => (
               <span className="inline-flex items-center gap-1.5">
-                <EntityLink
-                  data-testid="customer-roster-record-link"
-                  kind="customer"
-                  id={row.id}
-                  label={row.name}
-                  className="text-slate-700 hover:underline"
-                />
+                <span className="single-line-name min-w-0" title={row.name}>
+                  <EntityLink
+                    data-testid="customer-roster-record-link"
+                    kind="customer"
+                    id={row.id}
+                    label={row.name}
+                    className="text-slate-700 hover:underline"
+                  />
+                </span>
                 <button
                   type="button"
                   className="text-[10px] font-medium text-slate-500 underline hover:text-slate-700"

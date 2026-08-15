@@ -300,6 +300,26 @@ describe("invariant #23 single-line-name phase-1 pages", () => {
     await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toContain("LONG VENDOR"));
   });
 
+  it("CustomersPage list view renders .single-line-name on roster EntityLink", async () => {
+    render(wrap(<CustomersPage />));
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    await waitFor(() =>
+      expect(document.querySelector('[data-testid="customer-roster-record-link"].single-line-name')?.textContent).toContain(
+        "LONG CUSTOMER"
+      )
+    );
+  });
+
+  it("VendorsPage list view renders .single-line-name on roster EntityLink", async () => {
+    render(wrap(<VendorsPage />));
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    await waitFor(() =>
+      expect(document.querySelector('[data-testid="vendor-roster-record-link"]')?.closest(".single-line-name")?.textContent).toContain(
+        "LONG VENDOR"
+      )
+    );
+  });
+
   it("DriversPage renders .single-line-name on driver full name", async () => {
     render(wrap(<DriversPage />));
     await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toContain("ANTONIO"));
