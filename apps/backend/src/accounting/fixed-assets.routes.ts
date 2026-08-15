@@ -7,9 +7,13 @@
  * POST /api/v1/accounting/fixed-assets/register-trk-units  ND-FA-01 — bulk TRK register (pricesByUnitNumber required)
  *
  * Register writes accounting.fixed_assets rows only (no JE). Depreciation schedule is computed for display
- * (book-value roll-forward). GL posting/autopost is GATED behind FIXED_ASSET_AUTOPOST_ENABLED
- * (default OFF). Money = integer cents. Entity-scoped. RLS enforced.
- * Owner vs operator distinction preserved (owner_operating_company_id).
+ * (book-value roll-forward), annotated per-period with `posted`/`posted_journal_entry_id` from
+ * `accounting.depreciation_schedule_rows` when the ALREADY-BUILT poster (`postDepreciation` in
+ * amortization-posting.service.ts, "FIN-21") has actually posted that period. `FIXED_ASSET_AUTOPOST_ENABLED`
+ * gates only the (unbuilt) monthly cron — the manual per-asset poster is gated by the SEPARATE
+ * `AMORTIZATION_GL_POSTING_ENABLED` flag, already ON for TRK/USMCA (see docs/specs/depreciation-BLOCK-01-DESIGN.md).
+ * Money = integer cents. Entity-scoped. RLS enforced. Owner vs operator distinction preserved
+ * (owner_operating_company_id).
  */
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
@@ -18,6 +22,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { isEnabled } from "../lib/feature-flags/service.js";
 // FIN-21: the depreciation schedule math is shared with the GL poster (single source of truth).
 import { computeDepreciationSchedule, asOfToday } from "./fixed-assets.math.js";
+import { AMORTIZATION_GL_POSTING_FLAG_KEY } from "./amortization-posting/amortization-posting.math.js";
 import {
   registerOwnedUnitAsFixedAsset,
   registerRealTrkOwnedUnits,
@@ -253,6 +258,24 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
       });
       const now = asOfToday(compute.rows);
 
+      // ACCT-F5302 / FIXED-ASSETS-DEPRECIATION-GL-POSTING-NOT-BUILT: the poster
+      // (postDepreciation, "FIN-21") already exists and is already live for TRK/USMCA — it just never
+      // told this READ route which periods it actually posted. Read the real persisted rows so the FE
+      // can drill from a posted period to its real JE instead of only ever showing a computed preview.
+      const postedRes = await client.query(
+        `SELECT period_number, posted, posted_journal_entry_id::text AS posted_journal_entry_id
+           FROM accounting.depreciation_schedule_rows
+          WHERE operating_company_id = $1::uuid AND asset_id = $2::uuid AND is_active = true`,
+        [qp.data.operating_company_id, pp.data.id]
+      );
+      const postedRows = postedRes.rows as Array<{ period_number: number; posted: boolean; posted_journal_entry_id: string | null }>;
+      const postedByPeriod = new Map(postedRows.map((r) => [r.period_number, r]));
+      const schedule = compute.rows.map((r) => {
+        const p = postedByPeriod.get(r.period_number);
+        return { ...r, posted: p?.posted ?? false, posted_journal_entry_id: p?.posted_journal_entry_id ?? null };
+      });
+      const lastPosted = postedRows.filter((r) => r.posted).sort((x, y) => y.period_number - x.period_number)[0];
+
       const dispRes = await client.query(
         `SELECT id, disposal_date::text AS disposal_date, disposal_type,
                 proceeds_cents::text AS proceeds_cents,
@@ -270,10 +293,22 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
         operating_company_id: qp.data.operating_company_id,
         user_uuid: user.uuid,
       });
+      // The manual poster (postDepreciation) books on the OWNER/title-holder's flag+ledger (FLT-04),
+      // not the request's operating_company_id — check the SAME flag on the SAME entity it actually posts to.
+      const manualPostingEnabled = a.owner_id_s
+        ? await isEnabled(client, AMORTIZATION_GL_POSTING_FLAG_KEY, {
+            operating_company_id: a.owner_id_s,
+            user_uuid: user.uuid,
+          })
+        : false;
       const periodAmount = compute.rows.find((r) => r.depreciation_amount_cents > 0)?.depreciation_amount_cents ?? 0;
 
       const je_preview = {
+        // autopost_enabled = the (unbuilt) monthly cron gate; manual_posting_enabled = whether
+        // POST .../depreciation/post would actually post today (already ON for TRK/USMCA).
         posting_enabled: autopostEnabled,
+        autopost_enabled: autopostEnabled,
+        manual_posting_enabled: manualPostingEnabled,
         depreciation_je_template: a.depr_expense_account_id && a.accum_depr_account_id ? {
           balanced: true,
           lines: [
@@ -307,8 +342,10 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
         created_at: a.created_at_s,
         depreciation_to_date_cents: now.depr_to_date_cents,
         net_book_value_cents: compute.rows.length ? now.book_value_now_cents : Number(a.purchase_price_s) - Number(a.prior_accum_s),
-        schedule: compute.rows,
+        schedule: schedule,
         schedule_note: compute.note,
+        last_posted_journal_entry_id: lastPosted?.posted_journal_entry_id ?? null,
+        last_posted_period_number: lastPosted?.period_number ?? null,
         disposal: disposal ? {
           id: disposal.id,
           disposal_date: disposal.disposal_date,

@@ -249,8 +249,18 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
 
         {detail.je_preview.depreciation_je_template && (
           <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
-            <p className="font-semibold mb-1">GL Posting Preview (GATED — autopost flag OFF)</p>
+            <p className="font-semibold mb-1">
+              {detail.je_preview.manual_posting_enabled
+                ? "GL Posting (manual trigger enabled for this entity)"
+                : "GL Posting Preview (GATED — posting not yet enabled for this entity)"}
+            </p>
             <p>Per-period JE: Dr Depreciation Expense / Cr Accumulated Depreciation</p>
+            {detail.last_posted_journal_entry_id ? (
+              <p className="mt-1">
+                Last posted through period {detail.last_posted_period_number}:{" "}
+                <EntityLink kind="journal_entry" id={detail.last_posted_journal_entry_id} label="Journal entry" />
+              </p>
+            ) : null}
           </div>
         )}
 
@@ -262,14 +272,14 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
           <table className="min-w-full text-xs divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
-                {["#", "Period", "Depreciation", "Accumulated", "Book Value"].map((h) => (
+                {["#", "Period", "Depreciation", "Accumulated", "Book Value", "JE"].map((h) => (
                   <th key={h} className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {detail.schedule.length === 0 ? (
-                <tr><td colSpan={5} className="px-3 py-4 text-center text-gray-400">No schedule to display.</td></tr>
+                <tr><td colSpan={6} className="px-3 py-4 text-center text-gray-400">No schedule to display.</td></tr>
               ) : detail.schedule.map((row) => (
                 <tr key={row.period_number} className="hover:bg-gray-50">
                   <td className="px-3 py-1.5 text-gray-500">{row.period_number}</td>
@@ -277,6 +287,13 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
                   <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(row.depreciation_amount_cents)}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{fmtCents(row.accumulated_to_date_cents)}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(row.book_value_end_cents)}</td>
+                  <td className="px-3 py-1.5 whitespace-nowrap" data-testid={`fixed-asset-schedule-je-${row.period_number}`}>
+                    {row.posted && row.posted_journal_entry_id ? (
+                      <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label="Posted" />
+                    ) : (
+                      <span className="text-gray-400">Not posted</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
