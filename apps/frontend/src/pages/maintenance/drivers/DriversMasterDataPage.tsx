@@ -192,6 +192,7 @@ export function DriversMasterDataPage() {
           <p className="text-xs text-gray-600">Manage projected drivers with manual create/edit/void controls.</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* MAINT-F3522: server-bound drivers search — keep; ParityTable toolbar Search suppressed */}
           <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search drivers" />
           <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>+ Create</Button>
         </div>
@@ -222,6 +223,8 @@ export function DriversMasterDataPage() {
             storageKey="maint-master-data-drivers"
             exportFilename="maintenance-drivers"
             rowActions={rowActions}
+            // MAINT-F3522: keep API search above; hide ParityTable toolbar Search
+            suppressToolbarSearch
           />
         )}
       </div>
