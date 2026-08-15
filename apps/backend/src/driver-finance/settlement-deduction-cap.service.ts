@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
 
 export type Queryable = {
   query: <T extends Record<string, unknown> = Record<string, unknown>>(
@@ -277,13 +278,20 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
       const dollars = amountCents / 100;
       const description = String(row.reason ?? "Settlement deduction").slice(0, 500);
 
+      // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: stamp the generic source_table/
+      // source_reference_id pair (added 202607430000 for exactly this "Phase-2 repoint" purpose,
+      // never previously populated by this writer) so a reader can trace this line back to the
+      // real driver_finance.driver_settlement_deductions row (row.id) it was generated from. Without
+      // this the settlement-detail UI's only handle on a deduction line was the line's OWN id, which
+      // can never identify anything in a different table's disjoint id space.
       const lineRes = await client.query<{ id: string }>(
         `
-          INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
-          VALUES ($1, 'deduction', $2, $3)
+          INSERT INTO driver_finance.settlement_lines
+            (settlement_id, line_type, description, amount, source_table, source_reference_id)
+          VALUES ($1, 'deduction', $2, $3, $4, $5::uuid)
           RETURNING id
         `,
-        [input.settlementId, description, dollars]
+        [input.settlementId, description, dollars, SETTLEMENT_DEDUCTION_SOURCE_TABLE, row.id]
       );
       const lineId = lineRes.rows[0]?.id ? String(lineRes.rows[0].id) : "";
       if (!lineId) continue;

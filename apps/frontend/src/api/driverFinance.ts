@@ -245,6 +245,28 @@ export function resumeDeduction(id: string, companyId: string) {
   });
 }
 
+// HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: the settlement-detail Hold Deduction modal's real
+// target is a driver_finance.driver_settlement_deductions row, not a deduction_schedule row (see
+// deductions.routes.ts). holdDeduction/resumeDeduction above are UNCHANGED and still correctly
+// target deduction_schedule for the separate cash-advance/liability recurring-schedule feature.
+export function holdSettlementDeduction(
+  id: string,
+  companyId: string,
+  payload: { hold_until_period: string; reason: string }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/driver-finance/settlement-deductions/${id}/hold?${q(companyId)}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function resumeSettlementDeduction(id: string, companyId: string) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/driver-finance/settlement-deductions/${id}/resume?${q(companyId)}`,
+    { method: "PATCH" }
+  );
+}
+
 export function getEscrowTimeline(driverId: string, companyId: string) {
   return apiRequest<{ timeline: Array<Record<string, unknown>> }>(
     `/api/v1/driver-finance/drivers/${driverId}/escrow-timeline?${q(companyId)}`

@@ -14,6 +14,7 @@ import {
   markSettlementPaidManually,
   markSettlementSent,
   queueSettlementPayment,
+  resumeSettlementDeduction,
   type SettlementDisputeCategory,
   type OpenDriverBill,
 } from "../../api/driverFinance";
@@ -55,9 +56,14 @@ function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] 
       description: String(line.description ?? "Deduction"),
       balance_left: Number(line.balance_left ?? line.amount ?? 0),
       this_period_amount: Number(line.amount ?? 0),
-      is_held: Boolean(line.is_held),
-      held_by_user: line.held_by_user_id ? String(line.held_by_user_id) : null,
+      // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: is_held/held_by are now the REAL state joined
+      // from driver_finance.driver_settlement_deductions (settlements.routes.ts GET detail), not
+      // dead columns that never existed on settlement_lines and were always false/null before.
+      is_held: Boolean(line.deduction_is_held),
+      held_by_user: line.deduction_held_by_user_email ? String(line.deduction_held_by_user_email) : null,
+      held_by_user_id: line.deduction_held_by_user_id ? String(line.deduction_held_by_user_id) : null,
       pending_ack: Boolean(line.pending_ack),
+      source_deduction_id: line.source_deduction_id ? String(line.source_deduction_id) : null,
     }));
 }
 
@@ -86,6 +92,20 @@ export function SettlementDetailPage() {
     queryFn: () => getSettlement(settlementId!, companyId),
     enabled: Boolean(settlementId && companyId),
   });
+
+  // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: completes the hold/resume pair now that hold
+  // actually persists real state (see HoldDeductionModal.tsx) — without this a held deduction had
+  // no UI path back to active.
+  const handleResumeDeduction = async (row: DeductionRow) => {
+    if (!row.source_deduction_id) return;
+    try {
+      await resumeSettlementDeduction(row.source_deduction_id, companyId);
+      pushToast("Deduction resumed", "success");
+      void queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] });
+    } catch {
+      pushToast("Failed to resume deduction", "error");
+    }
+  };
   const paymentEventsQuery = useQuery({
     queryKey: ["driver-finance", "settlement-payment-events", settlementId, companyId],
     queryFn: () => getSettlementPaymentEvents(settlementId!, companyId),
@@ -363,7 +383,11 @@ export function SettlementDetailPage() {
           <EarningsSection lines={earnings} />
           <ExtraPaySection lines={extra} />
           <ReimbursementsSection lines={reimbursements} />
-          <DeductionsSection rows={deductions} onHold={(row) => setHoldTarget(row)} />
+          <DeductionsSection
+            rows={deductions}
+            onHold={(row) => setHoldTarget(row)}
+            onResume={(row) => void handleResumeDeduction(row)}
+          />
           {/* Settlement payout poster creates a real accounting.bills row + journal entry per
               load this settlement pays out — drill-through into that posting. Empty when no
               bills were posted yet (honest-empty, not fabricated). */}

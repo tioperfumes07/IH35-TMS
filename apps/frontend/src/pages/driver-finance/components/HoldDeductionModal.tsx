@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { holdDeduction } from "../../../api/driverFinance";
+import { holdSettlementDeduction } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Modal } from "../../../components/Modal";
@@ -36,13 +36,22 @@ export function HoldDeductionModal({
 
   const submit = async () => {
     if (!deduction) return;
+    // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: deduction.id is this settlement LINE's own id,
+    // never a valid PATCH target (see DeductionsSection.tsx). The real driver_finance.
+    // driver_settlement_deductions id is source_deduction_id, resolved server-side; DeductionsSection
+    // only renders the Hold button when it is present, but guard here too since this modal has no
+    // other caller to rely on that gating.
+    if (!deduction.source_deduction_id) {
+      pushToast("This deduction has no linked record to hold", "error");
+      return;
+    }
     if (reason.trim().length < 10) {
       pushToast("Reason must be at least 10 characters", "error");
       return;
     }
     setLoading(true);
     try {
-      await holdDeduction(deduction.id, operatingCompanyId, {
+      await holdSettlementDeduction(deduction.source_deduction_id, operatingCompanyId, {
         hold_until_period: holdUntil || companyToday(),
         reason: reason.trim(),
       });
