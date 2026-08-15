@@ -218,10 +218,6 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
   },
 ];
 
-function fleetHosSearchText(r: FleetLocationHosRow): string {
-  return [r.unit_number, r.driver_name, r.city, r.state].filter(Boolean).join(" ");
-}
-
 const OFFLINE_FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
   FLEET_HOS_COLUMNS[0],
   FLEET_HOS_COLUMNS[1],
@@ -272,7 +268,6 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   });
 
   const [showOffline, setShowOffline] = useState(false);
-  const [search, setSearch] = useState("");
 
   const allRows = query.data?.rows ?? [];
   // COMPLIANCE-1: default view = only units reporting within the freshness threshold; years/weeks-
@@ -288,12 +283,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   useEffect(() => {
     if (effectiveUnitId && offlineRows.length > 0) setShowOffline(true);
   }, [offlineRows.length, effectiveUnitId]);
-  const filteredLiveRows = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    return needle
-      ? liveRows.filter((row) => fleetHosSearchText(row).toLowerCase().includes(needle))
-      : liveRows;
-  }, [liveRows, search]);
+  // Free-text search: ParityTable toolbar owns it (COMP-F3484) — no page-local filterBar search.
 
   return (
     <section data-testid="compliance-section-fleet-hos">
@@ -311,7 +301,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
         />
       ) : (
         <ParityTable
-          rows={filteredLiveRows}
+          rows={liveRows}
           columns={FLEET_HOS_COLUMNS}
           rowKey={(row) => row.unit_id}
           loading={query.isLoading}
@@ -334,16 +324,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                   dataTestId="fleet-hos-filter-unit"
                 />
               </div>
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search unit, driver, city…"
-                className="rounded-sm border border-slate-300 px-2 py-1 text-sm"
-              />
-              <span className="text-xs text-slate-500">
-                {filteredLiveRows.length} of {liveRows.length}
-              </span>
+              <span className="text-xs text-slate-500">{liveRows.length} reporting</span>
               <span className="text-xs text-slate-500">
                 {query.data?.generated_at ? `as of ${formatClockTimeCT(query.data.generated_at)} CT` : ""}
               </span>
