@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T14:32:39-05:00",
-    "sourceSha": "10143f5ac",
-    "deployedSha": "b7b5d8a",
+    "generatedAt": "2026-08-15T14:34:14-05:00",
+    "sourceSha": "7b3eeb32c",
+    "deployedSha": "323896d",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 808,
+    "ledgerRows": 809,
     "failOpen": 14,
     "defects": 17
   },
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 7342,
+      "title": "FINDING: LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED — schema handoff",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7342",
+      "sha": "14b211a96",
+      "committedAtIso": "2026-08-15T14:34:27-05:00"
+    },
+    {
+      "number": 7341,
+      "title": "FINDING: LIVE-LEDGER-OPTIMAL-DEADHEAD-809",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7341",
+      "sha": "7b3eeb32c",
+      "committedAtIso": "2026-08-15T14:34:14-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 02:33 PM CT",
+      "url": "",
+      "sha": "58a45a125",
+      "committedAtIso": "2026-08-15T19:33:44Z"
+    },
+    {
       "number": 7340,
       "title": "FINDING: LIVE-LEDGER-PART-LOCATION-MAP-808",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "",
       "sha": "b7b5d8a1c",
       "committedAtIso": "2026-08-15T19:25:44Z"
-    },
-    {
-      "number": 7336,
-      "title": "FINDING: LIVE-LEDGER-PRESETTLE-BOL-805",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7336",
-      "sha": "2e563a9e1",
-      "committedAtIso": "2026-08-15T14:24:34-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:23 PM CT",
-      "url": "",
-      "sha": "b4eb5b748",
-      "committedAtIso": "2026-08-15T19:23:33Z"
-    },
-    {
-      "number": 7335,
-      "title": "FINDING: LIVE-LEDGER-ABANDON-TEMPLATE-804",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7335",
-      "sha": "a22b885fc",
-      "committedAtIso": "2026-08-15T14:22:21-05:00"
     }
   ]
 }
