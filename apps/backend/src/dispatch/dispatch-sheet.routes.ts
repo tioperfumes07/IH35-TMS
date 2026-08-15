@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import {
   docIdFromLoadNumber,
+  formatDate,
   formatDateTime,
   formatMoney,
   joinBrandAddrLines,
@@ -51,7 +52,11 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
             d.first_name AS driver_first_name,
             d.last_name AS driver_last_name,
             d.cdl_state,
-            d.cdl_expires_at AS cdl_expiration_date,
+            -- ::text cast so node-postgres never hands this back as a JS Date — same class of bug
+            -- already documented/fixed in bills.service.ts / void.service.ts / payments.routes.ts
+            -- (String(dateObject) yields "Tue Aug 11 2026 00:00:00 GMT+0000 (Coordinated Universal
+            -- Time)", what cdlExp below would otherwise render into the printed dispatch sheet).
+            d.cdl_expires_at::text AS cdl_expiration_date,
             d.identity_user_id AS primary_driver_identity_user_id,
             u.unit_number AS truck_display_id,
             u.vehicle_type AS truck_unit_type,
@@ -155,7 +160,7 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
       const driverName =
         `${String(load.driver_first_name ?? "").trim()} ${String(load.driver_last_name ?? "").trim()}`.trim() || "Assigned driver";
       const cdlState = load.cdl_state ? String(load.cdl_state) : "—";
-      const cdlExp = load.cdl_expiration_date ? String(load.cdl_expiration_date) : "—";
+      const cdlExp = load.cdl_expiration_date ? formatDate(load.cdl_expiration_date) : "—";
 
       const truckUnit = load.truck_display_id ? String(load.truck_display_id) : "—";
       const truckMetaParts = [load.truck_model_year, load.truck_make, load.truck_model].filter(Boolean).map(String);
