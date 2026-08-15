@@ -79,7 +79,6 @@ const PROTECTED = new Set([
   "connectivity\tbanking:banking.modal.record_ccpayment",
   "connectivity\tbanking:banking.modal.record_transfer",
   "connectivity\tbanking:banking.modal.transfer",
-  "connectivity\tbanking:banking.modal.bank_transaction_split",
   "connectivity\tbanking:banking.modal.manage_accounts",
   "connectivity\tbanking:banking.modal.manual_je",
   "connectivity\tbanking:banking.drawer.match",
@@ -87,7 +86,6 @@ const PROTECTED = new Set([
   "connectivity\tbanking:banking.parity.record_ccpayment",
   "connectivity\tbanking:banking.parity.record_transfer",
   "connectivity\tbanking:banking.parity.transfer",
-  "connectivity\tbanking:banking.parity.bank_transaction_split",
   "connectivity\tbanking:banking.parity.manual_je",
   "connectivity\tbanking:banking.parity.match",
   "connectivity\tbanking:banking.panel.linked_bank_transactions",
@@ -171,6 +169,14 @@ export function collectProblems(specs = loadSpecs(), entries = loadEntries()) {
   return collectGaps(specs, entries).filter((gap) => !PROTECTED.has(gap));
 }
 
+export function collectStaleProtectedProblems(gaps = collectGaps(), protectedKeys = PROTECTED) {
+  const liveGaps = new Set(gaps);
+  return [...protectedKeys]
+    .filter((key) => !liveGaps.has(key))
+    .sort()
+    .map((key) => `stale protected owner-lane key: ${key}`);
+}
+
 if (SELFTEST) {
   const specs = loadSpecs();
   const entries = loadEntries();
@@ -207,12 +213,24 @@ if (SELFTEST) {
     console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — duplicate fixed/claim row escaped");
     process.exit(1);
   }
-  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, and reopened merged claim caught");
+  const staleProtection = collectStaleProtectedProblems(["connectivity\tsafety:still_open"], new Set([
+    "connectivity\tsafety:still_open",
+    "connectivity\tbanking:selftest_completed_leaf",
+  ]));
+  if (staleProtection.length !== 1 || !staleProtection[0].includes("selftest_completed_leaf")) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — stale protected key escaped");
+    process.exit(1);
+  }
+  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, reopened claim, and stale protection caught");
   process.exit(0);
 }
 
 const gaps = collectGaps();
-const problems = [...gaps.filter((gap) => !PROTECTED.has(gap)), ...collectStaleClaimProblems()];
+const problems = [
+  ...gaps.filter((gap) => !PROTECTED.has(gap)),
+  ...collectStaleProtectedProblems(gaps),
+  ...collectStaleClaimProblems(),
+];
 if (problems.length) {
   console.error("verify-codex-vertical-nonmoney-zero-remainder FAIL — unowned canonical-column gaps:");
   for (const problem of problems) console.error(`  - ${problem}`);
