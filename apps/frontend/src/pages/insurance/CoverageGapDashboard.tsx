@@ -1,5 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getInsuranceCoverageGaps,
@@ -9,10 +9,11 @@ import {
 } from "../../api/insurance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -31,8 +32,21 @@ function unitLabel(unit: InsuranceCoverageGapUnit) {
 export function CoverageGapDashboard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [searchParams] = useSearchParams();
-  const unitId = searchParams.get("unit_id") ?? undefined;
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5170 — visible EntityPicker (URL-only clear link is not reverse chrome).
+  const deepLinkUnitId = searchParams.get("unit_id") ?? "";
+  const [unitPickerId, setUnitPickerId] = useState("");
+  useEffect(() => {
+    if (deepLinkUnitId) setUnitPickerId(deepLinkUnitId);
+  }, [deepLinkUnitId]);
+  const setUnitFilter = (next: string) => {
+    setUnitPickerId(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("unit_id", next);
+    else params.delete("unit_id");
+    setSearchParams(params, { replace: true });
+  };
+  const unitId = unitPickerId.trim() || deepLinkUnitId || undefined;
 
   // INSURANCE-1: the uncovered/mismatched lists come from the SAME backend endpoint that feeds the
   // Landing "Coverage Gap Count" KPI (/api/v1/insurance/coverage-gaps), so the rows shown here always
@@ -111,7 +125,21 @@ export function CoverageGapDashboard() {
       <header className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Coverage Gap Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">Identify units without coverage, policies approaching expiration, and requirement mismatches.</p>
-        {unitId ? <Link className="mt-2 inline-block text-xs text-slate-700 underline" to="/safety/insurance/coverage-gaps">Clear unit filter</Link> : null}
+        <div className="mt-3 max-w-sm" data-testid="coverage-gap-filters">
+          <label className="text-[11px] text-slate-600">
+            Unit
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={unitPickerId || null}
+              onChange={(next) => setUnitFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All units"
+              className="mt-1"
+              dataTestId="coverage-gap-filter-unit"
+            />
+          </label>
+        </div>
       </header>
 
       {coverageGapsQuery.isLoading || policiesQuery.isLoading ? (
