@@ -13,6 +13,7 @@
  *   3. /lists/hub/:domain still mounts DomainCatalogHubPage (Rule 07 — additive only).
  *   4. ChartOfAccountsListPage + AccountingCatalogListPage honor ?create=1.
  *   5. VoidCancelReasonsListPage honors ?create=1 → Create Entry modal (LST-F5211).
+ *   6. Shared domain catalog list pages use useCreateQueryParam (LST-F5214 systemic sweep).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -34,6 +35,25 @@ const PATHS = {
     "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx"
   ),
 };
+
+/** LST-F5214 — shared bases + safety/dispatch leaves that must honor ?create=1 via the hook. */
+const SHARED_CREATE_DEEPLINK_FILES = [
+  "apps/frontend/src/hooks/useCreateQueryParam.ts",
+  "apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx",
+  "apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx",
+  "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx",
+  "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx",
+  "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx",
+  "apps/frontend/src/pages/lists/GenericCatalogPage.tsx",
+  "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx",
+  "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/ComplaintTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/DotViolationTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/CompanyViolationTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/InternalFineReasonsListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/CargoClaimReasonsListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/CivilFineTypesListPage.tsx",
+];
 
 const KNOWN_DOMAIN_KEYS = [
   "accounting",
@@ -123,6 +143,29 @@ export function collectProblems(sources = {}) {
     errors.push(fail("VoidCancelReasonsListPage must setModalMode(create) on create deep-link"));
   }
 
+  // LST-F5214 — ratcheting shared catalog create deep-link (reads live disk; skip when selftest fixtures only).
+  if (!sources.skipSharedCreateRatchet) {
+    for (const rel of SHARED_CREATE_DEEPLINK_FILES) {
+      const src = read(rel);
+      if (!src) {
+        errors.push(fail(`missing ${rel}`));
+        continue;
+      }
+      if (rel.endsWith("useCreateQueryParam.ts")) {
+        if (!/searchParams\.get\("create"\) !== "1"/.test(src)) {
+          errors.push(fail("useCreateQueryParam must honor ?create=1"));
+        }
+        if (!/next\.delete\("create"\)/.test(src)) {
+          errors.push(fail("useCreateQueryParam must strip create param after open"));
+        }
+        continue;
+      }
+      if (!/useCreateQueryParam/.test(src)) {
+        errors.push(fail(`${path.basename(rel)} must use useCreateQueryParam for ?create=1`));
+      }
+    }
+  }
+
   if (!/path="\/lists\/hub\/:domain"[\s\S]{0,200}?DomainCatalogHubPage/.test(manifest)) {
     errors.push(fail("/lists/hub/:domain must still mount DomainCatalogHubPage (Rule 07)"));
   }
@@ -172,6 +215,7 @@ if (catalogKey === "_create") {
       coaPage: goodCoa,
       catalogListPage: goodCatalogList,
       voidCancelPage: goodVoidCancel,
+      skipSharedCreateRatchet: true,
     }).length
   ) {
     console.error(`${LABEL} --selftest FAIL: good fixture should pass`);
@@ -190,6 +234,7 @@ function ListsDomainRoute() {
     coaPage: goodCoa,
     catalogListPage: goodCatalogList,
     voidCancelPage: goodVoidCancel,
+    skipSharedCreateRatchet: true,
   });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
     console.error(`${LABEL} --selftest FAIL: bad ListsDomainRoute should fail`, badErrors);
@@ -203,6 +248,7 @@ function ListsDomainRoute() {
     coaPage: goodCoa,
     catalogListPage: goodCatalogList,
     voidCancelPage: goodVoidCancel,
+    skipSharedCreateRatchet: true,
   });
   if (!badMapErrors.some((e) => e.includes("create=1") || e.includes("_create"))) {
     console.error(`${LABEL} --selftest FAIL: unconditional hub _create should fail`, badMapErrors);
@@ -215,6 +261,7 @@ function ListsDomainRoute() {
     coaPage: goodCoa,
     catalogListPage: goodCatalogList,
     voidCancelPage: `// no create deep-link`,
+    skipSharedCreateRatchet: true,
   });
   if (!badVoid.some((e) => e.includes("VoidCancelReasonsListPage must honor"))) {
     console.error(`${LABEL} --selftest FAIL: void-cancel missing ?create=1 should fail`, badVoid);

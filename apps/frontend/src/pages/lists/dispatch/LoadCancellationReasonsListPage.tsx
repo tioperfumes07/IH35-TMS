@@ -17,6 +17,7 @@ import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 
 const CATALOG_KEY = "load-cancellation-reasons";
 
@@ -79,6 +80,16 @@ export function LoadCancellationReasonsListPage() {
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<LoadCancellationReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
+
+  // LST-F5214 — Lists hub ?create=1 must open Create Entry (accounting catalog parity).
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
+      setConflictError(null);
+      setActiveRow(null);
+      setModalMode("create");
+    },
+  });
 
   const listQuery = useQuery({
     queryKey: ["load-cancellation-reasons", companyId],

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useQuery } from "@tanstack/react-query";
 import { listCivilFineTypes, type CivilFineTypeRow } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
@@ -16,6 +17,15 @@ export function CivilFineTypesListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("true");
   const [modalOpen, setModalOpen] = useState(false);
+
+  // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
+      setSelectedRow(null);
+      setModalOpen(true);
+    },
+  });
   const [selectedRow, setSelectedRow] = useState<CivilFineTypeRow | null>(null);
 
   const query = useQuery({

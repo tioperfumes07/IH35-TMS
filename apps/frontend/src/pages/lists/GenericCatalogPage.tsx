@@ -8,6 +8,7 @@ import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../hooks/useCreateQueryParam";
 import {
   GENERIC_CATALOG_REGISTRY,
   catalogKeyToCatalogName,
@@ -59,6 +60,16 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;
   const readOnly = definition?.readOnly ?? false;
+
+  // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
+  useCreateQueryParam({
+    companyId,
+    enabled: Boolean(catalogName && !readOnly),
+    onOpenCreate: () => {
+      setEditRow(null);
+      setEditOpen(true);
+    },
+  });
 
   async function saveRow(body: Record<string, unknown>, row: CatalogRow | null) {
     if (!catalogName) return;

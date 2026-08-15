@@ -16,6 +16,7 @@ import { DataTable } from "../../../components/DataTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -73,6 +74,16 @@ export function TerminationReasonsListPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<DriverTerminationReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
+
+  // LST-F5214 — Lists hub ?create=1 must open create modal (org-wide catalog; no opco gate).
+  useCreateQueryParam({
+    companyId: "_",
+    onOpenCreate: () => {
+      setConflictError(null);
+      setActiveRow(null);
+      setModalOpen(true);
+    },
+  });
 
   const listQuery = useQuery({
     queryKey: ["driver-termination-reasons"],

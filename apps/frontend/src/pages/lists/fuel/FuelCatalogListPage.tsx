@@ -5,6 +5,7 @@ import { Button } from "../../../components/Button";
 import { DataTable } from "../../../components/DataTable";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { FuelCatalogModal, type FuelCatalogClient } from "./FuelCatalogModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -34,6 +35,16 @@ export function FuelCatalogListPage({ client, displayName, breadcrumbPath }: Pro
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<FuelCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
+      setModalMode("create");
+      setSelectedRow(null);
+      setModalOpen(true);
+    },
+  });
 
   const query = useQuery({
     queryKey: ["catalogs", "fuel", displayName, companyId, search, status],
