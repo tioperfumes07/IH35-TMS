@@ -11,6 +11,7 @@ const sources = {
   roadside: fs.readFileSync("apps/frontend/src/pages/maintenance/components/RoadServiceActivePanel.tsx", "utf8"),
   driver: fs.readFileSync("apps/frontend/src/pages/DriverDetail.tsx", "utf8"),
   detail: fs.readFileSync("apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx", "utf8"),
+  routes: fs.readFileSync("apps/backend/src/maintenance/triage.routes.ts", "utf8"),
 };
 
 const checks = [
@@ -26,6 +27,10 @@ const checks = [
   ["detail", /kind="work_order"[\s\S]*id=\{String\(workOrder\.id \?\? ""\)\}/, "WO detail self-drills canonically"],
   ["detail", /kind="unit"[\s\S]*workOrder\.unit_id/, "WO detail drills to unit"],
   ["detail", /kind="driver"[\s\S]*workOrder\.driver_id/, "WO detail drills to driver"],
+  ["routes", /SELECT \*[\s\S]*FROM dispatch\.intransit_issues[\s\S]*WHERE id = \$1[\s\S]*AND operating_company_id = \$2[\s\S]*promoted_to_wo_id IS NULL[\s\S]*\[params\.data\.issue_id, query\.data\.operating_company_id\]/, "WO conversion source read is explicitly company-scoped"],
+  ["routes", /SET promoted_to_wo_id = \$2[\s\S]*WHERE id = \$1[\s\S]*AND operating_company_id = \$3[\s\S]*\[params\.data\.issue_id, workOrderId, query\.data\.operating_company_id\]/, "WO conversion source update is explicitly company-scoped"],
+  ["routes", /convert-to-damage[\s\S]*SELECT \*[\s\S]*FROM dispatch\.intransit_issues[\s\S]*WHERE id = \$1[\s\S]*AND operating_company_id = \$2[\s\S]*\[params\.data\.issue_id, query\.data\.operating_company_id\]/, "damage conversion source read is explicitly company-scoped"],
+  ["routes", /SET promoted_to_damage_report_id = \$2[\s\S]*WHERE id = \$1[\s\S]*AND operating_company_id = \$3[\s\S]*\[params\.data\.issue_id, damageReportId, query\.data\.operating_company_id\]/, "damage conversion source update is explicitly company-scoped"],
 ];
 
 const failures = (candidate) => checks

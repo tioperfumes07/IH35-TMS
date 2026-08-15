@@ -61,11 +61,12 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
           SELECT *
           FROM dispatch.intransit_issues
           WHERE id = $1
+            AND operating_company_id = $2
             AND promoted_to_wo_id IS NULL
             AND promoted_to_damage_report_id IS NULL
           LIMIT 1
         `,
-        [params.data.issue_id]
+        [params.data.issue_id, query.data.operating_company_id]
       );
       const issue = issueRes.rows[0];
       if (!issue) return { notFound: true as const };
@@ -131,7 +132,13 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
       );
       const workOrderId = String(woRes.rows[0].id);
 
-      await client.query(`UPDATE dispatch.intransit_issues SET promoted_to_wo_id = $2 WHERE id = $1`, [params.data.issue_id, workOrderId]);
+      await client.query(
+        `UPDATE dispatch.intransit_issues
+         SET promoted_to_wo_id = $2
+         WHERE id = $1
+           AND operating_company_id = $3`,
+        [params.data.issue_id, workOrderId, query.data.operating_company_id]
+      );
 
       // ONE event, not one per recipient. The previous code emitted three near-identical events
       // differing only by notify_target; the consumer resolves the audience by role, so fanning out
@@ -193,11 +200,12 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
           SELECT *
           FROM dispatch.intransit_issues
           WHERE id = $1
+            AND operating_company_id = $2
             AND promoted_to_wo_id IS NULL
             AND promoted_to_damage_report_id IS NULL
           LIMIT 1
         `,
-        [params.data.issue_id]
+        [params.data.issue_id, query.data.operating_company_id]
       );
       const issue = issueRes.rows[0];
       if (!issue) return { notFound: true as const };
@@ -233,10 +241,13 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
       );
       const damageReportId = String(incidentRes.rows[0].id);
 
-      await client.query(`UPDATE dispatch.intransit_issues SET promoted_to_damage_report_id = $2 WHERE id = $1`, [
-        params.data.issue_id,
-        damageReportId,
-      ]);
+      await client.query(
+        `UPDATE dispatch.intransit_issues
+         SET promoted_to_damage_report_id = $2
+         WHERE id = $1
+           AND operating_company_id = $3`,
+        [params.data.issue_id, damageReportId, query.data.operating_company_id]
+      );
 
       // ONE event, not one per recipient — see the converted_to_wo path above.
       await enqueueOutboxEvent(
