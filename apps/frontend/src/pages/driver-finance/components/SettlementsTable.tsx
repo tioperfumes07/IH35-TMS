@@ -126,7 +126,20 @@ export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
         sortValue: (row) => row.live_debt_flag ?? null,
         render: (row) =>
           typeof row.live_debt_flag === "number" && row.live_debt_flag > 0 ? (
-            <span className="font-semibold text-red-700">${row.live_debt_flag.toFixed(2)}</span>
+            <span className="flex flex-wrap items-center gap-1">
+              <span className="font-semibold text-red-700">${row.live_debt_flag.toFixed(2)}</span>
+              {/* LINK-F5187: the dollar total above is a sum over real driver_finance.driver_liabilities
+                  rows (liability_ids) — link each one instead of leaving the total as dead text. */}
+              {(row.liability_ids ?? []).map((id, idx) => (
+                <EntityLink
+                  key={id}
+                  kind="liability"
+                  id={id}
+                  label={(row.liability_ids?.length ?? 0) > 1 ? `#${idx + 1}` : "view →"}
+                  className="text-[10px] text-red-600 hover:underline"
+                />
+              ))}
+            </span>
           ) : (
             <span className="text-gray-500">—</span>
           ),

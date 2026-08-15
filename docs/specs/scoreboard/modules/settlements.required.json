@@ -326,8 +326,7 @@
         "connectivity",
         "reverse_link",
         "load",
-        "settlement",
-        "liability"
+        "settlement"
       ]
     },
     {
@@ -678,6 +677,18 @@
             "reverse_link"
           ],
           "reason": "same file as modal.create_advance, creation modal"
+        }
+      ]
+    },
+    "liability_2026_08_15_cluster_a_genuine": {
+      "finding": "LIABILITY-GENUINE-GAP-CLUSTER-A",
+      "note": "settlements.list / pre_settlements / settlements.panel.pre_settlements / settlement_close all KEEP liability Required (real gaps, now built): the settlements list endpoints (/api/v1/driver-finance/settlements and /api/v1/drivers/:id/settlements) already call recompute_driver_debt() per row, which returns source_liabilities (a real jsonb array of driver_finance.driver_liabilities ids, per db/migrations/202612471500_create_recompute_driver_debt.sql) -- both routes discarded it, keeping only the summed live_debt_flag dollar total. Now threaded through as liability_ids[] and rendered as EntityLink kind=liability in SettlementsTable's Debt Flag column and PreSettlementsPanel (shared by pre_settlements + settlements.panel.pre_settlements, both mount the same component). settlement_close (SettlementCloseArrivalPage.tsx) already fetches the identical debt summary via getDebtSummary() to compute its escrow-cap indicator -- source_liabilities was fetched and discarded there too; now rendered as an Open liabilities EntityLink strip. safety.modal.escrow_forfeit / safety.parity.escrow_forfeit (EscrowForfeitModal.tsx) already fetch and let the operator pick a real driver_liabilities id via getLiabilitiesByDriver(), but rendered it only inside a native <option> (no drill target); now shows a real EntityLink once a liability is selected.\n\nsettlements.panel.pay_run_close (PayRunClosePanel.tsx) is DROPPED here as false-required: verified live 2026-08-15 that the pay-run escrow contribution path (escrow-resolver.service.ts, settlement-payrun-close.routes.ts) never reads or writes driver_finance.driver_liabilities at all -- the escrow this panel deals with is a GL LIABILITY SUB-ACCOUNT (accounting.escrow_accounts / driver_finance.escrow_balances), a structurally different kind of liability than the driver_finance.driver_liabilities table EntityLink kind=\"liability\" resolves to (routes to /liabilities?liability_id=, the driver_liabilities domain). The escrow GL account is already linked honestly via the panel's existing EntityLink kind=\"account\" on each je_preview leg -- forcing a kind=\"liability\" link here would fabricate a relationship to an unrelated driver_liabilities row that this pay-run never touches.",
+      "drops": [
+        {
+          "id": "settlements.panel.pay_run_close",
+          "removed": [
+            "liability"
+          ]
         }
       ]
     }
