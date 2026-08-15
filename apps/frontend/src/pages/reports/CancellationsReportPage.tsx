@@ -9,25 +9,30 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
 const BUCKET_SECTIONS = [
-  { title: "By reason", prop: "by_reason" as const, storageKey: "cancellations-report-by-reason" },
-  { title: "By driver", prop: "by_driver" as const, storageKey: "cancellations-report-by-driver" },
-  { title: "By customer", prop: "by_customer" as const, storageKey: "cancellations-report-by-customer" },
-  { title: "By date", prop: "by_date" as const, storageKey: "cancellations-report-by-date" },
+  { title: "By reason", prop: "by_reason" as const, storageKey: "cancellations-report-by-reason", entityKind: null },
+  { title: "By driver", prop: "by_driver" as const, storageKey: "cancellations-report-by-driver", entityKind: "driver" as const },
+  { title: "By customer", prop: "by_customer" as const, storageKey: "cancellations-report-by-customer", entityKind: "customer" as const },
+  { title: "By date", prop: "by_date" as const, storageKey: "cancellations-report-by-date", entityKind: null },
 ];
 
-function bucketColumns(groupLabel: string): ParityColumn<CancellationBucket>[] {
+const UUID_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function bucketColumns(groupLabel: string, entityKind: EntityKind | null): ParityColumn<CancellationBucket>[] {
   return [
     {
       key: "label",
       label: groupLabel,
       sortable: true,
-      render: (row) => <span className="font-medium text-gray-800">{row.label}</span>,
+      render: (row) => entityKind && UUID_KEY.test(row.key)
+        ? <EntityLink kind={entityKind} id={row.key} label={row.label} className="font-medium text-gray-800" />
+        : <span className="font-medium text-gray-800">{row.label}</span>,
     },
     { key: "count", label: "Count", sortable: true, className: "text-right", cellClass: "text-right font-mono" },
     { key: "billable_count", label: "Billable", sortable: true, className: "text-right", cellClass: "text-right font-mono text-gray-600" },
@@ -46,15 +51,17 @@ function CancellationBucketTable({
   title,
   rows,
   storageKey,
+  entityKind,
   loading,
 }: {
   title: string;
   rows: CancellationBucket[];
   storageKey: string;
+  entityKind: EntityKind | null;
   loading?: boolean;
 }) {
   const groupLabel = title.replace(/^By /, "");
-  const columns = useMemo(() => bucketColumns(groupLabel), [groupLabel]);
+  const columns = useMemo(() => bucketColumns(groupLabel, entityKind), [entityKind, groupLabel]);
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
@@ -156,12 +163,13 @@ export function CancellationsReportPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {BUCKET_SECTIONS.map(({ title, prop, storageKey }) => (
+            {BUCKET_SECTIONS.map(({ title, prop, storageKey, entityKind }) => (
               <CancellationBucketTable
                 key={prop}
                 title={title}
                 rows={data?.[prop] ?? []}
                 storageKey={storageKey}
+                entityKind={entityKind}
                 loading={tableLoading}
               />
             ))}

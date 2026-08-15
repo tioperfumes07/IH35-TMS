@@ -1,35 +1,54 @@
 #!/usr/bin/env node
-// Guard (GAP-10): the load cancellations analytics report stays wired end-to-end — backend route
-// registered + per-entity scoped, frontend page routed + linked in the Reports sub-nav, and the page
-// renders all four groupings (reason / driver / customer / date). Additive report; locks it from
-// silently disappearing.
+/** @matrix-built {"modules":["reports"],"cols":["connectivity","reverse_link"],"leafRe":"^report\\.cancellations$","task":"LV-REPORTS-CANCELLATIONS-AGGREGATE-ENTITY-LINKS-INERT"} */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const fail = (m) => { console.error(`FAIL verify-cancellations-report-wired: ${m}`); process.exit(1); };
-const read = (p) => readFileSync(join(root, p), "utf8");
-
-// Backend: route exists, per-entity scoped, queries the real cancellations table.
+const read = (path) => readFileSync(join(root, path), "utf8");
 const route = read("apps/backend/src/dispatch/cancellations-report.routes.ts");
-if (!/\/api\/v1\/dispatch\/cancellations-report/.test(route)) fail("backend route path missing");
-if (!/withCompanyScope/.test(route)) fail("route must use withCompanyScope (per-entity isolation)");
-if (!/FROM dispatch\.load_cancellations/.test(route)) fail("route must read dispatch.load_cancellations");
-for (const g of ["by_reason", "by_driver", "by_customer", "by_date"]) {
-  if (!route.includes(`${g}:`)) fail(`route response missing grouping ${g}`);
-}
 const index = read("apps/backend/src/index.ts");
-if (!/registerCancellationsReportRoutes\(app\)/.test(index)) fail("route not registered in index.ts");
-
-// Frontend: page routed + sub-nav link + renders the four groupings.
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
-if (!/path="\/reports\/cancellations"/.test(manifest)) fail("/reports/cancellations route missing in manifest");
-if (!/<CancellationsReportPage\b/.test(manifest)) fail("CancellationsReportPage not mounted in manifest");
 const subnav = read("apps/frontend/src/pages/reports/ReportsSubNav.tsx");
-if (!/href: "\/reports\/cancellations"/.test(subnav)) fail("Cancellations link missing from Reports sub-nav");
 const page = read("apps/frontend/src/pages/reports/CancellationsReportPage.tsx");
-for (const [title, prop] of [["By reason", "by_reason"], ["By driver", "by_driver"], ["By customer", "by_customer"], ["By date", "by_date"]]) {
-  if (!page.includes(title) || !page.includes(prop)) fail(`page must render the "${title}" grouping (${prop})`);
+
+function failures(routeSource = route, pageSource = page) {
+  return [
+    ["backend route path", /\/api\/v1\/dispatch\/cancellations-report/.test(routeSource)],
+    ["company scope", routeSource.includes("withCompanyScope") && routeSource.includes("FROM dispatch.load_cancellations")],
+    ["route registration", /registerCancellationsReportRoutes\(app\)/.test(index)],
+    ["frontend mount", /path="\/reports\/cancellations"/.test(manifest) && /<CancellationsReportPage\b/.test(manifest)],
+    ["subnav link", /href: "\/reports\/cancellations"/.test(subnav)],
+    ["all four groupings", ["by_reason", "by_driver", "by_customer", "by_date"].every((value) => routeSource.includes(`${value}:`) && pageSource.includes(value))],
+    ["driver canonical key lineage", routeSource.includes('by_driver: groupBy(rows, (r) => r.driver_id ?? "unassigned"')],
+    ["customer canonical key lineage", routeSource.includes('by_customer: groupBy(rows, (r) => r.customer_id ?? "unknown"')],
+    ["driver typed mapping", pageSource.includes('prop: "by_driver" as const') && pageSource.includes('entityKind: "driver" as const')],
+    ["customer typed mapping", pageSource.includes('prop: "by_customer" as const') && pageSource.includes('entityKind: "customer" as const')],
+    ["shared EntityLink renderer", pageSource.includes("<EntityLink kind={entityKind} id={row.key} label={row.label}")],
+    ["sentinel safety", pageSource.includes("entityKind && UUID_KEY.test(row.key)")],
+  ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
-console.log("PASS verify-cancellations-report-wired");
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["driver canonical key lineage", route.replace("r.driver_id", "r.driver_name")],
+    ["customer canonical key lineage", route.replace("r.customer_id", "r.customer_name")],
+    ["driver typed mapping", page.replace('entityKind: "driver" as const', "entityKind: null")],
+    ["customer typed mapping", page.replace('entityKind: "customer" as const', "entityKind: null")],
+    ["shared EntityLink renderer", page.replace("<EntityLink kind={entityKind}", "<span data-kind={entityKind}")],
+    ["sentinel safety", page.replace("entityKind && UUID_KEY.test(row.key)", "entityKind")],
+  ];
+  for (const [expected, source] of mutations) {
+    const problems = expected.includes("key lineage") ? failures(source, page) : failures(route, source);
+    if (!problems.includes(expected)) throw new Error(`planted ${expected} defect escaped`);
+  }
+  console.log(`verify-cancellations-report-wired SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+  process.exit(0);
+}
+
+const missing = failures();
+if (missing.length) {
+  console.error(`verify-cancellations-report-wired FAIL\n${missing.join("\n")}`);
+  process.exit(1);
+}
+console.log("verify-cancellations-report-wired PASS — scoped cancellations plus canonical driver/customer aggregate drills");
