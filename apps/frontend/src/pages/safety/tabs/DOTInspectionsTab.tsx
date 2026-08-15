@@ -22,14 +22,15 @@ export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5189 — list EntityPicker filters must write URL params (not local-only state).
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
   // LST-F5163C: list filters are EntityPickers (allowCreate=false); reverse ?trailer_id= seeds trailerFilter.
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [trailerFilter, setTrailerFilter] = useState("");
+  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
+  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
+  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
   const [form, setForm] = useState({
     inspection_date: companyToday(),
     driver_id: "",
@@ -44,17 +45,36 @@ export function DOTInspectionsTab() {
   });
 
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+    setDriverFilterState(driverIdFromUrl);
   }, [driverIdFromUrl]);
   useEffect(() => {
-    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+    setUnitFilterState(unitIdFromUrl);
   }, [unitIdFromUrl]);
   useEffect(() => {
+    setTrailerFilterState(trailerIdFromUrl);
     if (trailerIdFromUrl) {
-      setTrailerFilter(trailerIdFromUrl);
       setForm((prev) => (prev.trailer_id ? prev : { ...prev, trailer_id: trailerIdFromUrl }));
     }
   }, [trailerIdFromUrl]);
+
+  function patchSearchParam(key: "driver_id" | "unit_id" | "trailer_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
+  function setDriverFilter(next: string) {
+    setDriverFilterState(next);
+    patchSearchParam("driver_id", next);
+  }
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    patchSearchParam("unit_id", next);
+  }
+  function setTrailerFilter(next: string) {
+    setTrailerFilterState(next);
+    patchSearchParam("trailer_id", next);
+  }
 
   const query = useQuery({
     queryKey: [
