@@ -105,6 +105,19 @@ export function computeSystemModuleFailures(files) {
     errors.push("SystemModulePage.tsx: QBO Sync request failures must render an accessible error message");
   }
 
+  // LV-SYSTEM-CLAUDE-ACTIVITY-FALSE-LIVE: recent_merged comes from the committed reconciliation
+  // snapshot, not a runtime GitHub feed. The UI must expose its real as-of timestamp and never call
+  // three-day-old snapshot rows "live" while current deploys continue moving.
+  if (/Live feed of the most recently merged PRs/i.test(page)) {
+    errors.push("SystemModulePage.tsx: Claude Coder must not label snapshot PR activity as a live feed");
+  }
+  if (!/Program Tracker reconciliation snapshot as of[\s\S]{0,120}?tracker\.data\?\.recon_synced_at/.test(page)) {
+    errors.push("SystemModulePage.tsx: Claude Coder must show the reconciliation snapshot as-of timestamp");
+  }
+  if (!/This is not a[\s\S]{0,30}?live GitHub feed/.test(page)) {
+    errors.push("SystemModulePage.tsx: Claude Coder must disclose that PR activity is not a live GitHub feed");
+  }
+
   return errors;
 }
 
@@ -127,6 +140,7 @@ if (process.argv.includes("--selftest")) {
     '<ParityTable<ReconObject> storageKey="system-qbo-reconciled-objects" />\n' +
     'syncHealth.isError ? <Pill tone="off">UNAVAILABLE</Pill> : <Pill>CHECKING</Pill>;\n' +
     'syncHealth.isError ? <p role="alert">Could not load QuickBooks sync health.</p> : null;\n' +
+    'Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}. This is not a live GitHub feed;\n' +
     "// not bank reconciliation\n" +
     SYSTEM_TAB_LABELS.map((l) => `"${l}"`).join(",");
 
@@ -163,6 +177,13 @@ if (process.argv.includes("--selftest")) {
       .replace('syncHealth.isError ? <Pill tone="off">UNAVAILABLE</Pill> : <Pill>CHECKING</Pill>;', '<Pill>CHECKING</Pill>;')
       .replace('syncHealth.isError ? <p role="alert">Could not load QuickBooks sync health.</p> : null;', ""),
   });
+  const failFalseLiveActivity = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: goodPage
+      .replace("Program Tracker reconciliation snapshot as of", "Live feed of the most recently merged PRs")
+      .replace("This is not a live GitHub feed", "Activity is live"),
+  });
 
   const checks = [
     ["fully-wired inputs produce zero failures", pass.length === 0],
@@ -172,6 +193,7 @@ if (process.argv.includes("--selftest")) {
     ["non-OwnerOnly route is flagged", failNotOwnerRoute.some((e) => e.includes("OwnerOnlyRoute"))],
     ["hand-built QBO table is flagged", failHandBuiltQboTable.some((e) => e.includes("persistent ParityTable"))],
     ["false CHECKING state is flagged", failFalseChecking.filter((e) => e.includes("QBO Sync request failures")).length === 2],
+    ["false-live Claude activity is flagged", failFalseLiveActivity.filter((e) => e.includes("Claude Coder")).length === 3],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
