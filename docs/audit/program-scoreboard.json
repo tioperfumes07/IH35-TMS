@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T18:26:14-05:00",
-    "sourceSha": "3609b372d",
-    "deployedSha": "4c980da",
+    "generatedAt": "2026-08-15T18:43:51-05:00",
+    "sourceSha": "93feb1eba",
+    "deployedSha": "93feb1e",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 832,
+    "ledgerRows": 834,
     "failOpen": 15,
     "defects": 18
   },
@@ -2121,6 +2121,87 @@
   },
   "recentActivity": [
     {
+      "number": 7574,
+      "title": "FINDING: ACCT-F5313",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7574",
+      "sha": "83cdeb993",
+      "committedAtIso": "2026-08-15T18:50:25-05:00"
+    },
+    {
+      "number": 7571,
+      "title": "FINDING: ACCT-F5314",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7571",
+      "sha": "af1ff4e96",
+      "committedAtIso": "2026-08-15T18:49:45-05:00"
+    },
+    {
+      "number": 7568,
+      "title": "FINDING: CLAIM-RESERVE-3601",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7568",
+      "sha": "93af451f8",
+      "committedAtIso": "2026-08-15T18:49:39-05:00"
+    },
+    {
+      "number": 7567,
+      "title": "FINDING: ACCT-F5312",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7567",
+      "sha": "85fca80ba",
+      "committedAtIso": "2026-08-15T18:49:31-05:00"
+    },
+    {
+      "number": 7573,
+      "title": "FINDING: LIVE-FINANCE-RELATED-MODULE-HOPS",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7573",
+      "sha": "93feb1eba",
+      "committedAtIso": "2026-08-15T18:43:51-05:00"
+    },
+    {
+      "number": 7572,
+      "title": "FINDING: LIVE-HOME-PROGRAM-FLEET-EXACT-LEAVES",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7572",
+      "sha": "f844808d6",
+      "committedAtIso": "2026-08-15T18:41:32-05:00"
+    },
+    {
+      "number": 7570,
+      "title": "FINDING: INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT-CLOSEOUT",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7570",
+      "sha": "702aa22c0",
+      "committedAtIso": "2026-08-15T18:39:01-05:00"
+    },
+    {
+      "number": 7569,
+      "title": "FINDING: INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7569",
+      "sha": "896ce6207",
+      "committedAtIso": "2026-08-15T18:37:22-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:33 PM CT",
+      "url": "",
+      "sha": "50bd908b7",
+      "committedAtIso": "2026-08-15T23:33:43Z"
+    },
+    {
       "number": 7566,
       "title": "FINDING: LST-F3600",
       "state": "merged",
@@ -2128,87 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7566",
       "sha": "4c980daec",
       "committedAtIso": "2026-08-15T18:26:28-05:00"
-    },
-    {
-      "number": 7565,
-      "title": "FINDING: LV-LEGAL-TRUCK-LEASE-GENERIC-INPUT-GUARD-BYPASS",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7565",
-      "sha": "3609b372d",
-      "committedAtIso": "2026-08-15T18:26:14-05:00"
-    },
-    {
-      "number": 7564,
-      "title": "FINDING: CLAIM-RESERVE-3600",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7564",
-      "sha": "a4d3c73a5",
-      "committedAtIso": "2026-08-15T18:23:24-05:00"
-    },
-    {
-      "number": 7563,
-      "title": "FINDING: LIVE-LEGAL-CONTRACT-DRAWERS-2026-08-15",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7563",
-      "sha": "99f4c1f6c",
-      "committedAtIso": "2026-08-15T18:23:11-05:00"
-    },
-    {
-      "number": 7562,
-      "title": "FINDING: MAINT-F3598",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7562",
-      "sha": "be493a392",
-      "committedAtIso": "2026-08-15T18:22:20-05:00"
-    },
-    {
-      "number": 7561,
-      "title": "FINDING: CLAIM-RESERVE-3598",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7561",
-      "sha": "90b5bae8b",
-      "committedAtIso": "2026-08-15T18:21:05-05:00"
-    },
-    {
-      "number": 7560,
-      "title": "FINDING: LV-LEGAL-TRUCK-LEASE-GENERIC-INPUT-GUARD-BYPASS",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7560",
-      "sha": "899a6ef05",
-      "committedAtIso": "2026-08-15T18:20:37-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: BANK-F3596 LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:19 PM CT",
-      "url": "",
-      "sha": "26099d6ce",
-      "committedAtIso": "2026-08-15T18:19:58-05:00"
-    },
-    {
-      "number": 7559,
-      "title": "FINDING: BANK-F3596",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7559",
-      "sha": "3a1be09fc",
-      "committedAtIso": "2026-08-15T18:19:33-05:00"
-    },
-    {
-      "number": 7558,
-      "title": "FINDING: CLAIM-RESERVE-3596",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7558",
-      "sha": "2a7e792ff",
-      "committedAtIso": "2026-08-15T18:18:39-05:00"
     }
   ]
 }
