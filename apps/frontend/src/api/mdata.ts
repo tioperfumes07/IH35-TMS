@@ -165,7 +165,17 @@ export type DriverTeam = {
   effective_from: string;
   effective_to: string | null;
   notes: string | null;
-  settlement_history?: Array<Record<string, unknown>>;
+  settlement_history?: DriverTeamSettlementHistory[];
+};
+
+export type DriverTeamSettlementHistory = {
+  id: string;
+  load_id: string;
+  load_number: string;
+  driver_id: string;
+  driver_name: string;
+  driver_pay_cents: number | string;
+  computed_at: string;
 };
 
 export function listDriverTeams(operatingCompanyId: string) {
