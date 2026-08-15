@@ -15,6 +15,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { dueDateFromBillTerms } from "../../components/accounting/vendorBillDueDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -90,6 +91,10 @@ function emptyRow(): BillDraftRow {
 type CreateResult = {
   ok: number;
   failed: Array<{ rowId: string; reason: string }>;
+  // LINK-F5186 (accounting.parity.expense_create_page sibling bills.multiple): capture the real
+  // created bill ids so the operator can drill into each bill's own GL journal entry -- the batch
+  // create previously discarded createVendorBill's response entirely.
+  createdBillIds: string[];
 };
 
 export function CreateMultipleBillsPage() {
@@ -169,6 +174,7 @@ export function CreateMultipleBillsPage() {
   const createMutation = useMutation({
     mutationFn: async () => {
       const failed: Array<{ rowId: string; reason: string }> = [];
+      const createdBillIds: string[] = [];
       let ok = 0;
 
       for (const row of rows) {
@@ -206,7 +212,7 @@ export function CreateMultipleBillsPage() {
         }
         if (row.terms) memoParts.push(`terms:${row.terms}`);
         try {
-          await createVendorBill(companyId, {
+          const created = await createVendorBill(companyId, {
             vendor_id: row.vendor_id,
             bill_number: row.bill_number.trim() || undefined,
             bill_date: row.bill_date,
@@ -225,12 +231,13 @@ export function CreateMultipleBillsPage() {
             ],
           });
           ok += 1;
+          if (created?.bill?.id) createdBillIds.push(created.bill.id);
         } catch (error) {
           failed.push({ rowId: row.id, reason: userFacingApiError(error, "Failed to create bill") });
         }
       }
 
-      return { ok, failed };
+      return { ok, failed, createdBillIds };
     },
     onSuccess: async (result) => {
       setLastResult(result);
@@ -456,6 +463,18 @@ export function CreateMultipleBillsPage() {
               {lastResult.failed.map((failure) => (
                 <li key={`${failure.rowId}-${failure.reason}`}>
                   {failure.reason}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {/* LINK-F5186 (bills.multiple / accounting.parity.vendor_bill_create_page): each created
+          bill's own detail page carries the real GL journal entry -- surface it here so a batch
+          create doesn't leave the operator with no path to any of the resulting bills. */}
+          {lastResult.createdBillIds.length > 0 ? (
+            <ul className="mt-1 space-y-1" data-testid="multi-bills-created-links">
+              {lastResult.createdBillIds.map((id) => (
+                <li key={id}>
+                  <EntityLink kind="bill" id={id} label="View bill →" className="font-semibold text-slate-700 underline" />
                 </li>
               ))}
             </ul>

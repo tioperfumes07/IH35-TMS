@@ -4,6 +4,7 @@ import { createVendorBill } from "../../api/accounting";
 import { VendorBillForm } from "../../components/accounting/VendorBillForm";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -61,14 +62,29 @@ export function VendorBillCreatePage() {
               }}
             />
             {lastBillId ? (
-              <div className="flex items-center justify-between border-t border-gray-200 pt-3">
-                <span className="text-xs text-gray-600">Close an open task this bill fulfils:</span>
-                <TaskLinkPicker
-                  operatingCompanyId={companyId}
-                  targetType="bill"
-                  targetId={lastBillId}
-                  onLinked={() => setLastBillId(null)}
-                />
+              <div className="space-y-2 border-t border-gray-200 pt-3">
+                {/* LINK-F5186 (accounting.parity.vendor_bill_create_page): the created bill's own
+                detail page carries the real GL journal entry -- surface it here so the operator
+                isn't left in a drawer with no path to it. */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Bill created.</span>
+                  <EntityLink
+                    kind="bill"
+                    id={lastBillId}
+                    label="View bill →"
+                    className="text-xs font-semibold text-slate-700 underline"
+                    data-testid="vendor-bill-create-view-bill"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Close an open task this bill fulfils:</span>
+                  <TaskLinkPicker
+                    operatingCompanyId={companyId}
+                    targetType="bill"
+                    targetId={lastBillId}
+                    onLinked={() => setLastBillId(null)}
+                  />
+                </div>
               </div>
             ) : null}
           </div>

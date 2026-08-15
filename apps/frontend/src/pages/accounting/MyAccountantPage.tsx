@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -67,6 +68,29 @@ const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
     label: "Closed",
     sortable: true,
     render: (p) => <span className="whitespace-nowrap text-gray-500">{fmtDate(p.closed_at)}</span>,
+  },
+  {
+    key: "gl_je",
+    label: "GL",
+    // LINK-F5186 (accounting.panel.period_status): a closed/locked period's closing entry now
+    // resolves server-side (periods.routes.ts joins accounting.journal_entries by source='auto' +
+    // entry_date + memo) -- drill straight to the real JE when found; fall back to Month Close's
+    // JE list for periods closed via any other path (this panel had no route there at all before).
+    render: (p) =>
+      p.closing_journal_entry_id ? (
+        <EntityLink
+          kind="journal_entry"
+          id={p.closing_journal_entry_id}
+          label="View closing entry →"
+          className="text-xs font-semibold text-slate-700 underline"
+        />
+      ) : p.status === "closed" || p.status === "locked" ? (
+        <Link to="/accounting/month-close" className="text-xs font-semibold text-slate-700 underline">
+          View closing entries →
+        </Link>
+      ) : (
+        <span className="text-xs text-gray-400">—</span>
+      ),
   },
 ];
 
