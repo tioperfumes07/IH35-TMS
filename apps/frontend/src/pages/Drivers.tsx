@@ -707,6 +707,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           </p>
           {subnavTab === "drivers" ? (
             <>
+              {/* DRV-F3504: server-bound roster search (listDrivers search param) — keep page input;
+                  hide ParityTable toolbar Search so it does not duplex. */}
               <div className="flex flex-wrap gap-2">
                 <input
                   value={search}
@@ -731,6 +733,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   onRowClick={(row) => navigate(`/drivers/${row.id}`)}
                   columns={driversRosterColumns}
                   emptyText="No drivers found."
+                  // DRV-F3504: keep API search above; hide ParityTable toolbar Search
+                  suppressToolbarSearch
                 />
               )}
             </>
