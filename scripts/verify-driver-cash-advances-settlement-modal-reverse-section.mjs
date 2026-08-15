@@ -166,6 +166,13 @@ export function assertSettlementsClusterReverse(sources) {
   if (!/setSelectedLiabilityId\(deepLinkLiabilityId\)/.test(liabilitiesHome) || !/setDetailOpen\(true\)/.test(liabilitiesHome)) {
     problems.push(`${LIABILITIES_HOME}: must open LiabilityDetailDrawer on deepLinkLiabilityId (pre-existing chain)`);
   }
+  if (
+    !/driverIdFilter\s*=\s*searchParams\.get\("driver_id"\)/.test(liabilitiesHome) ||
+    !/dataTestId="liabilities-filter-driver"/.test(liabilitiesHome) ||
+    !/allowCreate=\{false\}/.test(liabilitiesHome)
+  ) {
+    problems.push(`${LIABILITIES_HOME}: must render EntityPicker kind=driver filter (allowCreate=false) and honor ?driver_id=`);
+  }
 
   return problems;
 }
@@ -233,6 +240,9 @@ function selftest() {
     [SETTLEMENT_FINANCE_SECTION]: `kind="liability"`,
     [LIABILITIES_HOME]: `
       const deepLinkLiabilityId = searchParams.get("liability_id");
+      const driverIdFilter = searchParams.get("driver_id");
+      dataTestId="liabilities-filter-driver"
+      allowCreate={false}
       useEffect(() => {
         if (!deepLinkLiabilityId) return;
         setSelectedLiabilityId(deepLinkLiabilityId);
@@ -271,6 +281,7 @@ function selftest() {
     { ...good, [SETTLEMENT_DETAIL]: good[SETTLEMENT_DETAIL].replace("import { HoldDeductionModal }", "// removed") },
     { ...good, [SETTLEMENT_FINANCE_SECTION]: good[SETTLEMENT_FINANCE_SECTION].replace('kind="liability"', "") },
     { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace('searchParams.get("liability_id")', '""') },
+    { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace('dataTestId="liabilities-filter-driver"', 'dataTestId="x"') },
     { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace("setSelectedLiabilityId(deepLinkLiabilityId);", "") },
     { ...good, [LIABILITIES_HOME]: good[LIABILITIES_HOME].replace("setDetailOpen(true);\n      }, [deepLinkLiabilityId]);", "}, [deepLinkLiabilityId]);") },
   ];
