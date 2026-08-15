@@ -69,14 +69,6 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
   // Empty message renders only once the lawsuits query settles (no first-fetch flash).
   const listState = useListState(query, (query.data ?? []).length === 0);
 
-  if (!companyId) {
-    return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-        Select an operating company to view lawsuits.
-      </div>
-    );
-  }
-
   const rows = query.data ?? [];
 
   const columns = useMemo<ParityColumn<InsuranceLawsuit>[]>(
@@ -131,6 +123,14 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
     ],
     [],
   );
+
+  if (!companyId) {
+    return (
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+        Select an operating company to view lawsuits.
+      </div>
+    );
+  }
 
   return (
     <DataPanel title="Lawsuits">

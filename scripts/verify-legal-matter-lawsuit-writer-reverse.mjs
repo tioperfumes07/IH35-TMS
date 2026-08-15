@@ -28,6 +28,9 @@ function audit(s) {
   if (!/kind="lawsuit"[\s\S]{0,180}matter\.insurance_lawsuit_id[\s\S]{0,180}insurance_lawsuit_case_number/.test(s.detail)) failures.push("matter detail must drill to canonical lawsuit");
   if (!/\{ insurance_lawsuit_id: string;/.test(s.reverse)) failures.push("shared reverse section must accept lawsuit FK");
   if (!/filter=\{\{ insurance_lawsuit_id: selectedLawsuitId \}\}[\s\S]{0,120}contextLabel="this lawsuit"/.test(s.lawsuits)) failures.push("lawsuit page must mount exact lawsuit reverse set");
+  const companyGuard = s.lawsuits.indexOf("if (!companyId)");
+  const columnsHook = s.lawsuits.indexOf("const columns = useMemo");
+  if (companyGuard < 0 || columnsHook < 0 || companyGuard < columnsHook) failures.push("lawsuit page must execute hooks before the no-company early return");
   return failures;
 }
 
@@ -42,6 +45,7 @@ if (process.argv.includes("--selftest")) {
     ["join", "service", /lw\.operating_company_id = m\.operating_company_id/g, "TRUE"],
     ["detail", "detail", /kind="lawsuit"/, 'kind="claim"'],
     ["reverse", "lawsuits", /filter=\{\{ insurance_lawsuit_id: selectedLawsuitId \}\}/, "filter={{ insurance_claim_id: selectedLawsuitId }}"],
+    ["hook order", "lawsuits", /const columns = useMemo/, "if (!companyId) return null;\n  const columns = useMemo"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
