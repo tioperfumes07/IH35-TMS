@@ -20,6 +20,7 @@ import {
   updateRendition,
   type CandidateAsset,
   type Rendition,
+  type RenditionLine,
   type RenditionStatus,
 } from "../../api/property-tax";
 
@@ -418,57 +419,60 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         </div>
       </section>
 
-      {/* Basis lines */}
-      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-100 text-left text-slate-600">
-            <tr>
-              <th className="px-2 py-1.5 font-semibold">Asset</th>
-              <th className="px-2 py-1.5 font-semibold">Category</th>
-              <th className="px-2 py-1.5 font-semibold">Acquired</th>
-              <th className="px-2 py-1.5 font-semibold">Cost</th>
-              <th className="px-2 py-1.5 font-semibold">Rendered Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lines.length === 0 ? (
-              <tr>
-                <td className="p-3 text-slate-500" colSpan={5}>
-                  No taxable assets rendered yet.
-                </td>
-              </tr>
-            ) : (
-              lines.map((l) => (
-                <tr key={l.id} className="border-t border-slate-100">
-                  <td className="px-2 py-1.5">
-                    {l.unit_id ? (
-                      <EntityLink kind="unit" id={l.unit_id} label={l.asset_description} />
-                    ) : l.equipment_id ? (
-                      <EntityLink kind="trailer" id={l.equipment_id} label={l.asset_description} />
-                    ) : (
-                      l.asset_description
-                    )}
-                  </td>
-                  <td className="px-2 py-1.5">{l.asset_category ?? "—"}</td>
-                  <td className="px-2 py-1.5">{l.acquisition_date ? formatDateUS(l.acquisition_date) : "—"}</td>
-                  <td className="px-2 py-1.5">{centsToUSD(l.acquisition_cost_cents)}</td>
-                  <td className="px-2 py-1.5">{centsToUSD(l.rendered_value_cents)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-          {lines.length > 0 ? (
-            <tfoot>
-              <tr className="border-t border-slate-200 font-semibold">
-                <td className="px-2 py-1.5" colSpan={4}>
-                  Total Rendered Value
-                </td>
-                <td className="px-2 py-1.5">{centsToUSD(rendition.total_rendered_value_cents)}</td>
-              </tr>
-            </tfoot>
-          ) : null}
-        </table>
-      </div>
+      {/* Basis lines — COMP-F3548: ParityTable owns Search+Range+gear on taxable assets. */}
+      <ParityTable<RenditionLine>
+        columns={[
+          {
+            key: "asset_description",
+            label: "Asset",
+            render: (l) =>
+              l.unit_id ? (
+                <EntityLink kind="unit" id={l.unit_id} label={l.asset_description} />
+              ) : l.equipment_id ? (
+                <EntityLink kind="trailer" id={l.equipment_id} label={l.asset_description} />
+              ) : (
+                l.asset_description
+              ),
+          },
+          {
+            key: "asset_category",
+            label: "Category",
+            render: (l) => l.asset_category ?? "—",
+          },
+          {
+            key: "acquisition_date",
+            label: "Acquired",
+            sortable: true,
+            render: (l) => (l.acquisition_date ? formatDateUS(l.acquisition_date) : "—"),
+          },
+          {
+            key: "acquisition_cost_cents",
+            label: "Cost",
+            sortable: true,
+            render: (l) => centsToUSD(l.acquisition_cost_cents),
+          },
+          {
+            key: "rendered_value_cents",
+            label: "Rendered Value",
+            sortable: true,
+            render: (l) => centsToUSD(l.rendered_value_cents),
+          },
+        ]}
+        rows={lines}
+        rowKey={(l) => l.id}
+        loading={false}
+        emptyText="No taxable assets rendered yet."
+        storageKey="property-tax-rendition-lines"
+        exportFilename="property-tax-rendition-lines"
+        tableTestId="property-tax-rendition-lines-table"
+        filterBar={
+          lines.length > 0 ? (
+            <div className="text-xs font-semibold text-slate-700" data-testid="property-tax-total-rendered">
+              Total Rendered Value: {centsToUSD(rendition.total_rendered_value_cents)}
+            </div>
+          ) : null
+        }
+      />
     </div>
   );
 }
