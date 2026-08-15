@@ -422,7 +422,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
               <div className="flex flex-col gap-3 text-sm" data-testid="factoring-profile-edit-modal">
                 <p className="text-xs text-gray-500">
-                  Rates write to <code className="text-[11px]">factoring.factor</code> columns (advance_rate / fee_rate / reserve_rate). Contacts → remittance_details. Not vendor notes.
+                  Rates write to the factoring profile record (advance_rate / fee_rate / reserve_rate). Contacts → remittance_details. Not vendor notes.
                 </p>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Canonical rates (%)</p>
                 <div className="grid grid-cols-2 gap-3">
