@@ -1182,6 +1182,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3452": {
+    "purpose": "verify-inventory-assignments-no-dup-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "3453": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
