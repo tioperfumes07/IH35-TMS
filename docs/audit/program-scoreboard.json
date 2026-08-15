@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T15:07:29-05:00",
-    "sourceSha": "999b4d190",
+    "generatedAt": "2026-08-15T15:09:06-05:00",
+    "sourceSha": "531d8cefd",
     "deployedSha": "9628108",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 824,
+    "ledgerRows": 825,
     "failOpen": 14,
     "defects": 17
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7365,
+      "title": "FINDING: LIVE-LEDGER-SAFETY-PARITY-825",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 03:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7365",
+      "sha": "531d8cefd",
+      "committedAtIso": "2026-08-15T15:09:06-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 03:08 PM CT",
+      "url": "",
+      "sha": "f3486d5d5",
+      "committedAtIso": "2026-08-15T20:08:30Z"
+    },
+    {
       "number": 7363,
       "title": "FINDING: LIVE-LEDGER-BOOK-LOAD-LOAD-CREATE-824",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7355",
       "sha": "ffb950ba2",
       "committedAtIso": "2026-08-15T14:57:55-05:00"
-    },
-    {
-      "number": 7357,
-      "title": "FINDING: LIVE-LEDGER-CUSTOMERS-SYNC-ADD-PARTS-820-821",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7357",
-      "sha": "a6779784f",
-      "committedAtIso": "2026-08-15T14:57:15-05:00"
-    },
-    {
-      "number": 7356,
-      "title": "FINDING: LV-AUDIT-TRAIL-SUBJECT-KIND-MISCLASSIFIED",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 02:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7356",
-      "sha": "54a635618",
-      "committedAtIso": "2026-08-15T14:56:42-05:00"
     }
   ]
 }
