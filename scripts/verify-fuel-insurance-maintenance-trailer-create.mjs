@@ -40,6 +40,10 @@ export function audit(src) {
   if (!/setTrailerFilter\(reverseTrailerId\)/.test(src.claimsList)) {
     failures.push(`${FILES.claimsList}: ?trailer_id= reverse deep-link must seed trailerFilter`);
   }
+  // LST-F5192 — list filters must write URL params.
+  if (!/setSearchParams/.test(src.claimsList) || !/dataTestId="insurance-claims-filter-driver"/.test(src.claimsList)) {
+    failures.push(`${FILES.claimsList}: claims list filters must sync to URL (setSearchParams)`);
+  }
   if (!/register\("equipment_id"\)/.test(src.wo)) {
     failures.push(`${FILES.wo}: WO create must capture a real trailer/reefer equipment_id`);
   }
@@ -74,6 +78,7 @@ if (process.argv.includes("--selftest")) {
     ["claims-filter", "claimsList", /dataTestId="insurance-claims-trailer-filter"/, 'dataTestId="insurance-claims-filter-unit"'],
     ["claims-column", "claimsList", /key:\s*"trailer_id"/, 'key: "unit_id"'],
     ["claims-seed", "claimsList", /setTrailerFilter\(reverseTrailerId\)/, "setUnitFilter(reverseTrailerId)"],
+    ["claims-url", "claimsList", /setSearchParams/g, "setUrlParams"],
     ["wo-register", "wo", /register\("equipment_id"\)/g, 'register("unused_field")'],
     ["tires-toggle", "tires", /const \[assetKind, setAssetKind\] = useState<"unit" \| "trailer">\("unit"\)/, 'const assetKind = "unit"'],
     ["tires-scope", "tires", /assetKind === "trailer" \? \{ equipment_id: assetId \}/, '{ unit_id: assetId } ? { equipment_id: assetId }'],
