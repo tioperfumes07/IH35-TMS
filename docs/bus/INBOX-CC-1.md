@@ -54,12 +54,12 @@ exactly. `verify-guard-wired` orphan census dropped from 77 → 1 repo-wide (the
 `verify-wave-c-gl-je-system-qbo-recon.mjs`, explicitly excluded from USMCA sprint scope by owner ruling —
 left deliberately unwired). Slice closed; no remaining work.
 
-## ☐ CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20 — itemized, NOT yet independently re-verified by me
+## ☑ CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20 — CLOSED (verified live 2026-08-15)
 
-`CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20` (board, filed by Codex audit) lists 20 exact money-bearing
-Required leaves across `accounting.required.json` / `banking.required.json` still missing their owed
-connectivity/reverse obligation. I have not personally re-run each of the 20 live yet — do that before fixing,
-not after (verify-everything-never-guess law). Full leaf list is on the board row itself.
+`CODEX-ZERO-REMAINDER-PROTECTED-MONEY-20` — re-ran `verify-codex-vertical-nonmoney-zero-remainder.mjs`
+live: PROTECTED had already shrunk to a single remaining key (19 of the 20 closed by ACCT-F5209 in an
+earlier turn, per the guard's own comment). The last one, `reverse_link accounting:escrow`, closed
+ACCT-F5313 (PR #7574) — `protected gaps visible=0` live. Slice closed; no remaining work.
 
 ## LAW LOCK
 Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-BUILT-LAUNCH-LAW-2026-08-14` + `FULLY-WIRED-COMPLETE-BAR-2026-08-13`. Live Chrome (item 12) is Cursor-led with Codex assisting per owner directive 2026-08-15 — CC-1 stays on Built-honest (items 1–11); do not get pulled into item-12 clicking.
@@ -70,6 +70,6 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 
 `LV-REPORTS-SCHEDULED-SUBSCRIPTIONS-STALE-CPA-AND-DUPLICATE-RECIPIENTS` — live USMCA `/reports/scheduled` exposes the persisted seed defect: Monthly P&L still targets `cpa@ih35dispatch.com`, and Weekly driver settlement preview plus Daily safety alerts digest each contain the owner email twice. Exact source is `db/migrations/202606080206_scheduled_report_subscriptions.sql:107-112`; display is `SubscriptionManager.tsx:159-163`. Implement forward seed correction + case-insensitive recipient normalization on create/update + audited company-scoped existing-row repair, retaining subscriptions and delivery history. `OWNER-GATED=no`; `BLOCKS=LIVE-REPORTS-SCHEDULED-SUBSCRIPTIONS`; no QBO work.
 
-`CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY` — product-wide census found five protected money UI instances exposing raw database identifiers to operators: `VendorBillForm.tsx:554`, `BankingHome.tsx:417,879`, `BankingTransactionsDesignView.tsx:2336`, `FactoringHome.tsx:425`. Replace all five with accurate operator language without changing money behavior, then remove their exact keys from `VISIBLE_SCHEMA_BASELINE` in `verify-no-internal-language-in-prod-ui.mjs`. `OWNER-GATED=no`; exact board row has blockers; no QBO work.
+`CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY` — **FIXED (ACCT-F5312, CC-1, 2026-08-15, PR #7567)** — see `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
 
 `LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES` — exact live USMCA inspection proves `/finance/overview`, `/finance/projections`, and `/finance/scenarios` are placeholders with no entity-scoped read, data model, persistence, creator, or reload. Prior broad Live row 745 is superseded for all three exact leaves by audit rows 828–829. Build the canonical versioned forecast/scenario model and real UI under the finance/money lane; reuse existing calculator math where applicable, preserve actual-vs-estimate identity, audit and void/supersede semantics, and do not invent GL posting. Exact paths and acceptance are on `GUARD-WORKORDERS`; `BLOCKS=LIVE-FINANCE-OVERVIEW,LIVE-FINANCE-PROJECTIONS,LIVE-FINANCE-SCENARIOS`; `OWNER-GATED=no`.
