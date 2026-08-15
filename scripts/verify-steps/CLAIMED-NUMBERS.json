@@ -1488,6 +1488,11 @@
     "claimedBy": "cursor",
     "name": "verify-fixed-assets-parity-surface-bar"
   },
+  "3568": {
+    "claimedAt": "2026-08-15",
+    "claimedBy": "cursor",
+    "name": "verify-ap-aging-parity-surface-bar"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
