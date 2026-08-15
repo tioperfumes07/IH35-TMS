@@ -5,7 +5,8 @@
  * stored on the item as REAL ids (default_income_account_id / default_expense_account_id / category_id);
  * we resolve them to names here for display.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemsCatalogClient, qboCategoriesCatalogClient } from "../../../api/catalogs-accounting";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
@@ -35,6 +36,7 @@ export function ItemsListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
   // (?sort=&dir=) so it survives reload / is shareable, same as ExpensesListPage.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -49,6 +51,17 @@ export function ItemsListPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
+
+  // LST-F5213 — Live Chrome deep-link: Lists ?create=1 must open item create (posting-templates / void-cancel parity).
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || !companyId) return;
+    setModalMode("create");
+    setSelectedRow(null);
+    setModalOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, companyId, setSearchParams]);
 
   const query = useQuery({
     queryKey: ["catalogs", "accounting", "items", companyId, search],

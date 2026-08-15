@@ -80,6 +80,17 @@ export function itemsListUrlSortErrors({ hookSrc, pageSrc }) {
   if (!/onRetry=\{\(\) => void query\.refetch\(\)\}/.test(pageSrc)) {
     failures.push(`${PAGE_FILE} — ListErrorBanner must retry the items query`);
   }
+  // LST-F5213 — Live Chrome deep-link parity with posting-templates / void-cancel.
+  if (!/useSearchParams/.test(pageSrc)) {
+    failures.push(`${PAGE_FILE} — must use useSearchParams for ?create=1 deep-link`);
+  }
+  if (!/searchParams\.get\(\s*["']create["']\s*\)\s*!==\s*["']1["']/.test(pageSrc) &&
+      !/searchParams\.get\(\s*["']create["']\s*\)\s*===\s*["']1["']/.test(pageSrc)) {
+    failures.push(`${PAGE_FILE} — must honor ?create=1 deep-link`);
+  }
+  if (!/setModalOpen\(\s*true\s*\)/.test(pageSrc)) {
+    failures.push(`${PAGE_FILE} — ?create=1 must open create modal (setModalOpen(true))`);
+  }
   const sortedTables = countParityTablesWithControlledSort(pageSrc);
   // Grouped + flat list modes each render a ParityTable; both must be URL-controlled.
   if (sortedTables < 2) {
@@ -121,6 +132,10 @@ function selftest() {
   const goodHook = `export function useUrlSort() { useSearchParams(); }`;
   const goodPage = `
     import { useUrlSort } from "../../../hooks/useUrlSort";
+    import { useSearchParams } from "react-router-dom";
+    const [searchParams, setSearchParams] = useSearchParams();
+    if (searchParams.get("create") !== "1") return;
+    setModalOpen(true);
     const { sortKey, sortDirection, onSortChange } = useUrlSort();
     { key: "display_name", label: "Name", sortable: true }
     { key: "type", label: "Type / Sides", sortable: true }
@@ -156,6 +171,11 @@ function selftest() {
         ),
       },
       "sortKey/sortDirection/onSortChange",
+    ],
+    [
+      "missing create deep-link",
+      { ...good, pageSrc: goodPage.replace('searchParams.get("create") !== "1"', 'false') },
+      "must honor ?create=1 deep-link",
     ],
   ];
   const goodErrors = itemsListUrlSortErrors(good);
