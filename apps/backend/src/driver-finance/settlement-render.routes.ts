@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
-import { formatDateTime, formatMoney, joinBrandAddrLines, wrapPdfDocument } from "../render/pdf-template.js";
+import { formatDate, formatDateTime, formatMoney, joinBrandAddrLines, wrapPdfDocument } from "../render/pdf-template.js";
 import { formatSettlementPeriodLines, renderSettlementBody, type SettlementDeductionRow, type SettlementHtmlModel, type SettlementLoadRow } from "../render/settlement.template.js";
 import { driverBillRowsToSettlementLoads, listDriverBillsForSettlementPeriod, type DriverBillSettlementRow } from "./settlements.service.js";
 
@@ -73,7 +73,12 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
             --                         inventing an identifier).
             -- Both are aliased back to the names the renderer already reads, so nothing downstream
             -- of this query changes.
-            d.cdl_expires_at AS cdl_expiration_date,
+            -- ::text cast so node-postgres never hands this back as a JS Date — the same class of
+            -- bug already documented/fixed in bills.service.ts / void.service.ts / payments.routes.ts
+            -- (String(dateObject) yields Date.prototype.toString()'s verbose form, e.g. "Tue Aug 11
+            -- 2026 00:00:00 GMT+0000 (Coordinated Universal Time)", which is what cdlExp below would
+            -- render into the printed/PDF settlement without this cast).
+            d.cdl_expires_at::text AS cdl_expiration_date,
             d.identity_user_id,
             d.employee_id_display AS driver_display_id
           FROM driver_finance.driver_settlements s
@@ -215,7 +220,7 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
       const settlementDocNum = String(settlement.display_id ?? params.data.settlementId);
       const driverName = String(settlement.driver_full_name ?? "Driver");
       const cdlState = settlement.cdl_state ? String(settlement.cdl_state) : "—";
-      const cdlExp = settlement.cdl_expiration_date ? String(settlement.cdl_expiration_date) : "—";
+      const cdlExp = settlement.cdl_expiration_date ? formatDate(settlement.cdl_expiration_date) : "—";
 
       const model: SettlementHtmlModel = {
         brandName,
