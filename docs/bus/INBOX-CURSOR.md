@@ -7,6 +7,8 @@
 
 ## ☐ NOW (Cursor lane — permanent sequence)
 
+0. **OPEN `LV-HOVERDROPDOWN-HOVER-CLICK-SELF-CLOSE`** — live USMCA `/reports` `All` trigger becomes active but renders no flyout: shared `HoverDropdown` opens on mouseenter, then the same click sees open state and closes it. Fix once across all three consumers (Reports category nav ×2 + Safety group nav) with pointer/keyboard/outside-dismiss behavior coverage and one mutation-proven guard; `BLOCKS=LIVE-REPORTS-REPORT-FLYOUT,LIVE-SAFETY-GROUP-NAV`; OWNER-GATED=no.
+
 0. **OPEN `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH`** — live USMCA `/inventory/assignments` has canonical ParityTable Search+Range+gear plus a second “Search assignment trail” input (`InventoryAssignmentsPage.tsx:34-60,170-188`). Fix as a vertical `ParityTable filterBar` search-child class sweep with one mutation-proven all-consumer guard; `BLOCKS=LIVE-INVENTORY-ASSIGNMENTS-CHROME`; OWNER-GATED=no.
 
 1. **Theater purge:** `qbo_chrome` + `picker_law` — no `leafRe:.*` / `|.*` / word-blanket Built  
