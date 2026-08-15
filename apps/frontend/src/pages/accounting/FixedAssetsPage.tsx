@@ -268,36 +268,58 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
           <p className="mb-3 text-xs text-gray-500 rounded-sm bg-gray-50 px-2 py-1">{detail.schedule_note}</p>
         )}
 
-        <div className="overflow-y-auto overflow-x-auto flex-1 rounded-sm border border-gray-200">
-          <table className="min-w-full text-xs divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0">
-              <tr>
-                {["#", "Period", "Depreciation", "Accumulated", "Book Value", "JE"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {detail.schedule.length === 0 ? (
-                <tr><td colSpan={6} className="px-3 py-4 text-center text-gray-400">No schedule to display.</td></tr>
-              ) : detail.schedule.map((row) => (
-                <tr key={row.period_number} className="hover:bg-gray-50">
-                  <td className="px-3 py-1.5 text-gray-500">{row.period_number}</td>
-                  <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(row.period_date)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(row.depreciation_amount_cents)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{fmtCents(row.accumulated_to_date_cents)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{fmtCents(row.book_value_end_cents)}</td>
-                  <td className="px-3 py-1.5 whitespace-nowrap" data-testid={`fixed-asset-schedule-je-${row.period_number}`}>
+        <div className="overflow-y-auto flex-1">
+          {/* FA-F3566: ParityTable owns Search+Range+gear on depreciation schedule leaf. */}
+          <ParityTable<(typeof detail.schedule)[number]>
+            rows={detail.schedule}
+            rowKey={(row) => String(row.period_number)}
+            emptyText="No schedule to display."
+            storageKey="fixed-asset-depreciation-schedule"
+            exportFilename="fixed-asset-depreciation-schedule"
+            tableTestId="fixed-asset-depreciation-schedule-table"
+            columns={[
+              { key: "period_number", label: "#", render: (row) => <span className="text-gray-500">{row.period_number}</span> },
+              {
+                key: "period_date",
+                label: "Period",
+                render: (row) => <span className="whitespace-nowrap">{fmtDate(row.period_date)}</span>,
+              },
+              {
+                key: "depreciation_amount_cents",
+                label: "Depreciation",
+                className: "text-right",
+                cellClass: "text-right tabular-nums",
+                render: (row) => fmtCents(row.depreciation_amount_cents),
+              },
+              {
+                key: "accumulated_to_date_cents",
+                label: "Accumulated",
+                className: "text-right",
+                cellClass: "text-right tabular-nums text-gray-500",
+                render: (row) => fmtCents(row.accumulated_to_date_cents),
+              },
+              {
+                key: "book_value_end_cents",
+                label: "Book Value",
+                className: "text-right",
+                cellClass: "text-right tabular-nums",
+                render: (row) => fmtCents(row.book_value_end_cents),
+              },
+              {
+                key: "posted_journal_entry_id",
+                label: "JE",
+                render: (row) => (
+                  <span className="whitespace-nowrap" data-testid={`fixed-asset-schedule-je-${row.period_number}`}>
                     {row.posted && row.posted_journal_entry_id ? (
                       <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label="Posted" />
                     ) : (
                       <span className="text-gray-400">Not posted</span>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>
+                ),
+              },
+            ]}
+          />
         </div>
       </div>
     </div>
