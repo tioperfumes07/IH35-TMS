@@ -9486,7 +9486,8 @@
       "updated_at",
       "voided_at",
       "voided_by_user_id",
-      "voided_reason"
+      "voided_reason",
+      "work_order_id"
     ],
     "safety.integrity_alert_events": [
       "acknowledged_at",
