@@ -8,6 +8,7 @@
  * @matrix-built {"modules":["settlements"],"cols":["qbo_chrome"],"leafRe":"^cash_advances$","task":"VERTICAL-QBO-CHROME-settlements-cash-advances","vertical":"column-wave"}
  * @matrix-built {"modules":["settlements"],"cols":["qbo_chrome"],"leafRe":"^settlement_close$","task":"VERTICAL-QBO-CHROME-settlements-close","vertical":"column-wave"}
  * @matrix-built {"modules":["settlements"],"cols":["qbo_chrome"],"leafRe":"^settlements\\.panel\\.open_driver_bills$","task":"VERTICAL-QBO-CHROME-settlements-open-bills","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements"],"cols":["qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"VERTICAL-QBO-CHROME-settlements-toolbar-filter","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-settlements-qbo-chrome-surfaces.mjs --selftest
  */
@@ -66,6 +67,12 @@ const CHECKS = [
     name: "SettlementDisputesTab MoneyInput",
     file: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
     pattern: /MoneyInput/,
+  },
+  {
+    name: "chrome.toolbar_filter: SettlementsPage CollapsedListFilters payment_state Apply triad",
+    file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+    pattern:
+      /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}[\s\S]*testIdPrefix="settlements"/,
   },
 ];
 
