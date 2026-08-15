@@ -55,7 +55,10 @@ describe("AccidentsPage", () => {
     const row = within(await screen.findByTestId("accident-row-acc-1"));
     expect(row.getByText("Disputed")).toBeTruthy();
     expect(row.getByText("Preventable")).toBeTruthy();
-    expect(safetyApi.getSafetyAccidents).toHaveBeenCalledWith(companyId);
+    expect(safetyApi.getSafetyAccidents).toHaveBeenCalledWith(
+      companyId,
+      expect.objectContaining({}),
+    );
   });
 
   it("opens AccidentReportDrawer from + Create Accident", async () => {
