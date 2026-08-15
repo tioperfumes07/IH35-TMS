@@ -1,9 +1,10 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -36,16 +37,29 @@ export function SubmissionQueue() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // LINK-F5171/LINK-F5181 — reverse_link: CustomerDetail/FactoringTab link here as
-  // ?customer_id=/?load_id=; this page previously never read either param.
+  // ?customer_id=/?load_id=; LST-F5163N adds visible EntityPicker filters (URL-only is not reverse chrome).
   const [searchParams] = useSearchParams();
-  const deepLinkCustomerId = searchParams.get("customer_id");
-  const deepLinkLoadId = searchParams.get("load_id");
+  const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
+  const deepLinkLoadId = searchParams.get("load_id")?.trim() ?? "";
+  const [customerFilter, setCustomerFilter] = useState("");
+  const [loadFilter, setLoadFilter] = useState("");
+
+  useEffect(() => {
+    if (deepLinkCustomerId) setCustomerFilter(deepLinkCustomerId);
+  }, [deepLinkCustomerId]);
+  useEffect(() => {
+    if (deepLinkLoadId) setLoadFilter(deepLinkLoadId);
+  }, [deepLinkLoadId]);
+
+  const effectiveCustomerId = customerFilter.trim() || deepLinkCustomerId || undefined;
+  const effectiveLoadId = loadFilter.trim() || deepLinkLoadId || undefined;
+
   const queueQuery = useQuery({
-    queryKey: ["factoring", "submission-queue", companyId, deepLinkCustomerId, deepLinkLoadId],
+    queryKey: ["factoring", "submission-queue", companyId, effectiveCustomerId, effectiveLoadId],
     queryFn: () =>
       listSubmissionQueue(companyId, {
-        customer_id: deepLinkCustomerId ?? undefined,
-        load_id: deepLinkLoadId ?? undefined,
+        customer_id: effectiveCustomerId,
+        load_id: effectiveLoadId,
       }).then((r) => r.items),
     enabled: Boolean(companyId),
   });
@@ -104,6 +118,35 @@ export function SubmissionQueue() {
   return (
     <div className="space-y-3 p-4">
       <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
+
+      <div className="flex flex-wrap items-end gap-3" data-testid="factoring-submit-filters">
+        <label className="text-[11px] text-slate-600">
+          Customer
+          <EntityPicker
+            kind="customer"
+            operatingCompanyId={companyId}
+            value={customerFilter || null}
+            onChange={(next) => setCustomerFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All customers"
+            className="mt-1"
+            dataTestId="factoring-submit-filter-customer"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={loadFilter || null}
+            onChange={(next) => setLoadFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="factoring-submit-filter-load"
+          />
+        </label>
+      </div>
 
       {queueQuery.isError ? (
         <ListErrorBanner onRetry={() => void queueQuery.refetch()} />
