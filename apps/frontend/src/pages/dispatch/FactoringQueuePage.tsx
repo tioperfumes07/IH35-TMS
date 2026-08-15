@@ -101,7 +101,6 @@ export function FactoringQueuePage() {
   const queryClient = useQueryClient();
 
   const [stageFilter, setStageFilter] = useState<StageFilter>("ALL");
-  const [search, setSearch] = useState("");
 
   // LINK-F5171/LINK-F5179 — reverse_link: CustomerDetail/FactoringTab now link here as
   // ?customer_id=/?queue_record_id=; legacy ?load_id= bookmarks remain readable.
@@ -166,16 +165,9 @@ export function FactoringQueuePage() {
 
   const rows = queueQ.data?.rows ?? [];
 
+  // Free-text search: ParityTable toolbar owns it (FAC-F3496) — stage filter stays page-local.
   const filtered = rows.filter((row) => {
     if (stageFilter !== "ALL" && row.packet_stage !== stageFilter) return false;
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      if (
-        !row.load_number.toLowerCase().includes(q) &&
-        !(row.customer_name ?? "").toLowerCase().includes(q)
-      )
-        return false;
-    }
     return true;
   });
 
@@ -187,7 +179,7 @@ export function FactoringQueuePage() {
 
   const listState = useListState(queueQ, filtered.length === 0);
   const emptyText = listState.isEmpty
-    ? search.trim() || stageFilter !== "ALL"
+    ? stageFilter !== "ALL"
       ? "No loads match the current filter."
       : "No delivered loads in factoring queue."
     : undefined;
@@ -396,15 +388,6 @@ export function FactoringQueuePage() {
             </button>
           );
         })}
-        <div className="ml-auto">
-          <input
-            type="text"
-            placeholder="Search load # or customer…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700 placeholder-gray-400"
-          />
-        </div>
       </div>
 
       {/* Queue table — shared ParityTable (GLOBAL-COLS-01 / ACCT-R-25 Phase A adoption) */}
