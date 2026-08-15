@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
+const SELFTEST = process.argv.includes("--selftest");
 let passed = 0;
 let failed = 0;
 
@@ -16,6 +17,31 @@ function check(label, bool) { bool ? ok(label) : fail(label); }
 
 function read(rel) {
   try { return readFileSync(resolve(ROOT, rel), "utf8"); } catch { return ""; }
+}
+
+const DATE_FIELDS = ["execution_date", "start_date", "end_date"];
+const MONEY_FIELDS = ["monthly_lease_amount", "security_deposit", "late_fee", "escrow_amount"];
+
+function governedInputProblems(source) {
+  const problems = [];
+  if (!source.includes('components/forms/DatePicker')) problems.push("DatePicker import is required");
+  if (!source.includes('components/forms/MoneyInput')) problems.push("MoneyInput import is required");
+  if (!source.includes("<DatePicker")) problems.push("DatePicker renderer is required");
+  if (!source.includes("<MoneyInput")) problems.push("MoneyInput renderer is required");
+  if (!source.includes("valueCents={parseDollars(terms[k])}")) problems.push("MoneyInput must preserve the dollars-to-cents contract");
+  if (!source.includes("onChangeCents={(cents)")) problems.push("MoneyInput must update the governed term state");
+  if (source.includes("type={t}")) problems.push("generic input must not hide governed date or money types");
+  for (const key of DATE_FIELDS) {
+    if (!new RegExp(`\\[\\s*\\"${key}\\"\\s*,[^\\]]*\\"date\\"\\s*\\]`).test(source)) {
+      problems.push(`${key} must be a date field`);
+    }
+  }
+  for (const key of MONEY_FIELDS) {
+    if (!new RegExp(`\\[\\s*\\"${key}\\"\\s*,[^\\]]*\\"money\\"\\s*\\]`).test(source)) {
+      problems.push(`${key} must be a money field`);
+    }
+  }
+  return problems;
 }
 
 // 1. Template definition
@@ -71,6 +97,8 @@ check("Save as Draft — uses legalContractsApi.create", modal.includes("legalCo
 check("No dead buttons: disabled until template ready + signer email present", modal.includes("!templateId") || modal.includes("disabled="));
 check("Draft-block message communicated to user", modal.includes("draft") || modal.includes("Draft"));
 check("LEGAL_CONTRACTS_ENABLED off → unavailable message", modal.includes("LEGAL_CONTRACTS_ENABLED") || modal.includes("unavailable"));
+for (const problem of governedInputProblems(modal)) fail(`Governed Truck Lease input: ${problem}`);
+if (governedInputProblems(modal).length === 0) ok("Truck Lease uses shared DatePicker + MoneyInput with preserved cents payload");
 
 // 7. Wired into LegalContractInstancesPage
 const page = read("apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx");
@@ -91,6 +119,21 @@ check("Audit log appended on create/send", contractsService.includes("appendCont
 
 // 9. Entity scope
 check("No truck-lease data crosses entity boundary (operating_company_id enforced in seed)", service.includes("operatingCompanyId"));
+
+if (SELFTEST) {
+  for (const key of DATE_FIELDS) {
+    const planted = modal.replace(new RegExp(`(\\[\\s*\\"${key}\\"\\s*,[^\\]]*)\\"date\\"`), '$1"text"');
+    check(`SELFTEST catches ${key} raw-input regression`, governedInputProblems(planted).some((p) => p.includes(`${key} must be a date field`)));
+  }
+  for (const key of MONEY_FIELDS) {
+    const planted = modal.replace(new RegExp(`(\\[\\s*\\"${key}\\"\\s*,[^\\]]*)\\"money\\"`), '$1"text"');
+    check(`SELFTEST catches ${key} raw-money regression`, governedInputProblems(planted).some((p) => p.includes(`${key} must be a money field`)));
+  }
+  check(
+    "SELFTEST catches hidden generic field renderer",
+    governedInputProblems(modal.replace('type="text"', "type={t}")).some((p) => p.includes("generic input")),
+  );
+}
 
 console.log(`\n${passed + failed === 0 ? "No checks ran" : `${passed}/${passed + failed} passed`}`);
 if (failed > 0) {

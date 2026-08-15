@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **18 / 30** | 2026-08-15 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-15 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **65 / 150** | 2026-08-15 |
-| Rows in this file | **829** | 2026-08-15 |
+| Rows in this file | **830** | 2026-08-15 |
 | Rows `FAIL` + `OPEN` | **15** | 2026-08-15 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-15 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-15 |
-| Verdict tally (all rows) | FAIL=76 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=308 | 2026-08-15 |
+| Verdict tally (all rows) | FAIL=77 · PASS=200 · N/A=218 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=308 | 2026-08-15 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -917,3 +917,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 827 | vendors · qbo_sync_panel | E | USMCA | PROD-VERIFIED — Cursor Live Chrome 2026-08-15 (VERIFY-1 · VERIFY-3) | **Cursor Live Chrome 2026-08-15** prod USMCA. **Leaves:** `vendors.panel.vendors_sync`. **Proven:** `/vendors` mounts VendorsSyncPanel 'QBO Vendors' with status 'Cloned from QBO: 0 · 3 exceptions · Last reconciled: 8/1/2026, 12:00:00 PM' + Refresh from QBO + Reconcile; list All (44) Active (44). Scope VERIFY-1/3 mount only — no pull/reconcile mutation. | LIVE-LEDGERED | OUTBOX-CURSOR LIVE#99 | NO | 2026-08-15 | CURSOR |
 | 828 | finance · planning_placeholders | C | USMCA | SUPERSEDED | Superseded by row 829, which preserves this evidence and adds the sibling `nav.overview` placeholder to the same root-cause cluster. Original exact proof: `/finance/projections` rendered “not yet built — future module placeholder”; `/finance/scenarios` stated there was “no working feature,” with no company-scoped API, persistence, creator, reload, or scenario comparison. | SUPERSEDED | LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES | NO | 2026-08-15 | CODEX |
 | 829 | finance · planning_placeholders | C | USMCA | FAIL | **SUPERSEDES row 828 and row 745 for the complete three-leaf planning cluster. Leaves:** `nav.overview` · `nav.projections` · `nav.scenarios`. Live `/finance/overview` says “Future module for financial planning”; the two sibling routes remain the exact placeholders recorded in row 828. None has a company-scoped API, persistence, creator, reload, or governed comparison. Route mount is not connectivity or Fully-Wired proof. Paths: `apps/frontend/src/pages/finance/FinanceOverviewPage.tsx`; `FinanceProjectionsPage.tsx`; `FinanceScenariosPage.tsx`. | OPEN | LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES | NO | 2026-08-15 | CODEX |
+| 830 | legal · truck_lease_creator | E | USMCA | FAIL | **Leaves:** `legal.modal.truck_lease_creator` · `legal.parity.truck_lease_creator`. Live `+ Truck Lease` proved the real creator mounts, but the generic term-field loop rendered execution/start/end through hidden native date inputs and four dollar fields through plain textboxes. Root fix uses shared DatePicker/MoneyInput and independently mutation-ratchets all seven exact fields while preserving cents payloads. | FIXED (this PR) | LV-LEGAL-TRUCK-LEASE-GENERIC-INPUT-GUARD-BYPASS | NO | 2026-08-15 | CODEX |
