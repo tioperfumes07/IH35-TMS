@@ -75,8 +75,24 @@ function checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc) {
   if (!/searchParams\.get\("trailer_id"\)/.test(plannerSrc)) {
     failures.push("FuelPlannerHome.tsx must read trailer_id from the URL (reverse deep-link)");
   }
-  if (!/trailer_id:\s*deepLinkTrailerId/.test(plannerSrc) && !/trailer_id:\s*deepLinkTrailerId\s*\|\|/.test(plannerSrc)) {
+  if (
+    !/trailer_id:\s*(deepLinkTrailerId|effectiveTrailerId)/.test(plannerSrc) &&
+    !/trailer_id:\s*deepLinkTrailerId\s*\|\|/.test(plannerSrc)
+  ) {
     failures.push("FuelPlannerHome.tsx must pass trailer_id into getFuelTransactions()");
+  }
+  // LST-F5172 — URL-only reverse seed is not reverse chrome; History needs visible EntityPickers.
+  if (!/dataTestId="fuel-history-filter-driver"/.test(plannerSrc) || !/allowCreate=\{false\}/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must expose driver EntityPicker filter (allowCreate=false)");
+  }
+  if (!/dataTestId="fuel-history-filter-unit"/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must expose unit EntityPicker filter");
+  }
+  if (!/dataTestId="fuel-history-filter-load"/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must expose load EntityPicker filter");
+  }
+  if (!/dataTestId="fuel-history-filter-trailer"/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must expose trailer EntityPicker filter");
   }
   if (!/FUEL_HISTORY_KIND/.test(reverseSrc ?? "") || !/kind=\{FUEL_HISTORY_KIND\[filterKey\]\}/.test(reverseSrc ?? "") || !/fuel_history_driver/.test(reverseSrc ?? "") || !/fuel_history_trailer/.test(reverseSrc ?? "")) {
     failures.push("FuelTransactionsReverseSection Open Fuel History must use EntityLink FUEL_HISTORY_KIND filter map");
@@ -197,10 +213,19 @@ function selftest() {
     import { getFuelTransactions } from "../../api/fuelPlanner";
     import { ImportFuelTransactionsModal } from "./components/ImportFuelTransactionsModal";
     const deepLinkTrailerId = searchParams.get("trailer_id");
-    const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId, { trailer_id: deepLinkTrailerId || undefined }) });
+    const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId, { trailer_id: effectiveTrailerId }) });
+    dataTestId="fuel-history-filter-driver" allowCreate={false}
+    dataTestId="fuel-history-filter-unit"
+    dataTestId="fuel-history-filter-load"
+    dataTestId="fuel-history-filter-trailer"
     <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
     <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
     <ImportFuelTransactionsModal open={importOpen} />
+  `;
+  const badPlannerNoPickers = `
+    import { getFuelTransactions } from "../../api/fuelPlanner";
+    const deepLinkTrailerId = searchParams.get("trailer_id");
+    getFuelTransactions(companyId, { trailer_id: deepLinkTrailerId || undefined })
   `;
   const badPlannerDeadButton = `
     <ActionButton disabled onClick={() => pushToast("Fuel import UI coming soon (requires backend endpoint)", "info")}>
@@ -242,6 +267,7 @@ function selftest() {
   expectFail("dead rows={[]} planner", checkHistoryFetchWired(badPlannerDeadButton, goodApiClient));
 
   expectPass("good deeplink filters", checkDeepLinkFilters(goodPlanner, goodReverse, goodTable));
+  expectFail("URL-only missing EntityPickers", checkDeepLinkFilters(badPlannerNoPickers, goodReverse, goodTable));
   expectFail("unfiltered Open Fuel History", checkDeepLinkFilters(goodPlanner, badReverse, goodTable));
   expectFail("missing trailer column", checkDeepLinkFilters(goodPlanner, goodReverse, badTable));
 
