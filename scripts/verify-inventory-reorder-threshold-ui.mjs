@@ -16,10 +16,11 @@ const PAGE = path.join(ROOT, "apps/frontend/src/pages/inventory/InventoryPartsSt
 const TEST = path.join(ROOT, "apps/frontend/src/pages/inventory/InventoryPartsStockPage.test.ts");
 const ROUTES = path.join(ROOT, "apps/backend/src/maintenance/parts.routes.ts");
 const MIGRATION = path.join(ROOT, "db/migrations/202608151800_inv_reorder_threshold_persistence.sql");
+const TRIGGER_MIGRATION = path.join(ROOT, "db/migrations/202608151830_inv_reorder_alert_trigger_canonical_column.sql");
 const LABEL = "verify-inventory-reorder-threshold-ui";
 
 /**
- * @param {{ page: string, test: string, routes: string, migration: string }} files
+ * @param {{ page: string, test: string, routes: string, migration: string, triggerMigration: string }} files
  * @returns {string[]}
  */
 export function computeFailures(files) {
@@ -27,6 +28,7 @@ export function computeFailures(files) {
   const test = files.test ?? "";
   const routes = files.routes ?? "";
   const migration = files.migration ?? "";
+  const triggerMigration = files.triggerMigration ?? "";
   const errors = [];
 
   if (!/reorder_threshold/.test(page)) {
@@ -67,6 +69,14 @@ export function computeFailures(files) {
   if (!/on_hand_qty <= reorder_threshold/.test(routes)) {
     errors.push("parts KPI must use each persisted reorder_threshold instead of a magic constant");
   }
+  if (!/NEW\.reorder_threshold/.test(triggerMigration) ||
+      !/OLD\.reorder_threshold/.test(triggerMigration) ||
+      !/AFTER UPDATE OF on_hand_qty, reorder_threshold/.test(triggerMigration)) {
+    errors.push("reorder alert trigger must bind and react to the canonical reorder_threshold column");
+  }
+  if (/\b(?:NEW|OLD)\.reorder_point\b/.test(triggerMigration)) {
+    errors.push("reorder alert trigger must not reference phantom reorder_point");
+  }
   return errors;
 }
 
@@ -91,8 +101,9 @@ function selftest() {
       on_hand_qty <= reorder_threshold;
     `,
     migration: `ADD COLUMN IF NOT EXISTS reorder_threshold integer NOT NULL DEFAULT 0; CHECK (reorder_threshold >= 0);`,
+    triggerMigration: `NEW.reorder_threshold <= OLD.reorder_threshold AFTER UPDATE OF on_hand_qty, reorder_threshold`,
   };
-  const bad = { page: `on_hand_qty only`, test: `on_hand_qty only`, routes: `0::int AS reorder_threshold`, migration: `` };
+  const bad = { page: `on_hand_qty only`, test: `on_hand_qty only`, routes: `0::int AS reorder_threshold`, migration: ``, triggerMigration: `NEW.reorder_point OLD.reorder_point` };
   const cases = [
     { name: "reorder columns wired", input: good, expectPass: true },
     { name: "missing reorder surface", input: bad, expectPass: false },
@@ -100,6 +111,8 @@ function selftest() {
     { name: "update drops threshold", input: { ...good, routes: good.routes.replace('add("reorder_threshold", body.data.reorder_threshold);', "") }, expectPass: false },
     { name: "schema drops threshold", input: { ...good, migration: "" }, expectPass: false },
     { name: "KPI uses magic floor", input: { ...good, routes: good.routes.replace("on_hand_qty <= reorder_threshold", "on_hand_qty <= 2") }, expectPass: false },
+    { name: "trigger reads phantom column", input: { ...good, triggerMigration: good.triggerMigration.replaceAll("reorder_threshold", "reorder_point") }, expectPass: false },
+    { name: "trigger ignores threshold-only edits", input: { ...good, triggerMigration: good.triggerMigration.replace(", reorder_threshold", "") }, expectPass: false },
   ];
   let ok = true;
   for (const c of cases) {
@@ -122,6 +135,7 @@ function run() {
     test: fs.readFileSync(TEST, "utf8"),
     routes: fs.readFileSync(ROUTES, "utf8"),
     migration: fs.readFileSync(MIGRATION, "utf8"),
+    triggerMigration: fs.readFileSync(TRIGGER_MIGRATION, "utf8"),
   });
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
