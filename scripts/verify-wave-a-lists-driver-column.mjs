@@ -3,22 +3,39 @@
 import fs from "node:fs";
 
 const checks = [
-  ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink kind="driver" id=\{row\.primary_driver_id\} label=\{driverTeamMemberName\(row, "primary"\)\}/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink kind="driver" id=\{row\.secondary_driver_id\} label=\{driverTeamMemberName\(row, "secondary"\)\}/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /primary_driver_id:\s*form\.primary_driver_id!/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /secondary_driver_id:\s*form\.secondary_driver_id!/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /new_driver_id:\s*replacementDriverId/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /<DriverPickerWithCreate[\s\S]*dataField="primary_driver_id"/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /<DriverPickerWithCreate[\s\S]*dataField="secondary_driver_id"/],
+  ["primary driver drill", "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink kind="driver" id=\{row\.primary_driver_id\} label=\{driverTeamMemberName\(row, "primary"\)\}/],
+  ["secondary driver drill", "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink kind="driver" id=\{row\.secondary_driver_id\} label=\{driverTeamMemberName\(row, "secondary"\)\}/],
+  ["primary driver submit FK", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /primary_driver_id:\s*form\.primary_driver_id!/],
+  ["secondary driver submit FK", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /secondary_driver_id:\s*form\.secondary_driver_id!/],
+  ["replacement driver submit FK", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /new_driver_id:\s*replacementDriverId/],
+  ["primary canonical picker", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /<DriverPickerWithCreate[\s\S]*dataField="primary_driver_id"/],
+  ["secondary canonical picker", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /<DriverPickerWithCreate[\s\S]*dataField="secondary_driver_id"/],
 ];
+const files = [...new Set(checks.map(([, file]) => file))];
+const original = new Map(files.map((file) => [file, fs.readFileSync(file, "utf8")]));
 
-const failures = checks
-  .filter(([file, pattern]) => !pattern.test(fs.readFileSync(file, "utf8")))
-  .map(([file]) => `${file}: driver FK/link contract missing`);
+function audit(sources) {
+  return checks
+    .filter(([, file, pattern]) => !pattern.test(sources.get(file) ?? ""))
+    .map(([name]) => name);
+}
 
+const failures = audit(original);
 if (failures.length) {
   console.error(`verify-wave-a-lists-driver-column FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  let caught = 0;
+  for (const [name, file, pattern] of checks) {
+    const mutated = new Map(original);
+    mutated.set(file, original.get(file).replace(pattern, "__PLANTED_LISTS_DRIVER_DEFECT__"));
+    if (audit(mutated).includes(name)) caught += 1;
+    else throw new Error(`selftest failed to catch: ${name}`);
+  }
+  console.log(`verify-wave-a-lists-driver-column SELFTEST PASS — ${caught}/${checks.length} exact driver-team mutations detected`);
+  process.exit(0);
 }
 
 console.log("verify-wave-a-lists-driver-column PASS — Lists driver-team FKs, pickers, replacement, and reverse links ratcheted");
