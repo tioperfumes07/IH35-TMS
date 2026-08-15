@@ -1,0 +1,173 @@
+#!/usr/bin/env node
+/**
+ * CODEX-VERTICAL-NONMONEY-ZERO-REMAINDER-RATCHET
+ *
+ * Class/census guard only — intentionally carries no Box-3 Built tag. It proves that every
+ * canonical identity/connectivity cell outside the explicitly itemized protected money and
+ * toolbar lanes already has leaf-specific evidence. A new Required leaf or a removed exact
+ * guard therefore becomes red instead of silently reopening Codex's all-module queue.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const MATRIX_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
+const SELFTEST = process.argv.includes("--selftest");
+const COLUMNS = new Set(["driver", "customer", "vendor", "unit", "trailer", "load", "connectivity", "reverse_link"]);
+const TAG_RE = /@matrix-built\s+(\{[^\n]*\})/g;
+const SHORTHAND_RE = /@matrix-built\s+modules=([^\s]+)(?:\s+cols=([^\s]+))?(?:\s+leafRe=([^\s]+))?/g;
+const CSV_RE = /@matrix-built\s+(?!modules=|\{)([a-z][a-z0-9_-]*(?:,[a-z][a-z0-9_-]*)+)(?=\s|\*|\/|$)/gi;
+
+function isLeafSpecific(leafRe) {
+  const value = String(leafRe ?? "").trim();
+  return Boolean(value) &&
+    !/^\^?\.[*+]\$?$/.test(value) &&
+    !/\|\.\*|\.\*\|/.test(value) &&
+    !/\.\*\([^)]*(?:create|modal|drawer|wizard|picker)[^)]*\)/i.test(value) &&
+    !(/^\.\*.*\.\*$/.test(value) && !/^\^\(/.test(value));
+}
+
+function loadEntries() {
+  const entries = [];
+  const feed = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/specs/scoreboard/wire-sprint-built.json"), "utf8"));
+  for (const entry of feed.entries ?? []) {
+    entries.push({ ...entry, file: entry.guard });
+  }
+  for (const name of fs.readdirSync(path.join(ROOT, "scripts")).filter((name) => name.startsWith("verify-") && name.endsWith(".mjs"))) {
+    const file = `scripts/${name}`;
+    const header = fs.readFileSync(path.join(ROOT, file), "utf8");
+    for (const match of header.matchAll(TAG_RE)) {
+      try {
+        const entry = JSON.parse(match[1]);
+        entries.push({ ...entry, file });
+      } catch {
+        // Malformed tags are owned by verify-matrix-built-tag-present; never count them as evidence here.
+      }
+    }
+    for (const match of header.matchAll(SHORTHAND_RE)) {
+      entries.push({
+        modules: match[1].split(",").filter(Boolean),
+        cols: String(match[2] ?? "connectivity,reverse_link").split(",").filter(Boolean),
+        leafRe: String(match[3] ?? ".*"),
+        file,
+      });
+    }
+    for (const match of header.matchAll(CSV_RE)) {
+      entries.push({
+        modules: match[1].split(",").filter(Boolean),
+        cols: ["connectivity", "reverse_link"],
+        leafRe: ".*",
+        file,
+      });
+    }
+  }
+  return entries;
+}
+
+// These are exact, shrinking lane boundaries—not exemptions and never Built credit. CC-1 owns the
+// accounting/banking money surfaces; Cursor owns toolbar chrome. Removing a completed key is safe.
+const PROTECTED = new Set([
+  "reverse_link\taccounting:escrow",
+  "connectivity\taccounting:accounting.modal.invoice_create",
+  "connectivity\taccounting:accounting.parity.expense_create_page",
+  "connectivity\taccounting:accounting.parity.invoice_create",
+  "connectivity\taccounting:accounting.parity.vendor_bill_create_page",
+  "connectivity\taccounting:payment_methods_catalog.create",
+  "connectivity\tbanking:banking.modal.record_ccpayment",
+  "connectivity\tbanking:banking.modal.record_transfer",
+  "connectivity\tbanking:banking.modal.transfer",
+  "connectivity\tbanking:banking.modal.bank_transaction_split",
+  "connectivity\tbanking:banking.modal.manage_accounts",
+  "connectivity\tbanking:banking.modal.manual_je",
+  "connectivity\tbanking:banking.drawer.match",
+  "connectivity\tbanking:banking.panel.banking_plaid_connections",
+  "connectivity\tbanking:banking.parity.record_ccpayment",
+  "connectivity\tbanking:banking.parity.record_transfer",
+  "connectivity\tbanking:banking.parity.transfer",
+  "connectivity\tbanking:banking.parity.bank_transaction_split",
+  "connectivity\tbanking:banking.parity.manual_je",
+  "connectivity\tbanking:banking.parity.match",
+  "connectivity\tbanking:banking.panel.linked_bank_transactions",
+  "connectivity\tbanking:banking.panel.plaid_sync_status",
+  "connectivity\tcustomers:chrome.toolbar_filter",
+  "connectivity\tdocs:chrome.toolbar_filter",
+  "connectivity\tfactoring:chrome.toolbar_filter",
+  "connectivity\tfleet:chrome.toolbar_filter",
+  "connectivity\tmaintenance:chrome.toolbar_filter",
+  "connectivity\ttasks:chrome.toolbar_filter",
+  "connectivity\tvendors:chrome.toolbar_filter",
+]);
+
+function loadSpecs() {
+  return fs.readdirSync(MATRIX_DIR)
+    .filter((name) => name.endsWith(".required.json"))
+    .sort()
+    .map((name) => JSON.parse(fs.readFileSync(path.join(MATRIX_DIR, name), "utf8")));
+}
+
+function hasBuilt(entries, moduleId, leafId, column) {
+  return entries.some((entry) =>
+    isLeafSpecific(entry.leafRe) &&
+    entry.modules.includes(moduleId) &&
+    entry.cols.includes(column) &&
+    new RegExp(entry.leafRe).test(leafId) &&
+    fs.existsSync(path.join(ROOT, entry.file)),
+  );
+}
+
+export function collectGaps(specs = loadSpecs(), entries = loadEntries()) {
+  const gaps = [];
+  for (const spec of specs) {
+    const moduleId = spec.module;
+    for (const leaf of spec.leaves ?? []) {
+      for (const column of leaf.required ?? []) {
+        if (!COLUMNS.has(column) || hasBuilt(entries, moduleId, leaf.id, column)) continue;
+        gaps.push(`${column}\t${moduleId}:${leaf.id}`);
+      }
+    }
+  }
+  return gaps.sort();
+}
+
+export function collectProblems(specs = loadSpecs(), entries = loadEntries()) {
+  return collectGaps(specs, entries).filter((gap) => !PROTECTED.has(gap));
+}
+
+if (SELFTEST) {
+  const specs = loadSpecs();
+  const entries = loadEntries();
+  const planted = structuredClone(specs);
+  planted.find((spec) => spec.module === "safety").leaves.push({
+    id: "selftest.unowned_connectivity_gap",
+    tab: "Selftest",
+    required: ["connectivity"],
+  });
+  const problems = collectProblems(planted, entries);
+  if (!problems.includes("connectivity\tsafety:selftest.unowned_connectivity_gap")) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — planted unowned gap escaped");
+    process.exit(1);
+  }
+  const stripped = entries.filter((entry) => !(
+    entry.modules.includes("safety") &&
+    entry.cols.includes("vendor") &&
+    isLeafSpecific(entry.leafRe) &&
+    new RegExp(entry.leafRe).test("accidents.create")
+  ));
+  const removedEvidenceProblems = collectProblems(specs, stripped);
+  if (!removedEvidenceProblems.includes("vendor\tsafety:accidents.create")) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — removed exact evidence escaped");
+    process.exit(1);
+  }
+  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new Required leaf and removed exact evidence caught");
+  process.exit(0);
+}
+
+const gaps = collectGaps();
+const problems = gaps.filter((gap) => !PROTECTED.has(gap));
+if (problems.length) {
+  console.error("verify-codex-vertical-nonmoney-zero-remainder FAIL — unowned canonical-column gaps:");
+  for (const problem of problems) console.error(`  - ${problem}`);
+  process.exit(1);
+}
+console.log(`verify-codex-vertical-nonmoney-zero-remainder PASS — Codex remainder=0 across all module maps; protected gaps visible=${gaps.length}`);
