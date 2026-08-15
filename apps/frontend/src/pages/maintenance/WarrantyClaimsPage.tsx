@@ -139,7 +139,7 @@ export function WarrantyClaimsPage() {
     () => [
       { key: "part_description", label: "Part", sortable: true, render: (row) => row.part_description },
       { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id ?? undefined} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
-      { key: "work_order_id", label: "Work order", render: (row) => <EntityLink kind="work_order" id={row.work_order_id ?? undefined} label={entityLabel(null, row.work_order_id, "Work order")} /> },
+      { key: "work_order_id", label: "Work order", render: (row) => <EntityLink kind="work_order" id={row.work_order_id ?? undefined} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} /> },
       { key: "claim_number", label: "Claim #", sortable: true, render: (row) => row.claim_number || "—" },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status_label ?? row.status },
       { key: "claim_amount_cents", label: "Amount", render: (row) => `$${((row.claim_amount_cents ?? 0) / 100).toFixed(2)}` },

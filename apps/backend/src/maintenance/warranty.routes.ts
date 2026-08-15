@@ -137,6 +137,7 @@ export function mapWarrantyClaimRow(row: Record<string, unknown>) {
     operating_company_id: row.operating_company_id,
     parts_warranty_id: row.parts_warranty_id ?? null,
     work_order_id: row.work_order_id ?? null,
+    work_order_display_id: row.work_order_display_id ?? null,
     vendor_id: row.vendor_id ?? null,
     vendor_name: row.vendor_name ?? null,
     claim_number: row.claim_number ?? "",
@@ -297,6 +298,7 @@ const CLAIM_SELECT = `
     wc.operating_company_id::text,
     wc.parts_warranty_id::text,
     wc.work_order_id::text,
+    wo.display_id AS work_order_display_id,
     wc.vendor_id::text,
     v.vendor_name AS vendor_name,
     wc.claim_number,
@@ -315,6 +317,8 @@ const CLAIM_SELECT = `
   FROM maintenance.warranty_claims wc
   LEFT JOIN mdata.vendors v ON v.id = wc.vendor_id
                             AND v.operating_company_id = wc.operating_company_id
+  LEFT JOIN maintenance.work_orders wo ON wo.id = wc.work_order_id
+                                       AND wo.operating_company_id = wc.operating_company_id
 `;
 
 async function fetchClaimById(client: DbClient, companyId: string, id: string) {

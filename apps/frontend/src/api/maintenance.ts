@@ -1355,6 +1355,7 @@ export type MaintenanceWarrantyClaimRow = {
   operating_company_id: string;
   parts_warranty_id?: string | null;
   work_order_id?: string | null;
+  work_order_display_id?: string | null;
   vendor_id?: string | null;
   vendor_name?: string | null;
   claim_number?: string;
