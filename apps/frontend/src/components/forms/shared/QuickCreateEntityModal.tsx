@@ -1,17 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
 import { createCustomer } from "../../../api/mdata";
-import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
-import {
-  accountTypePickerGroupsFromCatalog,
-  detailTypesForAccountTypeSelection,
-  fetchAccountTypeCatalog,
-  resolveAccountTypeCatalogEntry,
-} from "../../../api/coa-list";
+import { classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { NewAccountDrawerForm } from "../../../components/parity/drawers/NewAccountDrawerForm";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { VendorCreateModal } from "../../vendors/VendorCreateModal";
@@ -40,17 +34,12 @@ const schema = z.object({
   phone: z.string().trim().optional(),
   qtyReceived: z.coerce.number().int().min(1).optional(),
   location: z.string().trim().optional(),
-  // category: full COA classification — account_type is the QBO catalog code (BANK/EXP/…) when
-  // the live taxonomy is loaded; account_subtype is the chosen Detail Type name.
-  accountType: z.string().trim().optional(),
-  detailType: z.string().trim().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-function titleFor(kind: Exclude<QuickCreateKind, "vendor" | "item" | "class">): string {
+function titleFor(kind: Exclude<QuickCreateKind, "vendor" | "item" | "class" | "category">): string {
   if (kind === "customer") return "Quick Create Customer";
-  if (kind === "category") return "Quick Create Category";
   return "Quick Create Part";
 }
 
@@ -71,28 +60,8 @@ export function QuickCreateEntityModal({
       phone: "",
       qtyReceived: 1,
       location: "",
-      accountType: "",
-      detailType: "",
     },
   });
-
-  // category: live COA Detail Type taxonomy — same source the Chart-of-Accounts page uses
-  // (catalogs.account_types via fetchAccountTypeCatalog), filtered by the chosen account type.
-  const selectedAccountType = form.watch("accountType") ?? "";
-  const accountTypeCatalogQuery = useQuery({
-    queryKey: ["account-type-catalog", operatingCompanyId],
-    queryFn: () => fetchAccountTypeCatalog(operatingCompanyId),
-    staleTime: 5 * 60 * 1000,
-    enabled: open && kind === "category" && Boolean(operatingCompanyId),
-  });
-  const detailTypeOptions = useMemo(
-    () => detailTypesForAccountTypeSelection(accountTypeCatalogQuery.data, selectedAccountType),
-    [accountTypeCatalogQuery.data, selectedAccountType],
-  );
-  const accountTypePickerGroups = useMemo(
-    () => accountTypePickerGroupsFromCatalog(accountTypeCatalogQuery.data),
-    [accountTypeCatalogQuery.data],
-  );
 
   const submit = form.handleSubmit(async (raw) => {
     const parsed = schema.safeParse(raw);
@@ -127,32 +96,6 @@ export function QuickCreateEntityModal({
           main_contact_email: invoiceEmail,
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
-      } else if (kind === "category") {
-        // FIX-02: full QBO COA classification — persist catalog CODE (BANK/EXP/…) + Detail Type.
-        // Writes to catalogs.accounts (canonical) — same table getCoaAccounts reads.
-        if (!parsed.data.accountType) {
-          pushToast("Account type is required.", "error");
-          return;
-        }
-        const rawSlug = parsed.data.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "ACCT";
-        const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
-        // Timestamp suffix avoids account_number unique-constraint violations on same-name creates.
-        const accountCode = `${safeSlug}${String(Date.now()).slice(-6)}`;
-        const typeCode =
-          resolveAccountTypeCatalogEntry(
-            accountTypeCatalogQuery.data,
-            parsed.data.accountType,
-            parsed.data.detailType?.trim() || undefined,
-          )?.code ?? parsed.data.accountType;
-        const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
-          code: accountCode,
-          display_name: parsed.data.name,
-          metadata: {
-            account_type: typeCode,
-            account_subtype: parsed.data.detailType?.trim() || undefined,
-          },
-        });
-        onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "part") {
         const res = await createPartsInventoryPurchase(operatingCompanyId, {
           part_description: parsed.data.name,
@@ -161,7 +104,7 @@ export function QuickCreateEntityModal({
         });
         onCreated({ id: String(res.id ?? ""), label: parsed.data.name });
       } else {
-        // vendor / item / class early-return below — residual submit must not handle them.
+        // vendor / item / class / category early-return below — residual submit must not handle them.
         pushToast("Use the Lists create chrome for this entity.", "error");
         return;
       }
@@ -176,8 +119,8 @@ export function QuickCreateEntityModal({
   });
 
   // CHROME-11: nest create in a right ParityDrawer — never a centered Modal stacked on money drawers.
-  // LST-F3368 — vendor / item / class share ONE chrome with Lists (VendorCreateModal / ItemEditorModal /
-  // AccountingCatalogModal). Residual thin forms for those kinds are dual-chrome defects.
+  // LST-F3368 / LST-F3370 — vendor / item / class / category share ONE chrome with Lists
+  // (VendorCreateModal / ItemEditorModal / AccountingCatalogModal / AccountDrawer via NewAccountDrawerForm).
   if (kind === "vendor") {
     return (
       <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="Create Vendor" stackAboveModal>
@@ -230,6 +173,21 @@ export function QuickCreateEntityModal({
       </ParityDrawer>
     );
   }
+  if (kind === "category") {
+    // LST-F3370 — category = catalogs.accounts CoA create. Same chrome as Lists → CoA → + Create
+    // and InlineCreateDrawer createKind="account" (NewAccountDrawerForm → AccountDrawer embedded).
+    return (
+      <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="New Account" stackAboveModal>
+        <NewAccountDrawerForm
+          operatingCompanyId={operatingCompanyId}
+          onClose={onClose}
+          onCreated={(created) => {
+            onCreated({ id: created.id, label: created.label });
+          }}
+        />
+      </ParityDrawer>
+    );
+  }
 
   return (
     <ParityDrawer open={open} onClose={onClose} onBack={onClose} title={titleFor(kind)} stackAboveModal>
@@ -243,10 +201,10 @@ export function QuickCreateEntityModal({
         data-testid="quick-create-entity-drawer"
       >
         {/*
-          PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT / LST-F3368:
-          vendor / item / class early-return above to VendorCreateModal / ItemEditorModal /
-          AccountingCatalogModal. Residual form is customer | category | part only — do not
-          reintroduce kind === "vendor" | "item" branches here (TS2367 after narrowing).
+          PICKER-QUICK-CREATE / LST-F3368 / LST-F3370:
+          vendor / item / class / category early-return above to Lists creators.
+          Residual form is customer | part only — do not reintroduce kind === "vendor" | "item" |
+          "category" branches here (TS2367 after narrowing).
         */}
         <label className="block">
           <span className="text-xs font-medium text-gray-600">{kind === "customer" ? "Display name *" : "Name *"}</span>
@@ -269,49 +227,6 @@ export function QuickCreateEntityModal({
             <label>
               <span className="text-xs font-medium text-gray-600">Phone</span>
               <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("phone")} aria-label="Quick create phone" />
-            </label>
-          </div>
-        ) : null}
-
-        {kind === "category" ? (
-          <div className="space-y-3">
-            <label className="block">
-              <span className="text-xs font-medium text-gray-600">Account type *</span>
-              <select
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                aria-label="Quick create account type"
-                data-testid="account-type-qbo-finer-select"
-                {...form.register("accountType", { onChange: () => form.setValue("detailType", "") })}
-              >
-                <option value="">Select a type…</option>
-                {accountTypePickerGroups.map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.options.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-gray-600">Detail type</span>
-              <select
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-50 disabled:text-gray-400"
-                aria-label="Quick create detail type"
-                disabled={detailTypeOptions.length === 0}
-                {...form.register("detailType")}
-              >
-                <option value="">
-                  {!selectedAccountType
-                    ? "Select an account type first"
-                    : detailTypeOptions.length === 0
-                      ? "No detail types available"
-                      : "Select a detail type…"}
-                </option>
-                {detailTypeOptions.map((dt) => (
-                  <option key={dt.id} value={dt.name}>{dt.name}</option>
-                ))}
-              </select>
             </label>
           </div>
         ) : null}

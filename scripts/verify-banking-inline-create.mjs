@@ -47,6 +47,7 @@ const LABEL = "verify-banking-inline-create";
 
 const DESIGN_VIEW = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
 const QUICK_CREATE = "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx";
+const CLASS_CATALOG_MODAL = "apps/frontend/src/pages/lists/accounting/AccountingCatalogModal.tsx";
 
 // Each categorize-row dropdown that MUST keep its inline "+ Add new" (ReferenceSelect + createKind).
 const REQUIRED_CREATE_KINDS = ["vendor", "category", "customer", "service", "class"];
@@ -56,6 +57,15 @@ function stripComments(text) {
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, "")
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
+function quickCreateEmbedsClassModal(qc) {
+  return (
+    /kind\s*===\s*["']class["']/.test(qc) &&
+    /<AccountingCatalogModal[\s>]/.test(qc) &&
+    /\bclassesCatalogClient\b/.test(qc) &&
+    /\bembedded\b/.test(qc)
+  );
 }
 
 /**
@@ -102,14 +112,22 @@ export function assertGuard({ designView, quickCreate }) {
     errors.push(`${DESIGN_VIEW}: Location was wired createKind="location" — there is NO canonical reporting-location create endpoint; mdata.locations/asset-locations/shop-locations are different entities. This is a fake-wire (design-law §0). Location stays free-text until the CPA-gated Location=driver mapping is decided.`);
   }
 
-  // QuickCreateEntityModal must actually SUPPORT the class kind (type union) AND have a real create branch
-  // that writes the canonical catalogs.classes via classesCatalogClient — else the picker's "+ Add new
-  // class" is a stub that 400s.
+  // QuickCreateEntityModal must SUPPORT the class kind AND write catalogs.classes — either via a direct
+  // classesCatalogClient.create call OR by embedding AccountingCatalogModal (LST-F3368 single chrome)
+  // which calls client.create with classesCatalogClient.
   if (!/QuickCreateKind\s*=[^;]*["']class["']/.test(qc)) {
     errors.push(`${QUICK_CREATE}: "class" missing from the QuickCreateKind union`);
   }
-  if (!/kind === ["']class["']/.test(qc) || !/classesCatalogClient\.create/.test(qc)) {
+  const hasDirectClassCreate = /kind === ["']class["']/.test(qc) && /classesCatalogClient\.create/.test(qc);
+  const embedsClass = quickCreateEmbedsClassModal(qc);
+  if (!hasDirectClassCreate && !embedsClass) {
     errors.push(`${QUICK_CREATE}: no classesCatalogClient.create branch for kind="class" (inline create is a stub)`);
+  } else if (embedsClass) {
+    const modalPath = path.join(ROOT, CLASS_CATALOG_MODAL);
+    const modalSrc = fs.existsSync(modalPath) ? stripComments(fs.readFileSync(modalPath, "utf8")) : "";
+    if (!/\bclient\.create\s*\(/.test(modalSrc)) {
+      errors.push(`${CLASS_CATALOG_MODAL}: embeds for class create but lost client.create (catalogs.classes write)`);
+    }
   }
 
   return errors;
@@ -132,19 +150,26 @@ function selftest() {
   `;
   const goodQuickCreate = `
     export type QuickCreateKind = "vendor" | "customer" | "item" | "category" | "part" | "class";
-    // ...
+    // LST-F3368 embed shape (preferred) — create lives on AccountingCatalogModal via client.create
+    if (kind === "class") {
+      return <AccountingCatalogModal client={classesCatalogClient} embedded />;
+    }
+  `;
+  const goodQuickCreateDirect = `
+    export type QuickCreateKind = "vendor" | "customer" | "item" | "category" | "part" | "class";
     } else if (kind === "class") {
       const res = await classesCatalogClient.create(operatingCompanyId, { code, display_name });
     }
   `;
 
   const cases = [
-    { name: "all categorize dropdowns wired + class create branch → 0 errors", in: { designView: goodDesignView, quickCreate: goodQuickCreate }, want: 0 },
+    { name: "all categorize dropdowns wired + class embed → 0 errors", in: { designView: goodDesignView, quickCreate: goodQuickCreate }, want: 0 },
+    { name: "all categorize dropdowns wired + direct class create → 0 errors", in: { designView: goodDesignView, quickCreate: goodQuickCreateDirect }, want: 0 },
     { name: "Class dropdown lost createKind=class → FAIL", in: { designView: goodDesignView.replace('createKind="class"', 'createKind="unknown"'), quickCreate: goodQuickCreate }, wantMin: 1 },
     { name: "Class regressed to bare <input value={draft.className}> → FAIL", in: { designView: goodDesignView.replace('<ReferenceSelect createKind="class" addNewLabel="+ Add new class" />', '<input className="x" value={draft.className} />'), quickCreate: goodQuickCreate }, wantMin: 1 },
     { name: "Customer dropdown lost inline-create → FAIL", in: { designView: goodDesignView.replace('createKind="customer"', 'value=""'), quickCreate: goodQuickCreate }, wantMin: 1 },
     { name: "QuickCreateEntityModal missing class kind in union → FAIL", in: { designView: goodDesignView, quickCreate: goodQuickCreate.replace('| "part" | "class"', '| "part"') }, wantMin: 1 },
-    { name: "QuickCreateEntityModal class branch is a stub (no classesCatalogClient.create) → FAIL", in: { designView: goodDesignView, quickCreate: goodQuickCreate.replace("await classesCatalogClient.create(operatingCompanyId, { code, display_name });", "throw new Error('not implemented');") }, wantMin: 1 },
+    { name: "QuickCreateEntityModal class branch is a stub (no create, no embed) → FAIL", in: { designView: goodDesignView, quickCreate: goodQuickCreate.replace("<AccountingCatalogModal client={classesCatalogClient} embedded />", "<div>stub</div>") }, wantMin: 1 },
     { name: "Location lost its intentional free-text input → FAIL", in: { designView: goodDesignView.replace('<input className="x" value={draft.location} />', '<span/>'), quickCreate: goodQuickCreate }, wantMin: 1 },
     { name: 'Location fake-wired createKind="location" (no canonical endpoint) → FAIL', in: { designView: goodDesignView + '\n<ReferenceSelect createKind="location" />', quickCreate: goodQuickCreate }, wantMin: 1 },
   ];
