@@ -96,6 +96,7 @@ export function LegalTemplatesListPage() {
         loading={query.isPending || (query.isFetching && rows.length === 0)}
         storageKey="legal-templates"
         emptyText="No legal templates found for current filters."
+        suppressToolbarSearch
         filterBar={
           <CollapsedListFilters
             activeFilterCount={(status !== "all" ? 1 : 0) + (category ? 1 : 0)}
