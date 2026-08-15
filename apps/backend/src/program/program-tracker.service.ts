@@ -179,6 +179,7 @@ export type ProgramTracker = {
   source: string;
   authored_total: number;
   registered_total: number; // LIVE count of ALL .block-ready blocks (registry.size) — the headline "Registered"
+  tracked_total: number; // registry UNION recon-only legacy rows — denominator for status views/tabs
   authored_registered_total: number; // how many authored MASTER-6 blocks are registered (authored-progress denom)
   not_registered_total: number; // authored blocks not yet registered (authored_total − authored_registered_total)
   recon_synced_at: string | null; // when the per-block status artifact was last reconciled (A3 honest "as of")
@@ -428,6 +429,10 @@ export function computeProgramTracker(now: Date, reconOverride?: Recon, createdD
     // from the DEPLOYED registry directory. A newly-committed block bumps this on the next deploy with NO script
     // re-run (the frozen manifest.registered_total is kept below as the authored-progress figure, never as headline).
     registered_total: registry.size,
+    // The status views intentionally retain recon-only legacy blocks so historical work is not erased.
+    // Keep that UNION denominator explicit: presenting these counts beside registry.size without it made
+    // 604 + 481 + 128 appear to exceed the 1,019-row universe on live Program Tracker.
+    tracked_total: rows.length,
     authored_registered_total: manifest.registered_total,
     not_registered_total: manifest.not_registered_total,
     // A3 — per-block status/PR/timestamps + phase rollup are from the last reconcile sync artifact (refreshed on

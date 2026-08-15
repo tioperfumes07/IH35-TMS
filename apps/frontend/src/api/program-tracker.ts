@@ -48,6 +48,7 @@ export type ProgramTracker = {
   source: string;
   authored_total: number;
   registered_total: number; // LIVE count of ALL .block-ready blocks — headline "Registered"
+  tracked_total: number; // live registry UNION recon-only legacy rows — status-view denominator
   authored_registered_total: number; // authored MASTER-6 blocks that are registered (authored-progress denom)
   not_registered_total: number;
   recon_synced_at: string | null; // when per-block status was last reconciled (A3 honest "as of last sync")

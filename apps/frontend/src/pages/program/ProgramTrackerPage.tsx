@@ -270,10 +270,11 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
 
       <div className="flex flex-wrap gap-3">
         <StatCard n={data.registered_total} label="Registered (unique, live from .block-ready)" />
+        <StatCard n={data.tracked_total} label="Tracked status rows (registry + legacy)" />
         <StatCard n={`${data.authored_registered_total}/${data.authored_total}`} label="Authored registered" />
-        <StatCard n={data.view_counts.pending} label="Pending" />
-        <StatCard n={data.view_counts.in_progress} label="In progress" />
-        <StatCard n={data.view_counts.completed} label="Completed & live" />
+        <StatCard n={data.view_counts.pending} label="Tracked pending" />
+        <StatCard n={data.view_counts.in_progress} label="Tracked in progress" />
+        <StatCard n={data.view_counts.completed} label="Tracked completed & live" />
       </div>
 
       {/* FIX B — "Since Jul 1": the same breakdown restricted to blocks created (git add-date) on/after
@@ -324,7 +325,10 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
         The headline <b>Registered</b> count is computed live at request time from the deployed
         <span className="font-mono"> .block-ready</span> registry — <b>unique block_id, with duplicate / superseded /
         stale files excluded</b> (a CI guard keeps every active block_id unique), so it is never inflated by the raw
-        file count. A newly-registered block bumps it on the next deploy with no script re-run. Per-block <b>status / PR / timestamps</b> and the phase rollup come from the
+        file count. <b>Tracked status rows</b> are a different, explicitly labeled population: the live registry
+        unioned with recon-only legacy rows so historical work is not erased. Pending / In Progress / Completed use
+        that tracked denominator, not the smaller registry-only count. A newly-registered block bumps the registry
+        count on the next deploy with no script re-run. Per-block <b>status / PR / timestamps</b> and the phase rollup come from the
         last reconcile sync (Status as of last sync, above) — refreshed automatically on schedule and on merge-to-main,
         not fabricated per request. "Completed" = registry DONE <b>and</b> merged + deployed (live-verified) — a bare
         done marker without live proof stays In Progress, never Completed.
