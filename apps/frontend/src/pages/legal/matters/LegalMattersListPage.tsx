@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -32,17 +33,34 @@ function daysUntil(dateStr: unknown) {
 
 export function LegalMattersListPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
   const [type, setType] = useState("");
   const relatedDriverId = searchParams.get("related_driver_id")?.trim() || "";
-  const unitId = searchParams.get("unit_id")?.trim() || "";
   const equipmentId = searchParams.get("equipment_id")?.trim() || "";
   const insuranceClaimId = searchParams.get("insurance_claim_id")?.trim() || "";
   const insuranceLawsuitId = searchParams.get("insurance_lawsuit_id")?.trim() || "";
+  // LST-F5181 — visible EntityPicker (URL-only unit_id is not reverse chrome).
+  const deepLinkUnitId = searchParams.get("unit_id")?.trim() || "";
+  const [unitFilter, setUnitFilterState] = useState(deepLinkUnitId);
+  useEffect(() => {
+    setUnitFilterState(deepLinkUnitId);
+  }, [deepLinkUnitId]);
+  const unitId = unitFilter || deepLinkUnitId;
+  const PAGE_SIZE = 100;
+  const [page, setPage] = useState(0);
+  const resetPage = () => setPage(0);
+  function setUnitFilter(next: string) {
+    setUnitFilterState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("unit_id", next);
+    else p.delete("unit_id");
+    setSearchParams(p, { replace: true });
+    resetPage();
+  }
   const staged = useStagedListFilters({
     applied: { status, severity, type }, empty: { status: "", severity: "", type: "" },
     onApply: (next) => { setStatus(next.status); setSeverity(next.severity); setType(next.type); resetPage(); },
@@ -50,8 +68,6 @@ export function LegalMattersListPage() {
   // CLS-SILENT-CAP — this list was capped at 500 server-side with no offset and no total, so matter
   // 501 vanished and the screen had no way to say so. Page size is explicit and the server's own
   // `total` drives the range label, so a truncated view is now visible instead of silent.
-  const PAGE_SIZE = 100;
-  const [page, setPage] = useState(0);
 
   const listQuery = useQuery({
     queryKey: [
@@ -92,10 +108,6 @@ export function LegalMattersListPage() {
   const rangeEnd = Math.min(page * PAGE_SIZE + rows.length, total);
   const hasPrev = page > 0;
   const hasNext = rangeEnd < total;
-
-  // A filter change must reset to page 0, otherwise a narrower result set lands the user on an
-  // offset past its end and the list reads as empty.
-  const resetPage = () => setPage(0);
 
   const columns = useMemo<ParityColumn<LegalMatterListRow>[]>(
     () => [
@@ -202,6 +214,17 @@ export function LegalMattersListPage() {
               dataAttributes={{ "data-legal-matters-filter-toolbar": "collapsed" }}
             >
               <div className="flex flex-wrap gap-2">
+                <div className="min-w-[14rem]">
+                  <EntityPicker
+                    kind="unit"
+                    operatingCompanyId={companyId}
+                    value={unitId || null}
+                    onChange={(next) => setUnitFilter(next ?? "")}
+                    allowCreate={false}
+                    placeholder="All units"
+                    dataTestId="legal-matters-filter-unit"
+                  />
+                </div>
                 <SelectCombobox
                   className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
                   value={staged.draft.status}

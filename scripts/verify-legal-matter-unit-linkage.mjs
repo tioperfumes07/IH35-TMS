@@ -5,6 +5,7 @@ const LABEL = "verify-legal-matter-unit-linkage";
 const files = {
   service: "apps/backend/src/legal/matters.service.ts",
   form: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
+  list: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
   detail: "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx",
   reverse: "apps/frontend/src/components/legal/LegalMattersReverseSection.tsx",
   profile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
@@ -23,6 +24,15 @@ function audit(s) {
   if (!/kind="unit"[\s\S]{0,160}matter\.unit_id[\s\S]{0,160}unit_number/.test(s.detail)) failures.push("matter detail must drill to canonical unit");
   if (!/LegalMattersReverseSection[\s\S]{0,220}filter=\{\{ unit_id: id \}\}/.test(s.profile)) failures.push("vehicle profile must mount exact matter reverse set");
   if (!/\{ unit_id: string;/.test(s.reverse) || !/unit_id\?: string/.test(s.api)) failures.push("shared reverse/API must retain unit filter");
+  // LST-F5181 — list reverse must be visible EntityPicker, not URL-only.
+  if (
+    !/dataTestId="legal-matters-filter-unit"/.test(s.list) ||
+    !/kind="unit"/.test(s.list) ||
+    !/allowCreate=\{false\}/.test(s.list) ||
+    !/searchParams\.get\("unit_id"\)/.test(s.list)
+  ) {
+    failures.push("matters list must render EntityPicker unit filter (allowCreate=false) synced to ?unit_id=");
+  }
   return failures;
 }
 if (process.argv.includes("--selftest")) {
@@ -35,6 +45,7 @@ if (process.argv.includes("--selftest")) {
     ["filter", "service", /where\.push\(`m\.unit_id = \$\$\{values\.length\}`\)/, "where.push(`TRUE`)"],
     ["detail", "detail", /kind="unit"/, 'kind="driver"'],
     ["reverse", "profile", /(LegalMattersReverseSection[\s\S]{0,220})filter=\{\{ unit_id: id \}\}/, "$1filter={{ related_driver_id: id }}"],
+    ["list-picker", "list", /dataTestId="legal-matters-filter-unit"/, 'dataTestId="broken-filter"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
