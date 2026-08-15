@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { exportApAging, getApAgingReport, type APAgingRow } from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -17,6 +17,7 @@ import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThro
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -31,6 +32,7 @@ type APAgingRowWithBucket = APAgingRow & { bucket_0_30_cents: number };
 export function APAgingPage() {
   const navigate = useNavigate();
   const { pushToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   // BANK-SORT-ROLLOUT-ACCT (A/P Aging follow-up): every visible column header sorts ASC/DESC;
@@ -39,9 +41,23 @@ export function APAgingPage() {
   // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply (BalanceSheet pattern).
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
-  const [search, setSearch] = useState("");
   const [minBal, setMinBal] = useState("");
   const [bucketFilter, setBucketFilter] = useState<"all" | "61+">("all");
+
+  // LST-F5179 — visible EntityPicker (URL-only name seed is not reverse chrome).
+  const deepLinkVendorId = searchParams.get("vendor_id")?.trim() ?? "";
+  const [vendorFilter, setVendorFilterState] = useState(deepLinkVendorId);
+  useEffect(() => {
+    setVendorFilterState(deepLinkVendorId);
+  }, [deepLinkVendorId]);
+  const effectiveVendorId = vendorFilter || deepLinkVendorId;
+  function setVendorFilter(next: string) {
+    setVendorFilterState(next);
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set("vendor_id", next);
+    else p.delete("vendor_id");
+    setSearchParams(p, { replace: true });
+  }
 
   const query = useQuery({
     queryKey: ["reports", "ap-aging", companyId, appliedAsOf],
@@ -64,7 +80,7 @@ export function APAgingPage() {
   const filtered = useMemo<APAgingRowWithBucket[]>(() => {
     return rows
       .filter((r) => {
-        if (search.trim() && !r.vendor_name.toLowerCase().includes(search.trim().toLowerCase())) return false;
+        if (effectiveVendorId && r.vendor_id !== effectiveVendorId) return false;
         if (r.total_open_cents < minCents) return false;
         if (bucketFilter === "61+") {
           const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
@@ -73,7 +89,7 @@ export function APAgingPage() {
         return true;
       })
       .map((r) => ({ ...r, bucket_0_30_cents: r.current_cents + r.bucket_1_30_cents }));
-  }, [rows, search, minCents, bucketFilter]);
+  }, [rows, effectiveVendorId, minCents, bucketFilter]);
 
   function exportCsv() {
     const header = ["Vendor", "Total", "0-30", "31-60", "61-90", "91+", "Last Pmt"];
@@ -175,8 +191,17 @@ export function APAgingPage() {
           <DatePicker className="mt-1 h-9 w-full" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <label className="text-xs text-gray-600">
-          Vendor contains
-          <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={search} onChange={(e) => setSearch(e.target.value)} />
+          Vendor
+          <EntityPicker
+            kind="vendor"
+            operatingCompanyId={companyId}
+            value={effectiveVendorId || null}
+            onChange={(next) => setVendorFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All vendors"
+            className="mt-1"
+            dataTestId="ap-aging-filter-vendor"
+          />
         </label>
         <label className="text-xs text-gray-600">
           Min balance ($)
