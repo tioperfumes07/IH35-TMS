@@ -10,7 +10,7 @@ function accountingRoles(role: string) {
 }
 
 const frequencySchema = z.object({
-  kind: z.enum(["daily", "weekly", "monthly", "cron"]),
+  kind: z.enum(["daily", "weekly", "monthly", "quarterly", "cron"]),
   time_local: z.string().regex(/^\d{1,2}:\d{2}$/),
   day_of_week: z.number().int().min(0).max(6).optional(),
   day_of_month: z.number().int().min(1).max(31).optional(),
@@ -67,6 +67,7 @@ function cadenceLabel(row: {
   if (row.frequency === "daily") return `Daily @ ${t}`;
   if (row.frequency === "weekly") return `Weekly (dow ${row.run_day_of_week ?? "?"}) @ ${t}`;
   if (row.frequency === "monthly") return `Monthly (dom ${row.run_day_of_month ?? "?"}) @ ${t}`;
+  if (row.frequency === "quarterly") return `Quarterly (last day) @ ${t}`;
   return `Cron ${row.cron_expression ?? ""}`;
 }
 
@@ -109,7 +110,7 @@ export async function registerScheduledReportsRoutes(app: FastifyInstance) {
       if (!exists.rows[0]?.ok) return [];
 
       const values: unknown[] = [parsed.data.operating_company_id];
-      const where = [`operating_company_id = $1::uuid`];
+      const where = [`operating_company_id = $1::uuid`, `voided_at IS NULL`];
       if (parsed.data.status) {
         values.push(parsed.data.status);
         where.push(`status = $${values.length}`);
@@ -529,17 +530,27 @@ export async function registerScheduledReportsRoutes(app: FastifyInstance) {
     const parsed = detailQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const deleted = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+    // LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED: void-not-delete. This route's hard
+    // DELETE was the reason this whole engine stayed unmounted (locked decision §9.6 requires
+    // scoped audited void/deactivation before this table goes canonical) — never hard-delete a
+    // schedule; mark it voided and exclude it from the active list instead.
+    const voided = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const exists = await client.query(`SELECT to_regclass('reporting.scheduled_reports') IS NOT NULL AS ok`);
       if (!exists.rows[0]?.ok) return false;
-      const res = await client.query(`DELETE FROM reporting.scheduled_reports WHERE id=$1 RETURNING id`, [params.data.id]);
+      const res = await client.query(
+        `UPDATE reporting.scheduled_reports
+         SET voided_at = now(), voided_by_user_id = $2::uuid, status = 'paused'
+         WHERE id = $1::uuid AND operating_company_id = $3::uuid AND voided_at IS NULL
+         RETURNING id`,
+        [params.data.id, user.uuid, parsed.data.operating_company_id]
+      );
       return Boolean(res.rows[0]?.id);
     });
 
-    if (!deleted) return reply.code(404).send({ error: "not_found" });
+    if (!voided) return reply.code(404).send({ error: "not_found" });
 
     await appendReportingAuditEvent(
-      "scheduled_report.deleted",
+      "scheduled_report.voided",
       "info",
       {
         scheduled_report_id: params.data.id,
