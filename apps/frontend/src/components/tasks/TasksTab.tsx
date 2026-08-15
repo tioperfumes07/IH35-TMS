@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchTasksByTarget, type TaskStatus, type TaskTargetType } from "../../api/tasks";
+import { fetchTasksByTarget, type Task, type TaskStatus, type TaskTargetType } from "../../api/tasks";
 import { CreateTaskModal } from "./CreateTaskModal";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
@@ -43,6 +44,52 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
 
   const tasks = tasksQuery.data?.tasks ?? [];
 
+  // TASK-F3558 — ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar.
+  const columns = useMemo<ParityColumn<Task>[]>(
+    () => [
+      {
+        key: "title",
+        label: "Task",
+        render: (t) => (
+          <>
+            <EntityLink
+              kind="task"
+              id={t.task_id}
+              label={t.title}
+              className="font-semibold text-slate-700 hover:underline"
+            />
+            {t.anticipated_category ? (
+              <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span>
+            ) : null}
+          </>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (t) => <StatusPill status={t.status} />,
+      },
+      {
+        key: "scheduled_date",
+        label: "Due",
+        render: (t) => <span className="text-gray-600">{formatDateUS(t.scheduled_date) || "—"}</span>,
+      },
+      {
+        key: "alarm_at",
+        label: "Alarm",
+        render: (t) => (
+          <span className="text-gray-600">{t.alarm_at ? new Date(t.alarm_at).toLocaleString() : "—"}</span>
+        ),
+      },
+      {
+        key: "assigned_to_name",
+        label: "Assignee",
+        render: (t) => <span className="text-gray-600">{t.assigned_to_name ?? "—"}</span>,
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -57,47 +104,24 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
         </button>
       </div>
 
-      {tasksQuery.isLoading ? (
-        <p className="text-xs text-gray-500">Loading tasks…</p>
-      ) : tasksQuery.isError ? (
+      {tasksQuery.isError ? (
         <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700">
-          Could not load linked tasks. <button type="button" className="font-semibold underline" onClick={() => void tasksQuery.refetch()}>Retry</button>
+          Could not load linked tasks.{" "}
+          <button type="button" className="font-semibold underline" onClick={() => void tasksQuery.refetch()}>
+            Retry
+          </button>
         </div>
-      ) : tasks.length === 0 ? (
-        <p className="text-xs text-gray-500">No tasks linked to this record yet.</p>
       ) : (
-        <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-500">
-              <th className="py-1.5 pr-3 font-semibold">Task</th>
-              <th className="py-1.5 pr-3 font-semibold">Status</th>
-              <th className="py-1.5 pr-3 font-semibold">Due</th>
-              <th className="py-1.5 pr-3 font-semibold">Alarm</th>
-              <th className="py-1.5 pr-3 font-semibold">Assignee</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((t) => (
-              <tr key={t.task_id} className="border-b border-gray-100">
-                <td className="py-1.5 pr-3 text-gray-800">
-                  <EntityLink
-                    kind="task"
-                    id={t.task_id}
-                    label={t.title}
-                    className="font-semibold text-slate-700 hover:underline"
-                  />
-                  {t.anticipated_category ? <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span> : null}
-                </td>
-                <td className="py-1.5 pr-3"><StatusPill status={t.status} /></td>
-                <td className="py-1.5 pr-3 text-gray-600">{formatDateUS(t.scheduled_date) || "—"}</td>
-                <td className="py-1.5 pr-3 text-gray-600">{t.alarm_at ? new Date(t.alarm_at).toLocaleString() : "—"}</td>
-                <td className="py-1.5 pr-3 text-gray-600">{t.assigned_to_name ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
+        <ParityTable<Task>
+          columns={columns}
+          rows={tasks}
+          rowKey={(t) => t.task_id}
+          loading={tasksQuery.isLoading}
+          emptyText="No tasks linked to this record yet."
+          storageKey="entity-tasks-tab"
+          exportFilename="entity-tasks"
+          tableTestId="entity-tasks-tab-table"
+        />
       )}
 
       <CreateTaskModal
