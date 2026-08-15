@@ -1428,6 +1428,11 @@
     "claimedBy": "cursor",
     "name": "verify-factoring-submission-workqueue-parity-surface-bar"
   },
+  "3544": {
+    "claimedAt": "2026-08-15",
+    "claimedBy": "cursor",
+    "name": "verify-cash-advances-table-parity-surface-bar"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
