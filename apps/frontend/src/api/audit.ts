@@ -15,13 +15,15 @@ export type DriverAuditEvent = {
 export type ListDriverAuditEventsParams = {
   operatingCompanyId: string;
   driverId: string;
-  eventType?: string;
+  // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: arrays — see ListAuditEventsParams for the shared
+  // reasoning; this endpoint serves the driver-specific audit tab separately.
+  eventType?: string[];
   from?: string;
   to?: string;
   /** SAF-B29 — must reach SQL; client filter after limit:200 silently drops matching history. */
   actor?: string;
-  status?: string;
-  source?: string;
+  status?: string[];
+  source?: string[];
   voidsOnly?: boolean;
   limit?: number;
   offset?: number;
@@ -33,12 +35,12 @@ export async function listDriverAuditEvents(params: ListDriverAuditEventsParams)
     entity_type: "driver",
     entity_id: params.driverId,
   });
-  if (params.eventType) search.set("event_type", params.eventType);
+  if (params.eventType?.length) search.set("event_type", params.eventType.join(","));
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
   if (params.actor) search.set("actor", params.actor);
-  if (params.status) search.set("status", params.status);
-  if (params.source) search.set("source", params.source);
+  if (params.status?.length) search.set("status", params.status.join(","));
+  if (params.source?.length) search.set("source", params.source.join(","));
   if (params.voidsOnly) search.set("voids_only", "true");
   if (params.limit != null) search.set("limit", String(params.limit));
   if (params.offset != null) search.set("offset", String(params.offset));

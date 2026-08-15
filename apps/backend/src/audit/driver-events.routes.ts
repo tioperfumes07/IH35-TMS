@@ -3,17 +3,36 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { listDriverAuditEvents } from "./driver-events.service.js";
 
+// LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: comma-separated query params transformed to arrays
+// (OR'd filter) — mirrors audit-events-list.routes.ts's commaListSchema for the shared entity-audit
+// endpoint; this route serves the driver-specific audit tab separately.
+const commaListSchema = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .transform((v) => {
+      if (!v) return undefined;
+      const parts = v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, max);
+      return parts.length > 0 ? parts : undefined;
+    });
+
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   entity_type: z.literal("driver"),
   entity_id: z.string().uuid(),
-  event_type: z.string().trim().min(1).max(200).optional(),
+  event_type: commaListSchema(20),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
   // SAF-B29 — AuditHistoryTab chrome sent these nowhere; events past LIMIT were invisible under filter.
   actor: z.string().trim().min(1).max(300).optional(),
-  status: z.string().trim().min(1).max(100).optional(),
-  source: z.string().trim().min(1).max(100).optional(),
+  status: commaListSchema(20),
+  source: commaListSchema(20),
   voids_only: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),

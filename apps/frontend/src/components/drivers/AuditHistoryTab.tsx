@@ -9,6 +9,7 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Download, AlertTriangle } from "lucide-react";
 import { EntityLink } from "../shared/EntityLink";
+import { MultiSelectDropdown } from "../forms/MultiSelectDropdown";
 
 type Props = {
   driverId: string;
@@ -31,7 +32,6 @@ function payloadDiff(payload: unknown): string {
 }
 
 const SOURCE_OPTIONS = [
-  { value: "", label: "All Sources" },
   { value: "dispatch", label: "Dispatch" },
   { value: "maint", label: "Maintenance" },
   { value: "accounting", label: "Accounting" },
@@ -41,7 +41,6 @@ const SOURCE_OPTIONS = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All Statuses" },
   { value: "open", label: "Open" },
   { value: "paid", label: "Paid" },
   { value: "void", label: "Void" },
@@ -52,12 +51,13 @@ const STATUS_OPTIONS = [
 ];
 
 export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
-  const [eventTypeFilter, setEventTypeFilter] = useState("");
+  // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: arrays, wired to MultiSelectDropdown below.
+  const [eventTypeFilter, setEventTypeFilter] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [actorFilter, setActorFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [voidsOnly, setVoidsOnly] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -85,12 +85,12 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
       listDriverAuditEvents({
         operatingCompanyId,
         driverId,
-        eventType: eventTypeFilter.trim() || undefined,
+        eventType: eventTypeFilter.length > 0 ? eventTypeFilter : undefined,
         from: fromIso,
         to: toIso,
         actor: actorFilter.trim() || undefined,
-        status: statusFilter.trim() || undefined,
-        source: sourceFilter.trim() || undefined,
+        status: statusFilter.length > 0 ? statusFilter : undefined,
+        source: sourceFilter.length > 0 ? sourceFilter : undefined,
         voidsOnly: voidsOnly || undefined,
         limit: 200,
       }),
@@ -207,19 +207,13 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         </label>
         <label className="text-xs text-gray-600">
           Event type
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={eventTypeFilter}
-            onChange={(e) => setEventTypeFilter(e.target.value)}
+          <MultiSelectDropdown
+            label="Event type"
+            options={eventTypeOptions.map((value) => ({ value, label: value }))}
+            selected={eventTypeFilter}
+            onChange={setEventTypeFilter}
             data-testid="driver-audit-filter-event-type"
-          >
-            <option value="">All</option>
-            {eventTypeOptions.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
+          />
         </label>
         <label className="text-xs text-gray-600">
           Actor
@@ -234,29 +228,25 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         </label>
         <label className="text-xs text-gray-600">
           Status
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+          <MultiSelectDropdown
+            label="Status"
+            options={STATUS_OPTIONS}
+            selected={statusFilter}
+            onChange={setStatusFilter}
+            allLabel="All Statuses"
             data-testid="driver-audit-filter-status"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+          />
         </label>
         <label className="text-xs text-gray-600">
           Source
-          <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
+          <MultiSelectDropdown
+            label="Source"
+            options={SOURCE_OPTIONS}
+            selected={sourceFilter}
+            onChange={setSourceFilter}
+            allLabel="All Sources"
             data-testid="driver-audit-filter-source"
-          >
-            {SOURCE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+          />
         </label>
         <button
           onClick={() => setVoidsOnly((v) => !v)}
