@@ -11,6 +11,7 @@ import {
   getReconciliationSessions,
   listTransfers,
   syncPlaidBankAccount,
+  type ReconciliationSession,
   type Transfer,
 } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
@@ -120,6 +121,120 @@ export function BankAccountDetailPage() {
     return `${account.institution_name || "Bank"} - ${account.account_name || "Account"}`;
   }, [account]);
 
+  // BANK-F3556 — transfers + reconciliation reverse lists use ParityTable (Search+Range+gear).
+  const transferColumns = useMemo<ParityColumn<Transfer>[]>(
+    () => [
+      {
+        key: "transfer_date",
+        label: "Date",
+        render: (t) => <span className="text-gray-700">{formatDateUS(t.transfer_date)}</span>,
+      },
+      {
+        key: "direction",
+        label: "Direction",
+        render: (t) => (
+          <span className="text-gray-700">{t.from_account_id === id ? "Out" : "In"}</span>
+        ),
+      },
+      {
+        key: "other_account",
+        label: "Other account",
+        render: (t) => {
+          const isOutgoing = t.from_account_id === id;
+          const otherAccountId = isOutgoing ? t.to_account_id : t.from_account_id;
+          const otherAccountKind = isOutgoing ? t.to_account_kind : t.from_account_kind;
+          const otherAccountName = isOutgoing
+            ? t.to_bank_name || t.to_coa_name
+            : t.from_bank_name || t.from_coa_name;
+          return (
+            <EntityLink
+              kind={otherAccountKind === "coa" ? "account" : "bank_account"}
+              id={otherAccountId}
+              label={entityLabel(otherAccountName, otherAccountId, "Account")}
+            />
+          );
+        },
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        className: "text-right",
+        cellClass: "text-right",
+        render: (t) => {
+          const isOutgoing = t.from_account_id === id;
+          return (
+            <span className="font-semibold text-gray-900">
+              {isOutgoing ? "−" : "+"}
+              {formatUsdCents(Number(t.amount_cents))}
+            </span>
+          );
+        },
+      },
+      {
+        key: "memo",
+        label: "Memo",
+        render: (t) => <span className="text-gray-600">{t.memo || "—"}</span>,
+      },
+    ],
+    [id],
+  );
+
+  const reconciliationColumns = useMemo<ParityColumn<ReconciliationSession>[]>(
+    () => [
+      {
+        key: "period",
+        label: "Period",
+        render: (s) => (
+          <span className="text-gray-700">
+            {formatDateUS(s.period_start)} – {formatDateUS(s.period_end)}
+          </span>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (s) => <span className="capitalize text-gray-700">{s.status}</span>,
+      },
+      {
+        key: "statement_balance_cents",
+        label: "Statement balance",
+        className: "text-right",
+        cellClass: "text-right",
+        render: (s) => (
+          <span className="text-gray-900">{formatUsdCents(Number(s.statement_balance_cents))}</span>
+        ),
+      },
+      {
+        key: "variance_cents",
+        label: "Variance",
+        className: "text-right",
+        cellClass: "text-right",
+        render: (s) => (
+          <span className="text-gray-900">{formatUsdCents(Number(s.variance_cents))}</span>
+        ),
+      },
+      {
+        key: "open",
+        label: "",
+        className: "text-right",
+        cellClass: "text-right",
+        render: (s) => (
+          <button
+            type="button"
+            className="text-xs font-medium text-slate-700 hover:underline"
+            data-testid={`bank-account-detail-reconciliation-open-${s.id}`}
+            onClick={() =>
+              navigate(`/banking/reconciliation-workspace?session_id=${s.id}&bank_account_hint=${s.bank_account_id}`)
+            }
+          >
+            Open
+          </button>
+        ),
+      },
+    ],
+    [navigate],
+  );
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -215,47 +330,15 @@ export function BankAccountDetailPage() {
       {transfers.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="bank-account-detail-transfers">
           <h3 className="mb-2 text-sm font-semibold text-gray-800">Transfers ({transfers.length})</h3>
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
-                <th className="py-1 pr-2">Date</th>
-                <th className="py-1 pr-2">Direction</th>
-                <th className="py-1 pr-2">Other account</th>
-                <th className="py-1 pr-2 text-right">Amount</th>
-                <th className="py-1 pr-2">Memo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transfers.map((t) => {
-                const isOutgoing = t.from_account_id === id;
-                const otherAccountId = isOutgoing ? t.to_account_id : t.from_account_id;
-                const otherAccountKind = isOutgoing ? t.to_account_kind : t.from_account_kind;
-                const otherAccountName = isOutgoing
-                  ? t.to_bank_name || t.to_coa_name
-                  : t.from_bank_name || t.from_coa_name;
-                return (
-                  <tr key={t.id} className="border-b border-gray-100 last:border-0">
-                    <td className="py-1 pr-2 text-gray-700">{formatDateUS(t.transfer_date)}</td>
-                    <td className="py-1 pr-2 text-gray-700">{isOutgoing ? "Out" : "In"}</td>
-                    <td className="py-1 pr-2">
-                      <EntityLink
-                        kind={otherAccountKind === "coa" ? "account" : "bank_account"}
-                        id={otherAccountId}
-                        label={entityLabel(otherAccountName, otherAccountId, "Account")}
-                      />
-                    </td>
-                    <td className="py-1 pr-2 text-right font-semibold text-gray-900">
-                      {isOutgoing ? "−" : "+"}
-                      {formatUsdCents(Number(t.amount_cents))}
-                    </td>
-                    <td className="py-1 pr-2 text-gray-600">{t.memo || "—"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          </div>
+          <ParityTable<Transfer>
+            columns={transferColumns}
+            rows={transfers}
+            rowKey={(t) => t.id}
+            storageKey="bank-account-detail-transfers"
+            exportFilename="bank-account-detail-transfers"
+            tableTestId="bank-account-detail-transfers-table"
+            emptyText="No transfers for this account."
+          />
         </div>
       ) : null}
 
@@ -264,43 +347,15 @@ export function BankAccountDetailPage() {
       {reconciliationSessions.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="bank-account-detail-reconciliation-sessions">
           <h3 className="mb-2 text-sm font-semibold text-gray-800">Reconciliation sessions ({reconciliationSessions.length})</h3>
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
-                <th className="py-1 pr-2">Period</th>
-                <th className="py-1 pr-2">Status</th>
-                <th className="py-1 pr-2 text-right">Statement balance</th>
-                <th className="py-1 pr-2 text-right">Variance</th>
-                <th className="py-1 pr-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {reconciliationSessions.map((s) => (
-                <tr key={s.id} className="border-b border-gray-100 last:border-0">
-                  <td className="py-1 pr-2 text-gray-700">
-                    {formatDateUS(s.period_start)} – {formatDateUS(s.period_end)}
-                  </td>
-                  <td className="py-1 pr-2 text-gray-700 capitalize">{s.status}</td>
-                  <td className="py-1 pr-2 text-right text-gray-900">{formatUsdCents(Number(s.statement_balance_cents))}</td>
-                  <td className="py-1 pr-2 text-right text-gray-900">{formatUsdCents(Number(s.variance_cents))}</td>
-                  <td className="py-1 pr-2 text-right">
-                    <button
-                      type="button"
-                      className="text-xs font-medium text-slate-700 hover:underline"
-                      data-testid={`bank-account-detail-reconciliation-open-${s.id}`}
-                      onClick={() =>
-                        navigate(`/banking/reconciliation-workspace?session_id=${s.id}&bank_account_hint=${s.bank_account_id}`)
-                      }
-                    >
-                      Open
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
+          <ParityTable<ReconciliationSession>
+            columns={reconciliationColumns}
+            rows={reconciliationSessions}
+            rowKey={(s) => s.id}
+            storageKey="bank-account-detail-reconciliation"
+            exportFilename="bank-account-detail-reconciliation"
+            tableTestId="bank-account-detail-reconciliation-table"
+            emptyText="No reconciliation sessions for this account."
+          />
         </div>
       ) : null}
 
