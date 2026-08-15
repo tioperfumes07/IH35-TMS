@@ -16,6 +16,8 @@ function failures(s = files) { return [
   ["exact config drill", s.reverse.includes('kind="driver_team_split"') && s.reverse.includes('id={config.id}') && s.panel.includes('searchParams.get("team_id")') && s.panel.includes("row.id === teamId")],
   ["driver target preserved", s.reverse.includes('kind="driver_team_splits_filter"') && s.reverse.includes('id={driverId}') && s.panel.includes('searchParams.get("driver_id")') && s.panel.includes("row.primary_driver_id === driverId || row.secondary_driver_id === driverId")],
   ["honest panel failure state", s.panel.includes("Team split configurations unavailable.") && s.panel.includes("!isLoading && !isError") && s.panel.includes("void refetch()")],
+  // LST-F5185 — list reverse filter must be EntityPicker + URL write
+  ["visible driver EntityPicker filter", s.panel.includes('dataTestId="team-split-config-filter-driver"') && s.panel.includes("allowCreate={false}") && s.panel.includes("setSearchParams") && s.panel.includes("EntityPicker")],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   const checks = [
@@ -25,9 +27,10 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, panel: files.panel.replace("row.id === teamId", "true") }).includes("exact config drill"),
     failures({ ...files, reverse: files.reverse.replace('kind="driver_team_splits_filter"', 'kind="driver"') }).includes("driver target preserved"),
     failures({ ...files, panel: files.panel.replace("!isLoading && !isError", "!isLoading") }).includes("honest panel failure state"),
+    failures({ ...files, panel: files.panel.replace('dataTestId="team-split-config-filter-driver"', 'dataTestId="gone"') }).includes("visible driver EntityPicker filter"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-driver-team-split-config-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-driver-team-split-config-reverse selftest PASS — 6/6 filter/profile/target/error mutations red"); process.exit(0);
+  console.log("verify-driver-team-split-config-reverse selftest PASS — 7/7 filter/profile/target/error/picker mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-driver-team-split-config-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
