@@ -2333,8 +2333,7 @@ export function BankingTransactionsDesignView({
             <p className="mt-1">
               QBO-style paperclip and note icons stay visible but disabled.{" "}
               <strong>Attachments:</strong>{" "}
-              <code className="text-[11px]">documents.attachments</code> CHECK has no{" "}
-              <code className="text-[11px]">bank_transaction</code> entity_type and{" "}
+              the attachment system does not support bank feed rows as an attachable record type, and{" "}
               <code className="text-[11px]">/api/v1/documents/attachments</code> upload rejects bank feed rows — attach
               receipts to the Bill, Expense, or JE this transaction posts to instead.{" "}
               <strong>Notes:</strong>{" "}
