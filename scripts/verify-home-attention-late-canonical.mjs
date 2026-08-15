@@ -10,6 +10,7 @@
  *   (2) EXCLUDES sample + soft-deleted: references is_sample_data and soft_deleted_at in the late block.
  *   (3) IN-FLIGHT status set only: dispatched/at_pickup/in_transit/at_delivery (not booked/planned/assigned).
  *   (4) REAL late source: reads mdata.load_stops (scheduled_arrival_at / actual_arrival_at).
+ *   (5) DEEP ROUTE: the attention action opens the canonical late-arrivals queue, not generic Dispatch.
  *
  * --selftest exercises assertGuard() against inline fixtures.
  */
@@ -54,6 +55,12 @@ export function assertGuard({ source }) {
   if (!/mdata\.load_stops/.test(block) || !/scheduled_arrival_at/.test(block)) {
     errors.push(`${FILE}: late metric does not source the deadline from mdata.load_stops.scheduled_arrival_at`);
   }
+  if (!/action_url:\s*["']\/dispatch\/alerts\/late-arrivals["']/.test(block)) {
+    errors.push(`${FILE}: late attention action must deep-link to /dispatch/alerts/late-arrivals`);
+  }
+  if (!/action_label:\s*["']Open late arrivals["']/.test(block)) {
+    errors.push(`${FILE}: late attention action label must name the late-arrivals destination`);
+  }
   return errors;
 }
 
@@ -63,6 +70,8 @@ function selftest() {
     if (hasSample) whereParts.push('l.is_sample_data IS NOT TRUE');
     whereParts.push("COALESCE(l.status::text,'') IN ('dispatched','at_pickup','in_transit','at_delivery')");
     whereParts.push("EXISTS (SELECT 1 FROM mdata.load_stops s WHERE s.load_id=l.id AND s.scheduled_arrival_at < now() AND s.actual_arrival_at IS NULL)");
+    action_url: "/dispatch/alerts/late-arrivals",
+    action_label: "Open late arrivals",
   });
   let maintenanceCriticalOrOverdue = 0;`;
   const cases = [
@@ -71,6 +80,8 @@ function selftest() {
     { n: "no sample exclusion", src: good.replace("if (hasSample) whereParts.push('l.is_sample_data IS NOT TRUE');", ""), min: 1 },
     { n: "broad status set", src: good.replace("'dispatched','at_pickup','in_transit','at_delivery'", "'booked','planned','assigned_not_dispatched','dispatched','at_pickup','in_transit','at_delivery'"), min: 1 },
     { n: "no load_stops source", src: good.replace(/mdata\.load_stops[\s\S]*?actual_arrival_at IS NULL\)"\);/, ""), min: 1 },
+    { n: "generic dispatch route", src: good.replace("/dispatch/alerts/late-arrivals", "/dispatch"), min: 1 },
+    { n: "generic dispatch label", src: good.replace("Open late arrivals", "Open dispatch"), min: 1 },
   ];
   let failed = 0;
   for (const c of cases) {
