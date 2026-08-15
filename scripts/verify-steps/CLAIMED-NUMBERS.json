@@ -2836,5 +2836,10 @@
     "claimed_at": "2026-08-15",
     "claimed_by": "cc-1",
     "purpose": "verify-bank-required-honest-genuine"
+  },
+  "3377": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "cc-1",
+    "purpose": "verify-invoice-required-honest"
   }
 }
