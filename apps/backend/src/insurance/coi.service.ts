@@ -72,7 +72,7 @@ export async function listCoiRequests(client: Queryable, input: ListCoiRequestsI
       SELECT ${selectColumns("r.")},
              COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u.email) AS requested_by_name,
              p.policy_number,
-             c.legal_name AS customer_name
+             c.customer_name AS customer_name
       FROM insurance.coi_request r
       LEFT JOIN org.user_company_access uca
         ON uca.user_id = r.requested_by
