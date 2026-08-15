@@ -90,8 +90,8 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
       listAuditEvents({
         operatingCompanyId,
         actor: userId,
-        eventType: eventTypeFilter.trim() || undefined,
-        source: sourceFilter.trim() || undefined,
+        eventType: eventTypeFilter.trim() ? [eventTypeFilter.trim()] : undefined,
+        source: sourceFilter.trim() ? [sourceFilter.trim()] : undefined,
         voidsOnly,
         from: fromIso,
         to: toIso,
