@@ -11,6 +11,7 @@
  *   (3) IN-FLIGHT status set only: dispatched/at_pickup/in_transit/at_delivery (not booked/planned/assigned).
  *   (4) REAL late source: reads mdata.load_stops (scheduled_arrival_at / actual_arrival_at).
  *   (5) DEEP ROUTE: the attention action opens the canonical late-arrivals queue, not generic Dispatch.
+ *   (6) SIBLING DEEP ROUTES: WO and complaint attention items open their canonical lists, not module hubs.
  *
  * --selftest exercises assertGuard() against inline fixtures.
  */
@@ -61,6 +62,18 @@ export function assertGuard({ source }) {
   if (!/action_label:\s*["']Open late arrivals["']/.test(block)) {
     errors.push(`${FILE}: late attention action label must name the late-arrivals destination`);
   }
+  if (!/type:\s*["']maintenance_open_critical_or_overdue_pm["'][\s\S]{0,320}?action_url:\s*["']\/maintenance\/work-orders["']/.test(source)) {
+    errors.push(`${FILE}: maintenance attention action must deep-link to /maintenance/work-orders`);
+  }
+  if (!/type:\s*["']maintenance_open_critical_or_overdue_pm["'][\s\S]{0,360}?action_label:\s*["']Open work orders["']/.test(source)) {
+    errors.push(`${FILE}: maintenance attention label must name the work-order destination`);
+  }
+  if (!/type:\s*["']safety_open_driver_issues["'][\s\S]{0,320}?action_url:\s*["']\/safety\/complaints["']/.test(source)) {
+    errors.push(`${FILE}: safety attention action must deep-link to /safety/complaints`);
+  }
+  if (!/type:\s*["']safety_open_driver_issues["'][\s\S]{0,360}?action_label:\s*["']Open complaints["']/.test(source)) {
+    errors.push(`${FILE}: safety attention label must name the complaints destination`);
+  }
   return errors;
 }
 
@@ -72,6 +85,12 @@ function selftest() {
     whereParts.push("EXISTS (SELECT 1 FROM mdata.load_stops s WHERE s.load_id=l.id AND s.scheduled_arrival_at < now() AND s.actual_arrival_at IS NULL)");
     action_url: "/dispatch/alerts/late-arrivals",
     action_label: "Open late arrivals",
+    type: "maintenance_open_critical_or_overdue_pm",
+    action_url: "/maintenance/work-orders",
+    action_label: "Open work orders",
+    type: "safety_open_driver_issues",
+    action_url: "/safety/complaints",
+    action_label: "Open complaints",
   });
   let maintenanceCriticalOrOverdue = 0;`;
   const cases = [
@@ -82,6 +101,10 @@ function selftest() {
     { n: "no load_stops source", src: good.replace(/mdata\.load_stops[\s\S]*?actual_arrival_at IS NULL\)"\);/, ""), min: 1 },
     { n: "generic dispatch route", src: good.replace("/dispatch/alerts/late-arrivals", "/dispatch"), min: 1 },
     { n: "generic dispatch label", src: good.replace("Open late arrivals", "Open dispatch"), min: 1 },
+    { n: "generic maintenance route", src: good.replace("/maintenance/work-orders", "/maintenance"), min: 1 },
+    { n: "generic maintenance label", src: good.replace("Open work orders", "Open maintenance"), min: 1 },
+    { n: "generic safety route", src: good.replace("/safety/complaints", "/safety"), min: 1 },
+    { n: "generic safety label", src: good.replace("Open complaints", "Open safety"), min: 1 },
   ];
   let failed = 0;
   for (const c of cases) {
