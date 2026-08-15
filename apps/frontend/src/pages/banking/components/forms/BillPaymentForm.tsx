@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listBills } from "../../../../api/accounting";
 import { getAllAccounts } from "../../../../api/banking";
 import { DatePicker } from "../../../../components/forms/DatePicker";
+import { ParityTable } from "../../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
 import { entityLabel } from "../../../../lib/entity-label";
 
@@ -120,40 +121,45 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             ))}
           </SelectCombobox>
         </label>
-        <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="px-2 py-1 font-semibold">Bill #</th>
-                <th className="px-2 py-1 font-semibold">Total</th>
-                <th className="px-2 py-1 font-semibold">Open</th>
-                <th className="px-2 py-1 font-semibold">Apply</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedBill ? (
-                <tr className="border-t border-gray-100">
-                  <td className="px-2 py-1">{entityLabel(selectedBill.bill_number, selectedBill.id, "Bill")}</td>
-                  <td className="px-2 py-1">${(Number(selectedBill.amount_cents ?? 0) / 100).toFixed(2)}</td>
-                  <td className="px-2 py-1 text-red-700">${(openBalanceCents / 100).toFixed(2)}</td>
-                  <td className="px-2 py-1">
-                    <input
-                      className="h-8 w-24 rounded-sm border border-gray-300 px-2 text-xs"
-                      value={String(value.apply_amount_usd ?? value.amount_usd ?? "")}
-                      onChange={(event) => onChange({ ...value, apply_amount_usd: event.target.value })}
-                    />
-                  </td>
-                </tr>
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-2 py-2 text-gray-500">
-                    Select a bill to apply payment.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* BANK-F3596: embedded ParityTable owns Search+Range+gear on archived Workflow-B apply grid. */}
+        <ParityTable
+          embedded
+          rows={selectedBill ? [selectedBill] : []}
+          rowKey={(bill) => bill.id}
+          storageKey="bill-payment-form-apply"
+          exportFilename="bill-payment-form-apply"
+          tableTestId="bill-payment-form-apply-table"
+          emptyText="Select a bill to apply payment."
+          columns={[
+            {
+              key: "bill",
+              label: "Bill #",
+              render: (bill) => entityLabel(bill.bill_number, bill.id, "Bill"),
+            },
+            {
+              key: "total",
+              label: "Total",
+              render: (bill) => `$${(Number(bill.amount_cents ?? 0) / 100).toFixed(2)}`,
+            },
+            {
+              key: "open",
+              label: "Open",
+              cellClass: "text-red-700",
+              render: () => `$${(openBalanceCents / 100).toFixed(2)}`,
+            },
+            {
+              key: "apply",
+              label: "Apply",
+              render: () => (
+                <input
+                  className="h-8 w-24 rounded-sm border border-gray-300 px-2 text-xs"
+                  value={String(value.apply_amount_usd ?? value.amount_usd ?? "")}
+                  onChange={(event) => onChange({ ...value, apply_amount_usd: event.target.value })}
+                />
+              ),
+            },
+          ]}
+        />
       </div>
     </div>
   );
