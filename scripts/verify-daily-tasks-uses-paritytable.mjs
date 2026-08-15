@@ -10,9 +10,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-daily-tasks-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx";
+const SERVICE = "apps/backend/src/daily-tasks/daily-tasks.service.ts";
+const API = "apps/frontend/src/api/dailyTasks.ts";
 const REQUIRED_LABELS = ["Task", "Status", "Assignee", "Due", "Timestamps", "Actions"];
 
-function assertMigrated(source) {
+const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+function assertMigrated(source, serviceSource = read(SERVICE), apiSource = read(API)) {
   const errors = [];
   if (!source.includes('from "../../components/parity/ParityTable"')) {
     errors.push(`${PAGE}: must import ParityTable from components/parity/ParityTable`);
@@ -46,8 +50,14 @@ function assertMigrated(source) {
   if (!source.includes('title="Couldn\'t load task activity"') || !source.includes("onRetry={onRetryEvents}")) {
     errors.push(`${PAGE}: task activity failure must be visible and retryable`);
   }
-  if (!/Actor:\s*<EntityLink\s+kind="user"\s+id=\{event\.actor_user_id\}\s+label=\{entityLabel\(null,\s*event\.actor_user_id,\s*"User"\)\}\s*\/>/.test(source)) {
-    errors.push(`${PAGE}: activity actor must suppress raw user ids with entityLabel`);
+  if (!/Actor:\s*<EntityLink\s+kind="user"\s+id=\{event\.actor_user_id\}\s+label=\{entityLabel\(event\.actor_name,\s*event\.actor_user_id,\s*"User"\)\}\s*\/>/.test(source)) {
+    errors.push(`${PAGE}: activity actor must consume the resolved human identity`);
+  }
+  if (!serviceSource.includes("AS actor_name") || !serviceSource.includes("LEFT JOIN identity.users u ON u.id = e.actor_user_id")) {
+    errors.push(`${SERVICE}: task activity must resolve the actor through identity.users`);
+  }
+  if (!apiSource.includes("actor_name: string | null")) {
+    errors.push(`${API}: DailyTaskEvent must type actor_name`);
   }
   return errors;
 }
@@ -65,14 +75,14 @@ function selftest() {
       { key: "actions", label: "Actions" },
     ];
     export function DailyTasksPage() {
-      return <>{task.is_overdue ? "Overdue" : null}<ListErrorState title="Couldn't load task activity" onRetry={onRetryEvents} />Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(null, event.actor_user_id, "User")} /><ParityTable storageKey="daily-tasks" rowTestId={(task) => \`task-row-\${task.id}\`} columns={columns} /></>;
+      return <>{task.is_overdue ? "Overdue" : null}<ListErrorState title="Couldn't load task activity" onRetry={onRetryEvents} />Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_name, event.actor_user_id, "User")} /><ParityTable storageKey="daily-tasks" rowTestId={(task) => \`task-row-\${task.id}\`} columns={columns} /></>;
     }
   `;
   const bad = `export function DailyTasksPage() { return <table><thead><tr><th>Task</th></tr></thead></table>; }`;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
   const rawActorErrors = assertMigrated(good.replace(
-    'Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(null, event.actor_user_id, "User")} />',
+    'Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_name, event.actor_user_id, "User")} />',
     "Actor: {event.actor_user_id}"
   ));
   const noActivityRetryErrors = assertMigrated(good.replace(
@@ -91,6 +101,11 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL raw actor mutation survived`);
     process.exit(1);
   }
+  const serviceProjectionErrors = assertMigrated(good, read(SERVICE).replace("AS actor_name", "AS actor_uuid"), read(API));
+  if (!serviceProjectionErrors.some((error) => error.includes("resolve the actor"))) {
+    console.error(`${LABEL} --selftest FAIL actor projection mutation survived`);
+    process.exit(1);
+  }
   if (!noActivityRetryErrors.some((error) => error.includes("activity failure"))) {
     console.error(`${LABEL} --selftest FAIL activity retry mutation survived`);
     process.exit(1);
@@ -103,7 +118,7 @@ function main() {
     selftest();
     return;
   }
-  const source = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const source = read(PAGE);
   const errors = assertMigrated(source);
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);

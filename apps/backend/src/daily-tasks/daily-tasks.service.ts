@@ -494,8 +494,10 @@ export async function listTaskEvents(
 
   const events = await client.query<Record<string, unknown>>(
     `
-      SELECT e.*
+      SELECT e.*,
+             COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u.email) AS actor_name
       FROM ops.daily_task_events e
+      LEFT JOIN identity.users u ON u.id = e.actor_user_id
       WHERE e.daily_task_id = $1::uuid
       ORDER BY e.created_at ASC
     `,
