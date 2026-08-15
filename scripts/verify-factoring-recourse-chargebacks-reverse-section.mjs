@@ -65,6 +65,10 @@ export function assertFactoringRecourseChargebacksReverse(sources) {
   if (!/getFactoringChargebacksFees\(companyId,\s*deepLinkCustomerId/.test(home)) {
     problems.push(`${HOME}: must forward customer_id to getFactoringChargebacksFees`);
   }
+  // LST-F5193 — visible reverse filters must write URL.
+  if (!/setSearchParams/.test(home) || !/dataTestId="factoring-home-filter-customer"/.test(home) || !/dataTestId="factoring-home-filter-load"/.test(home)) {
+    problems.push(`${HOME}: recourse/chargebacks reverse filters must sync to URL (setSearchParams + EntityPickers)`);
+  }
   if (!/kind="factoring_recourse_load"/.test(factoringTab) || !/id=\{loadId\}/.test(factoringTab)) {
     problems.push(`${FACTORING_TAB}: must render EntityLink kind="factoring_recourse_load" id={loadId}`);
   }
@@ -106,6 +110,7 @@ function selftest() {
       });
     `,
     [HOME]: `
+      const [searchParams, setSearchParams] = useSearchParams();
       const deepLinkCustomerId = searchParams.get("customer_id");
       const deepLinkLoadId = searchParams.get("load_id");
       getFactoringRecoursePipeline(companyId, 200, {
@@ -113,6 +118,8 @@ function selftest() {
         load_id: deepLinkLoadId ?? undefined,
       });
       getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined);
+      dataTestId="factoring-home-filter-customer"
+      dataTestId="factoring-home-filter-load"
     `,
     [FACTORING_TAB]: `<EntityLink kind="factoring_recourse_load" id={loadId} label="View" />`,
     [ENTITY_LINK]: `
@@ -140,6 +147,7 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace("load_id: z.string().uuid().optional(),\n      });\n      const chargebacksFeesQuerySchema", "});\n      const chargebacksFeesQuerySchema") },
     { ...good, [ROUTES]: good[ROUTES].replace("const chargebacksFeesQuerySchema = companyQuerySchema.extend({", "const chargebacksFeesQuerySchema = z.object({") },
     { ...good, [HOME]: good[HOME].replace('searchParams.get("customer_id")', '""') },
+    { ...good, [HOME]: good[HOME].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [HOME]: good[HOME].replace("getFactoringRecoursePipeline(companyId, 200, {", "getFactoringRecoursePipeline(companyId, 200)") },
     { ...good, [HOME]: good[HOME].replace("getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined);", "getFactoringChargebacksFees(companyId);") },
     { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace('kind="factoring_recourse_load"', 'kind="factoring_queue_load"') },

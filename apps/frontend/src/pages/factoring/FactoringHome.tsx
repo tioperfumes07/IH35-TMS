@@ -233,7 +233,14 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   // link landed on the unfiltered company-wide table. Server-side scoping (both routes now accept
   // these) rather than client-side, since recourse defaults limit=200 and chargebacks history is
   // capped at LIMIT 500.
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LST-F5193 — visible reverse filters write URL (not seed-only).
+  function patchSearchParam(key: "customer_id" | "load_id" | "vendor_id" | "driver_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
   const deepLinkCustomerId = searchParams.get("customer_id");
   const deepLinkLoadId = searchParams.get("load_id");
   const recourseQuery = useQuery({
@@ -588,6 +595,34 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "recourse_pipeline" ? (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-recourse-filters">
+            <label className="text-[11px] text-slate-600">
+              Customer
+              <EntityPicker
+                kind="customer"
+                operatingCompanyId={companyId}
+                value={deepLinkCustomerId || null}
+                onChange={(next) => patchSearchParam("customer_id", next ?? "")}
+                allowCreate={false}
+                placeholder="All customers"
+                className="mt-1"
+                dataTestId="factoring-home-filter-customer"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Load
+              <EntityPicker
+                kind="load"
+                operatingCompanyId={companyId}
+                value={deepLinkLoadId || null}
+                onChange={(next) => patchSearchParam("load_id", next ?? "")}
+                allowCreate={false}
+                placeholder="All loads"
+                className="mt-1"
+                dataTestId="factoring-home-filter-load"
+              />
+            </label>
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium text-gray-900">Invoices inside recourse window (sorted by days until expiry)</span>
             <span className="text-gray-600">
@@ -601,6 +636,22 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       ) : null}
 
       {tab === "chargebacks_fees" ? (
+        <div className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-chargebacks-filters">
+            <label className="text-[11px] text-slate-600">
+              Customer
+              <EntityPicker
+                kind="customer"
+                operatingCompanyId={companyId}
+                value={deepLinkCustomerId || null}
+                onChange={(next) => patchSearchParam("customer_id", next ?? "")}
+                allowCreate={false}
+                placeholder="All customers"
+                className="mt-1"
+                dataTestId="factoring-home-chargebacks-filter-customer"
+              />
+            </label>
+          </div>
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Chargebacks + fee history</div>
@@ -627,6 +678,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               />
             )}
           </div>
+        </div>
         </div>
       ) : null}
 
@@ -873,6 +925,21 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-equipment-loan-filters">
+              <label className="text-[11px] text-slate-600">
+                Lender vendor
+                <EntityPicker
+                  kind="vendor"
+                  operatingCompanyId={companyId}
+                  value={deepLinkVendorId || null}
+                  onChange={(next) => patchSearchParam("vendor_id", next ?? "")}
+                  allowCreate={false}
+                  placeholder="All lenders"
+                  className="mt-1"
+                  dataTestId="factoring-home-filter-vendor"
+                />
+              </label>
+            </div>
             <div className="mb-2 text-sm font-medium text-gray-900">Loans + ledger actions</div>
             <div className="space-y-2">
               {(equipmentLoansQuery.data?.rows ?? []).map((row) => (
@@ -1015,6 +1082,34 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-vendor-merges-filters">
+              <label className="text-[11px] text-slate-600">
+                Driver
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={companyId}
+                  value={deepLinkDriverId || null}
+                  onChange={(next) => patchSearchParam("driver_id", next ?? "")}
+                  allowCreate={false}
+                  placeholder="All drivers"
+                  className="mt-1"
+                  dataTestId="factoring-home-filter-driver"
+                />
+              </label>
+              <label className="text-[11px] text-slate-600">
+                Vendor
+                <EntityPicker
+                  kind="vendor"
+                  operatingCompanyId={companyId}
+                  value={deepLinkVendorId || null}
+                  onChange={(next) => patchSearchParam("vendor_id", next ?? "")}
+                  allowCreate={false}
+                  placeholder="All vendors"
+                  className="mt-1"
+                  dataTestId="factoring-home-merges-filter-vendor"
+                />
+              </label>
+            </div>
             <div className="mb-2 text-sm font-medium text-gray-900">Recent merge history</div>
             {vendorMergesQuery.isError ? (
               <ListErrorState

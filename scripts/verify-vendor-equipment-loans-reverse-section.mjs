@@ -67,6 +67,10 @@ export function assertVendorEquipmentLoansReverse(sources) {
   if (!/listEquipmentLoans\(companyId, deepLinkVendorId/.test(home)) {
     problems.push(`${HOME}: must forward deepLinkVendorId to listEquipmentLoans`);
   }
+  // LST-F5193 — visible vendor filter must write URL.
+  if (!/setSearchParams/.test(home) || !/dataTestId="factoring-home-filter-vendor"/.test(home)) {
+    problems.push(`${HOME}: equipment loans reverse filter must sync to URL (setSearchParams + vendor EntityPicker)`);
+  }
   if (!/listEquipmentLoans\(operatingCompanyId, vendorId\)/.test(section)) {
     problems.push(`${SECTION}: must query equipment loans scoped to vendorId`);
   }
@@ -109,10 +113,12 @@ function selftest() {
       }
     `,
     [HOME]: `
+      const [searchParams, setSearchParams] = useSearchParams();
       const deepLinkVendorId = searchParams.get("vendor_id");
       const equipmentLoansQuery = useQuery({
         queryFn: () => listEquipmentLoans(companyId, deepLinkVendorId ?? undefined),
       });
+      dataTestId="factoring-home-filter-vendor"
     `,
     [SECTION]: `listEquipmentLoans(operatingCompanyId, vendorId).then((r) => r.rows)
       equipment_loans_vendor`,
@@ -134,6 +140,7 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace(", query.data.vendor_id)", ")") },
     { ...good, [API]: good[API].replace("vendorId?: string", "") },
     { ...good, [HOME]: good[HOME].replace('searchParams.get("vendor_id")', '""') },
+    { ...good, [HOME]: good[HOME].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [HOME]: good[HOME].replace("listEquipmentLoans(companyId, deepLinkVendorId ?? undefined)", "listEquipmentLoans(companyId)") },
     { ...good, [SECTION]: good[SECTION].replace("listEquipmentLoans(operatingCompanyId, vendorId)", "") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("import { VendorEquipmentLoansReverseSection }", "// removed") },

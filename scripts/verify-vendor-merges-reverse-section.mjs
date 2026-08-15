@@ -76,6 +76,10 @@ export function assertVendorMergesReverse(sources) {
   if (!/listDriverVendorMerges\(companyId,\s*\{[\s\S]{0,80}driver_id:\s*deepLinkDriverId/.test(home)) {
     problems.push(`${HOME}: must forward deepLinkDriverId to listDriverVendorMerges`);
   }
+  // LST-F5193 — visible driver/vendor filters must write URL.
+  if (!/setSearchParams/.test(home) || !/dataTestId="factoring-home-filter-driver"/.test(home)) {
+    problems.push(`${HOME}: vendor merges reverse filters must sync to URL (setSearchParams + driver EntityPicker)`);
+  }
   if (!/listDriverVendorMerges\(operatingCompanyId,\s*\{\s*driver_id:\s*driverId\s*\}\)/.test(driverSection)) {
     problems.push(`${DRIVER_SECTION}: must query merges scoped to driverId`);
   }
@@ -128,6 +132,7 @@ function selftest() {
       }
     `,
     [HOME]: `
+      const [searchParams, setSearchParams] = useSearchParams();
       const deepLinkDriverId = searchParams.get("driver_id");
       const vendorMergesQuery = useQuery({
         queryFn: () =>
@@ -136,6 +141,7 @@ function selftest() {
             vendor_id: deepLinkVendorId ?? undefined,
           }),
       });
+      dataTestId="factoring-home-filter-driver"
     `,
     [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)
       kind="factoring_vendor_merges_driver"`,
@@ -163,6 +169,7 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace("driverId: query.data.driver_id,", "") },
     { ...good, [API]: good[API].replace("filters: { driver_id?: string; vendor_id?: string } = {}", "") },
     { ...good, [HOME]: good[HOME].replace('searchParams.get("driver_id")', '""') },
+    { ...good, [HOME]: good[HOME].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [HOME]: good[HOME].replace("driver_id: deepLinkDriverId ?? undefined,", "") },
     { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("{ driver_id: driverId }", "{}") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("import { DriverVendorMergesReverseSection }", "// removed") },
