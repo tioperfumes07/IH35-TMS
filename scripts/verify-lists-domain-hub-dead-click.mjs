@@ -55,6 +55,7 @@ const SHARED_CREATE_DEEPLINK_FILES = [
   "apps/frontend/src/pages/lists/safety/CivilFineTypesListPage.tsx",
   "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx",
   "apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx",
+  "apps/frontend/src/pages/lists/dispatch/DispatchFlagColorsCatalog.tsx",
 ];
 
 const KNOWN_DOMAIN_KEYS = [
@@ -119,12 +120,12 @@ export function collectProblems(sources = {}) {
       fail('buildCatalogPath accounting "_create" must return /lists/accounting/chart-of-accounts?create=1')
     );
   }
-  // Non-accounting domains: flyout Create deep-links first live catalog ?create=1 (LST-F5216).
-  if (!/firstLive|first live catalog/.test(catalogsMap) && !/firstLive\?\.catalogKey/.test(catalogsMap)) {
-    // Prefer explicit create=1 append for non-accounting _create.
-    if (!/create=1/.test(catalogsMap.split('catalogKey === "_create"')[1]?.slice(0, 800) ?? "")) {
-      errors.push(fail('buildCatalogPath non-accounting "_create" must deep-link a catalog with ?create=1'));
-    }
+  // Non-accounting domains: flyout Create deep-links preferred createable catalog ?create=1 (LST-F5216/5217).
+  if (!/preferredByDomain/.test(catalogsMap)) {
+    errors.push(fail('buildCatalogPath non-accounting "_create" must use preferredByDomain createable leaves'));
+  }
+  if (!/create=1/.test(catalogsMap.split('catalogKey === "_create"')[1]?.slice(0, 1200) ?? "")) {
+    errors.push(fail('buildCatalogPath non-accounting "_create" must deep-link a catalog with ?create=1'));
   }
   // Must not unconditionally return hub-only for every domain's _create (accounting CoA carve-out stays).
   if (/if \(catalogKey === "_create"\) \{\s*return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
@@ -210,8 +211,9 @@ if (catalogKey === "_create") {
   if (domain === "accounting" || routeDomain === "accounting") {
     return "/lists/accounting/chart-of-accounts?create=1";
   }
-  const firstLive = { catalogKey: "termination-reasons" };
-  if (firstLive?.catalogKey) {
+  const preferredByDomain = { drivers: "termination-reasons" };
+  const preferred = { catalogKey: "termination-reasons" };
+  if (preferred?.catalogKey) {
     return "/lists/drivers/termination-reasons?create=1";
   }
   return \`/lists/hub/\${domain}\`;

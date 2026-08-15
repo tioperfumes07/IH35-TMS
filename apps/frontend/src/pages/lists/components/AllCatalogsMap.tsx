@@ -300,12 +300,23 @@ export function buildCatalogPath(domain: string, catalogKey: string): string {
     if (domain === "accounting" || routeDomain === "accounting") {
       return "/lists/accounting/chart-of-accounts?create=1";
     }
-    // LST-F5216 — non-accounting flyout "+ Create new catalog" must open a real create surface
-    // (first live catalog + ?create=1), not the hub card grid with dialogCount=0.
+    // LST-F5216/5217 — flyout Create opens a createable live catalog (+ ?create=1), not hub-only.
+    // Prefer leaves that already honor useCreateQueryParam (avoid unmounted/legacy first cards).
+    const preferredByDomain: Record<string, string> = {
+      safety: "internal-fine-reasons",
+      dispatch: "dispatch-flag-colors",
+      drivers: "termination-reasons",
+      maintenance: "labor-rates",
+      fuel: "card-types",
+      fleet: "equipment-types",
+    };
     const cfg = DOMAIN_CONFIG.find((d) => d.key === domain || d.key === routeDomain);
-    const firstLive = cfg?.catalogs.find((c) => c.live && c.catalogKey);
-    if (firstLive?.catalogKey) {
-      const base = buildCatalogPath(domain, firstLive.catalogKey);
+    const preferredKey = preferredByDomain[domain] ?? preferredByDomain[routeDomain];
+    const preferred =
+      (preferredKey && cfg?.catalogs.find((c) => c.live && c.catalogKey === preferredKey)) ||
+      cfg?.catalogs.find((c) => c.live && c.catalogKey);
+    if (preferred?.catalogKey) {
+      const base = buildCatalogPath(domain, preferred.catalogKey);
       return base.includes("?") ? `${base}&create=1` : `${base}?create=1`;
     }
     return `/lists/hub/${domain}`;

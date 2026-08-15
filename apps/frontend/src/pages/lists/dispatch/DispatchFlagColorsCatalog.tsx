@@ -22,6 +22,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import type { CatalogColumnConfig, CatalogFieldConfig, CatalogRow } from "../../../hooks/useCatalogQuery";
 import {
   createDispatchFlagColor,
@@ -78,6 +79,15 @@ export function DispatchFlagColorsCatalog() {
 
   const [editRow, setEditRow] = useState<CatalogRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+
+  // LST-F5217 — Lists hub / flyout ?create=1 must open create modal (hub Create prefers this leaf for dispatch).
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
+      setEditRow(null);
+      setEditOpen(true);
+    },
+  });
 
   const query = useQuery({
     queryKey: ["dispatch-flag-colors", companyId],
