@@ -12,6 +12,7 @@ import {
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -97,6 +98,21 @@ export function ExpensesListPage() {
         const params = new URLSearchParams(prev);
         if (next) params.set("create", "1");
         else params.delete("create");
+        return params;
+      },
+      { replace: true }
+    );
+  }
+  // LST-F5195 — visible reverse filters write URL (seed-only was not enough).
+  function patchEntityFilter(
+    key: "load_id" | "driver_id" | "unit_id" | "trailer_id",
+    next: string
+  ) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set(key, next);
+        else params.delete(key);
         return params;
       },
       { replace: true }
@@ -317,6 +333,60 @@ export function ExpensesListPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3" data-testid="expenses-entity-filters">
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={deepLinkLoadId || null}
+            onChange={(next) => patchEntityFilter("load_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="expenses-filter-load"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Driver
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={deepLinkDriverId || null}
+            onChange={(next) => patchEntityFilter("driver_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1"
+            dataTestId="expenses-filter-driver"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={deepLinkUnitId || null}
+            onChange={(next) => patchEntityFilter("unit_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1"
+            dataTestId="expenses-filter-unit"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Trailer
+          <EntityPicker
+            kind="trailer"
+            operatingCompanyId={companyId}
+            value={deepLinkTrailerId || null}
+            onChange={(next) => patchEntityFilter("trailer_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All trailers"
+            className="mt-1"
+            dataTestId="expenses-filter-trailer"
+          />
+        </label>
+      </div>
       <CollapsedListFilters
         activeFilterCount={expensesActiveFilterCount}
         onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
