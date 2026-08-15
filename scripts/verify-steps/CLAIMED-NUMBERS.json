@@ -1337,6 +1337,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-15"
   },
+  "3510": {
+    "purpose": "verify-dispatch-catalog-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "3505": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
