@@ -196,6 +196,7 @@ export function WorkOrdersConsoleListPage() {
           emptyText="No work orders match the current filters."
           initialPageSize={PAGE_SIZE}
           pageSizeOptions={[PAGE_SIZE]}
+          suppressToolbarSearch
           filterBar={
             <div className="flex flex-wrap items-center gap-2">
               <SelectCombobox
