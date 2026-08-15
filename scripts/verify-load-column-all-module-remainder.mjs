@@ -54,6 +54,7 @@ export function verify(source) {
   if (!required(customers, "md.transaction_list").includes("load")) failures.push("customers:md.transaction_list must retain exact load Required");
   need("customerPage", "r.source_load_id ? (", "customer transaction list must branch on the persisted invoice source_load_id");
   need("customerPage", '<EntityLink kind="load" id={r.source_load_id}', "customer transaction list must render canonical load drill-through");
+  need("customerPage", 'entityLabel(r.source_load_number, r.source_load_id, "Load")', "customer transaction list must consume the API-resolved load number");
   need("customerPage", "Projects groups loads/invoices under a customer project. Needs a projects data source", "Projects must remain an honest static placeholder until a real data source exists");
 
   if (!legal?.leaves?.some((leaf) => leaf.id === "matters.create")) failures.push("legal:matters.create inventory leaf must remain present");
@@ -89,7 +90,7 @@ if (failures.length) { console.error(`verify-load-column-all-module-remainder FA
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["listsMatrix", '"leaves_touched":98'], ["catalogPage", "selectedCompanyId"], ["catalogFactory", "operating_company_id"],
-    ["customersMatrix", '"id": "md.transaction_list"'], ["customerPage", "r.source_load_id ? ("], ["customerPage", '<EntityLink kind="load" id={r.source_load_id}'],
+    ["customersMatrix", '"id": "md.transaction_list"'], ["customerPage", "r.source_load_id ? ("], ["customerPage", '<EntityLink kind="load" id={r.source_load_id}'], ["customerPage", 'entityLabel(r.source_load_number, r.source_load_id, "Load")'],
     ["legalMatrix", '"id": "matters.create"'], ["dispatchMatrix", '"id": "dispatch.modal.load_create"'],
     ["bookLoad", "const payload = await createDispatchLoad({"], ["bookLoad", "operating_company_id: operatingCompanyId"],
     ["dispatchApi", '"/api/v1/dispatch/loads", { method: "POST", body: payload }'], ["dispatchRoute", 'app.post("/api/v1/dispatch/loads"'],
