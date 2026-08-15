@@ -91,6 +91,11 @@ export type ParityTableProps<T> = {
 
   /** Filter toolbar slot (search + dropdowns), rendered above the table per the universal-list standard. */
   filterBar?: ReactNode;
+  /**
+   * When true, hide UniversalListToolbar TableSearch (page owns server-side search in filterBar).
+   * Prevents competing client search over a single page of server results (LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH).
+   */
+  suppressToolbarSearch?: boolean;
   /** When set, a ⤓ Export button appears that downloads the (sorted, visible-column) rows as CSV. */
   exportFilename?: string;
   /** Sticky header row on vertical scroll (universal-list standard). Default true. */
@@ -278,6 +283,7 @@ export function ParityTable<T>({
   selectedKeys: controlledSelectedKeys,
   onSelectionChange,
   filterBar,
+  suppressToolbarSearch = false,
   exportFilename,
   stickyHeader = true,
   enableColumnResize = true,
@@ -787,6 +793,7 @@ export function ParityTable<T>({
           onRangeApply={(value) => { setToolbarRange(value); changePage(1); }}
           resultCount={rows.length}
           totalCount={sourceRows.length}
+          hideSearch={suppressToolbarSearch}
         />
         <div className="flex items-center gap-2 text-[11px] text-gray-600">
           {selectable && selected.size > 0 ? (

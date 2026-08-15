@@ -119,6 +119,8 @@ type Props = {
   resultCount: number;
   totalCount: number;
   searchPlaceholder?: string;
+  /** When true, hide TableSearch (page owns server-side search elsewhere). */
+  hideSearch?: boolean;
 };
 
 export function UniversalListToolbar({
@@ -130,6 +132,7 @@ export function UniversalListToolbar({
   resultCount,
   totalCount,
   searchPlaceholder = "Search rows…",
+  hideSearch = false,
 }: Props) {
   const rangeColumns = useMemo(() => inferUniversalRangeColumns(columns), [columns]);
   const [open, setOpen] = useState(false);
@@ -159,7 +162,9 @@ export function UniversalListToolbar({
   const selected = rangeColumns.find((column) => column.key === draft?.key);
   return (
     <div className="flex flex-wrap items-center gap-2" data-list-toolbar="search-range-gear">
-      <TableSearch value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="w-56" />
+      {hideSearch ? null : (
+        <TableSearch value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="w-56" />
+      )}
       <div className="relative" ref={ref}>
         <button
           type="button"
