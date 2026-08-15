@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi, type CashAdvanceRequestRow } from "../../api/cashAdvanceRequests";
 import { useAuth } from "../../auth/useAuth";
@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -35,8 +36,21 @@ export function CashAdvanceRequestsPage() {
   const qc = useQueryClient();
   // LINK-F5171/LINK-F5185: settlements:cash_advances reverse — driver's profile can drill into
   // their own pending cash-advance requests.
-  const [searchParams] = useSearchParams();
+  // LST-F5175 — visible EntityPicker (URL-only seed is not reverse chrome).
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkDriverId = searchParams.get("driver_id");
+  const [driverPickerId, setDriverPickerId] = useState("");
+  useEffect(() => {
+    if (deepLinkDriverId) setDriverPickerId(deepLinkDriverId);
+  }, [deepLinkDriverId]);
+  const setDriverFilter = (driverId: string) => {
+    setDriverPickerId(driverId);
+    const next = new URLSearchParams(searchParams);
+    if (driverId) next.set("driver_id", driverId);
+    else next.delete("driver_id");
+    setSearchParams(next, { replace: true });
+  };
+  const effectiveDriverId = driverPickerId.trim() || deepLinkDriverId || undefined;
   const [denyForId, setDenyForId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const [approveNotesById, setApproveNotesById] = useState<Record<string, string>>({});
@@ -76,8 +90,8 @@ export function CashAdvanceRequestsPage() {
   const canCreate = Boolean(newDriverId) && (newAmountCents ?? 0) > 0 && newReason.trim().length >= 10;
 
   const pendingQuery = useQuery({
-    queryKey: ["driver-finance", "cash-advance-requests", "pending", companyId, deepLinkDriverId],
-    queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, deepLinkDriverId ?? undefined),
+    queryKey: ["driver-finance", "cash-advance-requests", "pending", companyId, effectiveDriverId],
+    queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, effectiveDriverId),
     enabled: Boolean(companyId),
   });
 
@@ -137,7 +151,7 @@ export function CashAdvanceRequestsPage() {
       <PageHeader
         title="Cash advance requests"
         subtitle={
-          deepLinkDriverId
+          effectiveDriverId
             ? "This driver's own pending requests"
             : "Driver-submitted + office-created requests pending action"
         }
@@ -147,6 +161,24 @@ export function CashAdvanceRequestsPage() {
           ) : null
         }
       />
+
+      {companyId ? (
+        <div className="max-w-sm" data-testid="cash-advance-requests-filters">
+          <label className="text-[11px] text-slate-600">
+            Driver
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={companyId}
+              value={driverPickerId || null}
+              onChange={(next) => setDriverFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="mt-1"
+              dataTestId="cash-advance-requests-filter-driver"
+            />
+          </label>
+        </div>
+      ) : null}
 
       {createOpen ? (
         <div className="space-y-3 border-t border-gray-200 pt-3">
