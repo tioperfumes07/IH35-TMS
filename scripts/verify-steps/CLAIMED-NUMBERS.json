@@ -2715,5 +2715,9 @@
     "claimed_at": "2026-08-14",
     "claimed_by": "cursor",
     "purpose": "verify-cursor-vertical-qbo-picker-modules (reports→accounting→… vertical)"
+  },
+  "3325": {
+    "owner": "cc-1",
+    "purpose": "verify-driver-cash-advances-settlement-modal-reverse-section (LINK-F5185)"
   }
 }
