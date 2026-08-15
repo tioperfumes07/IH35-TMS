@@ -63,6 +63,13 @@ export function assertFactoringDispatchQueueReverse(sources) {
   if (!/params\.set\("customer_id"/.test(queuePage) || !/params\.set\("load_id"/.test(queuePage)) {
     problems.push(`${QUEUE_PAGE}: must forward customer_id/load_id to the API call`);
   }
+  if (
+    !/dataTestId="factoring-dispatch-filter-customer"/.test(queuePage) ||
+    !/dataTestId="factoring-dispatch-filter-load"/.test(queuePage) ||
+    !/allowCreate=\{false\}/.test(queuePage)
+  ) {
+    problems.push(`${QUEUE_PAGE}: must render EntityPicker customer+load filters (allowCreate=false)`);
+  }
   if (!/kind=["']factoring_queue_load["']/.test(factoringTab) || !/id=\{loadId\}/.test(factoringTab)) {
     problems.push(`${FACTORING_TAB}: must drill via EntityLink kind=factoring_queue_load id={loadId}`);
   }
@@ -99,8 +106,11 @@ function selftest() {
       const deepLinkCustomerId = searchParams.get("customer_id");
       const deepLinkLoadId = searchParams.get("load_id");
       const params = new URLSearchParams();
-      if (deepLinkCustomerId) params.set("customer_id", deepLinkCustomerId);
-      if (deepLinkLoadId) params.set("load_id", deepLinkLoadId);
+      if (effectiveCustomerId) params.set("customer_id", effectiveCustomerId);
+      if (effectiveLoadId) params.set("load_id", effectiveLoadId);
+      dataTestId="factoring-dispatch-filter-customer"
+      dataTestId="factoring-dispatch-filter-load"
+      allowCreate={false}
     `,
     [FACTORING_TAB]: `<EntityLink kind="factoring_queue_load" id={loadId} label="View" />`,
     [SECTION]: `\`/api/v1/dispatch/factoring-queue?operating_company_id=\${x}&customer_id=\${encodeURIComponent(customerId)}\` factoring_queue_customer`,
@@ -121,7 +131,8 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace('customerFilter = `AND c.id = $${filterParams.length}::uuid`;', "") },
     { ...good, [ROUTES]: good[ROUTES].replace('loadFilter = `AND l.id = $${filterParams.length}::uuid`;', "") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('searchParams.get("customer_id")', '""') },
-    { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('params.set("customer_id", deepLinkCustomerId);', "") },
+    { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('params.set("customer_id", effectiveCustomerId);', "") },
+    { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('dataTestId="factoring-dispatch-filter-customer"', 'dataTestId="x"') },
     { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace('kind="factoring_queue_load"', 'kind="load"') },
     { ...good, [SECTION]: good[SECTION].replace("customer_id=${encodeURIComponent(customerId)}", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringQueueReverseSection }", "// removed") },

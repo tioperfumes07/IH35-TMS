@@ -6,7 +6,7 @@
  * Uses GET /api/v1/dispatch/factoring-queue (factoring-queue.routes.ts).
  * FARO Reserve summary strip reuses existing factoring summary API.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +17,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -103,21 +104,32 @@ export function FactoringQueuePage() {
   const [search, setSearch] = useState("");
 
   // LINK-F5171/LINK-F5179 — reverse_link: CustomerDetail/FactoringTab now link here as
-  // ?customer_id=/?queue_record_id=; legacy ?load_id= bookmarks remain readable. This page
-  // previously never read either param, so a reverse link
-  // landed on the unfiltered company-wide queue. Server-side scoping (factoring-queue.routes.ts
-  // now accepts both) rather than a client-side filter, since the queue is capped at limit=200.
+  // ?customer_id=/?queue_record_id=; legacy ?load_id= bookmarks remain readable.
+  // LST-F5163O — visible EntityPicker filters (URL-only is not reverse chrome).
   const [searchParams] = useSearchParams();
-  const deepLinkCustomerId = searchParams.get("customer_id");
-  const deepLinkLoadId = searchParams.get("queue_record_id") ?? searchParams.get("load_id");
+  const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
+  const deepLinkLoadId =
+    (searchParams.get("queue_record_id") ?? searchParams.get("load_id"))?.trim() ?? "";
+  const [customerFilter, setCustomerFilter] = useState("");
+  const [loadFilter, setLoadFilter] = useState("");
 
-  // queue data
+  useEffect(() => {
+    if (deepLinkCustomerId) setCustomerFilter(deepLinkCustomerId);
+  }, [deepLinkCustomerId]);
+  useEffect(() => {
+    if (deepLinkLoadId) setLoadFilter(deepLinkLoadId);
+  }, [deepLinkLoadId]);
+
+  const effectiveCustomerId = customerFilter.trim() || deepLinkCustomerId || undefined;
+  const effectiveLoadId = loadFilter.trim() || deepLinkLoadId || undefined;
+
+  // queue data — server-side scoping (factoring-queue.routes.ts); queue capped at limit=200.
   const queueQ = useQuery({
-    queryKey: ["dispatch", "factoring-queue", companyId, deepLinkCustomerId, deepLinkLoadId],
+    queryKey: ["dispatch", "factoring-queue", companyId, effectiveCustomerId, effectiveLoadId],
     queryFn: () => {
       const params = new URLSearchParams({ operating_company_id: companyId });
-      if (deepLinkCustomerId) params.set("customer_id", deepLinkCustomerId);
-      if (deepLinkLoadId) params.set("load_id", deepLinkLoadId);
+      if (effectiveCustomerId) params.set("customer_id", effectiveCustomerId);
+      if (effectiveLoadId) params.set("load_id", effectiveLoadId);
       return apiRequest<QueueResponse>(`/api/v1/dispatch/factoring-queue?${params.toString()}`);
     },
     enabled: Boolean(companyId),
@@ -311,6 +323,35 @@ export function FactoringQueuePage() {
           </div>
         </div>
       ) : null}
+
+      <div className="flex flex-wrap items-end gap-3" data-testid="factoring-dispatch-queue-filters">
+        <label className="text-[11px] text-slate-600">
+          Customer
+          <EntityPicker
+            kind="customer"
+            operatingCompanyId={companyId}
+            value={customerFilter || null}
+            onChange={(next) => setCustomerFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All customers"
+            className="mt-1"
+            dataTestId="factoring-dispatch-filter-customer"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={loadFilter || null}
+            onChange={(next) => setLoadFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="factoring-dispatch-filter-load"
+          />
+        </label>
+      </div>
 
       {/* Stage filter tabs */}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-2">
