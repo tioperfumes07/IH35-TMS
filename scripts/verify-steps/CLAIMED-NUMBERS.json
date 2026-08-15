@@ -1393,6 +1393,11 @@
     "claimedBy": "cursor",
     "claimedAt": "2026-08-15"
   },
+  "3530": {
+    "name": "verify-payment-methods-catalog-parity-surface-bar",
+    "claimedBy": "cursor",
+    "claimedAt": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
