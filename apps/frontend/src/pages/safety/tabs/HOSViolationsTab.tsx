@@ -32,8 +32,9 @@ function toDatetimeLocalValue(iso: string): string {
 }
 
 export function HOSViolationsTab() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const highlightedViolationId = searchParams.get("violation_id")?.trim() ?? "";
+  // LST-F5190 — visible reverse filters (URL-only ?driver_id=/?load_id= is not reverse chrome).
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
@@ -49,6 +50,13 @@ export function HOSViolationsTab() {
     source: "manual_office" as Source,
     notes: "",
   });
+
+  function patchSearchParam(key: "driver_id" | "load_id", next: string) {
+    const p = new URLSearchParams(searchParams);
+    if (next) p.set(key, next);
+    else p.delete(key);
+    setSearchParams(p, { replace: true });
+  }
 
   const query = useQuery({
     queryKey: ["safety-v64", "hos-violations", companyId, loadIdFromUrl, driverIdFromUrl],
@@ -189,6 +197,38 @@ export function HOSViolationsTab() {
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Driver
+          <div className="mt-1">
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={companyId}
+              value={driverIdFromUrl || null}
+              onChange={(next) => patchSearchParam("driver_id", next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="w-full"
+              dataTestId="hos-violations-filter-driver"
+            />
+          </div>
+        </label>
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Load
+          <div className="mt-1">
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={loadIdFromUrl || null}
+              onChange={(next) => patchSearchParam("load_id", next ?? "")}
+              allowCreate={false}
+              placeholder="All loads"
+              className="w-full"
+              dataTestId="hos-violations-filter-load"
+            />
+          </div>
+        </label>
+      </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-8">
         {/* SAF-F14: raw uuid text box replaced with the canonical driver picker (inline create). */}
         <div data-testid="hos-violation-driver-picker">
