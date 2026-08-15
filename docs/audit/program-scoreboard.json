@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-08-12T06:21:50-05:00",
-    "sourceSha": "0735373d4",
-    "deployedSha": "b985418",
+    "generatedAt": "2026-08-15T00:44:41-05:00",
+    "sourceSha": "ab43e786a",
+    "deployedSha": "363a3ad",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 705,
-    "failOpen": 14,
-    "defects": 16
+    "ledgerRows": 711,
+    "failOpen": 17,
+    "defects": 17
   },
   "modules": [
     {
@@ -124,7 +124,7 @@
         "AUDIT",
         "AUDIT",
         "NA",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "FAIL",
         "AUDIT",
@@ -156,7 +156,7 @@
           "AUDIT",
           "AUDIT",
           "NA",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "FAIL",
           "AUDIT",
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 6464,
-      "title": "FINDING: BORDER-CROSSING-LOAD-CREATE-REVERSE",
+      "number": 7120,
+      "title": "FINDING: LST-F3372-LIVE-COA-CREATE-DEEP-LINK",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6464",
-      "sha": "81c6be844",
-      "committedAtIso": "2026-08-13T11:30:31-05:00"
+      "mergedAtCt": "08/15/2026, 12:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7120",
+      "sha": "ab43e786a",
+      "committedAtIso": "2026-08-15T00:44:41-05:00"
     },
     {
-      "number": 6463,
-      "title": "FINDING: BORDER-CROSSING-DRIVER-CREATE-REVERSE",
+      "number": 7119,
+      "title": "FINDING: reserve step 3382 for reverse preview access",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:26 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6463",
-      "sha": "b985418a9",
-      "committedAtIso": "2026-08-13T11:26:18-05:00"
+      "mergedAtCt": "08/15/2026, 12:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7119",
+      "sha": "0e87019da",
+      "committedAtIso": "2026-08-15T00:43:03-05:00"
     },
     {
-      "number": 6462,
-      "title": "FINDING: ACCT-F5057",
+      "number": 7118,
+      "title": "FINDING: claim reverse profile preview cap class",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6462",
-      "sha": "348edfa26",
-      "committedAtIso": "2026-08-13T11:24:19-05:00"
+      "mergedAtCt": "08/15/2026, 12:41 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7118",
+      "sha": "363a3ad2c",
+      "committedAtIso": "2026-08-15T00:41:33-05:00"
     },
     {
-      "number": 6461,
-      "title": "FINDING: BORDER-CROSSING-UNIT-CREATE-REVERSE",
+      "number": 7117,
+      "title": "FINDING: AUTO-DEDUCTION-POLICY-HISTORY-NO-HUMAN-LABEL",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6461",
-      "sha": "30b5ee547",
-      "committedAtIso": "2026-08-13T11:22:41-05:00"
+      "mergedAtCt": "08/15/2026, 12:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7117",
+      "sha": "7ad32f95a",
+      "committedAtIso": "2026-08-15T00:34:39-05:00"
     },
     {
-      "number": 6460,
-      "title": "FINDING: ACCT-F5056",
+      "number": 7116,
+      "title": "FINDING: BILL-EXPENSE-CATEGORY-PICKER-RAW-UUID-FALLBACK",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6460",
-      "sha": "357c4169c",
-      "committedAtIso": "2026-08-13T11:22:20-05:00"
+      "mergedAtCt": "08/15/2026, 12:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7116",
+      "sha": "5fc2c85f8",
+      "committedAtIso": "2026-08-15T00:32:15-05:00"
     },
     {
-      "number": 6459,
-      "title": "FINDING: ACCT-F5055",
+      "number": 7115,
+      "title": "FINDING: INV-PARTS-VENDOR-NAME-FROM-API",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:20 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6459",
-      "sha": "d646fb9c9",
-      "committedAtIso": "2026-08-13T11:20:10-05:00"
+      "mergedAtCt": "08/15/2026, 12:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7115",
+      "sha": "6b5e0c169",
+      "committedAtIso": "2026-08-15T00:31:49-05:00"
     },
     {
-      "number": 6458,
-      "title": "FINDING: ACCT-F5054b",
+      "number": 7114,
+      "title": "FINDING: LINK-F5170-ASSIGNABLE-USER-COMPANY-SCOPE-LABELS",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6458",
-      "sha": "67ea2f595",
-      "committedAtIso": "2026-08-13T11:18:08-05:00"
+      "mergedAtCt": "08/15/2026, 12:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7114",
+      "sha": "0f9b768cb",
+      "committedAtIso": "2026-08-15T00:29:46-05:00"
     },
     {
-      "number": 6457,
-      "title": "FINDING: PM-SCHEDULE-UNIT-CREATE-REVERSE",
+      "number": 7113,
+      "title": "FINDING: CLAIM-RESERVE-VERIFY-STEP-3380",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6457",
-      "sha": "2cf7d5505",
-      "committedAtIso": "2026-08-13T11:17:23-05:00"
+      "mergedAtCt": "08/15/2026, 12:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7113",
+      "sha": "c55c1ac4a",
+      "committedAtIso": "2026-08-15T00:23:06-05:00"
     },
     {
-      "number": 6456,
-      "title": "FINDING: ACCT-F5054",
+      "number": 7112,
+      "title": "FINDING: LINK-F5170-ASSIGNABLE-USER-COMPANY-SCOPE-LABELS",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:16 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6456",
-      "sha": "cd9521f32",
-      "committedAtIso": "2026-08-13T11:16:59-05:00"
+      "mergedAtCt": "08/15/2026, 12:22 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7112",
+      "sha": "e930dd222",
+      "committedAtIso": "2026-08-15T00:22:24-05:00"
     },
     {
-      "number": 6455,
-      "title": "FINDING: ACCT-F5053",
+      "number": 7111,
+      "title": "FINDING: LINK-F5170-CUSTOMER-PICKER-CANONICAL-LABELS",
       "state": "merged",
-      "mergedAtCt": "08/13/2026, 11:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/6455",
-      "sha": "da816f1df",
-      "committedAtIso": "2026-08-13T11:13:48-05:00"
+      "mergedAtCt": "08/15/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7111",
+      "sha": "0c5ce6e31",
+      "committedAtIso": "2026-08-15T00:19:04-05:00"
     }
   ]
 }
