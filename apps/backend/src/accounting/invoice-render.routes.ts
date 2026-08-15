@@ -110,7 +110,14 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
 
       // FACT-PAR-2: Look up active factor assignment via factoring.customer_factor_assignment
       // If the customer is assigned to a factor, the factor MUST have NOA config before render is allowed.
-      const invoiceDate = String(invoice.issue_date);
+      // invoice.issue_date comes back from enrichInvoice()'s query as a native JS Date object (the
+      // pg driver's default date-column parsing), NOT an ISO string. String(dateObject) produces
+      // Date.prototype.toString()'s verbose form ("Tue Aug 11 2026 00:00:00 GMT+0000 (Coordinated
+      // Universal Time)"), which Postgres cannot parse as ::date — every invoice HTML/PDF render
+      // 500'd on this line. Normalize to YYYY-MM-DD the same way from-load.ts / cash-forecast.routes.ts do.
+      const issueDateValue = invoice.issue_date;
+      const invoiceDate =
+        issueDateValue instanceof Date ? issueDateValue.toISOString().slice(0, 10) : String(issueDateValue);
       const noaAssignmentRes = await client.query(
         `
           SELECT
@@ -286,7 +293,11 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
         brandSub,
         brandAddrHtml: joinBrandAddrLines(brandAddrLines),
         invoiceDocNum,
-        issuedLines: formatInvoiceIssuedLines(String(invoice.issue_date), String(invoice.due_date), paymentTermsLabel),
+        // formatInvoiceIssuedLines already accepts Date | string directly (it calls formatDate()
+        // internally); wrapping in String() first is unnecessary and, for a Date value, produces
+        // Date.prototype.toString()'s verbose form before formatDate re-parses it — fragile for the
+        // same reason the invoiceDate ::date bind above was. Pass the raw values through.
+        issuedLines: formatInvoiceIssuedLines(invoice.issue_date as string | Date, invoice.due_date as string | Date, paymentTermsLabel),
         statusLine: `Status · ${String(invoice.status ?? "draft")}`,
         billToSectionTitle,
         billToInnerHtml,
