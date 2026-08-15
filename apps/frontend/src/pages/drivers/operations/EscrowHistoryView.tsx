@@ -18,6 +18,16 @@ export function EscrowHistoryView({ driverId, operatingCompanyId }: Props) {
       >
         View in Banking → Driver Escrow
       </Link>
+      {/* ACCT-F5313 — reverse_link gap (accounting:escrow): the accounting escrow ledger already deep-links
+      IN via ?holder_id= (ACCT-SURF-09), but nothing on the driver side linked OUT to it — only the Banking
+      visualizer above. Same holder_id round-trip, second canonical surface. */}
+      <Link
+        to={`/accounting/escrow?holder_id=${driverId}`}
+        data-testid="driver-escrow-history-view-in-accounting"
+        className="inline-block text-xs font-medium text-slate-700 hover:underline"
+      >
+        View in Accounting → Escrow
+      </Link>
       <OperationsHistoryTable
       driverId={driverId}
       operatingCompanyId={operatingCompanyId}
