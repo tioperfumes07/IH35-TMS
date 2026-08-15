@@ -52,6 +52,13 @@ const NOT_A_CREATE_FORM = new Set([
  */
 const KIND_SWEEP_QUEUE = new Map();
 
+/** AUDITED-INVENTORY-2026-08-14: #7041/#7051/#7055/#7057 replaced and deleted four duplicate
+ * parity drawer creators (Account, Service, Class, Vendor). Two new Safety forms landed in the same
+ * interval, so the exact net movement from #6355 is 86→84 forms and 21→17 creator files. The class
+ * contracts below remain exhaustive; these floors ratchet any further shrink until it is audited. */
+const FORM_FLOOR = 84;
+const CREATOR_FLOOR = 17;
+
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 function walk(dir, out = []) {
@@ -112,8 +119,8 @@ export function collectProblems(files) {
       }
     }
   }
-  if (files.length > 100 && formCount < 86) problems.push(`frontend form inventory shrank to ${formCount}; audit removals before lowering the ratchet`);
-  if (files.length > 100 && creatorCount < 21) problems.push(`nested creator inventory shrank to ${creatorCount}; audit removals before lowering the ratchet`);
+  if (files.length > 100 && formCount < FORM_FLOOR) problems.push(`frontend form inventory shrank to ${formCount}; audit removals before lowering the ratchet`);
+  if (files.length > 100 && creatorCount < CREATOR_FLOOR) problems.push(`nested creator inventory shrank to ${creatorCount}; audit removals before lowering the ratchet`);
   if (KIND_SWEEP_QUEUE.size !== 0) problems.push("KIND_SWEEP_QUEUE must remain empty — nested creator submit defects cannot be deferred");
   return problems;
 }
@@ -125,17 +132,29 @@ function readTree() {
 function selftest() {
   const mk = (rel, src) => ({ rel, src });
   const good = `<form onSubmit={(e)=>{e.preventDefault();e.stopPropagation();}}>`;
+  const inventoryFixture = (formCount, creatorCount) => Array.from({ length: 101 }, (_, index) => {
+    const isCreator = index < creatorCount;
+    const hasForm = index < formCount;
+    const name = isCreator ? `CreateFixture${index}Modal.tsx` : `Fixture${index}.tsx`;
+    return mk(`apps/frontend/src/components/fixture/${name}`, hasForm ? good : "export const fixture = true;");
+  });
   const cases = [
     { name: "real tree passes", files: null, expect: 0 },
     { name: "form with no onSubmit is caught", files: [mk("apps/frontend/src/components/x/Foo.tsx", "<form className='a'>")], expectAtLeast: 1 },
     { name: "creator missing stopPropagation is caught", files: [mk("apps/frontend/src/components/x/CreateFooModal.tsx", "<form onSubmit={(e)=>{e.preventDefault();}}>")], expectAtLeast: 1 },
     { name: "creator with both passes", files: [mk("apps/frontend/src/components/x/CreateFooModal.tsx", good)], expect: 0 },
     { name: "commented-out form is ignored", files: [mk("apps/frontend/src/components/x/Bar.tsx", "// <form>\nconst a=1;")], expect: 0 },
+    { name: "form inventory shrink is caught", files: inventoryFixture(FORM_FLOOR - 1, CREATOR_FLOOR), expectMessage: "frontend form inventory shrank" },
+    { name: "creator inventory shrink is caught", files: inventoryFixture(FORM_FLOOR, CREATOR_FLOOR - 1), expectMessage: "nested creator inventory shrank" },
   ];
   let pass = 0;
   for (const c of cases) {
     const problems = collectProblems(c.files ?? readTree());
-    const ok = c.expect === 0 ? problems.length === 0 : problems.length >= (c.expectAtLeast ?? 1);
+    const ok = c.expectMessage
+      ? problems.some((problem) => problem.includes(c.expectMessage))
+      : c.expect === 0
+        ? problems.length === 0
+        : problems.length >= (c.expectAtLeast ?? 1);
     if (ok) pass += 1;
     else console.error(`  selftest FAIL: ${c.name} -> ${JSON.stringify(problems)}`);
   }
