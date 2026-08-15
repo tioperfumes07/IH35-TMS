@@ -1192,6 +1192,96 @@
     "claimed_by": "claude-1",
     "purpose": "verify-inventory-purchase-ledger-sor-stock-upsert"
   },
+  "3454": {
+    "purpose": "verify-parts-inventory-no-dup-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3456": {
+    "purpose": "verify-severe-repair-oos-no-dup-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3458": {
+    "purpose": "verify-work-orders-console-no-dup-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3460": {
+    "purpose": "verify-road-service-no-dup-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3462": {
+    "purpose": "verify-accounting-catalog-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3464": {
+    "purpose": "verify-ap-aging-no-dup-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3466": {
+    "purpose": "verify-items-list-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3468": {
+    "purpose": "verify-vendors-customers-list-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3469": {
+    "claimed_at": "2026-08-15",
+    "claimed_by": "claude-1",
+    "purpose": "verify-pdf-render-date-object-stringify"
+  },
+  "3470": {
+    "purpose": "verify-legal-templates-list-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3472": {
+    "purpose": "verify-legal-contracts-list-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3474": {
+    "purpose": "verify-maint-lists-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3476": {
+    "purpose": "verify-accounting-money-lists-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3478": {
+    "purpose": "verify-accounting-register-lists-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3480": {
+    "purpose": "verify-catalog-table-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3482": {
+    "purpose": "verify-assets-workspace-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3484": {
+    "purpose": "verify-fleet-hos-board-duplicate-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3486": {
+    "purpose": "verify-safety-hos-dashboard-suppress-toolbar-search",
+    "lane": "cursor",
+    "claimed_at": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -3036,90 +3126,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1163,
-  "3454": {
-    "purpose": "verify-parts-inventory-no-dup-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3456": {
-    "purpose": "verify-severe-repair-oos-no-dup-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3458": {
-    "purpose": "verify-work-orders-console-no-dup-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3460": {
-    "purpose": "verify-road-service-no-dup-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3462": {
-    "purpose": "verify-accounting-catalog-suppress-toolbar-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3464": {
-    "purpose": "verify-ap-aging-no-dup-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3466": {
-    "purpose": "verify-items-list-suppress-toolbar-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3468": {
-    "purpose": "verify-vendors-customers-list-duplicate-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3469": {
-    "claimed_at": "2026-08-15",
-    "claimed_by": "claude-1",
-    "purpose": "verify-pdf-render-date-object-stringify"
-  },
-  "3470": {
-    "purpose": "verify-legal-templates-list-duplicate-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3472": {
-    "purpose": "verify-legal-contracts-list-duplicate-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3474": {
-    "purpose": "verify-maint-lists-duplicate-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3476": {
-    "purpose": "verify-accounting-money-lists-suppress-toolbar-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3478": {
-    "purpose": "verify-accounting-register-lists-suppress-toolbar-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3480": {
-    "purpose": "verify-catalog-table-duplicate-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3482": {
-    "purpose": "verify-assets-workspace-duplicate-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3484": {
-    "purpose": "verify-fleet-hos-board-duplicate-search",
-    "lane": "cursor",
-    "claimed_at": "2026-08-15"
-  }
+  "total_claimed": 1163
 }
