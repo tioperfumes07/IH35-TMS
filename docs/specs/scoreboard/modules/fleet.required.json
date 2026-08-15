@@ -503,7 +503,8 @@
         "unit",
         "connectivity",
         "reverse_link",
-        "bank"
+        "bank",
+        "gl_je"
       ]
     },
     {
@@ -690,7 +691,8 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "gl_je"
       ]
     },
     {
@@ -800,7 +802,8 @@
         "trailer",
         "connectivity",
         "reverse_link",
-        "bank"
+        "bank",
+        "gl_je"
       ]
     },
     {

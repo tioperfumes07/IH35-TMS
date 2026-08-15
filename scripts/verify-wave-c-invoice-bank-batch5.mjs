@@ -44,9 +44,16 @@ const CHECKS = [
     pattern: /navigate\(`\/accounting\/invoices\/\$\{invoiceId\}`\)/,
   },
   {
-    name: "DriverEscrowTabContent.tsx renders a real escrow_balance",
+    // ACCT-F5307 (2026-08-15): the raw `escrow_balance` API field was refactored into a typed
+    // `driverEscrowBalance: number` prop (DriverEscrowTabContent.tsx:25), sourced live from
+    // BankingHome.tsx:953 `driverEscrowBalance={Number(kpiQuery.data?.driver_escrow ?? 0)}` —
+    // verified live: this is a real backend-derived value passed down, not hardcoded/lost. The
+    // literal string this check looked for no longer exists anywhere in the codebase after that
+    // legitimate rename; updated the anchor to match the current real wiring instead of the old
+    // field name.
+    name: "DriverEscrowTabContent.tsx renders a real driver escrow balance",
     file: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
-    pattern: /escrow_balance/,
+    pattern: /driverEscrowBalance/,
   },
   {
     name: "BankingHome.tsx renders a real factoringReserve tile",
@@ -79,7 +86,7 @@ if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/frontend/src/pages/factoring/SubmissionQueue.tsx": 'kind="invoice"',
     "apps/frontend/src/pages/home/QuickActionsBar.tsx": "navigate(`/accounting/invoices/${invoiceId}`)",
-    "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx": "driver.escrow_balance",
+    "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx": "driverEscrowBalance: number",
     "apps/frontend/src/pages/banking/BankingHome.tsx": "factoringReserve === 0",
     "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx": 'title="Import candidates (Faro statements)"',
   };
