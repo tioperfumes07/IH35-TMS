@@ -384,3 +384,4 @@ exact failure this register exists to prevent.
 | ☐ | `LV-BOX4-MONEY-CHROME-LEAVES-BACKLOG` | **P1** | CC-1 | — | — | — | ~51 unmatched accounting/banking Box4 Leaves after Cursor Live #7366; CC-1 mount walks with explicit Leaves | — | — |
 | ☐ | `LV-USMCA-NO-ACTIVE-FACTOR-BLOCKS-PROFILE` | **P1** | CC-1 | — | — | — | USMCA Factoring has no active factor; blocks profile + deactivate confirm Live Chrome | — | — |
 | ☐ | `LV-BOX4-STARVED-OPS-FIXTURES` | **P1** | Codex | — | — | — | quick_assign / triage+convert / integrity_alert_detail starved on USMCA; fixtures or honest N/A-PRE-OP | — | — |
+| ☐ | `LV-FORM425-FILING-PROFILE-CROSS-ENTITY-SEED` | **P1** | Codex | Codex | — | 2026-08-15 | USMCA `/425c` auto-seeds and renders TRANSP/TRK legal profiles; locked filing model is per selected filing entity; root fix in flight | planned focused mutation guard |

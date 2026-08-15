@@ -140,9 +140,10 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
   const profileRes = await client.query(
     `
       SELECT *
-      FROM catalogs.form_425c_company_profiles
-      WHERE operating_company_id = $1::uuid
-      ORDER BY CASE company_key WHEN 'trucking' THEN 1 ELSE 2 END
+      FROM catalogs.form_425c_company_profiles p
+      JOIN org.companies c ON c.id = p.operating_company_id
+      WHERE p.operating_company_id = $1::uuid
+        AND p.company_key = CASE WHEN c.code = 'TRK' THEN 'trucking' ELSE 'transportation' END
       LIMIT 1
     `,
     [operatingCompanyId]

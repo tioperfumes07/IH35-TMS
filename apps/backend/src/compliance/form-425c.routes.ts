@@ -133,11 +133,45 @@ function monthWindow(month: string) {
   };
 }
 
-async function ensureDefaultProfiles(
+type FilingProfileIdentity = {
+  companyKey: "trucking" | "transportation";
+  legalName: string;
+  filingAddress: string;
+};
+
+async function filingProfileIdentity(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  operatingCompanyId: string
+): Promise<FilingProfileIdentity> {
+  const company = await client.query<{ code: string; legal_name: string; filing_address: string }>(
+    `
+      SELECT
+        code,
+        legal_name,
+        concat_ws(', ', nullif(concat_ws(' ', address_line1, address_line2), ''), nullif(city, ''), nullif(concat_ws(' ', state, postal_code), '')) AS filing_address
+      FROM org.companies
+      WHERE id = $1::uuid
+        AND is_active = true
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [operatingCompanyId]
+  );
+  const row = company.rows[0];
+  if (!row) throw new Error("form_425c_operating_company_not_found");
+  return {
+    companyKey: row.code === "TRK" ? "trucking" : "transportation",
+    legalName: row.legal_name,
+    filingAddress: row.filing_address,
+  };
+}
+
+async function ensureDefaultProfile(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
   operatingCompanyId: string,
   userId: string
-) {
+): Promise<FilingProfileIdentity> {
+  const identity = await filingProfileIdentity(client, operatingCompanyId);
   const defaultAnswers = {
     "1": "yes",
     "2": "yes",
@@ -158,28 +192,7 @@ async function ensureDefaultProfiles(
     "17": "no",
     "18": "no",
   };
-  const rows = [
-    {
-      company_key: "trucking",
-      company_name: "IH 35 TRUCKING LLC",
-      line_of_business: "Freight Trucking",
-      naisc_code: "484121",
-      bank_accounts: [{ id: "WF-3500", label: "Wells Fargo – WF-3500", number: "xxxx3500" }],
-    },
-    {
-      company_key: "transportation",
-      company_name: "IH 35 TRANSPORTATION LLC",
-      line_of_business: "Transportation",
-      naisc_code: "485",
-      bank_accounts: [
-        { id: "WF-1", label: "Wells Fargo – WF (Account 1)", number: "xxxx" },
-        { id: "WF-2", label: "Wells Fargo – WF (Account 2)", number: "xxxx" },
-        { id: "WF-3", label: "Wells Fargo – WF (Account 3)", number: "xxxx" },
-      ],
-    },
-  ];
-  for (const row of rows) {
-    await client.query(
+  await client.query(
       `
         INSERT INTO catalogs.form_425c_company_profiles (
           operating_company_id,
@@ -194,21 +207,56 @@ async function ensureDefaultProfiles(
           bank_accounts,
           last_updated_by_user_id
         )
-        VALUES ($1, $2, $3, 'Texas', 'San Antonio', 'Laredo, TX 78041', $4, $5, $6::jsonb, $7::jsonb, $8)
-        ON CONFLICT (operating_company_id, company_key) DO NOTHING
+        VALUES ($1, $2, $3, '', '', $4, '', '', $5::jsonb, '[]'::jsonb, $6)
+        ON CONFLICT (operating_company_id, company_key) DO UPDATE SET
+          company_name = CASE
+            WHEN catalogs.form_425c_company_profiles.company_name IN ('IH 35 TRUCKING LLC', 'IH 35 TRANSPORTATION LLC')
+              AND catalogs.form_425c_company_profiles.company_name <> EXCLUDED.company_name
+            THEN EXCLUDED.company_name
+            ELSE catalogs.form_425c_company_profiles.company_name
+          END,
+          filing_address = CASE
+            WHEN catalogs.form_425c_company_profiles.company_name IN ('IH 35 TRUCKING LLC', 'IH 35 TRANSPORTATION LLC')
+              AND catalogs.form_425c_company_profiles.company_name <> EXCLUDED.company_name
+            THEN EXCLUDED.filing_address
+            ELSE catalogs.form_425c_company_profiles.filing_address
+          END,
+          district = CASE
+            WHEN catalogs.form_425c_company_profiles.company_name IN ('IH 35 TRUCKING LLC', 'IH 35 TRANSPORTATION LLC')
+              AND catalogs.form_425c_company_profiles.company_name <> EXCLUDED.company_name
+              AND catalogs.form_425c_company_profiles.district = 'Texas'
+            THEN ''
+            ELSE catalogs.form_425c_company_profiles.district
+          END,
+          division = CASE
+            WHEN catalogs.form_425c_company_profiles.company_name IN ('IH 35 TRUCKING LLC', 'IH 35 TRANSPORTATION LLC')
+              AND catalogs.form_425c_company_profiles.company_name <> EXCLUDED.company_name
+              AND catalogs.form_425c_company_profiles.division = 'San Antonio'
+            THEN ''
+            ELSE catalogs.form_425c_company_profiles.division
+          END,
+          bank_accounts = CASE
+            WHEN catalogs.form_425c_company_profiles.company_name IN ('IH 35 TRUCKING LLC', 'IH 35 TRANSPORTATION LLC')
+              AND catalogs.form_425c_company_profiles.company_name <> EXCLUDED.company_name
+              AND catalogs.form_425c_company_profiles.bank_accounts IN (
+                '[{"id":"WF-3500","label":"Wells Fargo – WF-3500","number":"xxxx3500"}]'::jsonb,
+                '[{"id":"WF-1","label":"Wells Fargo – WF (Account 1)","number":"xxxx"},{"id":"WF-2","label":"Wells Fargo – WF (Account 2)","number":"xxxx"},{"id":"WF-3","label":"Wells Fargo – WF (Account 3)","number":"xxxx"}]'::jsonb
+              )
+            THEN '[]'::jsonb
+            ELSE catalogs.form_425c_company_profiles.bank_accounts
+          END,
+          updated_at = now()
       `,
       [
         operatingCompanyId,
-        row.company_key,
-        row.company_name,
-        row.line_of_business,
-        row.naisc_code,
+        identity.companyKey,
+        identity.legalName,
+        identity.filingAddress,
         JSON.stringify(defaultAnswers),
-        JSON.stringify(row.bank_accounts),
         userId,
       ]
-    );
-  }
+  );
+  return identity;
 }
 
 /**
@@ -406,15 +454,16 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     const profiles = await withCompanyScope(user.uuid, companyId, async (client) => {
-      await ensureDefaultProfiles(client, companyId, user.uuid);
+      const identity = await ensureDefaultProfile(client, companyId, user.uuid);
       const res = await client.query(
         `
           SELECT *
           FROM catalogs.form_425c_company_profiles
           WHERE operating_company_id = $1::uuid
-          ORDER BY CASE company_key WHEN 'trucking' THEN 1 ELSE 2 END
+            AND company_key = $2
+          LIMIT 1
         `,
-        [companyId]
+        [companyId, identity.companyKey]
       );
       return res.rows;
     });
@@ -428,7 +477,11 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
 
-    const profile = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+      const identity = await filingProfileIdentity(client, b.operating_company_id);
+      if (b.company_key !== identity.companyKey) {
+        return { kind: "company_key_mismatch" as const };
+      }
       const res = await client.query(
         `
           INSERT INTO catalogs.form_425c_company_profiles (
@@ -484,10 +537,13 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           user.uuid,
         ]
       );
-      return res.rows[0];
+      return { kind: "profile" as const, profile: res.rows[0] };
     });
 
-    return reply.code(201).send(profile);
+    if (result.kind === "company_key_mismatch") {
+      return reply.code(400).send({ error: "form_425c_profile_company_key_mismatch" });
+    }
+    return reply.code(201).send(result.profile);
   });
 
   app.post("/api/v1/form-425c", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -500,7 +556,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     const { prevMonthDate } = monthWindow(reportingMonth.slice(0, 7));
 
     const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-      await ensureDefaultProfiles(client, b.operating_company_id, user.uuid);
+      await ensureDefaultProfile(client, b.operating_company_id, user.uuid);
 
       // Case petition date is a single source of truth for the Ch.11 case — never invent a literal.
       // Prefer the petition_date already recorded on any prior report for this entity; otherwise require body.
