@@ -126,7 +126,7 @@ export function PmAutoEnginePage() {
               {entry.work_order_id ? (
                 <>
                   {" "}
-                  · WO <EntityLink kind="work_order" id={entry.work_order_id} label={entry.work_order_id} />
+                  · WO <EntityLink kind="work_order" id={entry.work_order_id} label={entityLabel(entry.work_order_display_id, entry.work_order_id, "Work order")} />
                 </>
               ) : ""}
             </li>

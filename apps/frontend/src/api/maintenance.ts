@@ -1957,6 +1957,7 @@ export type PmAutoEngineLogRow = {
   unit_id: string;
   action: string;
   work_order_id?: string | null;
+  work_order_display_id?: string | null;
   schedule_label?: string | null;
   unit_number?: string | null;
   created_at?: string;

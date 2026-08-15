@@ -30,6 +30,14 @@ function fail(msg) {
   process.exit(1);
 }
 
+function labelFailures(service, maintenanceApi, page) {
+  return [
+    ["PM log must project work-order display id", service.includes("wo.display_id AS work_order_display_id")],
+    ["PM log work-order join must be company scoped", service.includes("wo.operating_company_id = l.operating_company_id")],
+    ["typed work-order label must reach mounted action log", maintenanceApi.includes("work_order_display_id?: string | null") && page.includes('entityLabel(entry.work_order_display_id, entry.work_order_id, "Work order")')],
+  ].filter(([, ok]) => !ok).map(([name]) => name);
+}
+
 function main() {
   const failures = [];
   const migration = read(paths.migration);
@@ -42,6 +50,19 @@ function main() {
   const index = read(paths.index);
   const maintenanceApi = read(paths.maintenanceApi);
   const archDesign = read(paths.archDesign);
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      labelFailures(service.replace("wo.display_id AS work_order_display_id", "NULL AS work_order_display_id"), maintenanceApi, page).length > 0,
+      labelFailures(service.replace("wo.operating_company_id = l.operating_company_id", "TRUE"), maintenanceApi, page).length > 0,
+      labelFailures(service, maintenanceApi, page.replace('entityLabel(entry.work_order_display_id, entry.work_order_id, "Work order")', "entry.work_order_id")).length > 0,
+    ];
+    if (mutations.some((caught) => !caught)) fail("PM work-order label mutation escaped");
+    console.log("verify:maint-pm-auto-wo-engine SELFTEST PASS — 3/3 work-order label mutations red");
+    return;
+  }
+
+  failures.push(...labelFailures(service, maintenanceApi, page));
 
   if (!migration.includes("maintenance.pm_schedule_runs")) failures.push("migration must create pm_schedule_runs");
   if (!migration.includes("maintenance.pm_auto_wo_log")) failures.push("migration must create pm_auto_wo_log");

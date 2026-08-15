@@ -532,6 +532,7 @@ export async function registerMaintenancePmAutoEngineRoutes(app: FastifyInstance
             l.unit_id::text,
             l.action,
             l.work_order_id::text,
+            wo.display_id AS work_order_display_id,
             l.created_at::text,
             s.label AS schedule_label,
             u.unit_number
@@ -539,6 +540,8 @@ export async function registerMaintenancePmAutoEngineRoutes(app: FastifyInstance
           LEFT JOIN maintenance.pm_schedules s ON s.id = l.pm_schedule_id
           LEFT JOIN mdata.units u ON u.id = l.unit_id
                                   AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+          LEFT JOIN maintenance.work_orders wo ON wo.id = l.work_order_id
+                                               AND wo.operating_company_id = l.operating_company_id
           WHERE l.operating_company_id = $1::uuid
           ORDER BY l.created_at DESC
           LIMIT $2
