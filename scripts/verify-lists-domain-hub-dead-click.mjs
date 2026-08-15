@@ -53,6 +53,8 @@ const SHARED_CREATE_DEEPLINK_FILES = [
   "apps/frontend/src/pages/lists/safety/InternalFineReasonsListPage.tsx",
   "apps/frontend/src/pages/lists/safety/CargoClaimReasonsListPage.tsx",
   "apps/frontend/src/pages/lists/safety/CivilFineTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx",
+  "apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx",
 ];
 
 const KNOWN_DOMAIN_KEYS = [
