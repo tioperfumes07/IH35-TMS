@@ -54,6 +54,7 @@ const EXACT_CONSUMERS = {
   legal: { route: "/legal/matters", surface: "pages/legal/matters/LegalMattersListPage.tsx" },
   program: { route: "/program/modules", surface: "pages/program/ModuleCompletionPage.tsx" },
   system: { route: "/system?tab=program", surface: "pages/system/SystemModulePage.tsx" },
+  tasks: { route: "/tasks/report", surface: "pages/tasks/TasksReportPage.tsx" },
 };
 const CONNECTIVITY_EXCLUSIONS = {
   form_425: ["tab.qb", "law.virtual_banks_excluded"],
