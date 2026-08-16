@@ -102,17 +102,25 @@ async function liveScan() {
   const client = new Client(buildPgClientConfig(connectionString));
   await client.connect();
   try {
-    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-
-    const res = await client.query(
+    // The prod endpoint is a PgBouncer-style pooler in transaction-pooling mode: a SEPARATE
+    // client.query() call can land on a DIFFERENT physical backend, so a set_config() issued in its
+    // own call can silently vanish before the next call runs — the bypass would then look "applied"
+    // while the real SELECT sees RLS-filtered (near-empty) rows and this guard reports a false "no
+    // active row" pass forever, regardless of real state. Sending SET + SELECT as ONE multi-statement
+    // string guarantees the whole simple-query message executes as a single implicit transaction on
+    // one backend. (Found live 2026-08-16 while authoring the sibling settlement-posting-config guard
+    // — this file shipped with the same latent flaw and is fixed in the same pass.)
+    const results = await client.query(
       `
+        SELECT set_config('app.bypass_rls', 'lucia', true);
         SELECT id::text AS id, operating_company_id::text AS operating_company_id, account_name
         FROM catalogs.accounts
         WHERE account_number IS NULL
           AND deactivated_at IS NULL
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC;
       `
     );
+    const res = Array.isArray(results) ? results[results.length - 1] : results;
 
     if (res.rows.length > 0) {
       const ids = res.rows.map((row) => `${row.id} (${row.account_name})`).join(", ");
