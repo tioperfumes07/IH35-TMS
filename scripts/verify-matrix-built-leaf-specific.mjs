@@ -176,6 +176,21 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
+  // ENV-MATRIX-LEAF-SPECIFIC-WHOLE-FILE-DIFF: appending an unrelated EXACT (leaf-specific) entry
+  // to the shared feed must leave legacy broad identities as legacy — never reclassify them NEW.
+  const withExactAppend = [
+    ...currentSiblingEntries,
+    { file: sameFeedFile, cols: ["connectivity"], leafRe: "^detail\\.loads$", task: "EXACT-APPEND-ONLY" },
+  ];
+  const exactAppendResult = splitNewVsLegacy(withExactAppend, mainSiblingEntries);
+  if (exactAppendResult.newFailures.length !== 0 || exactAppendResult.legacyFailures.length !== 2) {
+    console.error(
+      `${LABEL} SELFTEST FAIL — exact feed append false-flagged legacy broad entries as new ` +
+        `(got ${exactAppendResult.newFailures.length} new / ${exactAppendResult.legacyFailures.length} legacy, want 0 new / 2 legacy)`,
+    );
+    process.exit(1);
+  }
+
   // A genuinely NEW broad claim (task never existed at origin/main) must still hard-fail.
   const withNewTask = [...currentSiblingEntries, { file: "scripts/verify-brand-new.mjs", cols: ["driver"], leafRe: ".*", task: "BRAND-NEW-TASK" }];
   const withNewTaskResult = splitNewVsLegacy(withNewTask, mainSiblingEntries);
@@ -222,19 +237,43 @@ if (process.argv.includes("--selftest")) {
 function originMainEntries() {
   try {
     const feedText = execSync(`git show origin/main:${FEED_FILE}`, { cwd: ROOT, encoding: "utf8" });
-    const listOut = execSync("git ls-tree -r --name-only origin/main -- scripts", { cwd: ROOT, encoding: "utf8" });
-    const scriptNames = listOut
-      .split("\n")
-      .map((s) => s.trim())
-      .filter((s) => s.startsWith("scripts/verify-") && s.endsWith(".mjs"))
-      .map((s) => s.slice("scripts/".length));
+    // Only materialize scripts that actually carry @matrix-built — a full `git show` per verify-*.mjs
+    // was hanging the push gate for minutes (ENV-MATRIX false-positive class + wall-clock defect).
+    let taggedScripts = [];
+    try {
+      const grepOut = execSync(
+        "git grep -l --fixed-strings '@matrix-built' origin/main -- 'scripts/verify-*.mjs'",
+        { cwd: ROOT, encoding: "utf8" },
+      );
+      taggedScripts = grepOut
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((s) => s.replace(/^origin\/main:/, ""))
+        .filter((s) => s.startsWith("scripts/verify-") && s.endsWith(".mjs"))
+        .map((s) => s.slice("scripts/".length))
+        .filter((n) => n !== "verify-matrix-built-leaf-specific.mjs");
+    } catch {
+      // git grep exit 1 = no matches; treat as empty tagged set (feed-only compare still runs).
+      taggedScripts = [];
+    }
+    const scriptBlobCache = new Map();
+    for (const name of taggedScripts) {
+      scriptBlobCache.set(
+        name,
+        execSync(`git show origin/main:scripts/${name}`, { cwd: ROOT, encoding: "utf8" }),
+      );
+    }
     return scanEntries(
       (p) => {
         const rel = path.relative(ROOT, p).split(path.sep).join("/");
         if (rel === FEED_FILE) return feedText;
-        return execSync(`git show origin/main:${rel}`, { cwd: ROOT, encoding: "utf8" });
+        const name = path.basename(rel);
+        if (scriptBlobCache.has(name)) return scriptBlobCache.get(name);
+        // Untagged scripts are not scanned for Built claims on main; empty source → no false entries.
+        return "";
       },
-      () => scriptNames,
+      () => taggedScripts,
     );
   } catch {
     // origin/main unreachable (shallow clone, detached fixture, etc.) — fail open to "everything new"
