@@ -351,7 +351,10 @@ export function backgroundJobRule(
       return { enabled: true, maxStaleMinutes: 15 };
     case "compliance.csa_basic_pull_cron":
       // "30 5 * * *" = every 1440m -> two missed periods
-      return { enabled: true, maxStaleMinutes: 2880 };
+      // Public SAFER does not expose CSA BASIC measures. The worker is therefore explicit opt-in,
+      // and health must mirror that same capability gate instead of alarming forever for a job the
+      // process deliberately did not schedule.
+      return { enabled: envEnabled("ENABLE_CSA_BASIC_PULL_CRON"), maxStaleMinutes: 2880 };
     case "compliance.fmcsa_safer_verification_cron":
       // "15 6 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };
@@ -363,7 +366,9 @@ export function backgroundJobRule(
       return { enabled: true, maxStaleMinutes: 2880 };
     case "fuel.fraud_detector_worker":
       // "*/15 * * * *" = every 15m -> two missed periods
-      return { enabled: true, maxStaleMinutes: 30 };
+      // The detector can create alerts and dispatch notifications, so its worker is default-OFF.
+      // Monitoring the disabled ledger row as enabled made one historic run permanently stale.
+      return { enabled: envEnabled("ENABLE_FUEL_FRAUD_DETECTOR_WORKER"), maxStaleMinutes: 30 };
     case "idempotency.cleanup_cron":
       // "30 3 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };

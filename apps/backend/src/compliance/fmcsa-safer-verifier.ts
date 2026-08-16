@@ -8,7 +8,7 @@ export type SaferVerificationResult = {
   operating_company_id: string;
   lookup_type: "mc" | "usdot" | null;
   lookup_value: string | null;
-  safer_status: "verified" | "failed" | "skipped" | "error";
+  safer_status: "verified" | "inactive" | "revoked" | "not_found" | "missing_lookup" | "lookup_failed";
   safer_authority_status: string | null;
   safer_oos_status: string | null;
   safer_verified_at: string | null;
@@ -77,7 +77,7 @@ export function parseSaferOperatingStatus(rawText: string): string {
 export function deriveSaferFieldsFromCarrier(carrier: CarrierResult | null, rawHtml?: string) {
   if (!carrier) {
     return {
-      safer_status: "failed" as const,
+      safer_status: "not_found" as const,
       safer_authority_status: "NONE",
       safer_oos_status: "unknown",
       safer_verified_at: null as string | null,
@@ -94,8 +94,15 @@ export function deriveSaferFieldsFromCarrier(carrier: CarrierResult | null, rawH
         : oosFromHtml;
 
   const verified = authority === "ACTIVE" && saferOos !== "out_of_service";
+  const saferStatus = verified
+    ? ("verified" as const)
+    : authority === "REVOKED"
+      ? ("revoked" as const)
+      : authority === "INACTIVE"
+        ? ("inactive" as const)
+        : ("lookup_failed" as const);
   return {
-    safer_status: verified ? ("verified" as const) : ("failed" as const),
+    safer_status: saferStatus,
     safer_authority_status: authority,
     safer_oos_status: saferOos,
     safer_verified_at: verified ? new Date().toISOString() : null,
@@ -178,7 +185,7 @@ export async function verifySaferEntity(
       `
         UPDATE ${table}
         SET
-          safer_status = 'skipped',
+          safer_status = 'missing_lookup',
           safer_authority_status = NULL,
           safer_oos_status = NULL,
           safer_verified_at = NULL,
@@ -193,7 +200,7 @@ export async function verifySaferEntity(
       operating_company_id: params.operatingCompanyId,
       lookup_type: null,
       lookup_value: null,
-      safer_status: "skipped",
+      safer_status: "missing_lookup",
       safer_authority_status: null,
       safer_oos_status: null,
       safer_verified_at: null,
@@ -211,7 +218,7 @@ export async function verifySaferEntity(
       `
         UPDATE ${table}
         SET
-          safer_status = 'error',
+          safer_status = 'lookup_failed',
           safer_authority_status = NULL,
           safer_oos_status = NULL,
           safer_verified_at = NULL,
@@ -226,7 +233,7 @@ export async function verifySaferEntity(
       operating_company_id: params.operatingCompanyId,
       lookup_type: lookup.type,
       lookup_value: lookup.value,
-      safer_status: "error",
+      safer_status: "lookup_failed",
       safer_authority_status: null,
       safer_oos_status: null,
       safer_verified_at: null,
