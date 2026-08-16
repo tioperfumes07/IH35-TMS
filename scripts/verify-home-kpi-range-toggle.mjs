@@ -69,6 +69,20 @@ export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes
     if (!/revenueKpiLabel\(\s*kpiRange\s*\)/.test(src)) {
       f.push(`${rel}: revenue KPI label must reflect the selected range`);
     }
+    if (rel !== QBO_HOME) {
+      if (!/qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/.test(src)) {
+        f.push(`${rel}: QBO capability must derive from the canonical selected TRANSP company`);
+      }
+      if ((src.match(/enabled:\s*Boolean\(selectedCompanyId\)\s*&&\s*qboAvailable/g) ?? []).length < 4) {
+        f.push(`${rel}: all four Home QBO queries must be disabled outside TRANSP`);
+      }
+      if (!/qboAvailable\s*\?\s*<QboSyncHealthCard/.test(src)) {
+        f.push(`${rel}: QBO Sync Health chrome must be absent outside TRANSP`);
+      }
+      if ((src.match(/\.\.\.\(qboAvailable\s*\?\s*\[\{/g) ?? []).length < 2) {
+        f.push(`${rel}: QBO vendor and pending-sync KPI cards must be absent outside TRANSP`);
+      }
+    }
   }
 
   if (!apiHome) {
@@ -128,6 +142,13 @@ if (process.argv.includes("--selftest")) {
   `;
   const goodVariant = `
     import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
+    const qboAvailable = selectedCompany?.code === "TRANSP";
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
+    const kpis = [...(qboAvailable ? [{ label: "QBO Vendors" }] : []), ...(qboAvailable ? [{ label: "Pending QBO Sync" }] : [])];
+    {qboAvailable ? <QboSyncHealthCard /> : null}
     queryKey: ["home", "today-revenue", cid, kpiRange],
     queryFn: () => fetchHomeTodayRevenue(cid, kpiRange),
     label={revenueKpiLabel(kpiRange)}
@@ -184,6 +205,18 @@ if (process.argv.includes("--selftest")) {
       "service without company-TZ window caught",
       check({ ...good, service: "export function revenueRangeWindow() { /* no tz */ }" }).some((x) =>
         x.includes("companyBusinessDate"),
+      ),
+    ],
+    [
+      "non-TRANSP QBO chrome caught",
+      check({ ...good, ownerHome: goodVariant.replace("qboAvailable ? <QboSyncHealthCard", "true ? <QboSyncHealthCard") }).some((x) =>
+        x.includes("QBO Sync Health chrome"),
+      ),
+    ],
+    [
+      "non-TRANSP QBO polling caught",
+      check({ ...good, defaultHome: goodVariant.replace("enabled: Boolean(selectedCompanyId) && qboAvailable", "enabled: Boolean(selectedCompanyId)") }).some((x) =>
+        x.includes("four Home QBO queries"),
       ),
     ],
   ];
