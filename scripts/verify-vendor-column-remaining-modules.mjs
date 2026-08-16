@@ -63,7 +63,7 @@ export function audit(src) {
   need(/kind="vendor"/.test(src.banking), `${FILES.banking}: banking transactions must render a real vendor EntityLink`);
   need(/customs_broker(?!_)/.test(src.borderWizard), `${FILES.borderWizard}: border crossing wizard must resolve a real customs-broker vendor`);
   need(/kind="vendor" id=\{selected\.customs_broker_id\}/.test(src.borderHistory), `${FILES.borderHistory}: border crossing history must render a real vendor EntityLink`);
-  need(/createKind="vendor"/.test(src.factoringHome) && /createDriverVendorMerge/.test(src.factoringHome), `${FILES.factoringHome}: equipment loans and vendor merges must be real vendor-scoped surfaces`);
+  need(/kind=["']vendor["']/.test(src.factoringHome) && /allowCreate/.test(src.factoringHome) && /createDriverVendorMerge/.test(src.factoringHome), `${FILES.factoringHome}: equipment loans and vendor merges must be real vendor-scoped surfaces`);
   need(/type === "driver" \|\| type === "customer" \|\| type === "vendor"/.test(src.contractsList), `${FILES.contractsList}: contracts list must resolve a real vendor signer via signerKind`);
   need(/kind=["']vendor["']/.test(src.contractsCreate) && /allowCreate/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real vendor EntityPicker`);
   need(/kind="vendor" id=\{row\.vendor_id\}/.test(src.management), `${FILES.management}: management report must render a real vendor EntityLink`);
@@ -98,7 +98,7 @@ if (process.argv.includes("--selftest")) {
     ["banking-link", "banking", /kind="vendor"/g, 'kind="unit"'],
     ["border-wizard-broker", "borderWizard", /customs_broker/g, "customs_broker_unused"],
     ["border-history-link", "borderHistory", /kind="vendor" id=\{selected\.customs_broker_id\}/, 'kind="unit" id={selected.unit_id}'],
-    ["factoring-loans-picker", "factoringHome", /createKind="vendor"/g, 'createKind="unit"'],
+    ["factoring-loans-picker", "factoringHome", /kind=["']vendor["']/g, 'kind="unit"'],
     ["contracts-list-link", "contractsList", /type === "driver" \|\| type === "customer" \|\| type === "vendor"/, 'type === "driver" || type === "customer"'],
     ["contracts-create-picker", "contractsCreate", /kind=["']vendor["']/g, 'kind="customer"'],
     ["management-link", "management", /kind="vendor" id=\{row\.vendor_id\}/g, 'kind="unit" id={row.unit_id}'],

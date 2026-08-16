@@ -15,9 +15,7 @@ import {
   type FactoringMonthlyFeeSummary,
   type FactoringSettingsRow,
 } from "../../api/factoring";
-import { listVendors } from "../../api/mdata";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import {
   createDriverVendorMerge,
   createEquipmentLoan,
@@ -216,11 +214,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const summaryQuery = useQuery({
     queryKey: ["factoring", "summary", companyId],
     queryFn: () => getFactoringSummary(companyId),
-    enabled: Boolean(companyId),
-  });
-  const vendorsQuery = useQuery({
-    queryKey: ["factoring", "vendors", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, status: "active" }).then((res) => res.vendors),
     enabled: Boolean(companyId),
   });
   const factorsQuery = useQuery({
@@ -866,15 +859,17 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 placeholder="Select equipment"
                 enabled={Boolean(companyId) && tab === "equipment_loans"}
               />
-              <ReferenceSelect
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no uncapped listVendors page for lender. */}
+              <EntityPicker
+                kind="vendor"
+                allowCreate
+                operatingCompanyId={companyId}
                 value={loanLenderVendorId || null}
                 onChange={(v) => setLoanLenderVendorId(v ?? "")}
-                options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
-                createKind="vendor"
-                operatingCompanyId={companyId}
                 placeholder="Select lender vendor"
-                disabled={!companyId}
-                onOptionCreated={() => void queryClient.invalidateQueries({ queryKey: ["factoring", "vendors", companyId] })}
+                enabled={Boolean(companyId) && tab === "equipment_loans"}
+                dataField="factoring-loan-lender-vendor"
+                className="w-full"
               />
               {/* M-1 (GUARD FAIL #3): was a raw "principal cents" text input (350 = $3.50). cents-mode MoneyInput:
                   operator types dollars; principal_cents = Number(loanPrincipalCents) stored unchanged. */}
