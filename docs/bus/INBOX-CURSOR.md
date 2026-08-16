@@ -40,3 +40,6 @@ Actions run `31940366897` is green only because both R2 upload scripts skipped o
 ## CODEX HANDOFF · 2026-08-16 · LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP
 
 At 697px Live USMCA `/home`, shared `Topbar.tsx` clips the company switcher after `Current:` and pushes every right-side action off-screen. Fix the shared vertical class across all modules; preserve all actions via responsive wrapping/compaction/accessible overflow, with a leaf-specific guard and viewport test. Exact OPEN row, source lines, acceptance, audit row 875, and `BLOCKS=LIVE-CHROME-RESPONSIVE-ALL-MODULES` are filed. OWNER-GATED=no.
+## CODEX HANDOFF · 2026-08-16 · LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR
+
+Live USMCA `/home` has honest no-HOS copy but zero Search/Range/gear/Filter controls because `DriverDaySummaryCard.tsx:82-105` replaces `ParityTable` when `has_data=false`. Preserve the explanation and keep an empty governed table mounted; extend the Home guards with an independent empty-branch mutation. Exact OPEN row, audit 879, and `BLOCKS=LIVE-HOME-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no.
