@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * AccidentReportDrawer — Unit/Load use EntityPicker (server search + optional unit create),
- * not silent Combobox over listUnits/listDispatchLoads.
+ * AccidentReportDrawer — Unit/Load/Vendor use EntityPicker (server search + optional create),
+ * not silent Combobox over listUnits/listDispatchLoads or capped listVendors.
  * Cursor even claim: 2142.
  */
 import fs from "node:fs";
@@ -38,6 +38,12 @@ export function collectProblems(root = ROOT) {
   }
   if (/listDispatchLoads\(/.test(code)) {
     problems.push(`${FILE}: must not call listDispatchLoads for load picker`);
+  }
+  if (!/kind=["']vendor["']/.test(code) || !/allowCreate/.test(code)) {
+    problems.push(`${FILE}: must use EntityPicker kind="vendor" allowCreate`);
+  }
+  if (/listVendors\(/.test(code)) {
+    problems.push(`${FILE}: must not call listVendors directly (EntityPicker owns roster)`);
   }
   // Unit field must not be a bare Combobox with unitOptions
   if (/accident-unit-picker[\s\S]{0,400}<Combobox/.test(src)) {
@@ -80,5 +86,5 @@ listDispatchLoads({ limit: 200 })
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — AccidentReportDrawer EntityPicker unit+load`);
+  console.log(`${LABEL} OK — AccidentReportDrawer EntityPicker unit+load+vendor`);
 }

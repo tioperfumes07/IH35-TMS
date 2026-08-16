@@ -71,7 +71,7 @@ export function audit(src) {
   need(/kind="vendor" id=\{r\.vendor_id\}/.test(src.arApAging), `${FILES.arApAging}: AR/AP aging must render a real vendor EntityLink`);
   need(/kind="vendor"/.test(src.fuelCreate), `${FILES.fuelCreate}: fuel transaction create must have a real vendor picker`);
   need(/insurer_vendor_id: string/.test(src.policyWizard), `${FILES.policyWizard}: policy create must have a real insurer_vendor_id field`);
-  need(/Field label="Repair Vendor"/.test(src.accidentDrawer) && /createKind="vendor"/.test(src.accidentDrawer), `${FILES.accidentDrawer}: accident create must have a real repair-vendor picker`);
+  need(/Field label="Repair Vendor"/.test(src.accidentDrawer) && /kind=["']vendor["']/.test(src.accidentDrawer) && /allowCreate/.test(src.accidentDrawer), `${FILES.accidentDrawer}: accident create must have a real repair-vendor EntityPicker`);
   need(/vendor:\s*"vendor"/.test(src.auditTrail), `${FILES.auditTrail}: audit trail must map subject_type to a real vendor EntityKind`);
   return failures;
 }

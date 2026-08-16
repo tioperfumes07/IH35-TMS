@@ -1,6 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   addAccidentPhoto,
@@ -11,7 +11,6 @@ import {
   spawnSafetyWo,
   type AccidentFault,
 } from "../../api/safety";
-import { listVendors } from "../../api/mdata";
 import { suggestExpenseLoad } from "../../api/maintenance";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
@@ -23,7 +22,7 @@ import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLi
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { Combobox } from "../shared/Combobox";
 import { EntityPicker } from "../parity/EntityPicker";
-import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -42,8 +41,7 @@ type Props = {
 export function AccidentReportDrawer({ open, operatingCompanyId, accident, createMode = false, onClose, onUpdated }: Props) {
   const { pushToast } = useToast();
   const [uploading, setUploading] = useState(false);
-  // SAF-F31: load/vendor pickers send search to the server (EntityPicker owns unit roster + search).
-  const [vendorSearch, setVendorSearch] = useState("");
+  // SAF-F31: EntityPicker owns unit/load/vendor server-search.
   // SAF-B30 / F35: list of AC WOs linked by description token — survives reload (not React-only).
   const [spawnedWorkOrders, setSpawnedWorkOrders] = useState<Array<{ id: string; display_id: string }>>([]);
   const [costLines, setCostLines] = useState<TwoSectionLine[]>([]);
@@ -178,21 +176,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     );
   }, [detailQuery.data]);
 
-  const vendorsQuery = useQuery({
-    queryKey: ["accident", "vendors", operatingCompanyId, vendorSearch],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200, search: vendorSearch || undefined }),
-    enabled: scopeReady,
-  });
   const accidentTypesQuery = useQuery({
     queryKey: ["accident-types", operatingCompanyId],
     queryFn: () => apiRequest<{ rows: Array<{ id: string; code: string; display_name: string }> }>(`/api/v1/catalogs/safety/accident-types?operating_company_id=${encodeURIComponent(operatingCompanyId)}&is_active=true&limit=200`),
     enabled: scopeReady,
   });
-
-  const vendorOptions: ReferenceOption[] = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).map((row) => ({ value: String(row.id), label: entityLabel(row.name, String(row.id), "Vendor") })),
-    [vendorsQuery.data?.vendors]
-  );
 
   if (!open || !accident) return null;
   const id = accidentId;
@@ -368,14 +356,18 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
             <Field label="Repair Vendor">
               <div data-testid="accident-vendor-picker">
-                <ReferenceSelect
-                  options={vendorOptions}
-                  value={vendorId || null}
-                  placeholder="Search vendor…"
-                  onChange={(next) => setVendorId(next ?? "")}
-                  createKind="vendor"
+                <EntityPicker
+                  kind="vendor"
+                  allowCreate
                   operatingCompanyId={operatingCompanyId}
-                  onSearch={setVendorSearch}
+                  value={vendorId || null}
+                  onChange={(next) => setVendorId(next ?? "")}
+                  nestedInDrawer
+                  enabled={open && scopeReady}
+                  placeholder="Search vendor…"
+                  className="w-full"
+                  dataField="accident-vendor"
+                  dataTestId="accident-vendor"
                 />
               </div>
             </Field>
