@@ -21,13 +21,15 @@ import { entityLabel } from "../../../lib/entity-label";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
-import { listCustomers, listVendors } from "../../../api/mdata";
+import { listCustomers } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { PreDispatchValidationPanel } from "../../../components/dispatch/PreDispatchValidationPanel";
@@ -61,7 +63,6 @@ import {
   sumAccessorialCents,
   type AccessorialRow,
 } from "../../../components/dispatch/accessorial-editor-lib";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -486,19 +487,6 @@ export function BookLoadModalV4({
   const milesDeadhead = form.watch("miles_deadhead");
   const reservedLoadNumber = form.watch("reserved_load_number");
   const factoringCompanyVendorId = form.watch("factoring_company_vendor_id");
-
-  const factoringVendorsQuery = useQuery({
-    queryKey: ["book-load-factoring-vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const factoringVendorOptions = useMemo(
-    () =>
-      (factoringVendorsQuery.data?.vendors ?? [])
-        .filter((vendor) => (vendor.vendor_type ?? "").toLowerCase().includes("factor") || (vendor.name ?? "").toLowerCase().includes("factor"))
-        .map((vendor) => ({ value: vendor.id, label: vendor.name })),
-    [factoringVendorsQuery.data?.vendors]
-  );
 
   const customersQuery = useQuery({
     queryKey: ["book-load-v4-customers", operatingCompanyId],
@@ -1508,32 +1496,22 @@ export function BookLoadModalV4({
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
                       {/*
-                        LST-PICKER-01: bare SelectCombobox had no inline +Create — operators left for Lists/Vendors.
-                        ReferenceSelect createKind=vendor → POST mdata.vendors (same table this picker reads).
-                        Options stay factor-filtered; newly created vendors still appear via invalidate + select.
+                        LST-PICKER-01 / CLS-SILENT-CAP: EntityPicker server-search + allowCreate →
+                        mdata.vendors (same table factoring_company_vendor_id writes).
                       */}
                       <div className="mt-0.5">
-                        <ReferenceSelect
+                        <EntityPicker
+                          kind="vendor"
+                          allowCreate
+                          operatingCompanyId={operatingCompanyId}
                           value={factoringCompanyVendorId || null}
                           onChange={(next) =>
                             form.setValue("factoring_company_vendor_id", next ?? "", { shouldDirty: true })
                           }
-                          options={factoringVendorOptions}
-                          createKind="vendor"
-                          operatingCompanyId={operatingCompanyId}
-                          placeholder={
-                            factoringVendorsQuery.isLoading
-                              ? "Loading factoring companies…"
-                              : factoringVendorOptions.length === 0
-                                ? "No factoring companies yet — + Add new below"
-                                : "Select factoring company"
-                          }
-                          loading={factoringVendorsQuery.isLoading}
-                          disabled={!operatingCompanyId || factoringVendorsQuery.isLoading}
-                          onOptionCreated={(opt) => {
-                            void queryClient.invalidateQueries({ queryKey: ["book-load-factoring-vendors", operatingCompanyId] });
-                            form.setValue("factoring_company_vendor_id", opt.value, { shouldDirty: true });
-                          }}
+                          enabled={Boolean(operatingCompanyId)}
+                          placeholder="Search factoring company…"
+                          dataField="book-load-factoring-company-vendor"
+                          className="w-full"
                         />
                       </div>
                     </label>

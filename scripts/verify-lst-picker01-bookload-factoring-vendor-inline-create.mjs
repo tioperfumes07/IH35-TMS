@@ -27,9 +27,14 @@ export function collectProblems(root = ROOT) {
   if (!page) problems.push(`missing ${PAGE}`);
   else {
     const code = page.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-    // Factoring company block must use createKind=vendor (not only customer ReferenceSelect).
-    if (!/factoring_company_vendor_id[\s\S]{0,800}createKind=["']vendor["']/.test(code)) {
-      problems.push(`${PAGE}: factoring company must use createKind=vendor near factoring_company_vendor_id`);
+    // Factoring company block must use EntityPicker kind=vendor allowCreate (not SelectCombobox / capped listVendors).
+    if (!/factoring_company_vendor_id[\s\S]{0,1200}kind=["']vendor["'][\s\S]{0,200}allowCreate/.test(code) &&
+        !/kind=["']vendor["'][\s\S]{0,400}factoring_company_vendor_id/.test(code) &&
+        !/dataField=["']book-load-factoring-company-vendor["']/.test(code)) {
+      problems.push(`${PAGE}: factoring company must use EntityPicker kind=vendor allowCreate near factoring_company_vendor_id`);
+    }
+    if (/listVendors\(/.test(code)) {
+      problems.push(`${PAGE}: must not capped-listVendors — EntityPicker server-searches mdata.vendors`);
     }
     if (
       /factoring_company_vendor_id[\s\S]{0,500}SelectCombobox[\s\S]{0,400}factoringVendorOptions\.map/.test(code) ||
@@ -73,7 +78,7 @@ if (process.argv.includes("--selftest")) {
     );
     fs.copyFileSync(path.join(ROOT, REGISTRY), path.join(regDir, "catalogPickerRegistry.ts"));
     const planted = collectProblems(stubRoot);
-    if (!planted.some((p) => /createKind=vendor/.test(p))) {
+    if (!planted.some((p) => /EntityPicker|createKind=vendor|listVendors/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted SelectCombobox stub did not FAIL`);
       process.exit(1);
     }
