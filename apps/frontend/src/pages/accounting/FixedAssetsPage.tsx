@@ -345,7 +345,16 @@ export function FixedAssetsPage() {
     () => companies.find((c) => c.code === "TRK" || c.company_type === "asset_holder") ?? null,
     [companies],
   );
-  const canBulkRegister = (user?.role === "Owner" || user?.role === "Administrator") && Boolean(trkCompany);
+  // LV-USMCA-FIXED-ASSETS-TRK-BULK-REGISTER — the gate checked role + that a TRK company exists
+  // ANYWHERE in the system, never that the operator is actually looking at TRK. Selecting USMCA
+  // (or TRANSP) as the current entity still exposed "Register TRK units", so an Owner/Admin could
+  // register fixed assets onto TRK's books from inside a different entity's screen without any
+  // indication of the mismatch. Bulk-register is a TRK-books action; it must only be reachable
+  // while TRK itself is the selected entity.
+  const canBulkRegister =
+    (user?.role === "Owner" || user?.role === "Administrator") &&
+    Boolean(trkCompany) &&
+    operatingCompanyId === trkCompany?.id;
 
   useEffect(() => {
     const assetId = searchParams.get("asset_id");

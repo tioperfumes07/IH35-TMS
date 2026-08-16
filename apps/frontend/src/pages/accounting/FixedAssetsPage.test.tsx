@@ -6,12 +6,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FixedAssetsPage, parseOwnerPricesJson } from "./FixedAssetsPage";
 import * as faApi from "../../api/fixed-assets";
 import * as flagHook from "../../hooks/useFeatureFlag";
+import * as companyCtx from "../../contexts/CompanyContext";
 
+const TRK_ID = "trk-id-1";
+const TRK_COMPANIES = [{ id: TRK_ID, code: "TRK", legal_name: "TRK Holdings", short_name: "TRK", company_type: "asset_holder", is_active: true, is_default: false }];
+
+// LV-USMCA-FIXED-ASSETS-TRK-BULK-REGISTER — selectedCompanyId must equal the TRK company id.
+// Bulk-register is a TRK-books action and is now gated on TRK being the SELECTED entity, not
+// merely existing somewhere in `companies` (see FixedAssetsPage.tsx canBulkRegister). Mocked as a
+// vi.fn() (default TRK selected) so individual tests can override to a non-TRK entity.
 vi.mock("../../contexts/CompanyContext", () => ({
-  useCompanyContext: () => ({
-    selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96",
-    companies: [{ id: "trk-id-1", code: "TRK", legal_name: "TRK Holdings", short_name: "TRK", company_type: "asset_holder", is_active: true, is_default: false }],
-  }),
+  useCompanyContext: vi.fn(() => ({ selectedCompanyId: TRK_ID, companies: TRK_COMPANIES })),
 }));
 
 vi.mock("../../auth/useAuth", () => ({
@@ -89,6 +94,20 @@ describe("FixedAssetsPage", () => {
     expect(await screen.findByText("Tractors")).toBeTruthy();
     expect(await screen.findByText("TRK Holdings")).toBeTruthy();
     expect(await screen.findByTestId("fa-density-honesty-banner")).toBeTruthy();
+  });
+
+  it("hides Register TRK units when a non-TRK entity is selected (LV-USMCA-FIXED-ASSETS-TRK-BULK-REGISTER)", async () => {
+    vi.mocked(companyCtx.useCompanyContext).mockReturnValueOnce({
+      selectedCompanyId: "usmca-id-1",
+      companies: [...TRK_COMPANIES, { id: "usmca-id-1", code: "USMCA", legal_name: "USMCA Carrier", short_name: "USMCA", company_type: "operating_carrier", is_active: true, is_default: false }],
+    } as ReturnType<typeof companyCtx.useCompanyContext>);
+    vi.mocked(flagHook.useFeatureFlag).mockReturnValue({ enabled: true, loading: false, error: null });
+    vi.mocked(faApi.getFixedAssets).mockResolvedValue({ total: 0, limit: 50, offset: 0, items: [] });
+
+    render(wrap(<FixedAssetsPage />));
+    await waitFor(() => expect(faApi.getFixedAssets).toHaveBeenCalled());
+
+    expect(screen.queryByTestId("fa-open-trk-register")).toBeNull();
   });
 
   it("does not submit bulk register without owner prices", async () => {

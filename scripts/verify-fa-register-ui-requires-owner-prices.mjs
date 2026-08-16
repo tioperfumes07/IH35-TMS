@@ -68,6 +68,15 @@ export function collectProblems(root = ROOT) {
     if (!/missing_price/.test(code)) {
       problems.push(`${PAGE}: must surface missing_price in register results`);
     }
+    // LV-USMCA-FIXED-ASSETS-TRK-BULK-REGISTER — canBulkRegister used to gate on role + TRK
+    // existing ANYWHERE, never on TRK being the SELECTED entity. An Owner/Admin viewing USMCA
+    // (or TRANSP) could still see "Register TRK units" and register fixed assets onto TRK's
+    // books from inside a different entity's screen.
+    if (!/canBulkRegister\s*=[\s\S]{0,300}?operatingCompanyId\s*===\s*trkCompany\?\.\s*id/.test(code)) {
+      problems.push(
+        `${PAGE}: canBulkRegister must require operatingCompanyId === trkCompany?.id — otherwise the register action is reachable from any selected entity, not only TRK`
+      );
+    }
   }
 
   return problems;
@@ -87,6 +96,7 @@ function selftest() {
     "Object.keys(pricesMap).length",
     "disabled={registerMutation.isPending || Object.keys(pricesMap).length === 0}",
     "missing_price",
+    "const canBulkRegister = (user?.role === \"Owner\" || user?.role === \"Administrator\") && Boolean(trkCompany) && operatingCompanyId === trkCompany?.id;",
   ].join("\n");
 
   const tmp = fs.mkdtempSync(path.join(ROOT, ".selftest-fa-register-"));
@@ -109,6 +119,16 @@ function selftest() {
     fs.writeFileSync(path.join(tmp, PAGE), goodPage + "\nconst DEFAULT_PURCHASE_PRICE = 1;");
     if (!collectProblems(tmp).some((p) => p.includes("invent"))) {
       console.error(`${LABEL} --selftest FAIL invented default price not caught`);
+      process.exit(1);
+    }
+
+    const goodPageNoEntityGate = goodPage.replace(
+      'const canBulkRegister = (user?.role === "Owner" || user?.role === "Administrator") && Boolean(trkCompany) && operatingCompanyId === trkCompany?.id;',
+      'const canBulkRegister = (user?.role === "Owner" || user?.role === "Administrator") && Boolean(trkCompany);'
+    );
+    fs.writeFileSync(path.join(tmp, PAGE), goodPageNoEntityGate);
+    if (!collectProblems(tmp).some((p) => p.includes("operatingCompanyId === trkCompany?.id"))) {
+      console.error(`${LABEL} --selftest FAIL missing entity-selection gate (LV-USMCA-FIXED-ASSETS-TRK-BULK-REGISTER) not caught`);
       process.exit(1);
     }
   } finally {
