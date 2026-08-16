@@ -50,7 +50,7 @@ describe("DriverDaySummaryCard", () => {
     expect(screen.getByText("120.4")).toBeInTheDocument();
   });
 
-  it("renders neutral empty state when has_data=false (no red error styling)", async () => {
+  it("renders ParityTable toolbar empty state when has_data=false (no red error styling)", async () => {
     fetchDriverDaySummary.mockResolvedValueOnce({
       date: "2026-06-02",
       has_data: false,
@@ -59,9 +59,11 @@ describe("DriverDaySummaryCard", () => {
     const { container } = renderCard();
     const message = await screen.findByText(/No HOS data recorded for drivers on/i);
     expect(message).toBeInTheDocument();
-    expect(message.className).toContain("text-slate-500");
     expect(message.className).not.toMatch(/red|error/i);
     expect(container.querySelector(".text-red-700")).toBeNull();
+    // Toolbar must remain mounted — Search is the canonical ParityTable control.
+    expect(screen.getByPlaceholderText(/Search rows/i)).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="home-driver-day-summary-table"]')).toBeTruthy();
   });
 
   it("renders retry button on network error", async () => {
