@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task, type TaskStatus } from "../../api/tasks";
@@ -25,6 +26,11 @@ type AssigneeRow = {
   avgActualMinutes: number | null;
 };
 
+type ReportFilters = {
+  windowDays: number;
+  overdueOnly: boolean;
+};
+
 function taskAssigneeLabel(task: Task) {
   return entityLabel(task.assigned_to_name || task.assigned_to_email, task.assigned_to_user_id, "User");
 }
@@ -34,9 +40,14 @@ function taskAssigneeLabel(task: Task) {
 export function TasksReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [windowDays, setWindowDays] = useState(30);
+  const [filters, setFilters] = useState<ReportFilters>({ windowDays: 30, overdueOnly: false });
+  const staged = useStagedListFilters({
+    applied: filters,
+    empty: { windowDays: 30, overdueOnly: false },
+    onApply: (next) => setFilters(next),
+  });
   const today = companyToday();
-  const date_from = addDaysIso(today, -windowDays);
+  const date_from = addDaysIso(today, -filters.windowDays);
   const date_to = addDaysIso(today, 1);
 
   const query = useQuery({
@@ -63,7 +74,7 @@ export function TasksReportPage() {
       list.push(t);
       groups.set(name, list);
     }
-    return [...groups.entries()]
+    const rows = [...groups.entries()]
       .map(([name, list]) => {
         const completedWithTime = list.filter((t) => t.status === "completed" && typeof t.actual_minutes === "number");
         const avg =
@@ -80,7 +91,8 @@ export function TasksReportPage() {
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [tasks, today]);
+    return filters.overdueOnly ? rows.filter((row) => row.overdue > 0) : rows;
+  }, [tasks, today, filters.overdueOnly]);
 
   // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
   // hand-rolled table. Preserves the overdue red-highlight on the Overdue column.
@@ -101,6 +113,9 @@ export function TasksReportPage() {
     [],
   );
 
+  const activeFilterCount =
+    (filters.windowDays !== 30 ? 1 : 0) + (filters.overdueOnly ? 1 : 0);
+
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
@@ -117,20 +132,6 @@ export function TasksReportPage() {
     <div className="space-y-4">
       <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
       <TasksModuleTabs />
-
-      <div className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs">
-        <span className="font-semibold text-slate-600">Window</span>
-        {WINDOWS.map(([label, days]) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => setWindowDays(days)}
-            className={`rounded-sm px-2 py-1 ${windowDays === days ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
 
       {query.isLoading ? <div className="text-xs text-slate-500">Loading report…</div> : null}
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
@@ -159,7 +160,49 @@ export function TasksReportPage() {
           // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch.
           loading={query.isPending || (query.isFetching && byAssignee.length === 0)}
           storageKey="tasks-report-by-assignee"
-          emptyText="No tasks in this window."
+          emptyText="No assignees match the applied filters."
+          filterBar={
+            <CollapsedListFilters
+              activeFilterCount={activeFilterCount}
+              onApply={staged.apply}
+              onReset={staged.reset}
+              onCancel={staged.cancel}
+              applyDisabled={!staged.dirty}
+              testIdPrefix="tasks-report"
+              dataAttributes={{ "data-tasks-report-filter-toolbar": "collapsed" }}
+            >
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="text-xs font-semibold text-slate-600">
+                  Window
+                  <select
+                    className="mt-1 block w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                    value={staged.draft.windowDays}
+                    onChange={(event) =>
+                      staged.setDraft({ ...staged.draft, windowDays: Number(event.target.value) })
+                    }
+                    data-testid="tasks-report-window-filter"
+                  >
+                    {WINDOWS.map(([label, days]) => (
+                      <option key={label} value={days}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={staged.draft.overdueOnly}
+                    onChange={(event) =>
+                      staged.setDraft({ ...staged.draft, overdueOnly: event.target.checked })
+                    }
+                    data-testid="tasks-report-overdue-only"
+                  />
+                  Assignees with overdue only
+                </label>
+              </div>
+            </CollapsedListFilters>
+          }
         />
       </div>
     </div>

@@ -294,7 +294,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/tasks/TasksReportPage.tsx"
     },
     {
       "id": "tasks.drawer.task",
