@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T17:07:31-05:00",
-    "sourceSha": "4d9e6773a",
-    "deployedSha": "efddbc0",
+    "generatedAt": "2026-08-16T17:11:00-05:00",
+    "sourceSha": "f3edc1c29",
+    "deployedSha": "c302fee",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 952,
-    "failOpen": 18,
+    "failOpen": 17,
     "defects": 11
   },
   "modules": [
@@ -760,7 +760,7 @@
         "AUDIT",
         "AUDIT",
         "AUDIT",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -792,7 +792,7 @@
           "AUDIT",
           "AUDIT",
           "AUDIT",
-          "FAIL",
+          "FIX",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2121,6 +2121,42 @@
   },
   "recentActivity": [
     {
+      "number": 7944,
+      "title": "Claude-1- FINDING: ACCT-F5391 fix RLS-bypass pooler flakiness",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7944",
+      "sha": "98c271bca",
+      "committedAtIso": "2026-08-16T17:11:02-05:00"
+    },
+    {
+      "number": 7943,
+      "title": "FINDING: LV-SYSTEM-BACKGROUND-JOBS-STALE-DOWN",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7943",
+      "sha": "f3edc1c29",
+      "committedAtIso": "2026-08-16T17:11:00-05:00"
+    },
+    {
+      "number": 7942,
+      "title": "ChatGpt-Codex-1-fix(maintenance): hide QBO integration strip outside TRANSP",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7942",
+      "sha": "e1a7d361b",
+      "committedAtIso": "2026-08-16T17:10:25-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:08 PM CT",
+      "url": "",
+      "sha": "c302feeb3",
+      "committedAtIso": "2026-08-16T22:08:37Z"
+    },
+    {
       "number": 7941,
       "title": "FINDING: hygiene-post-7939-2026-08-16",
       "state": "merged",
@@ -2173,42 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7937",
       "sha": "386930c5b",
       "committedAtIso": "2026-08-16T16:50:26-05:00"
-    },
-    {
-      "number": 7936,
-      "title": "FINDING: rows716-720-verify-cursor-live-pass",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7936",
-      "sha": "a9dc23c6e",
-      "committedAtIso": "2026-08-16T16:48:34-05:00"
-    },
-    {
-      "number": 7935,
-      "title": "FINDING: rows711-715-verify-cursor-live-pass",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7935",
-      "sha": "52302bda4",
-      "committedAtIso": "2026-08-16T16:47:44-05:00"
-    },
-    {
-      "number": 7934,
-      "title": "FINDING: rows708-710-verify-cursor-live-pass",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7934",
-      "sha": "178a0d48c",
-      "committedAtIso": "2026-08-16T16:46:52-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:46 PM CT",
-      "url": "",
-      "sha": "c11034cae",
-      "committedAtIso": "2026-08-16T21:46:36Z"
     }
   ]
 }
