@@ -26,9 +26,9 @@ const checks = [
   ["legal", /entityLabel\(customer\.name, customer\.id, "Customer"\)/, "Legal customer hydrate uses canonical labels"],
   ["legal", /<EntityPicker[\s\S]*?kind=["']vendor["'][\s\S]*?allowCreate/, "Legal vendor signer uses EntityPicker allowCreate"],
   ["legal", /getVendor\(id, operatingCompanyId\)/, "Legal vendor hydrate via getVendor"],
-  ["dispatch", /label: entityLabel\(c\.name, c\.id, "Customer"\)/, "Dispatch notification customer picker uses canonical labels"],
+  ["dispatch", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "Dispatch notification customer uses EntityPicker allowCreate"],
   ["docs", /label: entityLabel\(customer\.name \?\? customer\.customer_code, customer\.id, "Customer"\)/, "Documents upload customer picker uses canonical labels"],
-  ["safety", /label: entityLabel\(c\.name, c\.id, "Customer"\)/, "Safety complaint customer picker uses canonical labels"],
+  ["safety", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "Safety complaint customer uses EntityPicker allowCreate"],
   ["safety", /label: entityLabel\(u\.name \|\| u\.email, u\.id, "User"\)/, "Safety complaint user picker rejects raw UUID fallback"],
 ];
 
@@ -40,8 +40,10 @@ function failures(sources) {
   const forbidden = [
     ["legal", /listCustomers\(|listVendors\(|createKind=["']customer["']|createKind=["']vendor["']/, "Legal creator must not regress to capped listCustomers/listVendors ReferenceSelect"],
     ["legal", /customer_name\?: string|\.customer_name\s*\?\?|label:\s*String\(c\.id\)/, "Legal creator contains an obsolete field or raw-ID label"],
+    ["dispatch", /listCustomers\(|createKind=["']customer["']/, "Dispatch notify must not regress to listCustomers ReferenceSelect"],
     ["dispatch", /label:\s*c\.name\s*\?\?\s*c\.id/, "Dispatch customer picker contains a raw-ID fallback"],
     ["docs", /label:\s*customer\.name\s*\?\?[\s\S]{0,80}customer\.id/, "Documents customer picker contains a raw-ID fallback"],
+    ["safety", /listCustomers\(|createKind=["']customer["']/, "Safety complaint must not regress to listCustomers ReferenceSelect"],
     ["safety", /label:\s*String\(c\.name\s*\?\?\s*c\.id\)|label:\s*String\(u\.name\s*\|\|\s*u\.email\s*\|\|\s*u\.id\)/, "Safety complaint picker contains a raw-ID fallback"],
   ];
   for (const [key, pattern, description] of forbidden) {
@@ -60,9 +62,9 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["legal", 'entityLabel(customer.name, customer.id, "Customer")', "String(customer.id)"],
     ["legal", 'kind="vendor"', 'kind="unit"'],
     ["legal", "getVendor(id, operatingCompanyId)", "getVendorRemoved(id, operatingCompanyId)"],
-    ["dispatch", 'label: entityLabel(c.name, c.id, "Customer")', "label: c.name ?? c.id"],
+    ["dispatch", '<EntityPicker\n              kind="customer"\n              operatingCompanyId={companyId}', '<EntityPicker\n              kind="unit"\n              operatingCompanyId={companyId}'],
     ["docs", 'label: entityLabel(customer.name ?? customer.customer_code, customer.id, "Customer")', "label: customer.name ?? customer.customer_code ?? customer.id"],
-    ["safety", 'label: entityLabel(c.name, c.id, "Customer")', "label: String(c.name ?? c.id)"],
+    ["safety", '<EntityPicker\n                kind="customer"\n                operatingCompanyId={companyId}', '<EntityPicker\n                kind="unit"\n                operatingCompanyId={companyId}'],
     ["safety", 'label: entityLabel(u.name || u.email, u.id, "User")', "label: String(u.name || u.email || u.id)"],
   ];
   const escaped = [];
