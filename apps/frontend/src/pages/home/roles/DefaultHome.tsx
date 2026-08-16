@@ -49,7 +49,8 @@ type Props = {
 
 export function DefaultHome({ auth }: Props) {
   const displayName = auth.email ?? "Driver";
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const qboAvailable = selectedCompany?.code === "TRANSP";
   const queryClient = useQueryClient();
   const cid = selectedCompanyId ?? "";
   // h-05: KPI range preset — server resolves the window in company TZ (default: today).
@@ -106,28 +107,28 @@ export function DefaultHome({ auth }: Props) {
   const qboSyncHealthQuery = useQuery({
     queryKey: ["home", "qbo-sync-health", selectedCompanyId],
     queryFn: () => fetchHomeQboSyncHealth(selectedCompanyId!),
-    enabled: Boolean(selectedCompanyId),
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
     refetchInterval: 60_000,
   });
 
   const qboCustomersPushStatusQuery = useQuery({
     queryKey: ["home", "qbo-customers-push-status", selectedCompanyId],
     queryFn: () => fetchHomeQboCustomersPushStatus(selectedCompanyId!),
-    enabled: Boolean(selectedCompanyId),
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
     refetchInterval: 60_000,
   });
 
   const qboVendorsPushStatusQuery = useQuery({
     queryKey: ["home", "qbo-vendors-push-status", selectedCompanyId],
     queryFn: () => fetchHomeQboVendorsPushStatus(selectedCompanyId!),
-    enabled: Boolean(selectedCompanyId),
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
     refetchInterval: 60_000,
   });
 
   const qboAccountsPushStatusQuery = useQuery({
     queryKey: ["home", "qbo-accounts-push-status", selectedCompanyId],
     queryFn: () => fetchHomeQboAccountsPushStatus(selectedCompanyId!),
-    enabled: Boolean(selectedCompanyId),
+    enabled: Boolean(selectedCompanyId) && qboAvailable,
     refetchInterval: 60_000,
   });
 
@@ -156,16 +157,16 @@ export function DefaultHome({ auth }: Props) {
     { label: "Tracked Assets", number: String(kpiSummaryQuery.data?.tracked_assets ?? 0), meta: "company-scoped total assets" },
     { label: "Assigned / Working", number: String(kpiSummaryQuery.data?.assigned_working ?? 0), meta: "on active loads" },
     { label: "Maint Past Due", number: String(kpiSummaryQuery.data?.maint_past_due ?? 0), meta: "work orders past due", alert: "crit" as const },
-    {
+    ...(qboAvailable ? [{
       label: "QBO Vendors",
       number: qboVendorsPushStatusQuery.data ? String(qboVendorsPushStatusQuery.data.synced) : "—",
       meta: qboVendorsPushStatusQuery.data
         ? `${qboVendorsPushStatusQuery.data.synced}/${qboVendorsPushStatusQuery.data.total} synced to QBO`
         : "—",
-    },
+    }] : []),
     { label: "Vehicles in Service", number: String(kpiSummaryQuery.data?.live_units ?? 0), meta: "tenant-scoped active units", healthy: true },
     { label: "Open Damage", number: String(kpiSummaryQuery.data?.open_damage ?? 0), meta: "open accidents", alert: "warn" as const },
-    { label: "Pending QBO Sync", number: String(kpiSummaryQuery.data?.pending_qbo_sync ?? 0), meta: "outbox events pending", alert: "warn" as const },
+    ...(qboAvailable ? [{ label: "Pending QBO Sync", number: String(kpiSummaryQuery.data?.pending_qbo_sync ?? 0), meta: "outbox events pending", alert: "warn" as const }] : []),
   ];
 
   const fleetRows = [
@@ -477,7 +478,7 @@ export function DefaultHome({ auth }: Props) {
             <FleetSnapshotPanel rows={fleetRows} />
           )}
           <div className="space-y-2">
-            <QboSyncHealthCard
+            {qboAvailable ? <QboSyncHealthCard
               data={qboSyncHealthQuery.data}
               pushStatus={qboCustomersPushStatusQuery.data}
               vendorsPushStatus={qboVendorsPushStatusQuery.data}
@@ -490,7 +491,7 @@ export function DefaultHome({ auth }: Props) {
                 void qboVendorsPushStatusQuery.refetch();
                 void qboAccountsPushStatusQuery.refetch();
               }}
-            />
+            /> : null}
             <VendorMappingIntegrityCard
               data={vendorMappingIntegrityQuery.data}
               isLoading={vendorMappingIntegrityQuery.isLoading}
