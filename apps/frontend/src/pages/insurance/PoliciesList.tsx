@@ -20,6 +20,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -91,9 +92,10 @@ export function PoliciesList() {
   const listState = useListState(policiesQuery, rows.length === 0);
 
   const coverageTypeName = (policy: InsurancePolicy) =>
-    policy.coverage_type_name?.trim() ||
-    typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name ||
-    policy.coverage_type.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+    insuranceTypeLabel(
+      policy.coverage_type,
+      policy.coverage_type_name ?? typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name,
+    );
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
   const columns = [

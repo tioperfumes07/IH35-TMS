@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getInsuranceCoverageGaps,
   listInsurancePolicies,
+  listInsuranceTypeCatalog,
   type InsuranceCoverageGapUnit,
   type InsurancePolicy,
 } from "../../api/insurance";
@@ -14,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
 import { useSearchParams } from "react-router-dom";
+import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -27,6 +29,10 @@ function daysUntil(value: string) {
 
 function unitLabel(unit: InsuranceCoverageGapUnit) {
   return entityLabel(unit.unit_number, unit.unit_id, "Unit");
+}
+
+function missingTypeLabels(codes: string[], typeNameByCode: ReadonlyMap<string, string>) {
+  return codes.map((code) => insuranceTypeLabel(code, typeNameByCode.get(code))).join(", ");
 }
 
 export function CoverageGapDashboard() {
@@ -65,6 +71,17 @@ export function CoverageGapDashboard() {
     queryFn: () => listInsurancePolicies({ operating_company_id: companyId, status: "active" }).then((result) => result.policies),
   });
 
+  const typesQuery = useQuery({
+    queryKey: ["insurance", "type-catalog", companyId],
+    enabled: Boolean(companyId),
+    queryFn: () => listInsuranceTypeCatalog({ operating_company_id: companyId }).then((result) => result.types),
+  });
+
+  const typeNameByCode = useMemo(
+    () => new Map<string, string>((typesQuery.data ?? []).map((entry) => [entry.code, entry.name])),
+    [typesQuery.data],
+  );
+
   const summary = useMemo(() => {
     const policies = policiesQuery.data ?? [];
     const gaps = coverageGapsQuery.data;
@@ -87,24 +104,24 @@ export function CoverageGapDashboard() {
   const uncoveredColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(
     () => [
       { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> },
-      { key: "missing_types", label: "Missing Required Types", render: (row) => row.missing_types.join(", ") || "all" },
+      { key: "missing_types", label: "Missing Required Types", render: (row) => missingTypeLabels(row.missing_types, typeNameByCode) || "All required coverage" },
     ],
-    [],
+    [typeNameByCode],
   );
 
   const mismatchedColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(
     () => [
       { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> },
-      { key: "missing_types", label: "Missing Required Types", render: (row) => row.missing_types.join(", ") },
+      { key: "missing_types", label: "Missing Required Types", render: (row) => missingTypeLabels(row.missing_types, typeNameByCode) },
     ],
-    [],
+    [typeNameByCode],
   );
 
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
   }
 
-  const failedQuery = coverageGapsQuery.isError ? coverageGapsQuery : policiesQuery.isError ? policiesQuery : null;
+  const failedQuery = coverageGapsQuery.isError ? coverageGapsQuery : policiesQuery.isError ? policiesQuery : typesQuery.isError ? typesQuery : null;
 
   if (failedQuery) {
     return (
@@ -115,6 +132,7 @@ export function CoverageGapDashboard() {
         onRetry={() => {
           void coverageGapsQuery.refetch();
           void policiesQuery.refetch();
+          void typesQuery.refetch();
         }}
       />
     );
@@ -142,7 +160,7 @@ export function CoverageGapDashboard() {
         </div>
       </header>
 
-      {coverageGapsQuery.isLoading || policiesQuery.isLoading ? (
+      {coverageGapsQuery.isLoading || policiesQuery.isLoading || typesQuery.isLoading ? (
         <div className="text-sm text-slate-500">Loading coverage gap dashboard...</div>
       ) : null}
 

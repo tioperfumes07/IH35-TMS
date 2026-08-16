@@ -28,6 +28,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
+import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -211,9 +212,10 @@ export function PolicyDetail() {
 
   const policy = policyQuery.data;
   const coverageTypeName =
-    policy.coverage_type_name?.trim() ||
-    typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name ||
-    policy.coverage_type.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+    insuranceTypeLabel(
+      policy.coverage_type,
+      policy.coverage_type_name ?? typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name,
+    );
 
   const openEditPanel = () => {
     setStatus(policy.status);

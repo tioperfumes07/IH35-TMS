@@ -2,6 +2,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 
 export type InsurancePolicySummary = {
   number?: string;
@@ -24,14 +25,6 @@ export type UnitInsuranceSummary = {
    *  column, so these are labelled by coverage type, not folded into us_policy/mx_policy. */
   linked_policies?: LinkedInsurancePolicy[];
 };
-
-function coverageTypeLabel(coverageType: string | null | undefined): string {
-  if (!coverageType) return "Linked policy";
-  return coverageType
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
 
 function fmtDate(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -107,7 +100,7 @@ export function InsuranceSummarySection({ insuranceSummary, unitId }: { insuranc
           {linked.map((policy, idx) => (
             <PolicyCard
               key={`${policy.number ?? "policy"}-${idx}`}
-              label={`${coverageTypeLabel(policy.coverage_type)}${policy.status && policy.status !== "active" ? ` (${policy.status})` : ""}`}
+              label={`${insuranceTypeLabel(policy.coverage_type, null)}${policy.status && policy.status !== "active" ? ` (${policy.status})` : ""}`}
               policy={policy}
             />
           ))}
