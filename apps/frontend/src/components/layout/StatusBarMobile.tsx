@@ -5,6 +5,7 @@ import { StatusBarPopover } from "./StatusBarPopover";
 import type { QboSyncPill } from "./TopStatusBar";
 
 type Props = {
+  qboAvailable?: boolean;
   qboVis: { label: string; dot: "gray" | "green" | "yellow" };
   samsaraVis: SamsaraVisualStatus;
   relayVis: SamsaraVisualStatus;
@@ -25,6 +26,7 @@ function dotClass(dot: "gray" | "green" | "yellow" | "red"): string {
 type IntegrationKey = "qbo" | "samsara" | "relay" | "sync";
 
 export function StatusBarMobile({
+  qboAvailable = true,
   qboVis,
   samsaraVis,
   relayVis,
@@ -49,7 +51,6 @@ export function StatusBarMobile({
     detail: string;
     action?: { label: string; onClick: () => void };
   }> = [
-    { key: "qbo", label: "QuickBooks", dot: qboVis.dot, detail: qboVis.label },
     {
       key: "samsara",
       label: "Samsara",
@@ -64,7 +65,11 @@ export function StatusBarMobile({
     },
   ];
 
-  if (qboSyncPill) {
+  if (qboAvailable) {
+    items.unshift({ key: "qbo", label: "QuickBooks", dot: qboVis.dot, detail: qboVis.label });
+  }
+
+  if (qboAvailable && qboSyncPill) {
     items.push({
       key: "sync",
       label: "QBO Sync",

@@ -511,7 +511,7 @@ function ProgramTab({ data }: { data: SystemData }) {
   );
 }
 
-function SoftwareTab({ data }: { data: SystemData }) {
+function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: boolean }) {
   const { health } = data;
   const h = health.data;
   const byName = (n: string) => h?.checks.find((c) => c.name === n);
@@ -521,6 +521,7 @@ function SoftwareTab({ data }: { data: SystemData }) {
   const r2Ok = byName("r2.head_bucket")?.ok;
   const emailOk = byName("email.queue.depth")?.ok;
   const jobsOk = byName("background_jobs.stale")?.ok;
+  const visibleChecks = (h?.checks ?? []).filter((check) => qboAvailable || !check.name.startsWith("qbo."));
   const trio = (a?: boolean, b?: boolean, c?: boolean) => a && b && c;
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -549,7 +550,7 @@ function SoftwareTab({ data }: { data: SystemData }) {
           <p className="text-[12px] text-slate-500">Health endpoint unreachable.</p>
         ) : (
           <ParityTable<{ name: string; ok: boolean; tier: "critical" | "warning" }>
-            rows={h?.checks ?? []}
+            rows={visibleChecks}
             rowKey={(c) => c.name}
             loading={!h}
             emptyText="No health checks returned."
@@ -711,7 +712,7 @@ export function SystemModulePage() {
         {tab === "qbo-recon" ? <QboReconTab data={data} /> : null}
         {tab === "qbo-sync" ? <QboSyncTab data={data} /> : null}
         {tab === "program" ? <ProgramTab data={data} /> : null}
-        {tab === "software" ? <SoftwareTab data={data} /> : null}
+        {tab === "software" ? <SoftwareTab data={data} qboAvailable={qboAvailable} /> : null}
         {tab === "claude-coder" ? <ClaudeCoderTab data={data} qboAvailable={qboAvailable} /> : null}
       </div>
 

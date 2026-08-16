@@ -139,6 +139,33 @@ export function computeSystemModuleFailures(files) {
   return errors;
 }
 
+export function computeGlobalQboCapabilityFailures(files) {
+  const topbar = files.topbar ?? "";
+  const statusBar = files.statusBar ?? "";
+  const mobile = files.mobile ?? "";
+  const page = files.page ?? "";
+  const errors = [];
+  if (!/const qboAvailable = selectedCompany\?\.code === ["']TRANSP["']/.test(topbar)) {
+    errors.push("Topbar.tsx: QBO capability must derive from selected TRANSP company");
+  }
+  if ((topbar.match(/enabled:\s*Boolean\(companyId\) && office && qboAvailable/g) ?? []).length < 2) {
+    errors.push("Topbar.tsx: QBO status and sync-health queries must be disabled outside TRANSP");
+  }
+  if (!/<TopStatusBar[\s\S]{0,120}?qboAvailable=\{qboAvailable\}/.test(topbar)) {
+    errors.push("Topbar.tsx: selected-company QBO capability must reach shared status chrome");
+  }
+  if (!/qboAvailable && qboSyncPill/.test(statusBar) || !/qboAvailable \? <span[\s\S]{0,420}?qboVis\.label/.test(statusBar)) {
+    errors.push("TopStatusBar.tsx: desktop QuickBooks and QBO Sync chrome must be hidden outside TRANSP");
+  }
+  if (!/if \(qboAvailable\)[\s\S]{0,180}?items\.unshift\(\{ key: ["']qbo["']/.test(mobile) || !/if \(qboAvailable && qboSyncPill\)/.test(mobile)) {
+    errors.push("StatusBarMobile.tsx: mobile QuickBooks and QBO Sync chrome must be hidden outside TRANSP");
+  }
+  if (!/visibleChecks = \(h\?\.checks \?\? \[\]\)\.filter\([\s\S]{0,120}!check\.name\.startsWith\(["']qbo\.["']\)/.test(page)) {
+    errors.push("SystemModulePage.tsx: non-TRANSP service health must not expose QBO checks");
+  }
+  return errors;
+}
+
 function readIf(rel) {
   const p = path.join(ROOT, rel);
   if (!fs.existsSync(p)) return "";
@@ -217,6 +244,19 @@ if (process.argv.includes("--selftest")) {
       .replace('parseSystemTab(searchParams.get("tab"), qboAvailable);', 'parseSystemTab(searchParams.get("tab"));')
       .replaceAll("qboAvailable ? <Card /> : null", "<Card />"),
   });
+  const goodGlobalQbo = {
+    topbar: 'const qboAvailable = selectedCompany?.code === "TRANSP"; enabled: Boolean(companyId) && office && qboAvailable; enabled: Boolean(companyId) && office && qboAvailable; <TopStatusBar qboAvailable={qboAvailable} />',
+    statusBar: 'qboAvailable ? <span>{qboVis.label}</span> : null; qboAvailable && qboSyncPill',
+    mobile: 'if (qboAvailable) { items.unshift({ key: "qbo" }); } if (qboAvailable && qboSyncPill) {}',
+    page: 'const visibleChecks = (h?.checks ?? []).filter((check) => qboAvailable || !check.name.startsWith("qbo."));',
+  };
+  const passGlobalQbo = computeGlobalQboCapabilityFailures(goodGlobalQbo);
+  const failGlobalQbo = computeGlobalQboCapabilityFailures({
+    topbar: goodGlobalQbo.topbar.replaceAll(" && qboAvailable", "").replace("qboAvailable={qboAvailable}", ""),
+    statusBar: goodGlobalQbo.statusBar.replaceAll("qboAvailable", "true"),
+    mobile: goodGlobalQbo.mobile.replaceAll("qboAvailable", "true"),
+    page: 'const visibleChecks = h?.checks ?? [];',
+  });
 
   const checks = [
     ["fully-wired inputs produce zero failures", pass.length === 0],
@@ -228,6 +268,8 @@ if (process.argv.includes("--selftest")) {
     ["false CHECKING state is flagged", failFalseChecking.filter((e) => e.includes("QBO Sync request failures")).length === 2],
     ["false-live Claude activity is flagged", failFalseLiveActivity.filter((e) => e.includes("Claude Coder")).length === 3],
     ["USMCA QBO chrome/query leak is flagged", failUsmcaQboLeak.filter((e) => /TRANSP|QBO/.test(e)).length === 5],
+    ["global QBO capability inputs produce zero failures", passGlobalQbo.length === 0],
+    ["global USMCA QBO chrome/query leak is flagged", failGlobalQbo.length === 5],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
@@ -244,6 +286,12 @@ const failures = computeSystemModuleFailures({
   manifest: readIf("apps/frontend/src/routes/manifest.tsx"),
   page: readIf("apps/frontend/src/pages/system/SystemModulePage.tsx"),
 });
+failures.push(...computeGlobalQboCapabilityFailures({
+  topbar: readIf("apps/frontend/src/components/Topbar.tsx"),
+  statusBar: readIf("apps/frontend/src/components/layout/TopStatusBar.tsx"),
+  mobile: readIf("apps/frontend/src/components/layout/StatusBarMobile.tsx"),
+  page: readIf("apps/frontend/src/pages/system/SystemModulePage.tsx"),
+}));
 
 if (failures.length) {
   console.error("verify:system-module FAIL — the Owner-only SYSTEM module is not fully wired:");
