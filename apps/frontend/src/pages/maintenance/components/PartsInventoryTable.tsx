@@ -1,23 +1,15 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow, type PartsPurchaseGlPosting } from "../../../api/maintenance";
-import { listVendors } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { capNotice, listCapInfo } from "../../../lib/list-cap";
-
-// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
-// 2,836 vendors on prod, so an unsearched 200-row fetch hides 2,636 of them.
-const VENDOR_PICKER_CAP = 200;
-
 
 type Props = {
   companyId: string;
@@ -58,7 +50,6 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
   // Search is ONLY ParityTable UniversalListToolbar (LV-PARTS-INVENTORY-DUPLICATE-SEARCH).
-  const [vendorSearch, setVendorSearch] = useState("");
   const [form, setForm] = useState<PurchaseForm>(EMPTY_PURCHASE);
   const [adjustRow, setAdjustRow] = useState<PartsInventoryRow | null>(null);
   // LINK-F5186 (parts_inventory.record_purchase): surfaces the real gl_posting result the backend
@@ -66,36 +57,6 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
   const [lastGlPosting, setLastGlPosting] = useState<PartsPurchaseGlPosting | null>(null);
   const [deltaQty, setDeltaQty] = useState(0);
   const [reason, setReason] = useState<"used" | "discarded" | "shrinkage" | "recount">("recount");
-
-  const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", companyId, "parts-inventory", vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: companyId,
-        status: "active",
-        limit: VENDOR_PICKER_CAP,
-        search: vendorSearch || undefined,
-      }),
-    enabled: Boolean(companyId),
-  });
-
-  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
-  const vendorCap = useMemo(
-    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
-    [vendorsQuery.data],
-  );
-  const vendorCapNotice = capNotice(vendorCap, "vendors");
-  const vendorOptions = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
-    [vendorsQuery.data?.vendors],
-  );
-  const vendorNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const v of vendorsQuery.data?.vendors ?? []) {
-      map.set(v.id, v.name);
-    }
-    return map;
-  }, [vendorsQuery.data?.vendors]);
 
   const purchaseMutation = useMutation({
     mutationFn: () =>
@@ -144,7 +105,7 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name ?? vendorNameById.get(row.vendor_id), row.vendor_id, "Vendor")} />
+          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
         ) : (
           "—"
         ),
@@ -228,21 +189,17 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
           <label className="block text-xs font-semibold text-gray-700">
             Vendor
             <div className="mt-1" data-testid="parts-inventory-vendor-picker">
-              {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
-              {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
-              <ReferenceSelect
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
+              <EntityPicker
+                kind="vendor"
+                operatingCompanyId={companyId}
                 value={form.vendor_id || null}
                 onChange={(next) => setForm((v) => ({ ...v, vendor_id: next ?? "" }))}
-                options={vendorOptions}
-                createKind="vendor"
-                operatingCompanyId={companyId}
-                placeholder="Select vendor…"
-                loading={vendorsQuery.isLoading}
-                onSearch={setVendorSearch}
-                onOptionCreated={(opt) => {
-                  setForm((v) => ({ ...v, vendor_id: opt.value }));
-                  void vendorsQuery.refetch();
-                }}
+                placeholder="Search vendor…"
+                dataTestId="parts-inventory-vendor"
+                allowCreate
+                allowClear
+                enabled={openPurchase}
               />
             </div>
           </label>
