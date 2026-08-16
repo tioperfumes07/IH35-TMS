@@ -368,12 +368,22 @@ function deriveLiveState(pr, gated) {
 
 const shortSha = (sha) => (sha ? String(sha).slice(0, 7) : null);
 
-// Heuristic for "deployed": a merged PR is considered live once the prod health
-// `version` advances to (or past) its merge. We can't compute git-ancestry here
-// without the full history, so we approximate: if the PR's merge short-sha ==
-// the live version -> deployed now; OR if the PR merged and there IS a live
-// deploy whose detection time is at/after the merge -> deployed. Once detected,
-// deployed_ct is PERSISTED (earliest detection) so it never resets.
+function isAncestorCommit(ancestor, descendant) {
+  if (!ancestor || !descendant) return false;
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", String(ancestor), String(descendant)], {
+      cwd: ROOT,
+      stdio: "ignore",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// A merged PR is deployed only when the production health SHA contains its
+// merge commit. The scheduled workflow checks out full history (`fetch-depth: 0`),
+// so ancestry is exact; elapsed wall time is never deployment proof.
 function computeDeployed({ pr, liveVersion, priorDeployedCt, priorDeployNo }) {
   if (!pr || pr.state !== "MERGED" || !pr.mergedAt) {
     return { deployedCt: priorDeployedCt || null, deployNo: priorDeployNo || null, deployed: false };
@@ -387,15 +397,10 @@ function computeDeployed({ pr, liveVersion, priorDeployedCt, priorDeployNo }) {
     };
   }
   const mergeSha = shortSha(pr.mergeCommit?.oid);
-  const mergedMs = new Date(pr.mergedAt).getTime();
   const liveIsExact = liveVersion && mergeSha && liveVersion.startsWith(mergeSha);
-  // "live advanced past merge": prod has a version AND this PR merged before now.
-  // (Health has no deploy timestamp; we treat presence of a live version + the
-  //  PR being merged in the past as evidence the fix rolled forward. This is the
-  //  documented approximation — exact ancestry needs git, unavailable in-Action.)
-  const liveAdvanced = !!liveVersion && mergedMs <= Date.now();
-  if (liveIsExact || liveAdvanced) {
-    return { deployedCt: nowCT(), deployNo: mergeSha || liveVersion, deployed: true };
+  const liveContainsMerge = isAncestorCommit(pr.mergeCommit?.oid, liveVersion);
+  if (liveIsExact || liveContainsMerge) {
+    return { deployedCt: nowCT(), deployNo: liveVersion, deployed: true };
   }
   return { deployedCt: null, deployNo: null, deployed: false };
 }
