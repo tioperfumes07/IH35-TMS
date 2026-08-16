@@ -48,6 +48,7 @@ const EVIDENCE = {
 const FILTER_MODULES = new Set(["banking", "cash-flow", "driver-hub", "finance", "home", "program", "system", "users"]);
 const EXACT_CONSUMERS = {
   "cash-flow": { route: "/cash-flow?tab=actual_vs_projected", surface: "pages/cash-flow/tabs/ActualVsProjectedTab.tsx" },
+  form_425: { route: "/425c?tab=history", surface: "pages/form425c/tabs/HistoryTab.tsx" },
   program: { route: "/program/modules", surface: "pages/program/ModuleCompletionPage.tsx" },
   system: { route: "/system?tab=program", surface: "pages/system/SystemModulePage.tsx" },
 };
