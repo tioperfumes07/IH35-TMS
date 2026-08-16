@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T15:33:05-05:00",
-    "sourceSha": "82e4a5883",
+    "generatedAt": "2026-08-16T15:41:11-05:00",
+    "sourceSha": "eb87ba7ec",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 933,
+    "ledgerRows": 934,
     "failOpen": 24,
     "defects": 26
   },
@@ -491,7 +491,7 @@
       "module": "drivers",
       "build": "20/20",
       "cells": [
-        "AUDIT",
+        "FIX",
         "FAIL",
         "FIX",
         "AUDIT",
@@ -508,7 +508,7 @@
       "gap": "183 drivers. B FAIL: duplicate drivers + 3 schema-drift cols. V4: 0 settlements.",
       "cellsByEntity": {
         "TRANSP": [
-          "AUDIT",
+          "FIX",
           "FAIL",
           "FIX",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7904,
+      "title": "FINDING: ROW-425-DRIVER-DUPLICATE-PICKER-AMBIGUITY",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7904",
+      "sha": "eb87ba7ec",
+      "committedAtIso": "2026-08-16T15:41:11-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:34 PM CT",
+      "url": "",
+      "sha": "24914c3db",
+      "committedAtIso": "2026-08-16T20:34:08Z"
+    },
+    {
       "number": 7903,
       "title": "FINDING: ROW-432-DRIVER-SCHEMA-DRIFT-CLOSEOUT",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7900",
       "sha": "28c365f83",
       "committedAtIso": "2026-08-16T15:15:47-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:06 PM CT",
-      "url": "",
-      "sha": "8b663ba55",
-      "committedAtIso": "2026-08-16T20:06:11Z"
-    },
-    {
-      "number": 7899,
-      "title": "FINDING: LV-SYSTEM-NONQBO-FOOTER-COMMA",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7899",
-      "sha": "5026d5540",
-      "committedAtIso": "2026-08-16T15:05:03-05:00"
     }
   ]
 }

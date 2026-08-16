@@ -28,11 +28,11 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-16T15:33:05-05:00",
-    "sourceSha": "82e4a5883",
+    "generatedAt": "2026-08-16T15:41:11-05:00",
+    "sourceSha": "eb87ba7ec",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 933,
+    "ledgerRows": 934,
     "failOpen": 24,
     "defects": 26
   },
@@ -519,7 +519,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "module": "drivers",
       "build": "20/20",
       "cells": [
-        "AUDIT",
+        "FIX",
         "FAIL",
         "FIX",
         "AUDIT",
@@ -536,7 +536,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "gap": "183 drivers. B FAIL: duplicate drivers + 3 schema-drift cols. V4: 0 settlements.",
       "cellsByEntity": {
         "TRANSP": [
-          "AUDIT",
+          "FIX",
           "FAIL",
           "FIX",
           "AUDIT",
