@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDriverDaySummary, type HomeDriverDaySummaryRow } from "../../api/home";
@@ -7,6 +7,7 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { CollapsedListFilters, useStagedListFilters } from "../table";
 
 type Props = {
   operatingCompanyId: string | null;
@@ -16,6 +17,8 @@ type Props = {
 // defaulted this picker to a date with no HOS data. See lib/businessDate.
 const TODAY = companyToday();
 
+type ActivityFilter = "all" | "active" | "late" | "no_activity";
+
 function formatDisplayDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   if (!year || !month || !day) return isoDate;
@@ -24,6 +27,12 @@ function formatDisplayDate(isoDate: string): string {
 
 export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
   const [date, setDate] = useState(TODAY);
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+  const stagedFilters = useStagedListFilters({
+    applied: { activityFilter },
+    empty: { activityFilter: "all" as ActivityFilter },
+    onApply: (next) => setActivityFilter(next.activityFilter),
+  });
   const query = useQuery({
     queryKey: ["home", "driver-day-summary", operatingCompanyId, date],
     queryFn: () => fetchDriverDaySummary(operatingCompanyId ?? "", date),
@@ -31,6 +40,18 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
   });
 
   const rows = query.data?.rows ?? [];
+  const filteredRows = useMemo(() => {
+    if (activityFilter === "active") {
+      return rows.filter((row) => row.miles > 0 || row.hours_on_duty > 0 || row.fuel_stops > 0);
+    }
+    if (activityFilter === "late") return rows.filter((row) => row.late_arrivals > 0);
+    if (activityFilter === "no_activity") {
+      return rows.filter(
+        (row) => row.miles === 0 && row.hours_on_duty === 0 && row.fuel_stops === 0 && row.late_arrivals === 0,
+      );
+    }
+    return rows;
+  }, [activityFilter, rows]);
 
   const columns: Array<ParityColumn<HomeDriverDaySummaryRow>> = [
     {
@@ -108,7 +129,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
             stays in emptyText (neutral slate via ParityTable empty cell), never a red error.
           */}
           <ParityTable
-            rows={rows}
+            rows={filteredRows}
             columns={columns}
             rowKey={(row) => row.driver_id}
             storageKey="home-driver-day-summary"
@@ -120,6 +141,33 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
             tableTestId="home-driver-day-summary-table"
             rowTestId={(row) => `home-driver-day-summary-row-${row.driver_id}`}
             initialPageSize={25}
+            filterBar={
+              <CollapsedListFilters
+                activeFilterCount={activityFilter === "all" ? 0 : 1}
+                onApply={stagedFilters.apply}
+                onReset={stagedFilters.reset}
+                onCancel={stagedFilters.cancel}
+                applyDisabled={!stagedFilters.dirty}
+                testIdPrefix="home-driver-day-summary"
+              >
+                <label className="block text-xs font-semibold text-slate-600">
+                  Driver activity
+                  <select
+                    aria-label="Driver activity filter"
+                    className="mt-1 h-9 w-full rounded-sm border border-slate-300 bg-white px-2 text-xs"
+                    value={stagedFilters.draft.activityFilter}
+                    onChange={(event) =>
+                      stagedFilters.setDraft({ activityFilter: event.target.value as ActivityFilter })
+                    }
+                  >
+                    <option value="all">All drivers</option>
+                    <option value="active">Recorded activity</option>
+                    <option value="late">Late arrival</option>
+                    <option value="no_activity">No recorded activity</option>
+                  </select>
+                </label>
+              </CollapsedListFilters>
+            }
           />
         </div>
       )}

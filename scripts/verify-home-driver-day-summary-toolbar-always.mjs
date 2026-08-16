@@ -35,6 +35,15 @@ export function collectFailures(src) {
   if (!/has_data\s*===\s*false[\s\S]{0,200}No HOS data recorded/.test(src)) {
     failures.push("emptyText must use has_data===false for the HOS-empty message");
   }
+  if (!/filterBar=\{[\s\S]*<CollapsedListFilters/.test(src)) {
+    failures.push("DriverDaySummaryCard must mount the governed Filters panel inside ParityTable filterBar");
+  }
+  for (const action of ["onApply={stagedFilters.apply}", "onReset={stagedFilters.reset}", "onCancel={stagedFilters.cancel}"]) {
+    if (!src.includes(action)) failures.push(`Driver day-summary Filters panel must wire ${action}`);
+  }
+  if (!/rows=\{filteredRows\}/.test(src) || !/activityFilter\s*===\s*"late"/.test(src)) {
+    failures.push("Applied driver activity filter must drive the rows rendered by ParityTable");
+  }
   return failures;
 }
 
@@ -58,6 +67,18 @@ function selftest() {
   const plantedNoHos = clean.replace(/No HOS data recorded for drivers on/g, "No rows");
   if (!collectFailures(plantedNoHos).length) {
     console.error("verify-home-driver-day-summary-toolbar-always --selftest FAILED — planted missing HOS copy escaped");
+    process.exit(1);
+  }
+
+  const plantedNoFilter = clean.replace(/filterBar=\{[\s\S]*?\n\s*\}\n\s*\/>/, "/>" );
+  if (!collectFailures(plantedNoFilter).length) {
+    console.error("verify-home-driver-day-summary-toolbar-always --selftest FAILED — planted missing Filters panel escaped");
+    process.exit(1);
+  }
+
+  const plantedNoApply = clean.replace("onApply={stagedFilters.apply}", "onApply={() => {}}");
+  if (!collectFailures(plantedNoApply).length) {
+    console.error("verify-home-driver-day-summary-toolbar-always --selftest FAILED — planted inert Apply escaped");
     process.exit(1);
   }
 
