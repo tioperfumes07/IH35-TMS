@@ -72,6 +72,7 @@ function makeClient(credRow: Record<string, unknown>, log: QueryLog, isHazmat = 
 const QUALIFIED = {
   is_deactivated: false,
   is_archived: false,
+  is_status_inactive: false,
   cdl_missing: false,
   cdl_expired: false,
   cdl_expires_at: "2030-01-01",
