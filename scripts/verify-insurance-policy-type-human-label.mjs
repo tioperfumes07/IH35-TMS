@@ -17,6 +17,10 @@ const FILES = {
   api: "apps/frontend/src/api/insurance.ts",
   list: "apps/frontend/src/pages/insurance/PoliciesList.tsx",
   detail: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
+  gaps: "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx",
+  vendor: "apps/frontend/src/components/insurance/VendorInsurancePoliciesReverseSection.tsx",
+  vehicle: "apps/frontend/src/components/vehicle-profile/InsuranceSummarySection.tsx",
+  helper: "apps/frontend/src/lib/insurance-type-label.ts",
 };
 
 function read(rel) {
@@ -25,7 +29,7 @@ function read(rel) {
 
 function audit(sources) {
   const failures = [];
-  const { routes, api, list, detail } = sources;
+  const { routes, api, list, detail, gaps, vendor, vehicle, helper } = sources;
   const scopedCatalogJoin = /LEFT JOIN insurance\.type_catalog tc[\s\S]*?tc\.id = p\.coverage_type_id[\s\S]*?tc\.tenant_id = p\.tenant_id/;
   if ((routes.match(new RegExp(scopedCatalogJoin.source, "g")) ?? []).length < 2) {
     failures.push("policy list and detail must each resolve type names through the same-company catalog FK");
@@ -54,6 +58,27 @@ function audit(sources) {
   if (!/subtitle=\{`\$\{policy\.insurer_name} · \$\{coverageTypeName} · \$\{policy\.status}`}/.test(detail)) {
     failures.push("PolicyDetail subtitle must render coverageTypeName");
   }
+  if (!/export function insuranceTypeLabel/.test(helper) || !/split\("_"\)/.test(helper)) {
+    failures.push("shared insuranceTypeLabel must humanize storage codes when a catalog name is unavailable");
+  }
+  if (!/listInsuranceTypeCatalog/.test(gaps) || !/new Map<string, string>/.test(gaps)) {
+    failures.push("CoverageGapDashboard must read and index the company-scoped Type Catalog");
+  }
+  if ((gaps.match(/missingTypeLabels\(row\.missing_types, typeNameByCode\)/g) ?? []).length !== 2) {
+    failures.push("both coverage-gap tables must render human missing-type labels");
+  }
+  if (/row\.missing_types\.join\(/.test(gaps)) {
+    failures.push("coverage-gap tables must not render raw missing-type codes");
+  }
+  if (!/insuranceTypeLabel\(policy\.coverage_type, policy\.coverage_type_name\)/.test(vendor)) {
+    failures.push("vendor reverse policies must render the canonical type name");
+  }
+  if (/\{policy\.coverage_type}\s*· expires/.test(vendor)) {
+    failures.push("vendor reverse policies must not render the raw type code");
+  }
+  if (!/insuranceTypeLabel\(policy\.coverage_type, null\)/.test(vehicle)) {
+    failures.push("vehicle insurance summary must use the shared type-label contract");
+  }
   return failures;
 }
 
@@ -65,6 +90,10 @@ if (process.argv.includes("--selftest")) {
     ["missing serializer label", { ...real, routes: real.routes.replaceAll("tc.name AS coverage_type_name", "p.coverage_type AS coverage_type_name") }],
     ["raw list renderer", { ...real, list: real.list.replace('render: (p: InsurancePolicy) => coverageTypeName(p)', 'render: (p: InsurancePolicy) => p.coverage_type') }],
     ["raw detail subtitle", { ...real, detail: real.detail.replace("${coverageTypeName}", "${policy.coverage_type}") }],
+    ["raw uncovered labels", { ...real, gaps: real.gaps.replace("missingTypeLabels(row.missing_types, typeNameByCode)", 'row.missing_types.join(", ")') }],
+    ["raw mismatched labels", { ...real, gaps: real.gaps.replaceAll("missingTypeLabels(row.missing_types, typeNameByCode)", 'row.missing_types.join(", ")') }],
+    ["raw vendor reverse label", { ...real, vendor: real.vendor.replace("insuranceTypeLabel(policy.coverage_type, policy.coverage_type_name)", "policy.coverage_type") }],
+    ["missing shared humanizer", { ...real, helper: real.helper.replace('split("_")', 'split(" ")') }],
   ];
   const missed = mutations.filter(([, sources]) => audit(sources).length === 0).map(([name]) => name);
   if (audit(real).length || missed.length) {
@@ -82,4 +111,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`  ✗ verify-insurance-policy-type-human-label: ${failure}`);
   process.exit(1);
 }
-console.log("verify-insurance-policy-type-human-label PASS — list/detail resolve same-company catalog human labels");
+console.log("verify-insurance-policy-type-human-label PASS — all policy/gap/reverse consumers render catalog human labels");
