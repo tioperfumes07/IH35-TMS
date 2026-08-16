@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T07:50:10-05:00",
-    "sourceSha": "7193cbd46",
-    "deployedSha": "bacdd81",
+    "generatedAt": "2026-08-16T07:53:27-05:00",
+    "sourceSha": "4e0f4efb0",
+    "deployedSha": "7193cbd",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 888,
-    "failOpen": 28,
+    "ledgerRows": 889,
+    "failOpen": 29,
     "defects": 25
   },
   "modules": [
@@ -495,7 +495,7 @@
         "FAIL",
         "FIX",
         "AUDIT",
-        "FIX",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -527,7 +527,7 @@
           "AUDIT",
           "FIX",
           "AUDIT",
-          "FIX",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7790,
+      "title": "FINDING: LV-DRIVERS-TOOLBAR-BORROWS-PROFILE-HISTORY",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7790",
+      "sha": "4e0f4efb0",
+      "committedAtIso": "2026-08-16T07:53:27-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:51 AM CT",
+      "url": "",
+      "sha": "db726ebca",
+      "committedAtIso": "2026-08-16T12:51:17Z"
+    },
+    {
       "number": 7789,
       "title": "FINDING: LV-DRIVER-HUB-TOOLBAR-LEAVES-POINT-INBOX + LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "67b4ad108",
       "committedAtIso": "2026-08-16T12:38:25Z"
-    },
-    {
-      "number": 7785,
-      "title": "FINDING: LV-INVENTORY-TOOLBAR-LEAVES-POINT-PARTS-STOCK",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 07:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7785",
-      "sha": "9dfbc5162",
-      "committedAtIso": "2026-08-16T07:37:19-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 07:31 AM CT",
-      "url": "",
-      "sha": "6ad237be7",
-      "committedAtIso": "2026-08-16T12:31:06Z"
     }
   ]
 }
