@@ -69,14 +69,14 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-16 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **16 / 30** | 2026-08-16 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **149 / 150** | 2026-08-16 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **69 / 150** · TRK **9 / 150** · USMCA **73 / 150** | 2026-08-16 |
-| Rows in this file | **948** | 2026-08-16 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **69 / 150** · TRK **9 / 150** · USMCA **72 / 150** | 2026-08-16 |
+| Rows in this file | **952** | 2026-08-16 |
 | Rows `FAIL` + `OPEN` | **19** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=146 · PASS=222 · N/A=220 · UNVERIFIED=19 · SUPERSEDED=9 · OTHER=332 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=150 · PASS=222 · N/A=220 · UNVERIFIED=19 · SUPERSEDED=9 · OTHER=332 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1039,4 +1039,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 949 | inventory · purchase_history filter chrome | D | USMCA | FAIL · FIXED CODE | Purchase History rendered its real append-only receipt SoR, Search/Range/gear/Export, vendor and work-order links, but no Filters control. Root fix mounts staged canonical vendor-FK, receipt-status, and work-order-linked filters in the ParityTable toolbar with explicit Apply/Cancel/Reset; receipt, void/reversal, amount, and source behavior remain unchanged. | FIXED CODE · deploy Live retry pending | `/inventory/purchases`; `verify-inventory-purchases-honesty` normal+selftest+6 mutations | NO | 2026-08-16 | CODEX |
 | 950 | reports · category_hub management copy | E | USMCA | FAIL · FIXED CODE | Authenticated Reports hub rendered the real 19-report catalog, category controls, and Frequently Run toolbar, but its USMCA-visible Management reports description claimed `QBO-standard` despite the closed TMS-native/no-QuickBooks entity law. Root fix describes the same unchanged packages as branded financial compilations and mutation-ratchets the forbidden copy. | FIXED CODE · deploy Live retry pending | `/reports`; `verify-rpt-s01-s05-reports-home-ifta` normal+selftest QBO-copy mutation | NO | 2026-08-16 | CODEX |
 | 951 | home · USMCA QBO chrome and polling | E | USMCA | FAIL · FIXED CODE | Authenticated Home rendered real scoped operational KPIs and governed Driver summary filters, but both role implementations exposed QBO Vendors, Pending QBO Sync, and the full QBO Sync Health/dashboard while also polling four QBO endpoints for USMCA. Root fix derives capability from canonical selected company code, limits both queries and chrome to TRANSP, and preserves TMS-native KPIs plus Samsara mapping integrity. | FIXED CODE · deploy Live retry pending | `/home`; `verify-home-kpi-range-toggle` normal+selftest+2 entity-capability mutations | NO | 2026-08-16 | CODEX |
-| 941 | program · scenario QBO route capability | E | USMCA | FAIL · FIXED CODE | Authenticated Program Scenario Tracker loaded its fresh live lifecycle feed and entity-scope controls, but the default/USMCA-visible header exposed a direct `QBO-style home` route. Root fix renders that additive legacy route only when the operator explicitly selects the TRANSP scenario scope; Role home and Role ops remain universal. | FIXED CODE · deploy Live retry pending | `/program`; `verify-homepage-scenario-tracker-staleness` normal+selftest capability mutation | NO | 2026-08-16 | CODEX |
+| 952 | program · scenario QBO route capability | E | USMCA | FAIL · FIXED CODE | Authenticated Program Scenario Tracker loaded its fresh live lifecycle feed and entity-scope controls, but the default/USMCA-visible header exposed a direct `QBO-style home` route. Root fix renders that additive legacy route only when the operator explicitly selects the TRANSP scenario scope; Role home and Role ops remain universal. | FIXED CODE · deploy Live retry pending | `/program`; `verify-homepage-scenario-tracker-staleness` normal+selftest capability mutation | NO | 2026-08-16 | CODEX |
