@@ -22,6 +22,7 @@ import { readFileSync, existsSync } from "node:fs";
 
 const LABEL = "verify:wo-cost-line-validator";
 const MODAL = "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx";
+const SERVICE = "apps/backend/src/maintenance/two-section-service.ts";
 const RULE = "At least one cost line item";
 
 function stripComments(src) {
@@ -64,11 +65,27 @@ export function analyse(files) {
         `accepts UUID, null, or omission; omit the field so an honestly described catalog-free Section-B line can save.`
     );
   }
+  const serviceRaw = files[SERVICE];
+  if (serviceRaw == null) {
+    problems.push(`${SERVICE} is missing — cannot verify Section-B primary-key returns.`);
+  } else {
+    const service = stripComments(serviceRaw);
+    const canonicalReturns = service.match(/RETURNING\s+uuid\s+AS\s+id/gi)?.length ?? 0;
+    if (canonicalReturns < 2) {
+      problems.push(`${SERVICE}: parent and sub-row inserts must return the real work_order_lines.uuid primary key as id.`);
+    }
+    if (/INSERT INTO maintenance\.work_order_lines[\s\S]{0,500}RETURNING\s+id\b/i.test(service)) {
+      problems.push(`${SERVICE}: maintenance.work_order_lines has uuid, not a phantom id column.`);
+    }
+  }
   return problems;
 }
 
 function readAll() {
-  return { [MODAL]: existsSync(MODAL) ? readFileSync(MODAL, "utf8") : null };
+  return {
+    [MODAL]: existsSync(MODAL) ? readFileSync(MODAL, "utf8") : null,
+    [SERVICE]: existsSync(SERVICE) ? readFileSync(SERVICE, "utf8") : null,
+  };
 }
 
 function selftest() {
@@ -77,14 +94,16 @@ function selftest() {
   const good = `...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),\n{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },`;
   const bug = `{ label: "${RULE}", ok: (form.watch("line_items") ?? []).length > 0 },`;
   const emptyUuidBug = `service_item_uuid: line.service_item_uuid || "",\n${good}`;
+  const serviceGood = `INSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;\nINSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;`;
 
-  t("counting the submitted arrays passes", analyse({ [MODAL]: good }).length === 0);
-  t("the REAL pre-fix line_items rule FAILS", analyse({ [MODAL]: bug }).length === 2);
-  t("deleting the rule entirely FAILS", analyse({ [MODAL]: "no such rule here" }).length === 1);
+  t("counting the submitted arrays passes", analyse({ [MODAL]: good, [SERVICE]: serviceGood }).length === 0);
+  t("the REAL pre-fix line_items rule FAILS", analyse({ [MODAL]: bug, [SERVICE]: serviceGood }).length === 2);
+  t("deleting the rule entirely FAILS", analyse({ [MODAL]: "no such rule here", [SERVICE]: serviceGood }).length === 1);
   t("a comment mentioning line_items does not trip it",
-    analyse({ [MODAL]: `// used to watch line_items\n${good}` }).length === 0);
-  t("an empty optional service-item UUID FAILS", analyse({ [MODAL]: emptyUuidBug }).length === 1);
-  t("missing file FAILS", analyse({ [MODAL]: null }).length === 1);
+    analyse({ [MODAL]: `// used to watch line_items\n${good}`, [SERVICE]: serviceGood }).length === 0);
+  t("an empty optional service-item UUID FAILS", analyse({ [MODAL]: emptyUuidBug, [SERVICE]: serviceGood }).length === 1);
+  t("phantom work-order-line id FAILS", analyse({ [MODAL]: good, [SERVICE]: serviceGood.replace("RETURNING uuid AS id", "RETURNING id") }).length === 2);
+  t("missing modal FAILS", analyse({ [MODAL]: null, [SERVICE]: serviceGood }).length === 1);
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
@@ -95,7 +114,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 6 cases (2 pass-shapes incl. comment-immunity, 4 fail-shapes)`);
+  console.log(`${LABEL} selftest OK — 7 cases (2 pass-shapes incl. comment-immunity, 5 fail-shapes)`);
   process.exit(0);
 }
 const problems = analyse(readAll());
