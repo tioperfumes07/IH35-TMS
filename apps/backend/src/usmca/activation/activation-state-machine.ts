@@ -18,8 +18,8 @@ export type ChecklistItem = {
 };
 
 export const CHECKLIST_ITEMS: ChecklistItem[] = [
-  { id: "qbo_subaccount", label: "QBO subaccount created for USMCA LLC", required_for: "soft_launch", completed: false },
-  { id: "coa_cloned", label: "Chart of Accounts cloned from TRANSP", required_for: "soft_launch", completed: false },
+  { id: "tms_entity_scope", label: "USMCA TMS entity scope and RLS verified", required_for: "soft_launch", completed: false },
+  { id: "tms_posting_flags", label: "USMCA TMS posting enabled and QBO sync flags disabled", required_for: "soft_launch", completed: false },
   { id: "admin_users", label: "2 admin users provisioned with USMCA RLS access", required_for: "soft_launch", completed: false },
   { id: "dot_registered", label: "DOT number registered", required_for: "soft_launch", completed: false },
   { id: "mc_authority", label: "MC authority active", required_for: "soft_launch", completed: false },
@@ -33,7 +33,7 @@ export const CHECKLIST_ITEMS: ChecklistItem[] = [
   { id: "five_drivers", label: "5+ drivers fully onboarded", required_for: "full_active", completed: false },
   { id: "ten_loads", label: "10+ loads completed under USMCA", required_for: "full_active", completed: false },
   { id: "bank_rec_30d", label: "Bank reconciliation pristine for 30 days", required_for: "full_active", completed: false },
-  { id: "owner_signoff", label: "Owner sign-off (Jorge approves transition to full)", required_for: "full_active", completed: false },
+  { id: "launch_evidence", label: "Required launch guards and live proofs recorded", required_for: "full_active", completed: false },
 ];
 
 export const VALID_TRANSITIONS: Record<ActivationState, ActivationState[]> = {

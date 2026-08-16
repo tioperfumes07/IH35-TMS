@@ -115,6 +115,13 @@ const ROUTE_PROOFS = [
   ["form_425", "exhibits", "routes/manifest.tsx", 'path="/425c/exhibits"'],
   ["system", "system.samsara_hos_driver_map", "routes/manifest.tsx", 'path="/samsara/hos-driver-map"'],
   ["system", "hop.program_matrix", "pages/system/SystemModulePage.tsx", 'to="/program/matrix"'],
+  ["system", "system.wizard.edi_setup", "routes/manifest.tsx", 'path="/integrations/edi"'],
+  ["system", "system.panel.usmcaactivation", "routes/manifest.tsx", 'path="/admin/usmca-activation"'],
+];
+
+const EXACT_ROUTE_HINTS = [
+  ["system", "system.wizard.edi_setup", "/integrations/edi"],
+  ["system", "system.panel.usmcaactivation", "/admin/usmca-activation"],
 ];
 
 function walk(dir, out = []) {
@@ -154,6 +161,11 @@ export function verify(source) {
   for (const [module, id, file, token] of ROUTE_PROOFS) {
     if (!source.frontend[file]?.includes(token)) failures.push(`${module}:${id} must retain production proof ${token}`);
   }
+  for (const [module, id, routeHint] of EXACT_ROUTE_HINTS) {
+    const matrix = JSON.parse(source.matrices[module]);
+    const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
+    if (leaf?.route_hint !== routeHint) failures.push(`${module}:${id} must bind navigable route_hint ${routeHint}`);
+  }
   return failures;
 }
 
@@ -174,6 +186,7 @@ if (process.argv.includes("--self-test")) {
     if (surface) mutations.push(() => ({ ...source, frontend: { ...source.frontend, [surface]: "" } }));
   }
   for (const [, , file, token] of ROUTE_PROOFS) mutations.push(() => ({ ...source, frontend: { ...source.frontend, [file]: source.frontend[file].replaceAll(token, "BROKEN_CONNECTIVITY") } }));
+  for (const [module, , routeHint] of EXACT_ROUTE_HINTS) mutations.push(() => ({ ...source, matrices: { ...source.matrices, [module]: source.matrices[module].replace(`\"route_hint\": \"${routeHint}\"`, `\"route_hint\": \"surface://BROKEN\"`) } }));
   mutations.forEach((mutate, index) => {
     if (!verify(mutate()).length) throw new Error(`self-test mutation ${index + 1} survived`);
   });
