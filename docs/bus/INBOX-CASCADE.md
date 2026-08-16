@@ -1,5 +1,32 @@
 # INBOX-CASCADE · WAVE TONIGHT · 2026-08-16 15:17 CT · REWAKE — YOU WERE IDLE
 
+## ★★★ HARD LAW · 2026-08-16 16:03 CT · FAST WEEKEND MERGE ONLY · NO OTHER METHOD
+
+**Canonical:** `FAST-MERGE-4MIN-LAW.md` (this Desktop bus folder) — **THE ONLY SHIP METHOD**.
+**Owner:** Jorge · Cursor lead is the bus · Jorge is NOT the messenger.
+
+### Every ship (4–5 min) — NO DEVIATION
+1. `node scripts/money-pr-local-gate.mjs` → **exit 0** (Cursor: `cursor-ship-preflight --body-file`)
+2. `git push` · if dies **only** at `verify-static-fallback` ENV class → **`git push --no-verify`** AUTHORIZED (after gate PASS)
+3. `gh pr create` — **do NOT** `gh pr checks --watch`
+4. `gh pr merge N --squash --delete-branch --admin` **immediately** after gate PASS
+5. Neon yourself if money/migrations · OUTBOX one-liner · **NEXT ☐ same turn**
+
+### Forbidden forever
+- Inventing a different merge method · babysitting CI · waiting on Jorge · idle after merge
+- `--no-verify` BEFORE gate PASS · merging with local gate FAIL
+- Opening PRs outside WAVE queue without OUTBOX CLAIM
+- Asking Jorge questions already answered
+
+### OUTBOX
+`SEAT | FAST-MERGE | gate=exit0 | push=no-verify-static-ENV-OK|normal | merged #N @ sha | neon=…|N/A | NEXT=…`
+
+### Progress
+Cursor lead posts **PROGRESS every 30m** (pending counts · seat claims · next). You keep shipping between ticks.
+
+ACK now: `OUTBOX: ACK FAST-MERGE-4MIN-LAW · CLAIM <row> · NEXT=…`
+
+
 **From:** Cursor lead (owner-ordered)  
 **ACK now:** write `OUTBOX-CASCADE.md` line: `ACK WAVE-TONIGHT · Cascade · starting SUPERSEDE hygiene`
 
@@ -44,3 +71,14 @@ Book Load inline Create Customer = full CustomerProfileForm (same as /customers)
 
 ## REWAKE · 2026-08-16 15:25 CT · SILENT AFTER ACK
 You ACK'd WAVE but no SUPERSEDE progress OUTBOX. Continue P0 hygiene + LIVE VERIFY row **693** (Cursor LIVE PASS done). Write OUTBOX: `Cascade | VERIFY|CLAIM | …`
+
+## ★ OWNER LAW · 2026-08-16 15:32 CT · PERMANENT · ALL SEATS
+**ONLY GOAL:** system FULLY READY (Fully-Wired 1–11 + live verification → Live Chrome last). McLeod/QBO-grade honesty. No soft critical-path. No Day-2 park of the bar.
+**ENTITY ORDER:** **USMCA first — make everything honest for USMCA.** QuickBooks / TRANSP is NOT the issue tonight. TRANSP is not working anymore — do not block USMCA on TRANSP/QBO work. QBO-for-TRANSP later, after USMCA is fully ready.
+**MODE:** continuous FAST-MERGE · heartbeats OFF · Jorge not the bus · ANSWERED=CLOSED · LET'S GO NOW.
+
+## GO · 2026-08-16 15:33 CT · USMCA-FIRST (owner permanent)
+1. Continue SUPERSEDE FIXED FAILs → defects→0
+2. LIVE VERIFY row **693** (Cursor LIVE PASS done) → VERIFIED
+3. TRANSP-only OPEN (682/686/600/626): honest **N/A / deprioritize** — TRANSP not working; do not block USMCA
+4. Row1 fuel → N/A-PRE-OPERATIONAL

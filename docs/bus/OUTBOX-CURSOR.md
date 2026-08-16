@@ -1,3 +1,6 @@
+- 2026-08-16 16:02 CT · OWNER LAW LIVE (Desktop+lockdown file+INBOXes): USMCA-FIRST FULL READY only goal · local commit 2bdb4a7cd await push (precheck verify-static env red 131 unrelated) · seats CONTINUE · CC-1 259 · Cascade hygiene+693 VERIFY · #7902 deploy pending
+- 2026-08-16 15:49 CT · GO LOCKED: USMCA-FIRST FULL READY permanent · PR push cursor/usmca-first-full-ready-ruling · CC-1 CLAIM 259 · Cascade hygiene · #7902 deploy pending · Live=BLOCKED
+- 2026-08-16 15:33 CT · OWNER LOCK USMCA-FIRST FULL READY · defects~11/30 · #7902 await deploy · CC-1 CLAIM 259 · Cascade VERIFY 693 · GO
 2026-08-15T03:25Z Cursor | tip=#6846 | shipping LINK-F5171 driver_reports_{driver,load} queue EntityLink + filter honor | Live=BLOCKED
 2026-08-15T00:55Z Cursor | SHIPPED #6843 LV-115 ratchet | closing stale home-widgets auth OPEN (vitest PASS) | Live=BLOCKED
 2026-08-15T00:50Z Cursor | SHIPPED #6841 Class-UUID stale | shipping LV-115 scenario entity-code ratchet + board FIXED | Live=BLOCKED
@@ -144,3 +147,4 @@
 - 2026-08-14 shipped #6813; next factoring/template/cash EntityLink (this PR)
 
 - 2026-08-14 shipped #6815; next FactoringTab EntityLink (this PR)
+- 2026-08-16 16:03 CT · HARD LAW broadcast FAST-MERGE-4MIN-LAW to all 4 INBOXes · #7910 author=Claude Opus (tioperfumes07+Claude session) ledger immutability · NOT Cursor · 30m PROGRESS armed · GO
