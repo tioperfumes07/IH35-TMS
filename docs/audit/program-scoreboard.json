@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T15:22:26-05:00",
-    "sourceSha": "012058d9d",
+    "generatedAt": "2026-08-16T15:30:57-05:00",
+    "sourceSha": "4825c5984",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 931,
+    "ledgerRows": 932,
     "failOpen": 24,
     "defects": 26
   },
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 7902,
+      "title": "FINDING: LV-SYSTEM-BACKGROUND-JOBS-STALE-DOWN",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7902",
+      "sha": "4825c5984",
+      "committedAtIso": "2026-08-16T15:30:57-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: CC1-WAVE-TONIGHT-ACK LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:28 PM CT",
+      "url": "",
+      "sha": "e918dcac8",
+      "committedAtIso": "2026-08-16T15:28:01-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:23 PM CT",
+      "url": "",
+      "sha": "a7f3e4d26",
+      "committedAtIso": "2026-08-16T20:23:26Z"
+    },
+    {
       "number": 7901,
       "title": "FINDING: LIVE-MAINT-TRIAGE-LINEAGE-PERSIST",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7898",
       "sha": "bb056549f",
       "committedAtIso": "2026-08-16T14:57:32-05:00"
-    },
-    {
-      "number": 7897,
-      "title": "FINDING: DOC-F3390",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7897",
-      "sha": "8064b4ccc",
-      "committedAtIso": "2026-08-16T14:55:09-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:52 PM CT",
-      "url": "",
-      "sha": "2e2298f76",
-      "committedAtIso": "2026-08-16T19:52:05Z"
-    },
-    {
-      "number": 7896,
-      "title": "FINDING: LV-SYSTEM-USMCA-QBO-CHROME-AND-QUERIES",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7896",
-      "sha": "ddd73e684",
-      "committedAtIso": "2026-08-16T14:50:53-05:00"
     }
   ]
 }
