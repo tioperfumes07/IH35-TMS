@@ -45,7 +45,6 @@
     "apps/backend/src/integrity/driver-metrics.service.ts: d.driver_name \u2014 column \"driver_name\" does not exist on mdata.drivers",
     "apps/backend/src/integrity/driver-metrics.service.ts: w.avg_repair_cost \u2014 column \"avg_repair_cost\" does not exist on maintenance.work_orders",
     "apps/backend/src/integrity/driver-metrics.service.ts: w.wo_count \u2014 column \"wo_count\" does not exist on maintenance.work_orders",
-    "apps/backend/src/kpi/canonical-kpis.ts: w.due_date \u2014 column \"due_date\" does not exist on maintenance.work_orders",
     "apps/backend/src/maintenance/severe-repair-estimate.service.ts: wl.amount \u2014 column \"amount\" does not exist on maintenance.work_order_lines",
     "apps/backend/src/maintenance/severe-repair-estimate.service.ts: wl.work_order_id \u2014 column \"work_order_id\" does not exist on maintenance.work_order_lines",
     "apps/backend/src/maintenance/wo-cost-context.routes.ts: FROM/JOIN maintenance.labor_rates \u2014 TABLE not in migrated schema",

@@ -44,7 +44,7 @@ describe("canonical-kpis (P8-AUDIT-KPI-DRIFTS)", () => {
     const client = {
       query: async (sql: string) => {
         calls.push(sql);
-        if (sql.includes("pm_alerts")) return { rows: [{ count: 4 }] };
+        if (calls.length === 1) return { rows: [{ count: 4 }] };
         return { rows: [{ count: 2 }] };
       },
     };
@@ -53,7 +53,11 @@ describe("canonical-kpis (P8-AUDIT-KPI-DRIFTS)", () => {
     expect(pmDue).toBe(4);
     expect(pastDue).toBe(2);
     expect(calls[0]).toMatch(/pm_alerts/);
-    expect(calls[1]).toMatch(/due_date < CURRENT_DATE/);
+    expect(calls[1]).toMatch(/JOIN maintenance\.pm_alerts pa/);
+    expect(calls[1]).toMatch(/pa\.scheduled_work_order_id = w\.id/);
+    expect(calls[1]).toMatch(/pa\.operating_company_id = w\.operating_company_id/);
+    expect(calls[1]).toMatch(/pa\.triggered_at < CURRENT_DATE/);
+    expect(calls[1]).not.toMatch(/w\.due_date/);
   });
 
   it("drivers on active loads counts distinct drivers on canonical statuses", async () => {
