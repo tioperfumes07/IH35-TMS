@@ -346,7 +346,8 @@ export function FinanceScenariosPage() {
       {scenariosQuery.isError ? (
         <ListErrorState
           title="Couldn't load finance scenarios"
-          detail={userFacingApiError(scenariosQuery.error, "Failed to load scenarios")}
+          status={0}
+          message={userFacingApiError(scenariosQuery.error, "Failed to load scenarios")}
           onRetry={() => void scenariosQuery.refetch()}
         />
       ) : (

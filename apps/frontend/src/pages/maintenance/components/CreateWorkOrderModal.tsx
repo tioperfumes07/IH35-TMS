@@ -1091,7 +1091,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           {suggestionQuery.isError ? (
             <ListErrorState
               title="Couldn't suggest a load for this work order"
-              detail={userFacingApiError(suggestionQuery.error, "Load suggestion failed")}
+              status={0}
+              message={userFacingApiError(suggestionQuery.error, "Load suggestion failed")}
               onRetry={() => void suggestionQuery.refetch()}
             />
           ) : null}
