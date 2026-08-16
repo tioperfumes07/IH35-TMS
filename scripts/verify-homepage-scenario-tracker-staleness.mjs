@@ -63,7 +63,10 @@ export function collectProblems(root = ROOT) {
     if (/localStorage|sessionStorage/.test(home)) {
       problems.push(`${HOME}: must not use localStorage/sessionStorage`);
     }
-    if (!/scenario-tracker-home/.test(home)) problems.push(`${HOME}: missing scenario-tracker-home testid`);
+  if (!/scenario-tracker-home/.test(home)) problems.push(`${HOME}: missing scenario-tracker-home testid`);
+  if (!/entity\s*===\s*"TRANSP"[\s\S]{0,220}<Link to="\/app\/homepage">QBO-style home<\/Link>/.test(home)) {
+    problems.push(`${HOME}: QBO-style home link must render only for the explicit TRANSP scenario scope`);
+  }
   }
 
   if (!manifest) {
@@ -122,7 +125,7 @@ if (SELFTEST) {
     );
     mk(
       HOME,
-      'const POLL_MS = 3000; refetchIntervalInBackground: true; data-testid="scenario-tracker-stale-banner"; TRANSP USMCA TRK; scenario-tracker-home\n',
+      'const POLL_MS = 3000; refetchIntervalInBackground: true; data-testid="scenario-tracker-stale-banner"; TRANSP USMCA TRK; scenario-tracker-home; entity === "TRANSP" ? <Link to="/app/homepage">QBO-style home</Link> : null\n',
     );
     mk(MANIFEST, 'ScenarioTrackerHome; path="/home/scenario-tracker"; path="/home/ops"\n');
     mk("apps/frontend/src/pages/program/scenario-tracker/api.ts", 'return "/api/v1/home/scenario-tracker";\n');
