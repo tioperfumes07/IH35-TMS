@@ -5,7 +5,7 @@
  *   node scripts/verify-inv-s02-s03-pick-01.mjs
  *   node scripts/verify-inv-s02-s03-pick-01.mjs --selftest
  */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,15 +17,18 @@ function read(rel) {
   return readFileSync(join(ROOT, rel), "utf8");
 }
 
-export function verifyInvS02S03Pick(root = ROOT) {
+export function verifyInvS02S03Pick(root = ROOT, overrides = {}) {
   const errs = [];
-  const assign = read("apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx");
-  const purch = read("apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx");
-  const routes = read("apps/backend/src/maintenance/parts-invoice-links.routes.ts");
-  const partsRoutes = read("apps/backend/src/maintenance/parts.routes.ts");
-  const stock = read("apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx");
-  const create = read("apps/frontend/src/pages/inventory/PartCreateDrawer.tsx");
-  const manifest = read("apps/frontend/src/routes/manifest.tsx");
+  const source = (rel) => overrides[rel] ?? read(rel);
+  const assign = source("apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx");
+  const purch = source("apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx");
+  const maintenanceApi = source("apps/frontend/src/api/maintenance.ts");
+  const routes = source("apps/backend/src/maintenance/parts-invoice-links.routes.ts");
+  const purchaseRoutes = source("apps/backend/src/maintenance/parts-inventory.routes.ts");
+  const partsRoutes = source("apps/backend/src/maintenance/parts.routes.ts");
+  const stock = source("apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx");
+  const create = source("apps/frontend/src/pages/inventory/PartCreateDrawer.tsx");
+  const manifest = source("apps/frontend/src/routes/manifest.tsx");
 
   // INV-S02
   if (!/listPartsAssignments/.test(assign)) errs.push("Assignments page must call listPartsAssignments");
@@ -39,16 +42,28 @@ export function verifyInvS02S03Pick(root = ROOT) {
   if (!/path="\/inventory\/assignments"/.test(manifest)) errs.push("manifest missing /inventory/assignments");
 
   // INV-S03
-  if (!/data-testid="inventory-purchases-honest-empty"/.test(purch)) {
-    errs.push("Purchases page missing honest-empty test id");
+  if (!/listPartsPurchases/.test(purch)) {
+    errs.push("Purchases page must call listPartsPurchases");
   }
-  if (!/HOLD-INVENTORY-PURCHASE-HISTORY-SOR/.test(purch)) {
-    errs.push("Purchases must cite HOLD SoR (no stock twin as history)");
+  if (!/No purchases recorded yet\. Record a purchase from Parts & Stock to see it here\./.test(purch)) {
+    errs.push("Purchases page missing honest emptyText");
+  }
+  if (!/maintenance\.parts_purchases \(append-only\)/.test(purch)) {
+    errs.push("Purchases page must name the append-only purchase SoR");
+  }
+  if (!/\/api\/v1\/maintenance\/parts-inventory\/purchases\?/.test(maintenanceApi)) {
+    errs.push("listPartsPurchases must call the canonical purchase-history endpoint");
+  }
+  if (!/FROM maintenance\.parts_purchases pp/.test(purchaseRoutes)) {
+    errs.push("purchase-history route must read maintenance.parts_purchases");
+  }
+  if (!/WHERE pp\.operating_company_id = \$1::uuid/.test(purchaseRoutes)) {
+    errs.push("purchase-history route must filter one operating company");
+  }
+  if (!/app\.post\("\/api\/v1\/maintenance\/parts-inventory\/purchases\/:id\/void"/.test(purchaseRoutes)) {
+    errs.push("purchase history must expose void/reversal instead of delete");
   }
   if (!/path="\/inventory\/purchases"/.test(manifest)) errs.push("manifest missing /inventory/purchases");
-  if (!existsSync(join(root, "docs/blocks/HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md"))) {
-    errs.push("missing HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md");
-  }
 
   // INV-PICK-01
   if (!/listMaintenanceParts/.test(stock)) errs.push("Parts & Stock must use listMaintenanceParts");
@@ -74,13 +89,27 @@ if (SELFTEST) {
     console.error(`${LABEL} --selftest FAIL:`, errs);
     process.exit(1);
   }
-  // Negative: strip emptyText
-  const assign = read("apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx");
-  if (!/No part assignments yet/.test(assign)) {
-    console.error(`${LABEL} --selftest FAIL: fixture expectation`);
-    process.exit(1);
+  const purchPath = "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx";
+  const apiPath = "apps/frontend/src/api/maintenance.ts";
+  const routePath = "apps/backend/src/maintenance/parts-inventory.routes.ts";
+  const fixtures = [
+    ["missing list reader", purchPath, /listPartsPurchases/g, "listPurchases_REMOVED"],
+    ["missing honest empty", purchPath, /No purchases recorded yet\. Record a purchase from Parts & Stock to see it here\./g, "History unavailable"],
+    ["wrong SoR copy", purchPath, /maintenance\.parts_purchases \(append-only\)/g, "maintenance.parts_inventory"],
+    ["wrong client endpoint", apiPath, /\/api\/v1\/maintenance\/parts-inventory\/purchases\?/g, "/api/v1/maintenance/parts?"],
+    ["wrong backend table", routePath, /FROM maintenance\.parts_purchases pp/g, "FROM maintenance.parts_inventory pp"],
+    ["missing company predicate", routePath, /WHERE pp\.operating_company_id = \$1::uuid/g, "WHERE TRUE"],
+    ["missing void route", routePath, /app\.post\("\/api\/v1\/maintenance\/parts-inventory\/purchases\/:id\/void"/g, 'app.post("/api/v1/maintenance/parts-inventory/purchases/:id/archive"'],
+  ];
+  for (const [name, path, pattern, replacement] of fixtures) {
+    const original = read(path);
+    const mutated = original.replace(pattern, replacement);
+    if (mutated === original || verifyInvS02S03Pick(ROOT, { [path]: mutated }).length === 0) {
+      console.error(`${LABEL} --selftest FAIL: ${name}`);
+      process.exit(1);
+    }
   }
-  console.log(`${LABEL} --selftest OK`);
+  console.log(`${LABEL} --selftest OK — ${fixtures.length}/${fixtures.length} purchase-ledger mutations rejected`);
 } else {
   const errs = verifyInvS02S03Pick();
   if (errs.length) {
