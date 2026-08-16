@@ -3178,6 +3178,11 @@
       "guard": "verify-vendor-bill-create-no-double-submit",
       "owner": "cursor",
       "note": "Bill create path is re-submittable \u2014 FE in-flight lock + stable Idempotency-Key per drawer session"
+    },
+    "3645": {
+      "name": "verify-driver-status-inactive-blocks-assignment",
+      "claimer": "cc-1",
+      "claimed_at": "2026-08-16"
     }
   },
   "generated_at": "2026-08-09T02:10:17.093Z",
