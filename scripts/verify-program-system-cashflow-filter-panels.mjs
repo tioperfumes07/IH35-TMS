@@ -10,6 +10,9 @@
  * LV-SAFETY-ANOMALIES-FILTER-LEAF-THEATER
  * LV-DOCS-FILTER-LEAF-THEATER
  * LV-REPORTS-FILTER-LEAF-THEATER
+ * LV-VENDORS-FILTER-LEAF-THEATER
+ * LV-CUSTOMERS-FILTER-LEAF-THEATER
+ * LV-LISTS-FILTER-LEAF-THEATER
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -65,6 +68,16 @@ const SURFACES = [
     id: "docs-home",
     file: "apps/frontend/src/pages/docs/DocsHomePage.tsx",
     route: "/docs",
+  },
+  {
+    id: "vendors-list",
+    file: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+    route: "/vendors",
+  },
+  {
+    id: "customers-list",
+    file: "apps/frontend/src/pages/customers/CustomersListView.tsx",
+    route: "/customers",
   },
 ];
 
@@ -185,6 +198,48 @@ export function collectFailures(sources) {
     }
   }
 
+  const vendorsReq = sources["docs/specs/scoreboard/modules/vendors.required.json"] ?? "";
+  if (vendorsReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/vendors\/VendorsListView\.tsx"/.test(vendorsReq)) {
+      failures.push("vendors.required.json: chrome.toolbar_filter surface_path must be VendorsListView.tsx");
+    }
+  }
+  const vendors = sources[SURFACES[9].file] ?? "";
+  if (!/testIdPrefix="vendors"/.test(vendors) && !/data-vendors-filter-toolbar/.test(vendors)) {
+    failures.push("vendors-list: Filters panel must use vendors testId/data attribute");
+  }
+
+  const customersReq = sources["docs/specs/scoreboard/modules/customers.required.json"] ?? "";
+  if (customersReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/customers\/CustomersListView\.tsx"/.test(customersReq)) {
+      failures.push("customers.required.json: chrome.toolbar_filter surface_path must be CustomersListView.tsx");
+    }
+  }
+  const customers = sources[SURFACES[10].file] ?? "";
+  if (!/testIdPrefix="customers"/.test(customers) && !/data-customers-filter-toolbar/.test(customers)) {
+    failures.push("customers-list: Filters panel must use customers testId/data attribute");
+  }
+
+  const listsReq = sources["docs/specs/scoreboard/modules/lists.required.json"] ?? "";
+  if (listsReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "components\/lists\/ListView\/components\/FilterPopover\.tsx"/.test(
+        listsReq,
+      )
+    ) {
+      failures.push("lists.required.json: chrome.toolbar_filter surface_path must be FilterPopover.tsx");
+    }
+  }
+  const listsFilter = sources["apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx"] ?? "";
+  if (listsFilter) {
+    if (!/\bApply\b/.test(listsFilter) || !/\bonClick=\{apply\}/.test(listsFilter)) {
+      failures.push("FilterPopover.tsx: must keep Apply commit for staged list filters");
+    }
+    if (!listsFilter.includes("listview-filter-popover")) {
+      failures.push("FilterPopover.tsx: must keep listview-filter-popover test id");
+    }
+  }
+
   return failures;
 }
 
@@ -210,6 +265,18 @@ function load() {
   );
   map["apps/frontend/src/pages/reports/runners/RunnerFilters.tsx"] = read(
     "apps/frontend/src/pages/reports/runners/RunnerFilters.tsx",
+  );
+  map["docs/specs/scoreboard/modules/vendors.required.json"] = read(
+    "docs/specs/scoreboard/modules/vendors.required.json",
+  );
+  map["docs/specs/scoreboard/modules/customers.required.json"] = read(
+    "docs/specs/scoreboard/modules/customers.required.json",
+  );
+  map["docs/specs/scoreboard/modules/lists.required.json"] = read(
+    "docs/specs/scoreboard/modules/lists.required.json",
+  );
+  map["apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx"] = read(
+    "apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx",
   );
   return map;
 }
@@ -272,6 +339,29 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         "docs/specs/scoreboard/modules/reports.required.json"
       ].replaceAll("pages/reports/runners/RunnerFilters.tsx", "components/table/UniversalListToolbar.tsx"),
     }),
+    () => ({
+      ...sources,
+      [SURFACES[9].file]: sources[SURFACES[9].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/vendors.required.json": sources[
+        "docs/specs/scoreboard/modules/vendors.required.json"
+      ].replaceAll("pages/vendors/VendorsListView.tsx", "components/table/UniversalListToolbar.tsx"),
+    }),
+    () => ({
+      ...sources,
+      [SURFACES[10].file]: sources[SURFACES[10].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/lists.required.json": sources[
+        "docs/specs/scoreboard/modules/lists.required.json"
+      ].replaceAll(
+        "components/lists/ListView/components/FilterPopover.tsx",
+        "components/table/UniversalListToolbar.tsx",
+      ),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -281,4 +371,6 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   console.log(`PASS: ${mutations.length} planted missing-Filters-panel defects were rejected`);
 }
 
-console.log("PASS: program/system/cash-flow/insurance/drivers/legal/tasks/safety/docs exact filter panels mount CollapsedListFilters + staged Apply");
+console.log(
+  "PASS: program/system/cash-flow/insurance/drivers/legal/tasks/safety/docs/vendors/customers(+lists FilterPopover) filter panels honest",
+);
