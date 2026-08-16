@@ -3564,5 +3564,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-16",
     "note": "LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR"
+  },
+  "3650": {
+    "guard": "verify-program-system-cashflow-filter-panels",
+    "lane": "cursor",
+    "claimed_at": "2026-08-16",
+    "note": "LV-PROGRAM-SYSTEM-CASHFLOW-FILTER-PANELS"
   }
 }
