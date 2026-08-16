@@ -304,49 +304,49 @@
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
-      "route_hint": "/finance",
+      "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "pages/finance/LoanWizardPage.tsx"
+      "surface_path": "pages/finance/ArApAgingPage.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
       "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
-      "route_hint": "/finance",
+      "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "pages/finance/LoanWizardPage.tsx"
+      "surface_path": "pages/finance/ArApAgingPage.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
       "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
-      "route_hint": "/finance",
+      "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "pages/finance/LoanWizardPage.tsx"
+      "surface_path": "pages/finance/ArApAgingPage.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
-      "route_hint": "/finance",
+      "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ],
-      "surface_path": "pages/finance/LoanWizardPage.tsx"
+      "surface_path": "pages/finance/ArApAgingPage.tsx",
+      "note": "N/A connectivity: no server-wired Filters panel exists anywhere in the Finance module today (ArApAgingPage — the real Search/Range/gear owner — has no CollapsedListFilters); qbo_chrome remains Cursor-owned chrome-law scope only."
     }
   ],
   "honesty_audit": {

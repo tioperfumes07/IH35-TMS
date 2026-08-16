@@ -38,6 +38,7 @@ const forbiddenTerms = [
 const forbiddenPatterns = [
   { re: /cycle\s+\d/i, label: "cycle <n>" },
   { re: /coming in cycle/i, label: "coming in cycle" },
+  { re: /owner[- ]gated/i, label: "owner-gated" },
 ];
 
 // Operator copy must describe records and workflows, not expose physical schema.table names.
