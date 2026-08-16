@@ -151,6 +151,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
         `
           INSERT INTO insurance.lawsuit (
             tenant_id,
+            operating_company_id,
             case_number,
             plaintiff,
             defendant,
@@ -165,7 +166,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
             notes
           )
           VALUES (
-            $1::uuid, $2, $3, $4, $5, $6::date, $7, $8::uuid, $9, $10, $11, $12, $13
+            $1::uuid, $1::uuid, $2, $3, $4, $5, $6::date, $7, $8::uuid, $9, $10, $11, $12, $13
           )
           RETURNING ${lawsuitSelectColumns()}
         `,

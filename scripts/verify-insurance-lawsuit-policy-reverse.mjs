@@ -26,6 +26,7 @@ function audit(s) {
   if (!/listLawsuitsQuerySchema[\s\S]{0,180}policy_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.schema)) failures.push("list schema must accept policy filter");
   if (!/claim\.policy_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("route must apply exact policy predicate through claim");
   if (!/claim\.tenant_id = lawsuit\.tenant_id[\s\S]{0,80}claim\.id = lawsuit\.claim_id/.test(s.route)) failures.push("policy reverse join must retain tenant match");
+  if (!/INSERT INTO insurance\.lawsuit \([\s\S]{0,100}tenant_id,\s*operating_company_id,[\s\S]{0,500}VALUES \(\s*\$1::uuid, \$1::uuid,/.test(s.route)) failures.push("lawsuit create must stamp the scoped company into tenant_id and FORCE-RLS operating_company_id");
   if ((s.api.match(/policy_id\?: string;/g) ?? []).length < 7) failures.push("lawsuit API and public wrapper must expose policy filter");
   if (!/listInsuranceLawsuits\(\{ operating_company_id: companyId, policy_id: policyId \}\)/.test(s.policy)) failures.push("policy detail must request exact lawsuit reverse filter");
   if (/\.filter\(\(lawsuit\) => lawsuit\.claim_id/.test(s.policy)) failures.push("policy detail must not browser-filter company-wide lawsuits");
@@ -48,6 +49,7 @@ if (process.argv.includes("--selftest")) {
     ["schema", "schema", /(listLawsuitsQuerySchema[\s\S]{0,180})policy_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "$1"],
     ["filter", "route", /claim\.policy_id = \$\$\{values\.length\}::uuid/, "TRUE"],
     ["tenant", "route", /claim\.tenant_id = lawsuit\.tenant_id/, "TRUE"],
+    ["create opco stamp", "route", /tenant_id,\s*operating_company_id,/, "tenant_id,"],
     ["api", "api", /policy_id\?: string;/g, ""],
     ["exact read", "policy", /listInsuranceLawsuits\(\{ operating_company_id: companyId, policy_id: policyId \}\)/, "listInsuranceLawsuits({ operating_company_id: companyId })"],
     ["error", "policy", /Couldn't load this policy's lawsuits/, "Lawsuits unavailable"],
