@@ -21,6 +21,12 @@ vi.mock("../auth/db.js", () => ({
 
 vi.mock("../lib/company-business-date.js", () => ({ companyBusinessDate: () => "2026-07-05" }));
 
+// LV-USMCA-FINANCE-HUB-EXPOSES-QBO-SYNC-KPI: unrelated to SWL-2 (cash-position honesty). Stub the
+// QBO-connection capability check so this suite's assertions are unaffected by that gate either way.
+vi.mock("../integrations/qbo/qbo-oauth.service.js", () => ({
+  companyHasQboConnectionRecord: async () => true,
+}));
+
 import { getFinanceHubOverview } from "./finance-hub.service.js";
 
 const INPUT = { userId: "u-1", operating_company_id: "oci" };

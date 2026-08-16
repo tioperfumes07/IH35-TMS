@@ -10,7 +10,10 @@
 //   • A/P open + aging      → views.ap_aging          (security_invoker, opco-scoped)
 //   • current period        → accounting.periods       (status open|closing|closed)
 //   • fixed assets NBV      → accounting.fixed_assets  + computeDepreciationSchedule (FIN-21 math)
-//   • QBO sync health       → views.qbo_sync_health    (opco-scoped via app.operating_company_id)
+//   • QBO sync health       → views.qbo_sync_health    (opco-scoped via app.operating_company_id;
+//                                                        omitted entirely for a company with no
+//                                                        integrations.qbo_connections row — e.g.
+//                                                        TMS-native USMCA, which has no QuickBooks)
 //
 // Each KPI carries a `drill_to` route string pointing at the real screen that owns that data.
 // Money is integer cents. Per-entity only — no cross-entity totals.
@@ -20,6 +23,7 @@ import { logger } from "../observability/structured-logger.js";
 import { getCashFlowReport } from "./cash-flow.service.js";
 import { computeDepreciationSchedule, asOfToday } from "./fixed-assets.math.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { companyHasQboConnectionRecord } from "../integrations/qbo/qbo-oauth.service.js";
 
 export type FinanceHubKpiKind = "money_cents" | "count" | "text";
 
@@ -231,6 +235,14 @@ export async function getFinanceHubOverview(input: {
     });
   }
 
+  // LV-USMCA-FINANCE-HUB-EXPOSES-QBO-SYNC-KPI: USMCA is TMS-native and has no QuickBooks
+  // connection (closed entity law). companyHasQboConnectionRecord is the canonical capability
+  // check already used by the QBO disconnect watchdog for the exact same "never-connected
+  // parallel-books entity" case — reuse it rather than inventing a second gate or hardcoding a
+  // USMCA UUID. A company with no connection record gets no QBO KPI card and no read against
+  // views.qbo_sync_health at all (never a fabricated "In sync").
+  const hasQbo = await companyHasQboConnectionRecord(operating_company_id);
+
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
 
@@ -239,7 +251,7 @@ export async function getFinanceHubOverview(input: {
       readApTotals(client, operating_company_id),
       readCurrentPeriod(client, operating_company_id),
       readFixedAssets(client, operating_company_id),
-      readQboSyncHealth(client),
+      hasQbo ? readQboSyncHealth(client) : Promise.resolve(null),
     ]);
 
     const kpis: FinanceHubKpi[] = [
@@ -300,15 +312,19 @@ export async function getFinanceHubOverview(input: {
         drill_to: "/accounting/fixed-assets",
         drill_label: "View fixed assets",
       },
-      {
-        key: "qbo_sync_health",
-        label: "QuickBooks sync health",
-        value_kind: "text",
-        value: qbo.out_of_sync_entities === 0 ? "In sync" : `${qbo.out_of_sync_entities} entit${qbo.out_of_sync_entities === 1 ? "y" : "ies"} drifting`,
-        secondary: `${qbo.pending_count} item${qbo.pending_count === 1 ? "" : "s"} pending sync`,
-        drill_to: "/accounting/qbo-reconcile",
-        drill_label: "View QBO reconciliation",
-      },
+      ...(qbo
+        ? [
+            {
+              key: "qbo_sync_health",
+              label: "QuickBooks sync health",
+              value_kind: "text" as const,
+              value: qbo.out_of_sync_entities === 0 ? "In sync" : `${qbo.out_of_sync_entities} entit${qbo.out_of_sync_entities === 1 ? "y" : "ies"} drifting`,
+              secondary: `${qbo.pending_count} item${qbo.pending_count === 1 ? "" : "s"} pending sync`,
+              drill_to: "/accounting/qbo-reconcile",
+              drill_label: "View QBO reconciliation",
+            },
+          ]
+        : []),
     ];
 
     return {
