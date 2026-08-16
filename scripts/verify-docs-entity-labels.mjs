@@ -13,8 +13,10 @@ const labelHelper = read("apps/backend/src/docs/entity-labels.ts");
 const frontendPage = read("apps/frontend/src/pages/docs/DocsHomePage.tsx");
 const legacyDocumentsPage = read("apps/frontend/src/pages/Documents.tsx");
 const frontendApi = read("apps/frontend/src/api/docs.ts");
+const completion = read("docs/module-completion/docs.json");
+const board = read("docs/audit/GUARD-WORKORDERS.md");
 
-const source = { filesRoute, foundationRoute, labelHelper, frontendPage, legacyDocumentsPage, frontendApi };
+const source = { filesRoute, foundationRoute, labelHelper, frontendPage, legacyDocumentsPage, frontendApi, completion, board };
 
 function verify(candidate) {
   const failures = [];
@@ -36,6 +38,14 @@ function verify(candidate) {
   if (candidate.legacyDocumentsPage.includes('formatEntityLabel(null, firstLink.entity_id')) {
     failures.push("legacy Documents route must not render a raw UUID fallback");
   }
+  const docsCompletion = JSON.parse(candidate.completion);
+  const linkItem = docsCompletion.items.find((item) => item.id === "DOCS-LINK-01");
+  if (!linkItem?.prod_verified || !/USMCA LIVE PASS/.test(linkItem.evidence) || !/zero Record — not visible/.test(linkItem.evidence)) {
+    failures.push("DOCS-LINK-01 must retain exact post-deploy Live label proof");
+  }
+  if (!/FIXED DEPLOYED \(Codex Live 2026-08-16\):\*\* `LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`/.test(candidate.board)) {
+    failures.push("docs legacy split-deploy blocker must remain closed with exact deployed evidence");
+  }
   return failures;
 }
 
@@ -53,6 +63,8 @@ if (process.argv.includes("--self-test")) {
     { file: "foundationRoute", token: "await hydrateEntityLabels(client, operatingCompanyId, rowsRes.rows)" },
     { file: "frontendPage", token: "label={label}" },
     { file: "legacyDocumentsPage", token: "return firstLink.entity_label ?" },
+    { file: "completion", token: "USMCA LIVE PASS after frontend deploy #7821" },
+    { file: "board", token: "FIXED DEPLOYED (Codex Live 2026-08-16):** `LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`" },
   ];
   mutations.forEach(({ file, token }, index) => {
     const mutated = { ...source, [file]: source[file].replace(token, "BROKEN_DOCS_ENTITY_LABEL_WIRING") };
