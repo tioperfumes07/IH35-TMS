@@ -9,6 +9,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useToast } from "../../components/Toast";
+import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   activateScenario,
@@ -342,6 +343,13 @@ export function FinanceScenariosPage() {
         </section>
       )}
 
+      {scenariosQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load finance scenarios"
+          detail={userFacingApiError(scenariosQuery.error, "Failed to load scenarios")}
+          onRetry={() => void scenariosQuery.refetch()}
+        />
+      ) : (
       <ParityTable<Scenario>
         columns={columns}
         rows={scenarios}
@@ -350,6 +358,7 @@ export function FinanceScenariosPage() {
         tableTestId="finance-scenarios-table"
         emptyText="No scenarios yet — create one to start planning."
       />
+      )}
     </div>
   );
 }
