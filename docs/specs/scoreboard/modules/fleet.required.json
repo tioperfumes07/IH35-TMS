@@ -1021,7 +1021,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/FleetTable.tsx"
     }
   ],
   "honesty_audit": {

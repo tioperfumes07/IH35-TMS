@@ -13,6 +13,10 @@
  * LV-VENDORS-FILTER-LEAF-THEATER
  * LV-CUSTOMERS-FILTER-LEAF-THEATER
  * LV-LISTS-FILTER-LEAF-THEATER
+ * LV-ACCOUNTING-FILTER-LEAF-THEATER
+ * LV-FLEET-FILTER-LEAF-THEATER
+ * LV-DISPATCH-FILTER-LEAF-THEATER
+ * LV-FACTORING-FILTER-LEAF-THEATER
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -240,6 +244,87 @@ export function collectFailures(sources) {
     }
   }
 
+  const accountingReq = sources["docs/specs/scoreboard/modules/accounting.required.json"] ?? "";
+  if (accountingReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/accounting\/BillsPage\.tsx"/.test(accountingReq)) {
+      failures.push("accounting.required.json: chrome.toolbar_filter surface_path must be BillsPage.tsx");
+    }
+  }
+  const bills = sources["apps/frontend/src/pages/accounting/BillsPage.tsx"] ?? "";
+  if (bills) {
+    if (!bills.includes("CollapsedListFilters")) {
+      failures.push("BillsPage.tsx: must mount CollapsedListFilters for chrome.toolbar_filter");
+    }
+    if (!/\bonApply=\{/.test(bills)) {
+      failures.push("BillsPage.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!bills.includes("useStagedListFilters")) {
+      failures.push("BillsPage.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="bills"/.test(bills) && !/data-bills-filter-toolbar/.test(bills)) {
+      failures.push("accounting-bills: Filters panel must use bills testId/data attribute");
+    }
+  }
+
+  const fleetReq = sources["docs/specs/scoreboard/modules/fleet.required.json"] ?? "";
+  if (fleetReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "components\/FleetTable\.tsx"/.test(fleetReq)) {
+      failures.push("fleet.required.json: chrome.toolbar_filter surface_path must be FleetTable.tsx");
+    }
+  }
+  const fleet = sources["apps/frontend/src/components/FleetTable.tsx"] ?? "";
+  if (fleet) {
+    if (!fleet.includes("CollapsedListFilters")) {
+      failures.push("FleetTable.tsx: must mount CollapsedListFilters for chrome.toolbar_filter");
+    }
+    if (!/\bonApply=\{/.test(fleet)) {
+      failures.push("FleetTable.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!fleet.includes("useStagedListFilters")) {
+      failures.push("FleetTable.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="fleet"/.test(fleet) && !/data-fleet-filter-toolbar/.test(fleet)) {
+      failures.push("fleet-table: Filters panel must use fleet testId/data attribute");
+    }
+  }
+
+  const dispatchReq = sources["docs/specs/scoreboard/modules/dispatch.required.json"] ?? "";
+  if (dispatchReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/dispatch\/AssignmentHistoryPage\.tsx"/.test(
+        dispatchReq,
+      )
+    ) {
+      failures.push("dispatch.required.json: chrome.toolbar_filter surface_path must be AssignmentHistoryPage.tsx");
+    }
+  }
+  const assignmentHistory = sources["apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx"] ?? "";
+  if (assignmentHistory) {
+    if (!assignmentHistory.includes("assignment-history-filters")) {
+      failures.push("AssignmentHistoryPage.tsx: must keep assignment-history-filters chrome");
+    }
+    if (!assignmentHistory.includes("assignment-history-filter-apply")) {
+      failures.push("AssignmentHistoryPage.tsx: must keep staged Apply for filters");
+    }
+  }
+
+  const factoringReq = sources["docs/specs/scoreboard/modules/factoring.required.json"] ?? "";
+  if (factoringReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/factoring\/FactoringHome\.tsx"/.test(
+        factoringReq,
+      )
+    ) {
+      failures.push("factoring.required.json: chrome.toolbar_filter surface_path must be FactoringHome.tsx");
+    }
+  }
+  const factoringHome = sources["apps/frontend/src/pages/factoring/FactoringHome.tsx"] ?? "";
+  if (factoringHome) {
+    if (!factoringHome.includes("factoring-home-recourse-filters")) {
+      failures.push("FactoringHome.tsx: must keep factoring-home-recourse-filters chrome");
+    }
+  }
+
   return failures;
 }
 
@@ -277,6 +362,30 @@ function load() {
   );
   map["apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx"] = read(
     "apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx",
+  );
+  map["docs/specs/scoreboard/modules/accounting.required.json"] = read(
+    "docs/specs/scoreboard/modules/accounting.required.json",
+  );
+  map["apps/frontend/src/pages/accounting/BillsPage.tsx"] = read(
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
+  );
+  map["apps/frontend/src/components/FleetTable.tsx"] = read(
+    "apps/frontend/src/components/FleetTable.tsx",
+  );
+  map["docs/specs/scoreboard/modules/fleet.required.json"] = read(
+    "docs/specs/scoreboard/modules/fleet.required.json",
+  );
+  map["docs/specs/scoreboard/modules/dispatch.required.json"] = read(
+    "docs/specs/scoreboard/modules/dispatch.required.json",
+  );
+  map["docs/specs/scoreboard/modules/factoring.required.json"] = read(
+    "docs/specs/scoreboard/modules/factoring.required.json",
+  );
+  map["apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx"] = read(
+    "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+  );
+  map["apps/frontend/src/pages/factoring/FactoringHome.tsx"] = read(
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
   );
   return map;
 }
@@ -362,6 +471,33 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         "components/table/UniversalListToolbar.tsx",
       ),
     }),
+    () => ({
+      ...sources,
+      "apps/frontend/src/pages/accounting/BillsPage.tsx": sources[
+        "apps/frontend/src/pages/accounting/BillsPage.tsx"
+      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "apps/frontend/src/components/FleetTable.tsx": sources[
+        "apps/frontend/src/components/FleetTable.tsx"
+      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/dispatch.required.json": sources[
+        "docs/specs/scoreboard/modules/dispatch.required.json"
+      ].replaceAll(
+        "pages/dispatch/AssignmentHistoryPage.tsx",
+        "components/table/UniversalListToolbar.tsx",
+      ),
+    }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/factoring.required.json": sources[
+        "docs/specs/scoreboard/modules/factoring.required.json"
+      ].replaceAll("pages/factoring/FactoringHome.tsx", "components/table/UniversalListToolbar.tsx"),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -372,5 +508,5 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
 }
 
 console.log(
-  "PASS: program/system/cash-flow/insurance/drivers/legal/tasks/safety/docs/vendors/customers(+lists FilterPopover) filter panels honest",
+  "PASS: filter-panel wave incl. vendors/customers/lists/accounting/fleet/dispatch/factoring honest",
 );
