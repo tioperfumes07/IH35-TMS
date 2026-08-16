@@ -1112,8 +1112,8 @@ export function BankingTransactionsDesignView({
                 type="button"
                 disabled
                 data-testid="bank-txn-attach-disabled"
-                aria-label="Attach file (disabled — bank_transaction not in documents.attachments)"
-                title="Disabled: documents.attachments has no bank_transaction entity_type. Attach receipts to the Bill, Expense, or JE this row posts to."
+                aria-label="Attach file (disabled — file attachments aren't available on bank transaction rows yet)"
+                title="Disabled: file attachments aren't available on bank transaction rows yet. Attach receipts to the Bill, Expense, or JE this row posts to."
                 className="cursor-not-allowed opacity-60"
               >
                 <Paperclip className="h-4 w-4" />
@@ -1123,7 +1123,7 @@ export function BankingTransactionsDesignView({
                 disabled
                 data-testid="bank-txn-note-disabled"
                 aria-label="Add note (disabled — no notes PATCH route)"
-                title="Disabled: banking.bank_transactions.notes is system-only today; no PATCH /api/v1/banking/transactions/:id notes body."
+                title="Disabled: notes on bank transactions are system-only today; there is no way to save an operator note here yet."
                 className="cursor-not-allowed opacity-60"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -2333,14 +2333,13 @@ export function BankingTransactionsDesignView({
             <p className="mt-1">
               QBO-style paperclip and note icons stay visible but disabled.{" "}
               <strong>Attachments:</strong>{" "}
-              the attachment system does not support bank feed rows as an attachable record type, and{" "}
-              <code className="text-[11px]">/api/v1/documents/attachments</code> upload rejects bank feed rows — attach
+              the attachment system does not support bank feed rows as an attachable record type, and the
+              file-upload endpoint rejects bank feed rows — attach
               receipts to the Bill, Expense, or JE this transaction posts to instead.{" "}
               <strong>Notes:</strong>{" "}
-              <code className="text-[11px]">banking.bank_transactions.notes</code> exists for system/skip/investigate
-              text only; there is no operator notes{" "}
-              <code className="text-[11px]">PATCH /api/v1/banking/transactions/:id</code> body (today&apos;s PATCH edits
-              manual row dates only).
+              bank transaction notes are reserved for system/skip/investigate
+              text only; there is no way to save an operator note here yet (today&apos;s row-edit endpoint
+              only updates the manual date).
             </p>
           </div>
         </>

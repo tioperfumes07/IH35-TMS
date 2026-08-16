@@ -33,7 +33,7 @@ export function ItemsCatalog({ onSynced }: Props = {}) {
   return (
     <div className="flex flex-col gap-3 rounded-sm border border-border p-4">
       <h2 className="text-lg font-semibold">Products &amp; Services (QBO Items)</h2>
-      <p className="text-sm text-muted-foreground">Pull and reconcile QBO items into catalogs.items for WO auto-post.</p>
+      <p className="text-sm text-muted-foreground">Pull and reconcile QBO items into the items catalog for WO auto-post.</p>
       <div className="flex gap-2">
         <button
           type="button"

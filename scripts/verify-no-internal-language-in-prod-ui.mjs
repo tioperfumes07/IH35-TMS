@@ -46,15 +46,6 @@ const forbiddenPatterns = [
 const VISIBLE_SCHEMA_BASELINE = new Set([
   // QBO system explanation is outside the USMCA TMS-native sprint; do not expand this exception.
   "apps/frontend/src/pages/system/SystemModulePage.tsx::accounting.bills",
-  // Protected money-lane regression routed as CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY-REGRESSION.
-  // Exact keys only: the TSX AST detector rejects any new file/token pair and these shrink with CC-1's fix.
-  "apps/frontend/src/pages/accounting/ItemsCatalog.tsx::catalogs.items",
-  "apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx::catalogs.classes",
-  "apps/frontend/src/pages/banking/BankingHome.tsx::catalogs.accounts",
-  "apps/frontend/src/pages/banking/BankingHome.tsx::banking.bank_accounts",
-  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx::documents.attachments",
-  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx::banking.bank_transactions",
-  "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx::factoring.factor",
 ]);
 
 const USER_COPY_PROPS = new Set([

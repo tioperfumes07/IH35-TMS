@@ -24,7 +24,7 @@ export function FactoringProfilePanel({ factor, saving, onSave }: Props) {
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="font-medium text-gray-900">Active factoring company profile</h3>
-          <p className="text-xs text-gray-500">{factor.name} · canonical factoring.factor</p>
+          <p className="text-xs text-gray-500">{factor.name} · primary factoring company on file</p>
         </div>
         <Button size="sm" variant="secondary" onClick={onSave} loading={saving} data-testid="factoring-profile-edit">
           Edit factoring profile

@@ -221,7 +221,7 @@ function ClassCostCenterVariancePanel({ companyId, periods }: { companyId: strin
       <div>
         <h2 className="text-sm font-semibold text-gray-900">Cost centers (Class variance)</h2>
         <p className="text-xs text-gray-600">
-          QBO Class dimension (`catalogs.classes`) — expense / COGS / other-expense JE rollup. No new GL math.
+          QBO Class dimension — expense / COGS / other-expense JE rollup. No new GL math.
         </p>
       </div>
       {classQuery.data ? (
