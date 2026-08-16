@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T11:26:02-05:00",
-    "sourceSha": "1c03d6055",
-    "deployedSha": "ffd19de",
+    "generatedAt": "2026-08-16T11:35:41-05:00",
+    "sourceSha": "02bd9018b",
+    "deployedSha": "2a2ab34",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 908,
+    "ledgerRows": 909,
     "failOpen": 23,
     "defects": 25
   },
@@ -1161,7 +1161,7 @@
         "USMCA": [
           "AUDIT",
           "AUDIT",
-          "NA",
+          "AUDIT",
           "NA",
           "FIX",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7839,
+      "title": "Codex-1- fix(form-425): certify scoped filing identity",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 11:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7839",
+      "sha": "02bd9018b",
+      "committedAtIso": "2026-08-16T11:35:41-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 11:28 AM CT",
+      "url": "",
+      "sha": "2a2ab3428",
+      "committedAtIso": "2026-08-16T16:28:03Z"
+    },
+    {
       "number": 7838,
       "title": "FINDING: LV-PROGRAM-TRACKER-R2-CREDENTIALS-MISSING",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7832",
       "sha": "c02b7ce4c",
       "committedAtIso": "2026-08-16T11:07:49-05:00"
-    },
-    {
-      "number": 7830,
-      "title": "FINDING: LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND + LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7830",
-      "sha": "226f99096",
-      "committedAtIso": "2026-08-16T11:07:14-05:00"
-    },
-    {
-      "number": 7829,
-      "title": "FINDING: ACCT-F5334",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:06 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7829",
-      "sha": "8fbe94cae",
-      "committedAtIso": "2026-08-16T11:06:43-05:00"
     }
   ]
 }
