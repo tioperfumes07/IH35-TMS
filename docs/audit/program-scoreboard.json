@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T16:50:26-05:00",
-    "sourceSha": "386930c5b",
-    "deployedSha": "c11034c",
+    "generatedAt": "2026-08-16T17:07:31-05:00",
+    "sourceSha": "4d9e6773a",
+    "deployedSha": "efddbc0",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 952,
     "failOpen": 18,
-    "defects": 12
+    "defects": 11
   },
   "modules": [
     {
@@ -547,7 +547,7 @@
         "AUDIT",
         "AUDIT",
         "UNV",
-        "FIX",
+        "AUDIT",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -579,7 +579,7 @@
           "AUDIT",
           "AUDIT",
           "UNV",
-          "FIX",
+          "AUDIT",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -2121,6 +2121,51 @@
   },
   "recentActivity": [
     {
+      "number": 7941,
+      "title": "FINDING: hygiene-post-7939-2026-08-16",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7941",
+      "sha": "4d9e6773a",
+      "committedAtIso": "2026-08-16T17:07:31-05:00"
+    },
+    {
+      "number": 7940,
+      "title": "ChatGpt-Codex-1-fix(insurance): govern claims linkage filters with Apply",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7940",
+      "sha": "635d1e0f6",
+      "committedAtIso": "2026-08-16T17:06:07-05:00"
+    },
+    {
+      "number": 7939,
+      "title": "ChatGpt-Codex-1-fix(inventory): route Purchase History to canonical creator",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7939",
+      "sha": "efddbc0a8",
+      "committedAtIso": "2026-08-16T17:00:19-05:00"
+    },
+    {
+      "number": 7938,
+      "title": "Codex-1-fix(maintenance): replace phantom WO due_date with PM alert ledger",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7938",
+      "sha": "2b27690f8",
+      "committedAtIso": "2026-08-16T16:53:24-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:51 PM CT",
+      "url": "",
+      "sha": "d11ea3b90",
+      "committedAtIso": "2026-08-16T21:51:45Z"
+    },
+    {
       "number": 7937,
       "title": "FINDING: verify-all-live-ledgered-2026-08-16",
       "state": "merged",
@@ -2164,51 +2209,6 @@
       "url": "",
       "sha": "c11034cae",
       "committedAtIso": "2026-08-16T21:46:36Z"
-    },
-    {
-      "number": 7933,
-      "title": "FINDING: row707-verify-cursor-live-pass",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7933",
-      "sha": "961b0ad71",
-      "committedAtIso": "2026-08-16T16:45:37-05:00"
-    },
-    {
-      "number": 7932,
-      "title": "FINDING: row706-verify-cursor-live-pass",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7932",
-      "sha": "02e11301d",
-      "committedAtIso": "2026-08-16T16:44:38-05:00"
-    },
-    {
-      "number": 7931,
-      "title": "FINDING: AUDIT-DEDUP-952-2026-08-16",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7931",
-      "sha": "973bab4fe",
-      "committedAtIso": "2026-08-16T16:43:16-05:00"
-    },
-    {
-      "number": 7930,
-      "title": "FINDING: CC1-OUTBOX-ROW259-SHIP",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7930",
-      "sha": "7a7012ab6",
-      "committedAtIso": "2026-08-16T16:41:15-05:00"
-    },
-    {
-      "number": 7929,
-      "title": "Claude-1- FINDING: LV-USMCA-CHART-NULL-ACCOUNT-NUMBER-TEST-CASH-ADVANCE (row 259)",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7929",
-      "sha": "1e927a1d5",
-      "committedAtIso": "2026-08-16T16:40:12-05:00"
     }
   ]
 }
