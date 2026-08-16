@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -15,6 +16,32 @@ import {
 
 const dollars = (cents: number) => (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 const toCents = (s: string) => Math.round((Number(s) || 0) * 100);
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// LV-FINANCE-AMORTIZATION-CREATE-UNGATED-RAW-DATE — the create button had no client readiness
+// predicate at all: name/principal/rate/date could all be blank and the click still fired,
+// converting blanks to zero (toCents("") === 0) before POST. The backend's own zod schema
+// (createLoanInputSchema) already refuses these server-side (positive() on principal/term_months,
+// a date regex) — so this was never a money-integrity gap, only a guaranteed-to-400 UX papercut on
+// a real accounting creator. Mirrors backend's own bounds so the button disables BEFORE the round
+// trip, not after a confusing server error.
+function amortizationFormReady(form: {
+  name: string;
+  principal: string;
+  ratePct: string;
+  termMonths: string;
+  firstPaymentDate: string;
+}): boolean {
+  if (!form.name.trim()) return false;
+  const principalCents = toCents(form.principal);
+  if (!Number.isFinite(principalCents) || principalCents <= 0) return false;
+  const rate = Number(form.ratePct);
+  if (form.ratePct !== "" && (!Number.isFinite(rate) || rate < 0)) return false;
+  const term = Number(form.termMonths);
+  if (!Number.isInteger(term) || term <= 0 || term > 600) return false;
+  if (!ISO_DATE_RE.test(form.firstPaymentDate)) return false;
+  return true;
+}
 
 // Display-only column set — same order, labels, right-alignment, and dollars() cents
 // formatting as the former hand-rolled table markup. No amount math changes.
@@ -41,6 +68,7 @@ export function AmortizationPage() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: "", lender: "", principal: "", ratePct: "", termMonths: "60", firstPaymentDate: "" });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const formReady = useMemo(() => amortizationFormReady(form), [form]);
 
   useEffect(() => {
     if (!enabled || !companyId) return;
@@ -54,6 +82,12 @@ export function AmortizationPage() {
   }, [enabled, companyId]);
 
   async function onCreate() {
+    // Recheck on submit — never trust only the disabled attribute (defense in depth: a stale
+    // render, a fast double-click before re-render, or a future caller of this handler).
+    if (!amortizationFormReady(form)) {
+      setError("Enter a name, a positive principal, a term, and a first payment date before creating a loan.");
+      return;
+    }
     setBusy(true); setError(null);
     try {
       const res = await createLoan({
@@ -103,7 +137,12 @@ export function AmortizationPage() {
       </div>
     );
 
-  const field = (label: string, key: keyof typeof form, type = "text") => (
+  // LV-FINANCE-AMORTIZATION-CREATE-UNGATED-RAW-DATE — `type` is narrowed to "text" | "number" so
+  // this helper can no longer be called with "date" at all (it used to accept any string, and the
+  // one "date" call site rendered a raw native <input type="date">, evading the raw-date guard's
+  // literal-only match because the literal lived at the CALL SITE, not on the <input> tag itself).
+  // The date field now has its own dedicated dateField() below, using the real shared DatePicker.
+  const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text") => (
     <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
       <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" />
     </label>
@@ -120,6 +159,17 @@ export function AmortizationPage() {
       </div>
     </label>
   );
+  const dateField = (label: string, key: keyof typeof form) => (
+    <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
+      <div className="mt-1">
+        <DatePicker
+          value={form[key]}
+          onChange={(v) => setForm((f) => ({ ...f, [key]: v }))}
+          data-testid={`amortization-${key}`}
+        />
+      </div>
+    </label>
+  );
 
   return (
     <div className="p-6"><FinanceModuleTabs />{header}
@@ -131,9 +181,14 @@ export function AmortizationPage() {
               <div className="grid grid-cols-2 gap-3">
                 {field("Name", "name")}{field("Lender", "lender")}
                 {moneyField("Principal ($)", "principal")}{field("Rate (%)", "ratePct", "number")}
-                {field("Term (months)", "termMonths", "number")}{field("First payment", "firstPaymentDate", "date")}
+                {field("Term (months)", "termMonths", "number")}{dateField("First payment", "firstPaymentDate")}
               </div>
-              <button onClick={onCreate} disabled={busy || !companyId} className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+              <button
+                onClick={onCreate}
+                disabled={busy || !companyId || !formReady}
+                data-testid="amortization-create-button"
+                className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
                 {busy ? "Generating…" : "Create + generate schedule"}
               </button>
               {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
