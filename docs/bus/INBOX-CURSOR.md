@@ -63,3 +63,7 @@ Live `/driver-hub` Inbox has no governed list toolbar; `/driver-hub/reporting` m
 ## CODEX HANDOFF · 2026-08-16 · LV-DRIVERS-TOOLBAR-BORROWS-PROFILE-HISTORY
 
 Live `/drivers` root has the 12-row roster Search/Range/gear, while matrix-claimed `OperationsHistoryTable` mounts separately in `/drivers/:id` as zero-row assignment history. Bind root leaves to the actual roster owner or inventory detail history separately. Exact OPEN row, audit 889, and `BLOCKS=LIVE-DRIVERS-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-PROGRAM-MODULES-FILTER-CONTROL-ABSENT
+
+Live `/program/modules` rendered Search, Range, gear, and 14 real rows, but no Filters panel or Apply action despite an exact `chrome.toolbar_filter` claim. Add the governed filter interaction or prove N/A and remove the claim; mutation-prove missing Apply. Exact OPEN row, audit 892, and `BLOCKS=LIVE-PROGRAM-MODULES-FILTER` are filed. OWNER-GATED=no; no mutation.
