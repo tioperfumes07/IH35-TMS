@@ -3148,6 +3148,11 @@
       "guard": "verify-email-suppression-fail-closed",
       "note": "LV-EMAIL-SUPPRESSION-FAILS-OPEN",
       "owner": "cursor"
+    },
+    "3636": {
+      "guard": "verify-pwa-driver-notifications-table",
+      "note": "LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED",
+      "owner": "cursor"
     }
   },
   "generated_at": "2026-08-09T02:10:17.093Z",
