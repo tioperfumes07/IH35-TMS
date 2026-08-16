@@ -103,8 +103,9 @@ function postQuickAvailability(unitId: string, operatingCompanyId: string, value
 export function VehicleProfilePage() {
   const { id = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const qboAvailable = selectedCompany?.code === "TRANSP";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [quickAssignOpen, setQuickAssignOpen] = useState(false);
@@ -146,7 +147,7 @@ export function VehicleProfilePage() {
 
   const profile = profileQuery.data;
   const unit = profile?.unit;
-  const unitNumber = String(entityLabel(unit?.unit_number, id, "Unit"));
+  const unitNumber = profileQuery.isPending ? "Loading…" : String(entityLabel(unit?.unit_number, id, "Unit"));
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -164,7 +165,7 @@ export function VehicleProfilePage() {
   const saveMutation = useMutation({
     mutationFn: () =>
       patchUnit(id, {
-        qbo_vendor_id: qboVendorId || null,
+        ...(qboAvailable ? { qbo_vendor_id: qboVendorId || null } : {}),
         qbo_class_id: qboClassTmsId || null,
       }),
     onSuccess: () => {
@@ -215,7 +216,7 @@ export function VehicleProfilePage() {
     <div className="space-y-3 p-4 pb-24">
       <div className="flex items-center justify-between gap-2">
         <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" />
-        <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} />
+        {unit ? <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} /> : null}
       </div>
       {profileQuery.isError ? <ListErrorBanner onRetry={() => void profileQuery.refetch()} /> : null}
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
@@ -464,9 +465,9 @@ export function VehicleProfilePage() {
         </>
       ) : null}
 
-      <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-        <div className="text-xs font-semibold text-gray-600">QBO mapping</div>
-        <label className="block text-xs text-gray-600">
+      {profile ? <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded-sm border border-gray-200 bg-white p-4">
+        <div className="text-xs font-semibold text-gray-600">{qboAvailable ? "QBO mapping" : "Asset classification"}</div>
+        {qboAvailable ? <label className="block text-xs text-gray-600">
           QBO vendor (ownership / lease entity)
           <div className="mt-1">
             <QboCombobox
@@ -480,7 +481,7 @@ export function VehicleProfilePage() {
               }}
             />
           </div>
-        </label>
+        </label> : null}
         <label className="block text-xs text-gray-600">
           Class (TMS catalog)
           <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value={qboClassTmsId} onChange={(e) => setQboClassTmsId(e.target.value)}>
@@ -496,7 +497,7 @@ export function VehicleProfilePage() {
         <Button size="sm" disabled={!id || !companyId} loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
           Save
         </Button>
-      </div>
+      </div> : null}
       <QuickAssignModal
         open={quickAssignOpen}
         companyId={companyId}
