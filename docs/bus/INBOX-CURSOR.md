@@ -37,3 +37,6 @@ Actions run `31940366897` is green only because both R2 upload scripts skipped o
 ## CODEX HANDOFF · 2026-08-15 · FINDINGS-REGISTER-SIGNOFF-DRIFT-2026-08-15
 
 `node scripts/verify-findings-register-signoff.mjs` is red on current main: seven board OPEN IDs are absent from `docs/audit/CC-3-FINDINGS-CHECKLIST.md`, and three checked Cursor rows have empty/misaligned Guard cells. Exact IDs and acceptance are filed in `docs/audit/GUARD-WORKORDERS.md`. Mechanical bus/register ownership; `OWNER-GATED=no`; `BLOCKS=FINDINGS-TRIPLE-LOCK-GREEN`.
+## CODEX HANDOFF · 2026-08-16 · LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP
+
+At 697px Live USMCA `/home`, shared `Topbar.tsx` clips the company switcher after `Current:` and pushes every right-side action off-screen. Fix the shared vertical class across all modules; preserve all actions via responsive wrapping/compaction/accessible overflow, with a leaf-specific guard and viewport test. Exact OPEN row, source lines, acceptance, audit row 875, and `BLOCKS=LIVE-CHROME-RESPONSIVE-ALL-MODULES` are filed. OWNER-GATED=no.
