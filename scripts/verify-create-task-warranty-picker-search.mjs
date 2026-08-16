@@ -28,10 +28,13 @@ export function collectProblems(root = ROOT) {
   } else {
     const code = task.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
     if (!/EntityPicker/.test(code)) {
-      problems.push(`${TASK}: must use EntityPicker for vendor/driver/unit links`);
+      problems.push(`${TASK}: must use EntityPicker for vendor/driver/unit/customer links`);
     }
-    if (!/createKind=["']customer["']/.test(code) || !/onSearch=\{setCustomerSearch\}/.test(code)) {
-      problems.push(`${TASK}: customer link must use ReferenceSelect + customerSearch`);
+    if (!/kind=\{entityKind as "customer" \| "vendor" \| "driver" \| "unit" \| "load"\}/.test(code)) {
+      problems.push(`${TASK}: customer must be EntityPicker kind (not ReferenceSelect createKind=customer)`);
+    }
+    if (/createKind=["']customer["']/.test(code) || /listCustomers\s*\(/.test(code)) {
+      problems.push(`${TASK}: must not listCustomers / ReferenceSelect createKind=customer dual-path`);
     }
     if (/listVendors\s*\(/.test(code) || /listDrivers\s*\(/.test(code) || /listUnits\s*\(/.test(code)) {
       problems.push(`${TASK}: must not bulk listVendors/listDrivers/listUnits for entity link`);
