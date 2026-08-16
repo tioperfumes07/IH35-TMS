@@ -14,6 +14,7 @@
  *   4. ChartOfAccountsListPage + AccountingCatalogListPage honor ?create=1.
  *   5. VoidCancelReasonsListPage honors ?create=1 → Create Entry modal (LST-F5211).
  *   6. Shared domain catalog list pages use useCreateQueryParam (LST-F5214 systemic sweep).
+ *   7. Payment Methods + Payment Terms thin wrappers use AccountingCatalogListPage (inherits ?create=1).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -33,6 +34,14 @@ const PATHS = {
   voidCancelPage: path.join(
     ROOT,
     "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx"
+  ),
+  paymentMethodsPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/PaymentMethodsListPage.tsx"
+  ),
+  paymentTermsPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/PaymentTermsListPage.tsx"
   ),
 };
 
@@ -86,6 +95,8 @@ export function collectProblems(sources = {}) {
   const coaPage = sources.coaPage ?? read(PATHS.coaPage);
   const catalogListPage = sources.catalogListPage ?? read(PATHS.catalogListPage);
   const voidCancelPage = sources.voidCancelPage ?? read(PATHS.voidCancelPage);
+  const paymentMethodsPage = sources.paymentMethodsPage ?? read(PATHS.paymentMethodsPage);
+  const paymentTermsPage = sources.paymentTermsPage ?? read(PATHS.paymentTermsPage);
   const errors = [];
 
   if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
@@ -93,6 +104,8 @@ export function collectProblems(sources = {}) {
   if (!coaPage) errors.push(fail("missing ChartOfAccountsListPage.tsx"));
   if (!catalogListPage) errors.push(fail("missing AccountingCatalogListPage.tsx"));
   if (!voidCancelPage) errors.push(fail("missing VoidCancelReasonsListPage.tsx"));
+  if (!paymentMethodsPage) errors.push(fail("missing PaymentMethodsListPage.tsx"));
+  if (!paymentTermsPage) errors.push(fail("missing PaymentTermsListPage.tsx"));
   if (errors.length) return errors;
 
   if (!/function ListsDomainRoute\(\)/.test(manifest)) {
@@ -152,6 +165,20 @@ export function collectProblems(sources = {}) {
   }
   if (!/setModalMode\("create"\)/.test(voidCancelPage)) {
     errors.push(fail("VoidCancelReasonsListPage must setModalMode(create) on create deep-link"));
+  }
+
+  // INBOX Lists create leaves — Payment Methods / Terms inherit AccountingCatalogListPage ?create=1.
+  if (!/AccountingCatalogListPage/.test(paymentMethodsPage)) {
+    errors.push(fail("PaymentMethodsListPage must wrap AccountingCatalogListPage (inherits ?create=1)"));
+  }
+  if (!/AccountingCatalogListPage/.test(paymentTermsPage)) {
+    errors.push(fail("PaymentTermsListPage must wrap AccountingCatalogListPage (inherits ?create=1)"));
+  }
+  if (!/payment-methods/.test(catalogsMap) || !/Payment Methods/.test(catalogsMap)) {
+    errors.push(fail("AllCatalogsMap must list live Payment Methods catalog"));
+  }
+  if (!/payment-terms/.test(catalogsMap) || !/Payment Terms/.test(catalogsMap)) {
+    errors.push(fail("AllCatalogsMap must list live Payment Terms catalog"));
   }
 
   // LST-F5214 — ratcheting shared catalog create deep-link (reads live disk; skip when selftest fixtures only).
@@ -224,13 +251,22 @@ if (catalogKey === "_create") {
   const goodCatalogList = `useEffect(() => { if (searchParams.get("create") !== "1") return; setModalOpen(true); }, [searchParams]);`;
   const goodVoidCancel = `useEffect(() => { if (searchParams.get("create") !== "1") return; setModalMode("create"); }, [searchParams]);`;
 
+  const goodPaymentMethods = `export function PaymentMethodsListPage() { return <AccountingCatalogListPage client={paymentMethodsCatalogClient} />; }`;
+  const goodPaymentTerms = `export function PaymentTermsListPage() { return <AccountingCatalogListPage client={paymentTermsCatalogClient} />; }`;
+  const goodMapWithPaymentLeaves = `${goodMap}
+{ name: "Payment Terms", live: true, catalogKey: "payment-terms" },
+{ name: "Payment Methods", live: true, catalogKey: "payment-methods" },
+`;
+
   if (
     collectProblems({
       manifest: goodManifest,
-      catalogsMap: goodMap,
+      catalogsMap: goodMapWithPaymentLeaves,
       coaPage: goodCoa,
       catalogListPage: goodCatalogList,
       voidCancelPage: goodVoidCancel,
+      paymentMethodsPage: goodPaymentMethods,
+      paymentTermsPage: goodPaymentTerms,
       skipSharedCreateRatchet: true,
     }).length
   ) {
@@ -246,14 +282,32 @@ function ListsDomainRoute() {
 `;
   const badErrors = collectProblems({
     manifest: badManifest,
-    catalogsMap: goodMap,
+    catalogsMap: goodMapWithPaymentLeaves,
     coaPage: goodCoa,
     catalogListPage: goodCatalogList,
     voidCancelPage: goodVoidCancel,
+    paymentMethodsPage: goodPaymentMethods,
+    paymentTermsPage: goodPaymentTerms,
     skipSharedCreateRatchet: true,
   });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
     console.error(`${LABEL} --selftest FAIL: bad ListsDomainRoute should fail`, badErrors);
+    process.exit(1);
+  }
+
+  const barePaymentMethods = `export function PaymentMethodsListPage() { return <div>hand-rolled</div>; }`;
+  const barePmErrors = collectProblems({
+    manifest: goodManifest,
+    catalogsMap: goodMapWithPaymentLeaves,
+    coaPage: goodCoa,
+    catalogListPage: goodCatalogList,
+    voidCancelPage: goodVoidCancel,
+    paymentMethodsPage: barePaymentMethods,
+    paymentTermsPage: goodPaymentTerms,
+    skipSharedCreateRatchet: true,
+  });
+  if (!barePmErrors.some((e) => e.includes("PaymentMethodsListPage must wrap AccountingCatalogListPage"))) {
+    console.error(`${LABEL} --selftest FAIL: bare PaymentMethodsListPage should fail`, barePmErrors);
     process.exit(1);
   }
 
