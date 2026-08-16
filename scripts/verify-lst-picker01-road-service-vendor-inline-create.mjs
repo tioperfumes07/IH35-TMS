@@ -2,8 +2,8 @@
 /**
  * LST-PICKER-01 slice — RoadServiceTicketModal collected free-text vendor_name only, but
  * POST /api/v1/road-service-tickets REQUIRES vendor_id referencing mdata.vendors (MNT-LINK-04).
- * Free-text-only create could never succeed. Fix: ReferenceSelect createKind="vendor" (same
- * mdata.vendors table the route validates), send vendor_id + vendor_name.
+ * Free-text-only create could never succeed. Fix: EntityPicker kind=vendor allowCreate
+ * (server-search; same mdata.vendors table the route validates), send vendor_id + vendor_name.
  *
  * Cursor even claim: 1866.
  */
@@ -39,17 +39,17 @@ export function collectProblems(root = ROOT, overrides = null) {
   if (!modal) problems.push(`missing ${MODAL}`);
   else {
     const code = stripComments(modal);
-    if (!/import[\s\S]*ReferenceSelect[\s\S]*from\s*["']\.\.\/\.\.\/components\/parity\/ReferenceSelect["']/.test(code)) {
-      problems.push(`${MODAL}: must import ReferenceSelect`);
+    if (!/import[\s\S]*EntityPicker[\s\S]*from\s*["']\.\.\/\.\.\/components\/parity\/EntityPicker["']/.test(code)) {
+      problems.push(`${MODAL}: must import EntityPicker`);
     }
-    if (!/createKind=["']vendor["']/.test(code)) {
-      problems.push(`${MODAL}: Vendor picker must use createKind=vendor`);
+    if (!/kind=["']vendor["']/.test(code) || !/allowCreate/.test(code)) {
+      problems.push(`${MODAL}: Vendor picker must use EntityPicker kind=vendor allowCreate`);
     }
     if (!/vendor_id:\s*vendorId/.test(code) && !/vendor_id:\s*vendorId,/.test(modal)) {
       problems.push(`${MODAL}: create payload must send vendor_id`);
     }
-    if (!/listVendors/.test(code)) {
-      problems.push(`${MODAL}: must list mdata.vendors for the picker options`);
+    if (/listVendors/.test(code)) {
+      problems.push(`${MODAL}: must not capped-listVendors — EntityPicker server-searches`);
     }
     // Free-text vendor input (the defect).
     if (/value=\{vendorName\}[\s\S]{0,80}onChange=\{\(e\) => setVendorName/.test(modal)) {
@@ -97,10 +97,10 @@ if (process.argv.includes("--selftest")) {
   };
 
   expectCaught(
-    "modal-createKind-removed",
+    "modal-kind-vendor-removed",
     MODAL,
-    (s) => s.replace(/createKind=["']vendor["']/, 'createKind="customer"'),
-    "createKind=vendor"
+    (s) => s.replace(/kind=["']vendor["']/, 'kind="customer"'),
+    "kind=vendor"
   );
   expectCaught(
     "modal-vendor-id-dropped",
@@ -145,6 +145,6 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — RoadServiceTicketModal Vendor uses ReferenceSelect createKind=vendor + sends vendor_id (mdata.vendors)`
+    `${LABEL} OK — RoadServiceTicketModal Vendor uses EntityPicker kind=vendor allowCreate + sends vendor_id (mdata.vendors)`
   );
 }

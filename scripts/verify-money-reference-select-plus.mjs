@@ -183,8 +183,11 @@ const woId = read("apps/frontend/src/pages/maintenance/components/CreateWOSectio
 if (woId.includes("QboCombobox")) {
   failures.push("CreateWOSectionIdentification must not use QboCombobox");
 }
-if (!woId.includes('createKind="vendor"') || !woId.includes('createKind="customer"')) {
-  failures.push("CreateWOSectionIdentification vendor+customer must use ReferenceSelect");
+if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(woId) || !/allowCreate/.test(woId)) {
+  failures.push("CreateWOSectionIdentification vendor must use EntityPicker kind=vendor allowCreate");
+}
+if (!woId.includes('createKind="customer"')) {
+  failures.push("CreateWOSectionIdentification customer must use ReferenceSelect createKind=customer");
 }
 
 // ── overnight burn-down (2026-07-22): CoaRolesPage / InvoiceTypeModalBase / PaymentApplyModal ──

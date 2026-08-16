@@ -53,8 +53,8 @@ export function audit(src) {
   if (!/vendor_id: vendorId/.test(src.roadServiceTicket)) {
     failures.push(`${FILES.roadServiceTicket}: road service ticket must submit a real vendor_id`);
   }
-  if (!/kind="vendor" id=\{row\.vendor_id\}/.test(src.partsInventory) || !/createKind="vendor"/.test(src.partsInventory)) {
-    failures.push(`${FILES.partsInventory}: parts record purchase must have a real vendor EntityLink and picker`);
+  if (!/kind="vendor" id=\{row\.vendor_id\}/.test(src.partsInventory) || !/EntityPicker[\s\S]*?kind=["']vendor["']/.test(src.partsInventory)) {
+    failures.push(`${FILES.partsInventory}: parts record purchase must have a real vendor EntityLink and EntityPicker`);
   }
   if (!/Boolean\(vendorId\)/.test(src.addPartsLink) || !/createKind="vendor"/.test(src.addPartsLink)) {
     failures.push(`${FILES.addPartsLink}: add-parts-link must require a real vendor`);

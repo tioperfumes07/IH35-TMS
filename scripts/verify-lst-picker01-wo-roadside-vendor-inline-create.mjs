@@ -3,7 +3,7 @@
  * LST-PICKER-01 slice — CreateWOSectionIdentification's roadside provider field was a free-text
  * UUID input for roadside_provider_vendor_id. Backend requires a real mdata.vendors id for
  * roadside WOs (work-orders.service.ts LEFT JOIN + E_ROADSIDE_PROVIDER_REQUIRED). Fix:
- * ReferenceSelect createKind="vendor" (same vendorOptions / listVendors already used for shop vendor).
+ * EntityPicker kind=vendor allowCreate (same canonical table as shop vendor).
  *
  * Cursor even claim: 1868.
  */
@@ -39,23 +39,20 @@ export function collectProblems(root = ROOT, overrides = null) {
   if (!page) problems.push(`missing ${PAGE}`);
   else {
     const code = stripComments(page);
-    if (!/createKind=["']vendor["']/.test(code)) {
-      problems.push(`${PAGE}: must use createKind=vendor somewhere (shop + roadside)`);
-    }
     if (!/data-testid=["']wo-roadside-provider-vendor-select["']/.test(page)) {
-      problems.push(`${PAGE}: roadside provider must use ReferenceSelect (testid wo-roadside-provider-vendor-select)`);
+      problems.push(`${PAGE}: roadside provider must use EntityPicker (testid wo-roadside-provider-vendor-select)`);
     }
-    if (!/roadside_provider_vendor_id[\s\S]{0,400}createKind=["']vendor["']/.test(page) &&
-        !/createKind=["']vendor["'][\s\S]{0,400}roadside_provider_vendor_id/.test(page)) {
-      // Ensure the roadside block specifically wires createKind=vendor near the field
-      const roadsideBlock = page.split("Roadside Provider")[1]?.slice(0, 1200) ?? "";
-      if (!/createKind=["']vendor["']/.test(roadsideBlock)) {
-        problems.push(`${PAGE}: roadside provider picker must use createKind=vendor`);
-      }
+    const roadsideBlock = page.split("Roadside Provider")[1]?.slice(0, 1200) ?? "";
+    if (!/kind=["']vendor["']/.test(roadsideBlock) || !/allowCreate/.test(roadsideBlock)) {
+      problems.push(`${PAGE}: roadside provider picker must use EntityPicker kind=vendor allowCreate`);
     }
     // Bare free-text register-only control as the primary roadside vendor UI
     if (/Field label="Roadside Provider Vendor ID \*"[\s\S]{0,200}<input \{\.\.\.register\("roadside_provider_vendor_id"\)\}/.test(page)) {
       problems.push(`${PAGE}: must not keep free-text roadside_provider_vendor_id as the primary control`);
+    }
+    // Shop vendor also EntityPicker (same migration wave)
+    if (!/dataField=["']vendor_id["']/.test(page) || !( /kind=["']vendor["']/.test(code) && /allowCreate/.test(code) )) {
+      problems.push(`${PAGE}: shop vendor must use EntityPicker kind=vendor`);
     }
   }
 
@@ -105,16 +102,15 @@ if (process.argv.includes("--selftest")) {
     "wo-roadside-provider-vendor-select"
   );
   expectCaught(
-    "roadside-createKind-removed",
+    "roadside-kind-removed",
     PAGE,
     (s) => {
-      // Only strip createKind inside the roadside block
       const parts = s.split("Roadside Provider");
       if (parts.length < 2) return s;
-      parts[1] = parts[1].replace(/createKind=["']vendor["']/, 'createKind="customer"');
+      parts[1] = parts[1].replace(/kind=["']vendor["']/, 'kind="customer"');
       return parts.join("Roadside Provider");
     },
-    "createKind=vendor"
+    "kind=vendor"
   );
   expectCaught(
     "freetext-reintroduced",
@@ -155,6 +151,6 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — CreateWO roadside provider uses ReferenceSelect createKind=vendor (mdata.vendors)`
+    `${LABEL} OK — CreateWO roadside provider uses EntityPicker kind=vendor allowCreate (mdata.vendors)`
   );
 }

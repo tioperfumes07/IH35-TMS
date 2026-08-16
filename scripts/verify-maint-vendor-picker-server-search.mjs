@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Maintenance vendor pickers — RoadServiceTicketModal + PartsInventoryTable must server-search
- * (no silent listVendors limit:1000). Road service unit uses EntityPicker. Cursor even claim: 2106.
+ * Maintenance vendor pickers — RoadServiceTicketModal + PartsInventoryTable must use
+ * EntityPicker kind=vendor (server-search; no silent listVendors limit:1000 / capped pages).
+ * Cursor even claim: 2106.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -31,11 +32,11 @@ export function collectProblems(root = ROOT) {
       continue;
     }
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-    if (!/vendorSearch/.test(code) || !/onSearch=\{setVendorSearch\}/.test(code)) {
-      problems.push(`${file}: must wire vendorSearch → onSearch`);
+    if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(code) || !/allowCreate/.test(code)) {
+      problems.push(`${file}: vendor must use EntityPicker kind=vendor allowCreate`);
     }
-    if (!/search:\s*vendorSearch\s*\|\|\s*undefined/.test(code)) {
-      problems.push(`${file}: listVendors must send search: vendorSearch`);
+    if (/listVendors/.test(code)) {
+      problems.push(`${file}: must not listVendors — EntityPicker server-searches`);
     }
     if (/limit:\s*1000/.test(code)) {
       problems.push(`${file}: must not fetch silent limit:1000 vendors`);
@@ -69,7 +70,7 @@ if (process.argv.includes("--selftest")) {
       );
     }
     const planted = collectProblems(stubRoot);
-    if (!planted.some((p) => /vendorSearch|1000/.test(p))) {
+    if (!planted.some((p) => /EntityPicker|listVendors|1000/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted stubs did not FAIL`);
       process.exit(1);
     }
@@ -84,5 +85,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — RoadService + PartsInventory vendor search`);
+  console.log(`${LABEL} OK — RoadService + PartsInventory EntityPicker vendor`);
 }
