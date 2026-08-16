@@ -35,7 +35,6 @@ import {
   listCustomerQualityEvents,
   listCustomers,
   listPaymentTermOptions,
-  listVendors,
   listCustomerContacts,
   reactivateCustomerContact,
   updateCustomerLane,
@@ -55,6 +54,7 @@ import {
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
+import { EntityPicker } from "../components/parity/EntityPicker";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { CustomerEditModal, type CustomerEditFormValues } from "../components/customers/CustomerEditModal";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
@@ -516,12 +516,6 @@ export function CustomerDetailPage() {
     enabled: Boolean(id && operatingCompanyId && activeTab === "Billing & Receivables"),
     retry: false,
   });
-  const vendorsQuery = useQuery({
-    queryKey: ["vendors", "active", detailQuery.data?.operating_company_id ?? "none"],
-    queryFn: () =>
-      listVendors({ status: "active", operating_company_id: detailQuery.data?.operating_company_id ?? undefined }).then((result) => result.vendors),
-    enabled: Boolean(detailQuery.data?.operating_company_id),
-  });
   const usStatesQuery = useQuery({
     queryKey: ["catalogs", "us-states"],
     queryFn: () => listUsStates().then((result) => result.states),
@@ -577,15 +571,6 @@ export function CustomerDetailPage() {
 
   const customer = detailQuery.data;
   const contacts = contactsQuery.data ?? customer?.contacts ?? [];
-  const factoringVendors = useMemo(
-    () =>
-      (vendorsQuery.data ?? []).filter((vendor) => {
-        const notes = (vendor.notes ?? "").toLowerCase();
-        const name = vendor.name.toLowerCase();
-        return vendor.vendor_type === "factoring_company" || notes.includes("factor") || name.includes("factor") || name.includes("faro") || name.includes("rts");
-      }),
-    [vendorsQuery.data]
-  );
   const canManageContacts = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canViewInactiveContacts = ["Owner", "Administrator"].includes(user?.role ?? "");
   const canManageLanes = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
@@ -1458,16 +1443,21 @@ export function CustomerDetailPage() {
                 Factoring eligible
               </label>
             </div>
-            <SelectField
-              label="Factoring Company"
-              value={hydratedForm.factoring_company_vendor_id}
-              onChange={(value) => setForm((current) => ({ ...current, factoring_company_vendor_id: value }))}
-              disabled={!editMode}
-              options={[
-                { value: "", label: "(none)" },
-                ...factoringVendors.map((vendor) => ({ value: vendor.id, label: vendor.name })),
-              ]}
-            />
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-600">Factoring Company</label>
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no active-roster listVendors page. */}
+              <EntityPicker
+                kind="vendor"
+                allowCreate
+                operatingCompanyId={detailQuery.data?.operating_company_id ?? operatingCompanyId ?? ""}
+                value={hydratedForm.factoring_company_vendor_id || null}
+                onChange={(value) => setForm((current) => ({ ...current, factoring_company_vendor_id: value ?? "" }))}
+                enabled={editMode && Boolean(detailQuery.data?.operating_company_id ?? operatingCompanyId)}
+                placeholder="Search factoring company…"
+                dataField="customer-factoring-company-vendor"
+                className="w-full"
+              />
+            </div>
             <Field
               label="Advance Rate Override (%)"
               value={hydratedForm.factoring_advance_rate_override}
