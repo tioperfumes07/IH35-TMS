@@ -9,6 +9,8 @@ const REQUIRED = [
   "apps/frontend/src/styles/responsive-breakpoints.css",
   "apps/frontend/src/components/Topbar.tsx",
   "apps/frontend/src/components/Sidebar.tsx",
+  "apps/frontend/src/components/Modal.tsx",
+  "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
 ];
 
 // TOPBAR-01 (2026-07-29): these markers previously demanded "max-md:grid-cols-1" and
@@ -20,25 +22,36 @@ const REQUIRED = [
 // broken value. Markers now require a stack breakpoint that actually covers 1024px.
 const MARKERS = {
   "apps/frontend/src/styles/responsive-breakpoints.css": ["max-width: 1023px", "max-width: 1279px"],
-  "apps/frontend/src/components/Topbar.tsx": ["max-xl:grid-cols-1", "top-bar", "minmax(0,"],
+  "apps/frontend/src/components/Topbar.tsx": ["top-bar grid items-center gap-x-3", "gridTemplateColumns). Inline tracks"],
   "apps/frontend/src/components/Sidebar.tsx": ["max-lg:overflow-x-hidden", "sidebar"],
+  "apps/frontend/src/components/Modal.tsx": ["min-w-0 flex-1 overflow-x-hidden overflow-y-auto"],
+  "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx": [
+    'data-testid="create-wo-render-v5" className="min-w-0',
+    'data-testid="wo-responsive-footer"',
+    "flex min-w-0 flex-wrap items-center justify-end",
+    "mr-auto min-w-0",
+  ],
 };
 
-const failures = [];
-
-for (const rel of REQUIRED) {
-  const full = path.join(repoRoot, rel);
-  if (!fs.existsSync(full)) {
-    failures.push(`${rel} (missing)`);
-    continue;
-  }
-  const source = fs.readFileSync(full, "utf8");
-  for (const marker of MARKERS[rel] ?? []) {
-    if (!source.includes(marker)) {
-      failures.push(`${rel} (missing marker: ${marker})`);
+function collectFailures(readSource = (rel) => fs.readFileSync(path.join(repoRoot, rel), "utf8")) {
+  const found = [];
+  for (const rel of REQUIRED) {
+    const full = path.join(repoRoot, rel);
+    if (!fs.existsSync(full)) {
+      found.push(`${rel} (missing)`);
+      continue;
+    }
+    const source = readSource(rel);
+    for (const marker of MARKERS[rel] ?? []) {
+      if (!source.includes(marker)) {
+        found.push(`${rel} (missing marker: ${marker})`);
+      }
     }
   }
+  return found;
 }
+
+const failures = collectFailures();
 
 if (failures.length > 0) {
   console.error("[verify-no-horizontal-overflow-at-1024] FAIL:");
@@ -47,3 +60,32 @@ if (failures.length > 0) {
 }
 
 console.log("[verify-no-horizontal-overflow-at-1024] OK");
+
+if (process.env.SELFTEST === "1") {
+  const modalSource = fs.readFileSync(path.join(repoRoot, "apps/frontend/src/components/Modal.tsx"), "utf8");
+  const workOrderSource = fs.readFileSync(
+    path.join(repoRoot, "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx"),
+    "utf8"
+  );
+  const planted = [
+    collectFailures((rel) =>
+      rel === "apps/frontend/src/components/Modal.tsx"
+        ? modalSource.replace("min-w-0 flex-1 overflow-x-hidden overflow-y-auto", "flex-1 overflow-y-auto")
+        : fs.readFileSync(path.join(repoRoot, rel), "utf8")
+    ),
+    collectFailures((rel) =>
+      rel === "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx"
+        ? workOrderSource.replace("flex min-w-0 flex-wrap items-center justify-end", "flex items-center")
+        : fs.readFileSync(path.join(repoRoot, rel), "utf8")
+    ),
+  ];
+  if (planted[0].length === 0) {
+    console.error("[verify-no-horizontal-overflow-at-1024] SELFTEST FAIL: modal overflow mutation survived");
+    process.exit(1);
+  }
+  if (planted[1].length === 0) {
+    console.error("[verify-no-horizontal-overflow-at-1024] SELFTEST FAIL: footer wrap mutation survived");
+    process.exit(1);
+  }
+  console.log("[verify-no-horizontal-overflow-at-1024] SELFTEST OK (2/2 planted defects rejected)");
+}

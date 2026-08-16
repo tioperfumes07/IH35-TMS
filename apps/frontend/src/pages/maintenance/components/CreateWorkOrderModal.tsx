@@ -1064,7 +1064,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
   return (
     <Modal open={open} onClose={handleModalClose} title="Create Work Order" sizePreset="lg" wide>
-      <div data-testid="create-wo-render-v5" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
+      <div data-testid="create-wo-render-v5" className="min-w-0 space-y-2.5 overflow-x-hidden text-[12.5px] text-sidebar-bg">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
         <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
           <span>WO #</span>
@@ -1264,9 +1264,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         </SectionCard>
 
         {/* Footer — Cancel / Save draft / Create work order (green) */}
-        <div className="flex items-center gap-2 border-t border-[#d6dae1] pt-2.5">
-          <div className="text-[11px] text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
-          <div className="flex-1" />
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 border-t border-[#d6dae1] pt-2.5" data-testid="wo-responsive-footer">
+          <div className="mr-auto min-w-0 text-[11px] text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house" || !preSaveChecksOk} onClick={() => void submit("wo_only")}>Save draft</Button>
           <button
