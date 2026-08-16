@@ -717,7 +717,7 @@ export function SystemModulePage() {
       </div>
 
       <div className="rounded-[10px] border border-gray-200 bg-[#eef2f7] px-3.5 py-3 text-[11.5px] text-slate-600">
-        SYSTEM is Owner-only and is the single home for {qboAvailable ? "QuickBooks Reconciliation, QuickBooks Sync, " : ""}Program Tracker, and Software/Build. {qboAvailable ? "QuickBooks Reconciliation (TMS ↔ QBO tie-out) is deliberately separate from bank reconciliation, which stays in Banking — the two are never combined in one table. " : ""}The Claude Coder area is a launcher plus a read-only activity panel — no command execution occurs inside the production app (auditor/DOT-safe).
+        SYSTEM is Owner-only and is the single home for {qboAvailable ? "QuickBooks Reconciliation, QuickBooks Sync, Program Tracker, and Software/Build" : "Program Tracker and Software/Build"}. {qboAvailable ? "QuickBooks Reconciliation (TMS ↔ QBO tie-out) is deliberately separate from bank reconciliation, which stays in Banking — the two are never combined in one table. " : ""}The Claude Coder area is a launcher plus a read-only activity panel — no command execution occurs inside the production app (auditor/DOT-safe).
       </div>
     </div>
   );
