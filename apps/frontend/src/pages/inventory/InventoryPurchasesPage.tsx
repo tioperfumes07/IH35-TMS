@@ -12,6 +12,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useQueryClient } from "@tanstack/react-query";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function formatMoneyCents(cents: number | null | undefined) {
   return `$${(Number(cents ?? 0) / 100).toFixed(2)}`;
@@ -36,6 +38,18 @@ export function InventoryPurchasesPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [voidTarget, setVoidTarget] = useState<PartsPurchaseRow | null>(null);
+  const [vendorFilter, setVendorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | "active" | "voided">("");
+  const [workOrderLinkedOnly, setWorkOrderLinkedOnly] = useState(false);
+  const stagedFilters = useStagedListFilters({
+    applied: { vendorFilter, statusFilter, workOrderLinkedOnly },
+    empty: { vendorFilter: "", statusFilter: "" as const, workOrderLinkedOnly: false },
+    onApply: (next) => {
+      setVendorFilter(next.vendorFilter);
+      setStatusFilter(next.statusFilter);
+      setWorkOrderLinkedOnly(next.workOrderLinkedOnly);
+    },
+  });
 
   const purchasesQuery = useQuery({
     queryKey: ["maintenance", "parts-purchases", companyId],
@@ -45,6 +59,30 @@ export function InventoryPurchasesPage() {
 
   const rows = purchasesQuery.data ?? [];
   const activeRows = useMemo(() => rows.filter((row) => !row.voided_at), [rows]);
+  const vendorOptions = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          rows
+            .filter((row) => row.vendor_id)
+            .map((row) => [
+              row.vendor_id as string,
+              entityLabel(row.vendor_name, row.vendor_id as string, "Vendor"),
+            ]),
+        ),
+      )
+        .map(([value, label]) => ({ value, label }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [rows],
+  );
+  const visibleRows = useMemo(() => {
+    let next = rows;
+    if (vendorFilter) next = next.filter((row) => row.vendor_id === vendorFilter);
+    if (statusFilter === "active") next = next.filter((row) => !row.voided_at);
+    if (statusFilter === "voided") next = next.filter((row) => Boolean(row.voided_at));
+    if (workOrderLinkedOnly) next = next.filter((row) => Boolean(row.work_order_id));
+    return next;
+  }, [rows, statusFilter, vendorFilter, workOrderLinkedOnly]);
 
   async function handleVoidSubmit(reason: string) {
     if (!voidTarget) return;
@@ -166,11 +204,70 @@ export function InventoryPurchasesPage() {
           <h3 className="text-sm font-semibold">Purchase history ({activeRows.length})</h3>
           <ParityTable<PartsPurchaseRow>
             columns={columns}
-            rows={rows}
+            rows={visibleRows}
             rowKey={(row) => row.id}
             emptyText="No purchases recorded yet. Record a purchase from Parts & Stock to see it here."
             storageKey="inventory-purchases-history"
             exportFilename="inventory-purchase-history"
+            filterBar={
+              <CollapsedListFilters
+                activeFilterCount={(vendorFilter ? 1 : 0) + (statusFilter ? 1 : 0) + (workOrderLinkedOnly ? 1 : 0)}
+                onApply={stagedFilters.apply}
+                onReset={stagedFilters.reset}
+                onCancel={stagedFilters.cancel}
+                applyDisabled={!stagedFilters.dirty}
+                testIdPrefix="inventory-purchases"
+                dataAttributes={{ "data-inventory-purchases-filter-toolbar": "collapsed" }}
+              >
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <label className="text-[11px] text-slate-600">
+                    Vendor
+                    <SelectCombobox
+                      value={stagedFilters.draft.vendorFilter}
+                      onChange={(event) =>
+                        stagedFilters.setDraft((current) => ({ ...current, vendorFilter: event.target.value }))
+                      }
+                    >
+                      <option value="">All vendors</option>
+                      {vendorOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </SelectCombobox>
+                  </label>
+                  <label className="text-[11px] text-slate-600">
+                    Status
+                    <SelectCombobox
+                      value={stagedFilters.draft.statusFilter}
+                      onChange={(event) =>
+                        stagedFilters.setDraft((current) => ({
+                          ...current,
+                          statusFilter: event.target.value as typeof current.statusFilter,
+                        }))
+                      }
+                    >
+                      <option value="">All statuses</option>
+                      <option value="active">Active</option>
+                      <option value="voided">Voided</option>
+                    </SelectCombobox>
+                  </label>
+                  <label className="inline-flex items-center gap-2 self-end pb-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={stagedFilters.draft.workOrderLinkedOnly}
+                      onChange={(event) =>
+                        stagedFilters.setDraft((current) => ({
+                          ...current,
+                          workOrderLinkedOnly: event.target.checked,
+                        }))
+                      }
+                    />
+                    Work order linked only
+                  </label>
+                </div>
+              </CollapsedListFilters>
+            }
           />
         </div>
       )}
