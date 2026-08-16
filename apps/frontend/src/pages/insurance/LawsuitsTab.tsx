@@ -13,6 +13,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 
 type Props = {
@@ -45,6 +46,12 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
   const queryClient = useQueryClient();
   const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"" | InsuranceLawsuitStatus>("");
+  const staged = useStagedListFilters({
+    applied: { status: statusFilter },
+    empty: { status: "" as "" | InsuranceLawsuitStatus },
+    onApply: (next) => setStatusFilter(next.status),
+  });
   const [searchParams] = useSearchParams();
   const deepLinkLawsuitId = searchParams.get("lawsuit_id");
   const [selectedLawsuitId, setSelectedLawsuitId] = useState<string | null>(deepLinkLawsuitId);
@@ -69,7 +76,11 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
   // Empty message renders only once the lawsuits query settles (no first-fetch flash).
   const listState = useListState(query, (query.data ?? []).length === 0);
 
-  const rows = query.data ?? [];
+  const rows = useMemo(() => {
+    const all = query.data ?? [];
+    if (!statusFilter) return all;
+    return all.filter((lawsuit) => lawsuit.status === statusFilter);
+  }, [query.data, statusFilter]);
 
   const columns = useMemo<ParityColumn<InsuranceLawsuit>[]>(
     () => [
@@ -134,10 +145,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
 
   return (
     <DataPanel title="Lawsuits">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-gray-600">
-          Statuses: {LAWSUIT_STATUS_FILTERS.filter((option) => option.value).map((option) => option.label).join(", ")}
-        </span>
+      <div className="mb-3 flex items-center justify-end gap-2">
         <Button type="button" size="sm" onClick={() => setCreateOpen((prev) => !prev)}>
           {createOpen ? "Cancel" : "+ Create lawsuit"}
         </Button>
@@ -164,8 +172,37 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         rowKey={(lawsuit) => lawsuit.id}
         loading={listState.isLoading}
         storageKey="insurance-lawsuits"
-        emptyText="No lawsuits found."
+        emptyText="No lawsuits match the applied filters."
         rowClassName={(lawsuit) => (selectedLawsuitId === lawsuit.id ? "bg-slate-100" : "")}
+        filterBar={
+          <CollapsedListFilters
+            activeFilterCount={statusFilter ? 1 : 0}
+            onApply={staged.apply}
+            onReset={staged.reset}
+            onCancel={staged.cancel}
+            applyDisabled={!staged.dirty}
+            testIdPrefix="insurance-lawsuits"
+            dataAttributes={{ "data-insurance-lawsuits-filter-toolbar": "collapsed" }}
+          >
+            <label className="text-xs font-semibold text-slate-600">
+              Status
+              <select
+                className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                value={staged.draft.status}
+                onChange={(event) =>
+                  staged.setDraft({ status: event.target.value as "" | InsuranceLawsuitStatus })
+                }
+                data-testid="insurance-lawsuits-status-filter"
+              >
+                {LAWSUIT_STATUS_FILTERS.map((option) => (
+                  <option key={option.label} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </CollapsedListFilters>
+        }
       />
       <LawsuitCreateModal
         open={createOpen}

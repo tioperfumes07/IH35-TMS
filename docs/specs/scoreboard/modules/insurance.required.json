@@ -391,12 +391,12 @@
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
-      "route_hint": "/insurance",
+      "route_hint": "/safety/insurance/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/insurance/LawsuitsTab.tsx"
     }
   ],
   "honesty_audit": {
