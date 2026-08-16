@@ -313,6 +313,12 @@ async function writeC9HoldFieldsIfPresent(
   input: BookLoadInput,
   resolvedFactoringVendorId: string | null
 ): Promise<void> {
+  // P44 NOT NULL: never clobber the INSERT's resolved equipment id with a bare null from omitted input.
+  const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
+    client,
+    input.operating_company_id,
+    input.load_trailer_equipment_id
+  );
   await optionalQuery(
     client,
     `
@@ -340,7 +346,7 @@ async function writeC9HoldFieldsIfPresent(
       input.driver_pay_rate_per_mile ?? null,
       resolvedFactoringVendorId,
       input.catalog_load_type_id ?? null,
-      input.load_trailer_equipment_id ?? null,
+      loadTrailerEquipmentId,
       loadId,
     ]
   );
