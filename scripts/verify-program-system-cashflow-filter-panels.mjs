@@ -4,6 +4,7 @@
  * LV-SYSTEM-PROGRAM-FILTER-CONTROL-ABSENT
  * LV-CASH-FLOW-ACTUAL-FILTER-PANEL-ABSENT
  * LV-INSURANCE-LAWSUITS-FILTER-PANEL-ABSENT
+ * LV-DRIVERS-TABLE-FILTER-PANEL-ABSENT
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -34,6 +35,11 @@ const SURFACES = [
     id: "insurance-lawsuits",
     file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
     route: "/safety/insurance/lawsuits",
+  },
+  {
+    id: "drivers-table",
+    file: "apps/frontend/src/pages/drivers/DriversTable.tsx",
+    route: "/drivers",
   },
 ];
 
@@ -83,6 +89,10 @@ export function collectFailures(sources) {
   if (!/testIdPrefix="insurance-lawsuits"/.test(lawsuits) && !/data-insurance-lawsuits-filter-toolbar/.test(lawsuits)) {
     failures.push("insurance-lawsuits: Filters panel must use insurance-lawsuits testId/data attribute");
   }
+  const drivers = sources[SURFACES[4].file] ?? "";
+  if (!/testIdPrefix="drivers-table"/.test(drivers) && !/data-drivers-table-filter-toolbar/.test(drivers)) {
+    failures.push("drivers-table: Filters panel must use drivers-table testId/data attribute");
+  }
   return failures;
 }
 
@@ -122,6 +132,10 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         "docs/specs/scoreboard/modules/insurance.required.json"
       ].replaceAll('"/safety/insurance/lawsuits"', '"/insurance"'),
     }),
+    () => ({
+      ...sources,
+      [SURFACES[4].file]: sources[SURFACES[4].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -131,4 +145,4 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   console.log(`PASS: ${mutations.length} planted missing-Filters-panel defects were rejected`);
 }
 
-console.log("PASS: program/system/cash-flow/insurance exact filter panels mount CollapsedListFilters + staged Apply");
+console.log("PASS: program/system/cash-flow/insurance/drivers exact filter panels mount CollapsedListFilters + staged Apply");

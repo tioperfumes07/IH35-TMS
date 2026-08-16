@@ -1,11 +1,20 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import type { summarizeDriverDqf } from "../../lib/driverDqf";
+
+const DRIVER_STATUS_FILTERS: Array<{ value: string; label: string }> = [
+  { value: "", label: "All statuses" },
+  { value: "Active", label: "Active" },
+  { value: "Inactive", label: "Inactive" },
+  { value: "Terminated", label: "Terminated" },
+  { value: "Probation", label: "Probation" },
+];
 
 export type DriverTableRow = {
   driverId: string;
@@ -33,14 +42,25 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
   // stay hidden for roles that couldn't use them before. Matches the FuelTransactionsTable /
   // TBL-STANDARD batch-1 idiom.
   const bulkPermission = useBulkPermission();
+  const [statusFilter, setStatusFilter] = useState("");
+  const staged = useStagedListFilters({
+    applied: { status: statusFilter },
+    empty: { status: "" },
+    onApply: (next) => setStatusFilter(next.status),
+  });
 
   const enrichedRows = useMemo<EnrichedDriverRow[]>(
     () => rows.map((row) => ({ ...row, dqf_level: row.summary.level, dqf_present_count: row.summary.presentCount })),
     [rows]
   );
 
+  const filteredRows = useMemo(() => {
+    if (!statusFilter) return enrichedRows;
+    return enrichedRows.filter((row) => row.status === statusFilter);
+  }, [enrichedRows, statusFilter]);
+
   function handleExportSelected(selected: DriverTableRow[]) {
-    const scope = selected.length > 0 ? selected : rows;
+    const scope = selected.length > 0 ? selected : filteredRows;
     if (scope.length === 0) {
       pushToast("No drivers to export.", "info");
       return;
@@ -67,11 +87,38 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
 
   return (
     <ParityTable<EnrichedDriverRow>
-      rows={enrichedRows}
+      rows={filteredRows}
       rowKey={(row) => row.driverId}
       storageKey="drivers-table"
-      emptyText="No drivers found."
+      emptyText="No drivers match the applied filters."
       selectable={bulkPermission.canUseBulkOps}
+      filterBar={
+        <CollapsedListFilters
+          activeFilterCount={statusFilter ? 1 : 0}
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty}
+          testIdPrefix="drivers-table"
+          dataAttributes={{ "data-drivers-table-filter-toolbar": "collapsed" }}
+        >
+          <label className="text-xs font-semibold text-slate-600">
+            Status
+            <select
+              className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={staged.draft.status}
+              onChange={(event) => staged.setDraft({ status: event.target.value })}
+              data-testid="drivers-table-status-filter"
+            >
+              {DRIVER_STATUS_FILTERS.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </CollapsedListFilters>
+      }
       batchActions={(selected) => {
         return (
           <div className="flex flex-wrap gap-2">
