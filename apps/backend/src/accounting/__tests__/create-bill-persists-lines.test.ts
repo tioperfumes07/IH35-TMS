@@ -182,6 +182,11 @@ describe("createBill — vendor must resolve inside the caller's entity (ACCT-F1
         vendorId,
         billDate: "2026-07-21",
         amountCents: 2500,
+        // LV-BILL-HEADER-ONLY-UNPOSTABLE (2026-08-16): createBill now refuses up front when both
+        // lines and coaAccountId are omitted (a synchronous, pre-transaction check). This suite is
+        // about vendor resolution, not the lines requirement, so supply a coaAccountId to keep the
+        // vendor check reachable — the vendor-resolution failure still fires before any INSERT.
+        coaAccountId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
       },
       "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
     );

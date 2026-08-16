@@ -13,6 +13,14 @@ vi.mock("@sentry/node", () => ({
   captureMessage: (...args: unknown[]) => captureMessageMock(...args),
 }));
 
+// LV-BILL-HEADER-ONLY-UNPOSTABLE (2026-08-16): createPolicyBillSchedule now resolves a real
+// insurance_expense CoA account up front (instead of a stale "createBill resolves its own default"
+// assumption) and passes it as coaAccountId. This suite is about billing-schedule math and
+// void/rollback behavior, not CoA role resolution, so mock the resolver to a fixed account id.
+vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
+  resolveRoleAccount: vi.fn(async () => "acct-insurance-expense-1"),
+}));
+
 import { createPolicyBillSchedule } from "../policy-bill-schedule.service.js";
 
 const OC = "22222222-2222-4222-8222-222222222222";

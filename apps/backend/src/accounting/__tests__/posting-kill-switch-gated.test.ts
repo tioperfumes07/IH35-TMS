@@ -141,7 +141,25 @@ describe("kill-switch: recurring-bill autopost no-ops when BILL_GL_POSTING_ENABL
   it("generates the bill but posts NOTHING to the GL even when template.auto_post is true", async () => {
     queryHandler = async (sql) => {
       if (/FROM accounting\.recurring_bill_templates/.test(sql)) {
-        return { rows: [{ uuid: "tmpl-1", is_active: true, amount: "50", memo: "rent", template_name: "Rent", vendor_uuid: "vendor-1", operating_company_id: OC, frequency: "monthly", auto_post: true }] };
+        return {
+          rows: [
+            {
+              uuid: "tmpl-1",
+              is_active: true,
+              amount: "50",
+              memo: "rent",
+              template_name: "Rent",
+              vendor_uuid: "vendor-1",
+              operating_company_id: OC,
+              frequency: "monthly",
+              auto_post: true,
+              // LV-BILL-HEADER-ONLY-UNPOSTABLE (2026-08-16): createBill() now refuses a bill with no
+              // lines, so every fixture template needs a real line_items entry — a template with an
+              // empty array is exactly the header-only-bill shape the fix closes off.
+              line_items: [{ amount: "50", coa_account_id: "acct-rent-1", description: "Rent" }],
+            },
+          ],
+        };
       }
       return { rows: [] }; // UPDATE next_generation_date + INSERT log + set_config
     };
