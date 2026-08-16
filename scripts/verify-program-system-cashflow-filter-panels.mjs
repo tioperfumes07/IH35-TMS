@@ -5,6 +5,7 @@
  * LV-CASH-FLOW-ACTUAL-FILTER-PANEL-ABSENT
  * LV-INSURANCE-LAWSUITS-FILTER-PANEL-ABSENT
  * LV-DRIVERS-TABLE-FILTER-PANEL-ABSENT
+ * LV-LEGAL-MATTERS-FILTER-LEAF-THEATER
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -40,6 +41,11 @@ const SURFACES = [
     id: "drivers-table",
     file: "apps/frontend/src/pages/drivers/DriversTable.tsx",
     route: "/drivers",
+  },
+  {
+    id: "legal-matters",
+    file: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
+    route: "/legal/matters",
   },
 ];
 
@@ -93,6 +99,19 @@ export function collectFailures(sources) {
   if (!/testIdPrefix="drivers-table"/.test(drivers) && !/data-drivers-table-filter-toolbar/.test(drivers)) {
     failures.push("drivers-table: Filters panel must use drivers-table testId/data attribute");
   }
+  const legalReq = sources["docs/specs/scoreboard/modules/legal.required.json"] ?? "";
+  if (legalReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"route_hint": "\/legal\/matters"/.test(legalReq)) {
+      failures.push("legal.required.json: chrome.toolbar_filter route_hint must be /legal/matters");
+    }
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/legal\/matters\/LegalMattersListPage\.tsx"/.test(legalReq)) {
+      failures.push("legal.required.json: chrome.toolbar_filter surface_path must be LegalMattersListPage.tsx");
+    }
+  }
+  const legal = sources[SURFACES[5].file] ?? "";
+  if (!/testIdPrefix="legal-matters"/.test(legal) && !/data-legal-matters-filter-toolbar/.test(legal)) {
+    failures.push("legal-matters: Filters panel must use legal-matters testId/data attribute");
+  }
   return failures;
 }
 
@@ -100,6 +119,9 @@ function load() {
   const map = Object.fromEntries(SURFACES.map((s) => [s.file, read(s.file)]));
   map["docs/specs/scoreboard/modules/insurance.required.json"] = read(
     "docs/specs/scoreboard/modules/insurance.required.json",
+  );
+  map["docs/specs/scoreboard/modules/legal.required.json"] = read(
+    "docs/specs/scoreboard/modules/legal.required.json",
   );
   return map;
 }
@@ -136,6 +158,12 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       ...sources,
       [SURFACES[4].file]: sources[SURFACES[4].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
     }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/legal.required.json": sources[
+        "docs/specs/scoreboard/modules/legal.required.json"
+      ].replaceAll('"/legal/matters"', '"/legal"'),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -145,4 +173,4 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   console.log(`PASS: ${mutations.length} planted missing-Filters-panel defects were rejected`);
 }
 
-console.log("PASS: program/system/cash-flow/insurance/drivers exact filter panels mount CollapsedListFilters + staged Apply");
+console.log("PASS: program/system/cash-flow/insurance/drivers/legal exact filter panels mount CollapsedListFilters + staged Apply");
