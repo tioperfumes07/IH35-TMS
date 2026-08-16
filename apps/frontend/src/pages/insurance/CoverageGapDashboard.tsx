@@ -16,6 +16,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
 import { useSearchParams } from "react-router-dom";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -52,6 +53,11 @@ export function CoverageGapDashboard() {
     else params.delete("unit_id");
     setSearchParams(params, { replace: true });
   };
+  const stagedFilters = useStagedListFilters({
+    applied: { unitId: unitPickerId },
+    empty: { unitId: "" },
+    onApply: (next) => setUnitFilter(next.unitId),
+  });
   const unitId = unitPickerId.trim() || deepLinkUnitId || undefined;
 
   // INSURANCE-1: the uncovered/mismatched lists come from the SAME backend endpoint that feeds the
@@ -143,21 +149,32 @@ export function CoverageGapDashboard() {
       <header className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Coverage Gap Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">Identify units without coverage, policies approaching expiration, and requirement mismatches.</p>
-        <div className="mt-3 max-w-sm" data-testid="coverage-gap-filters">
-          <label className="text-[11px] text-slate-600">
-            Unit
-            <EntityPicker
-              kind="unit"
-              operatingCompanyId={companyId}
-              value={unitPickerId || null}
-              onChange={(next) => setUnitFilter(next ?? "")}
-              allowCreate={false}
-              placeholder="All units"
-              className="mt-1"
-              dataTestId="coverage-gap-filter-unit"
-            />
-          </label>
-        </div>
+        <CollapsedListFilters
+          activeFilterCount={unitPickerId ? 1 : 0}
+          onApply={stagedFilters.apply}
+          onReset={stagedFilters.reset}
+          onCancel={stagedFilters.cancel}
+          applyDisabled={!stagedFilters.dirty}
+          testIdPrefix="coverage-gap"
+          dataAttributes={{ "data-coverage-gap-filter-toolbar": "collapsed" }}
+          className="mt-3 max-w-sm"
+        >
+          <div data-testid="coverage-gap-filters">
+            <label className="text-[11px] text-slate-600">
+              Unit
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={companyId}
+                value={stagedFilters.draft.unitId || null}
+                onChange={(next) => stagedFilters.setDraft({ unitId: next ?? "" })}
+                allowCreate={false}
+                placeholder="All units"
+                className="mt-1"
+                dataTestId="coverage-gap-filter-unit"
+              />
+            </label>
+          </div>
+        </CollapsedListFilters>
       </header>
 
       {coverageGapsQuery.isLoading || policiesQuery.isLoading || typesQuery.isLoading ? (
