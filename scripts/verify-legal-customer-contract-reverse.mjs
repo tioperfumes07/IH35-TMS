@@ -11,26 +11,53 @@ const sources = {
   page: fs.readFileSync("apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx", "utf8"),
 };
 const checks = [
-  ["send", /listCustomers\(\{ operating_company_id: operatingCompanyId[\s\S]*search: customerSearch/, "send reads scoped customers"],
-  ["send", /createKind="customer"[\s\S]*onSearch=\{setCustomerSearch\}/, "send keeps customer create and search"],
+  ["send", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "send uses EntityPicker customer allowCreate"],
+  ["send", /getCustomerDetail\(id, operatingCompanyId\)/, "send hydrates customer signer"],
   ["send", /signer_entity_id: signerEntityId \|\| undefined/, "send forwards customer FK"],
-  ["lease", /listCustomers\(\{ operating_company_id: operatingCompanyId[\s\S]*search: customerSearch/, "lease reads scoped customers"],
-  ["lease", /createKind="customer"[\s\S]*onSearch=\{setCustomerSearch\}/, "lease keeps customer create and search"],
+  ["lease", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "lease uses EntityPicker customer allowCreate"],
+  ["lease", /getCustomerDetail\(id, operatingCompanyId\)/, "lease hydrates lessee customer"],
   ["lease", /signer_entity_id: lesseeCustomerId/, "lease forwards customer FK"],
   ["lease", /onSaved\(created\.id\)/, "lease returns persisted id"],
+  ["lease", /listCustomers\(|createKind=["']customer["']/, "lease must not keep capped listCustomers ReferenceSelect"],
   ["writer", /FROM mdata\.customers[\s\S]*id = \$1::uuid[\s\S]*operating_company_id = \$2::uuid[\s\S]*deactivated_at IS NULL/, "writer validates active customer ownership"],
   ["customer", /signer_type: "customer", signer_entity_id: customerId/, "customer reverse read filters canonical FK"],
   ["customer", /kind="legal_contract"[\s\S]{0,80}id=\{contract\.id\}/, "customer reverse row drills to selected contract"],
   ["customer", /Couldn't load this customer's legal contracts[\s\S]*legalContractsQuery\.refetch\(\)/, "customer reverse failure is retryable"],
   ["page", /onSaved=\{async \(contractId\)[\s\S]*setSearchParams\(\{ contract_id: contractId \}\)/, "lease R=W selects persisted detail"],
 ];
-const failures = (candidate) => checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
+
+// Positive checks that must MATCH; the lease "must not keep" row is inverted.
+function failures(candidate) {
+  const found = [];
+  for (const [key, pattern, label] of checks) {
+    if (label.includes("must not keep")) {
+      if (pattern.test(candidate[key])) found.push(label);
+    } else if (!pattern.test(candidate[key])) {
+      found.push(label);
+    }
+  }
+  return found;
+}
 const found = failures(sources);
 if (found.length) { console.error(`verify-legal-customer-contract-reverse: FAIL — ${found.join("; ")}`); process.exit(1); }
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   for (const [key, pattern, label] of checks) {
+    if (label.includes("must not keep")) {
+      const mutant = {
+        ...sources,
+        [key]: sources[key] + `\nlistCustomers({ operating_company_id: operatingCompanyId, search: customerSearch })\ncreateKind="customer"\n`,
+      };
+      if (!failures(mutant).includes(label)) {
+        console.error(`verify-legal-customer-contract-reverse: SELF-TEST FAIL — ${label}`);
+        process.exit(1);
+      }
+      continue;
+    }
     const mutant = { ...sources, [key]: sources[key].replace(pattern, "/* planted defect */") };
-    if (!failures(mutant).includes(label)) { console.error(`verify-legal-customer-contract-reverse: SELF-TEST FAIL — ${label}`); process.exit(1); }
+    if (!failures(mutant).includes(label)) {
+      console.error(`verify-legal-customer-contract-reverse: SELF-TEST FAIL — ${label}`);
+      process.exit(1);
+    }
   }
   console.log(`verify-legal-customer-contract-reverse: SELF-TEST PASS — ${checks.length} planted defects rejected`);
 }
