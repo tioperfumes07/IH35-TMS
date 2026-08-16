@@ -1499,89 +1499,139 @@
     "name": "verify-revenue-recognition-parity-surface-bar"
   },
   "3572": {
-    "name": "verify-loans-advances-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-loans-advances-parity-surface-bar"
   },
   "3574": {
-    "name": "verify-coa-asymmetry-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-coa-asymmetry-parity-surface-bar"
   },
   "3576": {
-    "name": "verify-break-even-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-break-even-parity-surface-bar"
   },
   "3578": {
-    "name": "verify-bank-tx-categorization-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-bank-tx-categorization-parity-surface-bar"
   },
   "3580": {
-    "name": "verify-create-multiple-bills-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-create-multiple-bills-parity-surface-bar"
   },
   "3582": {
-    "name": "verify-task-link-picker-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-task-link-picker-parity-surface-bar"
   },
   "3584": {
-    "name": "verify-allocation-preview-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-allocation-preview-parity-surface-bar"
   },
   "3586": {
-    "name": "verify-cost-breakdown-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-cost-breakdown-parity-surface-bar"
   },
   "3588": {
-    "name": "verify-pay-bill-modal-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-pay-bill-modal-parity-surface-bar"
   },
   "3590": {
-    "name": "verify-bill-payment-modal-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-bill-payment-modal-parity-surface-bar"
   },
   "3592": {
-    "name": "verify-submit-factoring-modal-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-submit-factoring-modal-parity-surface-bar"
   },
   "3594": {
-    "name": "verify-invoice-create-modal-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-invoice-create-modal-parity-surface-bar"
   },
   "3596": {
-    "name": "verify-bill-payment-form-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-bill-payment-form-parity-surface-bar"
   },
   "3598": {
-    "name": "verify-create-work-order-modal-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-create-work-order-modal-parity-surface-bar"
   },
   "3600": {
-    "name": "verify-dispatch-list-parity-surface-bar",
+    "claimed_at": "2026-08-15",
     "claimer": "cursor",
-    "claimed_at": "2026-08-15"
+    "name": "verify-dispatch-list-parity-surface-bar"
   },
   "3601": {
-    "name": "verify-accounting-escrow-holder-reverse-link",
+    "claimed_at": "2026-08-15",
     "claimer": "claude-1",
-    "claimed_at": "2026-08-15"
+    "name": "verify-accounting-escrow-holder-reverse-link"
+  },
+  "3602": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-owner-all-entities-non-qbo-flags-on"
+  },
+  "3604": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-load-stops-save-wired"
   },
   "3605": {
-    "name": "verify-finance-scenarios-mutation-roundtrip",
+    "claimed_at": "2026-08-15",
     "claimer": "claude-1",
-    "claimed_at": "2026-08-15"
+    "name": "verify-finance-scenarios-mutation-roundtrip"
+  },
+  "3606": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-outbox-success-clears-last-error"
+  },
+  "3608": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-driver-create-dob-mx-license-wired"
+  },
+  "3609": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cc-1",
+    "name": "verify-cardlink-plain-click-selects-in-place"
+  },
+  "3610": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-driver-create-invite-not-on-save"
+  },
+  "3612": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-wo-create-no-opened-at-update"
+  },
+  "3614": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-driver-create-is-wizard"
+  },
+  "3616": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-doc-categories-identity-mx-license"
+  },
+  "3618": {
+    "claimed_at": "2026-08-15",
+    "claimer": "cursor",
+    "name": "verify-docs-upload-sha256-required"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -2813,6 +2863,11 @@
     "34": "34-verify-safety-random-pool-determinism.mjs",
     "35": "35-verify-safety-reports-coverage.mjs",
     "36": "36-verify-safety-route-coverage.mjs",
+    "3620": {
+      "guard": "verify-driver-pay-types-tarp-seeded",
+      "note": "LV-NO-TARP-ACCESSORIAL-PAY-TYPE",
+      "owner": "cursor"
+    },
     "37": "37-verify-safety-accidents-wire-up.mjs",
     "38": "38-verify-safety-count-nav-integrity.mjs",
     "39": [
@@ -3427,55 +3482,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165,
-  "3602": {
-    "name": "verify-owner-all-entities-non-qbo-flags-on",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3604": {
-    "name": "verify-load-stops-save-wired",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3606": {
-    "name": "verify-outbox-success-clears-last-error",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3609": {
-    "name": "verify-cardlink-plain-click-selects-in-place",
-    "claimer": "cc-1",
-    "claimed_at": "2026-08-15"
-  },
-  "3608": {
-    "name": "verify-driver-create-dob-mx-license-wired",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3610": {
-    "name": "verify-driver-create-invite-not-on-save",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3612": {
-    "name": "verify-wo-create-no-opened-at-update",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3614": {
-    "name": "verify-driver-create-is-wizard",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3616": {
-    "name": "verify-doc-categories-identity-mx-license",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  },
-  "3618": {
-    "name": "verify-docs-upload-sha256-required",
-    "claimer": "cursor",
-    "claimed_at": "2026-08-15"
-  }
+  "total_claimed": 1165
 }
