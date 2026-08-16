@@ -48,6 +48,10 @@ function sourceLink(ev: SpineEvent): string | null {
   if (t.includes("invoice")) return `/accounting/invoices/${id}`;
   if (t.includes("bill")) return `/accounting/bills/${id}`;
   if (t.includes("work_order")) return `/maintenance/work-orders/${id}`;
+  if (t === "mdata.customers") return `/customers/${id}`;
+  if (t === "mdata.vendors") return `/vendors/${id}`;
+  if (t === "mdata.drivers") return `/drivers/${id}`;
+  if (t === "mdata.units") return `/fleet/units/${id}`;
   if (t.includes("transfer")) return `/banking/transfers/${id}`;
   if (t.includes("payment")) return `/accounting/payments/${id}`;
   return null;

@@ -9,6 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsVendorPushRequested } from "../qbo/tms-vendor-push-chain.service.js";
 import { listActiveVendorClassifications } from "./classification-queries.js";
 import { isTestVendorFixtureName } from "./fixture-vendor-name-pattern.js";
+import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { searchVendorsForAutocomplete } from "./vendor-autocomplete.shared.js";
 
 // LST-PICKER-01 / LST-F5009 (LST-VENDOR-TYPE-CREATE-RW-MISMATCH) — vendor_type is CATALOG-BACKED
@@ -508,6 +509,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           name: row.name,
           vendor_code: row.vendor_code,
           vendor_type: row.vendor_type,
+        });
+        await emitMasterDataCreatedSpineEvent(client, {
+          operating_company_id: String(row.operating_company_id),
+          actor_user_id: authUser.uuid,
+          subject_type: "vendor",
+          subject_id: String(row.id),
+          payload: { vendor_code: row.vendor_code, name: row.name, vendor_type: row.vendor_type },
         });
         await enqueueTmsVendorPushRequested(client, {
           operating_company_id: String(row.operating_company_id),

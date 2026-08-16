@@ -15,6 +15,7 @@ import { registerUnitPhotosRoutes } from "./unit-photos.routes.js";
 import { registerUnitPlatesRoutes } from "./unit-plates.routes.js";
 import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
 import { registerUnitFinanceLinkageRoutes } from "./unit-finance-linkage.routes.js";
+import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { getUnitFinancialYTD, type FinancialPeriod } from "./unit-financial.service.js";
 import { fleetTypeFilterSchema, truckTypeSqlFilter } from "./fleet-type-filter.js";
 import { fetchUnifiedFleetList } from "./units-unified-list.service.js";
@@ -315,6 +316,13 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           unit_number: row.unit_number,
           vin: row.vin,
           status: row.status,
+        });
+        await emitMasterDataCreatedSpineEvent(client, {
+          operating_company_id: String(resolvedLeasedId ?? resolvedOwnerId),
+          actor_user_id: authUser.uuid,
+          subject_type: "unit",
+          subject_id: String(row.id),
+          payload: { unit_number: row.unit_number, vin: row.vin, status: row.status },
         });
         return row;
       });
