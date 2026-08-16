@@ -819,7 +819,9 @@ export function BookLoadModalV4({
             | "power_only_no_trailer"
             | "power_only_customer_trailer"
             | undefined,
-        load_trailer_equipment_id: values.load_trailer_equipment_id,
+        // Empty string is NOT a valid UUID — zod rejects "" with Invalid UUID before the
+        // service can default DRY_VAN (P44 resolveLoadTrailerEquipmentIdForInsert). Omit when blank.
+        load_trailer_equipment_id: values.load_trailer_equipment_id || undefined,
         assigned_unit_id: values.assigned_unit_id || undefined,
         // The service persists this through dispatch.load_assignment_history.new_trailer_id after
         // creating the load; mdata.loads intentionally has no trailer FK column.

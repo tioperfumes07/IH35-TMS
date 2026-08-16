@@ -250,6 +250,13 @@ export function contractErrors(src) {
   if (!/createKind="load_trailer_equipment"/.test(src.trailerEquipmentPicker) || !/load_trailer_equipment_id/.test(src.bookLoad)) {
     errors.push("P44-FK: Book Load must select and submit canonical trailer equipment requirement UUID");
   }
+  // USMCA Book Load spine 2026-08-16: bare "" failed zod Invalid UUID before service DRY_VAN default.
+  if (!/load_trailer_equipment_id:\s*values\.load_trailer_equipment_id\s*\|\|\s*undefined/.test(src.bookLoad)) {
+    errors.push("P44-FK: Book Load must omit blank load_trailer_equipment_id (|| undefined) so zod accepts omit → service DRY_VAN default");
+  }
+  if (!/load_trailer_equipment_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(src.loadRoutes)) {
+    errors.push("P44-FK: create load schema must treat load_trailer_equipment_id as optional UUID (service defaults DRY_VAN)");
+  }
   if (!/loads_trailer_equipment_same_company_fk/.test(src.trailerEquipmentMigration) || !/ALTER COLUMN load_trailer_equipment_id SET NOT NULL/.test(src.trailerEquipmentMigration)) {
     errors.push("P44-FK: loads must enforce a NOT NULL same-opco trailer equipment requirement FK");
   }
@@ -519,8 +526,8 @@ const GOOD_BACKEND = `
 function selftest() {
   const p44 = {
     detentionPicker: "const options = rows.map((row) => ({ value: row.id }));",
-    bookLoad: 'detention_reason_id: values.detention_reason_id || undefined, pickup_time_type_id: stop.pickup_time_type_id || undefined, lumper_provider_id: stop.lumper_provider_id, catalog_load_type_id: values.catalog_load_type_id || undefined, load_trailer_equipment_id: values.load_trailer_equipment_id, createKind="load_type", createKind="lumper_provider", const options = rows.map((row) => ({ value: row.id }));',
-    loadRoutes: "detention_reason_id: z.string().uuid().optional(), pickup_time_type_id: z.string().uuid().optional(), catalog_load_type_id: z.string().uuid().optional(),",
+    bookLoad: 'detention_reason_id: values.detention_reason_id || undefined, pickup_time_type_id: stop.pickup_time_type_id || undefined, lumper_provider_id: stop.lumper_provider_id, catalog_load_type_id: values.catalog_load_type_id || undefined, load_trailer_equipment_id: values.load_trailer_equipment_id || undefined, createKind="load_type", createKind="lumper_provider", const options = rows.map((row) => ({ value: row.id }));',
+    loadRoutes: "detention_reason_id: z.string().uuid().optional(), pickup_time_type_id: z.string().uuid().optional(), catalog_load_type_id: z.string().uuid().optional(), load_trailer_equipment_id: z.string().uuid().optional(),",
     bookService: "detention_expected_y_n, detention_reason_id, detention_expected_hours, time_window_type, pickup_time_type_id, appointment_start_at, catalog_load_type_id = $9::uuid,",
     migration: "FOREIGN KEY (detention_reason_id, operating_company_id)",
     pickupPicker: 'createKind="pickup_time_type"; const options = rows.map((row) => ({ value: row.id }));',

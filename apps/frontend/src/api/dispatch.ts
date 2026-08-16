@@ -152,7 +152,8 @@ export type DispatchBookLoadPayload = {
   requires_straps?: boolean;
   load_type?: "broker" | "direct";
   catalog_load_type_id?: string;
-  load_trailer_equipment_id: string;
+  /** Optional — omit blank; API/service defaults DRY_VAN for the opco (P44). */
+  load_trailer_equipment_id?: string;
   driver_pay_rate_per_mile?: number;
   factoring_company_vendor_id?: string;
   tarp_type?: string;
