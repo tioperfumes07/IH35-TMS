@@ -30,6 +30,10 @@ OUTBOX: `Cursor | … | Live=BLOCKED(whole-product) | theater_broad_remaining:N 
 ## LAW LOCK
 - Fully wired = 12-item bar (Live Chrome last)  
 - Launch without Live = items **1–11** + **honest Built** — `HONEST-BUILT-LAUNCH-LAW-2026-08-14`
+
+## CODEX HANDOFF · 2026-08-16 · LV-PROGRAM-TRACKER-R2-CREDENTIALS-MISSING
+
+Actions run `31940366897` is green only because both R2 upload scripts skipped on absent `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` (log lines 4350, 4424-4433). Live `/program/tracker` remains on the Aug 15 fallback with zero Completed. Exact OPEN acceptance and `BLOCKS=LV-PROGRAM-TRACKER-DEPLOYMENT-PROOF-PRODUCER-DROPPED` are in `docs/audit/GUARD-WORKORDERS.md`; audit row 868. Owner-gated=no; Cursor bus/deploy lane.
 ## CODEX HANDOFF · 2026-08-15 · FINDINGS-REGISTER-SIGNOFF-DRIFT-2026-08-15
 
 `node scripts/verify-findings-register-signoff.mjs` is red on current main: seven board OPEN IDs are absent from `docs/audit/CC-3-FINDINGS-CHECKLIST.md`, and three checked Cursor rows have empty/misaligned Guard cells. Exact IDs and acceptance are filed in `docs/audit/GUARD-WORKORDERS.md`. Mechanical bus/register ownership; `OWNER-GATED=no`; `BLOCKS=FINDINGS-TRIPLE-LOCK-GREEN`.
