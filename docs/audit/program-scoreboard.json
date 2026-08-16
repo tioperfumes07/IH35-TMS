@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T13:39:45-05:00",
-    "sourceSha": "2defd75e5",
-    "deployedSha": "39848e8",
+    "generatedAt": "2026-08-16T13:59:00-05:00",
+    "sourceSha": "aeea37c11",
+    "deployedSha": "9a76f4e",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 917,
+    "ledgerRows": 918,
     "failOpen": 23,
     "defects": 25
   },
@@ -650,7 +650,7 @@
       "module": "legal",
       "build": "12/12",
       "cells": [
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "FIX",
         "AUDIT",
@@ -682,7 +682,7 @@
           "AUDIT"
         ],
         "USMCA": [
-          "AUDIT",
+          "FIX",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7888,
+      "title": "FINDING: LV-LEGAL-MATTER-UNIT-TRAILER-PICKERS-NO-INLINE-CREATE",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 01:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7888",
+      "sha": "aeea37c11",
+      "committedAtIso": "2026-08-16T13:59:00-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 01:40 PM CT",
+      "url": "",
+      "sha": "9a76f4e48",
+      "committedAtIso": "2026-08-16T18:40:55Z"
+    },
+    {
       "number": 7884,
       "title": "FINDING: LV-MAINT-WO-WIDE-MODAL-ACTIONS-CLIPPED",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7876",
       "sha": "71d0c0d81",
       "committedAtIso": "2026-08-16T12:47:46-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(customers): LV-CUST-DETAIL-FACTORING-VENDOR-ENTITY-PICKER — SelectField roster residual",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:47 PM CT",
-      "url": "",
-      "sha": "3e52f06fb",
-      "committedAtIso": "2026-08-16T12:47:30-05:00"
-    },
-    {
-      "number": 7874,
-      "title": "Codex-1- fix(maintenance): omit absent service item UUID",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7874",
-      "sha": "8eb78ca81",
-      "committedAtIso": "2026-08-16T12:46:40-05:00"
     }
   ]
 }
