@@ -1592,6 +1592,17 @@ export async function createBill(input: CreateBillInput, userId: string) {
 
   // LAW-E2E #3167: when the UI (or any caller) sends lines, fail closed — never create a header-only
   // bill that the poster cannot resolve (live Neon had 16k bills / 0 bill_lines).
+  //
+  // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — that guard only fired when `lines`
+  // was PROVIDED. A caller that omits `input.lines` entirely (not an empty array — the field simply
+  // absent) skipped this whole block and still produced a bill with zero accounting.bill_lines rows,
+  // reproducing the exact 16k-bills/0-bill_lines defect for two live callers
+  // (insurance/policy-bill-schedule.service.ts and the deprecated driver-settlement path) that only
+  // ever set `coaAccountId`, never `lines`. Closing that: a caller may still omit `lines` ONLY if it
+  // supplies `coaAccountId` — the single-account intent that omission was standing in for — and a
+  // single line is synthesized from `coaAccountId` + `amountCents` below (see the insert block).
+  // Omitting BOTH `lines` and `coaAccountId` is refused: there is then no way to know what account
+  // the money belongs to, and a bill must resolve to at least one GL account before it exists.
   const linesProvided = input.lines !== undefined;
   if (linesProvided) {
     if (!input.lines || input.lines.length === 0) throw new Error("bill_lines_required");
@@ -1602,6 +1613,8 @@ export async function createBill(input: CreateBillInput, userId: string) {
     }
     const linesSum = input.lines.reduce((sum, line) => sum + line.amountCents, 0);
     if (linesSum !== input.amountCents) throw new Error("bill_lines_amount_mismatch");
+  } else if (!input.coaAccountId) {
+    throw new Error("bill_lines_required");
   }
 
   const bill = await withCurrentUser(userId, async (client) => {
@@ -2022,6 +2035,32 @@ export async function createBill(input: CreateBillInput, userId: string) {
           ]
         );
       }
+    } else if (input.coaAccountId) {
+      // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — a caller that omits `lines` but
+      // supplies `coaAccountId` (its only way to say "post the whole amount to this one account")
+      // previously left `accounting.bill_lines` completely empty, so the GL poster — which reads
+      // `bill_lines`, never `coaAccountId` — could never resolve the bill. Synthesize the single
+      // line the caller's intent already implied, entity-scoped exactly like the multi-line path.
+      const acct = await client.query<{ id: string }>(
+        `
+          SELECT id::text
+          FROM catalogs.accounts
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [input.coaAccountId, input.operatingCompanyId]
+      );
+      if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
+      await client.query(
+        `
+          INSERT INTO accounting.bill_lines (
+            bill_id, line_sequence, amount, description, section, account_id
+          )
+          VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid)
+        `,
+        [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId]
+      );
     }
 
     // Option B inc 2: link create-time draft attachments (vendor invoice scans) to the real bill id,

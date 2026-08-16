@@ -51,8 +51,7 @@ export async function generateFromTemplate(
 
   const memo = template.memo ?? template.template_name;
 
-  // When the template stores line items with CoA, create real bill_lines (LAW §9). Header-only remains
-  // for legacy templates with an empty line_items array.
+  // When the template stores line items with CoA, create real bill_lines (LAW §9).
   const rawLines = Array.isArray(template.line_items) ? template.line_items : [];
   const billLines =
     rawLines.length > 0
@@ -77,6 +76,19 @@ export async function generateFromTemplate(
     if (linesSum !== amountCents) throw new Error("recurring_bill_lines_amount_mismatch");
   }
 
+  // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — this file's own removed comment
+  // documented "Header-only remains for legacy templates with an empty line_items array": exactly
+  // the defect createBill() now refuses (a bill with zero accounting.bill_lines rows the GL poster
+  // can never resolve). `accounting.recurring_bill_templates` has no CoA column of its own — the
+  // `coa_account_id` field on the `RecurringBillTemplate` TS type is a phantom, never backed by a
+  // real DB column (verified live: 0 rows on prod, `information_schema.columns` confirms the column
+  // does not exist) — so there is no template-level fallback to synthesize a line from. Fail loud
+  // instead: a template with empty line_items cannot generate a postable bill and must not silently
+  // produce one that sits unresolved forever.
+  if (!billLines) {
+    throw new Error("recurring_bill_template_missing_line_items");
+  }
+
   const bill = await createBill(
     {
       operatingCompanyId: template.operating_company_id,
@@ -84,7 +96,7 @@ export async function generateFromTemplate(
       billDate: targetDate,
       amountCents,
       memo,
-      ...(billLines ? { lines: billLines } : {}),
+      lines: billLines,
     },
     actorUserId
   );

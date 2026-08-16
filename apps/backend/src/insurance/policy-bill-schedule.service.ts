@@ -24,6 +24,7 @@
 
 import * as Sentry from "@sentry/node";
 import { createBill, voidBill } from "../accounting/bills.service.js";
+import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -197,8 +198,17 @@ export async function createPolicyBillSchedule(
     throw new Error("insurance_amounts_invalid_down_exceeds_total");
   }
 
-  // NOTE: createBill() resolves its own default AP/expense account; no per-policy COA
-  // is plumbed through this #687-compatible path, so there is no COA to pre-validate here.
+  // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — the note this replaces claimed
+  // "createBill() resolves its own default AP/expense account"; it never did. createBill() only
+  // writes whatever coaAccountId it is GIVEN onto the bill header and, when neither coaAccountId
+  // nor lines is supplied, creates ZERO accounting.bill_lines rows — every insurance policy bill
+  // minted through this path was silently unpostable for the life of this feature. Resolve the
+  // real expense-role account once, up front, same pattern as policy-unit-fleet.service.ts.
+  const insuranceExpenseAccountId = await resolveRoleAccount(
+    client as never,
+    policy.operating_company_id,
+    "insurance_expense"
+  );
 
   const planned = planBills(policy);
   if (planned.length === 0) return { scheduleIds: [], billUuids: [], skipped: false };
@@ -218,6 +228,7 @@ export async function createPolicyBillSchedule(
           dueDate: row.dueDate,
           amountCents: row.amountCents,
           memo: row.memo,
+          coaAccountId: insuranceExpenseAccountId,
         },
         userId
       );
