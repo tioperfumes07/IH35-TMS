@@ -3452,5 +3452,10 @@
     "name": "verify-driver-create-dob-mx-license-wired",
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
+  },
+  "3610": {
+    "name": "verify-driver-create-invite-not-on-save",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
   }
 }
