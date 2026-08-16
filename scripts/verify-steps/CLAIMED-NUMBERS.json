@@ -3150,6 +3150,11 @@
       "note": "CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE",
       "owner": "cursor"
     },
+    "3640": {
+      "guard": "verify-from-load-invoice-no-zero-rate",
+      "note": "FROM-LOAD-INVOICE-ZERO-RATE-SNAPSHOT",
+      "owner": "cursor"
+    },
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
