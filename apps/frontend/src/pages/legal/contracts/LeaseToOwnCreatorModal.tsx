@@ -14,9 +14,8 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
 import { Combobox } from "../../../components/Combobox";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { CappedListNotice } from "../../../components/CappedListNotice";
-import { getCustomerDetail, listCustomers } from "../../../api/mdata";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { getCustomerDetail } from "../../../api/mdata";
 
 type Props = {
   open: boolean;
@@ -56,7 +55,6 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
   const [ownerCompanyId, setOwnerCompanyId] = useState<string>("");
   const [lessee, setLessee] = useState({ name: "", entity_type: "Inc.", signer: "", title: "", address: "" });
   const [lesseeCustomerId, setLesseeCustomerId] = useState("");
-  const [customerSearch, setCustomerSearch] = useState("");
   const [terms, setTerms] = useState({
     term_months: "60", use_charge_pct: "10", governing_law: "Texas", venue_county: "Webb",
     execution_date: "", reference_no: "",
@@ -72,12 +70,6 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
   });
   const seller = ensureQuery.data?.seller_default ?? null;
   const templateId = ensureQuery.data?.template.id ?? "";
-  const customersQuery = useQuery({
-    queryKey: ["legal", "lease-to-own", "customers", operatingCompanyId, customerSearch],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, status: "active", limit: customerSearch ? 200 : 500, search: customerSearch || undefined }),
-  });
-  const customerOptions = (customersQuery.data?.customers ?? []).map((customer) => ({ value: customer.id, label: customer.name }));
 
   useEffect(() => {
     if (seller?.id && !ownerCompanyId) setOwnerCompanyId(seller.id); // default owner = TRK, selectable
@@ -285,28 +277,36 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
                 allowClear={false}
               />
             </div>
-            <div className="flex flex-col gap-1 text-sm md:col-span-2">
+            <div className="flex flex-col gap-1 text-sm md:col-span-2" data-testid="lease-to-own-lessee-customer-block">
               <label>Lessee customer *</label>
-              <ReferenceSelect
-                value={lesseeCustomerId || null}
-                onChange={(id) => {
-                  setLesseeCustomerId(id ?? "");
-                  if (id) {
-                    void getCustomerDetail(id, operatingCompanyId).then(({ customer }) => setLessee((current) => ({
-                      ...current,
-                      name: customer.name,
-                      address: [customer.billing_address, customer.billing_city, customer.billing_state, customer.billing_zip].filter(Boolean).join(", "),
-                    })));
-                  }
-                }}
-                options={customerOptions.map(({ value, label }) => ({ value, label, type: value }))}
-                createKind="customer"
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */}
+              <EntityPicker
+                kind="customer"
+                allowCreate
+                nestedInDrawer
                 operatingCompanyId={operatingCompanyId}
+                value={lesseeCustomerId || null}
+                onChange={(id, option) => {
+                  setLesseeCustomerId(id ?? "");
+                  if (!id) return;
+                  if (option?.label) {
+                    setLessee((current) => ({ ...current, name: option.label }));
+                  }
+                  void getCustomerDetail(id, operatingCompanyId).then(({ customer }) =>
+                    setLessee((current) => ({
+                      ...current,
+                      name: entityLabel(customer.name, customer.id, "Customer"),
+                      address: [customer.billing_address, customer.billing_city, customer.billing_state, customer.billing_zip]
+                        .filter(Boolean)
+                        .join(", "),
+                    })),
+                  );
+                }}
+                enabled={open}
                 placeholder="Search customer…"
-                onSearch={setCustomerSearch}
-                loading={customersQuery.isLoading}
+                dataField="lease-to-own-lessee-customer"
+                className="w-full"
               />
-              <CappedListNotice shown={customerOptions.length} limit={customerSearch ? 200 : 500} total={customersQuery.data?.total ?? null} hint="Type to search for a customer not listed." />
             </div>
             <label className="flex flex-col gap-1 text-sm">Lessee (Buyer) legal name
               <input className="rounded-sm border px-2 py-1" value={lessee.name} onChange={(e) => setLessee({ ...lessee, name: e.target.value })} placeholder="Acme Transportation, Inc." />
