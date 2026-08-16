@@ -36,7 +36,8 @@ const SCAN_ROOT = "apps/backend/src";
 const BASELINE = "scripts/regclass-fallback-intent-baseline.json";
 
 /** A false-branch "declares intent" if it throws, returns an HTTP error, or names an explicit unavailable code. */
-const DECLARES_INTENT = /throw |reply\.code\(|E_[A-Z_]+|_unavailable|NOT_APPLIED|fail(?:s)?[ _-]?closed|503/;
+const DECLARES_INTENT =
+  /throw |reply\.code\(|E_[A-Z_]+|_unavailable|\bunavailable\b|undelivered|sources\.|NOT_APPLIED|fail(?:s)?[ _-]?closed|503/;
 
 export function scanSource(src) {
   let total = 0;
@@ -86,6 +87,7 @@ if (process.argv.includes("--selftest")) {
     ["bare probe counts as undeclared", () => scanSource(`const t = await q("SELECT to_regclass('a.b')"); if (!t) return false;`).bare, 1],
     ["throwing false-branch declares intent", () => scanSource(`const t = await q("SELECT to_regclass('a.b')"); if (!t) throw new Error("x");`).bare, 0],
     ["explicit unavailable code declares intent", () => scanSource(`to_regclass('a.b') ... loves_prices_daily_unavailable`).bare, 0],
+    ["literal unavailable signal declares intent", () => scanSource(`to_regclass('a.b'); return { unavailable: true };`).bare, 0],
     ["no probe at all", () => scanSource(`const x = 1;`).total, 0],
     ["RATCHET — a file gaining a bare probe fails", () => compare({ "f.ts": 2 }, { "f.ts": 1 }).length, 1],
     ["RATCHET — holding at baseline passes", () => compare({ "f.ts": 1 }, { "f.ts": 1 }).length, 0],
