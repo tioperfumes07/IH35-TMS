@@ -72,4 +72,4 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 
 `CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY` — **FIXED (ACCT-F5312, CC-1, 2026-08-15, PR #7567)** — see `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
 
-`LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES` — exact live USMCA inspection proves `/finance/overview`, `/finance/projections`, and `/finance/scenarios` are placeholders with no entity-scoped read, data model, persistence, creator, or reload. Prior broad Live row 745 is superseded for all three exact leaves by audit rows 828–829. Build the canonical versioned forecast/scenario model and real UI under the finance/money lane; reuse existing calculator math where applicable, preserve actual-vs-estimate identity, audit and void/supersede semantics, and do not invent GL posting. Exact paths and acceptance are on `GUARD-WORKORDERS`; `BLOCKS=LIVE-FINANCE-OVERVIEW,LIVE-FINANCE-PROJECTIONS,LIVE-FINANCE-SCENARIOS`; `OWNER-GATED=no`.
+`LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES` — **FIXED (ACCT-F5316, CC-1, 2026-08-15, PR #7585)** — migration applied to prod. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
