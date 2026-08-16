@@ -19,14 +19,16 @@
     "apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx",
     "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
     "apps/frontend/src/pages/finance/FinanceHubPage.tsx",
-    "scripts/verify-no-internal-language-in-prod-ui.mjs"
+    "scripts/verify-no-internal-language-in-prod-ui.mjs",
+    "scripts/verify-money-input-format.mjs"
   ],
   "acceptance": [
     { "kind": "guard", "check": "scripts/verify-dispatch-list-hos-columns.mjs asserts live DriverHosClockValue markup (was pinned to dead DriverHosClockCells)" },
     { "kind": "guard", "check": "scripts/verify-topbar-tracks-shrinkable.mjs reads the top-level .top-bar rule in responsive-breakpoints.css (was reading a Topbar.tsx inline style that no longer exists there)" },
     { "kind": "migration", "check": "db/migrations/202612685000_usmca_faro_factor_profile_genesis.sql inserts USMCA's factoring.factor row idempotently; rehearsed no-op on a Neon branch forked from prod" },
     { "kind": "guard", "check": "scripts/verify-all-module-list-toolbar-search-range-filter.mjs + verify-all-module-list-toolbar-connectivity.mjs assert settlements/finance toolbar route_hints point at their real canonical data-list surfaces" },
-    { "kind": "guard", "check": "scripts/verify-no-internal-language-in-prod-ui.mjs forbids /owner[- ]gated/i; 0 hits repo-wide (1610 files)" }
+    { "kind": "guard", "check": "scripts/verify-no-internal-language-in-prod-ui.mjs forbids /owner[- ]gated/i; 0 hits repo-wide (1610 files)" },
+    { "kind": "guard", "check": "scripts/verify-money-input-format.mjs findInputClassName ignores literal <input> text inside // comments so it checks the real <input>'s className, not the next element's" }
   ],
   "runtime_path": "src",
   "db_required": true,

@@ -30,6 +30,50 @@ function fail(msg) {
   failures.push(msg);
 }
 
+// Locate the real <input> element's className, ignoring any literal "<input>" mentioned inside
+// a `//` line comment (e.g. doc comments explaining the JSX below). Exported for --selftest.
+export function findInputClassName(src) {
+  const withoutComments = src.replace(/^\s*\/\/.*$/gm, "");
+  const m = withoutComments.match(/<input[\s\S]*?className="([^"]*)"/);
+  return m ? m[1] : null;
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    {
+      n: "comment mentions <input> above the real element -> real element's className found",
+      src: '// the <input> below already owns its frame\n<span className="a b c">$</span>\n<input className="text-left text-xs" />',
+      want: "text-left text-xs",
+    },
+    {
+      n: "no comment noise -> className found directly",
+      src: '<input className="text-left" />',
+      want: "text-left",
+    },
+    {
+      n: "regressed to text-right -> still detected (not masked by the comment-strip fix)",
+      src: '// the <input> below\n<input className="text-right" />',
+      want: "text-right",
+    },
+  ];
+  let bad = 0;
+  for (const c of cases) {
+    const got = findInputClassName(c.src);
+    if (got !== c.want) {
+      console.error(`  selftest FAIL — ${c.n}: got ${JSON.stringify(got)}, want ${JSON.stringify(c.want)}`);
+      bad++;
+    } else {
+      console.log(`  selftest OK — ${c.n}`);
+    }
+  }
+  if (bad) {
+    console.error(`SELFTEST FAILED — ${bad}`);
+    process.exit(1);
+  }
+  console.log("verify-money-input-format SELFTEST OK — 3/3");
+  process.exit(0);
+}
+
 function read(rel) {
   const p = path.join(ROOT, rel);
   if (!fs.existsSync(p)) {
@@ -44,11 +88,16 @@ const moneyInputRel = "apps/frontend/src/components/forms/MoneyInput.tsx";
 const moneyInput = read(moneyInputRel);
 if (moneyInput) {
   // The single <input> in MoneyInput must be left-aligned so the value hugs the $.
-  const inputMatch = moneyInput.match(/<input[\s\S]*?className="([^"]*)"/);
-  if (!inputMatch) {
+  // findInputClassName strips `//` line comments first — a literal "<input>" inside a *comment*
+  // (documenting the JSX below) would otherwise satisfy `<input[\s\S]*?className="` and the
+  // non-greedy match would then latch onto the NEXT element's className (e.g. the $ prefix
+  // <span>) instead of the real <input>'s, silently checking the wrong node. Verified live: this
+  // exact false-FAIL fired on the current file, which already carries `<input>` in a comment on
+  // the line right above the real element.
+  const cls = findInputClassName(moneyInput);
+  if (cls == null) {
     fail(`${moneyInputRel}: could not locate the money <input> className`);
   } else {
-    const cls = inputMatch[1];
     if (/\btext-right\b/.test(cls)) {
       fail(
         `${moneyInputRel}: money <input> is text-right again — that floats the value to the far edge and reopens the "$   0.00" gap. Use text-left so it renders "$0.00".`
