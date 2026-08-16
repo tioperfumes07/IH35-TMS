@@ -27,7 +27,7 @@ const EVIDENCE = {
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
   finance: ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "<ParityTable"],
   fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
-  form_425: ["apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx", "<ParityTable"],
+  form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
   home: ["apps/frontend/src/components/home/DriverDaySummaryCard.tsx", "<ParityTable"],
   insurance: ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", "<ParityTable"],
@@ -83,6 +83,7 @@ export function verify(source) {
 
   for (const [module, [file, token]] of Object.entries(EVIDENCE)) {
     need(file, token, `${module} must retain production list evidence ${token} in ${file}`);
+    const expectedSurface = file.replace("apps/frontend/src/", "");
     const matrixFile = `docs/specs/scoreboard/modules/${module}.required.json`;
     let matrix;
     try { matrix = JSON.parse(source[matrixFile]); }
@@ -90,6 +91,9 @@ export function verify(source) {
     for (const id of ["chrome.toolbar_search", "chrome.toolbar_range", ...(FILTER_MODULES.has(module) ? ["chrome.toolbar_filter"] : [])]) {
       const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
       if (!leaf?.required?.includes("connectivity")) failures.push(`${module}:${id} must require connectivity`);
+      if (leaf?.surface_path !== expectedSurface) {
+        failures.push(`${module}:${id} must name its exact production owner ${expectedSurface}, not a shared primitive`);
+      }
       const exact = EXACT_CONSUMERS[module];
       if (exact && (leaf?.route_hint !== exact.route || leaf?.surface_path !== exact.surface)) {
         failures.push(`${module}:${id} must point at its exact production list consumer, not borrow shared-component credit`);
@@ -130,6 +134,11 @@ if (process.argv.includes("--self-test")) {
     mutations.push(() => ({ ...source, [file]: source[file].replaceAll(token, "BROKEN_PRODUCTION_CONSUMER") }));
     const matrixFile = `docs/specs/scoreboard/modules/${module}.required.json`;
     mutations.push(() => ({ ...source, [matrixFile]: source[matrixFile].replace('"id": "chrome.toolbar_search"', '"id": "broken.toolbar_search"') }));
+    mutations.push(() => {
+      const matrix = JSON.parse(source[matrixFile]);
+      matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_search").surface_path = "components/table/UniversalListToolbar.tsx";
+      return { ...source, [matrixFile]: JSON.stringify(matrix) };
+    });
   }
   for (const module of FILTER_MODULES) {
     const matrixFile = `docs/specs/scoreboard/modules/${module}.required.json`;

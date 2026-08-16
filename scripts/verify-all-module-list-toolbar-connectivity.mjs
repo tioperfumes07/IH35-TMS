@@ -23,7 +23,7 @@ const EVIDENCE = {
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
   finance: ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "<ParityTable"],
   fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
-  form_425: ["apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx", "<ParityTable"],
+  form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
   home: ["apps/frontend/src/components/home/DriverDaySummaryCard.tsx", "<ParityTable"],
   insurance: ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", "<ParityTable"],
@@ -75,11 +75,15 @@ export function verify(source) {
 
   for (const [module, [file, token]] of Object.entries(EVIDENCE)) {
     need(file, token, `${module} must retain production list evidence ${token} in ${file}`);
+    const expectedSurface = file.replace("apps/frontend/src/", "");
     let matrix;
     try { matrix = JSON.parse(source[`docs/specs/scoreboard/modules/${module}.required.json`]); }
     catch (error) { failures.push(`${module} matrix must parse: ${error.message}`); continue; }
     const leaf = matrix.leaves?.find((candidate) => candidate.id === "chrome.toolbar_gear");
     if (!leaf?.required?.includes("connectivity")) failures.push(`${module}:chrome.toolbar_gear must require connectivity`);
+    if (leaf?.surface_path !== expectedSurface) {
+      failures.push(`${module}:chrome.toolbar_gear must name its exact production owner ${expectedSurface}, not a shared primitive`);
+    }
     const exact = EXACT_CONSUMERS[module];
     if (exact && (leaf?.route_hint !== exact.route || leaf?.surface_path !== exact.surface)) {
       failures.push(`${module}:chrome.toolbar_gear must point at its exact production list consumer, not borrow shared-component credit`);
@@ -116,6 +120,11 @@ if (process.argv.includes("--self-test")) {
   for (const module of Object.keys(EVIDENCE)) {
     const file = `docs/specs/scoreboard/modules/${module}.required.json`;
     mutations.push(() => ({ ...source, [file]: source[file].replace('"id": "chrome.toolbar_gear"', '"id": "broken.toolbar_gear"') }));
+    mutations.push(() => {
+      const matrix = JSON.parse(source[file]);
+      matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_gear").surface_path = "components/table/UniversalListToolbar.tsx";
+      return { ...source, [file]: JSON.stringify(matrix) };
+    });
   }
   mutations.push(() => ({ ...source, [HELP_MATRIX]: source[HELP_MATRIX].replace('"id": "chrome.toolbar_gear",', '"id": "chrome.toolbar_gear",').replace('"required": [],\n      "note": "N/A: Help has no configurable data-table columns."', '"required": ["connectivity"],\n      "note": "BROKEN"') }));
   for (const module of Object.keys(EXACT_CONSUMERS)) {

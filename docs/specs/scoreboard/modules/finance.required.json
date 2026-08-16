@@ -310,7 +310,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/finance/LoanWizardPage.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -322,7 +322,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/finance/LoanWizardPage.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -334,7 +334,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/finance/LoanWizardPage.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -346,7 +346,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/finance/LoanWizardPage.tsx"
     }
   ],
   "honesty_audit": {

@@ -202,7 +202,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/users/UserActivityTab.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -213,7 +213,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/users/UserActivityTab.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -224,7 +224,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/users/UserActivityTab.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -235,7 +235,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/users/UserActivityTab.tsx"
     }
   ],
   "honesty_audit": {
