@@ -1,16 +1,10 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listVendors } from "../../api/mdata";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPartsAssignment } from "../../api/maintenance";
 import { Button } from "../Button";
 import { MoneyInput } from "../forms/MoneyInput";
-import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { vendorReferenceOption } from "../parity/referenceOptionLabels";
-
-// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number (same pattern
-// as inventory/PartCreateDrawer.tsx's vendor picker).
-const VENDOR_PICKER_CAP = 200;
+import { EntityPicker } from "../parity/EntityPicker";
 
 type Props = {
   open: boolean;
@@ -26,25 +20,11 @@ type Props = {
 // direct DB insert. This modal is the missing write path.
 export function AddPartsLinkModal({ open, workOrderId, operatingCompanyId, onClose }: Props) {
   const queryClient = useQueryClient();
-  const [vendorSearch, setVendorSearch] = useState("");
   const [vendorId, setVendorId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [amountDollars, setAmountDollars] = useState<number | null>(null);
   const [qty, setQty] = useState("1");
   const [partDescription, setPartDescription] = useState("");
-
-  const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", operatingCompanyId, "parts-link", vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: VENDOR_PICKER_CAP,
-        search: vendorSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId) && open,
-  });
-  const vendorOptions = (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption);
 
   const reset = () => {
     setVendorId("");
@@ -102,19 +82,16 @@ export function AddPartsLinkModal({ open, workOrderId, operatingCompanyId, onClo
           <div>
             <label className="block text-xs font-medium text-gray-700">Vendor *</label>
             <div className="mt-1" data-testid="parts-link-vendor-picker">
-              <ReferenceSelect
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
+              <EntityPicker
+                kind="vendor"
+                allowCreate
+                operatingCompanyId={operatingCompanyId}
                 value={vendorId || null}
                 onChange={(next) => setVendorId(next ?? "")}
-                options={vendorOptions}
-                createKind="vendor"
-                operatingCompanyId={operatingCompanyId}
+                enabled={open}
                 placeholder="Select vendor…"
-                loading={vendorsQuery.isLoading}
-                onSearch={setVendorSearch}
-                onOptionCreated={(opt) => {
-                  setVendorId(opt.value);
-                  void vendorsQuery.refetch();
-                }}
+                dataField="parts-link-vendor"
               />
             </div>
           </div>

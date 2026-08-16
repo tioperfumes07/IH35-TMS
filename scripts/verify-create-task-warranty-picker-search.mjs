@@ -46,14 +46,11 @@ export function collectProblems(root = ROOT) {
     problems.push(`missing ${WARRANTY}`);
   } else {
     const code = warranty.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-    if (!/vendorSearch/.test(code) || !/onSearch=\{setVendorSearch\}/.test(code)) {
-      problems.push(`${WARRANTY}: vendor ReferenceSelect must wire vendorSearch`);
+    if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(code) || !/allowCreate/.test(code)) {
+      problems.push(`${WARRANTY}: vendor must use EntityPicker kind=vendor allowCreate`);
     }
-    if (!/createKind=["']vendor["']/.test(code)) {
-      problems.push(`${WARRANTY}: vendor picker must keep createKind=vendor`);
-    }
-    if (/listVendors\([\s\S]*?limit:\s*1000\s*\)/.test(code) && !/vendorSearch/.test(code)) {
-      problems.push(`${WARRANTY}: must not keep silent limit:1000 without search`);
+    if (/listVendors/.test(code)) {
+      problems.push(`${WARRANTY}: must not listVendors — EntityPicker server-searches`);
     }
   }
 

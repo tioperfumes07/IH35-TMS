@@ -13,7 +13,8 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
-  if (!/ReferenceSelect[\s\S]{0,180}createKind="vendor"/.test(s.creator) || !/vendor_id:\s*vendorId/.test(s.creator)) failures.push("creator must pick and submit canonical vendor FK");
+  if (!/kind=["']vendor["']/.test(s.creator) || !/allowCreate/.test(s.creator) || !/vendor_id:\s*vendorId/.test(s.creator)) failures.push("creator must pick and submit canonical vendor FK");
+  if (!/EntityPicker/.test(s.creator)) failures.push("creator must use EntityPicker for vendor");
   if (!/EXISTS \([\s\S]{0,160}FROM mdata\.vendors[\s\S]{0,160}deactivated_at IS NULL/.test(s.route)) failures.push("writer must validate active tenant vendor");
   if (!/FROM maintenance\.parts_inventory[\s\S]{0,100}operating_company_id = \$2::uuid/.test(s.route)) failures.push("writer must validate optional tenant part FK");
   if (!/linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid links must fail before insert");
@@ -29,14 +30,14 @@ function audit(s) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["picker", "creator", /createKind="vendor"/, 'createKind="customer"'],
+    ["picker", "creator", /kind=["']vendor["']/, 'kind="customer"'],
     ["payload", "creator", /vendor_id:\s*vendorId/, "vendor_id: undefined"],
     ["vendor validation", "route", /deactivated_at IS NULL/, "TRUE"],
     ["part validation", "route", /FROM maintenance\.parts_inventory/, "FROM maintenance.parts_catalog"],
     ["reject", "route", /linked_entity_not_in_operating_company/, "invalid_link"],
     ["schema", "route", /vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, ""],
     ["filter", "route", /pil\.vendor_id = \$\$\{values\.length\}::uuid/, "TRUE"],
-    ["api", "api", /query\.set\("vendor_id", filters\.vendor_id\)/, 'query.set("status", filters.vendor_id)'],
+    ["api", "api", /query\.set\("vendor_id", filters\.vendor_id\)/g, 'query.set("status", filters.vendor_id)'],
     ["reverse", "reverse", /listPartsAssignments\(operatingCompanyId, \{ vendor_id: vendorId \}\)/, "listPartsAssignments(operatingCompanyId)"],
     ["error", "reverse", /ListErrorBanner/g, "MissingError"],
     ["drill", "reverse", /kind="work_order"/, 'kind="vendor"'],
