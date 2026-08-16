@@ -47,3 +47,7 @@ Live USMCA `/home` has honest no-HOS copy but zero Search/Range/gear/Filter cont
 ## CODEX HANDOFF · 2026-08-16 · LV-COMPLIANCE-TOOLBAR-BORROWS-FILINGS-TAB
 
 Live `/compliance` shows Search/Range/gear on the default 37-row Filings table, while `/compliance?tab=hos_viewer` mounts matrix-claimed `HosViewerSection` with only driver/date controls. Correct the exact leaf owner in the matrix and both vertical guards; do not invent a table on HOS Viewer. Exact OPEN row, audit 884, and `BLOCKS=LIVE-COMPLIANCE-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-TASKS-TOOLBAR-LEAVES-POINT-TASK-BOARD
+
+Live `/tasks` Task Board has Filters and two task cards but no Search/Range/gear. Live `/tasks/report` mounts matrix-claimed `TasksReportPage` with all three controls and one scoped assignee row. Bind the three exact leaves to `/tasks/report` and extend both vertical exact-consumer ratchets. Exact OPEN row, audit 885, and `BLOCKS=LIVE-TASKS-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
