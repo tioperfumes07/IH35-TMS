@@ -3432,5 +3432,10 @@
     "name": "verify-owner-all-entities-non-qbo-flags-on",
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
+  },
+  "3609": {
+    "name": "verify-cardlink-plain-click-selects-in-place",
+    "claimer": "cc-1",
+    "claimed_at": "2026-08-15"
   }
 }
