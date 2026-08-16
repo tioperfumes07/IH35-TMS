@@ -56,6 +56,7 @@ const EXACT_CONSUMERS = {
   tasks: { route: "/tasks/report", surface: "pages/tasks/TasksReportPage.tsx" },
   users: { route: "/users", surface: "pages/Users.tsx" },
   drivers: { route: "/drivers", surface: "pages/drivers/DriversTable.tsx" },
+  settlements: { route: "/driver-finance/settlements", surface: "pages/driver-finance/components/SettlementsTable.tsx" },
 };
 
 function read() {
