@@ -22,11 +22,23 @@ export type InboxReportingDriverRow = {
   approved_advance_cents: number;
 };
 
+// LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK — per-trip advance volume, computed from
+// cash_advance_requests.load_id (migration 202606251600_load_cash_advance_link.sql). Only requests
+// with a real load_id appear here.
+export type InboxReportingLoadRow = {
+  load_id: string;
+  load_number: string;
+  total_requests: number;
+  approved: number;
+  approved_advance_cents: number;
+};
+
 export type InboxReportingData = {
   from: string;
   to: string;
   summary: InboxReportingSummary;
   by_driver: InboxReportingDriverRow[];
+  by_load: InboxReportingLoadRow[];
   not_computed: string[];
 };
 

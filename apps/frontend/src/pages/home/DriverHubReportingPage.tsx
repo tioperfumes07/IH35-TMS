@@ -13,6 +13,7 @@ import {
   getInboxReporting,
   type InboxReportingData,
   type InboxReportingDriverRow,
+  type InboxReportingLoadRow,
 } from "../../api/driverInboxReporting";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
@@ -142,6 +143,41 @@ const DRIVER_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingDriverRow>> = [
   },
 ];
 
+// LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK — per-trip advance volume, only rows with a real
+// load link (see api/driverInboxReporting.ts's InboxReportingLoadRow).
+const LOAD_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingLoadRow>> = [
+  {
+    key: "load_number",
+    label: "Load",
+    sortable: true,
+    render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} />,
+  },
+  {
+    key: "total_requests",
+    label: "Total",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => r.total_requests,
+  },
+  {
+    key: "approved",
+    label: "Approved",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right text-[#334155]",
+    render: (r) => r.approved,
+  },
+  {
+    key: "approved_advance_cents",
+    label: "Approved volume",
+    sortable: true,
+    className: "text-right",
+    cellClass: "text-right",
+    render: (r) => fmtCents(r.approved_advance_cents),
+  },
+];
+
 export function DriverHubReportingPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -237,6 +273,22 @@ export function DriverHubReportingPage() {
               emptyText="No requests in this period."
               tableTestId="driver-hub-reporting-table"
               rowTestId={(r) => `driver-hub-reporting-row-${r.driver_id}`}
+              initialPageSize={50}
+            />
+          </div>
+
+          <div className="rounded-sm border border-gray-200 bg-white p-2">
+            <div className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-[#8A92AB]">
+              By load (LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK)
+            </div>
+            <ParityTable
+              rows={data.by_load}
+              columns={LOAD_REPORTING_COLUMNS}
+              rowKey={(r) => r.load_id}
+              storageKey="driver-hub-reporting-by-load"
+              emptyText="No load-linked requests in this period."
+              tableTestId="driver-hub-reporting-by-load-table"
+              rowTestId={(r) => `driver-hub-reporting-by-load-row-${r.load_id}`}
               initialPageSize={50}
             />
           </div>
