@@ -7,27 +7,32 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const REGISTRY = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
 const ROUTE = "apps/backend/src/mdata/drivers.routes.ts";
 const TYPE = "apps/frontend/src/types/api.ts";
+const IMPORT_ROUTE = "apps/backend/src/mdata/drivers-import.routes.ts";
 const LABEL = "verify-driver-picker-duplicate-disambiguation";
 
-export function audit({ registry, route, type }) {
+export function audit({ registry, route, type, importRoute }) {
   const failures = [];
   if (!/sublabel:\s*\[[\s\S]{0,500}d\.phone[\s\S]{0,500}d\.samsara_driver_id/.test(registry)) failures.push("shared driver picker lacks phone + Samsara disambiguation");
   if (!/qbo_class_id,[\s\S]{0,100}samsara_driver_id,[\s\S]{0,100}default_expense_account_id/.test(route)) failures.push("driver roster API does not project samsara_driver_id");
   if (!/samsara_driver_id\?:\s*string\s*\|\s*null/.test(type)) failures.push("Driver contract lacks samsara_driver_id");
   if (/slice\([^)]*-[48]/.test(registry)) failures.push("picker disambiguation must not expose truncated UUIDs");
+  const lockAt = importRoute.indexOf("pg_advisory_xact_lock");
+  const rosterReadAt = importRoute.indexOf("SELECT first_name, last_name FROM mdata.drivers");
+  if (lockAt < 0 || rosterReadAt < 0 || lockAt > rosterReadAt) failures.push("driver importer does not serialize entity dedup before roster read");
   return failures;
 }
 
-const sources = () => ({ registry: readFileSync(join(ROOT, REGISTRY), "utf8"), route: readFileSync(join(ROOT, ROUTE), "utf8"), type: readFileSync(join(ROOT, TYPE), "utf8") });
+const sources = () => ({ registry: readFileSync(join(ROOT, REGISTRY), "utf8"), route: readFileSync(join(ROOT, ROUTE), "utf8"), type: readFileSync(join(ROOT, TYPE), "utf8"), importRoute: readFileSync(join(ROOT, IMPORT_ROUTE), "utf8") });
 if (process.argv.includes("--selftest")) {
   const clean = sources();
   const mutations = [
     { ...clean, registry: clean.registry.replaceAll("d.samsara_driver_id", "null") },
     { ...clean, route: clean.route.replace("            samsara_driver_id,\n", "") },
     { ...clean, type: clean.type.replace("  samsara_driver_id?: string | null;\n", "") },
+    { ...clean, importRoute: clean.importRoute.replace("pg_advisory_xact_lock", "pg_advisory_xact_unlock") },
   ];
   if (mutations.some((m) => audit(m).length === 0) || audit(clean).length) process.exit(1);
-  console.log(`${LABEL}: selftest PASS — 3/3 planted defects rejected`);
+  console.log(`${LABEL}: selftest PASS — 4/4 planted defects rejected`);
 } else {
   const failures = audit(sources());
   if (failures.length) { failures.forEach((f) => console.error(`${LABEL}: ${f}`)); process.exit(1); }

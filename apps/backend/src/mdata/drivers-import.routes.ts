@@ -239,6 +239,15 @@ export async function registerDriversImportRoutes(app: FastifyInstance) {
       if (!operatingCompanyId) return { error: "operating_company_id_unresolved" as const };
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
+      // Serialize imports for this entity before reading the roster. Without this lock, two commit
+      // requests can both classify the same source row as `will_create` and then insert duplicate
+      // drivers. A database UNIQUE on name/phone would be unsafe because distinct people can share
+      // either value; the transaction-scoped entity lock closes only the importer race.
+      await client.query(
+        `SELECT pg_advisory_xact_lock(hashtextextended('mdata.drivers.import:' || $1::text, 0))`,
+        [operatingCompanyId]
+      );
+
       const existing = await client.query(
         `SELECT first_name, last_name FROM mdata.drivers WHERE operating_company_id = $1::uuid`,
         [operatingCompanyId]
