@@ -25,7 +25,7 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (id?: string, label?: string) => void;
 };
 
 type FormState = {
@@ -214,9 +214,9 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         recovery_rail: form.recovery_rail,
         repair_books_treatment: form.repair_books_treatment,
       }),
-    onSuccess: () => {
+    onSuccess: (claim) => {
       pushToast("Claim created successfully.", "success");
-      onCreated();
+      onCreated(claim.id, claim.claim_number);
     },
     onError: (error) => {
       if (!(error instanceof ApiError)) {

@@ -369,8 +369,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     entityScoped: true,
     evidence: "apps/backend/src/insurance/claim.routes.ts (company-scoped SELECT / INSERT)",
     inlineCreate: {
-      available: false,
-      reason: "An insurance claim is an audited transaction with policy, loss, reserve and recovery fields; create it in Insurance, then link it here.",
+      available: true,
     },
     serverSearch: false,
     async list(operatingCompanyId) {

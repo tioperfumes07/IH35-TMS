@@ -8,7 +8,9 @@
  *   - inline "+ Create ___" is the FIRST ROW INSIDE the dropdown, present before any keystroke;
  *   - picking an option hands the parent the CANONICAL ID plus its human-labelled roster option;
  *   - a filter (allowCreate={false}) shows no create row;
- *   - a kind that refuses inline create (a transaction) shows no create row even by default;
+ *   - a kind that refuses inline create (for example, load) shows no create row even by default;
+ *   - an audited entity with a real canonical nested creator (insurance claim) returns and selects
+ *     its persisted id and human label;
  *   - a value that is not in the roster stays visible instead of silently blanking.
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -21,6 +23,7 @@ import { EntityPicker } from "../EntityPicker";
 const listDrivers = vi.fn();
 const listLoads = vi.fn();
 const listVendors = vi.fn();
+const listInsuranceClaims = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listDrivers: (...args: unknown[]) => listDrivers(...args),
@@ -29,7 +32,10 @@ vi.mock("../../../api/mdata", () => ({
 }));
 vi.mock("../../../api/loads", () => ({ listLoads: (...args: unknown[]) => listLoads(...args) }));
 vi.mock("../../../api/maintenance", () => ({ listWorkOrders: vi.fn().mockResolvedValue({ work_orders: [] }) }));
-vi.mock("../../../api/insurance", () => ({ listInsurancePolicies: vi.fn().mockResolvedValue({ policies: [] }) }));
+vi.mock("../../../api/insurance", () => ({
+  listInsurancePolicies: vi.fn().mockResolvedValue({ policies: [] }),
+  listInsuranceClaims: (...args: unknown[]) => listInsuranceClaims(...args),
+}));
 vi.mock("../../../api/accounting", () => ({ listFactoringAdvances: vi.fn().mockResolvedValue({ rows: [] }) }));
 
 // The create surfaces are heavyweight real forms; C1's contract is only that the picker DELEGATES
@@ -41,6 +47,10 @@ vi.mock("../../drivers/CreateDriverModal", () => ({
 }));
 vi.mock("../../fleet/CreateUnitModal", () => ({ CreateUnitModal: () => null }));
 vi.mock("../../insurance/PolicyCreateModal", () => ({ PolicyCreateModal: () => null }));
+vi.mock("../../insurance/ClaimCreateModal", () => ({
+  ClaimCreateModal: ({ open, onCreated }: { open: boolean; onCreated: (id: string, label: string) => void }) =>
+    open ? <button type="button" onClick={() => onCreated("claim-created", "CLM-CREATED")}>Complete claim create</button> : null,
+}));
 vi.mock("../InlineCreateDrawer", () => ({
   InlineCreateDrawer: ({ open, kind, onCreated }: { open: boolean; kind: string; onCreated: (record: { id: string; label: string }) => void }) =>
     open ? (
@@ -86,6 +96,8 @@ describe("EntityPicker (C1 picker law)", () => {
     });
     listVendors.mockReset();
     listVendors.mockResolvedValue({ vendors: [{ id: "vendor-1", name: "Roadside Supply", vendor_type: "Shop" }] });
+    listInsuranceClaims.mockReset();
+    listInsuranceClaims.mockResolvedValue({ claims: [{ id: "claim-1", claim_number: "CLM-1", status: "open" }] });
   });
 
   it("reads the canonical roster company-scoped", async () => {
@@ -219,6 +231,19 @@ describe("EntityPicker (C1 picker law)", () => {
     await user.click(await screen.findByPlaceholderText("Select driver"));
     await screen.findByText("Jane Driver");
     expect(screen.queryByText("+ Create driver")).toBeNull();
+  });
+
+  it("creates a claim through the canonical creator and auto-selects the returned row", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="insurance_claim" operatingCompanyId={COMPANY} value={null} onChange={onChange} />);
+    await user.click(await screen.findByPlaceholderText("Select insurance claim"));
+    const createRow = await screen.findByText("+ Create insurance claim");
+    const rosterRow = await screen.findByText("CLM-1");
+    expect(createRow.compareDocumentPosition(rosterRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await user.click(createRow);
+    await user.click(await screen.findByText("Complete claim create"));
+    expect(onChange).toHaveBeenCalledWith("claim-created", { value: "claim-created", label: "CLM-CREATED" });
   });
 
   it("a TRANSACTION kind offers no create row even by default", async () => {

@@ -4,10 +4,10 @@
  *
  * Audit finding: neither module has a vendor/customer/account/category/class/item
  * *catalog* picker (ReferenceSelect's supported createKind list). Every entity picker in
- * these two modules resolves an operational record — insurance policy/claim/lawsuit,
- * driver, unit, load, accident report, legal matter/contract signer — none of which are
- * catalog entities with an inline "+ Add new" quick-create backend. This guard locks that
- * finding (no QboCombobox / raw UUID datalist regressions) and locks the two structural
+ * these two modules resolves either a catalog or an operational record. Operational create
+ * surfaces that explicitly owe picker_law (including insurance claims) reuse their real canonical
+ * creator through EntityPicker; filters still never create. This guard locks the absence of dirty
+ * QboCombobox / raw UUID datalist regressions and locks the two structural
  * fixes actually shipped tonight:
  *   1. Insurance/legal money create shells (Policy / Claim / Lawsuit / Contract / Template /
  *      Lease-to-Own / Truck Lease) run on ParityDrawer (QBO side panel), not centered Modal.
@@ -52,8 +52,8 @@ for (const rel of noDirtyPickerFiles) {
 }
 
 const lawsuitCreate = read("apps/frontend/src/components/insurance/LawsuitCreateModal.tsx");
-if (!/<EntityPicker[\s\S]*?kind=["']insurance_claim["'][\s\S]*?allowCreate=\{false\}/.test(lawsuitCreate)) {
-  failures.push("LawsuitCreateModal linked claim must use EntityPicker kind=insurance_claim in filter mode");
+if (!/<EntityPicker[\s\S]*?kind=["']insurance_claim["'][\s\S]*?allowCreate(?:\s|=)/.test(lawsuitCreate)) {
+  failures.push("LawsuitCreateModal linked claim must use the create-enabled insurance_claim EntityPicker");
 }
 if (/<select[\s\S]*?value=\{form\.claim_id\}/.test(lawsuitCreate)) {
   failures.push("LawsuitCreateModal linked claim must not regress to a native UUID-valued select");
