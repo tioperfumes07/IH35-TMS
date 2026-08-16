@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * CLS-GEOFENCE-LOC-REF — geofence location_ref must use ReferenceSelect for customer/vendor sites.
+ * CLS-GEOFENCE-LOC-REF — geofence location_ref must use EntityPicker for customer/vendor sites
+ * (server-search; no capped listCustomers/listVendors roster) and Combobox for yards.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,8 +15,14 @@ export function collectProblems(root = ROOT) {
   const problems = [];
   const src = fs.readFileSync(path.join(root, PAGE), "utf8");
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/createKind=["']customer["']/.test(src) || !/createKind=["']vendor["']/.test(src)) {
-    problems.push(`${PAGE}: customer_site + vendor_site location refs must use ReferenceSelect`);
+  if (!/<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/.test(code)) {
+    problems.push(`${PAGE}: customer_site location ref must use EntityPicker kind=customer allowCreate`);
+  }
+  if (!/<EntityPicker[\s\S]*?kind=["']vendor["'][\s\S]*?allowCreate/.test(code)) {
+    problems.push(`${PAGE}: vendor_site location ref must use EntityPicker kind=vendor allowCreate`);
+  }
+  if (/listCustomers\(|listVendors\(/.test(code)) {
+    problems.push(`${PAGE}: must not capped-listCustomers/listVendors — EntityPicker owns roster`);
   }
   if (/locationKind === "customer_site"[\s\S]{0,400}<select/.test(code)) {
     problems.push(`${PAGE}: customer_site must not use plain <select> for location ref`);
@@ -33,11 +40,36 @@ export function collectProblems(root = ROOT) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const bad = '<select value={locationRefId} onChange={e => setLocationRefId(e.target.value)} />';
-  const good = '<ReferenceSelect createKind="customer" createKind="vendor" value={locationRefId} />';
-  if (!/<select[\s\S]*locationRefId/.test(bad) || !/ReferenceSelect/.test(good)) {
-    console.error(LABEL, "SELFTEST FAIL");
+  if (collectProblems().length) {
+    console.error(LABEL, "SELFTEST FAIL — live page rejected");
     process.exit(1);
+  }
+  const good = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const mutantCustomer = good.replace('dataField="geofence-customer-site"', 'dataField="geofence-broken"').replace(
+    /<EntityPicker\n                  kind="customer"/,
+    '<EntityPicker\n                  kind="unit"'
+  );
+  const mutantVendor = good.replace(
+    /<EntityPicker\n                  kind="vendor"/,
+    '<EntityPicker\n                  kind="unit"'
+  );
+  const mutantList = good + "\nlistVendors({ limit: 5000 });\n";
+  for (const [name, mutant] of [
+    ["customer-kind", mutantCustomer],
+    ["vendor-kind", mutantVendor],
+    ["listVendors-regress", mutantList],
+  ]) {
+    const tmpDir = fs.mkdtempSync(path.join(ROOT, "tmp-geofence-loc-"));
+    try {
+      fs.mkdirSync(path.join(tmpDir, "apps/frontend/src/pages/operations"), { recursive: true });
+      fs.writeFileSync(path.join(tmpDir, PAGE), mutant);
+      if (!collectProblems(tmpDir).length) {
+        console.error(LABEL, `SELFTEST FAIL — ${name} escaped`);
+        process.exit(1);
+      }
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   }
   console.log(LABEL, "SELFTEST OK");
   process.exit(0);
