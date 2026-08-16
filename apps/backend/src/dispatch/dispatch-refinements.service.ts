@@ -41,6 +41,7 @@ export type LoadStopInput = {
   city?: string | null;
   state?: string | null;
   country?: string | null;
+  postal_code?: string | null;
   address_line1?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -304,6 +305,7 @@ export async function listLoadStopsRefined(userId: string, operatingCompanyId: s
           ls.city,
           ls.state,
           ls.country,
+          ls.postal_code,
           ls.scheduled_arrival_at,
           ls.scheduled_departure_at,
           ls.appointment_start_at,
@@ -321,6 +323,7 @@ export async function listLoadStopsRefined(userId: string, operatingCompanyId: s
         INNER JOIN mdata.loads l ON l.id = ls.load_id
         WHERE ls.load_id = $1
           AND l.operating_company_id = $2::uuid
+          AND ls.soft_deleted_at IS NULL
         ORDER BY ls.sequence_number ASC
       `,
       [loadId, operatingCompanyId]
@@ -357,7 +360,7 @@ export async function replaceLoadStopsRefined(
           `
             INSERT INTO mdata.load_stops (
               load_id, sequence_number, stop_type,
-              address_line1, city, state, country,
+              address_line1, city, state, country, postal_code,
               scheduled_arrival_at, appointment_start_at, appointment_end_at,
               notes, stop_notes, status,
               latitude, longitude, signature_required, photo_required,
@@ -365,11 +368,11 @@ export async function replaceLoadStopsRefined(
             )
             VALUES (
               $1,$2,$3::mdata.stop_type_enum,
-              $4,$5,$6,$7,
-              $8,$9,$10,
-              $11,$11,'pending'::mdata.stop_status_enum,
-              $12,$13,$14,$15,
-              CASE WHEN $9 IS NOT NULL THEN 'appointment'::mdata.time_window_type_enum ELSE 'first_come_first_serve'::mdata.time_window_type_enum END
+              $4,$5,$6,$7,$8,
+              $9,$10,$11,
+              $12,$12,'pending'::mdata.stop_status_enum,
+              $13,$14,$15,$16,
+              CASE WHEN $10 IS NOT NULL THEN 'appointment'::mdata.time_window_type_enum ELSE 'first_come_first_serve'::mdata.time_window_type_enum END
             )
           `,
           [
@@ -380,6 +383,7 @@ export async function replaceLoadStopsRefined(
             s.city ?? null,
             s.state ?? null,
             s.country ?? "US",
+            s.postal_code ?? null,
             apStart,
             apStart,
             apEnd,

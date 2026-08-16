@@ -132,7 +132,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-SEND-NOREASON` | — | — | — | — | — | — | — | — |
 | ☑ | `LV-INV-UUID` | — | CC-3 / mechanical+FE | Cursor | #5555 / #5556 | 2026-08-10 | from-load linehaul uses `load_number` not UUID; guards exit 0 | `scripts/verify-invoice-line-no-uuid-description.mjs` · `scripts/verify-invoice-line-load-number-not-uuid.mjs` | Register tick Cursor LEAD |
 | ☑ | `LV-LOAD-EDIT-BLANK` | — | CC-3 / mechanical+FE | Cursor | #5515 | 2026-08-10 | Edit-load hydrates primary driver/unit/trip_type; board FIXED on main | #5515 | Register tick |
-| ☐ | `LV-STOPS-NOSAVE` | — | — | — | — | — | — | — | — |
+| ☑ | `LV-STOPS-NOSAVE` | P0 | CC-3 / mechanical+FE | Cursor | this-PR | 2026-08-15 | Save→POST wired; postal_code round-trip; list filters soft_deleted_at; guard+selftest exit 0 | `scripts/verify-load-stops-save-wired.mjs` + step **3604** | Register tick Cursor LEAD |
 | ☐ | `LV-LOAD-UNASSIGNED` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-OUTBOX-ERRCOL` | — | — | — | — | — | — | — | — |
 | ☑ | `LV-DRV-TAB` | — | CC-3 / mechanical+FE | Cursor | #5546 / #5547 | 2026-08-10 | Probation status tab/filter surfaces default Create Driver status | #5546 | Register tick |

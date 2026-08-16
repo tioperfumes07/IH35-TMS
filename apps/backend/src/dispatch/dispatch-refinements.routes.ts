@@ -34,6 +34,7 @@ const stopBodyItem = z.object({
   city: z.string().trim().max(120).optional().nullable(),
   state: z.string().trim().max(120).optional().nullable(),
   country: z.string().trim().max(120).optional().nullable(),
+  postal_code: z.string().trim().max(32).optional().nullable(),
   address_line1: z.string().trim().max(300).optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),

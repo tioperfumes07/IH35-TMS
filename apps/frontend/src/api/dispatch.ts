@@ -646,6 +646,7 @@ export type RefinedLoadStop = {
   city: string | null;
   state: string | null;
   country: string | null;
+  postal_code?: string | null;
   address_line1: string | null;
   scheduled_arrival_at: string | null;
   appointment_start_at: string | null;
@@ -674,6 +675,7 @@ export function replaceLoadStopsDispatch(
       city?: string | null;
       state?: string | null;
       country?: string | null;
+      postal_code?: string | null;
       address_line1?: string | null;
       latitude?: number | null;
       longitude?: number | null;
