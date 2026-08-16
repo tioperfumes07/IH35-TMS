@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7613,
+      "title": "FINDING: LV-FINANCE-MONEY-FIELDS-HIDDEN-BEHIND-GENERIC-NUMBER-HELPER",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7613",
+      "sha": "4a1b61b8f",
+      "committedAtIso": "2026-08-15T20:11:57-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:11 PM CT",
+      "url": "",
+      "sha": "2a39ed777",
+      "committedAtIso": "2026-08-16T01:11:49Z"
+    },
+    {
       "number": 7612,
       "title": "FINDING: LV-QUICK-ASSIGN-CANONICAL-UNASSIGNED-HIDDEN",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7605",
       "sha": "f96705115",
       "committedAtIso": "2026-08-15T20:05:34-05:00"
-    },
-    {
-      "number": 7593,
-      "title": "FINDING: CLAIM-RESERVE-3602",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7593",
-      "sha": "5f2a501c3",
-      "committedAtIso": "2026-08-15T20:04:44-05:00"
-    },
-    {
-      "number": 7591,
-      "title": "Cursor- fix(chrome): LV-MOBILE-RESPONSIVE-REGRESSION-MEDCARD-LISTTOOLBAR — h-8 touch targets + register signoff",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7591",
-      "sha": "7531eb543",
-      "committedAtIso": "2026-08-15T20:04:04-05:00"
     }
   ]
 }
