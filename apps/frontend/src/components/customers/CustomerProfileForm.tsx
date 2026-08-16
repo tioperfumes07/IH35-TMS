@@ -544,8 +544,8 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
             />
             <p className="mt-1 text-xs text-gray-500">
               Link this customer as a sub-customer of an existing top-level customer. Leave blank for a top-level
-              customer. A parent must itself be top-level (no nesting beyond two levels). Inline create writes
-              mdata.customers (same table this picker lists).
+              customer. A parent must itself be top-level (no nesting beyond two levels). Adding a parent here
+              saves it to the customer list and selects it in this form.
             </p>
           </div>
         </div>
@@ -624,8 +624,8 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               }}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Option-B recommendation only: pre-fills the income account when creating an invoice line for
-              this customer. Always shown as an editable suggestion — never posted silently.
+              Suggested when creating an invoice line for this customer. You can always change it before
+              saving; it is never posted automatically.
             </p>
           </div>
         </div>

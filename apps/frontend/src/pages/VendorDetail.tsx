@@ -726,8 +726,8 @@ export function VendorDetailPage() {
               }}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Option-B recommendation only: pre-fills the expense account on new bills for this vendor.
-              Always editable — never posted silently.
+              Suggested on new bills for this vendor. You can always change it before saving; it is never
+              posted automatically.
             </p>
           </DataPanelRow>
           <DataPanelRow>
@@ -868,7 +868,7 @@ export function VendorDetailPage() {
               <Link to="/factoring" className="font-medium text-slate-900 underline">
                 Factoring → active factor profile
               </Link>{" "}
-              (<span className="text-gray-500">(factoring.factor columns — not vendor notes).</span>
+              <span className="text-gray-500">Rate fields are managed on that profile, not in vendor notes.</span>
             </p>
           </DataPanelRow>
           <DataPanelRow>

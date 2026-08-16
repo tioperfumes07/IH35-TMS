@@ -374,7 +374,7 @@ export function VendorCreateModal({
         </Section>
 
         {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) */}
-        <Section title="Terms & Option-B recommendation">
+        <Section title="Terms & default expense account">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Payment terms</span>

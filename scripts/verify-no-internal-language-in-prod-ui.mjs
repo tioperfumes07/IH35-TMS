@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import ts from "typescript";
 
 const repoRoot = process.cwd();
 const targetRoot = path.join(repoRoot, "apps/frontend/src");
@@ -45,18 +46,113 @@ const forbiddenPatterns = [
 const VISIBLE_SCHEMA_BASELINE = new Set([
   // QBO system explanation is outside the USMCA TMS-native sprint; do not expand this exception.
   "apps/frontend/src/pages/system/SystemModulePage.tsx::accounting.bills",
+  // Protected money-lane regression routed as CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY-REGRESSION.
+  // Exact keys only: the TSX AST detector rejects any new file/token pair and these shrink with CC-1's fix.
+  "apps/frontend/src/pages/accounting/ItemsCatalog.tsx::catalogs.items",
+  "apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx::catalogs.classes",
+  "apps/frontend/src/pages/banking/BankingHome.tsx::catalogs.accounts",
+  "apps/frontend/src/pages/banking/BankingHome.tsx::banking.bank_accounts",
+  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx::documents.attachments",
+  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx::banking.bank_transactions",
+  "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx::factoring.factor",
 ]);
+
+const USER_COPY_PROPS = new Set([
+  "aria-label",
+  "description",
+  "emptyMessage",
+  "helperText",
+  "label",
+  "placeholder",
+  "title",
+]);
+
+const PHYSICAL_SCHEMA_NAMES = new Set([
+  "accounting",
+  "banking",
+  "catalogs",
+  "dispatch",
+  "documents",
+  "driver_finance",
+  "factoring",
+  "fuel",
+  "insurance",
+  "legal",
+  "maintenance",
+  "mdata",
+  "org",
+  "reporting",
+  "reports",
+  "safety",
+]);
+
+function visibleJsxCopySegments(source, relativePath) {
+  if (!relativePath.endsWith(".tsx")) return [];
+  const sourceFile = ts.createSourceFile(
+    relativePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const segments = [];
+  const visit = (node) => {
+    if (ts.isJsxText(node) && node.getText(sourceFile).trim()) {
+      segments.push({ text: node.getText(sourceFile), pos: node.getStart(sourceFile) });
+    } else if (ts.isJsxAttribute(node) && USER_COPY_PROPS.has(node.name.getText(sourceFile))) {
+      const initializer = node.initializer;
+      if (initializer && ts.isStringLiteral(initializer)) {
+        segments.push({ text: initializer.text, pos: initializer.getStart(sourceFile) });
+      } else if (
+        initializer &&
+        ts.isJsxExpression(initializer) &&
+        initializer.expression &&
+        (ts.isStringLiteral(initializer.expression) || ts.isNoSubstitutionTemplateLiteral(initializer.expression))
+      ) {
+        segments.push({ text: initializer.expression.text, pos: initializer.expression.getStart(sourceFile) });
+      }
+    } else if (
+      ts.isJsxExpression(node) &&
+      node.expression &&
+      (ts.isStringLiteral(node.expression) || ts.isNoSubstitutionTemplateLiteral(node.expression))
+    ) {
+      segments.push({ text: node.expression.text, pos: node.expression.getStart(sourceFile) });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return segments;
+}
 
 export function visibleSchemaNames(source, relativePath) {
   const matches = [];
-  const elementRe = /<(?:code|span)\b[^>]*>\s*([a-z][a-z0-9_]*\.[a-z][a-z0-9_]*)\s*<\/(?:code|span)>/g;
-  for (const match of source.matchAll(elementRe)) {
-    const token = match[1];
-    const key = `${relativePath}::${token}`;
-    if (!VISIBLE_SCHEMA_BASELINE.has(key)) matches.push({ token, key });
+  const seen = new Set();
+  for (const segment of visibleJsxCopySegments(source, relativePath)) {
+    for (const tokenMatch of segment.text.matchAll(/\b([a-z][a-z0-9_]*\.[a-z][a-z0-9_]*)\b/g)) {
+      const token = tokenMatch[1];
+      if (!PHYSICAL_SCHEMA_NAMES.has(token.split(".", 1)[0])) continue;
+      const key = `${relativePath}::${token}`;
+      if (!VISIBLE_SCHEMA_BASELINE.has(key) && !seen.has(key)) {
+        seen.add(key);
+        matches.push({ token, key, pos: segment.pos });
+      }
+    }
   }
   return matches;
 }
+
+export function visibleArchitectureJargon(source, relativePath) {
+  return visibleJsxCopySegments(source, relativePath)
+    .filter((segment) => /\bOption-[A-Z]\b/.test(segment.text))
+    .map((segment) => ({ text: segment.text.trim(), pos: segment.pos }));
+}
+
+/*
+  // LV-OPERATOR-COPY-INTERNAL-MODEL-JARGON: the first guard only inspected exact <code>/<span>
+  // children. A multiline <p> therefore shipped "mdata.customers" to operators while this guard
+  // stayed green. Parse TSX and inspect only rendered JSX text/user-copy props; implementation
+  // strings, event handlers, comments and registry metadata remain outside this presentation AST.
+*/
 
 /**
  * CLASS RULE (added 2026-08-11) — a screen may not tell an operator to go set an internal feature
@@ -143,12 +239,33 @@ if (!fs.existsSync(targetRoot)) {
 if (process.argv.includes("--selftest")) {
   const good = visibleSchemaNames("<p>Recorded work-order parts.</p>", "apps/frontend/src/pages/example.tsx");
   const bad = visibleSchemaNames("<code>maintenance.parts_purchases</code>", "apps/frontend/src/pages/example.tsx");
+  const badMultiline = visibleSchemaNames(
+    "<p>Adding here writes\n  mdata.customers (same table this picker lists).</p>",
+    "apps/frontend/src/pages/example.tsx",
+  );
   const protectedExisting = visibleSchemaNames(
     '<code className="text-xs">accounting.bills</code>',
     "apps/frontend/src/pages/system/SystemModulePage.tsx",
   );
-  if (good.length !== 0 || bad.length !== 1 || bad[0]?.token !== "maintenance.parts_purchases" || protectedExisting.length !== 0) {
+  if (
+    good.length !== 0 ||
+    bad.length !== 1 ||
+    bad[0]?.token !== "maintenance.parts_purchases" ||
+    badMultiline.length !== 1 ||
+    badMultiline[0]?.token !== "mdata.customers" ||
+    protectedExisting.length !== 0
+  ) {
     console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — visible schema-name mutation escaped");
+    process.exit(1);
+  }
+  const architectureChecks = [
+    visibleArchitectureJargon('<Section title="Terms & Option-B recommendation" />', "apps/frontend/src/pages/example.tsx").length === 1,
+    visibleArchitectureJargon("<p>Option-B recommendation only: pre-fills the account.</p>", "apps/frontend/src/pages/example.tsx").length === 1,
+    visibleArchitectureJargon("// Option-B implementation note", "apps/frontend/src/pages/example.tsx").length === 0,
+    visibleArchitectureJargon("const value = 'Option-B implementation note';", "apps/frontend/src/pages/example.tsx").length === 0,
+  ];
+  if (architectureChecks.some((ok) => !ok)) {
+    console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — architecture-jargon mutation escaped");
     process.exit(1);
   }
   const projectStatusChecks = [
@@ -173,9 +290,17 @@ for (const file of files) {
   for (const leak of visibleSchemaNames(content, relativeFile)) {
     violations.push({
       file: relativeFile,
-      line: content.slice(0, content.indexOf(leak.token)).split(/\r?\n/).length,
+      line: content.slice(0, leak.pos).split(/\r?\n/).length,
       term: "internal schema.table name shown to the operator",
       text: leak.token,
+    });
+  }
+  for (const leak of visibleArchitectureJargon(content, relativeFile)) {
+    violations.push({
+      file: relativeFile,
+      line: content.slice(0, leak.pos).split(/\r?\n/).length,
+      term: "internal architecture-option name shown to the operator",
+      text: leak.text,
     });
   }
   const lines = content.split(/\r?\n/);
