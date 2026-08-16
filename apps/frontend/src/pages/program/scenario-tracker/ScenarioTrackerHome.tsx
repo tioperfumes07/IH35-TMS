@@ -132,8 +132,12 @@ export function ScenarioTrackerHome() {
           <Link to="/home">Role home</Link>
           {" · "}
           <Link to="/home/ops">Role ops dashboard</Link>
-          {" · "}
-          <Link to="/app/homepage">QBO-style home</Link>
+          {entity === "TRANSP" ? (
+            <>
+              {" · "}
+              <Link to="/app/homepage">QBO-style home</Link>
+            </>
+          ) : null}
         </div>
       </header>
 
