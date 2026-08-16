@@ -359,7 +359,7 @@ exact failure this register exists to prevent.
 | ☐ | `LV-COMPLAINTS-NO-SAMPLE-FLAG` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-COMPLAINTS-TAB-CANNOT-EXPRESS-DRIVER-OR-EMPLOYEE` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-EXPENSE-NUMBER-NEVER-POPULATED-SYSTEM-WIDE` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
-| ☐ | `LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
+| ☑ | `LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES` | **P2** | CC-2 | Cursor | FIXED (PR pending) | 2026-08-16 | Restored base Unit plain text vs maintenance Link; guard 3652 | verify-fleettable-unit-cell-maintenance-mode · step **3652** | OWNER-GATED=no |
 | ☐ | `LV-GATEA-DRIVER-EXPIRY-FIXED-FOR-ONE` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-GUARD-FILES-NEVER-EXECUTE` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `LV-INSURANCE-CLAIMS-CARRY-NO-LINKAGE-FKS` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |

@@ -568,10 +568,9 @@ export function FleetTable({
                         </Link>
                       </td>
                     ) : (
-                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                        <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
-                          {entityLabel(row.unit_number, row.id, "Unit")}
-                        </Link>
+                      /* Base /fleet mode: Unit is plain text; whole-row onClick navigates (LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES). */
+                      <td className="px-2 py-1 font-semibold text-slate-700">
+                        {entityLabel(row.unit_number, row.id, "Unit")}
                       </td>
                     )}
                     {isVisible("vin") ? <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td> : null}
