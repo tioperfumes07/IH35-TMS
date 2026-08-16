@@ -549,7 +549,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       : "rounded-sm bg-white px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
                   }
                 >
-                  {step.id}. {step.label}
+                  {`${step.id}. ${step.label}`}
                 </span>
               ))}
             </div>
