@@ -16,6 +16,7 @@ function createClient(config?: { phone?: string | null; code?: string | null }) 
       }
       if (sql.includes("INSERT INTO outbox.events")) {
         outboxPayloads.push(JSON.parse(String(values?.[1] ?? "{}")) as Record<string, unknown>);
+        expect(sql).toContain("ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING");
         return { rows: [{ id: "event-id-1" }] };
       }
       if (sql.includes("audit.append_event")) {
@@ -50,6 +51,8 @@ describe("alert-routing.service", () => {
     await routeFindingAlert({ client, finding: baseFinding, isNew: true, severityEscalated: false });
     expect(outboxPayloads).toHaveLength(1);
     expect(outboxPayloads[0]).toMatchObject({
+      aggregate_type: "_system.reconciliation_findings",
+      aggregate_id: baseFinding.id,
       to: "+19565550123",
       source: "reconciliation.alert_router",
       severity: "critical",

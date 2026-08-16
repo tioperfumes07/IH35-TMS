@@ -879,6 +879,10 @@ export async function runReconciliationCategoryTick(integration: Integration, mi
 
       const runId = randomUUID();
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      // One company's reconciliation SQL can fail after PostgreSQL has aborted the transaction. Roll
+      // that company back before recording its failure, otherwise the state writer itself raises 25P02
+      // and masks the query that actually broke the worker.
+      await client.query("SAVEPOINT reconciliation_company");
       try {
         await appendAuditEvent(client, "reconciliation.tick.started", "info", {
           operating_company_id: operatingCompanyId,
@@ -896,8 +900,11 @@ export async function runReconciliationCategoryTick(integration: Integration, mi
           mirror_category: mirrorCategory,
           reconciliation_run_id: runId,
         });
+        await client.query("RELEASE SAVEPOINT reconciliation_company");
       } catch (error) {
         const message = String((error as Error)?.message ?? error);
+        await client.query("ROLLBACK TO SAVEPOINT reconciliation_company");
+        await client.query("RELEASE SAVEPOINT reconciliation_company");
         const streak = await updateStateOnFailure(client, operatingCompanyId, integration, mirrorCategory, message);
         await appendAuditEvent(client, "reconciliation.outage.started_or_continued", "warning", {
           operating_company_id: operatingCompanyId,
