@@ -398,7 +398,7 @@ exact failure this register exists to prevent.
 | ☐ | `LV-INVENTORY-PURCHASE-HISTORY-CREATOR-UNREACHABLE` | **P1** | CC-1 | — | — | — | Purchase History has no reachable Record Purchase door (Maintenance PartsInventoryTable only); ledger #7368 prerequisite | — | — |
 | ☑ | `LV-QUICK-ASSIGN-CANONICAL-UNASSIGNED-HIDDEN` | **P1** | Codex | Codex | FIXED SLICE | 2026-08-15 | isBookedReserved includes canonical unassigned; guard book-load-no-crew + step 3408 | `scripts/verify-book-load-no-crew-not-assigned.mjs` + step **3408** | — |
 | ☐ | `LV-SAFETY-INTEGRITY-DETAIL-NO-RULE-MATCH` | **P1** | Codex | — | — | — | OPEN on GUARD-WORKORDERS; register sync 2026-08-15 | — | — |
-| ☐ | `LV-FINANCE-MONEY-FIELDS-HIDDEN-BEHIND-GENERIC-NUMBER-HELPER` | **P1** | CC-1 | — | — | — | Finance Loan/Calc/Amort money fields; ACCT-F5314 #7571 may close — confirm board FIXED then tick | — | — |
+| ☑ | `LV-FINANCE-MONEY-FIELDS-HIDDEN-BEHIND-GENERIC-NUMBER-HELPER` | **P1** | CC-1 | CC-1 | #7571 | 2026-08-15 | moneyField()+MoneyInput on Loan/Calc/Amort dollar fields; guard extended + selftest | `scripts/verify-money-fields-use-moneyinput.mjs` | — |
 | ☑ | `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR` | **P1** | Cursor | Cursor | #7468 | 2026-08-15 | Always-mount ParityTable surface bar (Search+Range+gear) including 0-row; guard 3524 | `scripts/verify-geofence-recon-surface-bar.mjs` + step **3524** | — |
 | ☐ | `LV-REPORTS-SCHEDULED-SUBSCRIPTIONS-STALE-CPA-AND-DUPLICATE-RECIPIENTS` | **P1** | CC-1 | — | — | — | Seed CPA email + dup recipients; OPEN on GUARD-WORKORDERS | — | — |
 | ☐ | `LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES` | **P1** | CC-1 | — | — | — | Overview/Projections/Scenarios still Future-module stubs; owner cash-flow Excel + FH-4 SoR | — | — |
