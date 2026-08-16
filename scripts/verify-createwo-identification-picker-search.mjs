@@ -30,8 +30,11 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
     problems.push(`${FILE}: unit must use EntityPicker kind=unit`);
   }
-  if (!/vendorSearch/.test(code) || !/onSearch=\{setVendorSearch\}/.test(code)) {
-    problems.push(`${FILE}: vendor ReferenceSelect must wire vendorSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(code) || !/allowCreate/.test(code)) {
+    problems.push(`${FILE}: vendor must use EntityPicker kind=vendor allowCreate`);
+  }
+  if (/listVendors/.test(code)) {
+    problems.push(`${FILE}: must not listVendors for vendor picker`);
   }
   if (!/customerSearch/.test(code) || !/onSearch=\{setCustomerSearch\}/.test(code)) {
     problems.push(`${FILE}: customer ReferenceSelect must wire customerSearch`);

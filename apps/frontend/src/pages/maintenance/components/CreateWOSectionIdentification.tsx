@@ -1,8 +1,8 @@
 import type { JSX } from "react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { getDriver, getUnit, listCustomers, listVendors } from "../../../api/mdata";
+import { getDriver, getUnit, listCustomers } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
@@ -10,13 +10,8 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { capNotice, listCapInfo } from "../../../lib/list-cap";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
-
-// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
-// 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
-const VENDOR_PICKER_CAP = 200;
 
 
 /** AUDIT-611 / backend deriveClassHint — {UNIT_DISPLAY}-{DRIVER_LAST} never raw UUIDs. */
@@ -95,8 +90,8 @@ export function CreateWOSectionIdentification({
   const showExemptionReason = requireLoadForExpense && !selectedLoadId;
   const unitId = watch("unit_id");
   const driverId = watch("driver_id");
-  // SAF-B29 / picker law: never silent 500/1000-cap pages. Unit → EntityPicker; vendor/customer → search.
-  const [vendorSearch, setVendorSearch] = useState("");
+  // SAF-B29 / picker law: never silent 500/1000-cap pages.
+  // Unit/vendor → EntityPicker; customer → ReferenceSelect + server search (customer EntityPicker wave later).
   const [customerSearch, setCustomerSearch] = useState("");
   const selectedUnitQuery = useQuery({
     queryKey: ["maintenance", "master-data", "unit", operatingCompanyId, unitId],
@@ -110,25 +105,6 @@ export function CreateWOSectionIdentification({
     enabled: Boolean(operatingCompanyId) && Boolean(driverId),
     staleTime: 60_000,
   });
-  const vendorsQuery = useQuery({
-    queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id", vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: String(operatingCompanyId),
-        status: "active",
-        limit: VENDOR_PICKER_CAP,
-        search: vendorSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
-    staleTime: 60_000,
-  });
-
-  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
-  const vendorCap = useMemo(
-    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
-    [vendorsQuery.data],
-  );
-  const vendorCapNotice = capNotice(vendorCap, "vendors");
   const customersQuery = useQuery({
     queryKey: ["maintenance", "customers", operatingCompanyId, "create-wo-id", customerSearch],
     queryFn: () =>
@@ -155,10 +131,6 @@ export function CreateWOSectionIdentification({
       setValue("class_hint", next, { shouldDirty: false });
     }
   }, [setValue, getValues, unitId, driverId, selectedUnitQuery.data, selectedDriverQuery.data]);
-  const vendorOptions = (vendorsQuery.data?.vendors ?? [])
-    .filter((v) => !v.deactivated_at)
-    .map((v) => ({ value: v.id, label: v.name }))
-    .sort((a, b) => a.label.localeCompare(b.label));
   const customerOptions = (customersQuery.data?.customers ?? [])
     .map((c) => ({ value: c.id, label: c.name }))
     .sort((a, b) => a.label.localeCompare(b.label));
@@ -302,36 +274,27 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("vendor_id")} />
               <input type="hidden" {...register("vendor_qbo_id")} />
               {/* Label only — shop_name/vendor_id are the persisted fields. */}
-              {/* CLS-SILENT-CAP: tell the user the picker is not showing every vendor. */}
-              {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
-              <ReferenceSelect
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
+              <EntityPicker
+                kind="vendor"
+                allowCreate
+                operatingCompanyId={operatingCompanyId}
                 value={watch("vendor_id") || null}
-                onChange={(next) => {
-                  const match = vendorOptions.find((o) => o.value === next);
+                onChange={(next, option) => {
                   setValue("vendor_id", next ?? "", { shouldDirty: true });
                   setValue("external_vendor_id", next ?? "", { shouldDirty: true });
                   setValue("vendor_qbo_id", "", { shouldDirty: true });
-                  setValue("vendor_display_name", match?.label ?? "", { shouldDirty: true });
-                  if (next && match) {
+                  setValue("vendor_display_name", option?.label ?? "", { shouldDirty: true });
+                  if (next && option?.label) {
                     const shopNameNow = String(getValues("shop_name") ?? "").trim();
                     if (!shopNameNow) {
-                      setValue("shop_name", match.label, { shouldDirty: true });
+                      setValue("shop_name", option.label, { shouldDirty: true });
                     }
                   }
                 }}
-                options={vendorOptions}
-                createKind="vendor"
-                operatingCompanyId={operatingCompanyId}
                 placeholder="Search vendors…"
-                onSearch={setVendorSearch}
-                loading={vendorsQuery.isLoading}
-                onOptionCreated={(opt) => {
-                  void queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors"] });
-                  setValue("vendor_display_name", opt.label, { shouldDirty: true });
-                  setValue("external_vendor_id", opt.value, { shouldDirty: true });
-                  const shopNameNow = String(getValues("shop_name") ?? "").trim();
-                  if (!shopNameNow) setValue("shop_name", opt.label, { shouldDirty: true });
-                }}
+                dataField="vendor_id"
+                className="h-8 w-full text-sm"
               />
             </>
           ) : (
@@ -418,23 +381,19 @@ export function CreateWOSectionIdentification({
             {/*
               LST-PICKER-01 (guard 1868): free-text UUID for roadside_provider_vendor_id.
               Backend joins mdata.vendors (work-orders.service.ts) and requires the id for
-              roadside WOs. ReferenceSelect createKind=vendor — same options as shop vendor above.
+              roadside WOs. EntityPicker kind=vendor allowCreate — same canonical table as shop vendor.
             */}
             {setValue && operatingCompanyId ? (
               <div data-testid="wo-roadside-provider-vendor-select">
-                <ReferenceSelect
+                <EntityPicker
+                  kind="vendor"
+                  allowCreate
+                  operatingCompanyId={operatingCompanyId}
                   value={watch("roadside_provider_vendor_id") || null}
                   onChange={(next) => setValue("roadside_provider_vendor_id", next ?? "", { shouldDirty: true })}
-                  options={vendorOptions}
-                  createKind="vendor"
-                  operatingCompanyId={operatingCompanyId}
-                  placeholder={vendorsQuery.isLoading ? "Loading vendors…" : "Select roadside vendor…"}
-                  loading={vendorsQuery.isLoading}
-                  onSearch={setVendorSearch}
-                  onOptionCreated={async (opt) => {
-                    setValue("roadside_provider_vendor_id", opt.value, { shouldDirty: true });
-                    await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id"] });
-                  }}
+                  placeholder="Select roadside vendor…"
+                  dataField="roadside_provider_vendor_id"
+                  className="h-8 w-full text-sm"
                 />
               </div>
             ) : (

@@ -1,20 +1,10 @@
-import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listVendors } from "../../api/mdata";
+import { useState } from "react";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
-import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useRoadServiceTickets, type RoadServiceType } from "../../hooks/useRoadServiceTickets";
-import { capNotice, listCapInfo } from "../../lib/list-cap";
 import { userFacingApiError } from "../../lib/api-error-message";
-
-// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
-// 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
-const VENDOR_PICKER_CAP = 200;
-
 
 type Props = {
   open: boolean;
@@ -33,27 +23,6 @@ const SERVICE_TYPES: Array<{ value: RoadServiceType; label: string }> = [
 
 export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Props) {
   const { createTicket } = useRoadServiceTickets();
-  const queryClient = useQueryClient();
-  const [vendorSearch, setVendorSearch] = useState("");
-  const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", operatingCompanyId, "road-service", vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: VENDOR_PICKER_CAP,
-        search: vendorSearch || undefined,
-      }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
-
-  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
-  const vendorCap = useMemo(
-    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
-    [vendorsQuery.data],
-  );
-  const vendorCapNotice = capNotice(vendorCap, "vendors");
-
   const [ticketNumber, setTicketNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
   const [vendorName, setVendorName] = useState("");
@@ -63,11 +32,6 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
   const [locationAddress, setLocationAddress] = useState("");
   const [initialComplaint, setInitialComplaint] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const vendorOptions = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption).sort((a, b) => a.label.localeCompare(b.label)),
-    [vendorsQuery.data?.vendors]
-  );
 
   async function handleSubmit() {
     setError(null);
@@ -110,31 +74,22 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
           Vendor
           {/*
             LST-PICKER-01 (guard 1866): free-text vendor_name alone cannot satisfy POST
-            (vendor_id required → mdata.vendors). ReferenceSelect createKind=vendor wires the
-            canonical AP vendor + keeps vendor_name for display/memo.
+            (vendor_id required → mdata.vendors). EntityPicker kind=vendor allowCreate —
+            server-search, no capped listVendors page; still sends vendor_id + vendor_name.
           */}
           <div className="mt-1" data-testid="road-service-vendor-select">
-            {/* CLS-SILENT-CAP: tell the user the picker is not showing every vendor. */}
-            {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
-            <ReferenceSelect
-              value={vendorId || null}
-              onChange={(next) => {
-                const id = next ?? "";
-                const opt = vendorOptions.find((o) => o.value === id);
-                setVendorId(id);
-                setVendorName(opt?.label ?? "");
-              }}
-              options={vendorOptions}
-              createKind="vendor"
+            <EntityPicker
+              kind="vendor"
+              allowCreate
               operatingCompanyId={operatingCompanyId}
-              placeholder={vendorsQuery.isLoading ? "Loading vendors…" : "Select vendor…"}
-              loading={vendorsQuery.isLoading}
-              onSearch={setVendorSearch}
-              onOptionCreated={async (opt) => {
-                setVendorId(opt.value);
-                setVendorName(opt.label);
-                await queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", operatingCompanyId, "road-service"] });
+              value={vendorId || null}
+              onChange={(next, option) => {
+                setVendorId(next ?? "");
+                setVendorName(option?.label ?? "");
               }}
+              enabled={open}
+              placeholder="Select vendor…"
+              dataField="road-service-vendor"
             />
           </div>
         </label>
