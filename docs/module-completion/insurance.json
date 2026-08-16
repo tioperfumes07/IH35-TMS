@@ -35,9 +35,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE FAIL → CODE FIXED pending deploy: /safety/insurance/policies rendered 3 scoped policies and the four-step creator; insurer picker put + Add new vendor first. The Type column and policy-detail subtitle exposed raw code auto_liability instead of canonical Type Catalog name Auto Liability. Current fix resolves list/detail labels through the same-company insurance.type_catalog FK and retains a humanized fallback. Mutation guard 4/4; Live recheck required after deploy.",
-      "pr": null,
-      "prod_verified": false
+      "evidence": "2026-08-16 USMCA LIVE PASS after frontend deploy #7821 (asset index-CTHSRnxD.js): fresh cache-busted /safety/insurance/policies rendered exactly 3 scoped policies and every Type cell displayed the canonical human label Auto Liability; zero raw auto_liability labels. Create policy, Filters, Search, Range, gear, pagination, and canonical policy detail links rendered. No save or mutation. Code fixes #7801/#7802; human-label guard normal + 8/8 mutations.",
+      "pr": "#7801 + #7802; deployed by #7821",
+      "prod_verified": true
     },
     {
       "id": "INS-T02",
@@ -63,9 +63,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE FAIL → CODE FIXED pending deploy: /safety/insurance/coverage-gaps rendered 39 uncovered units and 2 mismatched units with canonical unit drill links, but both Missing Required Types columns exposed raw codes auto_liability/physical_damage/cargo. The vertical fix now resolves all policy/gap/vendor-reverse/vehicle-summary consumers through shared insuranceTypeLabel, preferring the same-company Type Catalog name. Guard normal + 8/8 mutations; Live recheck required.",
-      "pr": null,
-      "prod_verified": false
+      "evidence": "2026-08-16 USMCA LIVE PASS after frontend deploy #7821 (asset index-CTHSRnxD.js): fresh cache-busted /safety/insurance/coverage-gaps rendered 39 uncovered units and 2 mismatched units with canonical unit drill links. Previously failing T163 displayed Auto Liability, Physical Damage, Cargo; T120 and T151 displayed Physical Damage, Cargo; zero raw underscore codes. Search, Range, gear, pagination, KPIs, and Unit picker rendered. No save or mutation. Code fixes #7801/#7802; guard normal + 8/8 mutations.",
+      "pr": "#7801 + #7802; deployed by #7821",
+      "prod_verified": true
     },
     {
       "id": "INS-T04",
