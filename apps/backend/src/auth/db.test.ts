@@ -45,17 +45,17 @@ describe("withLuciaBypass session context", () => {
       "SET LOCAL ROLE ih35_app",
       // bypass_rls is a literal constant (no interpolation) — still set via SET LOCAL.
       "SET LOCAL app.bypass_rls = 'lucia'",
-      // SQLi→RLS-bypass hardening: sentinel company GUCs are now PARAMETERIZED via set_config
+      // SQLi→RLS-bypass hardening: sentinel company GUC is PARAMETERIZED via set_config
       // (bound value), never string-interpolated into the SQL text.
-      "SELECT set_config('app.active_company_id', $1::text, true)",
+      // LV-ORPHANED-GUC-WRITE-ACTIVE-COMPANY-ID: active_company_id write removed (unread).
       "SELECT set_config('app.operating_company_id', $1::text, true)",
       "COMMIT",
     ]);
-    // Prove the sentinel is passed as a BOUND value (not interpolated) to each set_config call.
+    // Prove the sentinel is passed as a BOUND value (not interpolated) to set_config.
     const setConfigCalls = queryMock.mock.calls.filter(([sql]) =>
       String(sql).startsWith("SELECT set_config(")
     );
-    expect(setConfigCalls).toHaveLength(2);
+    expect(setConfigCalls).toHaveLength(1);
     for (const [, values] of setConfigCalls) {
       expect(values).toEqual([LUCIA_BYPASS_SENTINEL_COMPANY_ID]);
     }

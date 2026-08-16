@@ -198,9 +198,8 @@ export async function withLuciaBypass<T>(
       await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
     }
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await client.query(
-      "SELECT set_config('app.active_company_id', $1::text, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
-    );
+    // LV-ORPHANED-GUC-WRITE-ACTIVE-COMPANY-ID: do NOT set app.active_company_id — nothing reads it
+    // (pg_proc/pg_policies/pg_views sweep 2026-08-07). Real tenant scoping is app.operating_company_id.
     await client.query(
       "SELECT set_config('app.operating_company_id', $1::text, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
     );
