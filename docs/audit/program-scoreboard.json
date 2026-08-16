@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T10:59:40-05:00",
-    "sourceSha": "94a54ea9a",
-    "deployedSha": "1a1dfd9",
+    "generatedAt": "2026-08-16T11:02:18-05:00",
+    "sourceSha": "8cbd2173a",
+    "deployedSha": "fd42e19",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 904,
+    "ledgerRows": 905,
     "failOpen": 25,
     "defects": 25
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7828,
+      "title": "FINDING: LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 11:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7828",
+      "sha": "8cbd2173a",
+      "committedAtIso": "2026-08-16T11:02:18-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 11:01 AM CT",
+      "url": "",
+      "sha": "50b35056a",
+      "committedAtIso": "2026-08-16T16:01:28Z"
+    },
+    {
       "number": 7827,
       "title": "Cursor- fix(chrome): LV-PROGRAM/SYSTEM/CASH-FLOW — CollapsedListFilters + Apply panels",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7821",
       "sha": "f1143659d",
       "committedAtIso": "2026-08-16T10:36:49-05:00"
-    },
-    {
-      "number": 7820,
-      "title": "Cursor- fix(chrome): users+drivers toolbar exact-owner (roster surfaces)",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7820",
-      "sha": "0947bc547",
-      "committedAtIso": "2026-08-16T10:35:50-05:00"
-    },
-    {
-      "number": 7819,
-      "title": "Cursor- fix(chrome): compliance+driver-hub toolbar exact-owner (Filings + Reporting)",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7819",
-      "sha": "84215e1b7",
-      "committedAtIso": "2026-08-16T10:33:37-05:00"
     }
   ]
 }
