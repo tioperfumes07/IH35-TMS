@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T13:59:00-05:00",
-    "sourceSha": "aeea37c11",
-    "deployedSha": "9a76f4e",
+    "generatedAt": "2026-08-16T14:34:48-05:00",
+    "sourceSha": "b703b4761",
+    "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 918,
+    "ledgerRows": 919,
     "failOpen": 23,
-    "defects": 25
+    "defects": 26
   },
   "modules": [
     {
@@ -1078,7 +1078,7 @@
         "AUDIT",
         "AUDIT",
         "NA",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -1110,7 +1110,7 @@
           "AUDIT",
           "NA",
           "NA",
-          "AUDIT",
+          "FIX",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2121,6 +2121,60 @@
   },
   "recentActivity": [
     {
+      "number": 7892,
+      "title": "FINDING: LV-REPORTS-IFTA-INTERNAL-BACKEND-STATUS-COPY",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7892",
+      "sha": "b703b4761",
+      "committedAtIso": "2026-08-16T14:34:48-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(safety): SAF-F3386 — ComplaintsTab customer EntityPicker",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:34 PM CT",
+      "url": "",
+      "sha": "ad050227c",
+      "committedAtIso": "2026-08-16T14:34:34-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(tasks): TASK-F3384 — CreateTaskModal customer EntityPicker",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:32 PM CT",
+      "url": "",
+      "sha": "a192b6b24",
+      "committedAtIso": "2026-08-16T14:32:38-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(legal): LEG-F3382 — LeaseToOwn lessee customer EntityPicker",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:29 PM CT",
+      "url": "",
+      "sha": "c29842515",
+      "committedAtIso": "2026-08-16T14:29:45-05:00"
+    },
+    {
+      "number": 7880,
+      "title": "Cursor- fix(lists): LST-F3380 — ItemEditor preferred vendor EntityPicker",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7880",
+      "sha": "d36f6b917",
+      "committedAtIso": "2026-08-16T14:28:56-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:00 PM CT",
+      "url": "",
+      "sha": "ec717965c",
+      "committedAtIso": "2026-08-16T19:00:04Z"
+    },
+    {
       "number": 7888,
       "title": "FINDING: LV-LEGAL-MATTER-UNIT-TRAILER-PICKERS-NO-INLINE-CREATE",
       "state": "merged",
@@ -2155,60 +2209,6 @@
       "url": "",
       "sha": "39848e815",
       "committedAtIso": "2026-08-16T17:59:45Z"
-    },
-    {
-      "number": 7881,
-      "title": "Codex-1- fix(maintenance): return real work-order-line UUID",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7881",
-      "sha": "279478bf5",
-      "committedAtIso": "2026-08-16T12:58:18-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:54 PM CT",
-      "url": "",
-      "sha": "1de675674",
-      "committedAtIso": "2026-08-16T17:54:04Z"
-    },
-    {
-      "number": 7879,
-      "title": "Codex-1- fix(home): add staged driver-day Filters panel",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7879",
-      "sha": "03c4c87a3",
-      "committedAtIso": "2026-08-16T12:52:52-05:00"
-    },
-    {
-      "number": 7878,
-      "title": "Codex-1- fix(guards): refresh EntityLink structural baseline",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7878",
-      "sha": "90ca71828",
-      "committedAtIso": "2026-08-16T12:51:19-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(dispatch): LV-DISPATCH-BOOKLOAD-FACTORING-VENDOR-ENTITY-PICKER — listVendors residual",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:49 PM CT",
-      "url": "",
-      "sha": "4ef8c40f3",
-      "committedAtIso": "2026-08-16T12:49:40-05:00"
-    },
-    {
-      "number": 7876,
-      "title": "FINDING: FE-BUILD-RED-SERVICE-ITEM-UUID-NARROWER-THAN-BACKEND — the FE type disallowed a null the backend explicitly accepts LANE: NON-FINANCIAL (type-only; matches backend contract)",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7876",
-      "sha": "71d0c0d81",
-      "committedAtIso": "2026-08-16T12:47:46-05:00"
     }
   ]
 }
