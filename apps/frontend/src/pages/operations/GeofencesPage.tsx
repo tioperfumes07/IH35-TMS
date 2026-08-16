@@ -5,7 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -17,8 +17,7 @@ import {
   type Geofence,
   type GeofenceLocationKind,
 } from "../../api/geofencing";
-import { listCustomers, listLocations, listVendors } from "../../api/mdata";
-import { CappedListNotice } from "../../components/CappedListNotice";
+import { listLocations } from "../../api/mdata";
 
 const LOCATION_KIND_OPTIONS: Array<{ id: GeofenceLocationKind; label: string }> = [
   { id: "customer_site", label: "Customer site" },
@@ -63,8 +62,6 @@ export function GeofencesPage() {
   const [label, setLabel] = useState("");
   const [locationKind, setLocationKind] = useState<GeofenceLocationKind>("custom");
   const [locationRefId, setLocationRefId] = useState("");
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [vendorSearch, setVendorSearch] = useState("");
   const [polygonText, setPolygonText] = useState("-97.7431,30.2672\n-97.7350,30.2672\n-97.7350,30.2620\n-97.7431,30.2620");
   const [saving, setSaving] = useState(false);
 
@@ -72,28 +69,6 @@ export function GeofencesPage() {
     queryKey: ["telematics", "geofences", operatingCompanyId],
     queryFn: () => listGeofences(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
-  });
-
-  const customersQuery = useQuery({
-    queryKey: ["mdata", "customers", operatingCompanyId, customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: operatingCompanyId,
-        limit: 5000,
-        search: customerSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId) && locationKind === "customer_site",
-  });
-
-  const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", operatingCompanyId, vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        limit: 5000,
-        search: vendorSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId) && locationKind === "vendor_site",
   });
 
   const yardsQuery = useQuery({
@@ -114,24 +89,6 @@ export function GeofencesPage() {
     }
     return [];
   }, [locationKind, yardsQuery.data?.locations]);
-
-  const customerRefOptions = useMemo(
-    () =>
-      (customersQuery.data?.customers ?? []).map((customer) => ({
-        value: customer.id,
-        label: customer.name,
-      })),
-    [customersQuery.data?.customers]
-  );
-
-  const vendorRefOptions = useMemo(
-    () =>
-      (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
-        value: vendor.id,
-        label: vendor.name,
-      })),
-    [vendorsQuery.data?.vendors]
-  );
 
   const geofences = geofencesQuery.data?.geofences ?? [];
 
@@ -268,44 +225,32 @@ export function GeofencesPage() {
             Link to existing location (optional)
             {locationKind === "customer_site" ? (
               <div className="mt-1">
-                <ReferenceSelect
+                {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */}
+                <EntityPicker
+                  kind="customer"
+                  allowCreate
+                  operatingCompanyId={operatingCompanyId}
                   value={locationRefId || null}
                   onChange={(next) => setLocationRefId(next ?? "")}
-                  options={customerRefOptions}
-                  createKind="customer"
-                  operatingCompanyId={operatingCompanyId}
+                  enabled={Boolean(operatingCompanyId)}
                   placeholder="Select customer site"
-                  disabled={!operatingCompanyId}
-                  loading={customersQuery.isLoading}
-                  onSearch={setCustomerSearch}
-                />
-                <CappedListNotice
-                  shown={customerRefOptions.length}
-                  limit={5000}
-                  total={customersQuery.data?.total}
-                  hint="Type to search the full customer catalog."
-                  className="mt-1 text-xs text-slate-600"
+                  dataField="geofence-customer-site"
+                  className="w-full"
                 />
               </div>
             ) : locationKind === "vendor_site" ? (
               <div className="mt-1">
-                <ReferenceSelect
+                {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listVendors roster. */}
+                <EntityPicker
+                  kind="vendor"
+                  allowCreate
+                  operatingCompanyId={operatingCompanyId}
                   value={locationRefId || null}
                   onChange={(next) => setLocationRefId(next ?? "")}
-                  options={vendorRefOptions}
-                  createKind="vendor"
-                  operatingCompanyId={operatingCompanyId}
+                  enabled={Boolean(operatingCompanyId)}
                   placeholder="Select vendor site"
-                  disabled={!operatingCompanyId}
-                  loading={vendorsQuery.isLoading}
-                  onSearch={setVendorSearch}
-                />
-                <CappedListNotice
-                  shown={vendorRefOptions.length}
-                  limit={5000}
-                  total={vendorsQuery.data?.total}
-                  hint="Type to search the full vendor catalog."
-                  className="mt-1 text-xs text-slate-600"
+                  dataField="geofence-vendor-site"
+                  className="w-full"
                 />
               </div>
             ) : locationKind === "yard" ? (
