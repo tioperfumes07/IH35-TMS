@@ -944,8 +944,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           <div className="col-span-full space-y-3 rounded-md border border-slate-200 p-3" data-testid="driver-create-dq-step">
             <div className="text-sm font-semibold text-slate-800">DQ documents & drug screen</div>
             <p className="text-xs text-slate-600">
-              Stage the required hiring documents here. They upload to the driver record after Save
-              (docs.file_links). Pre-employment drug screen must be acknowledged before create.
+              Stage the required hiring documents here. They upload to the saved driver record after Save.
+              Pre-employment drug screen must be acknowledged before create.
             </p>
             <label className="flex items-start gap-2 text-sm text-slate-800">
               <input

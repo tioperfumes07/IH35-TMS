@@ -72,6 +72,7 @@ const PHYSICAL_SCHEMA_NAMES = new Set([
   "banking",
   "catalogs",
   "dispatch",
+  "docs",
   "documents",
   "driver_finance",
   "factoring",
@@ -243,6 +244,10 @@ if (process.argv.includes("--selftest")) {
     "<p>Adding here writes\n  mdata.customers (same table this picker lists).</p>",
     "apps/frontend/src/pages/example.tsx",
   );
+  const badDocsSchema = visibleSchemaNames(
+    "<p>Uploads are stored in docs.file_links after Save.</p>",
+    "apps/frontend/src/pages/example.tsx",
+  );
   const protectedExisting = visibleSchemaNames(
     '<code className="text-xs">accounting.bills</code>',
     "apps/frontend/src/pages/system/SystemModulePage.tsx",
@@ -253,6 +258,8 @@ if (process.argv.includes("--selftest")) {
     bad[0]?.token !== "maintenance.parts_purchases" ||
     badMultiline.length !== 1 ||
     badMultiline[0]?.token !== "mdata.customers" ||
+    badDocsSchema.length !== 1 ||
+    badDocsSchema[0]?.token !== "docs.file_links" ||
     protectedExisting.length !== 0
   ) {
     console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — visible schema-name mutation escaped");
