@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -33,9 +33,13 @@ export const SYSTEM_TABS = [
 
 type SystemTabId = (typeof SYSTEM_TABS)[number]["id"];
 const SYSTEM_TAB_IDS = new Set<string>(SYSTEM_TABS.map((t) => t.id));
+const QBO_SYSTEM_TAB_IDS = new Set<SystemTabId>(["qbo-recon", "qbo-sync"]);
 
-export function parseSystemTab(raw: string | null): SystemTabId {
-  if (raw && SYSTEM_TAB_IDS.has(raw)) return raw as SystemTabId;
+export function parseSystemTab(raw: string | null, qboAvailable = true): SystemTabId {
+  if (raw && SYSTEM_TAB_IDS.has(raw)) {
+    const parsed = raw as SystemTabId;
+    if (qboAvailable || !QBO_SYSTEM_TAB_IDS.has(parsed)) return parsed;
+  }
   return "overview";
 }
 
@@ -124,28 +128,28 @@ function GhostButton({ onClick, children }: { onClick: () => void; children: Rea
 
 // ---- live data hooks ------------------------------------------------------------------------------
 
-function useSystemData(companyId: string | null) {
+function useSystemData(companyId: string | null, qboAvailable: boolean) {
   const enabled = !!companyId;
   const asOf = new Date().toISOString().slice(0, 10);
 
   const recon = useQuery<QboReconResponse>({
     queryKey: ["system", "qbo-recon", companyId],
     queryFn: () => getQboReconciliation(companyId as string),
-    enabled,
+    enabled: enabled && qboAvailable,
     retry: false,
     staleTime: 60_000,
   });
   const syncHealth = useQuery<QboSyncHealthResponse>({
     queryKey: ["system", "qbo-sync-health", companyId],
     queryFn: () => getQboSyncHealth(companyId as string),
-    enabled,
+    enabled: enabled && qboAvailable,
     retry: false,
     staleTime: 60_000,
   });
   const apAging = useQuery<ApAgingSummary>({
     queryKey: ["system", "ap-aging", companyId, asOf],
     queryFn: () => getApAging(companyId as string, asOf),
-    enabled,
+    enabled: enabled && qboAvailable,
     retry: false,
     staleTime: 60_000,
   });
@@ -196,7 +200,7 @@ type SystemData = ReturnType<typeof useSystemData>;
 
 // ---- tab bodies -----------------------------------------------------------------------------------
 
-function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTabId) => void }) {
+function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen: (id: SystemTabId) => void; qboAvailable: boolean }) {
   const { recon, syncHealth, apAging, tracker, health } = data;
   const apObj = findApObject(recon.data);
   const reconAlerts = recon.data?.open_findings_count ?? null;
@@ -207,8 +211,7 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {/* QuickBooks Reconciliation */}
-      <Card
+      {qboAvailable ? <Card
         title="QuickBooks Reconciliation"
         pill={<Pill tone="neutral">TMS ↔ QBO</Pill>}
         sub="Daily tie-out of what the TMS posted against QuickBooks (system-of-record). This is not bank reconciliation — bank statement matching stays in Banking."
@@ -225,10 +228,10 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
         <Row label="Unresolved reconciliation alerts">
           {reconAlerts == null ? <Pill tone="neutral">—</Pill> : <Pill tone={reconAlerts > 0 ? "warn" : "ok"}>{reconAlerts}</Pill>}
         </Row>
-      </Card>
+      </Card> : null}
 
       {/* QuickBooks Sync */}
-      <Card
+      {qboAvailable ? <Card
         title="QuickBooks Sync"
         pill={
           syncConnected ? (
@@ -247,7 +250,7 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
         <Row label="QBO write-back">
           <Pill tone="ok">OFF (by design)</Pill>
         </Row>
-      </Card>
+      </Card> : null}
 
       {/* Program Tracker */}
       <Card
@@ -573,7 +576,7 @@ function SoftwareTab({ data }: { data: SystemData }) {
   );
 }
 
-function ClaudeCoderTab({ data }: { data: SystemData }) {
+function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable: boolean }) {
   const { health, recon, tracker } = data;
   const [copied, setCopied] = useState<string | null>(null);
   const apObj = findApObject(recon.data);
@@ -662,10 +665,10 @@ function ClaudeCoderTab({ data }: { data: SystemData }) {
               );
             })}
           </div>
-          <div>
+          {qboAvailable ? <div>
             <span className="text-[#7dd3fc]">qbo</span> A/P <span className="text-[#86efac]">{fmtUsd(apObj?.balance?.qbo_cents)}</span> → TMS{" "}
             <span className="text-slate-500">{apObj ? (apObj.balance?.in_sync ? "in sync" : "drift") : "pull pending"}</span>
-          </div>
+          </div> : null}
         </div>
       </Card>
     </div>
@@ -676,32 +679,44 @@ function ClaudeCoderTab({ data }: { data: SystemData }) {
 
 export function SystemModulePage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = parseSystemTab(searchParams.get("tab"));
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  // TRANSP is the only QBO mirror entity. USMCA/TRK are TMS-native and must not render or query QBO.
+  const qboAvailable = selectedCompany?.code === "TRANSP";
+  const tab = parseSystemTab(searchParams.get("tab"), qboAvailable);
   const setTab = (next: SystemTabId) => {
     const params = new URLSearchParams(searchParams);
     if (next === "overview") params.delete("tab");
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
-  const { selectedCompanyId } = useCompanyContext();
-  const data = useSystemData(selectedCompanyId);
+  useEffect(() => {
+    const requested = searchParams.get("tab");
+    if (requested && parseSystemTab(requested, qboAvailable) === "overview" && requested !== "overview") {
+      const params = new URLSearchParams(searchParams);
+      params.delete("tab");
+      setSearchParams(params, { replace: true });
+    }
+  }, [qboAvailable, searchParams, setSearchParams]);
+
+  const visibleTabs = SYSTEM_TABS.filter((candidate) => qboAvailable || !QBO_SYSTEM_TAB_IDS.has(candidate.id));
+  const data = useSystemData(selectedCompanyId, qboAvailable);
 
   return (
     <div className="space-y-3">
       <PageHeader breadcrumb={["Home", "System"]} backHref="/home" title="SYSTEM" subtitle="Owner-only" />
-      <SecondaryNavTabs tabs={SYSTEM_TABS.map((t) => ({ id: t.id, label: t.label }))} activeId={tab} onChange={(id) => setTab(id as SystemTabId)} />
+      <SecondaryNavTabs tabs={visibleTabs.map((t) => ({ id: t.id, label: t.label }))} activeId={tab} onChange={(id) => setTab(id as SystemTabId)} />
 
       <div className="pt-1">
-        {tab === "overview" ? <OverviewTab data={data} onOpen={setTab} /> : null}
+        {tab === "overview" ? <OverviewTab data={data} onOpen={setTab} qboAvailable={qboAvailable} /> : null}
         {tab === "qbo-recon" ? <QboReconTab data={data} /> : null}
         {tab === "qbo-sync" ? <QboSyncTab data={data} /> : null}
         {tab === "program" ? <ProgramTab data={data} /> : null}
         {tab === "software" ? <SoftwareTab data={data} /> : null}
-        {tab === "claude-coder" ? <ClaudeCoderTab data={data} /> : null}
+        {tab === "claude-coder" ? <ClaudeCoderTab data={data} qboAvailable={qboAvailable} /> : null}
       </div>
 
       <div className="rounded-[10px] border border-gray-200 bg-[#eef2f7] px-3.5 py-3 text-[11.5px] text-slate-600">
-        SYSTEM is Owner-only and is the single home for QuickBooks Reconciliation, QuickBooks Sync, Program Tracker, and Software/Build. QuickBooks Reconciliation (TMS ↔ QBO tie-out) is deliberately separate from bank reconciliation, which stays in Banking — the two are never combined in one table. The Claude Coder area is a launcher plus a read-only activity panel — no command execution occurs inside the production app (auditor/DOT-safe).
+        SYSTEM is Owner-only and is the single home for {qboAvailable ? "QuickBooks Reconciliation, QuickBooks Sync, " : ""}Program Tracker, and Software/Build. {qboAvailable ? "QuickBooks Reconciliation (TMS ↔ QBO tie-out) is deliberately separate from bank reconciliation, which stays in Banking — the two are never combined in one table. " : ""}The Claude Coder area is a launcher plus a read-only activity panel — no command execution occurs inside the production app (auditor/DOT-safe).
       </div>
     </div>
   );
