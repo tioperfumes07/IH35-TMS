@@ -406,7 +406,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
     pricesByUnitNumber: z.record(z.string(), z.number().int().positive()),
   });
 
-  app.post("/api/v1/accounting/fixed-assets/register-trk-units", async (req, reply) => {
+  app.post("/api/v1/accounting/fixed-assets/register-trk-units", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner" && user.role !== "Administrator") {
@@ -416,6 +416,25 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      // ACCT-F5392 backend residual — the FE gate (canBulkRegister requires the selected entity
+      // === TRK) only stops the button rendering; nothing here stopped a direct API call with a
+      // non-TRK operating_company_id. registerRealTrkOwnedUnits is a TRK-books action by name and
+      // by design (register-density UI language), so refuse anything that doesn't resolve to the
+      // TRK / asset_holder company. Checks both ids: the FE always sends them equal, and a caller
+      // splitting them (posting AS one entity, registering units OWNED by another) is exactly the
+      // cross-entity mismatch this endpoint must never allow.
+      const companyRows = await client.query(
+        `SELECT id::text AS id, code, company_type FROM org.companies WHERE id = ANY($1::uuid[])`,
+        [[parsed.data.operating_company_id, parsed.data.owner_operating_company_id]]
+      );
+      type CompanyRow = { id: string; code: string | null; company_type: string | null };
+      const isTrk = (row: CompanyRow | undefined) =>
+        Boolean(row) && (row!.code === "TRK" || row!.company_type === "asset_holder");
+      const byId = new Map((companyRows.rows as CompanyRow[]).map((r) => [r.id, r]));
+      if (!isTrk(byId.get(parsed.data.operating_company_id)) || !isTrk(byId.get(parsed.data.owner_operating_company_id))) {
+        return reply.code(403).send({ error: "trk_asset_holder_required" });
+      }
+
       return registerRealTrkOwnedUnits(client, {
         ...parsed.data,
         actor_user_id: user.uuid,

@@ -44,4 +44,15 @@ describe("fixed-assets routes guard", () => {
   it("has no stub / placeholder strings", () => {
     expect(route).not.toMatch(/TODO|FIXME|coming soon|not implemented/i);
   });
+
+  // ACCT-F5392 backend residual: the FE gate (canBulkRegister requires the selected entity ===
+  // TRK, PR #7983) only stops the button rendering. A direct API call with a non-TRK
+  // operating_company_id could still register fixed assets onto ANY company's books. The route
+  // must resolve both ids against org.companies and reject 403 unless both are TRK/asset_holder.
+  it("register-trk-units asserts both company ids are TRK / asset_holder before registering", () => {
+    expect(route).toMatch(/app\.post\("\/api\/v1\/accounting\/fixed-assets\/register-trk-units"[\s\S]{0,1400}FROM org\.companies/);
+    expect(route).toMatch(/code\s*===\s*"TRK"\s*\|\|\s*.*company_type\s*===\s*"asset_holder"/);
+    expect(route).toMatch(/trk_asset_holder_required/);
+    expect(route).toContain('reply.code(403).send({ error: "trk_asset_holder_required" })');
+  });
 });
