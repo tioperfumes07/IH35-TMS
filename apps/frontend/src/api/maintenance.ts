@@ -977,11 +977,18 @@ export async function listMaintenanceLaborCodes(operatingCompanyId: string) {
   return apiRequest<{ labor_codes: MaintenanceLaborCodeRow[] }>(`/api/v1/maintenance/labor-codes?${qs.toString()}`);
 }
 
+/** LV-WO-COST-CONTEXT-SILENTLY-MISSING-SOURCES — distinct from empty row arrays. */
+export type WoCostSourceStatus = "available" | "fallback" | "unavailable";
+
 export type WoCostContextPayload = {
   expense_categories: Array<Record<string, unknown>>;
   items: Array<Record<string, unknown>>;
   parts: Array<Record<string, unknown>>;
   labor_rates: Array<Record<string, unknown>>;
+  sources?: {
+    inventory_parts: { status: WoCostSourceStatus; relation: string | null };
+    labor_rates: { status: WoCostSourceStatus; relation: string | null };
+  };
 };
 
 export type MaintPmDueRow = {

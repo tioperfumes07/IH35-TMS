@@ -3,12 +3,18 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 
 const querySchema = companyQuerySchema;
 
+/** Per-catalog latch status — never conflate "table missing" with "zero rows". */
+export type WoCostSourceStatus = "available" | "fallback" | "unavailable";
+
 function officeRole(role: string) {
   return ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety", "Mechanic"].includes(role);
 }
 
 export async function registerWoCostContextRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/wo-cost-context", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get(
+    "/api/v1/maintenance/wo-cost-context",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -59,7 +65,12 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
         [oc]
       );
 
+      // LV-WO-COST-CONTEXT-SILENTLY-MISSING-SOURCES: every to_regclass false-branch MUST set a
+      // response flag. Empty arrays mean "zero rows"; sources.*.status="unavailable" means the
+      // catalog relation is not provisioned (distinct from empty).
       let parts: unknown[] = [];
+      let partsStatus: WoCostSourceStatus = "unavailable";
+      let partsRelation: string | null = null;
       const invParts = await client.query(`SELECT to_regclass('inventory.parts') IS NOT NULL AS ok`);
       if (invParts.rows[0]?.ok) {
         const pr = await client.query(
@@ -67,6 +78,8 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
           [oc]
         );
         parts = pr.rows;
+        partsStatus = "available";
+        partsRelation = "inventory.parts";
       } else {
         const mip = await client.query(`SELECT to_regclass('maintenance.parts_inventory') IS NOT NULL AS ok`);
         if (mip.rows[0]?.ok) {
@@ -81,10 +94,14 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
             [oc]
           );
           parts = pr.rows;
+          partsStatus = "fallback";
+          partsRelation = "maintenance.parts_inventory";
         }
       }
 
       let labor_rates: unknown[] = [];
+      let laborStatus: WoCostSourceStatus = "unavailable";
+      let laborRelation: string | null = null;
       const mlr = await client.query(`SELECT to_regclass('maintenance.labor_rates') IS NOT NULL AS ok`);
       if (mlr.rows[0]?.ok) {
         const lr = await client.query(
@@ -92,6 +109,8 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
           [oc]
         );
         labor_rates = lr.rows;
+        laborStatus = "available";
+        laborRelation = "maintenance.labor_rates";
       } else {
         const clr = await client.query(`SELECT to_regclass('catalogs.labor_rates') IS NOT NULL AS ok`);
         if (clr.rows[0]?.ok) {
@@ -106,6 +125,8 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
             [oc]
           );
           labor_rates = lr.rows;
+          laborStatus = "fallback";
+          laborRelation = "catalogs.labor_rates";
         }
       }
 
@@ -114,6 +135,10 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
         items: itemsRes.rows,
         parts,
         labor_rates,
+        sources: {
+          inventory_parts: { status: partsStatus, relation: partsRelation },
+          labor_rates: { status: laborStatus, relation: laborRelation },
+        },
       };
     });
 

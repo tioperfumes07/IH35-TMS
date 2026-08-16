@@ -958,8 +958,26 @@ export function WorkOrderDetailPage() {
             <ul className="list-inside list-disc space-y-1">
               <li>Expense categories (Section A): {costQ.data.expense_categories.length}</li>
               <li>Items (Section B): {costQ.data.items.length}</li>
-              <li>Parts: {costQ.data.parts.length}</li>
-              <li>Labor rates: {costQ.data.labor_rates.length}</li>
+              <li>
+                Parts:{" "}
+                {costQ.data.sources?.inventory_parts?.status === "unavailable"
+                  ? "not provisioned (parts catalog missing)"
+                  : `${costQ.data.parts.length}${
+                      costQ.data.sources?.inventory_parts?.status === "fallback"
+                        ? " (fallback catalog)"
+                        : ""
+                    }`}
+              </li>
+              <li>
+                Labor rates:{" "}
+                {costQ.data.sources?.labor_rates?.status === "unavailable"
+                  ? "not provisioned (labor rates catalog missing)"
+                  : `${costQ.data.labor_rates.length}${
+                      costQ.data.sources?.labor_rates?.status === "fallback"
+                        ? " (fallback catalog)"
+                        : ""
+                    }`}
+              </li>
             </ul>
           ) : null}
         </div>
