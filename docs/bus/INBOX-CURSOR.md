@@ -1,5 +1,19 @@
 # INBOX-CURSOR · WAVE TONIGHT · 2026-08-16 15:17 CT
 
+## ★★★ OWNER ORDER · 2026-08-16 16:09 CT · NON-STOP CONTINUOUS AUTO · ALL SEATS
+
+**NO heartbeats. NO ping theater. NO progress-only loops. NO idle. NO deviation.**
+
+**ONLY METHOD:** `FAST-MERGE-4MIN-LAW.md` — gate → push (--no-verify if ENV-static only) → PR → `merge --admin` → OUTBOX → NEXT same turn.
+
+**ONLY GOAL:** USMCA fully ready — Fully-Wired **1–11** · every leaf/picker/modal · live verify · Live Chrome last. No stone unturned.
+
+**DO:** claim OPEN → build complete atom → FAST-MERGE → next.  
+**DON'T:** wait Jorge · babysit CI · invent methods · ask answered questions · TRANSP/QBO block USMCA.
+
+ACK: `OUTBOX: ACK NONSTOP · CLAIM <id> · NEXT=…` then ship.
+
+
 ## ★★★ HARD LAW · 2026-08-16 16:03 CT · FAST WEEKEND MERGE ONLY · NO OTHER METHOD
 
 **Canonical:** `FAST-MERGE-4MIN-LAW.md` (this Desktop bus folder) — **THE ONLY SHIP METHOD**.
