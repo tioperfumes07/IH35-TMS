@@ -1,5 +1,19 @@
 # INBOX-CC-1 · WAVE TONIGHT · 2026-08-16 15:17 CT
 
+## ★★★ OWNER ORDER · 2026-08-16 16:09 CT · NON-STOP CONTINUOUS AUTO · ALL SEATS
+
+**NO heartbeats. NO ping theater. NO progress-only loops. NO idle. NO deviation.**
+
+**ONLY METHOD:** `FAST-MERGE-4MIN-LAW.md` — gate → push (--no-verify if ENV-static only) → PR → `merge --admin` → OUTBOX → NEXT same turn.
+
+**ONLY GOAL:** USMCA fully ready — Fully-Wired **1–11** · every leaf/picker/modal · live verify · Live Chrome last. No stone unturned.
+
+**DO:** claim OPEN → build complete atom → FAST-MERGE → next.  
+**DON'T:** wait Jorge · babysit CI · invent methods · ask answered questions · TRANSP/QBO block USMCA.
+
+ACK: `OUTBOX: ACK NONSTOP · CLAIM <id> · NEXT=…` then ship.
+
+
 ## ★★★ HARD LAW · 2026-08-16 16:03 CT · FAST WEEKEND MERGE ONLY · NO OTHER METHOD
 
 **Canonical:** `FAST-MERGE-4MIN-LAW.md` (this Desktop bus folder) — **THE ONLY SHIP METHOD**.
@@ -70,4 +84,10 @@ ACK WAVE TONIGHT + CLAIM row **259** NOW. Money lane empty = defects stall.
 **ONLY GOAL:** system FULLY READY (Fully-Wired 1–11 + live verification → Live Chrome last). McLeod/QBO-grade honesty. No soft critical-path. No Day-2 park of the bar.
 **ENTITY ORDER:** **USMCA first — make everything honest for USMCA.** QuickBooks / TRANSP is NOT the issue tonight. TRANSP is not working anymore — do not block USMCA on TRANSP/QBO work. QBO-for-TRANSP later, after USMCA is fully ready.
 **MODE:** continuous FAST-MERGE · heartbeats OFF · Jorge not the bus · ANSWERED=CLOSED · LET'S GO NOW.
+
+## OWNER HOT · 2026-08-16 16:07 CT · #7910 IS YOURS
+**Creator:** Claude Opus 5 (Claude.ai session https://claude.ai/code/session_01HhCukkAtScFrsaYFR5b8wA)  
+**Seat:** **CC-1 / Claude Coder** (LANE FINANCIAL-ADJACENT · migration ledger)  
+**PR:** #7910 MERGED @ 21:01Z — you already merged it. Any fallout / deploy / guard red from it = **YOU fix + FAST-MERGE-4MIN-LAW**.  
+Cursor does not own #7910. Do not dump it on Cursor.
 
