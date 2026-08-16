@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T15:05:03-05:00",
-    "sourceSha": "5026d5540",
+    "generatedAt": "2026-08-16T15:15:47-05:00",
+    "sourceSha": "28c365f83",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 926,
+    "ledgerRows": 928,
     "failOpen": 24,
     "defects": 26
   },
@@ -866,7 +866,7 @@
         "AUDIT",
         "UNV",
         "AUDIT",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "FAIL",
         "AUDIT",
@@ -898,7 +898,7 @@
           "AUDIT",
           "AUDIT",
           "AUDIT",
-          "AUDIT",
+          "FIX",
           "AUDIT",
           "FAIL",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7900,
+      "title": "FINDING: LV-USMCA-UNIT-PROFILE-QBO-MAPPING-AND-FALSE-LOADING",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7900",
+      "sha": "28c365f83",
+      "committedAtIso": "2026-08-16T15:15:47-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:06 PM CT",
+      "url": "",
+      "sha": "8b663ba55",
+      "committedAtIso": "2026-08-16T20:06:11Z"
+    },
+    {
       "number": 7899,
       "title": "FINDING: LV-SYSTEM-NONQBO-FOOTER-COMMA",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7895",
       "sha": "78231062f",
       "committedAtIso": "2026-08-16T14:44:22-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(dispatch): DISP-F3388 — NotifyPreferences customer EntityPicker",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:39 PM CT",
-      "url": "",
-      "sha": "6374762cc",
-      "committedAtIso": "2026-08-16T14:39:54-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:37 PM CT",
-      "url": "",
-      "sha": "22409631b",
-      "committedAtIso": "2026-08-16T19:37:33Z"
     }
   ]
 }
