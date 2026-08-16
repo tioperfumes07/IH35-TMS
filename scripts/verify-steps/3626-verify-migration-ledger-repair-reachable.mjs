@@ -1,5 +1,5 @@
-// verify-steps wrapper — LV-087-REPAIR-UNREACHABLE · claim 3626 (renumbered from colliding 3624)
 #!/usr/bin/env node
+// verify-steps wrapper — LV-087-REPAIR-UNREACHABLE · claim 3626 (renumbered from colliding 3624)
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
