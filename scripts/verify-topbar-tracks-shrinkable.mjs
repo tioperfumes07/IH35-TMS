@@ -17,7 +17,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
-const TOPBAR = join(ROOT, "apps/frontend/src/components/Topbar.tsx");
 const CSS = join(ROOT, "apps/frontend/src/styles/responsive-breakpoints.css");
 
 /** The grid-template-columns value must not contain a bare `1fr`/`auto` track. */
@@ -27,9 +26,18 @@ export function tracksAreShrinkable(decl) {
   return tracks.every((t) => t.startsWith("minmax(0,") || t.startsWith("minmax(0"));
 }
 
-export function extractGridDecl(src) {
-  const m = src.match(/gridTemplateColumns:\s*"([^"]+)"/);
-  return m ? m[1].replace(/,\s*/g, ",") : null;
+// LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP (2026-08-16): the desktop grid-template-columns declaration
+// moved OUT of Topbar.tsx's inline style and INTO the top-level (non-@media) `.top-bar` rule in
+// responsive-breakpoints.css — an inline gridTemplateColumns always beats a Tailwind class in the
+// cascade, which is exactly why the bar clipped at ~697px. Strip every @media block first so what's
+// left is only top-level rules, then read the desktop declaration from there (the 1279px stack
+// breakpoint's own `.top-bar` rule inside its @media block is intentionally excluded — that one
+// collapses to a single minmax(0,1fr) track on purpose and is checked separately by
+// stackBreakpointPx below).
+export function extractGridDecl(css) {
+  const topLevel = css.replace(/@media\s*\([^)]*\)\s*\{[\s\S]*?\n\}/g, "");
+  const m = topLevel.match(/\.top-bar\s*\{[^}]*grid-template-columns:\s*([^;]+);/);
+  return m ? m[1].trim().replace(/,\s*/g, ",") : null;
 }
 
 export function stackBreakpointPx(css) {
@@ -57,8 +65,8 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const decl = extractGridDecl(readFileSync(TOPBAR, "utf8"));
-if (!decl) { console.error("verify:topbar-tracks-shrinkable FAIL — gridTemplateColumns not found in Topbar.tsx"); process.exit(1); }
+const decl = extractGridDecl(readFileSync(CSS, "utf8"));
+if (!decl) { console.error("verify:topbar-tracks-shrinkable FAIL — top-level .top-bar { grid-template-columns } not found in responsive-breakpoints.css"); process.exit(1); }
 if (!tracksAreShrinkable(decl.replace(/,/g, " ").replace(/minmax\(0 /g, "minmax(0,"))) {
   console.error(`verify:topbar-tracks-shrinkable FAIL — every track must be minmax(0, …); got "${decl}".`);
   console.error("A bare `1fr` is minmax(auto,1fr): the TRACK cannot shrink, the columns overlap, and the");

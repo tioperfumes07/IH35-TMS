@@ -28,9 +28,12 @@ if (!/Math\.min\(\s*drive\s*,\s*shift\s*,\s*cycle\s*\)/.test(clocks)) fail("most
 // Stop By / Resume At labeled projected.
 if (!/HOS_PROJECTED_TOOLTIP/.test(clocks) || !/[Pp]rojected/.test(clocks)) fail("Stop By/Resume At must be labeled PROJECTED");
 if (!/derived:\s*true/.test(clocks)) fail("stopBy/resumeAt must be marked derived");
-// Wired in the List: header + body cells from the in-app store.
+// Wired in the List: header + body cells from the in-app store. The List renders one
+// <DriverHosClockValue> per HOS_COLUMNS entry (per-column cells) rather than the earlier
+// batch <DriverHosClockCells> component; DriverHosClockValue still reads the same in-app HOS
+// store (getDriverHosStatus, #1109), so the underlying requirement is unchanged.
 if (!/HOS_COLUMNS\.map/.test(list)) fail("List header must render HOS_COLUMNS");
-if (!/<DriverHosClockCells\b/.test(list)) fail("List body must render DriverHosClockCells");
+if (!/<DriverHosClockValue\b/.test(list)) fail("List body must render DriverHosClockValue per HOS_COLUMNS entry");
 const cells = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/DriverHosClocks.tsx"), "utf8");
 if (!/getDriverHosStatus/.test(cells)) fail("HOS cells must read the in-app HOS store (getDriverHosStatus, #1109)");
 console.log("PASS verify-dispatch-list-hos-columns");
