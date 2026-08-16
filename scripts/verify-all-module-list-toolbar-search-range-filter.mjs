@@ -50,6 +50,7 @@ const EXACT_CONSUMERS = {
   "cash-flow": { route: "/cash-flow?tab=actual_vs_projected", surface: "pages/cash-flow/tabs/ActualVsProjectedTab.tsx" },
   form_425: { route: "/425c?tab=history", surface: "pages/form425c/tabs/HistoryTab.tsx" },
   insurance: { route: "/safety/insurance/lawsuits", surface: "pages/insurance/LawsuitsTab.tsx" },
+  inventory: { route: "/inventory/assignments", surface: "pages/inventory/InventoryAssignmentsPage.tsx" },
   legal: { route: "/legal/matters", surface: "pages/legal/matters/LegalMattersListPage.tsx" },
   program: { route: "/program/modules", surface: "pages/program/ModuleCompletionPage.tsx" },
   system: { route: "/system?tab=program", surface: "pages/system/SystemModulePage.tsx" },
