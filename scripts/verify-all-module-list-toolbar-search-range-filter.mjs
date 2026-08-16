@@ -46,6 +46,8 @@ const EVIDENCE = {
 };
 
 const FILTER_MODULES = new Set(["banking", "cash-flow", "driver-hub", "finance", "home", "program", "system", "users"]);
+const PROGRAM_LIST_ROUTE = "/program/modules";
+const PROGRAM_LIST_CONSUMER = "pages/program/ModuleCompletionPage.tsx";
 const CONNECTIVITY_EXCLUSIONS = {
   form_425: ["tab.qb", "law.virtual_banks_excluded"],
   system: ["tab.qbo_recon", "tab.qbo_sync", "law.no_tms_qbo_writeback"],
@@ -83,6 +85,9 @@ export function verify(source) {
     for (const id of ["chrome.toolbar_search", "chrome.toolbar_range", ...(FILTER_MODULES.has(module) ? ["chrome.toolbar_filter"] : [])]) {
       const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
       if (!leaf?.required?.includes("connectivity")) failures.push(`${module}:${id} must require connectivity`);
+      if (module === "program" && (leaf?.route_hint !== PROGRAM_LIST_ROUTE || leaf?.surface_path !== PROGRAM_LIST_CONSUMER)) {
+        failures.push(`program:${id} must point at the real Module Completion list consumer, not borrow credit from /program`);
+      }
     }
   }
   for (const [module, ids] of Object.entries(CONNECTIVITY_EXCLUSIONS)) {
@@ -124,6 +129,12 @@ if (process.argv.includes("--self-test")) {
     const matrixFile = `docs/specs/scoreboard/modules/${module}.required.json`;
     mutations.push(() => ({ ...source, [matrixFile]: source[matrixFile].replace('"id": "chrome.toolbar_filter"', '"id": "broken.toolbar_filter"') }));
   }
+  mutations.push(() => {
+    const file = "docs/specs/scoreboard/modules/program.required.json";
+    const matrix = JSON.parse(source[file]);
+    matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_search").route_hint = "/program";
+    return { ...source, [file]: JSON.stringify(matrix) };
+  });
   for (const [module, ids] of Object.entries(CONNECTIVITY_EXCLUSIONS)) {
     const matrixFile = `docs/specs/scoreboard/modules/${module}.required.json`;
     for (const id of ids) {
