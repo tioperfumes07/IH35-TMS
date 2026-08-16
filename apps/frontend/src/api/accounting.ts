@@ -1384,6 +1384,23 @@ export function listJournalEntryTypesForJe(operatingCompanyId: string) {
   );
 }
 
+/**
+ * The posting payload the JE create endpoint accepts. Exported because it was previously an
+ * anonymous inline shape, which callers re-declared by hand -- and ManualJEModal duplicated it
+ * with `entity_type?: string | null`. When BANK-F5330 narrowed entity_type to the 4-kind
+ * discriminator, the duplicate did not follow, tsc -b exited 2, and the frontend stopped
+ * publishing for over two hours. One name, one source of truth.
+ */
+export type JournalEntryPostingInput = {
+  account_id: string;
+  class_id?: string | null;
+  entity_uuid?: string | null;
+  entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  description?: string | null;
+};
+
 export function createJournalEntry(
   operatingCompanyId: string,
   payload: {
@@ -1393,15 +1410,7 @@ export function createJournalEntry(
     source?: JournalEntrySource;
     journal_entry_type_id?: string | null;
     journal_entry_type_code?: string | null;
-    postings: Array<{
-      account_id: string;
-      class_id?: string | null;
-      entity_uuid?: string | null;
-      entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
-      debit_or_credit: "debit" | "credit";
-      amount_cents: number;
-      description?: string | null;
-    }>;
+    postings: JournalEntryPostingInput[];
   }
 ) {
   // The backend createJournalEntryBodySchema requires operating_company_id in the BODY (not just the

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../../../api/accounting";
+import type { JournalEntryPostingInput } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -135,15 +136,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               }
             : null,
         ])
-        .filter(Boolean) as Array<{
-        account_id: string;
-        class_id?: string | null;
-        entity_uuid?: string | null;
-        entity_type?: string | null;
-        debit_or_credit: "debit" | "credit";
-        amount_cents: number;
-        description?: string | null;
-      }>;
+        .filter(Boolean) as JournalEntryPostingInput[];
       const memoParts: string[] = [];
       if (referenceNumber.trim()) memoParts.push(`Ref: ${referenceNumber.trim()}`);
       if (memo.trim()) memoParts.push(memo.trim());
