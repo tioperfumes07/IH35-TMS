@@ -28,11 +28,11 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-16T08:27:55-05:00",
-    "sourceSha": "3cac457ef",
-    "deployedSha": "0132e2b",
+    "generatedAt": "2026-08-16T08:37:52-05:00",
+    "sourceSha": "aa5a14ee0",
+    "deployedSha": "151afc5",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 895,
+    "ledgerRows": 896,
     "failOpen": 33,
     "defects": 25
   },

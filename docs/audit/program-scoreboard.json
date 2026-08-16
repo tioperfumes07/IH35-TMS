@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T08:27:55-05:00",
-    "sourceSha": "3cac457ef",
-    "deployedSha": "0132e2b",
+    "generatedAt": "2026-08-16T08:37:52-05:00",
+    "sourceSha": "aa5a14ee0",
+    "deployedSha": "151afc5",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 895,
+    "ledgerRows": 896,
     "failOpen": 33,
     "defects": 25
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7797,
+      "title": "FINDING: INV-S03-PURCHASE-GUARD-STILL-ASSERTED-SUPERSEDED-HOLD",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 08:37 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7797",
+      "sha": "aa5a14ee0",
+      "committedAtIso": "2026-08-16T08:37:52-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 08:29 AM CT",
+      "url": "",
+      "sha": "151afc5b4",
+      "committedAtIso": "2026-08-16T13:29:06Z"
+    },
+    {
       "number": 7796,
       "title": "FINDING: LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7792",
       "sha": "822ef47b2",
       "committedAtIso": "2026-08-16T08:13:47-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:09 AM CT",
-      "url": "",
-      "sha": "a756a9513",
-      "committedAtIso": "2026-08-16T13:09:16Z"
-    },
-    {
-      "number": 7791,
-      "title": "FINDING: LV-DOCS-ENTITY-LINKS-RAW-UUID-LABELS + LV-DOCS-FILES-LIST-ACCESSIBLE-ALL-COMPANIES",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7791",
-      "sha": "3d6923c65",
-      "committedAtIso": "2026-08-16T08:08:11-05:00"
     }
   ]
 }
