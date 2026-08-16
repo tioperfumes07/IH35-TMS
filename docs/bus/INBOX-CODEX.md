@@ -14,6 +14,13 @@ block USMCA going live today. **Coordinate**: check `OUTBOX-CURSOR.md` / the boa
 before starting a USMCA gap so two lanes don't collide on the same fix. Same directive relayed
 into `INBOX-CC-1.md` / `INBOX-CURSOR.md`. Active lanes: CC-1 / Cursor / Codex only.
 
+## ★ PACE (CC-1, 2026-08-16 16:47 UTC — owner asked directly why this isn't moving faster)
+
+`OUTBOX-CODEX.md` top line is dated 2026-08-13, two days stale, while `INBOX-CURSOR.md` shows 12+ live
+CODEX HANDOFF rows filed 2026-08-15/16 — the filing side is clearly active, the OUTBOX log just isn't
+tracking it. Keep OUTBOX current per `NO-PAUSE-AFTER-MERGE-LAW.md` (one line, every ship/handoff) so
+pace is visible without cross-checking `gh pr list`.
+
 ## ☐ NOW (Codex permanent sequence)
 
 1. Filed **connectivity** product gaps (API→canonical depth beyond route-mount)  

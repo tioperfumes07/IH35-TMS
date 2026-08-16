@@ -14,6 +14,13 @@ block USMCA going live today. **Coordinate**: check `OUTBOX-CODEX.md` / the boar
 before starting a USMCA gap so two lanes don't collide on the same fix. Same directive relayed
 into `INBOX-CC-1.md` / `INBOX-CODEX.md`. Active lanes: CC-1 / Cursor / Codex only.
 
+## ★ PACE (CC-1, 2026-08-16 16:47 UTC — owner asked directly why this isn't moving faster)
+
+`OUTBOX-CURSOR.md` top line is dated 2026-08-15T03:25Z while real merges are landing every few minutes
+(#7841/#7842/#7843 in the last 30 min) — the log is stale even though the work isn't. Keep OUTBOX
+current per `NO-PAUSE-AFTER-MERGE-LAW.md` (one line, every ship) so pace is visible without someone
+having to cross-check `gh pr list` to prove the lane is alive.
+
 ## ☐ NOW (Cursor lane — permanent sequence)
 
 0. **OPEN `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR`** — live USMCA `/reports/geofence-reconciliation`; dynamic anomaly-class ParityTables at `GeofenceReconciliationReport.tsx:85-151` lack Search+Range+gear and disappear entirely at zero rows. Fix once for every class with a leaf-specific mutation guard; preserve date Apply, EntityLinks, resolution, and honest empty state; `BLOCKS=LIVE-REPORTS-GEOFENCE-RECONCILIATION-CHROME`; OWNER-GATED=no.
@@ -40,9 +47,15 @@ OUTBOX: `Cursor | … | Live=BLOCKED(whole-product) | theater_broad_remaining:N 
 - Fully wired = 12-item bar (Live Chrome last)  
 - Launch without Live = items **1–11** + **honest Built** — `HONEST-BUILT-LAUNCH-LAW-2026-08-14`
 
-## CODEX HANDOFF · 2026-08-16 · LV-PROGRAM-TRACKER-R2-CREDENTIALS-MISSING
+## CLOSED (CC-1, 2026-08-16 16:45 UTC) · LV-PROGRAM-TRACKER-R2-CREDENTIALS-MISSING
 
-Actions run `31940366897` is green only because both R2 upload scripts skipped on absent `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` (log lines 4350, 4424-4433). Live `/program/tracker` remains on the Aug 15 fallback with zero Completed. Exact OPEN acceptance and `BLOCKS=LV-PROGRAM-TRACKER-DEPLOYMENT-PROOF-PRODUCER-DROPPED` are in `docs/audit/GUARD-WORKORDERS.md`; audit row 868. Owner-gated=no; Cursor bus/deploy lane.
+Stale — already FIXED. R2 secrets landed in GitHub Actions ~16:19 UTC; re-verified live in the actual
+job log (not inferred from status) that run `31958630257` (16:26-16:31 UTC) did a REAL upload, not a
+skip: `[tracker:sync] uploaded -> r2://.../program-tracker/block-reconciliation-data.json (707457
+bytes)` with fresh counts. Backend reads R2 directly server-side (no redeploy needed). GUARD-WORKORDERS.md
+row already carries `FIXED — secrets from APIS; run 31958265901 uploaded...`. Removing this dead entry
+so it doesn't get re-worked. Owner flagged the 18h-stale tracker directly — pace matters, keep the
+queue honest: close rows here the moment GUARD-WORKORDERS.md shows FIXED, don't leave them as live work.
 ## CODEX HANDOFF · 2026-08-15 · FINDINGS-REGISTER-SIGNOFF-DRIFT-2026-08-15
 
 `node scripts/verify-findings-register-signoff.mjs` is red on current main: seven board OPEN IDs are absent from `docs/audit/CC-3-FINDINGS-CHECKLIST.md`, and three checked Cursor rows have empty/misaligned Guard cells. Exact IDs and acceptance are filed in `docs/audit/GUARD-WORKORDERS.md`. Mechanical bus/register ownership; `OWNER-GATED=no`; `BLOCKS=FINDINGS-TRIPLE-LOCK-GREEN`.
