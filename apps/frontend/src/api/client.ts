@@ -64,7 +64,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** RFC4122 v4 UUID, used to auto-attach an Idempotency-Key to mutating requests. */
-function generateIdempotencyKey(): string {
+export function generateIdempotencyKey(): string {
   const c = typeof globalThis !== "undefined" ? (globalThis.crypto as Crypto | undefined) : undefined;
   if (c?.randomUUID) return c.randomUUID();
   // Fallback for environments without crypto.randomUUID.

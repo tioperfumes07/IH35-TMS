@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createVendorBill } from "../../api/accounting";
+import { generateIdempotencyKey } from "../../api/client";
 import { VendorBillForm } from "../../components/accounting/VendorBillForm";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
@@ -22,6 +23,10 @@ export function VendorBillCreatePage() {
   const companyId = selectedCompanyId ?? "";
   const [submitting, setSubmitting] = useState(false);
   const [lastBillId, setLastBillId] = useState<string | null>(null);
+  // Sync lock — React state alone loses the double-click race before re-render.
+  const submitInFlight = useRef(false);
+  // One key for this drawer session so GAP-IDEMP-KEYS middleware returns the cached bill.
+  const idempotencyKeyRef = useRef(generateIdempotencyKey());
 
   return (
     <AccountingSubNavWrapper title="Bills" subtitle="Create vendor bill">
@@ -49,14 +54,19 @@ export function VendorBillCreatePage() {
                   pushToast("Select operating company first", "error");
                   return;
                 }
+                if (submitInFlight.current || submitting) return;
+                submitInFlight.current = true;
                 setSubmitting(true);
                 try {
-                  const res = await createVendorBill(companyId, payload);
+                  const res = await createVendorBill(companyId, payload, {
+                    idempotencyKey: idempotencyKeyRef.current,
+                  });
                   pushToast("Vendor bill created", "success");
                   setLastBillId(res?.bill?.id ?? null);
                 } catch (error) {
                   pushToast(userFacingApiError(error, "Failed to create bill"), "error");
                 } finally {
+                  submitInFlight.current = false;
                   setSubmitting(false);
                 }
               }}

@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createVendorBill } from "../../../api/accounting";
+import { generateIdempotencyKey } from "../../../api/client";
 import {
   VendorBillForm,
   type VendorBillFormSubmitPayload,
@@ -62,12 +63,16 @@ export function CreateBillModal({
   // caller (BillsPage.tsx, WorkOrderDetailPage.tsx, MaintenanceHome.tsx, LegalMatterDetailPage.tsx)
   // discarded res.bill.id the moment onSuccess fired onClose() in the same tick.
   const [createdBill, setCreatedBill] = useState<{ id: string; bill_number: string | null } | null>(null);
+  const submitInFlight = useRef(false);
+  const idempotencyKeyRef = useRef(generateIdempotencyKey());
 
   useEffect(() => {
     if (!open) return;
     setPickedWoId(linkedWoId ?? null);
     setPickedUnitId(linkedUnitId ?? null);
     setCreatedBill(null);
+    submitInFlight.current = false;
+    idempotencyKeyRef.current = generateIdempotencyKey();
   }, [open, linkedWoId, linkedUnitId]);
 
   const showLinkPickers = requireWoLink && !linkedWoId;
@@ -79,7 +84,9 @@ export function CreateBillModal({
       if (requireWoLink && !(linkedWoId ?? pickedWoId)) {
         throw new Error("Select a work order — Maintenance bills must link to a WO");
       }
-      return createVendorBill(operatingCompanyId, payload);
+      return createVendorBill(operatingCompanyId, payload, {
+        idempotencyKey: idempotencyKeyRef.current,
+      });
     },
     onSuccess: (res) => {
       pushToast("Bill created", "success");
@@ -177,14 +184,20 @@ export function CreateBillModal({
           submitTestId="create-bill-submit"
           onCancel={onClose}
           onSubmit={async (payload) => {
+            if (submitInFlight.current || createMutation.isPending) return;
+            submitInFlight.current = true;
             // Name pickedWoId / pickedUnitId on the submit path so form-field-roundtrip
             // sees the Maintenance Home pickers reach the create payload (M-21).
+            try {
             await createMutation.mutateAsync({
               ...payload,
               work_order_id: payload.work_order_id ?? pickedWoId ?? linkedWoId ?? undefined,
               unit_id: payload.unit_id ?? pickedUnitId ?? linkedUnitId ?? undefined,
               legal_matter_id: payload.legal_matter_id ?? linkedLegalMatterId ?? undefined,
             });
+            } finally {
+              submitInFlight.current = false;
+            }
           }}
         />
       ) : null}

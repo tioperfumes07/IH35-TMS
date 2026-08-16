@@ -919,11 +919,14 @@ export function createVendorBill(
       category_code?: string;
       load_id?: string;
     }>;
-  }
+  },
+  opts?: { idempotencyKey?: string }
 ) {
   return apiRequest<{ bill: VendorBill }>(withCompany(`/api/v1/accounting/bills`, operatingCompanyId), {
     method: "POST",
     body,
+    // Stable key per create session — double-click must NOT mint a second bill (GAP-IDEMP-KEYS).
+    headers: opts?.idempotencyKey ? { "Idempotency-Key": opts.idempotencyKey } : undefined,
   });
 }
 
