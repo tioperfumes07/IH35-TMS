@@ -52,14 +52,15 @@ export function CarrierSwitcher() {
     <div className="relative">
       <button
         type="button"
-        className="inline-flex max-w-[280px] items-center gap-1 rounded-sm border px-2 py-1 text-xs hover:bg-white/10"
+        className="inline-flex w-full min-w-0 max-w-[min(280px,100%)] items-center gap-1 rounded-sm border px-2 py-1 text-xs hover:bg-white/10"
         style={{ borderColor: "#2A3242", color: "#E5E7EB", backgroundColor: "#151A24" }}
         onClick={() => setOpen((current) => !current)}
         title={`Current company: ${selectedLabel}`}
+        data-testid="carrier-switcher-trigger"
       >
-        <span className="text-[10px] text-gray-300">Current:</span>
-        <span className="truncate">{selectedLabel}</span>
-        <ChevronDown className="h-3 w-3" />
+        <span className="shrink-0 text-[10px] text-gray-300">Current:</span>
+        <span className="min-w-0 flex-1 truncate text-left">{selectedLabel}</span>
+        <ChevronDown className="h-3 w-3 shrink-0" />
       </button>
 
       {open ? (

@@ -14,17 +14,33 @@
   }
 }
 
-/* The top bar stacks well before it would overlap. It previously stacked only at <=767px, but the
-   three-column chrome (wordmark + entity chip | nav | language/switcher/bell/help/clock/user) needs
-   far more than 768px: between 768px and ~1400px the columns overflowed and rendered ON TOP of each
-   other, which made the company switcher physically unclickable on every page. Stack at <=1279px. */
+/*
+  Topbar desktop grid MUST live here (not inline on <header>).
+  An inline gridTemplateColumns beat Tailwind max-xl:grid-cols-1 and left a 3-column track
+  at ~697px — CarrierSwitcher truncated after "Current:" and action buttons clipped
+  (LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP). minmax(0,…) on every track is required so 1fr
+  columns can shrink below content width.
+*/
+.top-bar {
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+}
+
+/* Stack well before overlap. Between 768px and ~1400px the three columns used to paint
+   on top of each other and make the company switcher unclickable. Stack at <=1279px. */
 @media (max-width: 1279px) {
   .top-bar {
     grid-template-columns: minmax(0, 1fr) !important;
     row-gap: 0.5rem;
   }
 
-  .top-bar > div:nth-child(2) {
+  .top-bar > div {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .top-bar > div:nth-child(2),
+  .top-bar > div:nth-child(3) {
     justify-content: flex-start !important;
   }
 
@@ -35,6 +51,13 @@
 
   .ih35-responsive-table-hide-sm {
     display: none;
+  }
+}
+
+/* Phone / narrow in-app panes: drop the long datetime so Create/Tasks/… stay on-screen. */
+@media (max-width: 767px) {
+  .top-bar-date-label {
+    display: none !important;
   }
 }
 
