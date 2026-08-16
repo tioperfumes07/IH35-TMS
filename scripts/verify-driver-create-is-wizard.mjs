@@ -5,6 +5,8 @@
  *  2) Next / Back navigation (Save only on final step)
  *  3) DQ docs & drug-screen step with ack + file staging
  *  4) post-create upload via requestUploadUrl + confirmUpload
+ *  5) identity step owns every backend-required create field (first/last/10-digit phone) and
+ *     neither Next nor Save can hide those errors on step 4
  *
  * --selftest strips the wizard testid and expects FAIL.
  */
@@ -30,9 +32,15 @@ function check(src) {
     assertWired("DQ step", src, /data-testid=["']driver-create-dq-step["']/);
     assertWired("drug ack", src, /data-testid=["']driver-create-drug-screen-ack["']/);
     assertWired("Save gated on drug ack", src, /!drugScreenAcknowledged/);
-    assertWired("requestUploadUrl", src, /requestUploadUrl\s*\(/);
+    assertWired("requestUploadUrlFromFile", src, /requestUploadUrlFromFile\s*\(/);
     assertWired("confirmUpload", src, /confirmUpload\s*\(/);
     assertWired("pending docs", src, /pendingDocs/);
+    assertWired("identity step readiness", src, /const identityStepReady = Boolean\([\s\S]*?form\.first_name\.trim\(\)[\s\S]*?form\.last_name\.trim\(\)[\s\S]*?normalizePhoneDigits\(form\.phone_input\)\.length === 10[\s\S]*?\);/);
+    assertWired("required first-name label", src, /\["first_name", "First Name \*"\]/);
+    assertWired("required last-name label", src, /\["last_name", "Last Name \*"\]/);
+    assertWired("required phone label", src, /Phone \(10 digits\) \*/);
+    assertWired("Next blocks incomplete identity", src, /disabled=\{wizardStep === 1 && !identityStepReady\}/);
+    assertWired("Save blocks incomplete identity", src, /disabled=\{[\s\S]*?!identityStepReady \|\|[\s\S]*?!drugScreenAcknowledged/);
   } catch (e) {
     errors.push(String(e.message || e));
   }
@@ -41,7 +49,10 @@ function check(src) {
 
 function selftest() {
   const orig = fs.readFileSync(MODAL, "utf8");
-  const broken = orig.replace(/data-testid=["']driver-create-wizard["']/, 'data-testid="driver-create-flat"');
+  const broken = orig.replace(
+    /normalizePhoneDigits\(form\.phone_input\)\.length === 10/,
+    "true /* SELFTEST: blank phone escapes identity gate */"
+  );
   if (broken === orig) throw new Error("selftest: could not plant defect");
   fs.writeFileSync(MODAL, broken);
   try {
