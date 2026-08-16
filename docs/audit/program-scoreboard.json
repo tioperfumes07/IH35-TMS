@@ -1,8 +1,8 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T16:45:37-05:00",
-    "sourceSha": "961b0ad71",
-    "deployedSha": "097723e",
+    "generatedAt": "2026-08-16T16:50:26-05:00",
+    "sourceSha": "386930c5b",
+    "deployedSha": "c11034c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 952,
     "failOpen": 18,
@@ -2121,6 +2121,51 @@
   },
   "recentActivity": [
     {
+      "number": 7937,
+      "title": "FINDING: verify-all-live-ledgered-2026-08-16",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7937",
+      "sha": "386930c5b",
+      "committedAtIso": "2026-08-16T16:50:26-05:00"
+    },
+    {
+      "number": 7936,
+      "title": "FINDING: rows716-720-verify-cursor-live-pass",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7936",
+      "sha": "a9dc23c6e",
+      "committedAtIso": "2026-08-16T16:48:34-05:00"
+    },
+    {
+      "number": 7935,
+      "title": "FINDING: rows711-715-verify-cursor-live-pass",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7935",
+      "sha": "52302bda4",
+      "committedAtIso": "2026-08-16T16:47:44-05:00"
+    },
+    {
+      "number": 7934,
+      "title": "FINDING: rows708-710-verify-cursor-live-pass",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7934",
+      "sha": "178a0d48c",
+      "committedAtIso": "2026-08-16T16:46:52-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:46 PM CT",
+      "url": "",
+      "sha": "c11034cae",
+      "committedAtIso": "2026-08-16T21:46:36Z"
+    },
+    {
       "number": 7933,
       "title": "FINDING: row707-verify-cursor-live-pass",
       "state": "merged",
@@ -2164,51 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7929",
       "sha": "1e927a1d5",
       "committedAtIso": "2026-08-16T16:40:12-05:00"
-    },
-    {
-      "number": 7928,
-      "title": "FINDING: row432-superseeded-by-933",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7928",
-      "sha": "097723e48",
-      "committedAtIso": "2026-08-16T16:38:48-05:00"
-    },
-    {
-      "number": 7927,
-      "title": "ChatGpt-Codex-1-fix(system): restore CAP-15 reconciliation health",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7927",
-      "sha": "bb5c5d5a5",
-      "committedAtIso": "2026-08-16T16:38:22-05:00"
-    },
-    {
-      "number": 7925,
-      "title": "FINDING: CLAIM-RESERVE-3649",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7925",
-      "sha": "972a8bb18",
-      "committedAtIso": "2026-08-16T16:37:19-05:00"
-    },
-    {
-      "number": 7924,
-      "title": "FINDING: AUDIT-935-STATUS-FIXED-7923",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7924",
-      "sha": "0336d8ff3",
-      "committedAtIso": "2026-08-16T16:36:55-05:00"
-    },
-    {
-      "number": 7923,
-      "title": "FINDING: LV-INSURANCE-POLICY-VENDOR-CREATOR-DEPLOY-DRIFT",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7923",
-      "sha": "44d7ba863",
-      "committedAtIso": "2026-08-16T16:36:06-05:00"
     }
   ]
 }
