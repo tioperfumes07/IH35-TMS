@@ -266,7 +266,7 @@ export function FinanceScenariosPage() {
               </div>
               <div className="space-y-2">
                 {lines.map((line, idx) => (
-                  <div key={line.key} className="grid grid-cols-2 gap-2 rounded-sm border border-slate-200 p-3 md:grid-cols-6">
+                  <div key={line.key} className="grid grid-cols-2 gap-2 border-t border-slate-100 py-3 md:grid-cols-6">
                     <label className="block">
                       <span className="text-xs font-medium text-slate-600">Kind</span>
                       <select
