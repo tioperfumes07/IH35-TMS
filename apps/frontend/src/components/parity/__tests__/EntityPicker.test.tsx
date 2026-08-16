@@ -124,12 +124,12 @@ describe("EntityPicker (C1 picker law)", () => {
     );
   });
 
-  it('puts inline "+ Create driver" as the FIRST ROW inside the dropdown, before any keystroke', async () => {
+  it('puts inline "+ Add new driver" as the FIRST ROW inside the dropdown, before any keystroke', async () => {
     const user = userEvent.setup();
     wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
     await user.click(await screen.findByPlaceholderText("Select driver"));
 
-    const createRow = await screen.findByText("+ Create driver");
+    const createRow = await screen.findByText("+ Add new driver");
     expect(createRow).toBeTruthy();
     // FIRST row: it must precede the first roster option in document order.
     const janeRow = await screen.findByText("Jane Driver");
@@ -149,7 +149,7 @@ describe("EntityPicker (C1 picker law)", () => {
     const user = userEvent.setup();
     wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
     await user.click(await screen.findByPlaceholderText("Select driver"));
-    await user.click(await screen.findByText("+ Create driver"));
+    await user.click(await screen.findByText("+ Add new driver"));
     const surface = await screen.findByTestId("create-driver-surface");
     // shell="modal" is the shared Modal, which after C7 renders variant="drawer" (480px right
     // drawer with focus trap + Escape + unsaved guard). shell="drawer" is CHROME-11's ParityDrawer,
@@ -162,7 +162,7 @@ describe("EntityPicker (C1 picker law)", () => {
     wrap(<EntityPicker kind="vendor" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} allowCreate />);
     await user.click(await screen.findByPlaceholderText("Select vendor"));
 
-    const createRow = await screen.findByText("+ Create vendor");
+    const createRow = await screen.findByText("+ Add new vendor");
     const vendorRow = await screen.findByText("Roadside Supply");
     expect(createRow.compareDocumentPosition(vendorRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
@@ -180,7 +180,7 @@ describe("EntityPicker (C1 picker law)", () => {
     );
 
     await user.click(await screen.findByPlaceholderText("Select vendor"));
-    await user.click(await screen.findByText("+ Create vendor"));
+    await user.click(await screen.findByText("+ Add new vendor"));
     await user.click(await screen.findByText("Complete vendor create"));
     await waitFor(() => expect((screen.getByTestId("company-switch-vendor-picker") as HTMLInputElement).value).toBe("Created Vendor"));
 
@@ -219,7 +219,7 @@ describe("EntityPicker (C1 picker law)", () => {
     const user = userEvent.setup();
     wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} nestedInDrawer />);
     await user.click(await screen.findByPlaceholderText("Select driver"));
-    await user.click(await screen.findByText("+ Create driver"));
+    await user.click(await screen.findByText("+ Add new driver"));
     expect((await screen.findByTestId("create-driver-surface")).getAttribute("data-shell")).toBe("drawer");
   });
 
@@ -230,7 +230,7 @@ describe("EntityPicker (C1 picker law)", () => {
     );
     await user.click(await screen.findByPlaceholderText("Select driver"));
     await screen.findByText("Jane Driver");
-    expect(screen.queryByText("+ Create driver")).toBeNull();
+    expect(screen.queryByText("+ Add new driver")).toBeNull();
   });
 
   it("creates a claim through the canonical creator and auto-selects the returned row", async () => {
