@@ -18,6 +18,7 @@ export type MultiStopRow = {
   city: string;
   state: string;
   country: string;
+  postal_code: string;
   window_start: string;
   window_end: string;
   notes: string;
@@ -38,6 +39,7 @@ function apiStopToRow(s: RefinedLoadStop): MultiStopRow {
     city: s.city ?? "",
     state: s.state ?? "",
     country: s.country ?? "US",
+    postal_code: s.postal_code ?? "",
     window_start: wStart ? wStart.slice(0, 16) : "",
     window_end: wEnd ? wEnd.slice(0, 16) : "",
     notes: s.notes ?? "",
@@ -121,6 +123,15 @@ function SortableRow({
           <div>
             <div className="text-[10px] font-semibold text-gray-500">ST</div>
             <input className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.state} onChange={(e) => onChange(row.key, { state: e.target.value })} />
+          </div>
+          <div>
+            <div className="text-[10px] font-semibold text-gray-500">ZIP</div>
+            <input
+              className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+              value={row.postal_code}
+              onChange={(e) => onChange(row.key, { postal_code: e.target.value })}
+              aria-label="ZIP"
+            />
           </div>
           <div>
             <div className="text-[10px] font-semibold text-gray-500">Window start</div>
@@ -217,6 +228,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
             city: r.city || null,
             state: r.state || null,
             country: r.country || "US",
+            postal_code: r.postal_code || null,
             address_line1: r.location_address || null,
             latitude: lat != null && Number.isFinite(lat) ? lat : null,
             longitude: lng != null && Number.isFinite(lng) ? lng : null,
@@ -235,6 +247,10 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
       pushToast("Stops saved", "success");
       await qc.invalidateQueries({ queryKey: ["dispatch", "load-stops-refined", loadId, operatingCompanyId] });
       await qc.invalidateQueries({ queryKey: ["loads", "detail", loadId] });
+    },
+    onError: (err) => {
+      const msg = String((err as Error)?.message ?? "");
+      pushToast(msg === "need_two_stops" ? "Need at least 2 stops to save" : "Could not save stops", "error");
     },
   });
 
@@ -256,6 +272,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
         city: "",
         state: "",
         country: "US",
+        postal_code: "",
         window_start: "",
         window_end: "",
         notes: "",
@@ -286,7 +303,6 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
       <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
         Est. leg miles: ~{totals.dist} · Est. hours: ~{totals.hrs.toFixed(1)}
       </div>
-      {mut.isError ? <div className="text-xs text-red-600">Save failed (need at least 2 stops).</div> : null}
       <Button type="button" size="sm" loading={mut.isPending} onClick={() => void mut.mutateAsync()}>
         Save stops
       </Button>
