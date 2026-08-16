@@ -117,7 +117,7 @@
       "id": "home",
       "tab": "Home",
       "sub": "Cash Flow page shell",
-      "route_hint": "/cash-flow",
+      "route_hint": "/cash-flow?tab=actual_vs_projected",
       "required": [
         "connectivity"
       ]
@@ -203,45 +203,45 @@
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
-      "route_hint": "/cash-flow",
+      "route_hint": "/cash-flow?tab=actual_vs_projected",
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/cash-flow/tabs/ActualVsProjectedTab.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
       "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
-      "route_hint": "/cash-flow",
+      "route_hint": "/cash-flow?tab=actual_vs_projected",
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/cash-flow/tabs/ActualVsProjectedTab.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
       "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
-      "route_hint": "/cash-flow",
+      "route_hint": "/cash-flow?tab=actual_vs_projected",
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/cash-flow/tabs/ActualVsProjectedTab.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
-      "route_hint": "/cash-flow",
+      "route_hint": "/cash-flow?tab=actual_vs_projected",
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/cash-flow/tabs/ActualVsProjectedTab.tsx"
     },
     {
       "id": "cash-flow.panel.projection",
