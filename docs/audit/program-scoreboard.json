@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T21:13:06-05:00",
-    "sourceSha": "6431aa1bc",
-    "deployedSha": "07713ba",
+    "generatedAt": "2026-08-15T21:17:24-05:00",
+    "sourceSha": "aa042f88a",
+    "deployedSha": "b0edcda",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 846,
+    "ledgerRows": 847,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7662,
+      "title": "FINDING: LV-BOX4-STARVED-OPS-FIXTURES",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 09:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7662",
+      "sha": "aa042f88a",
+      "committedAtIso": "2026-08-15T21:17:24-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 09:14 PM CT",
+      "url": "",
+      "sha": "e5d17e456",
+      "committedAtIso": "2026-08-16T02:14:19Z"
+    },
+    {
       "number": 7661,
       "title": "FINDING: LV-OPERATOR-COPY-DEPLOY-RECHECK-REMAINDER",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7655",
       "sha": "8bdaff8ac",
       "committedAtIso": "2026-08-15T21:01:45-05:00"
-    },
-    {
-      "number": 7654,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7654",
-      "sha": "71d699d35",
-      "committedAtIso": "2026-08-15T21:01:21-05:00"
-    },
-    {
-      "number": 7653,
-      "title": "FINDING: CLAIM-RESERVE-3612",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7653",
-      "sha": "52ffd3c34",
-      "committedAtIso": "2026-08-15T21:00:56-05:00"
     }
   ]
 }
