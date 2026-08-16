@@ -56,14 +56,14 @@ export function audit(src) {
   if (!/kind="vendor" id=\{row\.vendor_id\}/.test(src.partsInventory) || !/EntityPicker[\s\S]*?kind=["']vendor["']/.test(src.partsInventory)) {
     failures.push(`${FILES.partsInventory}: parts record purchase must have a real vendor EntityLink and EntityPicker`);
   }
-  if (!/Boolean\(vendorId\)/.test(src.addPartsLink) || !/createKind="vendor"/.test(src.addPartsLink)) {
-    failures.push(`${FILES.addPartsLink}: add-parts-link must require a real vendor`);
+  if (!/Boolean\(vendorId\)/.test(src.addPartsLink) || !/EntityPicker[\s\S]*?kind=["']vendor["']/.test(src.addPartsLink)) {
+    failures.push(`${FILES.addPartsLink}: add-parts-link must require a real vendor EntityPicker`);
   }
   if (!/mdata_vendor_id: string \| null/.test(src.vendorsHub)) {
     failures.push(`${FILES.vendorsHub}: maintenance vendors hub create must persist a real mdata_vendor_id link`);
   }
-  if (!/createKind="vendor"/.test(src.warranty)) {
-    failures.push(`${FILES.warranty}: warranty claim create must have a real vendor picker`);
+  if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(src.warranty) || !/allowCreate/.test(src.warranty)) {
+    failures.push(`${FILES.warranty}: warranty claim create must have a real vendor EntityPicker`);
   }
   if (!/external_vendor_id(?!_)/.test(src.woDetailModal) || !/kind="vendor" id=\{link\.vendor_id\}/.test(src.woDetailModal)) {
     failures.push(`${FILES.woDetailModal}: WO detail modal must render real vendor EntityLinks for the external vendor and linked parts`);
@@ -91,7 +91,7 @@ if (process.argv.includes("--selftest")) {
     ["parts-inventory-link", "partsInventory", /kind="vendor" id=\{row\.vendor_id\}/, 'kind="unit" id={row.unit_id}'],
     ["add-parts-required", "addPartsLink", /Boolean\(vendorId\)/, "true"],
     ["vendors-hub-field", "vendorsHub", /mdata_vendor_id: string \| null/, "mdata_vendor_id_unused: string | null"],
-    ["warranty-picker", "warranty", /createKind="vendor"/g, 'createKind="unit"'],
+    ["warranty-picker", "warranty", /kind="vendor"/g, 'kind="unit"'],
     ["wo-detail-external", "woDetailModal", /external_vendor_id/g, "external_vendor_id_unused"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

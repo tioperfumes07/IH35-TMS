@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,7 +8,6 @@ import {
   listMaintenanceWarrantyClaims,
   type MaintenanceWarrantyClaimRow,
 } from "../../api/maintenance";
-import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -16,8 +15,6 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
-import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useSearchParams } from "react-router-dom";
@@ -57,28 +54,9 @@ export function WarrantyClaimsPage() {
     enabled: Boolean(companyId),
   });
 
-  // LST-PICKER-01/1858: maintenance.warranty_claims.vendor_id REFERENCES mdata.vendors(id) — the
-  // read side must list the SAME table the FK targets. This used to list catalogs.maintenance_vendors
-  // (a different table with different uuids), so every claim vendor_id 500'd on the FK constraint.
-  // SAF-B29: server search — limit:1000 without search still truncates large rosters; type-ahead
-  // re-queries so vendors past page 1 stay selectable.
-  const [vendorSearch, setVendorSearch] = useState("");
-  const vendorsQ = useQuery({
-    queryKey: ["mdata", "vendors", companyId, "warranty-claims", vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: companyId,
-        status: "active",
-        limit: vendorSearch ? 200 : 1000,
-        search: vendorSearch || undefined,
-      }),
-    enabled: Boolean(companyId),
-  });
-
-  const vendorOptions = useMemo(
-    () => (vendorsQ.data?.vendors ?? []).map(vendorReferenceOption).sort((a, b) => a.label.localeCompare(b.label)),
-    [vendorsQ.data?.vendors]
-  );
+  // LST-PICKER-01/1858: maintenance.warranty_claims.vendor_id REFERENCES mdata.vendors(id).
+  // EntityPicker kind=vendor allowCreate reads/writes that same table (no catalogs.maintenance_vendors,
+  // no capped listVendors page).
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["maintenance", "warranty-claims", companyId] });
@@ -240,19 +218,15 @@ export function WarrantyClaimsPage() {
           <label className="block text-xs">
             Vendor
             <div className="mt-1" data-testid="warranty-vendor-select">
-              <ReferenceSelect
+              <EntityPicker
+                kind="vendor"
+                allowCreate
+                operatingCompanyId={companyId}
                 value={claimDraft.vendor_id || null}
                 onChange={(next) => setClaimDraft((d) => ({ ...d, vendor_id: next ?? "" }))}
-                options={vendorOptions}
-                createKind="vendor"
-                operatingCompanyId={companyId}
+                enabled={createOpen}
                 placeholder="Select vendor…"
-                onSearch={setVendorSearch}
-                loading={vendorsQ.isLoading}
-                onOptionCreated={(opt) => {
-                  void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", companyId, "warranty-claims"] });
-                  setClaimDraft((d) => ({ ...d, vendor_id: opt.value }));
-                }}
+                dataField="warranty-claim-vendor"
               />
             </div>
           </label>
