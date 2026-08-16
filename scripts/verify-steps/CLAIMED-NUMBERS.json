@@ -1578,6 +1578,11 @@
     "claimer": "claude-1",
     "claimed_at": "2026-08-15"
   },
+  "3605": {
+    "name": "verify-finance-scenarios-mutation-roundtrip",
+    "claimer": "claude-1",
+    "claimed_at": "2026-08-15"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
