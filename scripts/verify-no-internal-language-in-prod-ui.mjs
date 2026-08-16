@@ -187,7 +187,11 @@ export function flagNameLeakedToOperator(line, filePath) {
   return FLAG_IDENTIFIER_IN_COPY.test(line);
 }
 
-const PROJECT_STATUS_IN_COPY = /(?:pending(?:\s|\W)*(?:awaits?\s+)?backend|migration\s+\d{12})/i;
+// CodeQL js/redos: the previous `(?:\s|\W)*` alternation is ambiguous — \s is a strict subset of \W,
+// so the engine has two overlapping ways to consume every whitespace character, causing catastrophic
+// backtracking on a long run of non-matching whitespace/tabs. \W alone already covers \s; drop the
+// redundant branch (same matches, no ambiguity).
+const PROJECT_STATUS_IN_COPY = /(?:pending\W*(?:awaits?\s+)?backend|migration\s+\d{12})/i;
 
 export function projectStatusLeakedToOperator(line, filePath) {
   if (!filePath.endsWith(".tsx")) return false;
