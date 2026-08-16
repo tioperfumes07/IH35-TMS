@@ -480,7 +480,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/banking/CashGlSetupPage.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -492,7 +492,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/banking/CashGlSetupPage.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -504,7 +504,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/parity/ParityTable.tsx"
+      "surface_path": "pages/banking/CashGlSetupPage.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -516,7 +516,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/parity/ParityTable.tsx"
+      "surface_path": "pages/banking/CashGlSetupPage.tsx"
     }
   ],
   "honesty_audit": {

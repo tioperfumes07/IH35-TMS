@@ -272,7 +272,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/fuel/card-overage/CardOverageQueuePage.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -283,7 +283,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/fuel/card-overage/CardOverageQueuePage.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -294,7 +294,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/fuel/card-overage/CardOverageQueuePage.tsx"
     },
     {
       "id": "chrome.toolbar_filter",

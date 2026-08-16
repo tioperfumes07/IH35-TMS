@@ -1069,7 +1069,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/accounting/BillsPage.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -1081,7 +1081,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/accounting/BillsPage.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -1093,7 +1093,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/accounting/BillsPage.tsx"
     },
     {
       "id": "chrome.toolbar_filter",

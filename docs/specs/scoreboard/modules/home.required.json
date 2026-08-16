@@ -397,7 +397,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/home/DriverDaySummaryCard.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -408,7 +408,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/home/DriverDaySummaryCard.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -419,7 +419,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/home/DriverDaySummaryCard.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -430,7 +430,7 @@
       "required": [
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/home/DriverDaySummaryCard.tsx"
     }
   ],
   "honesty_audit": {
