@@ -11,13 +11,15 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const HEALTH = "apps/backend/src/health/health.routes.ts";
 const CSA = "apps/backend/src/compliance/csa-basic-pull.ts";
 const SAFER = "apps/backend/src/compliance/fmcsa-safer-verifier.ts";
+const ALERT_ROUTER = "apps/backend/src/reconciliation/alert-routing.service.ts";
+const RECON_WORKER = "apps/backend/src/reconciliation/reconciliation-worker.service.ts";
 const LABEL = "verify-background-job-source-readiness";
 
 function stripComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-export function auditSources({ health, csa, safer }) {
+export function auditSources({ health, csa, safer, alertRouter, reconWorker }) {
   const failures = [];
   const healthCode = stripComments(health);
   const csaCode = stripComments(csa);
@@ -41,6 +43,15 @@ export function auditSources({ health, csa, safer }) {
   for (const required of ["verified", "inactive", "revoked", "not_found", "missing_lookup", "lookup_failed"]) {
     if (!saferCode.includes(`\"${required}\"`)) failures.push(`FMCSA SAFER contract is missing ${required}`);
   }
+  if (!/enqueueOutboxEvent\([\s\S]{0,500}dedupeKey/.test(alertRouter)) {
+    failures.push("reconciliation alerts bypass the canonical partial-index-aware outbox enqueue");
+  }
+  if (/ON\s+CONFLICT\s*\(\s*dedupe_key\s*\)\s+DO\s+NOTHING/i.test(alertRouter)) {
+    failures.push("reconciliation alerts use a conflict target that cannot infer the partial dedupe index");
+  }
+  if (!/SAVEPOINT reconciliation_company[\s\S]{0,2400}ROLLBACK TO SAVEPOINT reconciliation_company[\s\S]{0,200}updateStateOnFailure/.test(reconWorker)) {
+    failures.push("reconciliation failure state can mask the originating SQL error with transaction-aborted 25P02");
+  }
   return failures;
 }
 
@@ -49,6 +60,8 @@ function treeSources() {
     health: readFileSync(join(ROOT, HEALTH), "utf8"),
     csa: readFileSync(join(ROOT, CSA), "utf8"),
     safer: readFileSync(join(ROOT, SAFER), "utf8"),
+    alertRouter: readFileSync(join(ROOT, ALERT_ROUTER), "utf8"),
+    reconWorker: readFileSync(join(ROOT, RECON_WORKER), "utf8"),
   };
 }
 
@@ -58,6 +71,8 @@ function selftest() {
     { name: "fuel health hard-enabled", value: { ...clean, health: clean.health.replace('envEnabled("ENABLE_FUEL_FRAUD_DETECTOR_WORKER")', "true") } },
     { name: "CSA worker default-enabled", value: { ...clean, csa: clean.csa.replace('process.env.ENABLE_CSA_BASIC_PULL_CRON !== "true"', 'process.env.ENABLE_CSA_BASIC_PULL_CRON === "false"') } },
     { name: "SAFER invalid skipped status", value: { ...clean, safer: clean.safer.replace("safer_status = 'missing_lookup'", "safer_status = 'skipped'") } },
+    { name: "alert partial-index predicate bypass", value: { ...clean, alertRouter: clean.alertRouter.replace("enqueueOutboxEvent(", "enqueueOutboxEventMissing(") } },
+    { name: "reconciliation error savepoint removed", value: { ...clean, reconWorker: clean.reconWorker.replace("ROLLBACK TO SAVEPOINT reconciliation_company", "SELECT 1") } },
   ];
   const failures = [];
   for (const mutation of planted) {
@@ -69,7 +84,7 @@ function selftest() {
     for (const failure of failures) console.error(`${LABEL}: ${failure}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — 3/3 planted defects rejected`);
+  console.log(`${LABEL}: selftest PASS — 5/5 planted defects rejected`);
 }
 
 if (process.argv.includes("--selftest")) selftest();

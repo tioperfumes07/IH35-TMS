@@ -54,17 +54,15 @@ export async function routeFindingAlert(args: {
     detected_at: finding.detected_at,
   };
 
-  const inserted = await client.query<{ id: string }>(
-    `
-      INSERT INTO outbox.events (event_type, payload, next_retry_at, dedupe_key)
-      VALUES ($1, $2::jsonb, now(), $3)
-      ON CONFLICT (dedupe_key) DO NOTHING
-      RETURNING id::text
-    `,
-    ["twilio.sms.send", JSON.stringify(payload), dedupeKey]
+  const inserted = await enqueueOutboxEvent(
+    client,
+    "twilio.sms.send",
+    { aggregate_type: "_system.reconciliation_findings", aggregate_id: finding.id },
+    payload,
+    dedupeKey
   );
 
-  if (!inserted.rows[0]?.id) return;
+  if (!inserted.enqueued) return;
   await appendAudit(client, "alert_enqueued", "info", {
     finding_id: finding.id,
     operating_company_id: finding.operating_company_id,
@@ -118,3 +116,4 @@ async function appendAudit(
     "DS-REMEDIATE-5",
   ]);
 }
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
