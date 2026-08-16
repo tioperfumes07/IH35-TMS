@@ -52,8 +52,16 @@ function run() {
   if (!bp.includes("max-width: 1279px")) errors.push("responsive-breakpoints.css must keep topbar stack ≤1279px");
 
   const edge = read(FILES.edge);
-  if (!edge.includes("@media (min-width: 1920px)") || !edge.includes("max-width: 1800px")) {
-    errors.push("breakpoints-edge.css must keep TV ultrawide content cap");
+  // LV-CONTENT-AUTO-SIZE-TO-BROWSER (owner directive): the prior 1800px/2200px caps were removed —
+  // content must fill the available browser width at any size. Assert the cap stays GONE, not
+  // present (the inverse of this guard's original assertion, ratcheted forward on the same owner-
+  // decision precedence the rest of this codebase follows: a live owner ruling outranks a prior
+  // audit's fixed choice).
+  if (!edge.includes("@media (min-width: 1920px)")) {
+    errors.push("breakpoints-edge.css must keep the 1920px ultrawide breakpoint");
+  }
+  if (edge.includes("max-width: 1800px") || edge.includes("max-width: 2200px")) {
+    errors.push("breakpoints-edge.css must NOT reintroduce a fixed ultrawide content-width cap (LV-CONTENT-AUTO-SIZE-TO-BROWSER)");
   }
 
   const shell = read(FILES.shellTsx);
