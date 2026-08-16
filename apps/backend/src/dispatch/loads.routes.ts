@@ -194,7 +194,9 @@ const createDispatchLoadBodySchema = z.object({
   // no create path ever populated it, so every TMS-native load was written as `false` regardless.
   is_sample_data: z.boolean().optional(),
   trailer_type: z.enum(["refrigerated_van", "dry_van", "flatbed", "lowboy", "power_only_no_trailer", "power_only_customer_trailer"]).optional(),
-  load_trailer_equipment_id: z.string().uuid(),
+  // Optional: when omitted, book-load.service resolveLoadTrailerEquipmentIdForInsert defaults DRY_VAN.
+  // Required UUID here rejected FE empty-string "" as Invalid UUID (Book Load USMCA spine 2026-08-16).
+  load_trailer_equipment_id: z.string().uuid().optional(),
   // Trip Pairing (Block 04): optional at the API for now (Phase 1, additive — no break for in-flight
   // clients); the wizard makes it REQUIRED on the UI, and a follow-up flips this to required once the
   // selector ships on all clients. NB starts a tour; TR/SB pass the tour_id to join.
