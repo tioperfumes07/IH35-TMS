@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T14:44:22-05:00",
-    "sourceSha": "78231062f",
+    "generatedAt": "2026-08-16T14:50:53-05:00",
+    "sourceSha": "ddd73e684",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 920,
+    "ledgerRows": 921,
     "failOpen": 23,
     "defects": 26
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7896,
+      "title": "FINDING: LV-SYSTEM-USMCA-QBO-CHROME-AND-QUERIES",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7896",
+      "sha": "ddd73e684",
+      "committedAtIso": "2026-08-16T14:50:53-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:45 PM CT",
+      "url": "",
+      "sha": "35528db7f",
+      "committedAtIso": "2026-08-16T19:45:33Z"
+    },
+    {
       "number": 7895,
       "title": "FINDING: LV-FORM425-USMCA-QB-IMPORT-LABEL",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7880",
       "sha": "d36f6b917",
       "committedAtIso": "2026-08-16T14:28:56-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:00 PM CT",
-      "url": "",
-      "sha": "ec717965c",
-      "committedAtIso": "2026-08-16T19:00:04Z"
-    },
-    {
-      "number": 7888,
-      "title": "FINDING: LV-LEGAL-MATTER-UNIT-TRAILER-PICKERS-NO-INLINE-CREATE",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 01:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7888",
-      "sha": "aeea37c11",
-      "committedAtIso": "2026-08-16T13:59:00-05:00"
     }
   ]
 }
