@@ -264,7 +264,7 @@ export function LoanWizardPage() {
                     </div>
                   </div>
                   <p className="text-xs text-slate-400">
-                    Preview only — posting these entries is a separate, owner-gated step (not enabled here).
+                    Preview only — posting these entries is a separate, disabled step (not enabled here).
                   </p>
                 </div>
               )}

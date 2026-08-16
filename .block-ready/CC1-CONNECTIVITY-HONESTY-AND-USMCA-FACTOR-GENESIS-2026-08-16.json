@@ -1,0 +1,35 @@
+{
+  "block_id": "CC1-CONNECTIVITY-HONESTY-AND-USMCA-FACTOR-GENESIS-2026-08-16",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "CC-1-CONTINUOUS",
+  "task": "4 independently-verified findings: (1) stale DispatchList/Topbar guard markers pinned to dead component names/CSS locations from earlier merged refactors — now assert the live surfaces; (2) USMCA-scoped genesis migration for factoring.factor row (Faro Full Recourse V1), closing an out-of-band-insert dependency gap for fresh-DB CI, rehearsed no-op on a Neon branch forked from prod; (3) settlements toolbar search/range/gear repointed from the /settlements compatibility alias to the canonical /driver-finance/settlements route; (4) finance toolbar search/range/gear repointed from LoanWizardPage (conditional JE-preview only) to the real Finance data-list surface ArApAgingPage, filter left honestly N/A, plus 4 'owner-gated' UI/comment strings reworded to match the no-owner-approval-gate law with a new forbidden-pattern guard.",
+  "branch": "cc1-final-clean-2026-08-16",
+  "lane": "CC-1",
+  "allowed_files": [
+    ".block-ready/CC1-CONNECTIVITY-HONESTY-AND-USMCA-FACTOR-GENESIS-2026-08-16.json",
+    "scripts/verify-dispatch-list-hos-columns.mjs",
+    "scripts/verify-topbar-tracks-shrinkable.mjs",
+    "db/migrations/202612685000_usmca_faro_factor_profile_genesis.sql",
+    "docs/specs/scoreboard/modules/settlements.required.json",
+    "docs/specs/scoreboard/modules/finance.required.json",
+    "scripts/verify-all-module-list-toolbar-search-range-filter.mjs",
+    "scripts/verify-all-module-list-toolbar-connectivity.mjs",
+    "apps/frontend/src/pages/finance/LoanWizardPage.tsx",
+    "apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx",
+    "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
+    "apps/frontend/src/pages/finance/FinanceHubPage.tsx",
+    "scripts/verify-no-internal-language-in-prod-ui.mjs"
+  ],
+  "acceptance": [
+    { "kind": "guard", "check": "scripts/verify-dispatch-list-hos-columns.mjs asserts live DriverHosClockValue markup (was pinned to dead DriverHosClockCells)" },
+    { "kind": "guard", "check": "scripts/verify-topbar-tracks-shrinkable.mjs reads the top-level .top-bar rule in responsive-breakpoints.css (was reading a Topbar.tsx inline style that no longer exists there)" },
+    { "kind": "migration", "check": "db/migrations/202612685000_usmca_faro_factor_profile_genesis.sql inserts USMCA's factoring.factor row idempotently; rehearsed no-op on a Neon branch forked from prod" },
+    { "kind": "guard", "check": "scripts/verify-all-module-list-toolbar-search-range-filter.mjs + verify-all-module-list-toolbar-connectivity.mjs assert settlements/finance toolbar route_hints point at their real canonical data-list surfaces" },
+    { "kind": "guard", "check": "scripts/verify-no-internal-language-in-prod-ui.mjs forbids /owner[- ]gated/i; 0 hits repo-wide (1610 files)" }
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
