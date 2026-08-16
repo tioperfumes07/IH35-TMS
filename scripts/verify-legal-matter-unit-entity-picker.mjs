@@ -35,6 +35,9 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker/.test(code) || !/kind=["']unit["']/.test(code)) {
     problems.push(`${FILE}: unit field must use EntityPicker kind="unit"`);
   }
+  if (!/data-testid="legal-matter-unit-picker"[\s\S]{0,500}allowCreate(?:\s|\/>)/.test(code)) {
+    problems.push(`${FILE}: unit picker must offer first-row canonical create`);
+  }
   return problems;
 }
 

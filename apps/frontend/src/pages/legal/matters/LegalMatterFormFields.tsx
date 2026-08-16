@@ -324,7 +324,7 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
             operatingCompanyId={operatingCompanyId}
             value={form.unit_id || null}
             onChange={(next) => setForm((f) => ({ ...f, unit_id: next ?? "" }))}
-            allowCreate={false}
+            allowCreate
             placeholder="None"
             className="w-full"
             dataField="legal-matter-unit"
@@ -341,7 +341,7 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
             operatingCompanyId={operatingCompanyId}
             value={form.equipment_id || null}
             onChange={(next) => setForm((f) => ({ ...f, equipment_id: next ?? "" }))}
-            allowCreate={false}
+            allowCreate
             placeholder="None"
             className="w-full"
             dataField="legal-matter-trailer"
