@@ -428,6 +428,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           <PartsInventoryTable
             companyId={companyId}
             rows={partsInventoryRowsQuery.data ?? []}
+            openPurchaseOnMount={searchParams.get("create") === "purchase"}
             loading={
               partsInventoryRowsQuery.isPending ||
               (partsInventoryRowsQuery.isFetching && (partsInventoryRowsQuery.data?.length ?? 0) === 0)
