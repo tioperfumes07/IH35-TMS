@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T04:27:26-05:00",
-    "sourceSha": "eadcb9954",
-    "deployedSha": "5664dc6",
+    "generatedAt": "2026-08-16T04:35:00-05:00",
+    "sourceSha": "29f68de6f",
+    "deployedSha": "7bfb8e9",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 860,
+    "ledgerRows": 861,
     "failOpen": 15,
     "defects": 19
   },
@@ -1396,7 +1396,7 @@
         "AUDIT",
         "UNV",
         "NA",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -1428,7 +1428,7 @@
           "AUDIT",
           "UNV",
           "NA",
-          "AUDIT",
+          "FIX",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 7760,
+      "title": "FINDING: LV-PROGRAM-MATRIX-INCOMPLETE-BUILT-ROUNDS-TO-100",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7760",
+      "sha": "29f68de6f",
+      "committedAtIso": "2026-08-16T04:35:00-05:00"
+    },
+    {
+      "number": 7759,
+      "title": "FINDING: BOARD-G18-INVESTIGATION-2026-08-16",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7759",
+      "sha": "7bfb8e948",
+      "committedAtIso": "2026-08-16T04:29:59-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:28 AM CT",
+      "url": "",
+      "sha": "3c24d570f",
+      "committedAtIso": "2026-08-16T09:28:24Z"
+    },
+    {
       "number": 7758,
       "title": "FINDING: LIVE-REPORTS-RUNNER-DISPATCH-FLEET-UTILIZATION",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "",
       "sha": "c7af35a4b",
       "committedAtIso": "2026-08-16T04:16:35-05:00"
-    },
-    {
-      "number": 7752,
-      "title": "FINDING: ACCT-F5326",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7752",
-      "sha": "b97ee740e",
-      "committedAtIso": "2026-08-16T04:14:35-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs(audit): close CI-F03a/b + MDATA-F08 PR-pending board rows",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:14 AM CT",
-      "url": "",
-      "sha": "930986919",
-      "committedAtIso": "2026-08-16T04:14:14-05:00"
-    },
-    {
-      "number": 7750,
-      "title": "FINDING: CLAIM-RESERVE-3645",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7750",
-      "sha": "db5abb425",
-      "committedAtIso": "2026-08-16T04:13:16-05:00"
     }
   ]
 }
