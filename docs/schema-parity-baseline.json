@@ -8121,6 +8121,17 @@
       "table_name",
       "table_schema"
     ],
+    "notifications.suppression_rules": [
+      "auto_suppressed",
+      "created_at",
+      "created_by_user_id",
+      "effective_from",
+      "effective_to",
+      "event_class",
+      "id",
+      "reason",
+      "user_uuid"
+    ],
     "notifications.user_notification_preferences": [
       "channels_per_type",
       "email_digest_enabled",
