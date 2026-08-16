@@ -163,6 +163,9 @@ export function computeGlobalQboCapabilityFailures(files) {
   if (!/visibleChecks = \(h\?\.checks \?\? \[\]\)\.filter\([\s\S]{0,120}!check\.name\.startsWith\(["']qbo\.["']\)/.test(page)) {
     errors.push("SystemModulePage.tsx: non-TRANSP service health must not expose QBO checks");
   }
+  if (!/qboAvailable \? ["']QuickBooks Reconciliation, QuickBooks Sync, Program Tracker, and Software\/Build["'] : ["']Program Tracker and Software\/Build["']/.test(page)) {
+    errors.push("SystemModulePage.tsx: entity-specific System footer must remain grammatical");
+  }
   return errors;
 }
 
@@ -248,14 +251,14 @@ if (process.argv.includes("--selftest")) {
     topbar: 'const qboAvailable = selectedCompany?.code === "TRANSP"; enabled: Boolean(companyId) && office && qboAvailable; enabled: Boolean(companyId) && office && qboAvailable; <TopStatusBar qboAvailable={qboAvailable} />',
     statusBar: 'qboAvailable ? <span>{qboVis.label}</span> : null; qboAvailable && qboSyncPill',
     mobile: 'if (qboAvailable) { items.unshift({ key: "qbo" }); } if (qboAvailable && qboSyncPill) {}',
-    page: 'const visibleChecks = (h?.checks ?? []).filter((check) => qboAvailable || !check.name.startsWith("qbo."));',
+    page: 'const visibleChecks = (h?.checks ?? []).filter((check) => qboAvailable || !check.name.startsWith("qbo.")); qboAvailable ? "QuickBooks Reconciliation, QuickBooks Sync, Program Tracker, and Software/Build" : "Program Tracker and Software/Build";',
   };
   const passGlobalQbo = computeGlobalQboCapabilityFailures(goodGlobalQbo);
   const failGlobalQbo = computeGlobalQboCapabilityFailures({
     topbar: goodGlobalQbo.topbar.replaceAll(" && qboAvailable", "").replace("qboAvailable={qboAvailable}", ""),
     statusBar: goodGlobalQbo.statusBar.replaceAll("qboAvailable", "true"),
     mobile: goodGlobalQbo.mobile.replaceAll("qboAvailable", "true"),
-    page: 'const visibleChecks = h?.checks ?? [];',
+    page: 'const visibleChecks = h?.checks ?? []; qboAvailable ? "QuickBooks Reconciliation, QuickBooks Sync, Program Tracker, and Software/Build" : "Program Tracker, and Software/Build";',
   });
 
   const checks = [
@@ -269,7 +272,7 @@ if (process.argv.includes("--selftest")) {
     ["false-live Claude activity is flagged", failFalseLiveActivity.filter((e) => e.includes("Claude Coder")).length === 3],
     ["USMCA QBO chrome/query leak is flagged", failUsmcaQboLeak.filter((e) => /TRANSP|QBO/.test(e)).length === 5],
     ["global QBO capability inputs produce zero failures", passGlobalQbo.length === 0],
-    ["global USMCA QBO chrome/query leak is flagged", failGlobalQbo.length === 5],
+    ["global USMCA QBO chrome/query/copy leak is flagged", failGlobalQbo.length === 6],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
