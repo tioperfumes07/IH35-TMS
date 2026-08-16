@@ -98,6 +98,15 @@ export function flagNameLeakedToOperator(line, filePath) {
   return FLAG_IDENTIFIER_IN_COPY.test(line);
 }
 
+const PROJECT_STATUS_IN_COPY = /(?:pending backend|migration\s+\d{12})/i;
+
+export function projectStatusLeakedToOperator(line, filePath) {
+  if (!filePath.endsWith(".tsx")) return false;
+  if (isCommentLine(line)) return false;
+  if (line.includes("{/*") || line.includes("*/}")) return false;
+  return PROJECT_STATUS_IN_COPY.test(line);
+}
+
 function isExcluded(filePath) {
   const normalized = filePath.replace(/\\/g, "/");
   if (normalized === selfPath.replace(/\\/g, "/")) return true;
@@ -142,7 +151,17 @@ if (process.argv.includes("--selftest")) {
     console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — visible schema-name mutation escaped");
     process.exit(1);
   }
-  console.log("[verify-no-internal-language-in-prod-ui] SELFTEST PASS — visible schema-name mutation rejected; exact protected baseline honored");
+  const projectStatusChecks = [
+    projectStatusLeakedToOperator('<h3>QuickBooks fields — pending backend</h3>', "apps/frontend/src/pages/example.tsx"),
+    projectStatusLeakedToOperator('emptyMessage="Run migration 202606080206 to seed defaults"', "apps/frontend/src/pages/example.tsx"),
+    !projectStatusLeakedToOperator('// migration 202606080206 is applied by deploy', "apps/frontend/src/pages/example.tsx"),
+    !projectStatusLeakedToOperator('{/* pending backend implementation note */}', "apps/frontend/src/pages/example.tsx"),
+  ];
+  if (projectStatusChecks.some((ok) => !ok)) {
+    console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — project-status copy mutation escaped");
+    process.exit(1);
+  }
+  console.log("[verify-no-internal-language-in-prod-ui] SELFTEST PASS — schema names and project-status copy mutations rejected; exact protected baseline honored");
   process.exit(0);
 }
 
@@ -177,6 +196,14 @@ for (const file of files) {
         file: path.relative(repoRoot, file),
         line: i + 1,
         term: "internal feature-flag name shown to the operator",
+        text: line.trim(),
+      });
+    }
+    if (projectStatusLeakedToOperator(line, file)) {
+      violations.push({
+        file: path.relative(repoRoot, file),
+        line: i + 1,
+        term: "internal project/migration status shown to the operator",
         text: line.trim(),
       });
     }
