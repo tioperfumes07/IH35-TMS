@@ -86,7 +86,7 @@ contains("apps/backend/src/middleware/idempotency.ts", idempotency, [
 const policyModal = read("apps/frontend/src/components/insurance/PolicyCreateModal.tsx");
 contains("apps/frontend/src/components/insurance/PolicyCreateModal.tsx", policyModal, [
   { pattern: /insurer_vendor_id/, label: "canonical insurer vendor state" },
-  { pattern: /listVendors/, label: "entity-scoped mdata vendor API call" },
+  { pattern: /kind=["']vendor["'][\s\S]*?allowCreate/, label: "EntityPicker insurer vendor allowCreate" },
   { pattern: /vendor_id:\s*next\.payload\.insurer_vendor_id/, label: "vendor_id passed in mutation" },
 ]);
 

@@ -9,9 +9,10 @@ import {
   type AllocationMethod,
   type InsuranceCoverageType,
 } from "../../api/insurance";
-import { listUnits, listVendors } from "../../api/mdata";
+import { listUnits } from "../../api/mdata";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -173,34 +174,12 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   const [step3, setStep3] = useState<Step3>(INITIAL_STEP3);
   const [step3Errors, setStep3Errors] = useState<Partial<Record<keyof Step3, string>>>({});
   const [serverError, setServerError] = useState("");
-  const [vendorSearch, setVendorSearch] = useState("");
 
   const typesQuery = useQuery({
     queryKey: ["insurance", "type-catalog", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () => listInsuranceTypeCatalog({ operating_company_id: operatingCompanyId }).then((r) => r.types),
   });
-
-  // FAIL-INS-VENDOR-UX: free-text insurer never matched mdata.vendors → 409 insurance_vendor_not_found.
-  // Vendor picker + inline create writes the same table the atomic bill seeder reads.
-  const vendorsQuery = useQuery({
-    queryKey: ["insurance", "wizard", "vendors", operatingCompanyId, vendorSearch],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        limit: 200,
-        search: vendorSearch.trim() || undefined,
-      }).then((r) => r.vendors),
-  });
-
-  const vendorOptions = useMemo(
-    () =>
-      (vendorsQuery.data ?? [])
-        .filter((v) => Boolean(v.id) && Boolean(v.name?.trim()))
-        .map((v) => ({ value: v.id, label: v.name.trim() })),
-    [vendorsQuery.data]
-  );
 
   const unitsQuery = useQuery({
     queryKey: ["insurance", "wizard", "units", operatingCompanyId, unitSearchQuery],
@@ -232,7 +211,6 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     setStep3(INITIAL_STEP3);
     setStep3Errors({});
     setServerError("");
-    setVendorSearch("");
   }, [open]);
 
   const premiumCents = useMemo(() => parsePremiumCents(step3.total_premium) ?? 0, [step3.total_premium]);
@@ -377,45 +355,28 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         {step === 1 && (
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="Insurer (vendor) *" error={step1Errors.insurer_name}>
-              {vendorsQuery.isError ? (
-                <ListErrorState
-                  title="Couldn't load vendors"
-                  {...formatQueryErrorDetail(vendorsQuery.error)}
-                  onRetry={() => void vendorsQuery.refetch()}
-                  className="py-4"
-                />
-              ) : (
-                // FAIL-INS-VENDOR-UX: ReferenceSelect createKind=vendor → mdata.vendors (atomic bill vendor match).
-                <ReferenceSelect
-                  value={step1.insurer_vendor_id || null}
-                  onChange={(next) => {
-                    const id = next ?? "";
-                    const label = vendorOptions.find((o) => o.value === id)?.label ?? "";
-                    setStep1((s) => ({
-                      ...s,
-                      insurer_vendor_id: id,
-                      insurer_name: label || (id ? s.insurer_name : ""),
-                    }));
-                    setStep1Errors((e) => ({ ...e, insurer_name: undefined }));
-                    setServerError("");
-                  }}
-                  options={vendorOptions}
-                  createKind="vendor"
-                  operatingCompanyId={operatingCompanyId}
-                  placeholder="Select insurer vendor"
-                  onSearch={setVendorSearch}
-                  onOptionCreated={async (opt) => {
-                    setStep1((s) => ({
-                      ...s,
-                      insurer_vendor_id: opt.value,
-                      insurer_name: opt.label,
-                    }));
-                    await queryClient.invalidateQueries({
-                      queryKey: ["insurance", "wizard", "vendors", operatingCompanyId],
-                    });
-                  }}
-                />
-              )}
+              {/* FAIL-INS-VENDOR-UX / CLS-SILENT-CAP: EntityPicker → mdata.vendors (atomic bill vendor match). */}
+              <EntityPicker
+                kind="vendor"
+                allowCreate
+                nestedInDrawer
+                operatingCompanyId={operatingCompanyId}
+                value={step1.insurer_vendor_id || null}
+                onChange={(next, option) => {
+                  const id = next ?? "";
+                  setStep1((s) => ({
+                    ...s,
+                    insurer_vendor_id: id,
+                    insurer_name: option?.label ?? (id ? s.insurer_name : ""),
+                  }));
+                  setStep1Errors((e) => ({ ...e, insurer_name: undefined }));
+                  setServerError("");
+                }}
+                enabled={open}
+                placeholder="Select insurer vendor"
+                dataField="policy-wizard-insurer-vendor"
+                className="w-full"
+              />
             </Field>
             <Field label="Policy Number *" error={step1Errors.policy_number}>
               <input
