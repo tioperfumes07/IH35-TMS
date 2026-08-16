@@ -190,7 +190,7 @@ export function SubscriptionManager() {
           rowKey={(row) => row.uuid}
           emptyMessage={
             subsQuery.isSuccess
-              ? "No subscriptions found. Run migration 202606080206 to seed Q8 defaults."
+              ? "No subscriptions found."
               : "Loading subscriptions…"
           }
           columns={[

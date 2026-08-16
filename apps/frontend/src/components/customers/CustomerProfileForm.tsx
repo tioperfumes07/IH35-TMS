@@ -819,18 +819,6 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
         </section>
       ) : null}
 
-      {/* QuickBooks fields pending backend — honest follow-up, no silent data loss */}
-      <section className="border-t border-gray-200 pt-3">
-        <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">QuickBooks fields — pending backend</h3>
-        <p className="text-xs text-gray-500">
-          VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) closed Cc/Bcc email, print-on-invoice
-          name, structured shipping address, preferred payment/delivery method, customer language, and
-          tax-exemption — those are now real sections above. Document attachments already live on the
-          <code className="text-gray-600"> Documents</code> tab. The one remaining gap: fine-grained
-          communication-consent tracking (beyond the delivery-method choice) has no column yet — a gated
-          follow-up, intentionally not shown as an input here so no data is silently dropped.
-        </p>
-      </section>
     </div>
   );
 }
