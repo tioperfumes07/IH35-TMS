@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T20:10:42-05:00",
-    "sourceSha": "2062be8e2",
+    "generatedAt": "2026-08-15T20:18:05-05:00",
+    "sourceSha": "48ee69ec9",
     "deployedSha": "83cec4b",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 839,
+    "ledgerRows": 841,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 7613,
-      "title": "FINDING: LV-FINANCE-MONEY-FIELDS-HIDDEN-BEHIND-GENERIC-NUMBER-HELPER",
+      "number": 7622,
+      "title": "FINDING: LV-COLLAPSEDLISTFILTERS-SILENT-APPLY",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7613",
-      "sha": "4a1b61b8f",
-      "committedAtIso": "2026-08-15T20:11:57-05:00"
+      "mergedAtCt": "08/15/2026, 08:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7622",
+      "sha": "6898b2b03",
+      "committedAtIso": "2026-08-15T20:22:57-05:00"
+    },
+    {
+      "number": 7621,
+      "title": "FINDING: DA-PROGRAM-ROUTES-500-MISSING-UUID-CAST",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7621",
+      "sha": "8ed8f443c",
+      "committedAtIso": "2026-08-15T20:20:25-05:00"
+    },
+    {
+      "number": 7620,
+      "title": "FINDING: LV-SAFETY-INTEGRITY-DETAIL-NO-RULE-MATCH",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7620",
+      "sha": "5103e5a8c",
+      "committedAtIso": "2026-08-15T20:19:18-05:00"
+    },
+    {
+      "number": 7619,
+      "title": "FINDING: LIVE-MAINTENANCE-TRIAGE-CONVERT-PREFILL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7619",
+      "sha": "48ee69ec9",
+      "committedAtIso": "2026-08-15T20:18:05-05:00"
+    },
+    {
+      "number": 7618,
+      "title": "FINDING: LISTS-CREATE-QBO-CATEGORIES-POSTING-TEMPLATES-RATCHET",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7618",
+      "sha": "9affb7c26",
+      "committedAtIso": "2026-08-15T20:17:56-05:00"
+    },
+    {
+      "number": 7617,
+      "title": "FINDING: LISTS-CREATE-JE-CURRENCY-ITEMS-DETAIL-RATCHET",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7617",
+      "sha": "20035da6e",
+      "committedAtIso": "2026-08-15T20:16:59-05:00"
+    },
+    {
+      "number": 7616,
+      "title": "FINDING: LISTS-CREATE-CLASSES-EXPENSE-TAX-RATCHET",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7616",
+      "sha": "9eef7a183",
+      "committedAtIso": "2026-08-15T20:16:00-05:00"
+    },
+    {
+      "number": 7615,
+      "title": "FINDING: LIVE-INSURANCE-LAWSUIT-CLAIM-PICKER-MOUNT",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7615",
+      "sha": "cc93c700b",
+      "committedAtIso": "2026-08-15T20:15:38-05:00"
+    },
+    {
+      "number": 7614,
+      "title": "FINDING: LV-BANKING-QBO-CONNECTED-IS-HARDCODED",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 08:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7614",
+      "sha": "c90222ca3",
+      "committedAtIso": "2026-08-15T20:14:40-05:00"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:11 PM CT",
+      "mergedAtCt": "08/15/2026, 08:13 PM CT",
       "url": "",
-      "sha": "2a39ed777",
-      "committedAtIso": "2026-08-16T01:11:49Z"
-    },
-    {
-      "number": 7612,
-      "title": "FINDING: LV-QUICK-ASSIGN-CANONICAL-UNASSIGNED-HIDDEN",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7612",
-      "sha": "95879f222",
-      "committedAtIso": "2026-08-15T20:10:43-05:00"
-    },
-    {
-      "number": 7611,
-      "title": "FINDING: LV-INSURANCE-LAWSUIT-CLAIM-PICKER-NO-INLINE-CREATE-CLOSEOUT",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7611",
-      "sha": "2062be8e2",
-      "committedAtIso": "2026-08-15T20:10:42-05:00"
-    },
-    {
-      "number": 7610,
-      "title": "FINDING: LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7610",
-      "sha": "0226988ec",
-      "committedAtIso": "2026-08-15T20:09:55-05:00"
-    },
-    {
-      "number": 7608,
-      "title": "FINDING: LV-INSURANCE-LAWSUIT-CLAIM-PICKER-NO-INLINE-CREATE",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7608",
-      "sha": "d7d7c8a7c",
-      "committedAtIso": "2026-08-15T20:08:39-05:00"
-    },
-    {
-      "number": 7609,
-      "title": "FINDING: FINDINGS-REGISTER-SIGNOFF-DRIFT-2026-08-15",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7609",
-      "sha": "f8491c05f",
-      "committedAtIso": "2026-08-15T20:08:13-05:00"
-    },
-    {
-      "number": 7607,
-      "title": "FINDING: VOID-NOT-DELETE-WORM-STALE-CLOSEOUT",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7607",
-      "sha": "326556863",
-      "committedAtIso": "2026-08-15T20:07:36-05:00"
-    },
-    {
-      "number": 7606,
-      "title": "FINDING: OWNER-ALL-ENTITIES-NON-QBO-FLAGS-ON",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7606",
-      "sha": "44a3de1c3",
-      "committedAtIso": "2026-08-15T20:05:47-05:00"
-    },
-    {
-      "number": 7605,
-      "title": "FINDING: BANKING-SCHEMA-EMPTY-FLAG-STALE-CLOSEOUT",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7605",
-      "sha": "f96705115",
-      "committedAtIso": "2026-08-15T20:05:34-05:00"
+      "sha": "f73cb95d8",
+      "committedAtIso": "2026-08-16T01:13:00Z"
     }
   ]
 }
