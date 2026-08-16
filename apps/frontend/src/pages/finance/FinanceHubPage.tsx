@@ -74,7 +74,7 @@ export function FinanceHubPage() {
     );
   }
 
-  // Honest OFF-state (audit gap #14): the Finance Hub is turned on per operating company (owner-gated,
+  // Honest OFF-state (audit gap #14): the Finance Hub is turned on per operating company (per-entity flag,
   // read-only). When it is not enabled for the selected company we keep the module fully reachable —
   // the finance sub-nav, header, and a working link back to Finance stay rendered — and show an
   // owner/operator message that this is expected, NOT a broken screen. We never expose the raw internal

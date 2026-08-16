@@ -38,6 +38,7 @@ const forbiddenTerms = [
 const forbiddenPatterns = [
   { re: /cycle\s+\d/i, label: "cycle <n>" },
   { re: /coming in cycle/i, label: "coming in cycle" },
+  { re: /owner[- ]gated/i, label: "owner-gated" },
 ];
 
 // Operator copy must describe records and workflows, not expose physical schema.table names.
@@ -276,7 +277,19 @@ if (process.argv.includes("--selftest")) {
     console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — project-status copy mutation escaped");
     process.exit(1);
   }
-  console.log("[verify-no-internal-language-in-prod-ui] SELFTEST PASS — schema names and project-status copy mutations rejected; exact protected baseline honored");
+  // LV-FINANCE-LOAN-WIZARD-STALE-OWNER-GATED-COPY: reintroducing "owner-gated" anywhere must fail.
+  const ownerGatedPattern = forbiddenPatterns.find((p) => p.label === "owner-gated");
+  const ownerGatedChecks = [
+    ownerGatedPattern?.re.test("Preview only — posting these entries is a separate, owner-gated step (not enabled here).") === true,
+    ownerGatedPattern?.re.test("(owner-gated, not here).") === true,
+    ownerGatedPattern?.re.test("(owner gated, not here).") === true,
+    ownerGatedPattern?.re.test("Preview only — posting these entries is a separate, disabled step (not enabled here).") === false,
+  ];
+  if (ownerGatedChecks.some((ok) => !ok)) {
+    console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — owner-gated reintroduction mutation escaped");
+    process.exit(1);
+  }
+  console.log("[verify-no-internal-language-in-prod-ui] SELFTEST PASS — schema names, project-status, and owner-gated-copy mutations rejected; exact protected baseline honored");
   process.exit(0);
 }
 

@@ -1,26 +1,26 @@
 {
  "date": "2026-08-16",
- "generated_at_iso": "2026-08-16T02:01:14.256Z",
+ "generated_at_iso": "2026-08-16T19:35:51.993Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
   "NEEDS-VERIFY": 41,
-  "DONE": 545,
+  "DONE": 546,
   "AUDIT-NOTE": 577
  },
  "universe": {
-  "total_blocks_after_dedup": 1210,
+  "total_blocks_after_dedup": 1211,
   "by_source_after_dedup": {
-   ".block-ready": 1016,
+   ".block-ready": 1017,
    "program": 83,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1388,
+   ".block-ready (*.json files)": 1389,
    ".block-ready retired (dup/stale/superseded, excluded)": 367,
-   ".block-ready active (counted)": 1021
+   ".block-ready active (counted)": 1022
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -946,10 +946,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #4656 title-match only, unverified",
+   "evidence": "PR #7736 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 4656
+   "pr": 7736
   },
   {
    "id": "FEAT-DISP-DRAWER-WIRE",
@@ -1730,7 +1730,7 @@
    "evidence": "all 8 file(s) on main",
    "name": "ACCT-R-03 (ranked ACCT-F13) / pile 0091-m-lists-2 — the Chart-of-Accounts 'Merge accounts' action was deactivate-only. C",
    "registered_on": null,
-   "pr": 5044
+   "pr": 7725
   },
   {
    "id": "AF-0-rebaseline",
@@ -2754,6 +2754,17 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 8 file(s) on main",
+   "name": "Settlements/finance toolbar search/range/gear repointed from compatibility aliases and a conditional-preview page to the",
+   "registered_on": null,
+   "pr": 7252
   },
   {
    "id": "CHAIN-01-vendor-picker-fix",
@@ -13342,6 +13353,1404 @@
  ],
  "merged_prs": [
   {
+   "number": 7892,
+   "title": "Codex-1-fix(reports): LV-REPORTS-IFTA-INTERNAL-BACKEND-STATUS-COPY",
+   "mergedAt": "2026-08-16T19:34:48Z",
+   "branch": "codex/reports-ifta-operator-copy"
+  },
+  {
+   "number": 7891,
+   "title": "Cursor- fix(safety): SAF-F3386 — ComplaintsTab customer EntityPicker",
+   "mergedAt": "2026-08-16T19:34:34Z",
+   "branch": "cursor/complaints-customer-entity-picker"
+  },
+  {
+   "number": 7890,
+   "title": "Cursor- fix(tasks): TASK-F3384 — CreateTaskModal customer EntityPicker",
+   "mergedAt": "2026-08-16T19:32:38Z",
+   "branch": "cursor/create-task-customer-entity-picker"
+  },
+  {
+   "number": 7888,
+   "title": "Codex-1-fix(legal): LV-LEGAL-MATTER-UNIT-TRAILER-PICKERS-NO-INLINE-CREATE",
+   "mergedAt": "2026-08-16T18:59:00Z",
+   "branch": "codex/legal-matter-picker-law"
+  },
+  {
+   "number": 7884,
+   "title": "Codex-1-fix(maintenance): LV-MAINT-WO-WIDE-MODAL-ACTIONS-CLIPPED",
+   "mergedAt": "2026-08-16T18:39:46Z",
+   "branch": "codex/live-wo-responsive"
+  },
+  {
+   "number": 7882,
+   "title": "Cursor- fix(legal): LEG-F3382 — LeaseToOwn lessee customer EntityPicker",
+   "mergedAt": "2026-08-16T19:29:45Z",
+   "branch": "cursor/lease-to-own-customer-entity-picker"
+  },
+  {
+   "number": 7881,
+   "title": "Codex-1- fix(maintenance): return real work-order-line UUID",
+   "mergedAt": "2026-08-16T17:58:18Z",
+   "branch": "codex/fix-maint-wo-line-phantom-id"
+  },
+  {
+   "number": 7880,
+   "title": "Cursor- fix(lists): LST-F3380 — ItemEditor preferred vendor EntityPicker",
+   "mergedAt": "2026-08-16T19:28:56Z",
+   "branch": "cursor/item-editor-preferred-vendor-entity-picker"
+  },
+  {
+   "number": 7879,
+   "title": "Codex-1- fix(home): add staged driver-day Filters panel",
+   "mergedAt": "2026-08-16T17:52:53Z",
+   "branch": "codex/fix-home-driver-filter"
+  },
+  {
+   "number": 7878,
+   "title": "Codex-1- fix(guards): refresh EntityLink structural baseline",
+   "mergedAt": "2026-08-16T17:51:19Z",
+   "branch": "codex/fix-entity-link-baseline"
+  },
+  {
+   "number": 7877,
+   "title": "Cursor- fix(dispatch): LV-DISPATCH-BOOKLOAD-FACTORING-VENDOR-ENTITY-PICKER — listVendors residual",
+   "mergedAt": "2026-08-16T17:49:40Z",
+   "branch": "cursor/bookload-factoring-vendor-entity-picker"
+  },
+  {
+   "number": 7876,
+   "title": "Claude-1- FINDING: FE-BUILD-RED-SERVICE-ITEM-UUID-NARROWER-THAN-BACKEND",
+   "mergedAt": "2026-08-16T17:47:46Z",
+   "branch": "claude/fix-wo-service-item-uuid"
+  },
+  {
+   "number": 7875,
+   "title": "Cursor- fix(customers): LV-CUST-DETAIL-FACTORING-VENDOR-ENTITY-PICKER — SelectField roster residual",
+   "mergedAt": "2026-08-16T17:47:30Z",
+   "branch": "cursor/customer-detail-factoring-vendor-entity-picker"
+  },
+  {
+   "number": 7874,
+   "title": "Codex-1- fix(maintenance): omit absent service item UUID",
+   "mergedAt": "2026-08-16T17:46:40Z",
+   "branch": "codex/fix-main-fe-typecheck"
+  },
+  {
+   "number": 7873,
+   "title": "Cursor- fix(factoring): LV-FACT-LOAN-LENDER-VENDOR-ENTITY-PICKER — listVendors residual",
+   "mergedAt": "2026-08-16T17:45:33Z",
+   "branch": "cursor/factoring-loan-lender-entity-picker"
+  },
+  {
+   "number": 7872,
+   "title": "Cursor- fix(operations): LV-OPS-GEOFENCE-LOC-REF-ENTITY-PICKER — customer+vendor capped roster",
+   "mergedAt": "2026-08-16T17:41:54Z",
+   "branch": "cursor/geofences-vendor-entity-picker"
+  },
+  {
+   "number": 7871,
+   "title": "Cursor- fix(insurance): LV-INS-POLICY-VENDOR-REVERSE-FILTER-GUARD — p.vendor_id needle + unused imports",
+   "mergedAt": "2026-08-16T17:39:17Z",
+   "branch": "cursor/insurance-policy-vendor-reverse-filter-guard"
+  },
+  {
+   "number": 7870,
+   "title": "Claude-1- FINDING: BUILD-STABILITY-BUS-LINE — rebase+tsc before push (96h: 203 frontend build failures, 0 logic bugs)",
+   "mergedAt": "2026-08-16T17:37:51Z",
+   "branch": "claude/bus-rebase-typecheck-before-push"
+  },
+  {
+   "number": 7869,
+   "title": "Cursor- fix(insurance): LV-INS-POLICY-INSURER-VENDOR-ENTITY-PICKER — capped listVendors residual",
+   "mergedAt": "2026-08-16T17:38:09Z",
+   "branch": "cursor/policy-insurer-vendor-entity-picker"
+  },
+  {
+   "number": 7868,
+   "title": "Cursor- fix(legal): LV-LEGAL-UNIFIED-CONTRACT-SIGNER-ENTITY-PICKER — customer+vendor caps",
+   "mergedAt": "2026-08-16T17:35:29Z",
+   "branch": "cursor/unified-contract-signer-entity-picker"
+  },
+  {
+   "number": 7867,
+   "title": "Codex-1- fix(system): certify master-data audit spine",
+   "mergedAt": "2026-08-16T17:34:50Z",
+   "branch": "codex/live-system-audit-spine-complete"
+  },
+  {
+   "number": 7866,
+   "title": "Cursor- fix(legal): LV-LEGAL-SENDCONTRACT-SIGNER-ENTITY-PICKER — vendor+customer capped roster",
+   "mergedAt": "2026-08-16T17:33:28Z",
+   "branch": "cursor/sendcontract-vendor-entity-picker"
+  },
+  {
+   "number": 7865,
+   "title": "Cursor- fix(legal): LV-LEGAL-TRUCKLEASE-LESSEE-VENDOR-ENTITY-PICKER — capped listVendors residual",
+   "mergedAt": "2026-08-16T17:32:07Z",
+   "branch": "cursor/trucklease-lessee-vendor-entity-picker"
+  },
+  {
+   "number": 7864,
+   "title": "Cursor- fix(maintenance): LV-MAINT-CREATEWO-OUTSIDE-VENDOR-ENTITY-PICKER — retry after empty #7861 squash",
+   "mergedAt": "2026-08-16T17:30:27Z",
+   "branch": "cursor/createwo-outside-vendor-entity-picker-retry"
+  },
+  {
+   "number": 7863,
+   "title": "Codex-1- fix(maintenance): omit empty service item UUID",
+   "mergedAt": "2026-08-16T17:29:01Z",
+   "branch": "codex/fix-maint-wo-empty-service-uuid"
+  },
+  {
+   "number": 7862,
+   "title": "Claude-1- FINDING: FE-BUILD-RED-WARRANTY-USEMEMO-IMPORT — missing useMemo import, 4 failed builds",
+   "mergedAt": "2026-08-16T17:27:54Z",
+   "branch": "claude/fix-warranty-usememo-import"
+  },
+  {
+   "number": 7861,
+   "title": "Cursor- fix(maintenance): LV-MAINT-CREATEWO-OUTSIDE-VENDOR-ENTITY-PICKER — capped listVendors on Create WO outside vendor",
+   "mergedAt": "2026-08-16T17:27:17Z",
+   "branch": "cursor/createwo-outside-vendor-entity-picker"
+  },
+  {
+   "number": 7860,
+   "title": "Cursor- fix(safety): LV-SAF-ACCIDENT-REPAIR-VENDOR-ENTITY-PICKER — capped listVendors on AccidentReportDrawer",
+   "mergedAt": "2026-08-16T17:25:29Z",
+   "branch": "cursor/accident-repair-vendor-entity-picker"
+  },
+  {
+   "number": 7859,
+   "title": "Cursor- fix(maintenance): LV-MAINT-CREATEWO-CUSTOMER-ENTITY-PICKER — capped listCustomers on Create WO",
+   "mergedAt": "2026-08-16T17:23:19Z",
+   "branch": "cursor/createwo-customer-entity-picker"
+  },
+  {
+   "number": 7858,
+   "title": "Codex-1- fix(program): certify honest matrix percentage",
+   "mergedAt": "2026-08-16T17:20:03Z",
+   "branch": "codex/live-program-honest-percent"
+  },
+  {
+   "number": 7857,
+   "title": "Cursor- fix(maintenance): LV-MAINT-WARRANTY-ADDPARTS-VENDOR-ENTITY-PICKER — capped listVendors on warranty + AddPartsLink",
+   "mergedAt": "2026-08-16T17:18:44Z",
+   "branch": "cursor/warranty-addparts-vendor-entity-picker"
+  },
+  {
+   "number": 7856,
+   "title": "Cursor- fix(maintenance): LV-MAINT-ROAD-SERVICE-WO-VENDOR-ENTITY-PICKER — capped listVendors+ReferenceSelect on road service + Create WO",
+   "mergedAt": "2026-08-16T17:13:45Z",
+   "branch": "cursor/road-service-wo-vendor-entity-picker"
+  },
+  {
+   "number": 7855,
+   "title": "Cursor- fix(inventory): LV-INV-PART-VENDOR-CAPPED-REFERENCESELECT — EntityPicker uncapped vendor",
+   "mergedAt": "2026-08-16T17:06:53Z",
+   "branch": "cursor/inv-part-vendor-entity-picker"
+  },
+  {
+   "number": 7854,
+   "title": "Cursor- fix(scoreboard): LV-HELP-RANGE-GEAR-TOOLBAR-THEATER — N/A bind HelpCenterPage",
+   "mergedAt": "2026-08-16T17:02:01Z",
+   "branch": "cursor/help-range-gear-honesty"
+  },
+  {
+   "number": 7853,
+   "title": "Cursor- fix(scoreboard): LV-REMAINING-FILTER-PANELS — fuel/compliance/inventory/425/help CollapsedListFilters",
+   "mergedAt": "2026-08-16T17:00:58Z",
+   "branch": "cursor/remaining-filter-panels-wave"
+  },
+  {
+   "number": 7852,
+   "title": "Cursor- fix(scoreboard): LV-REMAINING-FILTER-PANELS — fuel/compliance/inventory/425/help CollapsedListFilters",
+   "mergedAt": "2026-08-16T17:00:08Z",
+   "branch": "claude-1-ci-post-bank-f5330-canonical-check-2026-08-16"
+  },
+  {
+   "number": 7851,
+   "title": "Cursor- fix(scoreboard): LV-MAINTENANCE-FILTER-LEAF-THEATER — bind Filters to WorkOrdersTable",
+   "mergedAt": "2026-08-16T16:56:15Z",
+   "branch": "cursor/maintenance-filter-leaf-honesty"
+  },
+  {
+   "number": 7850,
+   "title": "Cursor- fix(scoreboard): LV-ACCT-FLEET-DISPATCH-FACTORING-FILTER-LEAF-THEATER — honesty bind Filters leaves",
+   "mergedAt": "2026-08-16T16:55:22Z",
+   "branch": "cursor/acct-fleet-dispatch-factoring-filter-honesty"
+  },
+  {
+   "number": 7849,
+   "title": "Cursor- fix(scoreboard): LV-VENDORS-CUSTOMERS-LISTS-FILTER-LEAF-THEATER — honesty bind Filters leaves",
+   "mergedAt": "2026-08-16T16:52:39Z",
+   "branch": "cursor/vendors-customers-lists-filter-honesty"
+  },
+  {
+   "number": 7848,
+   "title": "Cursor- fix(reports): LV-REPORTS-FILTER-LEAF-THEATER — filter leaf pointed at UniversalListToolbar",
+   "mergedAt": "2026-08-16T16:49:04Z",
+   "branch": "cursor/reports-filter-leaf-honesty"
+  },
+  {
+   "number": 7847,
+   "title": "Cursor- docs: LV-CURSOR-INBOX-STALE-OPEN-HYGIENE — close FIXED rows still listed OPEN",
+   "mergedAt": "2026-08-16T16:47:12Z",
+   "branch": "cursor/inbox-board-hygiene-stale-open"
+  },
+  {
+   "number": 7846,
+   "title": "Codex-1- fix(chrome): certify customer reports copy",
+   "mergedAt": "2026-08-16T16:46:56Z",
+   "branch": "codex/live-project-copy-customer-reports"
+  },
+  {
+   "number": 7845,
+   "title": "Cursor- fix(docs): LV-DOCS-FILTER-LEAF-THEATER — filter leaf pointed at UniversalListToolbar",
+   "mergedAt": "2026-08-16T16:45:36Z",
+   "branch": "cursor/docs-filter-leaf-honesty"
+  },
+  {
+   "number": 7844,
+   "title": "Cursor- fix(safety): LV-SAFETY-ANOMALIES-FILTER-LEAF-THEATER — filter leaf pointed at UniversalListToolbar",
+   "mergedAt": "2026-08-16T16:44:24Z",
+   "branch": "cursor/safety-anomalies-filter-honesty"
+  },
+  {
+   "number": 7843,
+   "title": "Codex-1- fix(chrome): certify non-money operator copy",
+   "mergedAt": "2026-08-16T16:44:02Z",
+   "branch": "codex/live-operator-copy-nonmoney"
+  },
+  {
+   "number": 7842,
+   "title": "Cursor- fix(legal): LV-LEGAL-MATTERS-FILTER-LEAF-THEATER — filter leaf pointed at UniversalListToolbar",
+   "mergedAt": "2026-08-16T16:41:05Z",
+   "branch": "cursor/legal-matters-filter-honesty"
+  },
+  {
+   "number": 7841,
+   "title": "Cursor- fix(drivers): LV-DRIVERS-TABLE-FILTER-PANEL-ABSENT — DriversTable missing CollapsedListFilters",
+   "mergedAt": "2026-08-16T16:39:33Z",
+   "branch": "cursor/drivers-table-filter-panel"
+  },
+  {
+   "number": 7840,
+   "title": "Cursor- fix(insurance): LV-INSURANCE-LAWSUITS-FILTER-PANEL-ABSENT — Lawsuits missing CollapsedListFilters",
+   "mergedAt": "2026-08-16T16:36:57Z",
+   "branch": "cursor/insurance-lawsuits-filter-panel"
+  },
+  {
+   "number": 7839,
+   "title": "Codex-1- fix(form-425): certify scoped filing identity",
+   "mergedAt": "2026-08-16T16:35:41Z",
+   "branch": "codex/live-form425-profile"
+  },
+  {
+   "number": 7838,
+   "title": "Cursor- docs: LV-PROGRAM-TRACKER-R2-CREDENTIALS-MISSING — secrets + upload proof",
+   "mergedAt": "2026-08-16T16:26:03Z",
+   "branch": "cursor/r2-credentials-closeout"
+  },
+  {
+   "number": 7837,
+   "title": "Codex-1- fix(drivers): certify deployed DQ document copy",
+   "mergedAt": "2026-08-16T16:25:46Z",
+   "branch": "codex/live-driver-doc-copy"
+  },
+  {
+   "number": 7836,
+   "title": "Cursor- docs: LV-FLEETTABLE checklist stamp PR #7835",
+   "mergedAt": "2026-08-16T16:13:59Z",
+   "branch": "cursor/fleettable-checklist-prnum"
+  },
+  {
+   "number": 7835,
+   "title": "Cursor- fix(fleet): LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES — restore base Unit plain text",
+   "mergedAt": "2026-08-16T16:13:34Z",
+   "branch": "cursor/fleettable-unit-cell-maintenance-mode"
+  },
+  {
+   "number": 7834,
+   "title": "Cursor- chore: CLAIM-RESERVE 3652 — verify-fleettable-unit-cell-maintenance-mode",
+   "mergedAt": "2026-08-16T16:11:19Z",
+   "branch": "chore/claim-reserve-3652-fleettable-ternary"
+  },
+  {
+   "number": 7833,
+   "title": "Cursor- docs: GUARD-BOARD-HYGIENE — close stale OPEN chrome after #7813–#7827",
+   "mergedAt": "2026-08-16T16:10:14Z",
+   "branch": "cursor/guard-board-hygiene-fixed-chrome"
+  },
+  {
+   "number": 7832,
+   "title": "Claude-1-ACCT-F5334: board closeout",
+   "mergedAt": "2026-08-16T16:07:50Z",
+   "branch": "claude-1/board-amortization-closeout"
+  },
+  {
+   "number": 7831,
+   "title": "Codex-1- fix(finance): route USMCA QBO KPI defect",
+   "mergedAt": "2026-08-16T16:09:26Z",
+   "branch": "codex/finance-usmca-qbo-handoff"
+  },
+  {
+   "number": 7830,
+   "title": "Cursor- docs: FE-DEPLOY-CLOSEOUT — docs+insurance Live + #7827 filter board",
+   "mergedAt": "2026-08-16T16:07:15Z",
+   "branch": "cursor/docs-insurance-fe-deploy-closeout"
+  },
+  {
+   "number": 7829,
+   "title": "Claude-1-ACCT-F5334: finance amortization create-gate + shared DatePicker",
+   "mergedAt": "2026-08-16T16:06:43Z",
+   "branch": "claude-1/finance-amortization-create-gate"
+  },
+  {
+   "number": 7828,
+   "title": "Codex-1- fix(docs): certify deployed legacy entity labels",
+   "mergedAt": "2026-08-16T16:02:19Z",
+   "branch": "codex/docs-legacy-live"
+  },
+  {
+   "number": 7827,
+   "title": "Cursor- fix(chrome): LV-PROGRAM/SYSTEM/CASH-FLOW — CollapsedListFilters + Apply panels",
+   "mergedAt": "2026-08-16T15:59:40Z",
+   "branch": "cursor/program-system-cashflow-filter-panels"
+  },
+  {
+   "number": 7826,
+   "title": "Claude-1-ACCT-F5333: board closeout (driver-hub reporting)",
+   "mergedAt": "2026-08-16T15:57:59Z",
+   "branch": "claude-1/board-driverhub-loadfk-closeout"
+  },
+  {
+   "number": 7825,
+   "title": "Codex-1- fix(insurance): certify deployed human type labels",
+   "mergedAt": "2026-08-16T15:57:44Z",
+   "branch": "codex/insurance-live-postdeploy"
+  },
+  {
+   "number": 7824,
+   "title": "Claude-1-ACCT-F5333: driver-hub reporting per-trip advance volume (fix stale no-load-FK claim)",
+   "mergedAt": "2026-08-16T15:57:00Z",
+   "branch": "claude-1/driver-hub-reporting-load-fk"
+  },
+  {
+   "number": 7823,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE-3650 — program/system/cash-flow filter panels",
+   "mergedAt": "2026-08-16T15:55:35Z",
+   "branch": "chore/claim-reserve-3650-program-system-cashflow-filters"
+  },
+  {
+   "number": 7822,
+   "title": "Claude-1-LV-USMCA-FINANCE-HUB: flag/resolver correct, deploy pipe healthy",
+   "mergedAt": "2026-08-16T15:41:34Z",
+   "branch": "claude-1/board-finance-hub-flag-closeout"
+  },
+  {
+   "number": 7821,
+   "title": "Claude-1- FINDING: FE-BUILD-RED-JE-POSTING-SHAPE-DUPLICATED — hand-copied JE payload type drifted; frontend down 2h+",
+   "mergedAt": "2026-08-16T15:36:50Z",
+   "branch": "claude/fix-manualje-entity-type"
+  },
+  {
+   "number": 7820,
+   "title": "Cursor- fix(chrome): users+drivers toolbar exact-owner (roster surfaces)",
+   "mergedAt": "2026-08-16T15:35:50Z",
+   "branch": "cursor/users-drivers-toolbar-exact-owner"
+  },
+  {
+   "number": 7819,
+   "title": "Cursor- fix(chrome): compliance+driver-hub toolbar exact-owner (Filings + Reporting)",
+   "mergedAt": "2026-08-16T15:33:37Z",
+   "branch": "cursor/driver-hub-toolbar-exact-route"
+  },
+  {
+   "number": 7818,
+   "title": "Claude-1-ACCT-F5332: board closeout (USMCA Faro)",
+   "mergedAt": "2026-08-16T15:32:53Z",
+   "branch": "claude-1/board-faro-usmca-closeout"
+  },
+  {
+   "number": 7817,
+   "title": "Cursor- fix(tasks): LV-TASKS-TOOLBAR-LEAVES-POINT-TASK-BOARD — bind /tasks/report",
+   "mergedAt": "2026-08-16T15:32:20Z",
+   "branch": "cursor/tasks-toolbar-exact-route"
+  },
+  {
+   "number": 7816,
+   "title": "Claude-1-ACCT-F5332: USMCA joins Faro Full Recourse V1 (owner-confirmed, eff 2026-08-07)",
+   "mergedAt": "2026-08-16T15:31:25Z",
+   "branch": "claude-1/usmca-faro-factoring-agreement"
+  },
+  {
+   "number": 7815,
+   "title": "Cursor- fix(home): LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR — always mount ParityTable",
+   "mergedAt": "2026-08-16T15:30:10Z",
+   "branch": "cursor/home-driver-day-toolbar-3648"
+  },
+  {
+   "number": 7814,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3648 — home driver-day toolbar",
+   "mergedAt": "2026-08-16T15:28:05Z",
+   "branch": "chore/claim-reserve-3648-home-toolbar"
+  },
+  {
+   "number": 7813,
+   "title": "Cursor- fix(chrome): LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP — stack topbar at ≤1279",
+   "mergedAt": "2026-08-16T15:27:11Z",
+   "branch": "cursor/topbar-responsive-clip-3646"
+  },
+  {
+   "number": 7812,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3646 — topbar responsive clip",
+   "mergedAt": "2026-08-16T15:24:56Z",
+   "branch": "chore/claim-reserve-3646-topbar"
+  },
+  {
+   "number": 7811,
+   "title": "Cursor- fix(audit): FINDINGS-REGISTER-SIGNOFF — add 2 missing USMCA OPEN ☐ rows",
+   "mergedAt": "2026-08-16T15:24:08Z",
+   "branch": "cursor/register-signoff-usmca-two"
+  },
+  {
+   "number": 7810,
+   "title": "Claude-1-ACCT-F5332: claim migration 202612690000 (USMCA Faro factoring agreement)",
+   "mergedAt": "2026-08-16T15:22:12Z",
+   "branch": "claude-1/claim-migration-202612690000"
+  },
+  {
+   "number": 7809,
+   "title": "Claude-1-LV-USMCA-DRIVER-DUPLICATE-IMPORT-ROWS: 2 duplicate driver pairs filed",
+   "mergedAt": "2026-08-16T14:40:41Z",
+   "branch": "claude-1/board-usmca-driver-dup-finding"
+  },
+  {
+   "number": 7808,
+   "title": "Claude-1-LV-USMCA-FACTORING-GL-FLAG-OVERRIDE: factoring create path OK, GL-flag/policy discrepancy flagged",
+   "mergedAt": "2026-08-16T14:33:20Z",
+   "branch": "claude-1/board-usmca-factoring-finding"
+  },
+  {
+   "number": 7807,
+   "title": "Claude-1-LV-CATALOG-CREATORS-STALE-CORRECTION: 3 catalog-creator bugs don't reproduce (live-verified)",
+   "mergedAt": "2026-08-16T14:26:05Z",
+   "branch": "claude-1/board-stale-catalog-creators-correction"
+  },
+  {
+   "number": 7806,
+   "title": "Claude-1-LV-USMCA-LIVE-TODAY: relay owner USMCA-only go-live directive to all coder inboxes",
+   "mergedAt": "2026-08-16T14:21:31Z",
+   "branch": "claude-1/owner-directive-usmca-live-today"
+  },
+  {
+   "number": 7805,
+   "title": "Codex-1- chore(insurance): route stale frontend deploy blocker",
+   "mergedAt": "2026-08-16T14:20:11Z",
+   "branch": "codex/insurance-frontend-deploy-handoff"
+  },
+  {
+   "number": 7804,
+   "title": "Claude-1-ACCT-F5331: claim migration 202612680000 (posting_batches refusal code)",
+   "mergedAt": "2026-08-16T14:14:36Z",
+   "branch": "claude-1/claim-migration-202612680000"
+  },
+  {
+   "number": 7803,
+   "title": "Codex-1- fix(inventory): certify USMCA module contract",
+   "mergedAt": "2026-08-16T14:13:09Z",
+   "branch": "codex/inventory-live-cert"
+  },
+  {
+   "number": 7802,
+   "title": "Codex-1- fix(insurance): complete vertical type-label class",
+   "mergedAt": "2026-08-16T14:08:00Z",
+   "branch": "codex/insurance-type-label-vertical"
+  },
+  {
+   "number": 7801,
+   "title": "Codex-1- fix(insurance): resolve policy type human labels",
+   "mergedAt": "2026-08-16T13:59:29Z",
+   "branch": "codex/insurance-type-human-label"
+  },
+  {
+   "number": 7800,
+   "title": "Codex-1- docs(finance): route USMCA hub flag Live failure",
+   "mergedAt": "2026-08-16T13:50:42Z",
+   "branch": "codex/finance-hub-flag-handoff"
+  },
+  {
+   "number": 7799,
+   "title": "Codex-1- chore(cash-flow): ledger exact USMCA Live tabs",
+   "mergedAt": "2026-08-16T13:47:19Z",
+   "branch": "codex/cash-flow-live"
+  },
+  {
+   "number": 7798,
+   "title": "Codex-1- chore(insurance): ledger exact root Live proof",
+   "mergedAt": "2026-08-16T13:43:05Z",
+   "branch": "codex/insurance-root-live"
+  },
+  {
+   "number": 7797,
+   "title": "Codex-1- fix(inventory): ratchet purchase ledger and Live six leaves",
+   "mergedAt": "2026-08-16T13:37:52Z",
+   "branch": "codex/inventory-live-six-leaves"
+  },
+  {
+   "number": 7796,
+   "title": "Codex-1- chore(docs): route split frontend deploy",
+   "mergedAt": "2026-08-16T13:27:55Z",
+   "branch": "codex/docs-frontend-deploy-handoff"
+  },
+  {
+   "number": 7795,
+   "title": "Codex-1- chore(guards): close stale orphan censuses",
+   "mergedAt": "2026-08-16T13:24:43Z",
+   "branch": "codex/close-stale-orphan-census"
+  },
+  {
+   "number": 7794,
+   "title": "Codex-1- chore(cash-flow): route missing filter panel",
+   "mergedAt": "2026-08-16T13:19:26Z",
+   "branch": "codex/cash-flow-filter-handoff"
+  },
+  {
+   "number": 7793,
+   "title": "Codex-1- chore(system): route missing Program filter",
+   "mergedAt": "2026-08-16T13:17:01Z",
+   "branch": "codex/system-program-filter-handoff"
+  },
+  {
+   "number": 7792,
+   "title": "Codex-1- chore(program): route missing filter control",
+   "mergedAt": "2026-08-16T13:13:47Z",
+   "branch": "codex/program-toolbar-filter-handoff"
+  },
+  {
+   "number": 7791,
+   "title": "Codex-1- fix(docs): resolve scoped entity-link labels",
+   "mergedAt": "2026-08-16T13:08:12Z",
+   "branch": "codex/docs-entity-human-labels"
+  },
+  {
+   "number": 7790,
+   "title": "Codex-1- chore(drivers): route exact toolbar owner defect",
+   "mergedAt": "2026-08-16T12:53:27Z",
+   "branch": "codex/drivers-toolbar-owner-handoff"
+  },
+  {
+   "number": 7789,
+   "title": "Codex-1- chore(driver-hub): route toolbar and reporting defects",
+   "mergedAt": "2026-08-16T12:50:10Z",
+   "branch": "codex/driver-hub-toolbar-economic-handoffs"
+  },
+  {
+   "number": 7788,
+   "title": "Codex-1- chore(users): route exact toolbar owner defect",
+   "mergedAt": "2026-08-16T12:46:59Z",
+   "branch": "codex/users-toolbar-owner-handoff"
+  },
+  {
+   "number": 7787,
+   "title": "Codex-1- chore(tasks): route exact toolbar owner defect",
+   "mergedAt": "2026-08-16T12:44:04Z",
+   "branch": "codex/tasks-toolbar-route-handoff"
+  },
+  {
+   "number": 7786,
+   "title": "Codex-1- chore(compliance): route exact toolbar owner defect",
+   "mergedAt": "2026-08-16T12:40:29Z",
+   "branch": "codex/compliance-toolbar-owner-handoff"
+  },
+  {
+   "number": 7785,
+   "title": "Codex-1- fix(inventory): bind toolbar to canonical Assignments leaf",
+   "mergedAt": "2026-08-16T12:37:20Z",
+   "branch": "codex/inventory-toolbar-exact-consumer"
+  },
+  {
+   "number": 7784,
+   "title": "Codex-1- fix(legal): bind toolbar to canonical Matters leaf",
+   "mergedAt": "2026-08-16T12:29:57Z",
+   "branch": "codex/legal-toolbar-exact-consumer"
+  },
+  {
+   "number": 7783,
+   "title": "Codex-1- chore(finance): route toolbar applicability and stale copy findings",
+   "mergedAt": "2026-08-16T12:18:37Z",
+   "branch": "codex/finance-toolbar-copy-handoff"
+  },
+  {
+   "number": 7782,
+   "title": "Codex-1- chore(home): route empty-state toolbar defect",
+   "mergedAt": "2026-08-16T12:07:39Z",
+   "branch": "codex/home-empty-toolbar-handoff"
+  },
+  {
+   "number": 7781,
+   "title": "Codex-1- chore(settlements): route canonical toolbar alias gap",
+   "mergedAt": "2026-08-16T12:02:05Z",
+   "branch": "codex/settlements-toolbar-alias-handoff"
+  },
+  {
+   "number": 7780,
+   "title": "Codex-1- fix(connectivity): bind toolbar leaves to exact owners across all modules",
+   "mergedAt": "2026-08-16T11:41:06Z",
+   "branch": "codex/toolbar-exact-owner-wave"
+  },
+  {
+   "number": 7779,
+   "title": "Codex-1- fix(insurance): bind toolbar to canonical Lawsuits leaf",
+   "mergedAt": "2026-08-16T11:20:37Z",
+   "branch": "codex/insurance-toolbar-exact-consumer"
+  },
+  {
+   "number": 7778,
+   "title": "Codex-1- chore(chrome): route product-wide topbar responsive clip",
+   "mergedAt": "2026-08-16T10:58:32Z",
+   "branch": "codex/topbar-responsive-handoff"
+  },
+  {
+   "number": 7777,
+   "title": "Codex-1- docs(system): ledger activation Live closeout",
+   "mergedAt": "2026-08-16T10:42:22Z",
+   "branch": "codex/system-activation-live-closeout"
+  },
+  {
+   "number": 7776,
+   "title": "Codex-1- chore(finance): route amortization create defect",
+   "mergedAt": "2026-08-16T10:39:49Z",
+   "branch": "codex/handoff-finance-amortization-create"
+  },
+  {
+   "number": 7775,
+   "title": "Codex-1- fix(form-425): bind toolbar to Filing History",
+   "mergedAt": "2026-08-16T10:36:40Z",
+   "branch": "codex/form425-toolbar-exact-tab"
+  },
+  {
+   "number": 7774,
+   "title": "Codex-1- chore(ci): route BANK-F5330 main reds",
+   "mergedAt": "2026-08-16T10:32:51Z",
+   "branch": "codex/handoff-bank-f5330-main-red"
+  },
+  {
+   "number": 7773,
+   "title": "Codex-1- fix(cash-flow): bind toolbar to exact live tab",
+   "mergedAt": "2026-08-16T10:28:32Z",
+   "branch": "codex/cash-flow-toolbar-exact-tab"
+  },
+  {
+   "number": 7772,
+   "title": "Codex-1- fix(system): bind EDI and activation live contracts",
+   "mergedAt": "2026-08-16T10:23:42Z",
+   "branch": "codex/system-edi-activation-contract"
+  },
+  {
+   "number": 7771,
+   "title": "Codex-1- fix(program): expose skipped tracker R2 delivery",
+   "mergedAt": "2026-08-16T10:17:56Z",
+   "branch": "codex/program-tracker-r2-credentials-handoff"
+  },
+  {
+   "number": 7770,
+   "title": "Claude-1-BANK-F5330: board closeout",
+   "mergedAt": "2026-08-16T10:13:01Z",
+   "branch": "claude-1/board-bank-f5330-closeout"
+  },
+  {
+   "number": 7769,
+   "title": "Claude-1-BANK-F5330: JE posting entity_type discriminator + real picker",
+   "mergedAt": "2026-08-16T10:11:29Z",
+   "branch": "claude-1/je-posting-entity-type-picker"
+  },
+  {
+   "number": 7768,
+   "title": "Codex-1- fix(system): bind toolbar leaves to exact tab",
+   "mergedAt": "2026-08-16T10:06:18Z",
+   "branch": "codex/system-toolbar-leaf-honesty"
+  },
+  {
+   "number": 7767,
+   "title": "Claude-1-BANK-F5330: claim migration 202612670000 (JE posting entity_type)",
+   "mergedAt": "2026-08-16T10:02:46Z",
+   "branch": "claude-1/claim-migration-202612670000"
+  },
+  {
+   "number": 7766,
+   "title": "Codex-1- fix(program): bind thread leaf to exact board route",
+   "mergedAt": "2026-08-16T10:00:56Z",
+   "branch": "codex/program-thread-leaf-honesty"
+  },
+  {
+   "number": 7765,
+   "title": "Claude-1-BANK-F5329: board closeout",
+   "mergedAt": "2026-08-16T09:58:33Z",
+   "branch": "claude-1/board-bank-f5329-closeout"
+  },
+  {
+   "number": 7764,
+   "title": "Claude-1-BANK-F5329: manual bank-recon match reuses existing candidate picker, drops raw-uuid input",
+   "mergedAt": "2026-08-16T09:55:55Z",
+   "branch": "claude-1/acct-f5329-manual-recon-ledger-entry-picker"
+  },
+  {
+   "number": 7763,
+   "title": "Codex-1- fix(program): emit ancestry-proven deployment lifecycle",
+   "mergedAt": "2026-08-16T09:56:13Z",
+   "branch": "codex/program-tracker-deploy-producer"
+  },
+  {
+   "number": 7762,
+   "title": "Codex-1- fix(program): bind toolbar leaves to exact consumer",
+   "mergedAt": "2026-08-16T09:48:54Z",
+   "branch": "codex/program-toolbar-leaf-honesty"
+  },
+  {
+   "number": 7761,
+   "title": "Codex-1- fix(program): require deployment proof for Live status",
+   "mergedAt": "2026-08-16T09:42:24Z",
+   "branch": "codex/program-tracker-deploy-proof"
+  },
+  {
+   "number": 7760,
+   "title": "Codex-1- fix(program): prevent incomplete Built from displaying 100%",
+   "mergedAt": "2026-08-16T09:35:01Z",
+   "branch": "codex/program-honest-percent"
+  },
+  {
+   "number": 7759,
+   "title": "Claude-1-docs(board): document LV-G18 fix design + why it was withheld",
+   "mergedAt": "2026-08-16T09:29:59Z",
+   "branch": "claude-1/board-g18-investigation-halted-for-safety"
+  },
+  {
+   "number": 7758,
+   "title": "Codex-1- fix(reports): live-ledger dispatch alias and fleet runner",
+   "mergedAt": "2026-08-16T09:27:27Z",
+   "branch": "codex/live-reports-runner-evidence"
+  },
+  {
+   "number": 7757,
+   "title": "Codex-1- fix(insurance): live-ledger lawsuit scope and legal claim reverse",
+   "mergedAt": "2026-08-16T09:22:37Z",
+   "branch": "codex/live-insurance-legal-evidence"
+  },
+  {
+   "number": 7756,
+   "title": "Claude-1-FINDING: ACCT-F5328 TRK superseded AP account non-postable",
+   "mergedAt": "2026-08-16T09:22:05Z",
+   "branch": "claude-1/acct-f5328-trk-superseded-account-unpostable"
+  },
+  {
+   "number": 7755,
+   "title": "Cursor- docs(audit): close CLS-VOID-LITERAL-DEAD / ACCT-F171 pending",
+   "mergedAt": "2026-08-16T09:19:48Z",
+   "branch": "cursor/board-close-acct-f171-b"
+  },
+  {
+   "number": 7754,
+   "title": "Claude-1-FINDING: ACCT-F5327 CLAIM-MIGRATION-202612660000",
+   "mergedAt": "2026-08-16T09:18:56Z",
+   "branch": "claude-1/board-correct-superseded-role-targets"
+  },
+  {
+   "number": 7753,
+   "title": "Cursor- docs(audit): close DISP-F10/11 + CI-F04/06 + MDATA-F09 pending",
+   "mergedAt": "2026-08-16T09:16:35Z",
+   "branch": "cursor/board-close-disp-mdata-pending"
+  },
+  {
+   "number": 7752,
+   "title": "Claude-1-FINDING: ACCT-F5326 block driver assignment on status Inactive/Terminated",
+   "mergedAt": "2026-08-16T09:14:36Z",
+   "branch": "claude-1/acct-f5326-driver-inactive-status-assignment-gate"
+  },
+  {
+   "number": 7751,
+   "title": "Cursor- docs(audit): close CI-F03a/b + MDATA-F08 PR-pending board rows",
+   "mergedAt": "2026-08-16T09:14:15Z",
+   "branch": "cursor/board-close-cif03-pending"
+  },
+  {
+   "number": 7750,
+   "title": "Claude-1-FINDING: CLAIM-RESERVE-3645",
+   "mergedAt": "2026-08-16T09:13:16Z",
+   "branch": "chore/claim-reserve-3645-driver-status-inactive-gate"
+  },
+  {
+   "number": 7749,
+   "title": "Cursor- fix(program): PROG-PRFEED — align ledger guard to STALE-LEDGER call order",
+   "mergedAt": "2026-08-16T09:13:03Z",
+   "branch": "cursor/board-close-prog-prfeed-pending"
+  },
+  {
+   "number": 7748,
+   "title": "Cursor- docs(audit): attribute mobile #7591 + close SCENARIO-TRACKER pending",
+   "mergedAt": "2026-08-16T09:09:10Z",
+   "branch": "cursor/board-close-mobile-pr7591"
+  },
+  {
+   "number": 7747,
+   "title": "Claude-1-FINDING: ACCT-F5325 close PUBLIC-grant WORM leak on driver_finance/banking",
+   "mergedAt": "2026-08-16T09:08:59Z",
+   "branch": "claude-1/acct-f5325-worm-public-grant-leak"
+  },
+  {
+   "number": 7746,
+   "title": "Cursor- docs(audit): close NAV-BACK pending + mobile chrome board status",
+   "mergedAt": "2026-08-16T09:07:40Z",
+   "branch": "cursor/board-close-nav-back-pending"
+  },
+  {
+   "number": 7745,
+   "title": "Claude-1-FINDING: ACCT-F5324 CLAIM-MIGRATION-202612650000",
+   "mergedAt": "2026-08-16T09:04:17Z",
+   "branch": "chore/claim-reserve-worm-public-grant-leak"
+  },
+  {
+   "number": 7744,
+   "title": "Cursor- docs(audit): close stale LV-COMPLAINTS-TAB dual-path OPEN",
+   "mergedAt": "2026-08-16T09:04:26Z",
+   "branch": "cursor/board-close-complaints-tab-stale"
+  },
+  {
+   "number": 7743,
+   "title": "Cursor- docs(audit): undo #7741 sed over-attribution on GUARD board",
+   "mergedAt": "2026-08-16T09:01:40Z",
+   "branch": "cursor/board-fix-pr7741-sed"
+  },
+  {
+   "number": 7742,
+   "title": "Codex-1- fix(insurance): stamp lawsuit operating-company scope",
+   "mergedAt": "2026-08-16T09:01:14Z",
+   "branch": "codex/lawsuit-create-opco-scope"
+  },
+  {
+   "number": 7741,
+   "title": "Cursor- docs(audit): close THEATER-LEAFRE-13 + CI-ORPHAN board OPENs",
+   "mergedAt": "2026-08-16T09:01:01Z",
+   "branch": "cursor/board-close-theater-leafre-orphan"
+  },
+  {
+   "number": 7740,
+   "title": "Claude-1-FINDING: ACCT-F5323 vendor_payment_methods master data (ORPH-003 / CLS-ORPHAN-SURFACE)",
+   "mergedAt": "2026-08-16T08:59:41Z",
+   "branch": "claude-1/acct-f5323-vendor-payment-methods"
+  },
+  {
+   "number": 7739,
+   "title": "Cursor- fix(accounting): ACCT-F142 — bill create double-submit FE Idempotency-Key lock",
+   "mergedAt": "2026-08-16T08:58:55Z",
+   "branch": "cursor/bill-create-no-double-submit-3644"
+  },
+  {
+   "number": 7738,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3644 — verify-vendor-bill-create-no-double-submit",
+   "mergedAt": "2026-08-16T08:55:52Z",
+   "branch": "chore/claim-reserve-3644-bill-create-no-double-submit"
+  },
+  {
+   "number": 7737,
+   "title": "Claude-1-FINDING: ACCT-F5322 CLAIM-MIGRATION-202612640000",
+   "mergedAt": "2026-08-16T08:55:40Z",
+   "branch": "chore/claim-reserve-vendor-payment-methods"
+  },
+  {
+   "number": 7736,
+   "title": "Cursor- docs(audit): BOARD-CODEQL-F02-STALE-OPEN — close ReDoS row after linear scan",
+   "mergedAt": "2026-08-16T08:54:18Z",
+   "branch": "cursor/board-codeql-f02-stale-close"
+  },
+  {
+   "number": 7735,
+   "title": "Claude-1-docs(board): correct ECON-014 false-negative",
+   "mergedAt": "2026-08-16T08:53:28Z",
+   "branch": "claude-1/board-closeout-econ014-cash-advance-type"
+  },
+  {
+   "number": 7734,
+   "title": "Cursor- docs(audit): BOARD-STALE-CI-MAINT-OPENS — close baseline/CI-F03-cat/WO-class UUID rows",
+   "mergedAt": "2026-08-16T08:52:57Z",
+   "branch": "cursor/board-stale-ci-maint-closes"
+  },
+  {
+   "number": 7733,
+   "title": "ChatGpt-Codex-1- docs(live): ledger unit create and audit-spine evidence",
+   "mergedAt": "2026-08-16T08:52:10Z",
+   "branch": "codex/live-unit-audit-spine"
+  },
+  {
+   "number": 7732,
+   "title": "Cursor- fix(drivers): LV-DRIVER-ARCHIVED-NOT-DEACTIVATED — archive implies inactive + guard 3642",
+   "mergedAt": "2026-08-16T08:51:21Z",
+   "branch": "cursor/lv-driver-archived-not-deactivated-3642"
+  },
+  {
+   "number": 7731,
+   "title": "Claude-1-FINDING: ACCT-F5321 CLAIM-MIGRATION-202612630000",
+   "mergedAt": "2026-08-16T08:50:16Z",
+   "branch": "chore/claim-reserve-cash-advance-types-seed"
+  },
+  {
+   "number": 7730,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3642 — verify-driver-archive-implies-inactive",
+   "mergedAt": "2026-08-16T08:49:30Z",
+   "branch": "chore/claim-reserve-3642-driver-archived-active"
+  },
+  {
+   "number": 7729,
+   "title": "Cursor- docs(audit): BOARD-CLS-GUARD-READS-COMMENTS-4TH-STALE — close OPEN after #4658",
+   "mergedAt": "2026-08-16T08:48:03Z",
+   "branch": "cursor/board-cls-guard-comments-4th-fixed"
+  },
+  {
+   "number": 7728,
+   "title": "Claude-1-docs(board): USMCA factor row + close LV-USMCA-NO-ACTIVE-FACTOR-BLOCKS-PROFILE",
+   "mergedAt": "2026-08-16T08:47:47Z",
+   "branch": "claude-1/board-usmca-factor-created"
+  },
+  {
+   "number": 7727,
+   "title": "ChatGpt-Codex-1- docs(live): ledger driver validation and master-data spine evidence",
+   "mergedAt": "2026-08-16T08:47:34Z",
+   "branch": "codex/live-driver-validation-spine"
+  },
+  {
+   "number": 7726,
+   "title": "Cursor- docs(audit): BOARD-STALE-PR-RED-ROWS — close MERGED/CLOSED PR-red board noise",
+   "mergedAt": "2026-08-16T08:46:19Z",
+   "branch": "cursor/board-stale-pr-red-closes"
+  },
+  {
+   "number": 7725,
+   "title": "Claude-1-FINDING: ACCT-F5320 LV-BANK-SIGN-COMMENT-IS-INVERTED + ACCT-R-17 selftest",
+   "mergedAt": "2026-08-16T08:45:34Z",
+   "branch": "claude-1/acct-f5320-quick-fixes-batch"
+  },
+  {
+   "number": 7724,
+   "title": "Cursor- docs(audit): BOARD-STALE-TEST-HARNESS-OPENS — close home-widgets + collections",
+   "mergedAt": "2026-08-16T08:44:40Z",
+   "branch": "cursor/board-stale-test-harness-closes"
+  },
+  {
+   "number": 7723,
+   "title": "Cursor- docs(audit): BOARD-QBO-SYNC-STALENESS-STALE-OPEN — close stale OPEN rows",
+   "mergedAt": "2026-08-16T08:43:25Z",
+   "branch": "cursor/board-qbo-sync-staleness-closed"
+  },
+  {
+   "number": 7722,
+   "title": "ChatGpt-Codex-1- fix(fleet): LV-UNIT-CREATE-ASSET-FORCE-RLS-CONTEXT-MISSING — bind company context",
+   "mergedAt": "2026-08-16T08:42:16Z",
+   "branch": "codex/unit-create-assets-rls"
+  },
+  {
+   "number": 7721,
+   "title": "Cursor- docs(audit): BOARD-FROM-LOAD-ZERO-RATE-PR7719 — FIXED ref 7718→7719",
+   "mergedAt": "2026-08-16T08:41:32Z",
+   "branch": "cursor/board-from-load-pr-7719"
+  },
+  {
+   "number": 7720,
+   "title": "Claude-1-FINDING: ACCT-F5319 LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL",
+   "mergedAt": "2026-08-16T08:40:57Z",
+   "branch": "claude-1/acct-f5319-bill-header-only-lines-required"
+  },
+  {
+   "number": 7719,
+   "title": "Cursor- fix(dispatch): FROM-LOAD-INVOICE-ZERO-RATE — pin refuse+resync (3640)",
+   "mergedAt": "2026-08-16T08:40:27Z",
+   "branch": "cursor/from-load-zero-rate-guard-3640"
+  },
+  {
+   "number": 7718,
+   "title": "Claude-1-FINDING: CLAIM-RESERVE-3641",
+   "mergedAt": "2026-08-16T08:39:26Z",
+   "branch": "chore/claim-reserve-3641-bill-header-only-guard"
+  },
+  {
+   "number": 7717,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3640 — from-load zero-rate invoice",
+   "mergedAt": "2026-08-16T08:38:41Z",
+   "branch": "chore/claim-reserve-3640-from-load-zero-inv"
+  },
+  {
+   "number": 7716,
+   "title": "Cursor- docs(board): FAIL-A2 EXPENSE-VOID — FIXED (UI+3127 on main)",
+   "mergedAt": "2026-08-16T08:38:03Z",
+   "branch": "cursor/board-expense-void-ui-closeout"
+  },
+  {
+   "number": 7715,
+   "title": "Cursor- docs(board): CLS-LATCH — FIXED (PR #7714)",
+   "mergedAt": "2026-08-16T08:36:22Z",
+   "branch": "cursor/board-cls-latch-7714"
+  },
+  {
+   "number": 7714,
+   "title": "Cursor- fix(guards): CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE — pin + intent ratchet",
+   "mergedAt": "2026-08-16T08:35:39Z",
+   "branch": "cursor/cls-latch-silent-degrade-3638"
+  },
+  {
+   "number": 7713,
+   "title": "ChatGpt-Codex-1- fix(drivers): LV-DRIVER-CREATE-REQUIRED-PHONE-HIDDEN-ON-FINAL-STEP — gate identity step",
+   "mergedAt": "2026-08-16T08:34:06Z",
+   "branch": "codex/driver-create-required-phone"
+  },
+  {
+   "number": 7712,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3638 — CLS-LATCH silent-degrade",
+   "mergedAt": "2026-08-16T08:33:00Z",
+   "branch": "chore/claim-reserve-3638-cls-latch"
+  },
+  {
+   "number": 7711,
+   "title": "Cursor- docs(board): LV-DRIVER-PWA-NOTIFY — FIXED (PR #7710)",
+   "mergedAt": "2026-08-16T08:32:06Z",
+   "branch": "cursor/board-pwa-notify-7710"
+  },
+  {
+   "number": 7710,
+   "title": "Cursor- fix(pwa): LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — create table + no bare return",
+   "mergedAt": "2026-08-16T08:30:45Z",
+   "branch": "cursor/pwa-driver-notifications-silent-drop"
+  },
+  {
+   "number": 7709,
+   "title": "Cursor- chore(migrations): CLAIM 202608161500 — pwa.driver_notifications",
+   "mergedAt": "2026-08-16T08:27:11Z",
+   "branch": "chore/claim-migration-202608161500-pwa-notify"
+  },
+  {
+   "number": 7708,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3636 — pwa driver notifications",
+   "mergedAt": "2026-08-16T08:26:34Z",
+   "branch": "chore/claim-reserve-3636-pwa-notify"
+  },
+  {
+   "number": 7707,
+   "title": "ChatGpt-Codex-1- docs(system): LIVE-SYSTEM-AUDIT-CUSTOMER-SPINE — customer round trip",
+   "mergedAt": "2026-08-16T08:26:26Z",
+   "branch": "codex/live-audit-customer-spine"
+  },
+  {
+   "number": 7706,
+   "title": "Cursor- fix(notifications): LV-EMAIL-SUPPRESSION — fail-closed + table",
+   "mergedAt": "2026-08-16T08:25:19Z",
+   "branch": "cursor/email-suppression-fail-closed"
+  },
+  {
+   "number": 7705,
+   "title": "Cursor- chore(migrations): CLAIM 202608161400 — email suppression_rules",
+   "mergedAt": "2026-08-16T08:24:29Z",
+   "branch": "chore/claim-migration-202608161400-email-supp"
+  },
+  {
+   "number": 7704,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3634 — email suppression fail-closed",
+   "mergedAt": "2026-08-16T08:22:45Z",
+   "branch": "chore/claim-reserve-3634-email-suppression"
+  },
+  {
+   "number": 7703,
+   "title": "Cursor- docs(audit): LV-WO-COST-CONTEXT — correct register PR# to #7701",
+   "mergedAt": "2026-08-16T08:20:48Z",
+   "branch": "cursor/wo-cost-prnum-7701"
+  },
+  {
+   "number": 7702,
+   "title": "Claude-1- FINDING: LV-087-CANONICAL-ONLY-DRIFT — ledger mirror trigger (3 outages in one night)",
+   "mergedAt": "2026-08-16T08:20:13Z",
+   "branch": "claude/lv087-ledger-mirror-trigger-v2"
+  },
+  {
+   "number": 7701,
+   "title": "Cursor- fix(maintenance): LV-WO-COST-CONTEXT — source flags not silent empty",
+   "mergedAt": "2026-08-16T08:20:02Z",
+   "branch": "cursor/wo-cost-context-source-flags"
+  },
+  {
+   "number": 7700,
+   "title": "Claude-1- FINDING: VERIFY-STEP-3626-SHEBANG-ON-LINE-2 — renumbered guard cannot parse (my collision)",
+   "mergedAt": "2026-08-16T08:19:08Z",
+   "branch": "claude/fix-3626-shebang"
+  },
+  {
+   "number": 7699,
+   "title": "ChatGpt-Codex-1- docs(drivers): LIVE-DRIVER-DQ-DOCS-OPERATOR-COPY — deployed recheck",
+   "mergedAt": "2026-08-16T08:17:29Z",
+   "branch": "codex/live-driver-dq-copy"
+  },
+  {
+   "number": 7698,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3632 — wo-cost-context source flags",
+   "mergedAt": "2026-08-16T08:17:05Z",
+   "branch": "chore/claim-reserve-3632-wo-cost-sources"
+  },
+  {
+   "number": 7697,
+   "title": "Cursor- docs(audit): BOARD-CLOSEOUT LV-DA-RANDOM-POOL — tick stale ☐",
+   "mergedAt": "2026-08-16T08:15:34Z",
+   "branch": "cursor/da-pool-board-closeout"
+  },
+  {
+   "number": 7696,
+   "title": "Cursor- docs(audit): LV-DEAD-SEEDED-FLAGS — correct register PR# to #7694",
+   "mergedAt": "2026-08-16T08:14:31Z",
+   "branch": "cursor/dead-flags-prnum-7694"
+  },
+  {
+   "number": 7695,
+   "title": "Claude-1- CLAIM-RESERVE: migration 202612620000 — LV-087 ledger mirror trigger",
+   "mergedAt": "2026-08-16T08:14:10Z",
+   "branch": "chore/claim-migration-202612620000-ledger-mirror-trigger"
+  },
+  {
+   "number": 7694,
+   "title": "Cursor- fix(lib): LV-DEAD-SEEDED-FLAGS — archive unread seeded feature flags",
+   "mergedAt": "2026-08-16T08:13:37Z",
+   "branch": "cursor/dead-seeded-flags-archive"
+  },
+  {
+   "number": 7693,
+   "title": "Claude-1-docs(board): close out stale LV-SETTLEMENT-SAMPLE-TAG-GAP row",
+   "mergedAt": "2026-08-16T08:11:24Z",
+   "branch": "claude-1/board-closeout-settlement-sample-tag-gap"
+  },
+  {
+   "number": 7692,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3630 — dead seeded flags archive",
+   "mergedAt": "2026-08-16T08:10:48Z",
+   "branch": "cursor/claim-reserve-3630-dead-flags"
+  },
+  {
+   "number": 7691,
+   "title": "Cursor- docs(audit): LV-ORPHANED-GUC — correct register PR# to #7690",
+   "mergedAt": "2026-08-16T08:09:36Z",
+   "branch": "cursor/orphaned-guc-prnum-fix"
+  },
+  {
+   "number": 7690,
+   "title": "Cursor- fix(auth): LV-ORPHANED-GUC-WRITE-ACTIVE-COMPANY-ID — remove unread GUC",
+   "mergedAt": "2026-08-16T08:08:55Z",
+   "branch": "cursor/orphaned-active-company-id-guc"
+  },
+  {
+   "number": 7689,
+   "title": "Claude-1-docs(board): close out stale LV-ACCT-F197 generated-column row",
+   "mergedAt": "2026-08-16T08:08:11Z",
+   "branch": "claude-1/board-closeout-lv-acct-f197-generated-column"
+  },
+  {
+   "number": 7688,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3628 — orphaned active_company_id GUC",
+   "mergedAt": "2026-08-16T08:07:54Z",
+   "branch": "cursor/claim-reserve-3628-orphaned-guc"
+  },
+  {
+   "number": 7687,
+   "title": "Cursor- fix(guards): VERIFY-STEP-3624-COLLISION — renumber migration twin to 3626",
+   "mergedAt": "2026-08-16T08:06:43Z",
+   "branch": "cursor/fix-3624-step-collision"
+  },
+  {
+   "number": 7686,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3626 — fix 3624 collision",
+   "mergedAt": "2026-08-16T08:05:54Z",
+   "branch": "cursor/claim-reserve-3626-mig-ledger-collision"
+  },
+  {
+   "number": 7685,
+   "title": "Claude-1-docs(board): close out ACCT-F5318",
+   "mergedAt": "2026-08-16T08:04:53Z",
+   "branch": "claude-1/board-update-acct-f5318"
+  },
+  {
+   "number": 7684,
+   "title": "Cursor- docs(standards): LV-CLAUDEMD-S4 — settlement_lines HAS load_id",
+   "mergedAt": "2026-08-16T08:04:27Z",
+   "branch": "cursor/settlement-lines-load-id-doc"
+  },
+  {
+   "number": 7683,
+   "title": "Claude-1- FINDING: LV-087-REPAIR-UNREACHABLE — ledger-repair remedy sat below the refusal that needs it (6 failed backend deploys)",
+   "mergedAt": "2026-08-16T08:04:09Z",
+   "branch": "claude/migration-ledger-repair"
+  },
+  {
+   "number": 7682,
+   "title": "Claude-1-FINDING: ACCT-F5318 CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY-REGRESSION",
+   "mergedAt": "2026-08-16T08:03:31Z",
+   "branch": "claude-1/acct-f5318-money-ui-schema-name-regression"
+  },
+  {
+   "number": 7681,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3624 — settlement_lines load_id doc",
+   "mergedAt": "2026-08-16T08:03:16Z",
+   "branch": "cursor/claim-reserve-3624-settlement-loadid-doc"
+  },
+  {
+   "number": 7680,
+   "title": "Cursor- docs(audit): LV-WO-DISPLAY-ID-V5 — correct register PR# to #7679",
+   "mergedAt": "2026-08-16T08:01:16Z",
+   "branch": "cursor/wo-v5-prnum-fix"
+  },
+  {
+   "number": 7679,
+   "title": "Cursor- fix(maintenance): LV-WO-DISPLAY-ID-V5-IS-HARDCODED-PEND0 — refresh V5 after create",
+   "mergedAt": "2026-08-16T08:00:34Z",
+   "branch": "cursor/wo-create-refresh-v5"
+  },
+  {
+   "number": 7677,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3622 — WO create refreshes V5",
+   "mergedAt": "2026-08-16T02:36:28Z",
+   "branch": "cursor/claim-reserve-3622-wo-v5"
+  },
+  {
+   "number": 7676,
+   "title": "ChatGpt-Codex-1- test(live): verify geofence zero-row surface bar",
+   "mergedAt": "2026-08-16T02:36:24Z",
+   "branch": "codex/next-live-assist"
+  },
+  {
+   "number": 7675,
+   "title": "Cursor- fix(catalogs): LV-NO-TARP-ACCESSORIAL-PAY-TYPE — seed enlonada/desenlonada pay types",
+   "mergedAt": "2026-08-16T02:33:58Z",
+   "branch": "cursor/tarp-accessorial-pay-types"
+  },
+  {
+   "number": 7674,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3620 — tarp driver pay types",
+   "mergedAt": "2026-08-16T02:31:21Z",
+   "branch": "cursor/claim-reserve-3620-tarp-pay"
+  },
+  {
+   "number": 7673,
+   "title": "ChatGpt-Codex-1- fix(drivers): hide docs schema from wizard copy",
+   "mergedAt": "2026-08-16T02:31:25Z",
+   "branch": "codex/driver-wizard-docs-schema-copy"
+  },
+  {
+   "number": 7672,
+   "title": "Cursor- fix(docs): LV-DOCS-FILES-NOT-HASHED — hash File bytes before upload-url",
+   "mergedAt": "2026-08-16T02:29:33Z",
+   "branch": "cursor/fix-docs-upload-sha256"
+  },
+  {
+   "number": 7671,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE-3618 — verify-docs-upload-sha256-required",
+   "mergedAt": "2026-08-16T02:27:01Z",
+   "branch": "chore/claim-reserve-3618-docs-hash"
+  },
+  {
+   "number": 7670,
+   "title": "ChatGpt-Codex-1- fix(docs): correct document-category PR provenance",
+   "mergedAt": "2026-08-16T02:27:03Z",
+   "branch": "codex/doc-category-pr-provenance"
+  },
+  {
+   "number": 7669,
+   "title": "Cursor- docs: LV-DOC-CATEGORIES-PRNUM-CORRECTION — #7666→#7668",
+   "mergedAt": "2026-08-16T02:25:31Z",
+   "branch": "cursor/fix-doc-categories-prnum-7668"
+  },
+  {
+   "number": 7668,
+   "title": "Cursor- fix(docs): LV-DOC-CATEGORIES-MISSING-IDENTITY-AND-MX-LICENCE — seed identity/MX license categories",
+   "mergedAt": "2026-08-16T02:24:52Z",
+   "branch": "cursor/fix-doc-categories-identity-mx"
+  },
+  {
+   "number": 7667,
+   "title": "ChatGpt-Codex-1- test(live): verify assigned surface remainder",
+   "mergedAt": "2026-08-16T02:24:22Z",
+   "branch": "codex/live-assigned-surface-remainder"
+  },
+  {
+   "number": 7666,
+   "title": "ChatGpt-Codex-1- fix(guards): shrink stale wizard id baseline",
+   "mergedAt": "2026-08-16T02:22:36Z",
+   "branch": "codex/driver-wizard-entitylink-baseline-shrink"
+  },
+  {
+   "number": 7665,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE-3616 — verify-doc-categories-identity-mx-license",
+   "mergedAt": "2026-08-16T02:21:55Z",
+   "branch": "chore/claim-reserve-3616-doc-categories"
+  },
+  {
+   "number": 7664,
+   "title": "Cursor- chore(guards): ENTITYLINK-BASELINE-STEP-ID-STALE — drop post-#7663 fingerprint",
+   "mergedAt": "2026-08-16T02:21:19Z",
+   "branch": "cursor/fix-entitylink-baseline-step-id"
+  },
+  {
+   "number": 7663,
+   "title": "Cursor- fix(drivers): LV-DRIVER-CREATE-WIZARD-STEP-ID-ENTITYLINK — bare step.id + Driver factory fields",
+   "mergedAt": "2026-08-16T02:20:11Z",
+   "branch": "cursor/fix-driver-wizard-step-id-entitylink"
+  },
+  {
+   "number": 7662,
+   "title": "ChatGpt-Codex-1- audit(live): close starved ops honestly",
+   "mergedAt": "2026-08-16T02:17:24Z",
+   "branch": "codex/box4-starved-ops-honesty"
+  },
+  {
+   "number": 7661,
+   "title": "ChatGpt-Codex-1- test(live): verify remaining operator copy",
+   "mergedAt": "2026-08-16T02:13:06Z",
+   "branch": "codex/live-operator-copy-remainder"
+  },
+  {
+   "number": 7660,
+   "title": "ChatGpt-Codex-1- fix(guards): classify driver wizard step id",
+   "mergedAt": "2026-08-16T02:12:16Z",
+   "branch": "codex/driver-wizard-entitylink-baseline"
+  },
+  {
+   "number": 7659,
+   "title": "ChatGpt-Codex-1- test(live): verify deployed operator copy",
+   "mergedAt": "2026-08-16T02:07:25Z",
+   "branch": "codex/live-operator-copy-recheck"
+  },
+  {
+   "number": 7658,
+   "title": "Cursor- fix(drivers): LV-DRIVER-CREATE-IS-NOT-A-WIZARD — 4-step Create Driver + DQ docs stage",
+   "mergedAt": "2026-08-16T02:07:02Z",
+   "branch": "cursor/lv-driver-create-wizard"
+  },
+  {
+   "number": 7657,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE-3614 — verify-driver-create-is-wizard",
+   "mergedAt": "2026-08-16T02:03:45Z",
+   "branch": "chore/claim-reserve-3614-driver-create-wizard"
+  },
+  {
+   "number": 7656,
+   "title": "Cursor- fix(audit): REG-LV-WO-CREATE-500 — correct register PR #7655",
+   "mergedAt": "2026-08-16T02:02:21Z",
+   "branch": "cursor/reg-wo-pr-number-fix"
+  },
+  {
+   "number": 7655,
+   "title": "Cursor- fix(audit): REG-LV-WO-CREATE-500-OPENED-AT — wire step 3612 + register ☐→☑",
+   "mergedAt": "2026-08-16T02:01:45Z",
+   "branch": "cursor/reg-wo-create-opened-at"
+  },
+  {
+   "number": 7654,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-16T02:01:22Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 7653,
    "title": "Cursor- chore(guards): CLAIM-RESERVE-3612 — verify-wo-create-no-opened-at-update",
    "mergedAt": "2026-08-16T02:00:56Z",
@@ -15542,1404 +16951,6 @@
    "title": "Claude-1- fix(accounting): ACCT-F5310 GUARD-MANUAL-JE-HUB-NO-MUTATION-PROOF — mutation-prove the manual JE hub guard",
    "mergedAt": "2026-08-15T16:53:19Z",
    "branch": "claude/guard-manual-je-hub-mutation-proof"
-  },
-  {
-   "number": 7281,
-   "title": "Claude-1- docs(board): close LINK-F5170-F5171-CUSTOMER-PAYMENT-HISTORY-SCOPE-LABEL",
-   "mergedAt": "2026-08-15T16:47:00Z",
-   "branch": "claude/close-link-f5170-board"
-  },
-  {
-   "number": 7280,
-   "title": "Claude-1- fix(accounting): ACCT-F5309 LINK-F5170-F5171 — customer payment history requires operating_company_id + shows real display_id",
-   "mergedAt": "2026-08-15T16:36:24Z",
-   "branch": "claude/link-f5170-f5171-customer-payment-scope-label"
-  },
-  {
-   "number": 7279,
-   "title": "ChatGpt-Codex-1- docs(findings): handoff MoneyInput outer-frame vertical defect",
-   "mergedAt": "2026-08-15T16:23:53Z",
-   "branch": "codex/handoff-moneyinput-outer-frame"
-  },
-  {
-   "number": 7278,
-   "title": "Claude-1- chore(claim-reserve): 3437 verify-customer-payment-history-scope-label",
-   "mergedAt": "2026-08-15T16:27:12Z",
-   "branch": "claude/claim-reserve-3437-customer-payment-scope"
-  },
-  {
-   "number": 7277,
-   "title": "ChatGpt-Codex-1- fix(chrome): CLS-BOX-IN-BOX collapsed filters vertical single frame",
-   "mergedAt": "2026-08-15T16:22:41Z",
-   "branch": "codex/collapsed-filters-single-frame-vertical"
-  },
-  {
-   "number": 7276,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve 3436 collapsed filters single-frame vertical",
-   "mergedAt": "2026-08-15T16:19:39Z",
-   "branch": "codex/claim-3436-collapsed-filters-single-frame"
-  },
-  {
-   "number": 7275,
-   "title": "ChatGpt-Codex-1- fix(chrome): CLS-BOX-IN-BOX SelectCombobox vertical single frame",
-   "mergedAt": "2026-08-15T16:16:09Z",
-   "branch": "codex/selectcombobox-single-frame-vertical"
-  },
-  {
-   "number": 7274,
-   "title": "Cursor- fix(lists): LST-F5218 — OEM parts catalog missing ?create=1",
-   "mergedAt": "2026-08-15T16:13:36Z",
-   "branch": "cursor/oem-parts-create-deeplink"
-  },
-  {
-   "number": 7273,
-   "title": "Claude-1- docs(board): close HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID",
-   "mergedAt": "2026-08-15T16:20:12Z",
-   "branch": "claude/close-hold-deduction-board"
-  },
-  {
-   "number": 7272,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve 3434 SelectCombobox single-frame vertical",
-   "mergedAt": "2026-08-15T16:12:23Z",
-   "branch": "codex/claim-3434-selectcombobox-single-frame"
-  },
-  {
-   "number": 7271,
-   "title": "Cursor- fix(lists): LST-F5217 — hub Create prefers createable leaves + flag-colors deeplink",
-   "mergedAt": "2026-08-15T16:12:16Z",
-   "branch": "cursor/lists-hub-create-preferred-createable"
-  },
-  {
-   "number": 7270,
-   "title": "Cursor- fix(lists): LST-F5216 — non-accounting hub Create dead-clicked hub-only",
-   "mergedAt": "2026-08-15T16:11:02Z",
-   "branch": "cursor/lists-hub-create-first-catalog"
-  },
-  {
-   "number": 7269,
-   "title": "Cursor- fix(lists): LST-F5215 — driver teams + reference catalogs missing ?create=1",
-   "mergedAt": "2026-08-15T16:09:37Z",
-   "branch": "cursor/driver-teams-ref-create-deeplink"
-  },
-  {
-   "number": 7268,
-   "title": "Cursor- fix(lists): LST-F5214 — shared catalog bases missing ?create=1 deep-link",
-   "mergedAt": "2026-08-15T16:08:15Z",
-   "branch": "cursor/lists-shared-create-deeplink"
-  },
-  {
-   "number": 7267,
-   "title": "Cursor- fix(lists): LST-F5213 — items ?create=1 never opened item create modal",
-   "mergedAt": "2026-08-15T16:02:33Z",
-   "branch": "cursor/items-create-deeplink"
-  },
-  {
-   "number": 7266,
-   "title": "Cursor- fix(lists): LST-F5212 — posting-templates ?create=1 never opened New Posting Template",
-   "mergedAt": "2026-08-15T16:01:00Z",
-   "branch": "cursor/posting-templates-create-deeplink"
-  },
-  {
-   "number": 7265,
-   "title": "Claude-1- fix(driver-finance): HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID — hold now targets the real deduction record",
-   "mergedAt": "2026-08-15T16:11:23Z",
-   "branch": "claude/hold-deduction-real-target"
-  },
-  {
-   "number": 7264,
-   "title": "Claude-1- chore(claim-reserve): 3433 verify-hold-deduction-real-target",
-   "mergedAt": "2026-08-15T15:55:12Z",
-   "branch": "claude/claim-reserve-3433-hold-deduction"
-  },
-  {
-   "number": 7263,
-   "title": "Cursor- fix(lists): LST-F5211 — void-cancel-reasons ?create=1 never opened Create Entry",
-   "mergedAt": "2026-08-15T15:46:56Z",
-   "branch": "cursor/void-cancel-create-deeplink"
-  },
-  {
-   "number": 7262,
-   "title": "Cursor- fix(banking): BANK-F5210 — claim 9 remaining qbo_chrome Built gaps",
-   "mergedAt": "2026-08-15T15:42:03Z",
-   "branch": "cursor/banking-settlements-qbo-chrome-remainder"
-  },
-  {
-   "number": 7261,
-   "title": "Claude-1- docs(board): close 76-item CC-1 orphan-guard slice",
-   "mergedAt": "2026-08-15T15:49:30Z",
-   "branch": "claude/close-76-orphan-slice-board"
-  },
-  {
-   "number": 7260,
-   "title": "Cursor- fix(accounting): ACCT-F5209 — claim 5 PROTECTED connectivity leaves Built",
-   "mergedAt": "2026-08-15T15:38:15Z",
-   "branch": "cursor/accounting-protected-chrome-claim"
-  },
-  {
-   "number": 7259,
-   "title": "Cursor- fix(banking): BANK-F5208 — drain PROTECTED banking connectivity chrome×14",
-   "mergedAt": "2026-08-15T15:36:42Z",
-   "branch": "cursor/banking-protected-chrome-claim"
-  },
-  {
-   "number": 7258,
-   "title": "Cursor- docs: LST-F5207 — board FIXED #7257 chrome.toolbar_filter×7",
-   "mergedAt": "2026-08-15T15:33:13Z",
-   "branch": "cursor/board-7257-closeout"
-  },
-  {
-   "number": 7257,
-   "title": "Cursor- fix(chrome): LST-F5206 — drain PROTECTED chrome.toolbar_filter 7",
-   "mergedAt": "2026-08-15T15:32:35Z",
-   "branch": "cursor/chrome-toolbar-filter-7"
-  },
-  {
-   "number": 7256,
-   "title": "Claude-1- chore(guards): wire 76 CC-1 money orphan guards into CI (verify-step 3429)",
-   "mergedAt": "2026-08-15T15:37:37Z",
-   "branch": "claude/cc1-orphan-batch-3429"
-  },
-  {
-   "number": 7255,
-   "title": "Cursor- fix(lists): LST-F5205 — catalogIndexOpenPath satisfies generic-framework guard",
-   "mergedAt": "2026-08-15T15:30:12Z",
-   "branch": "cursor/catalog-index-framework-drift"
-  },
-  {
-   "number": 7254,
-   "title": "Cursor- fix(accounting): LST-F5204 — legal matter Open Bills keeps legal_matter_id",
-   "mergedAt": "2026-08-15T15:28:51Z",
-   "branch": "cursor/legal-matter-bills-reverse"
-  },
-  {
-   "number": 7253,
-   "title": "Cursor- fix(factoring): LST-F5203 — FactoringList+BankingHome load filter URL write",
-   "mergedAt": "2026-08-15T15:25:47Z",
-   "branch": "cursor/factoring-list-filter-url"
-  },
-  {
-   "number": 7252,
-   "title": "Claude-1- chore(claim-reserve): 3429 verify-cc1-money-orphan-guard-registry-batch",
-   "mergedAt": "2026-08-15T15:31:14Z",
-   "branch": "claude/claim-reserve-3429-cc1-orphan-batch"
-  },
-  {
-   "number": 7251,
-   "title": "Cursor- fix(accounting): LST-F5202 — VendorCredits vendor filter writes URL",
-   "mergedAt": "2026-08-15T15:22:47Z",
-   "branch": "cursor/vendor-credits-filter-url"
-  },
-  {
-   "number": 7250,
-   "title": "Cursor- fix(factoring): LST-F5201 — FactorAdmin selection writes URL",
-   "mergedAt": "2026-08-15T15:21:21Z",
-   "branch": "cursor/factor-admin-filter-url"
-  },
-  {
-   "number": 7249,
-   "title": "Cursor- fix(maintenance): LST-F5200 — TireProgram asset selection writes URL",
-   "mergedAt": "2026-08-15T15:20:22Z",
-   "branch": "cursor/tire-program-filter-url"
-  },
-  {
-   "number": 7248,
-   "title": "Cursor- fix(accounting): LST-F5199 — InvoicesList load filter writes URL",
-   "mergedAt": "2026-08-15T15:19:19Z",
-   "branch": "cursor/invoices-load-filter-url"
-  },
-  {
-   "number": 7247,
-   "title": "Cursor- fix(accounting): LST-F5198 — BillsPage unit/load filters write URL",
-   "mergedAt": "2026-08-15T15:18:32Z",
-   "branch": "cursor/bills-entity-filter-url"
-  },
-  {
-   "number": 7246,
-   "title": "Cursor- fix(safety): LST-F5197 — PositionHistory filters write URL",
-   "mergedAt": "2026-08-15T15:17:40Z",
-   "branch": "cursor/position-history-filter-url"
-  },
-  {
-   "number": 7245,
-   "title": "Cursor- fix(factoring): LST-F5196 — submit + dispatch queue filters write URL",
-   "mergedAt": "2026-08-15T15:16:17Z",
-   "branch": "cursor/factoring-queue-url-write"
-  },
-  {
-   "number": 7244,
-   "title": "Cursor- fix(accounting): LST-F5195 — ExpensesList reverse filters write URL",
-   "mergedAt": "2026-08-15T15:14:59Z",
-   "branch": "cursor/expenses-list-filter-url"
-  },
-  {
-   "number": 7243,
-   "title": "Cursor- fix(safety): LST-F5194 — cargo + incidents list filters write URL",
-   "mergedAt": "2026-08-15T15:13:13Z",
-   "branch": "cursor/cargo-claim-filter-url"
-  },
-  {
-   "number": 7242,
-   "title": "Cursor- fix(factoring): LST-F5193 — FactoringHome reverse filters write URL",
-   "mergedAt": "2026-08-15T15:11:33Z",
-   "branch": "cursor/factoring-home-filter-url"
-  },
-  {
-   "number": 7241,
-   "title": "Claude-1- fix(compliance): CI-UNBLOCK — PropertyTaxRenditionPage missing addRenditionLine import",
-   "mergedAt": "2026-08-15T15:17:18Z",
-   "branch": "claude/fix-property-tax-rendition-import"
-  },
-  {
-   "number": 7240,
-   "title": "Cursor- fix(insurance): LST-F5192 — ClaimsTab filters write URL + load EntityPicker",
-   "mergedAt": "2026-08-15T15:09:59Z",
-   "branch": "cursor/claims-filter-url-write"
-  },
-  {
-   "number": 7239,
-   "title": "Cursor- fix(safety): LST-F5191 — Complaints/Training/Fines/CompanyViolations URL write",
-   "mergedAt": "2026-08-15T15:07:59Z",
-   "branch": "cursor/complaints-filter-url-write"
-  },
-  {
-   "number": 7238,
-   "title": "Cursor- fix(safety): LST-F5190 — HOSViolations list EntityPicker filters + URL",
-   "mergedAt": "2026-08-15T15:04:31Z",
-   "branch": "cursor/hos-violations-filter-url-write"
-  },
-  {
-   "number": 7237,
-   "title": "Cursor- fix(safety): LST-F5189 — DOTInspections filter URL write",
-   "mergedAt": "2026-08-15T15:03:19Z",
-   "branch": "cursor/dot-inspections-filter-url-write"
-  },
-  {
-   "number": 7236,
-   "title": "Cursor- fix(safety): LST-F5188 — IdvrPage filter URL write",
-   "mergedAt": "2026-08-15T15:02:19Z",
-   "branch": "cursor/idvr-filter-url-write"
-  },
-  {
-   "number": 7235,
-   "title": "Cursor- fix(drivers): LST-F5187 — PendingSettlementDeductions URL write",
-   "mergedAt": "2026-08-15T15:01:24Z",
-   "branch": "cursor/pending-deductions-url-write"
-  },
-  {
-   "number": 7234,
-   "title": "Cursor- fix(dispatch): LST-F5186b — ratchet InTransit filter guard",
-   "mergedAt": "2026-08-15T15:00:30Z",
-   "branch": "cursor/intransit-picker-guard-ratchet"
-  },
-  {
-   "number": 7233,
-   "title": "Cursor- fix(dispatch): LST-F5186 — InTransitIssues EntityPicker filters + URL sync",
-   "mergedAt": "2026-08-15T14:59:50Z",
-   "branch": "cursor/intransit-filter-entity-picker"
-  },
-  {
-   "number": 7232,
-   "title": "Cursor- fix(drivers): LST-F5185 — TeamSplitConfig EntityPicker + URL sync",
-   "mergedAt": "2026-08-15T14:58:42Z",
-   "branch": "cursor/team-split-driver-entity-picker"
-  },
-  {
-   "number": 7231,
-   "title": "Cursor- fix(drivers): LST-F5184 — AutoDeductionPolicies EntityPicker + URL sync",
-   "mergedAt": "2026-08-15T14:56:39Z",
-   "branch": "cursor/auto-deduction-driver-entity-picker"
-  },
-  {
-   "number": 7230,
-   "title": "Cursor- fix(safety): LST-F5183 — DrugAlcoholTab EntityPicker + URL sync",
-   "mergedAt": "2026-08-15T14:55:28Z",
-   "branch": "cursor/drug-alcohol-driver-entity-picker"
-  },
-  {
-   "number": 7229,
-   "title": "Cursor- fix(settlements): LST-F5182 — disputes tab driver EntityPicker URL sync",
-   "mergedAt": "2026-08-15T14:52:50Z",
-   "branch": "cursor/settlement-disputes-driver-entity-picker"
-  },
-  {
-   "number": 7228,
-   "title": "Cursor- fix(legal): LST-F5181 — matters list unit EntityPicker reverse",
-   "mergedAt": "2026-08-15T14:50:24Z",
-   "branch": "cursor/legal-matters-unit-entity-picker"
-  },
-  {
-   "number": 7227,
-   "title": "Claude-1- fix(accounting): ACCT-F5305-F5308 — 5 genuinely red guards found live-verifying my 76-item orphan slice",
-   "mergedAt": "2026-08-15T15:37:55Z",
-   "branch": "claude/acct-f5305-required-linkage-inflation"
-  },
-  {
-   "number": 7226,
-   "title": "Cursor- fix(compliance): LST-F5180 — property-tax unit EntityPicker reverse",
-   "mergedAt": "2026-08-15T14:48:44Z",
-   "branch": "cursor/property-tax-unit-entity-picker"
-  },
-  {
-   "number": 7225,
-   "title": "Cursor- fix(reports): LST-F5179 — AR/AP aging EntityPicker reverse filters",
-   "mergedAt": "2026-08-15T14:47:21Z",
-   "branch": "cursor/ar-ap-aging-entity-picker"
-  },
-  {
-   "number": 7224,
-   "title": "Cursor- fix(banking): LST-F5178 — leaf-specific banking qbo_chrome surfaces",
-   "mergedAt": "2026-08-15T14:44:41Z",
-   "branch": "cursor/banking-qbo-chrome-leaf"
-  },
-  {
-   "number": 7223,
-   "title": "Cursor- chore(guards): CLAIM-RESERVE-3426 — banking qbo_chrome surfaces",
-   "mergedAt": "2026-08-15T14:43:31Z",
-   "branch": "chore/claim-reserve-3426-banking-qbo-chrome"
-  },
-  {
-   "number": 7222,
-   "title": "Cursor- fix(settlements): LST-F5177 — leaf-specific settlements qbo_chrome surfaces",
-   "mergedAt": "2026-08-15T14:42:47Z",
-   "branch": "cursor/settlements-qbo-chrome-leaf"
-  },
-  {
-   "number": 7221,
-   "title": "Cursor- chore(guards): CLAIM-RESERVE-3424 — settlements qbo_chrome surfaces",
-   "mergedAt": "2026-08-15T14:41:33Z",
-   "branch": "chore/claim-reserve-3424-settlements-qbo-chrome"
-  },
-  {
-   "number": 7220,
-   "title": "Cursor- chore(guards): LST-F5176 — enroll Cursor-14 picker/chrome orphan-guard registry (3422)",
-   "mergedAt": "2026-08-15T14:35:25Z",
-   "branch": "cursor/cursor-14-orphan-guard-registry"
-  },
-  {
-   "number": 7219,
-   "title": "Cursor- chore(guards): CLAIM-RESERVE 3422 — Cursor picker/chrome orphan registry",
-   "mergedAt": "2026-08-15T14:34:23Z",
-   "branch": "chore/claim-reserve-3422-cursor-picker-chrome"
-  },
-  {
-   "number": 7218,
-   "title": "Cursor- fix(settlements): LST-F5175 — Cash advance requests URL-only driver_id lacked EntityPicker",
-   "mergedAt": "2026-08-15T14:33:47Z",
-   "branch": "cursor/cash-advance-requests-driver-filter"
-  },
-  {
-   "number": 7217,
-   "title": "Cursor- fix(dispatch): LST-F5174 — Load templates URL-only customer_id lacked EntityPicker",
-   "mergedAt": "2026-08-15T14:31:20Z",
-   "branch": "cursor/load-template-customer-filter"
-  },
-  {
-   "number": 7216,
-   "title": "Cursor- fix(compliance): LST-F5173 — Fleet HOS URL-only unit_id lacked EntityPicker",
-   "mergedAt": "2026-08-15T14:30:20Z",
-   "branch": "cursor/fleet-hos-unit-filter"
-  },
-  {
-   "number": 7215,
-   "title": "Cursor- fix(fuel): LST-F5172 — Fuel History URL-only filters lacked EntityPickers",
-   "mergedAt": "2026-08-15T14:29:19Z",
-   "branch": "cursor/fuel-history-entity-filters"
-  },
-  {
-   "number": 7214,
-   "title": "Cursor- fix(compliance): LST-F5171 — HOS Tracker URL-only driver_id lacked EntityPicker",
-   "mergedAt": "2026-08-15T14:27:37Z",
-   "branch": "cursor/hos-tracker-driver-filter"
-  },
-  {
-   "number": 7213,
-   "title": "Claude-1- docs(bus): coordinate 3 seats — Codex→Live-Chrome-assist, Cursor Live-Chrome start, 5 CC-1 red findings",
-   "mergedAt": "2026-08-15T14:32:17Z",
-   "branch": "claude/coordinate-3-seat-live-chrome-and-cc1-red-findings"
-  },
-  {
-   "number": 7212,
-   "title": "Cursor- fix(insurance): LST-F5170 — CoverageGapDashboard URL-only unit filter",
-   "mergedAt": "2026-08-15T14:25:55Z",
-   "branch": "cursor/coverage-gap-unit-filter"
-  },
-  {
-   "number": 7211,
-   "title": "Cursor- fix(maintenance): LST-F5169 — FaultDraftsPage URL-only unit filter",
-   "mergedAt": "2026-08-15T14:24:52Z",
-   "branch": "cursor/fault-drafts-unit-entity-picker"
-  },
-  {
-   "number": 7210,
-   "title": "Cursor- fix(maintenance): LST-F5168 — DriverReportsQueue URL-only driver/load filters",
-   "mergedAt": "2026-08-15T14:23:38Z",
-   "branch": "cursor/driver-reports-entity-filters"
-  },
-  {
-   "number": 7209,
-   "title": "ChatGpt-Codex-1- docs(guards): itemize final orphan owner partition",
-   "mergedAt": "2026-08-15T07:52:23Z",
-   "branch": "codex/handoff-orphan-guard-owner-partition"
-  },
-  {
-   "number": 7208,
-   "title": "ChatGpt-Codex-1- fix(linkage): wire TMS-native mixed guard registry",
-   "mergedAt": "2026-08-15T07:49:53Z",
-   "branch": "codex/wire-tms-native-mixed-registry"
-  },
-  {
-   "number": 7207,
-   "title": "ChatGpt-Codex-1- chore(claim): reserve step 3420 TMS-native linkage registry",
-   "mergedAt": "2026-08-15T07:48:48Z",
-   "branch": "codex/claim-step-3420-tms-native-mixed"
-  },
-  {
-   "number": 7206,
-   "title": "ChatGpt-Codex-1- chore(guards): claim TMS-native mixed linkage registry",
-   "mergedAt": "2026-08-15T07:48:25Z",
-   "branch": "codex/claim-tms-native-mixed-registry"
-  },
-  {
-   "number": 7205,
-   "title": "ChatGpt-Codex-1- fix(guards): wire all-module wiring-law registry",
-   "mergedAt": "2026-08-15T07:47:30Z",
-   "branch": "codex/wire-wiring-law-registry-batch"
-  },
-  {
-   "number": 7204,
-   "title": "ChatGpt-Codex-1- chore(claim): reserve step 3418 wiring-law registry",
-   "mergedAt": "2026-08-15T07:44:52Z",
-   "branch": "codex/claim-step-3418-wiring-law"
-  },
-  {
-   "number": 7203,
-   "title": "ChatGpt-Codex-1- chore(guards): claim wiring-law registry batch",
-   "mergedAt": "2026-08-15T07:44:25Z",
-   "branch": "codex/claim-wiring-law-registry"
-  },
-  {
-   "number": 7202,
-   "title": "ChatGpt-Codex-1- docs(wiring): hand off exact protected owner boundary",
-   "mergedAt": "2026-08-15T07:40:07Z",
-   "branch": "codex/handoff-protected-owner-boundary"
-  },
-  {
-   "number": 7201,
-   "title": "ChatGpt-Codex-1- fix(guards): reject stale protected linkage keys",
-   "mergedAt": "2026-08-15T07:38:57Z",
-   "branch": "codex/fix-zero-remainder-stale-protections"
-  },
-  {
-   "number": 7200,
-   "title": "ChatGpt-Codex-1- chore(guards): claim stale protected-key ratchet",
-   "mergedAt": "2026-08-15T07:37:51Z",
-   "branch": "codex/claim-zero-remainder-stale-protections"
-  },
-  {
-   "number": 7199,
-   "title": "ChatGpt-Codex-1- fix(linkage): wire residual non-money guard registry",
-   "mergedAt": "2026-08-15T07:32:06Z",
-   "branch": "codex/wire-nonmoney-residual-linkage-registry"
-  },
-  {
-   "number": 7198,
-   "title": "ChatGpt-Codex-1- chore(claim): reserve step 3416 residual linkage registry",
-   "mergedAt": "2026-08-15T07:31:05Z",
-   "branch": "codex/claim-step-3416-residual-linkage"
-  },
-  {
-   "number": 7197,
-   "title": "ChatGpt-Codex-1- chore(guards): claim residual non-money linkage wave",
-   "mergedAt": "2026-08-15T07:30:38Z",
-   "branch": "codex/claim-nonmoney-residual-linkage"
-  },
-  {
-   "number": 7196,
-   "title": "ChatGpt-Codex-1- fix(connectivity): wire non-money connectivity guard registry",
-   "mergedAt": "2026-08-15T07:29:00Z",
-   "branch": "codex/wire-nonmoney-connectivity-registry-batch"
-  },
-  {
-   "number": 7195,
-   "title": "ChatGpt-Codex-1- chore(claim): reserve step 3414 non-money connectivity registry",
-   "mergedAt": "2026-08-15T07:27:38Z",
-   "branch": "codex/claim-step-3414-nonmoney-connectivity"
-  },
-  {
-   "number": 7194,
-   "title": "ChatGpt-Codex-1- chore(guards): claim non-money connectivity registry wave",
-   "mergedAt": "2026-08-15T07:27:06Z",
-   "branch": "codex/claim-nonmoney-connectivity-registry"
-  },
-  {
-   "number": 7193,
-   "title": "ChatGpt-Codex-1- fix(connectivity): wire non-money reverse guard registry",
-   "mergedAt": "2026-08-15T07:25:35Z",
-   "branch": "codex/wire-nonmoney-reverse-registry-batch"
-  },
-  {
-   "number": 7192,
-   "title": "ChatGpt-Codex-1- chore(claim): reserve step 3412 non-money reverse registry",
-   "mergedAt": "2026-08-15T07:23:36Z",
-   "branch": "codex/claim-step-3412-nonmoney-reverse"
-  },
-  {
-   "number": 7191,
-   "title": "ChatGpt-Codex-1- chore(guards): claim non-money reverse registry wave",
-   "mergedAt": "2026-08-15T07:22:47Z",
-   "branch": "codex/claim-nonmoney-reverse-registry"
-  },
-  {
-   "number": 7190,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-TRAILER — enforce vertical column",
-   "mergedAt": "2026-08-15T07:20:13Z",
-   "branch": "codex/wire-trailer-guard-registry-batch"
-  },
-  {
-   "number": 7189,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3410 trailer registry batch",
-   "mergedAt": "2026-08-15T07:18:41Z",
-   "branch": "chore/claim-reserve-3410-trailer-guard-batch"
-  },
-  {
-   "number": 7188,
-   "title": "ChatGpt-Codex-1- chore(guards): claim vertical trailer registry batch",
-   "mergedAt": "2026-08-15T07:18:01Z",
-   "branch": "codex/claim-guard-wired-trailer-column"
-  },
-  {
-   "number": 7187,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-LOAD — enforce vertical column",
-   "mergedAt": "2026-08-15T07:16:14Z",
-   "branch": "codex/wire-load-guard-registry-batch"
-  },
-  {
-   "number": 7186,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3408 load registry batch",
-   "mergedAt": "2026-08-15T07:14:37Z",
-   "branch": "chore/claim-reserve-3408-load-guard-batch"
-  },
-  {
-   "number": 7185,
-   "title": "Claude-1- fix(accounting): ACCT-F5303 — Audit report JE subject-type miscategorization",
-   "mergedAt": "2026-08-15T07:14:24Z",
-   "branch": "claude/acct-f5303-audit-report-je-subject-type"
-  },
-  {
-   "number": 7184,
-   "title": "ChatGpt-Codex-1- chore(guards): claim vertical load registry batch",
-   "mergedAt": "2026-08-15T07:13:54Z",
-   "branch": "codex/claim-guard-wired-load-column"
-  },
-  {
-   "number": 7183,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-CUSTOMER — enforce vertical column",
-   "mergedAt": "2026-08-15T07:12:32Z",
-   "branch": "codex/wire-customer-guard-registry-batch"
-  },
-  {
-   "number": 7182,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3406 customer registry batch",
-   "mergedAt": "2026-08-15T07:11:06Z",
-   "branch": "chore/claim-reserve-3406-customer-guard-batch"
-  },
-  {
-   "number": 7181,
-   "title": "ChatGpt-Codex-1- chore(guards): claim vertical customer registry batch",
-   "mergedAt": "2026-08-15T07:10:16Z",
-   "branch": "codex/claim-guard-wired-customer-column"
-  },
-  {
-   "number": 7180,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-VENDOR — enforce vertical column",
-   "mergedAt": "2026-08-15T07:08:44Z",
-   "branch": "codex/wire-vendor-guard-registry-batch"
-  },
-  {
-   "number": 7179,
-   "title": "Claude-1- chore(verify-steps): reserve 3405 for audit-report JE subject-type guard",
-   "mergedAt": "2026-08-15T07:08:22Z",
-   "branch": "claude/claim-verify-step-3405"
-  },
-  {
-   "number": 7178,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3404 vendor registry batch",
-   "mergedAt": "2026-08-15T07:06:56Z",
-   "branch": "chore/claim-reserve-3404-vendor-guard-batch"
-  },
-  {
-   "number": 7177,
-   "title": "ChatGpt-Codex-1- chore(guards): claim vertical vendor registry batch",
-   "mergedAt": "2026-08-15T07:06:30Z",
-   "branch": "codex/claim-guard-wired-vendor-column"
-  },
-  {
-   "number": 7176,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-UNIT — enforce vertical column",
-   "mergedAt": "2026-08-15T07:04:31Z",
-   "branch": "codex/wire-unit-guard-registry-batch"
-  },
-  {
-   "number": 7175,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3402 unit registry batch",
-   "mergedAt": "2026-08-15T07:02:55Z",
-   "branch": "chore/claim-reserve-3402-unit-guard-batch"
-  },
-  {
-   "number": 7174,
-   "title": "ChatGpt-Codex-1- chore(guards): claim vertical unit registry batch",
-   "mergedAt": "2026-08-15T07:02:25Z",
-   "branch": "codex/claim-guard-wired-unit-column"
-  },
-  {
-   "number": 7173,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-DRIVER — enforce vertical column",
-   "mergedAt": "2026-08-15T07:00:59Z",
-   "branch": "codex/wire-driver-guard-registry-batch"
-  },
-  {
-   "number": 7172,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3400 driver registry batch",
-   "mergedAt": "2026-08-15T06:59:17Z",
-   "branch": "chore/claim-reserve-3400-driver-guard-batch"
-  },
-  {
-   "number": 7171,
-   "title": "ChatGpt-Codex-1- chore(guards): claim vertical driver registry batch",
-   "mergedAt": "2026-08-15T06:58:49Z",
-   "branch": "codex/claim-guard-wired-driver-column"
-  },
-  {
-   "number": 7170,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-WAVE-B — enforce connectivity reverse sweep",
-   "mergedAt": "2026-08-15T06:57:15Z",
-   "branch": "codex/wire-wave-b-guard-registry-batch"
-  },
-  {
-   "number": 7169,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3398 Wave B registry batch",
-   "mergedAt": "2026-08-15T06:55:39Z",
-   "branch": "chore/claim-reserve-3398-wave-b-guard-batch"
-  },
-  {
-   "number": 7168,
-   "title": "ChatGpt-Codex-1- chore(guards): claim Wave B connectivity reverse batch",
-   "mergedAt": "2026-08-15T06:55:12Z",
-   "branch": "codex/claim-guard-wired-wave-b-batch"
-  },
-  {
-   "number": 7167,
-   "title": "ChatGpt-Codex-1- fix(guards): LOCKED-GUARDS-ORPHAN-WAVE-A-ENTITY-BATCH — execute vertical guards",
-   "mergedAt": "2026-08-15T06:53:01Z",
-   "branch": "codex/wire-wave-a-guard-registry-batch"
-  },
-  {
-   "number": 7166,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve step 3396 Wave A registry batch",
-   "mergedAt": "2026-08-15T06:50:07Z",
-   "branch": "chore/claim-reserve-3396-wave-a-guard-batch"
-  },
-  {
-   "number": 7165,
-   "title": "ChatGpt-Codex-1- chore(guards): claim Wave A orphan registry batch",
-   "mergedAt": "2026-08-15T06:49:15Z",
-   "branch": "codex/claim-guard-wired-wave-a-batch"
-  },
-  {
-   "number": 7164,
-   "title": "ChatGpt-Codex-1- fix(wiring): NONMONEY-ENTITY-LABEL-GENERIC-RECORD-NOUN — exact linked entity identity",
-   "mergedAt": "2026-08-15T06:47:20Z",
-   "branch": "codex/nonmoney-exact-entity-nouns"
-  },
-  {
-   "number": 7163,
-   "title": "Cursor- fix(fuel): BANK-F5167 — CardOverageQueue URL-only driver/unit filters",
-   "mergedAt": "2026-08-15T06:46:19Z",
-   "branch": "cursor/card-overage-driver-filter"
-  },
-  {
-   "number": 7162,
-   "title": "Cursor- fix(liabilities): BANK-F5166 — LiabilitiesHome URL-only driver filter",
-   "mergedAt": "2026-08-15T06:44:26Z",
-   "branch": "cursor/liabilities-driver-entity-picker"
-  },
-  {
-   "number": 7161,
-   "title": "Claude-1- fix(accounting): ACCT-F5302 — Fixed Asset depreciation JE reverse-link (poster already existed; FE never surfaced it)",
-   "mergedAt": "2026-08-15T06:59:39Z",
-   "branch": "claude-1/acct-f5302-fixed-asset-depreciation-je-reverse-link"
-  },
-  {
-   "number": 7160,
-   "title": "Cursor- fix(settlements): BANK-F5165 — SettlementsPage URL-only driver filter",
-   "mergedAt": "2026-08-15T06:42:10Z",
-   "branch": "cursor/settlements-driver-entity-picker"
-  },
-  {
-   "number": 7159,
-   "title": "Cursor- fix(cash-advances): LST-F5164 — CashAdvancesHome URL-only driver filter",
-   "mergedAt": "2026-08-15T06:39:55Z",
-   "branch": "cursor/cash-advances-driver-entity-picker"
-  },
-  {
-   "number": 7158,
-   "title": "ChatGpt-Codex-1- chore(guard): reserve exact entity noun step 3394",
-   "mergedAt": "2026-08-15T06:36:55Z",
-   "branch": "chore/claim-reserve-3394-exact-entity-nouns"
-  },
-  {
-   "number": 7157,
-   "title": "ChatGpt-Codex-1- chore(wiring): claim exact non-money entity noun sweep",
-   "mergedAt": "2026-08-15T06:36:05Z",
-   "branch": "codex/claim-nonmoney-exact-entity-nouns"
-  },
-  {
-   "number": 7156,
-   "title": "Cursor- fix(banking): BANK-F5163 — Driver Escrow SelectCombobox not EntityPicker",
-   "mergedAt": "2026-08-15T06:37:13Z",
-   "branch": "cursor/banking-escrow-driver-entity-picker"
-  },
-  {
-   "number": 7155,
-   "title": "ChatGpt-Codex-1- fix(insurance): honest Unit labels in policy creators",
-   "mergedAt": "2026-08-15T06:33:24Z",
-   "branch": "codex/insurance-policy-unit-label"
-  },
-  {
-   "number": 7154,
-   "title": "Cursor- fix(factoring): LST-F5163O — FactoringQueuePage URL-only customer/load filters",
-   "mergedAt": "2026-08-15T06:32:29Z",
-   "branch": "cursor/factoring-dispatch-queue-filters"
-  },
-  {
-   "number": 7153,
-   "title": "Cursor- fix(factoring): LST-F5163N — Submit queue missing customer/load EntityPicker filters",
-   "mergedAt": "2026-08-15T06:29:40Z",
-   "branch": "cursor/factoring-submission-queue-filters"
-  },
-  {
-   "number": 7152,
-   "title": "Claude-1- chore(verify-steps): reserve 3391 for fixed-asset depreciation JE reverse-link guard",
-   "mergedAt": "2026-08-15T06:37:51Z",
-   "branch": "claude-1/claim-verify-step-3391"
-  },
-  {
-   "number": 7151,
-   "title": "ChatGpt-Codex-1- chore(guard): reserve Insurance unit label step 3392",
-   "mergedAt": "2026-08-15T06:27:59Z",
-   "branch": "chore/claim-reserve-3392-insurance-unit-label"
-  },
-  {
-   "number": 7150,
-   "title": "Cursor- fix(settlements): LST-F5163M — Pending deductions missing driver EntityPicker filter",
-   "mergedAt": "2026-08-15T06:27:48Z",
-   "branch": "cursor/settlements-deductions-driver-filter"
-  },
-  {
-   "number": 7149,
-   "title": "ChatGpt-Codex-1- chore(wiring): claim Insurance policy unit label gap",
-   "mergedAt": "2026-08-15T06:27:06Z",
-   "branch": "codex/claim-insurance-policy-unit-label"
-  },
-  {
-   "number": 7148,
-   "title": "Claude-1- docs(board): file CI-wide catalog-pages + locked-guards regressions found while shipping #7126",
-   "mergedAt": "2026-08-15T06:38:31Z",
-   "branch": "claude-1/file-catalog-and-locked-guards-findings"
-  },
-  {
-   "number": 7147,
-   "title": "ChatGpt-Codex-1- docs(wiring): hand off expense load UUID label",
-   "mergedAt": "2026-08-15T06:25:39Z",
-   "branch": "codex/handoff-expense-load-label"
-  },
-  {
-   "number": 7146,
-   "title": "Cursor- fix(safety): LST-F5163L — Internal fines list missing driver/load reverse filters",
-   "mergedAt": "2026-08-15T06:25:08Z",
-   "branch": "cursor/safety-internal-fines-list-filters"
-  },
-  {
-   "number": 7145,
-   "title": "ChatGpt-Codex-1- fix(wiring): honest driver-team member labels",
-   "mergedAt": "2026-08-15T06:23:39Z",
-   "branch": "codex/driver-team-honest-label"
-  },
-  {
-   "number": 7144,
-   "title": "Cursor- fix(safety): LST-F5163K — Escrow records list missing driver reverse filter",
-   "mergedAt": "2026-08-15T06:23:32Z",
-   "branch": "cursor/safety-escrow-list-driver-filter"
-  },
-  {
-   "number": 7143,
-   "title": "Cursor- fix(safety): LST-F5163J — Training records list missing driver reverse filter",
-   "mergedAt": "2026-08-15T06:21:38Z",
-   "branch": "cursor/safety-training-list-driver-filter"
-  },
-  {
-   "number": 7142,
-   "title": "ChatGpt-Codex-1- chore(guard): reserve driver-team label step 3390",
-   "mergedAt": "2026-08-15T06:18:59Z",
-   "branch": "chore/claim-reserve-3390-driver-team-label"
-  },
-  {
-   "number": 7141,
-   "title": "Cursor- fix(safety): LST-F5163I — Complaints list missing driver EntityPicker reverse filter",
-   "mergedAt": "2026-08-15T06:18:44Z",
-   "branch": "cursor/safety-complaints-driver-list-filter"
-  },
-  {
-   "number": 7140,
-   "title": "ChatGpt-Codex-1- chore(wiring): claim driver-team UUID label gap",
-   "mergedAt": "2026-08-15T06:17:58Z",
-   "branch": "codex/claim-driver-team-honest-label"
-  },
-  {
-   "number": 7139,
-   "title": "ChatGpt-Codex-1- fix(wiring): honest labels in shared EntityPicker",
-   "mergedAt": "2026-08-15T06:16:49Z",
-   "branch": "codex/entity-picker-honest-labels"
-  },
-  {
-   "number": 7138,
-   "title": "Cursor- fix(safety): LST-F5163H — Integrity alerts missing subject EntityPicker reverse filters",
-   "mergedAt": "2026-08-15T06:14:43Z",
-   "branch": "cursor/safety-integrity-alerts-subject-filters"
-  },
-  {
-   "number": 7137,
-   "title": "Cursor- fix(safety): LST-F5163G — Company violations list missing driver/unit reverse filters",
-   "mergedAt": "2026-08-15T06:12:31Z",
-   "branch": "cursor/safety-company-violations-list-filters"
-  },
-  {
-   "number": 7136,
-   "title": "ChatGpt-Codex-1- chore(guard): reserve EntityPicker label step 3388",
-   "mergedAt": "2026-08-15T06:11:50Z",
-   "branch": "chore/claim-reserve-3388-entity-picker-labels"
-  },
-  {
-   "number": 7135,
-   "title": "ChatGpt-Codex-1- chore(wiring): claim product-wide EntityPicker label gap",
-   "mergedAt": "2026-08-15T06:11:04Z",
-   "branch": "codex/claim-entity-picker-honest-labels"
-  },
-  {
-   "number": 7134,
-   "title": "Cursor- fix(safety): LST-F5163F — Fines list missing driver/unit EntityPicker reverse filters",
-   "mergedAt": "2026-08-15T06:09:52Z",
-   "branch": "cursor/safety-fines-list-filters"
-  },
-  {
-   "number": 7133,
-   "title": "ChatGpt-Codex-1- fix(dispatch): honest assign-driver picker labels",
-   "mergedAt": "2026-08-15T06:09:03Z",
-   "branch": "codex/dispatch-driver-picker-uuid"
-  },
-  {
-   "number": 7132,
-   "title": "Cursor- fix(insurance): LST-F5163E — claims list trailer reverse filter",
-   "mergedAt": "2026-08-15T06:07:23Z",
-   "branch": "cursor/insurance-claims-list-trailer-filter"
-  },
-  {
-   "number": 7131,
-   "title": "ChatGpt-Codex-1- chore(guard): reserve Dispatch driver label step 3386",
-   "mergedAt": "2026-08-15T06:04:17Z",
-   "branch": "chore/claim-reserve-3386-dispatch-driver-label"
-  },
-  {
-   "number": 7130,
-   "title": "Cursor- fix(safety): LST-F5163D — cargo claims list trailer reverse filter",
-   "mergedAt": "2026-08-15T06:03:33Z",
-   "branch": "cursor/safety-cargo-claims-trailer-list-filter"
-  },
-  {
-   "number": 7129,
-   "title": "ChatGpt-Codex-1- docs(dispatch): claim driver-picker UUID fallback",
-   "mergedAt": "2026-08-15T06:01:55Z",
-   "branch": "codex/dispatch-driver-picker-uuid-claim"
-  },
-  {
-   "number": 7128,
-   "title": "ChatGpt-Codex-1- fix(safety): remove driver UUID-fragment identity",
-   "mergedAt": "2026-08-15T06:00:28Z",
-   "branch": "codex/safety-driver-uuid-fragment"
-  },
-  {
-   "number": 7127,
-   "title": "Cursor- fix(safety): LST-F5163C — DOT inspections trailer create + list reverse",
-   "mergedAt": "2026-08-15T06:02:29Z",
-   "branch": "cursor/safety-dot-inspections-trailer-filter"
-  },
-  {
-   "number": 7126,
-   "title": "Claude-1- fix(accounting): ACCT-F5300 — Bills/Invoices reverse-section silent 200-row cap",
-   "mergedAt": "2026-08-15T06:17:18Z",
-   "branch": "claude-1/acct-f5300-reverse-sections-silent-list-caps"
-  },
-  {
-   "number": 7125,
-   "title": "ChatGpt-Codex-1- chore(guard): reserve Safety identity step 3384",
-   "mergedAt": "2026-08-15T05:55:40Z",
-   "branch": "chore/claim-reserve-3384-safety-driver-identity"
-  },
-  {
-   "number": 7124,
-   "title": "ChatGpt-Codex-1- docs(safety): claim driver UUID-fragment label",
-   "mergedAt": "2026-08-15T05:54:49Z",
-   "branch": "codex/safety-driver-uuid-fragment-claim"
-  },
-  {
-   "number": 7123,
-   "title": "Cursor- fix(safety): LST-F5163B — IDVR list missing trailer filter/column",
-   "mergedAt": "2026-08-15T05:52:23Z",
-   "branch": "cursor/settlements-create-advance-picker"
-  },
-  {
-   "number": 7122,
-   "title": "ChatGpt-Codex-1- fix(reverse): expose all capped profile rows",
-   "mergedAt": "2026-08-15T05:51:59Z",
-   "branch": "codex/reverse-profile-preview-cap"
-  },
-  {
-   "number": 7121,
-   "title": "Cursor- fix(safety): LST-F5163 — Accidents list missing trailer filter/column",
-   "mergedAt": "2026-08-15T05:50:39Z",
-   "branch": "cursor/settlements-qbo-chrome-vertical"
-  },
-  {
-   "number": 7120,
-   "title": "Cursor- fix(lists): LST-F3372 — Accounting flyout Create dead-pathed to hub",
-   "mergedAt": "2026-08-15T05:44:42Z",
-   "branch": "cursor/lists-live-chrome-ledger"
-  },
-  {
-   "number": 7119,
-   "title": "ChatGpt-Codex-1- chore(guard): reserve reverse preview step 3382",
-   "mergedAt": "2026-08-15T05:43:04Z",
-   "branch": "chore/claim-reserve-3382-reverse-preview"
-  },
-  {
-   "number": 7118,
-   "title": "ChatGpt-Codex-1- docs(reverse): claim silent five-row preview class",
-   "mergedAt": "2026-08-15T05:41:33Z",
-   "branch": "codex/reverse-profile-preview-cap-claim"
-  },
-  {
-   "number": 7117,
-   "title": "ChatGpt-Codex-1- docs(settlements): handoff policy history label gap",
-   "mergedAt": "2026-08-15T05:34:39Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7116,
-   "title": "ChatGpt-Codex-1- docs(accounting): handoff bill category UUID fallback",
-   "mergedAt": "2026-08-15T05:32:15Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7115,
-   "title": "Cursor- fix(inventory): INV-PARTS-VENDOR-NAME-FROM-API — parts roster used capped listVendors for labels",
-   "mergedAt": "2026-08-15T05:31:50Z",
-   "branch": "cursor/inv-parts-api-vendor-name"
-  },
-  {
-   "number": 7114,
-   "title": "ChatGpt-Codex-1- fix(connectivity): LINK-F5170 — company-scoped assignee rosters",
-   "mergedAt": "2026-08-15T05:29:47Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7113,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve verify-step 3380",
-   "mergedAt": "2026-08-15T05:23:07Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7112,
-   "title": "ChatGpt-Codex-1- fix(tasks): LINK-F5170 — claim assignable-user scope",
-   "mergedAt": "2026-08-15T05:22:24Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7111,
-   "title": "ChatGpt-Codex-1- fix(connectivity): LINK-F5170 — canonical customer picker labels",
-   "mergedAt": "2026-08-15T05:19:05Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7110,
-   "title": "ChatGpt-Codex-1- chore(guards): reserve verify-step 3378",
-   "mergedAt": "2026-08-15T05:09:27Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7109,
-   "title": "ChatGpt-Codex-1- fix(legal): LINK-F5170 — claim customer picker UUID fallback",
-   "mergedAt": "2026-08-15T05:08:23Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7108,
-   "title": "Cursor- fix(lists): FE-INVARIANT23-LIST-VIEW-SINGLE-LINE-NAME — list-view roster names wrap",
-   "mergedAt": "2026-08-15T05:03:36Z",
-   "branch": "cursor/fe-invariant23-list-view-single-line-name"
-  },
-  {
-   "number": 7107,
-   "title": "ChatGpt-Codex-1- docs(money): route liability and reports guard drift",
-   "mergedAt": "2026-08-15T04:59:57Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7106,
-   "title": "Cursor- fix(scoreboard): LINK-F5172-WAVE-C-AP-BILL-LEAFR-STAR — illegal leafRe:.* on WAVE-C Built claim",
-   "mergedAt": "2026-08-15T04:59:34Z",
-   "branch": "cursor/honest-built-wave-c-ap-bill-leafre"
-  },
-  {
-   "number": 7105,
-   "title": "ChatGpt-Codex-1- test(vendor): mutation-prove exact column guard",
-   "mergedAt": "2026-08-15T04:57:54Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7104,
-   "title": "ChatGpt-Codex-1- claim(vendor): mutation-prove exact column guard",
-   "mergedAt": "2026-08-15T04:56:50Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7103,
-   "title": "ChatGpt-Codex-1- test(unit): mutation-prove exact column guard",
-   "mergedAt": "2026-08-15T04:55:34Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7102,
-   "title": "Cursor- docs(lists): LST-F3370B — QuickCreate part honest residual (not OemParts)",
-   "mergedAt": "2026-08-15T04:54:44Z",
-   "branch": "cursor/lst3370-part-honesty-residual"
-  },
-  {
-   "number": 7101,
-   "title": "ChatGpt-Codex-1- claim(unit): mutation-prove exact column guard",
-   "mergedAt": "2026-08-15T04:54:21Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7100,
-   "title": "ChatGpt-Codex-1- test(load): mutation-prove exact column guard",
-   "mergedAt": "2026-08-15T04:53:28Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7099,
-   "title": "ChatGpt-Codex-1- claim(load): mutation-prove exact column guard",
-   "mergedAt": "2026-08-15T04:52:21Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7098,
-   "title": "ChatGpt-Codex-1- test(creators): ratchet audited form inventory",
-   "mergedAt": "2026-08-15T04:51:18Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7097,
-   "title": "ChatGpt-Codex-1- claim(creators): audit inline-form inventory shrink",
-   "mergedAt": "2026-08-15T04:50:14Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7096,
-   "title": "Cursor- fix(program): SURFACE-INVENTORY-HOST-WITHOUT-EXACT-PATH-20 — exact surface_path required",
-   "mergedAt": "2026-08-15T04:49:23Z",
-   "branch": "cursor/surface-inventory-exact-path-20"
-  },
-  {
-   "number": 7095,
-   "title": "ChatGpt-Codex-1- docs(accounting): route manual-JE guard evidence gap",
-   "mergedAt": "2026-08-15T04:42:24Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7094,
-   "title": "ChatGpt-Codex-1- test(connectivity): mutation-prove Dispatch planner",
-   "mergedAt": "2026-08-15T04:40:45Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7093,
-   "title": "ChatGpt-Codex-1- claim(connectivity): Dispatch planner mutation proof",
-   "mergedAt": "2026-08-15T04:39:25Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7092,
-   "title": "ChatGpt-Codex-1- test(connectivity): mutation-prove Dispatch in-transit",
-   "mergedAt": "2026-08-15T04:38:34Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7091,
-   "title": "ChatGpt-Codex-1- claim(connectivity): Dispatch in-transit mutation proof",
-   "mergedAt": "2026-08-15T04:37:03Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7090,
-   "title": "ChatGpt-Codex-1- test(reverse_link): mutation-prove insurance policy leaves",
-   "mergedAt": "2026-08-15T04:35:50Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7089,
-   "title": "Cursor- docs(board): LST-F3370 — Status/DONE sync to #7088",
-   "mergedAt": "2026-08-15T04:35:01Z",
-   "branch": "cursor/board-lst3370-pr7088"
-  },
-  {
-   "number": 7088,
-   "title": "Cursor- fix(lists): LST-F3370 — QuickCreate category dual chrome vs AccountDrawer",
-   "mergedAt": "2026-08-15T04:34:23Z",
-   "branch": "cursor/inline-create-canonical-anchor-embed-fix"
-  },
-  {
-   "number": 7087,
-   "title": "ChatGpt-Codex-1- claim(reverse_link): insurance policy mutation proof",
-   "mergedAt": "2026-08-15T04:33:44Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7086,
-   "title": "ChatGpt-Codex-1- test(driver): mutation-prove exact column guards",
-   "mergedAt": "2026-08-15T04:32:37Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7085,
-   "title": "ChatGpt-Codex-1- claim(driver): mutation-prove exact column guards",
-   "mergedAt": "2026-08-15T04:29:29Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7084,
-   "title": "ChatGpt-Codex-1- test(customer): mutation-prove remainder column",
-   "mergedAt": "2026-08-15T04:27:45Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7083,
-   "title": "Cursor- docs(board): PICKER-QUICK-CREATE Status FIXED (PR #7081)",
-   "mergedAt": "2026-08-15T04:24:58Z",
-   "branch": "cursor/post-7081-board-status"
-  },
-  {
-   "number": 7082,
-   "title": "ChatGpt-Codex-1- docs(customer): claim remainder mutation-proof gap",
-   "mergedAt": "2026-08-15T04:24:41Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7081,
-   "title": "Cursor- fix(lists): PICKER-QUICK-CREATE-ENTITY-KIND-TYPE-DRIFT — residual vendor/item TS2367",
-   "mergedAt": "2026-08-15T04:23:00Z",
-   "branch": "cursor/picker-quick-create-kind-type-drift"
-  },
-  {
-   "number": 7080,
-   "title": "ChatGpt-Codex-1- fix(vendors): ratchet header edit control",
-   "mergedAt": "2026-08-15T04:21:26Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7079,
-   "title": "ChatGpt-Codex-1- docs(vendors): claim header-edit mutation escape",
-   "mergedAt": "2026-08-15T04:19:53Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7078,
-   "title": "ChatGpt-Codex-1- fix(safety): ratchet driver-incidents reverse guard",
-   "mergedAt": "2026-08-15T04:18:28Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7077,
-   "title": "ChatGpt-Codex-1- docs(safety): claim driver-incidents mutation escape",
-   "mergedAt": "2026-08-15T04:16:27Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7076,
-   "title": "ChatGpt-Codex-1- fix(dispatch): ratchet visible labels and reverse route",
-   "mergedAt": "2026-08-15T04:13:39Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7075,
-   "title": "ChatGpt-Codex-1- docs(dispatch): claim driver-title guard false positive",
-   "mergedAt": "2026-08-15T04:10:26Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7074,
-   "title": "ChatGpt-Codex-1- fix(load): ratchet inventory and reverse-list focus",
-   "mergedAt": "2026-08-15T04:09:04Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7073,
-   "title": "ChatGpt-Codex-1- docs(load): claim inventory and surface-focus guard drift",
-   "mergedAt": "2026-08-15T04:06:46Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7072,
-   "title": "ChatGpt-Codex-1- fix(driver): ratchet all-module inventory floors",
-   "mergedAt": "2026-08-15T04:04:42Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7071,
-   "title": "ChatGpt-Codex-1- docs(driver): claim inventory floor guard drift",
-   "mergedAt": "2026-08-15T04:03:54Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7070,
-   "title": "ChatGpt-Codex-1- fix(board): close stale feature-flag ownership row",
-   "mergedAt": "2026-08-15T04:00:24Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7069,
-   "title": "ChatGpt-Codex-1- docs(board): claim stale feature-flag ownership row",
-   "mergedAt": "2026-08-15T03:59:33Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7068,
-   "title": "ChatGpt-Codex-1- fix(safety): ratchet company-violation unit scope",
-   "mergedAt": "2026-08-15T03:57:21Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7067,
-   "title": "ChatGpt-Codex-1- docs(safety): claim company-violation scope guard drift",
-   "mergedAt": "2026-08-15T03:56:16Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7066,
-   "title": "ChatGpt-Codex-1- docs(bus): sync verified money handoffs to CC-1 inbox",
-   "mergedAt": "2026-08-15T03:54:58Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7065,
-   "title": "ChatGpt-Codex-1- fix(payments): hand off customer history scope and label",
-   "mergedAt": "2026-08-15T03:51:02Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7064,
-   "title": "ChatGpt-Codex-1- fix(customers): LINK-F5170/F5171 — close quality linkage",
-   "mergedAt": "2026-08-15T03:48:56Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7063,
-   "title": "ChatGpt-Codex-1- fix(customers): LINK-F5170 claim related ownership",
-   "mergedAt": "2026-08-15T03:43:55Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7062,
-   "title": "ChatGpt-Codex-1- fix(pickers): hand off quick-create kind type drift",
-   "mergedAt": "2026-08-15T03:42:48Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7061,
-   "title": "ChatGpt-Codex-1- fix(customers): LINK-F5171 claim quality invoice label",
-   "mergedAt": "2026-08-15T03:38:41Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7060,
-   "title": "Cursor- fix(lists): LST-F3368 — QuickCreate vendor/item/class single chrome",
-   "mergedAt": "2026-08-15T03:37:19Z",
-   "branch": "cursor/lst-quickcreate-vendor-single-chrome"
-  },
-  {
-   "number": 7059,
-   "title": "ChatGpt-Codex-1- fix(safety): LINK-F5171 — honest integrity entity identity",
-   "mergedAt": "2026-08-15T03:35:51Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7058,
-   "title": "Cursor- fix(customers): LST-F3366 — FMCSA verify no box-in-box",
-   "mergedAt": "2026-08-15T03:35:33Z",
-   "branch": "cursor/lst-fmcsa-verify-no-box-in-box"
-  },
-  {
-   "number": 7057,
-   "title": "Cursor- fix(lists): LST-F3364 — Vendor create single QBO chrome",
-   "mergedAt": "2026-08-15T03:33:34Z",
-   "branch": "cursor/lst-category-create-single-chrome"
-  },
-  {
-   "number": 7056,
-   "title": "ChatGpt-Codex-1- fix(safety): LINK-F5171 claim integrity entity honesty",
-   "mergedAt": "2026-08-15T03:32:00Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7055,
-   "title": "Cursor- fix(lists): LST-F3362 — Class create single QBO chrome",
-   "mergedAt": "2026-08-15T03:29:28Z",
-   "branch": "cursor/lst-class-create-single-chrome"
-  },
-  {
-   "number": 7054,
-   "title": "ChatGpt-Codex-1- fix(maintenance): LINK-F5171 — fault-draft WO human label",
-   "mergedAt": "2026-08-15T03:28:58Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7053,
-   "title": "Cursor- fix(lists): LST-F3360B — entity-link baseline after Item embed",
-   "mergedAt": "2026-08-15T03:25:50Z",
-   "branch": "cursor/lst-f3360-entitylink-baseline"
-  },
-  {
-   "number": 7052,
-   "title": "ChatGpt-Codex-1- fix(maintenance): LINK-F5171 claim fault-draft WO label",
-   "mergedAt": "2026-08-15T03:25:31Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7051,
-   "title": "Cursor- fix(lists): LST-F3360 — Item/Service create single QBO chrome",
-   "mergedAt": "2026-08-15T03:25:09Z",
-   "branch": "cursor/lst-item-create-single-chrome"
-  },
-  {
-   "number": 7050,
-   "title": "ChatGpt-Codex-1- fix(fuel): resolve reverse vendor labels",
-   "mergedAt": "2026-08-15T03:22:25Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7049,
-   "title": "Cursor- fix(banking): BANK-F3358 — §7 palette BankAccountDetail text-blue-700",
-   "mergedAt": "2026-08-15T03:21:39Z",
-   "branch": "cursor/fix-section7-palette-bank-account-detail"
   }
  ],
  "merged_pr_total": 3000,
@@ -17002,36 +17013,6 @@
    "number": 5129,
    "title": "FINDING: ACCT-F288 — settlement lines never link to the driver bill, so the GL poster has nothing to post (HOLD-001 link 2)",
    "mergedAt": "2026-08-09T13:49:24Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 4748,
-   "title": "fix(blocks): tombstone 10 abolished approval-hold instructions blocking verify-step 2773 on main",
-   "mergedAt": "2026-08-08T02:08:46Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 4689,
-   "title": "Claude-3- docs(audit): LV-HOLD-INVENTORY-PURCHASES-DOC-STALE — battery item 77 PURCHASE ORDER: capability absent by design (prod-verified); HOLD doc's blocking ",
-   "mergedAt": "2026-08-07T23:33:39Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 4686,
-   "title": "Claude-1- CLS-MONEY-HOLD ruling: card is stale — pipeline fires 1:1 and the $0.00 settlement is arithmetically correct",
-   "mergedAt": "2026-08-07T18:00:42Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 4615,
-   "title": "Claude-2- chore(governance): the approval gate was abolished in LAW but still live in 50 design docs — 80 affirmative hold lines removed, ratchet widened",
-   "mergedAt": "2026-08-07T12:16:23Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 4613,
-   "title": "Claude-2- audit(live): CLS-MONEY-HOLD — HOLD-001 is NOT a hold, it is a code defect (LV-TXN-004, P0)",
-   "mergedAt": "2026-08-07T00:29:43Z",
    "category": "HOLD"
   }
  ]

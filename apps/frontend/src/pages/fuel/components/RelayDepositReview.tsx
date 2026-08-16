@@ -194,7 +194,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         <p className="text-xs text-gray-600">
           These cards funded Relay but are not in the company-card set. Identify each: if it is a company card, add it below (its
           deposits reclassify to company). If it is personal, it will be booked separately as a loan/capital contribution
-          (owner-gated, not here).
+          (a separate, disabled step — not here).
         </p>
         <ParityTable<RelayDepositByCardRow>
           columns={unclassifiedColumns}
