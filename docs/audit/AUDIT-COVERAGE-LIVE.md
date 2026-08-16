@@ -69,14 +69,14 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-16 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **22 / 30** | 2026-08-16 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **23 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **61 / 150** | 2026-08-16 |
-| Rows in this file | **883** | 2026-08-16 |
-| Rows `FAIL` + `OPEN` | **23** | 2026-08-16 |
+| Rows in this file | **884** | 2026-08-16 |
+| Rows `FAIL` + `OPEN` | **24** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=107 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=108 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -971,3 +971,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 881 | finance · loan_wizard operator copy | E | USMCA | FAIL · OPEN CC-1 HANDOFF | Loan Wizard source tells operators that posting is a separate “owner-gated step.” Standing law grants lane authority and forbids owner-approval holds; posting may remain separate/disabled without representing owner approval as the gate. No Live money-path claim and no mutation. | OPEN · CC-1 finance lane | `LV-FINANCE-LOAN-WIZARD-STALE-OWNER-GATED-COPY` · exact source | NO | 2026-08-16 | CODEX |
 | 882 | legal · matters toolbar | E | USMCA | FAIL · FIXED CODE — inventory honesty | **Leaves:** `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear`. Live `/legal` mounted the distinct landing page with zero of three governed controls. Live `/legal/matters` mounted Search, Range, gear, and real company-scoped matter rows without error. Required metadata already named `LegalMattersListPage` after #7780 but retained the landing route. Root fix binds the three leaves to Matters and adds Legal to both vertical exact-route ratchets. Filter remains qbo_chrome-only. No mutation. | FIXED CODE · LIVE EVIDENCE CAPTURED | `LV-LEGAL-TOOLBAR-LEAVES-POINT-LANDING` · both all-module guards normal+selftest | NO | 2026-08-16 | CODEX |
 | 883 | inventory · assignments toolbar | E | USMCA | FAIL · FIXED CODE — inventory honesty | **Leaves:** `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear`. Live `/inventory` mounted the distinct Parts & Stock list with two scoped rows. Live `/inventory/assignments` mounted the Assignment Trail with Search, Range, CSV, gear, reciprocal Parts/Purchases doors, and an honest zero-row state. Required metadata named `InventoryAssignmentsPage` but retained the Parts route. Root fix binds all three connectivity leaves to Assignments and adds Inventory to both vertical exact-route ratchets. Filter remains qbo_chrome-only. No mutation. | FIXED CODE · LIVE EVIDENCE CAPTURED | `LV-INVENTORY-TOOLBAR-LEAVES-POINT-PARTS-STOCK` · both all-module guards normal+selftest | NO | 2026-08-16 | CODEX |
+| 884 | compliance · toolbar exact owner | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaves:** `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear`. Live `/compliance` defaulted to Filings & Compliance Due, whose 37-row table owns Search, Range, CSV, and gear. Live `/compliance?tab=hos_viewer` mounted the matrix-claimed `HosViewerSection`, which has driver/date controls and no governed list toolbar. Current metadata therefore borrows controls from a sibling tab while citing HOS Viewer as leaf owner. No mutation. | OPEN · Cursor chrome/inventory lane | `LV-COMPLIANCE-TOOLBAR-BORROWS-FILINGS-TAB` · exact Live tab comparison + source | NO | 2026-08-16 | CODEX |

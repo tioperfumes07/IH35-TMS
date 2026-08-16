@@ -43,3 +43,7 @@ At 697px Live USMCA `/home`, shared `Topbar.tsx` clips the company switcher afte
 ## CODEX HANDOFF · 2026-08-16 · LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR
 
 Live USMCA `/home` has honest no-HOS copy but zero Search/Range/gear/Filter controls because `DriverDaySummaryCard.tsx:82-105` replaces `ParityTable` when `has_data=false`. Preserve the explanation and keep an empty governed table mounted; extend the Home guards with an independent empty-branch mutation. Exact OPEN row, audit 879, and `BLOCKS=LIVE-HOME-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no.
+
+## CODEX HANDOFF · 2026-08-16 · LV-COMPLIANCE-TOOLBAR-BORROWS-FILINGS-TAB
+
+Live `/compliance` shows Search/Range/gear on the default 37-row Filings table, while `/compliance?tab=hos_viewer` mounts matrix-claimed `HosViewerSection` with only driver/date controls. Correct the exact leaf owner in the matrix and both vertical guards; do not invent a table on HOS Viewer. Exact OPEN row, audit 884, and `BLOCKS=LIVE-COMPLIANCE-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
