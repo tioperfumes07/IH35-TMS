@@ -17,6 +17,10 @@ const MIGRATION = path.join(
   "db/migrations/202608152200_seed_file_categories_identity_mx.sql"
 );
 const MODAL = path.join(ROOT, "apps/frontend/src/components/drivers/CreateDriverModal.tsx");
+const BOARD = path.join(ROOT, "docs/audit/GUARD-WORKORDERS.md");
+const REGISTER = path.join(ROOT, "docs/audit/CC-3-FINDINGS-CHECKLIST.md");
+const FINDING_ID = "LV-DOC-CATEGORIES-MISSING-IDENTITY-AND-MX-LICENCE";
+const MERGED_PR = "#7668";
 
 const REQUIRED_CODES = [
   "identity_document",
@@ -25,7 +29,11 @@ const REQUIRED_CODES = [
   "mexican_federal_license",
 ];
 
-function check({ migration, modal }) {
+function findingLine(text) {
+  return text.split("\n").find((line) => line.includes(FINDING_ID)) ?? "";
+}
+
+function check({ migration, modal, board, register }) {
   const errors = [];
   if (!fs.existsSync(MIGRATION)) {
     errors.push("missing migration 202608152200_seed_file_categories_identity_mx.sql");
@@ -57,22 +65,45 @@ function check({ migration, modal }) {
       errors.push("CreateDriverModal upload path must pass category_id from resolved map");
     }
   }
+  for (const [name, text] of [["GUARD board", board], ["findings register", register]]) {
+    const line = findingLine(text);
+    if (!line.includes(MERGED_PR)) {
+      errors.push(`${name} must credit ${FINDING_ID} to merged PR ${MERGED_PR}`);
+    }
+    if (line.includes("#7666")) {
+      errors.push(`${name} retains stale PR #7666 provenance for ${FINDING_ID}`);
+    }
+  }
   return errors;
 }
 
 function selftest() {
   const orig = fs.readFileSync(MIGRATION, "utf8");
+  const modal = fs.readFileSync(MODAL, "utf8");
+  const board = fs.readFileSync(BOARD, "utf8");
+  const register = fs.readFileSync(REGISTER, "utf8");
   const broken = orig.replace(/'mexican_federal_license'/g, "'mexican_federal_license_REMOVED'");
   if (broken === orig) throw new Error("selftest: could not plant defect");
   fs.writeFileSync(MIGRATION, broken);
   try {
     const errors = check({
       migration: fs.readFileSync(MIGRATION, "utf8"),
-      modal: fs.readFileSync(MODAL, "utf8"),
+      modal,
+      board,
+      register,
     });
     if (errors.length === 0) throw new Error("selftest: planted defect did not fail");
   } finally {
     fs.writeFileSync(MIGRATION, orig);
+  }
+  const staleProvenance = check({
+    migration: orig,
+    modal,
+    board,
+    register: register.replace(MERGED_PR, "#7666"),
+  });
+  if (!staleProvenance.some((error) => error.includes("stale PR #7666 provenance"))) {
+    throw new Error("selftest: planted stale PR provenance did not fail");
   }
   console.log("verify-doc-categories-identity-mx-license --selftest OK");
 }
@@ -85,6 +116,8 @@ function main() {
   const errors = check({
     migration: fs.readFileSync(MIGRATION, "utf8"),
     modal: fs.readFileSync(MODAL, "utf8"),
+    board: fs.readFileSync(BOARD, "utf8"),
+    register: fs.readFileSync(REGISTER, "utf8"),
   });
   if (errors.length) {
     console.error("verify-doc-categories-identity-mx-license FAIL:");
