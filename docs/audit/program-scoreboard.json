@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T20:18:05-05:00",
-    "sourceSha": "48ee69ec9",
-    "deployedSha": "83cec4b",
+    "generatedAt": "2026-08-15T20:38:15-05:00",
+    "sourceSha": "75fb5500a",
+    "deployedSha": "e198ac8",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 841,
+    "ledgerRows": 843,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 7622,
-      "title": "FINDING: LV-COLLAPSEDLISTFILTERS-SILENT-APPLY",
+      "number": 7639,
+      "title": "FINDING: REG-SIGNOFF-EVIDENCE-CELLS — ☑ ticks from #7635/#7637 lacked Coder/PR/Date/proof/guard cells (signoff red)",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7622",
-      "sha": "6898b2b03",
-      "committedAtIso": "2026-08-15T20:22:57-05:00"
+      "mergedAtCt": "08/15/2026, 08:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7639",
+      "sha": "07789f661",
+      "committedAtIso": "2026-08-15T20:41:42-05:00"
     },
     {
-      "number": 7621,
-      "title": "FINDING: DA-PROGRAM-ROUTES-500-MISSING-UUID-CAST",
+      "number": 7638,
+      "title": "FINDING: BOARD-UPDATE-2026-08-16-ACCT-F5317-AND-PR-MERGES",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7621",
-      "sha": "8ed8f443c",
-      "committedAtIso": "2026-08-15T20:20:25-05:00"
+      "mergedAtCt": "08/15/2026, 08:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7638",
+      "sha": "3c2c90465",
+      "committedAtIso": "2026-08-15T20:41:33-05:00"
     },
     {
-      "number": 7620,
-      "title": "FINDING: LV-SAFETY-INTEGRITY-DETAIL-NO-RULE-MATCH",
+      "number": 7637,
+      "title": "FINDING: REG-LV-CI-DEPENDABOT-RED — register ☐→☑; pr-evidence-block already exempts dependabot[bot]",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7620",
-      "sha": "5103e5a8c",
-      "committedAtIso": "2026-08-15T20:19:18-05:00"
+      "mergedAtCt": "08/15/2026, 08:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7637",
+      "sha": "18aca0dd2",
+      "committedAtIso": "2026-08-15T20:40:03-05:00"
     },
     {
-      "number": 7619,
-      "title": "FINDING: LIVE-MAINTENANCE-TRIAGE-CONVERT-PREFILL",
+      "number": 7636,
+      "title": "FINDING: ACCT-F5317",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7619",
-      "sha": "48ee69ec9",
-      "committedAtIso": "2026-08-15T20:18:05-05:00"
+      "mergedAtCt": "08/15/2026, 08:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7636",
+      "sha": "eb74e0482",
+      "committedAtIso": "2026-08-15T20:39:46-05:00"
     },
     {
-      "number": 7618,
-      "title": "FINDING: LISTS-CREATE-QBO-CATEGORIES-POSTING-TEMPLATES-RATCHET",
+      "number": 7635,
+      "title": "FINDING: REG-EXP-VOID-TXN-ORPHAN — register closeout for expense Void UI + LV-TXN-005 + CI-ORPHAN (already FIXED on main)",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7618",
-      "sha": "9affb7c26",
-      "committedAtIso": "2026-08-15T20:17:56-05:00"
+      "mergedAtCt": "08/15/2026, 08:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7635",
+      "sha": "816de0106",
+      "committedAtIso": "2026-08-15T20:39:13-05:00"
     },
     {
-      "number": 7617,
-      "title": "FINDING: LISTS-CREATE-JE-CURRENCY-ITEMS-DETAIL-RATCHET",
+      "number": 7634,
+      "title": "FINDING: LIVE-CARDLINK-MASTER-DETAIL-SHARED-CONSUMERS",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7617",
-      "sha": "20035da6e",
-      "committedAtIso": "2026-08-15T20:16:59-05:00"
+      "mergedAtCt": "08/15/2026, 08:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7634",
+      "sha": "75fb5500a",
+      "committedAtIso": "2026-08-15T20:38:15-05:00"
     },
     {
-      "number": 7616,
-      "title": "FINDING: LISTS-CREATE-CLASSES-EXPENSE-TAX-RATCHET",
+      "number": 7633,
+      "title": "FINDING: LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7616",
-      "sha": "9eef7a183",
-      "committedAtIso": "2026-08-15T20:16:00-05:00"
+      "mergedAtCt": "08/15/2026, 08:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7633",
+      "sha": "e198ac80e",
+      "committedAtIso": "2026-08-15T20:35:50-05:00"
     },
     {
-      "number": 7615,
-      "title": "FINDING: LIVE-INSURANCE-LAWSUIT-CLAIM-PICKER-MOUNT",
+      "number": 7632,
+      "title": "FINDING: CLAIM-MIGRATION-202612610000",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7615",
-      "sha": "cc93c700b",
-      "committedAtIso": "2026-08-15T20:15:38-05:00"
+      "mergedAtCt": "08/15/2026, 08:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7632",
+      "sha": "79381a2f4",
+      "committedAtIso": "2026-08-15T20:35:06-05:00"
     },
     {
-      "number": 7614,
-      "title": "FINDING: LV-BANKING-QBO-CONNECTED-IS-HARDCODED",
+      "number": 7631,
+      "title": "FINDING: CLS-CUSTOMER-PROFILE-MISSING-BILLING-CITY-ZIP",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7614",
-      "sha": "c90222ca3",
-      "committedAtIso": "2026-08-15T20:14:40-05:00"
+      "mergedAtCt": "08/15/2026, 08:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7631",
+      "sha": "063c83e5f",
+      "committedAtIso": "2026-08-15T20:34:22-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 7630,
+      "title": "FINDING: TRACKER-ARTIFACTS-SYNC-2026-08-15",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:13 PM CT",
-      "url": "",
-      "sha": "f73cb95d8",
-      "committedAtIso": "2026-08-16T01:13:00Z"
+      "mergedAtCt": "08/15/2026, 08:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7630",
+      "sha": "c9fab5a0f",
+      "committedAtIso": "2026-08-15T20:34:20-05:00"
     }
   ]
 }
