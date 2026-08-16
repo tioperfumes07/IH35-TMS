@@ -21,9 +21,10 @@ const root = path.join(__dirname, "..");
 const SVC = path.join(root, "apps/backend/src/program/program-tracker.service.ts");
 const ROUTE = path.join(root, "apps/backend/src/program/program-board.routes.ts");
 const WF = path.join(root, ".github/workflows/program-board-sync.yml");
+const SYNC = path.join(root, "scripts/sync-program-board.mjs");
 const UPLOAD = path.join(root, "scripts/sync-tracker-r2.mjs");
 
-function assertAll({ svc, route, wf, uploadExists }) {
+function assertAll({ svc, route, wf, sync, uploadExists }) {
   const errors = [];
   if (!/getObjectTextIfExists\(\s*R2_TRACKER_RECON_KEY/.test(svc) && !/getObjectTextIfExists\([^)]*program-tracker/.test(svc)) {
     errors.push("service: does not read the tracker artifact from R2 (getObjectTextIfExists with the tracker key)");
@@ -58,6 +59,21 @@ function assertAll({ svc, route, wf, uploadExists }) {
   if (!/tracker:sync:r2/.test(wf)) {
     errors.push("workflow: program-board-sync.yml does not upload the tracker artifact (tracker:sync:r2)");
   }
+  const reconcileAt = wf.indexOf("npm run reconcile:blocks");
+  const enrichAt = wf.indexOf("npm run board:sync", reconcileAt + 1);
+  const uploadAt = wf.indexOf("npm run tracker:sync:r2", enrichAt + 1);
+  if (reconcileAt < 0 || enrichAt < 0 || uploadAt < 0 || !(reconcileAt < enrichAt && enrichAt < uploadAt)) {
+    errors.push("workflow: tracker artifact must be reconcile → deployment-enrich → R2 upload");
+  }
+  if (!/execFileSync\("git", \["merge-base", "--is-ancestor"/.test(sync)) {
+    errors.push("sync: deployment proof must use exact git ancestry");
+  }
+  if (!/isAncestorCommit\(pr\.mergeCommit\?\.oid, liveVersion\)/.test(sync)) {
+    errors.push("sync: PR merge commit must be checked against the production health SHA");
+  }
+  if (/const liveAdvanced =/.test(sync)) {
+    errors.push("sync: elapsed time or any live version must never count as deployment proof");
+  }
   if (!uploadExists) {
     errors.push("scripts/sync-tracker-r2.mjs missing (the R2 upload)");
   }
@@ -68,10 +84,11 @@ if (process.argv.includes("--selftest")) {
   const good = {
     svc: 'const R2_TRACKER_RECON_KEY = "program-tracker/block-reconciliation-data.json";\nawait getObjectTextIfExists(R2_TRACKER_RECON_KEY)\nexport async function computeProgramTrackerLive(\nfunction hasDeploymentProof(block: ReconBlock) { return block.live_state === "deployed" || Boolean(block.deployed_ct); }\nconst liveVerified = isDone && hasDeploymentProof(b);\nString(rb.status).toUpperCase() === "DONE" && hasDeploymentProof(rb)',
     route: "return reply.send(await computeProgramTrackerLive(new Date()));",
-    wf: "run: npm run reconcile:blocks\nrun: npm run tracker:sync:r2",
+    wf: "run: npm run reconcile:blocks\nrun: npm run board:sync\nrun: npm run tracker:sync:r2",
+    sync: 'execFileSync("git", ["merge-base", "--is-ancestor", String(ancestor), String(descendant)]);\nisAncestorCommit(pr.mergeCommit?.oid, liveVersion)',
     uploadExists: true,
   };
-  const bad = { svc: 'readJson("docs/trackers/block-reconciliation-data.json")', route: "computeProgramTracker(new Date())", wf: "npm run board:sync:r2", uploadExists: false };
+  const bad = { svc: 'readJson("docs/trackers/block-reconciliation-data.json")', route: "computeProgramTracker(new Date())", wf: "npm run board:sync:r2", sync: "const liveAdvanced = true", uploadExists: false };
   if (assertAll(good).length !== 0) { console.error("SELFTEST FAIL: good flagged", assertAll(good)); process.exit(1); }
   if (assertAll(bad).length < 8) { console.error("SELFTEST FAIL: bad not caught", assertAll(bad)); process.exit(1); }
   const mergedOnly = {
@@ -85,15 +102,24 @@ if (process.argv.includes("--selftest")) {
     console.error("SELFTEST FAIL: merged-only Live regression escaped", assertAll(mergedOnly));
     process.exit(1);
   }
+  const guessedDeploy = {
+    ...good,
+    sync: good.sync.replace('execFileSync("git", ["merge-base", "--is-ancestor", String(ancestor), String(descendant)]);', "const liveAdvanced = true;"),
+  };
+  if (!assertAll(guessedDeploy).some((e) => e.includes("exact git ancestry"))) {
+    console.error("SELFTEST FAIL: guessed deployment regression escaped", assertAll(guessedDeploy));
+    process.exit(1);
+  }
   console.log("verify-program-tracker-r2-live selftest OK");
   process.exit(0);
 }
 
-for (const p of [SVC, ROUTE, WF]) if (!fs.existsSync(p)) { console.error(`GUARD FAIL: missing ${p}`); process.exit(1); }
+for (const p of [SVC, ROUTE, WF, SYNC]) if (!fs.existsSync(p)) { console.error(`GUARD FAIL: missing ${p}`); process.exit(1); }
 const errors = assertAll({
   svc: fs.readFileSync(SVC, "utf8"),
   route: fs.readFileSync(ROUTE, "utf8"),
   wf: fs.readFileSync(WF, "utf8"),
+  sync: fs.readFileSync(SYNC, "utf8"),
   uploadExists: fs.existsSync(UPLOAD),
 });
 if (errors.length) {
