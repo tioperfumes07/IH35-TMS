@@ -177,10 +177,19 @@ export function InventoryPurchasesPage() {
       <PageHeader title="Purchase History" backHref="/inventory" breadcrumb={["Inventory", "Purchase History"]} />
       <InventoryModuleTabs />
 
+      <div className="flex justify-end">
+        <Link
+          className="inline-flex h-8 items-center rounded-sm bg-slate-800 px-3 text-sm font-semibold text-white hover:bg-slate-700"
+          to="/maintenance/parts-inventory?create=purchase"
+        >
+          + Record Purchase
+        </Link>
+      </div>
+
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600">
         Purchase receipts are preserved as an append-only history. Stock on-hand lives on{" "}
-        <Link className="text-slate-700 underline" to="/inventory">
-          Parts &amp; Stock
+        <Link className="text-slate-700 underline" to="/maintenance/parts-inventory?create=purchase">
+          Maintenance Parts Inventory
         </Link>{" "}
         (upserted by part on each purchase); WO part consumption lives on{" "}
         <Link className="text-slate-700 underline" to="/inventory/assignments">
@@ -206,7 +215,7 @@ export function InventoryPurchasesPage() {
             columns={columns}
             rows={visibleRows}
             rowKey={(row) => row.id}
-            emptyText="No purchases recorded yet. Record a purchase from Parts & Stock to see it here."
+            emptyText="No purchases recorded yet. Use + Record Purchase to add a receipt through Maintenance Parts Inventory."
             storageKey="inventory-purchases-history"
             exportFilename="inventory-purchase-history"
             filterBar={

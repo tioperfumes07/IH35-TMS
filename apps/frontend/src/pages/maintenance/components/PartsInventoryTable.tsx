@@ -14,6 +14,8 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 type Props = {
   companyId: string;
   rows: PartsInventoryRow[];
+  /** Inventory Purchase History deep-link opens the one canonical creator, not a duplicate form. */
+  openPurchaseOnMount?: boolean;
   /** MAINT-S19 — ParityTable emptyText only when settled. */
   loading?: boolean;
   // CLS-LIST-ERROR-STATE-UNGUARDED. This component owns no query — the parent does — so it could not
@@ -46,9 +48,9 @@ const EMPTY_PURCHASE: PurchaseForm = {
   location: "",
 };
 
-export function PartsInventoryTable({ companyId, rows, loading = false, isError = false, onRetry, highlightedRowId = "" }: Props) {
+export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = false, loading = false, isError = false, onRetry, highlightedRowId = "" }: Props) {
   const queryClient = useQueryClient();
-  const [openPurchase, setOpenPurchase] = useState(false);
+  const [openPurchase, setOpenPurchase] = useState(openPurchaseOnMount);
   // Search is ONLY ParityTable UniversalListToolbar (LV-PARTS-INVENTORY-DUPLICATE-SEARCH).
   const [form, setForm] = useState<PurchaseForm>(EMPTY_PURCHASE);
   const [adjustRow, setAdjustRow] = useState<PartsInventoryRow | null>(null);
