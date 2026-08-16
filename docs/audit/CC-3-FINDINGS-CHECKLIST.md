@@ -127,13 +127,13 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☑ | `LV-EXP-NOLOAD` | — | CC-2 / mechanical+FE | Cursor | #5564 | 2026-08-10 | RecordExpenseForm Trip/Load EntityPicker; fuel/diesel/roadside require load_id; guard exit 0 | `scripts/verify-expense-load-field-for-fuel.mjs` | Register tick — board FIXED (#5564); historical load-null still PRE-OP per Rule 32 |
 | ☑ | `LV-CI-DEPENDABOT-RED` | — | CC-2 / mechanical + CI | Cursor | #5519 / #4659 | 2026-08-10 | `pr-evidence-block.yml` has `if: (github.actor != 'dependabot[bot]')`; board FIXED on main | `.github/workflows/pr-evidence-block.yml` + dependabot actor guard | Register evidence fill Cursor LEAD |
 | ☐ | `LV-BANKFLAG-STALE` | — | CC-1 / money | — | — | — | — | — | — |
-| ☑ | `LV-SPAWN-LIABILITY-NOSAVE` | — | CC-3 / mechanical+FE | Cursor | FIXED on main 2026-08-10 | 2026-08-10 | Spawn Liability wired (board FIXED on main) | board FIXED 2026-08-10 | Register tick |
+| ☑ | `LV-SPAWN-LIABILITY-NOSAVE` | P0 | CC-3 / mechanical+FE | Cursor | #5516 | 2026-08-10 | Spawn Liability wired; guards exit 0 | `scripts/verify-safety-accident-spawn-liability.mjs` + `verify-saf-f35-spawn-liability-no-silent-success.mjs` | Register evidence fill Cursor LEAD |
 | ☑ | `LV-WO-NOSAVE` | P0 | CC-3 / mechanical+FE | Cursor | #5516 | 2026-08-10 | createWorkOrder wired on CreateWorkOrderModal; `verify-maintenance-work-order-create-modal-connectivity` exit 0 + selftest | `scripts/verify-maintenance-work-order-create-modal-connectivity.mjs` | Register tick Cursor LEAD |
-| ☐ | `LV-SEND-NOREASON` | — | — | — | — | — | — | — | — |
+| ☑ | `LV-SEND-NOREASON` | P2 | Cursor FE | Cursor | #5552 | 2026-08-10 | disabled Send surfaces reason + aria-disabled; `verify-invoice-send-disabled-reason` exit 0 | `scripts/verify-invoice-send-disabled-reason.mjs` | Register tick Cursor LEAD |
 | ☑ | `LV-INV-UUID` | — | CC-3 / mechanical+FE | Cursor | #5555 / #5556 | 2026-08-10 | from-load linehaul uses `load_number` not UUID; guards exit 0 | `scripts/verify-invoice-line-no-uuid-description.mjs` · `scripts/verify-invoice-line-load-number-not-uuid.mjs` | Register tick Cursor LEAD |
 | ☑ | `LV-LOAD-EDIT-BLANK` | — | CC-3 / mechanical+FE | Cursor | #5515 | 2026-08-10 | Edit-load hydrates primary driver/unit/trip_type; board FIXED on main | #5515 | Register tick |
 | ☑ | `LV-STOPS-NOSAVE` | P0 | CC-3 / mechanical+FE | Cursor | #7641 | 2026-08-15 | Save→POST wired; postal_code round-trip; list filters soft_deleted_at; guard+selftest exit 0 | `scripts/verify-load-stops-save-wired.mjs` + step **3604** | Register tick Cursor LEAD |
-| ☐ | `LV-LOAD-UNASSIGNED` | — | — | — | — | — | — | — | — |
+| ☑ | `LV-LOAD-UNASSIGNED` | P1 | CC-3 / mechanical+FE | Cursor | #5515 | 2026-08-10 | load detail resolves assigned_primary_driver; board FIXED on main | `scripts/verify-dispatch-awaiting-unassigned-not-uuid.mjs` + load detail EntityLink | Register tick Cursor LEAD |
 | ☑ | `LV-OUTBOX-ERRCOL` | P2 | CC-3 / mechanical | Cursor | this-PR | 2026-08-15 | success delivery sets last_error=NULL; message in audit delivery_message; guard+selftest exit 0 | `scripts/verify-outbox-success-clears-last-error.mjs` + step **3606** | Register tick Cursor LEAD |
 | ☑ | `LV-DRV-TAB` | — | CC-3 / mechanical+FE | Cursor | #5546 / #5547 | 2026-08-10 | Probation status tab/filter surfaces default Create Driver status | #5546 | Register tick |
 | ☐ | `LV-AP-DUP` | — | CC-1 / money | — | — | — | — | — | — |
@@ -141,7 +141,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☑ | `LV-BULK-DELIVER-NOLATCH` | — | CC-1 / money (fix) + CC-2 / guard | CC-1 | #4730 | 2026-08-07 | Mutation on the REAL `apps/backend/src/dispatch/loads-bulk.routes.ts`: strip `latchOnDeliveryEvidence` → `node scripts/verify-delivery-evidence-latch-wired.mjs` exit **1** naming the file; restore → exit **0**. Selftest (cases 1-9) exit 0. That mutation is now permanent selftest case9, so the widening is a regression test, not a description of one. | `scripts/verify-delivery-evidence-latch-wired.mjs` + step `2634` | — |
 | ☑ | `LV-STOP-ZIP-DROPPED` | — | CC-2 / mechanical | CC-2 | #4789 | 2026-08-07 | postal_code in stops payload + form type; guard step **2823**; live on deploy `9c4f095` | step **2823** | Register tick — board DONE |
 | ☑ | `LV-DISPATCH-TOAST-LIES` | — | CC-2 / mechanical | CC-2 | FIXED on main 2026-08-10 | 2026-08-10 | Success toast reports server-returned status (not assumed dispatched) | board FIXED 2026-08-10 | Register tick — board Status FIXED on main |
-| ☐ | `LV-LOAD-DETAIL-SHOWS-UNASSIGNED` | — | CC-2 / mechanical | — | — | — | — | — | — |
+| ☑ | `LV-LOAD-DETAIL-SHOWS-UNASSIGNED` | P1 | CC-2 / mechanical | Cursor | #5515 | 2026-08-10 | same class as LV-LOAD-UNASSIGNED; detail uses assigned_primary_driver_id EntityLink | load detail drawer assignment display | Register tick Cursor LEAD |
 | ☐ | `LV-CANCEL-VOIDS-STATUS-ONLY` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AR-OPEN-INCLUDES-VOIDED` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-BILL-NO-DISPLAY-ID` | — | CC-1 / money | — | — | — | — | — | — |
