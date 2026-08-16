@@ -15,6 +15,7 @@ export type FeatureFlagRow = {
   description: string | null;
   default_enabled: boolean;
   rollout_pct: string | number;
+  archived_at?: string | null;
 };
 
 export type FeatureFlagOverrideRow = {
@@ -315,7 +316,7 @@ export async function isEnabled(
 ): Promise<boolean> {
   const flagRes = await client.query<FeatureFlagRow>(
     `
-      SELECT flag_key, description, default_enabled, rollout_pct
+      SELECT flag_key, description, default_enabled, rollout_pct, archived_at
       FROM lib.feature_flags
       WHERE flag_key = $1
     `,
@@ -323,6 +324,8 @@ export async function isEnabled(
   );
   const flag = flagRes.rows[0];
   if (!flag) return false;
+  // LV-DEAD-SEEDED-FLAGS — archived rows stay in the table (never DELETE) but cannot enable.
+  if (flag.archived_at) return false;
 
   // ★ THE PER-ENTITY OVERRIDE IS INVISIBLE UNLESS THE ENTITY GUC IS SET (found live 2026-08-11).
   //
@@ -395,6 +398,7 @@ export async function listFlags(client: Queryable) {
                  AND (o.expires_at IS NULL OR o.expires_at > now())
              ) AS override_count
       FROM lib.feature_flags f
+      WHERE f.archived_at IS NULL
       ORDER BY f.flag_key
     `
   );
