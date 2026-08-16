@@ -32,10 +32,11 @@ export function run() {
 
   assert(home.includes("useCompanyContext"), "Form425CHome must read selectedCompanyId", errors);
   assert(/operating_company_id:\s*companyId/.test(home), "Form425CHome must pass operating_company_id", errors);
-  const tabLabels = ["Profiles & Defaults", "QB Import", "Form 425C", "Merge & Export", "History"];
+  const tabLabels = ["Profiles & Defaults", "Deposit Import", "Form 425C", "Merge & Export", "History"];
   for (const label of tabLabels) {
     assert(home.includes(label), `Form425CHome missing tab label "${label}"`, errors);
   }
+  assert(!home.includes('label: "QB Import"'), "Form425CHome must not expose QuickBooks-only wording to USMCA", errors);
   assert(/createForm425CReport|getForm425CReport|listForm425CReports/.test(home), "Form425CHome must call a 425C report API", errors);
 
   assert(exhibits.includes("useCompanyContext"), "ExhibitsViewer must read selectedCompanyId", errors);
@@ -61,6 +62,19 @@ function selftest() {
     if (!planted.some((e) => e.includes("/425c"))) {
       console.error("[verify-425-s01-s02] SELFTEST FAIL: planted stale /425c route not detected");
       process.exit(1);
+    }
+    fs.writeFileSync(realPath, backup, "utf8");
+    const homePath = path.join(ROOT, "apps/frontend/src/pages/form425c/Form425CHome.tsx");
+    const homeBackup = fs.readFileSync(homePath, "utf8");
+    try {
+      fs.writeFileSync(homePath, homeBackup.replace('label: "Deposit Import"', 'label: "QB Import"'), "utf8");
+      const copyPlanted = run();
+      if (!copyPlanted.some((e) => e.includes("QuickBooks-only wording"))) {
+        console.error("[verify-425-s01-s02] SELFTEST FAIL: planted QB Import operator copy not detected");
+        process.exit(1);
+      }
+    } finally {
+      fs.writeFileSync(homePath, homeBackup, "utf8");
     }
     console.log(`[verify-425-s01-s02] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {

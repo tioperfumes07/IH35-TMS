@@ -40,7 +40,7 @@ export function parseForm425CTab(raw: string | null): TabId {
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "profile", label: "Profiles & Defaults" },
-  { id: "qb", label: "QB Import" },
+  { id: "qb", label: "Deposit Import" },
   { id: "form", label: "Form 425C" },
   { id: "merge", label: "Merge & Export" },
   { id: "history", label: "History" },
