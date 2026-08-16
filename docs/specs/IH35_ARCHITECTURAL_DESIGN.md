@@ -772,19 +772,17 @@ Reports Generated MTD · Scheduled Reports · Top Lane (revenue) · Top Customer
 ### Top action button
 **+ Generate New Submission**
 
-### Sub-nav tabs (9)
+### Sub-nav tabs (5)
 
 | Tab | What it shows |
 |-----|---------------|
-| **Form (Lines 1-37)** | Full monthly operating report form with all 8 parts |
-| **Exhibit A** | Explanations for Part 1 "No" answers (lines 1-9) |
-| **Exhibit B** | Explanations for Part 2 "Yes" answers (lines 10-18) |
-| **Exhibit C (auto)** | Cash receipts detail auto-derived from Banking |
-| **Exhibit D (auto)** | Cash disbursements detail auto-derived from Banking |
-| **Exhibit E (auto)** | Payables aging sourced from Accounting bills |
-| **Exhibit F (auto)** | Receivables aging sourced from Accounting invoices |
+| **Profiles & Defaults** | Company/case identity, petition date, bank accounts, and default questionnaire answers |
+| **Deposit Import** | Session preview of pasted income deposits; applies included total to Form line 20 (TMS-native, no QBO sync) |
+| **Form 425C** | Current monthly operating report and questionnaire |
 | **Merge & Export** | Generate filing PDF package for manual court upload |
-| **Filing History** | All prior reports with filed/amended status timeline |
+| **History** | All prior reports with filed/amended status timeline |
+
+Exhibits A–F are mounted at the separate `/425c/exhibits` route from the page header.
 
 ### KPI row — 5 cards
 Days to Next Submission · Current Period Cash Receipts · Current Period Disbursements · YTD Operating Loss/Profit · Compliance Status
