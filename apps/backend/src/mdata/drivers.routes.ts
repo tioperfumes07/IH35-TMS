@@ -1263,6 +1263,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             qbo_vendor_id, qbo_vendor_linked_at, qbo_vendor_linked_by_user_id,
             qbo_class_id,
+            samsara_driver_id,
             default_expense_account_id,
             status, notes, prior_driver_id, rehire_count, is_rehire,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id,
