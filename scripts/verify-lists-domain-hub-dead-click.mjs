@@ -61,6 +61,14 @@ const PATHS = {
     ROOT,
     "apps/frontend/src/pages/lists/accounting/QboCategoriesListPage.tsx"
   ),
+  accountRoleBindingsPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/AccountRoleBindingsListPage.tsx"
+  ),
+  chartOfAccountsSeedsPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/ChartOfAccountsSeedsListPage.tsx"
+  ),
 };
 
 /** LST-F5214 — shared bases + safety/dispatch leaves that must honor ?create=1 via the hook. */
@@ -121,6 +129,9 @@ export function collectProblems(sources = {}) {
   const journalEntryTypesPage = sources.journalEntryTypesPage ?? read(PATHS.journalEntryTypesPage);
   const currencyCodesPage = sources.currencyCodesPage ?? read(PATHS.currencyCodesPage);
   const qboCategoriesPage = sources.qboCategoriesPage ?? read(PATHS.qboCategoriesPage);
+  const accountRoleBindingsPage = sources.accountRoleBindingsPage ?? read(PATHS.accountRoleBindingsPage);
+  const chartOfAccountsSeedsPage =
+    sources.chartOfAccountsSeedsPage ?? read(PATHS.chartOfAccountsSeedsPage);
   const errors = [];
 
   if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
@@ -136,6 +147,8 @@ export function collectProblems(sources = {}) {
   if (!journalEntryTypesPage) errors.push(fail("missing JournalEntryTypesListPage.tsx"));
   if (!currencyCodesPage) errors.push(fail("missing CurrencyCodesListPage.tsx"));
   if (!qboCategoriesPage) errors.push(fail("missing QboCategoriesListPage.tsx"));
+  if (!accountRoleBindingsPage) errors.push(fail("missing AccountRoleBindingsListPage.tsx"));
+  if (!chartOfAccountsSeedsPage) errors.push(fail("missing ChartOfAccountsSeedsListPage.tsx"));
   if (errors.length) return errors;
 
   if (!/function ListsDomainRoute\(\)/.test(manifest)) {
@@ -217,6 +230,8 @@ export function collectProblems(sources = {}) {
     [journalEntryTypesPage, "JournalEntryTypesListPage"],
     [currencyCodesPage, "CurrencyCodesListPage"],
     [qboCategoriesPage, "QboCategoriesListPage"],
+    [accountRoleBindingsPage, "AccountRoleBindingsListPage"],
+    [chartOfAccountsSeedsPage, "ChartOfAccountsSeedsListPage"],
   ]) {
     if (!/AccountingCatalogListPage/.test(src)) {
       errors.push(fail(`${name} must wrap AccountingCatalogListPage (inherits ?create=1)`));
@@ -325,6 +340,8 @@ if (catalogKey === "_create") {
   const goodJeTypes = `export function JournalEntryTypesListPage() { return <AccountingCatalogListPage client={journalEntryTypesCatalogClient} />; }`;
   const goodCurrency = `export function CurrencyCodesListPage() { return <AccountingCatalogListPage client={currencyCodesCatalogClient} />; }`;
   const goodQboCategories = `export function QboCategoriesListPage() { return <AccountingCatalogListPage client={qboCategoriesCatalogClient} />; }`;
+  const goodRoleBindings = `export function AccountRoleBindingsListPage() { return <AccountingCatalogListPage client={accountRoleBindingsCatalogClient} readOnly />; }`;
+  const goodCoaSeeds = `export function ChartOfAccountsSeedsListPage() { return <AccountingCatalogListPage client={chartOfAccountsSeedsCatalogClient} />; }`;
   const goodMapWithPaymentLeaves = `${goodMap}
 { name: "Payment Terms", live: true, catalogKey: "payment-terms" },
 { name: "Payment Methods", live: true, catalogKey: "payment-methods" },
@@ -366,6 +383,8 @@ function ListsDomainRoute() {
     journalEntryTypesPage: goodJeTypes,
     currencyCodesPage: goodCurrency,
     qboCategoriesPage: goodQboCategories,
+    accountRoleBindingsPage: goodRoleBindings,
+    chartOfAccountsSeedsPage: goodCoaSeeds,
     skipSharedCreateRatchet: true,
   });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
@@ -388,6 +407,8 @@ function ListsDomainRoute() {
     journalEntryTypesPage: goodJeTypes,
     currencyCodesPage: goodCurrency,
     qboCategoriesPage: goodQboCategories,
+    accountRoleBindingsPage: goodRoleBindings,
+    chartOfAccountsSeedsPage: goodCoaSeeds,
     skipSharedCreateRatchet: true,
   });
   if (!barePmErrors.some((e) => e.includes("PaymentMethodsListPage must wrap AccountingCatalogListPage"))) {
