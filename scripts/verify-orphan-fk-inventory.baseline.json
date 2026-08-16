@@ -1,6 +1,6 @@
 {
   "_comment": "0519-ri1(a) orphan-FK inventory ratchet. Regenerate: UPDATE_ORPHAN_FK_BASELINE=1. Adding real FK constraints is owner-gated (db-integrity-hardening-0519).",
-  "count": 782,
+  "count": 788,
   "keys": [
     "0001_audit_init.sql::actor_user_uuid",
     "0003_outbox_init.sql::aggregate_id",
@@ -783,6 +783,12 @@
     "202612502300_p44_load_stop_lumper_provider_canonical_fk.sql::lumper_provider_id",
     "202612511200_p44_load_trailer_equipment_canonical_fk.sql::load_trailer_equipment_id",
     "202612511400_p44_accident_report_type_canonical_fk.sql::accident_type_id",
-    "202612511800_p44_cargo_claim_reason_same_opco_fk.sql::claim_reason_id"
+    "202612511800_p44_cargo_claim_reason_same_opco_fk.sql::claim_reason_id",
+    "202612550000_hold_deduction_real_target.sql::held_by_user_id",
+    "202612560000_inv_purchase_ledger_sor_stock_upsert.sql::created_by_user_id",
+    "202612560000_inv_purchase_ledger_sor_stock_upsert.sql::operating_company_id",
+    "202612560000_inv_purchase_ledger_sor_stock_upsert.sql::voided_by_user_id",
+    "202612570000_reports_scheduled_canonicalize.sql::voided_by_user_id",
+    "202612580000_incidents_work_order_fk.sql::work_order_id"
   ]
 }
