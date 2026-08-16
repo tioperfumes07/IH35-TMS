@@ -129,6 +129,10 @@
     "202612670000": {
       "claimed_by": "claude",
       "purpose": "je_posting_entity_type_discriminator_p23"
+    },
+    "202612680000": {
+      "claimed_by": "claude",
+      "purpose": "posting_batches_refusal_code_and_status"
     }
   }
 }
