@@ -112,6 +112,8 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
           WHEN el.subject_type = 'load' THEN NULLIF(TRIM(l.load_number), '')
           WHEN el.subject_type = 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
           WHEN el.subject_type = 'unit' THEN NULLIF(TRIM(un.unit_number), '')
+          WHEN el.subject_type = 'customer' THEN NULLIF(TRIM(c.customer_name), '')
+          WHEN el.subject_type = 'vendor' THEN NULLIF(TRIM(v.vendor_name), '')
           WHEN el.subject_type = 'invoice' THEN NULLIF(TRIM(i.display_id), '')
           WHEN el.subject_type = 'bill' THEN NULLIF(TRIM(COALESCE(b.display_id, b.bill_number)), '')
           WHEN el.subject_type = 'task' THEN CASE el.source_table
@@ -143,6 +145,14 @@ export async function registerSpineEventsRoutes(app: FastifyInstance) {
         ON el.subject_type = 'unit'
        AND un.id = el.subject_id
        AND COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id
+      LEFT JOIN mdata.customers c
+        ON el.subject_type = 'customer'
+       AND c.id = el.subject_id
+       AND c.operating_company_id = el.operating_company_id
+      LEFT JOIN mdata.vendors v
+        ON el.subject_type = 'vendor'
+       AND v.id = el.subject_id
+       AND v.operating_company_id = el.operating_company_id
       LEFT JOIN maintenance.work_orders wo
         ON el.subject_type = 'task'
        AND el.source_table = 'maintenance.work_orders'

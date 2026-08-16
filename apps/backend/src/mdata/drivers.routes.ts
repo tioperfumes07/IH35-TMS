@@ -11,6 +11,7 @@ import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
 import { findRosterDuplicates } from "./driver-roster-duplicate.service.js";
+import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
@@ -1066,6 +1067,13 @@ export async function createDriverCanonical(
         last_name: row.last_name,
         email: row.email,
         status: row.status,
+      });
+      await emitMasterDataCreatedSpineEvent(client, {
+        operating_company_id: String(row.operating_company_id),
+        actor_user_id: authUser.uuid,
+        subject_type: "driver",
+        subject_id: String(row.id),
+        payload: { first_name: row.first_name, last_name: row.last_name, status: row.status },
       });
 
       if (returningDetection.returning_driver && b.override_returning_warning) {

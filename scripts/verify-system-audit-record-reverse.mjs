@@ -15,6 +15,12 @@ const files = {
   customer: read("apps/frontend/src/pages/CustomerDetail.tsx"),
   workOrder: read("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx"),
   load: read("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
+  migration: read("db/migrations/202612601200_system_audit_master_data_spine_subjects.sql"),
+  emitter: read("apps/backend/src/mdata/master-data-spine-emit.ts"),
+  customerRoute: read("apps/backend/src/mdata/customers.routes.ts"),
+  vendorRoute: read("apps/backend/src/mdata/vendors.routes.ts"),
+  driverRoute: read("apps/backend/src/mdata/drivers.routes.ts"),
+  unitRoute: read("apps/backend/src/mdata/units.routes.ts"),
 };
 function failures(s = files) { return [
   ["company-scoped exact audit filter", s.routes.includes("audit_event_id: z.string().uuid().optional()") && s.routes.includes("e.uuid = $${values.length}::uuid") && s.api.includes('search.set("audit_event_id", params.auditEventId)')],
@@ -30,6 +36,19 @@ function failures(s = files) { return [
   ["load subject same-company join", s.spine.includes("l.operating_company_id = el.operating_company_id")],
   ["driver subject same-company join", s.spine.includes("d.operating_company_id = el.operating_company_id")],
   ["unit subject effective-company join", s.spine.includes("COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id")],
+  ["customer spine subject allowed", s.migration.includes("'customer', 'vendor'")],
+  ["vendor spine subject allowed", s.migration.includes("'customer', 'vendor'") && s.migration.includes("p_subject_type NOT IN")],
+  ["shared master-data spine emitter", s.emitter.includes("events.log_event(") && s.emitter.includes('customer: "mdata.customers"') && s.emitter.includes('vendor: "mdata.vendors"') && s.emitter.includes('driver: "mdata.drivers"') && s.emitter.includes('unit: "mdata.units"')],
+  ["customer create emits spine atomically", s.customerRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.customerRoute.includes('subject_type: "customer"')],
+  ["vendor create emits spine atomically", s.vendorRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.vendorRoute.includes('subject_type: "vendor"')],
+  ["driver create emits spine atomically", s.driverRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.driverRoute.includes('subject_type: "driver"')],
+  ["unit create emits spine with effective company", s.unitRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.unitRoute.includes("String(resolvedLeasedId ?? resolvedOwnerId)") && s.unitRoute.includes('subject_type: "unit"')],
+  ["customer subject same-company label", s.spine.includes("c.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(c.customer_name), '')")],
+  ["vendor subject same-company label", s.spine.includes("v.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(v.vendor_name), '')")],
+  ["customer source drill", s.page.includes('t === "mdata.customers"') && s.page.includes('return `/customers/${id}`')],
+  ["vendor source drill", s.page.includes('t === "mdata.vendors"') && s.page.includes('return `/vendors/${id}`')],
+  ["driver source drill", s.page.includes('t === "mdata.drivers"') && s.page.includes('return `/drivers/${id}`')],
+  ["unit source drill", s.page.includes('t === "mdata.units"') && s.page.includes('return `/fleet/units/${id}`')],
   ["all canonical history mounts remain", [s.driver, s.unit, s.trailer, s.vendor, s.customer, s.workOrder, s.load].every((source) => source.includes("<EntityAuditHistoryTab"))],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
@@ -47,11 +66,24 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, spine: files.spine.replace("l.operating_company_id = el.operating_company_id", "TRUE") }).includes("load subject same-company join"),
     failures({ ...files, spine: files.spine.replace("d.operating_company_id = el.operating_company_id", "TRUE") }).includes("driver subject same-company join"),
     failures({ ...files, spine: files.spine.replace("COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id", "TRUE") }).includes("unit subject effective-company join"),
+    failures({ ...files, migration: files.migration.replaceAll("'customer', 'vendor'", "'customer_unused', 'vendor'") }).includes("customer spine subject allowed"),
+    failures({ ...files, migration: files.migration.replaceAll("'customer', 'vendor'", "'customer', 'vendor_unused'") }).includes("vendor spine subject allowed"),
+    failures({ ...files, emitter: files.emitter.replace("events.log_event(", "events.log_event_unused(") }).includes("shared master-data spine emitter"),
+    failures({ ...files, customerRoute: files.customerRoute.replace('subject_type: "customer"', 'subject_type: "driver"') }).includes("customer create emits spine atomically"),
+    failures({ ...files, vendorRoute: files.vendorRoute.replace('subject_type: "vendor"', 'subject_type: "driver"') }).includes("vendor create emits spine atomically"),
+    failures({ ...files, driverRoute: files.driverRoute.replace('subject_type: "driver"', 'subject_type: "unit"') }).includes("driver create emits spine atomically"),
+    failures({ ...files, unitRoute: files.unitRoute.replace("String(resolvedLeasedId ?? resolvedOwnerId)", "String(resolvedOwnerId)") }).includes("unit create emits spine with effective company"),
+    failures({ ...files, spine: files.spine.replace("c.operating_company_id = el.operating_company_id", "TRUE") }).includes("customer subject same-company label"),
+    failures({ ...files, spine: files.spine.replace("v.operating_company_id = el.operating_company_id", "TRUE") }).includes("vendor subject same-company label"),
+    failures({ ...files, page: files.page.replace('t === "mdata.customers"', 't === "mdata.customers_unused"') }).includes("customer source drill"),
+    failures({ ...files, page: files.page.replace('t === "mdata.vendors"', 't === "mdata.vendors_unused"') }).includes("vendor source drill"),
+    failures({ ...files, page: files.page.replace('t === "mdata.drivers"', 't === "mdata.drivers_unused"') }).includes("driver source drill"),
+    failures({ ...files, page: files.page.replace('t === "mdata.units"', 't === "mdata.units_unused"') }).includes("unit source drill"),
     failures({ ...files, load: "" }).includes("all canonical history mounts remain"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 14/14 filter/profile/target/state/subject-label mutations red"); process.exit(0);
+  console.log("verify-system-audit-record-reverse selftest PASS — 27/27 filter/profile/emitter/target/state/subject-label mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
-console.log("verify-system-audit-record-reverse PASS — exact audit drills and canonical same-company load/driver/unit subject labels are wired");
+console.log("verify-system-audit-record-reverse PASS — exact audit drills plus atomic customer/vendor/driver/unit spine emits and same-company labels are wired");

@@ -20,6 +20,7 @@ import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueTmsCustomerPushRequested } from "../qbo/tms-customer-push-chain.service.js";
 import { listActiveCustomerClassifications } from "./classification-queries.js";
 import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
+import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL } from "./test-seed-archive.js";
 
 const listQuerySchema = z.object({
@@ -751,6 +752,13 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           "info",
           "BT-1-CUSTOMER-FULL-PROFILE"
         );
+        await emitMasterDataCreatedSpineEvent(client, {
+          operating_company_id: String(row.operating_company_id),
+          actor_user_id: authUser.uuid,
+          subject_type: "customer",
+          subject_id: String(row.id),
+          payload: { customer_code: row.customer_code, name: row.name },
+        });
         await enqueueTmsCustomerPushRequested(client, {
           operating_company_id: String(row.operating_company_id),
           customer_id: String(row.id),
