@@ -125,6 +125,10 @@
     "202608161500": {
       "claimed_by": "cursor",
       "purpose": "pwa_driver_notifications_lv_driver_pwa_notify"
+    },
+    "202612670000": {
+      "claimed_by": "claude",
+      "purpose": "je_posting_entity_type_discriminator_p23"
     }
   }
 }
