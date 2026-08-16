@@ -3427,5 +3427,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1163
+  "total_claimed": 1163,
+  "3602": {
+    "name": "verify-owner-all-entities-non-qbo-flags-on",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
+  }
 }
