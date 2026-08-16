@@ -59,6 +59,8 @@ const createDriverSchema = z.object({
   cdl_class: z.enum(["A", "B", "C"]).optional(),
   cdl_expires_at: z.string().optional(),
   hire_date: z.string().optional(),
+  // LV-DRIVER-DOB-SILENTLY-DROPPED — column exists on mdata.drivers; create must expose + submit it.
+  date_of_birth: z.string().optional(),
   pay_basis: z.enum(["short_miles", "practical_miles"]).default("short_miles"),
   dot_medical_expires_at: z.string().optional(),
   visa_type: z.string().trim().optional(),
@@ -66,6 +68,13 @@ const createDriverSchema = z.object({
   visa_expires_at: z.string().optional(),
   passport_number: z.string().trim().optional(),
   passport_expires_at: z.string().optional(),
+  passport_country: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || /^[A-Za-z]{2}$/.test(value), "passport country must be a 2-letter code"),
+  mexican_license_number: z.string().trim().optional(),
+  mexican_license_expiration: z.string().optional(),
   ine_number: z.string().trim().optional(),
   curp: z
     .string()
@@ -98,6 +107,7 @@ const DRIVER_CREATE_FORM_INITIAL: Record<string, string> = {
   cdl_class: "A",
   cdl_expires_at: "",
   hire_date: "",
+  date_of_birth: "",
   pay_basis: "short_miles",
   dot_medical_expires_at: "",
   visa_type: "",
@@ -105,6 +115,9 @@ const DRIVER_CREATE_FORM_INITIAL: Record<string, string> = {
   visa_expires_at: "",
   passport_number: "",
   passport_expires_at: "",
+  passport_country: "",
+  mexican_license_number: "",
+  mexican_license_expiration: "",
   ine_number: "",
   curp: "",
   mx_address_line1: "",
@@ -414,6 +427,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         cdl_class: parsed.cdl_class,
         cdl_expires_at: parsed.cdl_expires_at || undefined,
         hire_date: parsed.hire_date || undefined,
+        date_of_birth: parsed.date_of_birth || undefined,
         pay_basis: parsed.pay_basis,
         dot_medical_expires_at: parsed.dot_medical_expires_at || undefined,
         visa_type: parsed.visa_type || undefined,
@@ -421,6 +435,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         visa_expires_at: parsed.visa_expires_at || undefined,
         passport_number: parsed.passport_number || undefined,
         passport_expires_at: parsed.passport_expires_at || undefined,
+        passport_country: parsed.passport_country
+          ? parsed.passport_country.trim().toUpperCase()
+          : undefined,
+        mexican_license_number: parsed.mexican_license_number || undefined,
+        mexican_license_expiration: parsed.mexican_license_expiration || undefined,
         ine_number: parsed.ine_number || undefined,
         curp: parsed.curp || undefined,
         mx_address_line1: parsed.mx_address_line1 || undefined,
@@ -492,6 +511,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ["first_name", "First Name"],
             ["last_name", "Last Name"],
             ["email", "Email"],
+            ["date_of_birth", "Date of birth"],
             ["cdl_number", "CDL #"],
             ["cdl_expires_at", "CDL Expires"],
             ["hire_date", "Hire Date"],
@@ -637,6 +657,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 {[
                   ["ine_number", "INE Number"],
                   ["curp", "CURP"],
+                  ["mexican_license_number", "Mexican license #"],
+                  ["mexican_license_expiration", "Mexican license expires"],
                   ["mx_address_line1", "MX Address Line 1"],
                   ["mx_address_line2", "MX Address Line 2"],
                   ["mx_city", "MX City"],
@@ -644,17 +666,29 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 ].map(([key, label]) => (
                   <div key={key} className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-gray-600">{label}</label>
-                    <input
-                      data-field={key}
-                      type="text"
-                      value={form[key] ?? ""}
-                      aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
-                      onChange={(event) => {
-                        clearDriverFieldError(key);
-                        setForm((current) => ({ ...current, [key]: event.target.value }));
-                      }}
-                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
-                    />
+                    {key.includes("expiration") || key.includes("expires") ? (
+                      <DatePicker
+                        data-testid={key}
+                        value={form[key] ?? ""}
+                        onChange={(value) => {
+                          clearDriverFieldError(key);
+                          setForm((current) => ({ ...current, [key]: value }));
+                        }}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                      />
+                    ) : (
+                      <input
+                        data-field={key}
+                        type="text"
+                        value={form[key] ?? ""}
+                        aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
+                        onChange={(event) => {
+                          clearDriverFieldError(key);
+                          setForm((current) => ({ ...current, [key]: event.target.value }));
+                        }}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                      />
+                    )}
                     <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
                 ))}
@@ -699,6 +733,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   ["visa_expires_at", "Visa Expires"],
                   ["passport_number", "Passport Number"],
                   ["passport_expires_at", "Passport Expires"],
+                  ["passport_country", "Passport country (ISO-2)"],
                   ["emergency_contact_name", "Emergency Contact Name"],
                   ["emergency_contact_relationship", "Relationship"],
                   ["emergency_contact_phone_primary", "Emergency Phone Primary"],
@@ -720,11 +755,16 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       <input
                         data-field={key}
                         type="text"
+                        maxLength={key === "passport_country" ? 2 : undefined}
                         value={form[key] ?? ""}
                         aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
                         onChange={(event) => {
                           clearDriverFieldError(key);
-                          setForm((current) => ({ ...current, [key]: event.target.value }));
+                          const next =
+                            key === "passport_country"
+                              ? event.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2)
+                              : event.target.value;
+                          setForm((current) => ({ ...current, [key]: next }));
                         }}
                         className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
                       />

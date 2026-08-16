@@ -71,6 +71,8 @@ export type Driver = {
   cdl_class: CdlClass | null;
   cdl_expires_at: string | null;
   hire_date: string | null;
+  /** 49 CFR 391.21(b)(2) — required for DQ / MVR / Clearinghouse; create path must expose it. */
+  date_of_birth: string | null;
   pay_basis: MilesBasis;
   termination_date: string | null;
   dot_medical_expires_at: string | null;
@@ -85,6 +87,7 @@ export type Driver = {
   visa_expires_at: string | null;
   passport_number: string | null;
   passport_expires_at: string | null;
+  passport_country: string | null;
   fast_card_number: string | null;
   fast_card_expiration: string | null;
   sentri_member: boolean;
@@ -141,6 +144,7 @@ export type CreateDriverInput = {
   cdl_class?: CdlClass;
   cdl_expires_at?: string;
   hire_date?: string;
+  date_of_birth?: string;
   pay_basis?: MilesBasis;
   dot_medical_expires_at?: string;
   hazmat_endorsement_expires_at?: string;
@@ -150,6 +154,9 @@ export type CreateDriverInput = {
   visa_expires_at?: string;
   passport_number?: string;
   passport_expires_at?: string;
+  passport_country?: string;
+  mexican_license_number?: string;
+  mexican_license_expiration?: string;
   ine_number?: string;
   curp?: string;
   mx_address_line1?: string;
@@ -190,6 +197,7 @@ export type UpdateDriverInput = Partial<
     | "cdl_class"
     | "cdl_expires_at"
     | "hire_date"
+    | "date_of_birth"
     | "pay_basis"
     | "dot_medical_expires_at"
     | "hazmat_endorsement_expires_at"
@@ -199,6 +207,7 @@ export type UpdateDriverInput = Partial<
     | "visa_expires_at"
     | "passport_number"
     | "passport_expires_at"
+    | "passport_country"
     | "fast_card_number"
     | "fast_card_expiration"
     | "sentri_member"
