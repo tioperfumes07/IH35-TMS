@@ -111,6 +111,8 @@ const MIRROR_LEDGER_TABLE = "ih35_migrations.applied_migrations";
 const ARGS = new Set(process.argv.slice(2));
 const VERIFY_ONLY = ARGS.has("--verify-only");
 const BACKFILL_LEDGER = ARGS.has("--backfill-ledger");
+// LV-087-REPAIR: mirror-side repair for the SAFE divergence direction only. See runRepairMirror().
+const REPAIR_MIRROR = ARGS.has("--repair-mirror");
 
 /**
  * Wrapper that uses the imported listMigrationFiles with the correct migrations directory.
@@ -340,6 +342,60 @@ async function runVerifyOnly(client, diskMigrations, ledgerByFile, mirrorByFile,
   console.log("No drift detected.");
 }
 
+/**
+ * LV-087-REPAIR — repair a one-sided ledger row in the ONE direction that is provably safe.
+ *
+ * WHY THIS EXISTS: insertLedgerRow() writes BOTH ledgers, but any out-of-band apply (psql, the Neon
+ * console, a hand-run script) can write `_system._schema_migrations` alone. That canonical-only row
+ * then trips the LV-087 refusal and EVERY backend deploy dies in pre-deploy `db:migrate` until a
+ * human works it out. That happened on 2026-08-16: 202612581400_owner_all_entities_non_qbo_flags_on.sql
+ * was applied at 01:06:58Z by cursor-usmca-lead, the mirror row never landed, and six consecutive
+ * backend deploys failed over ~20 minutes.
+ *
+ * WHY ONLY ONE DIRECTION: the canonical ledger is written by insertLedgerRow ONLY after the DDL has
+ * run, so canonical-present => applied. Copying it into the mirror records a fact already true.
+ * The reverse (mirror-only) is the DANGEROUS direction the guard exists for -- backend boot accepts a
+ * migration present in EITHER ledger, so a mirror-only row can make an unapplied migration look
+ * applied. This function REFUSES to touch that direction and exits non-zero if any exists.
+ *
+ * It never writes the canonical ledger, and never applies DDL.
+ */
+async function runRepairMirror(client, ledgerRows, mirrorRows, ledgerByFile, mirrorByFile, knownLedgerOrphans) {
+  const dangerous = [];
+  for (const row of mirrorRows) {
+    const name = row.name;
+    if (ledgerByFile.has(name) || HELD_SET.has(name) || knownLedgerOrphans.has(name)) continue;
+    dangerous.push(name);
+  }
+  if (dangerous.length > 0) {
+    throw new Error(
+      `LV-087-REPAIR: refusing to run. ${dangerous.length} migration(s) are in ${MIRROR_LEDGER_TABLE} ` +
+        `ONLY:\n  ${dangerous.join("\n  ")}\n` +
+        `That is the dangerous direction -- boot would treat them as applied while the DDL may never ` +
+        `have run. --repair-mirror only ever copies canonical -> mirror. Resolve these by hand.`
+    );
+  }
+
+  const toMirror = [];
+  for (const row of ledgerRows) {
+    const name = row.filename;
+    if (mirrorByFile.has(name) || HELD_SET.has(name) || knownLedgerOrphans.has(name)) continue;
+    toMirror.push(name);
+  }
+  if (toMirror.length === 0) {
+    console.log("LV-087-REPAIR: ledgers already agree. Nothing to repair.");
+    return;
+  }
+  for (const name of toMirror) {
+    await client.query(
+      `INSERT INTO ${MIRROR_LEDGER_TABLE} (name) VALUES ($1) ON CONFLICT (name) DO NOTHING;`,
+      [name]
+    );
+    console.log(`MIRRORED ${name} (canonical row already present -> DDL already applied)`);
+  }
+  console.log(`LV-087-REPAIR: inserted ${toMirror.length} mirror row(s). Re-run db:migrate.`);
+}
+
 async function runBackfillLedger(client, diskMigrations, ledgerByFile) {
   const toInsert = [];
   if (ledgerByFile.size === 0 && diskMigrations.length > 0) {
@@ -432,13 +488,26 @@ try {
     if (mirrorByFile.has(name) || HELD_SET.has(name) || knownLedgerOrphans.has(name)) continue;
     ledgerDivergence.push(`${name}: in ${CANONICAL_LEDGER_TABLE} only (not mirrored, not held, not baselined)`);
   }
+  // LV-087-REPAIR must be reachable WHEN A DIVERGENCE EXISTS -- that is the only time it is needed.
+  // --backfill-ledger sits below the throw at the bottom of this function and is therefore dead on
+  // arrival for this failure mode; it also skips anything already in the canonical ledger, so it
+  // could never have repaired a mirror gap. Handle the repair here, before the refusal.
+  if (REPAIR_MIRROR) {
+    await runRepairMirror(client, ledgerRows, mirrorRows, ledgerByFile, mirrorByFile, knownLedgerOrphans);
+    process.exit(0);
+  }
+
   if (ledgerDivergence.length > 0) {
     throw new Error(
       `LV-087: the two migration ledgers disagree on ${ledgerDivergence.length} migration(s) that the held ` +
         `registry does not explain:\n  ${ledgerDivergence.join("\n  ")}\n` +
         `A one-sided ledger row makes a migration look applied to the boot check while its DDL may never ` +
-        `have run. Resolve it (apply the migration, or record it in known-migration-ledger-exceptions.json ` +
-        `with the evidence) before migrating.`
+        `have run.\n` +
+        `If the row is in ${CANONICAL_LEDGER_TABLE} ONLY, the DDL DID run (that ledger is written only ` +
+        `after a successful apply) and the mirror row is simply missing -- repair it with:\n` +
+        `    npm run db:repair-mirror\n` +
+        `If the row is in ${MIRROR_LEDGER_TABLE} only, do NOT auto-repair: the DDL may never have run. ` +
+        `Apply the migration, or record it in known-migration-ledger-exceptions.json with the evidence.`
     );
   }
 
