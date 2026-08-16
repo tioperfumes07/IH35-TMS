@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T10:35:50-05:00",
-    "sourceSha": "0947bc547",
-    "deployedSha": "84215e1",
+    "generatedAt": "2026-08-16T10:59:40-05:00",
+    "sourceSha": "94a54ea9a",
+    "deployedSha": "1a1dfd9",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 903,
-    "failOpen": 28,
+    "ledgerRows": 904,
+    "failOpen": 25,
     "defects": 25
   },
   "modules": [
@@ -760,7 +760,7 @@
         "FAIL",
         "FIX",
         "AUDIT",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -792,7 +792,7 @@
           "AUDIT",
           "FIX",
           "AUDIT",
-          "FAIL",
+          "FIX",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -1184,7 +1184,7 @@
         "AUDIT",
         "AUDIT",
         "NA",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -1216,7 +1216,7 @@
           "AUDIT",
           "NA",
           "NA",
-          "FAIL",
+          "FIX",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -1396,7 +1396,7 @@
         "AUDIT",
         "FAIL",
         "NA",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -1428,7 +1428,7 @@
           "AUDIT",
           "FAIL",
           "NA",
-          "FAIL",
+          "FIX",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2121,6 +2121,69 @@
   },
   "recentActivity": [
     {
+      "number": 7827,
+      "title": "Cursor- fix(chrome): LV-PROGRAM/SYSTEM/CASH-FLOW — CollapsedListFilters + Apply panels",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 10:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7827",
+      "sha": "94a54ea9a",
+      "committedAtIso": "2026-08-16T10:59:40-05:00"
+    },
+    {
+      "number": 7826,
+      "title": "FINDING: ACCT-F5333",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 10:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7826",
+      "sha": "fd42e1982",
+      "committedAtIso": "2026-08-16T10:57:59-05:00"
+    },
+    {
+      "number": 7825,
+      "title": "FINDING: LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 10:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7825",
+      "sha": "c8c06d56b",
+      "committedAtIso": "2026-08-16T10:57:44-05:00"
+    },
+    {
+      "number": 7824,
+      "title": "FINDING: ACCT-F5333",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 10:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7824",
+      "sha": "98684eef1",
+      "committedAtIso": "2026-08-16T10:57:00-05:00"
+    },
+    {
+      "number": 7823,
+      "title": "FINDING: CLAIM-RESERVE-3650",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 10:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7823",
+      "sha": "1a1dfd98d",
+      "committedAtIso": "2026-08-16T10:55:35-05:00"
+    },
+    {
+      "number": 7822,
+      "title": "FINDING: LV-USMCA-FINANCE-HUB-FLAG-CORRECTION",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 10:41 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7822",
+      "sha": "542c1fd04",
+      "committedAtIso": "2026-08-16T10:41:34-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 10:40 AM CT",
+      "url": "",
+      "sha": "7c8c92cec",
+      "committedAtIso": "2026-08-16T15:40:12Z"
+    },
+    {
       "number": 7821,
       "title": "FINDING: FE-BUILD-RED-JE-POSTING-SHAPE-DUPLICATED — a hand-copied payload type drifted from the API and stopped the frontend publishing for 2h+ LANE: NON-FINANCIAL (type-only; no runtime change on a money path)",
       "state": "merged",
@@ -2146,69 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7819",
       "sha": "84215e1b7",
       "committedAtIso": "2026-08-16T10:33:37-05:00"
-    },
-    {
-      "number": 7818,
-      "title": "FINDING: ACCT-F5332",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7818",
-      "sha": "fa2f24553",
-      "committedAtIso": "2026-08-16T10:32:52-05:00"
-    },
-    {
-      "number": 7817,
-      "title": "Cursor- fix(tasks): LV-TASKS-TOOLBAR-LEAVES-POINT-TASK-BOARD — bind /tasks/report",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7817",
-      "sha": "34e281fb5",
-      "committedAtIso": "2026-08-16T10:32:19-05:00"
-    },
-    {
-      "number": 7816,
-      "title": "FINDING: ACCT-F5332",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:31 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7816",
-      "sha": "925e48e50",
-      "committedAtIso": "2026-08-16T10:31:24-05:00"
-    },
-    {
-      "number": 7815,
-      "title": "Cursor- fix(home): LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR — always mount ParityTable",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7815",
-      "sha": "3a549da00",
-      "committedAtIso": "2026-08-16T10:30:09-05:00"
-    },
-    {
-      "number": 7814,
-      "title": "FINDING: CLAIM-RESERVE-3648",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:28 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7814",
-      "sha": "92de8836c",
-      "committedAtIso": "2026-08-16T10:28:05-05:00"
-    },
-    {
-      "number": 7813,
-      "title": "Cursor- fix(chrome): LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP — stack topbar at ≤1279",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7813",
-      "sha": "5d072a8c0",
-      "committedAtIso": "2026-08-16T10:27:11-05:00"
-    },
-    {
-      "number": 7812,
-      "title": "FINDING: CLAIM-RESERVE-3646",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 10:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7812",
-      "sha": "296208e2a",
-      "committedAtIso": "2026-08-16T10:24:56-05:00"
     }
   ]
 }
