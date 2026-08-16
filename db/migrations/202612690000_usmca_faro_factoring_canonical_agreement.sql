@@ -103,6 +103,15 @@ SELECT
   NULL
 FROM org.companies c
 WHERE c.code = 'USMCA'
+  -- Fresh CI / throwaway DBs lack the prod-seeded USMCA factor profile (40b3690b-…).
+  -- Skip the agreement seed when the FK target is absent so apply-twice stays green;
+  -- prod already has the profile (LV-USMCA-NO-ACTIVE-FACTOR-BLOCKS-PROFILE) so this
+  -- INSERT still lands there.
+  AND EXISTS (
+    SELECT 1
+    FROM factoring.factor_profiles p
+    WHERE p.id = '40b3690b-f1d4-44b4-90cf-c1cfd4f79c33'::uuid
+  )
 ON CONFLICT (id) DO NOTHING;
 
 COMMIT;
