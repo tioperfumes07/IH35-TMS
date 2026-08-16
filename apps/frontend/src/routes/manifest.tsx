@@ -476,6 +476,7 @@ const LoanWizardPage = React.lazy(() => import("../pages/finance/LoanWizardPage"
 const CalculatorPage = React.lazy(() => import("../pages/finance/CalculatorPage").then((m) => ({ default: m.CalculatorPage })));
 const AmortizationPage = React.lazy(() => import("../pages/finance/AmortizationPage").then((m) => ({ default: m.AmortizationPage })));
 const FinanceScenariosPage = React.lazy(() => import("../pages/finance/FinanceScenariosPage").then((m) => ({ default: m.FinanceScenariosPage })));
+const FinanceScenarioDetailPage = React.lazy(() => import("../pages/finance/FinanceScenarioDetailPage").then((m) => ({ default: m.FinanceScenarioDetailPage })));
 import { ArApAgingPage } from "../pages/finance/ArApAgingPage"; // FIN-20 (read-only, flag-gated)
 const FinancialStatementsPage = React.lazy(() => import("../pages/finance/FinancialStatementsPage").then((m) => ({ default: m.FinancialStatementsPage })));
 import { FinanceHubPage } from "../pages/finance/FinanceHubPage"; // AF-6 (read-only, flag-gated)
@@ -4395,6 +4396,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/finance/overview" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
         <Route path="/finance/projections" element={<ProtectedRoute><FinanceProjectionsPage /></ProtectedRoute>} />
         <Route path="/finance/scenarios" element={<ProtectedRoute><FinanceScenariosPage /></ProtectedRoute>} />
+        <Route path="/finance/scenarios/:scenarioId" element={<ProtectedRoute><FinanceScenarioDetailPage /></ProtectedRoute>} />
         <Route path="/finance/loan-wizard" element={<ProtectedRoute><LoanWizardPage /></ProtectedRoute>} />
         <Route path="/finance/calculator" element={<ProtectedRoute><CalculatorPage /></ProtectedRoute>} />
         <Route path="/finance/amortization" element={<ProtectedRoute><AmortizationPage /></ProtectedRoute>} />
