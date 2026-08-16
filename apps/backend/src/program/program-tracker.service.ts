@@ -226,6 +226,15 @@ function classify(statusRaw: string, liveVerified: boolean): Tab {
   return "pending"; // pending / build / to-build / gated / unknown → not started
 }
 
+/**
+ * A merged PR is not deployment proof. The reconcile artifact must carry an
+ * explicit deployed lifecycle signal before Program Tracker may call a block
+ * Live. This deliberately fails closed when older artifacts lack the field.
+ */
+function hasDeploymentProof(block: ReconBlock): boolean {
+  return block.live_state === "deployed" || Boolean(block.deployed_ct);
+}
+
 // LIVE reconcile artifact from Cloudflare R2 — the same CI→R2 mechanism the program board uses
 // (program-board-sync.yml runs reconcile:blocks with git+gh, then uploads here). This is what makes the
 // per-block STATUS rollup refresh on every merge WITHOUT a deploy: the prod backend has no git/gh so it
@@ -320,9 +329,9 @@ export function computeProgramTracker(now: Date, reconOverride?: Recon, createdD
 
   const rows: TrackerBlockRow[] = blockInputs.map((b) => {
     const isDone = String(b.status).toUpperCase() === "DONE";
-    // Merge to main IS the prod deploy (§1.1), so a merged PR is the live-verified proof. Accept an explicit
-    // live_state=deployed too. A bare "done" with NO merged PR is NOT live-verified → stays In Progress.
-    const liveVerified = isDone && (b.pr != null || b.live_state === "deployed");
+    // DONE + merged is still only Built. Program Tracker may say Live solely
+    // when reconciliation carries explicit deployment proof.
+    const liveVerified = isDone && hasDeploymentProof(b);
     const prMergedAt = b.pr != null ? mergedAtByPr.get(b.pr) ?? null : null;
     const mergedAt = b.merged_at ?? prMergedAt ?? null;
     const entry = registry.get(normId(b.id));
@@ -403,7 +412,7 @@ export function computeProgramTracker(now: Date, reconOverride?: Recon, createdD
     for (const blk of p.blocks) {
       const rb = reconByNorm.get(normId(blk.block_ready_key ?? blk.id)) ?? reconByNorm.get(normId(blk.id));
       const status = rb ? String(rb.status) : "pending";
-      const lv = rb ? String(rb.status).toUpperCase() === "DONE" && (rb.pr != null || rb.live_state === "deployed") : false;
+      const lv = rb ? String(rb.status).toUpperCase() === "DONE" && hasDeploymentProof(rb) : false;
       const t = classify(status, lv);
       if (t === "completed") completed++;
       else if (t === "in_progress") inProg++;
