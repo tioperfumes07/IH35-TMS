@@ -972,7 +972,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.roadside_breakdown_load_id ?? null,
         ]
       );
-      const wo = woRes.rows[0];
+      let wo = woRes.rows[0];
+
+      // LV-WO-DISPLAY-ID-V5-IS-HARDCODED-PEND0 — next_wo_display_id mints with -PEND0 (correct when
+      // no vendor/parts ref yet). Rule 03 V5 is vendor-invoice / LABOR / pending — never unit serial.
+      // For ES/AC/ET/RT/RS create requires invoice numbers, so refresh immediately so the returned
+      // display_id carries the real V5 (last 5 of invoice) instead of a permanent -PEND0 stamp.
+      await client.query(`SELECT maintenance.refresh_wo_display_id($1)`, [wo.id]);
+      const refreshedWo = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 LIMIT 1`, [wo.id]);
+      if (refreshedWo.rows[0]) wo = refreshedWo.rows[0];
 
       for (const line of body.line_items) {
         await client.query(
@@ -1172,7 +1180,24 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.repaired_by ?? null,
         ]
       );
-      const updated = updatedRes.rows[0];
+      let updated = updatedRes.rows[0];
+      // When vendor invoice/WO refs change, recompute V5 per Rule 03 (immutable only after complete).
+      if (
+        body.external_vendor_invoice_number !== undefined ||
+        body.external_vendor_wo_number !== undefined
+      ) {
+        try {
+          await client.query(`SELECT maintenance.refresh_wo_display_id($1)`, [params.data.id]);
+          const refreshed = await client.query(
+            `SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+            [params.data.id, companyId],
+          );
+          if (refreshed.rows[0]) updated = refreshed.rows[0];
+        } catch (err) {
+          // E_WO_DISPLAY_ID_LOCKED when completed — leave display_id as-is
+          if (!String((err as Error).message || "").includes("E_WO_DISPLAY_ID_LOCKED")) throw err;
+        }
+      }
       await appendCrudAudit(
         client,
         user.uuid,
