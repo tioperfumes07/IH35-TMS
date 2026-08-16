@@ -5,6 +5,7 @@ import { luciaPool, withLuciaBypass } from "../auth/db.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars } from "../cash-advances/cash-advance-create.js";
 import { repaymentScheduleFromRequest } from "./cash-advance-requests.service.js";
+import { insertDriverPwaNotification } from "../pwa/driver-notifications.js";
 
 type QueryableClient = {
   query: <T extends Record<string, unknown> = Record<string, unknown>>(
@@ -121,15 +122,8 @@ async function notifyDriverPwaIfAvailable(
     payload: Record<string, unknown>;
   }
 ) {
-  const reg = await client.query(`SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return;
-  await client.query(
-    `
-      INSERT INTO pwa.driver_notifications (operating_company_id, driver_id, title, message, payload)
-      VALUES ($1, $2, $3, $4, $5::jsonb)
-    `,
-    [args.operatingCompanyId, args.driverId, args.title, args.message, JSON.stringify(args.payload)]
-  );
+  // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never bare-return when table absent.
+  await insertDriverPwaNotification(client, args);
 }
 
 /** Primary Owner UUID for accountable booking when acting via token (no interactive Owner login). */

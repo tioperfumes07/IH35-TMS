@@ -1,3 +1,5 @@
+import { insertDriverPwaNotification } from "../../pwa/driver-notifications.js";
+
 export type Queryable = {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
@@ -44,26 +46,17 @@ export async function enqueueEquipmentTransferNotify(
     ]
   );
 
-  const reg = await client.query(`SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return;
-
-  await client.query(
-    `
-      INSERT INTO pwa.driver_notifications (
-        operating_company_id, driver_id, title, message, payload
-      ) VALUES ($1::uuid, $2::uuid, $3, $4, $5::jsonb)
-    `,
-    [
-      args.operatingCompanyId,
-      args.driverUuid,
-      args.title,
-      args.message,
-      JSON.stringify({
-        kind: args.eventType,
-        transfer_uuid: args.transferUuid,
-        equipment_uuid: args.equipmentUuid ?? null,
-        equipment_kind: args.equipmentKind ?? null,
-      }),
-    ]
-  );
+  // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never bare-return when table absent.
+  await insertDriverPwaNotification(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    driverId: args.driverUuid,
+    title: args.title,
+    message: args.message,
+    payload: {
+      kind: args.eventType,
+      transfer_uuid: args.transferUuid,
+      equipment_uuid: args.equipmentUuid ?? null,
+      equipment_kind: args.equipmentKind ?? null,
+    },
+  });
 }

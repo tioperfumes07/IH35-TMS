@@ -5,6 +5,7 @@ import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { appendDeadlineReminderSent, listDeadlinesNeedingReminder } from "./matters.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { insertDriverPwaNotification } from "../pwa/driver-notifications.js";
 
 let initialized = false;
 
@@ -84,26 +85,20 @@ export function initializeLegalMattersReminderCron(app: FastifyInstance) {
 
             try {
               await withLuciaBypass(async (client) => {
-                const reg = await client.query(`SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS ok`);
-                if (!reg.rows[0]?.ok) return;
                 const driverId = row.related_driver_id;
                 if (!driverId) return;
-                await client.query(
-                  `
-                  INSERT INTO pwa.driver_notifications (operating_company_id, driver_id, title, message, payload)
-                  VALUES ($1, $2, $3, $4, $5::jsonb)
-                `,
-                  [
-                    companyId,
-                    driverId,
-                    `Legal deadline: ${matterNumber}`,
-                    `${title} — due ${due}`,
-                    JSON.stringify({ matter_id: row.matter_id, deadline_id: id, type: "legal_matter_deadline" }),
-                  ]
-                );
+                // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never bare-return when table absent.
+                await insertDriverPwaNotification(client, {
+                  operatingCompanyId: companyId,
+                  driverId: String(driverId),
+                  title: `Legal deadline: ${matterNumber}`,
+                  message: `${title} — due ${due}`,
+                  payload: { matter_id: row.matter_id, deadline_id: id, type: "legal_matter_deadline" },
+                });
               });
-            } catch {
-              /* PWA optional */
+            } catch (err) {
+              // Email already sent; PWA failure must not roll back reminder, but never silent.
+              console.error("legal.matter_deadline_reminder pwa notify failed", err);
             }
 
             await withLuciaBypass(async (client) => appendDeadlineReminderSent(client, id));
