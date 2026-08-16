@@ -21,9 +21,9 @@
       ],
       "spec": "inventory-deep-2026-08-01 roster",
       "status": "PASS",
-      "evidence": "2026-08-03 Neon lucia br-fancy-credit-akjnd07a: maintenance.parts_inventory TRANSP ≈144 (non-void active rows). InventoryPartsStockPage → listMaintenanceParts → GET /api/v1/maintenance/parts → FROM maintenance.parts_inventory (not catalogs.parts=0). Guard verify-inv-s01-parts-roster-density step 2256. Auditor 144-row UI match confirmed.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory rendered 2 scoped Parts & Stock rows; authenticated GET /api/v1/maintenance/parts with the same operating_company_id returned exactly 2 rows with matching IDs, names, quantities, and costs. Guard verify-inv-s01-parts-roster-density step 2256 remains green.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INV-CAT-01",
@@ -34,9 +34,9 @@
       ],
       "spec": "CLS-CATALOG-EMPTY field-level · 144/144 blank category",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS — legacy null/blank category renders N/A in Parts & Stock table; PartCreateDrawer requires PART_INVENTORY_CATEGORIES; backend create rejects blank category; guard verify-inv-cat-01-category-honesty.mjs (step 2260). Does not invent categories for existing 144 rows.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: both scoped /inventory rows rendered the human category Brake; Create Part mounted the required canonical category picker. Guard verify-inv-cat-01-category-honesty.mjs step 2260 remains green; no category was invented or mutated.",
       "pr": "#4223",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INV-S02",
@@ -47,9 +47,9 @@
       ],
       "spec": "sidebar flyout Assignments",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS — /inventory/assignments → listPartsAssignments → GET parts-invoice-links filtered by operating_company_id; ParityTable honest empty when no WO part links. Guard verify-inv-s02-s03-pick-01 step 2264.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory/assignments rendered its exact Assignment trail with honest 0-row copy; authenticated GET /api/v1/maintenance/parts-invoice-links for the same operating company returned exactly 0 rows. Guard step 2264 remains green.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INV-S03",
@@ -60,9 +60,9 @@
       ],
       "spec": "sidebar flyout Purchase History",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS — /inventory/purchases tab wired with honest empty (data-testid inventory-purchases-honest-empty); cites HOLD-INVENTORY-PURCHASE-HISTORY-SOR (no stock twin as history). Guard step 2264.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory/purchases rendered append-only Purchase History with honest 0-row copy; authenticated GET /api/v1/maintenance/parts-inventory/purchases for the same operating company returned exactly 0 rows. The old HOLD is superseded by the shipped append-only purchase ledger. Guard step 2264 remains green.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INV-PICK-01",
@@ -73,9 +73,9 @@
       ],
       "spec": "08-BLOCK picker source correction",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS — Parts & Stock + create path read maintenance.parts_inventory / PART_INVENTORY_CATEGORIES; no catalogs.parts SoR. Guard verify-inv-s02-s03-pick-01 + parts-canonical-source tests.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory and its Create/Edit drawers loaded the same 2 canonical maintenance.parts_inventory rows returned by the scoped maintenance parts endpoint; no catalogs.parts surface appeared. Guard verify-inv-s02-s03-pick-01 remains green.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INV-LINK-01",
@@ -86,9 +86,9 @@
       ],
       "spec": "Architectural inventory purchases chain",
       "status": "PASS",
-      "evidence": "2026-08-04 PASS — PartCreateDrawer + PartEditDrawer wire ReferenceSelect createKind=vendor posting vendor_id; parts.routes persists vendor_id on maintenance.parts_inventory INSERT/PATCH/SELECT; InventoryPartsStockPage renders EntityLink kind=vendor. Guard verify-inv-link-01-part-vendor.mjs step 2354 --selftest exit 0. | scaffold — mod13 finding: part-to-vendor none",
+      "evidence": "2026-08-16 USMCA LIVE PASS: Parts & Stock rendered P42-VENDOR-FK-20260811 on the canonical linked part; opening Edit after reload preserved that exact human vendor selection. Create Part vendor picker placed + Add new vendor first, followed by scoped human vendor labels. Guard verify-inv-link-01-part-vendor.mjs step 2354 remains green.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INV-VERIFY-01",
