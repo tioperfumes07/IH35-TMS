@@ -38,11 +38,14 @@ if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alia
 // "driver_status" appended at the end. Wires the previously-orphaned DriverStatusCell
 // (dispatch lifecycle sub-stage — pretrip/at_shipper/loading/detention/hos_break/accident/...,
 // distinct from both the load-level "status" chip and the Risk column's ETA prediction).
-// This 17-column order is the contract going forward.
+// LOCKED COUNT CHANGE 2026-08-15 (Live ETA / Samsara ETA surface, additive): 17 → 20 columns —
+// "samsara_eta", "on_time", "eta_freshness" appended after "driver_status" (LiveEtaColumns).
+// This 20-column order is the contract going forward.
 const expectedOrder = [
   "unit", "trailer", "load", "driver", "location", "customer",
   "commodity", "pickup", "delivery", "wo", "cargo_temp", "linehaul", "status_signal",
   "live_gps", "risk", "status", "driver_status",
+  "samsara_eta", "on_time", "eta_freshness",
 ];
 const modelStart = src.indexOf("const boardColumns");
 const modelEnd = src.indexOf("];", modelStart);
