@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T15:56:34-05:00",
-    "sourceSha": "be67f8e5d",
-    "deployedSha": "8f5ce7b",
+    "generatedAt": "2026-08-16T15:57:55-05:00",
+    "sourceSha": "500fb6b1a",
+    "deployedSha": "3106cb2",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 936,
+    "ledgerRows": 937,
     "failOpen": 21,
     "defects": 12
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7909,
+      "title": "FINDING: LV-INVENTORY-PARTS-STOCK-FILTERS-ABSENT",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7909",
+      "sha": "500fb6b1a",
+      "committedAtIso": "2026-08-16T15:57:55-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:57 PM CT",
+      "url": "",
+      "sha": "078cc26e6",
+      "committedAtIso": "2026-08-16T20:57:52Z"
+    },
+    {
       "number": 7905,
       "title": "FINDING: P0-HYGIENE-2026-08-16",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "24914c3db",
       "committedAtIso": "2026-08-16T20:34:08Z"
-    },
-    {
-      "number": 7903,
-      "title": "FINDING: ROW-432-DRIVER-SCHEMA-DRIFT-CLOSEOUT",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7903",
-      "sha": "82e4a5883",
-      "committedAtIso": "2026-08-16T15:33:05-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:32 PM CT",
-      "url": "",
-      "sha": "2d65436ac",
-      "committedAtIso": "2026-08-16T20:32:02Z"
     }
   ]
 }
