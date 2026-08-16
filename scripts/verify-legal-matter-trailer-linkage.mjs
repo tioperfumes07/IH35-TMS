@@ -17,6 +17,7 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function audit(s) {
   const failures = [];
   if (!/data-testid="legal-matter-trailer-picker"[\s\S]{0,500}kind="trailer"/.test(s.form)) failures.push("create/edit form must expose canonical trailer picker");
+  if (!/data-testid="legal-matter-trailer-picker"[\s\S]{0,500}allowCreate(?:\s|\/>)/.test(s.form)) failures.push("trailer picker must offer first-row canonical create");
   if (!/equipment_id:\s*optionalUuidOrNull\(form\.equipment_id\)/.test(s.form) || !/equipment_id:\s*matter\.equipment_id/.test(s.form)) failures.push("trailer FK must round-trip through form payload and reload");
   if (!/equipment_id,\s*\n\s*created_by_user_id/.test(s.service) || !/input\.equipment_id \?\? null/.test(s.service)) failures.push("create INSERT must persist equipment_id");
   if ((s.service.match(/assertEquipmentInCompany\(client, input\.equipment_id/g) ?? []).length < 2) failures.push("create and update must validate trailer before write");
@@ -33,6 +34,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "form", /kind="trailer"/, 'kind="unit"'],
+    ["picker-create", "form", /(data-testid="legal-matter-trailer-picker"[\s\S]{0,500})allowCreate(?:\s|\/>)/, "$1allowCreate={false}\n"],
     ["payload", "form", /equipment_id:\s*optionalUuidOrNull\(form\.equipment_id\)/, "equipment_id: null"],
     ["insert", "service", /input\.equipment_id \?\? null/, "null"],
     ["validation", "service", /assertEquipmentInCompany\(client, input\.equipment_id/g, "skipEquipmentCheck(client, input.equipment_id"],
