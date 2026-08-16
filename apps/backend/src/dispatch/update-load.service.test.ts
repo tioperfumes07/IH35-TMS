@@ -1,9 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   updateDispatchLoad,
   LoadEditLockedError,
   LoadNotFoundError,
 } from "./update-load.service.js";
+
+// ACCT-F289 mint-if-empty path calls buildInvoiceFromLoad when no draft/proforma lines match.
+// Unit tests mock SQL only — keep mint a no-op so rate-resync SQL assertions stay the subject.
+vi.mock("../accounting/from-load.js", () => ({
+  buildInvoiceFromLoad: vi.fn(async () => ({ idempotent: true, invoice: { id: "inv-mock" } })),
+}));
 
 const LOAD_ID = "11111111-1111-1111-1111-111111111111";
 const OCI = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";

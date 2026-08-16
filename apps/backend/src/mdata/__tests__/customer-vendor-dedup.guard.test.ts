@@ -17,7 +17,10 @@ describe("customer dedup (G6-3)", () => {
   });
 
   it("dedup is entity-scoped and ignores archived rows", () => {
-    expect(customerSource).toContain("operating_company_id = $2 AND deactivated_at IS NULL");
+    // Cast form ($2::uuid) is required for typed RLS-safe binds; plain $2 also historically matched.
+    expect(customerSource).toMatch(
+      /operating_company_id = \$2(?:::uuid)? AND deactivated_at IS NULL/
+    );
   });
 
   it("passes a resolved operating company into the dedup check", () => {
@@ -41,8 +44,8 @@ describe("vendor dedup (G6-2)", () => {
   });
 
   it("name compare is case-insensitive, entity-scoped, and ignores archived rows", () => {
-    expect(vendorSource).toContain(
-      "lower(btrim(vendor_name)) = lower(btrim($1)) AND operating_company_id = $2 AND deactivated_at IS NULL"
+    expect(vendorSource).toMatch(
+      /lower\(btrim\(vendor_name\)\) = lower\(btrim\(\$1\)\) AND operating_company_id = \$2(?:::uuid)? AND deactivated_at IS NULL/
     );
   });
 
