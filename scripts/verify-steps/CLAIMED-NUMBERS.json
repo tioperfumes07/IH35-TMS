@@ -3447,5 +3447,10 @@
     "name": "verify-cardlink-plain-click-selects-in-place",
     "claimer": "cc-1",
     "claimed_at": "2026-08-15"
+  },
+  "3608": {
+    "name": "verify-driver-create-dob-mx-license-wired",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
   }
 }
