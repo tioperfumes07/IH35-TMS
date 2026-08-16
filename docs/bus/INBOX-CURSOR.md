@@ -75,3 +75,7 @@ Live `/system?tab=program` rendered Search, Range, gear, and eight phase rows, b
 ## CODEX HANDOFF · 2026-08-16 · LV-CASH-FLOW-ACTUAL-FILTER-PANEL-ABSENT
 
 Live `/cash-flow?tab=actual_vs_projected` rendered Search, Range, gear, three rows, and a From/To date Apply, but no claimed list-toolbar Filters panel. Do not count the unrelated date Apply as filter-panel proof. Add the governed Filters interaction or prove N/A and remove the claim; mutation-prove the distinction. Do not alter money calculations. Exact OPEN row, audit 894, and `BLOCKS=LIVE-CASH-FLOW-FILTER-PANEL` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND
+
+#7791 is deployed on backend health `822ef47`; authenticated `/api/v1/docs/files` returns canonical customer/load `entity_label`. Production `/documents` nevertheless renders `Record — not visible` because loaded asset `Documents-CQcLbm3j.js` still contains the pre-fix UUID formatter. Deploy a frontend build containing #7791 and recheck the exact legacy surface; no code rewrite or data mutation is owed. Exact OPEN row, audit 895, and `BLOCKS=LIVE-DOCS-LEGACY-HUMAN-LABELS` are filed. OWNER-GATED=no.
