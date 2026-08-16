@@ -92,7 +92,7 @@
     },
     {
       "id": "INV-VERIFY-01",
-      "title": "Inventory module VERIFY-1..8 TRANSP + USMCA",
+      "title": "Inventory module VERIFY-1..8 — USMCA TMS-native",
       "layers": [
         "VERIFY-1",
         "VERIFY-2",
@@ -105,9 +105,9 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-04 PASS — meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks, INV-LINK-01 part→vendor + three /inventory routes. Inventory module 7/7 complete. | 2026-08-03 PASS — meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks + three /inventory routes. INV-LINK-01 (part→vendor) remains OPEN.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory rendered exactly 2 scoped stock rows; Parts & Stock, Assignments, and Purchase History all mounted without 404/500. Assignments and Purchase History showed honest zero states. Search, Range, gear, Create Part, canonical Category and Preferred Vendor controls rendered; the vendor picker placed + Add new vendor first and the persisted P42-VENDOR-FK-20260811 row exposed its canonical vendor drill. No save or mutation. TRANSP is explicitly N/A under the owner-closed USMCA-only sprint law; no TRANSP or QBO claim is made. Meta guard step 2268 composes the six exact inventory acceptance guards and three canonical routes.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
   "pass_count": 7,
