@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T07:46:59-05:00",
-    "sourceSha": "bacdd816e",
-    "deployedSha": "bef3033",
+    "generatedAt": "2026-08-16T07:50:10-05:00",
+    "sourceSha": "7193cbd46",
+    "deployedSha": "bacdd81",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 886,
-    "failOpen": 26,
-    "defects": 24
+    "ledgerRows": 888,
+    "failOpen": 28,
+    "defects": 25
   },
   "modules": [
     {
@@ -1447,9 +1447,9 @@
       "cells": [
         "AUDIT",
         "AUDIT",
+        "FAIL",
         "NA",
-        "NA",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -1479,9 +1479,9 @@
         "USMCA": [
           "AUDIT",
           "AUDIT",
+          "FAIL",
           "NA",
-          "NA",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7789,
+      "title": "FINDING: LV-DRIVER-HUB-TOOLBAR-LEAVES-POINT-INBOX + LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7789",
+      "sha": "7193cbd46",
+      "committedAtIso": "2026-08-16T07:50:10-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:48 AM CT",
+      "url": "",
+      "sha": "5c462e99d",
+      "committedAtIso": "2026-08-16T12:48:04Z"
+    },
+    {
       "number": 7788,
       "title": "FINDING: LV-USERS-TOOLBAR-BORROWS-DETAIL-ACTIVITY",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "6ad237be7",
       "committedAtIso": "2026-08-16T12:31:06Z"
-    },
-    {
-      "number": 7784,
-      "title": "FINDING: LV-LEGAL-TOOLBAR-LEAVES-POINT-LANDING",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 07:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7784",
-      "sha": "833f12b4d",
-      "committedAtIso": "2026-08-16T07:29:57-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 07:19 AM CT",
-      "url": "",
-      "sha": "58811221c",
-      "committedAtIso": "2026-08-16T12:19:44Z"
     }
   ]
 }
