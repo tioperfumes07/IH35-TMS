@@ -347,7 +347,7 @@ exact failure this register exists to prevent.
 | ☐ | `CI-F30` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `CI-F31` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `CI-F32` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
-| ☐ | `CI-GUARD-WIRED-REGRESSION-300-ORPHANS` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
+| ☑ | `CI-GUARD-WIRED-REGRESSION-300-ORPHANS` | C | Codex | Codex | this PR | 2026-08-16 | Historical 300/301/91 orphan censuses are drained; current main reports zero unaccounted guards. | `node scripts/verify-guard-wired.mjs` exit 0 · 3164 total / 0 unaccounted | OWNER-GATED=no · product Live=BLOCKED |
 | ☐ | `CI-MIGRATION-CONSISTENCY-NEVER-REACHED` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `CI-VERIFY-STATIC-BASELINE-RED` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
 | ☐ | `CI-VERIFY-STEP-DUPLICATE-1000-1002-1004` | — | — | — | — | — | Tip-static register sync 2026-08-15 (Cursor) — OPEN on GUARD-WORKORDERS; sign-off pending owning lane | — | — |
