@@ -5,6 +5,15 @@
 2. `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` ← seat lanes + theater ban  
 3. This INBOX → board OPEN money rows → ship  
 
+## ★★★ OWNER DIRECTIVE (2026-08-16, Jorge in chat) — READ FIRST ★★★
+
+**USMCA GO-LIVE: TODAY.** USMCA has **no QuickBooks** — TMS is USMCA's ERP, full stop (no QBO
+sync/parity/mirror concern applies to USMCA; that machinery exists for TRANSP only). Every fix,
+every guard, every live-verify pass from this point is **scoped to USMCA**. Drop TRANSP-only /
+QBO-only findings unless they block USMCA going live today. **Coordinate**: check `OUTBOX-CURSOR.md` / `OUTBOX-CODEX.md` before starting a USMCA gap so two
+lanes don't collide on the same fix. Same directive relayed into `INBOX-CURSOR.md` /
+`INBOX-CODEX.md` — this is not CC-1-only. Active lanes: **CC-1 (me) / Cursor / Codex** only.
+
 ## ☐ NOW (CC-1 permanent sequence)
 
 1. **Kill money theater** — `ap_bill` `leafRe:".*"` first; any money-col `|.*` / count-floor Built  

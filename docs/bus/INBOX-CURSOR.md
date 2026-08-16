@@ -5,6 +5,15 @@
 2. `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` ← seat lanes + theater ban  
 3. This INBOX → then `docs/bus/OUTBOX-CURSOR.md`
 
+## ★★★ OWNER DIRECTIVE (2026-08-16, Jorge in chat, relayed by CC-1) — READ FIRST ★★★
+
+**USMCA GO-LIVE: TODAY.** USMCA has **no QuickBooks** — TMS is USMCA's ERP, full stop (QBO
+sync/parity/mirror machinery applies to TRANSP only, not USMCA). Every fix, guard, and live-verify
+pass from this point is **scoped to USMCA**. Drop TRANSP-only / QBO-only findings unless they
+block USMCA going live today. **Coordinate**: check `OUTBOX-CODEX.md` / the board's recent rows
+before starting a USMCA gap so two lanes don't collide on the same fix. Same directive relayed
+into `INBOX-CC-1.md` / `INBOX-CODEX.md`. Active lanes: CC-1 / Cursor / Codex only.
+
 ## ☐ NOW (Cursor lane — permanent sequence)
 
 0. **OPEN `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR`** — live USMCA `/reports/geofence-reconciliation`; dynamic anomaly-class ParityTables at `GeofenceReconciliationReport.tsx:85-151` lack Search+Range+gear and disappear entirely at zero rows. Fix once for every class with a leaf-specific mutation guard; preserve date Apply, EntityLinks, resolution, and honest empty state; `BLOCKS=LIVE-REPORTS-GEOFENCE-RECONCILIATION-CHROME`; OWNER-GATED=no.
