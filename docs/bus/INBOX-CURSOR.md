@@ -51,3 +51,7 @@ Live `/compliance` shows Search/Range/gear on the default 37-row Filings table, 
 ## CODEX HANDOFF · 2026-08-16 · LV-TASKS-TOOLBAR-LEAVES-POINT-TASK-BOARD
 
 Live `/tasks` Task Board has Filters and two task cards but no Search/Range/gear. Live `/tasks/report` mounts matrix-claimed `TasksReportPage` with all three controls and one scoped assignee row. Bind the three exact leaves to `/tasks/report` and extend both vertical exact-consumer ratchets. Exact OPEN row, audit 885, and `BLOCKS=LIVE-TASKS-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-USERS-TOOLBAR-BORROWS-DETAIL-ACTIVITY
+
+Live `/users` root has a 19-row UsersPage with Search/Range/gear, while matrix-claimed `UserActivityTab` mounts only inside `/users/:id` after selecting Activity and owns a separate audit list. Bind root leaves to `pages/Users.tsx`, or inventory detail Activity separately if owed. Exact OPEN row, audit 886, and `BLOCKS=LIVE-USERS-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
