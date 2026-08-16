@@ -3,6 +3,15 @@
 -- ACH/routing/bank-account fields exist anywhere in the schema (verified live: zero columns
 -- matching %ach%/%routing%/%bank_account% on any vendor-named table).
 --
+-- CANONICAL-CHECK: vendor_payment_method_master_data. accounting.vendor_payment_methods does NOT
+-- duplicate driver_finance.driver_payment_methods (the canonical registry entry for the
+-- "payment_method" concept, 202607370000) or any money ledger. driver_payment_methods is the
+-- PER-DRIVER method row; this table is the PER-VENDOR (AP-side) counterpart — same tokenized-
+-- reference pattern, disjoint subject (vendor, not driver), no shared rows, no shared FK. It holds
+-- no amount, no balance, no posting — master data only (see SCOPE note below) — so it cannot be a
+-- second ledger for anything driver_payment_methods, accounting.bill_payments, or any AP/GL table
+-- already covers.
+--
 -- MIRRORS THE EXISTING, DELIBERATE DRIVER PATTERN EXACTLY (driver_finance.driver_payment_methods,
 -- 202607370000) rather than inventing new architecture: a dedicated master-data table, TOKENIZED
 -- reference only (opaque token from a processor/vault) — this migration NEVER stores a raw bank

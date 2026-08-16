@@ -332,5 +332,13 @@
     "reason": "LIVE RENDER OUTAGE 2026-08-04: Claude Neon-applied ITEM-5a and ledgered _system._schema_migrations with sentinel checksum 'held-manual-apply' (not a sha256). Disk sha256 is 4d9bacee\u2026. db:migrate preDeploy aborts on \"modified after apply\" (same class as DEPLOY-UNBLOCK-ACCT-ECON-05). Accept historical ledger\u2194disk sentinel; do not re-apply; never edit the applied SQL (PR #4296 SQL header rewrite would change disk hash and re-break deploy).",
     "added_at": "2026-08-04",
     "added_in_pr": "DEPLOY-UNBLOCK-ITEM5A-20260812"
+  },
+  {
+    "filename": "202612640000_vendor_payment_methods_master_data.sql",
+    "ledger_checksum": "a8c74cc18bdd3f972817d371a7e60d64dba35fd5a70269733580ff9d3b089ca2",
+    "disk_checksum": "5c57ca74505c5c6554581d466def0406d5d65d32f581545371fa12eaecc443ba",
+    "reason": "CI-POST-BANK-F5330-MAIN-RED: applied to prod 2026-08-16T09:01:39Z before verify-no-duplicate-financial-ledger.mjs was run against it; the guard failed origin/main because the file carried no '-- CANONICAL-CHECK:' marker (the prose header explained the vendor-vs-driver distinction but not in the regex-matched shape). Added a CANONICAL-CHECK block naming driver_finance.driver_payment_methods and the per-vendor/per-driver distinction \u2014 comment-only, no DDL/behavior change. Never edit applied DDL again.",
+    "added_at": "2026-08-16",
+    "added_in_pr": "CI-POST-BANK-F5330-MAIN-RED"
   }
 ]
