@@ -16,6 +16,8 @@ import { partNeedsReorder } from "../maintenance/parts-low-stock";
 import { displayPartInventoryCategory } from "./partInventoryCategories";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 // ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
 // were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
@@ -134,6 +136,16 @@ export function InventoryPartsStockPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<MaintenancePartRow | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [stockFilter, setStockFilter] = useState<"" | "in_stock" | "reorder" | "out_of_stock" | "voided">("");
+  const stagedFilters = useStagedListFilters({
+    applied: { categoryFilter, stockFilter },
+    empty: { categoryFilter: "", stockFilter: "" as const },
+    onApply: (next) => {
+      setCategoryFilter(next.categoryFilter);
+      setStockFilter(next.stockFilter);
+    },
+  });
 
   const partsQuery = useQuery({
     queryKey: ["inventory", "parts", operatingCompanyId],
@@ -151,7 +163,24 @@ export function InventoryPartsStockPage() {
     const requestedPart = rawParts.find((part) => part.id === requestedPartId);
     if (requestedPart) setEditingPart(requestedPart);
   }, [rawParts, searchParams]);
-  const rows = useMemo(() => mapMaintenancePartsToInventoryRows(rawParts), [rawParts]);
+  const allRows = useMemo(() => mapMaintenancePartsToInventoryRows(rawParts), [rawParts]);
+  const categoryOptions = useMemo(
+    () => [...new Set(allRows.map((row) => row.category).filter((value): value is string => Boolean(value)))].sort().map((value) => ({ value, label: displayPartInventoryCategory(value) })),
+    [allRows],
+  );
+  const rows = useMemo(
+    () =>
+      allRows.filter((row) => {
+        if (categoryFilter && row.category !== categoryFilter) return false;
+        if (stockFilter === "voided") return Boolean(row.voided_at);
+        if (row.voided_at) return !stockFilter;
+        if (stockFilter === "reorder") return partNeedsReorder(row.on_hand_qty, row.reorder_threshold);
+        if (stockFilter === "out_of_stock") return row.on_hand_qty <= 0;
+        if (stockFilter === "in_stock") return row.on_hand_qty > 0 && !partNeedsReorder(row.on_hand_qty, row.reorder_threshold);
+        return true;
+      }),
+    [allRows, categoryFilter, stockFilter],
+  );
 
   return (
     <div className="space-y-4">
@@ -181,6 +210,45 @@ export function InventoryPartsStockPage() {
           loading={partsQuery.isLoading}
           emptyText="No parts found. Create your first part to get started."
           rowKey={(row: { id: string }) => row.id}
+          filterBar={
+            <CollapsedListFilters
+              activeFilterCount={(categoryFilter ? 1 : 0) + (stockFilter ? 1 : 0)}
+              onApply={stagedFilters.apply}
+              onReset={stagedFilters.reset}
+              onCancel={stagedFilters.cancel}
+              applyDisabled={!stagedFilters.dirty}
+              testIdPrefix="inventory-parts"
+              dataAttributes={{ "data-inventory-parts-filter-toolbar": "collapsed" }}
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-[11px] text-slate-600">
+                  Category
+                  <SelectCombobox
+                    value={stagedFilters.draft.categoryFilter || null}
+                    onChange={(next) => stagedFilters.setDraft((current) => ({ ...current, categoryFilter: next ?? "" }))}
+                    options={categoryOptions}
+                    placeholder="All categories"
+                    allowClear
+                  />
+                </label>
+                <label className="text-[11px] text-slate-600">
+                  Stock state
+                  <SelectCombobox
+                    value={stagedFilters.draft.stockFilter || null}
+                    onChange={(next) => stagedFilters.setDraft((current) => ({ ...current, stockFilter: (next ?? "") as typeof current.stockFilter }))}
+                    options={[
+                      { value: "in_stock", label: "In stock" },
+                      { value: "reorder", label: "Needs reorder" },
+                      { value: "out_of_stock", label: "Out of stock" },
+                      { value: "voided", label: "Voided" },
+                    ]}
+                    placeholder="All stock states"
+                    allowClear
+                  />
+                </label>
+              </div>
+            </CollapsedListFilters>
+          }
           rowActions={(row) => (
             <button
               type="button"
