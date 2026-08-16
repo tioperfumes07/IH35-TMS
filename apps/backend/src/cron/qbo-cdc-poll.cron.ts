@@ -7,7 +7,8 @@ import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 /** Poll QuickBooks CDC every 5 minutes for configured TRK/TRANSP realms (see env QBO_REALM_ID_*). */
 export function initializeQboCdcPollCron(app: FastifyInstance) {
   markRunnerInitialized("qbo_cdc_poll");
-  setInterval(async () => {
+
+  const tick = async () => {
     await wrapBackgroundJobTick(
       "integrations.qbo_cdc_poll",
       async () => {
@@ -34,5 +35,12 @@ export function initializeQboCdcPollCron(app: FastifyInstance) {
       app.log,
       { onError: (error) => markRunnerFailed("qbo_cdc_poll", error) }
     );
+  };
+
+  // Startup tick: setInterval alone leaves a post-deploy gap of up to one period; /healthz
+  // maxStaleMinutes=30 then flips stale_jobs after redeploys or event-loop stalls.
+  void tick();
+  setInterval(() => {
+    void tick();
   }, 5 * 60 * 1000);
 }

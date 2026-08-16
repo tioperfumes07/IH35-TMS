@@ -70,9 +70,22 @@ check(/initDriverPwaSentry\s*\(\s*\)/.test(pwaMain), "apps/driver-pwa/src/main.t
 const pwaEb = read("apps/driver-pwa/src/components/ErrorBoundary.tsx");
 check(/capturePwaError\s*\(/.test(pwaEb), "driver-pwa ErrorBoundary.tsx: componentDidCatch must report to Sentry via capturePwaError().");
 
+// 5. QBO interval crons must fire an immediate startup tick (not setInterval-only).
+// Prod 2026-08-16: integrations.qbo_cdc_poll went stale_jobs after redeploy because the first
+// wrapBackgroundJobTick waited a full 5m period while /healthz maxStaleMinutes=30.
+for (const f of [
+  "apps/backend/src/cron/qbo-cdc-poll.cron.ts",
+  "apps/backend/src/cron/qbo-inbound-sync.cron.ts",
+]) {
+  const src = read(f);
+  check(/void\s+tick\s*\(\s*\)/.test(src), `${f}: must void tick() at initialize (startup tick before setInterval).`);
+  check(/setInterval\s*\(/.test(src), `${f}: must retain setInterval cadence.`);
+  check(/wrapBackgroundJobTick\s*\(/.test(src), `${f}: tick must run through wrapBackgroundJobTick.`);
+}
+
 if (errors.length > 0) {
   console.error("verify-cron-observability FAIL:");
   for (const e of errors) console.error(`  • ${e}`);
   process.exit(1);
 }
-console.log("verify-cron-observability OK — cron entrypoints init Sentry + record jobs; qbo-sync/email reclaim stale locks; recon healthz rules + FE/PWA Sentry wired.");
+console.log("verify-cron-observability OK — cron entrypoints init Sentry + record jobs; qbo-sync/email reclaim stale locks; recon healthz rules + FE/PWA Sentry wired; QBO interval crons have startup ticks.");

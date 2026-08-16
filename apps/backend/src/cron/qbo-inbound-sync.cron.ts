@@ -8,7 +8,8 @@ let timer: ReturnType<typeof setInterval> | undefined;
 export function initializeQboInboundSyncCron(app: FastifyInstance) {
   markRunnerInitialized("qbo_inbound_sync");
   if (timer) clearInterval(timer);
-  timer = setInterval(async () => {
+
+  const tick = async () => {
     await wrapBackgroundJobTick(
       "integrations.qbo_inbound_sync",
       async () => {
@@ -18,6 +19,12 @@ export function initializeQboInboundSyncCron(app: FastifyInstance) {
       app.log,
       { onError: (error) => markRunnerFailed("qbo_inbound_sync", error) }
     );
+  };
+
+  // Startup tick: same class as qbo_cdc_poll — interval-only leaves a post-deploy health gap.
+  void tick();
+  timer = setInterval(() => {
+    void tick();
   }, 15_000);
 }
 
