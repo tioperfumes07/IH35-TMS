@@ -1,0 +1,35 @@
+{
+  "block_id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "CC-1-CONTINUOUS",
+  "task": "Settlements/finance toolbar search/range/gear repointed from compatibility aliases and a conditional-preview page to their real canonical data-list surfaces; toolbar_filter left honestly N/A where no Filters panel exists; topbar-tracks-shrinkable guard repointed to the live CSS location; 4 stale 'owner-gated' strings reworded to match the no-owner-approval-gate law with a new forbidden-pattern guard.",
+  "branch": "cc1-final-clean-2-2026-08-16",
+  "lane": "CC-1",
+  "allowed_files": [
+    ".block-ready/CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16.json",
+    "scripts/verify-topbar-tracks-shrinkable.mjs",
+    "docs/specs/scoreboard/modules/settlements.required.json",
+    "docs/specs/scoreboard/modules/finance.required.json",
+    "scripts/verify-all-module-list-toolbar-search-range-filter.mjs",
+    "scripts/verify-all-module-list-toolbar-connectivity.mjs",
+    "apps/frontend/src/pages/finance/LoanWizardPage.tsx",
+    "apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx",
+    "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
+    "apps/frontend/src/pages/finance/FinanceHubPage.tsx",
+    "scripts/verify-no-internal-language-in-prod-ui.mjs",
+    "docs/trackers/block-reconciliation-data.json",
+    "docs/trackers/BLOCK-RECONCILIATION-2026-08-16.md",
+    "docs/trackers/exports/IH35-TMS-BLOCK-RECONCILIATION-2026-08-16.xlsx"
+  ],
+  "acceptance": [
+    { "kind": "guard", "check": "scripts/verify-topbar-tracks-shrinkable.mjs reads the top-level .top-bar rule in responsive-breakpoints.css (was reading a Topbar.tsx inline style that no longer exists there)" },
+    { "kind": "guard", "check": "scripts/verify-all-module-list-toolbar-search-range-filter.mjs + verify-all-module-list-toolbar-connectivity.mjs assert settlements/finance toolbar route_hints point at their real canonical data-list surfaces" },
+    { "kind": "guard", "check": "scripts/verify-no-internal-language-in-prod-ui.mjs forbids /owner[- ]gated/i; 0 hits repo-wide" },
+    { "kind": "guard", "check": "scripts/verify-tracker-artifacts-fresh.mjs — regenerated block-reconciliation artifacts committed fresh" }
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}

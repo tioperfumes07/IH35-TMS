@@ -33,7 +33,7 @@ run("dire accident scenario — full linkage (real engine)", () => {
     ap: randomUUID(), repair: randomUUID(), uncat: randomUUID(),
     customer: randomUUID(), unit: randomUUID(), driver: randomUUID(), load: randomUUID(),
     covType: randomUUID(), policy: randomUUID(), accident: randomUUID(), claim: randomUUID(),
-    matter: randomUUID(), wo: randomUUID(), liability: randomUUID(),
+    matter: randomUUID(), wo: randomUUID(), liability: randomUUID(), accidentType: randomUUID(),
   };
   async function tx(fn: () => Promise<void>) {
     await db.query("BEGIN"); await db.query("SET LOCAL app.bypass_rls='lucia'");
@@ -55,6 +55,12 @@ run("dire accident scenario — full linkage (real engine)", () => {
     await db.connect(); await db.query("SET ROLE ih35_app");
     await tx(async () => {
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `dire-${s}@test.local`]);
+      // CI-BUILD-TYPECHECK-ACCIDENT-TYPE-ID-NOT-NULL: safety.accident_reports.accident_type_id is
+      // NOT NULL with an FK to catalogs.accident_types(operating_company_id, id) — a per-entity
+      // catalog createIsolatedOperatingCompany does not seed. The INSERT below never supplied it,
+      // so this always 23502'd (not order-dependent like the shared-user fixture bug — this scenario
+      // was never exercised green). Seed a minimal entity-scoped type and supply it on the insert.
+      await db.query(`INSERT INTO catalogs.accident_types (id,operating_company_id,code,display_name) VALUES ($1::uuid,$2::uuid,'COLLISION','Collision')`, [id.accidentType, companyId]);
       // COA + roles + a repair-expense category map
       await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Accounts Payable','Liability',true)`, [id.ap, companyId, `AP${s}`]);
       await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Accident Repair Expense','Expense',true)`, [id.repair, companyId, `RPR${s}`]);
@@ -73,7 +79,7 @@ run("dire accident scenario — full linkage (real engine)", () => {
       await db.query(`INSERT INTO insurance.type_catalog (id,tenant_id,code,name) VALUES ($1::uuid,$2::uuid,$3,'Auto Liability')`, [id.covType, companyId, `AL-${s}`]);
       await db.query(`INSERT INTO insurance.policy (id,tenant_id,insurer_name,policy_number,coverage_type,coverage_type_id,effective_date,expiry_date) VALUES ($1::uuid,$2::uuid,'Progressive',$3,'auto_liability',$4::uuid,CURRENT_DATE - 30, CURRENT_DATE + 300)`, [id.policy, companyId, `POL-${s}`, id.covType]);
       // ACCIDENT REPORT — driver at fault, police report #
-      await db.query(`INSERT INTO safety.accident_reports (id,operating_company_id,driver_id,unit_id,load_id,at_fault,police_report_number,accident_at,report_date) VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,'yes',$6,now(),CURRENT_DATE)`, [id.accident, companyId, id.driver, id.unit, id.load, `PR-${s}-DOT`]);
+      await db.query(`INSERT INTO safety.accident_reports (id,operating_company_id,driver_id,unit_id,load_id,at_fault,police_report_number,accident_at,report_date,accident_type_id) VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,'yes',$6,now(),CURRENT_DATE,$7::uuid)`, [id.accident, companyId, id.driver, id.unit, id.load, `PR-${s}-DOT`, id.accidentType]);
       // INSURANCE CLAIM — links accident, driver responsible, $0.05 deductible
       await db.query(`INSERT INTO insurance.claim (id,tenant_id,claim_number,policy_id,accident_date,reported_date,accident_report_id,driver_id,driver_responsible,fault,load_id,deductible_cents,status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE,CURRENT_DATE,$5::uuid,$6::uuid,true,'company',$7::uuid,$8,'open')`, [id.claim, companyId, `CLM-${s}`, id.policy, id.accident, id.driver, id.load, CENTS]);
       await db.query(`UPDATE safety.accident_reports SET insurance_claim_id=$1::uuid, insurance_claim_number=$2 WHERE id=$3::uuid`, [id.claim, `CLM-${s}`, id.accident]);

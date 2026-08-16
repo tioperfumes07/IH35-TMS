@@ -63,6 +63,14 @@ run("stage-3 · load abandonment → escrow forfeit (real engine)", () => {
     companyId = isolated.companyId;
 
     await tx(async () => {
+      // CI-BUILD-TYPECHECK-SCENARIO-TEST-USER-FK: `userId` above is a shared hardcoded fixture UUID
+      // that this file was silently relying on a SIBLING test file (accident-dire-scenario.db.test.ts)
+      // to have already inserted into identity.users as a beforeAll side effect — vitest gives no
+      // ordering guarantee between separate test files/workers, so this FK'd 23503 whenever this file
+      // ran before that one. Seed it here too (idempotent) so this file is self-sufficient.
+      await db.query(
+        `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
+        [userId, `abandon-${s}@test.local`]);
       // The abandonment trigger writes escrow_deductions_pending.source_type='LOAD-ABANDONMENT',
       // which FKs (operating_company_id, source_type) → catalogs.driver_deduction_types(.., code).
       // That catalog is PER ENTITY and createIsolatedOperatingCompany does not seed it, so without

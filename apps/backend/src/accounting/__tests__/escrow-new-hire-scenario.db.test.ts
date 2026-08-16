@@ -63,6 +63,15 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
     companyId = isolated.companyId;
 
     await tx(async () => {
+      // CI-BUILD-TYPECHECK-SCENARIO-TEST-USER-FK: actor.userId is a shared hardcoded fixture UUID
+      // that this file was silently relying on a SIBLING test file (accident-dire-scenario.db.test.ts)
+      // to have already inserted into identity.users as a beforeAll side effect — vitest gives no
+      // ordering guarantee between separate test files/workers, so any FK on this actor 23503'd
+      // whenever this file ran before that one. Seed it here too (idempotent) so this file is
+      // self-sufficient.
+      await db.query(
+        `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
+        [actor.userId, `escrow-hire-${s}@test.local`]);
       await db.query(`INSERT INTO catalogs.accounts (id,operating_company_id,account_number,account_name,account_type,is_postable) VALUES ($1::uuid,$2::uuid,$3,'Cash Clearing','Asset',true)`, [id.cash, companyId, `CSH${s}`]);
       // Mirrors prod USMCA 2100 "Driver Escrow - Held in Trust" — a LIABILITY. Trust money is owed
       // back to the driver; booking it anywhere else would recognise someone else's money as ours.
