@@ -40,23 +40,36 @@ export function collectProblems(root = ROOT) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const good = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   if (collectProblems().length) {
     console.error(LABEL, "SELFTEST FAIL — live page rejected");
     process.exit(1);
   }
-  const mutant = good.replace(/kind=["']vendor["']/, 'kind="unit"');
-  const tmpDir = fs.mkdtempSync(path.join(ROOT, "tmp-geofence-loc-"));
-  try {
-    const rel = "apps/frontend/src/pages/operations";
-    fs.mkdirSync(path.join(tmpDir, rel), { recursive: true });
-    fs.writeFileSync(path.join(tmpDir, PAGE), mutant);
-    if (!collectProblems(tmpDir).length) {
-      console.error(LABEL, "SELFTEST FAIL — vendor EntityPicker regression escaped");
-      process.exit(1);
+  const good = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const mutantCustomer = good.replace('dataField="geofence-customer-site"', 'dataField="geofence-broken"').replace(
+    /<EntityPicker\n                  kind="customer"/,
+    '<EntityPicker\n                  kind="unit"'
+  );
+  const mutantVendor = good.replace(
+    /<EntityPicker\n                  kind="vendor"/,
+    '<EntityPicker\n                  kind="unit"'
+  );
+  const mutantList = good + "\nlistVendors({ limit: 5000 });\n";
+  for (const [name, mutant] of [
+    ["customer-kind", mutantCustomer],
+    ["vendor-kind", mutantVendor],
+    ["listVendors-regress", mutantList],
+  ]) {
+    const tmpDir = fs.mkdtempSync(path.join(ROOT, "tmp-geofence-loc-"));
+    try {
+      fs.mkdirSync(path.join(tmpDir, "apps/frontend/src/pages/operations"), { recursive: true });
+      fs.writeFileSync(path.join(tmpDir, PAGE), mutant);
+      if (!collectProblems(tmpDir).length) {
+        console.error(LABEL, `SELFTEST FAIL — ${name} escaped`);
+        process.exit(1);
+      }
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
   console.log(LABEL, "SELFTEST OK");
   process.exit(0);
