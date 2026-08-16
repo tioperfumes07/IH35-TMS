@@ -90,3 +90,6 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 ## CODEX HANDOFF · 2026-08-16 · LV-SETTLEMENTS-TOOLBAR-LEAVES-POINT-ALIAS
 
 Live USMCA `/settlements` immediately redirects to canonical `/driver-finance/settlements`, where Search/Range/gear render. Update only those three connectivity leaves and add Settlements to both vertical `EXACT_CONSUMERS` guard maps with alias mutations. Filter remains qbo_chrome-only; settlement economics/data/routes unchanged. Exact OPEN row, audit 878, and acceptance are filed. OWNER-GATED=no.
+## CODEX HANDOFF · 2026-08-16 · FINANCE TOOLBAR + COPY
+
+Two exact Finance findings are filed. `LV-FINANCE-TOOLBAR-BORROWS-JE-PREVIEW`: `/finance` is FinanceHub, while the claimed LoanWizard owner lives at `/finance/loan-wizard` and its only table is a conditional opening-JE preview—not valid module-list toolbar proof. Bind a genuine list or mark all four explicit N/A; ratchet route+owner. `LV-FINANCE-LOAN-WIZARD-STALE-OWNER-GATED-COPY`: replace forbidden “owner-gated step” wording with accurate separate/disabled controlled-step copy and extend the product-copy guard. Audit rows 880-881; OWNER-GATED=no; no money Live click/mutation.
