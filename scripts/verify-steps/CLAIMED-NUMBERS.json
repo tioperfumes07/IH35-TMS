@@ -3552,5 +3552,11 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1165
+  "total_claimed": 1165,
+  "3646": {
+    "guard": "verify-topbar-responsive-no-horizontal-clip",
+    "lane": "cursor",
+    "claimed_at": "2026-08-16",
+    "note": "LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP"
+  }
 }
