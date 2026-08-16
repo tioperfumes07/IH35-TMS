@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leafRe":"^chrome\\.toolbar_(search|range)$","task":"CLS-LIST-TOOLBAR-SEARCH-RANGE-FILTER","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["banking","cash-flow","driver-hub","finance","home","program","system","users"],"cols":["connectivity"],"leafRe":"^chrome\\.toolbar_filter$","task":"CLS-LIST-TOOLBAR-SEARCH-RANGE-FILTER","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["banking","cash-flow","driver-hub","home","program","system","users"],"cols":["connectivity"],"leafRe":"^chrome\\.toolbar_filter$","task":"CLS-LIST-TOOLBAR-SEARCH-RANGE-FILTER","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -25,7 +25,7 @@ const EVIDENCE = {
   "driver-hub": ["apps/frontend/src/pages/home/DriverHubReportingPage.tsx", "<ParityTable"],
   drivers: ["apps/frontend/src/pages/drivers/DriversTable.tsx", "<ParityTable"],
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
-  finance: ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "<ParityTable"],
+  finance: ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", "<ParityTable"],
   fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
   form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
@@ -45,7 +45,7 @@ const EVIDENCE = {
   vendors: ["apps/frontend/src/pages/vendors/VendorsListView.tsx", "<ParityTable"],
 };
 
-const FILTER_MODULES = new Set(["banking", "cash-flow", "driver-hub", "finance", "home", "program", "system", "users"]);
+const FILTER_MODULES = new Set(["banking", "cash-flow", "driver-hub", "home", "program", "system", "users"]);
 const EXACT_CONSUMERS = {
   "cash-flow": { route: "/cash-flow?tab=actual_vs_projected", surface: "pages/cash-flow/tabs/ActualVsProjectedTab.tsx" },
   form_425: { route: "/425c?tab=history", surface: "pages/form425c/tabs/HistoryTab.tsx" },

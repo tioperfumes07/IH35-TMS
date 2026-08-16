@@ -216,7 +216,7 @@ function catalogEntry(entry: {
  *  - /api/v1/accounting/categories   — reads mdata.qbo_accounts, creates into catalogs.* (clause-5
  *    violation). Out of scope here; another PR owns it.
  *  - /api/v1/catalogs/driver/escrow-types — endpoint is healthy, but escrow is financial-cluster and
- *    this lane is frontend-only. Deliberately deferred to an owner-gated block.
+ *    this lane is frontend-only. Deliberately deferred to a separate, not-yet-wired block.
  */
 export const CATALOG_PICKER_CONFIGS = {
   // ── The original six, unchanged. Only the DISPATCH moved out of a hardcoded Set. ──────────────

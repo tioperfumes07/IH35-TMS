@@ -21,7 +21,7 @@ const EVIDENCE = {
   "driver-hub": ["apps/frontend/src/pages/home/DriverHubReportingPage.tsx", "<ParityTable"],
   drivers: ["apps/frontend/src/pages/drivers/DriversTable.tsx", "<ParityTable"],
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
-  finance: ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "<ParityTable"],
+  finance: ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", "<ParityTable"],
   fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
   form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
