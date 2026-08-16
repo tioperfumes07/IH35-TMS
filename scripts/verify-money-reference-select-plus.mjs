@@ -186,8 +186,14 @@ if (woId.includes("QboCombobox")) {
 if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(woId) || !/allowCreate/.test(woId)) {
   failures.push("CreateWOSectionIdentification vendor must use EntityPicker kind=vendor allowCreate");
 }
-if (!woId.includes('createKind="customer"')) {
-  failures.push("CreateWOSectionIdentification customer must use ReferenceSelect createKind=customer");
+if (!/EntityPicker[\s\S]*?kind=["']customer["']/.test(woId) || !/allowCreate/.test(woId)) {
+  failures.push("CreateWOSectionIdentification customer must use EntityPicker kind=customer allowCreate");
+}
+{
+  const stripped = woId.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  if (/listCustomers/.test(stripped) || /listVendors/.test(stripped)) {
+    failures.push("CreateWOSectionIdentification must not capped-list customers/vendors");
+  }
 }
 
 // ── overnight burn-down (2026-07-22): CoaRolesPage / InvoiceTypeModalBase / PaymentApplyModal ──
