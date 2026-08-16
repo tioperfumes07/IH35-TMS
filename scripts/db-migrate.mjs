@@ -9,6 +9,7 @@ import {
   listMigrationFiles,
 } from "./lib/migration-filename-validation.mjs";
 import { loadHeldSet, shouldSkipHeldOnProd } from "./lib/held-migrations.mjs";
+import { writeLedgerSnapshot } from "./db-ledger-snapshot.mjs";
 
 dotenv.config();
 
@@ -653,6 +654,28 @@ try {
         `(_system._schema_migrations=${g.canonical}, ih35_migrations.applied_migrations=${g.mirror}). ` +
         `The application reads these to answer "are we fully migrated?", so the backend boot check ` +
         `and launch-readiness both fail closed without them.`
+    );
+  }
+
+  // Refresh the committed snapshot that verify:applied-migrations-immutable falls back to where
+  // there are no database credentials (CI). BACKEND-PRE-DEPLOY-RED: hand-refreshing rotted for a
+  // month (353 cached entries vs 877 files on disk) and the guard reading it reported OK the whole
+  // time while production deploys were broken. Writing it here means the coder who applies a
+  // migration gets the refreshed snapshot in their working tree and commits it alongside.
+  // Non-fatal: the migrations are already committed by this point and the canonical ledger in the
+  // database is the source of truth. A snapshot write failure must never fail a deploy — but it is
+  // reported loudly, never swallowed.
+  try {
+    const snapshotCount = await writeLedgerSnapshot({
+      client,
+      ledgerPath: path.resolve(MIGRATIONS_DIR, ".ledger.json"),
+      sourceLabel: "db:migrate",
+    });
+    console.log(`Ledger snapshot refreshed — ${snapshotCount} applied migrations written to db/migrations/.ledger.json`);
+  } catch (snapshotError) {
+    console.warn(
+      `WARNING: migrations applied, but refreshing db/migrations/.ledger.json failed (${snapshotError.message}). ` +
+        `Run 'npm run db:ledger:snapshot' and commit the result, or CI's immutability guard will drift blind.`
     );
   }
 
