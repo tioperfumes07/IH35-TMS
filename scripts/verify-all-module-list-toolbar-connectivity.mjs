@@ -43,8 +43,10 @@ const EVIDENCE = {
 
 const HELP_MATRIX = "docs/specs/scoreboard/modules/help.required.json";
 const HELP_IDS = ["chrome.toolbar_search", "chrome.toolbar_range", "chrome.toolbar_gear", "chrome.toolbar_filter"];
-const PROGRAM_LIST_ROUTE = "/program/modules";
-const PROGRAM_LIST_CONSUMER = "pages/program/ModuleCompletionPage.tsx";
+const EXACT_CONSUMERS = {
+  program: { route: "/program/modules", surface: "pages/program/ModuleCompletionPage.tsx" },
+  system: { route: "/system?tab=program", surface: "pages/system/SystemModulePage.tsx" },
+};
 
 function read() {
   const files = new Set([...Object.values(CORE), ...Object.values(EVIDENCE).map(([file]) => file), HELP_MATRIX]);
@@ -75,8 +77,9 @@ export function verify(source) {
     catch (error) { failures.push(`${module} matrix must parse: ${error.message}`); continue; }
     const leaf = matrix.leaves?.find((candidate) => candidate.id === "chrome.toolbar_gear");
     if (!leaf?.required?.includes("connectivity")) failures.push(`${module}:chrome.toolbar_gear must require connectivity`);
-    if (module === "program" && (leaf?.route_hint !== PROGRAM_LIST_ROUTE || leaf?.surface_path !== PROGRAM_LIST_CONSUMER)) {
-      failures.push("program:chrome.toolbar_gear must point at the real Module Completion list consumer, not borrow credit from /program");
+    const exact = EXACT_CONSUMERS[module];
+    if (exact && (leaf?.route_hint !== exact.route || leaf?.surface_path !== exact.surface)) {
+      failures.push(`${module}:chrome.toolbar_gear must point at its exact production list consumer, not borrow shared-component credit`);
     }
   }
 
@@ -112,12 +115,14 @@ if (process.argv.includes("--self-test")) {
     mutations.push(() => ({ ...source, [file]: source[file].replace('"id": "chrome.toolbar_gear"', '"id": "broken.toolbar_gear"') }));
   }
   mutations.push(() => ({ ...source, [HELP_MATRIX]: source[HELP_MATRIX].replace('"id": "chrome.toolbar_gear",', '"id": "chrome.toolbar_gear",').replace('"required": [],\n      "note": "N/A: Help has no configurable data-table columns."', '"required": ["connectivity"],\n      "note": "BROKEN"') }));
-  mutations.push(() => {
-    const file = "docs/specs/scoreboard/modules/program.required.json";
-    const matrix = JSON.parse(source[file]);
-    matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_gear").route_hint = "/program";
-    return { ...source, [file]: JSON.stringify(matrix) };
-  });
+  for (const module of Object.keys(EXACT_CONSUMERS)) {
+    mutations.push(() => {
+      const file = `docs/specs/scoreboard/modules/${module}.required.json`;
+      const matrix = JSON.parse(source[file]);
+      matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_gear").route_hint = `/${module}`;
+      return { ...source, [file]: JSON.stringify(matrix) };
+    });
+  }
   mutations.forEach((mutate, index) => {
     if (!verify(mutate()).length) throw new Error(`self-test mutation ${index + 1} survived`);
   });
