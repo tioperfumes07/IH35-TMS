@@ -4,11 +4,18 @@ import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../.
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
 import { JournalEntryTypePicker } from "../../../components/accounting/JournalEntryTypePicker";
 import { userFacingApiError } from "../../../lib/api-error-message";
+
+// BANK-F5330 / P23-BANKING-RAW-UUID-BACKEND-GAPS — migration 202612670000 added entity_type as the
+// discriminator beside journal_entry_postings.entity_uuid. Same 4 kinds the exemption in
+// verify-picker-law-no-raw-uuid.mjs (and the blueprint's own entity_uuid comments) always meant.
+type JeEntityType = "" | "customer" | "vendor" | "driver" | "unit";
 
 type Props = {
   open: boolean;
@@ -26,10 +33,18 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
   const [referenceNumber, setReferenceNumber] = useState("");
   const [journalEntryTypeId, setJournalEntryTypeId] = useState<string | null>(null);
   const [lines, setLines] = useState<
-    Array<{ account_id: string; class_id: string; entity_uuid: string; debit: number; credit: number; description: string }>
+    Array<{
+      account_id: string;
+      class_id: string;
+      entity_type: JeEntityType;
+      entity_uuid: string;
+      debit: number;
+      credit: number;
+      description: string;
+    }>
   >([
-    { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
-    { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
+    { account_id: "", class_id: "", entity_type: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
+    { account_id: "", class_id: "", entity_type: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
   ]);
   const [loading, setLoading] = useState(false);
 
@@ -79,8 +94,8 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
     setReferenceNumber("");
     setJournalEntryTypeId(null);
     setLines([
-      { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
-      { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
+      { account_id: "", class_id: "", entity_type: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
+      { account_id: "", class_id: "", entity_type: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
     ]);
   };
 
@@ -102,6 +117,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                 account_id: line.account_id,
                 class_id: line.class_id || null,
                 entity_uuid: line.entity_uuid || null,
+                entity_type: line.entity_type || null,
                 debit_or_credit: "debit" as const,
                 amount_cents: Math.round(line.debit * 100),
                 description: line.description || null,
@@ -112,6 +128,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                 account_id: line.account_id,
                 class_id: line.class_id || null,
                 entity_uuid: line.entity_uuid || null,
+                entity_type: line.entity_type || null,
                 debit_or_credit: "credit" as const,
                 amount_cents: Math.round(line.credit * 100),
                 description: line.description || null,
@@ -122,6 +139,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
         account_id: string;
         class_id?: string | null;
         entity_uuid?: string | null;
+        entity_type?: string | null;
         debit_or_credit: "debit" | "credit";
         amount_cents: number;
         description?: string | null;
@@ -183,12 +201,38 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                     placeholder="Class"
                     onOptionCreated={() => void classesQuery.refetch()}
                   />
-                  <input
-                    className="h-8 rounded-sm border border-gray-300 px-2"
-                    placeholder="Entity UUID (optional)"
-                    value={line.entity_uuid}
-                    onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, entity_uuid: e.target.value } : row)))}
-                  />
+                  <div className="flex flex-col gap-1">
+                    <SelectCombobox
+                      value={line.entity_type}
+                      onChange={(e) =>
+                        setLines((prev) =>
+                          prev.map((row, i) =>
+                            i === idx ? { ...row, entity_type: e.target.value as JeEntityType, entity_uuid: "" } : row
+                          )
+                        )
+                      }
+                      className="h-8 text-xs"
+                    >
+                      <option value="">Entity (optional)</option>
+                      <option value="customer">Customer</option>
+                      <option value="vendor">Vendor</option>
+                      <option value="driver">Driver</option>
+                      <option value="unit">Unit</option>
+                    </SelectCombobox>
+                    {line.entity_type ? (
+                      <EntityPicker
+                        kind={line.entity_type}
+                        operatingCompanyId={operatingCompanyId}
+                        value={line.entity_uuid || null}
+                        onChange={(next) =>
+                          setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, entity_uuid: next ?? "" } : row)))
+                        }
+                        nestedInDrawer
+                        placeholder={`Select ${line.entity_type}`}
+                        className="h-8 text-xs"
+                      />
+                    ) : null}
+                  </div>
                   {/* M-1: dollars-mode QBO money entry; debit/credit DOLLARS → Math.round(*100)=amount_cents byte-for-byte. */}
                   <MoneyInput
                     valueDollars={line.debit || null}
@@ -224,7 +268,10 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               type="button"
               className="text-slate-700 underline"
               onClick={() =>
-                setLines((prev) => [...prev, { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" }])
+                setLines((prev) => [
+                  ...prev,
+                  { account_id: "", class_id: "", entity_type: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
+                ])
               }
             >
               + Create line

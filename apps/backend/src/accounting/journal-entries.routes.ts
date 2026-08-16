@@ -14,14 +14,34 @@ import {
 const sourceSchema = z.enum(["manual", "auto"]);
 const statusSchema = z.enum(["posted", "voided"]);
 
-const postingSchema = z.object({
-  account_id: z.string().uuid(),
-  class_id: z.string().uuid().nullable().optional(),
-  entity_uuid: z.string().uuid().nullable().optional(),
-  debit_or_credit: z.enum(["debit", "credit"]),
-  amount_cents: z.coerce.number().int().positive(),
-  description: z.string().trim().max(500).nullable().optional(),
-});
+// BANK-F5330 / P23-BANKING-RAW-UUID-BACKEND-GAPS — entity_type is the discriminator migration
+// 202612670000 added beside entity_uuid on accounting.journal_entry_postings (mirrors
+// banking.reconciliation_matches' ledger_entry_kind + ledger_entry_id pattern). The DB CHECK
+// already enforces the pair, but reject it here too so the operator gets a named 400 instead of a
+// raw constraint-violation 500.
+const entityTypeSchema = z.enum(["customer", "vendor", "driver", "unit"]);
+
+const postingSchema = z
+  .object({
+    account_id: z.string().uuid(),
+    class_id: z.string().uuid().nullable().optional(),
+    entity_uuid: z.string().uuid().nullable().optional(),
+    entity_type: entityTypeSchema.nullable().optional(),
+    debit_or_credit: z.enum(["debit", "credit"]),
+    amount_cents: z.coerce.number().int().positive(),
+    description: z.string().trim().max(500).nullable().optional(),
+  })
+  .superRefine((val, ctx) => {
+    const hasUuid = Boolean(val.entity_uuid);
+    const hasType = Boolean(val.entity_type);
+    if (hasUuid !== hasType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "entity_uuid and entity_type must both be set or both be empty",
+        path: ["entity_type"],
+      });
+    }
+  });
 
 const createJournalEntryBodySchema = z.object({
   operating_company_id: z.string().uuid(),

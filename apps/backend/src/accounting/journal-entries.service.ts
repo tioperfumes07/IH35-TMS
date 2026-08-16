@@ -110,6 +110,8 @@ type CreatePostingInput = {
   account_id: string;
   class_id?: string | null;
   entity_uuid?: string | null;
+  /** BANK-F5330 / P23 — discriminator for entity_uuid; migration 202612670000 CHECK-pairs them. */
+  entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
   debit_or_credit: "debit" | "credit";
   amount_cents: number;
   description?: string | null;
@@ -298,6 +300,7 @@ export async function createJournalEntryOnClient(
           account_id,
           class_id,
           entity_uuid,
+          entity_type,
           debit_or_credit,
           amount_cents,
           description,
@@ -305,7 +308,7 @@ export async function createJournalEntryOnClient(
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text
@@ -317,6 +320,9 @@ export async function createJournalEntryOnClient(
         posting.account_id,
         posting.class_id ?? null,
         posting.entity_uuid ?? null,
+        // BANK-F5330 / P23 — must travel with entity_uuid: migration 202612670000's CHECK rejects
+        // one set without the other.
+        posting.entity_type ?? null,
         posting.debit_or_credit,
         posting.amount_cents,
         posting.description ?? null,
@@ -867,6 +873,7 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
           p.class_id::text,
           c.class_name,
           p.entity_uuid::text,
+          p.entity_type,
           p.debit_or_credit,
           p.amount_cents,
           p.description

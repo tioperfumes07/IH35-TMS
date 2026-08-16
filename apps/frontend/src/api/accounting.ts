@@ -1287,6 +1287,8 @@ export type JournalEntryPosting = {
   class_id: string | null;
   class_name?: string | null;
   entity_uuid: string | null;
+  /** BANK-F5330 / P23 — discriminator kind for entity_uuid (migration 202612670000). */
+  entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
   debit_or_credit: "debit" | "credit";
   amount_cents: number;
   description: string | null;
@@ -1395,6 +1397,7 @@ export function createJournalEntry(
       account_id: string;
       class_id?: string | null;
       entity_uuid?: string | null;
+      entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
       debit_or_credit: "debit" | "credit";
       amount_cents: number;
       description?: string | null;

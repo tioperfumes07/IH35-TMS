@@ -168,15 +168,6 @@ const EXEMPTIONS = [
       "Accounting audit trail source_id filter, polymorphic over invoice|bill|payment as typed into the sibling source_type box. Read-only forensic filter on an audit surface; wiring a picker here needs a source_type-driven lookup that is C6/accounting lane work, not C1.",
   },
   {
-    file: `${SRC}/pages/banking/components/ManualJEModal.tsx`,
-    field: "entity_uuid",
-    category: "blocked-needs-backend",
-    blocker:
-      "Journal-entry line `entity_uuid` is polymorphic (customer|vendor|driver|unit) with NO sibling entity_type column to drive a picker kind. Resolving it needs either a new entity_type column or a cross-entity search endpoint — schema/money-route work in the accounting lane, not C1.",
-    reason:
-      "Manual JE line entity reference. C1 is frontend-only and must not guess an entity kind that the data model does not record.",
-  },
-  {
     file: `${SRC}/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx`,
     field: "qbo_vendor_id",
     category: "blocked-needs-backend",
@@ -200,7 +191,7 @@ const EXEMPTIONS = [
  * The exemption list is a RATCHET: it may shrink, never grow. Raising this number is a visible,
  * reviewable edit to the guard itself — which is the point. It is not a threshold to tune.
  */
-const EXEMPTION_CEILING = 12;
+const EXEMPTION_CEILING = 11;
 
 /** An "admin-audit-forensic-id" exemption must actually live on an admin/audit surface. */
 const AUDIT_PATH = /\/(admin|audit)\/|AuditTrail|AuditLog|ActivityLog|audit-log/;
