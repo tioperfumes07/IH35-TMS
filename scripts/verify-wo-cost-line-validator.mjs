@@ -58,6 +58,12 @@ export function analyse(files) {
         `sent in the create payload. The validator and the request must agree on what a cost line is.`
     );
   }
+  if (/service_item_uuid:\s*line\.service_item_uuid\s*\|\|\s*["']{2}/.test(src)) {
+    problems.push(
+      `${MODAL}: an unselected optional service-item FK is serialized as an empty string. The backend ` +
+        `accepts UUID, null, or omission; use null so an honestly described catalog-free Section-B line can save.`
+    );
+  }
   return problems;
 }
 
@@ -68,14 +74,16 @@ function readAll() {
 function selftest() {
   const failures = [];
   const t = (l, c) => { if (!c) failures.push(l); };
-  const good = `{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },`;
+  const good = `service_item_uuid: line.service_item_uuid || null,\n{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },`;
   const bug = `{ label: "${RULE}", ok: (form.watch("line_items") ?? []).length > 0 },`;
+  const emptyUuidBug = `service_item_uuid: line.service_item_uuid || "",\n${good}`;
 
   t("counting the submitted arrays passes", analyse({ [MODAL]: good }).length === 0);
   t("the REAL pre-fix line_items rule FAILS", analyse({ [MODAL]: bug }).length === 2);
   t("deleting the rule entirely FAILS", analyse({ [MODAL]: "no such rule here" }).length === 1);
   t("a comment mentioning line_items does not trip it",
     analyse({ [MODAL]: `// used to watch line_items\n${good}` }).length === 0);
+  t("an empty optional service-item UUID FAILS", analyse({ [MODAL]: emptyUuidBug }).length === 1);
   t("missing file FAILS", analyse({ [MODAL]: null }).length === 1);
 
   if (failures.length) {
@@ -87,7 +95,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 5 cases (2 pass-shapes incl. comment-immunity, 3 fail-shapes)`);
+  console.log(`${LABEL} selftest OK — 6 cases (2 pass-shapes incl. comment-immunity, 4 fail-shapes)`);
   process.exit(0);
 }
 const problems = analyse(readAll());
