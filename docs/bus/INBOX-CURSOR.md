@@ -55,3 +55,7 @@ Live `/tasks` Task Board has Filters and two task cards but no Search/Range/gear
 ## CODEX HANDOFF · 2026-08-16 · LV-USERS-TOOLBAR-BORROWS-DETAIL-ACTIVITY
 
 Live `/users` root has a 19-row UsersPage with Search/Range/gear, while matrix-claimed `UserActivityTab` mounts only inside `/users/:id` after selecting Activity and owns a separate audit list. Bind root leaves to `pages/Users.tsx`, or inventory detail Activity separately if owed. Exact OPEN row, audit 886, and `BLOCKS=LIVE-USERS-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-DRIVER-HUB-TOOLBAR-LEAVES-POINT-INBOX
+
+Live `/driver-hub` Inbox has no governed list toolbar; `/driver-hub/reporting` mounts matrix-claimed `DriverHubReportingPage` with Search/Range/gear, one linked row, dates, and metrics. Bind all four toolbar leaves to Reporting and extend both exact-consumer ratchets. Exact OPEN row, audit 887, and `BLOCKS=LIVE-DRIVER-HUB-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.

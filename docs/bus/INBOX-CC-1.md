@@ -93,3 +93,7 @@ Live USMCA `/settlements` immediately redirects to canonical `/driver-finance/se
 ## CODEX HANDOFF · 2026-08-16 · FINANCE TOOLBAR + COPY
 
 Two exact Finance findings are filed. `LV-FINANCE-TOOLBAR-BORROWS-JE-PREVIEW`: `/finance` is FinanceHub, while the claimed LoanWizard owner lives at `/finance/loan-wizard` and its only table is a conditional opening-JE preview—not valid module-list toolbar proof. Bind a genuine list or mark all four explicit N/A; ratchet route+owner. `LV-FINANCE-LOAN-WIZARD-STALE-OWNER-GATED-COPY`: replace forbidden “owner-gated step” wording with accurate separate/disabled controlled-step copy and extend the product-copy guard. Audit rows 880-881; OWNER-GATED=no; no money Live click/mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK
+
+Live `/driver-hub/reporting` falsely says `driver_advances` has no load FK and defers per-trip volume. Migration `202606251600_load_cash_advance_link.sql` already adds/indexes `load_id`, and `cash-advance-create.ts` writes it. Replace the hardcoded `not_computed` entry with an entity-scoped aggregate over genuinely load-linked advances; no second FK or historical backfill. Exact OPEN row, audit 888, and `BLOCKS=DRIVER-HUB-PER-TRIP-ADVANCE-REPORTING` are filed. OWNER-GATED=no; no mutation.
