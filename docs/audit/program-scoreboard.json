@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T14:57:32-05:00",
-    "sourceSha": "bb056549f",
+    "generatedAt": "2026-08-16T15:05:03-05:00",
+    "sourceSha": "5026d5540",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 923,
+    "ledgerRows": 926,
     "failOpen": 24,
     "defects": 26
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7899,
+      "title": "FINDING: LV-SYSTEM-NONQBO-FOOTER-COMMA",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7899",
+      "sha": "5026d5540",
+      "committedAtIso": "2026-08-16T15:05:03-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:58 PM CT",
+      "url": "",
+      "sha": "3a467d781",
+      "committedAtIso": "2026-08-16T19:58:49Z"
+    },
+    {
       "number": 7898,
       "title": "FINDING: LV-USMCA-GLOBAL-QBO-STATUS-CHROME",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "22409631b",
       "committedAtIso": "2026-08-16T19:37:33Z"
-    },
-    {
-      "number": 7892,
-      "title": "FINDING: LV-REPORTS-IFTA-INTERNAL-BACKEND-STATUS-COPY",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7892",
-      "sha": "b703b4761",
-      "committedAtIso": "2026-08-16T14:34:48-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(safety): SAF-F3386 — ComplaintsTab customer EntityPicker",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:34 PM CT",
-      "url": "",
-      "sha": "ad050227c",
-      "committedAtIso": "2026-08-16T14:34:34-05:00"
     }
   ]
 }
