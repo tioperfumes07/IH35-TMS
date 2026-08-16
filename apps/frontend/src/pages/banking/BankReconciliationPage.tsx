@@ -1,15 +1,17 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   acceptBankReconMatch,
+  type BankMatchCandidateKind,
   type BankReconWorklistPayload,
   type BankReconWorklistRow,
   closeBankReconPeriod,
   getBankReconWorklist,
   getCoaAccounts,
+  getMatchCandidates,
   getPlaidBankAccounts,
   getReconciliationSessions,
   manualBankReconMatch,
@@ -20,6 +22,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { Combobox } from "../../components/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -78,6 +81,7 @@ export function BankReconciliationPage() {
   const [selectedTxId, setSelectedTxId] = useState("");
   const [manualLedgerKind, setManualLedgerKind] = useState<"payment" | "bill_payment" | "transfer" | "je">("payment");
   const [manualLedgerId, setManualLedgerId] = useState("");
+  const [manualLedgerSearch, setManualLedgerSearch] = useState("");
   const [varianceAccountId, setVarianceAccountId] = useState("");
 
   const accountsQuery = useQuery({
@@ -139,6 +143,37 @@ export function BankReconciliationPage() {
     const all = [...(worklistQuery.data?.unmatched_transactions ?? []), ...(worklistQuery.data?.auto_matched_candidates ?? [])];
     return all.find((row) => row.id === selectedTxId) ?? null;
   }, [selectedTxId, worklistQuery.data]);
+
+  // P23-BANKING-RAW-UUID-BACKEND-GAPS — the manual-match panel used to take a raw pasted uuid
+  // because no unreconciled-only, bank-txn-comparable list endpoint covered all four kinds
+  // (verify-picker-law's documented blocker on `manualLedgerId`). It already exists one drawer over
+  // (MatchDrawer.tsx, via getMatchCandidates) — reused here rather than building a second endpoint.
+  const manualCandidatesQuery = useQuery({
+    queryKey: ["bank-recon", "manual-match-candidates", selectedCompanyId, selectedRow?.id, manualLedgerSearch],
+    queryFn: () =>
+      getMatchCandidates(String(selectedRow?.id), selectedCompanyId!, {
+        searchAll: true,
+        q: manualLedgerSearch || undefined,
+      }),
+    enabled: Boolean(selectedCompanyId && selectedRow?.id),
+  });
+
+  const manualLedgerOptions = useMemo(() => {
+    const candidates = manualCandidatesQuery.data?.candidates ?? [];
+    return candidates
+      .filter((c) => c.ledger_entry_kind === (manualLedgerKind as BankMatchCandidateKind))
+      .map((c) => ({
+        value: c.ledger_entry_id,
+        label: `${c.memo?.trim() ? c.memo : c.ledger_entry_id.slice(0, 8)} — ${money(c.amount_cents)}`,
+        sublabel: c.event_date,
+      }));
+  }, [manualCandidatesQuery.data, manualLedgerKind]);
+
+  // A stale selected candidate must not carry over to a different bank line's manual-match search.
+  useEffect(() => {
+    setManualLedgerId("");
+    setManualLedgerSearch("");
+  }, [selectedRow?.id]);
 
   const mutateAndRefresh = async (promise: Promise<unknown>, successMessage: string) => {
     try {
@@ -375,18 +410,31 @@ export function BankReconciliationPage() {
                   </ActionButton>
                 </div>
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                  <SelectCombobox value={manualLedgerKind} onChange={(event) => setManualLedgerKind(event.target.value as typeof manualLedgerKind)} className="text-sm">
+                  <SelectCombobox
+                    value={manualLedgerKind}
+                    onChange={(event) => {
+                      setManualLedgerKind(event.target.value as typeof manualLedgerKind);
+                      setManualLedgerId("");
+                    }}
+                    className="text-sm"
+                  >
                     <option value="payment">payment</option>
                     <option value="bill_payment">bill_payment</option>
                     <option value="transfer">transfer</option>
                     <option value="je">je</option>
                   </SelectCombobox>
-                  <input
-                    value={manualLedgerId}
-                    onChange={(event) => setManualLedgerId(event.target.value)}
-                    placeholder="Ledger entry id (uuid)"
-                    className="rounded-sm border border-gray-300 px-2 py-1 text-sm md:col-span-2"
-                  />
+                  <div className="md:col-span-2">
+                    <Combobox
+                      options={manualLedgerOptions}
+                      value={manualLedgerId || null}
+                      onChange={(next) => setManualLedgerId(next ?? "")}
+                      onSearch={setManualLedgerSearch}
+                      loading={manualCandidatesQuery.isFetching}
+                      placeholder="Search unreconciled entries by memo, payee, ref…"
+                      disabled={!selectedRow}
+                      clearCommittedOnEdit
+                    />
+                  </div>
                 </div>
                 <ActionButton
                   disabled={!selectedCompanyId || !manualLedgerId || !selectedRow}

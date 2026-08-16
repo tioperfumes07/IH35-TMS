@@ -168,15 +168,6 @@ const EXEMPTIONS = [
       "Accounting audit trail source_id filter, polymorphic over invoice|bill|payment as typed into the sibling source_type box. Read-only forensic filter on an audit surface; wiring a picker here needs a source_type-driven lookup that is C6/accounting lane work, not C1.",
   },
   {
-    file: `${SRC}/pages/banking/BankReconciliationPage.tsx`,
-    field: "manualLedgerId",
-    category: "blocked-needs-backend",
-    blocker:
-      "No unified ledger-entry lookup endpoint. The sibling kind selector spans payment|bill_payment|transfer|je — four different canonical tables with four different list routes, none of which returns an unreconciled-only, bank-txn-comparable option list. Building that is a money-route change (accounting lane), which C1 is forbidden to make.",
-    reason:
-      "Manual bank-reconciliation match field on a money surface. A picker is the right answer but cannot be built frontend-only; reported as a finding rather than half-wired.",
-  },
-  {
     file: `${SRC}/pages/banking/components/ManualJEModal.tsx`,
     field: "entity_uuid",
     category: "blocked-needs-backend",
@@ -209,7 +200,7 @@ const EXEMPTIONS = [
  * The exemption list is a RATCHET: it may shrink, never grow. Raising this number is a visible,
  * reviewable edit to the guard itself — which is the point. It is not a threshold to tune.
  */
-const EXEMPTION_CEILING = 13;
+const EXEMPTION_CEILING = 12;
 
 /** An "admin-audit-forensic-id" exemption must actually live on an admin/audit surface. */
 const AUDIT_PATH = /\/(admin|audit)\/|AuditTrail|AuditLog|ActivityLog|audit-log/;
