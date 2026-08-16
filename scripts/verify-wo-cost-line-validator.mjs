@@ -61,7 +61,7 @@ export function analyse(files) {
   if (/service_item_uuid:\s*line\.service_item_uuid\s*\|\|\s*["']{2}/.test(src)) {
     problems.push(
       `${MODAL}: an unselected optional service-item FK is serialized as an empty string. The backend ` +
-        `accepts UUID, null, or omission; use null so an honestly described catalog-free Section-B line can save.`
+        `accepts UUID, null, or omission; omit the field so an honestly described catalog-free Section-B line can save.`
     );
   }
   return problems;
@@ -74,7 +74,7 @@ function readAll() {
 function selftest() {
   const failures = [];
   const t = (l, c) => { if (!c) failures.push(l); };
-  const good = `service_item_uuid: line.service_item_uuid || null,\n{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },`;
+  const good = `...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),\n{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },`;
   const bug = `{ label: "${RULE}", ok: (form.watch("line_items") ?? []).length > 0 },`;
   const emptyUuidBug = `service_item_uuid: line.service_item_uuid || "",\n${good}`;
 
