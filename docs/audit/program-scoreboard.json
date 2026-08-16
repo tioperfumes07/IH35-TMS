@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T04:35:00-05:00",
-    "sourceSha": "29f68de6f",
-    "deployedSha": "7bfb8e9",
+    "generatedAt": "2026-08-16T04:42:23-05:00",
+    "sourceSha": "f23143730",
+    "deployedSha": "0e00b28",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 861,
+    "ledgerRows": 863,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7761,
+      "title": "FINDING: LV-PROGRAM-TRACKER-MERGED-PR-FALSE-LIVE",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:42 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7761",
+      "sha": "f23143730",
+      "committedAtIso": "2026-08-16T04:42:23-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:36 AM CT",
+      "url": "",
+      "sha": "0e00b289a",
+      "committedAtIso": "2026-08-16T09:36:07Z"
+    },
+    {
       "number": 7760,
       "title": "FINDING: LV-PROGRAM-MATRIX-INCOMPLETE-BUILT-ROUNDS-TO-100",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "d02e64d15",
       "committedAtIso": "2026-08-16T04:19:48-05:00"
-    },
-    {
-      "number": 7754,
-      "title": "FINDING: ACCT-F5327",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7754",
-      "sha": "0ece4a31d",
-      "committedAtIso": "2026-08-16T04:18:55-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs(audit): close DISP/CI/MDATA PR-pending board rows",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:16 AM CT",
-      "url": "",
-      "sha": "c7af35a4b",
-      "committedAtIso": "2026-08-16T04:16:35-05:00"
     }
   ]
 }
