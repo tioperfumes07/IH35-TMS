@@ -66,7 +66,7 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 
 ## ☐ CODEX LIVE HANDOFF · OWNER-GATED=no
 
-`LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED` — live USMCA `/reports/scheduled-custom` calls the unmounted `/api/v1/scheduled-reports` API and gets HTTP 404. Locked decision `00_LOCKED_DECISIONS.md` §9.6 already selects `reporting.scheduled_reports` as canonical, requires `reports.scheduled_reports` rows migrated in, and archives the old engine. Implement one atomic migration/WORM block: add scoped audited void/deactivation (replace hard DELETE), migrate deterministic old rows without loss, mount canonical routes, reconnect FE/remove stale P6-T11201 copy, preserve run history/workers and separate Q8 `scheduled_subscriptions`, and mutation-prove FE→BE→schema. `BLOCKS=LIVE-REPORTS-CUSTOM-SCHEDULER`; no QBO work.
+`LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED` — **FIXED CLOSEOUT (stale row, CC-1, 2026-08-16)** — already fixed by #7442 (an earlier session); re-verified live, board row never closed. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
 
 `LV-REPORTS-SCHEDULED-SUBSCRIPTIONS-STALE-CPA-AND-DUPLICATE-RECIPIENTS` — **FIXED (ACCT-F5315, CC-1, 2026-08-15, PR #7580)** — migration applied to prod. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
 
