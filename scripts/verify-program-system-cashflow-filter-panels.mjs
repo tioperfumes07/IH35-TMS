@@ -9,6 +9,7 @@
  * LV-TASKS-REPORT-FILTER-PANEL-ABSENT
  * LV-SAFETY-ANOMALIES-FILTER-LEAF-THEATER
  * LV-DOCS-FILTER-LEAF-THEATER
+ * LV-REPORTS-FILTER-LEAF-THEATER
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -165,6 +166,25 @@ export function collectFailures(sources) {
     failures.push("docs-home: Filters panel must use docs testId/data attribute");
   }
 
+  const reportsReq = sources["docs/specs/scoreboard/modules/reports.required.json"] ?? "";
+  if (reportsReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/reports\/runners\/RunnerFilters\.tsx"/.test(reportsReq)) {
+      failures.push("reports.required.json: chrome.toolbar_filter surface_path must be RunnerFilters.tsx");
+    }
+  }
+  const runnerFilters = sources["apps/frontend/src/pages/reports/runners/RunnerFilters.tsx"] ?? "";
+  if (runnerFilters) {
+    if (!runnerFilters.includes("CollapsedListFilters")) {
+      failures.push("RunnerFilters.tsx: must mount CollapsedListFilters for chrome.toolbar_filter");
+    }
+    if (!/\bonApply=\{/.test(runnerFilters)) {
+      failures.push("RunnerFilters.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!runnerFilters.includes("useStagedListFilters")) {
+      failures.push("RunnerFilters.tsx: must stage via useStagedListFilters");
+    }
+  }
+
   return failures;
 }
 
@@ -184,6 +204,12 @@ function load() {
   );
   map["docs/specs/scoreboard/modules/docs.required.json"] = read(
     "docs/specs/scoreboard/modules/docs.required.json",
+  );
+  map["docs/specs/scoreboard/modules/reports.required.json"] = read(
+    "docs/specs/scoreboard/modules/reports.required.json",
+  );
+  map["apps/frontend/src/pages/reports/runners/RunnerFilters.tsx"] = read(
+    "apps/frontend/src/pages/reports/runners/RunnerFilters.tsx",
   );
   return map;
 }
@@ -239,6 +265,12 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     () => ({
       ...sources,
       [SURFACES[8].file]: sources[SURFACES[8].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/reports.required.json": sources[
+        "docs/specs/scoreboard/modules/reports.required.json"
+      ].replaceAll("pages/reports/runners/RunnerFilters.tsx", "components/table/UniversalListToolbar.tsx"),
     }),
   ];
   mutations.forEach((mutate, index) => {
