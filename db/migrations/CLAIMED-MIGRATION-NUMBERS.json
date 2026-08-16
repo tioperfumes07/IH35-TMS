@@ -12,6 +12,10 @@
       "claimed_by": "codex",
       "purpose": "system_audit_master_data_spine_subjects"
     },
+    "202612610000": {
+      "claimed_by": "cc-1",
+      "purpose": "catalogs_accounts_items_audit_triggers"
+    },
     "202612600000": {
       "claimed_by": "cc-1",
       "purpose": "finance_forecast_scenarios_data_model"
