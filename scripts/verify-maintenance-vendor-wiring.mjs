@@ -38,8 +38,8 @@ export function audit(src) {
   if (!/resolved_vendor_id(?!_)/.test(src.woTable) || !/kind="vendor"/.test(src.woTable)) {
     failures.push(`${FILES.woTable}: WO list/source tabs must render a real resolved_vendor_id EntityLink`);
   }
-  if (!/createKind="vendor"/.test(src.createWo) || !/Vendor required for non in-house location/.test(src.createWo)) {
-    failures.push(`${FILES.createWo}: WO create must require a real vendor for non in-house repairs`);
+  if ((!/kind=["']vendor["']/.test(src.createWo) || !/allowCreate/.test(src.createWo)) || !/Vendor required for non in-house location/.test(src.createWo)) {
+    failures.push(`${FILES.createWo}: WO create must require a real vendor EntityPicker for non in-house repairs`);
   }
   if (!/createKind="vendor"/.test(src.vendorBillForm)) {
     failures.push(`${FILES.vendorBillForm}: WO bill create must have a real vendor picker`);
@@ -84,6 +84,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["wo-table-link", "woTable", /resolved_vendor_id/g, "resolved_vendor_id_unused"],
     ["create-wo-required", "createWo", /Vendor required for non in-house location/, "Vendor optional"],
+    ["create-wo-picker", "createWo", /kind="vendor"/g, 'kind="unit"'],
     ["bill-form-picker", "vendorBillForm", /createKind="vendor"/g, 'createKind="unit"'],
     ["expense-form-picker", "recordExpenseForm", /createKind="vendor"/g, 'createKind="unit"'],
     ["road-service-list-link", "roadServiceList", /kind="vendor" id=\{row\.vendor_id\}/, 'kind="unit" id={row.unit_id}'],

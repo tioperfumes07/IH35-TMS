@@ -107,8 +107,14 @@ const createWo = read("apps/frontend/src/pages/maintenance/components/CreateWork
 if (createWo.includes("QboCombobox")) {
   failures.push("CreateWorkOrderModal must not use QboCombobox for outside vendor");
 }
-if (!createWo.includes("wo-outside-vendor-block") || !/wo-outside-vendor-block[\s\S]{0,800}ReferenceSelect[\s\S]{0,800}createKind="vendor"/.test(createWo)) {
-  failures.push("CreateWorkOrderModal outside vendor must use ReferenceSelect createKind=vendor");
+if (!createWo.includes("wo-outside-vendor-block") || !/wo-outside-vendor-block[\s\S]{0,900}kind=["']vendor["']/.test(createWo) || !/allowCreate/.test(createWo)) {
+  failures.push("CreateWorkOrderModal outside vendor must use EntityPicker kind=vendor allowCreate");
+}
+{
+  const stripped = createWo.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  if (/listVendors/.test(stripped)) {
+    failures.push("CreateWorkOrderModal must not capped-listVendors for outside vendor");
+  }
 }
 
 const cashGl = read("apps/frontend/src/pages/banking/CashGlSetupPage.tsx");

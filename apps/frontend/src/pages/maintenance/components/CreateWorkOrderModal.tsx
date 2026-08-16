@@ -25,12 +25,11 @@ import {
 } from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { listVendors } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
 import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/shared/Combobox";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
@@ -433,7 +432,6 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const selectedLoad = form.watch("load_id");
   const [backendLoadError, setBackendLoadError] = useState<string | null>(null);
   const [suggestionPinned, setSuggestionPinned] = useState(false);
-  const [vendorSearch, setVendorSearch] = useState("");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   useEffect(() => {
     if (!open) return;
@@ -574,21 +572,6 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       }),
     enabled: Boolean(operatingCompanyId && serviceDate && (driverId || unitId || equipmentId)),
   });
-  const vendorsQuery = useQuery({
-    queryKey: ["maintenance", "vendors", operatingCompanyId, vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: vendorSearch ? 200 : 1000,
-        search: vendorSearch || undefined,
-      }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
-  const vendorOptions = (vendorsQuery.data?.vendors ?? [])
-    .filter((v) => !v.deactivated_at)
-    .map((v) => ({ value: v.id, label: v.name }));
-
   useEffect(() => {
     if (!open) return;
     if (selectedLoad || suggestionPinned) return;
@@ -1134,38 +1117,22 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               <input type="hidden" {...form.register("vendor_id")} />
               <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                 <FieldV5 label="Vendor (QuickBooks list)">
-                  <ReferenceSelect
+                  {/* CLS-SILENT-CAP: EntityPicker server-search — no capped vendor roster page. */}
+                  <EntityPicker
+                    kind="vendor"
+                    allowCreate
+                    operatingCompanyId={operatingCompanyId}
                     value={form.watch("vendor_id") || null}
-                    onChange={(next) => {
+                    onChange={(next, option) => {
                       form.setValue("vendor_id", next ?? "", { shouldDirty: true });
                       form.setValue("external_vendor_id", next ?? "", { shouldDirty: true });
-                      const match = vendorOptions.find((o) => o.value === next);
-                      form.setValue("vendor_display_name", match?.label ?? "", { shouldDirty: true });
+                      form.setValue("vendor_display_name", option?.label ?? "", { shouldDirty: true });
                     }}
-                    options={vendorOptions}
-                    createKind="vendor"
-                    operatingCompanyId={operatingCompanyId}
+                    enabled={open}
                     placeholder="Search vendor…"
-                    onSearch={setVendorSearch}
-                    loading={vendorsQuery.isLoading}
-                    onOptionCreated={(opt) => {
-                      void vendorsQuery.refetch();
-                      form.setValue("vendor_display_name", opt.label, { shouldDirty: true });
-                      form.setValue("external_vendor_id", opt.value, { shouldDirty: true });
-                    }}
+                    dataField="wo-outside-vendor"
+                    className="w-full"
                   />
-                  {/* CLS-LIST-ERROR-STATE-UNGUARDED — vendorsQuery.data ?? [] silently falls back to an
-                      empty picker on a failed fetch, indistinguishable from "this company has no
-                      vendors". ReferenceSelect has no error prop, so a small inline note + retry is the
-                      minimal honest fix without widening that shared component's contract. */}
-                  {vendorsQuery.isError ? (
-                    <p className="mt-1 text-[10.5px] text-red-600">
-                      Couldn't load vendors.{" "}
-                      <button type="button" className="underline" onClick={() => void vendorsQuery.refetch()}>
-                        Retry
-                      </button>
-                    </p>
-                  ) : null}
                 </FieldV5>
                 <FieldV5 label="Vendor invoice #"><input {...form.register("vendor_invoice_number")} className={FLD} /></FieldV5>
                 <FieldV5 label="Authorization #"><input {...form.register("authorization_number")} className={FLD} /></FieldV5>
