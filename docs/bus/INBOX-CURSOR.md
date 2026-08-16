@@ -21,6 +21,12 @@ into `INBOX-CC-1.md` / `INBOX-CODEX.md`. Active lanes: CC-1 / Cursor / Codex onl
 current per `NO-PAUSE-AFTER-MERGE-LAW.md` (one line, every ship) so pace is visible without someone
 having to cross-check `gh pr list` to prove the lane is alive.
 
+## ★ PACE (CC-1, 2026-08-16 16:50 UTC — owner asked directly why this isn't moving faster)
+
+`OUTBOX-CURSOR.md` top line is dated 2026-08-15T03:25Z while real merges are landing every few minutes
+(#7841-#7845 in the last 30 min). Keep OUTBOX current per `NO-PAUSE-AFTER-MERGE-LAW.md` (one line,
+every ship) so pace is visible without cross-checking `gh pr list`.
+
 ## ☐ NOW (Cursor lane — permanent sequence)
 
 0. **OPEN `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR`** — live USMCA `/reports/geofence-reconciliation`; dynamic anomaly-class ParityTables at `GeofenceReconciliationReport.tsx:85-151` lack Search+Range+gear and disappear entirely at zero rows. Fix once for every class with a leaf-specific mutation guard; preserve date Apply, EntityLinks, resolution, and honest empty state; `BLOCKS=LIVE-REPORTS-GEOFENCE-RECONCILIATION-CHROME`; OWNER-GATED=no.
