@@ -41,10 +41,14 @@ function read(rel) {
 
 // ── Check 1: shared MoneyInput keeps $ adjacent to a left-aligned value ──────────
 const moneyInputRel = "apps/frontend/src/components/forms/MoneyInput.tsx";
-const moneyInput = read(moneyInputRel);
+const moneyInputRaw = read(moneyInputRel);
+const moneyInput = moneyInputRaw
+  ? moneyInputRaw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "")
+  : "";
 if (moneyInput) {
   // The single <input> in MoneyInput must be left-aligned so the value hugs the $.
-  const inputMatch = moneyInput.match(/<input[\s\S]*?className="([^"]*)"/);
+  // Strip comments first — a prose "<input>" in a comment previously matched the $ span's className.
+  const inputMatch = moneyInput.match(/<input\b[\s\S]*?className="([^"]*)"/);
   if (!inputMatch) {
     fail(`${moneyInputRel}: could not locate the money <input> className`);
   } else {
