@@ -5,8 +5,13 @@
 // the internal double-entry ledger never moves (the CHAIN-05 gap). This service closes it by REUSING the
 // existing posting engine (postSourceTransaction 'bank_categorization') — NO new GL math is written here.
 //
-// DIRECTION IS DRIVEN ONLY BY is_credit, NEVER by the sign of amount_cents (money-out is stored NEGATIVE;
-// the posting engine posts Math.abs). The account TYPE the operator chose decides the economic meaning:
+// DIRECTION IS DRIVEN ONLY BY is_credit, NEVER by the sign of amount_cents — the posting engine posts
+// Math.abs, so the sign doesn't matter to this file either way, but for the next reader: LV-BANK-SIGN-
+// COMMENT-IS-INVERTED (2026-08-16) — live-measured on prod, the stored sign is the OPPOSITE of what this
+// comment used to claim. is_credit=false (money OUT) rows are 100% POSITIVE; is_credit=true (money IN)
+// rows are mostly NEGATIVE (2,687 of 2,795), with a single documented exception (108 Relay Fuel Wallet
+// rows, positive by that integration's own convention). The account TYPE the operator chose still decides
+// the economic meaning:
 //   • is_credit=false (money OUT): DR categorized account (expense/asset/liability) / CR bank ledger.
 //   • is_credit=true  (money IN):  DR bank ledger / CR categorized account (income/liability/contra).
 //
@@ -250,7 +255,9 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
       return { ok: false, reason: "bank_account_hidden" };
     }
 
-    // Sign landmine: money-out is stored NEGATIVE. Magnitude only; direction from the is_credit flag.
+    // Sign landmine (LV-BANK-SIGN-COMMENT-IS-INVERTED, 2026-08-16): the stored sign varies by row and is
+    // NOT a reliable direction signal either way (see the file-header note above for the live-measured
+    // convention) — take the magnitude only and derive direction from the is_credit flag.
     const amountCents = Math.abs(Number(txn.amount_cents ?? 0));
     if (!Number.isFinite(amountCents) || amountCents <= 0) return { ok: false, reason: "zero_amount" };
 

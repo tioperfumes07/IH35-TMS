@@ -185,9 +185,18 @@ export async function runCategorizationDiffPass(
 
 /** TMS side — bank transactions with their COA mapping in the window. */
 async function readTmsBankEntries(client: PoolClient, opco: string, ws: string, we: string): Promise<ReconEntry[]> {
-  // banking.bank_transactions stores amount_cents (bigint magnitude) + is_credit; normalize to a signed value
-  // (credit positive) so both sides share one convention. Columns verified against 0073/0087 (no external_id/
-  // voided_at exist): reference = description/merchant_name; TMS categorization = coa_account_id.
+  // LV-BANK-TWO-SIGN-CONVENTIONS (2026-08-16) — this comment previously claimed amount_cents is always a
+  // positive magnitude and this CASE normalizes it to "credit positive." Live-measured on prod: it is
+  // NOT a clean magnitude — is_credit=true rows are stored negative in 2,687 of 2,795 cases, positive in
+  // the remaining 108 (all one documented cohort, Relay Fuel Wallet). For those 2,687 rows this CASE
+  // (which takes amount_cents unchanged when is_credit) therefore returns a NEGATIVE value for a credit,
+  // not the "credit positive" the old comment claimed. Left AS-IS here rather than silently reversed: an
+  // in-place sign flip on a live bank-reconciliation match function is a money-matching behavior change
+  // that needs its own verified fix (confirm the QBO-side comparison's actual convention first — a
+  // one-sided change here could flip which rows currently DO match into ones that no longer do), not a
+  // guess bundled into a comment-honesty pass. Filed as its own open item; do not "fix" this expression
+  // without live-verifying both sides of the comparison first. Columns verified against 0073/0087 (no
+  // external_id/voided_at exist): reference = description/merchant_name; TMS categorization = coa_account_id.
   const res = await client.query<{ id: string; posted_date: string; amount_cents: string; reference: string | null; coa_account_id: string | null }>(
     `SELECT id::text, posted_date::text,
             (CASE WHEN is_credit THEN amount_cents ELSE -amount_cents END)::text AS amount_cents,
