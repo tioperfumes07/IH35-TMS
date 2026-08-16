@@ -825,7 +825,7 @@ export function WorkOrderDetailPage() {
               <div className="mt-3 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="wo-source-intransit-issue">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Source In-Transit Issue</div>
                 <Link
-                  className="font-semibold text-blue-700 hover:underline"
+                  className="font-semibold text-slate-700 hover:underline"
                   to={`/dispatch/in-transit-issues?issue_id=${encodeURIComponent(String(wo.source_intransit_issue_id))}`}
                 >
                   View source issue in Dispatch

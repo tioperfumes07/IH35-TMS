@@ -102,7 +102,10 @@ try {
   for (const reportId of ["trial-balance", "profit-loss", "balance-sheet", "cash-flow-statement"]) {
     assertIncludes(home, `["${reportId}"`, `Reports home is missing report quick-link: ${reportId}`);
     assertIncludes(subNav, `{ id: "${reportId}"`, `Reports sub-nav run list missing: ${reportId}`);
-    assertIncludes(categoryHover, `{ id: "${reportId}"`, `Category hover nav missing report id: ${reportId}`);
+    // CategoryHoverNav is prettier-multiline (`{\n      id: "…"`); require the id token, not a single-line `{ id:`.
+    if (!new RegExp(`\\{\\s*id:\\s*"${reportId}"`).test(categoryHover)) {
+      throw new Error(`Category hover nav missing report id: ${reportId}`);
+    }
     assertIncludes(phaseLinks, `"${reportId}": "/reports/${reportId}"`, `phase6ReportLinks missing route mapping: ${reportId}`);
   }
 

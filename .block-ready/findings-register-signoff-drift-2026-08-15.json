@@ -1,0 +1,25 @@
+{
+  "block_id": "findings-register-signoff-drift-2026-08-15",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TIP-STATIC",
+  "branch": "cursor/findings-register-signoff-drift",
+  "task": "Repair CC-3 findings checklist Guard cells + missing OPEN rows; board Status FIXED for FINDINGS-REGISTER-SIGNOFF-DRIFT.",
+  "allowed_files": [
+    ".block-ready/findings-register-signoff-drift-2026-08-15.json",
+    "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    "docs/audit/GUARD-WORKORDERS.md"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-findings-register-signoff.mjs",
+      "assert": "exit 0; every OPEN board LV/CI id listed; every ☑ has Guard"
+    }
+  ],
+  "linkage": "GUARD-WORKORDERS OPEN ids → CC-3-FINDINGS-CHECKLIST ☐/☑ rows → owner completion list.",
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": []
+}

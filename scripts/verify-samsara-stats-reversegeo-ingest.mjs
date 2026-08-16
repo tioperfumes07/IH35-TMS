@@ -67,6 +67,8 @@ for (const f of ["lat", "lng", "speed_mph", "heading_deg"]) {
 }
 const board = read("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx");
 if (/pending the reverse-geocoding source/.test(board)) fail("Compliance board still has the city/state placeholder comment");
-if (!/r\.city/.test(board) || !/r\.state/.test(board)) fail("Compliance board must render r.city/r.state");
+// ParityColumn render uses `(row) => … row.city / row.state` (not the old `r.` shorthand).
+if (!/(?:\br\.city\b|\brow\.city\b)/.test(board) || !/(?:\br\.state\b|\brow\.state\b)/.test(board))
+  fail("Compliance board must render city/state (r.city|row.city and r.state|row.state)");
 
 console.log("OK verify-samsara-stats-reversegeo-ingest: reverseGeo city/state + driver pairing ingest locked.");
