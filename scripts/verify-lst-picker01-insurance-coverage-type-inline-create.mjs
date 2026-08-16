@@ -38,11 +38,11 @@ function checkInsurerVendor(problems, rel, src) {
   if (!src) return;
   const code = stripComments(src);
   // FAIL-INS-VENDOR-UX: free-text insurer_name caused live 409 insurance_vendor_not_found.
-  if (!/createKind=["']vendor["']/.test(code)) {
-    problems.push(`${rel}: insurer must use ReferenceSelect createKind=vendor (mdata.vendors R=W)`);
+  if (!/<EntityPicker[\s\S]*?kind=["']vendor["'][\s\S]*?allowCreate/.test(code)) {
+    problems.push(`${rel}: insurer must use EntityPicker kind=vendor allowCreate (mdata.vendors R=W)`);
   }
-  if (!/listVendors/.test(code)) {
-    problems.push(`${rel}: must load vendors via listVendors for insurer picker`);
+  if (/listVendors/.test(code)) {
+    problems.push(`${rel}: must not capped-listVendors — EntityPicker server-searches mdata.vendors`);
   }
   // Bare free-text insurer — Cascade proved "SAMPLE Progressive Commercial" always 409s.
   if (/Insurer Name \*/.test(src) && /value=\{[^}]*insurer_name/.test(src) && /<input[\s\S]*insurer_name/.test(src)) {
@@ -187,8 +187,8 @@ if (process.argv.includes("--selftest")) {
   expectCaught(
     "wizard-vendor-picker-removed",
     WIZARD,
-    (s) => s.replace(/createKind=["']vendor["']/, 'createKind="customer"'),
-    "createKind=vendor"
+    (s) => s.replace(/kind=["']vendor["']/, 'kind="customer"'),
+    "kind=vendor"
   );
   expectCaught(
     "wizard-vendor-error-map-removed",
@@ -214,6 +214,6 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — PolicyCreateModal + PolicyCreateWizard: coverage_type + insurer vendor ReferenceSelect (type_catalog + mdata.vendors)`
+    `${LABEL} OK — PolicyCreateModal + PolicyCreateWizard: coverage_type ReferenceSelect + insurer EntityPicker (type_catalog + mdata.vendors)`
   );
 }
