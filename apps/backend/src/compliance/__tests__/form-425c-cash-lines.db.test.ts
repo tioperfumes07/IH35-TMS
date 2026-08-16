@@ -145,6 +145,14 @@ describeIntegration("MOR/425C cash lines — is_credit grouping + own-transfer e
   afterAll(async () => {
     if (!db) return;
     try {
+      // CI-BUILD-TYPECHECK-WORM-GRANT-BREAKS-FIXTURE-TEARDOWN: ih35_app deliberately has NO DELETE
+      // on banking.* (void-not-delete law, migration 202612650000 — enforced everywhere, not just
+      // prod; see worm-public-grant-leak-closed.db.test.ts). bypass_rls has no effect on a GRANT-level
+      // REVOKE (RLS and GRANTs are independent Postgres layers), so cleaning up this file's OWN test
+      // fixtures needs the connection's original, more-privileged role — RESET ROLE, last thing
+      // before disconnecting, not a general bypass() change (which stays ih35_app-scoped for every
+      // other assertion in this file).
+      await db.query("RESET ROLE");
       await bypass(async () => {
         if (txns.length) await db.query(`DELETE FROM banking.bank_transactions WHERE id = ANY($1::uuid[])`, [txns]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = ANY($1::uuid[])`, [[realAcct, otherAcct, virtualAcct]]);

@@ -99,6 +99,14 @@ describeIntegration("settlement approval.service canonical repoint (real Postgre
 
   afterAll(async () => {
     if (!db) return;
+    // CI-BUILD-TYPECHECK-WORM-GRANT-BREAKS-FIXTURE-TEARDOWN: ih35_app deliberately has NO DELETE on
+    // driver_finance.* (void-not-delete law, migration 202612650000 — enforced everywhere, not just
+    // prod; see worm-public-grant-leak-closed.db.test.ts). bypass_rls has no effect on a GRANT-level
+    // REVOKE (RLS and GRANTs are independent Postgres layers), so cleaning up this file's OWN test
+    // fixtures needs the connection's original, more-privileged role — RESET ROLE, last thing before
+    // disconnecting, not a general bypass() change (which stays ih35_app-scoped for every other
+    // assertion in this file). mdata.drivers is not WORM-restricted; RESET ROLE is harmless there too.
+    await db.query("RESET ROLE");
     await bypass(async () => {
       await db.query("DELETE FROM driver_finance.settlement_lines WHERE id = $1::uuid", [lineId]);
       await db.query("DELETE FROM driver_finance.driver_settlements WHERE id = $1::uuid", [settlementId]);

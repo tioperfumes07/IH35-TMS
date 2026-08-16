@@ -59,6 +59,15 @@ run("stage-3 · insurer claim recovery (real engine)", () => {
     companyId = isolated.companyId;
 
     await tx(async () => {
+      // CI-BUILD-TYPECHECK-SCENARIO-TEST-USER-FK: `userId` above is a shared hardcoded fixture UUID
+      // that this file was silently relying on a SIBLING test file (accident-dire-scenario.db.test.ts)
+      // to have already inserted into identity.users as a beforeAll side effect — vitest gives no
+      // ordering guarantee between separate test files/workers, so the flag-flip below's
+      // set_by_user_uuid FK 23503'd whenever this file ran before that one. Seed it here too
+      // (idempotent) so this file is self-sufficient.
+      await db.query(
+        `INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
+        [userId, `ins-recovery-${s}@test.local`]);
       // CoA: the two accounts the poster resolves by ROLE. insurance_recovery is deliberately an
       // EXPENSE-type account (contra-expense), mirroring prod where 6155 is OtherExpense on all three
       // entities — if this were ever seeded as Income the scenario would silently book revenue.
