@@ -22,6 +22,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 type Props = {
   operatingCompanyId?: string;
@@ -95,31 +96,31 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
     setLoadFilterState(reverseLoadId);
   }, [reverseLoadId]);
   useEffect(() => {
-    setTrailerFilter(reverseTrailerId);
+    setTrailerFilterState(reverseTrailerId);
   }, [reverseTrailerId]);
 
-  function patchSearchParam(key: "driver_id" | "unit_id" | "load_id" | "trailer_id", next: string) {
+  function applyEntityFilters(next: { driver: string; unit: string; load: string; trailer: string }) {
+    setDriverFilterState(next.driver);
+    setUnitFilterState(next.unit);
+    setLoadFilterState(next.load);
+    setTrailerFilterState(next.trailer);
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    for (const [key, value] of [
+      ["driver_id", next.driver],
+      ["unit_id", next.unit],
+      ["load_id", next.load],
+      ["trailer_id", next.trailer],
+    ] as const) {
+      if (value) p.set(key, value);
+      else p.delete(key);
+    }
     setSearchParams(p, { replace: true });
   }
-  function setDriverFilter(next: string) {
-    setDriverFilterState(next);
-    patchSearchParam("driver_id", next);
-  }
-  function setUnitFilter(next: string) {
-    setUnitFilterState(next);
-    patchSearchParam("unit_id", next);
-  }
-  function setLoadFilter(next: string) {
-    setLoadFilterState(next);
-    patchSearchParam("load_id", next);
-  }
-  function setTrailerFilter(next: string) {
-    setTrailerFilterState(next);
-    patchSearchParam("trailer_id", next);
-  }
+  const stagedFilters = useStagedListFilters({
+    applied: { driver: driverFilter, unit: unitFilter, load: loadFilter, trailer: trailerFilter },
+    empty: { driver: "", unit: "", load: "", trailer: "" },
+    onApply: applyEntityFilters,
+  });
 
   const query = useQuery({
     queryKey: [
@@ -495,14 +496,22 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         emptyText="No claims found."
         rowClassName={(claim) => (highlightedClaimId === claim.id ? "bg-slate-100" : "")}
         filterBar={
-          <div className="flex flex-wrap items-end gap-3">
+          <CollapsedListFilters
+            activeFilterCount={[driverFilter, unitFilter, loadFilter, trailerFilter].filter(Boolean).length}
+            onApply={stagedFilters.apply}
+            onReset={stagedFilters.reset}
+            onCancel={stagedFilters.cancel}
+            applyDisabled={!stagedFilters.dirty}
+            testIdPrefix="insurance-claims"
+          >
+          <div className="flex flex-wrap items-end gap-3" data-testid="insurance-claims-filters">
             <label className="text-[11px] text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={companyId}
-                value={driverFilter || null}
-                onChange={(next) => setDriverFilter(next ?? "")}
+                value={stagedFilters.draft.driver || null}
+                onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, driver: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
@@ -514,8 +523,8 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
               <EntityPicker
                 kind="unit"
                 operatingCompanyId={companyId}
-                value={unitFilter || null}
-                onChange={(next) => setUnitFilter(next ?? "")}
+                value={stagedFilters.draft.unit || null}
+                onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, unit: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
@@ -527,8 +536,8 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
               <EntityPicker
                 kind="load"
                 operatingCompanyId={companyId}
-                value={loadFilter || null}
-                onChange={(next) => setLoadFilter(next ?? "")}
+                value={stagedFilters.draft.load || null}
+                onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, load: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All loads"
                 className="mt-1"
@@ -540,8 +549,8 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
               <EntityPicker
                 kind="trailer"
                 operatingCompanyId={companyId}
-                value={trailerFilter || null}
-                onChange={(next) => setTrailerFilter(next ?? "")}
+                value={stagedFilters.draft.trailer || null}
+                onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, trailer: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All trailers"
                 className="mt-1"
@@ -549,6 +558,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
               />
             </label>
           </div>
+          </CollapsedListFilters>
         }
       />
       <ClaimCreateModal
