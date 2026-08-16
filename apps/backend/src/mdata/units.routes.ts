@@ -249,6 +249,10 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         if (!resolvedOwnerId) {
           throw new Error("owner_company_id_required");
         }
+        // mdata.assets is FORCE-RLS and scopes writes through app.operating_company_id.
+        // Validate the effective lessee/owner against this user and bind that same company before
+        // creating either half of the canonical unit -> insurance-asset pair.
+        await setScopedCompanyContext(client, authUser.uuid, resolvedLeasedId ?? resolvedOwnerId);
         const res = await client.query(
           `
             INSERT INTO mdata.units (
