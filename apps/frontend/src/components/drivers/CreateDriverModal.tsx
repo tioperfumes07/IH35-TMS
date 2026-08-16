@@ -229,6 +229,15 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     linked_user_event_type: "existing_user" | "new_user_created";
   } | null>(null);
   const [form, setForm] = useState<Record<string, string>>(() => ({ ...DRIVER_CREATE_FORM_INITIAL }));
+  // The canonical API requires first name, last name, and an E.164 phone. Keep those requirements
+  // on the identity step instead of letting an incomplete draft reach step 4 and fail as a generic
+  // backend "Invalid input" with the actual field errors hidden three steps behind the operator.
+  const identityStepReady = Boolean(
+    form.operating_company_id &&
+      form.first_name.trim() &&
+      form.last_name.trim() &&
+      normalizePhoneDigits(form.phone_input).length === 10
+  );
 
   const driverCreateAttemptCloseRef = useRef<(() => void) | null>(null);
   const saveModeRef = useRef<"default" | "add_another">("default");
@@ -599,8 +608,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="operating_company_id" message={driverFieldErrors.operating_company_id} />
           </div>
           {[
-            ["first_name", "First Name"],
-            ["last_name", "Last Name"],
+            ["first_name", "First Name *"],
+            ["last_name", "Last Name *"],
             ["email", "Email"],
             ["date_of_birth", "Date of birth"],
             ["hire_date", "Hire Date"],
@@ -622,6 +631,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 <input
                   data-field={key}
                   type="text"
+                  required={key === "first_name" || key === "last_name"}
                   value={form[key] ?? ""}
                   aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
                   onChange={(event) => {
@@ -673,9 +683,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="country_code" message={driverFieldErrors.country_code} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Phone (10 digits)</label>
+            <label className="text-xs font-semibold text-gray-600">Phone (10 digits) *</label>
             <input
               data-field="phone_input"
+              required
               value={form.phone_input}
               aria-describedby={driverFieldErrors.phone_input ? "phone_input-error" : undefined}
               onChange={(event) => {
@@ -1074,7 +1085,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 <Button
                   type="button"
                   data-testid="driver-create-wizard-next"
-                  disabled={wizardStep === 1 && !form.operating_company_id}
+                  disabled={wizardStep === 1 && !identityStepReady}
                   onClick={() => setWizardStep((step) => Math.min(DRIVER_CREATE_WIZARD_STEPS.length, step + 1))}
                 >
                   Next
@@ -1084,7 +1095,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   storageKey="driver-create"
                   primaryLabel="Save"
                   disabled={
-                    !form.operating_company_id ||
+                    !identityStepReady ||
                     !drugScreenAcknowledged ||
                     (returningDetection?.returning_driver && !overrideReturningWarning) ||
                     (overrideReturningWarning &&
