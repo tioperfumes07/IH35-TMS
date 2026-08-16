@@ -213,9 +213,9 @@ function agreementTermsMatchLockedFaro(row: {
 }
 
 /**
- * TRANSP contract entity (canonical company code only) + owner-seeded Faro agreement.
- * Never labels a generic sole factor as Faro. No majority / display-name / legal-name /
- * invented UUIDs.
+ * Faro contract entity (canonical company code only — TRANSP or USMCA, ACCT-F5332) +
+ * owner-seeded Faro agreement. Never labels a generic sole factor as Faro. No majority /
+ * display-name / legal-name / invented UUIDs.
  */
 export async function resolveFaroFactorIdentity(
   client: DbClient,
@@ -225,9 +225,25 @@ export async function resolveFaroFactorIdentity(
   return resolveCanonicalActiveFactor(client, operatingCompanyId, asOfBusinessDate);
 }
 
-/** Canonical Faro contract entity gate — company.code prefix only (never legal_name inference). */
-export function isTranspContractEntityCode(code: string | null | undefined): boolean {
-  return /^TRANSP\b/i.test(String(code ?? ""));
+/**
+ * ACCT-F5332 — canonical Faro contract entity gate. Originally TRANSP-only
+ * (`isTranspContractEntityCode`, `/^TRANSP\b/i` prefix match); the owner confirmed in chat
+ * 2026-08-16 that USMCA began factoring with Faro on 2026-08-07, same terms as TRANSP (migration
+ * 202612690000 seeds the matching canonical_factor_agreements + vendor rows for USMCA). Widened
+ * to both companies.
+ *
+ * KEPT AS A PREFIX MATCH (not exact equality — an earlier draft of this change switched to exact
+ * equality and it was wrong): `apps/backend/test-helpers/isolated-company.ts`'s
+ * `createIsolatedOperatingCompany({ codePrefix })` — the shared test-isolation helper several
+ * `.db.test.ts` files (e.g. `factoring-balance-invoice-linkage.db.test.ts`) use to get a
+ * collision-free real Postgres company per test run — builds codes as `${codePrefix}-${suffix}`
+ * (e.g. `TRANSP-a1b2c3`), specifically relying on prefix matching to stay Faro-gate-eligible.
+ * Exact equality would have broken every one of those tests. TRK is deliberately still excluded —
+ * TRK is not a Faro borrower (equipment holding entity only, per the flag's own original policy
+ * comment on FACTORING_GL_POSTING_ENABLED). Never legal_name inference — company.code only.
+ */
+export function isFaroContractEntityCode(code: string | null | undefined): boolean {
+  return /^(TRANSP|USMCA)\b/i.test(String(code ?? ""));
 }
 
 export async function resolveCanonicalActiveFactor(
@@ -260,7 +276,7 @@ export async function resolveCanonicalActiveFactor(
     };
   }
   const code = String(row.code ?? "");
-  if (!isTranspContractEntityCode(code)) {
+  if (!isFaroContractEntityCode(code)) {
     return {
       ok: false,
       reason: "faro_contract_entity_mismatch",
