@@ -248,10 +248,10 @@
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
-      "route_hint": "/425c",
+      "route_hint": "/425c?tab=history",
       "surface_kind": "toolbar",
       "required": [],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/form425c/tabs/HistoryTab.tsx"
     }
   ],
   "honesty_audit": {

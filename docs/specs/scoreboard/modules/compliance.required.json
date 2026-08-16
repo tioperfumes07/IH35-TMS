@@ -376,7 +376,7 @@
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/compliance/FilingsComplianceDueSection.tsx"
     }
   ],
   "honesty_audit": {

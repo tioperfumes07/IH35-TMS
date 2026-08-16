@@ -18,6 +18,11 @@
  * LV-DISPATCH-FILTER-LEAF-THEATER
  * LV-FACTORING-FILTER-LEAF-THEATER
  * LV-MAINTENANCE-FILTER-LEAF-THEATER
+ * LV-FUEL-FILTER-PANEL-ABSENT
+ * LV-COMPLIANCE-FILTER-PANEL-ABSENT
+ * LV-INVENTORY-FILTER-PANEL-ABSENT
+ * LV-FORM425-FILTER-PANEL-ABSENT
+ * LV-HELP-FILTER-PANEL-ABSENT
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -352,8 +357,140 @@ export function collectFailures(sources) {
     }
   }
 
+
+  const fuelReq = sources["docs/specs/scoreboard/modules/fuel.required.json"] ?? "";
+  if (fuelReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/fuel\/card-overage\/CardOverageQueuePage\.tsx"/.test(
+        fuelReq,
+      )
+    ) {
+      failures.push("fuel.required.json: chrome.toolbar_filter surface_path must be CardOverageQueuePage.tsx");
+    }
+  }
+  const fuel = sources["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx"] ?? "";
+  if (fuel) {
+    if (!fuel.includes("CollapsedListFilters")) {
+      failures.push("CardOverageQueuePage.tsx: must mount CollapsedListFilters");
+    }
+    if (!/\bonApply=\{/.test(fuel)) {
+      failures.push("CardOverageQueuePage.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!fuel.includes("useStagedListFilters")) {
+      failures.push("CardOverageQueuePage.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="fuel-card-overage"/.test(fuel)) {
+      failures.push("fuel: Filters panel must use fuel-card-overage testIdPrefix");
+    }
+  }
+
+  const complianceReq = sources["docs/specs/scoreboard/modules/compliance.required.json"] ?? "";
+  if (complianceReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/compliance\/FilingsComplianceDueSection\.tsx"/.test(
+        complianceReq,
+      )
+    ) {
+      failures.push("compliance.required.json: chrome.toolbar_filter surface_path must be FilingsComplianceDueSection.tsx");
+    }
+  }
+  const compliance = sources["apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx"] ?? "";
+  if (compliance) {
+    if (!compliance.includes("CollapsedListFilters")) {
+      failures.push("FilingsComplianceDueSection.tsx: must mount CollapsedListFilters");
+    }
+    if (!/\bonApply=\{/.test(compliance)) {
+      failures.push("FilingsComplianceDueSection.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!compliance.includes("useStagedListFilters")) {
+      failures.push("FilingsComplianceDueSection.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="compliance-filings"/.test(compliance)) {
+      failures.push("compliance: Filters panel must use compliance-filings testIdPrefix");
+    }
+  }
+
+  const inventoryReq = sources["docs/specs/scoreboard/modules/inventory.required.json"] ?? "";
+  if (inventoryReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/inventory\/InventoryAssignmentsPage\.tsx"/.test(
+        inventoryReq,
+      )
+    ) {
+      failures.push("inventory.required.json: chrome.toolbar_filter surface_path must be InventoryAssignmentsPage.tsx");
+    }
+  }
+  const inventory = sources["apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx"] ?? "";
+  if (inventory) {
+    if (!inventory.includes("CollapsedListFilters")) {
+      failures.push("InventoryAssignmentsPage.tsx: must mount CollapsedListFilters");
+    }
+    if (!/\bonApply=\{/.test(inventory)) {
+      failures.push("InventoryAssignmentsPage.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!inventory.includes("useStagedListFilters")) {
+      failures.push("InventoryAssignmentsPage.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="inventory-assignments"/.test(inventory)) {
+      failures.push("inventory: Filters panel must use inventory-assignments testIdPrefix");
+    }
+  }
+
+  const form425Req = sources["docs/specs/scoreboard/modules/form_425.required.json"] ?? "";
+  if (form425Req) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/form425c\/tabs\/HistoryTab\.tsx"/.test(
+        form425Req,
+      )
+    ) {
+      failures.push("form_425.required.json: chrome.toolbar_filter surface_path must be HistoryTab.tsx");
+    }
+  }
+  const form425 = sources["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"] ?? "";
+  if (form425) {
+    if (!form425.includes("CollapsedListFilters")) {
+      failures.push("HistoryTab.tsx: must mount CollapsedListFilters");
+    }
+    if (!/\bonApply=\{/.test(form425)) {
+      failures.push("HistoryTab.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!form425.includes("useStagedListFilters")) {
+      failures.push("HistoryTab.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="form425c-history"/.test(form425)) {
+      failures.push("form425: Filters panel must use form425c-history testIdPrefix");
+    }
+  }
+
+  const helpReq = sources["docs/specs/scoreboard/modules/help.required.json"] ?? "";
+  if (helpReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/help\/HelpCenterPage\.tsx"/.test(
+        helpReq,
+      )
+    ) {
+      failures.push("help.required.json: chrome.toolbar_filter surface_path must be HelpCenterPage.tsx");
+    }
+  }
+  const help = sources["apps/frontend/src/pages/help/HelpCenterPage.tsx"] ?? "";
+  if (help) {
+    if (!help.includes("CollapsedListFilters")) {
+      failures.push("HelpCenterPage.tsx: must mount CollapsedListFilters");
+    }
+    if (!/\bonApply=\{/.test(help)) {
+      failures.push("HelpCenterPage.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!help.includes("useStagedListFilters")) {
+      failures.push("HelpCenterPage.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="help-center"/.test(help)) {
+      failures.push("help: Filters panel must use help-center testIdPrefix");
+    }
+  }
+
   return failures;
 }
+
 
 function load() {
   const map = Object.fromEntries(SURFACES.map((s) => [s.file, read(s.file)]));
@@ -419,6 +556,36 @@ function load() {
   );
   map["apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx"] = read(
     "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+  );
+  map["docs/specs/scoreboard/modules/fuel.required.json"] = read(
+    "docs/specs/scoreboard/modules/fuel.required.json",
+  );
+  map["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx"] = read(
+    "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
+  );
+  map["docs/specs/scoreboard/modules/compliance.required.json"] = read(
+    "docs/specs/scoreboard/modules/compliance.required.json",
+  );
+  map["apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx"] = read(
+    "apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx",
+  );
+  map["docs/specs/scoreboard/modules/inventory.required.json"] = read(
+    "docs/specs/scoreboard/modules/inventory.required.json",
+  );
+  map["apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx"] = read(
+    "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
+  );
+  map["docs/specs/scoreboard/modules/form_425.required.json"] = read(
+    "docs/specs/scoreboard/modules/form_425.required.json",
+  );
+  map["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"] = read(
+    "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx",
+  );
+  map["docs/specs/scoreboard/modules/help.required.json"] = read(
+    "docs/specs/scoreboard/modules/help.required.json",
+  );
+  map["apps/frontend/src/pages/help/HelpCenterPage.tsx"] = read(
+    "apps/frontend/src/pages/help/HelpCenterPage.tsx",
   );
   return map;
 }
@@ -540,6 +707,36 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         "components/table/UniversalListToolbar.tsx",
       ),
     }),
+    () => ({
+      ...sources,
+      "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx": sources[
+        "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx"
+      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx": sources[
+        "apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx"
+      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx": sources[
+        "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx"
+      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx": sources[
+        "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx"
+      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "apps/frontend/src/pages/help/HelpCenterPage.tsx": sources[
+        "apps/frontend/src/pages/help/HelpCenterPage.tsx"
+      ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -550,5 +747,5 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
 }
 
 console.log(
-  "PASS: filter-panel wave incl. vendors/customers/lists/accounting/fleet/dispatch/factoring/maintenance honest",
+  "PASS: filter-panel wave drained (incl. fuel/compliance/inventory/form425/help)",
 );

@@ -12,6 +12,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -68,6 +69,11 @@ export function CardOverageQueuePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("pending_review");
+  const staged = useStagedListFilters({
+    applied: { statusFilter },
+    empty: { statusFilter: "pending_review" },
+    onApply: (next) => setStatusFilter(next.statusFilter),
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("event_id") ?? undefined;
   const driverId = searchParams.get("driver_id") ?? undefined;
@@ -274,25 +280,36 @@ export function CardOverageQueuePage() {
         </label>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {hasEntityTarget ? (
-          <Link to="/fuel/card-overage" className="text-xs font-semibold text-slate-700 underline">
-            Clear profile/event target
-          </Link>
-        ) : null}
-        {["pending_review", "approved", "posted", "company_variance", "all"].map((status) => (
-          <button
-            key={status}
-            type="button"
-            className={`rounded-sm border px-2 py-1 text-xs ${
-              statusFilter === status ? "border-slate-300 bg-slate-100" : "border-gray-300"
-            }`}
-            onClick={() => setStatusFilter(status)}
-          >
-            {status.replace(/_/g, " ")}
-          </button>
-        ))}
-      </div>
+      {hasEntityTarget ? (
+        <Link to="/fuel/card-overage" className="text-xs font-semibold text-slate-700 underline">
+          Clear profile/event target
+        </Link>
+      ) : null}
+
+      <CollapsedListFilters
+        activeFilterCount={statusFilter !== "pending_review" ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="fuel-card-overage"
+        dataAttributes={{ "data-fuel-card-overage-filter-toolbar": "collapsed" }}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          {["pending_review", "approved", "posted", "company_variance", "all"].map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={`rounded-sm border px-2 py-1 text-xs ${
+                staged.draft.statusFilter === status ? "border-slate-300 bg-slate-100" : "border-gray-300"
+              }`}
+              onClick={() => staged.setDraft({ statusFilter: status })}
+            >
+              {status.replace(/_/g, " ")}
+            </button>
+          ))}
+        </div>
+      </CollapsedListFilters>
 
       {eventsQuery.isError ? (
         <ListErrorState

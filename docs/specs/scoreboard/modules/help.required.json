@@ -190,7 +190,7 @@
       "surface_kind": "toolbar",
       "required": [],
       "note": "N/A: Help is article/card navigation, not a data pipeline list; search remains the canonical search leaf.",
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/help/HelpCenterPage.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -220,7 +220,7 @@
       "surface_kind": "toolbar",
       "required": [],
       "note": "N/A: Help has no applied-state data-list filter panel.",
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/help/HelpCenterPage.tsx"
     }
   ],
   "honesty_audit": {
