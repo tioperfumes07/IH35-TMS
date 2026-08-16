@@ -59,3 +59,7 @@ Live `/users` root has a 19-row UsersPage with Search/Range/gear, while matrix-c
 ## CODEX HANDOFF · 2026-08-16 · LV-DRIVER-HUB-TOOLBAR-LEAVES-POINT-INBOX
 
 Live `/driver-hub` Inbox has no governed list toolbar; `/driver-hub/reporting` mounts matrix-claimed `DriverHubReportingPage` with Search/Range/gear, one linked row, dates, and metrics. Bind all four toolbar leaves to Reporting and extend both exact-consumer ratchets. Exact OPEN row, audit 887, and `BLOCKS=LIVE-DRIVER-HUB-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-DRIVERS-TOOLBAR-BORROWS-PROFILE-HISTORY
+
+Live `/drivers` root has the 12-row roster Search/Range/gear, while matrix-claimed `OperationsHistoryTable` mounts separately in `/drivers/:id` as zero-row assignment history. Bind root leaves to the actual roster owner or inventory detail history separately. Exact OPEN row, audit 889, and `BLOCKS=LIVE-DRIVERS-EXACT-TOOLBAR-LEAVES` are filed. OWNER-GATED=no; no mutation.
