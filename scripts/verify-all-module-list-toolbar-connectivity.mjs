@@ -19,7 +19,7 @@ const EVIDENCE = {
   dispatch: ["apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx", "<ParityTable"],
   docs: ["apps/frontend/src/pages/docs/DocsHomePage.tsx", "<ParityTable"],
   "driver-hub": ["apps/frontend/src/pages/home/DriverHubReportingPage.tsx", "<ParityTable"],
-  drivers: ["apps/frontend/src/components/drivers/OperationsHistoryTable.tsx", "<ParityTable"],
+  drivers: ["apps/frontend/src/pages/drivers/DriversTable.tsx", "<ParityTable"],
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
   finance: ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "<ParityTable"],
   fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
@@ -37,7 +37,7 @@ const EVIDENCE = {
   settlements: ["apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx", "<ParityTable"],
   system: ["apps/frontend/src/pages/system/SystemModulePage.tsx", "<ParityTable"],
   tasks: ["apps/frontend/src/pages/tasks/TasksReportPage.tsx", "<ParityTable"],
-  users: ["apps/frontend/src/components/users/UserActivityTab.tsx", "<ParityTable"],
+  users: ["apps/frontend/src/pages/Users.tsx", "<ParityTable"],
   vendors: ["apps/frontend/src/pages/vendors/VendorsListView.tsx", "<ParityTable"],
 };
 
@@ -54,6 +54,8 @@ const EXACT_CONSUMERS = {
   "driver-hub": { route: "/driver-hub/reporting", surface: "pages/home/DriverHubReportingPage.tsx" },
   compliance: { route: "/compliance", surface: "pages/compliance/FilingsComplianceDueSection.tsx" },
   tasks: { route: "/tasks/report", surface: "pages/tasks/TasksReportPage.tsx" },
+  users: { route: "/users", surface: "pages/Users.tsx" },
+  drivers: { route: "/drivers", surface: "pages/drivers/DriversTable.tsx" },
 };
 
 function read() {
