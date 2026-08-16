@@ -56,7 +56,7 @@ export function audit(src) {
   need(/id: "vendor", label: "Vendors"/.test(src.docsHome), `${FILES.docsHome}: docs must have a real Vendors filter tab`);
   need(/"driver" \| "unit" \| "vendor" \| "customer"/.test(src.uploadModal), `${FILES.uploadModal}: upload modal must support real vendor link type`);
   need(/factoring_company_vendor_id(?!_)/.test(src.customers), `${FILES.customers}: list.segment.factored must filter real factoring_company_vendor_id`);
-  need(/factoring_company_vendor_id(?!_)/.test(src.customerDetail), `${FILES.customerDetail}: customer detail must edit real factoring_company_vendor_id`);
+  need(/factoring_company_vendor_id(?!_)/.test(src.customerDetail) && /kind=["']vendor["']/.test(src.customerDetail) && /allowCreate/.test(src.customerDetail), `${FILES.customerDetail}: customer detail must edit factoring_company_vendor_id via EntityPicker`);
   need(/lastService\.vendor/.test(src.maintSnapshot), `${FILES.maintSnapshot}: maintenance snapshot must show the real backend-joined vendor`);
   need(/entityType="vendor"/.test(src.vehicleProfile), `${FILES.vehicleProfile}: unit QBO mapping must have a real vendor combobox`);
   need(/lender_vendor_name(?!_)/.test(src.financeLinkage), `${FILES.financeLinkage}: finance linkage must show the real linked lender vendor`);
@@ -91,7 +91,7 @@ if (process.argv.includes("--selftest")) {
     ["docs-tab", "docsHome", /id: "vendor", label: "Vendors"/, 'id: "vendor_unused", label: "Vendors"'],
     ["upload-type", "uploadModal", /"driver" \| "unit" \| "vendor" \| "customer"/, '"driver" | "unit" | "customer"'],
     ["customers-factored-filter", "customers", /factoring_company_vendor_id/g, "factoring_company_vendor_id_unused"],
-    ["customer-detail-field", "customerDetail", /factoring_company_vendor_id/g, "factoring_company_vendor_id_unused"],
+    ["customer-detail-field", "customerDetail", /kind=["']vendor["']/g, 'kind="unit"'],
     ["maint-snapshot-field", "maintSnapshot", /lastService\.vendor/g, "lastService_unused"],
     ["vehicle-profile-combobox", "vehicleProfile", /entityType="vendor"/, 'entityType="unit"'],
     ["finance-linkage-field", "financeLinkage", /lender_vendor_name/g, "lender_vendor_name_unused"],
