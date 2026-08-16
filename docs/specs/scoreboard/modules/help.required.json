@@ -200,7 +200,7 @@
       "surface_kind": "toolbar",
       "required": [],
       "note": "N/A: Help has no date/amount-bearing data pipeline list.",
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/help/HelpCenterPage.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -210,7 +210,7 @@
       "surface_kind": "toolbar",
       "required": [],
       "note": "N/A: Help has no configurable data-table columns.",
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/help/HelpCenterPage.tsx"
     },
     {
       "id": "chrome.toolbar_filter",

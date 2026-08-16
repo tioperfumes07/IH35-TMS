@@ -487,6 +487,14 @@ export function collectFailures(sources) {
       failures.push("help: Filters panel must use help-center testIdPrefix");
     }
   }
+  if (helpReq) {
+    if (/"id": "chrome\.toolbar_range"[\s\S]*?"surface_path": "components\/table\/UniversalListToolbar\.tsx"/.test(helpReq)) {
+      failures.push("help.required.json: chrome.toolbar_range must not theater UniversalListToolbar (N/A → HelpCenterPage)");
+    }
+    if (/"id": "chrome\.toolbar_gear"[\s\S]*?"surface_path": "components\/table\/UniversalListToolbar\.tsx"/.test(helpReq)) {
+      failures.push("help.required.json: chrome.toolbar_gear must not theater UniversalListToolbar (N/A → HelpCenterPage)");
+    }
+  }
 
   return failures;
 }
@@ -736,6 +744,15 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       "apps/frontend/src/pages/help/HelpCenterPage.tsx": sources[
         "apps/frontend/src/pages/help/HelpCenterPage.tsx"
       ].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/help.required.json": sources[
+        "docs/specs/scoreboard/modules/help.required.json"
+      ].replaceAll(
+        '"id": "chrome.toolbar_range",\n      "tab": "Chrome controls",\n      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",\n      "route_hint": "/help",\n      "surface_kind": "toolbar",\n      "required": [],\n      "note": "N/A: Help has no date/amount-bearing data pipeline list.",\n      "surface_path": "pages/help/HelpCenterPage.tsx"',
+        '"id": "chrome.toolbar_range",\n      "tab": "Chrome controls",\n      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",\n      "route_hint": "/help",\n      "surface_kind": "toolbar",\n      "required": [],\n      "note": "N/A: Help has no date/amount-bearing data pipeline list.",\n      "surface_path": "components/table/UniversalListToolbar.tsx"',
+      ),
     }),
   ];
   mutations.forEach((mutate, index) => {
