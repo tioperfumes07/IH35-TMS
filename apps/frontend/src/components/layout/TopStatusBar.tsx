@@ -13,6 +13,7 @@ export type QboSyncPill = {
 };
 
 export type TopStatusBarProps = {
+  qboAvailable?: boolean;
   qboVis: { label: string; dot: "gray" | "green" | "yellow" };
   samsaraVis: SamsaraVisualStatus;
   relayVis: SamsaraVisualStatus;
@@ -50,6 +51,7 @@ function topbarDotClass(dot: "gray" | "green" | "yellow" | "red"): string {
 }
 
 export function TopStatusBar({
+  qboAvailable = true,
   qboVis,
   samsaraVis,
   relayVis,
@@ -67,6 +69,7 @@ export function TopStatusBar({
   if (compact) {
     return (
       <StatusBarMobile
+        qboAvailable={qboAvailable}
         qboVis={qboVis}
         samsaraVis={samsaraVis}
         relayVis={relayVis}
@@ -85,11 +88,11 @@ export function TopStatusBar({
       style={{ backgroundColor: "#151A24", color: muted }}
       data-status-bar-desktop
     >
-      <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }}>
+      {qboAvailable ? <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }}>
         <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboVis.dot)}`} />
         {qboVis.label}
-      </span>
-      <span style={{ color: muted }}>·</span>
+      </span> : null}
+      {qboAvailable ? <span style={{ color: muted }}>·</span> : null}
       <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }} title={samsaraVis.title}>
         <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(samsaraVis.dot)}`} />
         {samsaraVis.label}
@@ -99,7 +102,7 @@ export function TopStatusBar({
         <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(relayVis.dot)}`} />
         {relayVis.label}
       </span>
-      {qboSyncPill ? (
+      {qboAvailable && qboSyncPill ? (
         <>
           <span style={{ color: muted }}>·</span>
           <button

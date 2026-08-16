@@ -59,6 +59,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const companyLabel = selectedCompany?.short_name?.trim() || selectedCompany?.legal_name?.trim() || "";
+  const qboAvailable = selectedCompany?.code === "TRANSP";
   const office = auth.role !== "Driver";
   const prevQboSyncStatus = useRef<string | null>(null);
 
@@ -73,7 +74,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const qboQuery = useQuery({
     queryKey: ["integrations", "qbo", "status", companyId],
     queryFn: () => getQboConnectionStatus(companyId),
-    enabled: Boolean(companyId) && office,
+    enabled: Boolean(companyId) && office && qboAvailable,
     staleTime: 30_000,
     refetchInterval: 60_000,
   });
@@ -89,7 +90,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const qboSyncHealthQuery = useQuery({
     queryKey: ["qbo", "sync-health", companyId],
     queryFn: () => getQboSyncHealth(companyId),
-    enabled: Boolean(companyId) && office,
+    enabled: Boolean(companyId) && office && qboAvailable,
     staleTime: 15_000,
     refetchInterval: 30_000,
     retry: false,
@@ -226,6 +227,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
       <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">
         <TopStatusBar
+          qboAvailable={qboAvailable}
           qboVis={qboVis}
           samsaraVis={samsaraVis}
           relayVis={relayVis}
