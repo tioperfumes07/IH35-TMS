@@ -7,9 +7,8 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { CappedListNotice } from "../../../components/CappedListNotice";
-import { getCustomerDetail, getVendor, listCustomers, listVendors } from "../../../api/mdata";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { getCustomerDetail, getVendor } from "../../../api/mdata";
 
 type Props = {
   open: boolean;
@@ -37,8 +36,6 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
   const [templateId, setTemplateId] = useState("");
   const [signerType, setSignerType] = useState<"driver" | "employee" | "customer" | "vendor" | "other">("driver");
   const [signerEntityId, setSignerEntityId] = useState("");
-  const [vendorSearch, setVendorSearch] = useState("");
-  const [customerSearch, setCustomerSearch] = useState("");
   const [signerName, setSignerName] = useState("");
   const [signerEmail, setSignerEmail] = useState("");
   const [signerPhone, setSignerPhone] = useState("");
@@ -65,28 +62,6 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
     () => templates.find((row) => row.id === templateId) ?? null,
     [templateId, templates]
   );
-  const vendorsQuery = useQuery({
-    queryKey: ["legal", "send-modal", "vendors", operatingCompanyId, vendorSearch],
-    enabled: open && signerType === "vendor" && Boolean(operatingCompanyId),
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: vendorSearch ? 200 : 500, search: vendorSearch || undefined }),
-  });
-  const vendorOptions = useMemo(() => (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
-    value: vendor.id,
-    label: vendor.name,
-    email: vendor.email ?? "",
-    phone: vendor.phone ?? "",
-  })), [vendorsQuery.data]);
-  const customersQuery = useQuery({
-    queryKey: ["legal", "send-modal", "customers", operatingCompanyId, customerSearch],
-    enabled: open && signerType === "customer" && Boolean(operatingCompanyId),
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, status: "active", limit: customerSearch ? 200 : 500, search: customerSearch || undefined }),
-  });
-  const customerOptions = useMemo(() => (customersQuery.data?.customers ?? []).map((customer) => ({
-    value: customer.id,
-    label: customer.name,
-    email: customer.email ?? customer.ar_email ?? "",
-    phone: customer.phone ?? customer.office_phone ?? "",
-  })), [customersQuery.data]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -209,61 +184,55 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
             {signerType === "vendor" ? (
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Vendor signer *</label>
-                <ReferenceSelect
-                  value={signerEntityId || null}
-                  onChange={(id) => {
-                    setSignerEntityId(id ?? "");
-                    const selected = vendorOptions.find((vendor) => vendor.value === id);
-                    if (selected) {
-                      setSignerName(selected.label);
-                      setSignerEmail(selected.email);
-                      setSignerPhone(selected.phone);
-                    } else if (id) {
-                      void getVendor(id, operatingCompanyId).then((vendor) => {
-                        setSignerName(vendor.name);
-                        setSignerEmail(vendor.email ?? "");
-                        setSignerPhone(vendor.phone ?? "");
-                      });
-                    }
-                  }}
-                  options={vendorOptions.map(({ value, label }) => ({ value, label, type: value }))}
-                  createKind="vendor"
+                {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listVendors roster. */}
+                <EntityPicker
+                  kind="vendor"
+                  allowCreate
+                  nestedInDrawer
                   operatingCompanyId={operatingCompanyId}
+                  value={signerEntityId || null}
+                  onChange={(id, option) => {
+                    setSignerEntityId(id ?? "");
+                    if (!id) return;
+                    if (option?.label) setSignerName(option.label);
+                    void getVendor(id, operatingCompanyId).then((vendor) => {
+                      setSignerName(vendor.name);
+                      setSignerEmail(vendor.email ?? "");
+                      setSignerPhone(vendor.phone ?? "");
+                    });
+                  }}
+                  enabled={open}
                   placeholder="Search vendor…"
-                  onSearch={setVendorSearch}
-                  loading={vendorsQuery.isLoading}
+                  dataField="send-contract-vendor-signer"
+                  className="w-full"
                 />
-                <CappedListNotice shown={vendorOptions.length} limit={vendorSearch ? 200 : 500} total={vendorsQuery.data?.total ?? null} hint="Type to search for a vendor not listed." />
               </div>
             ) : null}
             {signerType === "customer" ? (
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Customer signer *</label>
-                <ReferenceSelect
-                  value={signerEntityId || null}
-                  onChange={(id) => {
-                    setSignerEntityId(id ?? "");
-                    const selected = customerOptions.find((customer) => customer.value === id);
-                    if (selected) {
-                      setSignerName(selected.label);
-                      setSignerEmail(selected.email);
-                      setSignerPhone(selected.phone);
-                    } else if (id) {
-                      void getCustomerDetail(id, operatingCompanyId).then(({ customer }) => {
-                        setSignerName(customer.name);
-                        setSignerEmail(customer.email ?? customer.ar_email ?? "");
-                        setSignerPhone(customer.phone ?? customer.office_phone ?? "");
-                      });
-                    }
-                  }}
-                  options={customerOptions.map(({ value, label }) => ({ value, label, type: value }))}
-                  createKind="customer"
+                {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */}
+                <EntityPicker
+                  kind="customer"
+                  allowCreate
+                  nestedInDrawer
                   operatingCompanyId={operatingCompanyId}
+                  value={signerEntityId || null}
+                  onChange={(id, option) => {
+                    setSignerEntityId(id ?? "");
+                    if (!id) return;
+                    if (option?.label) setSignerName(option.label);
+                    void getCustomerDetail(id, operatingCompanyId).then(({ customer }) => {
+                      setSignerName(customer.name);
+                      setSignerEmail(customer.email ?? customer.ar_email ?? "");
+                      setSignerPhone(customer.phone ?? customer.office_phone ?? "");
+                    });
+                  }}
+                  enabled={open}
                   placeholder="Search customer…"
-                  onSearch={setCustomerSearch}
-                  loading={customersQuery.isLoading}
+                  dataField="send-contract-customer-signer"
+                  className="w-full"
                 />
-                <CappedListNotice shown={customerOptions.length} limit={customerSearch ? 200 : 500} total={customersQuery.data?.total ?? null} hint="Type to search for a customer not listed." />
               </div>
             ) : null}
             <div className="flex flex-col gap-1">
