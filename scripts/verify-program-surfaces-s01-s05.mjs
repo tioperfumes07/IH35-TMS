@@ -38,6 +38,7 @@ export function run() {
   const finalAdditions = read("apps/frontend/src/pages/program/FinalAdditionsPage.tsx");
   const board = read("apps/frontend/src/pages/program/ProgramBoardPage.tsx");
   const boardService = read("apps/backend/src/program/program-board.service.ts");
+  const required = JSON.parse(read("docs/specs/scoreboard/modules/program.required.json"));
 
   const routes = ["/program", "/program/modules", "/program/tracker", "/program/legacy-scoreboard", "/program/matrix", "/program/final-additions"];
   for (const r of routes) {
@@ -52,6 +53,9 @@ export function run() {
   // S02: legacy board reads the committed block-reconciliation snapshot.
   assert(board.includes("getProgramBoard"), "ProgramBoardPage must fetch program board", errors);
   assert(boardService.includes("block-reconciliation-data.json"), "program-board.service must read block-reconciliation-data.json", errors);
+  const threadLeaf = required.leaves.find((leaf) => leaf.id === "program.panel.thread");
+  assert(threadLeaf?.route_hint === "/program/legacy-board", "program.panel.thread must point at its real Program Board route", errors);
+  assert(threadLeaf?.surface_path === "pages/program/ProgramBoardPage.tsx", "program.panel.thread must name its real consumer", errors);
 
   // S03: module-completion page surfaces generated manifests.
   assert(moduleComp.includes("MODULE_COMPLETION"), "ModuleCompletionPage must import MODULE_COMPLETION", errors);
@@ -91,8 +95,10 @@ export function run() {
 function selftest() {
   const realPath = path.join(ROOT, "apps/frontend/src/pages/program/ProgramModuleNav.tsx");
   const finalPath = path.join(ROOT, "apps/frontend/src/pages/program/FinalAdditionsPage.tsx");
+  const requiredPath = path.join(ROOT, "docs/specs/scoreboard/modules/program.required.json");
   const backup = fs.readFileSync(realPath, "utf8");
   const finalBackup = fs.readFileSync(finalPath, "utf8");
+  const requiredBackup = fs.readFileSync(requiredPath, "utf8");
   try {
     fs.writeFileSync(realPath, backup.replace(/to="\/program\/modules"/, 'to="/program/_removed_modules"'), "utf8");
     const planted = run();
@@ -106,10 +112,19 @@ function selftest() {
       console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted owner-gate regression not detected");
       process.exit(1);
     }
+    const requiredJson = JSON.parse(requiredBackup);
+    requiredJson.leaves.find((leaf) => leaf.id === "program.panel.thread").route_hint = "/program";
+    fs.writeFileSync(requiredPath, JSON.stringify(requiredJson, null, 2), "utf8");
+    const threadRoutePlanted = run();
+    if (!threadRoutePlanted.some((e) => e.includes("program.panel.thread"))) {
+      console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted thread route mismatch not detected");
+      process.exit(1);
+    }
     console.log(`[verify-program-surfaces-s01-s05] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {
     fs.writeFileSync(realPath, backup, "utf8");
     fs.writeFileSync(finalPath, finalBackup, "utf8");
+    fs.writeFileSync(requiredPath, requiredBackup, "utf8");
   }
 }
 
