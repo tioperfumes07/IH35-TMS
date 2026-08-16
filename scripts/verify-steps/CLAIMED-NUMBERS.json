@@ -3467,5 +3467,10 @@
     "name": "verify-driver-create-is-wizard",
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
+  },
+  "3616": {
+    "name": "verify-doc-categories-identity-mx-license",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
   }
 }
