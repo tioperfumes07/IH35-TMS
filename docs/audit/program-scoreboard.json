@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T18:43:51-05:00",
-    "sourceSha": "93feb1eba",
-    "deployedSha": "93feb1e",
+    "generatedAt": "2026-08-15T19:01:25-05:00",
+    "sourceSha": "c4f73ed2e",
+    "deployedSha": "d6cb13f",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 834,
+    "ledgerRows": 835,
     "failOpen": 15,
     "defects": 18
   },
@@ -2121,6 +2121,51 @@
   },
   "recentActivity": [
     {
+      "number": 7578,
+      "title": "FINDING: LV-MAINT-TRIAGE-SOURCE-LINEAGE-AND-LOAD-DROPPED",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 07:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7578",
+      "sha": "c4f73ed2e",
+      "committedAtIso": "2026-08-15T19:01:25-05:00"
+    },
+    {
+      "number": 7577,
+      "title": "FINDING: CLAIM-MIGRATION-202612590000",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7577",
+      "sha": "30bb59e49",
+      "committedAtIso": "2026-08-15T18:59:49-05:00"
+    },
+    {
+      "number": 7576,
+      "title": "FINDING: LV-MOBILE-RESPONSIVE-REGRESSION-MEDCARD-LISTTOOLBAR",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7576",
+      "sha": "d6cb13f27",
+      "committedAtIso": "2026-08-15T18:56:50-05:00"
+    },
+    {
+      "number": 7575,
+      "title": "FINDING: BOARD-CLOSEOUT-ACCT-F5312-F5313-F5314",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7575",
+      "sha": "d57dec475",
+      "committedAtIso": "2026-08-15T18:55:44-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 06:53 PM CT",
+      "url": "",
+      "sha": "25989031c",
+      "committedAtIso": "2026-08-15T23:53:51Z"
+    },
+    {
       "number": 7574,
       "title": "FINDING: ACCT-F5313",
       "state": "merged",
@@ -2164,51 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7573",
       "sha": "93feb1eba",
       "committedAtIso": "2026-08-15T18:43:51-05:00"
-    },
-    {
-      "number": 7572,
-      "title": "FINDING: LIVE-HOME-PROGRAM-FLEET-EXACT-LEAVES",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7572",
-      "sha": "f844808d6",
-      "committedAtIso": "2026-08-15T18:41:32-05:00"
-    },
-    {
-      "number": 7570,
-      "title": "FINDING: INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT-CLOSEOUT",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7570",
-      "sha": "702aa22c0",
-      "committedAtIso": "2026-08-15T18:39:01-05:00"
-    },
-    {
-      "number": 7569,
-      "title": "FINDING: INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7569",
-      "sha": "896ce6207",
-      "committedAtIso": "2026-08-15T18:37:22-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:33 PM CT",
-      "url": "",
-      "sha": "50bd908b7",
-      "committedAtIso": "2026-08-15T23:33:43Z"
-    },
-    {
-      "number": 7566,
-      "title": "FINDING: LST-F3600",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7566",
-      "sha": "4c980daec",
-      "committedAtIso": "2026-08-15T18:26:28-05:00"
     }
   ]
 }
