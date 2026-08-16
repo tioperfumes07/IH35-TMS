@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T15:30:57-05:00",
-    "sourceSha": "4825c5984",
+    "generatedAt": "2026-08-16T15:33:05-05:00",
+    "sourceSha": "82e4a5883",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 932,
+    "ledgerRows": 933,
     "failOpen": 24,
     "defects": 26
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7903,
+      "title": "FINDING: ROW-432-DRIVER-SCHEMA-DRIFT-CLOSEOUT",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7903",
+      "sha": "82e4a5883",
+      "committedAtIso": "2026-08-16T15:33:05-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 03:32 PM CT",
+      "url": "",
+      "sha": "2d65436ac",
+      "committedAtIso": "2026-08-16T20:32:02Z"
+    },
+    {
       "number": 7902,
       "title": "FINDING: LV-SYSTEM-BACKGROUND-JOBS-STALE-DOWN",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7899",
       "sha": "5026d5540",
       "committedAtIso": "2026-08-16T15:05:03-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:58 PM CT",
-      "url": "",
-      "sha": "3a467d781",
-      "committedAtIso": "2026-08-16T19:58:49Z"
-    },
-    {
-      "number": 7898,
-      "title": "FINDING: LV-USMCA-GLOBAL-QBO-STATUS-CHROME",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7898",
-      "sha": "bb056549f",
-      "committedAtIso": "2026-08-16T14:57:32-05:00"
     }
   ]
 }
