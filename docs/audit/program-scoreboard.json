@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T21:17:24-05:00",
-    "sourceSha": "aa042f88a",
-    "deployedSha": "b0edcda",
+    "generatedAt": "2026-08-15T21:31:24-05:00",
+    "sourceSha": "dbcb14b07",
+    "deployedSha": "b09f8a9",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 847,
+    "ledgerRows": 849,
     "failOpen": 15,
     "defects": 19
   },
@@ -495,7 +495,7 @@
         "FAIL",
         "FIX",
         "AUDIT",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -527,7 +527,7 @@
           "AUDIT",
           "FIX",
           "AUDIT",
-          "AUDIT",
+          "FIX",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 7662,
-      "title": "FINDING: LV-BOX4-STARVED-OPS-FIXTURES",
+      "number": 7673,
+      "title": "FINDING: CLS-OPERATOR-COPY-DOCS-SCHEMA-NAMESPACE-BLIND-SPOT",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7662",
-      "sha": "aa042f88a",
-      "committedAtIso": "2026-08-15T21:17:24-05:00"
+      "mergedAtCt": "08/15/2026, 09:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7673",
+      "sha": "dbcb14b07",
+      "committedAtIso": "2026-08-15T21:31:24-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 7674,
+      "title": "FINDING: CLAIM-RESERVE-3620",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:14 PM CT",
-      "url": "",
-      "sha": "e5d17e456",
-      "committedAtIso": "2026-08-16T02:14:19Z"
+      "mergedAtCt": "08/15/2026, 09:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7674",
+      "sha": "f2245a111",
+      "committedAtIso": "2026-08-15T21:31:21-05:00"
     },
     {
-      "number": 7661,
-      "title": "FINDING: LV-OPERATOR-COPY-DEPLOY-RECHECK-REMAINDER",
+      "number": 7672,
+      "title": "FINDING: LV-DOCS-FILES-NOT-HASHED",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7661",
-      "sha": "6431aa1bc",
-      "committedAtIso": "2026-08-15T21:13:06-05:00"
+      "mergedAtCt": "08/15/2026, 09:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7672",
+      "sha": "7c922b162",
+      "committedAtIso": "2026-08-15T21:29:33-05:00"
     },
     {
-      "number": 7660,
-      "title": "FINDING: CI-ENTITYLINK-DRIVER-WIZARD-STEP-ID-FALSE-POSITIVE",
+      "number": 7670,
+      "title": "FINDING: CI-DOC-CATEGORY-MERGED-PR-PROVENANCE",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7660",
-      "sha": "b0edcdac9",
-      "committedAtIso": "2026-08-15T21:12:16-05:00"
+      "mergedAtCt": "08/15/2026, 09:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7670",
+      "sha": "b09f8a936",
+      "committedAtIso": "2026-08-15T21:27:03-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 7671,
+      "title": "FINDING: CLAIM-RESERVE-3618",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:09 PM CT",
-      "url": "",
-      "sha": "d29bc6c26",
-      "committedAtIso": "2026-08-16T02:09:49Z"
+      "mergedAtCt": "08/15/2026, 09:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7671",
+      "sha": "1ce406822",
+      "committedAtIso": "2026-08-15T21:27:01-05:00"
     },
     {
-      "number": 7659,
-      "title": "FINDING: LV-OPERATOR-COPY-DEPLOY-RECHECK",
+      "number": 7669,
+      "title": "FINDING: LV-DOC-CATEGORIES-PRNUM-CORRECTION",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7659",
-      "sha": "07713ba73",
-      "committedAtIso": "2026-08-15T21:07:24-05:00"
+      "mergedAtCt": "08/15/2026, 09:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7669",
+      "sha": "eb6b28f29",
+      "committedAtIso": "2026-08-15T21:25:30-05:00"
     },
     {
-      "number": 7658,
-      "title": "FINDING: LV-DRIVER-CREATE-IS-NOT-A-WIZARD-AND-HIDES-EXISTING-COLUMNS",
+      "number": 7668,
+      "title": "FINDING: LV-DOC-CATEGORIES-MISSING-IDENTITY-AND-MX-LICENCE",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7658",
-      "sha": "8cf9b4e09",
-      "committedAtIso": "2026-08-15T21:07:02-05:00"
+      "mergedAtCt": "08/15/2026, 09:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7668",
+      "sha": "2c926ef6c",
+      "committedAtIso": "2026-08-15T21:24:52-05:00"
     },
     {
-      "number": 7657,
-      "title": "FINDING: CLAIM-RESERVE-3614",
+      "number": 7667,
+      "title": "FINDING: LIVE-ASSIGNED-NONMONEY-SURFACE-INVENTORY-REMAINDER",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7657",
-      "sha": "c6907ee76",
-      "committedAtIso": "2026-08-15T21:03:45-05:00"
+      "mergedAtCt": "08/15/2026, 09:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7667",
+      "sha": "ee5377e77",
+      "committedAtIso": "2026-08-15T21:24:22-05:00"
     },
     {
-      "number": 7656,
-      "title": "FINDING: REG-LV-WO-CREATE-500-PR-NUMBER",
+      "number": 7666,
+      "title": "FINDING: CI-ENTITYLINK-DRIVER-WIZARD-STEP-ID-BASELINE-STALE",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7656",
-      "sha": "123f741f0",
-      "committedAtIso": "2026-08-15T21:02:21-05:00"
+      "mergedAtCt": "08/15/2026, 09:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7666",
+      "sha": "c17cc7821",
+      "committedAtIso": "2026-08-15T21:22:35-05:00"
     },
     {
-      "number": 7655,
-      "title": "FINDING: REG-LV-WO-CREATE-500-OPENED-AT",
+      "number": 7665,
+      "title": "FINDING: CLAIM-RESERVE-3616",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 09:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7655",
-      "sha": "8bdaff8ac",
-      "committedAtIso": "2026-08-15T21:01:45-05:00"
+      "mergedAtCt": "08/15/2026, 09:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7665",
+      "sha": "4bb865d3f",
+      "committedAtIso": "2026-08-15T21:21:55-05:00"
     }
   ]
 }
