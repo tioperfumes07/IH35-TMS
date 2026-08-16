@@ -6,9 +6,8 @@ import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { CappedListNotice } from "../../../components/CappedListNotice";
-import { getVendor, listVendors } from "../../../api/mdata";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { getVendor } from "../../../api/mdata";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -52,7 +51,6 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
   const [lessor, setLessor] = useState({ legal_name: "", address: "", city_state_zip: "", contact_name: "", contact_title: "Manager", contact_email: "" });
   const [lessee, setLessee] = useState({ legal_name: "", entity_type: "LLC", address: "", city_state_zip: "", signer_name: "", signer_title: "", signer_email: "" });
   const [lesseeVendorId, setLesseeVendorId] = useState("");
-  const [vendorSearch, setVendorSearch] = useState("");
   const [terms, setTerms] = useState({
     execution_date: "",
     start_date: "",
@@ -77,12 +75,6 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
     queryFn: () => truckLeaseApi.ensureTemplate(operatingCompanyId),
   });
   const templateId = ensureQuery.data?.template.id ?? "";
-  const vendorsQuery = useQuery({
-    queryKey: ["legal", "truck-lease", "vendors", operatingCompanyId, vendorSearch],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: vendorSearch ? 200 : 500, search: vendorSearch || undefined }),
-  });
-  const vendorOptions = (vendorsQuery.data?.vendors ?? []).map((vendor) => ({ value: vendor.id, label: vendor.name }));
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -172,7 +164,12 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="mb-0.5 block text-[10px] font-semibold text-gray-500">Lessee vendor *</label>
-                  <ReferenceSelect
+                  {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listVendors roster. */}
+                  <EntityPicker
+                    kind="vendor"
+                    allowCreate
+                    nestedInDrawer
+                    operatingCompanyId={operatingCompanyId}
                     value={lesseeVendorId || null}
                     onChange={(id) => {
                       setLesseeVendorId(id ?? "");
@@ -186,14 +183,11 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                         })));
                       }
                     }}
-                    options={vendorOptions.map(({ value, label }) => ({ value, label, type: value }))}
-                    createKind="vendor"
-                    operatingCompanyId={operatingCompanyId}
+                    enabled={open}
                     placeholder="Search vendor…"
-                    onSearch={setVendorSearch}
-                    loading={vendorsQuery.isLoading}
+                    dataField="truck-lease-lessee-vendor"
+                    className="w-full"
                   />
-                  <CappedListNotice shown={vendorOptions.length} limit={vendorSearch ? 200 : 500} total={vendorsQuery.data?.total ?? null} hint="Type to search for a vendor not listed." />
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Legal Name *</label>
