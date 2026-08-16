@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T07:07:39-05:00",
-    "sourceSha": "33385addb",
-    "deployedSha": "26350a7",
+    "generatedAt": "2026-08-16T07:18:37-05:00",
+    "sourceSha": "fe34b3844",
+    "deployedSha": "6b45e70",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 879,
-    "failOpen": 21,
+    "ledgerRows": 881,
+    "failOpen": 23,
     "defects": 22
   },
   "modules": [
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7783,
+      "title": "FINDING: LV-FINANCE-TOOLBAR-BORROWS-JE-PREVIEW + LV-FINANCE-LOAN-WIZARD-STALE-OWNER-GATED-COPY",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7783",
+      "sha": "fe34b3844",
+      "committedAtIso": "2026-08-16T07:18:37-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:08 AM CT",
+      "url": "",
+      "sha": "6b45e70ba",
+      "committedAtIso": "2026-08-16T12:08:45Z"
+    },
+    {
       "number": 7782,
       "title": "FINDING: LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "8c0e17f3d",
       "committedAtIso": "2026-08-16T10:59:38Z"
-    },
-    {
-      "number": 7778,
-      "title": "FINDING: LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 05:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7778",
-      "sha": "5b82928f4",
-      "committedAtIso": "2026-08-16T05:58:32-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 05:43 AM CT",
-      "url": "",
-      "sha": "6f1514611",
-      "committedAtIso": "2026-08-16T10:43:29Z"
     }
   ]
 }
