@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **25 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **61 / 150** | 2026-08-16 |
-| Rows in this file | **892** | 2026-08-16 |
-| Rows `FAIL` + `OPEN` | **30** | 2026-08-16 |
+| Rows in this file | **893** | 2026-08-16 |
+| Rows `FAIL` + `OPEN` | **31** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=116 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=117 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -980,3 +980,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 890 | docs · table.entity_link | C | USMCA | FAIL · FIXED CODE — Live recheck pending | Live `/docs` rendered raw customer/load UUIDs as EntityLink text on real scoped document rows. `DocsHomePage` consumes `/api/v1/docs`, but only the separate `/api/v1/docs/files` route called label hydration. Root fix extracts one canonical hydrator, calls it from both APIs, removes raw UUID fallback from `/documents`, and sorts on labels. The hydrator resolves driver/customer/vendor/unit/equipment/load/settlement/invoice labels. | FIXED CODE · LIVE FAIL CAPTURED | `LV-DOCS-ENTITY-LINKS-RAW-UUID-LABELS` · verify-docs-entity-labels 6 mutations | NO | 2026-08-16 | CODEX |
 | 891 | docs · files list company scope | C | USMCA | FAIL · FIXED CODE — Live recheck pending | While extracting the shared hydrator, `/api/v1/docs/files` was proven to filter `operating_company_id IN (user_accessible_company_ids())`, which returns every active company for Owner sessions. Root fix resolves one requested/selected company, filters `f.operating_company_id = $1`, scopes label reads with the same ID, makes `listFiles` require the ID, threads every caller, and keys caches by company. | FIXED CODE · SECURITY RATCHETED | `LV-DOCS-FILES-LIST-ACCESSIBLE-ALL-COMPANIES` · verify-docs-entity-labels scope mutation | NO | 2026-08-16 | CODEX |
 | 892 | program · module completion filter | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaf:** `chrome.toolbar_filter`. Live `/program/modules` rendered Module Completion with Search, Range, gear, and 14 real rows, but no Filters panel or Apply action. Source mounts `ParityTable` without a governed filter configuration. The Required/Built claim is not exercisable. No mutation. | OPEN · Cursor chrome/inventory lane | `LV-PROGRAM-MODULES-FILTER-CONTROL-ABSENT` · exact Live route + source | NO | 2026-08-16 | CODEX |
+| 893 | system · program tracker filter | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaf:** `chrome.toolbar_filter`. Live `/system?tab=program` rendered Program Tracker with Search, Range, gear, and eight real phase rows, but no Filters panel or Apply action. The Required/Built claim naming SystemModulePage is not exercisable. No mutation. QBO behavior was not tested or changed. | OPEN · Cursor chrome/inventory lane | `LV-SYSTEM-PROGRAM-FILTER-CONTROL-ABSENT` · exact Live route + source | NO | 2026-08-16 | CODEX |

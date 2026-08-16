@@ -67,3 +67,7 @@ Live `/drivers` root has the 12-row roster Search/Range/gear, while matrix-claim
 ## CODEX HANDOFF · 2026-08-16 · LV-PROGRAM-MODULES-FILTER-CONTROL-ABSENT
 
 Live `/program/modules` rendered Search, Range, gear, and 14 real rows, but no Filters panel or Apply action despite an exact `chrome.toolbar_filter` claim. Add the governed filter interaction or prove N/A and remove the claim; mutation-prove missing Apply. Exact OPEN row, audit 892, and `BLOCKS=LIVE-PROGRAM-MODULES-FILTER` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-SYSTEM-PROGRAM-FILTER-CONTROL-ABSENT
+
+Live `/system?tab=program` rendered Search, Range, gear, and eight phase rows, but no Filters panel or Apply action despite an exact `chrome.toolbar_filter` claim. Add the governed filter interaction or prove N/A and remove the claim; mutation-prove missing Apply. Do not alter QBO behavior. Exact OPEN row, audit 893, and `BLOCKS=LIVE-SYSTEM-PROGRAM-FILTER` are filed. OWNER-GATED=no; no mutation.
