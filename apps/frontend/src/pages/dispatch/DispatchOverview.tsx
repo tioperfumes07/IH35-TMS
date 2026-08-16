@@ -29,6 +29,8 @@ type Props = {
 type BorderCrossingEvent = {
   uuid: string;
   vehicle_id: string;
+  unit_id: string | null;
+  unit_number: string | null;
   driver_uuid: string | null;
   driver_name: string | null;
   load_uuid: string | null;
@@ -48,11 +50,6 @@ const CROSSING_LABELS: Record<string, string> = {
   colombia: "Colombia",
   other: "Other",
 };
-
-function shortId(value: string | null | undefined): string {
-  if (!value) return "—";
-  return entityLabel(null, value, "Record");
-}
 
 function KpiCard({
   label,
@@ -392,7 +389,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             borderEvents.slice(0, PANEL_ROW_LIMIT).map((event) => (
               <PanelRow
                 key={event.uuid}
-                unit={shortId(event.vehicle_id)}
+                unit={event.unit_id
+                  ? <EntityLink kind="unit" id={event.unit_id} label={entityLabel(event.unit_number, event.unit_id, "Unit")} />
+                  : event.vehicle_id || "Unassigned"}
                 driver={<EntityLink kind="driver" id={event.driver_uuid} label={entityLabel(event.driver_name, event.driver_uuid, "Driver")} />}
                 loadCustomer={
                   event.load_uuid
