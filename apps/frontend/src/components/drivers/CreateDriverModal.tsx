@@ -6,6 +6,7 @@ import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../../api/catalogs";
 import { ApiError } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { confirmUpload, requestUploadUrl, uploadFileToR2 } from "../../api/docs";
 import {
   checkReturningDriver,
   createDriver,
@@ -42,6 +43,16 @@ const payBasisComboboxOptions = [
   { value: "short_miles", label: "Short Miles" },
   { value: "practical_miles", label: "Practical Miles" },
 ];
+
+/** LV-DRIVER-CREATE-IS-NOT-A-WIZARD — Create Driver is a stepped wizard, not one flat panel. */
+const DRIVER_CREATE_WIZARD_STEPS = [
+  { id: 1, label: "Identity & employment" },
+  { id: 2, label: "Licenses" },
+  { id: 3, label: "Border & emergency" },
+  { id: 4, label: "DQ docs & drug screen" },
+] as const;
+
+type PendingDriverDocKey = "cdl" | "medical" | "identity";
 
 function normalizePhoneDigits(value: string) {
   return value.replace(/\D/g, "").slice(-10);
@@ -177,8 +188,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
 
-  const [showMexicanIdentity, setShowMexicanIdentity] = useState(false);
-  const [showVisaEmergency, setShowVisaEmergency] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [drugScreenAcknowledged, setDrugScreenAcknowledged] = useState(false);
+  const [pendingDocs, setPendingDocs] = useState<Partial<Record<PendingDriverDocKey, File>>>({});
+  const [showMexicanIdentity, setShowMexicanIdentity] = useState(true);
+  const [showVisaEmergency, setShowVisaEmergency] = useState(true);
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
   const [returningCheckLoading, setReturningCheckLoading] = useState(false);
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
@@ -216,8 +230,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   useEffect(() => {
     if (!open) return;
     setForm({ ...DRIVER_CREATE_FORM_INITIAL });
-    setShowMexicanIdentity(false);
-    setShowVisaEmergency(false);
+    setWizardStep(1);
+    setDrugScreenAcknowledged(false);
+    setPendingDocs({});
+    setShowMexicanIdentity(true);
+    setShowVisaEmergency(true);
     setReturningDetection(null);
     setOverrideReturningWarning(false);
     setRehireAction("rehire");
@@ -342,14 +359,37 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
   const createMutation = useMutation({
     mutationFn: createDriver,
-    onSuccess: (created) => {
+    onSuccess: async (created) => {
       const displayName = [form.first_name, form.last_name].filter(Boolean).join(" ").trim() || "Driver unavailable";
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
+
+      // DQ docs staged on wizard step 4 upload after the driver row exists (entity_links need driver id).
+      const opco = created.operating_company_id || form.operating_company_id;
+      for (const [key, file] of Object.entries(pendingDocs) as Array<[PendingDriverDocKey, File]>) {
+        if (!file) continue;
+        try {
+          const { file_id, presigned_url } = await requestUploadUrl({
+            original_filename: file.name,
+            mime_type: file.type || "application/octet-stream",
+            size_bytes: file.size,
+            operating_company_id: opco || undefined,
+            entity_links: [{ entity_type: "driver", entity_id: created.id }],
+          });
+          await uploadFileToR2(presigned_url, file, file.type || "application/octet-stream");
+          await confirmUpload(file_id);
+        } catch (err) {
+          pushToast(userFacingApiError(err, `Driver created; could not upload ${key} document`), "error");
+        }
+      }
+
       if (saveModeRef.current === "add_another") {
         pushToast("Driver created. No invite sent yet.", "success");
         setForm({ ...DRIVER_CREATE_FORM_INITIAL });
-        setShowMexicanIdentity(false);
-        setShowVisaEmergency(false);
+        setWizardStep(1);
+        setDrugScreenAcknowledged(false);
+        setPendingDocs({});
+        setShowMexicanIdentity(true);
+        setShowVisaEmergency(true);
         setReturningDetection(null);
         setOverrideReturningWarning(false);
         setRehireAction("rehire");
@@ -367,8 +407,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       });
       pushToast("Driver created. No invite sent yet.", "success");
       setForm({ ...DRIVER_CREATE_FORM_INITIAL });
-      setShowMexicanIdentity(false);
-      setShowVisaEmergency(false);
+      setWizardStep(1);
+      setDrugScreenAcknowledged(false);
+      setPendingDocs({});
+      setShowMexicanIdentity(true);
+      setShowVisaEmergency(true);
       setReturningDetection(null);
       setOverrideReturningWarning(false);
       setRehireAction("rehire");
@@ -486,6 +529,33 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           <div className="col-span-full">
             <FormErrorBanner message={driverApiError} />
           </div>
+          <div
+            className="col-span-full space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3"
+            data-testid="driver-create-wizard"
+          >
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              Step {wizardStep} of {DRIVER_CREATE_WIZARD_STEPS.length}
+            </div>
+            <div className="flex flex-wrap gap-2" role="list" aria-label="Create driver steps">
+              {DRIVER_CREATE_WIZARD_STEPS.map((step) => (
+                <span
+                  key={step.id}
+                  role="listitem"
+                  data-testid={`driver-create-step-${step.id}`}
+                  data-active={wizardStep === step.id ? "true" : "false"}
+                  className={
+                    wizardStep === step.id
+                      ? "rounded-sm bg-slate-800 px-2 py-1 text-xs font-semibold text-white"
+                      : "rounded-sm bg-white px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
+                  }
+                >
+                  {step.id}. {step.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          {wizardStep === 1 ? (
+          <>
           <div className="col-span-full flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Operating Company</label>
             <Combobox
@@ -512,8 +582,6 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ["last_name", "Last Name"],
             ["email", "Email"],
             ["date_of_birth", "Date of birth"],
-            ["cdl_number", "CDL #"],
-            ["cdl_expires_at", "CDL Expires"],
             ["hire_date", "Hire Date"],
             ["dot_medical_expires_at", "DOT Medical Expires"],
           ].map(([key, label]) => (
@@ -644,6 +712,43 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <FieldError id="pay_basis" message={driverFieldErrors.pay_basis} />
           </div>
 
+          </>
+          ) : null}
+
+          {wizardStep === 2 ? (
+          <>
+          {[
+            ["cdl_number", "CDL #"],
+            ["cdl_expires_at", "CDL Expires"],
+          ].map(([key, label]) => (
+            <div key={key} className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">{label}</label>
+              {key.includes("date") || key.includes("expires") ? (
+                <DatePicker
+                  data-testid={key}
+                  value={form[key] ?? ""}
+                  onChange={(value) => {
+                    clearDriverFieldError(key);
+                    setForm((current) => ({ ...current, [key]: value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                />
+              ) : (
+                <input
+                  data-field={key}
+                  type="text"
+                  value={form[key] ?? ""}
+                  aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
+                  onChange={(event) => {
+                    clearDriverFieldError(key);
+                    setForm((current) => ({ ...current, [key]: event.target.value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                />
+              )}
+              <FieldError id={key} message={driverFieldErrors[key]} />
+            </div>
+          ))}
           <div className="col-span-full space-y-2 rounded-md border border-gray-200 p-3">
             <button
               type="button"
@@ -717,6 +822,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ) : null}
           </div>
 
+          </>
+          ) : null}
+
+          {wizardStep === 3 ? (
+          <>
           <div className="col-span-full space-y-2 rounded-md border border-gray-200 p-3">
             <button
               type="button"
@@ -806,7 +916,58 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ) : null}
           </div>
 
-          {returningDetection?.returning_driver ? (
+          </>
+          ) : null}
+
+          {wizardStep === 4 ? (
+          <div className="col-span-full space-y-3 rounded-md border border-slate-200 p-3" data-testid="driver-create-dq-step">
+            <div className="text-sm font-semibold text-slate-800">DQ documents & drug screen</div>
+            <p className="text-xs text-slate-600">
+              Stage the required hiring documents here. They upload to the driver record after Save
+              (docs.file_links). Pre-employment drug screen must be acknowledged before create.
+            </p>
+            <label className="flex items-start gap-2 text-sm text-slate-800">
+              <input
+                type="checkbox"
+                data-testid="driver-create-drug-screen-ack"
+                checked={drugScreenAcknowledged}
+                onChange={(event) => setDrugScreenAcknowledged(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>Pre-employment drug screen ordered / result on file (or scheduled before first dispatch).</span>
+            </label>
+            {(
+              [
+                ["cdl", "CDL / Licencia Federal scan"],
+                ["medical", "DOT medical card"],
+                ["identity", "INE / passport / identity"],
+              ] as const
+            ).map(([key, label]) => (
+              <div key={key} className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-600">{label}</label>
+                <input
+                  type="file"
+                  data-testid={`driver-create-doc-${key}`}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    setPendingDocs((current) => {
+                      const next = { ...current };
+                      if (file) next[key] = file;
+                      else delete next[key];
+                      return next;
+                    });
+                  }}
+                  className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-[13px]"
+                />
+                {pendingDocs[key] ? (
+                  <span className="text-[11px] text-slate-600">{pendingDocs[key]?.name}</span>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          ) : null}
+
+          {wizardStep === 4 && returningDetection?.returning_driver ? (
             <div className={`col-span-full rounded-md border p-3 text-sm ${getDetectionSeverityClass(returningDetection)}`}>
               <div className="font-semibold">RETURNING DRIVER DETECTED</div>
               <div className="mt-1 text-xs">
@@ -867,7 +1028,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             </div>
           ) : null}
 
-          <div className="col-span-full flex justify-end gap-2">
+          <div className="col-span-full flex flex-wrap justify-between gap-2">
             <Button
               variant="secondary"
               type="button"
@@ -875,22 +1036,46 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             >
               Cancel
             </Button>
-            <SaveDropdown
-              storageKey="driver-create"
-              primaryLabel="Save"
-              disabled={
-                !form.operating_company_id ||
-                (returningDetection?.returning_driver && !overrideReturningWarning) ||
-                (overrideReturningWarning &&
-                  rehireAction === "rehire" &&
-                  terminatedMatches.length > 0 &&
-                  !selectedPriorDriverId) ||
-                returningCheckLoading
-              }
-              loading={createMutation.isPending}
-              onSave={() => void runDriverCreateSave("default")}
-              onSaveAndAddAnother={() => void runDriverCreateSave("add_another")}
-            />
+            <div className="flex flex-wrap gap-2">
+              {wizardStep > 1 ? (
+                <Button
+                  variant="secondary"
+                  type="button"
+                  data-testid="driver-create-wizard-back"
+                  onClick={() => setWizardStep((step) => Math.max(1, step - 1))}
+                >
+                  Back
+                </Button>
+              ) : null}
+              {wizardStep < DRIVER_CREATE_WIZARD_STEPS.length ? (
+                <Button
+                  type="button"
+                  data-testid="driver-create-wizard-next"
+                  disabled={wizardStep === 1 && !form.operating_company_id}
+                  onClick={() => setWizardStep((step) => Math.min(DRIVER_CREATE_WIZARD_STEPS.length, step + 1))}
+                >
+                  Next
+                </Button>
+              ) : (
+                <SaveDropdown
+                  storageKey="driver-create"
+                  primaryLabel="Save"
+                  disabled={
+                    !form.operating_company_id ||
+                    !drugScreenAcknowledged ||
+                    (returningDetection?.returning_driver && !overrideReturningWarning) ||
+                    (overrideReturningWarning &&
+                      rehireAction === "rehire" &&
+                      terminatedMatches.length > 0 &&
+                      !selectedPriorDriverId) ||
+                    returningCheckLoading
+                  }
+                  loading={createMutation.isPending}
+                  onSave={() => void runDriverCreateSave("default")}
+                  onSaveAndAddAnother={() => void runDriverCreateSave("add_another")}
+                />
+              )}
+            </div>
           </div>
     </form>
   );
