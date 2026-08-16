@@ -520,6 +520,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             ? {
                 unit_id: prefillFromIssue.unit_id,
                 driver_id: prefillFromIssue.driver_id,
+                source_type: "IT",
+                source_intransit_issue_id: prefillFromIssue.id,
+                load_id: prefillFromIssue.load_id ?? "",
+                roadside_breakdown_load_id: prefillFromIssue.load_id ?? "",
+                roadside_callout_at: prefillFromIssue.reported_at,
+                roadside_location: `GPS: ${prefillFromIssue.gps_lat ?? "unknown"}, ${prefillFromIssue.gps_lng ?? "unknown"} ${prefillFromIssue.gps_label ?? ""}`.trim(),
                 description: `${prefillFromIssue.issue_description}\nGPS: ${prefillFromIssue.gps_lat ?? ""},${prefillFromIssue.gps_lng ?? ""} ${prefillFromIssue.gps_label ?? ""}`.trim(),
                 repair_location: "mobile_roadside",
                 bucket: "roadside",
@@ -527,8 +533,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               }
             : undefined
         }
-        onClose={() => setCreateWoOpen(false)}
+        onClose={() => {
+          setCreateWoOpen(false);
+          setPrefillFromIssue(null);
+        }}
         onCreated={async () => {
+          setPrefillFromIssue(null);
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "kpis", companyId] }),
             queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "rm-status", companyId] }),

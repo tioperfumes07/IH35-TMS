@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { EntityLink } from "../shared/EntityLink";
@@ -131,6 +132,24 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <div>Legacy ID: {String(workOrder.legacy_display_id ?? "—")}</div>
           <div>Cost (total): {String(workOrder.total_actual_cost ?? "0")}</div>
         </ModalSection>
+
+        {workOrder.source_intransit_issue_id ? (
+          <ModalSection title="Source In-Transit Issue">
+            <div>
+              <Link
+                className="font-semibold text-blue-700 hover:underline"
+                to={`/dispatch/in-transit-issues?issue_id=${encodeURIComponent(String(workOrder.source_intransit_issue_id))}`}
+              >
+                View source issue in Dispatch
+              </Link>
+            </div>
+            <div>Category: {String(workOrder.source_intransit_issue_category ?? "—")}</div>
+            <div>Severity: {String(workOrder.source_intransit_issue_severity ?? "—")}</div>
+            <div>Reported: {formatDateTime(workOrder.source_intransit_issue_reported_at)}</div>
+            <div>Location: {String(workOrder.source_intransit_issue_gps_label ?? "—")}</div>
+            <div>Description: {String(workOrder.source_intransit_issue_description ?? "—")}</div>
+          </ModalSection>
+        ) : null}
 
         {isExternal ? (
           <ModalSection title="External Vendor Invoice">

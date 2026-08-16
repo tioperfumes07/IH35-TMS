@@ -849,10 +849,11 @@ export type DispatchIntransitIssueRow = {
 
 export function listDispatchIntransitIssues(
   operatingCompanyId: string,
-  filters: { status?: string; load_id?: string; driver_id?: string; unit_id?: string } = {},
+  filters: { status?: string; issue_id?: string; load_id?: string; driver_id?: string; unit_id?: string } = {},
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (filters.status) q.set("status", filters.status);
+  if (filters.issue_id) q.set("issue_id", filters.issue_id);
   if (filters.load_id) q.set("load_id", filters.load_id);
   if (filters.driver_id) q.set("issue_driver_id", filters.driver_id);
   if (filters.unit_id) q.set("issue_unit_id", filters.unit_id);
