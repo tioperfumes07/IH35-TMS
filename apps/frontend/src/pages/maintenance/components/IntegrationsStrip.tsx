@@ -17,8 +17,11 @@ function dotClass(dot: "gray" | "green" | "yellow" | "red"): string {
 }
 
 export function IntegrationsStrip({ pendingQboCount }: Props) {
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // Entity capability law: only TRANSP owns the live QBO mirror. USMCA/TRK are TMS-native and must
+  // neither poll QBO nor render a permanent "not connected" / pending-sync false alarm.
+  const qboCapable = selectedCompany?.code?.trim().toUpperCase() === "TRANSP";
 
   const samsaraQuery = useQuery({
     queryKey: ["integrations", "samsara", "health", companyId],
@@ -31,7 +34,7 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
   const qboQuery = useQuery({
     queryKey: ["integrations", "qbo", "status", companyId],
     queryFn: () => getQboConnectionStatus(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId && qboCapable),
     staleTime: 30_000,
     refetchInterval: 60_000,
   });
@@ -50,11 +53,15 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600">
-      <span className="inline-flex items-center gap-1">
-        <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(qboVis.dot)}`} />
-        {qboVis.label}
-      </span>
-      <span className="text-gray-300">·</span>
+      {qboCapable ? (
+        <>
+          <span className="inline-flex items-center gap-1">
+            <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(qboVis.dot)}`} />
+            {qboVis.label}
+          </span>
+          <span className="text-gray-300">·</span>
+        </>
+      ) : null}
       <span className="inline-flex items-center gap-1" title={samsaraVis.title}>
         <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(samsaraVis.dot)}`} />
         {samsaraVis.label}
@@ -64,14 +71,16 @@ export function IntegrationsStrip({ pendingQboCount }: Props) {
         <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass(relayVis.dot)}`} />
         {relayVis.label}
       </span>
-      <span className="text-gray-300">·</span>
-      <span>
-        {pendingQboCount} pending QBO sync
-      </span>
-      <span className="text-gray-300">·</span>
-      <button type="button" className="text-slate-700 underline">
-        View sync log →
-      </button>
+      {qboCapable ? (
+        <>
+          <span className="text-gray-300">·</span>
+          <span>{pendingQboCount} pending QBO sync</span>
+          <span className="text-gray-300">·</span>
+          <button type="button" className="text-slate-700 underline">
+            View sync log →
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
