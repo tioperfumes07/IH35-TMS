@@ -100,19 +100,23 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
           message={(query.error as Error)?.message}
           onRetry={() => void query.refetch()}
         />
-      ) : query.data?.has_data === false ? (
-        <div className="px-3 py-3 text-xs text-slate-500">
-          No HOS data recorded for drivers on {formatDisplayDate(date)}. Select another date or check the Samsara
-          connection.
-        </div>
       ) : (
         <div className="px-2 py-2">
+          {/*
+            LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR — always mount ParityTable so
+            Search/Range/gear/Filter stay present when has_data=false. Honest empty copy
+            stays in emptyText (neutral slate via ParityTable empty cell), never a red error.
+          */}
           <ParityTable
             rows={rows}
             columns={columns}
             rowKey={(row) => row.driver_id}
             storageKey="home-driver-day-summary"
-            emptyText="No driver day-summary rows."
+            emptyText={
+              query.data?.has_data === false
+                ? `No HOS data recorded for drivers on ${formatDisplayDate(date)}. Select another date or check the Samsara connection.`
+                : "No driver day-summary rows."
+            }
             tableTestId="home-driver-day-summary-table"
             rowTestId={(row) => `home-driver-day-summary-row-${row.driver_id}`}
             initialPageSize={25}
