@@ -3,7 +3,7 @@
 /**
  * OWNER-EXECUTION-PLAN vertical vendor-column sweep (2026-08-14): all 8 genuine inventory vendor
  * leaves — real vendor_id + EntityLink kind="vendor" on the parts roster and assignments trail,
- * real ReferenceSelect(createKind="vendor") on both the create and edit parts drawers.
+ * real EntityPicker(kind="vendor", allowCreate) on both the create and edit parts drawers.
  *
  * Self-test: node scripts/verify-inventory-vendor-parts.mjs --selftest
  */
@@ -25,11 +25,11 @@ export function audit(src) {
   if (!/kind="vendor" id=\{row\.vendor_id\}/.test(src.stock)) {
     failures.push(`${FILES.stock}: parts roster/column must render a real vendor EntityLink`);
   }
-  if (!/data-testid="inv-part-create-vendor-picker"/.test(src.createDrawer) || !/createKind="vendor"/.test(src.createDrawer)) {
-    failures.push(`${FILES.createDrawer}: part create must have a real vendor picker`);
+  if (!/data-testid="inv-part-create-vendor-picker"/.test(src.createDrawer) || !/kind="vendor"/.test(src.createDrawer) || !/allowCreate/.test(src.createDrawer)) {
+    failures.push(`${FILES.createDrawer}: part create must have EntityPicker kind=vendor with allowCreate`);
   }
-  if (!/data-testid="inv-part-edit-vendor-picker"/.test(src.editDrawer) || !/createKind="vendor"/.test(src.editDrawer)) {
-    failures.push(`${FILES.editDrawer}: part edit must have a real vendor picker`);
+  if (!/data-testid="inv-part-edit-vendor-picker"/.test(src.editDrawer) || !/kind="vendor"/.test(src.editDrawer) || !/allowCreate/.test(src.editDrawer)) {
+    failures.push(`${FILES.editDrawer}: part edit must have EntityPicker kind=vendor with allowCreate`);
   }
   if (!/kind="vendor" id=\{row\.vendor_id\}/.test(src.assignments)) {
     failures.push(`${FILES.assignments}: assignments trail/vendor-link must render a real vendor EntityLink`);

@@ -34,8 +34,9 @@ export function verifyInvLink01PartVendor(root = ROOT, overrides = {}) {
     ["PartEditDrawer", edit],
   ]) {
     if (!/vendor_id/.test(src)) errs.push(`${name}: must wire vendor_id`);
-    if (!/ReferenceSelect/.test(src)) errs.push(`${name}: must use ReferenceSelect vendor picker`);
-    if (!/createKind\s*=\s*["']vendor["']/.test(src)) errs.push(`${name}: ReferenceSelect createKind="vendor"`);
+    if (!/EntityPicker/.test(src)) errs.push(`${name}: must use EntityPicker vendor picker`);
+    if (!/kind\s*=\s*["']vendor["']/.test(src)) errs.push(`${name}: EntityPicker kind="vendor"`);
+    if (!/allowCreate/.test(src)) errs.push(`${name}: EntityPicker allowCreate for preferred vendor`);
     if (!/updateMaintenancePart|vendor_id:/.test(src) && name === "PartEditDrawer") {
       errs.push("PartEditDrawer: must PATCH vendor_id via updateMaintenancePart");
     }

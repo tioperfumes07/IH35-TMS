@@ -1,22 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { capNotice, listCapInfo } from "../../lib/list-cap";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { updateMaintenancePart, type MaintenancePartRow } from "../../api/maintenance";
-import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
-import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import {
   PART_INVENTORY_CATEGORIES,
   formatPartInventoryCategoryLabel,
 } from "./partInventoryCategories";
-
-// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
-// 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
-const VENDOR_PICKER_CAP = 200;
 
 interface PartEditDrawerProps {
   part: MaintenancePartRow | null;
@@ -26,7 +19,6 @@ interface PartEditDrawerProps {
 
 export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDrawerProps) {
   const queryClient = useQueryClient();
-  const [vendorSearch, setVendorSearch] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -53,29 +45,6 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
       vendor_id: part.vendor_id ?? "",
     });
   }, [part]);
-
-  const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", operatingCompanyId, "part-edit", vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: VENDOR_PICKER_CAP,
-        search: vendorSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId) && Boolean(part),
-  });
-
-  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
-  const vendorCap = useMemo(
-    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
-    [vendorsQuery.data],
-  );
-  const vendorCapNotice = capNotice(vendorCap, "vendors");
-  const vendorOptions = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
-    [vendorsQuery.data?.vendors],
-  );
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -160,21 +129,17 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
           <div>
             <label className="block text-sm font-medium">Preferred vendor</label>
             <div className="mt-1" data-testid="inv-part-edit-vendor-picker">
-              {/* CLS-SILENT-CAP: tell the user the picker is not showing every vendor. */}
-              {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
-              <ReferenceSelect
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
+              <EntityPicker
+                kind="vendor"
+                operatingCompanyId={operatingCompanyId}
                 value={formData.vendor_id || null}
                 onChange={(next) => setFormData({ ...formData, vendor_id: next ?? "" })}
-                options={vendorOptions}
-                createKind="vendor"
-                operatingCompanyId={operatingCompanyId}
-                placeholder="Select vendor…"
-                loading={vendorsQuery.isLoading}
-                onSearch={setVendorSearch}
-                onOptionCreated={(opt) => {
-                  setFormData((v) => ({ ...v, vendor_id: opt.value }));
-                  void vendorsQuery.refetch();
-                }}
+                placeholder="Search vendor…"
+                dataTestId="inv-part-edit-vendor"
+                allowCreate
+                allowClear
+                enabled={Boolean(part)}
               />
             </div>
           </div>
