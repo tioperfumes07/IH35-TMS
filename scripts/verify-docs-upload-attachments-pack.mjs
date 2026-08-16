@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * verify-docs-upload-attachments-pack.mjs — DOCS-S03 + upload/attachments picker law ratchet.
- * Standalone Docs upload: category catalog combobox, optional EntityPicker/ReferenceSelect entity link,
+ * Standalone Docs upload: category catalog combobox, optional EntityPicker entity link
+ * (all kinds including customer — no listCustomers/ReferenceSelect dual-path),
  * operating_company_id threading, entity tabs ?tab= sync.
  */
 import fs from "node:fs";
@@ -30,7 +31,8 @@ function assertWiring(readSourceFn = readSource) {
       'dataTestId="docs-upload-category-combobox"',
       'data-testid="docs-upload-entity-link-panel"',
       "<EntityPicker",
-      'createKind="customer"',
+      "standaloneLinkToPickerKind",
+      'dataTestId={`docs-upload-link-${linkEntityType}-picker`}',
       "operating_company_id: operatingCompanyId",
       "entity_links",
     ]],
@@ -47,6 +49,13 @@ function assertWiring(readSourceFn = readSource) {
     for (const needle of needles) {
       if (!src.includes(needle)) problems.push(`${file} missing ${JSON.stringify(needle)}`);
     }
+  }
+
+  if (/listCustomers\(/.test(upload)) {
+    problems.push(`${UPLOAD_MODAL}: must not call listCustomers — customer link uses EntityPicker`);
+  }
+  if (/ReferenceSelect/.test(upload) || /createKind=["']customer["']/.test(upload)) {
+    problems.push(`${UPLOAD_MODAL}: must not use ReferenceSelect for customer — use EntityPicker`);
   }
 
   if (!/disabled=\{!companyId\}/.test(home)) {
