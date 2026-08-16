@@ -178,6 +178,15 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
           out.push({
             value: d.id,
             label: entityLabel(nonEmpty(d.first_name, d.last_name), d.id, "Driver"),
+            // Row 425: same-name active drivers can be distinct Samsara identities. Never coin-toss
+            // between identical labels and never merge them from name alone; expose stable operator
+            // context on every shared driver picker instead.
+            sublabel: [
+              d.phone && !/^0+[\s()-]*0*$/.test(d.phone) && d.phone !== "000-000-0000" ? d.phone : null,
+              d.samsara_driver_id ? `Samsara ${d.samsara_driver_id}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined,
           });
         }
       }
