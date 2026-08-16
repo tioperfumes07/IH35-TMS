@@ -49,6 +49,14 @@ const PATHS = {
     "apps/frontend/src/pages/lists/accounting/ExpenseCategoriesListPage.tsx"
   ),
   taxCodesPage: path.join(ROOT, "apps/frontend/src/pages/lists/accounting/TaxCodesListPage.tsx"),
+  journalEntryTypesPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/JournalEntryTypesListPage.tsx"
+  ),
+  currencyCodesPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/CurrencyCodesListPage.tsx"
+  ),
 };
 
 /** LST-F5214 — shared bases + safety/dispatch leaves that must honor ?create=1 via the hook. */
@@ -106,6 +114,8 @@ export function collectProblems(sources = {}) {
   const classesPage = sources.classesPage ?? read(PATHS.classesPage);
   const expenseCategoriesPage = sources.expenseCategoriesPage ?? read(PATHS.expenseCategoriesPage);
   const taxCodesPage = sources.taxCodesPage ?? read(PATHS.taxCodesPage);
+  const journalEntryTypesPage = sources.journalEntryTypesPage ?? read(PATHS.journalEntryTypesPage);
+  const currencyCodesPage = sources.currencyCodesPage ?? read(PATHS.currencyCodesPage);
   const errors = [];
 
   if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
@@ -118,6 +128,8 @@ export function collectProblems(sources = {}) {
   if (!classesPage) errors.push(fail("missing ClassesListPage.tsx"));
   if (!expenseCategoriesPage) errors.push(fail("missing ExpenseCategoriesListPage.tsx"));
   if (!taxCodesPage) errors.push(fail("missing TaxCodesListPage.tsx"));
+  if (!journalEntryTypesPage) errors.push(fail("missing JournalEntryTypesListPage.tsx"));
+  if (!currencyCodesPage) errors.push(fail("missing CurrencyCodesListPage.tsx"));
   if (errors.length) return errors;
 
   if (!/function ListsDomainRoute\(\)/.test(manifest)) {
@@ -196,9 +208,25 @@ export function collectProblems(sources = {}) {
     [classesPage, "ClassesListPage"],
     [expenseCategoriesPage, "ExpenseCategoriesListPage"],
     [taxCodesPage, "TaxCodesListPage"],
+    [journalEntryTypesPage, "JournalEntryTypesListPage"],
+    [currencyCodesPage, "CurrencyCodesListPage"],
   ]) {
     if (!/AccountingCatalogListPage/.test(src)) {
       errors.push(fail(`${name} must wrap AccountingCatalogListPage (inherits ?create=1)`));
+    }
+  }
+
+  // Items + Detail Types: custom create chrome must still honor ?create=1.
+  if (!sources.skipSharedCreateRatchet) {
+    const itemsPage = read("apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx");
+    const detailTypesPage = read("apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx");
+    if (!itemsPage) errors.push(fail("missing ItemsListPage.tsx"));
+    else if (!/searchParams\.get\("create"\) !== "1"/.test(itemsPage) && !/get\("create"\) === "1"/.test(itemsPage)) {
+      errors.push(fail("ItemsListPage must honor ?create=1 → ItemEditorModal"));
+    }
+    if (!detailTypesPage) errors.push(fail("missing DetailTypesListPage.tsx"));
+    else if (!/searchParams\.get\("create"\) === "1"/.test(detailTypesPage) && !/get\("create"\) === "1"/.test(detailTypesPage)) {
+      errors.push(fail("DetailTypesListPage must honor ?create=1 → create modal"));
     }
   }
 
@@ -277,6 +305,8 @@ if (catalogKey === "_create") {
   const goodClasses = `export function ClassesListPage() { return <AccountingCatalogListPage client={classesCatalogClient} />; }`;
   const goodExpenseCategories = `export function ExpenseCategoriesListPage() { return <AccountingCatalogListPage client={expenseCategoriesCatalogClient} />; }`;
   const goodTaxCodes = `export function TaxCodesListPage() { return <AccountingCatalogListPage client={taxCodesCatalogClient} />; }`;
+  const goodJeTypes = `export function JournalEntryTypesListPage() { return <AccountingCatalogListPage client={journalEntryTypesCatalogClient} />; }`;
+  const goodCurrency = `export function CurrencyCodesListPage() { return <AccountingCatalogListPage client={currencyCodesCatalogClient} />; }`;
   const goodMapWithPaymentLeaves = `${goodMap}
 { name: "Payment Terms", live: true, catalogKey: "payment-terms" },
 { name: "Payment Methods", live: true, catalogKey: "payment-methods" },
@@ -315,6 +345,8 @@ function ListsDomainRoute() {
     classesPage: goodClasses,
     expenseCategoriesPage: goodExpenseCategories,
     taxCodesPage: goodTaxCodes,
+    journalEntryTypesPage: goodJeTypes,
+    currencyCodesPage: goodCurrency,
     skipSharedCreateRatchet: true,
   });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
@@ -334,6 +366,8 @@ function ListsDomainRoute() {
     classesPage: goodClasses,
     expenseCategoriesPage: goodExpenseCategories,
     taxCodesPage: goodTaxCodes,
+    journalEntryTypesPage: goodJeTypes,
+    currencyCodesPage: goodCurrency,
     skipSharedCreateRatchet: true,
   });
   if (!barePmErrors.some((e) => e.includes("PaymentMethodsListPage must wrap AccountingCatalogListPage"))) {
