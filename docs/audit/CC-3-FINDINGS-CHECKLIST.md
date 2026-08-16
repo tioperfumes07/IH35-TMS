@@ -125,7 +125,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-CREDITMEMO-NOPATH` | — | CC-2 / mechanical+route (CC-1 confirms posti | — | — | — | — | — | — |
 | ☐ | `LV-BLOCKACCEPT-RED-ON-MAIN` | — | CC-2 / mechanical + whoever owns those 3 blo | — | — | — | — | — | — |
 | ☑ | `LV-EXP-NOLOAD` | — | CC-2 / mechanical+FE | Cursor | #5564 | 2026-08-10 | RecordExpenseForm Trip/Load EntityPicker; fuel/diesel/roadside require load_id; guard exit 0 | `scripts/verify-expense-load-field-for-fuel.mjs` | Register tick — board FIXED (#5564); historical load-null still PRE-OP per Rule 32 |
-| ☐ | `LV-CI-DEPENDABOT-RED` | — | CC-2 / mechanical + CI | — | — | — | — | — | — |
+| ☑ | `LV-CI-DEPENDABOT-RED` | — | CC-2 / mechanical + CI | — | — | — | — | — | — |
 | ☐ | `LV-BANKFLAG-STALE` | — | CC-1 / money | — | — | — | — | — | — |
 | ☑ | `LV-SPAWN-LIABILITY-NOSAVE` | — | CC-3 / mechanical+FE | Cursor | FIXED on main 2026-08-10 | 2026-08-10 | Spawn Liability wired (board FIXED on main) | board FIXED 2026-08-10 | Register tick |
 | ☐ | `LV-WO-NOSAVE` | — | — | — | — | — | — | — | — |
