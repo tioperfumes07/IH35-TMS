@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T07:18:37-05:00",
-    "sourceSha": "fe34b3844",
-    "deployedSha": "6b45e70",
+    "generatedAt": "2026-08-16T07:29:57-05:00",
+    "sourceSha": "833f12b4d",
+    "deployedSha": "5881122",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 881,
+    "ledgerRows": 882,
     "failOpen": 23,
     "defects": 22
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7784,
+      "title": "FINDING: LV-LEGAL-TOOLBAR-LEAVES-POINT-LANDING",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7784",
+      "sha": "833f12b4d",
+      "committedAtIso": "2026-08-16T07:29:57-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:19 AM CT",
+      "url": "",
+      "sha": "58811221c",
+      "committedAtIso": "2026-08-16T12:19:44Z"
+    },
+    {
       "number": 7783,
       "title": "FINDING: LV-FINANCE-TOOLBAR-BORROWS-JE-PREVIEW + LV-FINANCE-LOAN-WIZARD-STALE-OWNER-GATED-COPY",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "27921beb3",
       "committedAtIso": "2026-08-16T11:21:41Z"
-    },
-    {
-      "number": 7779,
-      "title": "FINDING: LV-INSURANCE-TOOLBAR-LEAVES-POINT-ALIAS",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 06:20 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7779",
-      "sha": "26a7dd125",
-      "committedAtIso": "2026-08-16T06:20:36-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 05:59 AM CT",
-      "url": "",
-      "sha": "8c0e17f3d",
-      "committedAtIso": "2026-08-16T10:59:38Z"
     }
   ]
 }
