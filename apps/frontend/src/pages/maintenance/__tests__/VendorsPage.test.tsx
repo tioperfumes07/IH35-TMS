@@ -86,6 +86,6 @@ describe("Maintenance VendorsPage (B29)", () => {
     renderPage();
     await user.click(await screen.findByRole("button", { name: "+ Create Vendor" }));
     expect(await screen.findByText("Create Vendor")).toBeInTheDocument();
-    expect(screen.getByText("AP Vendor (mdata.vendors)")).toBeInTheDocument();
+    expect(screen.getByText("A/P vendor")).toBeInTheDocument();
   });
 });

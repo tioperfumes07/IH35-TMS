@@ -314,7 +314,7 @@ export function VendorsPage() {
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Display name" value={draft.display_name} onChange={(e) => setDraft((p) => ({ ...p, display_name: e.target.value }))} />
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Code (optional)" value={draft.code} onChange={(e) => setDraft((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
+            <label className="text-[11px] font-semibold text-gray-600">A/P vendor</label>
             {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
             {apVendorCapNotice ? (
               <p className="text-[10px] text-slate-700" data-testid="ap-vendor-cap-notice">
@@ -353,7 +353,7 @@ export function VendorsPage() {
           <div className="space-y-2">
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={editing.display_name} onChange={(e) => setEditing((p) => (p ? { ...p, display_name: e.target.value } : p))} />
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
+              <label className="text-[11px] font-semibold text-gray-600">A/P vendor</label>
             {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
             {apVendorCapNotice ? (
               <p className="text-[10px] text-slate-700" data-testid="ap-vendor-cap-notice">

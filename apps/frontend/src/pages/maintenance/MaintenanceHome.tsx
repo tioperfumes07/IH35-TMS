@@ -439,7 +439,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Parts Inventory Reorder Flags</h3>
-              <div className="text-xs text-gray-500">Canonical: maintenance.parts_inventory</div>
+              <div className="text-xs text-gray-500">Source: Parts &amp; Stock</div>
             </div>
             {partsReorderQuery.isError ? (
               <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
