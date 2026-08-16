@@ -1,8 +1,8 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T19:01:25-05:00",
-    "sourceSha": "c4f73ed2e",
-    "deployedSha": "d6cb13f",
+    "generatedAt": "2026-08-15T19:03:48-05:00",
+    "sourceSha": "1abc91cae",
+    "deployedSha": "30bb59e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 835,
     "failOpen": 15,
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7579,
+      "title": "FINDING: LV-MAINT-TRIAGE-SOURCE-LINEAGE-AND-LOAD-DROPPED-CLOSEOUT",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 07:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7579",
+      "sha": "1abc91cae",
+      "committedAtIso": "2026-08-15T19:03:48-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/15/2026, 07:02 PM CT",
+      "url": "",
+      "sha": "c02116f1c",
+      "committedAtIso": "2026-08-16T00:02:52Z"
+    },
+    {
       "number": 7578,
       "title": "FINDING: LV-MAINT-TRIAGE-SOURCE-LINEAGE-AND-LOAD-DROPPED",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7568",
       "sha": "93af451f8",
       "committedAtIso": "2026-08-15T18:49:39-05:00"
-    },
-    {
-      "number": 7567,
-      "title": "FINDING: ACCT-F5312",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7567",
-      "sha": "85fca80ba",
-      "committedAtIso": "2026-08-15T18:49:31-05:00"
-    },
-    {
-      "number": 7573,
-      "title": "FINDING: LIVE-FINANCE-RELATED-MODULE-HOPS",
-      "state": "merged",
-      "mergedAtCt": "08/15/2026, 06:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7573",
-      "sha": "93feb1eba",
-      "committedAtIso": "2026-08-15T18:43:51-05:00"
     }
   ]
 }
