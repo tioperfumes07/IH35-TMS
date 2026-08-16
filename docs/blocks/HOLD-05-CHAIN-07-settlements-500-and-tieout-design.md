@@ -17,8 +17,7 @@ tie-out so Jorge merges together with ceremony). **Do not merge. No flag flip. N
   `driver_finance.settlement_lines` and probes `information_schema` for columns before inserting — so the
   classic "table/column missing" 500 is already guarded there. The 500 is therefore likely **outside**
   those guards (the payment route), not in the line-builder.
-- **Known landmines to check first** (from §4): `driver_finance.settlement_lines` has **no `load_id`**
-  (a join on it 500s); the **RLS `UPDATE … RETURNING` soft-delete landmine** (a `RETURNING` on a row the
+- **Known landmines to check first** (from §4): `driver_finance.settlement_lines` **HAS `load_id`** (nullable FK to `mdata.loads` — prefer it; do not invent a missing-column landmine). Also watch the **RLS `UPDATE … RETURNING` soft-delete landmine** (a `RETURNING` on a row the
   SELECT policy then filters throws `42501`). Either fits a generic 500.
 - **Safe, verifiable fix (non-financial):** make the route **surface the underlying error class** (it
   already passes `message`; also log/return the error `code`/`constraint` so the real cause is visible)
@@ -27,8 +26,8 @@ tie-out so Jorge merges together with ceremony). **Do not merge. No flag flip. N
   branch.
 
 ## Part B — settlement → GL tie-out (draft only)
-Reuse: `driver_finance.settlement_lines` → `driver_finance.driver_settlements` (note: **no `load_id`**
-on lines); escrow via `accounting.escrow_accounts` / `escrow_postings`; cash advances via
+Reuse: `driver_finance.settlement_lines` → `driver_finance.driver_settlements` (note: **`load_id` EXISTS** on settlement_lines — join via it when populated);
+escrow via `accounting.escrow_accounts` / `escrow_postings`; cash advances via
 `driver-finance/cash-advance-requests`; poster = `posting-engine.service.ts`. Flag **OFF**.
 
 Example weekly settlement: gross driver earnings **$2,000.00**, less escrow **$100.00**, less advance

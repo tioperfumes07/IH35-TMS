@@ -112,9 +112,11 @@ underlying hook failure instead; `gh pr create` with root-cause+scope+verificati
 No `ih35_app.*` data schema. loads=`mdata.loads` (`rate_total_cents`=GROSS; `assigned_primary_driver_id`);
 `mdata.units` has `owner_company_id`+`currently_leased_to_company_id` (NOT `operating_company_id`);
 bills=`accounting.bills`/`bill_payments`/`payments`(`voided_at`); bank=`banking.bank_transactions`
-(`is_credit`); driver earnings=`driver_finance.settlement_lines`; HOS=`hos.duty_status_events`. Verify enum
-members on prod; DRIVER hazmat=`mdata.drivers.endorsement_h`; every diesel/roadside expense FKs to a load.
-Don't trust string-grep systemic checks.
+(`is_credit`); driver earnings=`driver_finance.settlement_lines` (→ `driver_settlements`; **HAS
+`load_id` nullable FK to `mdata.loads`** — prefer it for settlement↔load joins; do NOT invent
+"no load_id" landmines; density may be sparse / untested on older rows); HOS=`hos.duty_status_events`.
+Verify enum members on prod; DRIVER hazmat=`mdata.drivers.endorsement_h`; every diesel/roadside expense
+FKs to a load. Don't trust string-grep systemic checks.
 
 ## §5. Where things live / how to verify
 Remote = the GitHub repo (schema truth = `db/migrations/`, prod wins). DB = Neon prod branch (gated §1).
