@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * LST-PICKER-01 slice — NewServiceDrawerForm preferred vendor was free-text and dropped at
- * create. ItemEditorModal already uses ReferenceSelect createKind=vendor + persists
- * preferred_vendor_id on catalogs.items. Close the dual-path: picker + write path.
+ * create. ItemEditorModal persists preferred_vendor_id on catalogs.items via EntityPicker
+ * kind=vendor allowCreate (canonical mdata.vendors + inline + Add new).
  *
  * Cursor even claim: 1874.
  */
@@ -52,6 +52,15 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
+function hasPreferredVendorEntityPicker(src) {
+  const code = stripComments(src);
+  const near =
+    /Preferred vendor[\s\S]{0,900}kind=["']vendor["'][\s\S]{0,400}allowCreate/.test(code) ||
+    /item-preferred-vendor-block[\s\S]{0,900}kind=["']vendor["'][\s\S]{0,400}allowCreate/.test(code) ||
+    /service-preferred-vendor-select[\s\S]{0,900}kind=["']vendor["'][\s\S]{0,400}allowCreate/.test(code);
+  return near && /EntityPicker/.test(code);
+}
+
 /** @returns {string[]} */
 export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
@@ -73,8 +82,8 @@ export function collectProblems(root = ROOT, overrides = null) {
       problems.push(`${DRAWER}: must use data-testid=service-preferred-vendor-select`);
     }
     const b = block(pickerSrc, "service-preferred-vendor-select");
-    if (!/createKind=["']vendor["']/.test(b)) {
-      problems.push(`${DRAWER}: preferred vendor must use createKind=vendor`);
+    if (!/kind=["']vendor["']/.test(b) || !/allowCreate/.test(b)) {
+      problems.push(`${DRAWER}: preferred vendor must use EntityPicker kind=vendor allowCreate`);
     }
     if (/preferredVendor[^I]|value=\{form\.preferredVendor\}/.test(pickerSrc) && /<input[\s\S]{0,200}preferredVendor/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must not keep free-text preferredVendor input`);
@@ -82,28 +91,25 @@ export function collectProblems(root = ROOT, overrides = null) {
     if (!/preferred_vendor_id/.test(pickerSrc)) {
       problems.push(`${DRAWER}: must persist preferred_vendor_id in create metadata`);
     }
-    if (!/listVendors/.test(pickerSrc)) {
-      problems.push(`${DRAWER}: must load vendors from listVendors (mdata.vendors)`);
+    if (/createKind=["']vendor["']/.test(pickerSrc) && /listVendors/.test(pickerSrc)) {
+      problems.push(`${DRAWER}: must not keep listVendors + ReferenceSelect createKind=vendor dual-path`);
     }
   } else {
-    if (!/createKind=["']vendor["']/.test(pickerSrc)) {
-      problems.push(`${EDITOR}: preferred vendor must use createKind=vendor`);
+    if (!hasPreferredVendorEntityPicker(pickerSrc)) {
+      problems.push(`${EDITOR}: preferred vendor must use EntityPicker kind=vendor allowCreate`);
     }
     if (!/preferred_vendor_id/.test(pickerSrc)) {
       problems.push(`${EDITOR}: must persist preferred_vendor_id in create metadata`);
     }
-    if (!/listVendors/.test(pickerSrc)) {
-      problems.push(`${EDITOR}: must load vendors from listVendors (mdata.vendors)`);
-    }
-    if (!/onSearch=\{setVendorSearch\}/.test(pickerSrc)) {
-      problems.push(`${EDITOR}: preferred vendor must wire onSearch for server search`);
+    if (/createKind=["']vendor["']/.test(pickerSrc) && /listVendors/.test(pickerSrc)) {
+      problems.push(`${EDITOR}: must not keep listVendors + ReferenceSelect createKind=vendor dual-path`);
     }
   }
 
   if (!editor) problems.push(`missing ${EDITOR}`);
   else {
-    if (!/createKind=["']vendor["']/.test(editor)) {
-      problems.push(`${EDITOR}: ItemEditorModal must keep createKind=vendor (parity anchor)`);
+    if (!hasPreferredVendorEntityPicker(editor)) {
+      problems.push(`${EDITOR}: ItemEditorModal preferred vendor must use EntityPicker kind=vendor allowCreate`);
     }
     if (!/preferred_vendor_id/.test(editor)) {
       problems.push(`${EDITOR}: must keep preferred_vendor_id write`);
@@ -151,22 +157,20 @@ if (process.argv.includes("--selftest")) {
     "embedded"
   );
   expectCaught(
-    "createKind-removed",
+    "entity-picker-removed",
     EDITOR,
-    (s) => s.replace(/createKind=["']vendor["']/g, 'createKind="customer"'),
-    "createKind=vendor"
+    (s) =>
+      s.replace(
+        /item-preferred-vendor-block[\s\S]*?<\/div>/,
+        `item-preferred-vendor-block">\n                  <ReferenceSelect createKind="vendor" options={vendorOptions} />\n                </div>`
+      ),
+    "EntityPicker kind=vendor allowCreate"
   );
   expectCaught(
     "persist-removed",
     EDITOR,
     (s) => s.replace(/preferred_vendor_id/g, "preferred_vendor_gone"),
     "preferred_vendor_id"
-  );
-  expectCaught(
-    "listVendors-removed",
-    EDITOR,
-    (s) => s.replace(/listVendors/g, "listGone"),
-    "listVendors"
   );
   expectCaught(
     "backend-map-removed",
@@ -180,7 +184,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST OK — planted defects caught, live sources clean`);
 } else {
   const problems = collectProblems();
   if (problems.length) {
