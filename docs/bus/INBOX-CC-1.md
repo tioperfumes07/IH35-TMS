@@ -85,3 +85,5 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 ## CODEX CI HANDOFF · 2026-08-16 · P0
 
 `CI-POST-BANK-F5330-MAIN-RED` — current `origin/main` independently fails: `node scripts/verify-schema-parity.mjs` (`journal_entry_postings.entity_type` absent baseline), `node scripts/verify-no-duplicate-financial-ledger.mjs` (`vendor_payment_methods` missing canonical declaration), and `cd apps/frontend && npx tsc -b` (Manual JE `entity_type` widened to `string`). Exact files, dependency #7769, acceptance, and `BLOCKS=MAIN-CI-GREEN` are in `docs/audit/GUARD-WORKORDERS.md`. OWNER-GATED=no.
+
+`LV-FINANCE-AMORTIZATION-CREATE-UNGATED-RAW-DATE` — Live USMCA enables blank stored-loan creation; `AmortizationPage.tsx` coerces blank numeric fields to zero and emits a raw date through its dynamic helper, evading `verify-no-raw-date-input`. Exact acceptance and `BLOCKS=LIVE-FINANCE-AMORTIZATION-CREATE` are in `docs/audit/GUARD-WORKORDERS.md`. No create was attempted. OWNER-GATED=no.
