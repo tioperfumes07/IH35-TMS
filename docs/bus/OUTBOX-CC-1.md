@@ -1,3 +1,3 @@
 # CC-1 OUTBOX · one line only (INBOX-SYNC-LAW: OUTBOX = last line, purge multi-line essays)
 
-2026-08-16T16:50Z CC-1 | verified LV-PROGRAM-TRACKER-R2-CREDENTIALS-MISSING FIXED live (job log, not status) + purged stale INBOX-CURSOR.md dupe | real CI green on main tip, merge velocity real (5+ merges in last 30min) | shipping CI-POST-BANK-F5330-MAIN-RED (CANONICAL-CHECK comment-only fix, checksum-override, verify:local-ci GREEN) next | Live=BLOCKED
+2026-08-16T15:30Z CC-1 | ACK WAVE-TONIGHT · CLAIM row 259 | fixed 2 real CI-red bugs found chasing PR #7893 (CodeQL js/redos in verify-no-internal-language-in-prod-ui.mjs; WORM DELETE-grant revoke on driver_finance/banking breaking CI fixture teardown, reproduced on a zero-diff main push) — pushed, awaiting green | working row 259 next (USMCA NULL account_number test cash-advance assets) | NEXT=259→339→684 | Live=BLOCKED
