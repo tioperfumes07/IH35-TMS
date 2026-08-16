@@ -66,7 +66,7 @@ export function audit(src) {
   need(/listCustomers/.test(src.complaints) && /kind="customer"/.test(src.complaints), `${FILES.complaints}: complaints must have a real customer picker and render EntityLink kind="customer"`);
   need(/kind="customer"/.test(src.banking) && /customerId:\s*""/.test(src.banking), `${FILES.banking}: banking transactions must have a real customerId field and render EntityLink kind="customer"`);
   need(/type === "driver" \|\| type === "customer" \|\| type === "vendor"/.test(src.contractsList), `${FILES.contractsList}: contracts list must resolve a real customer signer via signerKind`);
-  need(/createKind="customer"/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real customer party picker`);
+  need(/kind=["']customer["']/.test(src.contractsCreate) && /allowCreate/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real customer EntityPicker`);
   need(/kind="customer" id=\{r\.customer_id\}/.test(src.arApAging), `${FILES.arApAging}: AR/AP aging must render a real EntityLink kind="customer"`);
   need(/kind=["']customer["']/.test(src.woCreate) && /allowCreate/.test(src.woCreate), `${FILES.woCreate}: WO create must have a real customer EntityPicker`);
   need(/SUBJECT_ENTITY_KINDS(?!_)/.test(src.auditTrail), `${FILES.auditTrail}: audit trail must map subject_type to a real EntityKind (incl. customer)`);
@@ -102,7 +102,7 @@ if (process.argv.includes("--selftest")) {
     ["complaints-picker", "complaints", /listCustomers/g, "listSomethingElse"],
     ["banking-field", "banking", /customerId:\s*""/, 'customerId_unused: ""'],
     ["contracts-list-signer", "contractsList", /type === "driver" \|\| type === "customer" \|\| type === "vendor"/, 'type === "driver" || type === "vendor"'],
-    ["contracts-create-picker", "contractsCreate", /createKind="customer"/g, 'createKind="unit"'],
+    ["contracts-create-picker", "contractsCreate", /kind=["']customer["']/g, 'kind="unit"'],
     ["ar-ap-aging-link", "arApAging", /kind="customer" id=\{r\.customer_id\}/g, 'kind="unit" id={r.unit_id}'],
     ["wo-create-picker", "woCreate", /kind=["']customer["']/g, 'kind="unit"'],
     ["audit-trail-map", "auditTrail", /SUBJECT_ENTITY_KINDS/g, "SUBJECT_ENTITY_KINDS_UNUSED"],

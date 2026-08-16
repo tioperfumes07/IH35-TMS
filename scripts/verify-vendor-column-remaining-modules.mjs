@@ -65,7 +65,7 @@ export function audit(src) {
   need(/kind="vendor" id=\{selected\.customs_broker_id\}/.test(src.borderHistory), `${FILES.borderHistory}: border crossing history must render a real vendor EntityLink`);
   need(/createKind="vendor"/.test(src.factoringHome) && /createDriverVendorMerge/.test(src.factoringHome), `${FILES.factoringHome}: equipment loans and vendor merges must be real vendor-scoped surfaces`);
   need(/type === "driver" \|\| type === "customer" \|\| type === "vendor"/.test(src.contractsList), `${FILES.contractsList}: contracts list must resolve a real vendor signer via signerKind`);
-  need(/createKind="vendor"/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real vendor party picker`);
+  need(/kind=["']vendor["']/.test(src.contractsCreate) && /allowCreate/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real vendor EntityPicker`);
   need(/kind="vendor" id=\{row\.vendor_id\}/.test(src.management), `${FILES.management}: management report must render a real vendor EntityLink`);
   need(/function isVendorUuid/.test(src.apAging), `${FILES.apAging}: AP aging must have a real vendor UUID guard`);
   need(/kind="vendor" id=\{r\.vendor_id\}/.test(src.arApAging), `${FILES.arApAging}: AR/AP aging must render a real vendor EntityLink`);
@@ -100,7 +100,7 @@ if (process.argv.includes("--selftest")) {
     ["border-history-link", "borderHistory", /kind="vendor" id=\{selected\.customs_broker_id\}/, 'kind="unit" id={selected.unit_id}'],
     ["factoring-loans-picker", "factoringHome", /createKind="vendor"/g, 'createKind="unit"'],
     ["contracts-list-link", "contractsList", /type === "driver" \|\| type === "customer" \|\| type === "vendor"/, 'type === "driver" || type === "customer"'],
-    ["contracts-create-picker", "contractsCreate", /createKind="vendor"/g, 'createKind="customer"'],
+    ["contracts-create-picker", "contractsCreate", /kind=["']vendor["']/g, 'kind="customer"'],
     ["management-link", "management", /kind="vendor" id=\{row\.vendor_id\}/g, 'kind="unit" id={row.unit_id}'],
     ["ap-aging-guard", "apAging", /function isVendorUuid/, "function isUnusedGuard"],
     ["ar-ap-aging-link", "arApAging", /kind="vendor" id=\{r\.vendor_id\}/g, 'kind="unit" id={r.unit_id}'],

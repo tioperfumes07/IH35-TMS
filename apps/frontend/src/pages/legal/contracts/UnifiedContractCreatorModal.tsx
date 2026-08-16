@@ -7,10 +7,9 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } from "../../../api/legal-contracts";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
-import { getDriver, getVendor, listCustomers, listVendors } from "../../../api/mdata";
+import { getDriver, getVendor, getCustomerDetail } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { CappedListNotice } from "../../../components/CappedListNotice";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -26,8 +25,6 @@ type Props = {
   onClose: () => void;
   onSaved: (contractId: string) => void | Promise<void>;
 };
-
-type Party = { id: string; label: string; type?: string | null; email?: string | null; phone?: string | null };
 
 const SIGNER_TYPES: Array<{ value: LegalSignerType; label: string }> = [
   { value: "driver", label: "Driver" },
@@ -110,56 +107,11 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   });
   const fields = detailQuery.data?.variable_schema?.fields ?? {};
 
-  // SAF-B29: never silent listCustomers without search — type-ahead re-queries past page 1.
-  const [customerSearch, setCustomerSearch] = useState("");
-  const customersQuery = useQuery({
-    queryKey: ["legal", "party", "customers", operatingCompanyId, customerSearch],
-    enabled: open && signerType === "customer" && Boolean(operatingCompanyId),
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: operatingCompanyId,
-        limit: customerSearch ? 200 : 500,
-        search: customerSearch || undefined,
-      }),
-  });
-  const [vendorSearch, setVendorSearch] = useState("");
-  const vendorsQuery = useQuery({
-    queryKey: ["legal", "party", "vendors", operatingCompanyId, vendorSearch],
-    enabled: open && signerType === "vendor" && Boolean(operatingCompanyId),
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: vendorSearch ? 200 : 500,
-        search: vendorSearch || undefined,
-      }),
-  });
   const unitsQuery = useQuery({
     queryKey: ["legal", "party", "units", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId) && selectedTemplate?.category === "lease",
     queryFn: () => legalContractsApi.leaseToOwnFleet({ operating_company_id: operatingCompanyId }),
   });
-
-  const customerPartyOptions: Party[] = useMemo(() => {
-    if (signerType !== "customer") return [];
-    return (customersQuery.data?.customers ?? []).map((c) => ({
-      id: String(c.id),
-      label: entityLabel(c.name, c.id, "Customer"),
-      type: c.customer_code ?? c.customer_type ?? "Customer",
-      email: c.email ?? null,
-      phone: c.phone ?? null,
-    }));
-  }, [signerType, customersQuery.data]);
-  const vendorPartyOptions: Party[] = useMemo(() => {
-    if (signerType !== "vendor") return [];
-    return (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
-      id: String(vendor.id),
-      label: entityLabel(vendor.name, vendor.id, "Vendor"),
-      type: vendor.vendor_code ?? vendor.vendor_type,
-      email: vendor.email ?? null,
-      phone: vendor.phone ?? null,
-    }));
-  }, [signerType, vendorsQuery.data]);
 
   const isLease = selectedTemplate?.category === "lease";
   const leaseUnits = unitsQuery.data?.units ?? [];
@@ -518,76 +470,62 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                     }}
                   />
                 ) : signerType === "customer" ? (
-                  <ReferenceSelect
+                  /* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */
+                  <EntityPicker
+                    kind="customer"
+                    allowCreate
+                    nestedInDrawer
+                    operatingCompanyId={operatingCompanyId}
                     value={signerEntityId || null}
-                    onChange={(id) => {
+                    onChange={(id, option) => {
                       setSignerEntityId(id ?? "");
-                      const p = customerPartyOptions.find((x) => x.id === (id ?? ""));
-                      if (p) {
-                        setSignerName(p.label);
-                        setSignerEmail(p.email ?? "");
-                        setSignerPhone(p.phone ?? "");
-                      } else if (!id) {
+                      if (!id) {
                         setSignerName("");
                         setSignerEmail("");
                         setSignerPhone("");
+                        return;
                       }
+                      if (option?.label) setSignerName(option.label);
+                      void getCustomerDetail(id, operatingCompanyId).then(({ customer }) => {
+                        setSignerName(entityLabel(customer.name, customer.id, "Customer"));
+                        setSignerEmail(customer.email ?? customer.ar_email ?? "");
+                        setSignerPhone(customer.phone ?? customer.office_phone ?? "");
+                      });
                     }}
-                    options={customerPartyOptions.map((p) => ({ value: p.id, label: p.label, type: p.type ?? undefined }))}
-                    createKind="customer"
-                    operatingCompanyId={operatingCompanyId}
+                    enabled={open}
                     placeholder="Search customer…"
-                    onSearch={setCustomerSearch}
-                    loading={customersQuery.isLoading}
+                    dataField="unified-contract-customer-signer"
+                    className="w-full"
                   />
                 ) : (
-                  <ReferenceSelect
+                  /* CLS-SILENT-CAP: EntityPicker server-search — no capped listVendors roster. */
+                  <EntityPicker
+                    kind="vendor"
+                    allowCreate
+                    nestedInDrawer
+                    operatingCompanyId={operatingCompanyId}
                     value={signerEntityId || null}
-                    onChange={(id) => {
+                    onChange={(id, option) => {
                       setSignerEntityId(id ?? "");
-                      const selected = vendorPartyOptions.find((option) => option.id === (id ?? ""));
-                      if (selected) {
-                        setSignerName(selected.label);
-                        setSignerEmail(selected.email ?? "");
-                        setSignerPhone(selected.phone ?? "");
-                      } else if (id) {
-                        void getVendor(id, operatingCompanyId).then((vendor) => {
-                          setSignerName(vendor.name);
-                          setSignerEmail(vendor.email ?? "");
-                          setSignerPhone(vendor.phone ?? "");
-                        });
-                      } else {
+                      if (!id) {
                         setSignerName("");
                         setSignerEmail("");
                         setSignerPhone("");
+                        return;
                       }
+                      if (option?.label) setSignerName(option.label);
+                      void getVendor(id, operatingCompanyId).then((vendor) => {
+                        setSignerName(vendor.name);
+                        setSignerEmail(vendor.email ?? "");
+                        setSignerPhone(vendor.phone ?? "");
+                      });
                     }}
-                    options={vendorPartyOptions.map((vendor) => ({ value: vendor.id, label: vendor.label, type: vendor.type ?? undefined }))}
-                    createKind="vendor"
-                    operatingCompanyId={operatingCompanyId}
+                    enabled={open}
                     placeholder="Search vendor…"
-                    onSearch={setVendorSearch}
-                    loading={vendorsQuery.isLoading}
+                    dataField="unified-contract-vendor-signer"
+                    className="w-full"
                   />
                 )}
-                {signerType === "customer" ? (
-                  <CappedListNotice
-                    shown={customerPartyOptions.length}
-                    limit={customerSearch ? 200 : 500}
-                    total={customersQuery.data?.total ?? null}
-                    hint="Type to search for a customer not listed."
-                    className="text-[11px] text-slate-600"
-                  />
-                ) : null}
-                {signerType === "vendor" ? (
-                  <CappedListNotice
-                    shown={vendorPartyOptions.length}
-                    limit={vendorSearch ? 200 : 500}
-                    total={vendorsQuery.data?.total ?? null}
-                    hint="Type to search for a vendor not listed."
-                    className="text-[11px] text-slate-600"
-                  />
-                ) : null}
               </label>
             )}
 
