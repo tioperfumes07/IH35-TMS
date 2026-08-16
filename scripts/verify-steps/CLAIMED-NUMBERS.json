@@ -3462,5 +3462,10 @@
     "name": "verify-wo-create-no-opened-at-update",
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
+  },
+  "3614": {
+    "name": "verify-driver-create-is-wizard",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
   }
 }
