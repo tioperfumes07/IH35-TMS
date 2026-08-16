@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T08:43:05-05:00",
-    "sourceSha": "57d9fbffb",
-    "deployedSha": "aa5a14e",
+    "generatedAt": "2026-08-16T08:47:18-05:00",
+    "sourceSha": "d1e67321c",
+    "deployedSha": "57d9fbf",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 897,
+    "ledgerRows": 898,
     "failOpen": 33,
     "defects": 25
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7799,
+      "title": "FINDING: CASH-S01-T01-T02-USMCA-LIVE-EVIDENCE-STALE",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 08:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7799",
+      "sha": "d1e67321c",
+      "committedAtIso": "2026-08-16T08:47:18-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 08:44 AM CT",
+      "url": "",
+      "sha": "a9b87002e",
+      "committedAtIso": "2026-08-16T13:44:10Z"
+    },
+    {
       "number": 7798,
       "title": "FINDING: INS-S01-USMCA-LIVE-EVIDENCE-STALE",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7794",
       "sha": "7ed05cadf",
       "committedAtIso": "2026-08-16T08:19:26-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:18 AM CT",
-      "url": "",
-      "sha": "aa6c426e2",
-      "committedAtIso": "2026-08-16T13:18:09Z"
-    },
-    {
-      "number": 7793,
-      "title": "FINDING: LV-SYSTEM-PROGRAM-FILTER-CONTROL-ABSENT",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7793",
-      "sha": "79a404058",
-      "committedAtIso": "2026-08-16T08:17:01-05:00"
     }
   ]
 }
