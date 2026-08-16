@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T17:11:00-05:00",
-    "sourceSha": "f3edc1c29",
-    "deployedSha": "c302fee",
+    "generatedAt": "2026-08-16T17:15:02-05:00",
+    "sourceSha": "714fe3a70",
+    "deployedSha": "98c271b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 952,
-    "failOpen": 17,
+    "failOpen": 16,
     "defects": 11
   },
   "modules": [
@@ -760,7 +760,7 @@
         "AUDIT",
         "AUDIT",
         "AUDIT",
-        "FIX",
+        "FAIL",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -792,7 +792,7 @@
           "AUDIT",
           "AUDIT",
           "AUDIT",
-          "FIX",
+          "FAIL",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 7946,
+      "title": "FINDING: AUDIT-259-USMCA-NULL-ACCOUNT-NUMBER",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7946",
+      "sha": "714fe3a70",
+      "committedAtIso": "2026-08-16T17:15:02-05:00"
+    },
+    {
+      "number": 7945,
+      "title": "FINDING: row923-verify-live-healthz",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7945",
+      "sha": "b8f717e67",
+      "committedAtIso": "2026-08-16T17:13:35-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:12 PM CT",
+      "url": "",
+      "sha": "6804e055e",
+      "committedAtIso": "2026-08-16T22:12:44Z"
+    },
+    {
       "number": 7944,
       "title": "Claude-1- FINDING: ACCT-F5391 fix RLS-bypass pooler flakiness",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7939",
       "sha": "efddbc0a8",
       "committedAtIso": "2026-08-16T17:00:19-05:00"
-    },
-    {
-      "number": 7938,
-      "title": "Codex-1-fix(maintenance): replace phantom WO due_date with PM alert ledger",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7938",
-      "sha": "2b27690f8",
-      "committedAtIso": "2026-08-16T16:53:24-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:51 PM CT",
-      "url": "",
-      "sha": "d11ea3b90",
-      "committedAtIso": "2026-08-16T21:51:45Z"
-    },
-    {
-      "number": 7937,
-      "title": "FINDING: verify-all-live-ledgered-2026-08-16",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7937",
-      "sha": "386930c5b",
-      "committedAtIso": "2026-08-16T16:50:26-05:00"
     }
   ]
 }

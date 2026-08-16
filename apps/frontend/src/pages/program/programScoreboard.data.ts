@@ -28,12 +28,12 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-16T17:11:00-05:00",
-    "sourceSha": "f3edc1c29",
-    "deployedSha": "c302fee",
+    "generatedAt": "2026-08-16T17:15:02-05:00",
+    "sourceSha": "714fe3a70",
+    "deployedSha": "98c271b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 952,
-    "failOpen": 17,
+    "failOpen": 16,
     "defects": 11
   },
   "modules": [
@@ -788,7 +788,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "AUDIT",
         "AUDIT",
-        "FIX",
+        "FAIL",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -820,7 +820,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           "AUDIT",
           "AUDIT",
           "AUDIT",
-          "FIX",
+          "FAIL",
           "AUDIT",
           "NA",
           "AUDIT",
