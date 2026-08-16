@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **25 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **61 / 150** | 2026-08-16 |
-| Rows in this file | **894** | 2026-08-16 |
-| Rows `FAIL` + `OPEN` | **32** | 2026-08-16 |
+| Rows in this file | **895** | 2026-08-16 |
+| Rows `FAIL` + `OPEN` | **33** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=118 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=119 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -982,3 +982,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 892 | program · module completion filter | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaf:** `chrome.toolbar_filter`. Live `/program/modules` rendered Module Completion with Search, Range, gear, and 14 real rows, but no Filters panel or Apply action. Source mounts `ParityTable` without a governed filter configuration. The Required/Built claim is not exercisable. No mutation. | OPEN · Cursor chrome/inventory lane | `LV-PROGRAM-MODULES-FILTER-CONTROL-ABSENT` · exact Live route + source | NO | 2026-08-16 | CODEX |
 | 893 | system · program tracker filter | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaf:** `chrome.toolbar_filter`. Live `/system?tab=program` rendered Program Tracker with Search, Range, gear, and eight real phase rows, but no Filters panel or Apply action. The Required/Built claim naming SystemModulePage is not exercisable. No mutation. QBO behavior was not tested or changed. | OPEN · Cursor chrome/inventory lane | `LV-SYSTEM-PROGRAM-FILTER-CONTROL-ABSENT` · exact Live route + source | NO | 2026-08-16 | CODEX |
 | 894 | cash-flow · actual vs projected filter | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaf:** `chrome.toolbar_filter`. Live `/cash-flow?tab=actual_vs_projected` rendered Search, Range, gear, three scoped rows, and a From/To date Apply. It did not render the claimed list-toolbar Filters panel. The date Apply controls the date range and is not evidence of the separate filter-panel contract. No mutation; money calculations were not changed. | OPEN · Cursor chrome/inventory lane | `LV-CASH-FLOW-ACTUAL-FILTER-PANEL-ABSENT` · exact Live tab + Required/guard source | NO | 2026-08-16 | CODEX |
+| 895 | docs · legacy frontend deployment | E | USMCA | FAIL · OPEN CURSOR DEPLOY HANDOFF | Backend health `822ef47` includes #7791 and authenticated `/api/v1/docs/files` returns canonical customer/load `entity_label`. Production `/documents` still renders `Record — not visible`; loaded `Documents-CQcLbm3j.js` contains the old UUID formatter rather than the merged label consumer. This is a split backend/frontend deploy, not a new code gap. No mutation. | OPEN · Cursor deploy/frontend lane | `LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND` · asset/API/DOM evidence | NO | 2026-08-16 | CODEX |
