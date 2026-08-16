@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T04:22:37-05:00",
-    "sourceSha": "33cc50e7d",
-    "deployedSha": "0ece4a3",
+    "generatedAt": "2026-08-16T04:27:26-05:00",
+    "sourceSha": "eadcb9954",
+    "deployedSha": "5664dc6",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 859,
+    "ledgerRows": 860,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7758,
+      "title": "FINDING: LIVE-REPORTS-RUNNER-DISPATCH-FLEET-UTILIZATION",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7758",
+      "sha": "eadcb9954",
+      "committedAtIso": "2026-08-16T04:27:26-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:23 AM CT",
+      "url": "",
+      "sha": "4c6dcaa38",
+      "committedAtIso": "2026-08-16T09:23:47Z"
+    },
+    {
       "number": 7757,
       "title": "FINDING: LV-LAWSUIT-CREATE-OPERATING-COMPANY-RLS-STAMP-MISSING",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7750",
       "sha": "db5abb425",
       "committedAtIso": "2026-08-16T04:13:16-05:00"
-    },
-    {
-      "number": 0,
-      "title": "fix(program): PROG-PRFEED — align ledger guard to STALE-LEDGER call order",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:13 AM CT",
-      "url": "",
-      "sha": "1b626344a",
-      "committedAtIso": "2026-08-16T04:13:03-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs(audit): attribute mobile #7591 + close SCENARIO-TRACKER pending",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:09 AM CT",
-      "url": "",
-      "sha": "9e381a114",
-      "committedAtIso": "2026-08-16T04:09:10-05:00"
     }
   ]
 }
