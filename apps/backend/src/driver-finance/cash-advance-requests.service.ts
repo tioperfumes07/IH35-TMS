@@ -8,6 +8,7 @@ import {
 import { createSettlementDeduction, type Queryable as DeductionsQueryable } from "./deductions.service.js";
 import { emitDriverRequestSpineEvent } from "./driver-request-spine-emit.js";
 import { resolveAccountForCategory } from "../accounting/expense-category-map/resolver.service.js";
+import { insertDriverPwaNotification } from "../pwa/driver-notifications.js";
 
 // B4: driver-request timeline source identity (generic so future request types reuse it).
 const CASH_ADVANCE_REQUEST_TYPE = "cash_advance";
@@ -125,15 +126,8 @@ async function notifyDriverPwaIfAvailable(
     payload: Record<string, unknown>;
   }
 ) {
-  const reg = await client.query(`SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return;
-  await client.query(
-    `
-      INSERT INTO pwa.driver_notifications (operating_company_id, driver_id, title, message, payload)
-      VALUES ($1, $2, $3, $4, $5::jsonb)
-    `,
-    [args.operatingCompanyId, args.driverId, args.title, args.message, JSON.stringify(args.payload)]
-  );
+  // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never bare-return when table absent.
+  await insertDriverPwaNotification(client, args);
 }
 
 export async function nextCashAdvanceRequestDisplayId(client: QueryableClient, operatingCompanyId: string): Promise<string> {

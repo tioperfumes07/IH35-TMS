@@ -7,6 +7,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { generatePresignedDownloadUrl } from "../storage/r2-client.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { isWhatsappChannelConfigured } from "../outbox/handlers/twilio-channel-config.js";
+import { insertDriverPwaNotification } from "../pwa/driver-notifications.js";
 
 type DistributionInput = {
   operating_company_id: string;
@@ -17,10 +18,6 @@ type DistributionInput = {
 export async function distributeLoadInstructions(input: DistributionInput) {
   return withCurrentUser(input.requested_by_user_id, async (client) => {
     await setScopedCompanyContext(client, input.requested_by_user_id, input.operating_company_id);
-    const hasPwaNotifications = await client
-      .query<{ exists: boolean }>(`SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS exists`)
-      .then((res) => Boolean(res.rows[0]?.exists))
-      .catch(() => false);
 
     const loadRes = await client.query<{
       id: string;
@@ -245,24 +242,20 @@ export async function distributeLoadInstructions(input: DistributionInput) {
     const channels: string[] = ["portal"];
     const distributionTasks: Array<Promise<unknown>> = [];
 
-    if (hasPwaNotifications && load.assigned_primary_driver_id) {
+    if (load.assigned_primary_driver_id) {
       distributionTasks.push(
-        client.query(
-          `
-            INSERT INTO pwa.driver_notifications (
-              operating_company_id, driver_id, title, message, payload
-            ) VALUES ($1,$2,$3,$4,$5::jsonb)
-          `,
-          [
-            input.operating_company_id,
-            load.assigned_primary_driver_id,
-            `Load ${load.load_number} dispatched`,
-            "Driver Instructions PDF is ready.",
-            JSON.stringify({ load_id: input.load_id, pdf_url: presignedUrl }),
-          ]
-        )
+        (async () => {
+          // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never skip silently when table absent.
+          const delivered = await insertDriverPwaNotification(client, {
+            operatingCompanyId: input.operating_company_id,
+            driverId: load.assigned_primary_driver_id!,
+            title: `Load ${load.load_number} dispatched`,
+            message: "Driver Instructions PDF is ready.",
+            payload: { load_id: input.load_id, pdf_url: presignedUrl },
+          });
+          channels.push(delivered ? "pwa" : "pwa_unavailable");
+        })()
       );
-      channels.push("pwa");
     }
 
     // WhatsApp is not active for this company yet (owner ruling 2026-08-03). Enqueuing anyway would
