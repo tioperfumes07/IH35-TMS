@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T07:02:04-05:00",
-    "sourceSha": "c53dbade1",
-    "deployedSha": "0d60ac5",
+    "generatedAt": "2026-08-16T07:07:39-05:00",
+    "sourceSha": "33385addb",
+    "deployedSha": "26350a7",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 878,
-    "failOpen": 20,
+    "ledgerRows": 879,
+    "failOpen": 21,
     "defects": 22
   },
   "modules": [
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7782,
+      "title": "FINDING: LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7782",
+      "sha": "33385addb",
+      "committedAtIso": "2026-08-16T07:07:39-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:03 AM CT",
+      "url": "",
+      "sha": "26350a7d0",
+      "committedAtIso": "2026-08-16T12:03:13Z"
+    },
+    {
       "number": 7781,
       "title": "FINDING: LV-SETTLEMENTS-TOOLBAR-LEAVES-POINT-ALIAS",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "6f1514611",
       "committedAtIso": "2026-08-16T10:43:29Z"
-    },
-    {
-      "number": 7777,
-      "title": "FINDING: LV-SYSTEM-SURFACE-LEAVES-HIDE-LIVE-ROUTES",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 05:42 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7777",
-      "sha": "2386c45cb",
-      "committedAtIso": "2026-08-16T05:42:22-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 05:40 AM CT",
-      "url": "",
-      "sha": "2997d1e3a",
-      "committedAtIso": "2026-08-16T10:40:57Z"
     }
   ]
 }
