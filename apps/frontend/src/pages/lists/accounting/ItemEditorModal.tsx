@@ -430,11 +430,13 @@ export function ItemEditorModal({
                 <div className="mt-1" data-testid="item-preferred-vendor-block">
                   <EntityPicker
                     kind="vendor"
+                    operatingCompanyId={operatingCompanyId}
                     value={form.preferredVendorId}
                     onChange={(v) => set("preferredVendorId", v)}
                     placeholder="No preferred vendor"
                     allowCreate
                     nestedInDrawer
+                    enabled={open}
                     disabled={!operatingCompanyId}
                   />
                 </div>
