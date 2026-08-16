@@ -1063,7 +1063,7 @@
       "required": [
         "qbo_chrome"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/reports/runners/RunnerFilters.tsx"
     }
   ],
   "honesty_audit": {
