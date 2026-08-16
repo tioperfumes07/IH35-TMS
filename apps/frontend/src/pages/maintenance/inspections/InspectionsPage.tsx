@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { confirmUpload, requestUploadUrl } from "../../../api/docs";
+import { confirmUpload, requestUploadUrlFromFile } from "../../../api/docs";
 import {
   archiveMaintenanceInspection,
   attachMaintenanceInspectionPhoto,
@@ -59,10 +59,7 @@ const TYPE_OPTIONS: Array<{ value: MaintenanceInspectionRow["inspection_type"]; 
 ];
 
 async function uploadInspectionPhoto(file: File, unitId: string, operatingCompanyId: string) {
-  const { file_id, presigned_url } = await requestUploadUrl({
-    original_filename: file.name,
-    mime_type: file.type || "application/octet-stream",
-    size_bytes: file.size,
+  const { file_id, presigned_url } = await requestUploadUrlFromFile(file, {
     // File under the VIEWED entity, not the uploader's default_company_id (backend fallback).
     operating_company_id: operatingCompanyId || undefined,
     entity_links: unitId ? [{ entity_type: "unit", entity_id: unitId }] : undefined,

@@ -1,22 +1,15 @@
 import { useCallback, useState } from "react";
-import { requestUploadUrl, confirmUpload } from "../../../../api/docs";
+import { requestUploadUrlFromFile, confirmUpload } from "../../../../api/docs";
 import { extractRateCon, type RateConExtractResponse } from "../../../../api/ratecon";
 import { rateConExtractionToPrefill, type RateConPrefill } from "./rateConPrefill";
 import { userFacingApiError } from "../../../../lib/api-error-message";
 
 // RATECON-2 — the ONE rate-con intake code path. Both the "Upload Rate Con" panel and the drag-drop
 // zone consume this hook, so the upload→extract→prefill logic (and its error copy) lives exactly once.
-// Flow: file → sha256 → requestUploadUrl → PUT → confirmUpload → extractRateCon → rateConExtractionToPrefill.
+// Flow: file → requestUploadUrlFromFile (sha256) → PUT → confirmUpload → extractRateCon → rateConExtractionToPrefill.
 // Everything lands as EDITABLE draft (the dispatcher confirms every field; nothing auto-books).
 
 export type RateConPhase = "idle" | "uploading" | "extracting" | "done" | "error";
-
-async function sha256Hex(file: File): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 /** Run one upload/extract step and, on failure, rethrow with the step name prefixed onto the message
  *  (e.g. "confirm-upload: API request failed with status 404") so the surfaced error pinpoints which of
@@ -91,15 +84,9 @@ export function useRateConExtraction({
       setResult(null);
       try {
         setPhase("uploading");
-        const sha = await sha256Hex(file);
-        // Tag each step so a failure names WHICH call broke (upload-url / R2 PUT / confirm / extract)
-        // instead of a bare "status 404" that could be any of them. Surfaces via the raw-reason fallback.
         const up = await step("request-upload-url", () =>
-          requestUploadUrl({
-            original_filename: file.name,
+          requestUploadUrlFromFile(file, {
             mime_type: file.type || "application/pdf",
-            size_bytes: file.size,
-            sha256_hash: sha,
             // File under the SAME company the extract step reads from — otherwise a multi-company user's
             // upload lands under the lowest-UUID accessible company and extract 404s "file_not_found".
             operating_company_id: operatingCompanyId,

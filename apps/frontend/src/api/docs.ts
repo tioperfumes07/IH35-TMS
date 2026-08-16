@@ -78,6 +78,11 @@ export type DocsFoundationRow = {
   links: Array<{ entity_type: FileEntityType; entity_id: string; entity_label?: string | null }>;
 };
 
+export async function sha256HexOfFile(file: Blob): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function requestUploadUrl(payload: {
   original_filename: string;
   mime_type: string;
@@ -98,6 +103,29 @@ export function requestUploadUrl(payload: {
   }>("/api/v1/docs/files/upload-url", {
     method: "POST",
     body: payload,
+  });
+}
+
+/** LV-DOCS-FILES-NOT-HASHED — always hash the bytes the browser will PUT to R2 before minting the upload URL. */
+export async function requestUploadUrlFromFile(
+  file: File,
+  options: Omit<
+    Parameters<typeof requestUploadUrl>[0],
+    "original_filename" | "mime_type" | "size_bytes" | "sha256_hash"
+  > & {
+    original_filename?: string;
+    mime_type?: string;
+  } = {},
+) {
+  const sha256_hash = await sha256HexOfFile(file);
+  return requestUploadUrl({
+    original_filename: options.original_filename ?? file.name,
+    mime_type: options.mime_type ?? (file.type || "application/octet-stream"),
+    size_bytes: file.size,
+    sha256_hash,
+    category_id: options.category_id,
+    entity_links: options.entity_links,
+    operating_company_id: options.operating_company_id,
   });
 }
 
@@ -224,7 +252,7 @@ export function restoreFile(fileId: string) {
   });
 }
 
-export function uploadNewVersion(
+export async function uploadNewVersion(
   fileId: string,
   payload: { original_filename: string; mime_type: string; size_bytes: number; sha256_hash?: string }
 ) {
@@ -237,6 +265,17 @@ export function uploadNewVersion(
   }>(`/api/v1/docs/files/${fileId}/versions`, {
     method: "POST",
     body: payload,
+  });
+}
+
+/** Same integrity rule as requestUploadUrlFromFile for version bumps. */
+export async function uploadNewVersionFromFile(fileId: string, file: File) {
+  const sha256_hash = await sha256HexOfFile(file);
+  return uploadNewVersion(fileId, {
+    original_filename: file.name,
+    mime_type: file.type || "application/octet-stream",
+    size_bytes: file.size,
+    sha256_hash,
   });
 }
 

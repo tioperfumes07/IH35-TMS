@@ -10,7 +10,7 @@ import {
   saveOnboardingStep,
   type OnboardingSession,
 } from "../../api/onboarding";
-import { confirmUpload, requestUploadUrl } from "../../api/docs";
+import { confirmUpload, requestUploadUrlFromFile } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { OnboardingStepCdlUpload } from "./onboarding/OnboardingStepCdlUpload";
@@ -26,10 +26,7 @@ function stepDataFor(session: OnboardingSession | undefined, key: string) {
 }
 
 async function uploadDriverDoc(file: File, driverId: string | null | undefined, operatingCompanyId: string) {
-  const { file_id, presigned_url } = await requestUploadUrl({
-    original_filename: file.name,
-    mime_type: file.type || "application/octet-stream",
-    size_bytes: file.size,
+  const { file_id, presigned_url } = await requestUploadUrlFromFile(file, {
     // File under the VIEWED entity, not the uploader's default_company_id (backend fallback).
     operating_company_id: operatingCompanyId || undefined,
     entity_links: driverId ? [{ entity_type: "driver", entity_id: driverId }] : undefined,

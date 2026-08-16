@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
 import { listCivilFineTypes } from "../../../api/catalogs-safety";
-import { confirmUpload, requestUploadUrl } from "../../../api/docs";
+import { confirmUpload, requestUploadUrlFromFile } from "../../../api/docs";
 import { Button } from "../../../components/Button";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
@@ -112,10 +112,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   // is never created pointing at a file that failed to land.
   const uploadSourceDoc = async (): Promise<string | null> => {
     if (!sourceDocFile) return null;
-    const { file_id, presigned_url } = await requestUploadUrl({
-      original_filename: sourceDocFile.name,
-      mime_type: sourceDocFile.type || "application/octet-stream",
-      size_bytes: sourceDocFile.size,
+    const { file_id, presigned_url } = await requestUploadUrlFromFile(sourceDocFile, {
       // File under the VIEWED company, not the uploader's default (backend fallback files it under
       // the lowest-UUID company the user can access, and the scoped read then 404s).
       operating_company_id: operatingCompanyId || undefined,
