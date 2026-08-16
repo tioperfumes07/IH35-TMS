@@ -66,7 +66,19 @@ if (delegatesUnitPicker) {
     fail(`${REG} no longer calls listUnits for kind=unit — unit catalog dead through EntityPicker`);
   }
 }
-if (!src.includes("listVendors")) fail(`${DRAWER} no longer imports/uses listVendors — the listVendors catalog is dead again`);
+const delegatesVendorPicker = /EntityPicker[\s\S]*?kind=["']vendor["']/.test(src) || /kind=["']vendor["']/.test(src);
+if (!src.includes("listVendors") && !delegatesVendorPicker) {
+  fail(`${DRAWER} no longer imports/uses listVendors — the listVendors catalog is dead again`);
+}
+if (delegatesVendorPicker) {
+  const REG = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
+  let reg = "";
+  try { reg = fs.readFileSync(path.join(process.cwd(), REG), "utf8"); } catch { reg = ""; }
+  if (!reg) fail(`${REG} missing but ${DRAWER} delegates vendor catalog to EntityPicker`);
+  else if (!/kind:\s*"vendor"[\s\S]*?listVendors\(/.test(reg) && !reg.includes("listVendors")) {
+    fail(`${REG} no longer calls listVendors for kind=vendor — vendor catalog dead through EntityPicker`);
+  }
+}
 // Load catalog: listDispatchLoads OR EntityPicker kind="load" (listLoads in registry).
 const delegatesLoadPicker = /kind=["']load["']/.test(src);
 if (!src.includes("listDispatchLoads") && !delegatesLoadPicker) {
