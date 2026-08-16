@@ -348,7 +348,7 @@ export async function createWorkOrderWithLines(
           work_order_uuid, line_type, description, quantity, unit_cost, total_cost,
           section, service_item_uuid
         ) VALUES ($1,'other',$2,$3,$4,$5,'B',$6)
-        RETURNING id
+        RETURNING uuid AS id
       `,
       [wo.id, parent.description, Math.max(1, asNumber(parent.quantity)), asNumber(parent.unit_cost), asNumber(parent.amount), parent.service_item_uuid]
     );
@@ -371,7 +371,7 @@ export async function createWorkOrderWithLines(
           ) VALUES (
             $1,$2,$3,$4,$5,$6,'B',$7,$8,$9,$10
           )
-          RETURNING id
+          RETURNING uuid AS id
         `,
         [
           wo.id,
