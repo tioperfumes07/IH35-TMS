@@ -9,9 +9,10 @@ const sources = {
   writer: fs.readFileSync("apps/backend/src/legal/contracts.service.ts", "utf8"),
 };
 const checks = [
-  ["send", /listVendors\(\{ operating_company_id: operatingCompanyId[\s\S]*search: vendorSearch/, "send wizard reads scoped vendors"],
+  ["send", /<EntityPicker[\s\S]*?kind=["']vendor["'][\s\S]*?allowCreate/, "send wizard EntityPicker vendor allowCreate"],
+  ["send", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "send wizard EntityPicker customer allowCreate"],
   ["send", /signer_entity_id: signerEntityId \|\| undefined/, "send wizard FK reaches payload"],
-  ["send", /createKind="vendor"[\s\S]*onSearch=\{setVendorSearch\}/, "send wizard keeps inline create and search"],
+  ["send", /getVendor\(id, operatingCompanyId\)/, "send wizard hydrates vendor signer"],
   ["send", /onSent\(created\.id\)/, "send wizard returns persisted id"],
   ["truck", /<EntityPicker[\s\S]*?kind=["']vendor["'][\s\S]*?allowCreate/, "truck lease EntityPicker vendor allowCreate"],
   ["truck", /signer_entity_id: lesseeVendorId/, "truck lease FK reaches payload"],
