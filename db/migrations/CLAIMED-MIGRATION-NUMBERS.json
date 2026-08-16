@@ -133,6 +133,10 @@
     "202612680000": {
       "claimed_by": "claude",
       "purpose": "posting_batches_refusal_code_and_status"
+    },
+    "202612690000": {
+      "claimed_by": "claude",
+      "purpose": "usmca_faro_factoring_canonical_agreement"
     }
   }
 }
