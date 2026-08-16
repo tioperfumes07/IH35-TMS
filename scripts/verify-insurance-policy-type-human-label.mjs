@@ -21,6 +21,8 @@ const FILES = {
   vendor: "apps/frontend/src/components/insurance/VendorInsurancePoliciesReverseSection.tsx",
   vehicle: "apps/frontend/src/components/vehicle-profile/InsuranceSummarySection.tsx",
   helper: "apps/frontend/src/lib/insurance-type-label.ts",
+  completion: "docs/module-completion/insurance.json",
+  board: "docs/audit/GUARD-WORKORDERS.md",
 };
 
 function read(rel) {
@@ -29,7 +31,7 @@ function read(rel) {
 
 function audit(sources) {
   const failures = [];
-  const { routes, api, list, detail, gaps, vendor, vehicle, helper } = sources;
+  const { routes, api, list, detail, gaps, vendor, vehicle, helper, completion, board } = sources;
   const scopedCatalogJoin = /LEFT JOIN insurance\.type_catalog tc[\s\S]*?tc\.id = p\.coverage_type_id[\s\S]*?tc\.tenant_id = p\.tenant_id/;
   if ((routes.match(new RegExp(scopedCatalogJoin.source, "g")) ?? []).length < 2) {
     failures.push("policy list and detail must each resolve type names through the same-company catalog FK");
@@ -79,6 +81,16 @@ function audit(sources) {
   if (!/insuranceTypeLabel\(policy\.coverage_type, null\)/.test(vehicle)) {
     failures.push("vehicle insurance summary must use the shared type-label contract");
   }
+  const completionJson = JSON.parse(completion);
+  for (const id of ["INS-T01", "INS-T03"]) {
+    const item = completionJson.items.find((entry) => entry.id === id);
+    if (!item?.prod_verified || !/USMCA LIVE PASS/.test(item.evidence) || !/zero raw/.test(item.evidence)) {
+      failures.push(`${id} must retain exact post-deploy USMCA Live evidence with zero raw-code proof`);
+    }
+  }
+  if (!/FIXED DEPLOYED \(Codex Live 2026-08-16\):\*\* `LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`/.test(board)) {
+    failures.push("insurance split-deploy blocker must remain closed with exact deployed evidence");
+  }
   return failures;
 }
 
@@ -94,6 +106,8 @@ if (process.argv.includes("--selftest")) {
     ["raw mismatched labels", { ...real, gaps: real.gaps.replaceAll("missingTypeLabels(row.missing_types, typeNameByCode)", 'row.missing_types.join(", ")') }],
     ["raw vendor reverse label", { ...real, vendor: real.vendor.replace("insuranceTypeLabel(policy.coverage_type, policy.coverage_type_name)", "policy.coverage_type") }],
     ["missing shared humanizer", { ...real, helper: real.helper.replace('split("_")', 'split(" ")') }],
+    ["lost exact Live verification", { ...real, completion: real.completion.replace('"id": "INS-T01"', '"id": "INS-T01-REGRESSED"') }],
+    ["reopened split-deploy blocker", { ...real, board: real.board.replace("FIXED DEPLOYED (Codex Live 2026-08-16):** `LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`", "OPEN HANDOFF (Codex Live 2026-08-16):** `LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`") }],
   ];
   const missed = mutations.filter(([, sources]) => audit(sources).length === 0).map(([name]) => name);
   if (audit(real).length || missed.length) {
