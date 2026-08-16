@@ -6,7 +6,7 @@ import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../../api/catalogs";
 import { ApiError } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { confirmUpload, listFileCategories, requestUploadUrl, uploadFileToR2 } from "../../api/docs";
+import { confirmUpload, listFileCategories, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
 import {
   checkReturningDriver,
   createDriver,
@@ -391,10 +391,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         try {
           const code = DRIVER_CREATE_DOC_CATEGORY_CODES[key];
           const categoryId = categoryIdByCode.get(code);
-          const { file_id, presigned_url } = await requestUploadUrl({
-            original_filename: file.name,
-            mime_type: file.type || "application/octet-stream",
-            size_bytes: file.size,
+          const { file_id, presigned_url } = await requestUploadUrlFromFile(file, {
             operating_company_id: opco || undefined,
             category_id: categoryId,
             entity_links: [{ entity_type: "driver", entity_id: created.id }],

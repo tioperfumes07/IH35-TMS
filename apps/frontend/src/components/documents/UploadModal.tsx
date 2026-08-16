@@ -4,9 +4,9 @@ import { ApiError } from "../../api/client";
 import {
   confirmUpload,
   listFileCategories,
-  requestUploadUrl,
+  requestUploadUrlFromFile,
   updateFileMetadata,
-  uploadNewVersion,
+  uploadNewVersionFromFile,
   type FileEntityType,
 } from "../../api/docs";
 import { listCustomers } from "../../api/mdata";
@@ -194,15 +194,8 @@ export function UploadModal({
 
     try {
       const uploadInit = parentFileId
-        ? await uploadNewVersion(parentFileId, {
-            original_filename: selectedFile.name,
-            mime_type: selectedFile.type || "application/octet-stream",
-            size_bytes: selectedFile.size,
-          })
-        : await requestUploadUrl({
-            original_filename: selectedFile.name,
-            mime_type: selectedFile.type || "application/octet-stream",
-            size_bytes: selectedFile.size,
+        ? await uploadNewVersionFromFile(parentFileId, selectedFile)
+        : await requestUploadUrlFromFile(selectedFile, {
             category_id: categoryId,
             ...(resolvedEntityType && resolvedEntityId
               ? { entity_links: [{ entity_type: resolvedEntityType, entity_id: resolvedEntityId }] }
