@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T12:29:00-05:00",
-    "sourceSha": "89453cb63",
-    "deployedSha": "9810a7f",
+    "generatedAt": "2026-08-16T12:52:52-05:00",
+    "sourceSha": "03c4c87a3",
+    "deployedSha": "cce2051",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 913,
+    "ledgerRows": 915,
     "failOpen": 23,
     "defects": 25
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 7863,
-      "title": "Codex-1- fix(maintenance): omit empty service item UUID",
+      "number": 7879,
+      "title": "Codex-1- fix(home): add staged driver-day Filters panel",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7863",
-      "sha": "89453cb63",
-      "committedAtIso": "2026-08-16T12:29:00-05:00"
+      "mergedAtCt": "08/16/2026, 12:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7879",
+      "sha": "03c4c87a3",
+      "committedAtIso": "2026-08-16T12:52:52-05:00"
     },
     {
-      "number": 7862,
-      "title": "FINDING: FE-BUILD-RED-WARRANTY-USEMEMO-IMPORT — one missing import stopped the frontend publishing LANE: NON-FINANCIAL",
+      "number": 7878,
+      "title": "Codex-1- fix(guards): refresh EntityLink structural baseline",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7862",
-      "sha": "a0fff7d95",
-      "committedAtIso": "2026-08-16T12:27:54-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(maintenance): LV-MAINT-CREATEWO-OUTSIDE-VENDOR-ENTITY-PICKER — capped listVendors on Create WO outside vendor",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:27 PM CT",
-      "url": "",
-      "sha": "33bc63634",
-      "committedAtIso": "2026-08-16T12:27:16-05:00"
+      "mergedAtCt": "08/16/2026, 12:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7878",
+      "sha": "90ca71828",
+      "committedAtIso": "2026-08-16T12:51:19-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- fix(safety): LV-SAF-ACCIDENT-REPAIR-VENDOR-ENTITY-PICKER — capped listVendors on AccidentReportDrawer",
+      "title": "Cursor- fix(dispatch): LV-DISPATCH-BOOKLOAD-FACTORING-VENDOR-ENTITY-PICKER — listVendors residual",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:25 PM CT",
+      "mergedAtCt": "08/16/2026, 12:49 PM CT",
       "url": "",
-      "sha": "336e44046",
-      "committedAtIso": "2026-08-16T12:25:29-05:00"
+      "sha": "4ef8c40f3",
+      "committedAtIso": "2026-08-16T12:49:40-05:00"
+    },
+    {
+      "number": 7876,
+      "title": "FINDING: FE-BUILD-RED-SERVICE-ITEM-UUID-NARROWER-THAN-BACKEND — the FE type disallowed a null the backend explicitly accepts LANE: NON-FINANCIAL (type-only; matches backend contract)",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7876",
+      "sha": "71d0c0d81",
+      "committedAtIso": "2026-08-16T12:47:46-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- fix(maintenance): LV-MAINT-CREATEWO-CUSTOMER-ENTITY-PICKER — capped listCustomers on Create WO",
+      "title": "Cursor- fix(customers): LV-CUST-DETAIL-FACTORING-VENDOR-ENTITY-PICKER — SelectField roster residual",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:23 PM CT",
+      "mergedAtCt": "08/16/2026, 12:47 PM CT",
       "url": "",
-      "sha": "9810a7f7b",
-      "committedAtIso": "2026-08-16T12:23:19-05:00"
+      "sha": "3e52f06fb",
+      "committedAtIso": "2026-08-16T12:47:30-05:00"
+    },
+    {
+      "number": 7874,
+      "title": "Codex-1- fix(maintenance): omit absent service item UUID",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7874",
+      "sha": "8eb78ca81",
+      "committedAtIso": "2026-08-16T12:46:40-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "title": "Cursor- fix(factoring): LV-FACT-LOAN-LENDER-VENDOR-ENTITY-PICKER — listVendors residual",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:21 PM CT",
+      "mergedAtCt": "08/16/2026, 12:45 PM CT",
       "url": "",
-      "sha": "3375abebc",
-      "committedAtIso": "2026-08-16T17:21:11Z"
-    },
-    {
-      "number": 7858,
-      "title": "Codex-1- fix(program): certify honest matrix percentage",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7858",
-      "sha": "832e0f02b",
-      "committedAtIso": "2026-08-16T12:20:03-05:00"
+      "sha": "cce205175",
+      "committedAtIso": "2026-08-16T12:45:33-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- fix(maintenance): LV-MAINT-WARRANTY-ADDPARTS-VENDOR-ENTITY-PICKER — capped listVendors on warranty + AddPartsLink",
+      "title": "Cursor- fix(operations): LV-OPS-GEOFENCE-LOC-REF-ENTITY-PICKER — customer+vendor capped roster",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:18 PM CT",
+      "mergedAtCt": "08/16/2026, 12:41 PM CT",
       "url": "",
-      "sha": "0e6a4b158",
-      "committedAtIso": "2026-08-16T12:18:43-05:00"
+      "sha": "429d7a0ee",
+      "committedAtIso": "2026-08-16T12:41:54-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- fix(maintenance): LV-MAINT-ROAD-SERVICE-WO-VENDOR-ENTITY-PICKER — capped listVendors+ReferenceSelect on road service + Create WO",
+      "title": "Cursor- fix(insurance): LV-INS-POLICY-VENDOR-REVERSE-FILTER-GUARD — p.vendor_id needle + unused imports",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:13 PM CT",
+      "mergedAtCt": "08/16/2026, 12:39 PM CT",
       "url": "",
-      "sha": "a0263465b",
-      "committedAtIso": "2026-08-16T12:13:45-05:00"
+      "sha": "e580e5e03",
+      "committedAtIso": "2026-08-16T12:39:17-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- fix(inventory): LV-INV-PART-VENDOR-CAPPED-REFERENCESELECT — EntityPicker uncapped vendor",
+      "title": "Cursor- fix(insurance): LV-INS-POLICY-INSURER-VENDOR-ENTITY-PICKER — capped listVendors residual",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:06 PM CT",
+      "mergedAtCt": "08/16/2026, 12:38 PM CT",
       "url": "",
-      "sha": "c84dea09f",
-      "committedAtIso": "2026-08-16T12:06:53-05:00"
+      "sha": "1cb55d9cc",
+      "committedAtIso": "2026-08-16T12:38:08-05:00"
     }
   ]
 }
