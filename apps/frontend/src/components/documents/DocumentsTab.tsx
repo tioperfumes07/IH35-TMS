@@ -71,16 +71,19 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
   });
 
   const filesQuery = useQuery({
-    queryKey: ["docs-files", entityType, entityId, showDeleted],
-    queryFn: () =>
-      listFiles({
+    queryKey: ["docs-files", operatingCompanyId, entityType, entityId, showDeleted],
+    queryFn: () => {
+      if (!operatingCompanyId) throw new Error("Operating company is required to list entity documents");
+      return listFiles({
+        operating_company_id: operatingCompanyId,
         entity_type: entityType,
         entity_id: entityId,
         include_deleted: showDeleted && isOwner,
         limit: 200,
         offset: 0,
-      }).then((result) => result.files),
-    enabled: hasValidEntityId,
+      }).then((result) => result.files);
+    },
+    enabled: hasValidEntityId && Boolean(operatingCompanyId),
   });
 
   const restoreMutation = useMutation({

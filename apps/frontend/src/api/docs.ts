@@ -21,6 +21,7 @@ export type DocsFileLink = {
   file_id?: string;
   entity_type: FileEntityType;
   entity_id: string;
+  entity_label?: string | null;
   created_at: string;
   created_by_user_id: string;
   deleted_at: string | null;
@@ -135,7 +136,7 @@ export function confirmUpload(fileId: string) {
   });
 }
 
-export function listFiles(filters: Partial<{
+export function listFiles(filters: { operating_company_id: string } & Partial<{
   entity_type: FileEntityType;
   entity_id: string;
   category: string;
@@ -143,7 +144,7 @@ export function listFiles(filters: Partial<{
   include_incomplete: boolean;
   limit: number;
   offset: number;
-}> = {}) {
+}>) {
   const clean = (value: string | undefined) => {
     if (!value) return undefined;
     const trimmed = value.trim();
@@ -152,6 +153,7 @@ export function listFiles(filters: Partial<{
   };
 
   const query = new URLSearchParams();
+  if (filters.operating_company_id) query.set("operating_company_id", filters.operating_company_id);
   const entityType = clean(filters.entity_type);
   const entityId = clean(filters.entity_id);
   const category = clean(filters.category);

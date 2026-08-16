@@ -86,9 +86,9 @@
       ],
       "spec": "0441-mod12-docs-lowest-uuid-company-bug",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 USMCA Neon lucia: 3 active docs.file_links resolve the same USMCA driver; forward Docs rows render every persisted link through EntityLink with resolved human labels, and reverse driver document vault reads docs.file_links joined to docs.files with operating_company_id scope. Going-forward dispatch packets persist load+driver/customer links in the same transaction. Guards verify-docs-entity-column-entitylink and verify-docs-econ-link-pack PASS.",
+      "evidence": "LIVE FAIL 2026-08-16 USMCA: DocsHome rendered raw customer/load UUID link text because /api/v1/docs omitted entity_label hydration. Root fix shares one explicit-company-scoped canonical label hydrator across /api/v1/docs and /api/v1/docs/files, requires operating_company_id at every listFiles caller, and removes raw UUID display fallback from both /docs and /documents. Guard verify-docs-entity-labels normal+self-test PASS (6 planted defects). Live recheck remains pending deploy; product Live=BLOCKED.",
       "pr": "TBD",
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "DOCS-VERIFY-01",

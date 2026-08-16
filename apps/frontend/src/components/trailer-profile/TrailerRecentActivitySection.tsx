@@ -29,6 +29,7 @@ export function TrailerRecentActivitySection({ equipmentId, companyId }: Props) 
     queryKey: ["trailer-docs", equipmentId, companyId],
     queryFn: () =>
       listFiles({
+        operating_company_id: companyId,
         entity_type: "equipment",
         entity_id: equipmentId,
         limit: 10,

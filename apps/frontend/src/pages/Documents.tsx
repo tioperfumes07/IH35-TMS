@@ -33,7 +33,8 @@ const ENTITY_TYPE_OPTIONS = [
 function docsFileEntityLabel(file: DocsFile) {
   const firstLink = file.links?.[0];
   if (!firstLink) return "Standalone";
-  return `${firstLink.entity_type[0].toUpperCase()}${firstLink.entity_type.slice(1)}: ${formatEntityLabel(null, firstLink.entity_id, "Record")}`;
+  const entityType = `${firstLink.entity_type[0].toUpperCase()}${firstLink.entity_type.slice(1)}`;
+  return firstLink.entity_label ? `${entityType}: ${firstLink.entity_label}` : entityType;
 }
 
 export function DocumentsPage() {
@@ -74,14 +75,17 @@ export function DocumentsPage() {
   });
 
   const filesQuery = useQuery({
-    queryKey: ["all-documents-page", showDeleted, page],
-    queryFn: () =>
-      listFiles({
+    queryKey: ["all-documents-page", selectedCompanyId, showDeleted, page],
+    queryFn: () => {
+      if (!selectedCompanyId) throw new Error("Operating company is required to list documents");
+      return listFiles({
+        operating_company_id: selectedCompanyId,
         include_deleted: showDeleted && isOwner,
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
-      }),
-    enabled: isOwnerOrAdmin,
+      });
+    },
+    enabled: isOwnerOrAdmin && Boolean(selectedCompanyId),
   });
   const files = filesQuery.data?.files ?? [];
   const totalFiles = filesQuery.data?.total ?? 0;

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { hydrateEntityLabels } from "./entity-labels.js";
 
 const listQuerySchema = z.object({
   type: z.string().trim().min(1).max(100).optional(),
@@ -188,6 +189,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
         `,
         params
       );
+      await hydrateEntityLabels(client, operatingCompanyId, rowsRes.rows);
 
       return {
         total,
