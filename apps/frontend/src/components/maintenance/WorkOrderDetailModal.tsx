@@ -137,7 +137,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <ModalSection title="Source In-Transit Issue">
             <div>
               <Link
-                className="font-semibold text-blue-700 hover:underline"
+                className="font-semibold text-slate-700 hover:underline"
                 to={`/dispatch/in-transit-issues?issue_id=${encodeURIComponent(String(workOrder.source_intransit_issue_id))}`}
               >
                 View source issue in Dispatch
