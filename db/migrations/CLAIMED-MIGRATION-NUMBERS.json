@@ -105,6 +105,10 @@
     "202608161400": {
       "claimed_by": "cursor",
       "purpose": "notifications_suppression_rules_lv_email_suppression_fails_open"
+    },
+    "202608161500": {
+      "claimed_by": "cursor",
+      "purpose": "pwa_driver_notifications_lv_driver_pwa_notify"
     }
   }
 }
