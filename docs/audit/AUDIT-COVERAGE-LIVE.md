@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **25 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **61 / 150** | 2026-08-16 |
-| Rows in this file | **899** | 2026-08-16 |
+| Rows in this file | **900** | 2026-08-16 |
 | Rows `FAIL` + `OPEN` | **34** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=120 · PASS=203 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=121 · PASS=203 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -987,3 +987,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 897 | insurance · INS-S01 root surface | E | USMCA | PASS · LIVE-LEDGERED | Exact `/insurance` alias redirected to `/safety/insurance` and rendered the real scoped Insurance Dashboard. Six canonical tabs were reachable; live KPIs showed 3 active policies, 3 expiring, 41 coverage gaps, 4 open claims, and 1 open lawsuit, with canonical policy/gap/claim/lawsuit drill routes. No 404/500 and no mutation. | LIVE-LEDGERED · `INS-S01` | insurance module + dashboard-route guards exit 0 | NO | 2026-08-16 | CODEX |
 | 898 | cash-flow · exact root and tabs | E | USMCA | PASS · LIVE-LEDGERED | **Leaves:** `CASH-S01`, `CASH-T01`, `CASH-T02`. Live root rendered three tabs, five reciprocal module links, seven-day outlook, −$203.92 opening cash, and a $297.60 Driver Pay line linked to canonical load S-2026-0002. Actual vs Projected rendered three dated rows and scoped KPI totals. Manual Daily Projections mounted its real date/unit/customer/vendor-driver/income/expense controls with honest empty states. No mutation. The separately filed missing Filters panel remains OPEN and receives no credit here. | LIVE-LEDGERED · exact item evidence | cash-flow tabs entity-scope guard + exact Live DOM | NO | 2026-08-16 | CODEX |
 | 899 | finance · hub flag posture | E | USMCA | FAIL · OPEN CC-1 HANDOFF | Canonical sidebar `/finance` rendered the Finance Hub disabled card because `FINANCE_HUB_UI_ENABLED` resolves false for selected USMCA. The page is reachable and links back to Overview, but the real read-only dashboard is unavailable. This contradicts the closed all-USMCA-ON-except-QBO directive. No flag or money mutation. | OPEN · CC-1 finance/flag lane | `LV-USMCA-FINANCE-HUB-UI-FLAG-OFF` · exact Live DOM + flag source | NO — owner decision already made | 2026-08-16 | CODEX |
+| 900 | insurance · policy type human label | E | USMCA | FAIL · FIXED CODE | Live Policies rendered 3 scoped rows and its four-step creator; insurer picker correctly put + Add new vendor first. The Type column and policy detail exposed raw `auto_liability` instead of canonical catalog name `Auto Liability`. Policy list/detail reads now join `insurance.type_catalog` through `coverage_type_id` plus the same `tenant_id`; typed FE surfaces render the canonical name with a humanized fallback. Claims separately PASS with 4 scoped rows and applicable policy/unit/trailer/driver/load drills. No mutation. | FIXED CODE · `INS-T01`; `INS-T04` LIVE PASS | `verify-insurance-policy-type-human-label` normal + 4/4 mutation; backend build | NO | 2026-08-16 | CODEX |

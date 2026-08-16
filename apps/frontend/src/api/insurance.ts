@@ -51,6 +51,8 @@ export type InsurancePolicy = {
   policy_number: string;
   coverage_type: InsuranceCoverageType;
   coverage_type_id: string | null;
+  /** Canonical human label resolved from the same-company insurance.type_catalog row. */
+  coverage_type_name?: string | null;
   effective_date: string;
   expiry_date: string;
   total_premium_cents: number;
