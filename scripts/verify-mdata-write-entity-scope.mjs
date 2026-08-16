@@ -57,11 +57,12 @@ export function assertGuard({ units, equipment, loads }) {
     errs.push(`${EQUIP}: deactivate UPDATE is not gated on owner/lessee.`);
 
   // --- loads /stops ---
+  // Accept $2 or $2::uuid — cast is preferred; scope predicate is what matters.
   if (l.includes("SELECT id FROM mdata.loads WHERE id = $1 LIMIT 1"))
     errs.push(`${LOADS}: /stops parent-load lookup 'SELECT id FROM mdata.loads WHERE id = $1 LIMIT 1' is unscoped — reaches any entity's load. Add operating_company_id.`);
-  if (!l.includes("SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1"))
+  if (!/SELECT id FROM mdata\.loads WHERE id = \$1 AND operating_company_id = \$2(?:::uuid)? LIMIT 1/.test(l))
     errs.push(`${LOADS}: POST /stops does not gate the parent load on operating_company_id.`);
-  if (!l.includes("SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1"))
+  if (!/SELECT 1 FROM mdata\.loads WHERE id = \$1 AND operating_company_id = \$2(?:::uuid)? LIMIT 1/.test(l))
     errs.push(`${LOADS}: PATCH/DELETE /stops does not gate the parent load on operating_company_id.`);
 
   return errs;
@@ -77,8 +78,12 @@ function selftest() {
   const goodLoads = `
     SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1
     SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`;
+  const goodLoadsUuidCast = `
+    SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1
+    SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`;
   const cases = [
     { n: "all scoped → 0", in: { units: goodUnits, equipment: goodEquip, loads: goodLoads }, want: 0 },
+    { n: "scoped with ::uuid cast → 0", in: { units: goodUnits, equipment: goodEquip, loads: goodLoadsUuidCast }, want: 0 },
     { n: "bare units read → flag", in: { units: `SELECT * FROM mdata.units WHERE id = $1 LIMIT 1`, equipment: goodEquip, loads: goodLoads }, min: 1 },
     { n: "bare equipment read → flag", in: { units: goodUnits, equipment: `SELECT id FROM mdata.equipment WHERE id = $1 LIMIT 1`, loads: goodLoads }, min: 1 },
     { n: "bare loads /stops lookup → flag", in: { units: goodUnits, equipment: goodEquip, loads: `SELECT id FROM mdata.loads WHERE id = $1 LIMIT 1` }, min: 1 },
