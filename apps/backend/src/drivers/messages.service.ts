@@ -125,6 +125,7 @@ export async function listOfficeInbox(
       ) uc ON true
       WHERE d.operating_company_id = $1::uuid
         AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
       ORDER BY lm.created_at DESC
     `,
     [operatingCompanyId]

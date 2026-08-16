@@ -214,6 +214,11 @@ async function handleArchive(ctx: BulkPerEntityContext<z.infer<typeof archivePay
       UPDATE mdata.drivers
       SET
         archived_at = COALESCE(archived_at, now()),
+        deactivated_at = COALESCE(deactivated_at, now()),
+        status = CASE
+          WHEN status::text IN ('Inactive', 'Terminated') THEN status
+          ELSE 'Inactive'::mdata.driver_status
+        END,
         updated_by_user_id = $2,
         updated_at = now()
       WHERE id = $1::uuid
