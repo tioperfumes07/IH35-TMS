@@ -128,13 +128,13 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☑ | `LV-CI-DEPENDABOT-RED` | — | CC-2 / mechanical + CI | Cursor | #5519 / #4659 | 2026-08-10 | `pr-evidence-block.yml` has `if: (github.actor != 'dependabot[bot]')`; board FIXED on main | `.github/workflows/pr-evidence-block.yml` + dependabot actor guard | Register evidence fill Cursor LEAD |
 | ☐ | `LV-BANKFLAG-STALE` | — | CC-1 / money | — | — | — | — | — | — |
 | ☑ | `LV-SPAWN-LIABILITY-NOSAVE` | — | CC-3 / mechanical+FE | Cursor | FIXED on main 2026-08-10 | 2026-08-10 | Spawn Liability wired (board FIXED on main) | board FIXED 2026-08-10 | Register tick |
-| ☐ | `LV-WO-NOSAVE` | — | — | — | — | — | — | — | — |
+| ☑ | `LV-WO-NOSAVE` | P0 | CC-3 / mechanical+FE | Cursor | #5516 | 2026-08-10 | createWorkOrder wired on CreateWorkOrderModal; `verify-maintenance-work-order-create-modal-connectivity` exit 0 + selftest | `scripts/verify-maintenance-work-order-create-modal-connectivity.mjs` | Register tick Cursor LEAD |
 | ☐ | `LV-SEND-NOREASON` | — | — | — | — | — | — | — | — |
 | ☑ | `LV-INV-UUID` | — | CC-3 / mechanical+FE | Cursor | #5555 / #5556 | 2026-08-10 | from-load linehaul uses `load_number` not UUID; guards exit 0 | `scripts/verify-invoice-line-no-uuid-description.mjs` · `scripts/verify-invoice-line-load-number-not-uuid.mjs` | Register tick Cursor LEAD |
 | ☑ | `LV-LOAD-EDIT-BLANK` | — | CC-3 / mechanical+FE | Cursor | #5515 | 2026-08-10 | Edit-load hydrates primary driver/unit/trip_type; board FIXED on main | #5515 | Register tick |
-| ☑ | `LV-STOPS-NOSAVE` | P0 | CC-3 / mechanical+FE | Cursor | this-PR | 2026-08-15 | Save→POST wired; postal_code round-trip; list filters soft_deleted_at; guard+selftest exit 0 | `scripts/verify-load-stops-save-wired.mjs` + step **3604** | Register tick Cursor LEAD |
+| ☑ | `LV-STOPS-NOSAVE` | P0 | CC-3 / mechanical+FE | Cursor | #7641 | 2026-08-15 | Save→POST wired; postal_code round-trip; list filters soft_deleted_at; guard+selftest exit 0 | `scripts/verify-load-stops-save-wired.mjs` + step **3604** | Register tick Cursor LEAD |
 | ☐ | `LV-LOAD-UNASSIGNED` | — | — | — | — | — | — | — | — |
-| ☐ | `LV-OUTBOX-ERRCOL` | — | — | — | — | — | — | — | — |
+| ☑ | `LV-OUTBOX-ERRCOL` | P2 | CC-3 / mechanical | Cursor | this-PR | 2026-08-15 | success delivery sets last_error=NULL; message in audit delivery_message; guard+selftest exit 0 | `scripts/verify-outbox-success-clears-last-error.mjs` + step **3606** | Register tick Cursor LEAD |
 | ☑ | `LV-DRV-TAB` | — | CC-3 / mechanical+FE | Cursor | #5546 / #5547 | 2026-08-10 | Probation status tab/filter surfaces default Create Driver status | #5546 | Register tick |
 | ☐ | `LV-AP-DUP` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-CAT-500` | — | — | — | — | — | — | — | — |
