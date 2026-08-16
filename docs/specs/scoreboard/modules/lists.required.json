@@ -2997,7 +2997,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "components/lists/ListView/components/FilterPopover.tsx"
     },
     {
       "id": "lists.modal.detail_type",

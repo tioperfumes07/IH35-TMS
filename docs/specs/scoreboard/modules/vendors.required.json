@@ -647,7 +647,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/vendors/VendorsListView.tsx"
     }
   ],
   "honesty_audit": {
