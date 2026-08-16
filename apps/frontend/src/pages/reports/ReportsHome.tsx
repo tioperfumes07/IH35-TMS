@@ -255,7 +255,7 @@ export function ReportsHomePage() {
                 Management reports
               </h3>
               <p className="text-xs text-slate-500">
-                QBO-standard branded compilations — lender, insurance, and
+                Branded financial compilations — lender, insurance, and
                 stakeholder ready
               </p>
             </div>

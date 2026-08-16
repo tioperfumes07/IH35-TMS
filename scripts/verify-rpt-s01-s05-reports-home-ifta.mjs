@@ -41,12 +41,19 @@ export function run() {
   if (!/Management reports/.test(homeSrc)) {
     failures.push(`${FILE}: must render a management reports section`);
   }
+  if (/QBO-standard branded compilations/.test(homeSrc)) {
+    failures.push(`${FILE}: USMCA-visible management report copy must not claim a QBO standard`);
+  }
+  if (!/Branded financial compilations/.test(homeSrc)) {
+    failures.push(`${FILE}: management report copy must describe the TMS-native branded compilation`);
+  }
   // Count explicit report rows in the two grid sections (12 accounting + 3 management = 15 minimum).
   const accountingSection = homeSrc.match(/Accounting \+ financial reports[\s\S]{0,3000}(?=Management reports)/)?.[0] ?? "";
-  const mgmtSection = homeSrc.match(/Management reports[\s\S]{0,1500}(?=FrequentlyRunTable|ScheduledReportsPanel)/)?.[0] ?? "";
+  const mgmtSection = homeSrc.match(/Management reports[\s\S]{0,2500}(?=FrequentlyRunTable|ScheduledReportsPanel)/)?.[0] ?? "";
   const rowTupleRe = /\[["'][a-z-]+["'],\s*["'](?:[^"\\]|\\.)+["'](?:,\s*[^[\]]+)?\]/g;
   const accountingRows = (accountingSection.match(rowTupleRe) ?? []).length;
-  const mgmtRows = (mgmtSection.match(rowTupleRe) ?? []).length;
+  const managementReportIds = ["company-overview", "sales-performance", "expenses-performance"];
+  const mgmtRows = managementReportIds.filter((id) => mgmtSection.includes(`"${id}"`)).length;
   const totalRows = accountingRows + mgmtRows;
   if (totalRows < 15) {
     failures.push(`${FILE}: expected at least 15 report launch rows, found ${totalRows} (accounting=${accountingRows}, mgmt=${mgmtRows})`);
@@ -87,7 +94,13 @@ function main() {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted missing section did not fail");
         process.exit(1);
       }
-      console.log(`[verify-rpt-s01-s05-reports-home-ifta] SELFTEST PASS (${planted.length} planted failures detected)`);
+      fs.writeFileSync(realPath, backup.replace("Branded financial compilations", "QBO-standard branded compilations"), "utf8");
+      const qboCopyPlanted = run();
+      if (!qboCopyPlanted.some((failure) => failure.includes("must not claim a QBO standard"))) {
+        console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted QBO copy did not fail");
+        process.exit(1);
+      }
+      console.log(`[verify-rpt-s01-s05-reports-home-ifta] SELFTEST PASS (${planted.length} section failures + QBO-copy mutation detected)`);
     } finally {
       fs.writeFileSync(realPath, backup, "utf8");
     }
