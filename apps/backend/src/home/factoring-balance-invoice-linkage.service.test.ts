@@ -44,6 +44,12 @@ const TRANSP_CO = (sql: string) =>
     ? { rows: [{ code: "TRANSP", legal_name: "IH 35 TRANSPORTATION LLC" }] }
     : null;
 
+// ACCT-F5332 — USMCA joined the same Faro Full Recourse V1 agreement eff 2026-08-07, same terms.
+const USMCA_CO = (sql: string) =>
+  sql.includes("FROM org.companies")
+    ? { rows: [{ code: "USMCA", legal_name: "USMCA Freight Solutions Inc" }] }
+    : null;
+
 const AGREEMENT_TABLE_OK = (sql: string) =>
   sql.includes("to_regclass('factoring.canonical_factor_agreements')")
     ? { rows: [{ ok: true }] }
@@ -156,12 +162,16 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     expect(FARO_FULL_RECOURSE_AGREEMENT_CODE).toBe("FARO_FULL_RECOURSE_V1");
   });
 
-  it("unverifiable when Faro/TRANSP contract entity mismatch", async () => {
+  // ACCT-F5332 — this test used "USMCA-1" as its non-Faro example before USMCA joined the same
+  // Faro agreement TRANSP has; that would now match (correctly — real USMCA IS Faro-bound), so
+  // this asserts against "TRK-1" instead, since TRK is confirmed NOT a Faro borrower (equipment
+  // holding entity only, per FACTORING_GL_POSTING_ENABLED's own policy comment).
+  it("unverifiable when Faro/TRANSP/USMCA contract entity mismatch", async () => {
     const client = mockClient([
       PROBE_OK,
       (sql) =>
         sql.includes("FROM org.companies")
-          ? { rows: [{ code: "USMCA-1" }] }
+          ? { rows: [{ code: "TRK-1" }] }
           : null,
     ]);
     const result = await computeFactoringBalanceInvoiceLinkage(client, {
@@ -170,6 +180,34 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     expect(result.status).toBe("unverifiable");
     expect(result.unverifiable_reason).toBe("faro_contract_entity_mismatch");
     expect(result.outstanding_liability_cents).toBeNull();
+  });
+
+  // ACCT-F5332 regression guard — apps/backend/test-helpers/isolated-company.ts's
+  // createIsolatedOperatingCompany({ codePrefix }) builds real-Postgres test companies as
+  // `${codePrefix}-${suffix}` (e.g. "TRANSP-a1b2c3"), and several .db.test.ts files pass
+  // codePrefix: "TRANSP" / "USMCA" specifically relying on PREFIX matching to stay Faro-gate
+  // eligible. An exact-equality gate would silently break every one of those integration tests
+  // without failing here — assert both prefixes explicitly so this can't regress unnoticed again.
+  it("still resolves suffixed TRANSP-/USMCA- codes (isolated-test-company prefix pattern)", async () => {
+    for (const suffixedCode of ["TRANSP-a1b2c3", "USMCA-d4e5f6"]) {
+      const client = mockClient([
+        PROBE_OK,
+        (sql) => (sql.includes("FROM org.companies") ? { rows: [{ code: suffixedCode }] } : null),
+        (sql) => {
+          if (sql.includes("FROM factoring.canonical_factor_agreements a")) return { rows: [] };
+          if (sql.includes("voided_current_n") && sql.includes("canonical_factor_agreements")) {
+            return { rows: [{ live_future_n: "0", live_expired_n: "0", voided_current_n: "0" }] };
+          }
+          return null;
+        },
+      ]);
+      const result = await computeFactoringBalanceInvoiceLinkage(client, {
+        operatingCompanyId: "00000000-0000-4000-8000-000000000097",
+        asOfBusinessDate: "2026-08-16",
+      });
+      // Passes the entity gate (reaches the agreement-binding check), rather than mismatching.
+      expect(result.unverifiable_reason).toBe("missing_faro_agreement_binding");
+    }
   });
 
   it("never infers Faro contract entity from legal_name alone", async () => {
@@ -376,6 +414,52 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     });
     expect(bad.status).toBe("unverifiable");
     expect(bad.unverifiable_reason).toBe("incomplete_funding_je_artifacts");
+  });
+
+  // ACCT-F5332 — USMCA joined the same Faro Full Recourse V1 agreement TRANSP already had; this
+  // proves the contract-entity gate now resolves USMCA the same way the "ok path" test above
+  // proves TRANSP resolves, using the identical VALID_FARO/ROLES_OK/AS_OF fixtures with only the
+  // company code swapped — the gate change is the only variable, matching the earlier
+  // "USMCA-1 stays a mismatch" negative test's own precedent of testing the code check in
+  // isolation from everything else.
+  it("USMCA resolves the same Faro binding TRANSP does (ACCT-F5332)", async () => {
+    const okClient = mockClient([
+      PROBE_OK,
+      USMCA_CO,
+      VALID_FARO,
+      ROLES_OK,
+      AS_OF,
+      (sql) =>
+        sql.includes("FROM views.factoring_balance_invoice_linkage")
+          ? {
+              rows: [
+                {
+                  liability_credits_cents: 500_000,
+                  liability_debits_settled_cents: 0,
+                  liability_debits_recourse_cents: 0,
+                  outstanding_liability_signed_cents: 500_000,
+                  reserve_debits_cents: 7_500,
+                  reserve_credits_cents: 0,
+                  reserve_receivable_signed_cents: 7_500,
+                  invoice_count: 1,
+                  funded_advance_count: 1,
+                  factor_advances_without_funding_artifact: 0,
+                  factor_advances_with_reserve_missing_held_artifact: 0,
+                  orphan_liability_role_cents: 0,
+                  orphan_reserve_role_cents: 0,
+                  as_of_business_date: "2026-08-16",
+                },
+              ],
+            }
+          : null,
+    ]);
+    const ok = await computeFactoringBalanceInvoiceLinkage(okClient, {
+      operatingCompanyId: "00000000-0000-4000-8000-000000000099",
+      asOfBusinessDate: "2026-08-16",
+    });
+    expect(ok.status).toBe("ok");
+    expect(ok.outstanding_liability_cents).toBe(500_000);
+    expect(ok.reserve_receivable_cents).toBe(7_500);
   });
 
   it("debit liability anomaly → accounting_exception (never clamp headline to 0)", async () => {

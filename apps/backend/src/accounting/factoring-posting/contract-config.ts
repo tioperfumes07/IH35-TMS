@@ -1,4 +1,7 @@
-// Faro Factoring ↔ IH 35 TRANSPORTATION LLC — executed-contract constants (eff 2024-12-02, TRANSP only).
+// Faro Factoring ↔ IH 35 TRANSPORTATION LLC — executed-contract constants (eff 2024-12-02, TRANSP).
+// ACCT-F5332 — USMCA joined the same Faro Full Recourse V1 agreement eff 2026-08-07, same terms
+// (owner confirmed in chat 2026-08-16); these constants are now shared by both entities via
+// isFaroContractEntityCode(). TRK remains excluded — not a Faro borrower.
 // Single source of truth for the numeric terms the poster/accrual/recourse code builds to. Grounded in the
 // executed agreement (auto-memory `faro-factoring-contract-terms`) + blueprint §6. Numbers here are the
 // CONTRACT terms — NOT guesses. Where the contract leaves something to Faro's per-account discretion (tier

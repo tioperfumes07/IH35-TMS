@@ -1,6 +1,7 @@
 /**
- * Authoritative TRANSP/Faro full-recourse agreement gate for all factoring posting paths.
- * Same resolver as Home Factoring Balance — never customer-majority / sole-factor / name match.
+ * Authoritative Faro full-recourse agreement gate for all factoring posting paths — TRANSP and
+ * (since ACCT-F5332, eff 2026-08-07) USMCA. Same resolver as Home Factoring Balance — never
+ * customer-majority / sole-factor / name match.
  */
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import {
