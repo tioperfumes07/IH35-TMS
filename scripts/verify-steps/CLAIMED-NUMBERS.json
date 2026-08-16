@@ -3457,5 +3457,10 @@
     "name": "verify-driver-create-invite-not-on-save",
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
+  },
+  "3612": {
+    "name": "verify-wo-create-no-opened-at-update",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
   }
 }
