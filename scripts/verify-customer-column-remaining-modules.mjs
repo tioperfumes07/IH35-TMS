@@ -68,7 +68,7 @@ export function audit(src) {
   need(/type === "driver" \|\| type === "customer" \|\| type === "vendor"/.test(src.contractsList), `${FILES.contractsList}: contracts list must resolve a real customer signer via signerKind`);
   need(/createKind="customer"/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real customer party picker`);
   need(/kind="customer" id=\{r\.customer_id\}/.test(src.arApAging), `${FILES.arApAging}: AR/AP aging must render a real EntityLink kind="customer"`);
-  need(/listCustomers/.test(src.woCreate), `${FILES.woCreate}: WO create must have a real customer picker`);
+  need(/kind=["']customer["']/.test(src.woCreate) && /allowCreate/.test(src.woCreate), `${FILES.woCreate}: WO create must have a real customer EntityPicker`);
   need(/SUBJECT_ENTITY_KINDS(?!_)/.test(src.auditTrail), `${FILES.auditTrail}: audit trail must map subject_type to a real EntityKind (incl. customer)`);
   need(/<DispatcherActiveLoadsPanel/.test(src.dispatcherHome), `${FILES.dispatcherHome}: dispatcher home must mount the real active-loads panel (own text has no "customer" hits, wiring lives in the child)`);
   need(/kind="customer" id=\{row\.customer_id\}/.test(src.dispatcherPanel), `${FILES.dispatcherPanel}: active-loads panel must render a real EntityLink kind="customer" per row`);
@@ -104,7 +104,7 @@ if (process.argv.includes("--selftest")) {
     ["contracts-list-signer", "contractsList", /type === "driver" \|\| type === "customer" \|\| type === "vendor"/, 'type === "driver" || type === "vendor"'],
     ["contracts-create-picker", "contractsCreate", /createKind="customer"/g, 'createKind="unit"'],
     ["ar-ap-aging-link", "arApAging", /kind="customer" id=\{r\.customer_id\}/g, 'kind="unit" id={r.unit_id}'],
-    ["wo-create-picker", "woCreate", /listCustomers/g, "listSomethingElse"],
+    ["wo-create-picker", "woCreate", /kind=["']customer["']/g, 'kind="unit"'],
     ["audit-trail-map", "auditTrail", /SUBJECT_ENTITY_KINDS/g, "SUBJECT_ENTITY_KINDS_UNUSED"],
     ["dispatcher-panel-mount", "dispatcherHome", /<DispatcherActiveLoadsPanel/g, "<div"],
     ["dispatcher-panel-link", "dispatcherPanel", /kind="customer" id=\{row\.customer_id\}/, 'kind="unit" id={row.unit_id}'],

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * CreateWOSectionIdentification — unit EntityPicker + vendor/customer server search;
- * no listDrivers(limit:500) / listVendors(limit:1000) silent pages. Cursor even claim: 2104.
+ * CreateWOSectionIdentification — unit/vendor/customer EntityPicker (server-search);
+ * no listDrivers(limit:500) / listVendors|listCustomers silent pages. Cursor even claim: 2104.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -36,8 +36,11 @@ export function collectProblems(root = ROOT) {
   if (/listVendors/.test(code)) {
     problems.push(`${FILE}: must not listVendors for vendor picker`);
   }
-  if (!/customerSearch/.test(code) || !/onSearch=\{setCustomerSearch\}/.test(code)) {
-    problems.push(`${FILE}: customer ReferenceSelect must wire customerSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']customer["']/.test(code) || !/allowCreate/.test(code)) {
+    problems.push(`${FILE}: customer must use EntityPicker kind=customer allowCreate`);
+  }
+  if (/listCustomers/.test(code)) {
+    problems.push(`${FILE}: must not listCustomers for customer picker`);
   }
   if (/listDrivers\s*\(/.test(code)) {
     problems.push(`${FILE}: must not bulk listDrivers for class hint`);

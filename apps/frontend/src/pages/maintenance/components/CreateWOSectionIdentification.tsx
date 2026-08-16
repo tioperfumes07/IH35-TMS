@@ -1,15 +1,14 @@
 import type { JSX } from "react";
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { getDriver, getUnit, listCustomers } from "../../../api/mdata";
+import { getDriver, getUnit } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { Combobox } from "../../../components/shared/Combobox";
-import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
@@ -78,7 +77,6 @@ export function CreateWOSectionIdentification({
   setValue,
   getValues,
 }: Props) {
-  const queryClient = useQueryClient();
   const type = watch("wo_type");
   const sourceType = watch("source_type");
   const bucket = watch("bucket");
@@ -91,8 +89,7 @@ export function CreateWOSectionIdentification({
   const unitId = watch("unit_id");
   const driverId = watch("driver_id");
   // SAF-B29 / picker law: never silent 500/1000-cap pages.
-  // Unit/vendor → EntityPicker; customer → ReferenceSelect + server search (customer EntityPicker wave later).
-  const [customerSearch, setCustomerSearch] = useState("");
+  // Unit/vendor/customer → EntityPicker (server-search).
   const selectedUnitQuery = useQuery({
     queryKey: ["maintenance", "master-data", "unit", operatingCompanyId, unitId],
     queryFn: () => getUnit(String(unitId), String(operatingCompanyId)),
@@ -103,17 +100,6 @@ export function CreateWOSectionIdentification({
     queryKey: ["maintenance", "master-data", "driver", operatingCompanyId, driverId],
     queryFn: () => getDriver(String(driverId), String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId) && Boolean(driverId),
-    staleTime: 60_000,
-  });
-  const customersQuery = useQuery({
-    queryKey: ["maintenance", "customers", operatingCompanyId, "create-wo-id", customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: String(operatingCompanyId),
-        limit: 200,
-        search: customerSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
 
@@ -131,9 +117,6 @@ export function CreateWOSectionIdentification({
       setValue("class_hint", next, { shouldDirty: false });
     }
   }, [setValue, getValues, unitId, driverId, selectedUnitQuery.data, selectedDriverQuery.data]);
-  const customerOptions = (customersQuery.data?.customers ?? [])
-    .map((c) => ({ value: c.id, label: c.name }))
-    .sort((a, b) => a.label.localeCompare(b.label));
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
@@ -274,7 +257,7 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("vendor_id")} />
               <input type="hidden" {...register("vendor_qbo_id")} />
               {/* Label only — shop_name/vendor_id are the persisted fields. */}
-              {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no capped vendor roster page. */}
               <EntityPicker
                 kind="vendor"
                 allowCreate
@@ -314,23 +297,20 @@ export function CreateWOSectionIdentification({
         <Field label="Customer">
           {operatingCompanyId && setValue ? (
             <>
-                            <input type="hidden" {...register("customer_id")} />
-                            
-              <ReferenceSelect
-                value={watch("customer_id") || null}
-                onChange={(next) => {
-                  setValue("customer_id", next ?? "", { shouldDirty: true });
-                }}
-                options={customerOptions}
-                createKind="customer"
+              <input type="hidden" {...register("customer_id")} />
+              {/* CLS-SILENT-CAP: EntityPicker server-search — no capped customer roster page. */}
+              <EntityPicker
+                kind="customer"
+                allowCreate
                 operatingCompanyId={operatingCompanyId}
-                placeholder="Search customers…"
-                onSearch={setCustomerSearch}
-                loading={customersQuery.isLoading}
-                onOptionCreated={(opt) => {
-                  void queryClient.invalidateQueries({ queryKey: ["maintenance", "customers"] });
-                  setValue("customer_display_name", opt.label, { shouldDirty: true });
+                value={watch("customer_id") || null}
+                onChange={(next, option) => {
+                  setValue("customer_id", next ?? "", { shouldDirty: true });
+                  setValue("customer_display_name", option?.label ?? "", { shouldDirty: true });
                 }}
+                placeholder="Search customers…"
+                dataField="customer_id"
+                className="h-8 w-full text-sm"
               />
             </>
           ) : (
