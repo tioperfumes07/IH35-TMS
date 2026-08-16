@@ -1105,6 +1105,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             }
             backendLoadError={backendLoadError}
           />
+          {/* CI-WO-SUGGESTION-QUERY-NO-ERROR-BRANCH: a failed load-suggestion lookup previously failed
+              silently — indistinguishable from "no suggestion available". This is a soft suggestion (the
+              operator can still pick a load manually), so a lightweight inline notice is proportionate;
+              full ListErrorState is reserved for primary data lists. */}
+          {suggestionQuery.isError ? (
+            <p className="mt-1 text-xs text-slate-600">Couldn't check for a load suggestion — pick one manually.</p>
+          ) : null}
           {/* M-01: the compact Priority/Status/Repaired-by/Authorization # row that used to render here was
               a DUPLICATE of the same 4 fields already rendered by CreateWOSectionRenderV5Header's "Work
               order header" section immediately below — removed the duplicate render, kept the one full

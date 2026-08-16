@@ -21,7 +21,9 @@
     "apps/frontend/src/pages/finance/FinanceHubPage.tsx",
     "scripts/verify-no-internal-language-in-prod-ui.mjs",
     "scripts/verify-money-input-format.mjs",
-    "apps/frontend/src/pages/finance/FinanceScenariosPage.tsx"
+    "apps/frontend/src/pages/finance/FinanceScenariosPage.tsx",
+    "scripts/verify-list-error-state-coverage.mjs",
+    "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx"
   ],
   "acceptance": [
     { "kind": "guard", "check": "scripts/verify-dispatch-list-hos-columns.mjs asserts live DriverHosClockValue markup (was pinned to dead DriverHosClockCells)" },
@@ -30,7 +32,8 @@
     { "kind": "guard", "check": "scripts/verify-all-module-list-toolbar-search-range-filter.mjs + verify-all-module-list-toolbar-connectivity.mjs assert settlements/finance toolbar route_hints point at their real canonical data-list surfaces" },
     { "kind": "guard", "check": "scripts/verify-no-internal-language-in-prod-ui.mjs forbids /owner[- ]gated/i; 0 hits repo-wide (1610 files)" },
     { "kind": "guard", "check": "scripts/verify-money-input-format.mjs findInputClassName ignores literal <input> text inside // comments so it checks the real <input>'s className, not the next element's" },
-    { "kind": "guard", "check": "scripts/verify-no-nested-box.mjs — FinanceScenariosPage.tsx's per-line-item row flattened to a divider instead of a nested rounded/border box inside the creator section" }
+    { "kind": "guard", "check": "scripts/verify-no-nested-box.mjs — FinanceScenariosPage.tsx's per-line-item row flattened to a divider instead of a nested rounded/border box inside the creator section" },
+    { "kind": "guard", "check": "scripts/verify-list-error-state-coverage.mjs — FinanceScenariosPage.tsx + CreateWorkOrderModal.tsx given honest isError branches; word-boundary fix stops useQueryClient false-flagging ScenarioLinesTable.tsx" }
   ],
   "runtime_path": "src",
   "db_required": true,

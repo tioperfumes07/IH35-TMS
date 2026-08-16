@@ -90,7 +90,10 @@ export function discoverOffenders() {
     const rel = path.relative(repoRoot, abs).replace(/\\/g, "/");
     if (isListErrorDiscoveryExempt(rel)) continue;
     const src = fs.readFileSync(abs, "utf8");
-    if (!/useQuery/.test(src)) continue;
+    // \b-bounded: a bare /useQuery/ substring also matches useQueryClient (imported by components that
+    // take a query's result as a PROP and never call useQuery themselves — e.g. ScenarioLinesTable.tsx),
+    // which false-flagged a presentation-only component as an offender with no query of its own to guard.
+    if (!/\buseQuery\b/.test(src)) continue;
     if (!RENDERS_A_LIST.test(src)) continue;
     if (HAS_ERROR_BRANCH.test(src)) continue;
     offenders.push(rel);

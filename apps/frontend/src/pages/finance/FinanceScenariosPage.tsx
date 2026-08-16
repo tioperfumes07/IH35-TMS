@@ -6,10 +6,12 @@ import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import {
   activateScenario,
   createScenario,
@@ -345,14 +347,22 @@ export function FinanceScenariosPage() {
         </section>
       )}
 
-      <ParityTable<Scenario>
-        columns={columns}
-        rows={scenarios}
-        rowKey={(r) => r.id}
-        storageKey="finance-scenarios-list"
-        tableTestId="finance-scenarios-table"
-        emptyText="No scenarios yet — create one to start planning."
-      />
+      {scenariosQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load scenarios"
+          {...formatQueryErrorDetail(scenariosQuery.error)}
+          onRetry={() => void scenariosQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<Scenario>
+          columns={columns}
+          rows={scenarios}
+          rowKey={(r) => r.id}
+          storageKey="finance-scenarios-list"
+          tableTestId="finance-scenarios-table"
+          emptyText="No scenarios yet — create one to start planning."
+        />
+      )}
     </div>
   );
 }
