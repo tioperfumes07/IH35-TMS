@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T08:50:42-05:00",
-    "sourceSha": "2c7d34097",
-    "deployedSha": "57d9fbf",
+    "generatedAt": "2026-08-16T08:59:29-05:00",
+    "sourceSha": "73a12a6fe",
+    "deployedSha": "a5a4358",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 899,
+    "ledgerRows": 900,
     "failOpen": 34,
     "defects": 25
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7801,
+      "title": "FINDING: LV-INSURANCE-POLICY-TYPE-RAW-CODE",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 08:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7801",
+      "sha": "73a12a6fe",
+      "committedAtIso": "2026-08-16T08:59:29-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 08:51 AM CT",
+      "url": "",
+      "sha": "a5a43585c",
+      "committedAtIso": "2026-08-16T13:51:46Z"
+    },
+    {
       "number": 7800,
       "title": "FINDING: LV-USMCA-FINANCE-HUB-UI-FLAG-OFF",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "151afc5b4",
       "committedAtIso": "2026-08-16T13:29:06Z"
-    },
-    {
-      "number": 7796,
-      "title": "FINDING: LV-DOCS-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7796",
-      "sha": "3cac457ef",
-      "committedAtIso": "2026-08-16T08:27:55-05:00"
-    },
-    {
-      "number": 7795,
-      "title": "FINDING: CI-GUARD-WIRED-REGRESSION-300-ORPHANS closeout",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7795",
-      "sha": "0132e2bd3",
-      "committedAtIso": "2026-08-16T08:24:43-05:00"
     }
   ]
 }
