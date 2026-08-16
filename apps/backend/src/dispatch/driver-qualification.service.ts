@@ -61,6 +61,16 @@
 export type DriverQualificationReason =
   | "driver_deactivated"
   | "driver_archived"
+  // LV-INACTIVE-DRIVER-ASSIGNED-AND-DELIVERED-REVENUE-LOAD (2026-08-16) — `deactivated_at`/
+  // `archived_at` are markers on the DEACTIVATE/ARCHIVE write paths, but `mdata.drivers.status`
+  // can independently read 'Inactive' (or 'Terminated') with BOTH markers still NULL — confirmed
+  // live on prod (driver 88c04cf5…, status='Inactive', deactivated_at/archived_at/termination_date
+  // all NULL, still assigned + delivered a revenue load). The one-directional CHECK constraint
+  // (202606161300) only enforces "deactivated_at set -> status is Inactive/Terminated", never the
+  // reverse, so a driver can legitimately reach that state without either marker. Read `status`
+  // directly here too — defense-in-depth on the read side rather than chasing every writer that
+  // might set status without a marker.
+  | "driver_status_inactive"
   | "cdl_missing"
   | "cdl_expired"
   | "medical_card_missing"
@@ -315,6 +325,7 @@ export async function assertDriverQualifiedForLoad(
     driver_name: string | null;
     is_deactivated: boolean;
     is_archived: boolean;
+    is_status_inactive: boolean;
     cdl_missing: boolean;
     cdl_expired: boolean;
     cdl_expires_at: string | null;
@@ -330,6 +341,9 @@ export async function assertDriverQualifiedForLoad(
         CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
         (d.deactivated_at IS NOT NULL) AS is_deactivated,
         (d.archived_at IS NOT NULL) AS is_archived,
+        -- LV-INACTIVE-DRIVER-ASSIGNED-AND-DELIVERED-REVENUE-LOAD: status can independently say
+        -- Inactive/Terminated with both markers NULL; block on status directly too.
+        (d.status IN ('Inactive', 'Terminated')) AS is_status_inactive,
         (d.cdl_expires_at IS NULL) AS cdl_missing,
         (d.cdl_expires_at IS NOT NULL AND d.cdl_expires_at < CURRENT_DATE) AS cdl_expired,
         d.cdl_expires_at::text AS cdl_expires_at,
@@ -420,6 +434,7 @@ export async function assertDriverQualifiedForLoad(
   const reasons: DriverQualificationReason[] = [];
   if (dr.is_deactivated) reasons.push("driver_deactivated");
   if (dr.is_archived) reasons.push("driver_archived");
+  if (dr.is_status_inactive) reasons.push("driver_status_inactive");
   if (dr.cdl_missing) reasons.push("cdl_missing");
   else if (dr.cdl_expired) reasons.push("cdl_expired");
   if (dr.med_missing) reasons.push("medical_card_missing");
