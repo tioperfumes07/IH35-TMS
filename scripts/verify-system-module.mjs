@@ -136,6 +136,15 @@ export function computeSystemModuleFailures(files) {
     errors.push("SystemModulePage.tsx: both overview QBO cards must be hidden outside TRANSP");
   }
 
+  // LV-SYSTEM-DEPLOY-PARITY-DIRECTION-GUESS: comparing two unequal service SHAs establishes only
+  // a mismatch. Without main HEAD, the UI must not guess which independently deployed service lags.
+  if (/FRONTEND STALE|BACKEND STALE/.test(page)) {
+    errors.push("SystemModulePage.tsx: deploy parity must not guess which service is stale");
+  }
+  if (!/inSync \? ["']IN SYNC["'] : ["']DEPLOY MISMATCH["']/.test(page)) {
+    errors.push("SystemModulePage.tsx: unequal frontend/backend SHAs must render DEPLOY MISMATCH");
+  }
+
   return errors;
 }
 
@@ -194,6 +203,7 @@ if (process.argv.includes("--selftest")) {
     'const visibleTabs = SYSTEM_TABS.filter((candidate) => qboAvailable || !QBO_SYSTEM_TAB_IDS.has(candidate.id));\n' +
     'parseSystemTab(searchParams.get("tab"), qboAvailable);\n' +
     'qboAvailable ? <Card /> : null; qboAvailable ? <Card /> : null;\n' +
+    'inSync ? "IN SYNC" : "DEPLOY MISMATCH";\n' +
     "// not bank reconciliation\n" +
     SYSTEM_TAB_LABELS.map((l) => `"${l}"`).join(",");
 
@@ -247,6 +257,11 @@ if (process.argv.includes("--selftest")) {
       .replace('parseSystemTab(searchParams.get("tab"), qboAvailable);', 'parseSystemTab(searchParams.get("tab"));')
       .replaceAll("qboAvailable ? <Card /> : null", "<Card />"),
   });
+  const failDeployDirectionGuess = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: goodPage.replace('inSync ? "IN SYNC" : "DEPLOY MISMATCH"', 'inSync ? "IN SYNC" : "FRONTEND STALE"'),
+  });
   const goodGlobalQbo = {
     topbar: 'const qboAvailable = selectedCompany?.code === "TRANSP"; enabled: Boolean(companyId) && office && qboAvailable; enabled: Boolean(companyId) && office && qboAvailable; <TopStatusBar qboAvailable={qboAvailable} />',
     statusBar: 'qboAvailable ? <span>{qboVis.label}</span> : null; qboAvailable && qboSyncPill',
@@ -271,6 +286,7 @@ if (process.argv.includes("--selftest")) {
     ["false CHECKING state is flagged", failFalseChecking.filter((e) => e.includes("QBO Sync request failures")).length === 2],
     ["false-live Claude activity is flagged", failFalseLiveActivity.filter((e) => e.includes("Claude Coder")).length === 3],
     ["USMCA QBO chrome/query leak is flagged", failUsmcaQboLeak.filter((e) => /TRANSP|QBO/.test(e)).length === 5],
+    ["deploy mismatch direction guess is flagged", failDeployDirectionGuess.filter((e) => e.includes("deploy parity") || e.includes("DEPLOY MISMATCH")).length === 2],
     ["global QBO capability inputs produce zero failures", passGlobalQbo.length === 0],
     ["global USMCA QBO chrome/query/copy leak is flagged", failGlobalQbo.length === 6],
   ];
