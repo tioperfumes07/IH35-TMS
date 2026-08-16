@@ -145,6 +145,15 @@ export function computeSystemModuleFailures(files) {
     errors.push("SystemModulePage.tsx: unequal frontend/backend SHAs must render DEPLOY MISMATCH");
   }
 
+  // LV-SYSTEM-PROGRAM-MIXED-DENOMINATORS: status views include recon-only legacy rows while
+  // registered_total is registry-only. Both System cards must show the exact active-view denominator.
+  if (!/function activeTrackerCount\(tracker: ProgramTracker\)[\s\S]{0,180}pending \+ in_progress \+ completed/.test(page)) {
+    errors.push("SystemModulePage.tsx: Program status denominator must sum active status views");
+  }
+  if ((page.match(/<Row label="Active tracked blocks">[\s\S]{0,180}?activeTrackerCount\(/g) ?? []).length !== 2) {
+    errors.push("SystemModulePage.tsx: overview and Program cards must share the active status denominator");
+  }
+
   return errors;
 }
 
@@ -204,6 +213,8 @@ if (process.argv.includes("--selftest")) {
     'parseSystemTab(searchParams.get("tab"), qboAvailable);\n' +
     'qboAvailable ? <Card /> : null; qboAvailable ? <Card /> : null;\n' +
     'inSync ? "IN SYNC" : "DEPLOY MISMATCH";\n' +
+    'function activeTrackerCount(tracker: ProgramTracker) { const { pending, in_progress, completed } = tracker.view_counts; return pending + in_progress + completed; }\n' +
+    '<Row label="Active tracked blocks">{activeTrackerCount(tracker.data)}</Row>; <Row label="Active tracked blocks">{activeTrackerCount(t)}</Row>;\n' +
     "// not bank reconciliation\n" +
     SYSTEM_TAB_LABELS.map((l) => `"${l}"`).join(",");
 
@@ -262,6 +273,12 @@ if (process.argv.includes("--selftest")) {
     manifest: goodManifest,
     page: goodPage.replace('inSync ? "IN SYNC" : "DEPLOY MISMATCH"', 'inSync ? "IN SYNC" : "FRONTEND STALE"'),
   });
+  const failMixedTrackerDenominator = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: goodPage.replaceAll("activeTrackerCount(", "tracker.data.registered_total || (")
+      .replace("pending + in_progress + completed", "tracker.registered_total"),
+  });
   const goodGlobalQbo = {
     topbar: 'const qboAvailable = selectedCompany?.code === "TRANSP"; enabled: Boolean(companyId) && office && qboAvailable; enabled: Boolean(companyId) && office && qboAvailable; <TopStatusBar qboAvailable={qboAvailable} />',
     statusBar: 'qboAvailable ? <span>{qboVis.label}</span> : null; qboAvailable && qboSyncPill',
@@ -287,6 +304,7 @@ if (process.argv.includes("--selftest")) {
     ["false-live Claude activity is flagged", failFalseLiveActivity.filter((e) => e.includes("Claude Coder")).length === 3],
     ["USMCA QBO chrome/query leak is flagged", failUsmcaQboLeak.filter((e) => /TRANSP|QBO/.test(e)).length === 5],
     ["deploy mismatch direction guess is flagged", failDeployDirectionGuess.filter((e) => e.includes("deploy parity") || e.includes("DEPLOY MISMATCH")).length === 2],
+    ["mixed Program Tracker denominator is flagged", failMixedTrackerDenominator.filter((e) => e.includes("status denominator") || e.includes("active status denominator")).length === 2],
     ["global QBO capability inputs produce zero failures", passGlobalQbo.length === 0],
     ["global USMCA QBO chrome/query/copy leak is flagged", failGlobalQbo.length === 6],
   ];

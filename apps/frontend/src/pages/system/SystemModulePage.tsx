@@ -61,6 +61,11 @@ function fmtUsd(cents: number | null | undefined): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
+function activeTrackerCount(tracker: ProgramTracker): number {
+  const { pending, in_progress, completed } = tracker.view_counts;
+  return pending + in_progress + completed;
+}
+
 // ---- primitives (match the mockup: card / row / pill / kpi) ---------------------------------------
 
 type PillTone = "ok" | "warn" | "off" | "neutral";
@@ -258,8 +263,8 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
         sub="Live build status — derived from merges + deploys, not a static field."
         footer={<GhostButton onClick={() => onOpen("program")}>Open Program Tracker</GhostButton>}
       >
-        <Row label="Registered blocks (live)">
-          {tracker.data ? <span className="tabular-nums">{tracker.data.registered_total}</span> : <Pill tone="warn">LIVE COUNT PENDING</Pill>}
+        <Row label="Active tracked blocks">
+          {tracker.data ? <span className="tabular-nums">{activeTrackerCount(tracker.data)}</span> : <Pill tone="warn">LIVE COUNT PENDING</Pill>}
         </Row>
         <Row label="Built &amp; live-verified">{tracker.data ? <span className="tabular-nums">{tracker.data.view_counts.completed}</span> : "—"}</Row>
         <Row label="In progress (open PR)">{tracker.data ? <span className="tabular-nums">{tracker.data.view_counts.in_progress}</span> : "—"}</Row>
@@ -441,7 +446,7 @@ function ProgramTab({ data }: { data: SystemData }) {
           </Link>
         }
       >
-        <Row label="Registered blocks (live)">{t ? <span className="tabular-nums">{t.registered_total}</span> : <Pill tone="warn">LIVE COUNT PENDING</Pill>}</Row>
+        <Row label="Active tracked blocks">{t ? <span className="tabular-nums">{activeTrackerCount(t)}</span> : <Pill tone="warn">LIVE COUNT PENDING</Pill>}</Row>
         <Row label="Built &amp; live-verified">{t ? <span className="tabular-nums">{t.view_counts.completed}</span> : "—"}</Row>
         <Row label="In progress (open PR)">{t ? <span className="tabular-nums">{t.view_counts.in_progress}</span> : "—"}</Row>
         <Row label="Pending">{t ? <span className="tabular-nums">{t.view_counts.pending}</span> : "—"}</Row>
