@@ -119,9 +119,15 @@ export function ablPctToCell4(abl: {
   };
 }
 
-function pctOf(count: number, of: number): number {
-  if (of <= 0) return 0;
-  return Math.round((count / of) * 100);
+/**
+ * Progress percentages must never round an incomplete count up to 100.
+ * Exact completion is the only state allowed to display 100%; intermediate
+ * values are floored so the percentage cannot contradict the adjacent count.
+ */
+export function honestProgressPct(count: number, total: number): number {
+  if (total <= 0 || count <= 0) return 0;
+  if (count >= total) return 100;
+  return Math.floor((count / total) * 100);
 }
 
 /** Box 3 / Box 4 — both percentages side by side. */
@@ -150,8 +156,8 @@ export function DualPct({
 export function builtDualPcts(metrics: TierMetrics): { fill: number; wire: number } {
   const counts = cumulativeBoxCounts(metrics);
   return {
-    fill: pctOf(counts.built, counts.required),
-    wire: metrics.builtOnlyPct ?? pctOf(metrics.builtOnlyCells || 0, counts.required),
+    fill: honestProgressPct(counts.built, counts.required),
+    wire: metrics.builtOnlyPct ?? honestProgressPct(metrics.builtOnlyCells || 0, counts.required),
   };
 }
 
@@ -278,7 +284,7 @@ export function MatrixBoxTracker({
     <div className="box-tracker" data-testid="module-matrix-box-tracker">
       <div className="metrics metrics-ribbon metrics-boxes" data-testid="module-matrix-tier-ribbon">
         {tiles.map((t) => {
-          const pct = t.of === 0 ? 0 : Math.round((t.count / t.of) * 100);
+          const pct = honestProgressPct(t.count, t.of);
           const full = liveOk && t.of > 0 && t.count === t.of;
           const cls = !liveOk ? "" : full ? "good" : pct >= 40 ? "amb" : "big";
           return (
