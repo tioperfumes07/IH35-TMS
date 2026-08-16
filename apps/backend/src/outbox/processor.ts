@@ -194,6 +194,8 @@ export class OutboxProcessor {
         log: (message, meta) => this.log(message, meta),
       });
 
+      // LV-OUTBOX-ERRCOL: success must NEVER write into last_error (that column is
+      // failure-diagnosis only). Delivery detail stays in the audit append below.
       await client.query(
         `
           UPDATE outbox.events
@@ -201,18 +203,19 @@ export class OutboxProcessor {
               failed_at = NULL,
               locked_at = NULL,
               locked_by = NULL,
-              last_error = CASE WHEN $2::text = '' THEN NULL ELSE left($2, 2000) END,
+              last_error = NULL,
               updated_at = now()
               ${releaseDedupeSqlFragment(event.event_type)}
           WHERE id = $1
         `,
-        [event.id, result?.message ?? ""]
+        [event.id]
       );
       await this.appendOutboxAudit(client, "outbox.event.delivered", "info", {
         outbox_event_id: event.id,
         event_type: event.event_type,
         retry_count: event.retry_count,
         instance_id: this.instanceId,
+        delivery_message: result?.message ?? null,
         dedupe_key_released: shouldReleaseOutboxDedupeKey(event.event_type),
         ...this.tenantMeta(event.payload),
       });
