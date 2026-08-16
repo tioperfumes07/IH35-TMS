@@ -21,13 +21,19 @@ into `INBOX-CC-1.md` / `INBOX-CODEX.md`. Active lanes: CC-1 / Cursor / Codex onl
 current per `NO-PAUSE-AFTER-MERGE-LAW.md` (one line, every ship) so pace is visible without someone
 having to cross-check `gh pr list` to prove the lane is alive.
 
+## ★ PACE (CC-1, 2026-08-16 16:50 UTC — owner asked directly why this isn't moving faster)
+
+`OUTBOX-CURSOR.md` top line is dated 2026-08-15T03:25Z while real merges are landing every few minutes
+(#7841-#7845 in the last 30 min). Keep OUTBOX current per `NO-PAUSE-AFTER-MERGE-LAW.md` (one line,
+every ship) so pace is visible without cross-checking `gh pr list`.
+
 ## ☐ NOW (Cursor lane — permanent sequence)
 
-0. **OPEN `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR`** — live USMCA `/reports/geofence-reconciliation`; dynamic anomaly-class ParityTables at `GeofenceReconciliationReport.tsx:85-151` lack Search+Range+gear and disappear entirely at zero rows. Fix once for every class with a leaf-specific mutation guard; preserve date Apply, EntityLinks, resolution, and honest empty state; `BLOCKS=LIVE-REPORTS-GEOFENCE-RECONCILIATION-CHROME`; OWNER-GATED=no.
-
-0. **OPEN `LV-HOVERDROPDOWN-HOVER-CLICK-SELF-CLOSE`** — live USMCA `/reports` `All` trigger becomes active but renders no flyout: shared `HoverDropdown` opens on mouseenter, then the same click sees open state and closes it. Fix once across all three consumers (Reports category nav ×2 + Safety group nav) with pointer/keyboard/outside-dismiss behavior coverage and one mutation-proven guard; `BLOCKS=LIVE-REPORTS-REPORT-FLYOUT,LIVE-SAFETY-GROUP-NAV`; OWNER-GATED=no.
-
-0. **OPEN `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH`** — live USMCA `/inventory/assignments` has canonical ParityTable Search+Range+gear plus a second “Search assignment trail” input (`InventoryAssignmentsPage.tsx:34-60,170-188`). Fix as a vertical `ParityTable filterBar` search-child class sweep with one mutation-proven all-consumer guard; `BLOCKS=LIVE-INVENTORY-ASSIGNMENTS-CHROME`; OWNER-GATED=no.
+0. **CLOSED** `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR` — FIXED PR #7468 (single ParityTable + surface-bar; do not rework).
+0. **CLOSED** `LV-HOVERDROPDOWN-HOVER-CLICK-SELF-CLOSE` — FIXED PR #7370 (HoverDropdown click-after-hover).
+0. **CLOSED** `LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH` — FIXED PR #7373.
+0. **CLOSED** `LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR` — FIXED PR #7815 (ParityTable always mounted; guard 3648).
+0. **NEXT** Mine OPEN Cursor chrome from `docs/audit/GUARD-WORKORDERS.md` (filter-class theater leaves still on UniversalListToolbar for accounting/customers/dispatch/fleet/lists/maintenance/vendors/reports hub) OR Live Chrome per-leaf on honestly Built surfaces. Do not re-open CLOSED rows above.
 
 1. **Theater purge:** `qbo_chrome` + `picker_law` — no `leafRe:.*` / `|.*` / word-blanket Built  
 2. **Surface-bar leaf-existence audit** (Fully-Wired item 7) — **confirmed green live this session** (all 6 inventory ratchets PASS: create-drawer, toolbar, wizard, modal, ParityDrawer, Combobox)  
