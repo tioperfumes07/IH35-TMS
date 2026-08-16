@@ -183,17 +183,12 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   return (
     <div className="border-b" style={{ borderBottomColor: colors.sidebarBorder, backgroundColor: colors.topbarBg }}>
       <header
-        className="top-bar grid items-center gap-x-3 max-xl:grid-cols-1 max-xl:gap-2"
+        className="top-bar grid items-center gap-x-3"
         style={{
-          // minmax(0,…) is REQUIRED, not cosmetic. A bare `1fr` is `minmax(auto, 1fr)`, and that
-          // `auto` minimum means the TRACK refuses to shrink below its content — so the side columns
-          // overflowed into the fixed `auto` middle and the chrome rendered on top of itself. All
-          // three children already carried `min-w-0`; that cannot help, because the floor is on the
-          // GRID TRACK, not the grid item. Verified live on prod: the company switcher sat at
-          // x:410 y:51 w:164 h:26 and document.elementFromPoint() at its exact centre returned an
-          // <svg> — the button was physically unclickable, and operator clicks landed on
-          // Notifications or the help link instead. Entities could not be switched at all.
-          gridTemplateColumns: "minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr)",
+          // Desktop 3-col + ≤1279 stack live in responsive-breakpoints.css (NOT inline
+          // gridTemplateColumns). Inline tracks beat Tailwind max-xl:grid-cols-1 and caused
+          // LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP at ~697px: switcher truncated after "Current:"
+          // and Create/Tasks/… were clipped by body overflow-x:hidden.
           minHeight: spacing.topbarHeight,
           padding: `${spacing.topbarPaddingY}px ${spacing.topbarPaddingX}px`,
         }}
@@ -316,7 +311,12 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
         {office ? <LocaleSwitcher /> : null}
         {office ? <PageHelpLink /> : null}
         {office ? <NotificationBell /> : null}
-        <span style={{ fontSize: typography.pageSubtitle, color: colors.sidebarTextMuted }}>{dateLabel}</span>
+        <span
+          className="top-bar-date-label"
+          style={{ fontSize: typography.pageSubtitle, color: colors.sidebarTextMuted }}
+        >
+          {dateLabel}
+        </span>
         <button
           type="button"
           className="flex h-7 items-center gap-1 rounded-sm border px-2 hover:bg-white/10"
