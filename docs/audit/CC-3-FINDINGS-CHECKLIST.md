@@ -123,7 +123,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-BILLVOID-DATE-ERROR` | — | CC-1 / money — URGENT, blocks the void path | — | — | — | — | — | — |
 | ☐ | `LV-VOID-NO-REVERSAL` | — | CC-1 / money — URGENT | — | — | — | — | — | — |
 | ☐ | `LV-CREDITMEMO-NOPATH` | — | CC-2 / mechanical+route (CC-1 confirms posti | — | — | — | — | — | — |
-| ☐ | `LV-BLOCKACCEPT-RED-ON-MAIN` | — | CC-2 / mechanical + whoever owns those 3 blo | — | — | — | — | — | — |
+| ☑ | `LV-BLOCKACCEPT-RED-ON-MAIN` | P0 | CC-2 / mechanical | Cursor | FIXED on main 2026-08-10 | 2026-08-10 | `node scripts/verify-block-acceptance.mjs` exit 0 on tip main | `scripts/verify-block-acceptance.mjs` | Register tick Cursor LEAD |
 | ☑ | `LV-EXP-NOLOAD` | — | CC-2 / mechanical+FE | Cursor | #5564 | 2026-08-10 | RecordExpenseForm Trip/Load EntityPicker; fuel/diesel/roadside require load_id; guard exit 0 | `scripts/verify-expense-load-field-for-fuel.mjs` | Register tick — board FIXED (#5564); historical load-null still PRE-OP per Rule 32 |
 | ☑ | `LV-CI-DEPENDABOT-RED` | — | CC-2 / mechanical + CI | Cursor | #5519 / #4659 | 2026-08-10 | `pr-evidence-block.yml` has `if: (github.actor != 'dependabot[bot]')`; board FIXED on main | `.github/workflows/pr-evidence-block.yml` + dependabot actor guard | Register evidence fill Cursor LEAD |
 | ☐ | `LV-BANKFLAG-STALE` | — | CC-1 / money | — | — | — | — | — | — |
@@ -137,7 +137,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☑ | `LV-OUTBOX-ERRCOL` | P2 | CC-3 / mechanical | Cursor | this-PR | 2026-08-15 | success delivery sets last_error=NULL; message in audit delivery_message; guard+selftest exit 0 | `scripts/verify-outbox-success-clears-last-error.mjs` + step **3606** | Register tick Cursor LEAD |
 | ☑ | `LV-DRV-TAB` | — | CC-3 / mechanical+FE | Cursor | #5546 / #5547 | 2026-08-10 | Probation status tab/filter surfaces default Create Driver status | #5546 | Register tick |
 | ☐ | `LV-AP-DUP` | — | CC-1 / money | — | — | — | — | — | — |
-| ☐ | `LV-CAT-500` | — | — | — | — | — | — | — | — |
+| ☑ | `LV-CAT-500` | P0 | Cursor / catalogs | Cursor | #5512 / #5513 / #5521 | 2026-08-10 | generic catalog physical columns + display_name default; board FIXED on main | verify-step **2992** (CLS-CATALOG-PHYSICAL-COLUMNS) | Register tick Cursor LEAD |
 | ☑ | `LV-BULK-DELIVER-NOLATCH` | — | CC-1 / money (fix) + CC-2 / guard | CC-1 | #4730 | 2026-08-07 | Mutation on the REAL `apps/backend/src/dispatch/loads-bulk.routes.ts`: strip `latchOnDeliveryEvidence` → `node scripts/verify-delivery-evidence-latch-wired.mjs` exit **1** naming the file; restore → exit **0**. Selftest (cases 1-9) exit 0. That mutation is now permanent selftest case9, so the widening is a regression test, not a description of one. | `scripts/verify-delivery-evidence-latch-wired.mjs` + step `2634` | — |
 | ☑ | `LV-STOP-ZIP-DROPPED` | — | CC-2 / mechanical | CC-2 | #4789 | 2026-08-07 | postal_code in stops payload + form type; guard step **2823**; live on deploy `9c4f095` | step **2823** | Register tick — board DONE |
 | ☑ | `LV-DISPATCH-TOAST-LIES` | — | CC-2 / mechanical | CC-2 | FIXED on main 2026-08-10 | 2026-08-10 | Success toast reports server-returned status (not assumed dispatched) | board FIXED 2026-08-10 | Register tick — board Status FIXED on main |
