@@ -12,6 +12,10 @@
       "claimed_by": "claude",
       "purpose": "migration_ledger_mirror_trigger_lv087"
     },
+    "202612630000": {
+      "claimed_by": "cc-1",
+      "purpose": "cash_advance_types_catalog_seed"
+    },
     "202612601200": {
       "claimed_by": "codex",
       "purpose": "system_audit_master_data_spine_subjects"
