@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T11:46:55-05:00",
-    "sourceSha": "be5c59bb3",
-    "deployedSha": "ba3c584",
+    "generatedAt": "2026-08-16T12:20:03-05:00",
+    "sourceSha": "832e0f02b",
+    "deployedSha": "a026346",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 911,
+    "ledgerRows": 912,
     "failOpen": 23,
     "defects": 25
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 7847,
-      "title": "Cursor- docs: LV-CURSOR-INBOX-STALE-OPEN-HYGIENE — close FIXED rows still listed OPEN",
+      "number": 7858,
+      "title": "Codex-1- fix(program): certify honest matrix percentage",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7847",
-      "sha": "8e654f116",
-      "committedAtIso": "2026-08-16T11:47:12-05:00"
-    },
-    {
-      "number": 7846,
-      "title": "Codex-1- fix(chrome): certify customer reports copy",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7846",
-      "sha": "be5c59bb3",
-      "committedAtIso": "2026-08-16T11:46:55-05:00"
-    },
-    {
-      "number": 7845,
-      "title": "Cursor- fix(docs): LV-DOCS-FILTER-LEAF-THEATER — filter leaf pointed at UniversalListToolbar",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7845",
-      "sha": "9a00b7559",
-      "committedAtIso": "2026-08-16T11:45:36-05:00"
-    },
-    {
-      "number": 7844,
-      "title": "Cursor- fix(safety): LV-SAFETY-ANOMALIES-FILTER-LEAF-THEATER — filter leaf pointed at UniversalListToolbar",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7844",
-      "sha": "ba3c584b4",
-      "committedAtIso": "2026-08-16T11:44:23-05:00"
-    },
-    {
-      "number": 7843,
-      "title": "Codex-1- fix(chrome): certify non-money operator copy",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7843",
-      "sha": "436365f8a",
-      "committedAtIso": "2026-08-16T11:44:01-05:00"
+      "mergedAtCt": "08/16/2026, 12:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7858",
+      "sha": "832e0f02b",
+      "committedAtIso": "2026-08-16T12:20:03-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: LV-TASKS-REPORT-FILTER-PANEL-ABSENT LANE: NON-FINANCIAL",
+      "title": "Cursor- fix(maintenance): LV-MAINT-WARRANTY-ADDPARTS-VENDOR-ENTITY-PICKER — capped listVendors on warranty + AddPartsLink",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:42 AM CT",
+      "mergedAtCt": "08/16/2026, 12:18 PM CT",
       "url": "",
-      "sha": "8580012b9",
-      "committedAtIso": "2026-08-16T11:42:52-05:00"
-    },
-    {
-      "number": 7842,
-      "title": "Cursor- fix(legal): LV-LEGAL-MATTERS-FILTER-LEAF-THEATER — filter leaf pointed at UniversalListToolbar",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7842",
-      "sha": "34b5075a2",
-      "committedAtIso": "2026-08-16T11:41:04-05:00"
-    },
-    {
-      "number": 7841,
-      "title": "Cursor- fix(drivers): LV-DRIVERS-TABLE-FILTER-PANEL-ABSENT — DriversTable missing CollapsedListFilters",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7841",
-      "sha": "679775ae7",
-      "committedAtIso": "2026-08-16T11:39:33-05:00"
-    },
-    {
-      "number": 7840,
-      "title": "Cursor- fix(insurance): LV-INSURANCE-LAWSUITS-FILTER-PANEL-ABSENT — Lawsuits missing CollapsedListFilters",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7840",
-      "sha": "7cd4d07ad",
-      "committedAtIso": "2026-08-16T11:36:57-05:00"
+      "sha": "0e6a4b158",
+      "committedAtIso": "2026-08-16T12:18:43-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "title": "Cursor- fix(maintenance): LV-MAINT-ROAD-SERVICE-WO-VENDOR-ENTITY-PICKER — capped listVendors+ReferenceSelect on road service + Create WO",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 11:36 AM CT",
+      "mergedAtCt": "08/16/2026, 12:13 PM CT",
       "url": "",
-      "sha": "5e3f942eb",
-      "committedAtIso": "2026-08-16T16:36:51Z"
+      "sha": "a0263465b",
+      "committedAtIso": "2026-08-16T12:13:45-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(inventory): LV-INV-PART-VENDOR-CAPPED-REFERENCESELECT — EntityPicker uncapped vendor",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:06 PM CT",
+      "url": "",
+      "sha": "c84dea09f",
+      "committedAtIso": "2026-08-16T12:06:53-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(scoreboard): LV-HELP-RANGE-GEAR-TOOLBAR-THEATER — N/A bind HelpCenterPage",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:02 PM CT",
+      "url": "",
+      "sha": "13510caa1",
+      "committedAtIso": "2026-08-16T12:02:01-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(scoreboard): LV-REMAINING-FILTER-PANELS — fuel/compliance/inventory/425/help CollapsedListFilters",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:00 PM CT",
+      "url": "",
+      "sha": "3b8c435c5",
+      "committedAtIso": "2026-08-16T12:00:58-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(scoreboard): LV-REMAINING-FILTER-PANELS — fuel/compliance/inventory/425/help CollapsedListFilters",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:00 PM CT",
+      "url": "",
+      "sha": "8bc6808dd",
+      "committedAtIso": "2026-08-16T12:00:08-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(scoreboard): LV-MAINTENANCE-FILTER-LEAF-THEATER — bind Filters to WorkOrdersTable",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 11:56 AM CT",
+      "url": "",
+      "sha": "ced42d310",
+      "committedAtIso": "2026-08-16T11:56:15-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(scoreboard): LV-ACCT-FLEET-DISPATCH-FACTORING-FILTER-LEAF-THEATER — honesty bind Filters leaves",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 11:55 AM CT",
+      "url": "",
+      "sha": "854106700",
+      "committedAtIso": "2026-08-16T11:55:22-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- fix(scoreboard): LV-VENDORS-CUSTOMERS-LISTS-FILTER-LEAF-THEATER — honesty bind Filters leaves",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 11:52 AM CT",
+      "url": "",
+      "sha": "de67faa53",
+      "committedAtIso": "2026-08-16T11:52:39-05:00"
     }
   ]
 }
