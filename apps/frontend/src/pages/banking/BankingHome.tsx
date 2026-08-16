@@ -931,8 +931,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             >
               <p className="font-semibold">No Relay fuel wallet is bound for this operating company.</p>
               <p className="mt-1">
-                Identity uses <code className="text-[11px]">catalogs.accounts.system_purpose = &apos;relay_fuel_wallet&apos;</code>{" "}
-                linked through <code className="text-[11px]">banking.bank_accounts.ledger_account_id</code>. An empty
+                Identity is set by flagging a Chart of Accounts entry as the Relay fuel wallet, linked
+                through the bank account tile that entry is bound to. An empty
                 Relay tab here means no bank account tile carries that CoA bind for the selected company — not missing
                 Plaid tags. Fuel lines may still appear on the Transactions register once ingest has rows.
               </p>
