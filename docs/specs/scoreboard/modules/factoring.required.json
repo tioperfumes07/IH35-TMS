@@ -459,7 +459,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/factoring/FactoringHome.tsx"
     }
   ],
   "honesty_audit": {
