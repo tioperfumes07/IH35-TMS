@@ -3155,6 +3155,11 @@
       "note": "FROM-LOAD-INVOICE-ZERO-RATE-SNAPSHOT",
       "owner": "cursor"
     },
+    "3641": {
+      "name": "verify-bill-header-only-refused",
+      "claimer": "cc-1",
+      "claimed_at": "2026-08-16"
+    },
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
