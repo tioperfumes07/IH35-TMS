@@ -55,10 +55,19 @@ export function assertUniversalPickerLaw(sources) {
   if (!inv.includes("LST-PICKER-01") || !inv.includes("FAIL")) {
     problems.push(`${INV}: inventory doc must exist and list remaining FAILs`);
   }
+  // EntityPicker must use the same "+ Add new" vocabulary as ReferenceSelect (V2 / row 935).
+  const epr = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
+  const eprSrc = code(sources[epr] ?? "");
+  if (!/entityAddNewLabel/.test(eprSrc)) {
+    problems.push(`${epr}: missing entityAddNewLabel`);
+  } else if (!/\+ Add new \$\{/.test(eprSrc) && !/`\+ Add new /.test(eprSrc)) {
+    problems.push(`${epr}: entityAddNewLabel must return "+ Add new <entity>" (not "+ Create")`);
+  }
   return problems;
 }
 
-const FILES = [REF, COMBO, QC, INV];
+const EPR = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
+const FILES = [REF, COMBO, QC, INV, EPR];
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
@@ -67,6 +76,14 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   const broken = { ...real, [QC]: real[QC] + "\ncreateQboItem();\n" };
   if (assertUniversalPickerLaw(broken).length === 0) {
     console.error(`${LABEL} --selftest FAIL: mirror write not flagged`);
+    process.exit(1);
+  }
+  const createLabelBroken = {
+    ...real,
+    [EPR]: real[EPR].replace("`+ Add new ${", "`+ Create ${"),
+  };
+  if (!assertUniversalPickerLaw(createLabelBroken).some((p) => p.includes("Add new"))) {
+    console.error(`${LABEL} --selftest FAIL: EntityPicker '+ Create' label not flagged`);
     process.exit(1);
   }
   const good = assertUniversalPickerLaw(real);

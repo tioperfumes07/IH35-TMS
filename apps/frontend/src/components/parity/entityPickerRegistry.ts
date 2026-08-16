@@ -507,7 +507,9 @@ export function entityPickerKinds(): EntityPickerKind[] {
   return Object.keys(ENTITY_PICKERS) as EntityPickerKind[];
 }
 
-/** "+ Create driver" — §7 vocabulary, never "+ New" / "+ Add". */
+/** Inline dropdown create: "+ Add new <entity>" (V2). Page primary buttons stay "+ Create". */
 export function entityAddNewLabel(kind: EntityPickerKind): string {
-  return `+ Create ${getEntityPickerConfig(kind).label}`;
+  // V2 universal picker law: first-row label is "+ Add new <entity>", not "+ Create".
+  // "+ Create" is the page primary button vocabulary; dropdown inline create uses Add new.
+  return `+ Add new ${getEntityPickerConfig(kind).label}`;
 }
