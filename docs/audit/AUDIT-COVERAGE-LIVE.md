@@ -69,14 +69,14 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-16 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **25 / 30** | 2026-08-16 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **26 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-16 |
-| Rows in this file | **918** | 2026-08-16 |
+| Rows in this file | **919** | 2026-08-16 |
 | Rows `FAIL` + `OPEN` | **23** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=126 · PASS=214 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=332 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=127 · PASS=214 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=332 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1006,3 +1006,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 916 | maintenance · issue-to-WO Section-B line identity | C | USMCA | FAIL · FIXED CODE | Deployed `index-_y1P4yvL.js` contained #7874's optional-UUID omission. Exact T149 internal-shop/in-house retry preserved unit, driver, load, and breakdown load and enabled Save Draft; POST advanced past UUID validation but returned `column "id" does not exist`. Schema truth defines `maintenance.work_order_lines.uuid` as the primary key, while both parent and sub-row inserts used `RETURNING id`. Root fix returns `uuid AS id` twice and ratchets the phantom identifier. Transaction rollback left no WO/bill. | FIXED CODE · deploy retry pending | `LV-MAINT-WO-LINES-PHANTOM-ID` · `verify-wo-cost-line-validator` normal + 7-case selftest · root typecheck | NO | 2026-08-16 | CODEX |
 | 917 | maintenance · create-WO wide-wizard responsive actions | E | USMCA | FAIL · FIXED CODE | Fresh 752px Live Chrome retry after #7881 rendered every T149 pre-save check green, but the wide wizard's intrinsic horizontal overflow pushed Create/Save actions beyond the visible dialog edge. The buttons existed in the DOM and accepted focus while producing no operator-visible activation or API request; Neon confirmed no WO row and no active write. Root fix makes shared modal content horizontally bounded and the exact WO footer shrink-safe/wrapping without converting the owner-ratified wide wizard to a drawer. | FIXED CODE · deploy Live retry pending | `LV-MAINT-WO-WIDE-MODAL-ACTIONS-CLIPPED` · `verify-no-horizontal-overflow-at-1024` normal+selftest | NO | 2026-08-16 | CODEX |
 | 918 | legal · matter create unit/trailer picker law | A | USMCA | FAIL · FIXED CODE | Fresh `/legal/matters/new` rendered the real Legal Matter creator. Related Driver passed first-row `+ Create driver` and Escape-dismiss without selection. Unit and Trailer loaded scoped human labels but offered no first-row creator because both call sites explicitly set `allowCreate={false}`, even though the canonical registry declares same-table inline creators for `mdata.units` and `mdata.equipment`. Root fix enables those existing creator paths and ratchets each exact picker independently. No record saved during discovery. | FIXED CODE · deploy Live retry pending | `LV-LEGAL-MATTER-UNIT-TRAILER-PICKERS-NO-INLINE-CREATE` · unit/trailer linkage guards normal+selftest | NO | 2026-08-16 | CODEX |
+| 919 | reports · IFTA preparer operator status copy | E | USMCA | FAIL · FIXED CODE | Fresh `/reports` category hub rendered the IFTA Quarterly Preparer with three visible `pending · awaits backend` badges and one `awaits Q close` badge. These disclose implementation status and an internal abbreviation to operators. Root fix preserves the exact readiness booleans and disabled filing behavior but renders `waiting for data`, `waiting for quarter close`, or `ready`; the global copy guard now rejects punctuation-separated backend-status variants. | FIXED CODE · deploy Live retry pending | `LV-REPORTS-IFTA-INTERNAL-BACKEND-STATUS-COPY` · `verify-no-internal-language-in-prod-ui` normal+selftest | NO | 2026-08-16 | CODEX |

@@ -186,7 +186,7 @@ export function flagNameLeakedToOperator(line, filePath) {
   return FLAG_IDENTIFIER_IN_COPY.test(line);
 }
 
-const PROJECT_STATUS_IN_COPY = /(?:pending backend|migration\s+\d{12})/i;
+const PROJECT_STATUS_IN_COPY = /(?:pending(?:\s|\W)*(?:awaits?\s+)?backend|migration\s+\d{12})/i;
 
 export function projectStatusLeakedToOperator(line, filePath) {
   if (!filePath.endsWith(".tsx")) return false;

@@ -12,9 +12,9 @@ function ReadyBadge({ label }: { label: string }) {
   // §7 palette: the green pill (#d1fae5) is reserved for the Class field only — every other
   // status badge (including this "ready" state) uses the locked neutral navy/slate palette.
   const palette =
-    label === "awaits Q close"
+    label === "waiting for quarter close"
       ? { bg: "#f1f5f9", fg: "#334155" }
-      : label === "pending · awaits backend"
+      : label === "waiting for data"
         ? { bg: "#e2e8f0", fg: "#334155" }
         : { bg: "#e2e8f0", fg: "#1f2a44" };
   return (
@@ -47,22 +47,22 @@ export function IftaPreparerCard({ status }: Props) {
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">1</span>
           <span className="text-slate-700">Pull state-by-state miles and gallons from closed trips</span>
-          <ReadyBadge label={status.step1Ready ? "auto · ready" : "pending · awaits backend"} />
+          <ReadyBadge label={status.step1Ready ? "ready" : "waiting for data"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">2</span>
           <span className="text-slate-700">Validate fuel tax exceptions and unit-level anomalies</span>
-          <ReadyBadge label={status.step2Ready ? "auto · ready" : "pending · awaits backend"} />
+          <ReadyBadge label={status.step2Ready ? "ready" : "waiting for data"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">3</span>
           <span className="text-slate-700">Review jurisdiction totals with safety + accounting</span>
-          <ReadyBadge label={status.step3Ready ? "auto · ready" : "pending · awaits backend"} />
+          <ReadyBadge label={status.step3Ready ? "ready" : "waiting for data"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">4</span>
           <span className="text-slate-700">Finalize and generate IFTA-ready filing package</span>
-          <ReadyBadge label={status.step4WaitsClose ? "awaits Q close" : "auto · ready"} />
+          <ReadyBadge label={status.step4WaitsClose ? "waiting for quarter close" : "ready"} />
         </div>
       </div>
 
