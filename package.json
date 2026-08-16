@@ -1153,7 +1153,7 @@
     "tsx": "^4.23.11",
     "typescript": "^5.0.0",
     "vitest": "^4.1.5",
-    "jsdom": "^29.1.1"
+    "jsdom": "^30.0.1"
   },
   "overrides": {
     "@types/react": "^19.2.17",
