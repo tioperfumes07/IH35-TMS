@@ -9,16 +9,13 @@ import {
   uploadNewVersionFromFile,
   type FileEntityType,
 } from "../../api/docs";
-import { listCustomers } from "../../api/mdata";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { useQuery } from "@tanstack/react-query";
 import { EntityPicker } from "../parity/EntityPicker";
-import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { EntityPickerKind } from "../parity/entityPickerRegistry";
-import { entityLabel } from "../../lib/entity-label";
 
 type StandaloneLinkType = "driver" | "unit" | "vendor" | "customer" | "load";
 
@@ -30,9 +27,8 @@ const STANDALONE_LINK_TYPES: Array<{ value: StandaloneLinkType; label: string }>
   { value: "load", label: "Load" },
 ];
 
-function standaloneLinkToPickerKind(type: StandaloneLinkType): EntityPickerKind | null {
-  if (type === "driver" || type === "unit" || type === "vendor" || type === "load") return type;
-  return null;
+function standaloneLinkToPickerKind(type: StandaloneLinkType): EntityPickerKind {
+  return type;
 }
 
 type UploadModalProps = {
@@ -107,7 +103,6 @@ export function UploadModal({
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [linkEntityType, setLinkEntityType] = useState<StandaloneLinkType | null>(defaultLinkEntityType ?? null);
   const [linkEntityId, setLinkEntityId] = useState<string | null>(null);
-  const [customerSearch, setCustomerSearch] = useState("");
   const [documentDate, setDocumentDate] = useState(todayIso());
   const [expirationDate, setExpirationDate] = useState("");
   const [description, setDescription] = useState("");
@@ -124,26 +119,6 @@ export function UploadModal({
         result.categories.filter((category) => category.is_active)
       ),
   });
-
-  const customersQuery = useQuery({
-    queryKey: ["docs-upload-customers", operatingCompanyId, customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: operatingCompanyId,
-        search: customerSearch || undefined,
-        limit: 200,
-      }),
-    enabled: Boolean(operatingCompanyId) && isStandalone && linkEntityType === "customer",
-  });
-
-  const customerOptions = useMemo(
-    () =>
-      (customersQuery.data?.customers ?? []).map((customer) => ({
-        value: customer.id,
-        label: entityLabel(customer.name ?? customer.customer_code, customer.id, "Customer"),
-      })),
-    [customersQuery.data]
-  );
 
   const resolvedEntityType = entityType ?? (linkEntityId && linkEntityType ? linkEntityType : undefined);
   const resolvedEntityId = entityId ?? linkEntityId ?? undefined;
@@ -302,24 +277,13 @@ export function UploadModal({
                 dataTestId="docs-upload-link-entity-type"
               />
             </div>
-            {linkEntityType === "customer" ? (
-              <ReferenceSelect
-                value={linkEntityId}
-                onChange={(next) => setLinkEntityId(next)}
-                options={customerOptions}
-                createKind="customer"
-                operatingCompanyId={operatingCompanyId}
-                placeholder={customersQuery.isLoading ? "Loading customers…" : "Select customer to link"}
-                loading={customersQuery.isLoading}
-                onSearch={setCustomerSearch}
-              />
-            ) : linkEntityType && standaloneLinkToPickerKind(linkEntityType) ? (
+            {linkEntityType ? (
               <EntityPicker
-                kind={standaloneLinkToPickerKind(linkEntityType)!}
+                kind={standaloneLinkToPickerKind(linkEntityType)}
                 operatingCompanyId={operatingCompanyId}
                 value={linkEntityId}
                 onChange={setLinkEntityId}
-                placeholder={`Search ${linkEntityType}…`}
+                placeholder={`Select ${linkEntityType} to link`}
                 dataTestId={`docs-upload-link-${linkEntityType}-picker`}
               />
             ) : null}

@@ -76,15 +76,22 @@ export function assertGuard({ documentsPage, versionHistoryModal, documentsTab, 
     errors.push(`${DOCUMENTS_TAB}: <VersionHistoryModal> caller must pass operatingCompanyId={operatingCompanyId}`);
   }
 
-  // FE Render build unblock: Customer type uses `name` / `customer_code`, not customer_name/display_id.
+  // DOC-F3390: customer link must use EntityPicker (not capped listCustomers/ReferenceSelect).
+  // Legacy Customer.name label assert applied only while UploadModal mapped listCustomers options.
   if (um) {
     if (/customer\.customer_name/.test(um) || /customer\.display_id/.test(um)) {
       errors.push(
-        `${UPLOAD_MODAL}: customer option label must use Customer.name / customer_code (not customer_name/display_id) — tsc exit 2 on Render otherwise`
+        `${UPLOAD_MODAL}: must not reference phantom customer_name/display_id — tsc exit 2 on Render otherwise`
       );
     }
-    if (!/customer\.name/.test(um)) {
-      errors.push(`${UPLOAD_MODAL}: customer option label must read customer.name`);
+    if (/listCustomers\(/.test(um) && /linkEntityType === ["']customer["']/.test(um)) {
+      errors.push(`${UPLOAD_MODAL}: customer link must not dual-path via listCustomers — use EntityPicker kind="customer"`);
+    }
+    if (/createKind=["']customer["']/.test(um)) {
+      errors.push(`${UPLOAD_MODAL}: customer link must not use ReferenceSelect createKind — use EntityPicker`);
+    }
+    if (!/kind=["']customer["']/.test(um) && !/standaloneLinkToPickerKind\(linkEntityType\)/.test(um)) {
+      errors.push(`${UPLOAD_MODAL}: customer link must resolve through EntityPicker (kind=customer)`);
     }
   }
 
@@ -182,12 +189,22 @@ function selftest() {
       wantMin: 1,
     },
     {
-      name: "UploadModal uses Customer.name → PASS",
+      name: "UploadModal dual-path listCustomers customer → FAIL",
       in: {
         documentsPage: goodDocumentsPage,
         versionHistoryModal: goodVersionHistoryModal,
         documentsTab: goodDocumentsTab,
-        uploadModal: `label: customer.name ?? customer.customer_code ?? customer.id,`,
+        uploadModal: `if (linkEntityType === "customer") { listCustomers({ limit: 200 }); }`,
+      },
+      wantMin: 1,
+    },
+    {
+      name: "UploadModal EntityPicker customer via standaloneLinkToPickerKind → PASS",
+      in: {
+        documentsPage: goodDocumentsPage,
+        versionHistoryModal: goodVersionHistoryModal,
+        documentsTab: goodDocumentsTab,
+        uploadModal: `<EntityPicker kind={standaloneLinkToPickerKind(linkEntityType)} />`,
       },
       want: 0,
     },
