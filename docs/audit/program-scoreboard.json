@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T05:58:32-05:00",
-    "sourceSha": "5b82928f4",
-    "deployedSha": "6f15146",
+    "generatedAt": "2026-08-16T06:20:36-05:00",
+    "sourceSha": "26a7dd125",
+    "deployedSha": "8c0e17f",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 875,
+    "ledgerRows": 876,
     "failOpen": 19,
     "defects": 22
   },
@@ -548,7 +548,7 @@
         "AUDIT",
         "UNV",
         "AUDIT",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -580,7 +580,7 @@
           "AUDIT",
           "FIX",
           "AUDIT",
-          "AUDIT",
+          "FIX",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7779,
+      "title": "FINDING: LV-INSURANCE-TOOLBAR-LEAVES-POINT-ALIAS",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 06:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7779",
+      "sha": "26a7dd125",
+      "committedAtIso": "2026-08-16T06:20:36-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 05:59 AM CT",
+      "url": "",
+      "sha": "8c0e17f3d",
+      "committedAtIso": "2026-08-16T10:59:38Z"
+    },
+    {
       "number": 7778,
       "title": "FINDING: LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "2255474fc",
       "committedAtIso": "2026-08-16T10:34:04Z"
-    },
-    {
-      "number": 7774,
-      "title": "FINDING: CI-POST-BANK-F5330-MAIN-RED",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 05:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7774",
-      "sha": "1b207900e",
-      "committedAtIso": "2026-08-16T05:32:51-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 05:29 AM CT",
-      "url": "",
-      "sha": "5332f860c",
-      "committedAtIso": "2026-08-16T10:29:41Z"
     }
   ]
 }
