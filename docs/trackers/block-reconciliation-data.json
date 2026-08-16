@@ -1,6 +1,6 @@
 {
- "date": "2026-08-15",
- "generated_at_iso": "2026-08-16T01:33:16.939Z",
+ "date": "2026-08-16",
+ "generated_at_iso": "2026-08-16T02:01:14.256Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13342,6 +13342,156 @@
  ],
  "merged_prs": [
   {
+   "number": 7653,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE-3612 — verify-wo-create-no-opened-at-update",
+   "mergedAt": "2026-08-16T02:00:56Z",
+   "branch": "chore/claim-reserve-3612-wo-opened-at"
+  },
+  {
+   "number": 7652,
+   "title": "Cursor- fix(drivers): LV-DRIVER-CREATE-AUTO-SENDS-WHATSAPP-INVITE — ratchet invite-not-on-save",
+   "mergedAt": "2026-08-16T01:59:40Z",
+   "branch": "cursor/lv-driver-invite-not-on-save"
+  },
+  {
+   "number": 7651,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE-3610 — verify-driver-create-invite-not-on-save",
+   "mergedAt": "2026-08-16T01:58:42Z",
+   "branch": "chore/claim-reserve-3610-driver-invite-not-on-save"
+  },
+  {
+   "number": 7650,
+   "title": "Cursor- fix(drivers): LV-DRIVER-DOB-SILENTLY-DROPPED — Create Driver exposes DOB + MX license + passport country",
+   "mergedAt": "2026-08-16T01:57:16Z",
+   "branch": "cursor/lv-driver-dob-mx-create"
+  },
+  {
+   "number": 7649,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE-3608 — verify-driver-create-dob-mx-license-wired",
+   "mergedAt": "2026-08-16T01:54:43Z",
+   "branch": "chore/claim-reserve-3608-driver-create-dob"
+  },
+  {
+   "number": 7648,
+   "title": "ChatGpt-Codex-1- fix(system): close operator-copy finding records",
+   "mergedAt": "2026-08-16T01:53:55Z",
+   "branch": "codex/operator-copy-closeout"
+  },
+  {
+   "number": 7647,
+   "title": "Cursor- fix(audit): REG-LV-DRIVER-DETAIL-PAGE-CRASHES — ☐→☑ (#4758 unwrap live)",
+   "mergedAt": "2026-08-16T01:53:10Z",
+   "branch": "cursor/reg-driver-detail-crash"
+  },
+  {
+   "number": 7646,
+   "title": "Cursor- fix(audit): REG-CAT500-BLOCKACCEPT — register ☐→☑ + stale twin",
+   "mergedAt": "2026-08-16T01:51:38Z",
+   "branch": "cursor/reg-cat500-blockaccept"
+  },
+  {
+   "number": 7645,
+   "title": "Cursor- fix(audit): REG-SPAWN-SEND-UNASSIGNED — stale twin + register ☐→☑",
+   "mergedAt": "2026-08-16T01:50:23Z",
+   "branch": "cursor/reg-spawn-send-unassigned"
+  },
+  {
+   "number": 7644,
+   "title": "ChatGpt-Codex-1- fix(chrome): remove internal model jargon from non-money UI",
+   "mergedAt": "2026-08-16T01:50:02Z",
+   "branch": "codex/operator-copy-ast-nonmoney"
+  },
+  {
+   "number": 7643,
+   "title": "Cursor- fix(outbox): LV-OUTBOX-ERRCOL — success must clear last_error (+ WO register)",
+   "mergedAt": "2026-08-16T01:49:03Z",
+   "branch": "cursor/lv-outbox-errcol-wo-register"
+  },
+  {
+   "number": 7642,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3606 — verify-outbox-success-clears-last-error",
+   "mergedAt": "2026-08-16T01:47:54Z",
+   "branch": "chore/claim-reserve-3606-outbox-errcol"
+  },
+  {
+   "number": 7641,
+   "title": "Cursor- fix(dispatch): LV-STOPS-NOSAVE — Save→POST + postal_code + soft-delete list filter",
+   "mergedAt": "2026-08-16T01:46:40Z",
+   "branch": "cursor/lv-stops-nosave-save-wired"
+  },
+  {
+   "number": 7640,
+   "title": "Cursor- chore(guards): CLAIM-RESERVE 3604 — verify-load-stops-save-wired",
+   "mergedAt": "2026-08-16T01:44:37Z",
+   "branch": "chore/claim-reserve-3604-stops-save"
+  },
+  {
+   "number": 7639,
+   "title": "Cursor- fix(audit): REG-SIGNOFF-EVIDENCE-CELLS — fill empty ☑ evidence columns (#7635/#7637)",
+   "mergedAt": "2026-08-16T01:41:42Z",
+   "branch": "cursor/reg-signoff-evidence-cells"
+  },
+  {
+   "number": 7638,
+   "title": "Claude-1-docs(board): close out ACCT-F5317 + note stale-PR merges",
+   "mergedAt": "2026-08-16T01:41:33Z",
+   "branch": "claude-1/board-update-acct-f5317-and-pr-merges"
+  },
+  {
+   "number": 7637,
+   "title": "Cursor- fix(audit): REG-LV-CI-DEPENDABOT-RED — register ☐→☑ (evidence exemption live)",
+   "mergedAt": "2026-08-16T01:40:04Z",
+   "branch": "cursor/reg-dependabot-evidence"
+  },
+  {
+   "number": 7636,
+   "title": "Claude-1-FINDING: ACCT-F5317 LV-COA-AND-ITEMS-UNAUDITED — audit trigger on CoA/items/terms/classes",
+   "mergedAt": "2026-08-16T01:39:46Z",
+   "branch": "claude-1/catalogs-accounts-items-audit-triggers"
+  },
+  {
+   "number": 7635,
+   "title": "Cursor- fix(audit): REG-EXP-VOID-TXN-ORPHAN — register ☐→☑ for expense Void + LV-TXN-005 + CI-ORPHAN",
+   "mergedAt": "2026-08-16T01:39:14Z",
+   "branch": "cursor/reg-exp-void-txn-orphan"
+  },
+  {
+   "number": 7634,
+   "title": "ChatGpt-Codex-1- docs(customers-vendors): ledger CardLink shared Live proof",
+   "mergedAt": "2026-08-16T01:38:15Z",
+   "branch": "codex/live-cardlink-shared-843"
+  },
+  {
+   "number": 7633,
+   "title": "Cursor- fix(register): LV-KANBAN-DROP — tick #4826/#5546/#5515/#5889 already on main",
+   "mergedAt": "2026-08-16T01:35:51Z",
+   "branch": "cursor/register-load-drv-kanban-ci"
+  },
+  {
+   "number": 7632,
+   "title": "Claude-1-FINDING: CLAIM-MIGRATION-202612610000",
+   "mergedAt": "2026-08-16T01:35:07Z",
+   "branch": "claude-1/claim-migration-202612610000"
+  },
+  {
+   "number": 7631,
+   "title": "Cursor- fix(register): CLS-CUSTOMER-PROFILE — tick #6000/#5464/#5600 already on main",
+   "mergedAt": "2026-08-16T01:34:22Z",
+   "branch": "cursor/register-customer-wo-outbox"
+  },
+  {
+   "number": 7630,
+   "title": "Claude-1-chore(tracker): refresh reconcile artifact (2026-08-15) — supersedes stale #6020",
+   "mergedAt": "2026-08-16T01:34:21Z",
+   "branch": "chore/tracker-artifacts-sync-refresh-20260815"
+  },
+  {
+   "number": 7629,
+   "title": "ChatGpt-Codex-1- docs(system): ledger exact audit filter recheck",
+   "mergedAt": "2026-08-16T01:34:16Z",
+   "branch": "codex/live-system-audit-recheck-842"
+  },
+  {
    "number": 7628,
    "title": "Cursor- fix(register): LV-INV-UUID — tick #5555 invoice linehaul load_number already on main",
    "mergedAt": "2026-08-16T01:32:09Z",
@@ -16790,156 +16940,6 @@
    "title": "Cursor- fix(banking): BANK-F3358 — §7 palette BankAccountDetail text-blue-700",
    "mergedAt": "2026-08-15T03:21:39Z",
    "branch": "cursor/fix-section7-palette-bank-account-detail"
-  },
-  {
-   "number": 7048,
-   "title": "ChatGpt-Codex-1- chore(fuel): claim reverse vendor labels",
-   "mergedAt": "2026-08-15T03:19:55Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7047,
-   "title": "Cursor- fix(lists): LST-F3356 — Item/Service sell-buy no box-in-box",
-   "mergedAt": "2026-08-15T03:20:26Z",
-   "branch": "cursor/lst-items-sell-buy-no-box-in-box"
-  },
-  {
-   "number": 7046,
-   "title": "ChatGpt-Codex-1- fix(scope): scope unit joins by owner or lease",
-   "mergedAt": "2026-08-15T03:15:40Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7045,
-   "title": "ChatGpt-Codex-1- chore(scope): claim four unit join gaps",
-   "mergedAt": "2026-08-15T03:13:00Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7044,
-   "title": "ChatGpt-Codex-1- fix(pickers): retain created-option human labels",
-   "mergedAt": "2026-08-15T03:10:53Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7043,
-   "title": "ChatGpt-Codex-1- chore(pickers): claim created-option human labels",
-   "mergedAt": "2026-08-15T03:06:41Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7042,
-   "title": "ChatGpt-Codex-1- fix(dispatch): preserve inline assignment human labels",
-   "mergedAt": "2026-08-15T03:05:19Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7041,
-   "title": "Cursor- fix(lists): LST-F3354 — Account create single QBO chrome (no dual drawer)",
-   "mergedAt": "2026-08-15T03:15:39Z",
-   "branch": "cursor/lst-account-create-single-chrome"
-  },
-  {
-   "number": 7040,
-   "title": "ChatGpt-Codex-1- chore(guards): claim inline human-label semantic drift",
-   "mergedAt": "2026-08-15T03:01:50Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7039,
-   "title": "Cursor- fix(lists): LST-F3352B — toolbar search/range/filter matrix connectivity",
-   "mergedAt": "2026-08-15T03:04:14Z",
-   "branch": "cursor/lst-f3352b-toolbar-connectivity-matrices"
-  },
-  {
-   "number": 7038,
-   "title": "ChatGpt-Codex-1- fix(maintenance): defect inbox WO reverse",
-   "mergedAt": "2026-08-15T02:57:34Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7037,
-   "title": "ChatGpt-Codex-1- claim(maintenance): defect inbox WO reverse",
-   "mergedAt": "2026-08-15T02:54:47Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7036,
-   "title": "ChatGpt-Codex-1- fix(drivers): disputes company context",
-   "mergedAt": "2026-08-15T02:53:17Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7035,
-   "title": "ChatGpt-Codex-1- claim(drivers): disputes company context",
-   "mergedAt": "2026-08-15T02:51:17Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7034,
-   "title": "ChatGpt-Codex-1- fix(dispatch): border overview human labels",
-   "mergedAt": "2026-08-15T02:49:53Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7033,
-   "title": "ChatGpt-Codex-1- claim(dispatch): border overview human labels",
-   "mergedAt": "2026-08-15T02:45:31Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7032,
-   "title": "ChatGpt-Codex-1- fix(drivers): updater human label",
-   "mergedAt": "2026-08-15T02:43:22Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7031,
-   "title": "ChatGpt-Codex-1- claim(drivers): updater human label",
-   "mergedAt": "2026-08-15T02:39:57Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7030,
-   "title": "Cursor- fix(lists): LST-F3352 — ← back to /lists + Catalog Index dual-path + QBO range presets",
-   "mergedAt": "2026-08-15T02:52:23Z",
-   "branch": "cursor/lst-f3352-lists-back-main-hub"
-  },
-  {
-   "number": 7029,
-   "title": "ChatGpt-Codex-1- fix(customers): quality load human label",
-   "mergedAt": "2026-08-15T02:38:21Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7028,
-   "title": "Cursor- chore(guards): CLAIM-RESERVE 3352 — lists back-to-main-hub",
-   "mergedAt": "2026-08-15T02:36:58Z",
-   "branch": "chore/claim-reserve-3352-lists-back-nav"
-  },
-  {
-   "number": 7027,
-   "title": "ChatGpt-Codex-1- claim(customers): quality load human label",
-   "mergedAt": "2026-08-15T02:35:24Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7026,
-   "title": "ChatGpt-Codex-1- fix(system): feature override human labels",
-   "mergedAt": "2026-08-15T02:33:57Z",
-   "branch": "codex/next"
-  },
-  {
-   "number": 7025,
-   "title": "Claude-1- FINDING: LINK-F5189 expense Required-column honesty, batch 1",
-   "mergedAt": "2026-08-15T02:30:47Z",
-   "branch": "cc-1-link-f5189-expense-batch1-1786761035"
-  },
-  {
-   "number": 7024,
-   "title": "Cursor- fix(lists): LST-F2992 — catalog deactivated_at gate stays in guard window",
-   "mergedAt": "2026-08-15T02:29:11Z",
-   "branch": "cursor/lists-catalog-deactivated-at-gate-window"
   }
  ],
  "merged_pr_total": 3000,
