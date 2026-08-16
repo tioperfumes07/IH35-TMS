@@ -1,5 +1,6 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+<!-- Cursor FE-DEPLOY-CLOSEOUT tip-repair 2026-08-16T16:06Z · docs+insurance Live + #7827 filter dup ☐ closed -->
 ## ★★★ TRIPLE-LOCK LAW (owner-locked 2026-08-11 — PERMANENT)
 
 **Canonical:** `docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md` · Desktop mirror: `FINDINGS-TRIPLE-LOCK-LAW.md`
