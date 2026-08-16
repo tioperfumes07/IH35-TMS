@@ -17,7 +17,7 @@ import { displayPartInventoryCategory } from "./partInventoryCategories";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { Combobox } from "../../components/Combobox";
 
 // ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
 // were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
@@ -223,7 +223,7 @@ export function InventoryPartsStockPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-[11px] text-slate-600">
                   Category
-                  <SelectCombobox
+                  <Combobox
                     value={stagedFilters.draft.categoryFilter || null}
                     onChange={(next) => stagedFilters.setDraft((current) => ({ ...current, categoryFilter: next ?? "" }))}
                     options={categoryOptions}
@@ -233,7 +233,7 @@ export function InventoryPartsStockPage() {
                 </label>
                 <label className="text-[11px] text-slate-600">
                   Stock state
-                  <SelectCombobox
+                  <Combobox
                     value={stagedFilters.draft.stockFilter || null}
                     onChange={(next) => stagedFilters.setDraft((current) => ({ ...current, stockFilter: (next ?? "") as typeof current.stockFilter }))}
                     options={[
