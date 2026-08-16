@@ -2,6 +2,30 @@ import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.j
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { computeNextScheduledAt, type CadenceInput, type SubscriptionCadence } from "./cadence.js";
 
+// LV-REPORTS-SCHEDULED-SUBSCRIPTIONS-STALE-CPA-AND-DUPLICATE-RECIPIENTS (2026-08-15): the owner-locked
+// accounting law is there is NO CPA — the owner is the sole financial-decision authority
+// (docs/lockdown/00_LOCKED_DECISIONS.md). A seeded subscription can never carry this address again, and
+// recipient arrays must never carry a duplicate (case/whitespace-insensitive) entry. Applied at the
+// create/update write boundary so no future subscription — seeded, owner-typed, or API-driven — can
+// reintroduce either defect; the one-time repair for rows persisted before this guard existed lives in
+// migration 202608160000.
+const FORBIDDEN_RECIPIENT_EMAILS = new Set(["cpa@ih35dispatch.com"]);
+
+export function normalizeRecipientEmails(emails: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of emails) {
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (FORBIDDEN_RECIPIENT_EMAILS.has(key)) continue;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+  }
+  return out;
+}
+
 export type ScheduledSubscription = {
   uuid: string;
   operating_company_id: string;
@@ -91,6 +115,7 @@ export async function listSubscriptions(operatingCompanyId: string, userId: stri
 
 export async function createSubscription(data: CreateSubscriptionInput, userId: string): Promise<string> {
   const timezone = data.timezone?.trim() || "America/Chicago";
+  const recipientEmails = normalizeRecipientEmails(data.recipientEmails);
   const nextAt = computeNextScheduledAt({
     cadence: data.cadence,
     dayOfWeek: data.dayOfWeek,
@@ -119,7 +144,7 @@ export async function createSubscription(data: CreateSubscriptionInput, userId: 
         data.dayOfMonth ?? null,
         data.timeOfDay,
         timezone,
-        data.recipientEmails,
+        recipientEmails,
         data.recipientUserUuids?.length ? data.recipientUserUuids : null,
         data.deliveryFormat ?? "pdf",
         nextAt.toISOString(),
@@ -150,7 +175,7 @@ export async function updateSubscription(
     if ("dayOfMonth" in data) merged.day_of_month = data.dayOfMonth ?? null;
     if (data.timeOfDay) merged.time_of_day = data.timeOfDay;
     if (data.timezone) merged.timezone = data.timezone;
-    if (data.recipientEmails) merged.recipient_emails = data.recipientEmails;
+    if (data.recipientEmails) merged.recipient_emails = normalizeRecipientEmails(data.recipientEmails);
     if ("recipientUserUuids" in data) merged.recipient_user_uuids = data.recipientUserUuids ?? null;
     if (data.deliveryFormat) merged.delivery_format = data.deliveryFormat;
 
@@ -175,7 +200,7 @@ export async function updateSubscription(
       const value = (data as Record<string, unknown>)[key];
       if (key === "recipientEmails") {
         setClauses.push(`${column} = $${idx}::text[]`);
-        values.push(value);
+        values.push(normalizeRecipientEmails(value as string[]));
       } else if (key === "recipientUserUuids") {
         setClauses.push(`${column} = $${idx}::uuid[]`);
         values.push(Array.isArray(value) && value.length ? value : null);
