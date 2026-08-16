@@ -71,3 +71,7 @@ Live `/program/modules` rendered Search, Range, gear, and 14 real rows, but no F
 ## CODEX HANDOFF · 2026-08-16 · LV-SYSTEM-PROGRAM-FILTER-CONTROL-ABSENT
 
 Live `/system?tab=program` rendered Search, Range, gear, and eight phase rows, but no Filters panel or Apply action despite an exact `chrome.toolbar_filter` claim. Add the governed filter interaction or prove N/A and remove the claim; mutation-prove missing Apply. Do not alter QBO behavior. Exact OPEN row, audit 893, and `BLOCKS=LIVE-SYSTEM-PROGRAM-FILTER` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-CASH-FLOW-ACTUAL-FILTER-PANEL-ABSENT
+
+Live `/cash-flow?tab=actual_vs_projected` rendered Search, Range, gear, three rows, and a From/To date Apply, but no claimed list-toolbar Filters panel. Do not count the unrelated date Apply as filter-panel proof. Add the governed Filters interaction or prove N/A and remove the claim; mutation-prove the distinction. Do not alter money calculations. Exact OPEN row, audit 894, and `BLOCKS=LIVE-CASH-FLOW-FILTER-PANEL` are filed. OWNER-GATED=no; no mutation.
