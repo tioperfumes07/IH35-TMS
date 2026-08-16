@@ -474,7 +474,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       quantity: Number(line.quantity || 0),
       unit_cost: Number(line.unit_cost || 0),
       amount: Number(line.amount || 0),
-      service_item_uuid: line.service_item_uuid || "",
+      service_item_uuid: line.service_item_uuid || null,
       sub_rows: (line.sub_rows ?? []).map((row) => ({
         line_type: row.line_type,
         description: String(row.description ?? "").trim(),
