@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T08:59:29-05:00",
-    "sourceSha": "73a12a6fe",
-    "deployedSha": "a5a4358",
+    "generatedAt": "2026-08-16T09:07:59-05:00",
+    "sourceSha": "5438d8c92",
+    "deployedSha": "6a15b3d",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 900,
+    "ledgerRows": 901,
     "failOpen": 34,
     "defects": 25
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7802,
+      "title": "FINDING: LV-INSURANCE-COVERAGE-GAP-TYPE-RAW-CODE",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 09:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7802",
+      "sha": "5438d8c92",
+      "committedAtIso": "2026-08-16T09:07:59-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 09:00 AM CT",
+      "url": "",
+      "sha": "6a15b3d2d",
+      "committedAtIso": "2026-08-16T14:00:40Z"
+    },
+    {
       "number": 7801,
       "title": "FINDING: LV-INSURANCE-POLICY-TYPE-RAW-CODE",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "abbbb906e",
       "committedAtIso": "2026-08-16T13:38:59Z"
-    },
-    {
-      "number": 7797,
-      "title": "FINDING: INV-S03-PURCHASE-GUARD-STILL-ASSERTED-SUPERSEDED-HOLD",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7797",
-      "sha": "aa5a14ee0",
-      "committedAtIso": "2026-08-16T08:37:52-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 08:29 AM CT",
-      "url": "",
-      "sha": "151afc5b4",
-      "committedAtIso": "2026-08-16T13:29:06Z"
     }
   ]
 }
