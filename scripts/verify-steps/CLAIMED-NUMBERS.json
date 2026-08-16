@@ -3427,7 +3427,7 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1164,
+  "total_claimed": 1165,
   "3602": {
     "name": "verify-owner-all-entities-non-qbo-flags-on",
     "claimer": "cursor",
@@ -3435,6 +3435,11 @@
   },
   "3604": {
     "name": "verify-load-stops-save-wired",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
+  },
+  "3606": {
+    "name": "verify-outbox-success-clears-last-error",
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
   },
