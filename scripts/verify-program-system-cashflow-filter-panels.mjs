@@ -3,6 +3,7 @@
  * LV-PROGRAM-MODULES-FILTER-CONTROL-ABSENT
  * LV-SYSTEM-PROGRAM-FILTER-CONTROL-ABSENT
  * LV-CASH-FLOW-ACTUAL-FILTER-PANEL-ABSENT
+ * LV-INSURANCE-LAWSUITS-FILTER-PANEL-ABSENT
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -29,6 +30,11 @@ const SURFACES = [
     file: "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
     route: "/cash-flow?tab=actual_vs_projected",
   },
+  {
+    id: "insurance-lawsuits",
+    file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
+    route: "/safety/insurance/lawsuits",
+  },
 ];
 
 function read(rel) {
@@ -54,7 +60,7 @@ export function collectFailures(sources) {
     if (!src.includes("useStagedListFilters")) {
       failures.push(`${surface.id}: must stage drafts via useStagedListFilters`);
     }
-    if (!/<ParityTable[\s\S]*rows=\{/.test(src) && !/<ParityTable[\s\S]*rows=\{/.test(src)) {
+    if (!/<ParityTable[\s\S]*rows=\{/.test(src)) {
       failures.push(`${surface.id}: must retain ParityTable consumer`);
     }
   }
@@ -63,17 +69,35 @@ export function collectFailures(sources) {
   if (!/testIdPrefix="cash-flow-avp"/.test(cash) && !/data-cash-flow-avp-filter-toolbar/.test(cash)) {
     failures.push("cash-flow: Filters panel must be distinct from the date-range Apply control");
   }
+  // Insurance: Filters must bind to Lawsuits exact owner (not alias /insurance + UniversalListToolbar)
+  const insuranceReq = sources["docs/specs/scoreboard/modules/insurance.required.json"] ?? "";
+  if (insuranceReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"route_hint": "\/safety\/insurance\/lawsuits"/.test(insuranceReq)) {
+      failures.push("insurance.required.json: chrome.toolbar_filter route_hint must be /safety/insurance/lawsuits");
+    }
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/insurance\/LawsuitsTab\.tsx"/.test(insuranceReq)) {
+      failures.push("insurance.required.json: chrome.toolbar_filter surface_path must be LawsuitsTab.tsx");
+    }
+  }
+  const lawsuits = sources[SURFACES[3].file] ?? "";
+  if (!/testIdPrefix="insurance-lawsuits"/.test(lawsuits) && !/data-insurance-lawsuits-filter-toolbar/.test(lawsuits)) {
+    failures.push("insurance-lawsuits: Filters panel must use insurance-lawsuits testId/data attribute");
+  }
   return failures;
 }
 
 function load() {
-  return Object.fromEntries(SURFACES.map((s) => [s.file, read(s.file)]));
+  const map = Object.fromEntries(SURFACES.map((s) => [s.file, read(s.file)]));
+  map["docs/specs/scoreboard/modules/insurance.required.json"] = read(
+    "docs/specs/scoreboard/modules/insurance.required.json",
+  );
+  return map;
 }
 
 const sources = load();
 const failures = collectFailures(sources);
 if (failures.length) {
-  console.error(`program/system/cash-flow filter-panel guard failed:\n${failures.map((f) => `- ${f}`).join("\n")}`);
+  console.error(`filter-panel guard failed:\n${failures.map((f) => `- ${f}`).join("\n")}`);
   process.exit(1);
 }
 
@@ -88,6 +112,16 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         .replace(/testIdPrefix="cash-flow-avp"/g, 'testIdPrefix="broken"')
         .replace(/data-cash-flow-avp-filter-toolbar/g, "data-broken"),
     }),
+    () => ({
+      ...sources,
+      [SURFACES[3].file]: sources[SURFACES[3].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/insurance.required.json": sources[
+        "docs/specs/scoreboard/modules/insurance.required.json"
+      ].replaceAll('"/safety/insurance/lawsuits"', '"/insurance"'),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -97,4 +131,4 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   console.log(`PASS: ${mutations.length} planted missing-Filters-panel defects were rejected`);
 }
 
-console.log("PASS: program/system/cash-flow exact filter panels mount CollapsedListFilters + staged Apply");
+console.log("PASS: program/system/cash-flow/insurance exact filter panels mount CollapsedListFilters + staged Apply");
