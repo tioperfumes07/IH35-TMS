@@ -219,8 +219,11 @@ export async function runCsaBasicPullTick(onlyCompanyId?: string) {
 export function initializeCsaBasicPullCron(app: FastifyInstance) {
   if (cronInitialized) return;
   cronInitialized = true;
-  if (process.env.ENABLE_CSA_BASIC_PULL_CRON === "false") {
-    app.log.info("CSA BASIC pull cron disabled via ENABLE_CSA_BASIC_PULL_CRON=false");
+  // Public SAFER exposes inspection/OOS summaries, not carrier-only SMS BASIC measures. Until an
+  // authenticated SMS source is configured, repeatedly running this worker can only fail with
+  // public_csa_basic_source_unavailable. Require explicit opt-in and keep health on the same gate.
+  if (process.env.ENABLE_CSA_BASIC_PULL_CRON !== "true") {
+    app.log.info("CSA BASIC pull cron disabled (requires ENABLE_CSA_BASIC_PULL_CRON=true)");
     return;
   }
   cron.schedule(

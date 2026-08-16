@@ -44,7 +44,7 @@ describe("fmcsa-safer-verifier", () => {
     expect(derived.safer_verified_at).not.toBeNull();
   });
 
-  it("marks revoked authority as failed verification", () => {
+  it("persists the schema-canonical revoked authority status", () => {
     const carrier: CarrierResult = {
       legal_name: "Inactive Carrier",
       dba_name: null,
@@ -58,7 +58,7 @@ describe("fmcsa-safer-verifier", () => {
       raw: {},
     };
     const derived = deriveSaferFieldsFromCarrier(carrier);
-    expect(derived.safer_status).toBe("failed");
+    expect(derived.safer_status).toBe("revoked");
     expect(derived.safer_oos_status).toBe("out_of_service");
   });
 
