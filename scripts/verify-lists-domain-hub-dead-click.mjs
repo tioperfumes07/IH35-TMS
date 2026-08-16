@@ -43,6 +43,12 @@ const PATHS = {
     ROOT,
     "apps/frontend/src/pages/lists/accounting/PaymentTermsListPage.tsx"
   ),
+  classesPage: path.join(ROOT, "apps/frontend/src/pages/lists/accounting/ClassesListPage.tsx"),
+  expenseCategoriesPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/ExpenseCategoriesListPage.tsx"
+  ),
+  taxCodesPage: path.join(ROOT, "apps/frontend/src/pages/lists/accounting/TaxCodesListPage.tsx"),
 };
 
 /** LST-F5214 — shared bases + safety/dispatch leaves that must honor ?create=1 via the hook. */
@@ -97,6 +103,9 @@ export function collectProblems(sources = {}) {
   const voidCancelPage = sources.voidCancelPage ?? read(PATHS.voidCancelPage);
   const paymentMethodsPage = sources.paymentMethodsPage ?? read(PATHS.paymentMethodsPage);
   const paymentTermsPage = sources.paymentTermsPage ?? read(PATHS.paymentTermsPage);
+  const classesPage = sources.classesPage ?? read(PATHS.classesPage);
+  const expenseCategoriesPage = sources.expenseCategoriesPage ?? read(PATHS.expenseCategoriesPage);
+  const taxCodesPage = sources.taxCodesPage ?? read(PATHS.taxCodesPage);
   const errors = [];
 
   if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
@@ -106,6 +115,9 @@ export function collectProblems(sources = {}) {
   if (!voidCancelPage) errors.push(fail("missing VoidCancelReasonsListPage.tsx"));
   if (!paymentMethodsPage) errors.push(fail("missing PaymentMethodsListPage.tsx"));
   if (!paymentTermsPage) errors.push(fail("missing PaymentTermsListPage.tsx"));
+  if (!classesPage) errors.push(fail("missing ClassesListPage.tsx"));
+  if (!expenseCategoriesPage) errors.push(fail("missing ExpenseCategoriesListPage.tsx"));
+  if (!taxCodesPage) errors.push(fail("missing TaxCodesListPage.tsx"));
   if (errors.length) return errors;
 
   if (!/function ListsDomainRoute\(\)/.test(manifest)) {
@@ -180,6 +192,15 @@ export function collectProblems(sources = {}) {
   if (!/payment-terms/.test(catalogsMap) || !/Payment Terms/.test(catalogsMap)) {
     errors.push(fail("AllCatalogsMap must list live Payment Terms catalog"));
   }
+  for (const [src, name] of [
+    [classesPage, "ClassesListPage"],
+    [expenseCategoriesPage, "ExpenseCategoriesListPage"],
+    [taxCodesPage, "TaxCodesListPage"],
+  ]) {
+    if (!/AccountingCatalogListPage/.test(src)) {
+      errors.push(fail(`${name} must wrap AccountingCatalogListPage (inherits ?create=1)`));
+    }
+  }
 
   // LST-F5214 — ratcheting shared catalog create deep-link (reads live disk; skip when selftest fixtures only).
   if (!sources.skipSharedCreateRatchet) {
@@ -253,6 +274,9 @@ if (catalogKey === "_create") {
 
   const goodPaymentMethods = `export function PaymentMethodsListPage() { return <AccountingCatalogListPage client={paymentMethodsCatalogClient} />; }`;
   const goodPaymentTerms = `export function PaymentTermsListPage() { return <AccountingCatalogListPage client={paymentTermsCatalogClient} />; }`;
+  const goodClasses = `export function ClassesListPage() { return <AccountingCatalogListPage client={classesCatalogClient} />; }`;
+  const goodExpenseCategories = `export function ExpenseCategoriesListPage() { return <AccountingCatalogListPage client={expenseCategoriesCatalogClient} />; }`;
+  const goodTaxCodes = `export function TaxCodesListPage() { return <AccountingCatalogListPage client={taxCodesCatalogClient} />; }`;
   const goodMapWithPaymentLeaves = `${goodMap}
 { name: "Payment Terms", live: true, catalogKey: "payment-terms" },
 { name: "Payment Methods", live: true, catalogKey: "payment-methods" },
@@ -288,6 +312,9 @@ function ListsDomainRoute() {
     voidCancelPage: goodVoidCancel,
     paymentMethodsPage: goodPaymentMethods,
     paymentTermsPage: goodPaymentTerms,
+    classesPage: goodClasses,
+    expenseCategoriesPage: goodExpenseCategories,
+    taxCodesPage: goodTaxCodes,
     skipSharedCreateRatchet: true,
   });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
@@ -304,6 +331,9 @@ function ListsDomainRoute() {
     voidCancelPage: goodVoidCancel,
     paymentMethodsPage: barePaymentMethods,
     paymentTermsPage: goodPaymentTerms,
+    classesPage: goodClasses,
+    expenseCategoriesPage: goodExpenseCategories,
+    taxCodesPage: goodTaxCodes,
     skipSharedCreateRatchet: true,
   });
   if (!barePmErrors.some((e) => e.includes("PaymentMethodsListPage must wrap AccountingCatalogListPage"))) {

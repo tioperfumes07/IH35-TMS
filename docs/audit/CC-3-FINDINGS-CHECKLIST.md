@@ -117,7 +117,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-AP-OPEN-INCLUDES-VOIDED` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `ACCT-F174` | P0 | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AP-VOID-MARKER-SPLIT` | P0 | CC-1 / money | — | — | — | — | — | — |
-| ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | — | — | — | — | — | — |
+| ☑ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | Cursor | #4972 | 2026-08-08 | Category Combobox loading+disabled during CoA fetch (blocks +Add-only corruption) | `scripts/verify-bill-expense-category-full-coa.mjs` | — |
 | ☐ | `LV-BILLS-VENDOR-UUID` | — | CC-2 / mechanical+FE | — | — | — | — | — | — |
 | ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | CC-1 | #4730 | 2026-08-07 | — | — | **DELIBERATELY LEFT ☐.** Root cause fixed and mutation-proven in #4730 (`node scripts/verify-money-side-effect-after-commit.mjs` RED on the replanted real defect, GREEN restored), but a tick here would claim a POST-FIX LEDGER ROW exists and none does yet — that needs a delivery transition against the deployed build. Tick only after re-checking `LUSMCAFREIGHT-20260806-0001` on prod. See `LV-REVREC-LEDGER-DBTEST`. |
 | ☐ | `LV-BILLVOID-DATE-ERROR` | — | CC-1 / money — URGENT, blocks the void path | — | — | — | — | — | — |
@@ -158,7 +158,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-WO-RECONCILE-EXCLUDES-SECTION-A` | P0 | CC-1 (money / GL / A-P) | — | — | — | — | — | — |
 | ☐ | `CI-CC3-HAS-NO-VERIFY-STEP-BAND` | — | owner / lane-allocation decision (NOT self-a | — | — | — | — | — | — |
 | ☐ | `CI-CODEQL-BASELINE-STALE-ON-MAIN` | — | — | — | — | — | — | — | — |
-| ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY` | P1 | FE / mechanical lane | — | — | — | — | — | — |
+| ☑ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY` | P1 | FE / mechanical lane | Cursor | #5535 | 2026-08-10 | normalize account_type in expense picker scope; board FIXED #5536 | related expense picker guards | — |
 | ☐ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | — | — | — | — | — | — |
 | ☐ | `LV-AUDIT-TRAIL-HAS-NO-ACTOR` | P0 | CC-1 (WORM / audit integrity) | CC-1 | #4753 | 2026-08-07 | Rehearsed on Neon fork `br-soft-pine-akr8xlf4` of prod: PRE-FIX drivers UPDATE actor/role NULL; POST-FIX drivers AND accounting.invoices both name `d62f82f6…` / `Administrator`. One SECURITY DEFINER function behind 39 triggers, so all 39 audited tables are attributed at once. | `apps/backend/src/accounting/__tests__/worm-audit-actor-attribution.db.test.ts` (db-test; runs in the backend db.tests step) | — |
 | ☐ | `LV-REVREC-LEDGER-DBTEST` | P0 | CC-1 / money (db-test) | — | — | — | — | — | — |
