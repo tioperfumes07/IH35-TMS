@@ -71,7 +71,7 @@ function docsColumns(): Array<ParityColumn<DocsFoundationRow>> {
     label: "Entity",
     sortable: true,
     sortValue: (row) => {
-      return (row.links ?? []).map((link) => `${link.entity_type}:${link.entity_id}`).join("|");
+      return (row.links ?? []).map((link) => link.entity_label ?? link.entity_type).join("|");
     },
     render: (row) => {
       const links = row.links ?? [];

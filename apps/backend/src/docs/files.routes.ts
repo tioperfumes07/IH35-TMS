@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { MAX_DOC_UPLOAD_BYTES, isAllowedDocMimeType } from "./upload-constraints.js";
+import { hydrateEntityLabels } from "./entity-labels.js";
 import {
   generatePresignedDownloadUrl,
   generatePresignedUploadUrl,
@@ -67,6 +68,7 @@ const uploadUrlBodySchema = z.object({
 });
 
 const listQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   entity_type: z.preprocess(
@@ -199,58 +201,6 @@ async function ensureLinkEntityExists(
     return res.rows.length > 0;
   }
   return false;
-}
-
-type LabelClient = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> };
-
-const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string }> = {
-  driver: { table: "mdata.drivers", labelSelect: "COALESCE(NULLIF(d.first_name || ' ' || d.last_name, ' '), d.id::text)" },
-  customer: { table: "mdata.customers", labelSelect: "d.customer_name" },
-  vendor: { table: "mdata.vendors", labelSelect: "d.vendor_name" },
-  unit: { table: "mdata.units", labelSelect: "d.unit_number::text" },
-  equipment: { table: "mdata.equipment", labelSelect: "d.equipment_number" },
-  load: { table: "mdata.loads", labelSelect: "d.load_number" },
-  settlement: { table: "driver_finance.driver_settlements", labelSelect: "d.display_id" },
-  invoice: { table: "accounting.invoices", labelSelect: "d.display_id" },
-};
-
-async function hydrateEntityLabels(
-  client: LabelClient,
-  files: Array<{ links?: Array<{ entity_type: string; entity_id: string; entity_label?: string | null }> }>
-) {
-  const byType = new Map<string, Set<string>>();
-  for (const file of files) {
-    for (const link of file.links ?? []) {
-      if (!link.entity_type || !link.entity_id) continue;
-      let set = byType.get(link.entity_type);
-      if (!set) {
-        set = new Set();
-        byType.set(link.entity_type, set);
-      }
-      set.add(link.entity_id);
-    }
-  }
-
-  const labelMap = new Map<string, string>();
-  for (const [entityType, ids] of byType.entries()) {
-    const config = ENTITY_LABEL_SQL[entityType];
-    if (!config) continue;
-    const res = await client.query(
-      `SELECT d.id AS entity_id, ${config.labelSelect} AS label FROM ${config.table} d WHERE d.id = ANY($1::uuid[])`,
-      [Array.from(ids)]
-    );
-    for (const row of res.rows) {
-      const label = row.label ?? row.entity_id;
-      if (row.entity_id) labelMap.set(`${entityType}:${row.entity_id}`, String(label));
-    }
-  }
-
-  for (const file of files) {
-    for (const link of file.links ?? []) {
-      if (!link.entity_type || !link.entity_id) continue;
-      link.entity_label = labelMap.get(`${link.entity_type}:${link.entity_id}`) ?? null;
-    }
-  }
 }
 
 export async function registerDocsFilesRoutes(app: FastifyInstance) {
@@ -466,10 +416,15 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const query = parsedQuery.data;
 
+    const operatingCompanyId = await withCurrentUser(user.uuid, async (client) =>
+      resolveOperatingCompanyId(client, user.uuid, query.operating_company_id)
+    );
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
     const response = await withCurrentUser(user.uuid, async (client) => {
       const filters: string[] = [];
-      const values: unknown[] = [];
-      filters.push("f.operating_company_id IN (SELECT org.user_accessible_company_ids())");
+      const values: unknown[] = [operatingCompanyId];
+      filters.push("f.operating_company_id = $1::uuid");
       if (query.entity_type) {
         values.push(query.entity_type);
         filters.push(
@@ -531,7 +486,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
         `,
         values
       );
-      await hydrateEntityLabels(client, res.rows);
+      await hydrateEntityLabels(client, operatingCompanyId, res.rows);
 
       return {
         files: res.rows,

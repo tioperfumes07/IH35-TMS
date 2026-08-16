@@ -168,9 +168,9 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
   // documents for this load
   const docsQ = useQuery({
-    queryKey: ["factoring-tab", "docs", loadId],
-    queryFn: () => listFiles({ entity_type: "load", entity_id: loadId, limit: 200, offset: 0 }),
-    enabled: Boolean(loadId),
+    queryKey: ["factoring-tab", "docs", operatingCompanyId, loadId],
+    queryFn: () => listFiles({ operating_company_id: operatingCompanyId, entity_type: "load", entity_id: loadId, limit: 200, offset: 0 }),
+    enabled: Boolean(operatingCompanyId && loadId),
   });
   const docs = docsQ.data?.files ?? [];
 
@@ -186,9 +186,9 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
   // invoice docs (for PDF link)
   const invoiceDocsQ = useQuery({
-    queryKey: ["factoring-tab", "invoice-docs", linkedInvoice?.id],
-    queryFn: () => listFiles({ entity_type: "invoice", entity_id: linkedInvoice!.id, limit: 50, offset: 0 }),
-    enabled: Boolean(linkedInvoice?.id),
+    queryKey: ["factoring-tab", "invoice-docs", operatingCompanyId, linkedInvoice?.id],
+    queryFn: () => listFiles({ operating_company_id: operatingCompanyId, entity_type: "invoice", entity_id: linkedInvoice!.id, limit: 50, offset: 0 }),
+    enabled: Boolean(operatingCompanyId && linkedInvoice?.id),
   });
 
   // active factors for submission

@@ -7,28 +7,58 @@ function read(rel) {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-const backend = read("apps/backend/src/docs/files.routes.ts");
+const filesRoute = read("apps/backend/src/docs/files.routes.ts");
+const foundationRoute = read("apps/backend/src/docs/docs.routes.ts");
+const labelHelper = read("apps/backend/src/docs/entity-labels.ts");
 const frontendPage = read("apps/frontend/src/pages/docs/DocsHomePage.tsx");
+const legacyDocumentsPage = read("apps/frontend/src/pages/Documents.tsx");
 const frontendApi = read("apps/frontend/src/api/docs.ts");
 
-let fail = false;
+const source = { filesRoute, foundationRoute, labelHelper, frontendPage, legacyDocumentsPage, frontendApi };
 
-if (!backend.includes("async function hydrateEntityLabels")) {
-  console.error("FAIL: backend files.routes.ts does not define hydrateEntityLabels");
-  fail = true;
-}
-if (!backend.includes("await hydrateEntityLabels(client, res.rows)")) {
-  console.error("FAIL: backend list endpoint does not call hydrateEntityLabels");
-  fail = true;
-}
-if (!frontendApi.includes("entity_label")) {
-  console.error("FAIL: frontend api/docs.ts type does not expose entity_label");
-  fail = true;
-}
-if (!(frontendPage.includes("link.entity_label") && frontendPage.includes("label={label}"))) {
-  console.error("FAIL: DocsHomePage does not pass entity_label to EntityLink");
-  fail = true;
+function verify(candidate) {
+  const failures = [];
+  const need = (file, token, message) => {
+    if (!candidate[file].includes(token)) failures.push(message);
+  };
+  need("labelHelper", "export async function hydrateEntityLabels", "shared label hydrator must exist");
+  need("labelHelper", "d.operating_company_id = $1::uuid", "canonical label reads must be explicitly company-scoped");
+  need("labelHelper", "d.id = ANY($2::uuid[])", "canonical label reads must retain batched UUID lookup");
+  need("filesRoute", "await hydrateEntityLabels(client, operatingCompanyId, res.rows)", "files list must hydrate scoped labels");
+  need("filesRoute", 'filters.push("f.operating_company_id = $1::uuid")', "files list itself must use one explicit company predicate");
+  need("foundationRoute", "await hydrateEntityLabels(client, operatingCompanyId, rowsRes.rows)", "DocsHome list must hydrate scoped labels");
+  need("frontendApi", "entity_label", "frontend docs type must expose entity_label");
+  need("frontendApi", "filters: { operating_company_id: string }", "listFiles callers must supply an explicit company id");
+  need("frontendPage", "link.entity_label", "DocsHome must consume entity_label");
+  need("frontendPage", "label={label}", "DocsHome must pass human label to EntityLink");
+  need("frontendPage", "link.entity_label ?? link.entity_type", "DocsHome sorting must not prefer raw UUIDs");
+  need("legacyDocumentsPage", "return firstLink.entity_label ?", "legacy Documents route must render hydrated labels");
+  if (candidate.legacyDocumentsPage.includes('formatEntityLabel(null, firstLink.entity_id')) {
+    failures.push("legacy Documents route must not render a raw UUID fallback");
+  }
+  return failures;
 }
 
-if (fail) process.exit(1);
-console.log("PASS: docs entity label wiring present");
+const failures = verify(source);
+if (failures.length) {
+  console.error(`FAIL: docs entity label wiring:\n${failures.map((failure) => `- ${failure}`).join("\n")}`);
+  process.exit(1);
+}
+
+if (process.argv.includes("--self-test")) {
+  const mutations = [
+    { file: "labelHelper", token: "d.operating_company_id = $1::uuid" },
+    { file: "filesRoute", token: "await hydrateEntityLabels(client, operatingCompanyId, res.rows)" },
+    { file: "filesRoute", token: 'filters.push("f.operating_company_id = $1::uuid")' },
+    { file: "foundationRoute", token: "await hydrateEntityLabels(client, operatingCompanyId, rowsRes.rows)" },
+    { file: "frontendPage", token: "label={label}" },
+    { file: "legacyDocumentsPage", token: "return firstLink.entity_label ?" },
+  ];
+  mutations.forEach(({ file, token }, index) => {
+    const mutated = { ...source, [file]: source[file].replace(token, "BROKEN_DOCS_ENTITY_LABEL_WIRING") };
+    if (!verify(mutated).length) throw new Error(`self-test mutation ${index + 1} survived`);
+  });
+  console.log(`PASS: ${mutations.length} planted docs entity-label defects were rejected`);
+}
+
+console.log("PASS: both docs list APIs return company-scoped canonical entity labels");
