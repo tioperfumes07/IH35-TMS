@@ -366,6 +366,7 @@ function KanbanDispatchCard({
           label={cardPrimaryLabel(load)}
           className="font-semibold text-gray-900"
           data-testid="kanban-card-primary-entity-link"
+          data-kanban-card-primary="unit"
           onClick={(event) => event.stopPropagation()}
         />
         {hasVisibleFlag(load.flag_code) ? (
@@ -531,6 +532,7 @@ function KanbanStandardCard({
           label={cardPrimaryLabel(load)}
           className="min-w-0 flex-1 truncate font-semibold text-gray-900"
           data-testid="kanban-standard-primary-entity-link"
+          data-kanban-card-primary="unit"
           onClick={(event) => event.stopPropagation()}
         />
         {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
@@ -548,7 +550,15 @@ function KanbanStandardCard({
       {/* line 2 — secondary: load # · driver · lane */}
       <div className="flex items-center gap-1.5 truncate text-[10px] text-gray-500">
         {secondaryLoad ? (
-          <EntityLink kind="load" id={load.id} label={secondaryLoad} className="shrink-0 font-mono" onClick={(event) => event.stopPropagation()} data-testid="kanban-card-secondary-load-link" />
+          <EntityLink
+            kind="load"
+            id={load.id}
+            label={secondaryLoad}
+            className="shrink-0 font-mono"
+            onClick={(event) => event.stopPropagation()}
+            data-testid="kanban-card-secondary-load-link"
+            data-kanban-card-secondary="load-number"
+          />
         ) : null}
         {/* KANBAN-COMPACT-TRUNCATE — owner saw "Leon… Unkno…" at STANDARD density too, so this is not a
             compact-only bug. The driver was capped at an arbitrary max-w-[110px] and so truncated even when

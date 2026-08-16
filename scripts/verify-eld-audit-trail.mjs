@@ -29,10 +29,12 @@ function contains(relativePath, content, checks) {
 }
 
 const viewerService = read("apps/backend/src/safety/eld-audit-trail/viewer.service.ts");
+// Live path reads Samsara HOS edits via API (getHosLogs). The old samsara.hos_log_edits mirror
+// was never provisioned (phantom / Jorge-gated) and is banned by verify-safety-eld-audit-connectivity.
 contains("apps/backend/src/safety/eld-audit-trail/viewer.service.ts", viewerService, [
   { pattern: /getEditHistory/, label: "getEditHistory export" },
   { pattern: /getRecentEditHistory/, label: "getRecentEditHistory export" },
-  { pattern: /samsara\.hos_log_edits/, label: "hos_log_edits mirror query" },
+  { pattern: /getHosLogs|SamsaraClient/, label: "live Samsara HOS edit fetch (not phantom hos_log_edits)" },
   { pattern: /read_only/, label: "read-only marker" },
   { pattern: /buildDotAuditPdfPayload/, label: "DOT PDF payload builder" },
 ]);
