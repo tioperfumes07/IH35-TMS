@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import {
   MODULE_COMPLETION,
   FIRST_14_MODULE_IDS,
@@ -9,6 +10,8 @@ import {
   type ModuleCompletionProof,
 } from "../../generated/module-completion";
 import { SIDEBAR_ITEM_IDS } from "../../components/layout/sidebar-config";
+
+type ProofFilter = "all" | ModuleCompletionProof | "undefined";
 
 // Module Completion — the build scoreboard, in the product.
 //
@@ -151,11 +154,22 @@ function ProgressBar({
 export function ModuleCompletionPage() {
   const [scope, setScope] = useState<"first14" | "all">("first14");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [proofFilter, setProofFilter] = useState<ProofFilter>("all");
+  const staged = useStagedListFilters({
+    applied: { proofFilter },
+    empty: { proofFilter: "all" as ProofFilter },
+    onApply: (next) => setProofFilter(next.proofFilter),
+  });
 
   const rows = useMemo(() => {
     const ids = scope === "first14" ? FIRST_14_MODULE_IDS : [...SIDEBAR_ITEM_IDS];
     return buildRows(ids);
   }, [scope]);
+
+  const filteredRows = useMemo(() => {
+    if (proofFilter === "all") return rows;
+    return rows.filter((row) => row.proof === proofFilter);
+  }, [rows, proofFilter]);
 
   const defined = rows.filter((r) => r.defined);
   const totals = defined.reduce(
@@ -278,11 +292,40 @@ export function ModuleCompletionPage() {
         ) : null}
       </div>
 
+      <CollapsedListFilters
+        activeFilterCount={proofFilter === "all" ? 0 : 1}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="program-modules"
+        dataAttributes={{ "data-program-modules-filter-toolbar": "collapsed" }}
+        className="rounded-sm border border-gray-200 bg-white p-2"
+      >
+        <label className="text-xs font-semibold text-slate-600">
+          Proof status
+          <select
+            className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            value={staged.draft.proofFilter}
+            onChange={(event) =>
+              staged.setDraft({ proofFilter: event.target.value as ProofFilter })
+            }
+            data-testid="program-modules-proof-filter"
+          >
+            <option value="all">All proofs</option>
+            <option value="certified">Certified</option>
+            <option value="code_verified">Code-verified</option>
+            <option value="in_progress">In progress</option>
+            <option value="undefined">Not yet defined</option>
+          </select>
+        </label>
+      </CollapsedListFilters>
+
       <ParityTable<ModuleRow>
         columns={columns}
-        rows={rows}
+        rows={filteredRows}
         rowKey={(row) => row.id}
-        emptyText="No modules found."
+        emptyText="No modules match the applied filters."
         storageKey="program-module-completion"
         exportFilename="module-completion"
       />

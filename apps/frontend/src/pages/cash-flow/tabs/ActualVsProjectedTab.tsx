@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { localDateFromIso } from "../../../lib/businessDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
@@ -154,6 +155,13 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   const [to, setTo] = useState<string>(todayIso());
   const [appliedFrom, setAppliedFrom] = useState<string>(sevenDaysAgoIso());
   const [appliedTo, setAppliedTo] = useState<string>(todayIso());
+  type VarianceFilter = "all" | "over" | "under" | "flat";
+  const [varianceFilter, setVarianceFilter] = useState<VarianceFilter>("all");
+  const staged = useStagedListFilters({
+    applied: { varianceFilter },
+    empty: { varianceFilter: "all" as VarianceFilter },
+    onApply: (next) => setVarianceFilter(next.varianceFilter),
+  });
 
   const avpQ = useQuery<ActualVsProjectedResult>({
     queryKey: ["cash-flow-avp", operatingCompanyId, appliedFrom, appliedTo],
@@ -163,6 +171,15 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   const { data, isLoading, isError } = avpQ;
 
   const groups = data ? groupByDate(data.lines) : [];
+  const filteredGroups = useMemo(() => {
+    if (varianceFilter === "all") return groups;
+    return groups.filter((g) => {
+      const v = g.net.variance_cents;
+      if (varianceFilter === "over") return v > 0;
+      if (varianceFilter === "under") return v < 0;
+      return v === 0;
+    });
+  }, [groups, varianceFilter]);
   const acc = data?.accuracy_summary;
 
   return (
@@ -200,6 +217,35 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           <span className="text-xs text-red-600">From date must be before or equal to To date.</span>
         )}
       </div>
+
+      {/* List-toolbar Filters panel — distinct from the date-range Apply above (chrome.toolbar_filter). */}
+      <CollapsedListFilters
+        activeFilterCount={varianceFilter === "all" ? 0 : 1}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="cash-flow-avp"
+        dataAttributes={{ "data-cash-flow-avp-filter-toolbar": "collapsed" }}
+        className="rounded-sm border border-gray-200 bg-white p-2"
+      >
+        <label className="text-xs font-semibold text-slate-600">
+          Net variance
+          <select
+            className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            value={staged.draft.varianceFilter}
+            onChange={(event) =>
+              staged.setDraft({ varianceFilter: event.target.value as VarianceFilter })
+            }
+            data-testid="cash-flow-avp-variance-filter"
+          >
+            <option value="all">All rows</option>
+            <option value="over">Net over projected</option>
+            <option value="under">Net under projected</option>
+            <option value="flat">Net flat</option>
+          </select>
+        </label>
+      </CollapsedListFilters>
 
       {/* Accuracy Summary */}
       {!isLoading && acc && (
@@ -259,10 +305,10 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       ) : (
         <ParityTable
           columns={COLUMNS}
-          rows={groups}
+          rows={filteredGroups}
           rowKey={(g) => g.date}
           loading={isLoading}
-          emptyText="No data for the selected date range."
+          emptyText="No data matches the applied filters for the selected date range."
           storageKey="cash-flow-avp"
           tableTestId="cash-flow-avp-table"
         />

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -10,6 +10,7 @@ import { getQboSyncHealth, type QboSyncHealthResponse } from "../../api/qbo-inte
 import { getApAging, type ApAgingSummary } from "../../api/arApAging";
 import { getProgramTracker, type ProgramTracker, type TrackerPhase } from "../../api/program-tracker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -413,6 +414,19 @@ function QboSyncTab({ data }: { data: SystemData }) {
 function ProgramTab({ data }: { data: SystemData }) {
   const { tracker } = data;
   const t = tracker.data;
+  type PhaseFilter = "all" | "has_open" | "complete";
+  const [phaseFilter, setPhaseFilter] = useState<PhaseFilter>("all");
+  const staged = useStagedListFilters({
+    applied: { phaseFilter },
+    empty: { phaseFilter: "all" as PhaseFilter },
+    onApply: (next) => setPhaseFilter(next.phaseFilter),
+  });
+  const phaseRows = useMemo(() => {
+    const phases = t?.phases ?? [];
+    if (phaseFilter === "all") return phases;
+    if (phaseFilter === "complete") return phases.filter((p) => p.total > 0 && p.completed >= p.total);
+    return phases.filter((p) => p.total === 0 || p.completed < p.total);
+  }, [t?.phases, phaseFilter]);
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
@@ -435,32 +449,59 @@ function ProgramTab({ data }: { data: SystemData }) {
         {tracker.isError ? (
           <p className="text-[12px] text-slate-500">Tracker unavailable.</p>
         ) : (
-          <ParityTable<TrackerPhase>
-            rows={t?.phases ?? []}
-            rowKey={(p) => p.key}
-            loading={!t && tracker.isLoading}
-            emptyText="No phase rollup yet."
-            storageKey="system-program-phases"
-            exportFilename="system-program-phases"
-            tableTestId="system-program-phases-table"
-            columns={[
-              { key: "label", label: "Phase", render: (p) => <span className="text-slate-700">{p.label}</span> },
-              {
-                key: "total",
-                label: "Total",
-                className: "text-right",
-                cellClass: "text-right tabular-nums text-slate-600",
-                render: (p) => p.total,
-              },
-              {
-                key: "completed",
-                label: "Done",
-                className: "text-right",
-                cellClass: "text-right tabular-nums text-slate-600",
-                render: (p) => p.completed,
-              },
-            ]}
-          />
+          <div className="space-y-2">
+            <CollapsedListFilters
+              activeFilterCount={phaseFilter === "all" ? 0 : 1}
+              onApply={staged.apply}
+              onReset={staged.reset}
+              onCancel={staged.cancel}
+              applyDisabled={!staged.dirty}
+              testIdPrefix="system-program"
+              dataAttributes={{ "data-system-program-filter-toolbar": "collapsed" }}
+            >
+              <label className="text-xs font-semibold text-slate-600">
+                Phase progress
+                <select
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                  value={staged.draft.phaseFilter}
+                  onChange={(event) =>
+                    staged.setDraft({ phaseFilter: event.target.value as PhaseFilter })
+                  }
+                  data-testid="system-program-phase-filter"
+                >
+                  <option value="all">All phases</option>
+                  <option value="has_open">Has open work</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </label>
+            </CollapsedListFilters>
+            <ParityTable<TrackerPhase>
+              rows={phaseRows}
+              rowKey={(p) => p.key}
+              loading={!t && tracker.isLoading}
+              emptyText="No phases match the applied filters."
+              storageKey="system-program-phases"
+              exportFilename="system-program-phases"
+              tableTestId="system-program-phases-table"
+              columns={[
+                { key: "label", label: "Phase", render: (p) => <span className="text-slate-700">{p.label}</span> },
+                {
+                  key: "total",
+                  label: "Total",
+                  className: "text-right",
+                  cellClass: "text-right tabular-nums text-slate-600",
+                  render: (p) => p.total,
+                },
+                {
+                  key: "completed",
+                  label: "Done",
+                  className: "text-right",
+                  cellClass: "text-right tabular-nums text-slate-600",
+                  render: (p) => p.completed,
+                },
+              ]}
+            />
+          </div>
         )}
       </Card>
     </div>
