@@ -79,6 +79,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       driverId = String(driverRes.rows[0]?.id ?? "");
       if (!driverId) throw new Error("driver_insert_failed");
 
+      // WORM: ih35_app has no DELETE on driver_finance.* — fixture cleanup runs as session owner.
+      await pgClient.query("RESET ROLE");
       await pgClient.query(`DELETE FROM driver_finance.driver_bills WHERE driver_id = $1::uuid`, [driverId]);
       await pgClient.query(
         `
@@ -90,6 +92,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
         `,
         [companyId, driverId, periodStart, periodEnd]
       );
+      await pgClient.query("SET ROLE ih35_app");
+      await pgClient.query("SET LOCAL app.bypass_rls = 'lucia'");
 
       const customerExisting = await pgClient.query<{ id: string }>(`SELECT id FROM mdata.customers WHERE deactivated_at IS NULL LIMIT 1`);
       if (customerExisting.rows[0]?.id) {
@@ -211,8 +215,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
 
     try {
       await pgClient.query("BEGIN");
-      await pgClient.query("SET ROLE ih35_app");
-      await pgClient.query("SET LOCAL app.bypass_rls = 'lucia'");
+      // Fixture teardown must RESET ROLE — WORM revoked DELETE from ih35_app on driver_finance.*.
+      await pgClient.query("RESET ROLE");
 
       if (displayId) {
         await pgClient.query(`DELETE FROM email.email_queue WHERE subject ILIKE $1`, [`%${displayId}%`]);
