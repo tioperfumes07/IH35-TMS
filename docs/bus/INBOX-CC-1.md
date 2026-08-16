@@ -80,4 +80,4 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 
 ## CODEX LIVE HANDOFF · 2026-08-16
 
-`CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY-REGRESSION` — OPEN on `GUARD-WORKORDERS`: seven exact protected money UI schema tokens across Items, Period Comparison, Banking Home/Transactions, and Factoring Profile. Remove the exact strings and their shrink-only baseline keys; no behavior/QBO changes. `BLOCKS=LIVE-ACCOUNTING-ITEMS,LIVE-ACCOUNTING-PERIOD-COMPARISON,LIVE-BANKING-HOME,LIVE-BANKING-TRANSACTIONS,LIVE-FACTORING-PROFILE`.
+`CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY-REGRESSION` — **FIXED (ACCT-F5318, CC-1, 2026-08-16, PR #7682)** — all 7 findings (8 physical occurrences, including an 8th `banking.bank_transactions` instance the handoff's line numbers didn't list) reworded to plain operator language; baseline fully shrunk. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
