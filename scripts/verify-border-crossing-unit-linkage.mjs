@@ -15,6 +15,8 @@ const files = {
   submit: "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx",
   writer: "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts",
   historyRoute: "apps/backend/src/border-crossing/border-crossing-history.routes.ts",
+  detectorHistory: "apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts",
+  overview: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
   history: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",
   reverse: "apps/frontend/src/components/dispatch/UnitBorderCrossingsReverseSection.tsx",
   profile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
@@ -30,6 +32,12 @@ function audit(s) {
   if (!/unit_id: unitId/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("profile reverse must request exact unit and show errors");
   if (!/kind=["']border_crossing["']/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/UnitBorderCrossingsReverseSection[\s\S]{0,160}unitId=\{id\}/.test(s.profile)) failures.push("unit profile border reverse mount missing");
+  if (!/u\.id::text AS unit_id[\s\S]{0,80}u\.unit_number/.test(s.detectorHistory)
+      || !/LEFT JOIN mdata\.units u/.test(s.detectorHistory)
+      || !/owner_company_id = e\.operating_company_id/.test(s.detectorHistory)
+      || !/currently_leased_to_company_id = e\.operating_company_id/.test(s.detectorHistory)) failures.push("detector history must resolve canonical same-company unit labels");
+  if (!/event\.unit_id[\s\S]{0,180}<EntityLink kind="unit"[\s\S]{0,120}entityLabel\(event\.unit_number, event\.unit_id, "Unit"\)/.test(s.overview)) failures.push("dispatch overview must render the resolved unit label and drill-through");
+  if (/entityLabel\(null,\s*event\.vehicle_id,\s*"Record"\)/.test(s.overview)) failures.push("dispatch overview must not turn the raw vehicle id into Record — not visible");
   return failures;
 }
 if (process.argv.includes("--selftest")) {
@@ -43,6 +51,8 @@ if (process.argv.includes("--selftest")) {
     ["error", "reverse", /ListErrorBanner/g, "MissingErrorBanner"],
     ["drill", "reverse", /kind=["']border_crossing["']/, 'kind="unit"'],
     ["mount", "profile", /UnitBorderCrossingsReverseSection/g, "MissingBorderReverse"],
+    ["history-label", "detectorHistory", /u\.unit_number/, "NULL::text AS unit_number"],
+    ["overview-label", "overview", /entityLabel\(event\.unit_number, event\.unit_id, "Unit"\)/, 'entityLabel(null, event.vehicle_id, "Record")'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };

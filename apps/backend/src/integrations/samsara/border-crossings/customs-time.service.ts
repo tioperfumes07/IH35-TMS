@@ -70,7 +70,8 @@ export async function getHistoryForPeriod(
       vehicleFilter = `AND e.vehicle_id = $${params.length}`;
     }
     const res = await client.query(
-      `SELECT e.uuid, e.vehicle_id, e.driver_uuid, e.load_uuid,
+      `SELECT e.uuid, e.vehicle_id, u.id::text AS unit_id, u.unit_number,
+              e.driver_uuid, e.load_uuid,
               NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name,
               l.load_number,
               e.crossing_point, e.direction, e.entered_geofence_at, e.exited_geofence_at,
@@ -80,6 +81,14 @@ export async function getHistoryForPeriod(
          ON d.id = e.driver_uuid AND d.operating_company_id = e.operating_company_id
        LEFT JOIN mdata.loads l
          ON l.id = e.load_uuid AND l.operating_company_id = e.operating_company_id
+       LEFT JOIN mdata.units u
+         ON u.id = CASE
+              WHEN e.vehicle_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                THEN e.vehicle_id::uuid
+              ELSE NULL
+            END
+        AND (u.owner_company_id = e.operating_company_id
+          OR u.currently_leased_to_company_id = e.operating_company_id)
        WHERE e.operating_company_id = $1::uuid
          AND e.entered_geofence_at BETWEEN $2::date AND ($3::date + INTERVAL '1 day')
          ${vehicleFilter}
