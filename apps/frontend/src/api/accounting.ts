@@ -914,7 +914,7 @@ export function createVendorBill(
       description?: string;
       section?: "A" | "B";
       expense_category_uuid?: string;
-      service_item_uuid?: string;
+      service_item_uuid?: string | null;
       category_kind?: string;
       category_code?: string;
       load_id?: string;
