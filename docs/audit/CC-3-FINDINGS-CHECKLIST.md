@@ -403,3 +403,4 @@ exact failure this register exists to prevent.
 | ☐ | `LV-REPORTS-GEOFENCE-RECON-GROUPED-TABLES-MISSING-SURFACE-BAR` | **P1** | Cursor | — | — | — | Guard 3524 shipped; board Status sync pending if still OPEN | `scripts/verify-geofence-recon-surface-bar.mjs` + step **3524** | — |
 | ☐ | `LV-REPORTS-SCHEDULED-SUBSCRIPTIONS-STALE-CPA-AND-DUPLICATE-RECIPIENTS` | **P1** | CC-1 | — | — | — | Seed CPA email + dup recipients; OPEN on GUARD-WORKORDERS | — | — |
 | ☐ | `LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES` | **P1** | CC-1 | — | — | — | Overview/Projections/Scenarios still Future-module stubs; owner cash-flow Excel + FH-4 SoR | — | — |
+| ☐ | `LV-INSURANCE-LAWSUIT-CLAIM-PICKER-NO-INLINE-CREATE` | **P1** | Codex | — | — | — | Live Lawsuit Create linked-claim picker omitted the Required first-row canonical Claim creator; shared delegation/auto-select fix in flight. | `scripts/verify-insurance-lawsuit-policy-reverse.mjs` normal + selftest | OWNER-GATED=no |

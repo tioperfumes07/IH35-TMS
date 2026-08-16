@@ -263,8 +263,9 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
               value={form.claim_id || null}
               onChange={(next) => updateField("claim_id", next ?? "")}
               enabled={open}
-              allowCreate={false}
+              allowCreate
               placeholder="Unlinked"
+              nestedInDrawer
               dataTestId="lawsuit-create-claim-picker"
             />
           </div>
