@@ -3472,5 +3472,10 @@
     "name": "verify-doc-categories-identity-mx-license",
     "claimer": "cursor",
     "claimed_at": "2026-08-15"
+  },
+  "3618": {
+    "name": "verify-docs-upload-sha256-required",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-15"
   }
 }
