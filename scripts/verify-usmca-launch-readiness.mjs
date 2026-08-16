@@ -30,6 +30,37 @@ const rollbackPlan = read("docs/runbooks/USMCA-ROLLBACK-PLAN.md");
 const trainingEN = read("data/training/usmca-driver-onboarding-EN.md");
 const trainingES = read("data/training/usmca-driver-onboarding-ES.md");
 
+function activationContractFailures(source) {
+  const failures = [];
+  const required = [
+    'id: "tms_entity_scope"',
+    'id: "tms_posting_flags"',
+    'id: "launch_evidence"',
+    "USMCA TMS entity scope and RLS verified",
+    "USMCA TMS posting enabled and QBO sync flags disabled",
+    "Required launch guards and live proofs recorded",
+  ];
+  for (const token of required) if (!source.includes(token)) failures.push(`activation checklist must retain ${token}`);
+  for (const stale of ["qbo_subaccount", "coa_cloned", "owner_signoff", "QBO subaccount created", "Chart of Accounts cloned from TRANSP", "Jorge approves transition"])
+    if (source.includes(stale)) failures.push(`activation checklist must not retain stale dependency ${stale}`);
+  return failures;
+}
+
+const activationFailures = activationContractFailures(stateMachine);
+if (activationFailures.length) fail(activationFailures.join("; "));
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    stateMachine.replace('id: "tms_entity_scope"', 'id: "qbo_subaccount"'),
+    stateMachine.replace('id: "tms_posting_flags"', 'id: "coa_cloned"'),
+    stateMachine.replace('id: "launch_evidence"', 'id: "owner_signoff"'),
+  ];
+  mutations.forEach((mutated, index) => {
+    if (!activationContractFailures(mutated).length) fail(`selftest mutation ${index + 1} survived`);
+  });
+  console.log(`[${LABEL}] SELFTEST PASS — ${mutations.length} stale launch-contract mutations rejected`);
+}
+
 // Migration checks
 if (!migration.includes("usmca_ops.activation_state")) fail("migration must create usmca_ops.activation_state");
 if (!migration.includes("ENABLE ROW LEVEL SECURITY")) fail("migration must enable RLS");
