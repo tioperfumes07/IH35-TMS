@@ -248,7 +248,7 @@ export function Modal({
             </div>
             <ModalCloseButton title={title} onClose={attemptClose} />
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">{children}</div>
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">{children}</div>
           {resizeEnabled ? (
             <ResizeHandle
               onPointerDrag={(dx, dy) => {
