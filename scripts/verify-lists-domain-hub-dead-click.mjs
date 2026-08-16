@@ -57,6 +57,10 @@ const PATHS = {
     ROOT,
     "apps/frontend/src/pages/lists/accounting/CurrencyCodesListPage.tsx"
   ),
+  qboCategoriesPage: path.join(
+    ROOT,
+    "apps/frontend/src/pages/lists/accounting/QboCategoriesListPage.tsx"
+  ),
 };
 
 /** LST-F5214 — shared bases + safety/dispatch leaves that must honor ?create=1 via the hook. */
@@ -116,6 +120,7 @@ export function collectProblems(sources = {}) {
   const taxCodesPage = sources.taxCodesPage ?? read(PATHS.taxCodesPage);
   const journalEntryTypesPage = sources.journalEntryTypesPage ?? read(PATHS.journalEntryTypesPage);
   const currencyCodesPage = sources.currencyCodesPage ?? read(PATHS.currencyCodesPage);
+  const qboCategoriesPage = sources.qboCategoriesPage ?? read(PATHS.qboCategoriesPage);
   const errors = [];
 
   if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
@@ -130,6 +135,7 @@ export function collectProblems(sources = {}) {
   if (!taxCodesPage) errors.push(fail("missing TaxCodesListPage.tsx"));
   if (!journalEntryTypesPage) errors.push(fail("missing JournalEntryTypesListPage.tsx"));
   if (!currencyCodesPage) errors.push(fail("missing CurrencyCodesListPage.tsx"));
+  if (!qboCategoriesPage) errors.push(fail("missing QboCategoriesListPage.tsx"));
   if (errors.length) return errors;
 
   if (!/function ListsDomainRoute\(\)/.test(manifest)) {
@@ -210,6 +216,7 @@ export function collectProblems(sources = {}) {
     [taxCodesPage, "TaxCodesListPage"],
     [journalEntryTypesPage, "JournalEntryTypesListPage"],
     [currencyCodesPage, "CurrencyCodesListPage"],
+    [qboCategoriesPage, "QboCategoriesListPage"],
   ]) {
     if (!/AccountingCatalogListPage/.test(src)) {
       errors.push(fail(`${name} must wrap AccountingCatalogListPage (inherits ?create=1)`));
@@ -220,6 +227,9 @@ export function collectProblems(sources = {}) {
   if (!sources.skipSharedCreateRatchet) {
     const itemsPage = read("apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx");
     const detailTypesPage = read("apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx");
+    const postingTemplatesPage = read(
+      "apps/frontend/src/pages/lists/accounting/PostingTemplatesListPage.tsx"
+    );
     if (!itemsPage) errors.push(fail("missing ItemsListPage.tsx"));
     else if (!/searchParams\.get\("create"\) !== "1"/.test(itemsPage) && !/get\("create"\) === "1"/.test(itemsPage)) {
       errors.push(fail("ItemsListPage must honor ?create=1 → ItemEditorModal"));
@@ -227,6 +237,13 @@ export function collectProblems(sources = {}) {
     if (!detailTypesPage) errors.push(fail("missing DetailTypesListPage.tsx"));
     else if (!/searchParams\.get\("create"\) === "1"/.test(detailTypesPage) && !/get\("create"\) === "1"/.test(detailTypesPage)) {
       errors.push(fail("DetailTypesListPage must honor ?create=1 → create modal"));
+    }
+    if (!postingTemplatesPage) errors.push(fail("missing PostingTemplatesListPage.tsx"));
+    else if (
+      !/searchParams\.get\("create"\) !== "1"/.test(postingTemplatesPage) &&
+      !/get\("create"\) === "1"/.test(postingTemplatesPage)
+    ) {
+      errors.push(fail("PostingTemplatesListPage must honor ?create=1 → PostingTemplateModal"));
     }
   }
 
@@ -307,6 +324,7 @@ if (catalogKey === "_create") {
   const goodTaxCodes = `export function TaxCodesListPage() { return <AccountingCatalogListPage client={taxCodesCatalogClient} />; }`;
   const goodJeTypes = `export function JournalEntryTypesListPage() { return <AccountingCatalogListPage client={journalEntryTypesCatalogClient} />; }`;
   const goodCurrency = `export function CurrencyCodesListPage() { return <AccountingCatalogListPage client={currencyCodesCatalogClient} />; }`;
+  const goodQboCategories = `export function QboCategoriesListPage() { return <AccountingCatalogListPage client={qboCategoriesCatalogClient} />; }`;
   const goodMapWithPaymentLeaves = `${goodMap}
 { name: "Payment Terms", live: true, catalogKey: "payment-terms" },
 { name: "Payment Methods", live: true, catalogKey: "payment-methods" },
@@ -347,6 +365,7 @@ function ListsDomainRoute() {
     taxCodesPage: goodTaxCodes,
     journalEntryTypesPage: goodJeTypes,
     currencyCodesPage: goodCurrency,
+    qboCategoriesPage: goodQboCategories,
     skipSharedCreateRatchet: true,
   });
   if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
@@ -368,6 +387,7 @@ function ListsDomainRoute() {
     taxCodesPage: goodTaxCodes,
     journalEntryTypesPage: goodJeTypes,
     currencyCodesPage: goodCurrency,
+    qboCategoriesPage: goodQboCategories,
     skipSharedCreateRatchet: true,
   });
   if (!barePmErrors.some((e) => e.includes("PaymentMethodsListPage must wrap AccountingCatalogListPage"))) {
