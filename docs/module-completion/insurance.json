@@ -35,9 +35,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 — PoliciesList opco listInsurancePolicies + useListState + DataTable emptyText; PolicyCreate wizard; verify-list-empty-settled.",
+      "evidence": "2026-08-16 USMCA LIVE FAIL → CODE FIXED pending deploy: /safety/insurance/policies rendered 3 scoped policies and the four-step creator; insurer picker put + Add new vendor first. The Type column and policy-detail subtitle exposed raw code auto_liability instead of canonical Type Catalog name Auto Liability. Current fix resolves list/detail labels through the same-company insurance.type_catalog FK and retains a humanized fallback. Mutation guard 4/4; Live recheck required after deploy.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "INS-T02",
@@ -77,7 +77,7 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 — ClaimsTab useListState + emptyText (already guarded).",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /safety/insurance/claims rendered exactly 4 scoped claim rows with human policy labels and canonical forward links for applicable policy, unit, trailer, driver, and load relationships. Search, Range, gear, four entity filters, and + Create claim rendered. No save or mutation.",
       "pr": null,
       "prod_verified": true
     },

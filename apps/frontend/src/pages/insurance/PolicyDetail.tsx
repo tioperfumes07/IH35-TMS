@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   archiveInsurancePolicy,
   getInsurancePolicy,
+  listInsuranceTypeCatalog,
   listInsuranceClaims,
   listInsuranceCoiRequests,
   listInsuranceLawsuits,
@@ -49,6 +50,12 @@ export function PolicyDetail() {
     queryKey: ["insurance", "policy", policyId, companyId],
     enabled: Boolean(companyId && policyId),
     queryFn: () => getInsurancePolicy(policyId!, companyId),
+  });
+
+  const typesQuery = useQuery({
+    queryKey: ["insurance", "type-catalog", companyId],
+    enabled: Boolean(companyId),
+    queryFn: () => listInsuranceTypeCatalog({ operating_company_id: companyId }).then((result) => result.types),
   });
 
   const claimsQuery = useQuery({
@@ -203,6 +210,10 @@ export function PolicyDetail() {
   }
 
   const policy = policyQuery.data;
+  const coverageTypeName =
+    policy.coverage_type_name?.trim() ||
+    typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name ||
+    policy.coverage_type.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
   const openEditPanel = () => {
     setStatus(policy.status);
@@ -224,7 +235,7 @@ export function PolicyDetail() {
         backHref="/safety/insurance/policies"
         breadcrumb={["Insurance", "Policies", entityLabel(policy.policy_number, policy.id, "Policy")]}
         title={`Policy ${entityLabel(policy.policy_number, policy.id, "Policy")}`}
-        subtitle={`${policy.insurer_name} · ${policy.coverage_type} · ${policy.status}`}
+        subtitle={`${policy.insurer_name} · ${coverageTypeName} · ${policy.status}`}
         actions={
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={openEditPanel}>

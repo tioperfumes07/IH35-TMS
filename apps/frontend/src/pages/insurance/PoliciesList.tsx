@@ -90,11 +90,16 @@ export function PoliciesList() {
 
   const listState = useListState(policiesQuery, rows.length === 0);
 
+  const coverageTypeName = (policy: InsurancePolicy) =>
+    policy.coverage_type_name?.trim() ||
+    typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name ||
+    policy.coverage_type.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
   const columns = [
     { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} className="font-medium text-slate-800" /> },
     { key: "insurer_name", label: "Insurer", sortable: true },
-    { key: "coverage_type", label: "Type", sortable: true },
+    { key: "coverage_type", label: "Type", sortable: true, render: (p: InsurancePolicy) => coverageTypeName(p) },
     { key: "total_premium_cents", label: "Coverage Amount", sortable: true, numeric: true, render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
     { key: "effective_date", label: "Effective Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.effective_date) },
     { key: "expiry_date", label: "Expiry Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.expiry_date) },

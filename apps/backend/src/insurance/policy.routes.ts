@@ -124,27 +124,28 @@ async function withCompanyScope<T>(
   });
 }
 
-function policySelectColumns() {
+function policySelectColumns(alias = "") {
+  const p = alias ? `${alias}.` : "";
   return `
-    id::text,
-    insurer_name,
-    policy_number,
-    coverage_type,
-    coverage_type_id::text,
-    effective_date::text,
-    expiry_date::text,
-    total_premium_cents::bigint,
-    down_payment_cents::bigint,
-    installment_count::int,
-    due_day::int,
-    pay_day::int,
-    late_fee_pct::text,
-    insurer_email,
-    agent_contact,
-    status,
-    vendor_id::text,
-    created_at::text,
-    updated_at::text
+    ${p}id::text,
+    ${p}insurer_name,
+    ${p}policy_number,
+    ${p}coverage_type,
+    ${p}coverage_type_id::text,
+    ${p}effective_date::text,
+    ${p}expiry_date::text,
+    ${p}total_premium_cents::bigint,
+    ${p}down_payment_cents::bigint,
+    ${p}installment_count::int,
+    ${p}due_day::int,
+    ${p}pay_day::int,
+    ${p}late_fee_pct::text,
+    ${p}insurer_email,
+    ${p}agent_contact,
+    ${p}status,
+    ${p}vendor_id::text,
+    ${p}created_at::text,
+    ${p}updated_at::text
   `;
 }
 
@@ -180,30 +181,33 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["tenant_id = $1::uuid"];
+      const filters = ["p.tenant_id = $1::uuid"];
       if (parsed.data.coverage_type) {
         values.push(parsed.data.coverage_type);
-        filters.push(`coverage_type = $${values.length}`);
+        filters.push(`p.coverage_type = $${values.length}`);
       }
       if (parsed.data.status) {
         values.push(parsed.data.status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`p.status = $${values.length}`);
       } else {
         // Default view hides soft-cancelled (archived) policies — an explicit ?status=cancelled still
         // surfaces them for audit/evidence review. Keeps the DELETE→soft-cancel change invisible to
         // the active-policy list while preserving the row and its linked claims/lawsuits.
-        filters.push(`status <> 'cancelled'`);
+        filters.push(`p.status <> 'cancelled'`);
       }
       if (parsed.data.vendor_id) {
         values.push(parsed.data.vendor_id);
-        filters.push(`vendor_id = $${values.length}::uuid`);
+        filters.push(`p.vendor_id = $${values.length}::uuid`);
       }
       const result = await client.query(
         `
-          SELECT ${policySelectColumns()}
-          FROM insurance.policy
+          SELECT ${policySelectColumns("p")}, tc.name AS coverage_type_name
+          FROM insurance.policy p
+          LEFT JOIN insurance.type_catalog tc
+            ON tc.id = p.coverage_type_id
+           AND tc.tenant_id = p.tenant_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY expiry_date ASC, insurer_name ASC
+          ORDER BY p.expiry_date ASC, p.insurer_name ASC
         `,
         values
       );
@@ -224,9 +228,12 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const policy = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const policyRes = await client.query(
         `
-          SELECT ${policySelectColumns()}
-          FROM insurance.policy
-          WHERE tenant_id = $1::uuid AND id = $2::uuid
+          SELECT ${policySelectColumns("p")}, tc.name AS coverage_type_name
+          FROM insurance.policy p
+          LEFT JOIN insurance.type_catalog tc
+            ON tc.id = p.coverage_type_id
+           AND tc.tenant_id = p.tenant_id
+          WHERE p.tenant_id = $1::uuid AND p.id = $2::uuid
         `,
         [query.data.operating_company_id, params.data.id]
       );
