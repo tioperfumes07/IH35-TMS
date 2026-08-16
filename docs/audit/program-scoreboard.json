@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T07:53:27-05:00",
-    "sourceSha": "4e0f4efb0",
-    "deployedSha": "7193cbd",
+    "generatedAt": "2026-08-16T08:08:11-05:00",
+    "sourceSha": "3d6923c65",
+    "deployedSha": "3eec141",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 889,
+    "ledgerRows": 891,
     "failOpen": 29,
     "defects": 25
   },
@@ -1532,7 +1532,7 @@
         "USMCA": [
           "AUDIT",
           "AUDIT",
-          "NA",
+          "FIX",
           "NA",
           "AUDIT",
           "AUDIT",
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7791,
+      "title": "FINDING: LV-DOCS-ENTITY-LINKS-RAW-UUID-LABELS + LV-DOCS-FILES-LIST-ACCESSIBLE-ALL-COMPANIES",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 08:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7791",
+      "sha": "3d6923c65",
+      "committedAtIso": "2026-08-16T08:08:11-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 07:54 AM CT",
+      "url": "",
+      "sha": "3eec141ea",
+      "committedAtIso": "2026-08-16T12:54:31Z"
+    },
+    {
       "number": 7790,
       "title": "FINDING: LV-DRIVERS-TOOLBAR-BORROWS-PROFILE-HISTORY",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "bef303379",
       "committedAtIso": "2026-08-16T12:41:38Z"
-    },
-    {
-      "number": 7786,
-      "title": "FINDING: LV-COMPLIANCE-TOOLBAR-BORROWS-FILINGS-TAB",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 07:40 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7786",
-      "sha": "ad21c507e",
-      "committedAtIso": "2026-08-16T07:40:29-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 07:38 AM CT",
-      "url": "",
-      "sha": "67b4ad108",
-      "committedAtIso": "2026-08-16T12:38:25Z"
     }
   ]
 }
