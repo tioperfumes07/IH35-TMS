@@ -275,6 +275,26 @@ export function assertScoreboardContract(sources) {
         if (!/DualPct/.test(boxesPage)) {
           problems.push(`${boxesRel}: DualPct helper required for Box 3/4 dual percentages`);
         }
+        if (
+          !/export function honestProgressPct\(count: number, total: number\)/.test(boxesPage) ||
+          !/if \(count >= total\) return 100;/.test(boxesPage) ||
+          !/Math\.floor\(\(count \/ total\) \* 100\)/.test(boxesPage)
+        ) {
+          problems.push(
+            `${boxesRel}: incomplete exact counts must floor below 100 via honestProgressPct; only count >= total may return 100`,
+          );
+        }
+        if (
+          !/fill:\s*honestProgressPct\(counts\.built, counts\.required\)/.test(boxesPage) ||
+          !/const pct = honestProgressPct\(t\.count, t\.of\)/.test(boxesPage)
+        ) {
+          problems.push(
+            `${boxesRel}: Box tracker fill and tile percentages must use honestProgressPct beside exact counts`,
+          );
+        }
+        if (/Math\.round\(\(t\.count \/ t\.of\) \* 100\)/.test(boxesPage)) {
+          problems.push(`${boxesRel}: rounded tile percentages can paint an incomplete exact count as 100%`);
+        }
       }
       if (svc && !/columnAbl/.test(svc)) {
         problems.push(`${svcRel}: buildSystemModuleMatrix must emit columnAbl (A·B·L per column)`);
@@ -909,6 +929,7 @@ if (SELFTEST) {
     [DATA]: read(DATA),
     [FE_PKG]: read(FE_PKG),
     [matrixPageRel]: read(matrixPageRel),
+    ["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"]: read("apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"),
     ["apps/backend/src/program/audit-scoreboard.routes.ts"]: read("apps/backend/src/program/audit-scoreboard.routes.ts"),
   };
   const failures = [];
@@ -980,6 +1001,39 @@ if (SELFTEST) {
       ),
     },
     "must short-cache scoreboard payload",
+  );
+  expect(
+    "incomplete-progress-rounded-to-100",
+    {
+      ...live,
+      ["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"]: live["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"].replace(
+        "return Math.floor((count / total) * 100);",
+        "return Math.round((count / total) * 100);",
+      ),
+    },
+    "incomplete exact counts must floor below 100",
+  );
+  expect(
+    "built-fill-bypasses-honest-percent",
+    {
+      ...live,
+      ["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"]: live["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"].replace(
+        "fill: honestProgressPct(counts.built, counts.required)",
+        "fill: Math.round((counts.built / counts.required) * 100)",
+      ),
+    },
+    "Box tracker fill and tile percentages must use honestProgressPct",
+  );
+  expect(
+    "tile-percent-rounded-to-100",
+    {
+      ...live,
+      ["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"]: live["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"].replace(
+        "const pct = honestProgressPct(t.count, t.of);",
+        "const pct = Math.round((t.count / t.of) * 100);",
+      ),
+    },
+    "Box tracker fill and tile percentages must use honestProgressPct",
   );
   const liveProblems = assertScoreboardContract(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
