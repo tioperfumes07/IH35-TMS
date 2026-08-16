@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T04:48:54-05:00",
-    "sourceSha": "b31d2006b",
-    "deployedSha": "bcc600a",
+    "generatedAt": "2026-08-16T04:56:13-05:00",
+    "sourceSha": "b6b20cb22",
+    "deployedSha": "579db2a",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 864,
+    "ledgerRows": 865,
     "failOpen": 15,
     "defects": 19
   },
@@ -1394,7 +1394,7 @@
       "cells": [
         "AUDIT",
         "AUDIT",
-        "UNV",
+        "FIX",
         "NA",
         "FIX",
         "AUDIT",
@@ -1426,7 +1426,7 @@
         "USMCA": [
           "AUDIT",
           "AUDIT",
-          "UNV",
+          "FIX",
           "NA",
           "FIX",
           "AUDIT",
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 7763,
+      "title": "FINDING: LV-PROGRAM-TRACKER-DEPLOYMENT-PROOF-PRODUCER-DROPPED",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7763",
+      "sha": "b6b20cb22",
+      "committedAtIso": "2026-08-16T04:56:13-05:00"
+    },
+    {
+      "number": 7764,
+      "title": "FINDING: BANK-F5329 (P23-BANKING-RAW-UUID-BACKEND-GAPS)",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7764",
+      "sha": "48ba4ba57",
+      "committedAtIso": "2026-08-16T04:55:54-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:49 AM CT",
+      "url": "",
+      "sha": "579db2ae9",
+      "committedAtIso": "2026-08-16T09:49:57Z"
+    },
+    {
       "number": 7762,
       "title": "FINDING: LV-PROGRAM-TOOLBAR-LEAF-POINTS-WRONG-ROUTE",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "",
       "sha": "3c24d570f",
       "committedAtIso": "2026-08-16T09:28:24Z"
-    },
-    {
-      "number": 7758,
-      "title": "FINDING: LIVE-REPORTS-RUNNER-DISPATCH-FLEET-UTILIZATION",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7758",
-      "sha": "eadcb9954",
-      "committedAtIso": "2026-08-16T04:27:26-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:23 AM CT",
-      "url": "",
-      "sha": "4c6dcaa38",
-      "committedAtIso": "2026-08-16T09:23:47Z"
-    },
-    {
-      "number": 7757,
-      "title": "FINDING: LV-LAWSUIT-CREATE-OPERATING-COMPANY-RLS-STAMP-MISSING",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7757",
-      "sha": "33cc50e7d",
-      "committedAtIso": "2026-08-16T04:22:37-05:00"
     }
   ]
 }
