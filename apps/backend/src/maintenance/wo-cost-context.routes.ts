@@ -96,6 +96,10 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
           parts = pr.rows;
           partsStatus = "fallback";
           partsRelation = "maintenance.parts_inventory";
+        } else {
+          // CLS-LATCH: both relations absent — signal unavailable (not empty).
+          partsStatus = "unavailable";
+          partsRelation = null;
         }
       }
 
@@ -127,6 +131,10 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
           labor_rates = lr.rows;
           laborStatus = "fallback";
           laborRelation = "catalogs.labor_rates";
+        } else {
+          // CLS-LATCH: both relations absent — signal unavailable (not empty).
+          laborStatus = "unavailable";
+          laborRelation = null;
         }
       }
 
