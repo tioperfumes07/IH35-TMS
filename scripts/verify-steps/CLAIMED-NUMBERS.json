@@ -3558,5 +3558,11 @@
     "lane": "cursor",
     "claimed_at": "2026-08-16",
     "note": "LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP"
+  },
+  "3648": {
+    "guard": "verify-home-driver-day-summary-toolbar-always",
+    "lane": "cursor",
+    "claimed_at": "2026-08-16",
+    "note": "LV-HOME-DRIVER-DAY-SUMMARY-EMPTY-HIDES-TOOLBAR"
   }
 }
