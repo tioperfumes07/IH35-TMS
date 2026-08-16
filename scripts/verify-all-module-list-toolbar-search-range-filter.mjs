@@ -155,7 +155,7 @@ if (process.argv.includes("--self-test")) {
     mutations.push(() => {
       const file = `docs/specs/scoreboard/modules/${module}.required.json`;
       const matrix = JSON.parse(source[file]);
-      matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_search").route_hint = `/${module}`;
+      matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_search").route_hint = `${EXACT_CONSUMERS[module].route}-BROKEN-SELFTEST`;
       return { ...source, [file]: JSON.stringify(matrix) };
     });
   }
