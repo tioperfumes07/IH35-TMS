@@ -14,7 +14,7 @@ const EVIDENCE = {
   accounting: ["apps/frontend/src/pages/accounting/BillsPage.tsx", "<ParityTable"],
   banking: ["apps/frontend/src/pages/banking/CashGlSetupPage.tsx", "<ParityTable"],
   "cash-flow": ["apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx", "<ParityTable"],
-  compliance: ["apps/frontend/src/pages/compliance/HosViewerSection.tsx", "<ParityTable"],
+  compliance: ["apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx", "<ParityTable"],
   customers: ["apps/frontend/src/pages/customers/CustomersListView.tsx", "<ParityTable"],
   dispatch: ["apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx", "<ParityTable"],
   docs: ["apps/frontend/src/pages/docs/DocsHomePage.tsx", "<ParityTable"],
@@ -51,6 +51,8 @@ const EXACT_CONSUMERS = {
   legal: { route: "/legal/matters", surface: "pages/legal/matters/LegalMattersListPage.tsx" },
   program: { route: "/program/modules", surface: "pages/program/ModuleCompletionPage.tsx" },
   system: { route: "/system?tab=program", surface: "pages/system/SystemModulePage.tsx" },
+  "driver-hub": { route: "/driver-hub/reporting", surface: "pages/home/DriverHubReportingPage.tsx" },
+  compliance: { route: "/compliance", surface: "pages/compliance/FilingsComplianceDueSection.tsx" },
   tasks: { route: "/tasks/report", surface: "pages/tasks/TasksReportPage.tsx" },
 };
 

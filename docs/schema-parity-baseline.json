@@ -809,6 +809,7 @@
       "created_at",
       "debit_or_credit",
       "description",
+      "entity_type",
       "entity_uuid",
       "id",
       "idempotency_key",
