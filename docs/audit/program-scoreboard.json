@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T14:50:53-05:00",
-    "sourceSha": "ddd73e684",
+    "generatedAt": "2026-08-16T14:57:32-05:00",
+    "sourceSha": "bb056549f",
     "deployedSha": "ec71796",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 921,
-    "failOpen": 23,
+    "ledgerRows": 923,
+    "failOpen": 24,
     "defects": 26
   },
   "modules": [
@@ -760,7 +760,7 @@
         "FAIL",
         "FIX",
         "AUDIT",
-        "FIX",
+        "FAIL",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -792,7 +792,7 @@
           "AUDIT",
           "FIX",
           "AUDIT",
-          "FIX",
+          "FAIL",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 7898,
+      "title": "FINDING: LV-USMCA-GLOBAL-QBO-STATUS-CHROME",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7898",
+      "sha": "bb056549f",
+      "committedAtIso": "2026-08-16T14:57:32-05:00"
+    },
+    {
+      "number": 7897,
+      "title": "FINDING: DOC-F3390",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7897",
+      "sha": "8064b4ccc",
+      "committedAtIso": "2026-08-16T14:55:09-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 02:52 PM CT",
+      "url": "",
+      "sha": "2e2298f76",
+      "committedAtIso": "2026-08-16T19:52:05Z"
+    },
+    {
       "number": 7896,
       "title": "FINDING: LV-SYSTEM-USMCA-QBO-CHROME-AND-QUERIES",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "",
       "sha": "ad050227c",
       "committedAtIso": "2026-08-16T14:34:34-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(tasks): TASK-F3384 — CreateTaskModal customer EntityPicker",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:32 PM CT",
-      "url": "",
-      "sha": "a192b6b24",
-      "committedAtIso": "2026-08-16T14:32:38-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(legal): LEG-F3382 — LeaseToOwn lessee customer EntityPicker",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:29 PM CT",
-      "url": "",
-      "sha": "c29842515",
-      "committedAtIso": "2026-08-16T14:29:45-05:00"
-    },
-    {
-      "number": 7880,
-      "title": "Cursor- fix(lists): LST-F3380 — ItemEditor preferred vendor EntityPicker",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 02:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7880",
-      "sha": "d36f6b917",
-      "committedAtIso": "2026-08-16T14:28:56-05:00"
     }
   ]
 }
