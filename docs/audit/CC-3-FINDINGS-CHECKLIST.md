@@ -130,7 +130,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-SPAWN-LIABILITY-NOSAVE` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-WO-NOSAVE` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-SEND-NOREASON` | — | — | — | — | — | — | — | — |
-| ☐ | `LV-INV-UUID` | — | — | — | — | — | — | — | — |
+| ☑ | `LV-INV-UUID` | — | CC-3 / mechanical+FE | Cursor | #5555 / #5556 | 2026-08-10 | from-load linehaul uses `load_number` not UUID; guards exit 0 | `scripts/verify-invoice-line-no-uuid-description.mjs` · `scripts/verify-invoice-line-load-number-not-uuid.mjs` | Register tick Cursor LEAD |
 | ☐ | `LV-LOAD-EDIT-BLANK` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-STOPS-NOSAVE` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-LOAD-UNASSIGNED` | — | — | — | — | — | — | — | — |
