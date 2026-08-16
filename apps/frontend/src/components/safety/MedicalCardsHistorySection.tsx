@@ -60,7 +60,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
       <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Add DOT medical card">
         <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); createMutation.mutate(); }}>
           <label className="block text-xs text-slate-600">Driver<div className="mt-1"><DriverPickerWithCreate operatingCompanyId={operatingCompanyId} value={selectedDriverId || null} onChange={(next) => setSelectedDriverId(next ?? "")} open={open} placeholder="Select driver" dataField="medical-card-driver" /></div></label>
-          <label className="block text-xs text-slate-600">Card number<input required className="mt-1 h-8 w-full rounded-sm border border-gray-200 px-2 text-xs" value={cardNumber} onChange={(event) => setCardNumber(event.target.value)} /></label>
+          <label className="block text-xs text-slate-600">Card number<input required className="mt-1 h-12 min-h-12 w-full rounded-sm border border-gray-200 px-2 text-xs" value={cardNumber} onChange={(event) => setCardNumber(event.target.value)} /></label>
           <label className="block text-xs text-slate-600">Issued date<DatePicker className="mt-1 w-full" value={issuedDate} onChange={setIssuedDate} /></label>
           <label className="block text-xs text-slate-600">Expiry date<DatePicker className="mt-1 w-full" value={expiryDate} onChange={setExpiryDate} /></label>
           <label className="block text-xs text-slate-600">Notes<textarea className="mt-1 min-h-16 w-full rounded-sm border border-gray-200 px-2 py-1 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
