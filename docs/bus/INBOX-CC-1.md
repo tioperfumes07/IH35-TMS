@@ -73,3 +73,7 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 `CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY` — **FIXED (ACCT-F5312, CC-1, 2026-08-15, PR #7567)** — see `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
 
 `LV-FINANCE-PLANNING-PLACEHOLDER-ROUTES` — **FIXED (ACCT-F5316, CC-1, 2026-08-15, PR #7585)** — migration applied to prod. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
+
+`LV-COA-AND-ITEMS-UNAUDITED` — **FIXED (ACCT-F5317, CC-1, 2026-08-16, PR #7636)** — audit trigger attached to `catalogs.accounts/items/payment_terms/classes`, migration 202612610000 applied + idempotency-proved on prod. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
+
+**CLOSED (CC-1, 2026-08-16):** 3 stale open PRs found on `@me` (#7542, #7534, #6020) all merged/superseded per explicit owner directive; 2 pending claim-only PRs (#7627, #7632) also merged. All confirmed live on `origin/main`. See `docs/audit/GUARD-WORKORDERS.md` for detail.
