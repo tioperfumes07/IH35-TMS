@@ -69,14 +69,14 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-16 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **24 / 30** | 2026-08-16 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **25 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **61 / 150** | 2026-08-16 |
-| Rows in this file | **886** | 2026-08-16 |
-| Rows `FAIL` + `OPEN` | **26** | 2026-08-16 |
+| Rows in this file | **888** | 2026-08-16 |
+| Rows `FAIL` + `OPEN` | **28** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=110 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=112 · PASS=200 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=330 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -974,3 +974,5 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 884 | compliance · toolbar exact owner | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaves:** `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear`. Live `/compliance` defaulted to Filings & Compliance Due, whose 37-row table owns Search, Range, CSV, and gear. Live `/compliance?tab=hos_viewer` mounted the matrix-claimed `HosViewerSection`, which has driver/date controls and no governed list toolbar. Current metadata therefore borrows controls from a sibling tab while citing HOS Viewer as leaf owner. No mutation. | OPEN · Cursor chrome/inventory lane | `LV-COMPLIANCE-TOOLBAR-BORROWS-FILINGS-TAB` · exact Live tab comparison + source | NO | 2026-08-16 | CODEX |
 | 885 | tasks · admin report toolbar | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaves:** `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear`. Live `/tasks` mounted the distinct Task Board with filters and two task cards but none of the three governed controls. Live `/tasks/report` mounted the matrix-claimed `TasksReportPage`, where Search, Range, gear, metrics, and one scoped assignee row rendered without error. Required metadata names the correct owner but retains the Task Board route. No mutation. | OPEN · Cursor chrome/inventory lane | `LV-TASKS-TOOLBAR-LEAVES-POINT-TASK-BOARD` · exact Live route comparison + manifest | NO | 2026-08-16 | CODEX |
 | 886 | users · root/detail toolbar ownership | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaves:** `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear` · `chrome.toolbar_filter`. Live `/users` rendered the 19-row UsersPage with Search, Range, and gear. Live `/users/:id` Profile had no toolbar; selecting Activity mounted `UserActivityTab` with its own Search, Range, gear and honest zero state. Required metadata points at `/users` but names the detail-only `UserActivityTab`, borrowing a different surface's ownership; Filter shares the same mismatch. No mutation. | OPEN · Cursor chrome/inventory lane | `LV-USERS-TOOLBAR-BORROWS-DETAIL-ACTIVITY` · exact Live root/detail/tab comparison + source | NO | 2026-08-16 | CODEX |
+| 887 | driver-hub · reporting toolbar | E | USMCA | FAIL · OPEN CURSOR HANDOFF | **Leaves:** `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear` · `chrome.toolbar_filter`. Live `/driver-hub` mounted the Inbox overview with category pills and no governed list toolbar. Live `/driver-hub/reporting` mounted the matrix-claimed `DriverHubReportingPage` with From/To dates, Search, Range, gear, one linked driver row, and metrics. Required metadata names Reporting but retains the Inbox route; Filter shares the same mismatch. No mutation. | OPEN · Cursor chrome/inventory lane | `LV-DRIVER-HUB-TOOLBAR-LEAVES-POINT-INBOX` · exact Live routes + manifest | NO | 2026-08-16 | CODEX |
+| 888 | driver-hub · reporting economics | C | USMCA | FAIL · OPEN CC-1 HANDOFF | Live Reporting displayed “advance-volume-by-trip: driver_advances has no load FK” and called the FK a later migration. Repository schema truth contradicts this: `202606251600_load_cash_advance_link.sql` already adds and indexes `driver_finance.driver_advances.load_id`, and `cash-advance-create.ts` detects and writes that column. The reporting service hardcodes the stale `not_computed` message instead of querying the canonical existing link. No mutation. | OPEN · CC-1 money/reporting lane | `LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK` · live copy + migration/writer/service trace | NO | 2026-08-16 | CODEX |
