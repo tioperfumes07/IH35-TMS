@@ -72,7 +72,7 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **26 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **64 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-16 |
-| Rows in this file | **936** | 2026-08-16 |
+| Rows in this file | **937** | 2026-08-16 |
 | Rows `FAIL` + `OPEN` | **24** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
@@ -86,6 +86,7 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **4** | 2026-08-16 |
 | Verdict tally (all rows) | FAIL=130 · PASS=221 · N/A=220 · UNVERIFIED=19 · SUPERSEDED=9 · OTHER=332 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=138 · PASS=221 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=332 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1033,3 +1034,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 934 | drivers · duplicate active picker identity | A | ALL | FAIL · FIXED CODE · REFINES ROW 425 | Production remeasurement found the cited USMCA duplicate pairs already deactivated and absent from active pickers. TRANSP still has two active `JOSE MANUEL MEJIA OLMOS` rows, but they carry distinct Samsara IDs (`59885225`, `60088842`); one has the real phone and 15 fuel transactions, the other has a placeholder phone and zero measured loads/units/settlements/bills/fuel rows. The schema has no canonical driver-merge pointer, so name-only merge/deactivation would guess across external identities. Root fix projects Samsara identity and gives every shared driver picker a phone/Samsara sublabel, preventing coin-toss selection across all modules without exposing UUIDs or mutating money/history. | FIXED CODE · deploy Live retry pending | `verify-driver-picker-duplicate-disambiguation` normal+3 mutations | NO | 2026-08-16 | CODEX |
 | 935 | insurance · policies.create insurer nested vendor | D | USMCA | FAIL · OPEN | Authenticated four-step policy creator loaded the company-scoped insurer roster, but exact Live DOM contained zero `Add new` options. Current main already has the correct universal picker/creator path (`allowCreate`, nested drawer, vendor inline-create, unconditional first row), proving frontend deploy drift instead of missing source wiring. | LIVE FAIL · Cursor deploy handoff | `/safety/insurance/policies`; Add-new count=0; board `LV-INSURANCE-POLICY-VENDOR-CREATOR-DEPLOY-DRIFT` | NO | 2026-08-16 | CODEX |
 | 936 | insurance · coverage_gaps filter chrome | D | USMCA | FAIL · FIXED CODE | Both company-scoped gap lists rendered real unit links plus Search/Range/gear, but the visible Unit filter applied immediately with no explicit Filters Apply/Cancel/Reset contract. Root fix stages the same canonical unit FK through shared CollapsedListFilters and commits URL/query state only on Apply. | FIXED CODE · deploy Live retry pending | `/safety/insurance/coverage-gaps`; `verify-insurance-unit-wiring` mutations | NO | 2026-08-16 | CODEX |
+| 937 | inventory · parts_stock filter chrome | D | USMCA | FAIL · FIXED CODE | Parts & Stock rendered two canonical rows with Search/Range/gear, Vendor drill-through and Create/Edit, but no Filters control. Root fix mounts staged Category and stock-state filters in the ParityTable toolbar with explicit Apply/Cancel/Reset and the existing canonical reorder predicate. | FIXED CODE · deploy Live retry pending | `/inventory`; `verify-inv-s01-parts-roster-density` path + 3 chrome mutations | NO | 2026-08-16 | CODEX |

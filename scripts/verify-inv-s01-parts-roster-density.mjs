@@ -66,6 +66,15 @@ export function collectProblems(files) {
   if (!/partsQuery\.isError[\s\S]*?<ListErrorState[\s\S]*?partsQuery\.refetch\(\)/.test(pageCode)) {
     problems.push(`${PARTS_STOCK_PAGE}: list failure must render a retryable ListErrorState before empty copy`);
   }
+  if (!/<CollapsedListFilters[\s\S]{0,500}onApply=\{stagedFilters\.apply\}[\s\S]{0,500}onReset=\{stagedFilters\.reset\}[\s\S]{0,500}onCancel=\{stagedFilters\.cancel\}/.test(pageCode)) {
+    problems.push(`${PARTS_STOCK_PAGE}: Parts & Stock filters must stage Apply/Reset/Cancel explicitly`);
+  }
+  if (!/filterBar=\{[\s\S]{0,200}<CollapsedListFilters/.test(pageCode)) {
+    problems.push(`${PARTS_STOCK_PAGE}: governed Filters control must be mounted in the ParityTable toolbar`);
+  }
+  if (!/stockFilter === "reorder"[\s\S]{0,100}partNeedsReorder/.test(pageCode)) {
+    problems.push(`${PARTS_STOCK_PAGE}: stock-state filter must use the canonical reorder predicate`);
+  }
 
   if (!/listMaintenanceParts/.test(api)) {
     problems.push(`${MAINTENANCE_API}: must export listMaintenanceParts`);
@@ -113,7 +122,19 @@ if (SELFTEST) {
     for (const p of live) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  const chromeMutations = [
+    files[PARTS_STOCK_PAGE].replace("onApply={stagedFilters.apply}", "onApply={() => {}}"),
+    files[PARTS_STOCK_PAGE].replace("filterBar={", "filtersDetached={"),
+    files[PARTS_STOCK_PAGE].replace('stockFilter === "reorder"', 'stockFilter === "broken"'),
+  ];
+  for (const [index, source] of chromeMutations.entries()) {
+    const result = collectProblems({ ...files, [PARTS_STOCK_PAGE]: source });
+    if (!result.length) {
+      console.error(`${LABEL} SELFTEST FAIL — chrome mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} SELFTEST PASS — canonical path plus 3 filter-chrome mutations rejected`);
   process.exit(0);
 }
 
