@@ -8,6 +8,7 @@
  * LV-LEGAL-MATTERS-FILTER-LEAF-THEATER
  * LV-TASKS-REPORT-FILTER-PANEL-ABSENT
  * LV-SAFETY-ANOMALIES-FILTER-LEAF-THEATER
+ * LV-DOCS-FILTER-LEAF-THEATER
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -58,6 +59,11 @@ const SURFACES = [
     id: "safety-anomalies",
     file: "apps/frontend/src/pages/safety/tabs/AnomaliesTab.tsx",
     route: "/safety/integrity-reports",
+  },
+  {
+    id: "docs-home",
+    file: "apps/frontend/src/pages/docs/DocsHomePage.tsx",
+    route: "/docs",
   },
 ];
 
@@ -148,6 +154,16 @@ export function collectFailures(sources) {
   if (!/testIdPrefix="anomalies"/.test(anomalies) && !/data-anomalies-filter-toolbar/.test(anomalies)) {
     failures.push("safety-anomalies: Filters panel must use anomalies testId/data attribute");
   }
+  const docsReq = sources["docs/specs/scoreboard/modules/docs.required.json"] ?? "";
+  if (docsReq) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/docs\/DocsHomePage\.tsx"/.test(docsReq)) {
+      failures.push("docs.required.json: chrome.toolbar_filter surface_path must be DocsHomePage.tsx");
+    }
+  }
+  const docs = sources[SURFACES[8].file] ?? "";
+  if (!/testIdPrefix="docs"/.test(docs) && !/data-docs-filter-toolbar/.test(docs)) {
+    failures.push("docs-home: Filters panel must use docs testId/data attribute");
+  }
 
   return failures;
 }
@@ -165,6 +181,9 @@ function load() {
   );
   map["docs/specs/scoreboard/modules/safety.required.json"] = read(
     "docs/specs/scoreboard/modules/safety.required.json",
+  );
+  map["docs/specs/scoreboard/modules/docs.required.json"] = read(
+    "docs/specs/scoreboard/modules/docs.required.json",
   );
   return map;
 }
@@ -217,6 +236,10 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         "docs/specs/scoreboard/modules/safety.required.json"
       ].replaceAll('"/safety/integrity-reports"', '"/safety"'),
     }),
+    () => ({
+      ...sources,
+      [SURFACES[8].file]: sources[SURFACES[8].file].replaceAll("CollapsedListFilters", "BrokenFilters"),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -226,4 +249,4 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   console.log(`PASS: ${mutations.length} planted missing-Filters-panel defects were rejected`);
 }
 
-console.log("PASS: program/system/cash-flow/insurance/drivers/legal/tasks/safety exact filter panels mount CollapsedListFilters + staged Apply");
+console.log("PASS: program/system/cash-flow/insurance/drivers/legal/tasks/safety/docs exact filter panels mount CollapsedListFilters + staged Apply");

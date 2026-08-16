@@ -330,7 +330,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/docs/DocsHomePage.tsx"
     }
   ],
   "honesty_audit": {
