@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-15T20:53:54-05:00",
-    "sourceSha": "583a5962f",
-    "deployedSha": "e9d7eab",
+    "generatedAt": "2026-08-15T21:07:24-05:00",
+    "sourceSha": "07713ba73",
+    "deployedSha": "c6907ee",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 844,
+    "ledgerRows": 845,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 7649,
-      "title": "FINDING: CLAIM-RESERVE-3608",
+      "number": 7659,
+      "title": "FINDING: LV-OPERATOR-COPY-DEPLOY-RECHECK",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7649",
-      "sha": "10a8272a6",
-      "committedAtIso": "2026-08-15T20:54:42-05:00"
+      "mergedAtCt": "08/15/2026, 09:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7659",
+      "sha": "07713ba73",
+      "committedAtIso": "2026-08-15T21:07:24-05:00"
     },
     {
-      "number": 7648,
-      "title": "FINDING: CLS-OPERATOR-COPY-INTERNAL-MODEL-JARGON-NONMONEY-CLOSEOUT",
+      "number": 7658,
+      "title": "FINDING: LV-DRIVER-CREATE-IS-NOT-A-WIZARD-AND-HIDES-EXISTING-COLUMNS",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7648",
-      "sha": "583a5962f",
-      "committedAtIso": "2026-08-15T20:53:54-05:00"
+      "mergedAtCt": "08/15/2026, 09:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7658",
+      "sha": "8cf9b4e09",
+      "committedAtIso": "2026-08-15T21:07:02-05:00"
     },
     {
-      "number": 7647,
-      "title": "FINDING: REG-LV-DRIVER-DETAIL-PAGE-CRASHES — register ☐→☑; getDriver envelope unwrap already on main (#4758)",
+      "number": 7657,
+      "title": "FINDING: CLAIM-RESERVE-3614",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7647",
-      "sha": "e74ebaeb3",
-      "committedAtIso": "2026-08-15T20:53:10-05:00"
+      "mergedAtCt": "08/15/2026, 09:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7657",
+      "sha": "c6907ee76",
+      "committedAtIso": "2026-08-15T21:03:45-05:00"
     },
     {
-      "number": 7646,
-      "title": "FINDING: REG-CAT500-BLOCKACCEPT — register ☐→☑ for LV-CAT-500 + LV-BLOCKACCEPT; close stale OPEN twin",
+      "number": 7656,
+      "title": "FINDING: REG-LV-WO-CREATE-500-PR-NUMBER",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7646",
-      "sha": "c0130d979",
-      "committedAtIso": "2026-08-15T20:51:37-05:00"
+      "mergedAtCt": "08/15/2026, 09:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7656",
+      "sha": "123f741f0",
+      "committedAtIso": "2026-08-15T21:02:21-05:00"
     },
     {
-      "number": 7645,
-      "title": "FINDING: REG-SPAWN-SEND-UNASSIGNED — close stale SPAWN OPEN twin; register ☑ SEND-NOREASON + LOAD-UNASSIGNED (+ spawn evidence)",
+      "number": 7655,
+      "title": "FINDING: REG-LV-WO-CREATE-500-OPENED-AT",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7645",
-      "sha": "e9d7eab85",
-      "committedAtIso": "2026-08-15T20:50:23-05:00"
+      "mergedAtCt": "08/15/2026, 09:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7655",
+      "sha": "8bdaff8ac",
+      "committedAtIso": "2026-08-15T21:01:45-05:00"
     },
     {
-      "number": 7644,
-      "title": "FINDING: CLS-OPERATOR-COPY-INTERNAL-MODEL-JARGON-NONMONEY",
+      "number": 7654,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7644",
-      "sha": "3a1de5e78",
-      "committedAtIso": "2026-08-15T20:50:02-05:00"
+      "mergedAtCt": "08/15/2026, 09:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7654",
+      "sha": "71d699d35",
+      "committedAtIso": "2026-08-15T21:01:21-05:00"
     },
     {
-      "number": 7643,
-      "title": "FINDING: LV-OUTBOX-ERRCOL — success delivery wrote result.message into last_error (destroyed failure diagnosis); register LV-WO-NOSAVE",
+      "number": 7653,
+      "title": "FINDING: CLAIM-RESERVE-3612",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7643",
-      "sha": "89d235feb",
-      "committedAtIso": "2026-08-15T20:49:03-05:00"
+      "mergedAtCt": "08/15/2026, 09:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7653",
+      "sha": "52ffd3c34",
+      "committedAtIso": "2026-08-15T21:00:56-05:00"
     },
     {
-      "number": 7642,
-      "title": "FINDING: CLAIM-RESERVE — verify-step 3606 for LV-OUTBOX-ERRCOL success-must-not-write-last_error",
+      "number": 7652,
+      "title": "FINDING: LV-DRIVER-CREATE-AUTO-SENDS-WHATSAPP-INVITE",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7642",
-      "sha": "42bd86e24",
-      "committedAtIso": "2026-08-15T20:47:53-05:00"
+      "mergedAtCt": "08/15/2026, 08:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7652",
+      "sha": "61bbc8661",
+      "committedAtIso": "2026-08-15T20:59:40-05:00"
     },
     {
-      "number": 7641,
-      "title": "FINDING: LV-STOPS-NOSAVE — Save stops looked inert / ZIP never persisted; list ignored soft-deleted stops after replace",
+      "number": 7651,
+      "title": "FINDING: CLAIM-RESERVE-3610",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7641",
-      "sha": "1b73b2940",
-      "committedAtIso": "2026-08-15T20:46:39-05:00"
+      "mergedAtCt": "08/15/2026, 08:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7651",
+      "sha": "108efb62d",
+      "committedAtIso": "2026-08-15T20:58:42-05:00"
     },
     {
-      "number": 7640,
-      "title": "FINDING: CLAIM-RESERVE — verify-step 3604 for LV-STOPS-NOSAVE save wiring guard",
+      "number": 7650,
+      "title": "FINDING: LV-DRIVER-DOB-SILENTLY-DROPPED",
       "state": "merged",
-      "mergedAtCt": "08/15/2026, 08:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7640",
-      "sha": "d5ee0f275",
-      "committedAtIso": "2026-08-15T20:44:37-05:00"
+      "mergedAtCt": "08/15/2026, 08:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7650",
+      "sha": "ba22a2f15",
+      "committedAtIso": "2026-08-15T20:57:15-05:00"
     }
   ]
 }
