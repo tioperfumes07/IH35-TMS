@@ -6,7 +6,7 @@ import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../../api/catalogs";
 import { ApiError } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { confirmUpload, requestUploadUrl, uploadFileToR2 } from "../../api/docs";
+import { confirmUpload, listFileCategories, requestUploadUrl, uploadFileToR2 } from "../../api/docs";
 import {
   checkReturningDriver,
   createDriver,
@@ -52,7 +52,16 @@ const DRIVER_CREATE_WIZARD_STEPS = [
   { id: 4, label: "DQ docs & drug screen" },
 ] as const;
 
-type PendingDriverDocKey = "cdl" | "medical" | "identity";
+/** LV-DOC-CATEGORIES — DQ upload slots map to catalogs.file_categories.code (seeded + US CDL/medical). */
+const DRIVER_CREATE_DOC_CATEGORY_CODES = {
+  identity: "identity_document",
+  mexican_federal_license: "mexican_federal_license",
+  passport: "passport",
+  cdl: "cdl",
+  medical: "medical_card",
+} as const;
+
+type PendingDriverDocKey = keyof typeof DRIVER_CREATE_DOC_CATEGORY_CODES;
 
 function normalizePhoneDigits(value: string) {
   return value.replace(/\D/g, "").slice(-10);
@@ -191,6 +200,18 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const [wizardStep, setWizardStep] = useState(1);
   const [drugScreenAcknowledged, setDrugScreenAcknowledged] = useState(false);
   const [pendingDocs, setPendingDocs] = useState<Partial<Record<PendingDriverDocKey, File>>>({});
+  const fileCategoriesQuery = useQuery({
+    queryKey: ["file-categories", "driver-create"],
+    queryFn: () => listFileCategories("driver").then((result) => result.categories.filter((c) => c.is_active)),
+    enabled: open,
+  });
+  const categoryIdByCode = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const cat of fileCategoriesQuery.data ?? []) {
+      map.set(cat.code, cat.id);
+    }
+    return map;
+  }, [fileCategoriesQuery.data]);
   const [showMexicanIdentity, setShowMexicanIdentity] = useState(true);
   const [showVisaEmergency, setShowVisaEmergency] = useState(true);
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
@@ -368,11 +389,14 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       for (const [key, file] of Object.entries(pendingDocs) as Array<[PendingDriverDocKey, File]>) {
         if (!file) continue;
         try {
+          const code = DRIVER_CREATE_DOC_CATEGORY_CODES[key];
+          const categoryId = categoryIdByCode.get(code);
           const { file_id, presigned_url } = await requestUploadUrl({
             original_filename: file.name,
             mime_type: file.type || "application/octet-stream",
             size_bytes: file.size,
             operating_company_id: opco || undefined,
+            category_id: categoryId,
             entity_links: [{ entity_type: "driver", entity_id: created.id }],
           });
           await uploadFileToR2(presigned_url, file, file.type || "application/octet-stream");
@@ -938,9 +962,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             </label>
             {(
               [
-                ["cdl", "CDL / Licencia Federal scan"],
+                ["identity", "INE / voter ID"],
+                ["mexican_federal_license", "Licencia Federal (MX)"],
+                ["passport", "Passport"],
+                ["cdl", "US CDL scan"],
                 ["medical", "DOT medical card"],
-                ["identity", "INE / passport / identity"],
               ] as const
             ).map(([key, label]) => (
               <div key={key} className="flex flex-col gap-1">
