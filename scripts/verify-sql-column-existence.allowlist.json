@@ -25,7 +25,6 @@
     "apps/backend/src/integrations/relay-payments/relay-wallet-balance-control.service.ts#fuel.fuel_transactions.total_amount_cents",
     "apps/backend/src/integrity/anomaly-detector.service.ts#mdata.drivers.active",
     "apps/backend/src/integrity/driver-metrics.service.ts#mdata.drivers.active",
-    "apps/backend/src/kpi/canonical-kpis.ts#maintenance.work_orders.due_date",
     "apps/backend/src/maintenance/work-orders.routes.ts#accounting.expenses.revoked_at",
     "apps/backend/src/mdata/equipment-aggregate.service.ts#mdata.loads.assigned_primary_unit_id",
     "apps/backend/src/notifications/dispatcher.ts#identity.users.uuid",

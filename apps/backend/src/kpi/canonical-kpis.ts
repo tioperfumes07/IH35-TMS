@@ -86,17 +86,26 @@ export async function countPmDueAlerts(client: Queryable, operatingCompanyId: st
   return Number(res.rows[0]?.count ?? 0);
 }
 
-/** Work orders past due date — Maintenance "Past Due" + Home/Reports maint_past_due. */
+/**
+ * Open work orders whose canonical PM alert was triggered before today — Maintenance "Past Due"
+ * + Home/Reports maint_past_due.
+ *
+ * `maintenance.work_orders` deliberately has no `due_date`. PM due state belongs to the append-only
+ * `maintenance.pm_alerts` ledger; `scheduled_work_order_id` is its canonical forward link to the WO.
+ */
 export async function countPastDueMaintenanceWorkOrders(client: Queryable, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ count: number }>(
     `
-      SELECT count(*)::int AS count
+      SELECT count(DISTINCT w.id)::int AS count
       FROM maintenance.work_orders w
+      JOIN maintenance.pm_alerts pa
+        ON pa.scheduled_work_order_id = w.id
+       AND pa.operating_company_id = w.operating_company_id
       WHERE w.operating_company_id = $1::uuid
         AND w.voided_at IS NULL
         AND w.status NOT IN ('complete', 'cancelled', 'completed')
-        AND w.due_date IS NOT NULL
-        AND w.due_date < CURRENT_DATE
+        AND pa.state IN ('open', 'acknowledged', 'scheduled')
+        AND pa.triggered_at < CURRENT_DATE
     `,
     [operatingCompanyId]
   );
