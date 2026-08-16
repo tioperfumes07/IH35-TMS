@@ -109,7 +109,7 @@ WHERE c.code = 'USMCA'
   -- INSERT still lands there.
   AND EXISTS (
     SELECT 1
-    FROM factoring.factor_profiles p
+    FROM factoring.factor p
     WHERE p.id = '40b3690b-f1d4-44b4-90cf-c1cfd4f79c33'::uuid
   )
 ON CONFLICT (id) DO NOTHING;
