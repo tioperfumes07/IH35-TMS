@@ -16,7 +16,7 @@ from **NOT-BUILT**. "No postings" alone is not proof of "not built."
 
 ## block-22 — Driver Settlement Engine
 - **Files:** `apps/backend/src/payroll/driver-settlement.service.ts` (+ `__tests__/driver-settlement.test.ts`)
-- **Tables:** `driver_finance.settlement_lines` → `driver_finance.driver_settlements` (per §4; no `load_id`)
+- **Tables:** `driver_finance.settlement_lines` → `driver_finance.driver_settlements` (per §4; **`load_id` EXISTS** on settlement_lines)
 - **Verify:** service on main? settlement→JE posting path? any `source_transaction_type='settlement'` posting (expect none → BUILT-BUT-NEVER-RUN if code present).
 
 ## block-23 — Escrow Posting Flow
