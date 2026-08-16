@@ -14,10 +14,8 @@ import {
   type TaskType,
 } from "../../api/tasks";
 import { listAssignableUsers } from "../../api/identity";
-import { listCustomers } from "../../api/mdata";
 import { Combobox } from "../Combobox";
 import { EntityPicker } from "../parity/EntityPicker";
-import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -91,8 +89,6 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   const [anticipatedCategory, setAnticipatedCategory] = useState("");
   const [entityKind, setEntityKind] = useState<TaskTargetType | "">("");
   const [entityId, setEntityId] = useState("");
-  // SAF-B29: customer is not on EntityPicker yet — ReferenceSelect + server search (prod ~2.7k).
-  const [customerSearch, setCustomerSearch] = useState("");
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
 
@@ -112,22 +108,6 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
     enabled: open && Boolean(operatingCompanyId),
   });
   const profiles = profilesQuery.data?.types ?? [];
-
-  // Customer link: server search (EntityPicker has no customer kind; ReferenceSelect createKind=customer).
-  const customersQuery = useQuery({
-    queryKey: ["task-entity", "customer", operatingCompanyId, customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: operatingCompanyId,
-        limit: customerSearch ? 200 : 500,
-        search: customerSearch || undefined,
-      }),
-    enabled: open && entityKind === "customer" && Boolean(operatingCompanyId),
-  });
-  const customerOptions = useMemo(
-    () => (customersQuery.data?.customers ?? []).map((c) => ({ value: c.id, label: c.name })),
-    [customersQuery.data?.customers]
-  );
 
   // When a profile is chosen, adopt its category and suggest an alarm from its lead days + due date.
   const applyProfile = (p: TaskType | undefined) => {
@@ -154,7 +134,6 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
     setAnticipatedCategory("");
     setEntityKind("");
     setEntityId("");
-    setCustomerSearch("");
     setShowAddProfile(false);
     setNewProfileName("");
   };
@@ -359,7 +338,6 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                 onChange={(e) => {
                   setEntityKind(e.target.value as TaskTargetType | "");
                   setEntityId("");
-                  setCustomerSearch("");
                 }}
               >
                 <option value="">None</option>
@@ -375,29 +353,14 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                   <select id="create-task-entity-id" className={inputCls} disabled value="">
                     <option value="">Pick a type first</option>
                   </select>
-                ) : entityKind === "customer" ? (
-                  <ReferenceSelect
-                    id="create-task-entity-id"
-                    value={entityId || null}
-                    onChange={(next) => setEntityId(next ?? "")}
-                    options={customerOptions}
-                    createKind="customer"
-                    operatingCompanyId={operatingCompanyId}
-                    placeholder="Select customer…"
-                    onSearch={setCustomerSearch}
-                    loading={customersQuery.isLoading}
-                    onOptionCreated={(opt) => {
-                      void queryClient.invalidateQueries({ queryKey: ["task-entity", "customer", operatingCompanyId] });
-                      setEntityId(opt.value);
-                    }}
-                  />
                 ) : (
                   <EntityPicker
-                    kind={entityKind as "vendor" | "driver" | "unit" | "load"}
+                    kind={entityKind as "customer" | "vendor" | "driver" | "unit" | "load"}
                     operatingCompanyId={operatingCompanyId}
                     value={entityId || null}
                     onChange={(next) => setEntityId(next ?? "")}
                     enabled={open}
+                    allowCreate={entityKind === "customer" || entityKind === "vendor"}
                     placeholder={`Select ${entityKind}…`}
                     dataTestId={`create-task-entity-${entityKind}`}
                   />
