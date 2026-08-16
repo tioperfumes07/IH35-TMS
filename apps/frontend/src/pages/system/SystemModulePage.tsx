@@ -280,12 +280,12 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
         </Row>
         <Row label="Deploy parity">
           {(() => {
-            // B-B: frontend is a separate Render static deploy that can lag the backend. Surface a stale
-            // frontend here (previously invisible). Only compare when both are real shas.
+            // Frontend and backend deploy independently. Two unequal SHAs prove drift, but they do not
+            // prove which service is behind without a third authoritative main-HEAD value. Stay honest.
             const be = health.data?.version;
             if (!be || be === "—" || __APP_VERSION__ === "dev") return <Pill tone="neutral">—</Pill>;
             const inSync = be === __APP_VERSION__;
-            return <Pill tone={inSync ? "ok" : "off"}>{inSync ? "IN SYNC" : "FRONTEND STALE"}</Pill>;
+            return <Pill tone={inSync ? "ok" : "off"}>{inSync ? "IN SYNC" : "DEPLOY MISMATCH"}</Pill>;
           })()}
         </Row>
         <Row label="Service health">
