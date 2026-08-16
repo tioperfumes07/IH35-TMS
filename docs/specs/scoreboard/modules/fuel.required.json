@@ -300,10 +300,10 @@
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
-      "route_hint": "/fuel",
+      "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/fuel/card-overage/CardOverageQueuePage.tsx"
     }
   ],
   "honesty_audit": {

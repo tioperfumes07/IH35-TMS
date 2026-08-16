@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import type { HistoryReportRow } from "../types";
 
 type Props = {
@@ -15,7 +16,21 @@ function periodLabel(value: string) {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
+const STATUS_OPTIONS: Array<HistoryReportRow["status"] | ""> = ["", "draft", "ready_to_file", "filed", "amended"];
+
 export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
+  const [statusFilter, setStatusFilter] = useState<HistoryReportRow["status"] | "">("");
+  const staged = useStagedListFilters({
+    applied: { statusFilter },
+    empty: { statusFilter: "" as HistoryReportRow["status"] | "" },
+    onApply: (next) => setStatusFilter(next.statusFilter),
+  });
+
+  const filtered = useMemo(() => {
+    if (!statusFilter) return reports;
+    return reports.filter((r) => r.status === statusFilter);
+  }, [reports, statusFilter]);
+
   const columns = useMemo<ParityColumn<HistoryReportRow>[]>(
     () => [
       { key: "reporting_month", label: "Reporting Month", sortable: true, render: (r) => periodLabel(r.reporting_month) },
@@ -50,12 +65,40 @@ export function HistoryTab({ reports, loading, onOpen, onAmend }: Props) {
       <div className="rounded-sm border bg-white">
         <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Filing History</div>
         <ParityTable
-          rows={reports}
+          rows={filtered}
           columns={columns}
           rowKey={(r) => r.id}
           loading={loading}
           storageKey="form425c-history"
           emptyText="No reports found."
+          filterBar={
+            <CollapsedListFilters
+              activeFilterCount={statusFilter ? 1 : 0}
+              onApply={staged.apply}
+              onReset={staged.reset}
+              onCancel={staged.cancel}
+              applyDisabled={!staged.dirty}
+              testIdPrefix="form425c-history"
+              dataAttributes={{ "data-form425c-history-filter-toolbar": "collapsed" }}
+            >
+              <label className="text-sm text-gray-700">
+                Status{" "}
+                <select
+                  className="ml-1 rounded-sm border px-2 py-1"
+                  value={staged.draft.statusFilter}
+                  onChange={(e) =>
+                    staged.setDraft({ statusFilter: e.target.value as HistoryReportRow["status"] | "" })
+                  }
+                >
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s || "all"} value={s}>
+                      {s || "All"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </CollapsedListFilters>
+          }
         />
       </div>
     </div>

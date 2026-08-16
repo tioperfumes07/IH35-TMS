@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { fetchFilingsDashboard, type FilingItem, type FilingStatus } from "../../api/compliance";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 type Props = {
   operatingCompanyId: string;
@@ -41,12 +42,14 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
   const [statusFilter, setStatusFilter] = useState<FilingStatus | "">("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [filterText, setFilterText] = useState("");
-  const [debouncedFilter, setDebouncedFilter] = useState("");
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedFilter(filterText), 200);
-    return () => clearTimeout(t);
-  }, [filterText]);
+  const staged = useStagedListFilters({
+    applied: { categoryFilter, filterText },
+    empty: { categoryFilter: "", filterText: "" },
+    onApply: (next) => {
+      setCategoryFilter(next.categoryFilter);
+      setFilterText(next.filterText);
+    },
+  });
 
   const dashboardQ = useQuery({
     queryKey: ["compliance-filings-dashboard", operatingCompanyId],
@@ -64,8 +67,8 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
     let rows = items;
     if (statusFilter) rows = rows.filter((r) => r.status === statusFilter);
     if (categoryFilter) rows = rows.filter((r) => r.program === categoryFilter);
-    if (debouncedFilter.trim()) {
-      const needle = debouncedFilter.trim().toLowerCase();
+    if (filterText.trim()) {
+      const needle = filterText.trim().toLowerCase();
       rows = rows.filter((r) => `${r.program} ${r.detail} ${r.entity_code}`.toLowerCase().includes(needle));
     }
     // Default order (before any column-header sort) matches the prior default: due date ascending.
@@ -74,7 +77,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
       const db = b.due_date ? new Date(b.due_date).getTime() : Number.POSITIVE_INFINITY;
       return da - db;
     });
-  }, [items, statusFilter, categoryFilter, debouncedFilter]);
+  }, [items, statusFilter, categoryFilter, filterText]);
 
   const filingColumns = useMemo<ParityColumn<FilingItem>[]>(
     () => [
@@ -154,30 +157,40 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
         exportFilename="filings-compliance-due"
         tableTestId="compliance-filings-due-table"
         filterBar={
-          <div className="relative flex flex-wrap items-center gap-3">
-            <input
-              type="text"
-              placeholder="Filter by program, entity, detail…"
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              className="rounded-sm border px-2 py-1 text-sm"
-            />
-            <label className="text-sm">
-              Program{" "}
-              <select
-                className="ml-1 rounded-sm border px-2 py-1"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="">All</option>
-                {programs.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <CollapsedListFilters
+            activeFilterCount={(categoryFilter ? 1 : 0) + (filterText.trim() ? 1 : 0)}
+            onApply={staged.apply}
+            onReset={staged.reset}
+            onCancel={staged.cancel}
+            applyDisabled={!staged.dirty}
+            testIdPrefix="compliance-filings"
+            dataAttributes={{ "data-compliance-filings-filter-toolbar": "collapsed" }}
+          >
+            <div className="relative flex flex-wrap items-center gap-3">
+              <input
+                type="text"
+                placeholder="Filter by program, entity, detail…"
+                value={staged.draft.filterText}
+                onChange={(e) => staged.setDraft({ ...staged.draft, filterText: e.target.value })}
+                className="rounded-sm border px-2 py-1 text-sm"
+              />
+              <label className="text-sm">
+                Program{" "}
+                <select
+                  className="ml-1 rounded-sm border px-2 py-1"
+                  value={staged.draft.categoryFilter}
+                  onChange={(e) => staged.setDraft({ ...staged.draft, categoryFilter: e.target.value })}
+                >
+                  <option value="">All</option>
+                  {programs.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </CollapsedListFilters>
         }
       />
       </>

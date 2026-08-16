@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -9,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 function formatMoney(value: number | null | undefined) {
   return `$${Number(value ?? 0).toFixed(2)}`;
@@ -38,7 +40,30 @@ export function InventoryAssignmentsPage() {
   });
 
   // Search is ONLY the canonical ParityTable UniversalListToolbar (LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH).
-  const rows = assignmentsQuery.data ?? [];
+  const allRows = assignmentsQuery.data ?? [];
+  const [vendorFilter, setVendorFilter] = useState("");
+  const [unitLinkedOnly, setUnitLinkedOnly] = useState(false);
+  const staged = useStagedListFilters({
+    applied: { vendorFilter, unitLinkedOnly },
+    empty: { vendorFilter: "", unitLinkedOnly: false },
+    onApply: (next) => {
+      setVendorFilter(next.vendorFilter);
+      setUnitLinkedOnly(next.unitLinkedOnly);
+    },
+  });
+  const vendorOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(allRows.map((r) => (r.vendor_name ?? "").trim()).filter(Boolean)),
+      ).sort((a, b) => a.localeCompare(b)),
+    [allRows],
+  );
+  const rows = useMemo(() => {
+    let next = allRows;
+    if (vendorFilter) next = next.filter((r) => (r.vendor_name ?? "") === vendorFilter);
+    if (unitLinkedOnly) next = next.filter((r) => Boolean(r.unit_id));
+    return next;
+  }, [allRows, vendorFilter, unitLinkedOnly]);
 
   const columns: Array<ParityColumn<PartsAssignmentRow>> = [
     {
@@ -155,6 +180,43 @@ export function InventoryAssignmentsPage() {
             emptyText="No part assignments yet. Parts linked on a work order appear here (qty used → unit via WO)."
             storageKey="inventory-assignments-trail"
             exportFilename="inventory-assignments"
+            filterBar={
+              <CollapsedListFilters
+                activeFilterCount={(vendorFilter ? 1 : 0) + (unitLinkedOnly ? 1 : 0)}
+                onApply={staged.apply}
+                onReset={staged.reset}
+                onCancel={staged.cancel}
+                applyDisabled={!staged.dirty}
+                testIdPrefix="inventory-assignments"
+                dataAttributes={{ "data-inventory-assignments-filter-toolbar": "collapsed" }}
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="text-sm text-gray-700">
+                    Vendor{" "}
+                    <select
+                      className="ml-1 rounded-sm border px-2 py-1"
+                      value={staged.draft.vendorFilter}
+                      onChange={(e) => staged.setDraft({ ...staged.draft, vendorFilter: e.target.value })}
+                    >
+                      <option value="">All</option>
+                      {vendorOptions.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={staged.draft.unitLinkedOnly}
+                      onChange={(e) => staged.setDraft({ ...staged.draft, unitLinkedOnly: e.target.checked })}
+                    />
+                    Unit linked only
+                  </label>
+                </div>
+              </CollapsedListFilters>
+            }
           />
         </div>
       )}
