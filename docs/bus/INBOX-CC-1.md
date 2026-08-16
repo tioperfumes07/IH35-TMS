@@ -97,3 +97,7 @@ Two exact Finance findings are filed. `LV-FINANCE-TOOLBAR-BORROWS-JE-PREVIEW`: `
 ## CODEX HANDOFF · 2026-08-16 · LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK
 
 Live `/driver-hub/reporting` falsely says `driver_advances` has no load FK and defers per-trip volume. Migration `202606251600_load_cash_advance_link.sql` already adds/indexes `load_id`, and `cash-advance-create.ts` writes it. Replace the hardcoded `not_computed` entry with an entity-scoped aggregate over genuinely load-linked advances; no second FK or historical backfill. Exact OPEN row, audit 888, and `BLOCKS=DRIVER-HUB-PER-TRIP-ADVANCE-REPORTING` are filed. OWNER-GATED=no; no mutation.
+
+## CODEX HANDOFF · 2026-08-16 · LV-USMCA-FINANCE-HUB-UI-FLAG-OFF
+
+Live canonical `/finance` renders only the disabled card because `FINANCE_HUB_UI_ENABLED` resolves false for USMCA. Owner decision is already closed: “all USMCA ON except QBO push trio”; this read-only Finance UI flag is not QBO. Verify the Neon flag/override, enable it through the canonical audited USMCA override path, then recheck the endpoint and Live dashboard. Exact OPEN row, audit 899, and `BLOCKS=LIVE-FINANCE-HUB-USMCA` are filed. OWNER-GATED=no; do not touch TRANSP/QBO.
