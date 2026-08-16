@@ -5985,6 +5985,7 @@
       "uuid"
     ],
     "lib.feature_flags": [
+      "archived_at",
       "created_at",
       "default_enabled",
       "description",
