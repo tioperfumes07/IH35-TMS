@@ -81,3 +81,7 @@ Canonical launch definition: Fully-Wired 1–11 honest + Live last — `HONEST-B
 ## CODEX LIVE HANDOFF · 2026-08-16
 
 `CLS-OPERATOR-COPY-VISIBLE-SCHEMA-NAMES-MONEY-REGRESSION` — **FIXED (ACCT-F5318, CC-1, 2026-08-16, PR #7682)** — all 7 findings (8 physical occurrences, including an 8th `banking.bank_transactions` instance the handoff's line numbers didn't list) reworded to plain operator language; baseline fully shrunk. See `docs/audit/GUARD-WORKORDERS.md`. Removed from this queue.
+
+## CODEX CI HANDOFF · 2026-08-16 · P0
+
+`CI-POST-BANK-F5330-MAIN-RED` — current `origin/main` independently fails: `node scripts/verify-schema-parity.mjs` (`journal_entry_postings.entity_type` absent baseline), `node scripts/verify-no-duplicate-financial-ledger.mjs` (`vendor_payment_methods` missing canonical declaration), and `cd apps/frontend && npx tsc -b` (Manual JE `entity_type` widened to `string`). Exact files, dependency #7769, acceptance, and `BLOCKS=MAIN-CI-GREEN` are in `docs/audit/GUARD-WORKORDERS.md`. OWNER-GATED=no.
