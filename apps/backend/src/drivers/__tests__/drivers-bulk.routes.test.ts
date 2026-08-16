@@ -35,6 +35,7 @@ describe("drivers bulk-update route", () => {
 
   it("registers route from mdata module and archives without delete", () => {
     expect(routes).toMatch(/archived_at = COALESCE\(archived_at, now\(\)\)/);
+    expect(routes).toMatch(/deactivated_at = COALESCE\(deactivated_at, now\(\)\)/);
     expect(routes).toMatch(/appendBulkCrudAudit/);
     expect(mdataIndex).toMatch(/registerDriversBulkRoutes/);
   });

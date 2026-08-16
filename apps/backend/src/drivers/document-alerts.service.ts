@@ -154,6 +154,7 @@ async function loadExpiryCandidates(
         WHERE d.operating_company_id = $1::uuid
           AND d.cdl_expires_at IS NOT NULL
           AND d.deactivated_at IS NULL
+          AND d.archived_at IS NULL
       `,
       [operatingCompanyId]
     );
@@ -184,6 +185,7 @@ async function loadExpiryCandidates(
         WHERE d.operating_company_id = $1::uuid
           AND COALESCE(mc.expiry_date, d.dot_medical_expires_at) IS NOT NULL
           AND d.deactivated_at IS NULL
+          AND d.archived_at IS NULL
       `,
       [operatingCompanyId]
     );
@@ -208,6 +210,7 @@ async function loadExpiryCandidates(
           AND tr.expiry_date IS NOT NULL
           AND tr.voided_at IS NULL
           AND d.deactivated_at IS NULL
+          AND d.archived_at IS NULL
       `,
       [operatingCompanyId]
     );
@@ -232,6 +235,7 @@ async function loadExpiryCandidates(
           AND q.expiry_date IS NOT NULL
           AND q.voided_at IS NULL
           AND d.deactivated_at IS NULL
+          AND d.archived_at IS NULL
       `,
       [operatingCompanyId]
     );
@@ -260,6 +264,7 @@ async function loadExpiryCandidates(
           AND f.operating_company_id = $1::uuid
           AND f.expiration_date IS NOT NULL
           AND d.deactivated_at IS NULL
+          AND d.archived_at IS NULL
       `,
       [operatingCompanyId]
     );
@@ -302,6 +307,7 @@ async function loadExpiryCandidates(
         WHERE d.operating_company_id = $1::uuid
           AND d.hazmat_endorsement_expires_at IS NOT NULL
           AND d.deactivated_at IS NULL
+          AND d.archived_at IS NULL
       `,
       [operatingCompanyId]
     );
