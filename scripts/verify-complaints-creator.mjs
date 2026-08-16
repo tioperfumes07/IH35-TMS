@@ -78,8 +78,11 @@ if (!/respondent_type/.test(src) || !/respondent_user_id/.test(src)) {
 if (!/\blistAssignableUsers\b/.test(src)) {
   failures.push("employee identity must use listAssignableUsers — not a raw UUID text box.");
 }
-if (!/\blistCustomers\b/.test(src) || !/complainant_customer_id/.test(src)) {
-  failures.push("customer complainant must use listCustomers + complainant_customer_id.");
+if (!/EntityPicker[\s\S]*?kind=["']customer["']/.test(src) || !/complainant_customer_id/.test(src)) {
+  failures.push("customer complainant must use EntityPicker kind=customer + complainant_customer_id.");
+}
+if (/\blistCustomers\b/.test(src) || /createKind=["']customer["']/.test(src)) {
+  failures.push("customer complainant must not listCustomers / ReferenceSelect createKind=customer dual-path.");
 }
 
 if (failures.length > 0) {

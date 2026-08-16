@@ -9,7 +9,6 @@ import { ApiError } from "../../../api/client";
 import { createComplaintV64, listComplaints, patchComplaintV64, voidComplaintV64 } from "../../../api/safetyV64";
 import { listComplaintTypes } from "../../../api/catalogs-safety";
 import { listAssignableUsers } from "../../../api/identity";
-import { listCustomers } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
@@ -96,27 +95,6 @@ export function ComplaintsTab() {
     enabled: canCreate,
     staleTime: 60_000,
   });
-
-  const [customerSearch, setCustomerSearch] = useState("");
-  const customersQuery = useQuery({
-    queryKey: ["safety-v64", "complaints-customers", companyId, customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: companyId,
-        limit: customerSearch ? 200 : 500,
-        search: customerSearch || undefined,
-      }),
-    enabled: Boolean(companyId) && canCreate && form.complainant_type === "customer",
-    staleTime: 60_000,
-  });
-
-  const customerOptions = useMemo(
-    () =>
-      (customersQuery.data?.customers ?? [])
-        .map((c) => ({ value: String(c.id), label: entityLabel(c.name, c.id, "Customer") }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [customersQuery.data]
-  );
 
   const complaintTypeByCode = useMemo(() => {
     const map = new Map<string, string>();
@@ -387,28 +365,15 @@ export function ComplaintsTab() {
                 ))}
               </SelectCombobox>
             ) : form.complainant_type === "customer" ? (
-              <>
-                <ReferenceSelect
-                  value={form.complainant_customer_id || null}
-                  onChange={(next) => setForm((v) => ({ ...v, complainant_customer_id: next ?? "" }))}
-                  options={customerOptions}
-                  createKind="customer"
-                  operatingCompanyId={companyId}
-                  placeholder={customersQuery.isLoading ? "Loading customers…" : "Complainant customer"}
-                  loading={customersQuery.isLoading}
-                  onSearch={setCustomerSearch}
-                  onOptionCreated={() => {
-                    void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaints-customers", companyId] });
-                  }}
-                />
-                <CappedListNotice
-                  shown={customerOptions.length}
-                  limit={customerSearch ? 200 : 500}
-                  total={customersQuery.data?.total}
-                  hint="Type to search the full customer catalog."
-                  className="text-xs text-slate-600"
-                />
-              </>
+              <EntityPicker
+                kind="customer"
+                operatingCompanyId={companyId}
+                value={form.complainant_customer_id || null}
+                onChange={(next) => setForm((v) => ({ ...v, complainant_customer_id: next ?? "" }))}
+                enabled={canCreate}
+                allowCreate
+                placeholder="Complainant customer"
+              />
             ) : (
               <input
                 className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
