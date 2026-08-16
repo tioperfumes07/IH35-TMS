@@ -46,7 +46,10 @@ checkFile("PolicyCreateWizard", WIZARD_PATH, [
   ["term_months used", /term_months|termMonths/],
   ["unit_ids used", /unit_ids|unitIds/],
   ["0-unit guard (disabled when 0)", /selectedUnitIds\.length\s*===\s*0/],
-  ["insurer vendor picker (createKind=vendor)", /createKind=["']vendor["']/],
+  // The canonical insurer control migrated from catalog ReferenceSelect to the shared EntityPicker:
+  // it reads/writes mdata.vendors, returns the vendor FK, and owns the nested real vendor creator.
+  ["insurer vendor EntityPicker", /<EntityPicker[\s\S]{0,180}kind=["']vendor["']/],
+  ["insurer nested canonical vendor creator", /<EntityPicker[\s\S]{0,260}kind=["']vendor["'][\s\S]{0,260}allowCreate[\s\S]{0,260}nestedInDrawer/],
   ["insurance_vendor_not_found UX map", /insurance_vendor_not_found/],
 ]);
 
