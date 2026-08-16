@@ -93,6 +93,17 @@ export function collectProblems(files) {
         `${rel}: now mints its asset — remove it from KNOWN_GAPS so the list cannot silently regrow.`
       );
     }
+    if (rel === "apps/backend/src/mdata/units.routes.ts" && mintsAsset) {
+      const scopeCall = "await setScopedCompanyContext(client, authUser.uuid, resolvedLeasedId ?? resolvedOwnerId);";
+      const scopeAt = src.indexOf(scopeCall);
+      const assetAt = src.indexOf("await ensureUnitAsset(client, {");
+      if (scopeAt < 0 || assetAt < 0 || scopeAt > assetAt) {
+        problems.push(
+          `${rel}: canonical unit create must validate and bind the effective operating company before ` +
+            `ensureUnitAsset; mdata.assets is FORCE-RLS and otherwise rejects the live create.`
+        );
+      }
+    }
   }
   return problems;
 }
@@ -128,6 +139,16 @@ function selftest() {
     {
       name: "stale KNOWN_GAPS entry is caught",
       files: [mk("apps/backend/src/seed/csv-seed-import.ts", "INSERT INTO mdata.units (a); INSERT INTO mdata.assets (b)")],
+      expectAtLeast: 1,
+    },
+    {
+      name: "real route without company context before asset mint is caught",
+      files: readTree().map((file) => file.rel === "apps/backend/src/mdata/units.routes.ts"
+        ? { ...file, src: file.src.replace(
+            "await setScopedCompanyContext(client, authUser.uuid, resolvedLeasedId ?? resolvedOwnerId);",
+            "// planted defect: missing company context"
+          ) }
+        : file),
       expectAtLeast: 1,
     },
   ];
