@@ -1,0 +1,33 @@
+{
+  "block_id": "CC1-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "VERTICAL-CONNECTIVITY-HONESTY",
+  "task": "CC-1 batch: settlements + finance chrome.toolbar_search/range/gear connectivity leaves were bound to a shared-primitive/wrong-owner surface (settlements pointed at compatibility-alias route /settlements instead of canonical /driver-finance/settlements; finance named LoanWizardPage's conditional opening-JE preview instead of the real Finance data-list surface ArApAgingPage.tsx). Rebound both modules' EXACT_CONSUMERS in both all-module vertical toolbar guards; finance chrome.toolbar_filter dropped its connectivity claim honestly (no wired Filters panel exists in Finance). Also fixed 4 occurrences of 'owner-gated' operator copy (contradicts the permanent no-holds/no-owner-approval law) and hardened the toolbar guards' planted-mutation selftest, which had a latent no-op for any module whose real route equals bare /module (found while proving the settlements/finance mutations actually run).",
+  "branch": "cc1-ship-final-v5",
+  "lane": "NON-FINANCIAL",
+  "allowed_files": [
+    "docs/specs/scoreboard/modules/settlements.required.json",
+    "docs/specs/scoreboard/modules/finance.required.json",
+    "scripts/verify-all-module-list-toolbar-search-range-filter.mjs",
+    "scripts/verify-all-module-list-toolbar-connectivity.mjs",
+    "scripts/verify-no-internal-language-in-prod-ui.mjs",
+    "apps/frontend/src/pages/finance/LoanWizardPage.tsx",
+    "apps/frontend/src/pages/finance/FinanceHubPage.tsx",
+    "apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx",
+    "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
+    ".block-ready/CC1-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-all-module-list-toolbar-search-range-filter.mjs", "wired_into": "package.json + this branch's --self-test" },
+    { "kind": "guard", "script": "scripts/verify-all-module-list-toolbar-connectivity.mjs", "wired_into": "package.json + this branch's --self-test" },
+    { "kind": "guard", "script": "scripts/verify-no-internal-language-in-prod-ui.mjs", "wired_into": "package.json + this branch's --selftest" },
+    { "kind": "live", "assert": "both toolbar guards --self-test PASS to completion (124 and 78 planted mutations rejected respectively); verify-no-internal-language-in-prod-ui.mjs OK on 1610 files with 0 owner-gated hits; grep -rn owner-gated apps/frontend/src = 0 occurrences repo-wide" }
+  ],
+  "linkage": "No FK/table/route/economics change. Fully-Wired item 6 (matrix columns honest) + item 7 (surface bar exact-owner) honesty fix for settlements + finance connectivity leaves. No product behavior change; matrix/guard/copy honesty only.",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "NON-FINANCIAL — coder ships on green, no owner hold."
+}

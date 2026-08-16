@@ -21,7 +21,7 @@ const EVIDENCE = {
   "driver-hub": ["apps/frontend/src/pages/home/DriverHubReportingPage.tsx", "<ParityTable"],
   drivers: ["apps/frontend/src/pages/drivers/DriversTable.tsx", "<ParityTable"],
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
-  finance: ["apps/frontend/src/pages/finance/LoanWizardPage.tsx", "<ParityTable"],
+  finance: ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", "<ParityTable"],
   fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
   form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
@@ -56,6 +56,7 @@ const EXACT_CONSUMERS = {
   tasks: { route: "/tasks/report", surface: "pages/tasks/TasksReportPage.tsx" },
   users: { route: "/users", surface: "pages/Users.tsx" },
   drivers: { route: "/drivers", surface: "pages/drivers/DriversTable.tsx" },
+  settlements: { route: "/driver-finance/settlements", surface: "pages/driver-finance/components/SettlementsTable.tsx" },
 };
 
 function read() {
@@ -138,7 +139,7 @@ if (process.argv.includes("--self-test")) {
     mutations.push(() => {
       const file = `docs/specs/scoreboard/modules/${module}.required.json`;
       const matrix = JSON.parse(source[file]);
-      matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_gear").route_hint = `/${module}`;
+      matrix.leaves.find((leaf) => leaf.id === "chrome.toolbar_gear").route_hint = `${EXACT_CONSUMERS[module].route}-BROKEN-SELFTEST`;
       return { ...source, [file]: JSON.stringify(matrix) };
     });
   }
