@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T12:52:52-05:00",
-    "sourceSha": "03c4c87a3",
-    "deployedSha": "cce2051",
+    "generatedAt": "2026-08-16T12:58:18-05:00",
+    "sourceSha": "279478bf5",
+    "deployedSha": "1de6756",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 915,
+    "ledgerRows": 916,
     "failOpen": 23,
     "defects": 25
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7881,
+      "title": "Codex-1- fix(maintenance): return real work-order-line UUID",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7881",
+      "sha": "279478bf5",
+      "committedAtIso": "2026-08-16T12:58:18-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 12:54 PM CT",
+      "url": "",
+      "sha": "1de675674",
+      "committedAtIso": "2026-08-16T17:54:04Z"
+    },
+    {
       "number": 7879,
       "title": "Codex-1- fix(home): add staged driver-day Filters panel",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "",
       "sha": "429d7a0ee",
       "committedAtIso": "2026-08-16T12:41:54-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(insurance): LV-INS-POLICY-VENDOR-REVERSE-FILTER-GUARD — p.vendor_id needle + unused imports",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:39 PM CT",
-      "url": "",
-      "sha": "e580e5e03",
-      "committedAtIso": "2026-08-16T12:39:17-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- fix(insurance): LV-INS-POLICY-INSURER-VENDOR-ENTITY-PICKER — capped listVendors residual",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 12:38 PM CT",
-      "url": "",
-      "sha": "1cb55d9cc",
-      "committedAtIso": "2026-08-16T12:38:08-05:00"
     }
   ]
 }
