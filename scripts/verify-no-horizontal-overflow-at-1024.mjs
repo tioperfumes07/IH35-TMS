@@ -21,8 +21,15 @@ const REQUIRED = [
 // was physically unclickable and entities could not be switched at all. The guard was asserting the
 // broken value. Markers now require a stack breakpoint that actually covers 1024px.
 const MARKERS = {
-  "apps/frontend/src/styles/responsive-breakpoints.css": ["max-width: 1023px", "max-width: 1279px"],
-  "apps/frontend/src/components/Topbar.tsx": ["top-bar grid items-center gap-x-3", "gridTemplateColumns). Inline tracks"],
+  "apps/frontend/src/styles/responsive-breakpoints.css": [
+    "max-width: 1023px",
+    "max-width: 1279px",
+    ".top-bar",
+    "minmax(0,",
+  ],
+  // LV-TOPBAR-RESPONSIVE-HORIZONTAL-CLIP: tracks live in responsive-breakpoints.css (NOT inline
+  // gridTemplateColumns / Tailwind max-xl on the header). Assert the CSS owns minmax + stack.
+  "apps/frontend/src/components/Topbar.tsx": ["top-bar", "responsive-breakpoints.css"],
   "apps/frontend/src/components/Sidebar.tsx": ["max-lg:overflow-x-hidden", "sidebar"],
   "apps/frontend/src/components/Modal.tsx": ["min-w-0 flex-1 overflow-x-hidden overflow-y-auto"],
   "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx": [

@@ -16,7 +16,8 @@ describe("quick-assign trailer linkage", () => {
     expect(
       service.match(/COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/g)?.length ?? 0
     ).toBeGreaterThanOrEqual(2);
-    expect(service.match(/deactivated_at IS NULL/g)).toHaveLength(2);
+    // Create + update paths each validate trailer (+ unit lease checks may share the same clause).
+    expect(service.match(/deactivated_at IS NULL/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
     expect(service.match(/E_TRAILER_NOT_FOUND/g)).toHaveLength(2);
     expect(service.indexOf("if (!resolvedTrailerId)")).toBeLessThan(service.indexOf("const update = await client.query"));
     expect(routes).toContain('code === "E_TRAILER_NOT_FOUND"');

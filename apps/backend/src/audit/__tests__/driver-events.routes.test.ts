@@ -92,8 +92,9 @@ describe("driver audit events routes (A24-6)", () => {
       "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       expect.objectContaining({
         actor: "office@ih35.local",
-        status: "void",
-        source: "safety",
+        // commaListSchema turns single query values into string[]
+        status: ["void"],
+        source: ["safety"],
         voids_only: true,
       })
     );

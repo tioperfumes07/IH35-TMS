@@ -99,8 +99,12 @@ if (manualJe.includes("+ Add new account") && manualJe.includes("underline")) {
 }
 
 const itemEditor = read("apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx");
-if (!itemEditor.includes("Preferred vendor") || !/Preferred vendor[\s\S]{0,400}ReferenceSelect[\s\S]{0,200}createKind="vendor"/.test(itemEditor)) {
-  failures.push("ItemEditorModal preferred vendor must use ReferenceSelect createKind=vendor");
+if (
+  !itemEditor.includes("Preferred vendor") ||
+  !/item-preferred-vendor-block[\s\S]{0,900}kind=["']vendor["']/.test(itemEditor) ||
+  !/item-preferred-vendor-block[\s\S]{0,900}allowCreate/.test(itemEditor)
+) {
+  failures.push("ItemEditorModal preferred vendor must use EntityPicker kind=vendor allowCreate");
 }
 
 const createWo = read("apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx");

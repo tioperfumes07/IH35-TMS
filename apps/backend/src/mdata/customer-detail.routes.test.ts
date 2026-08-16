@@ -110,11 +110,18 @@ describeIntegration("mdata customer parent_customer_id link", () => {
   });
 
   async function createCustomer(body: Record<string, unknown>) {
+    const suffix = randomUUID().slice(0, 8);
     return app.inject({
       method: "POST",
       url: "/api/v1/mdata/customers",
       headers: testAuthHeaders(undefined, "Owner"),
-      payload: { operating_company_id: companyId, customer_type: "broker", ...body },
+      // createCustomerBodySchema requires email (not optional) — tests must supply a valid address.
+      payload: {
+        operating_company_id: companyId,
+        customer_type: "broker",
+        email: `cust-${suffix}@example.test`,
+        ...body,
+      },
     });
   }
 

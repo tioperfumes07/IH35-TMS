@@ -9,6 +9,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useToast } from "../../components/Toast";
+import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   activateScenario,
@@ -266,7 +267,7 @@ export function FinanceScenariosPage() {
               </div>
               <div className="space-y-2">
                 {lines.map((line, idx) => (
-                  <div key={line.key} className="grid grid-cols-2 gap-2 rounded-sm border border-slate-200 p-3 md:grid-cols-6">
+                  <div key={line.key} className="grid grid-cols-2 gap-2 border-t border-slate-100 py-3 md:grid-cols-6">
                     <label className="block">
                       <span className="text-xs font-medium text-slate-600">Kind</span>
                       <select
@@ -342,6 +343,14 @@ export function FinanceScenariosPage() {
         </section>
       )}
 
+      {scenariosQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load finance scenarios"
+          status={0}
+          message={userFacingApiError(scenariosQuery.error, "Failed to load scenarios")}
+          onRetry={() => void scenariosQuery.refetch()}
+        />
+      ) : (
       <ParityTable<Scenario>
         columns={columns}
         rows={scenarios}
@@ -350,6 +359,7 @@ export function FinanceScenariosPage() {
         tableTestId="finance-scenarios-table"
         emptyText="No scenarios yet — create one to start planning."
       />
+      )}
     </div>
   );
 }

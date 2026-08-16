@@ -24,12 +24,12 @@ import { ApiError } from "../../../api/client";
 import type { AccountingCatalogCreateBody, AccountingCatalogRow, AccountingCatalogUpdateBody } from "../../../api/catalogs-accounting";
 import { classesCatalogClient, qboCategoriesCatalogClient } from "../../../api/catalogs-accounting";
 import { getCoaAccounts } from "../../../api/banking";
-import { listVendors } from "../../../api/mdata";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Combobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -44,8 +44,6 @@ const INCOME_TYPES = ["Income", "OtherIncome"];
 const EXPENSE_TYPES = ["Expense", "CostOfGoodsSold", "OtherExpense"];
 const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
 const CATALOG_PICKER_CAP = 200;
-const VENDOR_PICKER_CAP = 200;
-const VENDOR_OPEN_CAP = 1000;
 
 export type ItemEditorSavedResult = { id: string; label: string };
 
@@ -119,7 +117,6 @@ export function ItemEditorModal({
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [vendorSearch, setVendorSearch] = useState("");
 
   const accountsQuery = useQuery({
     queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
@@ -134,19 +131,6 @@ export function ItemEditorModal({
   const classesQuery = useQuery({
     queryKey: ["catalogs", "accounting", "classes", operatingCompanyId],
     queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: CATALOG_PICKER_CAP }),
-    enabled: open && !!operatingCompanyId,
-  });
-  const vendorsQuery = useQuery({
-    // SAF-B29 / LST-PICKER-01: server search — a 1000-row open still truncates large rosters;
-    // type-ahead re-queries so preferred vendors past page 1 stay selectable.
-    queryKey: ["mdata", "vendors", "for-items", operatingCompanyId, vendorSearch],
-    queryFn: () =>
-      listVendors({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP,
-        search: vendorSearch || undefined,
-      }),
     enabled: open && !!operatingCompanyId,
   });
 
@@ -172,10 +156,6 @@ export function ItemEditorModal({
   const classOptions = useMemo(
     () => (classesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
     [classesQuery.data]
-  );
-  const vendorOptions = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).filter((v) => !v.deactivated_at).map((v) => ({ value: v.id, label: v.name })),
-    [vendorsQuery.data]
   );
 
   useEffect(() => {
@@ -447,26 +427,17 @@ export function ItemEditorModal({
               </label>
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600">Preferred vendor</span>
-                <div className="mt-1">
-                  <ReferenceSelect
+                <div className="mt-1" data-testid="item-preferred-vendor-block">
+                  <EntityPicker
+                    kind="vendor"
+                    operatingCompanyId={operatingCompanyId}
                     value={form.preferredVendorId}
                     onChange={(v) => set("preferredVendorId", v)}
-                    options={vendorOptions}
-                    createKind="vendor"
-                    operatingCompanyId={operatingCompanyId}
                     placeholder="No preferred vendor"
-                    disabled={vendorsQuery.isLoading || !operatingCompanyId}
-                    onSearch={setVendorSearch}
-                    onOptionCreated={() =>
-                      void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "for-items", operatingCompanyId] })
-                    }
-                  />
-                  <CappedListNotice
-                    shown={vendorOptions.length}
-                    limit={vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP}
-                    total={vendorsQuery.data?.total ?? null}
-                    hint="Type to search for a vendor that is not listed."
-                    className="mt-1 text-[11px] text-slate-600"
+                    allowCreate
+                    nestedInDrawer
+                    enabled={open}
+                    disabled={!operatingCompanyId}
                   />
                 </div>
               </label>

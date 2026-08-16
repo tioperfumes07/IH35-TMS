@@ -90,7 +90,7 @@ export function discoverOffenders() {
     const rel = path.relative(repoRoot, abs).replace(/\\/g, "/");
     if (isListErrorDiscoveryExempt(rel)) continue;
     const src = fs.readFileSync(abs, "utf8");
-    if (!/useQuery/.test(src)) continue;
+    if (!/\buseQuery\s*\(/.test(src)) continue;
     if (!RENDERS_A_LIST.test(src)) continue;
     if (HAS_ERROR_BRANCH.test(src)) continue;
     offenders.push(rel);

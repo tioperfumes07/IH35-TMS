@@ -29,8 +29,12 @@ if (!/Math\.min\(\s*drive\s*,\s*shift\s*,\s*cycle\s*\)/.test(clocks)) fail("most
 if (!/HOS_PROJECTED_TOOLTIP/.test(clocks) || !/[Pp]rojected/.test(clocks)) fail("Stop By/Resume At must be labeled PROJECTED");
 if (!/derived:\s*true/.test(clocks)) fail("stopBy/resumeAt must be marked derived");
 // Wired in the List: header + body cells from the in-app store.
+// DispatchList uses ParityTable column renders (DriverHosClockValue × HOS_COLUMNS); the older
+// raw-<td> DriverHosClockCells path remains for non-ParityTable consumers.
 if (!/HOS_COLUMNS\.map/.test(list)) fail("List header must render HOS_COLUMNS");
-if (!/<DriverHosClockCells\b/.test(list)) fail("List body must render DriverHosClockCells");
+if (!/<DriverHosClockCells\b/.test(list) && !/<DriverHosClockValue\b/.test(list)) {
+  fail("List body must render DriverHosClockCells or DriverHosClockValue");
+}
 const cells = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/DriverHosClocks.tsx"), "utf8");
 if (!/getDriverHosStatus/.test(cells)) fail("HOS cells must read the in-app HOS store (getDriverHosStatus, #1109)");
 console.log("PASS verify-dispatch-list-hos-columns");

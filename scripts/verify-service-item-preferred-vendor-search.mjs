@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * NewServiceDrawerForm + ItemEditorModal preferred-vendor ReferenceSelect server search.
+ * NewServiceDrawerForm + ItemEditorModal preferred-vendor EntityPicker (canonical search + create).
  * Cursor even claim: 2110.
  */
 import fs from "node:fs";
@@ -30,6 +30,14 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
+function hasPreferredVendorEntityPicker(code) {
+  return (
+    /EntityPicker/.test(code) &&
+    (/Preferred vendor[\s\S]{0,900}kind=["']vendor["'][\s\S]{0,400}allowCreate/.test(code) ||
+      /item-preferred-vendor-block[\s\S]{0,900}kind=["']vendor["'][\s\S]{0,400}allowCreate/.test(code))
+  );
+}
+
 /** @returns {string[]} */
 export function collectProblems(root = ROOT) {
   const problems = [];
@@ -55,15 +63,12 @@ export function collectProblems(root = ROOT) {
       problems.push(`missing ${file}`);
       continue;
     }
-    const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-    if (!/vendorSearch/.test(code) || !/onSearch=\{setVendorSearch\}/.test(code)) {
-      problems.push(`${file}: preferred vendor must wire vendorSearch + onSearch`);
+    const code = stripComments(src);
+    if (!hasPreferredVendorEntityPicker(code)) {
+      problems.push(`${file}: preferred vendor must use EntityPicker kind=vendor allowCreate`);
     }
-    if (!/createKind=["']vendor["']/.test(code)) {
-      problems.push(`${file}: preferred vendor must keep createKind=vendor`);
-    }
-    if (/listVendors\(\{[^}]*limit:\s*1000\s*\}\)/.test(code) && !/vendorSearch/.test(code)) {
-      problems.push(`${file}: must not keep silent limit:1000 without search`);
+    if (/createKind=["']vendor["']/.test(code) && /listVendors/.test(code)) {
+      problems.push(`${file}: must not keep listVendors + ReferenceSelect createKind=vendor dual-path`);
     }
     // LST-F3356 — sell/buy sections must not nest a bordered card (box-in-box) inside the drawer.
     if (/rounded-sm border border-gray-200 p-3/.test(code)) {
@@ -91,7 +96,8 @@ if (process.argv.includes("--selftest")) {
       fs.writeFileSync(
         path.join(stubRoot, rel),
         `listVendors({ operating_company_id: id, status: "active", limit: 1000 })
-<ReferenceSelect createKind="vendor" options={vendorOptions} />
+<ReferenceSelect createKind="vendor" options={vendorOptions} onSearch={setVendorSearch} />
+data-testid="item-sell-buy-section"
 `
       );
     }
@@ -111,5 +117,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — service/item preferred vendor search`);
+  console.log(`${LABEL} OK — service/item preferred vendor EntityPicker`);
 }

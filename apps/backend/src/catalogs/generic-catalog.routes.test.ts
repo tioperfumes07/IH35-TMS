@@ -152,9 +152,15 @@ vi.mock("../auth/db.js", () => ({
     fn({ query: queryMock }),
 }));
 
+vi.mock("../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
 vi.mock("../audit/crud-audit.js", () => ({
   appendCrudAudit: vi.fn(async () => undefined),
 }));
+
+const TEST_OPCO = "11111111-1111-4111-8111-111111111111";
 
 describe.sequential("generic catalog framework", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
@@ -206,7 +212,7 @@ describe.sequential("generic catalog framework", () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "GET",
-      url: "/api/v1/catalogs/fleet/equipment-types",
+      url: `/api/v1/catalogs/fleet/equipment-types?operating_company_id=${TEST_OPCO}`,
     });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ total: 1 });
@@ -216,7 +222,7 @@ describe.sequential("generic catalog framework", () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "POST",
-      url: "/api/v1/catalogs/fleet/equipment-types",
+      url: `/api/v1/catalogs/fleet/equipment-types?operating_company_id=${TEST_OPCO}`,
       payload: { code: "bad code" },
     });
     expect(response.statusCode).toBe(400);
@@ -227,7 +233,7 @@ describe.sequential("generic catalog framework", () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "DELETE",
-      url: "/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      url: `/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa?operating_company_id=${TEST_OPCO}`,
     });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ ok: true });
@@ -237,7 +243,7 @@ describe.sequential("generic catalog framework", () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "POST",
-      url: "/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/restore",
+      url: `/api/v1/catalogs/fleet/equipment-types/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/restore?operating_company_id=${TEST_OPCO}`,
     });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ code: "TEST_TYPE", is_active: true });

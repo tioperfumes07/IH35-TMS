@@ -36,6 +36,7 @@ import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/f
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 import { Modal } from "../../../components/Modal";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { UploadZone } from "../../../components/UploadZone";
 import { TaskLinkPicker } from "../../../components/tasks/TaskLinkPicker";
@@ -1087,6 +1088,14 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               }}
             />
           </div>
+          {suggestionQuery.isError ? (
+            <ListErrorState
+              title="Couldn't suggest a load for this work order"
+              status={0}
+              message={userFacingApiError(suggestionQuery.error, "Load suggestion failed")}
+              onRetry={() => void suggestionQuery.refetch()}
+            />
+          ) : null}
           <CreateWOSectionIdentification
             register={form.register}
             watch={form.watch}
