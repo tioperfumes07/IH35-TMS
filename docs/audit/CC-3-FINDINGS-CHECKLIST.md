@@ -118,7 +118,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `ACCT-F174` | P0 | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AP-VOID-MARKER-SPLIT` | P0 | CC-1 / money | — | — | — | — | — | — |
 | ☑ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | Cursor | #4972 | 2026-08-08 | Category Combobox loading+disabled during CoA fetch (blocks +Add-only corruption) | `scripts/verify-bill-expense-category-full-coa.mjs` | — |
-| ☐ | `LV-BILLS-VENDOR-UUID` | — | CC-2 / mechanical+FE | — | — | — | — | — | — |
+| ☑ | `LV-BILLS-VENDOR-UUID` | — | CC-2 / mechanical+FE | Cursor | #5559 / #5560 (+ EntityLink+entityLabel on BillsPage) | 2026-08-10 | Bills Vendor column uses `entityLabel(bill.vendor_name, …)` + EntityLink; `verify-bills-list-vendor-name-resolved` + `verify-acct-bill-vendor-uuid-link` exit 0 | `scripts/verify-bills-list-vendor-name-resolved.mjs` · `scripts/verify-acct-bill-vendor-uuid-link.mjs` | Register tick Cursor LEAD — product fix already on main |
 | ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | CC-1 | #4730 | 2026-08-07 | — | — | **DELIBERATELY LEFT ☐.** Root cause fixed and mutation-proven in #4730 (`node scripts/verify-money-side-effect-after-commit.mjs` RED on the replanted real defect, GREEN restored), but a tick here would claim a POST-FIX LEDGER ROW exists and none does yet — that needs a delivery transition against the deployed build. Tick only after re-checking `LUSMCAFREIGHT-20260806-0001` on prod. See `LV-REVREC-LEDGER-DBTEST`. |
 | ☐ | `LV-BILLVOID-DATE-ERROR` | — | CC-1 / money — URGENT, blocks the void path | — | — | — | — | — | — |
 | ☐ | `LV-VOID-NO-REVERSAL` | — | CC-1 / money — URGENT | — | — | — | — | — | — |
