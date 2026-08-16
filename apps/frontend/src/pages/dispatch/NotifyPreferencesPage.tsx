@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   getCustomerNotifyLog,
@@ -9,15 +9,13 @@ import {
   type CustomerNotifyLogEntry,
   type CustomerNotifyPreferences,
 } from "../../api/dispatch";
-import { listCustomers } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { CappedListNotice } from "../../components/CappedListNotice";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -129,18 +127,6 @@ export function NotifyPreferencesPage() {
   const { pushToast } = useToast();
   const initialCustomerId = useSearchParams()[0].get("customer_id") ?? "";
   const [customerId, setCustomerId] = useState(initialCustomerId);
-  const [customerSearch, setCustomerSearch] = useState("");
-
-  const customersQuery = useQuery({
-    queryKey: ["customers-list-notify", companyId, customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: companyId,
-        limit: 5000,
-        search: customerSearch || undefined,
-      }),
-    enabled: Boolean(companyId),
-  });
 
   const prefsQuery = useQuery({
     queryKey: ["customer-notify-prefs", companyId, customerId],
@@ -179,15 +165,6 @@ export function NotifyPreferencesPage() {
   });
 
   const prefs = prefsQuery.data?.preferences;
-  const customerOptions = useMemo(
-    () =>
-      (customersQuery.data?.customers ?? []).map((c) => ({
-        value: c.id,
-        label: entityLabel(c.name, c.id, "Customer"),
-        type: c.customer_code ?? c.customer_type ?? "Customer",
-      })),
-    [customersQuery.data?.customers]
-  );
 
   return (
     <div className="p-4" data-testid="dispatch-notify-preferences-page">
@@ -199,26 +176,15 @@ export function NotifyPreferencesPage() {
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="block text-sm">
           Customer
-          {/* CLS-CUST-BARE-SELECT: EntityPicker has no customer kind — ReferenceSelect createKind=customer. */}
           <div className="mt-1 w-80" data-testid="notify-customer-select">
-            <ReferenceSelect
+            <EntityPicker
+              kind="customer"
+              operatingCompanyId={companyId}
               value={customerId || null}
               onChange={(next) => setCustomerId(next ?? "")}
-              options={customerOptions}
-              createKind="customer"
-              operatingCompanyId={companyId}
+              enabled={Boolean(companyId)}
+              allowCreate
               placeholder="Select customer"
-              disabled={!companyId}
-              loading={customersQuery.isLoading}
-              onSearch={setCustomerSearch}
-            />
-            {/* CLS-SILENT-CAP: notify prefs customer picker caps at 5000; surfacing truncation so a customer past the cap is not silently missing. */}
-            <CappedListNotice
-              shown={customerOptions.length}
-              limit={5000}
-              total={customersQuery.data?.total ?? null}
-              hint="Type to search for a customer that is not listed."
-              className="text-[11px] text-slate-600"
             />
           </div>
         </label>

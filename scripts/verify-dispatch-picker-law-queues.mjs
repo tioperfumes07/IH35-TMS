@@ -29,7 +29,7 @@ const CHECKS = [
     ],
   },
   { name: "PodReviewPage", file: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx", re: /EntityPicker/ },
-  { name: "NotifyPreferencesPage", file: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx", re: /ReferenceSelect/ },
+  { name: "NotifyPreferencesPage", file: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx", re: /EntityPicker/ },
   { name: "BookLoadEquipmentSection", file: "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx", re: /EntityPicker/ },
 ];
 

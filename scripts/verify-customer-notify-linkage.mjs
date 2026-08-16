@@ -12,7 +12,7 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
-  if (!/createKind="customer"/.test(s.page) || !/updateCustomerNotifyPreferences\(customerId/.test(s.page)) failures.push("customer picker-to-writer missing");
+  if (!/<EntityPicker[\s\S]{0,200}kind=["']customer["']/.test(s.page) || !/updateCustomerNotifyPreferences\(customerId/.test(s.page)) failures.push("customer picker-to-writer missing");
   if (!/customerBelongsToCompany[\s\S]{0,420}FROM mdata\.customers[\s\S]{0,160}operating_company_id = \$1::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.service)) failures.push("active tenant customer validation missing");
   if ((s.service.match(/E_CUSTOMER_NOT_FOUND/g) ?? []).length < 2 || !/customer_not_found/.test(s.routes)) failures.push("read/write missing-customer contract missing");
   if (!/getCustomerNotifyPreferences\(customerId, operatingCompanyId\)/.test(s.reverse) || !/getCustomerNotifyLog\(operatingCompanyId, customerId\)/.test(s.reverse)) failures.push("exact customer reverse reads missing");
@@ -25,7 +25,7 @@ function audit(s) {
 }
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["picker", "page", /createKind="customer"/, 'createKind="vendor"'],
+    ["picker", "page", /<EntityPicker[\s\S]{0,200}kind=["']customer["']/, '<EntityPicker kind="vendor"'],
     ["payload", "page", /updateCustomerNotifyPreferences\(customerId/, "updateCustomerNotifyPreferences(companyId"],
     ["scope", "service", /(customerBelongsToCompany[\s\S]{0,420})operating_company_id = \$1::uuid/, "$1TRUE"],
     ["active", "service", /(customerBelongsToCompany[\s\S]{0,420})deactivated_at IS NULL/, "$1TRUE"],
