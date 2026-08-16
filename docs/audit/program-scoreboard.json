@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T04:42:23-05:00",
-    "sourceSha": "f23143730",
-    "deployedSha": "0e00b28",
+    "generatedAt": "2026-08-16T04:48:54-05:00",
+    "sourceSha": "b31d2006b",
+    "deployedSha": "bcc600a",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 863,
+    "ledgerRows": 864,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,6 +2121,24 @@
   },
   "recentActivity": [
     {
+      "number": 7762,
+      "title": "FINDING: LV-PROGRAM-TOOLBAR-LEAF-POINTS-WRONG-ROUTE",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7762",
+      "sha": "b31d2006b",
+      "committedAtIso": "2026-08-16T04:48:54-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:43 AM CT",
+      "url": "",
+      "sha": "bcc600a38",
+      "committedAtIso": "2026-08-16T09:43:24Z"
+    },
+    {
       "number": 7761,
       "title": "FINDING: LV-PROGRAM-TRACKER-MERGED-PR-FALSE-LIVE",
       "state": "merged",
@@ -2191,24 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7757",
       "sha": "33cc50e7d",
       "committedAtIso": "2026-08-16T04:22:37-05:00"
-    },
-    {
-      "number": 7756,
-      "title": "FINDING: ACCT-F5328",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7756",
-      "sha": "5664dc6e0",
-      "committedAtIso": "2026-08-16T04:22:04-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs(audit): close ACCT-F171 / CLS-VOID-LITERAL-DEAD pending",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:19 AM CT",
-      "url": "",
-      "sha": "d02e64d15",
-      "committedAtIso": "2026-08-16T04:19:48-05:00"
     }
   ]
 }
