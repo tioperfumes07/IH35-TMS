@@ -34,6 +34,21 @@ function assertAll({ svc, route, wf, uploadExists }) {
   if (!/export async function computeProgramTrackerLive/.test(svc)) {
     errors.push("service: computeProgramTrackerLive (R2-first path) not exported");
   }
+  if (!/function hasDeploymentProof\(block: ReconBlock\)/.test(svc)) {
+    errors.push("service: missing explicit deployment-proof classifier");
+  }
+  if (!/block\.live_state === ["']deployed["'] \|\| Boolean\(block\.deployed_ct\)/.test(svc)) {
+    errors.push("service: deployment proof must come from live_state=deployed or deployed_ct");
+  }
+  if (!/const liveVerified = isDone && hasDeploymentProof\(b\)/.test(svc)) {
+    errors.push("service: block completion must require explicit deployment proof");
+  }
+  if (!/String\(rb\.status\)\.toUpperCase\(\) === ["']DONE["'] && hasDeploymentProof\(rb\)/.test(svc)) {
+    errors.push("service: phase completion must use the same explicit deployment proof");
+  }
+  if (/b\.pr != null \|\| b\.live_state === ["']deployed["']/.test(svc)) {
+    errors.push("service: merged PR alone must never be treated as Live deployment proof");
+  }
   if (!/await computeProgramTrackerLive\(/.test(route)) {
     errors.push("route: /program/tracker must await computeProgramTrackerLive (the R2-first path)");
   }
@@ -51,14 +66,25 @@ function assertAll({ svc, route, wf, uploadExists }) {
 
 if (process.argv.includes("--selftest")) {
   const good = {
-    svc: 'const R2_TRACKER_RECON_KEY = "program-tracker/block-reconciliation-data.json";\nawait getObjectTextIfExists(R2_TRACKER_RECON_KEY)\nexport async function computeProgramTrackerLive(',
+    svc: 'const R2_TRACKER_RECON_KEY = "program-tracker/block-reconciliation-data.json";\nawait getObjectTextIfExists(R2_TRACKER_RECON_KEY)\nexport async function computeProgramTrackerLive(\nfunction hasDeploymentProof(block: ReconBlock) { return block.live_state === "deployed" || Boolean(block.deployed_ct); }\nconst liveVerified = isDone && hasDeploymentProof(b);\nString(rb.status).toUpperCase() === "DONE" && hasDeploymentProof(rb)',
     route: "return reply.send(await computeProgramTrackerLive(new Date()));",
     wf: "run: npm run reconcile:blocks\nrun: npm run tracker:sync:r2",
     uploadExists: true,
   };
   const bad = { svc: 'readJson("docs/trackers/block-reconciliation-data.json")', route: "computeProgramTracker(new Date())", wf: "npm run board:sync:r2", uploadExists: false };
   if (assertAll(good).length !== 0) { console.error("SELFTEST FAIL: good flagged", assertAll(good)); process.exit(1); }
-  if (assertAll(bad).length < 4) { console.error("SELFTEST FAIL: bad not caught", assertAll(bad)); process.exit(1); }
+  if (assertAll(bad).length < 8) { console.error("SELFTEST FAIL: bad not caught", assertAll(bad)); process.exit(1); }
+  const mergedOnly = {
+    ...good,
+    svc: good.svc.replace(
+      "const liveVerified = isDone && hasDeploymentProof(b);",
+      'const liveVerified = isDone && (b.pr != null || b.live_state === "deployed");',
+    ),
+  };
+  if (!assertAll(mergedOnly).some((e) => e.includes("merged PR alone"))) {
+    console.error("SELFTEST FAIL: merged-only Live regression escaped", assertAll(mergedOnly));
+    process.exit(1);
+  }
   console.log("verify-program-tracker-r2-live selftest OK");
   process.exit(0);
 }
