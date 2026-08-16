@@ -45,6 +45,7 @@ const HELP_MATRIX = "docs/specs/scoreboard/modules/help.required.json";
 const HELP_IDS = ["chrome.toolbar_search", "chrome.toolbar_range", "chrome.toolbar_gear", "chrome.toolbar_filter"];
 const EXACT_CONSUMERS = {
   "cash-flow": { route: "/cash-flow?tab=actual_vs_projected", surface: "pages/cash-flow/tabs/ActualVsProjectedTab.tsx" },
+  form_425: { route: "/425c?tab=history", surface: "pages/form425c/tabs/HistoryTab.tsx" },
   program: { route: "/program/modules", surface: "pages/program/ModuleCompletionPage.tsx" },
   system: { route: "/system?tab=program", surface: "pages/system/SystemModulePage.tsx" },
 };
