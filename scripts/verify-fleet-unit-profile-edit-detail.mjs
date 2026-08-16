@@ -33,6 +33,21 @@ export function audit(src) {
   if (!/patchUnit\(id, \{/.test(src.profile)) {
     failures.push(`${FILES.profile}: profile-level unit edits (e.g. QBO mapping) must patch the real unit id`);
   }
+  if (!/const qboAvailable = selectedCompany\?\.code === ["']TRANSP["']/.test(src.profile)) {
+    failures.push(`${FILES.profile}: QBO mapping capability must derive from selected TRANSP company`);
+  }
+  if (!/qboAvailable \? <label[\s\S]{0,180}?QBO vendor \(ownership \/ lease entity\)/.test(src.profile)) {
+    failures.push(`${FILES.profile}: QBO vendor control must be absent outside TRANSP`);
+  }
+  if (!/\.\.\.\(qboAvailable \? \{ qbo_vendor_id:[\s\S]{0,80}?\} : \{\}\)/.test(src.profile)) {
+    failures.push(`${FILES.profile}: non-QBO class saves must not overwrite qbo_vendor_id`);
+  }
+  if (!/profileQuery\.isPending \? ["']Loading…["'] : String\(entityLabel/.test(src.profile)) {
+    failures.push(`${FILES.profile}: loading state must not render a false Unit — not visible identity`);
+  }
+  if (!/\{profile \? <div id=["']asset-financial["']/.test(src.profile)) {
+    failures.push(`${FILES.profile}: classification controls must not render before the profile resolves`);
+  }
   if ((src.profile.match(/unitId=\{id\}/g) || []).length < 10) {
     failures.push(`${FILES.profile}: unit.profile.* reverse-drill sections must be self-referentially scoped via unitId={id}`);
   }
@@ -69,6 +84,11 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["profile-query", "profile", /fetchUnitProfile\(id, companyId\)/g, "fetchSomethingElse(id, companyId)"],
     ["profile-patch", "profile", /patchUnit\(id, \{/, "patchSomethingElse(id, {"],
+    ["profile-qbo-capability", "profile", /const qboAvailable = selectedCompany\?\.code === "TRANSP";/, "const qboAvailable = true;"],
+    ["profile-qbo-control", "profile", /qboAvailable \? <label/, "true ? <label"],
+    ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
+    ["profile-loading-label", "profile", /profileQuery\.isPending \? "Loading…" : String\(entityLabel/, "String(entityLabel"],
+    ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, patchPayload\)/, "patchUnit(undefined, patchPayload)"],
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
