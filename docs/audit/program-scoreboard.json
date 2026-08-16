@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-16T04:01:14-05:00",
-    "sourceSha": "750e74829",
-    "deployedSha": "4d7c251",
+    "generatedAt": "2026-08-16T04:22:37-05:00",
+    "sourceSha": "33cc50e7d",
+    "deployedSha": "0ece4a3",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 858,
+    "ledgerRows": 859,
     "failOpen": 15,
     "defects": 19
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "docs(audit): close stale LV-COMPLAINTS-TAB dual-path OPEN",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:04 AM CT",
-      "url": "",
-      "sha": "86ef6e908",
-      "committedAtIso": "2026-08-16T04:04:26-05:00"
-    },
-    {
-      "number": 7745,
-      "title": "FINDING: ACCT-F5324",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:04 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7745",
-      "sha": "c6a7ec7a4",
-      "committedAtIso": "2026-08-16T04:04:17-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs(audit): undo #7741 sed over-attribution on GUARD board",
-      "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:01 AM CT",
-      "url": "",
-      "sha": "b6baab816",
-      "committedAtIso": "2026-08-16T04:01:39-05:00"
-    },
-    {
-      "number": 7742,
+      "number": 7757,
       "title": "FINDING: LV-LAWSUIT-CREATE-OPERATING-COMPANY-RLS-STAMP-MISSING",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:01 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7742",
-      "sha": "750e74829",
-      "committedAtIso": "2026-08-16T04:01:14-05:00"
+      "mergedAtCt": "08/16/2026, 04:22 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7757",
+      "sha": "33cc50e7d",
+      "committedAtIso": "2026-08-16T04:22:37-05:00"
+    },
+    {
+      "number": 7756,
+      "title": "FINDING: ACCT-F5328",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:22 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7756",
+      "sha": "5664dc6e0",
+      "committedAtIso": "2026-08-16T04:22:04-05:00"
     },
     {
       "number": 0,
-      "title": "docs(audit): close THEATER-LEAFRE-13 + CI-ORPHAN board OPENs",
+      "title": "docs(audit): close ACCT-F171 / CLS-VOID-LITERAL-DEAD pending",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 04:01 AM CT",
+      "mergedAtCt": "08/16/2026, 04:19 AM CT",
       "url": "",
-      "sha": "50d7e70bc",
-      "committedAtIso": "2026-08-16T04:01:01-05:00"
+      "sha": "d02e64d15",
+      "committedAtIso": "2026-08-16T04:19:48-05:00"
     },
     {
-      "number": 7740,
-      "title": "FINDING: ACCT-F5323",
+      "number": 7754,
+      "title": "FINDING: ACCT-F5327",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7740",
-      "sha": "4d7c251b9",
-      "committedAtIso": "2026-08-16T03:59:41-05:00"
+      "mergedAtCt": "08/16/2026, 04:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7754",
+      "sha": "0ece4a31d",
+      "committedAtIso": "2026-08-16T04:18:55-05:00"
     },
     {
       "number": 0,
-      "title": "ACCT-F142 — bill create double-submit FE Idempotency-Key lock",
+      "title": "docs(audit): close DISP/CI/MDATA PR-pending board rows",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:58 AM CT",
+      "mergedAtCt": "08/16/2026, 04:16 AM CT",
       "url": "",
-      "sha": "94141d156",
-      "committedAtIso": "2026-08-16T03:58:54-05:00"
+      "sha": "c7af35a4b",
+      "committedAtIso": "2026-08-16T04:16:35-05:00"
+    },
+    {
+      "number": 7752,
+      "title": "FINDING: ACCT-F5326",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7752",
+      "sha": "b97ee740e",
+      "committedAtIso": "2026-08-16T04:14:35-05:00"
     },
     {
       "number": 0,
-      "title": "CLAIM-RESERVE 3644 — verify-vendor-bill-create-no-double-submit",
+      "title": "docs(audit): close CI-F03a/b + MDATA-F08 PR-pending board rows",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:55 AM CT",
+      "mergedAtCt": "08/16/2026, 04:14 AM CT",
       "url": "",
-      "sha": "30191d692",
-      "committedAtIso": "2026-08-16T03:55:51-05:00"
+      "sha": "930986919",
+      "committedAtIso": "2026-08-16T04:14:14-05:00"
     },
     {
-      "number": 7737,
-      "title": "FINDING: ACCT-F5322",
+      "number": 7750,
+      "title": "FINDING: CLAIM-RESERVE-3645",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7737",
-      "sha": "717b965b9",
-      "committedAtIso": "2026-08-16T03:55:39-05:00"
+      "mergedAtCt": "08/16/2026, 04:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/7750",
+      "sha": "db5abb425",
+      "committedAtIso": "2026-08-16T04:13:16-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "title": "fix(program): PROG-PRFEED — align ledger guard to STALE-LEDGER call order",
       "state": "merged",
-      "mergedAtCt": "08/16/2026, 03:55 AM CT",
+      "mergedAtCt": "08/16/2026, 04:13 AM CT",
       "url": "",
-      "sha": "45125bfef",
-      "committedAtIso": "2026-08-16T08:55:19Z"
+      "sha": "1b626344a",
+      "committedAtIso": "2026-08-16T04:13:03-05:00"
+    },
+    {
+      "number": 0,
+      "title": "docs(audit): attribute mobile #7591 + close SCENARIO-TRACKER pending",
+      "state": "merged",
+      "mergedAtCt": "08/16/2026, 04:09 AM CT",
+      "url": "",
+      "sha": "9e381a114",
+      "committedAtIso": "2026-08-16T04:09:10-05:00"
     }
   ]
 }
