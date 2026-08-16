@@ -69,24 +69,14 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-16 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **26 / 30** | 2026-08-16 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-16 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **64 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-16 |
-| Rows in this file | **937** | 2026-08-16 |
-| Rows `FAIL` + `OPEN` | **24** | 2026-08-16 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
-| Rows `VERIFIED` by GUARD | **5** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=137 · PASS=221 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=332 | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=135 · PASS=221 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=332 | 2026-08-16 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **11 / 30** | 2026-08-16 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **12 / 30** | 2026-08-16 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **149 / 150** | 2026-08-16 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **70 / 150** · TRK **9 / 150** · USMCA **76 / 150** | 2026-08-16 |
-| Rows in this file | **931** | 2026-08-16 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **69 / 150** · TRK **9 / 150** · USMCA **76 / 150** | 2026-08-16 |
+| Rows in this file | **938** | 2026-08-16 |
 | Rows `FAIL` + `OPEN` | **21** | 2026-08-16 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
 | Rows `VERIFIED` by GUARD | **4** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=130 · PASS=221 · N/A=220 · UNVERIFIED=19 · SUPERSEDED=9 · OTHER=332 | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=138 · PASS=221 · N/A=219 · UNVERIFIED=19 · SUPERSEDED=8 · OTHER=332 | 2026-08-16 |
+| Verdict tally (all rows) | FAIL=136 · PASS=222 · N/A=220 · UNVERIFIED=19 · SUPERSEDED=9 · OTHER=332 | 2026-08-16 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1044,3 +1034,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 935 | insurance · policies.create insurer nested vendor | D | USMCA | FAIL · OPEN | Authenticated four-step policy creator loaded the company-scoped insurer roster, but exact Live DOM contained zero `Add new` options. Current main already has the correct universal picker/creator path (`allowCreate`, nested drawer, vendor inline-create, unconditional first row), proving frontend deploy drift instead of missing source wiring. | LIVE FAIL · Cursor deploy handoff | `/safety/insurance/policies`; Add-new count=0; board `LV-INSURANCE-POLICY-VENDOR-CREATOR-DEPLOY-DRIFT` | NO | 2026-08-16 | CODEX |
 | 936 | insurance · coverage_gaps filter chrome | D | USMCA | FAIL · FIXED CODE | Both company-scoped gap lists rendered real unit links plus Search/Range/gear, but the visible Unit filter applied immediately with no explicit Filters Apply/Cancel/Reset contract. Root fix stages the same canonical unit FK through shared CollapsedListFilters and commits URL/query state only on Apply. | FIXED CODE · deploy Live retry pending | `/safety/insurance/coverage-gaps`; `verify-insurance-unit-wiring` mutations | NO | 2026-08-16 | CODEX |
 | 937 | inventory · parts_stock filter chrome | D | USMCA | FAIL · FIXED CODE | Parts & Stock rendered two canonical rows with Search/Range/gear, Vendor drill-through and Create/Edit, but no Filters control. Root fix mounts staged Category and stock-state filters in the ParityTable toolbar with explicit Apply/Cancel/Reset and the existing canonical reorder predicate. | FIXED CODE · deploy Live retry pending | `/inventory`; `verify-inv-s01-parts-roster-density` path + 3 chrome mutations | NO | 2026-08-16 | CODEX |
+| 938 | inventory · purchase_history filter chrome | D | USMCA | FAIL · FIXED CODE | Purchase History rendered its real append-only receipt SoR, Search/Range/gear/Export, vendor and work-order links, but no Filters control. Root fix mounts staged canonical vendor-FK, receipt-status, and work-order-linked filters in the ParityTable toolbar with explicit Apply/Cancel/Reset; receipt, void/reversal, amount, and source behavior remain unchanged. | FIXED CODE · deploy Live retry pending | `/inventory/purchases`; `verify-inventory-purchases-honesty` normal+selftest+6 mutations | NO | 2026-08-16 | CODEX |

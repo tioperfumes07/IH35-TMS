@@ -41,6 +41,26 @@ export function computeFailures(source) {
   if (!/InventoryPurchasesPage/.test(source)) {
     errors.push("InventoryPurchasesPage export must remain (never delete the door)");
   }
+  if (!/filterBar=\{\s*<CollapsedListFilters/.test(source)) {
+    errors.push("Purchase History must mount governed Filters inside the canonical ParityTable toolbar");
+  }
+  for (const action of ["apply", "reset", "cancel"]) {
+    if (!new RegExp(`on${action[0].toUpperCase()}${action.slice(1)}=\\{stagedFilters\\.${action}\\}`).test(source)) {
+      errors.push(`Purchase History filters must wire explicit ${action} behavior`);
+    }
+  }
+  if (!/rows=\{visibleRows\}/.test(source)) {
+    errors.push("Purchase History ParityTable must render the applied-filter result");
+  }
+  if (!/row\.vendor_id === vendorFilter/.test(source)) {
+    errors.push("Purchase History vendor filter must compare the canonical vendor FK");
+  }
+  if (!/statusFilter === "active"[\s\S]*!row\.voided_at[\s\S]*statusFilter === "voided"[\s\S]*Boolean\(row\.voided_at\)/.test(source)) {
+    errors.push("Purchase History status filter must distinguish active and voided receipt events");
+  }
+  if (!/workOrderLinkedOnly[\s\S]*Boolean\(row\.work_order_id\)/.test(source)) {
+    errors.push("Purchase History linked-only filter must use the canonical work-order FK");
+  }
   return errors;
 }
 
@@ -48,7 +68,13 @@ function selftest() {
   const good = `
     import { listPartsPurchases } from "../../api/maintenance";
     export function InventoryPurchasesPage() {
-      return <ParityTable rows={rows} emptyText="No purchases recorded yet." />;
+      if (vendorFilter) next = next.filter((row) => row.vendor_id === vendorFilter);
+      if (statusFilter === "active") next = next.filter((row) => !row.voided_at);
+      if (statusFilter === "voided") next = next.filter((row) => Boolean(row.voided_at));
+      if (workOrderLinkedOnly) next = next.filter((row) => Boolean(row.work_order_id));
+      return <ParityTable rows={visibleRows} emptyText="No purchases recorded yet."
+        filterBar={<CollapsedListFilters onApply={stagedFilters.apply} onReset={stagedFilters.reset}
+          onCancel={stagedFilters.cancel}>filters</CollapsedListFilters>} />;
     }
   `;
   const bad = `
@@ -60,6 +86,22 @@ function selftest() {
     { name: "real SoR list", input: good, expectPass: true },
     { name: "stock twin", input: bad, expectPass: false },
   ];
+  const mutations = [
+    ["filters detached from toolbar", /filterBar=/, "detachedFilterBar="],
+    ["Apply is inert", /onApply=\{stagedFilters\.apply\}/, "onApply={() => {}}"],
+    ["table ignores applied rows", /rows=\{visibleRows\}/, "rows={rows}"],
+    ["vendor predicate no longer uses FK", /row\.vendor_id === vendorFilter/, "row.vendor_name === vendorFilter"],
+    ["status predicate loses void truth", /Boolean\(row\.voided_at\)/, "Boolean(row.vendor_id)"],
+    ["work-order predicate loses FK", /Boolean\(row\.work_order_id\)/, "Boolean(row.vendor_id)"],
+  ];
+  for (const [name, pattern, replacement] of mutations) {
+    const mutated = good.replace(pattern, replacement);
+    if (mutated === good || computeFailures(mutated).length === 0) {
+      console.error(`SELFTEST FAIL — mutation survived: ${name}`);
+      process.exit(1);
+    }
+    console.log(`selftest ok — mutation rejected: ${name}`);
+  }
   let ok = true;
   for (const c of cases) {
     const failures = computeFailures(c.input);
