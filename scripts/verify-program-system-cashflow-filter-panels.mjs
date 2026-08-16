@@ -17,6 +17,7 @@
  * LV-FLEET-FILTER-LEAF-THEATER
  * LV-DISPATCH-FILTER-LEAF-THEATER
  * LV-FACTORING-FILTER-LEAF-THEATER
+ * LV-MAINTENANCE-FILTER-LEAF-THEATER
  *
  * Exact Live leaves claimed chrome.toolbar_filter but mounted ParityTable without a governed
  * CollapsedListFilters panel + Apply/Cancel/Reset. Date-range Apply on cash-flow is NOT the filter panel.
@@ -325,6 +326,32 @@ export function collectFailures(sources) {
     }
   }
 
+  const maintenanceReq = sources["docs/specs/scoreboard/modules/maintenance.required.json"] ?? "";
+  if (maintenanceReq) {
+    if (
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/maintenance\/components\/WorkOrdersTable\.tsx"/.test(
+        maintenanceReq,
+      )
+    ) {
+      failures.push("maintenance.required.json: chrome.toolbar_filter surface_path must be WorkOrdersTable.tsx");
+    }
+  }
+  const workOrders = sources["apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx"] ?? "";
+  if (workOrders) {
+    if (!workOrders.includes("CollapsedListFilters")) {
+      failures.push("WorkOrdersTable.tsx: must mount CollapsedListFilters for chrome.toolbar_filter");
+    }
+    if (!/\bonApply=\{/.test(workOrders)) {
+      failures.push("WorkOrdersTable.tsx: CollapsedListFilters must wire onApply");
+    }
+    if (!workOrders.includes("useStagedListFilters")) {
+      failures.push("WorkOrdersTable.tsx: must stage via useStagedListFilters");
+    }
+    if (!/testIdPrefix="work-orders"/.test(workOrders) && !/data-wo-filter-toolbar/.test(workOrders)) {
+      failures.push("maintenance work-orders: Filters panel must use work-orders testId/data attribute");
+    }
+  }
+
   return failures;
 }
 
@@ -386,6 +413,12 @@ function load() {
   );
   map["apps/frontend/src/pages/factoring/FactoringHome.tsx"] = read(
     "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+  );
+  map["docs/specs/scoreboard/modules/maintenance.required.json"] = read(
+    "docs/specs/scoreboard/modules/maintenance.required.json",
+  );
+  map["apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx"] = read(
+    "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
   );
   return map;
 }
@@ -498,6 +531,15 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         "docs/specs/scoreboard/modules/factoring.required.json"
       ].replaceAll("pages/factoring/FactoringHome.tsx", "components/table/UniversalListToolbar.tsx"),
     }),
+    () => ({
+      ...sources,
+      "docs/specs/scoreboard/modules/maintenance.required.json": sources[
+        "docs/specs/scoreboard/modules/maintenance.required.json"
+      ].replaceAll(
+        "pages/maintenance/components/WorkOrdersTable.tsx",
+        "components/table/UniversalListToolbar.tsx",
+      ),
+    }),
   ];
   mutations.forEach((mutate, index) => {
     if (!collectFailures(mutate()).length) {
@@ -508,5 +550,5 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
 }
 
 console.log(
-  "PASS: filter-panel wave incl. vendors/customers/lists/accounting/fleet/dispatch/factoring honest",
+  "PASS: filter-panel wave incl. vendors/customers/lists/accounting/fleet/dispatch/factoring/maintenance honest",
 );

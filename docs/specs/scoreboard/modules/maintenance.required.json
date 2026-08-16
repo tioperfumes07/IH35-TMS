@@ -856,7 +856,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/table/UniversalListToolbar.tsx"
+      "surface_path": "pages/maintenance/components/WorkOrdersTable.tsx"
     }
   ],
   "honesty_audit": {
