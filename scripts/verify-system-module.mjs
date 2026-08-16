@@ -118,6 +118,24 @@ export function computeSystemModuleFailures(files) {
     errors.push("SystemModulePage.tsx: Claude Coder must disclose that PR activity is not a live GitHub feed");
   }
 
+  // LV-SYSTEM-USMCA-QBO-CHROME: QBO belongs only to the TRANSP mirror. The selected-company
+  // capability must govern tabs, deep links, cards/activity copy, and network queries together.
+  if (!/const qboAvailable = selectedCompany\?\.code === ["']TRANSP["']/.test(page)) {
+    errors.push("SystemModulePage.tsx: QBO availability must derive from selected TRANSP company");
+  }
+  if (!/enabled:\s*enabled && qboAvailable/g.test(page) || (page.match(/enabled:\s*enabled && qboAvailable/g) ?? []).length < 3) {
+    errors.push("SystemModulePage.tsx: all three QBO/AP queries must be disabled outside TRANSP");
+  }
+  if (!/visibleTabs = SYSTEM_TABS\.filter\([\s\S]{0,140}!QBO_SYSTEM_TAB_IDS\.has\(candidate\.id\)/.test(page)) {
+    errors.push("SystemModulePage.tsx: QBO tabs must be filtered outside TRANSP");
+  }
+  if (!/parseSystemTab\(searchParams\.get\(["']tab["']\), qboAvailable\)/.test(page)) {
+    errors.push("SystemModulePage.tsx: direct QBO tab URLs must fail closed outside TRANSP");
+  }
+  if ((page.match(/qboAvailable \? <Card/g) ?? []).length < 2) {
+    errors.push("SystemModulePage.tsx: both overview QBO cards must be hidden outside TRANSP");
+  }
+
   return errors;
 }
 
@@ -141,6 +159,11 @@ if (process.argv.includes("--selftest")) {
     'syncHealth.isError ? <Pill tone="off">UNAVAILABLE</Pill> : <Pill>CHECKING</Pill>;\n' +
     'syncHealth.isError ? <p role="alert">Could not load QuickBooks sync health.</p> : null;\n' +
     'Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}. This is not a live GitHub feed;\n' +
+    'const qboAvailable = selectedCompany?.code === "TRANSP";\n' +
+    'enabled: enabled && qboAvailable; enabled: enabled && qboAvailable; enabled: enabled && qboAvailable;\n' +
+    'const visibleTabs = SYSTEM_TABS.filter((candidate) => qboAvailable || !QBO_SYSTEM_TAB_IDS.has(candidate.id));\n' +
+    'parseSystemTab(searchParams.get("tab"), qboAvailable);\n' +
+    'qboAvailable ? <Card /> : null; qboAvailable ? <Card /> : null;\n' +
     "// not bank reconciliation\n" +
     SYSTEM_TAB_LABELS.map((l) => `"${l}"`).join(",");
 
@@ -184,6 +207,16 @@ if (process.argv.includes("--selftest")) {
       .replace("Program Tracker reconciliation snapshot as of", "Live feed of the most recently merged PRs")
       .replace("This is not a live GitHub feed", "Activity is live"),
   });
+  const failUsmcaQboLeak = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: goodPage
+      .replace('const qboAvailable = selectedCompany?.code === "TRANSP";', "const qboAvailable = true;")
+      .replaceAll("enabled: enabled && qboAvailable", "enabled")
+      .replace("const visibleTabs = SYSTEM_TABS.filter((candidate) => qboAvailable || !QBO_SYSTEM_TAB_IDS.has(candidate.id));", "const visibleTabs = SYSTEM_TABS;")
+      .replace('parseSystemTab(searchParams.get("tab"), qboAvailable);', 'parseSystemTab(searchParams.get("tab"));')
+      .replaceAll("qboAvailable ? <Card /> : null", "<Card />"),
+  });
 
   const checks = [
     ["fully-wired inputs produce zero failures", pass.length === 0],
@@ -194,6 +227,7 @@ if (process.argv.includes("--selftest")) {
     ["hand-built QBO table is flagged", failHandBuiltQboTable.some((e) => e.includes("persistent ParityTable"))],
     ["false CHECKING state is flagged", failFalseChecking.filter((e) => e.includes("QBO Sync request failures")).length === 2],
     ["false-live Claude activity is flagged", failFalseLiveActivity.filter((e) => e.includes("Claude Coder")).length === 3],
+    ["USMCA QBO chrome/query leak is flagged", failUsmcaQboLeak.filter((e) => /TRANSP|QBO/.test(e)).length === 5],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
