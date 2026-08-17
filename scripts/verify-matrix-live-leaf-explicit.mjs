@@ -55,10 +55,10 @@ export function leafExplicitlyNamedInLiveEvidence(leaf, text) {
 
 /** Lockstep with module-matrix.service.ts */
 export function explicitlyNamedLiveColumns(text) {
-  const declaration = String(text ?? "").match(/\bExact cells?\s*:\s*([^\n|.]*)/i)?.[1];
+  const declaration = String(text ?? "").match(/\bExact cells?\s*:\s*([^\n|]*?)(?:\.\s|$)/i)?.[1];
   if (declaration === undefined) return null;
   return new Set(
-    Array.from(declaration.matchAll(/`([a-z][a-z0-9_]*)`/gi), (match) => match[1].toLowerCase()),
+    Array.from(declaration.matchAll(/`([a-z][a-z0-9_.-]*)`/gi), (match) => match[1].toLowerCase()),
   );
 }
 
@@ -69,6 +69,9 @@ function assertServiceWiring(src) {
   }
   if (!/export function explicitlyNamedLiveColumns\b/.test(src)) {
     errs.push("missing export explicitlyNamedLiveColumns");
+  }
+  if (!/declaration\.matchAll\(\/`\(\[a-z\]\[a-z0-9_\.\-\]\*\)`\/gi\)/.test(src)) {
+    errs.push("Exact cell(s) parser must retain dotted/hyphenated column ids");
   }
   const liveFn = src.match(/function leafColumnLiveReason\([\s\S]*?\n\}/);
   if (!liveFn) {
@@ -113,15 +116,16 @@ function selftest() {
     throw new Error(`${LABEL} SELFTEST FAIL — must not credit unrelated leaf from Leaves list`);
   }
   const scopedEvidence =
-    "PROD-VERIFIED. Leaf: `md.new_transaction`. Exact cells: `customer`, `qbo_chrome`, `connectivity`. Opened /accounting/invoices; reverse and invoice are not claimed.";
+    "PROD-VERIFIED. Leaf: `md.new_transaction`. Exact cells: `customer`, `qbo_chrome`, `connectivity`, `scenario.dispatch`. Opened /accounting/invoices; reverse and invoice are not claimed.";
   const scopedColumns = explicitlyNamedLiveColumns(scopedEvidence);
   if (
     !scopedColumns ||
     !scopedColumns.has("customer") ||
     !scopedColumns.has("qbo_chrome") ||
-    !scopedColumns.has("connectivity")
+    !scopedColumns.has("connectivity") ||
+    !scopedColumns.has("scenario.dispatch")
   ) {
-    throw new Error(`${LABEL} SELFTEST FAIL — Exact cells declaration must retain every declared column`);
+    throw new Error(`${LABEL} SELFTEST FAIL — Exact cells declaration must retain simple and dotted columns`);
   }
   if (scopedColumns.has("invoice") || scopedColumns.has("reverse_link")) {
     throw new Error(`${LABEL} SELFTEST FAIL — narrative route/non-claim words must not broaden Exact cells`);
@@ -156,6 +160,14 @@ function selftest() {
   const widenedErrs = assertServiceWiring(widened);
   if (!widenedErrs.some((e) => /outside the Exact cell\(s\) allowlist/.test(e))) {
     throw new Error(`${LABEL} SELFTEST FAIL — planted Exact cells allowlist bypass was not detected`);
+  }
+  const dotBlind = src.replace("[a-z][a-z0-9_.-]*", "[a-z][a-z0-9_]*");
+  if (dotBlind === src) {
+    throw new Error(`${LABEL} SELFTEST FAIL — could not plant dotted-column parser regression`);
+  }
+  const dotBlindErrs = assertServiceWiring(dotBlind);
+  if (!dotBlindErrs.some((e) => /dotted\/hyphenated column ids/.test(e))) {
+    throw new Error(`${LABEL} SELFTEST FAIL — planted dotted-column parser regression was not detected`);
   }
   console.log(`${LABEL} --selftest PASS`);
 }

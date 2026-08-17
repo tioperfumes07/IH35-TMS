@@ -757,10 +757,10 @@ export function leafExplicitlyNamedInLiveEvidence(leaf: RequiredLeaf, text: stri
  * non-claims) must not broaden the declaration into additional Live credit.
  */
 export function explicitlyNamedLiveColumns(text: string): Set<string> | null {
-  const declaration = text.match(/\bExact cells?\s*:\s*([^\n|.]*)/i)?.[1];
+  const declaration = text.match(/\bExact cells?\s*:\s*([^\n|]*?)(?:\.\s|$)/i)?.[1];
   if (declaration === undefined) return null;
   return new Set(
-    Array.from(declaration.matchAll(/`([a-z][a-z0-9_]*)`/gi), (match) => match[1].toLowerCase()),
+    Array.from(declaration.matchAll(/`([a-z][a-z0-9_.-]*)`/gi), (match) => match[1].toLowerCase()),
   );
 }
 
