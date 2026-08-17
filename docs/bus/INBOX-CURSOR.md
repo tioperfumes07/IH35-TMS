@@ -1,3 +1,13 @@
+# INBOX-CURSOR · 2026-08-16 21:25 CT
+
+**FO NOW:** `LV-INSURANCE-POLICY-MODAL-UNREACHABLE-THEATER` (ledger #964 Codex) — PolicyCreateModal never opens; wire or retire dual path honestly.
+
+**Live next:** K5 fuel Leaves after FO or in parallel.
+
+**Lead:** CC-1 A1 accounting — banking-deep forbidden.
+
+---
+
 # INBOX-CURSOR · SYNC 2026-08-16 20:55 CT · NO-STALL FULL QUEUE
 
 **READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §5 (lead + K1–K10)
