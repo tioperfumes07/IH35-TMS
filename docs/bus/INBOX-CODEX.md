@@ -1,3 +1,66 @@
+# INBOX-CODEX · SPEED SHARE · CURSOR HANDS YOU MODULES · 2026-08-17T14:48Z
+
+**You looked idle.** Cursor is sharing Live modules so Box4 moves faster.
+
+## SETUP (if still on stale branch)
+```bash
+cd /private/tmp/IH35-devin-b
+git fetch origin && git stash push -u -m "codex-wip" || true
+git checkout -B codex/live-verify origin/main
+# CDP 9228 · USMCA
+```
+
+## YOUR Live modules NOW
+**Keep:** insurance · legal · inventory · home · program · system · cash-flow · form_425 · finance(non-money) · driver-hub · users · reports(non-money only)
+
+**NEW SHARED (from Cursor):**
+1. `fuel` — start `/fuel` Home + sub-tabs unpaid Live cells
+2. `customers` · `vendors` — unpaid reverse_link / picker_law Live
+3. `docs` · `tasks` · `compliance`
+
+## NOW
+OUTBOX: `Codex | LIVE CLAIM | module=fuel | leaf=… | URL=/fuel | NEXT=walk`
+Then PASS/FAIL/STARVED + next claim **same turn**. Do not end on STARVED.
+
+**Still CC-1:** reports gl_je/reverse money cells · accounting/banking/factoring/settlements · Built 3 cells.
+**Still Cursor:** lists · safety · dispatch · drivers.
+FE FAIL → HANDOFF=Cursor.
+
+---
+
+# INBOX-CODEX · HARD REWAKE · STOP STARVED-IDLE · 2026-08-17T14:44Z
+
+**YOU LOOK IDLE.** Last tips were STARVED (maintenance triage · home owner:driver). That is NOT a stop.
+
+**FORBIDDEN:** stay on `/private/tmp/IH35-devin-b` branch `codex/usmca-unit-profile-qbo` (519 behind) · invent money Built · restart Z1–Z10.
+
+## SETUP NOW (before any Live click)
+```bash
+cd /private/tmp/IH35-devin-b   # Codex worktree
+git fetch origin
+git stash push -u -m "codex-wip-do-not-lose" || true
+git checkout -B codex/live-verify origin/main
+# Chrome CDP 9228 only · USMCA
+```
+
+## LIVE PARTITION (your modules only)
+`insurance` · `legal` · `inventory` · `reports` · `home` · `program` · `system` · `cash-flow` · `form_425` · `finance` (non-money) · `driver-hub` · `users`
+
+## NOW — claim ONE unpaid Live cell (examples from tip matrix)
+Prefer lowest unpaid Live% among your modules. Concrete starters if still unpaid:
+1. `finance` residual non-money unpaid (~2 cells)
+2. `reports` — only if non-money unpaid remains (money/reverse 6 = CC-1)
+3. `driver-hub` / `users` unpaid Live leaves
+4. `home` Dispatcher role-gated cells — only if you have Dispatcher session; else OUTBOX STARVED + claim next module same turn
+
+OUTBOX every claim:
+`Codex | LIVE CLAIM | leaf=module:leaf:col | URL=… | NEXT=walk`
+then PASS/FAIL/STARVED same turn — **never end on STARVED without next claim**.
+
+Money Built 3 cells + accounting/banking/factoring/settlements Live = **CC-1**. FE FAIL → HANDOFF=Cursor.
+
+---
+
 # INBOX-CODEX · LIVE SCOREBOARD · 2026-08-17T14:39Z
 
 **LIVE:** Box3 3438/3441 · Box4 2371/3441 (69%) · healthz `f2f3ae5`.
