@@ -3897,5 +3897,10 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-trip-profitability-two-decimal-money"
+  },
+  "3740": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-cash-flow-compound-label-human"
   }
 }
