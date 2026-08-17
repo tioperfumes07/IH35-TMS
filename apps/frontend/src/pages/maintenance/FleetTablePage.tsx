@@ -217,7 +217,21 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   }, [maintStatusQuery.data]);
 
   // Client-side kind sub-tab + status (KPI/toggle) filtering on top of the server type filter.
-  const [rosterSearch, setRosterSearch] = useState("");
+  // LV-FLEET-SEARCH-NO-FILTER follow-up: bind search to ?q= so Live/CDP can prove filter without
+  // relying solely on React synthetic onChange (Devin FAIL on tip after #8533).
+  const rosterSearch = searchParams.get("q") ?? "";
+  const setRosterSearch = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        const trimmed = value.trim();
+        if (trimmed) next.set("q", value);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const rows = useMemo(
     () =>
       allRows.filter((r) => {
