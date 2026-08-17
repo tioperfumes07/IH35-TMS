@@ -1695,6 +1695,12 @@
     "lane": "cursor",
     "note": "LV-LEGAL-MATTER-CLAIM-PICKER-CREATOR-DISABLED"
   },
+  "3664": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-cash-flow-adjustment-honesty",
+    "lane": "cursor",
+    "note": "LV-CASH-FLOW-ADJUSTMENT-FALSE-BILL-EXPENSE-CREATOR"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
