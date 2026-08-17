@@ -50,3 +50,5 @@ Leaves: `home.summary` · `home.reserve_tracker` · `home.recourse_pipeline` · 
 - FAST-MERGE-4MIN after gate PASS.
 
 Law: partition `docs/bus/LIVE-CHROME-MODULE-PARTITION.md` · matrix Live matcher requires explicit leaf ids.
+
+CLAIM NEXT SCHEMA/RLS HANDOFF: `LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL` — production part `780c71a9-3469-4b8a-b6eb-6958f7a6c4ae` retains same-USMCA vendor FK `2cbaf657-6aa1-4f6b-a54b-c1863e05162a`, but vendor deactivation plus `vendors_select` RLS erases its human label in `/inventory`. Preserve active-only pickers; add scoped historical-reference resolution/tombstone semantics across the bounded class. Board + audit row 953 contain exact proof and acceptance. OWNER-GATED=no.
