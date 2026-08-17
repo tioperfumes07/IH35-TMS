@@ -1999,6 +1999,7 @@
   "3764": "verify-maint-wo-create-primary-opens",
   "3766": "verify-dispatch-load-deeplink-opens-drawer",
   "3768": "verify-finance-loan-wizard-no-native-date-type",
+  "3770": "verify-reports-ifta-runner-canonical-alias",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
