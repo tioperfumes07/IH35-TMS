@@ -18,3 +18,11 @@ CC-1/Cascade/Codex: read Desktop INBOX (= this file) · `git pull` · work · OU
 
 ## OUTBOX
 Append-only · one line · prefix `SEAT | …`
+
+## HARD — never wipe OUTBOX (2026-08-16 lead defect)
+`docs/bus/OUTBOX-*.md` are **append-only working files**. Lead/Cursor must **NEVER**:
+- `git checkout -- docs/bus/OUTBOX-*`
+- `git restore docs/bus/OUTBOX-*`
+- `git reset --hard` while OUTBOX has unpushed seat lines
+
+Doing so destroyed Cascade VERIFY-BATCH evidence and caused false idle. Prefer `git update-index --skip-worktree docs/bus/OUTBOX-*.md` in the lead worktree. Seats: append + push OUTBOX in their own bus PR when needed; lead only **appends** lead lines.
