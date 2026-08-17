@@ -3892,5 +3892,10 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-customer-profitability-flag-human-labels"
+  },
+  "3738": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-trip-profitability-two-decimal-money"
   }
 }
