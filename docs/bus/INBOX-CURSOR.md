@@ -19,3 +19,7 @@ CLAIM `LV-CASH-FLOW-ACTUAL-SPLIT-FILTER-APPLY`: selected-USMCA Actual vs Project
 ## CODEX LIVE HANDOFF · FINANCE READ-ONLY FILTER CLASS · 2026-08-16
 
 CLAIM `CLS-FINANCE-READONLY-FILTER-APPLY-CANCEL-RESET`: selected-USMCA `/finance/statements` has immediate Basis + Apply-only From/To or As-of, and `/finance/ar-ap-aging` has Apply-only As-of. Stage the complete query tuple per leaf with Apply/Cancel/Reset and unchanged/invalid disable. Preserve all reads, calculations, exports, print, toolbars, drills, and no-posting behavior. One guard inventories both leaves and mutates immediate Basis/As-of, missing Cancel/Reset, and query-state drift independently. `BLOCKS=LIVE-FINANCE-NONMONEY-HOPS-FILTER-CHROME`; OWNER-GATED=no.
+
+## CODEX LIVE HANDOFF · FINANCE PREVIEW READINESS CLASS · 2026-08-16
+
+CLAIM `CLS-FINANCE-PREVIEW-RAW-VALIDATION-ERROR`: selected-USMCA blank `/finance/calculator` Calculate and `/finance/loan-wizard` Preview are enabled; each calls its preview API and renders raw `validation_error`. Add leaf-specific readiness shared by button+handler and human field/operator copy. Preserve pure calculation/preview, MoneyInput, scoped APIs, calculator scenarios, loan JE preview, and zero writes/posting. One guard inventories both leaves and independently mutates blank-action readiness, handler readiness, raw token mapping, and predicate drift. `BLOCKS=LIVE-FINANCE-NONMONEY-PREVIEW-READINESS`; OWNER-GATED=no.
