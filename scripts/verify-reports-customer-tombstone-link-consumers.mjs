@@ -4,6 +4,8 @@
  * LV-REPORTS-CANCELLATIONS-DEAD-CUSTOMER-TOMBSTONE-LINK
  * LV-REPORTS-DISPATCH-MARGIN-DEAD-CUSTOMER-TOMBSTONE-LINK
  * LV-REPORTS-MANAGEMENT-DEAD-CUSTOMER-TOMBSTONE-LINK
+ * LV-LOAD-DETAIL-DEAD-CUSTOMER-TOMBSTONE-LINK
+ * LV-DRIVER-PROFILE-DEAD-CUSTOMER-TOMBSTONE-LINK
  *
  * Residual of #8180: unresolved / Unknown customer buckets must not mount
  * EntityLink (dead reverse → Failed to load customer details).
@@ -17,6 +19,8 @@ const LIB = "apps/frontend/src/lib/entity-label.ts";
 const CANCELLATIONS = "apps/frontend/src/pages/reports/CancellationsReportPage.tsx";
 const DISPATCH = "apps/frontend/src/pages/reports/DispatchMarginPage.tsx";
 const MANAGEMENT = "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx";
+const LOAD_DETAIL = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
+const DRIVER_LOADS = "apps/frontend/src/components/driver-profile/LoadsSection.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
@@ -93,6 +97,32 @@ function analyze() {
   if (!/EntityLink\s+kind="vendor"/.test(mgmt)) {
     failures.push("ManagementReportPackagePage must still EntityLink resolvable vendors");
   }
+
+  const loadDetail = read(LOAD_DETAIL);
+  if (!/isUnresolvedEntityTombstone/.test(loadDetail) || !/load-detail-customer-tombstone/.test(loadDetail)) {
+    failures.push("LoadDetailDrawer must tombstone unresolved customers (load-detail-customer-tombstone)");
+  }
+  if (
+    /label:\s*"Customer"[\s\S]{0,220}<EntityLink\s+kind="customer"\s+id=\{load\.customer_id\}/.test(loadDetail) &&
+    !/isUnresolvedEntityTombstone\(load\.customer_name, load\.customer_id, "Customer"\)/.test(loadDetail)
+  ) {
+    failures.push("LoadDetailDrawer Customer field must not unconditionally EntityLink load.customer_id");
+  }
+  if (!/EntityLink\s+kind="customer"/.test(loadDetail)) {
+    failures.push("LoadDetailDrawer must still EntityLink resolvable customers");
+  }
+
+  const driverLoads = read(DRIVER_LOADS);
+  if (!/isUnresolvedEntityTombstone/.test(driverLoads) || !/driver-profile-load-customer-tombstone/.test(driverLoads)) {
+    failures.push("LoadsSection must tombstone unresolved customers (driver-profile-load-customer-tombstone)");
+  }
+  if (/render:\s*\(row\)\s*=>\s*\(\s*<EntityLink\s+kind="customer"\s+id=\{row\.customer_id\}/.test(driverLoads)) {
+    failures.push("LoadsSection customer column must not unconditionally mount EntityLink");
+  }
+  if (!/EntityLink\s+kind="customer"/.test(driverLoads)) {
+    failures.push("LoadsSection must still EntityLink resolvable customers");
+  }
+
   return failures;
 }
 
@@ -157,6 +187,39 @@ function selftest() {
     fs.writeFileSync(mgmtPath, mgmtOriginal);
   }
 
+  const loadPath = path.join(process.cwd(), LOAD_DETAIL);
+  const loadOriginal = fs.readFileSync(loadPath, "utf8");
+  try {
+    const bad = loadOriginal
+      .replace(/isUnresolvedEntityTombstone/g, "NEVER_TOMBSTONE")
+      .replace(/load-detail-customer-tombstone/g, "REMOVED");
+    if (bad === loadOriginal) fail("selftest could not plant LoadDetailDrawer tombstone regression");
+    fs.writeFileSync(loadPath, bad);
+    const planted = analyze();
+    if (!planted.some((m) => /LoadDetailDrawer/.test(m))) {
+      fail(`selftest expected LoadDetailDrawer fail; got: ${planted.join("; ")}`);
+    }
+  } finally {
+    fs.writeFileSync(loadPath, loadOriginal);
+  }
+
+  const driverPath = path.join(process.cwd(), DRIVER_LOADS);
+  const driverOriginal = fs.readFileSync(driverPath, "utf8");
+  try {
+    const bad = driverOriginal.replace(
+      /render:\s*\(row\)\s*=>\s*\{[\s\S]*?return <EntityLink kind="customer" id=\{row\.customer_id\} label=\{label\} \/>;\s*\},/,
+      'render: (row) => (\n      <EntityLink\n        kind="customer"\n        id={row.customer_id}\n        label={entityLabel(row.customer_name, row.customer_id, "Customer")}\n      />\n    ),',
+    );
+    if (bad === driverOriginal) fail("selftest could not plant LoadsSection unconditional EntityLink");
+    fs.writeFileSync(driverPath, bad);
+    const planted = analyze();
+    if (!planted.some((m) => /LoadsSection/.test(m))) {
+      fail(`selftest expected LoadsSection fail; got: ${planted.join("; ")}`);
+    }
+  } finally {
+    fs.writeFileSync(driverPath, driverOriginal);
+  }
+
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);
   console.log(`${LABEL} selftest PASS`);
@@ -170,5 +233,5 @@ if (process.argv.includes("--selftest")) {
 const failures = analyze();
 if (failures.length) fail(failures.join("; "));
 console.log(
-  `${LABEL} PASS — cancellations + dispatch-margin + management-report tombstone consumers are non-interactive`,
+  `${LABEL} PASS — cancellations + dispatch-margin + management-report + load-detail + driver-profile load tombstone consumers are non-interactive`,
 );

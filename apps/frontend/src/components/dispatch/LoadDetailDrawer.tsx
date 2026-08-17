@@ -40,7 +40,7 @@ import { InvoicesReverseSection } from "../accounting/InvoicesReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 
@@ -350,13 +350,20 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     fields={[
                       {
                         label: "Customer",
-                        value: (
-                          <EntityLink
-                            kind="customer"
-                            id={load.customer_id}
-                            label={entityLabel(load.customer_name, load.customer_id, "Customer")}
-                          />
-                        ),
+                        value: (() => {
+                          const label = entityLabel(load.customer_name, load.customer_id, "Customer");
+                          // LV-LOAD-DETAIL-DEAD-CUSTOMER-TOMBSTONE-LINK — unresolved stays visible, non-drillable.
+                          if (isUnresolvedEntityTombstone(load.customer_name, load.customer_id, "Customer")) {
+                            return (
+                              <span className="text-slate-800" data-testid="load-detail-customer-tombstone">
+                                {label}
+                              </span>
+                            );
+                          }
+                          return (
+                            <EntityLink kind="customer" id={load.customer_id} label={label} />
+                          );
+                        })(),
                       },
                       {
                         label: "Status",
