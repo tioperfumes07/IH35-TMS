@@ -69,14 +69,14 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-17 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **4 / 30** | 2026-08-17 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **5 / 30** | 2026-08-17 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **149 / 150** | 2026-08-17 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **81 / 150** | 2026-08-17 |
-| Rows in this file | **968** | 2026-08-17 |
-| Rows `FAIL` + `OPEN` | **1** | 2026-08-17 |
+| Rows in this file | **970** | 2026-08-17 |
+| Rows `FAIL` + `OPEN` | **2** | 2026-08-17 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-17 |
 | Rows `VERIFIED` by GUARD | **152** | 2026-08-17 |
-| Verdict tally (all rows) | FAIL=152 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=10 · OTHER=344 | 2026-08-17 |
+| Verdict tally (all rows) | FAIL=153 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=10 · OTHER=345 | 2026-08-17 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1056,4 +1056,5 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 966 | safety · dot_compliance_medical | E | USMCA | PROD-VERIFIED — Cursor Live re-prove after PR #8056 2026-08-16 (VERIFY-1 · VERIFY-3) | Leaves: `dot_compliance.list` · `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear`. LIVE USMCA `/safety/dot-compliance` mounts Certificate Expiry, DOT medical card history, Background and MVR, Compliance Reminders with Search, Range, gear — no error boundary. healthz `d919883`. | LIVE PASS Cursor K2 | `/safety/dot-compliance` · healthz d919883 · LIVE 2026-08-16 | NO | 2026-08-16 | CURSOR |
 | 967 | fuel · K5 home+history | E | USMCA | PROD-VERIFIED — Cursor Live Chrome Wave K5 2026-08-16 (VERIFY-1 · VERIFY-3) | Leaves: `home` · `history` · `card_overage`. LIVE USMCA `/fuel` mounted Home with Planner, Relay inbox, Settings, Expense mapping, History and savings, Loves prices, Compliance tabs; KPI reverse links Active Plans, MTD Spend, Card overage queue; `/fuel/history` route mounts. Current USMCA Freight. healthz `d919883`. Scope: Box 4 Live chrome — toolbar Search not claimed on this pass. | LIVE PASS Cursor K5 | `/fuel` · `/fuel/history` · LIVE 2026-08-16 | NO | 2026-08-16 | CURSOR |
 | 968 | customers · K7 roster_toolbar | E | USMCA | PROD-VERIFIED — Cursor Live Chrome Wave K7 2026-08-16 (VERIFY-1 · VERIFY-3) | Leaves:  ·  ·  ·  · . LIVE USMCA  mounted roster All **8** / Active **8**, + Create Customer, Filters, Search by name, master-detail with Transaction List Search/Range/gear/Filter. Sample customer D-06 Customer. Current USMCA Freight. healthz . Scope: Box 4 Live chrome — not full V2 create-save. | LIVE PASS Cursor K7 |  · Active 8 · LIVE 2026-08-16 | NO | 2026-08-16 | CURSOR |
-
+| 969 | legal · Z4 routes lists and matter linkage | E | USMCA | PROD-VERIFIED | Leaves: `landing` · `contracts.list` · `templates.list` · `policies.list` · `attorney_review.list` · `matters.list` · `matters.create` · `matters.detail` · `reports` · `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear`. Selected-USMCA Legal mounted real KPI/tab routes; Contracts settled honestly at 0; Templates rendered 12 human rows; Policies and Attorney Review settled honestly at 0; Matters rendered 5 rows with canonical detail links; create mounted claim/lawsuit/driver/unit/trailer FKs, MoneyInputs, shared dates and readiness-disabled Save; detail mounted overview/timeline/documents/deadlines/notes tabs plus scoped linked-bills reverse route; Reports rendered severity and deadline KPI drills. No save or money mutation. | LIVE PASS | `/legal{,/contracts,/templates,/policies,/attorney-review,/matters,/matters/new,/matters/b3ab19df-fb1f-494d-8e5e-08ebfbca07c6,/reports}`; 12 templates; 5 matters; frontend `assets/index-B5FTbuWy.js`; LIVE 2026-08-16 | NO | 2026-08-16 | CODEX |
+| 970 | legal · matter insurance-claim nested creator | D | USMCA | FAIL · OPEN | Leaf: `picker_law` on `matters.create`. The canonical insurance-claim picker renders four scoped human claims but no first-row `+ Add new insurance claim`; the registry and shared picker support the creator, while Legal explicitly passes `allowCreate={false}`. | OPEN HANDOFF · Cursor | `/legal/matters/new`; `LegalMatterFormFields.tsx:276-290`; `entityPickerRegistry.ts:371-393`; `EntityPicker.tsx:265-273`; `LV-LEGAL-MATTER-CLAIM-PICKER-CREATOR-DISABLED` | NO | 2026-08-16 | CODEX |
