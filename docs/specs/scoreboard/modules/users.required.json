@@ -139,7 +139,6 @@
       "route_hint": "/users",
       "required": [
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ],
       "surface_path": "pages/Users.tsx",
@@ -331,6 +330,18 @@
         },
         {
           "id": "kpi",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "create_picker_law_2026_08_17": {
+      "finding": "LV-USERS-CREATE-PICKER-LAW-FALSE-REQUIRED",
+      "note": "Create User drawer is Name/Email/Role enum/password setup only — no canonical entity FK. Prior secondary honesty drop missed create.",
+      "drops": [
+        {
+          "id": "create",
           "removed": [
             "picker_law"
           ]
