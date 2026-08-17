@@ -3963,5 +3963,11 @@
     "guard": "verify-docs-home-entity-no-raw-uuid",
     "lane": "cursor",
     "note": "LV-DOCS-HOME-ENTITY-RAW-UUID"
+  },
+  "3761": {
+    "guard": "verify-banking-register-virtual-account-id-accepted",
+    "finding": "ACCT-F5403",
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-17"
   }
 }
