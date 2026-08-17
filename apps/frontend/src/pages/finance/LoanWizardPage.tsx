@@ -4,6 +4,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 import {
   FINANCE_HUB_LOAN_WIZARD_FLAG,
   previewLoanWizard,
@@ -219,7 +220,14 @@ export function LoanWizardPage() {
                 {moneyField("Loan amount ($)", "loanAmount")}
                 {field("Annual rate (%)", "annualRatePct", "number")}
                 {field("Term (months)", "termMonths", "number")}
-                {field("First payment date", "firstPaymentDate", "date")}
+                <label className="block">
+                  <span className="text-xs font-medium text-slate-600">First payment date</span>
+                  <DatePicker
+                    className="mt-1 w-full"
+                    value={form.firstPaymentDate}
+                    onChange={(next) => setForm((f) => ({ ...f, firstPaymentDate: next }))}
+                  />
+                </label>
                 {field("Lender", "lender", "text", "Commercial Credit Group")}
                 {field("Useful life (months)", "usefulLifeMonths", "number")}
                 {moneyField("Salvage value ($)", "salvageValue")}

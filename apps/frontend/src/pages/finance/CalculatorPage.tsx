@@ -6,6 +6,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 import {
   FINANCE_HUB_CALCULATOR_FLAG,
   computeCalculator,
@@ -120,7 +121,15 @@ export function CalculatorPage() {
     <div className="p-6"><FinanceModuleTabs />{header}
       <div className="rounded-sm border border-slate-200 bg-white p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {moneyField("Price ($)", "price")}{moneyField("Down payment ($)", "down")}{field("First payment", "firstPaymentDate", "date")}
+          {moneyField("Price ($)", "price")}{moneyField("Down payment ($)", "down")}
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">First payment</span>
+            <DatePicker
+              className="mt-1 w-full"
+              value={form.firstPaymentDate}
+              onChange={(next) => setForm((f) => ({ ...f, firstPaymentDate: next }))}
+            />
+          </label>
           {field("Scenario A rate (%)", "rateA", "number")}{field("Scenario A term (mo)", "termA", "number")}
           {field("Scenario B rate (%) — optional", "rateB", "number")}{field("Scenario B term (mo)", "termB", "number")}
         </div>
