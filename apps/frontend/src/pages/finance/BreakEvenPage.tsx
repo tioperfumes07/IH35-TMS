@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -65,23 +65,43 @@ export function BreakEvenPage() {
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_BREAK_EVEN_UI_FLAG, companyId);
 
-  const [fromDate, setFromDate] = useState(startOfYearIso());
-  const [toDate, setToDate] = useState(todayIso());
-  const [appliedRange, setAppliedRange] = useState({ from: startOfYearIso(), to: todayIso() });
-  // Non-persisted what-if overrides.
-  const [classOverrides, setClassOverrides] = useState<Record<string, BreakEvenClassification>>({});
-  const [milesOverride, setMilesOverride] = useState<string>(""); // blank = use live miles
-  const [revenueBasis, setRevenueBasis] = useState<"gl" | "loads">("gl");
+  // LV-FINANCE-BREAK-EVEN-FILTERS-SILENT-APPLY — date range, revenue basis, miles override,
+  // and classification overrides all stage; Apply commits atomically (Cancel/Reset restore).
+  type BreakEvenFilter = {
+    from: string;
+    to: string;
+    revenueBasis: "gl" | "loads";
+    milesOverride: string;
+    classOverrides: Record<string, BreakEvenClassification>;
+  };
+  const emptyFilters: BreakEvenFilter = {
+    from: startOfYearIso(),
+    to: todayIso(),
+    revenueBasis: "gl",
+    milesOverride: "",
+    classOverrides: {},
+  };
+  const [applied, setApplied] = useState<BreakEvenFilter>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
+  const activeFilterCount =
+    (applied.from !== emptyFilters.from || applied.to !== emptyFilters.to ? 1 : 0) +
+    (applied.revenueBasis !== emptyFilters.revenueBasis ? 1 : 0) +
+    (applied.milesOverride.trim() !== "" ? 1 : 0) +
+    (Object.keys(applied.classOverrides).length > 0 ? 1 : 0);
 
   const active = enabled && Boolean(companyId);
 
   const inputsQuery = useQuery({
-    queryKey: ["f1-break-even", companyId, appliedRange.from, appliedRange.to],
+    queryKey: ["f1-break-even", companyId, applied.from, applied.to],
     queryFn: () =>
       getBreakEvenInputs({
         operating_company_id: companyId,
-        from_date: appliedRange.from,
-        to_date: appliedRange.to,
+        from_date: applied.from,
+        to_date: applied.to,
       }),
     enabled: active,
     retry: false,
@@ -91,7 +111,8 @@ export function BreakEvenPage() {
 
   const model = useMemo(() => {
     if (!data) return null;
-    const classify = (code: string, dflt: BreakEvenClassification) => classOverrides[code] ?? dflt;
+    const classify = (code: string, dflt: BreakEvenClassification) =>
+      applied.classOverrides[code] ?? dflt;
     let fixed = 0;
     let variable = 0;
     for (const line of data.expense_lines) {
@@ -99,8 +120,14 @@ export function BreakEvenPage() {
       else fixed += line.amount_cents;
     }
     const liveMiles = data.miles.total_miles;
-    const miles = milesOverride.trim() === "" ? liveMiles : Math.max(0, Number(milesOverride) || 0);
-    const revenue = revenueBasis === "gl" ? data.revenue.gl_revenue_cents : data.revenue.loads_gross_revenue_cents;
+    const miles =
+      applied.milesOverride.trim() === ""
+        ? liveMiles
+        : Math.max(0, Number(applied.milesOverride) || 0);
+    const revenue =
+      applied.revenueBasis === "gl"
+        ? data.revenue.gl_revenue_cents
+        : data.revenue.loads_gross_revenue_cents;
     return computeBreakEven({
       miles,
       days: data.days_in_period,
@@ -108,7 +135,7 @@ export function BreakEvenPage() {
       fixed_cost_cents: fixed,
       variable_cost_cents: variable,
     });
-  }, [data, classOverrides, milesOverride, revenueBasis]);
+  }, [data, applied]);
 
   const header = (
     <PageHeader
@@ -141,11 +168,17 @@ export function BreakEvenPage() {
   }
 
   const toggleClass = (code: string, current: BreakEvenClassification) => {
-    setClassOverrides((prev) => ({ ...prev, [code]: current === "variable" ? "fixed" : "variable" }));
+    staged.setDraft((prev) => ({
+      ...prev,
+      classOverrides: {
+        ...prev.classOverrides,
+        [code]: current === "variable" ? "fixed" : "variable",
+      },
+    }));
   };
 
   const effectiveClass = (code: string, dflt: BreakEvenClassification): BreakEvenClassification =>
-    classOverrides[code] ?? dflt;
+    staged.draft.classOverrides[code] ?? dflt;
 
   const beRateTone: Tone = model?.profit_per_mile_cents == null ? "neutral" : model.profit_per_mile_cents >= 0 ? "good" : "bad";
 
@@ -156,39 +189,43 @@ export function BreakEvenPage() {
 
       {!companyId ? <p className="mb-3 text-sm text-red-600">Select an operating company.</p> : null}
 
-      {/* Controls — single section frame; filter row uses border-b only (no nested card). */}
-      <section
-        className="mb-4 overflow-hidden rounded-sm border border-slate-200 bg-white"
-        data-testid="break-even-controls"
+      <CollapsedListFilters
+        activeFilterCount={activeFilterCount}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="break-even"
+        className="mb-4 rounded-sm border border-slate-200 bg-white p-3"
+        dataAttributes={{ "data-testid": "break-even-controls" }}
       >
-        <div className="flex flex-wrap items-end gap-3 border-b border-slate-200 bg-slate-50 p-3">
+        <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col text-xs font-medium text-slate-600">
             From
             <DatePicker
-              value={fromDate}
-              max={toDate}
-              onChange={setFromDate}
+              value={staged.draft.from}
+              max={staged.draft.to}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, from: next }))}
               className="mt-1"
             />
           </label>
           <label className="flex flex-col text-xs font-medium text-slate-600">
             To
             <DatePicker
-              value={toDate}
-              min={fromDate}
+              value={staged.draft.to}
+              min={staged.draft.from}
               max={todayIso()}
-              onChange={setToDate}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))}
               className="mt-1"
             />
           </label>
-          <Button size="sm" onClick={() => setAppliedRange({ from: fromDate, to: toDate })}>
-            Apply
-          </Button>
           <label className="flex flex-col text-xs font-medium text-slate-600">
             Revenue basis
             <select
-              value={revenueBasis}
-              onChange={(e) => setRevenueBasis(e.target.value as "gl" | "loads")}
+              value={staged.draft.revenueBasis}
+              onChange={(e) =>
+                staged.setDraft((p) => ({ ...p, revenueBasis: e.target.value as "gl" | "loads" }))
+              }
               className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
             >
               <option value="gl">GL recognized revenue</option>
@@ -201,13 +238,16 @@ export function BreakEvenPage() {
               type="number"
               min={0}
               placeholder={data ? fmtInt(data.miles.total_miles) : "live"}
-              value={milesOverride}
-              onChange={(e) => setMilesOverride(e.target.value)}
+              value={staged.draft.milesOverride}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, milesOverride: e.target.value }))}
               className="mt-1 w-32 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
             />
           </label>
         </div>
-      </section>
+        <p className="mt-2 text-xs text-slate-500">
+          Classification toggles below also stage until Apply. Cancel restores the last-applied model.
+        </p>
+      </CollapsedListFilters>
 
       {inputsQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
       {inputsQuery.isError ? <p className="text-sm text-red-600">Could not load break-even inputs.</p> : null}
@@ -230,9 +270,9 @@ export function BreakEvenPage() {
             />
             <StatTile
               label="Revenue / mile"
-              to={revenueBasis === "gl" ? "/finance/statements" : "/dispatch/loads"}
+              to={applied.revenueBasis === "gl" ? "/finance/statements" : "/dispatch/loads"}
               value={fmtPerMile(model.revenue_per_mile_cents)}
-              secondary={revenueBasis === "gl" ? "GL recognized revenue" : "Loads gross rate"}
+              secondary={applied.revenueBasis === "gl" ? "GL recognized revenue" : "Loads gross rate"}
             />
             <StatTile
               label="Profit / mile" to="/finance/statements"
