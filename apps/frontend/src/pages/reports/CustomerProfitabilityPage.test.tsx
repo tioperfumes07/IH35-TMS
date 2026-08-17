@@ -45,7 +45,7 @@ const samplePayload: reportsApi.CustomerProfitabilityResponse = {
     direct_cost_cents: 300_000_00,
     gross_margin_cents: 200_000_00,
     gross_margin_pct: 40,
-    customer_count: 1,
+    customer_count: 2,
   },
   by_customer: [
     {
@@ -60,6 +60,19 @@ const samplePayload: reportsApi.CustomerProfitabilityResponse = {
       ar_aging_balance_cents: 25_000_00,
       days_since_last_load: 3,
       flags: ["high_margin", "past_due"],
+    },
+    {
+      customer_id: "45226738-fcfa-40f0-944d-574e6725bcd6",
+      customer_name: "Customer — not visible",
+      revenue_cents: 10_000_00,
+      direct_cost_cents: 5_000_00,
+      gross_margin_cents: 5_000_00,
+      gross_margin_pct: 50,
+      load_count: 1,
+      avg_revenue_per_load_cents: 10_000_00,
+      ar_aging_balance_cents: 0,
+      days_since_last_load: 9,
+      flags: [],
     },
   ],
 };
@@ -90,5 +103,17 @@ describe("CustomerProfitabilityPage", () => {
     const arCell = screen.getByText("$25,000.00");
     await user.click(arCell);
     expect(mockNavigate).toHaveBeenCalledWith("/reports/ar-aging?customer_id=c1");
+  });
+
+  it("keeps unresolved customer tombstones non-interactive", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(reportsApi, "getCustomerProfitability").mockResolvedValue(samplePayload);
+    render(wrap(<CustomerProfitabilityPage />));
+    const tombstone = await screen.findByTestId("customer-profitability-tombstone");
+    expect(tombstone).toHaveTextContent("Customer — not visible");
+    expect(tombstone.closest("a")).toBeNull();
+    mockNavigate.mockClear();
+    await user.click(tombstone);
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

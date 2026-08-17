@@ -40,6 +40,15 @@ function pct(n: number) {
   return `${(Number(n) || 0).toFixed(1)}%`;
 }
 
+/** LV-REPORTS-CUSTOMER-PROFITABILITY-DEAD-TOMBSTONE-LINK — unresolved names are not drillable. */
+function customerDisplayLabel(row: Pick<CustomerProfitabilityRow, "customer_name" | "customer_id">) {
+  return entityLabel(row.customer_name, row.customer_id, "Customer");
+}
+
+function isUnresolvedCustomerTombstone(row: Pick<CustomerProfitabilityRow, "customer_name" | "customer_id">) {
+  return customerDisplayLabel(row) === "Customer — not visible";
+}
+
 function currentQuarterRange() {
   const now = new Date();
   const q = Math.floor(now.getUTCMonth() / 3);
@@ -89,7 +98,22 @@ export function CustomerProfitabilityPage() {
 
   const profitabilityColumns = useMemo<ParityColumn<CustomerProfitabilityRow>[]>(
     () => [
-      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <EntityLink kind="customer" id={r.customer_id} label={entityLabel(r.customer_name, r.customer_id, "Customer")} className="font-medium text-gray-900" /> },
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        render: (r) => {
+          const label = customerDisplayLabel(r);
+          if (isUnresolvedCustomerTombstone(r)) {
+            return (
+              <span className="font-medium text-gray-900" data-testid="customer-profitability-tombstone">
+                {label}
+              </span>
+            );
+          }
+          return <EntityLink kind="customer" id={r.customer_id} label={label} className="font-medium text-gray-900" />;
+        },
+      },
       { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_cents) },
       { key: "direct_cost_cents", label: "Direct cost", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.direct_cost_cents) },
@@ -101,17 +125,20 @@ export function CustomerProfitabilityPage() {
         sortable: true,
         className: "text-right",
         cellClass: "text-right",
-        render: (r) => (
-          <span
-            className="cursor-pointer text-slate-700 underline"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`);
-            }}
-          >
-            {money(r.ar_aging_balance_cents)}
-          </span>
-        ),
+        render: (r) =>
+          isUnresolvedCustomerTombstone(r) ? (
+            <span className="text-gray-900">{money(r.ar_aging_balance_cents)}</span>
+          ) : (
+            <span
+              className="cursor-pointer text-slate-700 underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`);
+              }}
+            >
+              {money(r.ar_aging_balance_cents)}
+            </span>
+          ),
       },
       {
         key: "days_since_last_load",
@@ -145,7 +172,7 @@ export function CustomerProfitabilityPage() {
     const rows = [...(query.data?.by_customer ?? [])];
     rows.sort((a, b) => b.revenue_cents - a.revenue_cents);
     return rows.slice(0, 5).map((r) => {
-      const label = entityLabel(r.customer_name, r.customer_id, "Customer");
+      const label = customerDisplayLabel(r);
       return {
         name: label.length > 14 ? `${label.slice(0, 12)}…` : label,
         revenue: r.revenue_cents,
@@ -158,7 +185,7 @@ export function CustomerProfitabilityPage() {
     const header = ["Customer", "Loads", "Revenue", "DirectCost", "Margin", "MarginPct", "ARAging", "DaysSinceLoad", "Flags"];
     const lines = (data.by_customer ?? []).map((r) =>
       [
-        `"${entityLabel(r.customer_name, r.customer_id, "Customer").replace(/"/g, '""')}"`,
+        `"${customerDisplayLabel(r).replace(/"/g, '""')}"`,
         r.load_count,
         r.revenue_cents,
         r.direct_cost_cents,
@@ -271,7 +298,10 @@ export function CustomerProfitabilityPage() {
             storageKey="customer-profitability"
             emptyText="No customers match the current filters."
             exportFilename={`customer-profitability-${applied.start}-${applied.end}`}
-            onRowClick={(r) => navigate(`/customers/${r.customer_id}?tab=billing`)}
+            onRowClick={(r) => {
+              if (isUnresolvedCustomerTombstone(r)) return;
+              navigate(`/customers/${r.customer_id}?tab=billing`);
+            }}
           />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
