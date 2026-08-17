@@ -62,7 +62,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — source mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${IDS.length + 1} mutations detected`);
+  const loadMut = structuredClone(doc);
+  loadMut.leaves.find((leaf) => leaf.id === "fuel.modal.upload_loves_prices").required.push("load");
+  if (!audit(loadMut, surfaces).some((failure) => failure.includes("falsely Requires load"))) {
+    console.error(`${LABEL} SELFTEST FAIL — loves load Required mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${IDS.length + 2} mutations detected`);
   process.exit(0);
 }
 
