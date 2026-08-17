@@ -367,7 +367,7 @@ for (const cfg of SHEETS) {
     if (RECON_BLOCKS.length) {
       const groups = [
         ["PENDING", "▼ PENDING — needs build"],
-        ["PENDING (GATED)", "▼ PENDING (GATED) — financial / locked, needs Jorge's gate first"],
+        ["PENDING (GATED)", "▼ PENDING (GATED) — historical financial/locked tag; actionable Pending (no owner approval required)"],
         ["NEEDS-VERIFY", "▼ NEEDS-VERIFY — weak signal (title-match / partial files / self-report), NOT trusted until GUARD confirms"],
         ["DONE", "▼ DONE — verified on main (branch merged OR all signature files present)"],
       ];
