@@ -1858,6 +1858,12 @@
     "guard": "verify-reports-customer-tombstone-link-consumers",
     "lane": "cursor"
   },
+  "3718": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-LEGAL-CONTRACT-LIST-SIGNER-PLAIN-TEXT",
+    "guard": "verify-legal-contract-list-signer-entitylink",
+    "lane": "cursor"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
