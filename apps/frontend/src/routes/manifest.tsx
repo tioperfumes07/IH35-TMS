@@ -903,6 +903,15 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* LV-SETTINGS-COMPANY-REDIRECT — Live walks hit /settings/company; company ops live under /system */}
+        <Route
+          path="/settings/company"
+          element={
+            <ProtectedRoute>
+              <PreserveSearchNavigate to="/system" />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/settings"
           element={
