@@ -257,9 +257,9 @@
       "sub": "Loan wizard",
       "route_hint": "/finance/loan-wizard",
       "required": [
-        "picker_law",
         "connectivity"
-      ]
+      ],
+      "note": "picker_law dropped — LoanWizard has no canonical-entity FK (FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER)."
     },
     {
       "id": "hop.accounting",
@@ -296,9 +296,9 @@
       "surface_kind": "wizard",
       "surface_path": "pages/finance/LoanWizardPage.tsx",
       "required": [
-        "connectivity",
-        "picker_law"
-      ]
+        "connectivity"
+      ],
+      "note": "picker_law dropped — LoanWizard has no canonical-entity FK (FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER)."
     },
     {
       "id": "chrome.toolbar_search",
@@ -792,6 +792,26 @@
           "removed": [
             "liability"
           ]
+        }
+      ]
+    },
+    "loan_wizard_picker_law_2026_08_17": {
+      "finding": "FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER",
+      "note": "Loan wizard field universe is Asset name/VIN/Lender free text + MoneyInput + rate/term + DatePicker. No EntityPicker. Drop picker_law from nav.loan_wizard and finance.wizard.loan_wizard_page; keep connectivity.",
+      "drops": [
+        {
+          "id": "nav.loan_wizard",
+          "removed": [
+            "picker_law"
+          ],
+          "reason": "no canonical-entity FK"
+        },
+        {
+          "id": "finance.wizard.loan_wizard_page",
+          "removed": [
+            "picker_law"
+          ],
+          "reason": "no canonical-entity FK"
         }
       ]
     }
