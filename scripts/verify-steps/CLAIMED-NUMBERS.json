@@ -3907,5 +3907,10 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-cash-flow-overview-iso-axis"
+  },
+  "3744": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-scheduled-status-datetime-chrome"
   }
 }
