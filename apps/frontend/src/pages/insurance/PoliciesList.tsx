@@ -123,9 +123,19 @@ export function PoliciesList() {
             <p className="mt-1 text-xs text-slate-600">Filter and review insurance policies. Click any row to open policy details.</p>
           </div>
           {canCreatePolicy ? (
-            <Button type="button" onClick={() => setWizardOpen(true)}>
-              + Create policy
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" onClick={() => setWizardOpen(true)}>
+                + Create policy
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                data-testid="policy-create-modal-open"
+                onClick={() => setCreateOpen(true)}
+              >
+                + Create policy form
+              </Button>
+            </div>
           ) : null}
         </div>
       </header>
