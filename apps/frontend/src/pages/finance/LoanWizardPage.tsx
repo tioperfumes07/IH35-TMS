@@ -78,7 +78,39 @@ export function LoanWizardPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // CLS-FINANCE-PREVIEW-RAW-VALIDATION-ERROR — gate Preview on required fields; never flash raw tokens.
+  const previewReady =
+    !!companyId &&
+    form.assetName.trim().length > 0 &&
+    toCents(form.purchasePrice) > 0 &&
+    String(form.annualRatePct).trim() !== "" &&
+    Number(form.annualRatePct) >= 0 &&
+    Number(form.termMonths) > 0 &&
+    /^\d{4}-\d{2}-\d{2}$/.test(form.firstPaymentDate) &&
+    form.lender.trim().length > 0;
+
+  function mapPreviewError(e: unknown): string {
+    const ae = e as { message?: string; data?: { error?: string; message?: string } };
+    const code = (ae?.data && typeof ae.data.error === "string" ? ae.data.error : ae?.message) ?? "";
+    if (code === "validation_error") {
+      return "Enter asset name, purchase price, rate, term, first payment date, and lender before preview.";
+    }
+    if (code === "feature_disabled") {
+      return "The Loan Wizard is not enabled for this company.";
+    }
+    if (code === "unbalanced_preview" && ae?.data && typeof ae.data.message === "string") {
+      return ae.data.message;
+    }
+    if (ae?.data && typeof ae.data.message === "string" && ae.data.message.trim()) return ae.data.message;
+    if (ae?.message && ae.message !== "validation_error") return ae.message;
+    return "Preview failed. Check inputs and try again.";
+  }
+
   async function onPreview() {
+    if (!previewReady) {
+      setError("Enter asset name, purchase price, rate, term, first payment date, and lender before preview.");
+      return;
+    }
     setBusy(true);
     setError(null);
     setPreview(null);
@@ -98,8 +130,7 @@ export function LoanWizardPage() {
       });
       setPreview(res.preview);
     } catch (e) {
-      const msg = (e as { payload?: { message?: string }; message?: string });
-      setError(msg?.payload?.message ?? msg?.message ?? "Preview failed");
+      setError(mapPreviewError(e));
     } finally {
       setBusy(false);
     }
@@ -195,7 +226,7 @@ export function LoanWizardPage() {
               </div>
               <button
                 onClick={onPreview}
-                disabled={busy || !companyId}
+                disabled={busy || !previewReady}
                 className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 {busy ? "Computing…" : "Preview"}
