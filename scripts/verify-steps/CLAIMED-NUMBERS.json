@@ -3726,5 +3726,11 @@
     "guard": "verify-break-even-staged-filters",
     "lane": "cursor",
     "note": "LV-FINANCE-BREAK-EVEN-FILTERS-SILENT-APPLY"
+  },
+  "3688": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-program-gated-no-owner-hold-copy",
+    "lane": "cursor",
+    "note": "LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY"
   }
 }
