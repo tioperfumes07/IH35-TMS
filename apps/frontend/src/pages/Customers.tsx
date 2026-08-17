@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
 import { ApiError } from "../api/client";
+import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
 import { createCustomer, getCustomerBillingSummary, listCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
 import {
   CustomerProfileForm,
@@ -400,11 +401,18 @@ export function CustomersPage() {
     return customersSorted[0] ?? null;
   }, [customersSorted, selectedCustomerId]);
 
+  // ACCT-F200 / LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027) — amount_open_cents is a STORED GENERATED
+  // column that legitimately stays nonzero on a voided invoice; every open-A/R read path must
+  // exclude voided rows via isVoidInvoice/invoiceOpenCentsForDisplay instead. This per-customer
+  // rollup was a third surface still summing the raw column unfiltered (same class as
+  // AccountingHubPage's ACCT-F5395 fix), live-overstating every USMCA customer's Open Balance by
+  // the sum of their voided invoices.
   const openByCustomerId = useMemo(() => {
     const map = new Map<string, number>();
     for (const invoice of allInvoicesQuery.data?.invoices ?? []) {
+      if (isVoidInvoice(invoice)) continue;
       const current = map.get(invoice.customer_id) ?? 0;
-      map.set(invoice.customer_id, current + Number(invoice.amount_open_cents ?? 0));
+      map.set(invoice.customer_id, current + invoiceOpenCentsForDisplay(invoice));
     }
     return map;
   }, [allInvoicesQuery.data?.invoices]);
