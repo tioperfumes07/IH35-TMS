@@ -1968,12 +1968,34 @@
     "lane": "cursor",
     "note": "LV-FUEL-HISTORY-RAW-ISO-DATETIME"
   },
+  "3756": {
+    "guard": "verify-customers-detail-status-label",
+    "lane": "cursor",
+    "note": "LV-CUSTOMERS-DETAIL-RAW-LOWERCASE-STATUS"
+  },
   "3757": {
     "guard": "verify-matrix-banking-module-alias-recognized",
     "finding": "ACCT-F5402",
     "claimed_by": "cc-1",
     "claimed_at": "2026-08-17"
   },
+  "3758": {
+    "guard": "verify-docs-home-entity-no-raw-uuid",
+    "lane": "cursor",
+    "note": "LV-DOCS-HOME-ENTITY-RAW-UUID"
+  },
+  "3760": {
+    "guard": "verify-maint-preflight-dvir-wo-join-uuid",
+    "lane": "cursor",
+    "note": "CLAIM-RESERVE LV-MAINT-PREFLIGHT-DVIR-WO-JOIN-UUID"
+  },
+  "3761": {
+    "guard": "verify-banking-register-virtual-account-id-accepted",
+    "finding": "ACCT-F5403",
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-17"
+  },
+  "3762": "verify-docs-soft-delete-recoverable-copy",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -3953,26 +3975,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165,
-  "3756": {
-    "guard": "verify-customers-detail-status-label",
-    "lane": "cursor",
-    "note": "LV-CUSTOMERS-DETAIL-RAW-LOWERCASE-STATUS"
-  },
-  "3758": {
-    "guard": "verify-docs-home-entity-no-raw-uuid",
-    "lane": "cursor",
-    "note": "LV-DOCS-HOME-ENTITY-RAW-UUID"
-  },
-  "3760": {
-    "guard": "verify-maint-preflight-dvir-wo-join-uuid",
-    "lane": "cursor",
-    "note": "CLAIM-RESERVE LV-MAINT-PREFLIGHT-DVIR-WO-JOIN-UUID"
-  },
-  "3761": {
-    "guard": "verify-banking-register-virtual-account-id-accepted",
-    "finding": "ACCT-F5403",
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-17"
-  }
+  "total_claimed": 1165
 }
