@@ -3953,5 +3953,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165
+  "total_claimed": 1165,
+  "3756": {
+    "guard": "verify-customers-detail-status-label",
+    "lane": "cursor",
+    "note": "LV-CUSTOMERS-DETAIL-RAW-LOWERCASE-STATUS"
+  }
 }
