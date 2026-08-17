@@ -30,6 +30,8 @@ import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useBulkSelection } from "../hooks/useBulkSelection";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { CollapsedListFilters, useStagedListFilters } from "../components/table";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
@@ -203,6 +205,26 @@ export function UsersPage() {
     );
   };
 
+  const roleFilter = (searchParams.get("role") ?? "").trim();
+  const setRoleFilter = (next: string) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (!next) p.delete("role");
+        else p.set("role", next);
+        return p;
+      },
+      { replace: false },
+    );
+  };
+  const staged = useStagedListFilters({
+    applied: { roleFilter },
+    empty: { roleFilter: "" },
+    onApply: (next) => {
+      setRoleFilter(next.roleFilter);
+    },
+  });
+
   const usersQuery = useQuery({
     queryKey: ["users", isOwnerOrAdmin],
     queryFn: () => listUsers(isOwnerOrAdmin).then((result) => result.users),
@@ -375,13 +397,14 @@ export function UsersPage() {
   );
 
   const filteredUsers = useMemo(() => {
-    const list = [...allUsers];
+    let list = [...allUsers];
     // Free-text search: ParityTable toolbar owns it (USR-F3494) — tab filter stays page-local.
-    if (listTab === "deactivated") return list.filter((u) => u.deactivated_at);
-    if (listTab === "pending") return list.filter((u) => userRowCategory(u) === "pending");
-    if (listTab === "active") return list.filter((u) => userRowCategory(u) === "active");
+    if (listTab === "deactivated") list = list.filter((u) => u.deactivated_at);
+    else if (listTab === "pending") list = list.filter((u) => userRowCategory(u) === "pending");
+    else if (listTab === "active") list = list.filter((u) => userRowCategory(u) === "active");
+    if (roleFilter) list = list.filter((u) => u.role === roleFilter);
     return list;
-  }, [allUsers, listTab]);
+  }, [allUsers, listTab, roleFilter]);
 
   const inviteSnapshot = { inviteName, inviteEmail, inviteRole, inviteInitialPassword, provisionMode, overrideReturningWarning };
   const { isDirty: inviteIsDirty } = useUnsavedChanges(inviteSnapshot, inviteBaseline);
@@ -612,6 +635,36 @@ export function UsersPage() {
         selectedKeys={paritySelectedKeys}
         onSelectionChange={(keys) => userBulk.setSelectedIds(new Set(keys))}
         hidePager
+        filterBar={
+          <div data-users-filter-toolbar="collapsed" data-testid="users-root-filter-panel">
+            <CollapsedListFilters
+              activeFilterCount={roleFilter ? 1 : 0}
+              onApply={staged.apply}
+              onReset={staged.reset}
+              onCancel={staged.cancel}
+              applyDisabled={!staged.dirty}
+              testIdPrefix="users"
+            >
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="space-y-1 text-xs text-gray-600" data-testid="users-filter-role">
+                  <span>Role</span>
+                  <SelectCombobox
+                    className="min-h-12 w-full min-w-[12rem] rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                    value={staged.draft.roleFilter}
+                    onChange={(event) => staged.setDraft({ ...staged.draft, roleFilter: event.target.value })}
+                  >
+                    <option value="">All roles</option>
+                    {ROLE_OPTIONS.filter((role) => role !== "Viewer").map((role) => (
+                      <option key={role} value={role}>
+                        {ROLE_LABEL[role]}
+                      </option>
+                    ))}
+                  </SelectCombobox>
+                </label>
+              </div>
+            </CollapsedListFilters>
+          </div>
+        }
         batchActions={() => (
           <div className="flex flex-wrap gap-2">
             {/* Bulk deactivate is intentionally omitted — per-row Deactivate in Actions is the live path.
