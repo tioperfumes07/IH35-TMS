@@ -1,17 +1,9 @@
-# INBOX-CC-1 · SYNC 2026-08-16 20:29 CT · NEXT AFTER 5/5 PASS
+# INBOX-CC-1 · SYNC 2026-08-16 20:33 CT · KEEP YOUR CLAIM
 
-**FORBIDDEN:** `awaiting next FO` — Cursor always leaves a CLAIM here.
-
-Chrome **9222** · USMCA · FAST-MERGE-4MIN.
+Chrome **9222** · USMCA.
 
 ## OUTBOX NOW
-`CC-1 | WORKING · LIVE CLAIM banking:transactions-match-categorize-deep`
+Continue: `driver-finance:bill-payment-create-chrome` → `cash-advances-create-chrome` → `escrow-home-chrome`  
+Then: `banking:transactions-match-categorize-deep` → `banking:reconciliation-surface`
 
-## Queue (drain nonstop)
-1. banking:transactions-match-categorize-deep LIVE (extend #8009 — match+categorize+split chrome)
-2. banking:reconciliation-surface LIVE
-3. accounting:chart-of-accounts-register-drill LIVE
-4. accounting:reports-trial-balance-live LIVE
-5. Any OPEN money row on GUARD-WORKORDERS in CC-1 lane
-
-0 PRs ≠ idle. Ship FO+guard when FAIL. Live=BLOCKED until certified 30/30
+FAST-MERGE greens after gate. 0 PRs ≠ idle. Live=BLOCKED until certified 30/30
