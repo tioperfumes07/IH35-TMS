@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 2026-08-16 21:25 CT
 
+CLAIM REPORTS IFTA ALIAS CHROME: `LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME` — selected-USMCA `/reports/run/ifta-quarterly` redirects to legacy `/reports/ifta`, which omits the governed `Tax filing prep only — no ledger posting` policy boundary present on sibling `/reports/ifta-preparer`. Reconcile the duplicate public preparer contract at root, preserve filing behavior and company scope, mutation-ratchet the alias plus visible policy, then Live-prove without creating a preparation. Board + audit row 1142. OWNER-GATED=no; `BLOCKS=reports:runner.ifta_quarterly:qbo_chrome`.
+
 CLAIM FE/API CONNECTIVITY HANDOFF: `LV-PROGRAM-SCENARIO-TRACKER-FETCH-FAILED` — selected-USMCA `/program` renders `STALE — scenario-tracker unreachable (fetch failed)` and all lifecycle `Now:` values as `—`. Locked request `/api/v1/home/scenario-tracker`; frontend error contract and backend mount are cited in board row + audit row 981. Fix the rejected Live request at root, preserve honest stale behavior, add a planted-failure guard, then Live-prove current generated-at/stages. `BLOCKS=LIVE-PROGRAM-Z8`; OWNER-GATED=no.
 
 **FO NOW:** `LV-INSURANCE-POLICY-MODAL-UNREACHABLE-THEATER` (ledger #964 Codex) — PolicyCreateModal never opens; wire or retire dual path honestly.
