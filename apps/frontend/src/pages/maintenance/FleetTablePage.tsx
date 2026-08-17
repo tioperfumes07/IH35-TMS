@@ -23,6 +23,35 @@ type UnifiedUnitRow = FleetRow & {
   type: string;
 };
 
+/** Map Live/matrix aliases -> canonical mdata unit status enums. LV-FLEET-OOS-FILTER-0-ROWS */
+function normalizeFleetStatusParam(raw: string | null): string {
+  if (raw == null) return "";
+  const v = raw.trim();
+  if (!v || v === "all") return "";
+  const key = v.toLowerCase().replace(/[_\s]+/g, "-");
+  const aliases: Record<string, string> = {
+    "out-of-service": "OutOfService",
+    outofservice: "OutOfService",
+    oos: "OutOfService",
+    "in-service": "InService",
+    inservice: "InService",
+    active: "InService",
+    "in-shop": "InMaintenance",
+    "in-maintenance": "InMaintenance",
+    inmaintenance: "InMaintenance",
+  };
+  if (aliases[key]) return aliases[key];
+  if (v === "OutOfService" || v === "InService" || v === "InMaintenance") return v;
+  return v;
+}
+
+function rowMatchesFleetStatus(row: UnifiedUnitProp, status: string): boolean {
+  if (!status) return true;
+  if (row.status === status) return true;
+  if (status === "OutOfService" && Boolean(row.is_oos)) return true;
+  return false;
+}
+
 // Trucks/Trailers/Company sub-tabs (unit_class). "company" is the future company-vehicle
 // class — empty for now (cars get their own class later), shown but with no rows yet.
 const KIND_TABS: Array<{ key: string; label: string }> = [
@@ -83,7 +112,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const kindFilter = searchParams.get("kind") ?? "";
   const rawStatus = searchParams.get("status");
   // Absent status → default (active-only on /fleet, all in Maintenance). "all" → no status filter.
-  const effectiveStatus = rawStatus == null ? (defaultActiveOnly ? "InService" : "") : rawStatus === "all" ? "" : rawStatus;
+  // Normalize Live/matrix kebab aliases (e.g. out-of-service → OutOfService) so KPI click + deep links match rows.
+  const effectiveStatus =
+    rawStatus == null ? (defaultActiveOnly ? "InService" : "") : normalizeFleetStatusParam(rawStatus);
   const activeOnly = effectiveStatus === "InService";
 
   // Soft-delete (deactivated_at) dimension — independent of the 5 operational statuses.
@@ -177,7 +208,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         if (softDeleteFilter === "inactive" && r.deactivated_at == null) return false;
         // Operational status filter only narrows the default (Active) view; Inactive/All
         // show soft-deleted units of any operational status.
-        if (softDeleteFilter === "active" && effectiveStatus && r.status !== effectiveStatus) return false;
+        if (softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus(r, effectiveStatus)) return false;
         return true;
       }).map((r) => ({ ...r, ...(locationByUnit[r.id] ?? {}), ...(maintByUnit[r.id] ?? {}) })),
     [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit, maintByUnit]
@@ -194,7 +225,12 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "";
 
   const counters = useMemo(() => {
-    const sourceRows = rowsQuery.data?.rows ?? [];
+    // Count the same soft-delete slice the table uses (default: active / not deactivated).
+    const sourceRows = (rowsQuery.data?.rows ?? []).filter((r) => {
+      if (softDeleteFilter === "active" && r.deactivated_at != null) return false;
+      if (softDeleteFilter === "inactive" && r.deactivated_at == null) return false;
+      return true;
+    });
     const trucks = sourceRows.filter((r) => r.kind === "truck");
     const trailers = sourceRows.filter((r) => r.kind === "trailer");
     return {
@@ -203,9 +239,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       trailers: trailers.length,
       active: sourceRows.filter((r) => r.status === "InService").length,
       inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
-      outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
+      outOfService: sourceRows.filter((r) => rowMatchesFleetStatus(r, "OutOfService")).length,
     };
-  }, [rowsQuery.data?.rows]);
+  }, [rowsQuery.data?.rows, softDeleteFilter]);
 
   const patchParams = (mutate: (params: URLSearchParams) => void) => {
     setSearchParams(
