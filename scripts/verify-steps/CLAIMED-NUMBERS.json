@@ -3703,5 +3703,11 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165
+  "total_claimed": 1165,
+  "3682": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-legal-matter-timeline-note-creator",
+    "lane": "cursor",
+    "note": "LV-LEGAL-MATTER-TIMELINE-RAW-JSON-CREATOR"
+  }
 }
