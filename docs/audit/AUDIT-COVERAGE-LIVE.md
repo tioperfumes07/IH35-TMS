@@ -68,15 +68,15 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 
 | Metric | Value | As of |
 |---|---|---|
-| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-16 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **0 / 30** | 2026-08-16 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **148 / 150** | 2026-08-16 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **81 / 150** | 2026-08-16 |
-| Rows in this file | **952** | 2026-08-16 |
-| Rows `FAIL` + `OPEN` | **0** | 2026-08-16 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-16 |
-| Rows `VERIFIED` by GUARD | **152** | 2026-08-16 |
-| Verdict tally (all rows) | FAIL=148 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=10 · OTHER=332 | 2026-08-16 |
+| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-17 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **1 / 30** | 2026-08-17 |
+| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **148 / 150** | 2026-08-17 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **81 / 150** | 2026-08-17 |
+| Rows in this file | **953** | 2026-08-17 |
+| Rows `FAIL` + `OPEN` | **1** | 2026-08-17 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-17 |
+| Rows `VERIFIED` by GUARD | **152** | 2026-08-17 |
+| Verdict tally (all rows) | FAIL=149 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=10 · OTHER=332 | 2026-08-17 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1040,3 +1040,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 950 | reports · category_hub management copy | E | USMCA | FAIL · FIXED CODE | Authenticated Reports hub rendered the real 19-report catalog, category controls, and Frequently Run toolbar, but its USMCA-visible Management reports description claimed `QBO-standard` despite the closed TMS-native/no-QuickBooks entity law. Root fix describes the same unchanged packages as branded financial compilations and mutation-ratchets the forbidden copy. | SUPERSEDED (CASCADE WAVE-TONIGHT 2026-08-16; was FIXED CODE) | `/reports`; `verify-rpt-s01-s05-reports-home-ifta` normal+selftest QBO-copy mutation | NO | 2026-08-16 | CODEX |
 | 951 | home · USMCA QBO chrome and polling | E | USMCA | FAIL · FIXED CODE | Authenticated Home rendered real scoped operational KPIs and governed Driver summary filters, but both role implementations exposed QBO Vendors, Pending QBO Sync, and the full QBO Sync Health/dashboard while also polling four QBO endpoints for USMCA. Root fix derives capability from canonical selected company code, limits both queries and chrome to TRANSP, and preserves TMS-native KPIs plus Samsara mapping integrity. | SUPERSEDED (CASCADE WAVE-TONIGHT 2026-08-16; was FIXED CODE) | `/home`; `verify-home-kpi-range-toggle` normal+selftest+2 entity-capability mutations | NO | 2026-08-16 | CODEX |
 | 952 | program · scenario QBO route capability | E | USMCA | FAIL · FIXED CODE | Authenticated Program Scenario Tracker loaded its fresh live lifecycle feed and entity-scope controls, but the default/USMCA-visible header exposed a direct `QBO-style home` route. Root fix renders that additive legacy route only when the operator explicitly selects the TRANSP scenario scope; Role home and Role ops remain universal. | SUPERSEDED (CASCADE WAVE-TONIGHT 2026-08-16; was FIXED CODE) | `/program`; `verify-homepage-scenario-tracker-staleness` normal+selftest capability mutation | NO | 2026-08-16 | CODEX |
+| 953 | inventory · parts_stock historical vendor linkage | C | USMCA | FAIL · OPEN | A persisted part renders its canonical same-company vendor link as `Vendor — not visible`. Production proves the vendor row and human name still exist but the vendor is deactivated; active-only vendor RLS hides it from the historical Parts & Stock join. | OPEN HANDOFF · CC-1 | `/inventory`; part `780c71a9-3469-4b8a-b6eb-6958f7a6c4ae`; vendor `2cbaf657-6aa1-4f6b-a54b-c1863e05162a`; Neon `vendors_select` policy | NO | 2026-08-16 | CODEX |
