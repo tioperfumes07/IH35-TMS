@@ -88,7 +88,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
            vc.created_by_user_id
          FROM accounting.vendor_credits vc
          LEFT JOIN mdata.vendors v
-           ON v.id = vc.vendor_id
+           ON v.id::text = vc.vendor_id
           AND v.operating_company_id = vc.operating_company_id
          WHERE ${conditions.join(" AND ")}
          ORDER BY vc.issue_date DESC, vc.created_at DESC
@@ -128,7 +128,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
            vc.created_by_user_id
          FROM accounting.vendor_credits vc
          LEFT JOIN mdata.vendors v
-           ON v.id = vc.vendor_id
+           ON v.id::text = vc.vendor_id
           AND v.operating_company_id = vc.operating_company_id
          WHERE vc.id = $1
            AND vc.operating_company_id = $2::uuid

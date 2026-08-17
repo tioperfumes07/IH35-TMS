@@ -113,6 +113,19 @@ function virtualKind(accountId: string) {
   return null;
 }
 
+// ACCT-F5403 — GET /accounts/:id/register 400s "Invalid UUID" on every virtual account
+// (factoring/escrow/advance_pool). accountIdParamsSchema's z.string().uuid() enforces the RFC 4122
+// version/variant nibbles; the sentinel ids virtualKind() matches against (…059/…056/…060) are all
+// version "0", so they fail that check before virtualKind() is ever reached — the register route has
+// been unreachable for every virtual account since it shipped. hide/unhide (the other two callers of
+// accountIdParamsSchema) act only on real bank accounts, so they correctly keep the strict schema;
+// this route alone needs to accept a real account uuid OR one of the three known virtual sentinels.
+const registerAccountIdParamsSchema = z.object({
+  id: z.string().refine((v) => virtualKind(v) !== null || z.string().uuid().safeParse(v).success, {
+    message: "Invalid account id",
+  }),
+});
+
 export async function registerBankingRoutes(app: FastifyInstance) {
   app.get("/api/v1/banking/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -315,7 +328,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
   app.get("/api/v1/banking/accounts/:id/register", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const params = accountIdParamsSchema.safeParse(req.params ?? {});
+    const params = registerAccountIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const query = registerQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);

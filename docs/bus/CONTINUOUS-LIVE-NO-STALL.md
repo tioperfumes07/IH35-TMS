@@ -1,6 +1,6 @@
 # CONTINUOUS LIVE VERIFY · NO-STALL LAW (owner 2026-08-16)
 
-**Seats:** Cursor + CC-1 + Codex only. **Cascade = OFF Live** (FAST-MERGE / poll only).
+**Seats:** Cursor + CC-1 + Codex + **Devin local-a**. **Cascade = CANCELLED** (2026-08-17).
 
 **Goal:** Move Box 4 Live% on `/program/matrix` honestly until money zeros leave 0% and partition modules keep climbing. Product stays `Live=BLOCKED` until certified 30/30 — but seats **never idle**.
 

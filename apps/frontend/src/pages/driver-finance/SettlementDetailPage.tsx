@@ -14,6 +14,7 @@ import {
   markSettlementPaidManually,
   markSettlementSent,
   queueSettlementPayment,
+  reopenSettlementManualPaid,
   resumeSettlementDeduction,
   type SettlementDisputeCategory,
   type OpenDriverBill,
@@ -83,6 +84,7 @@ export function SettlementDetailPage() {
   const [bounceReason, setBounceReason] = useState("");
   const [manualPaymentMethod, setManualPaymentMethod] = useState("check");
   const [manualReference, setManualReference] = useState("");
+  const [reopenReason, setReopenReason] = useState("");
   const [disputeCategory, setDisputeCategory] = useState("missing_pay");
   const [disputeAmount, setDisputeAmount] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
@@ -468,6 +470,8 @@ export function SettlementDetailPage() {
               companyId={companyId}
               userRole={auth.user?.role}
               settlementStatus={String(settlement.status ?? "")}
+              settlementDisplayId={settlementDisplayId}
+              settlementLoadIds={settlementLoadIds}
               onPosted={() => void refreshSettlementViews()}
             />
           ) : null}
@@ -515,6 +519,17 @@ export function SettlementDetailPage() {
                       className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       onClick={() => {
                         if (!companyId) return;
+                        // ACCT-F5401: manual_paid is a terminal state — confirm before firing so a
+                        // stale prefilled payment method / stray click can't silently mark the
+                        // wrong settlement paid with no way back except the Owner/Admin-only
+                        // reopen-correction action.
+                        if (
+                          !window.confirm(
+                            `Mark ${settlement?.settlement_no ?? "this settlement"} paid manually via "${manualPaymentMethod || "(blank)"}"? This is a terminal payment status — reopening it afterward requires an Owner/Admin correction with a written reason.`
+                          )
+                        ) {
+                          return;
+                        }
                         void markSettlementPaidManually(settlementId, companyId, {
                           payment_method: manualPaymentMethod,
                           reference: manualReference || undefined,
@@ -638,6 +653,17 @@ export function SettlementDetailPage() {
                       className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       onClick={() => {
                         if (!companyId) return;
+                        // ACCT-F5401: manual_paid is a terminal state — confirm before firing so a
+                        // stale prefilled payment method / stray click can't silently mark the
+                        // wrong settlement paid with no way back except the Owner/Admin-only
+                        // reopen-correction action.
+                        if (
+                          !window.confirm(
+                            `Mark ${settlement?.settlement_no ?? "this settlement"} paid manually via "${manualPaymentMethod || "(blank)"}"? This is a terminal payment status — reopening it afterward requires an Owner/Admin correction with a written reason.`
+                          )
+                        ) {
+                          return;
+                        }
                         void markSettlementPaidManually(settlementId, companyId, {
                           payment_method: manualPaymentMethod,
                           reference: manualReference || undefined,
@@ -656,9 +682,53 @@ export function SettlementDetailPage() {
                 ) : null}
 
                 {paymentState === "manual_paid" ? (
-                  <p className="text-xs text-gray-600">
-                    Marked paid manually — no further bank pipeline actions unless bounced back to unpaid.
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-600">
+                      Marked paid manually — no further bank pipeline actions unless bounced back to unpaid.
+                    </p>
+                    {auth.user?.role === "Owner" || auth.user?.role === "Administrator" ? (
+                      <div className="space-y-1 rounded-sm border border-slate-200 bg-slate-100 p-2">
+                        <p className="text-xs text-slate-700">
+                          Marked paid in error? Reopen requires a written reason and is itself permanently
+                          audited — the original mark-paid record is never erased.
+                        </p>
+                        <input
+                          value={reopenReason}
+                          onChange={(event) => setReopenReason(event.target.value)}
+                          placeholder="Reason for reopening (required)"
+                          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                          onClick={() => {
+                            if (!companyId) return;
+                            const reason = reopenReason.trim();
+                            if (reason.length < 3) {
+                              pushToast("Reopen reason must be at least 3 characters", "error");
+                              return;
+                            }
+                            if (
+                              !window.confirm(
+                                `Reopen this manual-paid settlement back to unpaid? Reason: "${reason}"`
+                              )
+                            ) {
+                              return;
+                            }
+                            void reopenSettlementManualPaid(settlementId, companyId, reason)
+                              .then(() => {
+                                pushToast("Settlement reopened to unpaid", "success");
+                                setReopenReason("");
+                                void refreshSettlementViews();
+                              })
+                              .catch((error) => pushToast(userFacingApiError(error, "Reopen failed"), "error"));
+                          }}
+                        >
+                          Reopen (correction)
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 {paymentState === "cleared" ? (

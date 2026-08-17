@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { UniversalListToolbar, applyUniversalListFilters } from "./UniversalListToolbar";
+import {
+  UniversalListToolbar,
+  applyUniversalListFilters,
+  inferUniversalRangeColumns,
+} from "./UniversalListToolbar";
 
 const rows = [
   { id: "1", name: "Alpha Freight", created_at: "2026-08-01T12:00:00Z", total_cents: 12500 },
@@ -9,6 +13,16 @@ const rows = [
 ];
 
 describe("UniversalListToolbar", () => {
+  it("infers Legal SOL / hearing and *_at columns as date range fields", () => {
+    const cols = inferUniversalRangeColumns([
+      { key: "statute_of_limitations_at", label: "SOL / hearing" },
+      { key: "next_hearing_date", label: "Next hearing" },
+      { key: "status", label: "Status" },
+    ]);
+    expect(cols.map((c) => c.key)).toEqual(["statute_of_limitations_at", "next_hearing_date"]);
+    expect(cols.every((c) => c.kind === "date")).toBe(true);
+  });
+
   it("filters every row value plus ISO dates and cents-backed money ranges", () => {
     expect(applyUniversalListFilters(rows, "bravo", null)).toEqual([rows[1]]);
     expect(applyUniversalListFilters(rows, "", { key: "created_at", kind: "date", from: "2026-08-05", to: "" })).toEqual([rows[1]]);

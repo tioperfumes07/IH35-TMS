@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
+import { FleetTable, fleetRosterSearchText, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
@@ -22,6 +22,38 @@ type UnifiedUnitRow = FleetRow & {
   kind: "truck" | "trailer";
   type: string;
 };
+
+/** Map Live/matrix aliases -> canonical mdata unit status enums. LV-FLEET-OOS-FILTER-0-ROWS */
+function normalizeFleetStatusParam(raw: string | null): string {
+  if (raw == null) return "";
+  const v = raw.trim();
+  if (!v || v === "all") return "";
+  const key = v.toLowerCase().replace(/[_\s]+/g, "-");
+  const aliases: Record<string, string> = {
+    "out-of-service": "OutOfService",
+    outofservice: "OutOfService",
+    oos: "OutOfService",
+    "in-service": "InService",
+    inservice: "InService",
+    active: "InService",
+    "in-shop": "InMaintenance",
+    "in-maintenance": "InMaintenance",
+    inmaintenance: "InMaintenance",
+  };
+  if (aliases[key]) return aliases[key];
+  if (v === "OutOfService" || v === "InService" || v === "InMaintenance") return v;
+  return v;
+}
+
+function rowMatchesFleetStatus(row: UnifiedUnitRow, status: string): boolean {
+  if (!status) return true;
+  // Normalize again here so deep links (?status=out-of-service) still match when the
+  // caller forgets to canonicalize — Live FAIL: KPI Out-of-Service=13, table 0 of 45.
+  const canonical = normalizeFleetStatusParam(status) || status;
+  if (row.status === canonical || row.status === status) return true;
+  if (canonical === "OutOfService" && Boolean(row.is_oos)) return true;
+  return false;
+}
 
 // Trucks/Trailers/Company sub-tabs (unit_class). "company" is the future company-vehicle
 // class — empty for now (cars get their own class later), shown but with no rows yet.
@@ -83,8 +115,25 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const kindFilter = searchParams.get("kind") ?? "";
   const rawStatus = searchParams.get("status");
   // Absent status → default (active-only on /fleet, all in Maintenance). "all" → no status filter.
-  const effectiveStatus = rawStatus == null ? (defaultActiveOnly ? "InService" : "") : rawStatus === "all" ? "" : rawStatus;
+  // Normalize Live/matrix kebab aliases (e.g. out-of-service → OutOfService) so KPI click + deep links match rows.
+  const effectiveStatus =
+    rawStatus == null ? (defaultActiveOnly ? "InService" : "") : normalizeFleetStatusParam(rawStatus);
   const activeOnly = effectiveStatus === "InService";
+
+  // Canonicalize kebab deep links in the URL so refresh/share matches KPI click (OutOfService).
+  useEffect(() => {
+    if (rawStatus == null || rawStatus === "" || rawStatus === "all") return;
+    const canonical = normalizeFleetStatusParam(rawStatus);
+    if (!canonical || canonical === rawStatus) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("status", canonical);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [rawStatus, setSearchParams]);
 
   // Soft-delete (deactivated_at) dimension — independent of the 5 operational statuses.
   // Default Active. Inactive/All fetch with include_inactive=true so soft-deleted units
@@ -168,6 +217,21 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   }, [maintStatusQuery.data]);
 
   // Client-side kind sub-tab + status (KPI/toggle) filtering on top of the server type filter.
+  // LV-FLEET-SEARCH-NO-FILTER follow-up: bind search to ?q= so Live/CDP can prove filter without
+  // relying solely on React synthetic onChange (Devin FAIL on tip after #8533).
+  const rosterSearch = searchParams.get("q") ?? "";
+  const setRosterSearch = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        const trimmed = value.trim();
+        if (trimmed) next.set("q", value);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const rows = useMemo(
     () =>
       allRows.filter((r) => {
@@ -177,24 +241,38 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         if (softDeleteFilter === "inactive" && r.deactivated_at == null) return false;
         // Operational status filter only narrows the default (Active) view; Inactive/All
         // show soft-deleted units of any operational status.
-        if (softDeleteFilter === "active" && effectiveStatus && r.status !== effectiveStatus) return false;
+        if (softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus(r, effectiveStatus)) return false;
         return true;
       }).map((r) => ({ ...r, ...(locationByUnit[r.id] ?? {}), ...(maintByUnit[r.id] ?? {}) })),
     [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit, maintByUnit]
   );
 
+  // LV-FLEET-SEARCH-NO-FILTER: page-level search must narrow rows AND the "Showing X of Y"
+  // counter. Nested FleetTable search previously filtered the body while this counter stayed stale,
+  // so Live walks reported "search does not filter".
+  const searchedRows = useMemo(() => {
+    const q = rosterSearch.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => fleetRosterSearchText(r).toLowerCase().includes(q));
+  }, [rows, rosterSearch]);
+
   // Empty state renders only once the roster query settles (no first-fetch flash).
-  const listState = useListState(rowsQuery, rows.length === 0);
+  const listState = useListState(rowsQuery, searchedRows.length === 0);
 
   // Use the server's authoritative total (GO-LIVE Block 1A) so the count reflects the FULL fleet, not just
   // the fetched page — the unified/trailers endpoint previously returned no total, leaving "of 50".
   const totalVehicleCount =
     typeFilter !== "" ? (totalRowsQuery.data?.total ?? 0) : (rowsQuery.data?.total ?? allRows.length);
-  const filteredCount = rows.length;
-  const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "";
+  const filteredCount = searchedRows.length;
+  const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "" || rosterSearch.trim() !== "";
 
   const counters = useMemo(() => {
-    const sourceRows = rowsQuery.data?.rows ?? [];
+    // Count the same soft-delete slice the table uses (default: active / not deactivated).
+    const sourceRows = (rowsQuery.data?.rows ?? []).filter((r) => {
+      if (softDeleteFilter === "active" && r.deactivated_at != null) return false;
+      if (softDeleteFilter === "inactive" && r.deactivated_at == null) return false;
+      return true;
+    });
     const trucks = sourceRows.filter((r) => r.kind === "truck");
     const trailers = sourceRows.filter((r) => r.kind === "trailer");
     return {
@@ -203,9 +281,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       trailers: trailers.length,
       active: sourceRows.filter((r) => r.status === "InService").length,
       inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
-      outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
+      outOfService: sourceRows.filter((r) => rowMatchesFleetStatus(r, "OutOfService")).length,
     };
-  }, [rowsQuery.data?.rows]);
+  }, [rowsQuery.data?.rows, softDeleteFilter]);
 
   const patchParams = (mutate: (params: URLSearchParams) => void) => {
     setSearchParams(
@@ -232,6 +310,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       params.delete("type");
       params.delete("kind");
       params.delete("status");
+      // LV-FLEET-CLEAR-FILTERS-DROPS-Q: Clear filters must also drop ?q= or the Showing counter
+      // stays narrowed after operators clear type/status (search sticks invisibly via URL).
+      params.delete("q");
     });
 
   return (
@@ -283,6 +364,14 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs"
         data-fleet-page-filter-toolbar="collapsed"
       >
+        <TableSearch
+          value={rosterSearch}
+          onChange={setRosterSearch}
+          placeholder="Search Unit #, VIN, Make/Model…"
+          aria-label="Search Unit #, VIN, Make/Model…"
+          className="w-56"
+          data-testid="fleet-roster-search"
+        />
         <CollapsedListFilters
           activeFilterCount={(typeFilter ? 1 : 0) + (rawStatus != null && rawStatus !== "all" ? 1 : 0)}
           onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
@@ -311,7 +400,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
             </label>
           </div>
         </CollapsedListFilters>
-        <span className="text-gray-600">
+        <span className="text-gray-600" data-testid="fleet-roster-showing-count">
           Showing {filteredCount} of {totalVehicleCount} vehicles
         </span>
         <button
@@ -328,7 +417,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           <button
             type="button"
             className="rounded-sm border border-gray-300 bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            onClick={clearFilters}
+            onClick={() => {
+              setRosterSearch("");
+              clearFilters();
+            }}
           >
             Clear filters
           </button>
@@ -349,10 +441,11 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       ) : (
         <FleetTable
           operatingCompanyId={operatingCompanyId}
-          rows={rows}
+          rows={searchedRows}
           softDeleteFilter={softDeleteFilter}
           onSoftDeleteFilterChange={setSoftDeleteFilter}
           showMaintenanceColumns={showMaintenanceColumns}
+          hideSearch
         />
       )}
     </div>

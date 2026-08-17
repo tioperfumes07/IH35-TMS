@@ -169,7 +169,7 @@ export function LoanWizardPage() {
     );
   }
 
-  const field = (label: string, key: keyof typeof form, type = "text", placeholder = "") => (
+  const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text", placeholder = "") => (
     <label className="block">
       <span className="text-xs font-medium text-slate-600">{label}</span>
       <input

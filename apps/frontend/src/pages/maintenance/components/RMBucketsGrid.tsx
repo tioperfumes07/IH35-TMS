@@ -84,7 +84,7 @@ export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceSt
   const columns = COLUMNS.map((col) => ({ ...col, rows: all.filter((wo) => columnFor(wo) === col.key) }));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-testid="rm-buckets-grid">
       {onCreateRoadside ? (
         <div className="flex justify-end">
           <button

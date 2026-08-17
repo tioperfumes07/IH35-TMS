@@ -6,7 +6,7 @@ import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveDefaultAchToken } from "./driver-payment-methods.service.js";
 
 type PaymentState = "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid";
-type PaymentEventType = "queued" | "sent" | "cleared" | "bounced" | "retried" | "marked_paid_manually";
+type PaymentEventType = "queued" | "sent" | "cleared" | "bounced" | "retried" | "marked_paid_manually" | "reopened_correction";
 
 type SettlementRow = {
   id: string;
@@ -524,6 +524,77 @@ export async function markPaidManually(
         reference,
       },
       "info",
+      "P5-T5-SETTLEMENT-PAYMENT"
+    );
+    return updated;
+  });
+}
+
+// ACCT-F5401: manual_paid is intentionally terminal in validateTransition() for the ordinary
+// business pipeline (no bank/GL action can ever un-happen a real manual disbursement by clicking a
+// button). This is a SEPARATE, explicitly-audited correction path for the operator-error case (wrong
+// settlement marked paid, no confirmation step existed at the time) — it does not go through
+// validateTransition() at all, is gated to fire ONLY from manual_paid, requires a written reason, and
+// appends a NEW event (reopened_correction) rather than mutating or deleting the original
+// marked_paid_manually event/audit row (VOID = reversal, nothing deletable). No GL/journal entry is
+// touched by either mark-paid-manually or this reversal — both are payment-status bookkeeping only.
+export async function reopenManualPaid(
+  settlementId: string,
+  operatingCompanyId: string,
+  reason: string,
+  userId: string
+) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId, { forUpdate: true });
+    if (!settlement) throw new Error("settlement_not_found");
+    const currentState = settlementPaymentState(settlement);
+    if (currentState === "unpaid") return settlement; // idempotent: correction already recorded
+    if (currentState !== "manual_paid") {
+      throw new Error("invalid_payment_state_transition");
+    }
+
+    const updateRes = await client.query<SettlementRow & { updated_at: Date | string | null }>(
+      `
+        UPDATE driver_finance.driver_settlements
+        SET payment_state = 'unpaid',
+            payment_method = NULL,
+            payment_bank_reference = NULL,
+            paid_at = NULL,
+            updated_at = now()
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+          AND payment_state IS NOT DISTINCT FROM 'manual_paid'
+        RETURNING ${SETTLEMENT_ROW_COLUMNS}, updated_at
+      `,
+      [settlement.id, settlement.operating_company_id]
+    );
+    const updated = updateRes.rows[0];
+    if (!updated) {
+      const miss = await resolveGuardedUpdateMiss(client, settlement.id, operatingCompanyId, "unpaid");
+      if (miss.outcome === "idempotent") return miss.settlement;
+      throw new Error("invalid_payment_state_transition");
+    }
+    await appendPaymentEvent(
+      client,
+      updated,
+      "reopened_correction",
+      userId,
+      { reason, previous_state: currentState },
+      paymentEventIdempotencyKey(updated.id, "reopened_correction", currentState, updated.updated_at)
+    );
+
+    await appendCrudAudit(
+      client,
+      userId,
+      "driver_pay.settlement.manual_paid_reopened",
+      {
+        resource_type: "driver_finance.driver_settlements",
+        resource_id: settlement.id,
+        operating_company_id: settlement.operating_company_id,
+        reason,
+      },
+      "warning",
       "P5-T5-SETTLEMENT-PAYMENT"
     );
     return updated;

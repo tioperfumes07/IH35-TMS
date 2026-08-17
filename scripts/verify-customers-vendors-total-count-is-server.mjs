@@ -33,6 +33,7 @@ const VENDORS_PAGE = "apps/frontend/src/pages/Vendors.tsx";
 const CUSTOMERS_ROUTE = "apps/backend/src/mdata/customers.routes.ts";
 const VENDORS_ROUTE = "apps/backend/src/mdata/vendors.routes.ts";
 const MDATA_API = "apps/frontend/src/api/mdata.ts";
+const CUSTOMER_EDIT_MODAL = "apps/frontend/src/components/customers/CustomerEditModal.tsx";
 
 function assertGuard(sources) {
   const errors = [];
@@ -50,12 +51,49 @@ function assertGuard(sources) {
     }
   }
 
-  // 2 — API clients expose server total (not page-length-only)
-  if (!/export function listCustomers[\s\S]*?total:\s*payload\.total\s*\?\?\s*payload\.customers\.length/.test(sources.mdata)) {
-    errors.push(`${MDATA_API}: listCustomers must thread payload.total (with length fallback)`);
+  // 2 — API clients expose server total (not page-length-only) AND always normalize collection to T[]
+  // LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY: non-array `customers` crashed Full Edit `.map`.
+  if (!/function normalizeMdataListRows[\s\S]*?Array\.isArray\(raw\)/.test(sources.mdata)) {
+    errors.push(`${MDATA_API}: must export normalizeMdataListRows that Array.isArray-guards list envelopes`);
   }
-  if (!/export function listVendors[\s\S]*?total:\s*payload\.total\s*\?\?\s*payload\.vendors\.length/.test(sources.mdata)) {
-    errors.push(`${MDATA_API}: listVendors must thread payload.total (with length fallback)`);
+  const listCustomersBlock = (sources.mdata.match(
+    /export function listCustomers[\s\S]*?(?=export function (?:listPaymentTermOptions|listVendors|getVendor|getCustomer))/
+  ) || [])[0] || "";
+  const listVendorsBlock = (sources.mdata.match(
+    /export function listVendors[\s\S]*?(?=export function getVendor|export type CreateVendorInput|$)/
+  ) || [])[0] || "";
+  if (!/normalizeMdataListRows(?:<Customer>)?/.test(listCustomersBlock) || !/listEnvelopeTotal/.test(listCustomersBlock)) {
+    errors.push(`${MDATA_API}: listCustomers must normalize customers via normalizeMdataListRows + listEnvelopeTotal`);
+  }
+  if (!/normalizeMdataListRows(?:<VendorOption>)?/.test(listVendorsBlock) || !/listEnvelopeTotal/.test(listVendorsBlock)) {
+    errors.push(`${MDATA_API}: listVendors must normalize vendors via normalizeMdataListRows + listEnvelopeTotal`);
+  }
+  if (/total:\s*payload\.total\s*\?\?\s*payload\.customers\.length/.test(listCustomersBlock)) {
+    errors.push(`${MDATA_API}: listCustomers must not trust raw payload.customers.length without Array.isArray normalize`);
+  }
+  if (/total:\s*payload\.total\s*\?\?\s*payload\.vendors\.length/.test(listVendorsBlock)) {
+    errors.push(`${MDATA_API}: listVendors must not trust raw payload.vendors.length without Array.isArray normalize`);
+  }
+
+  // LV-CUSTOMERS-FULL-EDIT-PAYMENT-TERMS-CACHE-SHAPE — normalize payment_terms + shared react-query envelope.
+  const listPaymentTermsBlock = (sources.mdata.match(
+    /export function listPaymentTermOptions[\s\S]*?(?=export function createPaymentTermOption|export function listVendors|$)/
+  ) || [])[0] || "";
+  if (!/normalizeMdataListRows(?:<PaymentTermOption>)?/.test(listPaymentTermsBlock)) {
+    errors.push(`${MDATA_API}: listPaymentTermOptions must normalize payment_terms via normalizeMdataListRows`);
+  }
+  if (sources.customerEditModal) {
+    if (/listPaymentTermOptions\([^)]*\)\.then\(\s*\(?\s*r\s*\)?\s*=>\s*r\.payment_terms\s*\)/.test(sources.customerEditModal)) {
+      errors.push(
+        `${CUSTOMER_EDIT_MODAL}: must not unwrap payment_terms in queryFn under shared ["payment-term-options"] key (cache shape collision with CustomerDetail)`
+      );
+    }
+    if (!/paymentTermsQuery\.data\?\.payment_terms/.test(sources.customerEditModal)) {
+      errors.push(`${CUSTOMER_EDIT_MODAL}: must read payment_terms from listPaymentTermOptions envelope (same as CustomerDetail)`);
+    }
+    if (!/Array\.isArray\(\s*(?:raw|paymentTermsQuery\.data\?\.payment_terms)/.test(sources.customerEditModal)) {
+      errors.push(`${CUSTOMER_EDIT_MODAL}: must Array.isArray-guard payment_terms before mapping`);
+    }
   }
 
   // 3 — pages must not pass array .length into totalCount
@@ -106,16 +144,37 @@ function selftest() {
     return { vendors: result.rows, total: result.total };
   `;
   const goodMdata = `
+    export function normalizeMdataListRows(raw) {
+      if (Array.isArray(raw)) return raw;
+      return [];
+    }
+    function listEnvelopeTotal(payload, rows) {
+      if (payload && typeof payload === "object" && typeof payload.total === "number") return payload.total;
+      return rows.length;
+    }
     export function listCustomers(params = {}) {
-      return apiRequest(\`/api/v1/mdata/customers\`).then(
-        (payload) => ({ customers: payload.customers, total: payload.total ?? payload.customers.length })
-      );
+      return apiRequest(\`/api/v1/mdata/customers\`).then((payload) => {
+        const customers = normalizeMdataListRows(payload?.customers ?? payload);
+        return { customers, total: listEnvelopeTotal(payload, customers) };
+      });
+    }
+    export function listPaymentTermOptions(operatingCompanyId) {
+      return apiRequest(\`/api/v1/catalogs/payment-terms\`).then((payload) => {
+        const payment_terms = normalizeMdataListRows(payload?.payment_terms ?? payload);
+        return { payment_terms };
+      });
     }
     export function listVendors(params = {}) {
-      return apiRequest(\`/api/v1/mdata/vendors\`).then(
-        (payload) => ({ vendors: payload.vendors, total: payload.total ?? payload.vendors.length })
-      );
+      return apiRequest(\`/api/v1/mdata/vendors\`).then((payload) => {
+        const vendors = normalizeMdataListRows(payload?.vendors ?? payload);
+        return { vendors, total: listEnvelopeTotal(payload, vendors) };
+      });
     }
+  `;
+  const goodCustomerEditModal = `
+    queryFn: () => listPaymentTermOptions(companyId),
+    const raw = paymentTermsQuery.data?.payment_terms;
+    return Array.isArray(raw) ? raw : [];
   `;
   const goodCustomersPage = `
     const customersServerTotal = customersQuery.data?.total ?? 0;
@@ -132,6 +191,7 @@ function selftest() {
     customersRoute: goodCustomersRoute,
     vendorsRoute: goodVendorsRoute,
     mdata: goodMdata,
+    customerEditModal: goodCustomerEditModal,
   };
 
   const cases = [
@@ -152,13 +212,61 @@ function selftest() {
       wantMin: 1,
     },
     {
-      name: "listCustomers drops total thread -> FAIL",
+      name: "listCustomers drops normalize -> FAIL",
       in: {
         ...base,
         mdata: goodMdata.replace(
-          "total: payload.total ?? payload.customers.length",
-          "total: payload.customers.length"
+          /export function listCustomers[\s\S]*?(?=export function listPaymentTermOptions)/,
+          `export function listCustomers(params = {}) {
+      return apiRequest(\`/api/v1/mdata/customers\`).then((payload) => ({
+        customers: payload.customers,
+        total: listEnvelopeTotal(payload, payload.customers || []),
+      }));
+    }
+    `
         ),
+      },
+      wantMin: 1,
+    },
+    {
+      name: "listCustomers regresses to raw .length -> FAIL",
+      in: {
+        ...base,
+        mdata: `
+    export function normalizeMdataListRows(raw) {
+      if (Array.isArray(raw)) return raw;
+      return [];
+    }
+    function listEnvelopeTotal(payload, rows) { return rows.length; }
+    export function listCustomers(params = {}) {
+      return apiRequest(\`/api/v1/mdata/customers\`).then(
+        (payload) => ({ customers: payload.customers, total: payload.total ?? payload.customers.length })
+      );
+    }
+    export function listPaymentTermOptions(operatingCompanyId) {
+      return apiRequest(\`/api/v1/catalogs/payment-terms\`).then((payload) => {
+        const payment_terms = normalizeMdataListRows(payload?.payment_terms ?? payload);
+        return { payment_terms };
+      });
+    }
+    export function listVendors(params = {}) {
+      return apiRequest(\`/api/v1/mdata/vendors\`).then((payload) => {
+        const vendors = normalizeMdataListRows(payload?.vendors ?? payload);
+        return { vendors, total: listEnvelopeTotal(payload, vendors) };
+      });
+    }
+        `,
+      },
+      wantMin: 1,
+    },
+    {
+      name: "Full Edit unwraps payment_terms under shared key -> FAIL",
+      in: {
+        ...base,
+        customerEditModal: `
+    queryFn: () => listPaymentTermOptions(companyId).then((r) => r.payment_terms),
+    const paymentTermOptions = paymentTermsQuery.data ?? [];
+        `,
       },
       wantMin: 1,
     },
@@ -190,6 +298,7 @@ const errors = assertGuard({
   customersRoute: readReal(CUSTOMERS_ROUTE),
   vendorsRoute: readReal(VENDORS_ROUTE),
   mdata: readReal(MDATA_API),
+  customerEditModal: readReal(CUSTOMER_EDIT_MODAL),
 });
 
 if (errors.length) {
@@ -197,4 +306,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — customers/vendors totalCount is server COUNT (not .length).`);
+console.log(`${LABEL} PASS — customers/vendors totalCount is server COUNT; Full Edit payment_terms cache shape locked.`);

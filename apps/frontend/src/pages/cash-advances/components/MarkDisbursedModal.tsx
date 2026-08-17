@@ -6,17 +6,25 @@ import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   advanceId: string | null;
+  // ACCT-F5408 — the parent already fetches the full advance record for the detail drawer; passing
+  // it through here (instead of just advanceId) lets this modal show the same Linked Load context
+  // the operator is confirming disbursement against, sourced from views.cash_advances_with_context
+  // (migration 202612750000 added load_id/load_display_id — the column always existed on
+  // driver_finance.driver_advances, the view had just never been refreshed to select it).
+  advance?: Record<string, unknown> | null;
   onClose: () => void;
   onDone: () => void;
 };
 
-export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClose, onDone }: Props) {
+export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advance, onClose, onDone }: Props) {
   const { pushToast } = useToast();
   const [method, setMethod] = useState<CashAdvanceMethod>("direct_bank_transfer");
   const [bankTxnId, setBankTxnId] = useState("");
@@ -51,6 +59,19 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Mark Disbursed</h3>
           <ModalCloseButton title="Mark Disbursed" onClose={onClose} />
+        </div>
+
+        <div className="mb-2 rounded-sm border border-gray-200 bg-gray-50 p-2">
+          <span className="font-semibold">Linked Load: </span>
+          {advance?.load_id ? (
+            <EntityLink
+              kind="load"
+              id={String(advance.load_id)}
+              label={entityLabel(advance.load_display_id ? String(advance.load_display_id) : null, String(advance.load_id), "Load")}
+            />
+          ) : (
+            <span className="text-gray-500">No load linked to this advance.</span>
+          )}
         </div>
 
         <div className="grid gap-2">

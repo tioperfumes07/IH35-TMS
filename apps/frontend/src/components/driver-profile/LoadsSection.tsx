@@ -4,7 +4,7 @@ import { listDispatchLoads, type DispatchLoad } from "../../api/dispatch";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { StatusBadge } from "../../components/StatusBadge";
 
 type Props = {
@@ -32,13 +32,18 @@ const LOAD_COLUMNS: Array<ParityColumn<DispatchLoad>> = [
     label: "Customer",
     sortable: true,
     sortValue: (row) => row.customer_name ?? "",
-    render: (row) => (
-      <EntityLink
-        kind="customer"
-        id={row.customer_id}
-        label={entityLabel(row.customer_name, row.customer_id, "Customer")}
-      />
-    ),
+    render: (row) => {
+      const label = entityLabel(row.customer_name, row.customer_id, "Customer");
+      // LV-DRIVER-PROFILE-DEAD-CUSTOMER-TOMBSTONE-LINK
+      if (isUnresolvedEntityTombstone(row.customer_name, row.customer_id, "Customer")) {
+        return (
+          <span className="text-slate-800" data-testid="driver-profile-load-customer-tombstone">
+            {label}
+          </span>
+        );
+      }
+      return <EntityLink kind="customer" id={row.customer_id} label={label} />;
+    },
   },
   {
     key: "origin",

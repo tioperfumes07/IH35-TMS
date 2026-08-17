@@ -12,6 +12,7 @@ import { UploadModal } from "../../components/documents/UploadModal";
 import { PreviewModal } from "../../components/documents/PreviewModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 
 type DocsEntityTabId = FileEntityType | "all";
 
@@ -30,6 +31,28 @@ function docsLinkToEntityKind(entityType: FileEntityType): EntityKind | null {
       return "unit";
     default:
       return null;
+  }
+}
+
+function docsEntityNoun(entityType: FileEntityType | string): string {
+  switch (entityType) {
+    case "driver":
+      return "Driver";
+    case "customer":
+      return "Customer";
+    case "vendor":
+      return "Vendor";
+    case "unit":
+    case "equipment":
+      return "Unit";
+    case "load":
+      return "Load";
+    case "settlement":
+      return "Settlement";
+    case "invoice":
+      return "Invoice";
+    default:
+      return "Record";
   }
 }
 
@@ -86,22 +109,28 @@ function docsColumns(): Array<ParityColumn<DocsFoundationRow>> {
         <span className="flex min-w-0 flex-wrap gap-x-2 gap-y-1">
           {links.map((link) => {
             const kind = docsLinkToEntityKind(link.entity_type);
-            const label = link.entity_label ?? undefined;
-            if (!kind) {
+            const noun = docsEntityNoun(link.entity_type);
+            const rawLabel = link.entity_label ?? null;
+            // LV-DOCS-HOME-ENTITY-RAW-UUID: never fall through to EntityLink's `label ?? id`
+            // (raw UUID chrome). Unresolved / UUID-shaped labels are noninteractive tombstones.
+            if (!kind || isUnresolvedEntityTombstone(rawLabel, link.entity_id, noun)) {
               return (
-                <span key={`${link.entity_type}:${link.entity_id}`} className="truncate" data-testid="docs-entity-plain">
-                  {label ?? link.entity_type}
+                <span
+                  key={`${link.entity_type}:${link.entity_id}`}
+                  className="truncate text-gray-500"
+                  data-testid={kind ? "docs-entity-unresolved" : "docs-entity-plain"}
+                >
+                  {entityLabel(rawLabel, link.entity_id, noun)}
                 </span>
               );
             }
-            // DOCS-LINK-01: resolve the real human label; an explicit `entity_type` label would
-            // suppress EntityLink's resolver and make every row read only "load"/"driver".
+            // DOCS-LINK-01: pass the resolved human label only — never the bare id.
             return (
               <EntityLink
                 key={`${link.entity_type}:${link.entity_id}`}
                 kind={kind}
                 id={link.entity_id}
-                label={label}
+                label={String(rawLabel).trim()}
                 className="truncate"
                 data-testid="docs-entity-link"
               />

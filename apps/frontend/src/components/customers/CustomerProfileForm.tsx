@@ -22,6 +22,7 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { CreateCustomerInput, Customer, PaymentTermOption, UpdateCustomerInput } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import type { CustomerType, MilesBasis } from "../../types/api";
+import { MoneyInput } from "../forms/MoneyInput";
 
 export type CustomerProfileFormValues = {
   // Name & contact
@@ -391,6 +392,37 @@ function TextField({
   );
 }
 
+// LV-CUSTOMER-PROFILE-MONEY-FIELDS-GENERIC-NUMBER — Credit limit / Detention rate were the only two
+// dollar fields still routed through the plain TextField's native <input type="number">, bypassing
+// governed MoneyInput. Both already store/round-trip as a bare dollar number (never cents — M-1
+// ruling), so this wraps MoneyInput's existing valueDollars/onChangeDollars mode over the SAME string
+// form-state field, converting only at the seam: the emitted/patched value stays the identical string
+// shape onPatch already expects, byte-for-byte unchanged from the TextField it replaces.
+function MoneyField({
+  label,
+  value,
+  onChange,
+  dataField,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  dataField?: string;
+}) {
+  const fieldName = dataField ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return (
+    <label className="block text-sm" data-field={dataField}>
+      <span className="mb-1 block text-xs font-semibold text-gray-600">{label}</span>
+      <MoneyInput
+        id={fieldName}
+        ariaLabel={label}
+        valueDollars={value === "" ? null : Number(value)}
+        onChangeDollars={(dollars) => onChange(dollars == null ? "" : String(dollars))}
+      />
+    </label>
+  );
+}
+
 function SelectField({
   label,
   value,
@@ -458,24 +490,20 @@ type Props = {
 
 export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, onParentCustomerCreated, parentCustomerOptions, customerId }: Props) {
   const queryClient = useQueryClient();
-  // LV-CUSTOMER-FULL-EDIT-CRASH: live prod crash "o.map is not a function" — this was the one memo
-  // in this file with no defensive fallback on its prop-sourced array (every sibling below it, e.g.
-  // parentOptions/incomeAccountOptions, already guards with `?? []`). A caller passing anything other
-  // than a live array (undefined during an in-flight refetch, a stale/mismatched cache entry) took the
-  // whole "Full Edit" modal down with it. Guard at the consumption point, not just at each call site.
-  const termOptions = useMemo(
-    () => (paymentTermOptions ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
-    [paymentTermOptions]
-  );
+  // LV-CUSTOMERS-FULL-EDIT-PAYMENT-TERMS-CACHE-SHAPE — Array.isArray (not `?? []`): a truthy non-array
+  // (react-query cache holding the `{ payment_terms }` envelope under a shared key) still crashes `.map`.
+  const termOptions = useMemo(() => {
+    const terms = Array.isArray(paymentTermOptions) ? paymentTermOptions : [];
+    return terms.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` }));
+  }, [paymentTermOptions]);
 
   // D1-4: parent-customer options, excluding the row being edited (a customer can't be its own parent).
-  const parentOptions = useMemo(
-    () =>
-      (parentCustomerOptions ?? [])
-        .filter((c) => c.id !== customerId)
-        .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name })),
-    [parentCustomerOptions, customerId]
-  );
+  const parentOptions = useMemo(() => {
+    const rows = Array.isArray(parentCustomerOptions) ? parentCustomerOptions : [];
+    return rows
+      .filter((c) => c.id !== customerId)
+      .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name }));
+  }, [parentCustomerOptions, customerId]);
 
   // Option-B (vendor-customer-categorization-option-b): default income account is a RECOMMENDATION
   // that pre-fills invoice lines — the user can always override it. Scoped to Income-type accounts.
@@ -492,7 +520,8 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
     staleTime: 5 * 60 * 1000,
   });
   const incomeAccountOptions = useMemo(() => {
-    const accounts = incomeAccountsQuery.data?.accounts ?? [];
+    const raw = incomeAccountsQuery.data?.accounts;
+    const accounts = Array.isArray(raw) ? raw : [];
     return accounts
       .filter((a) => a.account_type === "Income")
       .map((a) => ({ value: a.id, label: a.account_name }));
@@ -596,7 +625,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               }}
             />
           </div>
-          <TextField label="Credit limit (USD)" type="number" value={values.credit_limit} onChange={(credit_limit) => onPatch({ credit_limit })} />
+          <MoneyField label="Credit limit (USD)" value={values.credit_limit} onChange={(credit_limit) => onPatch({ credit_limit })} />
           <SelectField
             label="Credit limit source"
             value={values.credit_limit_source}
@@ -741,7 +770,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       <Section title="Detention & free-time defaults">
         <TextField label="Free time — pickup (min)" type="number" value={values.free_time_pickup_minutes} onChange={(free_time_pickup_minutes) => onPatch({ free_time_pickup_minutes })} />
         <TextField label="Free time — delivery (min)" type="number" value={values.free_time_delivery_minutes} onChange={(free_time_delivery_minutes) => onPatch({ free_time_delivery_minutes })} />
-        <TextField label="Detention rate ($/hr)" type="number" value={values.detention_rate_per_hour} onChange={(detention_rate_per_hour) => onPatch({ detention_rate_per_hour })} />
+        <MoneyField label="Detention rate ($/hr)" value={values.detention_rate_per_hour} onChange={(detention_rate_per_hour) => onPatch({ detention_rate_per_hour })} />
         <SelectField
           label="Default miles basis"
           value={values.default_billing_miles_basis}

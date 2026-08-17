@@ -1,14 +1,7 @@
-# INBOX-CASCADE · SYNC 2026-08-16 20:55 CT · OFF LIVE · NO IDLE MERGE
+# INBOX-CASCADE · CANCELLED · 2026-08-17T14:39Z
 
-**READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §6
+**OWNER DECISION:** Cascade seat **CANCELLED** for this wave.
 
-## OWNER
-You do **not** Live VERIFY. Cursor/CC-1/Codex own Live.
+Do **not** Live VERIFY. Do **not** merge-poll as primary. Devin local-a (`INBOX-DEVIN-A.md`) owns Live-assist prove.
 
-## CONTINUOUS (never stop at 0 PRs)
-1. REST list open PRs → squash-merge greens (`gh api` — avoid GraphQL rate limit)
-2. CONFLICTING → OUTBOX one-liner naming PR# (owner seat fixes) — keep scanning
-3. Do not OAuth-idle as a stop condition
-4. Defect while merging → GUARD-WORKORDERS OPEN + OUTBOX — do not deep-Live
-
-Loop forever until owner says stop.
+If Cascade process still running: stop Live claims; OUTBOX `Cascade | CANCELLED · handed to Devin local-a`.

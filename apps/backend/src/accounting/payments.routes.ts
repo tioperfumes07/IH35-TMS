@@ -110,7 +110,7 @@ async function fetchPaymentDetail(
         ON c.id = p.customer_id
        AND c.operating_company_id = p.operating_company_id
       LEFT JOIN catalogs.accounts dep_acct
-        ON dep_acct.id = p.deposited_to_account_id
+        ON dep_acct.id::text = p.deposited_to_account_id
        AND dep_acct.operating_company_id = p.operating_company_id
       LEFT JOIN banking.bank_transactions bt
         ON bt.id = ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL}::uuid

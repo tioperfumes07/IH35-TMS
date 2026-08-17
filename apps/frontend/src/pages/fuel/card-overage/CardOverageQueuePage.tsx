@@ -58,8 +58,10 @@ export async function listOverageEvents(
     operating_company_id: companyId,
     status,
     limit: "100",
-    ...filters,
   });
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
   return apiRequest<ListResponse>(`/api/v1/fuel/card-overage-events?${params.toString()}`);
 }
 

@@ -1132,15 +1132,46 @@ function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedL
   if (params.active_company_only) query.set("active_company_only", "true");
 }
 
+/**
+ * LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY — live Full Edit crashed with
+ * `(o ?? []).map is not a function` because `listCustomers().customers` was sometimes a non-array
+ * envelope (nested rows / bare array / missing key). Normalize at the API client boundary so every
+ * consumer always receives `T[]`.
+ */
+export function normalizeMdataListRows<T>(raw: unknown): T[] {
+  if (Array.isArray(raw)) return raw as T[];
+  if (raw && typeof raw === "object") {
+    const o = raw as Record<string, unknown>;
+    for (const key of ["rows", "customers", "vendors", "data", "results", "payment_terms"] as const) {
+      const nested = o[key];
+      if (Array.isArray(nested)) return nested as T[];
+    }
+  }
+  return [];
+}
+
+function listEnvelopeTotal(payload: unknown, rows: unknown[]): number {
+  if (payload && typeof payload === "object") {
+    const total = (payload as { total?: unknown }).total;
+    if (typeof total === "number" && Number.isFinite(total)) return total;
+  }
+  return rows.length;
+}
+
 export function listCustomers(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
   // CUST-1: expose the server's `total` (real count for the same filters) so the UI can page the FULL
   // roster, not just the first default-50 page. `total` falls back to the returned page length.
-  return apiRequest<{ customers: Customer[]; total?: number }>(`/api/v1/mdata/customers${qs ? `?${qs}` : ""}`).then(
-    (payload) => ({ customers: payload.customers, total: payload.total ?? payload.customers.length })
-  );
+  return apiRequest<{ customers: Customer[]; total?: number } | Customer[]>(
+    `/api/v1/mdata/customers${qs ? `?${qs}` : ""}`
+  ).then((payload) => {
+    const customers = normalizeMdataListRows<Customer>(
+      Array.isArray(payload) ? payload : (payload as { customers?: unknown })?.customers ?? payload
+    );
+    return { customers, total: listEnvelopeTotal(payload, customers) };
+  });
 }
 
 export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null) {
@@ -1402,7 +1433,15 @@ export function listPaymentTermOptions(operatingCompanyId: string) {
     status: "active",
     limit: "200",
   });
-  return apiRequest<{ payment_terms: PaymentTermOption[] }>(`/api/v1/catalogs/payment-terms?${query.toString()}`);
+  // Normalize at the API boundary so shared react-query keys never cache a non-array `payment_terms`.
+  return apiRequest<{ payment_terms: PaymentTermOption[] } | PaymentTermOption[]>(
+    `/api/v1/catalogs/payment-terms?${query.toString()}`
+  ).then((payload) => {
+    const payment_terms = normalizeMdataListRows<PaymentTermOption>(
+      Array.isArray(payload) ? payload : (payload as { payment_terms?: unknown })?.payment_terms ?? payload
+    );
+    return { payment_terms };
+  });
 }
 
 // Inline "+ Add new payment term" support (reference-dropdown keystone). Non-financial
@@ -1421,9 +1460,15 @@ export function listVendors(params: CompanyScopedListParams = {}) {
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
   // VEND-1: expose the server's `total` so the UI can page the FULL roster, not just the first 50.
-  return apiRequest<{ vendors: VendorOption[]; total?: number }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`).then(
-    (payload) => ({ vendors: payload.vendors, total: payload.total ?? payload.vendors.length })
-  );
+  // Same array-normalization class as listCustomers (LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY).
+  return apiRequest<{ vendors: VendorOption[]; total?: number } | VendorOption[]>(
+    `/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`
+  ).then((payload) => {
+    const vendors = normalizeMdataListRows<VendorOption>(
+      Array.isArray(payload) ? payload : (payload as { vendors?: unknown })?.vendors ?? payload
+    );
+    return { vendors, total: listEnvelopeTotal(payload, vendors) };
+  });
 }
 
 export function getVendor(id: string, operatingCompanyId?: string | null) {

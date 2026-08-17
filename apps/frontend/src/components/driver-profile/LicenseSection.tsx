@@ -1,3 +1,5 @@
+import { formatDateUS } from "../../lib/formatDate";
+
 function expColor(days: number | null | undefined) {
   if (days == null) return "text-slate-600";
   if (days < 0) return "text-red-700";
@@ -19,7 +21,8 @@ export function LicenseSection({ license }: { license: Record<string, unknown> }
           Class {String(license.class ?? "—")} · {String(license.state ?? "—")}
         </div>
         <div className={expColor(days)}>
-          Expires {String(license.expiration ?? "—")}
+          {/* LV-DRIVER-PROFILE-RAW-ISO-DATES-REOPEN — display chrome only; day counts stay raw. */}
+          Expires {formatDateUS(license.expiration as string | null) || "—"}
           {days != null ? ` (${days}d)` : ""}
         </div>
         <div>Restrictions {String(license.restrictions ?? "—")}</div>
