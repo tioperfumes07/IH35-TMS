@@ -38,7 +38,9 @@ export function WorkOrdersConsoleListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const sort = parseWoSort(searchParams.get("sort"));
   // LV-MAINT-WO-KANBAN-VIEW: ?view=kanban must render status columns (not silently ignore → table).
-  const view: ConsoleView = searchParams.get("view") === "kanban" ? "kanban" : "list";
+  // Case-insensitive — Live FAIL when casing/stale param left the console stuck on ParityTable.
+  const viewParam = String(searchParams.get("view") ?? "").trim().toLowerCase();
+  const view: ConsoleView = viewParam === "kanban" ? "kanban" : "list";
   const setView = (next: ConsoleView) => {
     setSearchParams(
       (prev) => {

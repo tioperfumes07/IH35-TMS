@@ -15,12 +15,19 @@ function fail(msg) {
 }
 
 function assertSource(src) {
+  if (!/normalizeFleetStatusParam\(status\)|normalizeFleetStatusParam\(rawStatus\)/.test(src)) {
+    fail("must normalize status for OOS matching");
+  }
   if (!src.includes("normalizeFleetStatusParam")) fail("missing normalizeFleetStatusParam");
   if (!src.includes("rowMatchesFleetStatus")) fail("missing rowMatchesFleetStatus");
   if (!src.includes('"out-of-service"')) fail("missing out-of-service alias");
   if (!src.includes("OutOfService")) fail("missing OutOfService canonical");
   if (!src.includes("is_oos")) fail("missing is_oos OOS match");
   if (!src.includes("normalizeFleetStatusParam(rawStatus)")) fail("effectiveStatus must normalize rawStatus");
+  // LV-FLEET-OOS-FILTER-0-ROWS-8498: kebab deep links must rewrite to canonical enum in the URL.
+  if (!src.includes('next.set("status", canonical)') && !src.includes("next.set(\"status\", canonical)")) {
+    fail("must canonicalize kebab status deep links into the URL");
+  }
 }
 
 function selftest() {
