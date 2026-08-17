@@ -3807,5 +3807,12 @@
     "claimer": "cursor",
     "guard": "verify-reports-fuel-reconciliation-display-dates",
     "note": "LV-REPORTS-FUEL-RECONCILIATION-RAW-ISO-DATES"
+  },
+  "3712": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-reports-geofence-reconciliation-display-dates",
+    "note": "LV-REPORTS-GEOFENCE-RECONCILIATION-RAW-ISO-EMPTY-DATE"
   }
 }
