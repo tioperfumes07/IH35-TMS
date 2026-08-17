@@ -396,8 +396,23 @@ function moduleTouchRe(moduleId: string): RegExp {
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
+// ACCT-F5402: scripts/audit-coverage-scoreboard.mjs's own SIDEBAR_ITEM_IDS/MODULE_ALIASES table
+// canonicalizes the Banking module's ledger `Module` column to "bank" (both "banking" and "bank"
+// alias to `{ id: "bank" }`) — every AUDIT-COVERAGE-LIVE.md row for Banking, from every agent,
+// literally starts with "bank" or "bank ·". This service's required.json/matrix moduleId is
+// "banking" instead. Before this fix, the `^banking\b` regex below never matched a single one of
+// those rows, so the entire Banking module's live evidence was invisible to Box4 Live% — measured
+// live 2026-08-17: banking showed livePct=0 despite real PROD-VERIFIED ledger rows dating back to
+// 2026-08-02 (rows 431/442/618/661/1077/1078 etc.). Fixed by accepting the ledger's own canonical
+// alias as an additional match candidate — additive, widens the matcher, narrows nothing.
+const LEDGER_MODULE_ALIASES: Record<string, string[]> = {
+  banking: ["bank"],
+};
+
 function rowTouchesModule(row: LedgerRow, moduleId: string): boolean {
-  return new RegExp(`^${moduleId}\\b`, "i").test(row.module.trim());
+  const candidates = [moduleId, ...(LEDGER_MODULE_ALIASES[moduleId] ?? [])];
+  const trimmed = row.module.trim();
+  return candidates.some((id) => new RegExp(`^${id}\\b`, "i").test(trimmed));
 }
 
 function columnTouches(colId: string, text: string): boolean {
