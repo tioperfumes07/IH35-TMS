@@ -2,7 +2,7 @@
   "module": "accounting",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Accounting grouped sub-nav",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Accounting grouped sub-nav",
     "nav": "apps/frontend/src/pages/accounting/subnav-manifest.ts",
     "routes": "/accounting/*"
   },
@@ -1062,7 +1062,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1074,7 +1074,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1086,7 +1086,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1098,7 +1098,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1143,7 +1143,6 @@
       "surface_kind": "panel",
       "surface_path": "pages/accounting/FixedAssetsPage.tsx",
       "required": [
-        "gl_je",
         "connectivity",
         "qbo_chrome"
       ]
@@ -1210,7 +1209,6 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/PrepaidExpensesPage.tsx",
       "required": [
-        "gl_je",
         "connectivity",
         "picker_law",
         "qbo_chrome"
@@ -1392,7 +1390,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "ChartOfAccountsListPage → AccountRegisterPage journal_entry EntityLink"
+          "proof": "ChartOfAccountsListPage \u2192 AccountRegisterPage journal_entry EntityLink"
         },
         {
           "id": "transactions",
@@ -1422,7 +1420,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "alias→MonthClosePage adjusting_entries href /accounting/journal-entries"
+          "proof": "alias\u2192MonthClosePage adjusting_entries href /accounting/journal-entries"
         },
         {
           "id": "month_close",
@@ -1441,7 +1439,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "FactoringDetailPage journal_entry_id EntityLink (list→:id)"
+          "proof": "FactoringDetailPage journal_entry_id EntityLink (list\u2192:id)"
         }
       ]
     },
@@ -1503,7 +1501,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "picker_law_2026_08_13_remainder_batch": {
       "finding": "VERTICAL-PICKER-LAW-REMAINDER-BATCH",
@@ -1605,7 +1603,7 @@
     },
     "vendor_column_2026_08_14_modal_create": {
       "finding": "CURSOR-ACCOUNTING-MODAL-CREATE-VENDOR-HONESTY",
-      "note": "PrepaidExpensesPage (accounting.modal.create surface) has no vendor EntityLink/picker — drop false vendor Required. expense/gl_je remain for money lane.",
+      "note": "PrepaidExpensesPage (accounting.modal.create surface) has no vendor EntityLink/picker \u2014 drop false vendor Required. expense/gl_je remain for money lane.",
       "drops": [
         {
           "id": "accounting.modal.create",
@@ -1701,6 +1699,24 @@
           "id": "payment_methods_catalog.create",
           "removed": [
             "bank"
+          ]
+        }
+      ]
+    },
+    "box3_gl_je_2026_08_17": {
+      "finding": "LV-MATRIX-THREE-HONEST-BUILT-GAPS",
+      "note": "Box3 unpaid cells closed by honesty, not new GL math. accounting.panel.trk_bulk_register: fixed-assets.routes documents Register writes fixed_assets rows only (no JE); depreciation JE lives on sibling accounting.panel.detail (already Built). accounting.modal.create: prepaid CreateModal is create-before-post (flag-gated copy, no JE EntityLink); sibling accounting.panel.schedule already carries purchase/amortization JE links. Requiring gl_je on these surfaces was false Required, not a missing poster.",
+      "drops": [
+        {
+          "id": "accounting.panel.trk_bulk_register",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "accounting.modal.create",
+          "removed": [
+            "gl_je"
           ]
         }
       ]
