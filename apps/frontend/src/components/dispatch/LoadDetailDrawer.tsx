@@ -305,8 +305,12 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 h-full w-full overflow-y-auto bg-white shadow-xl md:w-[600px]">
+      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />
+      <aside
+        className="fixed right-0 top-0 z-50 h-full w-full overflow-y-auto bg-white shadow-xl md:w-[600px]"
+        data-testid="load-detail-drawer"
+        data-load-id={loadId}
+      >
         <header className="sticky top-0 border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>

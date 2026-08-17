@@ -682,7 +682,8 @@ function DriverSafetyProfileTab() {
 function DispatchLoadDetailRoute() {
   const { id } = useParams<{ id: string }>();
   if (!id) return <Navigate to="/dispatch/loads" replace />;
-  return <DispatchPage loadsDeepLink />;
+  // Pass :id explicitly — Live FAIL: WO→load landed on board with ?view=list and drawer never opened.
+  return <DispatchPage loadsDeepLink deepLinkLoadId={id} />;
 }
 
 /** Legacy `/loads/:id` bookmarks → the canonical `/dispatch/loads/:id` (kept, never dropped). */
