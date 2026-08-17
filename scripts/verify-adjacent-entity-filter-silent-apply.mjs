@@ -98,6 +98,13 @@ function analyze(src, entityKeys) {
   if (silentFilters.length) {
     failures.push(`adjacent EntityPicker still silent-applies (${silentFilters.length})`);
   }
+  // Orphaned silent URL helpers (left after CLS-ADJACENT) break FE tsc (TS6133) and freeze Render.
+  if (/function patchEntityFilter\s*\(/.test(src)) {
+    failures.push("orphaned function patchEntityFilter (must commit only via staged.onApply)");
+  }
+  if (/\b(?:const|function)\s+set(?:Driver|Unit|Load)Filter\s*=/.test(src) || /\bfunction\s+set(?:Driver|Unit|Load)Filter\s*\(/.test(src)) {
+    failures.push("orphaned setDriverFilter/setUnitFilter/setLoadFilter (must commit only via staged.onApply)");
+  }
   void chrome;
   void filterPickers;
   return failures;
@@ -122,6 +129,16 @@ function selftest() {
   `;
   if (analyze(good, ["unitId"]).length) fail(`selftest GOOD: ${analyze(good, ["unitId"]).join("; ")}`);
   if (!analyze(bad, ["unitId"]).length) fail("selftest expected BAD to fail");
+  const orphan = `
+    useStagedListFilters({ applied: { status, unitId }, empty: { status: "", unitId: "" }, onApply });
+    <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel}>
+    <EntityPicker allowCreate={false} value={staged.draft.unitId || null}
+      onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })} />
+    function patchEntityFilter(key, next) { setSearchParams(next); }
+  `;
+  if (!analyze(orphan, ["unitId"]).some((f) => /orphaned function patchEntityFilter/.test(f))) {
+    fail("selftest expected orphaned patchEntityFilter to fail");
+  }
   console.log(`${LABEL} selftest PASS`);
 }
 

@@ -106,9 +106,14 @@ const CHECKS = [
     pattern: /dataTestId="bills-filter-unit"/,
   },
   {
-    name: "LST-F5198: BillsPage patchEntityFilter",
+    name: "LST-F5198: BillsPage staged Apply writes unit/load URL keys",
     file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    pattern: /function patchEntityFilter/,
+    pattern: /onApply:\s*\(next\)\s*=>[\s\S]*?params\.set\("unit_id"|params\.set\("load_id"/,
+  },
+  {
+    name: "LST-F5198: BillsPage must not keep silent patchEntityFilter",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern: /^(?![\s\S]*function patchEntityFilter)[\s\S]*useStagedListFilters/,
   },
   {
     name: "ACCT-F5049: BillsReverseSection Open Bills keeps filter query",
@@ -161,7 +166,7 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx": '<EntityLink kind="bill" id={result.bill_id} />',
     "apps/frontend/src/pages/accounting/BillDetailPage.tsx": '<EntityLink kind="cash_advance" id={bill.linked_cash_advance_id} />',
     "apps/frontend/src/pages/accounting/BillsPage.tsx":
-      'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id") searchParams.get("legal_matter_id") dataTestId="bills-filter-unit" function patchEntityFilter',
+      'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id") searchParams.get("legal_matter_id") dataTestId="bills-filter-unit" onApply: (next) => { params.set("unit_id", next.unitId); useStagedListFilters',
     "apps/frontend/src/api/accounting.ts":
       'legal_matter_id?: string;\n  if (params.legal_matter_id) query.set("legal_matter_id", params.legal_matter_id);',
     "apps/backend/src/accounting/bills.routes.ts": "legal_matter_id: z.string().uuid().optional(),",

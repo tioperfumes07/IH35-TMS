@@ -142,21 +142,7 @@ export function ExpensesListPage() {
       { replace: true }
     );
   }
-  // LST-F5195 — visible reverse filters write URL (seed-only was not enough).
-  function patchEntityFilter(
-    key: "load_id" | "driver_id" | "unit_id" | "trailer_id",
-    next: string
-  ) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next) params.set(key, next);
-        else params.delete(key);
-        return params;
-      },
-      { replace: true }
-    );
-  }
+  // LST-F5195 — reverse entity filters commit via staged Apply (no silent URL helper).
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidTarget, setVoidTarget] = useState<{ id: string; displayId: string } | null>(null);
   const [highlightedExpenseId, setHighlightedExpenseId] = useState<string | null>(deepLinkExpenseId);

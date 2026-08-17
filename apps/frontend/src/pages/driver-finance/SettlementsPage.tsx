@@ -46,13 +46,7 @@ export function SettlementsPage() {
   useEffect(() => {
     if (filterDriverId) setDriverPickerId(filterDriverId);
   }, [filterDriverId]);
-  const setDriverFilter = (driverId: string) => {
-    setDriverPickerId(driverId);
-    const next = new URLSearchParams(searchParams);
-    if (driverId) next.set("driver_id", driverId);
-    else next.delete("driver_id");
-    setSearchParams(next, { replace: true });
-  };
+  // Driver filter commits via staged Apply (CLS-ADJACENT — no silent URL helper).
   const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
   const selectedPaymentState = (searchParams.get("payment_state") as PaymentStateFilter | null) || null;
   // B-A3: KPI focus filter — same predicates as the KPI counts (not a guess-route).
