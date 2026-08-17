@@ -52,9 +52,14 @@ const CHECKS = [
     pattern: /dataTestId="expenses-filter-driver"/,
   },
   {
-    name: "LST-F5195: ExpensesListPage patchEntityFilter",
+    name: "LST-F5195: ExpensesListPage staged Apply writes entity URL keys",
     file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
-    pattern: /function patchEntityFilter/,
+    pattern: /onApply:\s*\(next\)\s*=>[\s\S]*?params\.set\("load_id"|params\.set\("driver_id"|params\.set\("unit_id"|params\.set\("trailer_id"/,
+  },
+  {
+    name: "LST-F5195: ExpensesListPage must not keep silent patchEntityFilter",
+    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    pattern: /^(?![\s\S]*function patchEntityFilter)[\s\S]*useStagedListFilters/,
   },
   {
     name: "ACCT-F5048: ExpensesListPage Trailer column EntityLink",
@@ -111,7 +116,7 @@ export function checkAll(readFile) {
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/frontend/src/pages/accounting/ExpensesListPage.tsx":
-      'searchParams.get("load_id") searchParams.get("trailer_id") searchParams.get("unit_id") kind="trailer" id={r.trailer_id} dataTestId="expenses-filter-driver" function patchEntityFilter',
+      'searchParams.get("load_id") searchParams.get("trailer_id") searchParams.get("unit_id") kind="trailer" id={r.trailer_id} dataTestId="expenses-filter-driver" onApply: (next) => { params.set("load_id", next.loadId); useStagedListFilters',
     "apps/frontend/src/components/accounting/ExpensesReverseSection.tsx":
       "to={`/accounting/expenses?${filterKey}=",
     "apps/backend/src/banking/reconciliation.routes.ts": "t.matched_settlement_id || t.matched_expense_id",

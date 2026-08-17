@@ -28,7 +28,7 @@ export function DriverReportsQueuePage({
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
   const qc = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
   // BANK-F5168 — visible EntityPicker (URL/prop-only filter is not reverse chrome).
   const [driverPickerId, setDriverPickerId] = useState(filterDriverId);
   const [loadPickerId, setLoadPickerId] = useState(filterLoadId);
@@ -38,20 +38,7 @@ export function DriverReportsQueuePage({
   useEffect(() => {
     if (filterLoadId) setLoadPickerId(filterLoadId);
   }, [filterLoadId]);
-  const setDriverFilter = (next: string) => {
-    setDriverPickerId(next);
-    const params = new URLSearchParams(searchParams);
-    if (next) params.set("driver_id", next);
-    else params.delete("driver_id");
-    setSearchParams(params, { replace: true });
-  };
-  const setLoadFilter = (next: string) => {
-    setLoadPickerId(next);
-    const params = new URLSearchParams(searchParams);
-    if (next) params.set("load_id", next);
-    else params.delete("load_id");
-    setSearchParams(params, { replace: true });
-  };
+  // Driver/load filters commit via staged Apply (CLS-ADJACENT — no silent URL helpers).
   const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
   const effectiveLoadId = loadPickerId.trim() || filterLoadId || undefined;
   const [statusFilter, setStatusFilter] = useState<"" | DriverReportRow["status"]>("");

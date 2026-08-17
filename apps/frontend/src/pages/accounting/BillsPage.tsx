@@ -238,18 +238,7 @@ export function BillsPage() {
       { replace: true }
     );
   }
-  // LST-F5198 — unit/load reverse filters write URL (seed-only was not enough).
-  function patchEntityFilter(key: "unit_id" | "load_id", next: string) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next) params.set(key, next);
-        else params.delete(key);
-        return params;
-      },
-      { replace: true }
-    );
-  }
+  // LST-F5198 — unit/load reverse filters commit via staged Apply (no silent URL helper).
 
   useEffect(() => {
     if (!deepLinkBillId) return;
