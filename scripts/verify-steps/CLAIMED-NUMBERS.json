@@ -1713,6 +1713,12 @@
     "lane": "cursor",
     "note": "CLS-FINANCE-PREVIEW-RAW-VALIDATION-ERROR"
   },
+  "3670": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-finance-readonly-staged-filters",
+    "lane": "cursor",
+    "note": "CLS-FINANCE-READONLY-FILTER-APPLY-CANCEL-RESET"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
