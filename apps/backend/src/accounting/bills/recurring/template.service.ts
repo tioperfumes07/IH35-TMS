@@ -30,6 +30,7 @@ export type RecurringBillTemplate = {
   uuid: string;
   operating_company_id: string;
   vendor_uuid: string;
+  vendor_name: string | null;
   template_name: string;
   amount: string;
   memo: string | null;
@@ -159,7 +160,12 @@ export async function getTemplate(uuid: string, operatingCompanyId: string, user
   const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<RecurringBillTemplate>(
-      `SELECT * FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid AND operating_company_id = $2::uuid`,
+      `
+        SELECT t.*, v.vendor_name
+        FROM accounting.recurring_bill_templates t
+        LEFT JOIN mdata.vendors v ON v.id = t.vendor_uuid AND v.operating_company_id = t.operating_company_id
+        WHERE t.uuid = $1::uuid AND t.operating_company_id = $2::uuid
+      `,
       [uuid, operatingCompanyId]
     );
     if (!res.rows[0]) throw new Error("recurring_bill_template_not_found");
@@ -173,16 +179,16 @@ export async function listTemplates(
   userId: string,
   opts: { activeOnly?: boolean; dueSoon?: boolean } = {}
 ): Promise<RecurringBillTemplate[]> {
-  const conditions: string[] = ["operating_company_id = $1::uuid"];
+  const conditions: string[] = ["t.operating_company_id = $1::uuid"];
   const values: unknown[] = [operatingCompanyId];
   let idx = 2;
 
   if (opts.activeOnly) {
-    conditions.push(`is_active = true`);
+    conditions.push(`t.is_active = true`);
   }
   if (opts.dueSoon) {
     const cutoff = DateTime.utc().plus({ days: 7 }).toISODate();
-    conditions.push(`next_generation_date <= $${idx}::date`);
+    conditions.push(`t.next_generation_date <= $${idx}::date`);
     values.push(cutoff);
     idx++;
   }
@@ -190,7 +196,13 @@ export async function listTemplates(
   const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<RecurringBillTemplate>(
-      `SELECT * FROM accounting.recurring_bill_templates WHERE ${conditions.join(" AND ")} ORDER BY next_generation_date ASC`,
+      `
+        SELECT t.*, v.vendor_name
+        FROM accounting.recurring_bill_templates t
+        LEFT JOIN mdata.vendors v ON v.id = t.vendor_uuid AND v.operating_company_id = t.operating_company_id
+        WHERE ${conditions.join(" AND ")}
+        ORDER BY t.next_generation_date ASC
+      `,
       values
     );
     return res.rows;
