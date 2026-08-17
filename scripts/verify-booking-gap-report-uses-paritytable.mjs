@@ -53,8 +53,16 @@ function assertMigrated(src) {
   if (!src.includes("rowClassName")) {
     errors.push(`${PAGE}: must keep rowClassName for rank highlight (best/worst)`);
   }
-  if (!src.includes('(["week", "month", "quarter"]')) {
-    errors.push(`${PAGE}: must keep week/month/quarter period toggle`);
+  if (!src.includes("PERIOD_LABELS") || !src.includes("useStagedListFilters")) {
+    errors.push(`${PAGE}: must stage week/month/quarter period via PERIOD_LABELS + useStagedListFilters`);
+  }
+  for (const token of ['"week"', '"month"', '"quarter"']) {
+    if (!src.includes(token)) {
+      errors.push(`${PAGE}: must keep period value ${token}`);
+    }
+  }
+  if (/const \[period,\s*setPeriod\]/.test(src) || /onClick=\{\(\)\s*=>\s*setPeriod\(/.test(src)) {
+    errors.push(`${PAGE}: must not immediately commit period via setPeriod`);
   }
   return errors;
 }
@@ -71,7 +79,9 @@ function selftest() {
       { key: "p50_gap_hours", label: "P50 (h)" },
       { key: "p90_gap_hours", label: "P90 (h)" },
     ];
-    (["week", "month", "quarter"] as Period[]).map((p) => null);
+    type Period = "week" | "month" | "quarter";
+    const PERIOD_LABELS = { week: "Week", month: "Month", quarter: "Quarter" };
+    const staged = useStagedListFilters({});
     <ListErrorState title="Couldn't load booking gap report" status={0} onRetry={() => {}} />
     <ParityTable
       storageKey="booking-gap-report"

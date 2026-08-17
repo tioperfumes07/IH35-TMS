@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -18,6 +19,14 @@ interface DispatcherStats {
 }
 
 type Period = "week" | "month" | "quarter";
+
+const PERIOD_LABELS: Record<Period, string> = {
+  week: "Week",
+  month: "Month",
+  quarter: "Quarter",
+};
+
+const DEFAULT_PERIOD: Period = "week";
 
 function periodDates(p: Period): { from: string; to: string } {
   const to = new Date().toISOString().slice(0, 10);
@@ -37,8 +46,14 @@ export function BookingGapReport() {
   const [operatingCompanyId] = useState(
     () => sessionStorage.getItem("operating_company_id") ?? ""
   );
-  const [period, setPeriod] = useState<Period>("week");
-  const { from, to } = periodDates(period);
+  const emptyFilters = { period: DEFAULT_PERIOD as Period };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
+  const { from, to } = periodDates(applied.period);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: { dispatchers: DispatcherStats[] } }>({
     queryKey: ["booking-gap", operatingCompanyId, from, to],
@@ -109,25 +124,36 @@ export function BookingGapReport() {
         backHref="/reports"
         breadcrumb={["Reports", "Dispatcher Booking Gap"]}
         title="Dispatcher Booking Gap"
-        actions={
-          <div className="flex gap-2">
-            {(["week", "month", "quarter"] as Period[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-sm rounded capitalize ${
-                  period === p
-                    ? "bg-[#1F2A44] text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        }
       />
+
+      <CollapsedListFilters
+        activeFilterCount={applied.period !== DEFAULT_PERIOD ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-booking-gap"
+        className="mb-4"
+      >
+        <label className="text-xs text-gray-600">
+          Period
+          <select
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+            value={staged.draft.period}
+            onChange={(event) =>
+              staged.setDraft((p) => ({ ...p, period: event.target.value as Period }))
+            }
+            aria-label="Period"
+            data-testid="reports-booking-gap-period"
+          >
+            {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
+              <option key={p} value={p}>
+                {PERIOD_LABELS[p]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </CollapsedListFilters>
 
       <p className="text-sm text-gray-500 mb-4">
         Average time between load delivery and next truck assignment. Lower is better (driver stays
