@@ -330,7 +330,9 @@ function buildRows(
 ): Row[] {
   const rows: Row[] = [];
   let lastSection = "";
-  for (const leaf of map.leaves) {
+  // Hard fail closed: required maps must expose array leaves (never for-of a plain object).
+  const requiredLeaves = Array.isArray(map?.leaves) ? map.leaves : [];
+  for (const leaf of requiredLeaves) {
     const section = sectionForLeaf(moduleId, leaf);
     if (section !== lastSection) {
       rows.push({ kind: "section", label: section });
@@ -439,8 +441,11 @@ export function ModuleMatrixPreviewPage() {
   const requiredMap = REQUIRED_BY_MODULE[moduleId];
   const cols = requiredMap.columns;
 
+  // Query key MUST stay distinct from ModuleMatrixSystemView's scope=system rollup key.
+  // Colliding on ["program","module-matrix","system"] lets the rollup payload (no leaf array)
+  // poison the System *module* board → ErrorBoundary "_.leaves is not iterable".
   const { data: live, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
-    queryKey: ["program", "module-matrix", moduleId],
+    queryKey: ["program", "module-matrix", "module", moduleId],
     queryFn: () => fetchModuleMatrix(moduleId),
     refetchInterval: MATRIX_POLL_MS,
     refetchIntervalInBackground: true,
@@ -449,11 +454,13 @@ export function ModuleMatrixPreviewPage() {
     enabled: !showSystem,
   });
 
-  const liveOk = Boolean(live && live.sample === false);
+  const liveOk = Boolean(
+    live && live.sample === false && Array.isArray(live.leaves),
+  );
   const showUnavailableBanner = isFetched && (!liveOk || isError);
 
   const liveByLeaf = useMemo(() => {
-    if (!liveOk || !live) return null;
+    if (!liveOk || !live || !Array.isArray(live.leaves)) return null;
     const m = new Map<string, Record<string, LiveCell>>();
     for (const leaf of live.leaves) {
       m.set(leaf.id, leaf.cells ?? {});
