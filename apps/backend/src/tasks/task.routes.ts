@@ -218,8 +218,9 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         SELECT t.task_id, t.category, t.status, t.title, t.priority, t.scheduled_date,
           t.assigned_to_user_id, u.email as assigned_to_email,
           coalesce(u.first_name || ' ' || u.last_name, u.email) as assigned_to_name,
-          t.subject_type, t.subject_id,
-          CASE t.subject_type
+          COALESCE(t.subject_type, primary_link.subject_type) AS subject_type,
+          COALESCE(t.subject_id, primary_link.subject_id) AS subject_id,
+          CASE COALESCE(t.subject_type, primary_link.subject_type)
             WHEN 'load' THEN subject_load.load_number
             WHEN 'unit' THEN subject_unit.unit_number
             WHEN 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', subject_driver.first_name, subject_driver.last_name)), '')
@@ -234,17 +235,28 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         FROM tasks.task t
         LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
         LEFT JOIN tasks.task_type tt ON tt.id = t.task_type_id
-        LEFT JOIN mdata.loads subject_load ON t.subject_type = 'load'
-          AND subject_load.id = t.subject_id AND subject_load.operating_company_id = t.operating_company_id
-        LEFT JOIN mdata.units subject_unit ON t.subject_type = 'unit'
-          AND subject_unit.id = t.subject_id
+        LEFT JOIN LATERAL (
+          SELECT CASE tl.target_type WHEN 'work_order' THEN 'maintenance_order' ELSE tl.target_type END AS subject_type,
+                 tl.target_id AS subject_id
+          FROM tasks.task_link tl
+          WHERE tl.task_id = t.task_id
+            AND tl.operating_company_id = t.operating_company_id
+            AND tl.role = 'about'
+            AND tl.target_type IN ('load', 'unit', 'driver', 'customer', 'work_order')
+          ORDER BY tl.created_at ASC, tl.id ASC
+          LIMIT 1
+        ) primary_link ON t.subject_id IS NULL
+        LEFT JOIN mdata.loads subject_load ON COALESCE(t.subject_type, primary_link.subject_type) = 'load'
+          AND subject_load.id = COALESCE(t.subject_id, primary_link.subject_id) AND subject_load.operating_company_id = t.operating_company_id
+        LEFT JOIN mdata.units subject_unit ON COALESCE(t.subject_type, primary_link.subject_type) = 'unit'
+          AND subject_unit.id = COALESCE(t.subject_id, primary_link.subject_id)
           AND COALESCE(subject_unit.currently_leased_to_company_id, subject_unit.owner_company_id) = t.operating_company_id
-        LEFT JOIN mdata.drivers subject_driver ON t.subject_type = 'driver'
-          AND subject_driver.id = t.subject_id AND subject_driver.operating_company_id = t.operating_company_id
-        LEFT JOIN mdata.customers subject_customer ON t.subject_type = 'customer'
-          AND subject_customer.id = t.subject_id AND subject_customer.operating_company_id = t.operating_company_id
-        LEFT JOIN maintenance.work_orders subject_wo ON t.subject_type IN ('maintenance_order', 'work_order')
-          AND subject_wo.id = t.subject_id AND subject_wo.operating_company_id = t.operating_company_id
+        LEFT JOIN mdata.drivers subject_driver ON COALESCE(t.subject_type, primary_link.subject_type) = 'driver'
+          AND subject_driver.id = COALESCE(t.subject_id, primary_link.subject_id) AND subject_driver.operating_company_id = t.operating_company_id
+        LEFT JOIN mdata.customers subject_customer ON COALESCE(t.subject_type, primary_link.subject_type) = 'customer'
+          AND subject_customer.id = COALESCE(t.subject_id, primary_link.subject_id) AND subject_customer.operating_company_id = t.operating_company_id
+        LEFT JOIN maintenance.work_orders subject_wo ON COALESCE(t.subject_type, primary_link.subject_type) IN ('maintenance_order', 'work_order')
+          AND subject_wo.id = COALESCE(t.subject_id, primary_link.subject_id) AND subject_wo.operating_company_id = t.operating_company_id
         WHERE t.operating_company_id = $1::uuid AND t.is_active = true
           AND (
             t.scheduled_date BETWEEN $2 AND $3
@@ -287,6 +299,16 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
 
+      // `links` is the canonical polymorphic create contract. Keep the legacy subject columns in
+      // sync with its first supported "about" link so every list/drawer can resolve the same human
+      // record immediately; the planner's lateral fallback above also repairs older link-only rows.
+      const primaryAboutLink = input.links?.find(
+        (link) => link.role === "about" && ["load", "unit", "driver", "customer", "work_order"].includes(link.target_type)
+      );
+      const linkedSubjectType = primaryAboutLink?.target_type === "work_order" ? "maintenance_order" : primaryAboutLink?.target_type;
+      const subjectType = input.subject_type ?? linkedSubjectType ?? null;
+      const subjectId = input.subject_id ?? primaryAboutLink?.target_id ?? null;
+
       const sql = `
         INSERT INTO tasks.task (operating_company_id, category, title, description,
           assigned_to_user_id, assigned_by_user_id, scheduled_date, due_date, priority,
@@ -300,7 +322,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       const result = await (client as Queryable).query<{ task_id: string }>(sql, [
         input.operating_company_id, input.category, input.title, input.description ?? null,
         input.assigned_to_user_id, user.uuid, input.scheduled_date, input.due_date ?? null,
-        input.priority, input.subject_type ?? null, input.subject_id ?? null, input.estimated_minutes ?? null,
+        input.priority, subjectType, subjectId, input.estimated_minutes ?? null,
         input.progress_pct, input.task_type_id ?? null, input.start_time ?? null, input.location ?? null,
         input.checkin_cadence_minutes ?? null, input.escalate_to_user_id ?? null, input.notes ?? null,
         input.alarm_at ?? null, input.anticipated_category ?? null,
