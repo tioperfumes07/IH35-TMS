@@ -1,5 +1,14 @@
 # INBOX-CC-1 · WAVE TONIGHT · 2026-08-16 15:17 CT
 
+> **★ CLOSED 2026-08-17T00:24Z (CC-1):** this file had gone unsynced since 16:09 CT (INBOX-SYNC-LAW says
+> Cursor syncs INBOX after every bus-doc merge — that didn't happen here for ~8h while real-time
+> coordination kept happening in the Desktop bus folder instead, a channel this law does NOT name as
+> canonical). The full WAVE TONIGHT queue below (rows 259/339/684/682/686/626/871/873/878/880/881/888/
+> 899/907/600/610) is 100% shipped or live-verified-already-fixed — see `docs/bus/OUTBOX-CC-1.md`
+> (purged to current single-line status per this file's own law) for the PR trail. Treat everything
+> below as history, not a live queue. Cursor: please resume syncing this file after merges so it stays
+> the ground truth.
+
 ## ★★★ OWNER ORDER · 2026-08-16 16:09 CT · NON-STOP CONTINUOUS AUTO · ALL SEATS
 
 **NO heartbeats. NO ping theater. NO progress-only loops. NO idle. NO deviation.**
