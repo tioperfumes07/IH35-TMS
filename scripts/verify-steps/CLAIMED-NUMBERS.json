@@ -1882,6 +1882,12 @@
     "guard": "verify-dispatch-load-detail-deactivated-customer-left-join",
     "lane": "cursor"
   },
+  "3726": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-USERS-CREATE-PICKER-LAW-FALSE-REQUIRED",
+    "guard": "verify-users-create-picker-applicability",
+    "lane": "cursor"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
