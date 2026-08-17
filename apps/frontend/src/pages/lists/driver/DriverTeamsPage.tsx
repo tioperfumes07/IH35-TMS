@@ -19,6 +19,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { formatDateUS } from "../../../lib/formatDate";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-label";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
@@ -26,6 +27,33 @@ import { DriverTeamModal } from "./DriverTeamModal";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
 type StatusFilter = "true" | "false" | "all";
+
+
+function DriverTeamMemberCell({ row, slot }: { row: MdataDriverTeam; slot: "primary" | "secondary" }) {
+  const driverId = slot === "primary" ? row.primary_driver_id : row.secondary_driver_id;
+  const rawName =
+    slot === "primary"
+      ? [row.primary_driver_first_name, row.primary_driver_last_name].filter(Boolean).join(" ").trim()
+      : [row.secondary_driver_first_name, row.secondary_driver_last_name].filter(Boolean).join(" ").trim();
+  const label = entityLabel(rawName || null, driverId, "Driver");
+  // LV-LISTS-DRIVER-TEAMS-DEAD-TOMBSTONE-LINK: unresolved / UUID-shaped names must not drill.
+  if (!driverId || isUnresolvedEntityTombstone(rawName || null, driverId, "Driver")) {
+    return (
+      <span className="text-xs text-slate-600" data-testid={`driver-teams-${slot}-tombstone`}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <EntityLink
+      kind="driver"
+      id={driverId}
+      label={label}
+      data-testid={`driver-teams-${slot}-link`}
+    />
+  );
+}
+
 
 function statusPillClass() {
   return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
@@ -43,14 +71,14 @@ const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [
     label: "Primary Driver",
     sortable: true,
     sortValue: (row) => driverTeamMemberName(row, "primary"),
-    render: (row) => <EntityLink kind="driver" id={row.primary_driver_id} label={driverTeamMemberName(row, "primary")} />,
+    render: (row) => <DriverTeamMemberCell row={row} slot="primary" />,
   },
   {
     key: "secondary_driver_id",
     label: "Secondary Driver",
     sortable: true,
     sortValue: (row) => driverTeamMemberName(row, "secondary"),
-    render: (row) => <EntityLink kind="driver" id={row.secondary_driver_id} label={driverTeamMemberName(row, "secondary")} />,
+    render: (row) => <DriverTeamMemberCell row={row} slot="secondary" />,
   },
   {
     key: "relationship",
