@@ -99,7 +99,7 @@ export function CalculatorPage() {
       </div>
     );
 
-  const field = (label: string, key: keyof typeof form, type = "text") => (
+  const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text") => (
     <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
       <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" />
     </label>
