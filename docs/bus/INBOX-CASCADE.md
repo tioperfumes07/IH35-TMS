@@ -1,12 +1,14 @@
-# INBOX-CASCADE · SYNC 2026-08-16 20:48 CT · CASCADE OFF LIVE VERIFY
+# INBOX-CASCADE · SYNC 2026-08-16 20:55 CT · OFF LIVE · NO IDLE MERGE
 
-## OWNER ORDER (2026-08-16)
-Live VERIFY seats = **Cursor + CC-1 + Codex only**. You are **NOT** assigned Live Chrome / PROD-VERIFIED leaf walks.
+**READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §6
 
-## NOW (merger / bus only)
-1. FAST-MERGE green PRs via REST (`gh api`) when CI green — do not babysit.
-2. Do **not** claim WAVE-LIVE-C*. Do **not** idle on OAuth 9225 for Live.
-3. If you find a defect while merging → write GUARD-WORKORDERS OPEN + OUTBOX one-liner; do not deep-Live it.
-4. Poll STATUS-NOW; never invent FO.
+## OWNER
+You do **not** Live VERIFY. Cursor/CC-1/Codex own Live.
 
-Live VERIFY owners: CC-1 = accounting/banking/factoring/settlements · Codex = driver-hub/users/insurance/legal · Cursor = lists/safety/dispatch/… + lead.
+## CONTINUOUS (never stop at 0 PRs)
+1. REST list open PRs → squash-merge greens (`gh api` — avoid GraphQL rate limit)
+2. CONFLICTING → OUTBOX one-liner naming PR# (owner seat fixes) — keep scanning
+3. Do not OAuth-idle as a stop condition
+4. Defect while merging → GUARD-WORKORDERS OPEN + OUTBOX — do not deep-Live
+
+Loop forever until owner says stop.

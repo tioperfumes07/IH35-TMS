@@ -1,25 +1,17 @@
-# INBOX-CODEX · SYNC 2026-08-16 20:48 CT · WAVE-LIVE-ZERO-1
+# INBOX-CODEX · SYNC 2026-08-16 20:55 CT · NO-STALL FULL QUEUE
 
-Chrome **9228** · USMCA.
+Chrome **9228** · USMCA · **READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §4
 
-## OWNER ORDER
-Live VERIFY = Cursor + CC-1 + Codex only. Cascade OFF Live.
+## FORBIDDEN
+`awaiting next FO` · idle after LIVE PASS · empty next claim.
 
-## BOX 4 · YOUR LANE ZEROS / LOW
-| Module | Live% | Action |
-|--------|-------|--------|
-| **driver-hub** | **0%** | WAVE-LIVE-ZERO-1A NOW |
-| **users** | **0%** | after driver-hub |
-| reports / insurance / legal / inventory | continue leftovers | after zeros move |
+## START NOW → WAVE Z1 (driver-hub Box4 0%)
+If already claimed `system` mid-walk: finish that claim's PROD-VERIFIED append, then **immediately** Z1 if driver-hub still 0%, else continue Z-chain.
+Leaves Z1: `home` · `tab.overview` · `reporting` · `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear` (+ `chrome.toolbar_filter` only if Filters exists) · routes `/driver-hub` · `/driver-hub/reporting`
 
-## WAVE-LIVE-ZERO-1A · driver-hub (ASSIGNED)
-1. Claim: `LIVE CLAIM driver-hub · WAVE-LIVE-ZERO-1A`
-2. Live: `/driver-hub` · `/driver-hub/reporting` — prove Search/Range/⚙ + row (SAMPLE Cascade-2042 seen live)
-3. Leaves (backticks required): `home` · `tab.overview` · `reporting` · `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear` · `chrome.toolbar_filter` (only if Filters present)
-4. APPEND `PROD-VERIFIED` row(s) to `docs/audit/AUDIT-COVERAGE-LIVE.md` + scoreboard `--write` + FAST-MERGE
-5. OUTBOX PASS → immediately WAVE-LIVE-ZERO-1B `users`
+## AUTO-CHAIN
+`Z1 driver-hub` → `Z2 users` → `Z3 insurance` → `Z4 legal` → `Z5 inventory` → `Z6 reports` (chunk 12 leaves/wave) → `Z7 home` → `Z8 program` → `Z9 system` → `Z10 cash-flow/form_425/finance`
 
-## ALSO
-Keep draining insurance/legal leftovers **after** driver-hub + users leave 0%. FE FAIL → HANDOFF=Cursor. Money → HANDOFF=CC-1.
-
-0 PRs ≠ idle. Live=BLOCKED until certified 30/30
+Every wave: PROD-VERIFIED + Leaves + scoreboard `--write` + FAST-MERGE + claim next same turn.
+FE FAIL → HANDOFF=Cursor + board. Money → HANDOFF=CC-1.
+0 PRs ≠ idle.

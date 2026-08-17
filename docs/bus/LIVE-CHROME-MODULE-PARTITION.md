@@ -19,5 +19,7 @@ Owner: Box 3 Built closed · Box 4 Live in flight · seats must not re-walk the 
 5. If another seat has LIVE CLAIM on a module, skip it
 6. **Never leave a seat on `awaiting next FO`** — lead always tips a numbered WAVE with leaf ids
 
-**CC-1 active:** WAVE-LIVE-MONEY-1A accounting → 1B banking → 1C factoring  
-**Codex active:** WAVE-LIVE-ZERO-1A driver-hub → 1B users
+**Standing queue (no stall):** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md`  
+**CC-1:** A1–A4 accounting → B1–B3 banking → C1–C3 factoring → D1–D2 settlements  
+**Codex:** Z1–Z10 (driver-hub → … → finance)  
+**Cursor:** lead + K1–K10

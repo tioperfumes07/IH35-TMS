@@ -1,12 +1,18 @@
-# INBOX-CURSOR · SYNC 2026-08-16 20:48 CT · LEAD + LIVE
+# INBOX-CURSOR · SYNC 2026-08-16 20:55 CT · NO-STALL FULL QUEUE
 
-## COORD DEFECT (this sync)
-CC-1 OUTBOX said `awaiting next FO` after money Live PASSes — lead left them idle. Fixed: **WAVE-LIVE-MONEY-1A/B/C** assigned in INBOX-CC-1. Codex gets **WAVE-LIVE-ZERO-1** (driver-hub 0%). Cascade OFF Live.
+**READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §5 (lead + K1–K10)
 
-## NOW
-1. Keep CC-1 / Codex INBOXes non-empty after every merge (concrete WAVE + leaf ids + ledger append rule)
-2. Cursor Live partition: lists/safety/dispatch/fleet/fuel/maint/customers/vendors/drivers/docs/tasks/compliance — append PROD-VERIFIED with explicit Leaves when you PASS
-3. FO every HANDOFF=Cursor same turn · FAST-MERGE
-4. Scoreboard: Box 4 system ~54% Live; money modules at **0%** until CC-1 ledger rows land
+## FORBIDDEN
+Leaving any seat on `awaiting next FO` · ending a tick without FO or Live claim · OUTBOX wipe.
 
-Law: OUTBOX LIVE PASS ≠ Box 4. Ledger `PROD-VERIFIED` + backtick leaf ids required.
+## EVERY TICK / EVERY MERGE
+1. healthz + main sha  
+2. If CC-1/Codex OUTBOX idle/awaiting → rewrite their INBOX tip to next Wave from CONTINUOUS-LIVE-NO-STALL **same turn**  
+3. FO every HANDOFF=Cursor  
+4. STATUS-NOW honest  
+
+## YOUR LIVE CHAIN (parallel with lead)
+`K1 lists` → `K2 safety` → `K3 dispatch` → `K4 fleet` → `K5 fuel` → `K6 maintenance` → `K7 customers` → `K8 vendors` · `K9 drivers` · `K10 docs/tasks/compliance`  
+Chunk ≤12 leaves/PR · PROD-VERIFIED + Leaves · FAST-MERGE · next Wave same turn.
+
+Money modules = CC-1. Cascade = OFF Live.
