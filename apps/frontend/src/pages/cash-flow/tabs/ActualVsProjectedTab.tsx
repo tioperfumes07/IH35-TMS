@@ -149,102 +149,107 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
   },
 ];
 
+type VarianceFilter = "all" | "over" | "under" | "flat";
+type AvpFilterDraft = {
+  from: string;
+  to: string;
+  varianceFilter: VarianceFilter;
+};
+
 export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
-  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply.
-  const [from, setFrom] = useState<string>(sevenDaysAgoIso());
-  const [to, setTo] = useState<string>(todayIso());
-  const [appliedFrom, setAppliedFrom] = useState<string>(sevenDaysAgoIso());
-  const [appliedTo, setAppliedTo] = useState<string>(todayIso());
-  type VarianceFilter = "all" | "over" | "under" | "flat";
-  const [varianceFilter, setVarianceFilter] = useState<VarianceFilter>("all");
-  const staged = useStagedListFilters({
-    applied: { varianceFilter },
-    empty: { varianceFilter: "all" as VarianceFilter },
-    onApply: (next) => setVarianceFilter(next.varianceFilter),
+  // LV-CASH-FLOW-ACTUAL-SPLIT-FILTER-APPLY — From/To + Net variance share one staged Filters draft.
+  const defaultFrom = sevenDaysAgoIso();
+  const defaultTo = todayIso();
+  const [applied, setApplied] = useState<AvpFilterDraft>({
+    from: defaultFrom,
+    to: defaultTo,
+    varianceFilter: "all",
   });
+  const staged = useStagedListFilters({
+    applied,
+    empty: { from: defaultFrom, to: defaultTo, varianceFilter: "all" as VarianceFilter },
+    onApply: (next) => {
+      if (next.from > next.to) return;
+      setApplied(next);
+    },
+  });
+  const draftInvalid = staged.draft.from > staged.draft.to;
+  const activeFilterCount =
+    (applied.varianceFilter === "all" ? 0 : 1) +
+    (applied.from !== defaultFrom || applied.to !== defaultTo ? 1 : 0);
 
   const avpQ = useQuery<ActualVsProjectedResult>({
-    queryKey: ["cash-flow-avp", operatingCompanyId, appliedFrom, appliedTo],
-    queryFn: () => getActualVsProjected(operatingCompanyId, appliedFrom, appliedTo),
-    enabled: !!operatingCompanyId && appliedFrom <= appliedTo,
+    queryKey: ["cash-flow-avp", operatingCompanyId, applied.from, applied.to],
+    queryFn: () => getActualVsProjected(operatingCompanyId, applied.from, applied.to),
+    enabled: !!operatingCompanyId && applied.from <= applied.to,
   });
   const { data, isLoading, isError } = avpQ;
 
   const groups = data ? groupByDate(data.lines) : [];
   const filteredGroups = useMemo(() => {
-    if (varianceFilter === "all") return groups;
+    if (applied.varianceFilter === "all") return groups;
     return groups.filter((g) => {
       const v = g.net.variance_cents;
-      if (varianceFilter === "over") return v > 0;
-      if (varianceFilter === "under") return v < 0;
+      if (applied.varianceFilter === "over") return v > 0;
+      if (applied.varianceFilter === "under") return v < 0;
       return v === 0;
     });
-  }, [groups, varianceFilter]);
+  }, [groups, applied.varianceFilter]);
   const acc = data?.accuracy_summary;
 
   return (
     <div className="space-y-4">
-      {/* Date Range Picker */}
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
-        <label className="flex items-center gap-2 text-sm text-gray-600">
-          From:
-          <DatePicker
-            value={from}
-            onChange={(next) => setFrom(next)}
-            className=""
-          />
-        </label>
-        <label className="flex items-center gap-2 text-sm text-gray-600">
-          To:
-          <DatePicker
-            value={to}
-            onChange={(next) => setTo(next)}
-            className=""
-          />
-        </label>
-        <button
-          type="button"
-          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-gray-50 disabled:opacity-50"
-          onClick={() => {
-            setAppliedFrom(from);
-            setAppliedTo(to);
-          }}
-          disabled={from === appliedFrom && to === appliedTo}
-        >
-          Apply
-        </button>
-        {from > to && (
-          <span className="text-xs text-red-600">From date must be before or equal to To date.</span>
-        )}
-      </div>
-
-      {/* List-toolbar Filters panel — distinct from the date-range Apply above (chrome.toolbar_filter). */}
+      {/* Single staged Filters — From/To + Net variance (no split Apply-only date chrome). */}
       <CollapsedListFilters
-        activeFilterCount={varianceFilter === "all" ? 0 : 1}
+        activeFilterCount={activeFilterCount}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
-        applyDisabled={!staged.dirty}
+        applyDisabled={!staged.dirty || draftInvalid}
         testIdPrefix="cash-flow-avp"
         dataAttributes={{ "data-cash-flow-avp-filter-toolbar": "collapsed" }}
         className="rounded-sm border border-gray-200 bg-white p-2"
       >
-        <label className="text-xs font-semibold text-slate-600">
-          Net variance
-          <select
-            className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            value={staged.draft.varianceFilter}
-            onChange={(event) =>
-              staged.setDraft({ varianceFilter: event.target.value as VarianceFilter })
-            }
-            data-testid="cash-flow-avp-variance-filter"
-          >
-            <option value="all">All rows</option>
-            <option value="over">Net over projected</option>
-            <option value="under">Net under projected</option>
-            <option value="flat">Net flat</option>
-          </select>
-        </label>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs font-semibold text-slate-600">
+            From
+            <DatePicker
+              value={staged.draft.from}
+              onChange={(next) => staged.setDraft({ ...staged.draft, from: next })}
+              className="mt-1"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-600">
+            To
+            <DatePicker
+              value={staged.draft.to}
+              onChange={(next) => staged.setDraft({ ...staged.draft, to: next })}
+              className="mt-1"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-600">
+            Net variance
+            <select
+              className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={staged.draft.varianceFilter}
+              onChange={(event) =>
+                staged.setDraft({
+                  ...staged.draft,
+                  varianceFilter: event.target.value as VarianceFilter,
+                })
+              }
+              data-testid="cash-flow-avp-variance-filter"
+            >
+              <option value="all">All rows</option>
+              <option value="over">Net over projected</option>
+              <option value="under">Net under projected</option>
+              <option value="flat">Net flat</option>
+            </select>
+          </label>
+        </div>
+        {draftInvalid && (
+          <p className="mt-2 text-xs text-red-600">From date must be before or equal to To date.</p>
+        )}
       </CollapsedListFilters>
 
       {/* Accuracy Summary */}
@@ -308,7 +313,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           rows={filteredGroups}
           rowKey={(g) => g.date}
           loading={isLoading}
-          emptyText="No data matches the applied filters for the selected date range."
+          emptyText="No data for the selected date range."
           storageKey="cash-flow-avp"
           tableTestId="cash-flow-avp-table"
         />
