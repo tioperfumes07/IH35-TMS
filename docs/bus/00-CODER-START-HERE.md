@@ -1,18 +1,29 @@
-# START HERE · 2026-08-12 20:16 CT
+# START HERE · 2026-08-16 · BUS SINGLE-CHANNEL
 
-**CANONICAL:** `FINAL-WEEKEND-FULL-WIRING-2026-08-12/`
+**Canonical bus = `docs/bus/` in this repo.**  
+Desktop USMCA folder is a **symlink mirror** — same files. Chat is not the command channel.
 
-**Quality:** Desktop `Claude.docx` = `docs/specs/OWNER-QUALITY-COMPACT.md`
+## Every session
 
-**Mode:** Fast weekend merge · non-stop continuous · **no deviation**
+1. `git pull --ff-only origin main`
+2. `docs/bus/STATUS-NOW.md`
+3. `docs/bus/INBOX-<YOUR-SEAT>.md`
+4. `docs/bus/INBOX-SYNC-LAW.md` (single-channel law)
+5. Ship → append one line to `docs/bus/OUTBOX-<YOUR-SEAT>.md` → push
 
-**Sequence:** Wire Built **100%** → **then** Live verify · full linkage / connectivity / economics · FE+BE · forward+reverse · every module/tab/leaf/modal/panel/picker
+## Active seats
 
-Open:
-1. `FINAL-WEEKEND-FULL-WIRING-2026-08-12/00-README.md`
-2. `01-FULL-LINKAGE-LAW.md` · `02-WIRE-THEN-LIVE.md`
-3. Your `PASTE-*.md` (or four fences in `CODER-PASTE-INSTRUCTIONS-FOUR-BOXES-ONLY.md`)
-4. `STATUS-NOW.md` · worktree INBOX
-5. Ship
+| Seat | INBOX | OUTBOX |
+|------|-------|--------|
+| Cursor (lead) | `INBOX-CURSOR.md` | `OUTBOX-CURSOR.md` |
+| Cascade | `INBOX-CASCADE.md` | `OUTBOX-CASCADE.md` |
+| Codex | `INBOX-CODEX.md` | `OUTBOX-CODEX.md` |
+| CC-1 | `INBOX-CC-1.md` | `OUTBOX-CC-1.md` |
 
-**Do not open** `_SUPERSEDED-*` or treat Matrix Required as primary.
+**OFF:** CC-2 · CC-3 — do not assign.
+
+## Method
+
+`FAST-MERGE-4MIN-LAW` · Fully-Wired 1–11 Built → Live last · product **Live=BLOCKED** until certified.
+
+Ignore: `_SUPERSEDED-*` · Matrix Required-as-primary · Jorge as messenger · Desktop-only OUTBOX paths.

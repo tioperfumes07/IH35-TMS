@@ -1,3 +1,5 @@
-**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+# INBOX-CC-2 · WORK NOW · 2026-08-16 17:45 CT
+LIVE VERIFY after CC-1 Status closeout / Cascade VERIFIED merges.
+Sample money-critical if CC-1 ships. OUTBOX one-liner. Never idle waiting.
 
-NOW 2026-08-12 20:17 CT · CANON FINAL-WEEKEND-FULL-WIRING · Built reverse/connectivity non-stop · LIVE CERTIFY BLOCKED until Built 100% · Claude.docx
+Law: docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md · seat OFF this wave.
