@@ -11,16 +11,17 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
 const BUCKET_SECTIONS = [
-  { title: "By reason", prop: "by_reason" as const, storageKey: "cancellations-report-by-reason", entityKind: null },
-  { title: "By driver", prop: "by_driver" as const, storageKey: "cancellations-report-by-driver", entityKind: "driver" as const },
-  { title: "By customer", prop: "by_customer" as const, storageKey: "cancellations-report-by-customer", entityKind: "customer" as const },
-  { title: "By date", prop: "by_date" as const, storageKey: "cancellations-report-by-date", entityKind: null },
+  { title: "By reason", prop: "by_reason" as const, storageKey: "cancellations-report-by-reason", entityKind: null, formatAsDate: false },
+  { title: "By driver", prop: "by_driver" as const, storageKey: "cancellations-report-by-driver", entityKind: "driver" as const, formatAsDate: false },
+  { title: "By customer", prop: "by_customer" as const, storageKey: "cancellations-report-by-customer", entityKind: "customer" as const, formatAsDate: false },
+  { title: "By date", prop: "by_date" as const, storageKey: "cancellations-report-by-date", entityKind: null, formatAsDate: true },
 ];
 
 const UUID_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -29,13 +30,27 @@ function entityNoun(kind: EntityKind): string {
   return kind === "customer" ? "Customer" : kind === "driver" ? "Driver" : "Record";
 }
 
-function bucketColumns(groupLabel: string, entityKind: EntityKind | null): ParityColumn<CancellationBucket>[] {
+/** Display-only: By date bucket labels are ISO YYYY-MM-DD keys — never mutate row.key / sort / API. */
+function cancellationsByDateLabel(row: CancellationBucket): string {
+  const raw = (row.label || row.key || "").trim();
+  return formatDateUS(raw) || raw;
+}
+
+function bucketColumns(
+  groupLabel: string,
+  entityKind: EntityKind | null,
+  formatAsDate: boolean,
+): ParityColumn<CancellationBucket>[] {
   return [
     {
       key: "label",
       label: groupLabel,
       sortable: true,
+      sortValue: (row) => row.key,
       render: (row) => {
+        if (formatAsDate) {
+          return <span className="font-medium text-gray-800">{cancellationsByDateLabel(row)}</span>;
+        }
         if (!entityKind || !UUID_KEY.test(row.key)) {
           return <span className="font-medium text-gray-800">{row.label}</span>;
         }
@@ -69,16 +84,21 @@ function CancellationBucketTable({
   rows,
   storageKey,
   entityKind,
+  formatAsDate,
   loading,
 }: {
   title: string;
   rows: CancellationBucket[];
   storageKey: string;
   entityKind: EntityKind | null;
+  formatAsDate: boolean;
   loading?: boolean;
 }) {
   const groupLabel = title.replace(/^By /, "");
-  const columns = useMemo(() => bucketColumns(groupLabel, entityKind), [entityKind, groupLabel]);
+  const columns = useMemo(
+    () => bucketColumns(groupLabel, entityKind, formatAsDate),
+    [entityKind, formatAsDate, groupLabel],
+  );
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
@@ -180,13 +200,14 @@ export function CancellationsReportPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {BUCKET_SECTIONS.map(({ title, prop, storageKey, entityKind }) => (
+            {BUCKET_SECTIONS.map(({ title, prop, storageKey, entityKind, formatAsDate }) => (
               <CancellationBucketTable
                 key={prop}
                 title={title}
                 rows={data?.[prop] ?? []}
                 storageKey={storageKey}
                 entityKind={entityKind}
+                formatAsDate={formatAsDate}
                 loading={tableLoading}
               />
             ))}
