@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Plus, BarChart2 } from "lucide-react";
@@ -92,14 +92,31 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     },
   });
 
+  const adjustmentReady = useMemo(() => {
+    const trimLabel = addLabel.trim();
+    if (!trimLabel) return false;
+    const parsedCents = Math.round(parseFloat(addAmount.replace(/[^0-9.-]/g, "")) * 100);
+    if (!Number.isFinite(parsedCents) || parsedCents === 0) return false;
+    if (mutation.isPending) return false;
+    return true;
+  }, [addLabel, addAmount, mutation.isPending]);
+
   const handleAddSubmit = useCallback(() => {
+    if (!adjustmentReady) {
+      const trimLabel = addLabel.trim();
+      const parsedCents = Math.round(parseFloat(addAmount.replace(/[^0-9.-]/g, "")) * 100);
+      if (!trimLabel) { setAddError("Label is required."); return; }
+      if (!Number.isFinite(parsedCents) || parsedCents === 0) {
+        setAddError("Enter a valid nonzero dollar amount.");
+        return;
+      }
+      return;
+    }
     const trimLabel = addLabel.trim();
     const parsedCents = Math.round(parseFloat(addAmount.replace(/[^0-9.-]/g, "")) * 100);
-    if (!trimLabel) { setAddError("Label is required."); return; }
-    if (isNaN(parsedCents) || parsedCents === 0) { setAddError("Enter a valid dollar amount."); return; }
     setAddError(null);
     mutation.mutate({ label: trimLabel, amount_cents: parsedCents });
-  }, [addLabel, addAmount, mutation]);
+  }, [addLabel, addAmount, adjustmentReady, mutation]);
 
   const net = data?.predicted_net_cents ?? 0;
   const netPositive = net >= 0;
@@ -348,10 +365,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                 </div>
               )}
 
-              {/* + Add new bill or expense inline input */}
-              <div className="border-t border-dashed border-gray-200 px-4 py-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  + Add new bill or expense
+              {/* Projection-only cash-flow adjustment (does NOT create accounting bill/expense). */}
+              <div className="border-t border-dashed border-gray-200 px-4 py-3" data-testid="cash-flow-adjustment-create">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Add cash-flow adjustment
+                </p>
+                <p className="mb-2 text-[11px] text-gray-500">
+                  Projection only — does not create an accounting bill or expense.
                 </p>
                 <div className="flex gap-2">
                   <input
@@ -371,7 +391,8 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   <button
                     type="button"
                     onClick={handleAddSubmit}
-                    disabled={mutation.isPending}
+                    disabled={!adjustmentReady}
+                    data-testid="cash-flow-adjustment-add"
                     className="flex items-center gap-1 rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#263452] disabled:opacity-50"
                   >
                     <Plus className="h-3 w-3" />
