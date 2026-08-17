@@ -124,8 +124,9 @@ function AblCell4({
 }
 
 export function ModuleMatrixSystemView() {
+  // Distinct from per-module boards (esp. moduleId "system") — see LV-SYSTEM-MATRIX-LEAVES-NOT-ITERABLE.
   const { data, error, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
-    queryKey: ["program", "module-matrix", "system"],
+    queryKey: ["program", "module-matrix", "scope", "system"],
     queryFn: fetchSystemMatrix,
     refetchInterval: POLL_MS,
     staleTime: 0,
