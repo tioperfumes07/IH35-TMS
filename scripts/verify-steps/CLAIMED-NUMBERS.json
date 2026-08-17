@@ -3902,5 +3902,10 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-cash-flow-compound-label-human"
+  },
+  "3742": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-cash-flow-overview-iso-axis"
   }
 }
