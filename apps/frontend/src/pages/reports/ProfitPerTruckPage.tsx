@@ -14,6 +14,10 @@ import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import {
+  formatProfitPerTruckFlagLabel,
+  PROFIT_PER_TRUCK_FLAG_LABELS,
+} from "../../lib/formatProfitPerTruckFlagLabel";
 
 /** API may send sentinel "unknown" for missing unit type — never show raw lowercase to operators. */
 function displayTruckType(truckType: string | null | undefined): string {
@@ -40,10 +44,22 @@ function currentQuarterRange() {
 }
 
 const FLAG_UI: Record<ProfitPerTruckFlag, { className: string; label: string }> = {
-  most_profitable: { className: "border-slate-300 bg-slate-100 text-[#1f2a44]", label: "most_profitable" },
-  least_profitable: { className: "border-slate-300 bg-slate-100 text-slate-700", label: "least_profitable" },
-  high_maintenance: { className: "border-slate-300 bg-slate-100 text-slate-700", label: "high_maintenance" },
-  underutilized: { className: "border-slate-200 bg-slate-50 text-slate-800", label: "underutilized" },
+  most_profitable: {
+    className: "border-slate-300 bg-slate-100 text-[#1f2a44]",
+    label: PROFIT_PER_TRUCK_FLAG_LABELS.most_profitable,
+  },
+  least_profitable: {
+    className: "border-slate-300 bg-slate-100 text-slate-700",
+    label: PROFIT_PER_TRUCK_FLAG_LABELS.least_profitable,
+  },
+  high_maintenance: {
+    className: "border-slate-300 bg-slate-100 text-slate-700",
+    label: PROFIT_PER_TRUCK_FLAG_LABELS.high_maintenance,
+  },
+  underutilized: {
+    className: "border-slate-200 bg-slate-50 text-slate-800",
+    label: PROFIT_PER_TRUCK_FLAG_LABELS.underutilized,
+  },
 };
 
 type FlagFilter = "all" | ProfitPerTruckFlag;
@@ -124,9 +140,11 @@ export function ProfitPerTruckPage() {
           <div className="flex flex-wrap gap-1">
             {(r.flags ?? []).map((f) => {
               const meta = FLAG_UI[f];
+              const label = meta?.label ?? formatProfitPerTruckFlagLabel(f);
+              const className = meta?.className ?? "border-slate-200 bg-slate-50 text-slate-800";
               return (
-                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
-                  {meta.label}
+                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${className}`} title={label}>
+                  {label}
                 </span>
               );
             })}
@@ -262,10 +280,10 @@ export function ProfitPerTruckPage() {
               onChange={(event) => staged.setDraft((p) => ({ ...p, flagFilter: event.target.value as FlagFilter }))}
             >
               <option value="all">All</option>
-              <option value="most_profitable">Most profitable</option>
-              <option value="least_profitable">Least profitable</option>
-              <option value="high_maintenance">High maintenance</option>
-              <option value="underutilized">Underutilized</option>
+              <option value="most_profitable">{PROFIT_PER_TRUCK_FLAG_LABELS.most_profitable}</option>
+              <option value="least_profitable">{PROFIT_PER_TRUCK_FLAG_LABELS.least_profitable}</option>
+              <option value="high_maintenance">{PROFIT_PER_TRUCK_FLAG_LABELS.high_maintenance}</option>
+              <option value="underutilized">{PROFIT_PER_TRUCK_FLAG_LABELS.underutilized}</option>
             </select>
           </label>
         </div>
