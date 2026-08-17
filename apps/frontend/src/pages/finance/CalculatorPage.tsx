@@ -37,7 +37,34 @@ export function CalculatorPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // CLS-FINANCE-PREVIEW-RAW-VALIDATION-ERROR — gate Calculate on required fields; never flash raw tokens.
+  const calcReady =
+    !!companyId &&
+    toCents(form.price) > 0 &&
+    /^\d{4}-\d{2}-\d{2}$/.test(form.firstPaymentDate) &&
+    Number(form.rateA) >= 0 &&
+    String(form.rateA).trim() !== "" &&
+    Number(form.termA) > 0;
+
+  function mapCalcError(e: unknown): string {
+    const ae = e as { message?: string; data?: { error?: string; message?: string } };
+    const code = (ae?.data && typeof ae.data.error === "string" ? ae.data.error : ae?.message) ?? "";
+    if (code === "validation_error") {
+      return "Enter price, first payment date, Scenario A rate, and term before calculating.";
+    }
+    if (code === "feature_disabled") {
+      return "The Finance Calculator is not enabled for this company.";
+    }
+    if (ae?.data && typeof ae.data.message === "string" && ae.data.message.trim()) return ae.data.message;
+    if (ae?.message && ae.message !== "validation_error") return ae.message;
+    return "Calculation failed. Check inputs and try again.";
+  }
+
   async function onCompute() {
+    if (!calcReady) {
+      setError("Enter price, first payment date, Scenario A rate, and term before calculating.");
+      return;
+    }
     setBusy(true); setError(null); setScenarios([]);
     try {
       const sc: Array<{ annual_rate_pct: number; term_months: number }> = [{ annual_rate_pct: Number(form.rateA) || 0, term_months: Number(form.termA) || 0 }];
@@ -51,8 +78,7 @@ export function CalculatorPage() {
       });
       setScenarios(res.scenarios);
     } catch (e) {
-      const m = e as { payload?: { message?: string }; message?: string };
-      setError(m?.payload?.message ?? m?.message ?? "Calculation failed");
+      setError(mapCalcError(e));
     } finally { setBusy(false); }
   }
 
@@ -98,7 +124,7 @@ export function CalculatorPage() {
           {field("Scenario A rate (%)", "rateA", "number")}{field("Scenario A term (mo)", "termA", "number")}
           {field("Scenario B rate (%) — optional", "rateB", "number")}{field("Scenario B term (mo)", "termB", "number")}
         </div>
-        <button onClick={onCompute} disabled={busy || !companyId} className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+        <button onClick={onCompute} disabled={busy || !calcReady} className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
           {busy ? "Calculating…" : "Calculate"}
         </button>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
