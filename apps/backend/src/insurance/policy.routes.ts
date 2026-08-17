@@ -197,7 +197,10 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       }
       if (parsed.data.vendor_id) {
         values.push(parsed.data.vendor_id);
-        filters.push(`p.vendor_id = $${values.length}::uuid`);
+        // insurance.policy.vendor_id is the legacy canonical TEXT FK (migration
+        // 202606071800). Compare text-to-text while the request remains UUID-
+        // validated so vendor reverse reads work without a text = uuid error.
+        filters.push(`p.vendor_id = $${values.length}::text`);
       }
       const result = await client.query(
         `
