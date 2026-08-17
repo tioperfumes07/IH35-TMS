@@ -100,6 +100,7 @@ const STEPS = [
   ["verify-cash-advances-view-load-column-present", "scripts/verify-cash-advances-view-load-column-present.mjs"],
   ["verify-payrun-close-panel-settlement-load-links", "scripts/verify-payrun-close-panel-settlement-load-links.mjs"],
   ["verify-je-source-links-invoice-bill-display-id", "scripts/verify-je-source-links-invoice-bill-display-id.mjs"],
+  ["verify-fuel-loves-prices-daily-table-and-report-guard", "scripts/verify-fuel-loves-prices-daily-table-and-report-guard.mjs"],
 ];
 
 function runNode(rel) {

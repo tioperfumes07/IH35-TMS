@@ -17,7 +17,10 @@ export async function registerFuelPriceVarianceRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error", details: { period: ["from must be on or before to"] } });
     }
 
-    const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+    const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const tableExists = await client.query(`SELECT to_regclass('fuel.loves_prices_daily') IS NOT NULL AS ok`);
+      if (!tableExists.rows[0]?.ok) return { unavailable: true as const };
+
       const result = await client.query(
         `
           WITH daily_state_benchmark AS (
@@ -60,15 +63,21 @@ export async function registerFuelPriceVarianceRoutes(app: FastifyInstance) {
         `,
         [parsed.data.operating_company_id, parsed.data.from, parsed.data.to]
       );
-      return result.rows.map((row: Record<string, unknown>) => ({
-        ...row,
-        gallons: Number(row.gallons ?? 0),
-        actual_price_per_gallon: Number(row.actual_price_per_gallon ?? 0),
-        benchmark_price_per_gallon: Number(row.benchmark_price_per_gallon ?? 0),
-        variance_per_gallon: Number(row.variance_per_gallon ?? 0),
-        total_variance_dollars: Number(row.total_variance_dollars ?? 0),
-      }));
+      return {
+        rows: result.rows.map((row: Record<string, unknown>) => ({
+          ...row,
+          gallons: Number(row.gallons ?? 0),
+          actual_price_per_gallon: Number(row.actual_price_per_gallon ?? 0),
+          benchmark_price_per_gallon: Number(row.benchmark_price_per_gallon ?? 0),
+          variance_per_gallon: Number(row.variance_per_gallon ?? 0),
+          total_variance_dollars: Number(row.total_variance_dollars ?? 0),
+        })),
+      };
     });
-    return { period: { from: parsed.data.from, to: parsed.data.to }, benchmark: "company_daily_state_loves", rows };
+
+    if ("unavailable" in result) {
+      return reply.code(501).send({ error: "loves_prices_daily_unavailable" });
+    }
+    return { period: { from: parsed.data.from, to: parsed.data.to }, benchmark: "company_daily_state_loves", rows: result.rows };
   });
 }

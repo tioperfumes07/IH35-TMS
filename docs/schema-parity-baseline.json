@@ -4955,6 +4955,21 @@
       "updated_by_user_id",
       "vendor_id"
     ],
+    "fuel.loves_prices_daily": [
+      "city",
+      "created_at",
+      "effective_date",
+      "id",
+      "operating_company_id",
+      "price_per_gallon",
+      "source_file_name",
+      "state",
+      "station_address",
+      "station_name",
+      "station_uuid",
+      "updated_at",
+      "uploaded_by_user_id"
+    ],
     "geo.geofence_events": [
       "created_at",
       "driver_id",

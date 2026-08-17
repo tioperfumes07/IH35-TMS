@@ -62,7 +62,6 @@ const KNOWN_PHANTOM_DEBT = [
   // ── forward-refs to unbuilt modules (bucket-4 — map to pending gap-specs, not bugs) ──
   { rel: "insurance.insurance_policies", why: "forward-ref — insurance module unbuilt" },
   { rel: "insurance.insurance_policy_units", why: "forward-ref — insurance module unbuilt" },
-  { rel: "fuel.loves_prices_daily", why: "forward-ref — Love's price feed unbuilt" },
   { rel: "fuel.recommended_stops", why: "forward-ref — fuel routing unbuilt" },
   { rel: "fuel.route_recommendations", why: "forward-ref — fuel routing unbuilt" },
   { rel: "samsara.hos_log_edits", why: "forward-ref — Samsara HOS-edit ingest unbuilt" },
