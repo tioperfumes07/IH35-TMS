@@ -2076,9 +2076,7 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/brake-wear"
           element={
             <ProtectedRoute>
-              <MaintenanceShell>
-                <BrakeWearDashboard />
-              </MaintenanceShell>
+              <MaintenanceTabRoute tabId="brake_wear" />
             </ProtectedRoute>
           }
         />
@@ -2086,9 +2084,16 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/pre-flight-dvir"
           element={
             <ProtectedRoute>
-              <MaintenanceShell>
-                <PreFlightDvirQueue />
-              </MaintenanceShell>
+              <MaintenanceTabRoute tabId="pre_flight_dvir" />
+            </ProtectedRoute>
+          }
+        />
+        {/* LV-MAINTENANCE-DVIR-ROUTE-REDIRECTS — short alias used in Live walks; must not fall through to catch-all → /home */}
+        <Route
+          path="/maintenance/dvir"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="pre_flight_dvir" />
             </ProtectedRoute>
           }
         />
@@ -2096,9 +2101,7 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/tire-wear"
           element={
             <ProtectedRoute>
-              <MaintenanceShell>
-                <TireWearDashboard />
-              </MaintenanceShell>
+              <MaintenanceTabRoute tabId="tire_wear" />
             </ProtectedRoute>
           }
         />

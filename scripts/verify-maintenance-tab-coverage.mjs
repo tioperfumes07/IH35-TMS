@@ -65,6 +65,32 @@ function main() {
     failures.push("missing_testid:rm-buckets-grid on RMBucketsGrid");
   }
 
+  // LV-MAINT-SUBNAV-ORPHAN-PATHS — every MaintenanceHome SUBNAV id must have a path map entry
+  // (otherwise NavLink falls through to /maintenance dashboard shell).
+  const routeManifestPath = path.join(ROOT, "apps/frontend/src/router/route-manifest.ts");
+  const routeManifestSrc = readIfExists(routeManifestPath);
+  const subnavIds = [...homeSrc.matchAll(/\{\s*id:\s*"([^"]+)"\s*,\s*label:/g)].map((m) => m[1]);
+  for (const id of subnavIds) {
+    if (!new RegExp(`${id}\\s*:\\s*"/maintenance/`).test(routeManifestSrc)) {
+      failures.push(`missing_MAINTENANCE_TAB_PATH:${id}`);
+    }
+  }
+  if (!manifestSource.includes('path="/maintenance/dvir"')) {
+    failures.push("missing_route:dvir_alias:/maintenance/dvir");
+  }
+  if (!routeManifestSrc.includes('norm === "/maintenance/dvir"')) {
+    failures.push("maintenanceTabFromPath must map /maintenance/dvir → pre_flight_dvir");
+  }
+  for (const testid of [
+    "maintenance-parts-inventory-tab",
+    "maintenance-road-service-tab",
+    "maintenance-pre-flight-dvir-tab",
+  ]) {
+    if (!homeSrc.includes(`data-testid="${testid}"`)) {
+      failures.push(`missing_testid:${testid}`);
+    }
+  }
+
   for (const endpoint of requiredKpiEndpoints) {
     if (!dashboardSource.includes(endpoint)) {
       failures.push(`missing_kpi_endpoint:${endpoint}`);

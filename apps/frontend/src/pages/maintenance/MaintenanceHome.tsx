@@ -403,16 +403,32 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 
-      {tab === "road_service" ? <RoadServiceList operatingCompanyId={companyId} /> : null}
+      {tab === "road_service" ? (
+        <div data-testid="maintenance-road-service-tab" data-maintenance-tab="road_service">
+          <RoadServiceList operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
-      {tab === "brake_wear" ? <BrakeWearDashboard /> : null}
+      {tab === "brake_wear" ? (
+        <div data-testid="maintenance-brake-wear-tab" data-maintenance-tab="brake_wear">
+          <BrakeWearDashboard />
+        </div>
+      ) : null}
 
-      {tab === "tire_wear" ? <TireWearDashboard /> : null}
+      {tab === "tire_wear" ? (
+        <div data-testid="maintenance-tire-wear-tab" data-maintenance-tab="tire_wear">
+          <TireWearDashboard />
+        </div>
+      ) : null}
 
-      {tab === "pre_flight_dvir" ? <PreFlightDvirQueue /> : null}
+      {tab === "pre_flight_dvir" ? (
+        <div data-testid="maintenance-pre-flight-dvir-tab" data-maintenance-tab="pre_flight_dvir">
+          <PreFlightDvirQueue />
+        </div>
+      ) : null}
 
       {tab === "parts_inventory" ? (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="maintenance-parts-inventory-tab" data-maintenance-tab="parts_inventory">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Total Parts</div>
