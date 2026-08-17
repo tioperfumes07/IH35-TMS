@@ -1797,6 +1797,12 @@
     "lane": "cursor",
     "note": "LV-DRIVER-HUB-REPORT-ISSUE-MODAL-MISOWNED-LEAF"
   },
+  "3698": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-customer-profitability-no-uuid-labels",
+    "lane": "cursor",
+    "note": "LV-REPORTS-CUSTOMER-PROFITABILITY-RAW-UUID-LABELS"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
