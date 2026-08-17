@@ -1,9 +1,9 @@
-# STATUS · 2026-08-16 22:15 CT
+# STATUS · 2026-08-16 22:25 CT
 
-**MODE:** CONTINUOUS FAST-MERGE · loop PID 50151 · no stall  
+**MODE:** CONTINUOUS FAST-MERGE · loop PID 50151 only (dup ticks killed) · no stall  
 **LAW:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md`  
-**CC-1:** STOP awaiting — Wave **A1 accounting** NOW  
-**Codex:** system Live claim  
-**Cursor:** DatePicker #8089 · next CLS-REPORTS-FILTER or K-wave · continuous  
+**CC-1:** Wave **A1 accounting** Leaves NOW  
+**Codex:** system Live  
+**Cursor:** Reports staged-filter class **#8094** · continuous  
 **Cascade:** OFF Live · REST merge  
 certified **0/30** · Live=BLOCKED · **GO**
