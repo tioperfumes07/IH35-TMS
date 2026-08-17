@@ -1399,6 +1399,15 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* LV-FUEL-RELAY-INBOX-REDIRECT — Live walks hit /fuel/relay-inbox; canonical leaf is /fuel/inbox */}
+        <Route
+          path="/fuel/relay-inbox"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="relay_inbox" />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/fuel/settings"
           element={
