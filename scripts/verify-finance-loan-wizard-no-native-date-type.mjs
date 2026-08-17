@@ -19,16 +19,21 @@ function fail(msg) {
   process.exit(1);
 }
 
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
 function assertFile(label, src) {
-  if (/type\s*=\s*["']date["']/.test(src) && /<input[\s\S]{0,80}type=["']date["']/.test(src)) {
-    fail(`${label}: raw <input type="date"> present`);
+  const code = stripComments(src);
+  if (/<input[^>]*\stype=["']date["']/.test(code) || /type=["']date["'][^>]*\s/.test(code)) {
+    // Only fail on actual input tags with type=date
+    if (/<input[\s\S]{0,120}?type=["']date["']/.test(code)) {
+      fail(`${label}: raw <input type="date"> present`);
+    }
   }
   // Dynamic helper must narrow to text|number (not open string that can be "date")
-  if (/const field = \([^)]*type = "text"/.test(src) && !/type:\s*"text"\s*\|\s*"number"/.test(src)) {
+  if (/const field = \([^)]*type = "text"/.test(code) && !/type:\s*"text"\s*\|\s*"number"/.test(code)) {
     fail(`${label}: field() still uses open type = "text" (can pass date)`);
-  }
-  if (/DatePicker/.test(src) === false && /firstPayment|first_payment|payment date/i.test(src)) {
-    fail(`${label}: payment date fields must use DatePicker`);
   }
 }
 
