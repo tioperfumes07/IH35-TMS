@@ -3983,5 +3983,6 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165
+  "total_claimed": 1165,
+  "3780": "verify-dispatch-assignment-history-tombstone"
 }
