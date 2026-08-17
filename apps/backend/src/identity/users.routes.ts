@@ -492,6 +492,10 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       );
       const hasDriverRecord = Boolean(hasDriverRecordRes.rows[0]?.has_driver_record);
 
+      // Always include the target's default company when the *actor* can see it
+      // (org.user_accessible_company_ids), even if there is no explicit
+      // org.user_company_access grant for that company. Visibility of the user
+      // already accepts default_company_id OR a grant; the label must match.
       const companyRes = await client.query(
         `
           SELECT c.id, c.code, c.legal_name, c.short_name
@@ -506,10 +510,15 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
                 WHERE a.user_id = $1
                   AND a.company_id = c.id
               )
+              OR (
+                $3::uuid IS NOT NULL
+                AND c.id = $3::uuid
+                AND c.id IN (SELECT org.user_accessible_company_ids())
+              )
             )
           ORDER BY c.legal_name
         `,
-        [parsedParams.data.id, user.role]
+        [parsedParams.data.id, user.role, user.default_company_id]
       );
 
       return {
