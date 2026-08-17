@@ -43,4 +43,18 @@ if (!page.includes("ActualVsProjectedTab") || !page.includes('"actual_vs_project
   fail("Actual vs Projected must remain its own cash-flow tab");
 }
 
+// 6. LV-CASH-FLOW-MANUAL-PROJECTION-PICKER-CLIPPING — create row must wrap (not one non-wrapping flex strip).
+if (!/data-mdp-create-row-layout="wrap"/.test(mdp)) {
+  fail("MDP create row must declare data-mdp-create-row-layout=wrap");
+}
+if (!/flex flex-wrap items-end/.test(mdp)) {
+  fail("MDP create row must use flex-wrap so EntityPickers stay reachable at narrow widths");
+}
+if (/data-mdp-create-row=\{direction\}[\s\S]{0,80}className="flex items-center/.test(mdp)) {
+  fail("MDP create row must not use a non-wrapping flex items-center strip");
+}
+if (!/MDP_CREATE_FIELD/.test(mdp) || !/min-w-\[11rem\]/.test(mdp)) {
+  fail("MDP create fields must use a wrapping min-width basis (MDP_CREATE_FIELD)");
+}
+
 console.log("PASS verify-mdp-single-row");
