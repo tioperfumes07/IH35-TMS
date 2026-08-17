@@ -27,7 +27,7 @@ function analyze() {
     failures.push("raw lowercase active/inactive status labels are forbidden");
   }
   if (/\.slice\(0,\s*19\)/.test(page)) {
-    failures.push("last_sent_at/next_scheduled_at must not slice raw ISO timestamps for display");
+    failures.push("must not slice raw ISO timestamps for display (Last sent / Next / Sent at)");
   }
   if (!/subscriptionTimestampLabel\(row\.last_sent_at\)/.test(page)
     || !/subscriptionTimestampLabel\(row\.next_scheduled_at\)/.test(page)) {

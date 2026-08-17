@@ -303,7 +303,7 @@ export function SubscriptionManager() {
               {
                 key: "sent",
                 header: "Sent at",
-                render: (log) => log.sent_at.slice(0, 19),
+                render: (log) => subscriptionTimestampLabel(log.sent_at),
               },
               { key: "status", header: "Status", render: (log) => log.status },
               {
