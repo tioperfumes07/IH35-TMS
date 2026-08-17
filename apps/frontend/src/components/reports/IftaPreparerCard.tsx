@@ -88,7 +88,7 @@ export function IftaPreparerCard({ status }: Props) {
 
       <div className="flex items-center justify-between border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
         <span>↑ Safety officer notified {status.daysUntilDue}d before due date · expense tracked + reminder</span>
-        <Link to="/reports/ifta" className="font-semibold text-[#1f2a44] hover:underline">
+        <Link to="/reports/ifta-preparer" className="font-semibold text-[#1f2a44] hover:underline">
           Open IFTA preparer →
         </Link>
       </div>
