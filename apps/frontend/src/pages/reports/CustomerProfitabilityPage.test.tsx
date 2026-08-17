@@ -82,8 +82,10 @@ describe("CustomerProfitabilityPage", () => {
     vi.spyOn(reportsApi, "getCustomerProfitability").mockResolvedValue(samplePayload);
     render(wrap(<CustomerProfitabilityPage />));
     await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
-    expect(screen.getByText(/high_margin/i)).toBeInTheDocument();
-    expect(screen.getByText(/past_due/i)).toBeInTheDocument();
+    expect(screen.getByText("High margin")).toBeInTheDocument();
+    expect(screen.getByText("Past due")).toBeInTheDocument();
+    expect(screen.queryByText(/high_margin/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/past_due/i)).not.toBeInTheDocument();
   });
 
   it("navigates to customer billing tab on row click", async () => {

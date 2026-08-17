@@ -29,6 +29,10 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import {
+  CUSTOMER_PROFITABILITY_FLAG_LABELS,
+  formatCustomerProfitabilityFlagLabel,
+} from "../../lib/formatCustomerProfitabilityFlagLabel";
 
 const DEFAULT_MIN_REVENUE_CENTS = 100_000; // $1,000
 
@@ -59,10 +63,22 @@ function currentQuarterRange() {
 }
 
 const FLAG_UI: Record<CustomerProfitFlag, { className: string; label: string }> = {
-  high_margin: { className: "border-slate-300 bg-slate-100 text-[#1f2a44]", label: "high_margin" },
-  low_margin: { className: "border-slate-300 bg-slate-100 text-slate-700", label: "low_margin" },
-  past_due: { className: "border-slate-300 bg-slate-100 text-slate-700", label: "past_due" },
-  declining_revenue: { className: "border-slate-200 bg-slate-50 text-slate-800", label: "declining_revenue" },
+  high_margin: {
+    className: "border-slate-300 bg-slate-100 text-[#1f2a44]",
+    label: CUSTOMER_PROFITABILITY_FLAG_LABELS.high_margin,
+  },
+  low_margin: {
+    className: "border-slate-300 bg-slate-100 text-slate-700",
+    label: CUSTOMER_PROFITABILITY_FLAG_LABELS.low_margin,
+  },
+  past_due: {
+    className: "border-slate-300 bg-slate-100 text-slate-700",
+    label: CUSTOMER_PROFITABILITY_FLAG_LABELS.past_due,
+  },
+  declining_revenue: {
+    className: "border-slate-200 bg-slate-50 text-slate-800",
+    label: CUSTOMER_PROFITABILITY_FLAG_LABELS.declining_revenue,
+  },
 };
 
 export function CustomerProfitabilityPage() {
@@ -154,10 +170,12 @@ export function CustomerProfitabilityPage() {
         render: (r) => (
           <div className="flex flex-wrap gap-1">
             {(r.flags ?? []).map((f) => {
-              const meta = FLAG_UI[f];
+              const meta = FLAG_UI[f as CustomerProfitFlag];
+              const label = meta?.label ?? formatCustomerProfitabilityFlagLabel(f);
+              const className = meta?.className ?? "border-slate-200 bg-slate-50 text-slate-700";
               return (
-                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
-                  {meta.label}
+                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${className}`} title={String(f)}>
+                  {label}
                 </span>
               );
             })}
