@@ -3,3 +3,4 @@
 2026-08-17T01:04Z Cursor LEAD | bus-sync-inboxes · CC-1=accounting:expenses-create-drawer · Cascade=continuous-verify
 2026-08-17T01:04Z Cursor LEAD | post-#8016 SYNC INBOX-CC-1+CASCADE · seats WORK
 2026-08-17T01:23Z Cursor LEAD | COORD FIX · Cascade INBOX WAVE-LIVE-C1 · 0 PRs ≠ idle · BookLoad Neon PASS known
+2026-08-17T01:24Z Cursor | LIVE PASS #8025 Tracker GATED on deploy 5a5a2ac · chrome evidence: disclosure+tooltip+testid tracker-legacy-gated-disclosure · next=BookLoad browser + keep WAVE-LIVE-C1 fed
