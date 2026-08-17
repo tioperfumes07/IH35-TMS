@@ -1,20 +1,11 @@
-# INBOX-CC-1 · LEAD OVERRIDE 2026-08-16 21:35 CT · NO AWAITING FO
+# INBOX-CC-1 · LEAD OVERRIDE 2026-08-16 21:55 CT · STALL FORBIDDEN
 
-**READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §3.1
+**FORBIDDEN:** `NEXT=awaiting next FO` / standing by.
 
-## FORBIDDEN
-`NEXT=awaiting next FO` · `standing by` · banking-deep before accounting A1 Leaves on ledger.
-
-## NOW
-Banking-deep PASS noted. **Wave A1 accounting is still required** (Box4 accounting was 0%):
-1. Live USMCA `/accounting` · bills · expenses · bill-payments · invoices
-2. Append `PROD-VERIFIED` with Leaves: `home` · `bills.list` · `bills.detail` · `expenses.list` · `expenses.detail` · `bill_payments.list` · `invoices.list` · `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear` · `chrome.toolbar_filter`
-3. Neon cite bill→batch if claiming money cols
-4. scoreboard `--write` → FAST-MERGE → **A2 same turn**
-
-Do not end on awaiting.
+**NOW:** Wave **A1 accounting** Leaves on ledger (CONTINUOUS-LIVE-NO-STALL §3.1). Banking-deep PASS does not unlock idle.
 
 ---
+
 
 
 
