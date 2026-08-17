@@ -3924,5 +3924,11 @@
     "finding": "LV-REPORTS-CANCELLATIONS-BY-DATE-RAW-ISO",
     "claimed_by": "cursor",
     "claimed_at": "2026-08-17"
+  },
+  "3750": {
+    "guard": "verify-reports-ifta-runner-duplicate-policy-chrome",
+    "finding": "LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
   }
 }
