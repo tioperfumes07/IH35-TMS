@@ -14,7 +14,13 @@ Repo **`docs/bus/`** · Desktop USMCA hotfiles = **symlinks** (`scripts/ops/bus-
 CC-1/Cascade/Codex: read Desktop INBOX (= this file) · `git pull` · work · OUTBOX only.
 
 ## Seat loop
-`git pull` → STATUS → your INBOX → work → one OUTBOX line → push · never wait Jorge.
+`git pull` → STATUS → your INBOX → **`docs/bus/CONTINUOUS-LIVE-NO-STALL.md`** → work → one OUTBOX line → push · never wait Jorge.
+
+## NO-STALL (HARD — owner 2026-08-16)
+- **`NEXT=awaiting next FO` is FORBIDDEN.** Standing queue = CONTINUOUS-LIVE-NO-STALL.md wave tables.
+- OUTBOX LIVE PASS without same-turn ledger `PROD-VERIFIED` + Leaves = incomplete (Box 4 will not move).
+- Finishing a Wave without claiming the next Wave in OUTBOX = defect.
+- Lead must rewrite INBOX the same turn a seat goes idle — seats must not wait for that rewrite if the standing queue already names the next Wave.
 
 ## OUTBOX
 Append-only · one line · prefix `SEAT | …`
