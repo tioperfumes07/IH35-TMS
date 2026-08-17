@@ -144,18 +144,21 @@ export function CustomerProfitabilityPage() {
   const top5Chart = useMemo(() => {
     const rows = [...(query.data?.by_customer ?? [])];
     rows.sort((a, b) => b.revenue_cents - a.revenue_cents);
-    return rows.slice(0, 5).map((r) => ({
-      name: r.customer_name.length > 14 ? `${r.customer_name.slice(0, 12)}…` : r.customer_name,
-      revenue: r.revenue_cents,
-      marginPct: r.gross_margin_pct,
-    }));
+    return rows.slice(0, 5).map((r) => {
+      const label = entityLabel(r.customer_name, r.customer_id, "Customer");
+      return {
+        name: label.length > 14 ? `${label.slice(0, 12)}…` : label,
+        revenue: r.revenue_cents,
+        marginPct: r.gross_margin_pct,
+      };
+    });
   }, [query.data?.by_customer]);
 
   function exportCsv(data: CustomerProfitabilityResponse) {
     const header = ["Customer", "Loads", "Revenue", "DirectCost", "Margin", "MarginPct", "ARAging", "DaysSinceLoad", "Flags"];
     const lines = (data.by_customer ?? []).map((r) =>
       [
-        `"${r.customer_name.replace(/"/g, '""')}"`,
+        `"${entityLabel(r.customer_name, r.customer_id, "Customer").replace(/"/g, '""')}"`,
         r.load_count,
         r.revenue_cents,
         r.direct_cost_cents,

@@ -182,7 +182,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
 
           return {
             customer_id: customerId,
-            customer_name: nameMap.get(customerId) ?? customerId,
+            customer_name: nameMap.get(customerId) ?? "Customer — not visible",
             revenue_cents: revenue,
             direct_cost_cents: directCost,
             gross_margin_cents: margin,
