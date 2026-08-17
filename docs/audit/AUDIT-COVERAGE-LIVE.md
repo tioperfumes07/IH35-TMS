@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **10 / 30** | 2026-08-17 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **149 / 150** | 2026-08-17 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **77 / 150** | 2026-08-17 |
-| Rows in this file | **1040** | 2026-08-17 |
-| Rows `FAIL` + `OPEN` | **4** | 2026-08-17 |
+| Rows in this file | **1041** | 2026-08-17 |
+| Rows `FAIL` + `OPEN` | **5** | 2026-08-17 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-17 |
 | Rows `VERIFIED` by GUARD | **152** | 2026-08-17 |
-| Verdict tally (all rows) | FAIL=163 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=11 · OTHER=404 | 2026-08-17 |
+| Verdict tally (all rows) | FAIL=164 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=11 · OTHER=404 | 2026-08-17 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1128,3 +1128,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 1038 | reports · maintenance cost classification | C | USMCA | FAIL | Selected-USMCA `/reports/maintenance-cost-per-unit` returned positive rows, but T149 simultaneously displayed `high_cost`, `low_cost`, and `reliable`. Source independently appends all three threshold flags, so tied/small percentile cohorts produce contradictory operator guidance. No filter, report, data, money or GL mutation was made. | OPEN `LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS` · CC-1 economics lane | `apps/backend/src/reports/maintenance-cost-per-unit.routes.ts:35-44`; exact Live URL; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
 | 1039 | reports · maintenance cost per unit chrome | E | USMCA | PROD-VERIFIED NON-MONEY | Exact leaf/cell: `report.maintenance_cost_per_unit:qbo_chrome`. Selected-USMCA `/reports/maintenance-cost-per-unit` mounted canonical Reports sub-navigation, print/export actions, Filters, six KPIs with QBO money, two positive human-labeled unit rows with active unit drills, a nine-column Search/Range/export/gear ParityTable, and the category chart/legend. No filter, print, export, drill, table preference, report, backend, data, money, QBO, or GL mutation was made. Contradictory economic classification is separately OPEN in row 1038 and is not certified here. | LIVE PASS · 1 EXACT CELL | `https://app.ih35dispatch.com/reports/maintenance-cost-per-unit`; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
 | 1040 | reports · fuel reconciliation date chrome | E | USMCA | FAIL | Selected-USMCA `/reports/fuel-reconciliation` mounted positive unmatched Card data but displayed transaction date `2026-08-12` as raw ISO. Source passes both unmatched `transaction_date` and `wo_date` directly to ParityTable without a display renderer. No Re-match GPS, filter, export, report, data, fuel, money or GL mutation was made. | OPEN `LV-REPORTS-FUEL-RECONCILIATION-RAW-ISO-DATES` · Cursor FE/date lane | `apps/frontend/src/pages/reports/FuelReconciliationPage.tsx:123-155`; exact Live URL; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
+| 1041 | reports · dispatch margin customer reverse | D | USMCA | FAIL | Selected-USMCA `/reports/dispatch-margin` mounted positive load/customer rows but multiple unresolved customers remained active links. Known id `45226738-fcfa-40f0-944d-574e6725bcd6` is already proven to render `Failed to load customer details.` No filter, drill, report, data, money or GL mutation was made. | OPEN `LV-REPORTS-DISPATCH-MARGIN-DEAD-CUSTOMER-TOMBSTONE-LINK` · Cursor FE/EntityLink lane | `apps/frontend/src/pages/reports/DispatchMarginPage.tsx:57`; exact Live URL; dependency #8180; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
