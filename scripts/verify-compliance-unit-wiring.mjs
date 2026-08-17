@@ -23,6 +23,9 @@ const CHECKS = [
   ["apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", /kind="unit" id=\{row\.unit_id\}/],
   ["apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx", /kind="unit" id=\{l\.unit_id\}/],
   ["apps/frontend/src/pages/compliance/Form2290Filings.tsx", /kind="unit" id=\{u\.unit_id\}/],
+  ["apps/backend/src/compliance/form-2290.routes.ts", /\.map\(\(u\) => \(\{ unit_id: u\.id, unit_number: u\.unit_number \}\)\)/],
+  ["apps/frontend/src/pages/compliance/Form2290Filings.tsx", /units_missing_first_use\?: Array<\{ unit_id: string \| null; unit_number: string \| null \}>/],
+  ["apps/frontend/src/pages/compliance/Form2290Filings.tsx", /missingFirstUse\.slice\(0, 6\)\.map\(\(unit, idx\) =>[\s\S]*?unit\.unit_id \? \([\s\S]*?<EntityLink kind="unit" id=\{unit\.unit_id\} label=\{unit\.unit_number \?\? "Unit"\} \/>[\s\S]*?: \([\s\S]*?<span>\{unit\.unit_number \?\? "Unit — not visible"\}<\/span>/],
 ];
 
 export function audit(files) {
@@ -66,4 +69,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — compliance's 6 unit-scoped overview/hos/property-tax/2290 leaves are real`);
+console.log(`${LABEL} PASS — compliance's 6 unit-scoped leaves include Form 2290 resolved and unresolved unit drills`);
