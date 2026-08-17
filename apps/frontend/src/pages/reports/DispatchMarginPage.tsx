@@ -7,13 +7,17 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+function isUnresolvedCustomerTombstone(row: { customer_name?: string | null; customer_id?: string | null }) {
+  return isUnresolvedEntityTombstone(row.customer_name, row.customer_id, "Customer");
 }
 
 function currentQuarterRange() {
@@ -54,7 +58,22 @@ export function DispatchMarginPage() {
   const columns = useMemo<ParityColumn<DispatchMarginRow>[]>(
     () => [
       { key: "load_number", label: "Load", sortable: true, render: (row) => <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> },
-      { key: "customer_name", label: "Customer", sortable: true, render: (row) => <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> },
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        render: (row) => {
+          const label = entityLabel(row.customer_name, row.customer_id, "Customer");
+          if (isUnresolvedCustomerTombstone(row)) {
+            return (
+              <span className="font-medium text-gray-800" data-testid="dispatch-margin-customer-tombstone">
+                {label}
+              </span>
+            );
+          }
+          return <EntityLink kind="customer" id={row.customer_id} label={label} />;
+        },
+      },
       { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.revenue_cents) },
       { key: "direct_cost_cents", label: "Direct cost", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.direct_cost_cents) },
       { key: "margin_cents", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.margin_cents) },

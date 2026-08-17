@@ -37,6 +37,23 @@ export function entityLabel(
 }
 
 /**
+ * LV-REPORTS-*-DEAD-CUSTOMER-TOMBSTONE-LINK — unresolved / unknown buckets must not
+ * mount EntityLink (dead drill → Failed to load customer details).
+ * Covers: entityLabel "— not visible", raw "Unknown …" cohort labels, UUID-shaped names.
+ */
+export function isUnresolvedEntityTombstone(
+  name: unknown,
+  id: unknown,
+  noun: string,
+): boolean {
+  const display = entityLabel(name, id, noun);
+  if (display === `${noun} — not visible`) return true;
+  const raw = name != null ? String(name).trim() : "";
+  if (/^unknown\b/i.test(raw)) return true;
+  return false;
+}
+
+/**
  * Infer a display noun from an id field name, so generated call sites read naturally:
  * `load_uuid` → "Load", `assigned_primary_driver_id` → "Driver", `vendor_id` → "Vendor".
  * Exported for the codemod and its tests; hand-written call sites should just pass the noun.
