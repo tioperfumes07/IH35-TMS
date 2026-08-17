@@ -72,11 +72,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **15 / 30** | 2026-08-17 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **149 / 150** | 2026-08-17 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **73 / 150** | 2026-08-17 |
-| Rows in this file | **1212** | 2026-08-17 |
+| Rows in this file | **1213** | 2026-08-17 |
 | Rows `FAIL` + `OPEN` | **6** | 2026-08-17 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-17 |
 | Rows `VERIFIED` by GUARD | **152** | 2026-08-17 |
-| Verdict tally (all rows) | FAIL=196 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=541 | 2026-08-17 |
+| Verdict tally (all rows) | FAIL=196 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=542 | 2026-08-17 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1300,3 +1300,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 1210 | drivers · qualification profile date chrome | E | USMCA | FAIL — OPEN | Selected-USMCA Compliance Overview driver drill to Leonel Antonio Morales Noguez mounted the canonical qualification profile, but License and Medical sections exposed raw ISO timestamps `2026-11-30T00:00:00.000Z`. Source renders both API values directly. | OPEN — Cursor | `apps/frontend/src/pages/drivers/DriverProfilePage.tsx:509,513`; `https://app.ih35dispatch.com/drivers/ac9ea24d-25a5-4e4f-b23e-aa90294357ac/profile`; `BLOCKS=drivers:profile:qbo_chrome` | NO | 2026-08-17 | CODEX |
 | 1211 | drivers · profile load customer tombstone | D | USMCA | FAIL — OPEN | Same positive driver profile Loads table rendered `Customer — not visible` as an active customer EntityLink for load L-20260809-0007. The unresolved customer must remain visible but non-interactive; resolved customers must keep canonical drills. | OPEN — Cursor | `apps/frontend/src/components/driver-profile/LoadsSection.tsx:25-37`; live Leonel driver profile; `BLOCKS=drivers:profile:reverse_link` | NO | 2026-08-17 | CODEX |
 | 1212 | compliance · HOS viewer driver picker | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-2 · VERIFY-3 | **Leaf:** `hos_viewer`. Exact cell: `driver`. Selected-USMCA HOS Viewer mounted the canonical driver selector; opening it placed `+ Add new driver` first followed by 11 human active drivers with phone/Samsara context. Escape dismissed without forced selection. No driver, HOS, date, data or money mutation occurred. | LIVE PASS · 1 EXACT CELL | `https://app.ih35dispatch.com/compliance?tab=hos_viewer`; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
+| 1213 | compliance · Safety navigation hops | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hop.safety_hos` · `hop.dot_compliance`. Exact cell: `driver` on each navigate-only hop. Selected-USMCA Compliance Related modules exposed canonical `/safety/hos` and `/safety/dot-compliance` links; each target mounted the real Safety surface without 404/ErrorBoundary. No Safety control, record, data or money mutation occurred. | LIVE PASS · 2 EXACT CELLS | `https://app.ih35dispatch.com/compliance` → `/safety/hos` + `/safety/dot-compliance`; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
