@@ -23,6 +23,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -122,7 +123,7 @@ export function FuelReconciliationPage() {
 
   const cardColumns = useMemo<ParityColumn<FuelReconciliationUnmatchedCard>[]>(
     () => [
-      { key: "transaction_date", label: "Date", sortable: true },
+      { key: "transaction_date", label: "Date", sortable: true, sortValue: (row) => row.transaction_date, render: (row) => (row.transaction_date ? formatDateUS(row.transaction_date) : "—") },
       { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
       {
         key: "merchant_name",
@@ -151,7 +152,7 @@ export function FuelReconciliationPage() {
   const woColumns = useMemo<ParityColumn<FuelReconciliationUnmatchedWo>[]>(
     () => [
       { key: "wo_number", label: "WO#", sortable: true },
-      { key: "wo_date", label: "Date", sortable: true },
+      { key: "wo_date", label: "Date", sortable: true, sortValue: (row) => row.wo_date, render: (row) => (row.wo_date ? formatDateUS(row.wo_date) : "—") },
       { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
       { key: "unit_number", label: "Unit", sortable: true },
     ],
