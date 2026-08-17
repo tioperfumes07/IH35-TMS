@@ -1,10 +1,14 @@
-# STATUS · 2026-08-16 20:08 CT · CONCRETE INBOX (not vague continuous)
+# STATUS · 2026-08-16 20:23 CT · COORD DEFECT FIXED
 
-| Seat | RIGHT file | NOW |
-|------|------------|-----|
-| Cascade | Desktop INBOX-CASCADE.md | VERIFY-BATCH #8014 #8015 #8016/#8017 Codex lawsuits Book Load #8001 |
-| CC-1 | Desktop INBOX-CC-1.md | expenses → invoices → JE → settlements → factoring |
-| Codex | INBOX-CODEX | keep non-money walk |
-| Cursor | lead | re-sync INBOX after every merge · never vague "0 PR wait" |
+**Defect:** Cascade VERIFY-BATCH done → INBOX still closed batch → false idle ("awaiting INBOX / 0 green PRs").
 
-0 open PRs ≠ idle. Live=BLOCKED until certified.
+**Fix:** INBOX-CASCADE = **WAVE-LIVE-C1** continuous Live VERIFY. **0 green PRs ≠ stop.**
+
+| Seat | NOW |
+|------|-----|
+| Cascade 9225 | WAVE-LIVE-C1 (#8025 + BookLoad + program/reports/insurance/…) |
+| CC-1 9222 | expenses → invoices → JE → settlements → factoring |
+| Codex 9228 | insurance partition |
+| Cursor 9226 | lead + FO + Book Load browser |
+
+certified **0/30** · Live=BLOCKED · Jorge ≠ messenger

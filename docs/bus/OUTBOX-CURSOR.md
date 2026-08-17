@@ -2,3 +2,4 @@
 2026-08-17T01:01Z Cursor LEAD | BUS-SINGLE-CHANNEL FAST-MERGE landing · Desktop=docs/bus symlinks · seats WORK from Desktop INBOX NONSTOP
 2026-08-17T01:04Z Cursor LEAD | bus-sync-inboxes · CC-1=accounting:expenses-create-drawer · Cascade=continuous-verify
 2026-08-17T01:04Z Cursor LEAD | post-#8016 SYNC INBOX-CC-1+CASCADE · seats WORK
+2026-08-17T01:23Z Cursor LEAD | COORD FIX · Cascade INBOX WAVE-LIVE-C1 · 0 PRs ≠ idle · BookLoad Neon PASS known
