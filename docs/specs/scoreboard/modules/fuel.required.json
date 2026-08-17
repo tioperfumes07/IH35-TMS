@@ -2,7 +2,7 @@
   "module": "fuel",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Fuel",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Fuel",
     "nav": "apps/frontend/src/pages/fuel/FUEL_TABS_CONFIG.ts",
     "routes": "/fuel/*"
   },
@@ -174,7 +174,7 @@
     {
       "id": "expense_mapping",
       "tab": "Expense mapping",
-      "sub": "Fuel→expense map",
+      "sub": "Fuel\u2192expense map",
       "route_hint": "/fuel/expense-mapping",
       "required": [
         "connectivity"
@@ -248,8 +248,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/fuel/components/UploadLovesPricesModal.tsx",
       "required": [
-        "connectivity",
-        "load"
+        "connectivity"
       ]
     },
     {
@@ -266,7 +265,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [
@@ -277,7 +276,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [
@@ -288,7 +287,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [
@@ -299,7 +298,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [
@@ -321,11 +320,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_relay": {
       "finding": "VERTICAL-REVERSE-LINK-LEGAL-FUEL-REMAINDER",
-      "note": "RelayDepositReview has no EntityLink reverse drill — reverse_link Required was inflation.",
+      "note": "RelayDepositReview has no EntityLink reverse drill \u2014 reverse_link Required was inflation.",
       "drops": [
         {
           "id": "relay_inbox",
@@ -361,7 +360,7 @@
     },
     "qbo_chrome_2026_08_13_fuel_chrome": {
       "finding": "VERTICAL-QBO-CHROME-FUEL-HONESTY",
-      "note": "Relay/settings/expense_mapping + chrome.toolbar_* lack ListToolbar/QBO triad on those tabs — Required was inflation (transactions list already Built elsewhere).",
+      "note": "Relay/settings/expense_mapping + chrome.toolbar_* lack ListToolbar/QBO triad on those tabs \u2014 Required was inflation (transactions list already Built elsewhere).",
       "drops": [
         {
           "id": "relay_inbox",
@@ -409,7 +408,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "expense_mapping (FuelGlMappingCoverage) is false — maps fuel categories to GL accounts only, no vendor field. fuel.modal.create_fuel_transaction (not touched here — already correctly not flagged) genuinely has a real EntityPicker kind=\"vendor\" bound to vendor_id.",
+      "note": "expense_mapping (FuelGlMappingCoverage) is false \u2014 maps fuel categories to GL accounts only, no vendor field. fuel.modal.create_fuel_transaction (not touched here \u2014 already correctly not flagged) genuinely has a real EntityPicker kind=\"vendor\" bound to vendor_id.",
       "drops": [
         {
           "id": "expense_mapping",
@@ -421,7 +420,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "6 of 10 fuel leaves are false: home/relay_inbox/compliance/import-transactions-modal/upload-loves-prices-modal/savings-panel are aggregate/fleet-wide with zero unit_id. planner RESTORED 2026-08-14 (LINK-F5171-FUEL-PLANNER-UNIT-DRIVER-DRILL) — ActiveTripStrip EntityLinks unit_id from views.fuel_planner_active_routes. KEEP unit on CardOverageQueuePage / FuelTransactionsTable / CreateFuelTransactionModal.",
+      "note": "6 of 10 fuel leaves are false: home/relay_inbox/compliance/import-transactions-modal/upload-loves-prices-modal/savings-panel are aggregate/fleet-wide with zero unit_id. planner RESTORED 2026-08-14 (LINK-F5171-FUEL-PLANNER-UNIT-DRIVER-DRILL) \u2014 ActiveTripStrip EntityLinks unit_id from views.fuel_planner_active_routes. KEEP unit on CardOverageQueuePage / FuelTransactionsTable / CreateFuelTransactionModal.",
       "drops": [
         {
           "id": "home",
@@ -463,7 +462,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required was false on 6 aggregate leaves (home/relay_inbox/compliance/import/upload/savings). planner RESTORED 2026-08-14 (LINK-F5171-FUEL-PLANNER-UNIT-DRIVER-DRILL) — ActiveTripStrip EntityLinks driver_id from views.fuel_planner_active_routes (FE type previously omitted the FK despite SELECT *).",
+      "note": "driver blanket-required was false on 6 aggregate leaves (home/relay_inbox/compliance/import/upload/savings). planner RESTORED 2026-08-14 (LINK-F5171-FUEL-PLANNER-UNIT-DRIVER-DRILL) \u2014 ActiveTripStrip EntityLinks driver_id from views.fuel_planner_active_routes (FE type previously omitted the FK despite SELECT *).",
       "drops": [
         {
           "id": "home",
@@ -593,6 +592,20 @@
           "removed": [
             "expense"
           ]
+        }
+      ]
+    },
+    "load_column_2026_08_17_loves_upload": {
+      "finding": "LV-FUEL-LOVES-UPLOAD-FALSE-LOAD-REQUIRED",
+      "note": "Upload Loves Prices is a company-wide .xlsx price-feed import (file+Cancel+Upload only). No trip/load entity is created or selected; Required load was false applicability. Inventing a load FK is forbidden (Rule 32 pre-op / domain).",
+      "leaves_touched": 1,
+      "drops": [
+        {
+          "id": "fuel.modal.upload_loves_prices",
+          "removed": [
+            "load"
+          ],
+          "reason": "company-scoped Loves price-feed import; no trip/load FK"
         }
       ]
     }
