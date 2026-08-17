@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
@@ -210,11 +211,34 @@ export function FinancialStatementsPage() {
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
-  const [basis, setBasis] = useState<AccountingBasis>("accrual");
-  const [period, setPeriod] = useState(currentMonthRange);
-  const [applied, setApplied] = useState(currentMonthRange);
-  const [asOf, setAsOf] = useState(todayIso);
-  const [appliedAsOf, setAppliedAsOf] = useState(todayIso);
+  // CLS-FINANCE-READONLY-FILTER-APPLY-CANCEL-RESET — Basis + dates share one staged Filters draft.
+  type StatementsFilter = {
+    basis: AccountingBasis;
+    start: string;
+    end: string;
+    asOf: string;
+  };
+  const defaults = useMemo((): StatementsFilter => {
+    const range = currentMonthRange();
+    return { basis: "accrual", start: range.start, end: range.end, asOf: todayIso() };
+  }, []);
+  const [appliedFilter, setAppliedFilter] = useState<StatementsFilter>(defaults);
+  const staged = useStagedListFilters({
+    applied: appliedFilter,
+    empty: defaults,
+    onApply: (next) => {
+      if (next.start > next.end) return;
+      setAppliedFilter(next);
+    },
+  });
+  const draftInvalid = staged.draft.start > staged.draft.end;
+  const basis = appliedFilter.basis;
+  const applied = { start: appliedFilter.start, end: appliedFilter.end };
+  const appliedAsOf = appliedFilter.asOf;
+  const activeFilterCount =
+    (appliedFilter.basis !== "accrual" ? 1 : 0) +
+    (appliedFilter.start !== defaults.start || appliedFilter.end !== defaults.end ? 1 : 0) +
+    (appliedFilter.asOf !== defaults.asOf ? 1 : 0);
 
   const active = enabled && Boolean(companyId);
 
@@ -359,41 +383,55 @@ export function FinancialStatementsPage() {
         ))}
       </div>
 
-      <div className="no-print mb-4 flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
-        <BasisSelector value={basis} onChange={setBasis} />
-        {usesRange ? (
-          <>
-            <label className="text-xs text-slate-600">
-              From
-              <DatePicker
-                className="mt-1 block h-9"
-                value={period.start}
-                onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
-              />
-            </label>
-            <label className="text-xs text-slate-600">
-              To
-              <DatePicker
-                className="mt-1 block h-9"
-                value={period.end}
-                onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
-              />
-            </label>
-            <Button size="sm" onClick={() => setApplied({ ...period })}>
-              Apply
-            </Button>
-          </>
-        ) : (
-          <>
-            <label className="text-xs text-slate-600">
-              As-of date
-              <DatePicker className="mt-1 block h-9" value={asOf} onChange={(next) => setAsOf(next)} />
-            </label>
-            <Button size="sm" onClick={() => setAppliedAsOf(asOf)}>
-              Apply
-            </Button>
-          </>
-        )}
+      <div className="no-print mb-4 flex flex-wrap items-start gap-3">
+        <CollapsedListFilters
+          activeFilterCount={activeFilterCount}
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty || draftInvalid}
+          testIdPrefix="finance-statements"
+          className="min-w-[18rem] flex-1 rounded-sm border border-slate-200 bg-white p-2"
+        >
+          <div className="flex flex-wrap items-end gap-3">
+            <BasisSelector
+              value={staged.draft.basis}
+              onChange={(next) => staged.setDraft({ ...staged.draft, basis: next })}
+            />
+            {usesRange ? (
+              <>
+                <label className="text-xs text-slate-600">
+                  From
+                  <DatePicker
+                    className="mt-1 block h-9"
+                    value={staged.draft.start}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, start: next })}
+                  />
+                </label>
+                <label className="text-xs text-slate-600">
+                  To
+                  <DatePicker
+                    className="mt-1 block h-9"
+                    value={staged.draft.end}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, end: next })}
+                  />
+                </label>
+              </>
+            ) : (
+              <label className="text-xs text-slate-600">
+                As-of date
+                <DatePicker
+                  className="mt-1 block h-9"
+                  value={staged.draft.asOf}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, asOf: next })}
+                />
+              </label>
+            )}
+          </div>
+          {draftInvalid && (
+            <p className="mt-2 text-xs text-red-600">From date must be before or equal to To date.</p>
+          )}
+        </CollapsedListFilters>
         <div className="ml-auto flex gap-2">
           <Button size="sm" variant="secondary" onClick={exportCurrentCsv}>
             Export CSV
