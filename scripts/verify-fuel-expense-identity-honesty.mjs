@@ -24,6 +24,10 @@ export function audit(doc, surfaces) {
     if (!leaves.has(id)) failures.push(`${id}: leaf missing`);
     else if ((leaves.get(id).required || []).includes("expense")) failures.push(`${id}: fuel record falsely claims accounting expense identity`);
   }
+  const lovesUpload = leaves.get("fuel.modal.upload_loves_prices");
+  if ((lovesUpload?.required || []).includes("load")) {
+    failures.push("fuel.modal.upload_loves_prices: company-wide price-feed upload falsely claims load identity");
+  }
   for (const [file, source] of Object.entries(surfaces)) {
     if (/kind=["']expense["']|\bexpense_id\b|accounting\.expenses/.test(source)) {
       failures.push(`${file}: gained accounting expense identity; re-scope and guard it`);
@@ -49,7 +53,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — source mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — ${IDS.length + 1} mutations detected`);
+  const mutatedLoad = structuredClone(doc);
+  mutatedLoad.leaves.find((leaf) => leaf.id === "fuel.modal.upload_loves_prices").required.push("load");
+  if (!audit(mutatedLoad, surfaces).some((failure) => failure.includes("falsely claims load identity"))) {
+    console.error(`${LABEL} SELFTEST FAIL — Loves upload load-identity mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${IDS.length + 2} mutations detected`);
   process.exit(0);
 }
 

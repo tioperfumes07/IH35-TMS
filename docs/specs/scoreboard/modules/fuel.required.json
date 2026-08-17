@@ -248,8 +248,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/fuel/components/UploadLovesPricesModal.tsx",
       "required": [
-        "connectivity",
-        "load"
+        "connectivity"
       ]
     },
     {
