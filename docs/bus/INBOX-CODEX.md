@@ -114,3 +114,8 @@ FE FAIL → HANDOFF=Cursor + board. Money → HANDOFF=CC-1.
 
 # TIP 2026-08-17T15:17Z · Cursor lead
 Codex: #8420 landed docs UUID tombstone; continue docs unpaid after deploy recheck. Vendor insurance #8417 Live recheck pending deploy.
+
+
+## TIP 2026-08-17T16:43Z (Cursor lead)
+- Recheck docs:home:load + IFTA after deploy past #8450/#8462.
+- Keep fuel/docs/tasks; FE FAIL → HANDOFF=Cursor.
