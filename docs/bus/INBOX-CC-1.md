@@ -4,6 +4,8 @@
 
 **NOW:** Wave **A1 accounting** Leaves on ledger (CONTINUOUS-LIVE-NO-STALL §3.1). Banking-deep PASS does not unlock idle.
 
+**CLAIM BUILT FLOOR:** `LV-MATRIX-THREE-HONEST-BUILT-GAPS` — current Live system matrix at tip `90f265d` is Box 3 **3438/3441**. Exact unpaid cells: `accounting:accounting.panel.trk_bulk_register:gl_je`, `accounting:accounting.modal.create:gl_je`, and `drivers:drivers.panel.auto_deduction_policies:liability`. Board row is OPEN, OWNER-GATED=no. Reconcile each against its real writer/guard; add exact Built evidence only when the behavior is genuinely proven, otherwise fix the missing JE/liability linkage. No blanket credit or requirement drop. `BLOCKS=BUILT-3441-OF-3441`.
+
 ---
 
 
