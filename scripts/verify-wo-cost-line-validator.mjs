@@ -17,13 +17,18 @@
  *
  * WHAT IT ENFORCES: the cost-line rule references the derived submit arrays (sectionALines /
  * sectionBLines) and does NOT watch `line_items`.
+ *
+ * DETAIL RATCHET (2026-08-16): WorkOrderDetailPage must not normalize optional service_item_uuid to "".
  */
 import { readFileSync, existsSync } from "node:fs";
 
 const LABEL = "verify:wo-cost-line-validator";
 const MODAL = "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx";
+const DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
 const SERVICE = "apps/backend/src/maintenance/two-section-service.ts";
 const RULE = "At least one cost line item";
+const EMPTY_OPTIONAL_SERVICE_ITEM =
+  /service_item_uuid:\s*(?:String\(\s*)?line\.service_item_uuid[\s\S]{0,80}(?:\|\||\?\?)\s*["']{2}/;
 
 function stripComments(src) {
   return String(src).replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
@@ -59,10 +64,19 @@ export function analyse(files) {
         `sent in the create payload. The validator and the request must agree on what a cost line is.`
     );
   }
-  if (/service_item_uuid:\s*line\.service_item_uuid\s*\|\|\s*["']{2}/.test(src)) {
+  if (EMPTY_OPTIONAL_SERVICE_ITEM.test(src)) {
     problems.push(
       `${MODAL}: an unselected optional service-item FK is serialized as an empty string. The backend ` +
         `accepts UUID, null, or omission; omit the field so an honestly described catalog-free Section-B line can save.`
+    );
+  }
+  const detailRaw = files[DETAIL];
+  if (detailRaw == null) {
+    problems.push(`${DETAIL} is missing — cannot verify detail-line optional service-item FK serialization.`);
+  } else if (EMPTY_OPTIONAL_SERVICE_ITEM.test(stripComments(detailRaw))) {
+    problems.push(
+      `${DETAIL}: optional service_item_uuid must not be normalized to "". Omit the field when blank ` +
+        `(same Invalid-UUID class as CreateWorkOrderModal).`,
     );
   }
   const serviceRaw = files[SERVICE];
@@ -84,6 +98,7 @@ export function analyse(files) {
 function readAll() {
   return {
     [MODAL]: existsSync(MODAL) ? readFileSync(MODAL, "utf8") : null,
+    [DETAIL]: existsSync(DETAIL) ? readFileSync(DETAIL, "utf8") : null,
     [SERVICE]: existsSync(SERVICE) ? readFileSync(SERVICE, "utf8") : null,
   };
 }
@@ -91,19 +106,23 @@ function readAll() {
 function selftest() {
   const failures = [];
   const t = (l, c) => { if (!c) failures.push(l); };
+  const goodDetail = `...(serviceItemUuid ? { service_item_uuid: serviceItemUuid } : {}),`;
   const good = `...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),\n{ label: "${RULE}", ok: sectionALines.length + sectionBLines.length > 0 },`;
   const bug = `{ label: "${RULE}", ok: (form.watch("line_items") ?? []).length > 0 },`;
   const emptyUuidBug = `service_item_uuid: line.service_item_uuid || "",\n${good}`;
+  const emptyDetailBug = `service_item_uuid: String(line.service_item_uuid ?? line.ps_item_id ?? ""),`;
   const serviceGood = `INSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;\nINSERT INTO maintenance.work_order_lines (work_order_uuid) VALUES ($1) RETURNING uuid AS id;`;
+  const filesGood = { [MODAL]: good, [DETAIL]: goodDetail, [SERVICE]: serviceGood };
 
-  t("counting the submitted arrays passes", analyse({ [MODAL]: good, [SERVICE]: serviceGood }).length === 0);
-  t("the REAL pre-fix line_items rule FAILS", analyse({ [MODAL]: bug, [SERVICE]: serviceGood }).length === 2);
-  t("deleting the rule entirely FAILS", analyse({ [MODAL]: "no such rule here", [SERVICE]: serviceGood }).length === 1);
+  t("counting the submitted arrays passes", analyse(filesGood).length === 0);
+  t("the REAL pre-fix line_items rule FAILS", analyse({ ...filesGood, [MODAL]: bug }).length === 2);
+  t("deleting the rule entirely FAILS", analyse({ ...filesGood, [MODAL]: "no such rule here" }).length === 1);
   t("a comment mentioning line_items does not trip it",
-    analyse({ [MODAL]: `// used to watch line_items\n${good}`, [SERVICE]: serviceGood }).length === 0);
-  t("an empty optional service-item UUID FAILS", analyse({ [MODAL]: emptyUuidBug, [SERVICE]: serviceGood }).length === 1);
-  t("phantom work-order-line id FAILS", analyse({ [MODAL]: good, [SERVICE]: serviceGood.replace("RETURNING uuid AS id", "RETURNING id") }).length === 2);
-  t("missing modal FAILS", analyse({ [MODAL]: null, [SERVICE]: serviceGood }).length === 1);
+    analyse({ ...filesGood, [MODAL]: `// used to watch line_items\n${good}` }).length === 0);
+  t("an empty optional service-item UUID FAILS", analyse({ ...filesGood, [MODAL]: emptyUuidBug }).length === 1);
+  t("detail page empty optional service-item UUID FAILS", analyse({ ...filesGood, [DETAIL]: emptyDetailBug }).length === 1);
+  t("phantom work-order-line id FAILS", analyse({ ...filesGood, [SERVICE]: serviceGood.replace("RETURNING uuid AS id", "RETURNING id") }).length === 2);
+  t("missing modal FAILS", analyse({ ...filesGood, [MODAL]: null }).length === 1);
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
@@ -114,7 +133,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 7 cases (2 pass-shapes incl. comment-immunity, 5 fail-shapes)`);
+  console.log(`${LABEL} selftest OK — 8 cases (detail empty-uuid ratchet included)`);
   process.exit(0);
 }
 const problems = analyse(readAll());

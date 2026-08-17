@@ -248,6 +248,7 @@ function normalizeLineItems(lineItems: unknown): TwoSectionLine[] {
             },
           ];
 
+    const serviceItemUuid = String(line.service_item_uuid ?? line.ps_item_id ?? "").trim();
     normalized.push({
       id,
       section,
@@ -255,7 +256,8 @@ function normalizeLineItems(lineItems: unknown): TwoSectionLine[] {
       quantity,
       unit_cost: toFiniteNumber(unitCost, toFiniteNumber(amount, 0)),
       amount: toFiniteNumber(amount, 0),
-      service_item_uuid: String(line.service_item_uuid ?? line.ps_item_id ?? ""),
+      // Same class as CreateWorkOrderModal #7863: never serialize optional FK as "".
+      ...(serviceItemUuid ? { service_item_uuid: serviceItemUuid } : {}),
       sub_rows: subRows,
     });
   });
