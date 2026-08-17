@@ -3715,5 +3715,11 @@
     "guard": "verify-inventory-part-create-save-readiness",
     "lane": "cursor",
     "note": "LV-INVENTORY-PART-CREATE-SAVE-READINESS"
+  },
+  "3686": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-break-even-staged-filters",
+    "lane": "cursor",
+    "note": "LV-FINANCE-BREAK-EVEN-FILTERS-SILENT-APPLY"
   }
 }
