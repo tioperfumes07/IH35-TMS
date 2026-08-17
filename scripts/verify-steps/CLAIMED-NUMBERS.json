@@ -1864,6 +1864,24 @@
     "guard": "verify-legal-contract-list-signer-entitylink",
     "lane": "cursor"
   },
+  "3720": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-SYSTEM-MATRIX-LEAVES-NOT-ITERABLE",
+    "guard": "verify-program-matrix-system-querykey-disambiguate",
+    "lane": "cursor"
+  },
+  "3722": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-REPORTS-HOME-FILTER-LEAF-MISOWNED",
+    "guard": "verify-reports-home-filter-leaf-ownership",
+    "lane": "cursor"
+  },
+  "3724": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END",
+    "guard": "verify-dispatch-load-detail-deactivated-customer-left-join",
+    "lane": "cursor"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -3833,17 +3851,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165,
-  "3720": {
-    "claimed_at": "2026-08-17",
-    "finding": "LV-SYSTEM-MATRIX-LEAVES-NOT-ITERABLE",
-    "guard": "verify-program-matrix-system-querykey-disambiguate",
-    "lane": "cursor"
-  },
-  "3722": {
-    "claimed_at": "2026-08-17",
-    "finding": "LV-REPORTS-HOME-FILTER-LEAF-MISOWNED",
-    "guard": "verify-reports-home-filter-leaf-ownership",
-    "lane": "cursor"
-  }
+  "total_claimed": 1165
 }
