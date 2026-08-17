@@ -2,7 +2,7 @@
 /** @matrix-built {"modules":["compliance"],"cols":["load"],"leafRe":"^tab\\.violations$","task":"LINK-F5169-COMPLIANCE-LOAD"} */
 /** @matrix-built {"modules":["docs"],"cols":["load"],"leafRe":"^(home|tab\\.all|upload|table\\.entity_link|docs\\.modal\\.upload)$","task":"LINK-F5169-DOCS-LOAD"} */
 /** @matrix-built {"modules":["fuel"],"cols":["load"],"leafRe":"^(home|planner)$","task":"LINK-F5169-FUEL-LOAD"} */
-/** @matrix-built {"modules":["home"],"cols":["load"],"leafRe":"^role\\.(owner|dispatcher)$","task":"LINK-F5169-HOME-LOAD"} */
+/** @matrix-built {"modules":["home"],"cols":["load"],"leafRe":"^role\\.dispatcher$","task":"LINK-F5169-HOME-LOAD"} */
 /** @matrix-built {"modules":["reports"],"cols":["load"],"leafRe":"^report\\.(lane_profitability|trip_profitability|dispatch_margin)$","task":"LINK-F5169-REPORTS-LOAD"} */
 /** @matrix-built {"modules":["tasks"],"cols":["load"],"leafRe":"^(nav\\.(board|mine|calendar)|board\\.(planner_grid|create)|mine\\.list)$","task":"LINK-F5169-TASKS-LOAD"} */
 /**
@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-load-column-all-modules";
+const HOME_MATRIX = "docs/specs/scoreboard/modules/home.required.json";
 
 const CHECKS = [
   // Compliance/Safety: existing FK now travels create → validation → INSERT → joined label → EntityLink.
@@ -33,7 +34,7 @@ const CHECKS = [
   // Documents: standalone upload can key a file_link to an existing load; list resolves it back.
   ["apps/frontend/src/components/documents/UploadModal.tsx", /StandaloneLinkType = [^;]*"load"/, "Documents standalone load type"],
   ["apps/frontend/src/components/documents/UploadModal.tsx", /\{ value: "load", label: "Load" \}/, "Documents load choice"],
-  ["apps/frontend/src/components/documents/UploadModal.tsx", /type === "load"\) return type/, "Documents canonical load picker"],
+  ["apps/frontend/src/components/documents/UploadModal.tsx", /function standaloneLinkToPickerKind\(type: StandaloneLinkType\): EntityPickerKind \{\n  return type;\n\}/, "Documents canonical load picker"],
   ["apps/frontend/src/components/documents/UploadModal.tsx", /entity_links: \[\{ entity_type: resolvedEntityType, entity_id: resolvedEntityId \}\]/, "Documents persists file-to-load link"],
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /case "load":/, "Documents load EntityLink map"],
 
@@ -56,11 +57,18 @@ const CHECKS = [
 ];
 
 function readFiles(root) {
-  return Object.fromEntries([...new Set(CHECKS.map(([file]) => file))].map((file) => [file, fs.readFileSync(path.join(root, file), "utf8")]));
+  const files = [...new Set([...CHECKS.map(([file]) => file), HOME_MATRIX])];
+  return Object.fromEntries(files.map((file) => [file, fs.readFileSync(path.join(root, file), "utf8")]));
 }
 
 export function audit(files) {
-  return CHECKS.flatMap(([file, pattern, description]) => pattern.test(files[file] ?? "") ? [] : [`${file}: ${description}`]);
+  const failures = CHECKS.flatMap(([file, pattern, description]) => pattern.test(files[file] ?? "") ? [] : [`${file}: ${description}`]);
+  const home = JSON.parse(files[HOME_MATRIX] ?? '{"leaves":[]}');
+  const owner = home.leaves?.find((leaf) => leaf.id === "role.owner");
+  const dispatcher = home.leaves?.find((leaf) => leaf.id === "role.dispatcher");
+  if (owner?.required?.includes("load")) failures.push(`${HOME_MATRIX}: role.owner invents load from DispatcherActiveLoadsPanel`);
+  if (!dispatcher?.required?.includes("load")) failures.push(`${HOME_MATRIX}: role.dispatcher lost its genuine active-load contract`);
+  return failures;
 }
 
 if (process.argv.includes("--selftest")) {
@@ -79,6 +87,16 @@ if (process.argv.includes("--selftest")) {
     }
     caught++;
   }
+  const crossLeaf = structuredClone(good);
+  crossLeaf[HOME_MATRIX] = crossLeaf[HOME_MATRIX].replace(
+    '"required": [\n        "connectivity",\n        "driver"',
+    '"required": [\n        "connectivity",\n        "load",\n        "driver"',
+  );
+  if (crossLeaf[HOME_MATRIX] === good[HOME_MATRIX] || !audit(crossLeaf).some((failure) => failure.includes("role.owner invents load"))) {
+    console.error(`${LABEL} SELFTEST FAIL — Owner/Dispatcher cross-leaf load mutation escaped`);
+    process.exit(1);
+  }
+  caught++;
   console.log(`${LABEL} SELFTEST PASS — ${caught} planted load-wiring defects detected`);
   process.exit(0);
 }
