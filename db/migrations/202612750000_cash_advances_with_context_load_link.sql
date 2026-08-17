@@ -24,7 +24,7 @@ BEGIN
         a.operating_company_id,
         a.display_id,
         a.driver_id,
-        a.amount,
+        a.amount::numeric AS amount,
         a.purpose,
         a.disbursement_method,
         a.disbursement_status,
@@ -35,22 +35,23 @@ BEGIN
         a.linked_bank_txn_id,
         a.linked_bill_payment_id,
         a.requires_owner_approval,
-        a.approved_at,
-        a.approved_by_user_id,
+        NULL::timestamptz AS approved_at,   -- driver_finance.driver_advances has NO approved_at column
+        NULL::uuid AS approved_by_user_id,  -- nor approved_by_user_id; both were always literals
         a.created_at,
         a.created_by_user_id,
-        l.current_balance AS outstanding_balance,
+        l.current_balance::numeric AS outstanding_balance,
         l.id AS liability_id,
         CONCAT_WS(' ', d.first_name, d.last_name) AS driver_full_name,
         d.id::text AS driver_display_id,
         COALESCE(b.display_id, b.id::text) AS linked_bill_display_id,
-        b.vendor_id AS linked_bill_vendor_id,
+        v.id AS linked_bill_vendor_id,
         a.load_id,
         ld.load_number AS load_display_id
       FROM driver_finance.driver_advances a
       JOIN mdata.drivers d ON d.id = a.driver_id
       LEFT JOIN driver_finance.driver_liabilities l ON l.id = a.liability_id
       LEFT JOIN accounting.bills b ON b.id = a.linked_bill_id
+      LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id
       LEFT JOIN mdata.loads ld ON ld.id = a.load_id
       ORDER BY a.created_at DESC
     $VIEW$;
