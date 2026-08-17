@@ -3,7 +3,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
-import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { resolveOperatingCompanyId, OperatingCompanyMembershipError } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
@@ -383,7 +383,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
             e.related_load_id,
             rl.load_number AS related_load_number,
             e.related_customer_id,
-            rc.name AS related_customer_name,
+            rc.customer_name AS related_customer_name,
             e.related_driver_id,
             concat_ws(' ', rd.first_name, rd.last_name) AS related_driver_name,
             e.document_ids,
@@ -424,22 +424,24 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     const parsedQuery = reverseListQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const events = await withCurrentUser(authUser.uuid, async (client) => {
-      const query = parsedQuery.data;
-      const opco = await scopeToCallerCompany(client, authUser.uuid, query.operating_company_id);
-      const filter = query.related_load_id
-        ? { sql: "e.related_load_id = $2 AND rl.id IS NOT NULL", value: query.related_load_id }
-        : query.related_customer_id
-          ? { sql: "e.related_customer_id = $2 AND rc.id IS NOT NULL", value: query.related_customer_id }
-          : { sql: "e.related_driver_id = $2 AND rd.id IS NOT NULL", value: query.related_driver_id! };
-      const res = await client.query(
-        `
+    try {
+      const events = await withCurrentUser(authUser.uuid, async (client) => {
+        const query = parsedQuery.data;
+        const opco = await scopeToCallerCompany(client, authUser.uuid, query.operating_company_id);
+        if (!opco) return [];
+        const filter = query.related_load_id
+          ? { sql: "e.related_load_id = $2 AND rl.id IS NOT NULL", value: query.related_load_id }
+          : query.related_customer_id
+            ? { sql: "e.related_customer_id = $2 AND rc.id IS NOT NULL", value: query.related_customer_id }
+            : { sql: "e.related_driver_id = $2 AND rd.id IS NOT NULL", value: query.related_driver_id! };
+        const res = await client.query(
+          `
           SELECT
             e.id, e.dispatcher_user_id, du.email AS dispatcher_email, e.event_type, e.event_date,
             e.severity, e.summary, e.details, e.cost_amount, e.cost_currency,
             e.cost_recovered_amount, e.cost_recovery_status,
             e.related_load_id, rl.load_number AS related_load_number,
-            e.related_customer_id, rc.name AS related_customer_name,
+            e.related_customer_id, rc.customer_name AS related_customer_name,
             e.related_driver_id, concat_ws(' ', rd.first_name, rd.last_name) AS related_driver_name,
             e.created_at, e.updated_at
           FROM mdata.dispatcher_safety_events e
@@ -451,11 +453,17 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
           ORDER BY e.event_date DESC, e.created_at DESC
           LIMIT 200
         `,
-        [opco, filter.value]
-      );
-      return res.rows;
-    });
-    return { events };
+          [opco, filter.value]
+        );
+        return res.rows;
+      });
+      return { events };
+    } catch (error) {
+      if (error instanceof OperatingCompanyMembershipError) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      throw error;
+    }
   });
 
   app.post("/api/v1/identity/users/:user_id/safety-events", RL_WRITE, async (req, reply) => {
