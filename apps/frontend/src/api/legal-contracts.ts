@@ -12,6 +12,7 @@ export type LegalContractSummary = {
   template_code: string;
   template_version: number;
   signer_type: LegalSignerType;
+  signer_entity_id: string | null;
   signer_name: string;
   signer_email: string | null;
   signer_phone: string | null;

@@ -38,6 +38,13 @@ function statusClass(status: LegalContractStatus) {
   return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
+/** LV-LEGAL-CONTRACT-LIST-SIGNER-PLAIN-TEXT — list + detail share the same kind map. */
+function signerKind(type: LegalContractSummary["signer_type"]): EntityKind | null {
+  if (type === "driver" || type === "customer" || type === "vendor") return type;
+  if (type === "employee") return "user";
+  return null;
+}
+
 export function LegalContractInstancesPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -159,12 +166,26 @@ export function LegalContractInstancesPage() {
         key: "signer_name",
         label: "Signer",
         sortable: true,
-        render: (row) => (
-          <>
-            <div>{row.signer_name}</div>
-            <div className="text-xs text-gray-500">{row.signer_email ?? row.signer_phone ?? "No contact"}</div>
-          </>
-        ),
+        render: (row) => {
+          const kind = signerKind(row.signer_type);
+          const entityId = row.signer_entity_id;
+          return (
+            <>
+              {kind && entityId ? (
+                <EntityLink
+                  kind={kind}
+                  id={entityId}
+                  label={row.signer_name}
+                  className="font-medium text-gray-900"
+                  data-testid="legal-contract-list-signer-link"
+                />
+              ) : (
+                <div data-testid="legal-contract-list-signer-plain">{row.signer_name}</div>
+              )}
+              <div className="text-xs text-gray-500">{row.signer_email ?? row.signer_phone ?? "No contact"}</div>
+            </>
+          );
+        },
       },
       { key: "signer_type", label: "Type", sortable: true, render: (row) => row.signer_type },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusClass(row.status)}>{row.status}</span> },
@@ -173,12 +194,6 @@ export function LegalContractInstancesPage() {
     ],
     [],
   );
-
-  const signerKind = (type: LegalContractSummary["signer_type"]): EntityKind | null => {
-    if (type === "driver" || type === "customer" || type === "vendor") return type;
-    if (type === "employee") return "user";
-    return null;
-  };
 
   return (
     <div className="space-y-3">
