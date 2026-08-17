@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -24,15 +25,31 @@ const BUCKET_SECTIONS = [
 
 const UUID_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function entityNoun(kind: EntityKind): string {
+  return kind === "customer" ? "Customer" : kind === "driver" ? "Driver" : "Record";
+}
+
 function bucketColumns(groupLabel: string, entityKind: EntityKind | null): ParityColumn<CancellationBucket>[] {
   return [
     {
       key: "label",
       label: groupLabel,
       sortable: true,
-      render: (row) => entityKind && UUID_KEY.test(row.key)
-        ? <EntityLink kind={entityKind} id={row.key} label={row.label} className="font-medium text-gray-800" />
-        : <span className="font-medium text-gray-800">{row.label}</span>,
+      render: (row) => {
+        if (!entityKind || !UUID_KEY.test(row.key)) {
+          return <span className="font-medium text-gray-800">{row.label}</span>;
+        }
+        const noun = entityNoun(entityKind);
+        const label = entityLabel(row.label, row.key, noun);
+        if (isUnresolvedEntityTombstone(row.label, row.key, noun)) {
+          return (
+            <span className="font-medium text-gray-800" data-testid="cancellations-report-tombstone">
+              {label}
+            </span>
+          );
+        }
+        return <EntityLink kind={entityKind} id={row.key} label={label} className="font-medium text-gray-800" />;
+      },
     },
     { key: "count", label: "Count", sortable: true, className: "text-right", cellClass: "text-right font-mono" },
     { key: "billable_count", label: "Billable", sortable: true, className: "text-right", cellClass: "text-right font-mono text-gray-600" },
