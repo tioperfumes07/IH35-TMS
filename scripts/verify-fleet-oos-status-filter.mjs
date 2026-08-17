@@ -32,6 +32,9 @@ function assertSource(src) {
   if (!src.includes("rosterSearch") || !src.includes("searchedRows")) {
     fail("must keep page-level rosterSearch → searchedRows so Showing X of Y tracks search");
   }
+  if (!src.includes('searchParams.get("q")') && !src.includes("searchParams.get('q')")) {
+    fail("roster search must bind to ?q= URL for Live/CDP verify");
+  }
   if (!src.includes("fleet-roster-search") || !src.includes("fleet-roster-showing-count")) {
     fail("must expose fleet-roster-search + fleet-roster-showing-count for Live VERIFY");
   }
