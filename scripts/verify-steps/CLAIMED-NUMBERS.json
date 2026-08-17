@@ -3094,6 +3094,11 @@
       "claimer": "cc-1",
       "name": "verify-recurring-bill-templates-vendor-name-resolves"
     },
+    "3685": {
+      "claimed_at": "2026-08-16",
+      "claimer": "cc-1",
+      "name": "verify-bill-list-journal-entry-date-memo-resolves"
+    },
     "37": "37-verify-safety-accidents-wire-up.mjs",
     "38": "38-verify-safety-count-nav-integrity.mjs",
     "39": [
