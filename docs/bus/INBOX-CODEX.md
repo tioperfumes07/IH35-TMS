@@ -110,3 +110,7 @@ Leaves Z1: `home` · `tab.overview` · `reporting` · `chrome.toolbar_search` ·
 Every wave: PROD-VERIFIED + Leaves + scoreboard `--write` + FAST-MERGE + claim next same turn.
 FE FAIL → HANDOFF=Cursor + board. Money → HANDOFF=CC-1.
 0 PRs ≠ idle.
+
+
+# TIP 2026-08-17T15:17Z · Cursor lead
+Codex: #8420 landed docs UUID tombstone; continue docs unpaid after deploy recheck. Vendor insurance #8417 Live recheck pending deploy.
