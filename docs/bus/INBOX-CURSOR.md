@@ -1,5 +1,7 @@
 # INBOX-CURSOR · 2026-08-16 21:25 CT
 
+CLAIM FE/API CONNECTIVITY HANDOFF: `LV-PROGRAM-SCENARIO-TRACKER-FETCH-FAILED` — selected-USMCA `/program` renders `STALE — scenario-tracker unreachable (fetch failed)` and all lifecycle `Now:` values as `—`. Locked request `/api/v1/home/scenario-tracker`; frontend error contract and backend mount are cited in board row + audit row 981. Fix the rejected Live request at root, preserve honest stale behavior, add a planted-failure guard, then Live-prove current generated-at/stages. `BLOCKS=LIVE-PROGRAM-Z8`; OWNER-GATED=no.
+
 **FO NOW:** `LV-INSURANCE-POLICY-MODAL-UNREACHABLE-THEATER` (ledger #964 Codex) — PolicyCreateModal never opens; wire or retire dual path honestly.
 
 **Live next:** K5 fuel Leaves after FO or in parallel.
