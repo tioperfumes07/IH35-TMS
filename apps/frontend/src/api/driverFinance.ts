@@ -214,6 +214,18 @@ export function markSettlementPaidManually(
   );
 }
 
+// ACCT-F5401: correction path for an erroneous Mark Paid Manually (manual_paid is otherwise a
+// terminal state — see settlement-payment.service.ts).
+export function reopenSettlementManualPaid(id: string, companyId: string, reason: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(
+    `/api/v1/driver-pay/settlements/${id}/reopen-manual-paid?${q(companyId)}`,
+    {
+      method: "POST",
+      body: { reason },
+    }
+  );
+}
+
 export function getSettlementPaymentEvents(id: string, companyId: string) {
   return apiRequest<{ events: SettlementPaymentEvent[] }>(`/api/v1/driver-pay/settlements/${id}/payment-events?${q(companyId)}`);
 }
