@@ -1,16 +1,14 @@
-# INBOX-CC-1 · SYNC 2026-08-16 20:23 CT · MONEY LIVE NEVER STOPS
+# INBOX-CC-1 · SYNC 2026-08-16 20:26 CT · FAST-MERGE CONTINUOUS
 
-Chrome **9222** · USMCA · Desktop INBOX only.
+Chrome **9222** · USMCA.
 
 ## OUTBOX NOW
-`CC-1 | WORKING · LIVE CLAIM accounting:expenses-create-drawer`
+`CC-1 | WORKING · LIVE CLAIM accounting:journal-entries-list-create-chrome`
 
-## Drain (no FO wait)
-1. expenses-create-drawer LIVE
-2. invoices-create-drawer LIVE
-3. journal-entries-list-create-chrome LIVE
-4. settlements:list-toolbar-create-chrome LIVE
-5. factoring:home-surfaces LIVE
+## Drain
+1. journal-entries-list-create-chrome LIVE (expenses+invoices done per your OUTBOX)
+2. settlements:list-toolbar-create-chrome LIVE
+3. factoring:home-surfaces LIVE
 
-0 open PRs ≠ idle — keep Live VERIFY money leaves · FAST-MERGE your greens.
+FAST-MERGE your greens immediately after gate PASS. 0 open PRs ≠ idle — keep Live VERIFY.
 Law: Live=BLOCKED until certified 30/30

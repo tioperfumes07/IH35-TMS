@@ -1,14 +1,14 @@
-# STATUS · 2026-08-16 20:23 CT · COORD DEFECT FIXED
+# STATUS · 2026-08-16 20:26 CT · AUTO LOOP + FAST-MERGE ON
 
-**Defect:** Cascade VERIFY-BATCH done → INBOX still closed batch → false idle ("awaiting INBOX / 0 green PRs").
+**Mode:** continuous auto lead loop 5m · FAST-MERGE-4MIN · Jorge ≠ messenger
 
-**Fix:** INBOX-CASCADE = **WAVE-LIVE-C1** continuous Live VERIFY. **0 green PRs ≠ stop.**
+**OUTBOX wipe defect:** lead must NEVER `git checkout --` / reset `docs/bus/OUTBOX-*` (wiped Cascade). Fixed with `skip-worktree` on OUTBOX files + restored Cascade lines.
 
 | Seat | NOW |
 |------|-----|
-| Cascade 9225 | WAVE-LIVE-C1 (#8025 + BookLoad + program/reports/insurance/…) |
-| CC-1 9222 | expenses → invoices → JE → settlements → factoring |
-| Codex 9228 | insurance partition |
-| Cursor 9226 | lead + FO + Book Load browser |
+| Cascade 9225 | REWAKE WAVE-LIVE-C1 Live VERIFY |
+| CC-1 9222 | journal-entries → settlements → factoring |
+| Codex 9228 | reports runner library claim |
+| Cursor 9226 | lead loop + FO + Live VERIFY |
 
-certified **0/30** · Live=BLOCKED · Jorge ≠ messenger
+certified **0/30** · deploy `5a5a2ac` · Live=BLOCKED
