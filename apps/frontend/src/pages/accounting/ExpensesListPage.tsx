@@ -89,7 +89,46 @@ export function ExpensesListPage() {
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const staged = useStagedListFilters({ applied: { status, fromDate, toDate }, empty: { status: "" as const, fromDate: "", toDate: "" }, onApply: (next) => { setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); } });
+  const staged = useStagedListFilters({
+    applied: {
+      status,
+      fromDate,
+      toDate,
+      loadId: deepLinkLoadId || "",
+      driverId: deepLinkDriverId || "",
+      unitId: deepLinkUnitId || "",
+      trailerId: deepLinkTrailerId || "",
+    },
+    empty: {
+      status: "" as const,
+      fromDate: "",
+      toDate: "",
+      loadId: "",
+      driverId: "",
+      unitId: "",
+      trailerId: "",
+    },
+    onApply: (next) => {
+      setStatus(next.status);
+      setFromDate(next.fromDate);
+      setToDate(next.toDate);
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next.loadId) params.set("load_id", next.loadId);
+          else params.delete("load_id");
+          if (next.driverId) params.set("driver_id", next.driverId);
+          else params.delete("driver_id");
+          if (next.unitId) params.set("unit_id", next.unitId);
+          else params.delete("unit_id");
+          if (next.trailerId) params.set("trailer_id", next.trailerId);
+          else params.delete("trailer_id");
+          return params;
+        },
+        { replace: true },
+      );
+    },
+  });
   // ACCT-F5054 — Topbar Create→Expense uses ?create=1 (Bills/Invoices parity).
   const createOpen = searchParams.get("create") === "1";
   function setCreateOpen(next: boolean) {
@@ -329,71 +368,75 @@ export function ExpensesListPage() {
     },
   ];
 
-  const expensesActiveFilterCount = (status ? 1 : 0) + (fromDate || toDate ? 1 : 0);
+  const expensesActiveFilterCount =
+    (status ? 1 : 0) +
+    (fromDate || toDate ? 1 : 0) +
+    (deepLinkLoadId ? 1 : 0) +
+    (deepLinkDriverId ? 1 : 0) +
+    (deepLinkUnitId ? 1 : 0) +
+    (deepLinkTrailerId ? 1 : 0);
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3">
-      <div className="flex flex-wrap items-end gap-3" data-testid="expenses-entity-filters">
-        <label className="text-[11px] text-slate-600">
-          Load
-          <EntityPicker
-            kind="load"
-            operatingCompanyId={companyId}
-            value={deepLinkLoadId || null}
-            onChange={(next) => patchEntityFilter("load_id", next ?? "")}
-            allowCreate={false}
-            placeholder="All loads"
-            className="mt-1"
-            dataTestId="expenses-filter-load"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Driver
-          <EntityPicker
-            kind="driver"
-            operatingCompanyId={companyId}
-            value={deepLinkDriverId || null}
-            onChange={(next) => patchEntityFilter("driver_id", next ?? "")}
-            allowCreate={false}
-            placeholder="All drivers"
-            className="mt-1"
-            dataTestId="expenses-filter-driver"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Unit
-          <EntityPicker
-            kind="unit"
-            operatingCompanyId={companyId}
-            value={deepLinkUnitId || null}
-            onChange={(next) => patchEntityFilter("unit_id", next ?? "")}
-            allowCreate={false}
-            placeholder="All units"
-            className="mt-1"
-            dataTestId="expenses-filter-unit"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Trailer
-          <EntityPicker
-            kind="trailer"
-            operatingCompanyId={companyId}
-            value={deepLinkTrailerId || null}
-            onChange={(next) => patchEntityFilter("trailer_id", next ?? "")}
-            allowCreate={false}
-            placeholder="All trailers"
-            className="mt-1"
-            dataTestId="expenses-filter-trailer"
-          />
-        </label>
-      </div>
       <CollapsedListFilters
         activeFilterCount={expensesActiveFilterCount}
         onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="expenses"
         dataAttributes={{ "data-expenses-filter-toolbar": "collapsed" }}
       >
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3" data-testid="expenses-entity-filters">
+          <label className="text-[11px] text-slate-600">
+            Load
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={staged.draft.loadId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All loads"
+              className="mt-1"
+              dataTestId="expenses-filter-load"
+            />
+          </label>
+          <label className="text-[11px] text-slate-600">
+            Driver
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={companyId}
+              value={staged.draft.driverId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="mt-1"
+              dataTestId="expenses-filter-driver"
+            />
+          </label>
+          <label className="text-[11px] text-slate-600">
+            Unit
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={staged.draft.unitId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All units"
+              className="mt-1"
+              dataTestId="expenses-filter-unit"
+            />
+          </label>
+          <label className="text-[11px] text-slate-600">
+            Trailer
+            <EntityPicker
+              kind="trailer"
+              operatingCompanyId={companyId}
+              value={staged.draft.trailerId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, trailerId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All trailers"
+              className="mt-1"
+              dataTestId="expenses-filter-trailer"
+            />
+          </label>
           <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
             Status
             <SelectCombobox

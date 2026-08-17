@@ -69,23 +69,18 @@ export function CardOverageQueuePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("pending_review");
-  const staged = useStagedListFilters({
-    applied: { statusFilter },
-    empty: { statusFilter: "pending_review" },
-    onApply: (next) => setStatusFilter(next.statusFilter),
-  });
   const [searchParams, setSearchParams] = useSearchParams();
   const eventId = searchParams.get("event_id") ?? undefined;
   const driverId = searchParams.get("driver_id") ?? undefined;
   const unitId = searchParams.get("unit_id") ?? undefined;
-  // BANK-F5167 — visible EntityPicker filters (URL-only is not reverse chrome).
-  const [driverPickerId, setDriverPickerId] = useState("");
-  const [unitPickerId, setUnitPickerId] = useState("");
+  // BANK-F5167 + CLS-ADJACENT — EntityPicker FKs stage with status; URL only on Apply.
+  const [driverPickerId, setDriverPickerId] = useState(driverId ?? "");
+  const [unitPickerId, setUnitPickerId] = useState(unitId ?? "");
   useEffect(() => {
-    if (driverId) setDriverPickerId(driverId);
+    setDriverPickerId(driverId ?? "");
   }, [driverId]);
   useEffect(() => {
-    if (unitId) setUnitPickerId(unitId);
+    setUnitPickerId(unitId ?? "");
   }, [unitId]);
   const setDriverFilter = (next: string) => {
     setDriverPickerId(next);
@@ -101,6 +96,30 @@ export function CardOverageQueuePage() {
     else params.delete("unit_id");
     setSearchParams(params, { replace: true });
   };
+  const staged = useStagedListFilters({
+    applied: {
+      statusFilter,
+      driverId: driverPickerId || driverId || "",
+      unitId: unitPickerId || unitId || "",
+    },
+    empty: { statusFilter: "pending_review", driverId: "", unitId: "" },
+    onApply: (next) => {
+      setStatusFilter(next.statusFilter);
+      setDriverPickerId(next.driverId);
+      setUnitPickerId(next.unitId);
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next.driverId) params.set("driver_id", next.driverId);
+          else params.delete("driver_id");
+          if (next.unitId) params.set("unit_id", next.unitId);
+          else params.delete("unit_id");
+          return params;
+        },
+        { replace: true },
+      );
+    },
+  });
   const effectiveDriverId = driverPickerId.trim() || driverId || undefined;
   const effectiveUnitId = unitPickerId.trim() || unitId || undefined;
   const hasEntityTarget = Boolean(eventId || effectiveDriverId || effectiveUnitId);
@@ -251,43 +270,12 @@ export function CardOverageQueuePage() {
         Approve never invents density — it calls the same poster as the API.
       </p>
 
-      <div className="flex flex-wrap items-end gap-3" data-testid="fuel-card-overage-filters">
-        <label className="text-[11px] text-slate-600">
-          Driver
-          <EntityPicker
-            kind="driver"
-            operatingCompanyId={companyId}
-            value={driverPickerId || null}
-            onChange={(next) => setDriverFilter(next ?? "")}
-            allowCreate={false}
-            placeholder="All drivers"
-            className="mt-1"
-            dataTestId="fuel-card-overage-filter-driver"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Unit
-          <EntityPicker
-            kind="unit"
-            operatingCompanyId={companyId}
-            value={unitPickerId || null}
-            onChange={(next) => setUnitFilter(next ?? "")}
-            allowCreate={false}
-            placeholder="All units"
-            className="mt-1"
-            dataTestId="fuel-card-overage-filter-unit"
-          />
-        </label>
-      </div>
-
-      {hasEntityTarget ? (
-        <Link to="/fuel/card-overage" className="text-xs font-semibold text-slate-700 underline">
-          Clear profile/event target
-        </Link>
-      ) : null}
-
       <CollapsedListFilters
-        activeFilterCount={statusFilter !== "pending_review" ? 1 : 0}
+        activeFilterCount={
+          (statusFilter !== "pending_review" ? 1 : 0) +
+          (effectiveDriverId ? 1 : 0) +
+          (effectiveUnitId ? 1 : 0)
+        }
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -295,21 +283,55 @@ export function CardOverageQueuePage() {
         testIdPrefix="fuel-card-overage"
         dataAttributes={{ "data-fuel-card-overage-filter-toolbar": "collapsed" }}
       >
-        <div className="flex flex-wrap items-center gap-2">
-          {["pending_review", "approved", "posted", "company_variance", "all"].map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={`rounded-sm border px-2 py-1 text-xs ${
-                staged.draft.statusFilter === status ? "border-slate-300 bg-slate-100" : "border-gray-300"
-              }`}
-              onClick={() => staged.setDraft({ statusFilter: status })}
-            >
-              {status.replace(/_/g, " ")}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-end gap-3" data-testid="fuel-card-overage-filters">
+          <label className="text-[11px] text-slate-600">
+            Driver
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={companyId}
+              value={staged.draft.driverId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="mt-1"
+              dataTestId="fuel-card-overage-filter-driver"
+            />
+          </label>
+          <label className="text-[11px] text-slate-600">
+            Unit
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={staged.draft.unitId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All units"
+              className="mt-1"
+              dataTestId="fuel-card-overage-filter-unit"
+            />
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            {["pending_review", "approved", "posted", "company_variance", "all"].map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={`rounded-sm border px-2 py-1 text-xs ${
+                  staged.draft.statusFilter === status ? "border-slate-300 bg-slate-100" : "border-gray-300"
+                }`}
+                onClick={() => staged.setDraft({ ...staged.draft, statusFilter: status })}
+              >
+                {status.replace(/_/g, " ")}
+              </button>
+            ))}
+          </div>
         </div>
       </CollapsedListFilters>
+
+      {hasEntityTarget ? (
+        <Link to="/fuel/card-overage" className="text-xs font-semibold text-slate-700 underline">
+          Clear profile/event target
+        </Link>
+      ) : null}
 
       {eventsQuery.isError ? (
         <ListErrorState

@@ -167,8 +167,15 @@ export function InvoicesListPage() {
     );
   }
   const staged = useStagedListFilters({
-    applied: { status, customerId, fromDate, toDate }, empty: { status: "" as InvoiceListFilter, customerId: "", fromDate: "", toDate: "" },
-    onApply: (next) => { setStatus(next.status); setCustomerId(next.customerId); setFromDate(next.fromDate); setToDate(next.toDate); },
+    applied: { status, customerId, fromDate, toDate, sourceLoadId: deepLinkSourceLoadId || "" },
+    empty: { status: "" as InvoiceListFilter, customerId: "", fromDate: "", toDate: "", sourceLoadId: "" },
+    onApply: (next) => {
+      setStatus(next.status);
+      setCustomerId(next.customerId);
+      setFromDate(next.fromDate);
+      setToDate(next.toDate);
+      setSourceLoadId(next.sourceLoadId);
+    },
   });
 
   // Customer picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
@@ -387,25 +394,10 @@ export function InvoicesListPage() {
   );
 
   const invoicesActiveFilterCount =
-    (status ? 1 : 0) + (customerId ? 1 : 0) + (fromDate || toDate ? 1 : 0);
+    (status ? 1 : 0) + (customerId ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (deepLinkSourceLoadId ? 1 : 0);
 
   const filterBar = (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-end gap-3" data-testid="invoices-entity-filters">
-        <label className="text-[11px] text-slate-600">
-          Load
-          <EntityPicker
-            kind="load"
-            operatingCompanyId={selectedCompanyId ?? ""}
-            value={deepLinkSourceLoadId || null}
-            onChange={(next) => setSourceLoadId(next ?? "")}
-            allowCreate={false}
-            placeholder="All loads"
-            className="mt-1"
-            dataTestId="invoices-filter-load"
-          />
-        </label>
-      </div>
       {customersQuery.isError ? (
         <ListErrorBanner
           message={`Failed to load customer filters: ${(customersQuery.error as Error)?.message ?? "Request failed"}`}
@@ -427,7 +419,19 @@ export function InvoicesListPage() {
           />
         }
       >
-        <div className="grid gap-2 md:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-4" data-testid="invoices-entity-filters">
+          <label className="flex flex-col gap-1 text-[11px] text-slate-600">
+            Load
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={selectedCompanyId ?? ""}
+              value={staged.draft.sourceLoadId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, sourceLoadId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All loads"
+              dataTestId="invoices-filter-load"
+            />
+          </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
             <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as InvoiceListFilter })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">

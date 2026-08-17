@@ -47,8 +47,8 @@ export function VendorCreditsPage() {
   const companyId = selectedCompanyId ?? "";
   const canWrite = WRITE_ROLES.has(user?.role ?? "");
 
+  // LST-F5202 — visible vendor filter; CLS-ADJACENT — stages with status, URL only on Apply.
   const vendorFilter = searchParams.get("vendor_id") ?? "";
-  // LST-F5202 — visible vendor filter writes URL.
   function setVendorFilter(next: string) {
     setSearchParams(
       (prev) => {
@@ -62,7 +62,14 @@ export function VendorCreditsPage() {
   }
   const deepLinkCreditId = searchParams.get("credit_id");
   const [statusFilter, setStatusFilter] = useState<VendorCreditStatus | "">("");
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
+  const staged = useStagedListFilters({
+    applied: { statusFilter, vendorId: vendorFilter },
+    empty: { statusFilter: "" as const, vendorId: "" },
+    onApply: (next) => {
+      setStatusFilter(next.statusFilter);
+      setVendorFilter(next.vendorId);
+    },
+  });
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedCreditId, setSelectedCreditId] = useState<string | null>(deepLinkCreditId);
   const [applyOpen, setApplyOpen] = useState(false);
@@ -210,31 +217,33 @@ export function VendorCreditsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
-      <label className="text-[11px] text-slate-600">
-        Vendor
-        <EntityPicker
-          kind="vendor"
-          operatingCompanyId={companyId}
-          value={vendorFilter || null}
-          onChange={(next) => setVendorFilter(next ?? "")}
-          allowCreate={false}
-          placeholder="All vendors"
-          className="mt-1"
-          dataTestId="vendor-credits-filter-vendor"
-        />
-      </label>
       <CollapsedListFilters activeFilterCount={(statusFilter ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <select
-          value={staged.draft.statusFilter}
-          onChange={(e) => staged.setDraft({ statusFilter: e.target.value as VendorCreditStatus | "" })}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
-          aria-label="Vendor credit status filter"
-        >
-          <option value="">All statuses</option>
-          <option value="open">Open</option>
-          <option value="applied">Applied</option>
-          <option value="voided">Voided</option>
-        </select>
+        <div className="flex flex-wrap gap-2">
+          <label className="text-[11px] text-slate-600">
+            Vendor
+            <EntityPicker
+              kind="vendor"
+              operatingCompanyId={companyId}
+              value={staged.draft.vendorId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All vendors"
+              className="mt-1"
+              dataTestId="vendor-credits-filter-vendor"
+            />
+          </label>
+          <select
+            value={staged.draft.statusFilter}
+            onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as VendorCreditStatus | "" })}
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
+            aria-label="Vendor credit status filter"
+          >
+            <option value="">All statuses</option>
+            <option value="open">Open</option>
+            <option value="applied">Applied</option>
+            <option value="voided">Voided</option>
+          </select>
+        </div>
       </CollapsedListFilters>
       {vendorFilter ? (
         <span className="text-xs text-gray-600">
