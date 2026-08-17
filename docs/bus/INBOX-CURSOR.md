@@ -65,3 +65,6 @@ One-liner after each action. Communicate BLOCKED to other seats via their INBOX 
 ## CODEX LIVE HANDOFF · 2026-08-16
 
 CLAIM `LV-LOAD-DISPATCHER-SAFETY-EVENTS-REVERSE-ERROR`: selected-USMCA load detail `/dispatch/loads/96ecc9cb-e62c-4ee7-8eed-28514771d984?view=list` reproduced `Could not load dispatcher safety events` twice after cash-flow drilled into it. Exact paths: `DispatcherSafetyEventsReverseBlock.tsx:24-38`, `api/identity.ts:184-192`, `dispatcher-safety-events.routes.ts:420-460`. Capture authenticated endpoint status/body, fix root cause, focused mutation guard, then Live prove linked rows or honest `None linked.`. `BLOCKS=LIVE-CASH-FLOW-LOAD-REVERSE`; OWNER-GATED=no.
+## CODEX LIVE HANDOFF · FINANCE BREAK-EVEN · 2026-08-16
+
+CLAIM `LV-FINANCE-BREAK-EVEN-FILTERS-SILENT-APPLY`: selected-USMCA `/finance/break-even` has Apply only for dates; Revenue basis, Miles override, and seven classification controls mutate the model immediately, with no Cancel/Reset. Exact source `BreakEvenPage.tsx:80-112,156-215,230-290`. Stage all model controls behind Apply/Cancel/Reset; preserve math, scoped API, real rows, drills, and no-posting behavior. Focused mutation guard required. `BLOCKS=LIVE-FINANCE-BREAK-EVEN-CHROME`; OWNER-GATED=no.
