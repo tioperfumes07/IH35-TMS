@@ -3942,5 +3942,11 @@
     "finding": "ACCT-F5401",
     "claimed_by": "cc-1",
     "claimed_at": "2026-08-17"
+  },
+  "3757": {
+    "guard": "verify-matrix-banking-module-alias-recognized",
+    "finding": "ACCT-F5402",
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-17"
   }
 }
