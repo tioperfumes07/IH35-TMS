@@ -41,6 +41,10 @@ function assertSource(src) {
   if (!src.includes("hideSearch")) {
     fail("must pass hideSearch to FleetTable so page owns the single roster search");
   }
+  // LV-FLEET-CLEAR-FILTERS-DROPS-Q: Clear filters must delete ?q= with type/kind/status.
+  if (!/clearFilters[\s\S]{0,280}params\.delete\(["']q["']\)/.test(src)) {
+    fail("clearFilters must params.delete(\"q\") so search does not stick after Clear filters");
+  }
 }
 
 function selftest() {

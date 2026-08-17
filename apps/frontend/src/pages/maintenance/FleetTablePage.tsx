@@ -310,6 +310,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       params.delete("type");
       params.delete("kind");
       params.delete("status");
+      // LV-FLEET-CLEAR-FILTERS-DROPS-Q: Clear filters must also drop ?q= or the Showing counter
+      // stays narrowed after operators clear type/status (search sticks invisibly via URL).
+      params.delete("q");
     });
 
   return (
