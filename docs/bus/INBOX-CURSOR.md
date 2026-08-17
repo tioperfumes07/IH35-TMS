@@ -80,3 +80,7 @@ CLAIM `LV-LEGAL-MATTER-TIMELINE-RAW-JSON-CREATOR`: selected-USMCA matter detail 
 ## CODEX LIVE HANDOFF · INVENTORY PART CREATOR · 2026-08-16
 
 CLAIM `LV-INVENTORY-PART-CREATE-SAVE-READINESS`: selected-USMCA `/inventory` blank `+ Create part` leaves Save enabled. `PartCreateDrawer.tsx:89-123,212-216` has no button predicate and submit checks Category only. Use one trimmed Name+Category `canSubmit` for button disabled and submit guard; retain pending disable. Preserve real maintenance.parts write, MoneyInput, company scope, vendor `+ Add new`, returned-id selection, and reload. Ratchet missing Name, missing Category, and predicate drift independently. `BLOCKS=LIVE-INVENTORY-PART-CREATOR`; OWNER-GATED=no.
+
+## CODEX LIVE HANDOFF · REPORT RUNNER EMPTY FILTER CLASS · 2026-08-16
+
+CLAIM `LV-REPORT-RUNNER-EMPTY-FILTERS-THEATER`: selected-USMCA Fleet Utilization opened Filters with Reset/Cancel/disabled Apply but zero fields. Source scope is exactly `fleet-utilization` + `csa-fleet-score` (`runner-config.ts:208,222`); `ReportsRunner.tsx:225` always mounts `RunnerFilters`. For empty configs, omit fieldless Filters and retain direct Run report; preserve staged Filters for every nonempty control runner. Ratchet both empty IDs and one nonempty control. `BLOCKS=LIVE-REPORTS-RUNNER-FILTER-CHROME`; OWNER-GATED=no.
