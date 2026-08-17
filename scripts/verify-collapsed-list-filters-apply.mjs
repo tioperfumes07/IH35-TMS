@@ -129,6 +129,35 @@ export function auditFilterPopover(source) {
   return failures;
 }
 
+/** CLS-COLLAPSED-FILTER-PORTAL-PICKER-CANCELS-DRAFT — portaled Combobox must not Cancel staged draft. */
+export function auditPortalOwnership(collapsedSource, runnerFiltersSource) {
+  const failures = [];
+  if (!collapsedSource) {
+    failures.push("CollapsedListFilters.tsx missing");
+    return failures;
+  }
+  if (!collapsedSource.includes("closest('[data-combobox-listbox=\"portal\"]')")
+    && !collapsedSource.includes('closest(\'[data-combobox-listbox="portal"]\')')
+    && !collapsedSource.includes('closest(`[data-combobox-listbox="portal"]`)')
+    && !/closest\(\s*'\[data-combobox-listbox="portal"\]'\s*\)/.test(collapsedSource)
+    && !collapsedSource.includes('[data-combobox-listbox="portal"]')) {
+    failures.push("CollapsedListFilters must treat [data-combobox-listbox=portal] as a logical child (not outside Cancel)");
+  } else if (!collapsedSource.includes("closest(") || !collapsedSource.includes('data-combobox-listbox="portal"')) {
+    failures.push("CollapsedListFilters mousedown must closest() portal listbox before Cancel");
+  }
+  if (!collapsedSource.includes('data-combobox-listbox="portal"') || !collapsedSource.includes("Escape")) {
+    failures.push("CollapsedListFilters Escape must defer when a portal combobox listbox is open");
+  }
+  if (runnerFiltersSource) {
+    const pickers = [...runnerFiltersSource.matchAll(/<EntityPicker\b[\s\S]*?\/>/g)].map((m) => m[0]);
+    const unit = pickers.find((p) => /kind="unit"/.test(p));
+    const driver = pickers.find((p) => /kind="driver"/.test(p));
+    if (!unit || !/allowCreate=\{false\}/.test(unit)) failures.push("RunnerFilters unit EntityPicker must set allowCreate={false}");
+    if (!driver || !/allowCreate=\{false\}/.test(driver)) failures.push("RunnerFilters driver EntityPicker must set allowCreate={false}");
+  }
+  return failures;
+}
+
 if (process.argv.includes("--selftest")) {
   const fixture = {
     "pages/dispatch/Test.tsx": `<CollapsedListFilters activeFilterCount={1}>x</CollapsedListFilters>`,
@@ -164,15 +193,27 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-collapsed-list-filters-apply SELFTEST FAIL — live FilterPopover not Apply-gated:\n${goodPopover.join("\n")}`);
     process.exit(1);
   }
-  console.log("verify-collapsed-list-filters-apply SELFTEST PASS — missing actions, exemption abuse, FilterPopover silent-apply detected");
+  const portalPlanted = auditPortalOwnership(
+    `useEffect(() => { const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) cancelAndClose(); }; }, []);`,
+    `kind="unit" allowClear\nkind="driver" allowClear`,
+  );
+  if (!portalPlanted.some((f) => /portal|allowCreate/i.test(f))) {
+    console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — portal Cancel regression escaped");
+    process.exit(1);
+  }
+  console.log("verify-collapsed-list-filters-apply SELFTEST PASS — missing actions, exemption abuse, FilterPopover silent-apply, portal ownership detected");
   process.exit(0);
 }
 
 const result = audit(sources);
 const popoverFailures = auditFilterPopover(sources[FILTER_POPOVER] ?? "");
-const failures = [...result.failures, ...popoverFailures];
+const portalFailures = auditPortalOwnership(
+  sources["components/table/CollapsedListFilters.tsx"] ?? "",
+  sources["pages/reports/runners/RunnerFilters.tsx"] ?? "",
+);
+const failures = [...result.failures, ...popoverFailures, ...portalFailures];
 if (failures.length) {
   console.error(`verify-collapsed-list-filters-apply FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`verify-collapsed-list-filters-apply PASS — ${result.consumers} consumers require Apply/Cancel/Reset; ${result.exempt} owner-ruled QBO-sync exemption; FilterPopover draft→Apply gated`);
+console.log(`verify-collapsed-list-filters-apply PASS — ${result.consumers} consumers require Apply/Cancel/Reset; ${result.exempt} owner-ruled QBO-sync exemption; FilterPopover draft→Apply gated; portal picker ownership OK`);

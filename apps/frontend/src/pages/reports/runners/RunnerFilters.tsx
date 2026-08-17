@@ -95,6 +95,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                     className="h-9 w-full text-sm"
                     dataField={`runner-filter-${filter.key}`}
                     allowClear
+                    allowCreate={false}
                   />
                 </label>
               );
@@ -113,6 +114,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                     className="h-9 w-full text-sm"
                     dataField={`runner-filter-${filter.key}`}
                     allowClear
+                    allowCreate={false}
                   />
                 </label>
               );

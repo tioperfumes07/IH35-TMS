@@ -48,12 +48,25 @@ export function CollapsedListFilters({
 
   useEffect(() => {
     if (!filtersOpen) return;
+    /** Portaled Combobox/EntityPicker listboxes render under document.body — not under `ref`. */
+    const isLogicalChild = (target: EventTarget | null) => {
+      if (!(target instanceof Node)) return false;
+      if (ref.current?.contains(target)) return true;
+      if (target instanceof Element) {
+        // Combobox marks its portal listbox; treat it as inside the open filter panel.
+        if (target.closest('[data-combobox-listbox="portal"]')) return true;
+      }
+      return false;
+    };
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) cancelAndClose();
+      if (!isLogicalChild(e.target)) cancelAndClose();
     };
     document.addEventListener("mousedown", onDoc);
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") cancelAndClose();
+      if (event.key !== "Escape") return;
+      // Let an open Combobox consume Escape first; do not Cancel the staged filter draft.
+      if (document.querySelector('[data-combobox-listbox="portal"]')) return;
+      cancelAndClose();
     };
     document.addEventListener("keydown", onKey);
     return () => {
