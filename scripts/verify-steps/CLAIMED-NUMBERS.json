@@ -3912,5 +3912,11 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-scheduled-status-datetime-chrome"
+  },
+  "3746": {
+    "guard": "verify-reports-scheduled-custom-raw-chrome-delete",
+    "finding": "LV-REPORTS-SCHEDULED-CUSTOM-RAW-CHROME-DELETE",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
   }
 }
