@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./InvoicesListPage";
 import { ManualJEModal } from "./ManualJEModal";
 import {
   listBills,
@@ -264,7 +265,13 @@ export function AccountingHubPage() {
   const billsMtd = useMemo(() => bills.filter((bill) => isIsoOnOrAfter(bill.bill_date, mtdStart)), [bills, mtdStart]);
   const openBillsAmountCents = openBills.reduce((sum, bill) => sum + amountOrBalanceCents(bill), 0);
   const expensesMtdCents = billsMtd.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0);
-  const openInvoices = invoices.filter((invoice) => Number(invoice.amount_open_cents ?? 0) > 0);
+  // ACCT-F200 / LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027) — amount_open_cents is a STORED GENERATED
+  // column that legitimately stays nonzero on a voided invoice (voiding changes validity, not face
+  // value); every open-A/R read path MUST exclude voided rows instead, via the same
+  // isVoidInvoice/invoiceOpenCentsForDisplay helpers InvoicesListPage already uses. This KPI was the
+  // one surface still summing the raw column unfiltered, live-overstating USMCA Open Invoices by
+  // ~$32.9k (34 void rows, $34,873.57 shown vs the real $3,200.00 open across 3 proforma rows).
+  const openInvoices = invoices.filter((invoice) => !isVoidInvoice(invoice) && invoiceOpenCentsForDisplay(invoice) > 0);
   const openInvoicesCents = openInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
   const overdueInvoices = openInvoices.filter((invoice) => invoice.due_date < companyToday());
   const overdueInvoiceCents = overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
