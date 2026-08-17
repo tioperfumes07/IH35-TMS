@@ -3964,6 +3964,11 @@
     "lane": "cursor",
     "note": "LV-DOCS-HOME-ENTITY-RAW-UUID"
   },
+  "3760": {
+    "guard": "verify-maint-preflight-dvir-wo-join-uuid",
+    "lane": "cursor",
+    "note": "CLAIM-RESERVE LV-MAINT-PREFLIGHT-DVIR-WO-JOIN-UUID"
+  },
   "3761": {
     "guard": "verify-banking-register-virtual-account-id-accepted",
     "finding": "ACCT-F5403",
