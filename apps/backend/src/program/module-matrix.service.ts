@@ -751,6 +751,19 @@ export function leafExplicitlyNamedInLiveEvidence(leaf: RequiredLeaf, text: stri
   return false;
 }
 
+/**
+ * An evidence row that declares `Exact cell:` / `Exact cells:` is making a closed, auditable
+ * column claim. Narrative words elsewhere in that row (including route names and explicit
+ * non-claims) must not broaden the declaration into additional Live credit.
+ */
+export function explicitlyNamedLiveColumns(text: string): Set<string> | null {
+  const declaration = text.match(/\bExact cells?\s*:\s*([^\n|.]*)/i)?.[1];
+  if (declaration === undefined) return null;
+  return new Set(
+    Array.from(declaration.matchAll(/`([a-z][a-z0-9_]*)`/gi), (match) => match[1].toLowerCase()),
+  );
+}
+
 function cellState(audited: boolean, built: boolean, live: boolean): MatrixCellState {
   if (live) return "live";
   if (built) return "built";
@@ -861,7 +874,9 @@ function leafColumnLiveReason(
     if (!isProdVerifiedBlob(hay)) continue;
     // Explicit leaf only — never stem/sub fan-out (LV-MATRIX-LIVE-KEYWORD-FANOUT).
     if (!leafExplicitlyNamedInLiveEvidence(leaf, hay)) continue;
-    if (!columnTouches(colId, hay) && !hay.includes(`\`${colId}\``) && !new RegExp(`\\b${escapeRegExp(colId)}\\b`).test(hay)) {
+    const declaredColumns = explicitlyNamedLiveColumns(hay);
+    if (declaredColumns && !declaredColumns.has(colId.toLowerCase())) continue;
+    if (!declaredColumns && !columnTouches(colId, hay) && !hay.includes(`\`${colId}\``) && !new RegExp(`\\b${escapeRegExp(colId)}\\b`).test(hay)) {
       continue;
     }
     return `ledger #${row.num} PROD-VERIFIED`;
