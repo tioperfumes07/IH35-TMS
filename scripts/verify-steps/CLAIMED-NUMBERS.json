@@ -3983,7 +3983,7 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1168,
+  "total_claimed": 1169,
   "3780": "verify-dispatch-assignment-history-tombstone",
   "3782": "verify-dispatch-border-crossing-history-tombstone",
   "3784": "verify-dispatch-late-arrivals-tombstone",
@@ -3991,5 +3991,6 @@
   "3788": "verify-maint-wo-console-kanban-view",
   "3785": "verify-vendor-credits-vendor-id-safe-cast",
   "3789": "verify-payments-deposited-to-account-safe-cast",
-  "3793": "verify-bill-allocation-assets-limit-in-bounds"
+  "3793": "verify-bill-allocation-assets-limit-in-bounds",
+  "3797": "verify-cash-advances-view-load-column-present"
 }
