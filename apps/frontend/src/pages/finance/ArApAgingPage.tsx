@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
@@ -269,9 +270,16 @@ export function ArApAgingPage() {
   // invoice/bill's open balance AS OF that date via accounting.ar_aging_as_of / ap_aging_as_of
   // (migration 202606290040). Future dates are clamped to today.
   const today = todayIso();
-  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply.
-  const [asOfDate, setAsOfDate] = useState<string>(today);
+  // CLS-FINANCE-READONLY-FILTER-APPLY-CANCEL-RESET — As-of staged Filters with Cancel/Reset.
   const [appliedAsOf, setAppliedAsOf] = useState<string>(today);
+  const staged = useStagedListFilters({
+    applied: { asOfDate: appliedAsOf },
+    empty: { asOfDate: today },
+    onApply: (next) => {
+      const clamped = next.asOfDate && next.asOfDate <= today ? next.asOfDate : today;
+      setAppliedAsOf(clamped);
+    },
+  });
   const isHistorical = appliedAsOf < today;
 
   const queryReady = Boolean(operatingCompanyId) && enabled;
@@ -345,26 +353,29 @@ export function ArApAgingPage() {
         subtitle="Accounts receivable & payable aging, as of any date (read-only, per entity)"
         actions={
           <div className="flex flex-wrap items-end gap-2 print:hidden">
-            <div className="flex flex-col">
-              <span className="text-[11px] font-medium text-gray-500">As of</span>
-              <DatePicker
-                value={asOfDate}
-                max={today}
-                onChange={(next) => {
-                  // Clamp to today; ignore empties so the report always has a valid as-of.
-                  setAsOfDate(next && next <= today ? next : today);
-                }}
-                className="h-9 bg-white tabular-nums"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setAppliedAsOf(asOfDate)}
-              disabled={asOfDate === appliedAsOf}
-              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            <CollapsedListFilters
+              activeFilterCount={appliedAsOf !== today ? 1 : 0}
+              onApply={staged.apply}
+              onReset={staged.reset}
+              onCancel={staged.cancel}
+              applyDisabled={!staged.dirty}
+              testIdPrefix="finance-ar-ap-aging"
+              className="rounded-sm border border-gray-200 bg-white p-2"
             >
-              Apply
-            </button>
+              <label className="text-[11px] font-medium text-gray-500">
+                As of
+                <DatePicker
+                  value={staged.draft.asOfDate}
+                  max={today}
+                  onChange={(next) => {
+                    staged.setDraft({
+                      asOfDate: next && next <= today ? next : today,
+                    });
+                  }}
+                  className="mt-1 h-9 bg-white tabular-nums"
+                />
+              </label>
+            </CollapsedListFilters>
             <button
               type="button"
               onClick={handleExport}
