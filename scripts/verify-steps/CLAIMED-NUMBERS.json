@@ -1731,6 +1731,12 @@
     "lane": "cursor",
     "note": "CLS-REPORTS-FILTER-APPLY-CANCEL-RESET"
   },
+  "3676": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-finance-scenarios-staged-filters",
+    "lane": "cursor",
+    "note": "LV-FINANCE-SCENARIOS-FILTER-APPLY-MISSING"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
