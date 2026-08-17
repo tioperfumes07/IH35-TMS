@@ -19,6 +19,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { FUEL_TAB_PATH, fuelTabFromPath } from "../../router/route-manifest";
@@ -65,6 +66,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const [tab, setTab] = useState<FuelTabId>(initialTab);
   // ACCT-F5048 — reverse "Open Fuel History" carries ?trailer_id=|unit_id=|load_id=|driver_id=
   // LST-F5172 — visible EntityPicker filters (URL-only is not reverse chrome).
+  // LST-F5214 / CLS-ADJACENT — History EntityPickers stage; URL + query only on Apply.
   const deepLinkDriverId = searchParams.get("driver_id");
   const deepLinkUnitId = searchParams.get("unit_id");
   const deepLinkLoadId = searchParams.get("load_id");
@@ -85,28 +87,36 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   useEffect(() => {
     if (deepLinkTrailerId) setTrailerPickerId(deepLinkTrailerId);
   }, [deepLinkTrailerId]);
-  const patchHistoryFilter = (key: "driver_id" | "unit_id" | "load_id" | "trailer_id", next: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (next) params.set(key, next);
-    else params.delete(key);
-    setSearchParams(params, { replace: true });
-  };
-  const setDriverFilter = (next: string) => {
-    setDriverPickerId(next);
-    patchHistoryFilter("driver_id", next);
-  };
-  const setUnitFilter = (next: string) => {
-    setUnitPickerId(next);
-    patchHistoryFilter("unit_id", next);
-  };
-  const setLoadFilter = (next: string) => {
-    setLoadPickerId(next);
-    patchHistoryFilter("load_id", next);
-  };
-  const setTrailerFilter = (next: string) => {
-    setTrailerPickerId(next);
-    patchHistoryFilter("trailer_id", next);
-  };
+  const staged = useStagedListFilters({
+    applied: {
+      driverId: driverPickerId || deepLinkDriverId || "",
+      unitId: unitPickerId || deepLinkUnitId || "",
+      loadId: loadPickerId || deepLinkLoadId || "",
+      trailerId: trailerPickerId || deepLinkTrailerId || "",
+    },
+    empty: { driverId: "", unitId: "", loadId: "", trailerId: "" },
+    onApply: (next) => {
+      setDriverPickerId(next.driverId);
+      setUnitPickerId(next.unitId);
+      setLoadPickerId(next.loadId);
+      setTrailerPickerId(next.trailerId);
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next.driverId) params.set("driver_id", next.driverId);
+          else params.delete("driver_id");
+          if (next.unitId) params.set("unit_id", next.unitId);
+          else params.delete("unit_id");
+          if (next.loadId) params.set("load_id", next.loadId);
+          else params.delete("load_id");
+          if (next.trailerId) params.set("trailer_id", next.trailerId);
+          else params.delete("trailer_id");
+          return params;
+        },
+        { replace: true },
+      );
+    },
+  });
   const effectiveDriverId = driverPickerId.trim() || deepLinkDriverId || undefined;
   const effectiveUnitId = unitPickerId.trim() || deepLinkUnitId || undefined;
   const effectiveLoadId = loadPickerId.trim() || deepLinkLoadId || undefined;
@@ -307,62 +317,73 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
             <p className="mt-2 text-xs text-gray-600">
               Fleet-card imports and office-keyed fuel purchases (manual create stamps unit / trailer / load).
             </p>
-            <div
-              className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"
-              data-testid="fuel-history-filters"
-            >
-              <label className="text-[11px] text-slate-600">
-                Driver
-                <EntityPicker
-                  kind="driver"
-                  operatingCompanyId={companyId}
-                  value={driverPickerId || null}
-                  onChange={(next) => setDriverFilter(next ?? "")}
-                  allowCreate={false}
-                  placeholder="All drivers"
-                  className="mt-1"
-                  dataTestId="fuel-history-filter-driver"
-                />
-              </label>
-              <label className="text-[11px] text-slate-600">
-                Unit
-                <EntityPicker
-                  kind="unit"
-                  operatingCompanyId={companyId}
-                  value={unitPickerId || null}
-                  onChange={(next) => setUnitFilter(next ?? "")}
-                  allowCreate={false}
-                  placeholder="All units"
-                  className="mt-1"
-                  dataTestId="fuel-history-filter-unit"
-                />
-              </label>
-              <label className="text-[11px] text-slate-600">
-                Load
-                <EntityPicker
-                  kind="load"
-                  operatingCompanyId={companyId}
-                  value={loadPickerId || null}
-                  onChange={(next) => setLoadFilter(next ?? "")}
-                  allowCreate={false}
-                  placeholder="All loads"
-                  className="mt-1"
-                  dataTestId="fuel-history-filter-load"
-                />
-              </label>
-              <label className="text-[11px] text-slate-600">
-                Trailer
-                <EntityPicker
-                  kind="trailer"
-                  operatingCompanyId={companyId}
-                  value={trailerPickerId || null}
-                  onChange={(next) => setTrailerFilter(next ?? "")}
-                  allowCreate={false}
-                  placeholder="All trailers"
-                  className="mt-1"
-                  dataTestId="fuel-history-filter-trailer"
-                />
-              </label>
+            <div className="mt-3" data-testid="fuel-history-filters">
+              <CollapsedListFilters
+                activeFilterCount={
+                  [effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId].filter(Boolean).length
+                }
+                onApply={staged.apply}
+                onReset={staged.reset}
+                onCancel={staged.cancel}
+                applyDisabled={!staged.dirty}
+                testIdPrefix="fuel-history"
+                dataAttributes={{ "data-fuel-history-filter-toolbar": "collapsed" }}
+              >
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <label className="text-[11px] text-slate-600">
+                    Driver
+                    <EntityPicker
+                      kind="driver"
+                      operatingCompanyId={companyId}
+                      value={staged.draft.driverId || null}
+                      onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
+                      allowCreate={false}
+                      placeholder="All drivers"
+                      className="mt-1"
+                      dataTestId="fuel-history-filter-driver"
+                    />
+                  </label>
+                  <label className="text-[11px] text-slate-600">
+                    Unit
+                    <EntityPicker
+                      kind="unit"
+                      operatingCompanyId={companyId}
+                      value={staged.draft.unitId || null}
+                      onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
+                      allowCreate={false}
+                      placeholder="All units"
+                      className="mt-1"
+                      dataTestId="fuel-history-filter-unit"
+                    />
+                  </label>
+                  <label className="text-[11px] text-slate-600">
+                    Load
+                    <EntityPicker
+                      kind="load"
+                      operatingCompanyId={companyId}
+                      value={staged.draft.loadId || null}
+                      onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
+                      allowCreate={false}
+                      placeholder="All loads"
+                      className="mt-1"
+                      dataTestId="fuel-history-filter-load"
+                    />
+                  </label>
+                  <label className="text-[11px] text-slate-600">
+                    Trailer
+                    <EntityPicker
+                      kind="trailer"
+                      operatingCompanyId={companyId}
+                      value={staged.draft.trailerId || null}
+                      onChange={(next) => staged.setDraft({ ...staged.draft, trailerId: next ?? "" })}
+                      allowCreate={false}
+                      placeholder="All trailers"
+                      className="mt-1"
+                      dataTestId="fuel-history-filter-trailer"
+                    />
+                  </label>
+                </div>
+              </CollapsedListFilters>
             </div>
             <div className="mt-3">
               {fuelTransactionsQuery.isLoading ? (
