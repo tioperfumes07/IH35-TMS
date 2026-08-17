@@ -2003,6 +2003,7 @@
   "3772": "verify-lists-driver-teams-dead-tombstone-link",
   "3774": "verify-lists-names-master-dead-tombstone-link",
   "3776": "verify-lists-brokers-dead-tombstone-link",
+  "3778": "verify-safety-position-history-actor-tombstone",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
