@@ -3366,6 +3366,11 @@
       "claimer": "cc-1",
       "name": "verify-bill-list-journal-entry-date-memo-resolves"
     },
+    "3689": {
+      "claimed_at": "2026-08-16",
+      "claimer": "cc-1",
+      "name": "verify-customers-open-balance-excludes-void"
+    },
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
