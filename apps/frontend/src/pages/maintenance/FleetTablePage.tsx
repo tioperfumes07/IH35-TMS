@@ -45,7 +45,7 @@ function normalizeFleetStatusParam(raw: string | null): string {
   return v;
 }
 
-function rowMatchesFleetStatus(row: UnifiedUnitProp, status: string): boolean {
+function rowMatchesFleetStatus(row: UnifiedUnitRow, status: string): boolean {
   if (!status) return true;
   if (row.status === status) return true;
   if (status === "OutOfService" && Boolean(row.is_oos)) return true;
