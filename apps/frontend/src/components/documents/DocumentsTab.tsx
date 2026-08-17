@@ -233,7 +233,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
                 ) : null}
                 {canDelete && !row.deleted_at ? (
                   <Button size="sm" variant="danger" onClick={() => setSelectedDeleteFile(row)}>
-                    Soft Delete
+                    Archive
                   </Button>
                 ) : null}
                 {isOwner && row.deleted_at ? (
