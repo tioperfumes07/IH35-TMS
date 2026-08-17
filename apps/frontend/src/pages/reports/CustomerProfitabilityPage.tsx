@@ -25,6 +25,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -59,10 +60,17 @@ export function CustomerProfitabilityPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(currentQuarterRange);
-  const [applied, setApplied] = useState(currentQuarterRange);
-  const [minRevDollars, setMinRevDollars] = useState("1000");
-  const [appliedMinCents, setAppliedMinCents] = useState(DEFAULT_MIN_REVENUE_CENTS);
+  const emptyFilters = { ...currentQuarterRange(), minRevDollars: "1000" };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
+  const appliedMinCents = useMemo(() => {
+    const d = applied.minRevDollars.trim() === "" ? DEFAULT_MIN_REVENUE_CENTS : Math.round(Number(applied.minRevDollars) * 100) || 0;
+    return Math.max(0, d);
+  }, [applied.minRevDollars]);
 
   const query = useQuery({
     queryKey: ["reports", "customer-profitability", companyId, applied.start, applied.end, appliedMinCents],
@@ -143,12 +151,6 @@ export function CustomerProfitabilityPage() {
     }));
   }, [query.data?.by_customer]);
 
-  function applyFilters() {
-    setApplied({ ...period });
-    const d = minRevDollars.trim() === "" ? DEFAULT_MIN_REVENUE_CENTS : Math.round(Number(minRevDollars) * 100) || 0;
-    setAppliedMinCents(Math.max(0, d));
-  }
-
   function exportCsv(data: CustomerProfitabilityResponse) {
     const header = ["Customer", "Loads", "Revenue", "DirectCost", "Margin", "MarginPct", "ARAging", "DaysSinceLoad", "Flags"];
     const lines = (data.by_customer ?? []).map((r) =>
@@ -197,32 +199,43 @@ export function CustomerProfitabilityPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="text-xs text-gray-600">
-          Min revenue (USD)
-          {/* M-1: dollars-mode filter; Math.round(minRevDollars*100)=min_revenue_cents byte-for-byte. */}
-          <MoneyInput valueDollars={minRevDollars ? Number(minRevDollars) : null} onChangeDollars={(d) => setMinRevDollars(d == null ? "" : String(d))} ariaLabel="Min revenue (USD)" className="mt-1 w-28" />
-        </label>
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.start}
-            onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
-          />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.end}
-            onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
-          />
-        </label>
-        <Button size="sm" onClick={applyFilters}>
-          Apply
-        </Button>
-      </div>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-customer-profitability"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-600">
+            Min revenue (USD)
+            <MoneyInput
+              valueDollars={staged.draft.minRevDollars ? Number(staged.draft.minRevDollars) : null}
+              onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minRevDollars: d == null ? "" : String(d) }))}
+              ariaLabel="Min revenue (USD)"
+              className="mt-1 w-28"
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.start}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.end}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
 

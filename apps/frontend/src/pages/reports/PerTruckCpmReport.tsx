@@ -3,9 +3,9 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -44,8 +44,13 @@ function currentQuarterRange() {
 export function PerTruckCpmReport() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(currentQuarterRange);
-  const [applied, setApplied] = useState(currentQuarterRange);
+  const defaultRange = currentQuarterRange();
+  const [applied, setApplied] = useState(defaultRange);
+  const staged = useStagedListFilters({
+    applied,
+    empty: defaultRange,
+    onApply: setApplied,
+  });
 
   const query = useQuery({
     queryKey: ["reports", "per-truck-cpm", companyId, applied.from, applied.to],
@@ -78,17 +83,26 @@ export function PerTruckCpmReport() {
         breadcrumb={["Reports", "Per-Truck CPM"]}
       />
       <ReportsSubNav />
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
-        <label className="text-sm">
-          From
-          <DatePicker className="ml-2" value={period.from} onChange={(next) => setPeriod((p) => ({ ...p, from: next }))} />
-        </label>
-        <label className="text-sm">
-          To
-          <DatePicker className="ml-2" value={period.to} onChange={(next) => setPeriod((p) => ({ ...p, to: next }))} />
-        </label>
-        <Button onClick={() => setApplied(period)}>Apply</Button>
-      </div>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(defaultRange) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-per-truck-cpm"
+        className="rounded-sm border bg-white p-4"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-sm">
+            From
+            <DatePicker className="ml-2" value={staged.draft.from} onChange={(next) => staged.setDraft((p) => ({ ...p, from: next }))} />
+          </label>
+          <label className="text-sm">
+            To
+            <DatePicker className="ml-2" value={staged.draft.to} onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))} />
+          </label>
+        </div>
+      </CollapsedListFilters>
       {query.isError ? (
         <ListErrorState
           title="Couldn't load per-truck CPM"

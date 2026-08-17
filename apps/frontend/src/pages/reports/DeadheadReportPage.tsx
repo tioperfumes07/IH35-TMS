@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -63,19 +64,27 @@ function fetchDeadheadReport(companyId: string, period: DeadheadPeriod, unitId?:
 export function DeadheadReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState<DeadheadPeriod>("last_4_weeks");
+  const [appliedPeriod, setAppliedPeriod] = useState<DeadheadPeriod>("last_4_weeks");
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const staged = useStagedListFilters({
+    applied: { period: appliedPeriod },
+    empty: { period: "last_4_weeks" as DeadheadPeriod },
+    onApply: (next) => {
+      setSelectedUnitId(null);
+      setAppliedPeriod(next.period);
+    },
+  });
 
   const reportQuery = useQuery({
-    queryKey: ["reports", "deadhead", companyId, period],
-    queryFn: () => fetchDeadheadReport(companyId, period),
+    queryKey: ["reports", "deadhead", companyId, appliedPeriod],
+    queryFn: () => fetchDeadheadReport(companyId, appliedPeriod),
     enabled: Boolean(companyId),
     retry: false,
   });
 
   const drilldownQuery = useQuery({
-    queryKey: ["reports", "deadhead", "drilldown", companyId, period, selectedUnitId],
-    queryFn: () => fetchDeadheadReport(companyId, period, selectedUnitId ?? undefined),
+    queryKey: ["reports", "deadhead", "drilldown", companyId, appliedPeriod, selectedUnitId],
+    queryFn: () => fetchDeadheadReport(companyId, appliedPeriod, selectedUnitId ?? undefined),
     enabled: Boolean(companyId && selectedUnitId),
     retry: false,
   });
@@ -115,26 +124,28 @@ export function DeadheadReportPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-4">
+      <CollapsedListFilters
+        activeFilterCount={appliedPeriod !== "last_4_weeks" ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-deadhead"
+        className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-4"
+      >
         <label className="text-xs text-gray-600">
           Period
           <select
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={period}
-            onChange={(e) => {
-              setSelectedUnitId(null);
-              setPeriod(e.target.value as DeadheadPeriod);
-            }}
+            value={staged.draft.period}
+            onChange={(e) => staged.setDraft({ period: e.target.value as DeadheadPeriod })}
           >
             <option value="last_4_weeks">Last 4 weeks</option>
             <option value="last_12_weeks">Last 12 weeks</option>
             <option value="YTD">Year to date</option>
           </select>
         </label>
-        <Button size="sm" disabled={!companyId || reportQuery.isFetching} onClick={() => void reportQuery.refetch()}>
-          Refresh
-        </Button>
-      </div>
+      </CollapsedListFilters>
 
       {reportQuery.data ? (
         <>

@@ -20,6 +20,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -55,8 +56,13 @@ export function FuelReconciliationPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(defaultRange);
-  const [applied, setApplied] = useState(defaultRange);
+  const emptyRange = defaultRange();
+  const [applied, setApplied] = useState(emptyRange);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyRange,
+    onApply: setApplied,
+  });
   const tab = useMemo(() => parseFuelReconTab(searchParams), [searchParams]);
   const setTab = (next: FuelReconTab) => {
     setSearchParams(
@@ -189,19 +195,26 @@ export function FuelReconciliationPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockVPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker className="mt-1 block h-9" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker className="mt-1 block h-9" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
-        </label>
-        <Button size="sm" onClick={() => setApplied({ ...period })}>
-          Apply
-        </Button>
-      </div>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyRange) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-fuel-reconciliation"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker className="mt-1 block h-9" value={staged.draft.start} onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))} />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker className="mt-1 block h-9" value={staged.draft.end} onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))} />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
 

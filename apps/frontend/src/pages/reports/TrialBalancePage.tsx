@@ -13,6 +13,7 @@ import {
 } from "../../api/reports";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -39,20 +40,24 @@ type SortKey = keyof AccountingTrialBalanceRow;
 export function TrialBalancePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(currentQuarterRange);
-  const [applied, setApplied] = useState(currentQuarterRange);
-  const [basis, setBasis] = useState<AccountingBasis>("accrual");
+  const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as AccountingBasis };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
   const [sortKey, setSortKey] = useState<SortKey>("account_code");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const query = useQuery({
-    queryKey: ["reports", "trial-balance", companyId, applied.start, applied.end, basis],
+    queryKey: ["reports", "trial-balance", companyId, applied.start, applied.end, applied.basis],
     queryFn: () =>
       getTrialBalanceReport({
         operating_company_id: companyId,
         from_date: applied.start,
         to_date: applied.end,
-        basis,
+        basis: applied.basis,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -60,7 +65,7 @@ export function TrialBalancePage() {
 
   const rows = useMemo(() => {
     const input = [...(query.data?.rows ?? [])];
-    if (basis === "cash") {
+    if (applied.basis === "cash") {
       const hasAr = input.some((row) => row.account_name.toLowerCase().includes("accounts receivable") || row.account_code === "1100");
       const hasAp = input.some((row) => row.account_name.toLowerCase().includes("accounts payable") || row.account_code === "2000");
       if (!hasAr) {
@@ -116,7 +121,7 @@ export function TrialBalancePage() {
       <ReportsSubNav />
       <PageHeader
         title="Trial balance"
-        subtitle={`Ledger debits and credits by account · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
+        subtitle={`Ledger debits and credits by account · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref="/reports"
         breadcrumb={["Reports", "Trial Balance"]}
         actions={
@@ -159,28 +164,38 @@ export function TrialBalancePage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <BasisSelector value={basis} onChange={setBasis} />
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.start}
-            onChange={(next) => setPeriod((previous) => ({ ...previous, start: next }))}
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-trial-balance"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <BasisSelector
+            value={staged.draft.basis}
+            onChange={(next) => staged.setDraft((previous) => ({ ...previous, basis: next }))}
           />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.end}
-            onChange={(next) => setPeriod((previous) => ({ ...previous, end: next }))}
-          />
-        </label>
-        <Button size="sm" onClick={() => setApplied({ ...period })}>
-          Apply
-        </Button>
-      </div>
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.start}
+              onChange={(next) => staged.setDraft((previous) => ({ ...previous, start: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.end}
+              onChange={(next) => staged.setDraft((previous) => ({ ...previous, end: next }))}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {summary ? (
         <div className="grid gap-2 md:grid-cols-3">
@@ -248,7 +263,7 @@ export function TrialBalancePage() {
                   <td className="px-3 py-2">
                     {canDrill ? (
                       <Link
-                        to={registerHref(row.account_id!, applied.start, applied.end, basis)}
+                        to={registerHref(row.account_id!, applied.start, applied.end, applied.basis)}
                         className="text-slate-700 underline-offset-2 hover:underline"
                       >
                         {row.account_name || "—"}

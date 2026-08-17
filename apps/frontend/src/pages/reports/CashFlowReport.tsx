@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 type CashFlowReportResponse = {
   operating_company_id: string;
@@ -22,15 +23,20 @@ function money(cents: number) {
 export function CashFlowReport() {
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [asOf, setAsOf] = useState(new Date().toISOString().slice(0, 10));
-  const [applied, setApplied] = useState(asOf);
+  const today = new Date().toISOString().slice(0, 10);
+  const [appliedAsOf, setAppliedAsOf] = useState(today);
+  const staged = useStagedListFilters({
+    applied: { asOfDate: appliedAsOf },
+    empty: { asOfDate: today },
+    onApply: (next) => setAppliedAsOf(next.asOfDate),
+  });
 
   const query = useQuery({
-    queryKey: ["reports", "cash-flow", companyId, applied],
+    queryKey: ["reports", "cash-flow", companyId, appliedAsOf],
     enabled: Boolean(companyId),
     queryFn: () =>
       apiRequest<CashFlowReportResponse>(
-        `/api/v1/reports/cash-flow?operating_company_id=${encodeURIComponent(companyId)}&as_of_date=${applied}`
+        `/api/v1/reports/cash-flow?operating_company_id=${encodeURIComponent(companyId)}&as_of_date=${appliedAsOf}`
       ),
   });
 
@@ -45,13 +51,20 @@ export function CashFlowReport() {
         breadcrumb={["Reports", "Cash Flow"]}
       />
       <ReportsSubNav />
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
+      <CollapsedListFilters
+        activeFilterCount={appliedAsOf !== today ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-cash-flow"
+        className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4"
+      >
         <label className="text-sm">
           As of
-          <DatePicker className="ml-2" value={asOf} onChange={(next) => setAsOf(next)} />
+          <DatePicker className="ml-2" value={staged.draft.asOfDate} onChange={(next) => staged.setDraft({ asOfDate: next })} />
         </label>
-        <Button onClick={() => setApplied(asOf)}>Apply</Button>
-      </div>
+      </CollapsedListFilters>
       {query.isLoading ? <p>Loading…</p> : null}
       {query.isError ? (
         <ListErrorState

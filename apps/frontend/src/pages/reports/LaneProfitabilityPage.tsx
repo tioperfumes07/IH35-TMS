@@ -22,6 +22,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LaneDetailModal } from "../../components/reports/LaneDetailModal";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
@@ -45,22 +46,23 @@ function marginClass(margin: number | null) {
 export function LaneProfitabilityPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState<LaneProfitabilityPeriod>("YTD");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
-  const [applied, setApplied] = useState<{ period: LaneProfitabilityPeriod; start?: string; end?: string }>({
-    period: "YTD",
+  const emptyFilters = { period: "YTD" as LaneProfitabilityPeriod, customStart: "", customEnd: "" };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
   });
   const [selectedLane, setSelectedLane] = useState<LaneProfitabilityLane | null>(null);
 
   const query = useQuery({
-    queryKey: ["reports", "lane-profitability", companyId, applied.period, applied.start, applied.end],
+    queryKey: ["reports", "lane-profitability", companyId, applied.period, applied.customStart, applied.customEnd],
     queryFn: () =>
       getLaneProfitability({
         operating_company_id: companyId,
         period: applied.period,
-        start: applied.start,
-        end: applied.end,
+        start: applied.period === "custom" ? applied.customStart : undefined,
+        end: applied.period === "custom" ? applied.customEnd : undefined,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -143,14 +145,6 @@ export function LaneProfitabilityPage() {
       }));
   }, [query.data?.lanes]);
 
-  function applyPeriod() {
-    setApplied({
-      period,
-      start: period === "custom" ? customStart : undefined,
-      end: period === "custom" ? customEnd : undefined,
-    });
-  }
-
   function exportCsv() {
     const header = [
       "Origin City",
@@ -192,43 +186,44 @@ export function LaneProfitabilityPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-4">
-        <label className="text-xs text-slate-600">
-          Period
-          <select
-            className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value as LaneProfitabilityPeriod)}
-          >
-            <option value="YTD">YTD</option>
-            <option value="quarter">Last quarter</option>
-            <option value="month">Last month</option>
-            <option value="custom">Custom</option>
-          </select>
-        </label>
-        {period === "custom" ? (
-          <>
+      <div className="flex flex-wrap items-end gap-3">
+        <CollapsedListFilters
+          activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty}
+          testIdPrefix="reports-lane-profitability"
+          className="rounded-sm border border-slate-200 bg-white p-4"
+        >
+          <div className="flex flex-wrap items-end gap-3">
             <label className="text-xs text-slate-600">
-              Start
-              <DatePicker
-                className="mt-1 block"
-                value={customStart}
-                onChange={(next) => setCustomStart(next)}
-              />
+              Period
+              <select
+                className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+                value={staged.draft.period}
+                onChange={(e) => staged.setDraft((p) => ({ ...p, period: e.target.value as LaneProfitabilityPeriod }))}
+              >
+                <option value="YTD">YTD</option>
+                <option value="quarter">Last quarter</option>
+                <option value="month">Last month</option>
+                <option value="custom">Custom</option>
+              </select>
             </label>
-            <label className="text-xs text-slate-600">
-              End
-              <DatePicker
-                className="mt-1 block"
-                value={customEnd}
-                onChange={(next) => setCustomEnd(next)}
-              />
-            </label>
-          </>
-        ) : null}
-        <Button type="button" onClick={applyPeriod}>
-          Apply
-        </Button>
+            {staged.draft.period === "custom" ? (
+              <>
+                <label className="text-xs text-slate-600">
+                  Start
+                  <DatePicker className="mt-1 block" value={staged.draft.customStart} onChange={(next) => staged.setDraft((p) => ({ ...p, customStart: next }))} />
+                </label>
+                <label className="text-xs text-slate-600">
+                  End
+                  <DatePicker className="mt-1 block" value={staged.draft.customEnd} onChange={(next) => staged.setDraft((p) => ({ ...p, customEnd: next }))} />
+                </label>
+              </>
+            ) : null}
+          </div>
+        </CollapsedListFilters>
         <Button type="button" variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>
           Export CSV
         </Button>

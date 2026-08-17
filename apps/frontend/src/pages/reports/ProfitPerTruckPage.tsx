@@ -9,6 +9,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
@@ -44,9 +45,13 @@ export function ProfitPerTruckPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(currentQuarterRange);
-  const [applied, setApplied] = useState(currentQuarterRange);
-  const [flagFilter, setFlagFilter] = useState<FlagFilter>("all");
+  const emptyFilters = { ...currentQuarterRange(), flagFilter: "all" as FlagFilter };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
 
   const query = useQuery({
     queryKey: ["reports", "profit-per-truck", companyId, applied.start, applied.end],
@@ -63,8 +68,8 @@ export function ProfitPerTruckPage() {
   // Free-text search: ParityTable toolbar owns it (RPT-F3488) — flag filter stays page-local.
   const filteredRows = useMemo(() => {
     const rows = query.data?.by_truck ?? [];
-    return rows.filter((row) => flagFilter === "all" || row.flags.includes(flagFilter));
-  }, [flagFilter, query.data?.by_truck]);
+    return rows.filter((row) => applied.flagFilter === "all" || row.flags.includes(applied.flagFilter));
+  }, [applied.flagFilter, query.data?.by_truck]);
 
   const sorted = filteredRows;
 
@@ -216,46 +221,48 @@ export function ProfitPerTruckPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.start}
-            onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
-          />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.end}
-            onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
-          />
-        </label>
-        <Button
-          size="sm"
-          onClick={() => {
-            setApplied({ ...period });
-          }}
-        >
-          Apply
-        </Button>
-        <label className="text-xs text-gray-600">
-          Flag
-          <select
-            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
-            value={flagFilter}
-            onChange={(event) => setFlagFilter(event.target.value as FlagFilter)}
-          >
-            <option value="all">All</option>
-            <option value="most_profitable">Most profitable</option>
-            <option value="least_profitable">Least profitable</option>
-            <option value="high_maintenance">High maintenance</option>
-            <option value="underutilized">Underutilized</option>
-          </select>
-        </label>
-      </div>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-profit-per-truck"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.start}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.end}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            Flag
+            <select
+              className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+              value={staged.draft.flagFilter}
+              onChange={(event) => staged.setDraft((p) => ({ ...p, flagFilter: event.target.value as FlagFilter }))}
+            >
+              <option value="all">All</option>
+              <option value="most_profitable">Most profitable</option>
+              <option value="least_profitable">Least profitable</option>
+              <option value="high_maintenance">High maintenance</option>
+              <option value="underutilized">Underutilized</option>
+            </select>
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
 

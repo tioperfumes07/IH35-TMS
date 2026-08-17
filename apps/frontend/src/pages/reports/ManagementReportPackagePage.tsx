@@ -8,6 +8,7 @@ import { BasisSelector, type AccountingBasis } from "../../components/accounting
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getProfitLossReport, getBalanceSheetReport, getArAgingReport, getApAgingReport, getCustomerProfitability } from "../../api/reports";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -355,9 +356,13 @@ export function ManagementReportPackagePage() {
   const pkgType: PackageType = rawType in PACKAGES ? (rawType as PackageType) : "company-overview";
   const pkg = PACKAGES[pkgType];
 
-  const [period, setPeriod] = useState(currentMonthRange);
-  const [applied, setApplied] = useState(currentMonthRange);
-  const [basis, setBasis] = useState<AccountingBasis>("accrual");
+  const emptyFilters = { ...currentMonthRange(), basis: "accrual" as AccountingBasis };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
 
   const preparedDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
@@ -387,26 +392,38 @@ export function ManagementReportPackagePage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <BasisSelector value={basis} onChange={setBasis} />
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.start}
-            onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-management-package"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <BasisSelector
+            value={staged.draft.basis}
+            onChange={(next) => staged.setDraft((previous) => ({ ...previous, basis: next }))}
           />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.end}
-            onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
-          />
-        </label>
-        <Button size="sm" onClick={() => setApplied({ ...period })}>Apply</Button>
-      </div>
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.start}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.end}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {companyId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-6 print:border-0 print:p-0">
@@ -418,7 +435,7 @@ export function ManagementReportPackagePage() {
             <div className="grid grid-cols-2 gap-4 text-xs text-slate-500 mt-6">
               <div><span className="font-semibold text-slate-700">Entity</span><br />{entityName}</div>
               <div><span className="font-semibold text-slate-700">Period</span><br />{applied.start} through {applied.end}</div>
-              <div><span className="font-semibold text-slate-700">Basis</span><br />{basis === "cash" ? "Cash" : "Accrual"}</div>
+              <div><span className="font-semibold text-slate-700">Basis</span><br />{applied.basis === "cash" ? "Cash" : "Accrual"}</div>
               <div><span className="font-semibold text-slate-700">Prepared</span><br />{preparedDate}</div>
             </div>
             <p className="mt-4 text-[10px] text-slate-400 italic">
@@ -443,17 +460,17 @@ export function ManagementReportPackagePage() {
           {pkgType === "company-overview" && (
             <>
               <SectionDivider title="Profit & Loss" index={0} />
-              <PLSection companyId={companyId} fromDate={applied.start} toDate={applied.end} basis={basis} />
+              <PLSection companyId={companyId} fromDate={applied.start} toDate={applied.end} basis={applied.basis} />
               <div className="print-page-break" />
               <SectionDivider title="Balance Sheet" index={1} />
-              <BSSection companyId={companyId} asOfDate={applied.end} basis={basis} />
+              <BSSection companyId={companyId} asOfDate={applied.end} basis={applied.basis} />
             </>
           )}
 
           {pkgType === "sales-performance" && (
             <>
               <SectionDivider title="Profit & Loss" index={0} />
-              <PLSection companyId={companyId} fromDate={applied.start} toDate={applied.end} basis={basis} />
+              <PLSection companyId={companyId} fromDate={applied.start} toDate={applied.end} basis={applied.basis} />
               <div className="print-page-break" />
               <SectionDivider title="A/R Aging Detail" index={1} />
               <ARAgingSection companyId={companyId} asOfDate={applied.end} />
@@ -466,7 +483,7 @@ export function ManagementReportPackagePage() {
           {pkgType === "expenses-performance" && (
             <>
               <SectionDivider title="Profit & Loss" index={0} />
-              <PLSection companyId={companyId} fromDate={applied.start} toDate={applied.end} basis={basis} />
+              <PLSection companyId={companyId} fromDate={applied.start} toDate={applied.end} basis={applied.basis} />
               <div className="print-page-break" />
               <SectionDivider title="A/P Aging Detail" index={1} />
               <APAgingSection companyId={companyId} asOfDate={applied.end} />

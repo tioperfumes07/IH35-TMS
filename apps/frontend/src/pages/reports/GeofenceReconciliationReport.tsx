@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -42,9 +43,12 @@ export function GeofenceReconciliationReport() {
   const [operatingCompanyId] = useState(() => sessionStorage.getItem("operating_company_id") ?? "");
   const today = new Date().toISOString().slice(0, 10);
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply.
-  const [date, setDate] = useState(yesterday);
   const [appliedDate, setAppliedDate] = useState(yesterday);
+  const staged = useStagedListFilters({
+    applied: { reportDate: appliedDate },
+    empty: { reportDate: yesterday },
+    onApply: (next) => setAppliedDate(next.reportDate),
+  });
   const qc = useQueryClient();
 
   const { data, isLoading, isError, error, refetch } = useQuery<{ data: Finding[] }>({
@@ -103,25 +107,20 @@ export function GeofenceReconciliationReport() {
         breadcrumb={["Reports", "Geofence Reconciliation Report"]}
         title="Geofence Reconciliation Report"
       />
-      <div className="mb-6 flex flex-wrap items-end gap-3">
+      <CollapsedListFilters
+        activeFilterCount={appliedDate !== yesterday ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-geofence-recon"
+        className="mb-6"
+      >
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Report Date</label>
-          <DatePicker
-            value={date}
-            onChange={setDate}
-            max={today}
-            className=""
-          />
+          <DatePicker value={staged.draft.reportDate} onChange={(next) => staged.setDraft({ reportDate: next })} max={today} className="" />
         </div>
-        <button
-          type="button"
-          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-gray-50 disabled:opacity-50"
-          onClick={() => setAppliedDate(date)}
-          disabled={date === appliedDate}
-        >
-          Apply
-        </button>
-      </div>
+      </CollapsedListFilters>
       {isError && (
         <ListErrorState
           title="Couldn't load reconciliation"

@@ -20,6 +20,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 const PAYROLL_ALERT_CENTS = 50_000_00;
 const DIP_ATTENTION_CENTS = 25_000_00;
@@ -87,9 +88,13 @@ function MiniSparkline({ values }: { values: number[] }) {
 export function CashFlowOverviewPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply (BalanceSheet pattern).
-  const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
-  const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+  const today = new Date().toISOString().slice(0, 10);
+  const [appliedAsOf, setAppliedAsOf] = useState(today);
+  const staged = useStagedListFilters({
+    applied: { asOfDate: appliedAsOf },
+    empty: { asOfDate: today },
+    onApply: (next) => setAppliedAsOf(next.asOfDate),
+  });
 
   const query = useQuery({
     queryKey: ["reports", "cash-flow-overview", companyId, appliedAsOf],
@@ -163,19 +168,24 @@ export function CashFlowOverviewPage() {
 
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
+      <CollapsedListFilters
+        activeFilterCount={appliedAsOf !== today ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-cash-flow-overview"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
         <label className="text-xs text-gray-600">
           As-of date
           <DatePicker
             className="mt-1 h-9"
-            value={asOf}
-            onChange={(next) => setAsOf(next)}
+            value={staged.draft.asOfDate}
+            onChange={(next) => staged.setDraft({ asOfDate: next })}
           />
         </label>
-        <Button size="sm" className="h-9" onClick={() => setAppliedAsOf(asOf)} disabled={asOf === appliedAsOf}>
-          Apply
-        </Button>
-      </div>
+      </CollapsedListFilters>
 
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
 

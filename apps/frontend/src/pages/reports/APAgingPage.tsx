@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
@@ -29,6 +30,13 @@ function isVendorUuid(value: string) {
 
 type APAgingRowWithBucket = APAgingRow & { bucket_0_30_cents: number };
 
+type APAgingFilters = {
+  asOfDate: string;
+  minBal: string;
+  bucketFilter: "all" | "61+";
+  vendorId: string;
+};
+
 export function APAgingPage() {
   const navigate = useNavigate();
   const { pushToast } = useToast();
@@ -38,30 +46,28 @@ export function APAgingPage() {
   // BANK-SORT-ROLLOUT-ACCT (A/P Aging follow-up): every visible column header sorts ASC/DESC;
   // sort persists in the URL (?sort=&dir=) so it survives reload / is shareable.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply (BalanceSheet pattern).
-  const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
-  const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
-  const [minBal, setMinBal] = useState("");
-  const [bucketFilter, setBucketFilter] = useState<"all" | "61+">("all");
-
-  // LST-F5179 — visible EntityPicker (URL-only name seed is not reverse chrome).
+  const today = new Date().toISOString().slice(0, 10);
   const deepLinkVendorId = searchParams.get("vendor_id")?.trim() ?? "";
-  const [vendorFilter, setVendorFilterState] = useState(deepLinkVendorId);
+  const emptyFilters: APAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", vendorId: "" };
+  const [appliedFilters, setAppliedFilters] = useState<APAgingFilters>({ ...emptyFilters, vendorId: deepLinkVendorId });
   useEffect(() => {
-    setVendorFilterState(deepLinkVendorId);
+    setAppliedFilters((prev) => ({ ...prev, vendorId: deepLinkVendorId }));
   }, [deepLinkVendorId]);
-  const effectiveVendorId = vendorFilter || deepLinkVendorId;
-  function setVendorFilter(next: string) {
-    setVendorFilterState(next);
-    const p = new URLSearchParams(searchParams);
-    if (next) p.set("vendor_id", next);
-    else p.delete("vendor_id");
-    setSearchParams(p, { replace: true });
-  }
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: (next) => {
+      setAppliedFilters(next);
+      const p = new URLSearchParams(searchParams);
+      if (next.vendorId) p.set("vendor_id", next.vendorId);
+      else p.delete("vendor_id");
+      setSearchParams(p, { replace: true });
+    },
+  });
 
   const query = useQuery({
-    queryKey: ["reports", "ap-aging", companyId, appliedAsOf],
-    queryFn: () => getApAgingReport(companyId, appliedAsOf),
+    queryKey: ["reports", "ap-aging", companyId, appliedFilters.asOfDate],
+    queryFn: () => getApAgingReport(companyId, appliedFilters.asOfDate),
     enabled: Boolean(companyId),
   });
 
@@ -75,21 +81,21 @@ export function APAgingPage() {
     return { total, day0_30, day31_60, day61p };
   }, [rows]);
 
-  const minCents = minBal.trim() === "" ? 0 : Math.round(Number(minBal) * 100) || 0;
+  const minCents = appliedFilters.minBal.trim() === "" ? 0 : Math.round(Number(appliedFilters.minBal) * 100) || 0;
 
   const filtered = useMemo<APAgingRowWithBucket[]>(() => {
     return rows
       .filter((r) => {
-        if (effectiveVendorId && r.vendor_id !== effectiveVendorId) return false;
+        if (appliedFilters.vendorId && r.vendor_id !== appliedFilters.vendorId) return false;
         if (r.total_open_cents < minCents) return false;
-        if (bucketFilter === "61+") {
+        if (appliedFilters.bucketFilter === "61+") {
           const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
           if (late <= 0) return false;
         }
         return true;
       })
       .map((r) => ({ ...r, bucket_0_30_cents: r.current_cents + r.bucket_1_30_cents }));
-  }, [rows, effectiveVendorId, minCents, bucketFilter]);
+  }, [rows, appliedFilters.vendorId, appliedFilters.bucketFilter, minCents]);
 
   function exportCsv() {
     const header = ["Vendor", "Total", "0-30", "31-60", "61-90", "91+", "Last Pmt"];
@@ -108,7 +114,7 @@ export function APAgingPage() {
     const ur = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = ur;
-    a.download = `ap-aging-${appliedAsOf}.csv`;
+    a.download = `ap-aging-${appliedFilters.asOfDate}.csv`;
     a.click();
     URL.revokeObjectURL(ur);
   }
@@ -137,7 +143,7 @@ export function APAgingPage() {
       <ReportsSubNav />
       <PageHeader
         title="A/P aging"
-        subtitle={`As of ${formatDateUS(appliedAsOf)} · open bills by vendor · Accrual basis`}
+        subtitle={`As of ${formatDateUS(appliedFilters.asOfDate)} · open bills by vendor · Accrual basis`}
         backHref="/reports"
         breadcrumb={["Reports", "A/P Aging"]}
         actions={
@@ -155,7 +161,7 @@ export function APAgingPage() {
               onClick={() =>
                 exportApAging({
                   operating_company_id: companyId,
-                  as_of_date: appliedAsOf,
+                  as_of_date: appliedFilters.asOfDate,
                   format: "pdf",
                 })
               }
@@ -169,7 +175,7 @@ export function APAgingPage() {
               onClick={() =>
                 exportApAging({
                   operating_company_id: companyId,
-                  as_of_date: appliedAsOf,
+                  as_of_date: appliedFilters.asOfDate,
                   format: "xlsx",
                 })
               }
@@ -185,42 +191,55 @@ export function APAgingPage() {
       </p>
       {query.isError ? <ListErrorState title="Couldn't load A/P aging" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4 lg:grid-cols-5">
-        <label className="text-xs text-gray-600">
-          As-of date
-          <DatePicker className="mt-1 h-9 w-full" value={asOf} onChange={(next) => setAsOf(next)} />
-        </label>
-        <label className="text-xs text-gray-600">
-          Vendor
-          <EntityPicker
-            kind="vendor"
-            operatingCompanyId={companyId}
-            value={effectiveVendorId || null}
-            onChange={(next) => setVendorFilter(next ?? "")}
-            allowCreate={false}
-            placeholder="All vendors"
-            className="mt-1"
-            dataTestId="ap-aging-filter-vendor"
-          />
-        </label>
-        <label className="text-xs text-gray-600">
-          Min balance ($)
-          {/* M-1: dollars-mode filter; Math.round(minBal*100) byte-for-byte. */}
-          <MoneyInput valueDollars={minBal ? Number(minBal) : null} onChangeDollars={(d) => setMinBal(d == null ? "" : String(d))} ariaLabel="Min balance ($)" className="mt-1 w-full" />
-        </label>
-        <label className="text-xs text-gray-600">
-          Aging bucket
-          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={bucketFilter} onChange={(e) => setBucketFilter(e.target.value as typeof bucketFilter)}>
-            <option value="all">All</option>
-            <option value="61+">61+ days past due portion</option>
-          </SelectCombobox>
-        </label>
-        <div className="flex items-end">
-          <Button size="sm" className="h-9 w-full" onClick={() => setAppliedAsOf(asOf)} disabled={asOf === appliedAsOf}>
-            Apply
-          </Button>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(appliedFilters) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-ap-aging"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="grid gap-2 md:grid-cols-4 lg:grid-cols-5">
+          <label className="text-xs text-gray-600">
+            As-of date
+            <DatePicker className="mt-1 h-9 w-full" value={staged.draft.asOfDate} onChange={(next) => staged.setDraft((p) => ({ ...p, asOfDate: next }))} />
+          </label>
+          <label className="text-xs text-gray-600">
+            Vendor
+            <EntityPicker
+              kind="vendor"
+              operatingCompanyId={companyId}
+              value={staged.draft.vendorId || null}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, vendorId: next ?? "" }))}
+              allowCreate={false}
+              placeholder="All vendors"
+              className="mt-1"
+              dataTestId="ap-aging-filter-vendor"
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            Min balance ($)
+            <MoneyInput
+              valueDollars={staged.draft.minBal ? Number(staged.draft.minBal) : null}
+              onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minBal: d == null ? "" : String(d) }))}
+              ariaLabel="Min balance ($)"
+              className="mt-1 w-full"
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            Aging bucket
+            <SelectCombobox
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
+              value={staged.draft.bucketFilter}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, bucketFilter: e.target.value as APAgingFilters["bucketFilter"] }))}
+            >
+              <option value="all">All</option>
+              <option value="61+">61+ days past due portion</option>
+            </SelectCombobox>
+          </label>
         </div>
-      </div>
+      </CollapsedListFilters>
 
       <div className="grid gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
