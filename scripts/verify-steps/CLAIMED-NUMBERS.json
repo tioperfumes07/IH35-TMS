@@ -3983,12 +3983,13 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1167,
+  "total_claimed": 1168,
   "3780": "verify-dispatch-assignment-history-tombstone",
   "3782": "verify-dispatch-border-crossing-history-tombstone",
   "3784": "verify-dispatch-late-arrivals-tombstone",
   "3786": "verify-fleet-oos-status-filter",
   "3788": "verify-maint-wo-console-kanban-view",
   "3785": "verify-vendor-credits-vendor-id-safe-cast",
-  "3789": "verify-payments-deposited-to-account-safe-cast"
+  "3789": "verify-payments-deposited-to-account-safe-cast",
+  "3793": "verify-bill-allocation-assets-limit-in-bounds"
 }
