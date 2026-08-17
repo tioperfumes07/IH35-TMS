@@ -62,4 +62,6 @@ One-liner after each action. Communicate BLOCKED to other seats via their INBOX 
 **ONLY GOAL:** system FULLY READY (Fully-Wired 1–11 + live verification → Live Chrome last). McLeod/QBO-grade honesty. No soft critical-path. No Day-2 park of the bar.
 **ENTITY ORDER:** **USMCA first — make everything honest for USMCA.** QuickBooks / TRANSP is NOT the issue tonight. TRANSP is not working anymore — do not block USMCA on TRANSP/QBO work. QBO-for-TRANSP later, after USMCA is fully ready.
 **MODE:** continuous FAST-MERGE · heartbeats OFF · Jorge not the bus · ANSWERED=CLOSED · LET'S GO NOW.
+## CODEX LIVE HANDOFF · 2026-08-16
 
+CLAIM `LV-LOAD-DISPATCHER-SAFETY-EVENTS-REVERSE-ERROR`: selected-USMCA load detail `/dispatch/loads/96ecc9cb-e62c-4ee7-8eed-28514771d984?view=list` reproduced `Could not load dispatcher safety events` twice after cash-flow drilled into it. Exact paths: `DispatcherSafetyEventsReverseBlock.tsx:24-38`, `api/identity.ts:184-192`, `dispatcher-safety-events.routes.ts:420-460`. Capture authenticated endpoint status/body, fix root cause, focused mutation guard, then Live prove linked rows or honest `None linked.`. `BLOCKS=LIVE-CASH-FLOW-LOAD-REVERSE`; OWNER-GATED=no.
