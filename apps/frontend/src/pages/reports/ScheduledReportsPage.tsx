@@ -18,6 +18,7 @@ import { ScheduleReportModal } from "./ScheduleReportModal";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useSearchParams } from "react-router-dom";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const REPORT_PRESETS: Record<string, { title: string; subtitle: string; reportIds: Set<string> }> = {
   "owner-weekly": {
@@ -31,6 +32,65 @@ const REPORT_PRESETS: Record<string, { title: string; subtitle: string; reportId
     reportIds: new Set(["cash-position-ar", "profit-per-truck-week", "settlements-ready", "ifta-quarterly-state"]),
   },
 };
+
+/** Governed display labels for known scheduled-custom report_id slugs (API id stays raw). */
+const REPORT_LABELS: Record<string, string> = {
+  "dispatch-board": "Dispatch board",
+  "cash-position-ar": "Cash position / A/R",
+  "profit-per-truck-week": "Profit per truck (week)",
+  "settlements-ready": "Settlements ready",
+  "maintenance-open-wos": "Maintenance open WOs",
+  "ifta-quarterly-state": "IFTA quarterly by state",
+  "cash-flow-overview": "Cash flow overview",
+  "settlement-summary": "Settlement summary",
+  "customer-profitability": "Customer profitability",
+  "profit-per-truck": "Profit per truck",
+  "fuel-reconciliation": "Fuel reconciliation",
+  "maintenance-cost-per-unit": "Maintenance cost per unit",
+  "ar-aging": "A/R aging",
+  "ap-aging": "A/P aging",
+};
+
+function isSlugLike(value: string, reportId: string): boolean {
+  const v = value.trim();
+  if (!v) return true;
+  if (v === reportId) return true;
+  return /^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(v);
+}
+
+function humanizeReportSlug(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((part) => {
+      const lower = part.toLowerCase();
+      if (["ar", "ap", "wo", "wos", "ifta", "pnl"].includes(lower)) return lower.toUpperCase();
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join(" ");
+}
+
+function scheduledReportLabel(row: ScheduledReportListRow): string {
+  const mapped = REPORT_LABELS[row.report_id];
+  const name = (row.name ?? "").trim();
+  if (name && !isSlugLike(name, row.report_id)) return name;
+  if (mapped) return mapped;
+  if (name) return humanizeReportSlug(name);
+  return humanizeReportSlug(row.report_id);
+}
+
+function scheduledStatusLabel(status: string): "Active" | "Paused" | "Failed" | string {
+  if (status === "active") return "Active";
+  if (status === "paused") return "Paused";
+  if (status === "failed" || status === "error") return "Failed";
+  if (!status) return "—";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function scheduledTimestampLabel(value: string | null | undefined): string {
+  if (!value) return "—";
+  return formatDateTimeUS(value) || "—";
+}
 
 function statusPill(status: string) {
   if (status === "active") return "bg-emerald-100 text-emerald-900 border-emerald-200";
@@ -83,9 +143,9 @@ export function ScheduledReportsPage() {
     mutationFn: (id: string) => deleteScheduledReport(id, companyId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["scheduled-reports-v2"] });
-      pushToast("Deleted", "success");
+      pushToast("Deactivated", "success");
     },
-    onError: () => pushToast("Delete failed", "error"),
+    onError: () => pushToast("Deactivate failed", "error"),
   });
 
   const allRows = listQuery.data?.rows ?? [];
@@ -93,16 +153,34 @@ export function ScheduledReportsPage() {
 
   const columns = useMemo<ParityColumn<ScheduledReportListRow>[]>(
     () => [
-      { key: "name", label: "Report", sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
+      {
+        key: "name",
+        label: "Report",
+        sortable: true,
+        sortValue: (r) => scheduledReportLabel(r),
+        render: (r) => <span className="font-medium">{scheduledReportLabel(r)}</span>,
+      },
       { key: "cadence_label", label: "Frequency", sortable: true },
       { key: "recipients", label: "Recipients" },
-      { key: "last_run_at", label: "Last run", render: (r) => r.last_run_at?.slice(0, 19) ?? "—" },
-      { key: "next_run_at", label: "Next run", render: (r) => r.next_run_at?.slice(0, 19) ?? "—" },
+      {
+        key: "last_run_at",
+        label: "Last run",
+        render: (r) => scheduledTimestampLabel(r.last_run_at),
+      },
+      {
+        key: "next_run_at",
+        label: "Next run",
+        render: (r) => scheduledTimestampLabel(r.next_run_at),
+      },
       {
         key: "status",
         label: "Status",
         sortable: true,
-        render: (r) => <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>,
+        render: (r) => (
+          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>
+            {scheduledStatusLabel(r.status)}
+          </span>
+        ),
       },
     ],
     [],
@@ -148,7 +226,7 @@ export function ScheduledReportsPage() {
               Send now
             </Button>
             <Button size="sm" variant="secondary" loading={delMut.isPending} onClick={() => delMut.mutate(r.id)}>
-              Delete
+              Deactivate
             </Button>
           </div>
         )}

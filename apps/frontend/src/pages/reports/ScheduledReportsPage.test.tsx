@@ -75,12 +75,13 @@ describe("ScheduledReportsPage", () => {
     expect(await screen.findByTestId("scheduled-reports-backend-pending")).toBeInTheDocument();
   });
 
-  it("delete removes via API", async () => {
+  it("deactivate soft-voids via API", async () => {
     const user = userEvent.setup();
     const delSpy = vi.spyOn(schedApi, "deleteScheduledReport").mockResolvedValue({ ok: true });
     render(wrap(<ScheduledReportsPage />));
     await screen.findByText("AR weekly");
-    await user.click(screen.getByRole("button", { name: /^delete$/i }));
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^deactivate$/i }));
     await waitFor(() => expect(delSpy).toHaveBeenCalledWith("s1", "11111111-1111-1111-1111-111111111111"));
   });
 });
