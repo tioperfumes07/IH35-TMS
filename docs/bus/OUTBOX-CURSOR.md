@@ -2,3 +2,4 @@
 2026-08-17T01:01Z Cursor LEAD | BUS-SINGLE-CHANNEL FAST-MERGE landing · Desktop=docs/bus symlinks · seats WORK from Desktop INBOX NONSTOP
 2026-08-17T01:04Z Cursor LEAD | bus-sync-inboxes · CC-1=accounting:expenses-create-drawer · Cascade=continuous-verify
 2026-08-17T01:04Z Cursor LEAD | post-#8016 SYNC INBOX-CC-1+CASCADE · seats WORK
+2026-08-17T01:20Z Cursor | MERGED #8025 Tracker GATED FO @ 5a5a2ac · BookLoad Neon PASS L-20260816-0168 dispatched USMCA · INBOX sync 20:20 CT · next=FO HANDOFFs + deploy wait
