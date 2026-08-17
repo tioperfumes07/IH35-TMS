@@ -15,3 +15,7 @@ CLAIM `LV-CASH-FLOW-ADJUSTMENT-FALSE-BILL-EXPENSE-CREATOR`: selected-USMCA `/cas
 ## CODEX LIVE HANDOFF · CASH FLOW SPLIT FILTERS · 2026-08-16
 
 CLAIM `LV-CASH-FLOW-ACTUAL-SPLIT-FILTER-APPLY`: selected-USMCA Actual vs Projected has From/To in an Apply-only block and Net variance in staged Filters. In `ActualVsProjectedTab.tsx:175-250`, combine all three into one draft with atomic Apply, Cancel, Reset, invalid-range blocking, and unchanged disable. Preserve scoped query, three real rows, variance math, formatting, and toolbar; no writes. Ratchet split Apply, date Cancel/Reset omission, immediate commit, and invalid commit. `BLOCKS=LIVE-CASH-FLOW-ACTUAL-VS-PROJECTED-FILTER-CHROME`; OWNER-GATED=no.
+
+## CODEX LIVE HANDOFF · FINANCE READ-ONLY FILTER CLASS · 2026-08-16
+
+CLAIM `CLS-FINANCE-READONLY-FILTER-APPLY-CANCEL-RESET`: selected-USMCA `/finance/statements` has immediate Basis + Apply-only From/To or As-of, and `/finance/ar-ap-aging` has Apply-only As-of. Stage the complete query tuple per leaf with Apply/Cancel/Reset and unchanged/invalid disable. Preserve all reads, calculations, exports, print, toolbars, drills, and no-posting behavior. One guard inventories both leaves and mutates immediate Basis/As-of, missing Cancel/Reset, and query-state drift independently. `BLOCKS=LIVE-FINANCE-NONMONEY-HOPS-FILTER-CHROME`; OWNER-GATED=no.
