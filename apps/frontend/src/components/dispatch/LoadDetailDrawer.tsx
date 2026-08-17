@@ -149,11 +149,19 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   const [abandonmentOpen, setAbandonmentOpen] = useState(false);
   const { pushToast } = useToast();
 
-  // BUG 1 fix: the side panel reads via the entity-scoped dispatch endpoint (operating_company_id passed) so
-  // the Overview can't hang on an RLS-null / unscoped read; falls back to the mdata read if no company id.
+  // BUG 1 fix: prefer entity-scoped dispatch GET. When that 404s (historically: INNER JOIN on a
+  // deactivated customer — LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END), fall back to mdata GET so the
+  // canonical /dispatch/loads/:id drawer still shows the load.
   const dispatchLoadQuery = useDispatchLoad(loadId, operatingCompanyId);
-  const mdataLoadQuery = useLoad(operatingCompanyId ? null : loadId);
-  const loadQuery = operatingCompanyId ? dispatchLoadQuery : mdataLoadQuery;
+  const dispatchFailed = Boolean(operatingCompanyId && dispatchLoadQuery.isError);
+  const mdataLoadQuery = useLoad(operatingCompanyId ? (dispatchFailed ? loadId : null) : loadId);
+  const loadQuery = !operatingCompanyId
+    ? mdataLoadQuery
+    : dispatchLoadQuery.data
+      ? dispatchLoadQuery
+      : dispatchFailed
+        ? mdataLoadQuery
+        : dispatchLoadQuery;
   const auditQuery = useLoadAudit(loadId);
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
