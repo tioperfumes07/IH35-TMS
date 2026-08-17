@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../lib/formatDate";
+import { customerStatusLabel } from "../lib/customerStatusLabel";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
@@ -206,10 +207,7 @@ function statusVariant(status: Customer["status"]): "crit" | "warn" | "neutral" 
 }
 
 function statusLabel(status: Customer["status"]) {
-  if (status === "credit_hold") return "Credit Hold";
-  if (status === "blacklist") return "Blacklist";
-  if (status === "inactive") return "Inactive";
-  return "Active";
+  return customerStatusLabel(status);
 }
 
 function departmentVariant(department: CustomerContactDepartment): "crit" | "warn" | "info" | "positive" | "neutral" {
