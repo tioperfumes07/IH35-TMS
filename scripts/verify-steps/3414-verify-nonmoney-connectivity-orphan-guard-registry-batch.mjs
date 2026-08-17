@@ -11,6 +11,7 @@ const guards = [
   "verify-reports-fuel-price-variance-connectivity.mjs",
   "verify-reports-hos-violations-connectivity.mjs",
   "verify-reports-hub-connectivity.mjs",
+  "verify-reports-maint-cost-runner-unit-linkage.mjs",
   "verify-reports-runner-canonical-aliases.mjs",
   "verify-reports-runner-entity-link-vertical.mjs",
   "verify-reports-saved-preset-connectivity.mjs",

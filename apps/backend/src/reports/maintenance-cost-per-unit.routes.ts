@@ -102,6 +102,24 @@ type MaintTruckRow = {
   flags: MaintCostFlag[];
 };
 
+export type MaintenanceCostRunnerRow = {
+  unit_id: string;
+  unit_number: string;
+  total_cost_cents: number;
+  wo_count: number;
+  avg_cost_per_wo_cents: number;
+};
+
+export function toMaintenanceCostRunnerRow(truck: MaintTruckRow): MaintenanceCostRunnerRow {
+  return {
+    unit_id: truck.unit_id,
+    unit_number: truck.unit_number,
+    total_cost_cents: truck.total_cents,
+    wo_count: truck.wo_count,
+    avg_cost_per_wo_cents: truck.avg_wo_cents,
+  };
+}
+
 export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/maintenance-cost-per-unit", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -326,12 +344,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
         };
       });
 
-      const rows = byTruck.map((t: MaintTruckRow) => ({
-        unit_number: t.unit_number,
-        total_cost_cents: t.total_cents,
-        wo_count: t.wo_count,
-        avg_cost_per_wo_cents: t.avg_wo_cents,
-      }));
+      const rows = byTruck.map(toMaintenanceCostRunnerRow);
 
       return {
         period: { start: startDay, end: endDay },
