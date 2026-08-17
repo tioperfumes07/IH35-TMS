@@ -1888,6 +1888,92 @@
     "guard": "verify-users-create-picker-applicability",
     "lane": "cursor"
   },
+  "3728": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-account-type-human-labels"
+  },
+  "3730": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-profit-per-truck-flag-human-labels"
+  },
+  "3732": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-booking-gap-staged-period-filter"
+  },
+  "3734": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-maint-cost-flag-human-labels"
+  },
+  "3736": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-customer-profitability-flag-human-labels"
+  },
+  "3738": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-trip-profitability-two-decimal-money"
+  },
+  "3740": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-cash-flow-compound-label-human"
+  },
+  "3742": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-cash-flow-overview-iso-axis"
+  },
+  "3744": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-scheduled-status-datetime-chrome"
+  },
+  "3746": {
+    "guard": "verify-reports-scheduled-custom-raw-chrome-delete",
+    "finding": "LV-REPORTS-SCHEDULED-CUSTOM-RAW-CHROME-DELETE",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
+  },
+  "3748": {
+    "guard": "verify-reports-cancellations-by-date-iso-chrome",
+    "finding": "LV-REPORTS-CANCELLATIONS-BY-DATE-RAW-ISO",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
+  },
+  "3750": {
+    "guard": "verify-reports-ifta-runner-duplicate-policy-chrome",
+    "finding": "LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
+  },
+  "3752": {
+    "guard": "verify-bus-single-channel",
+    "finding": "INFRA-GUARD-BUS-SINGLE-CHANNEL-ORPHAN",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
+  },
+  "3753": {
+    "guard": "verify-settlement-manual-paid-reopen-confirmed",
+    "finding": "ACCT-F5401",
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-17"
+  },
+  "3754": {
+    "guard": "verify-fuel-history-transaction-date-display",
+    "lane": "cursor",
+    "note": "LV-FUEL-HISTORY-RAW-ISO-DATETIME"
+  },
+  "3757": {
+    "guard": "verify-matrix-banking-module-alias-recognized",
+    "finding": "ACCT-F5402",
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-08-17"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -3867,86 +3953,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165,
-  "3728": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-account-type-human-labels"
-  },
-  "3730": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-profit-per-truck-flag-human-labels"
-  },
-  "3732": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-booking-gap-staged-period-filter"
-  },
-  "3734": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-maint-cost-flag-human-labels"
-  },
-  "3736": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-customer-profitability-flag-human-labels"
-  },
-  "3738": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-trip-profitability-two-decimal-money"
-  },
-  "3740": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-cash-flow-compound-label-human"
-  },
-  "3742": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-cash-flow-overview-iso-axis"
-  },
-  "3744": {
-    "claimed_at": "2026-08-17",
-    "claimed_by": "cursor",
-    "purpose": "verify-reports-scheduled-status-datetime-chrome"
-  },
-  "3746": {
-    "guard": "verify-reports-scheduled-custom-raw-chrome-delete",
-    "finding": "LV-REPORTS-SCHEDULED-CUSTOM-RAW-CHROME-DELETE",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-17"
-  },
-  "3748": {
-    "guard": "verify-reports-cancellations-by-date-iso-chrome",
-    "finding": "LV-REPORTS-CANCELLATIONS-BY-DATE-RAW-ISO",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-17"
-  },
-  "3750": {
-    "guard": "verify-reports-ifta-runner-duplicate-policy-chrome",
-    "finding": "LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-17"
-  },
-  "3752": {
-    "guard": "verify-bus-single-channel",
-    "finding": "INFRA-GUARD-BUS-SINGLE-CHANNEL-ORPHAN",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-17"
-  },
-  "3753": {
-    "guard": "verify-settlement-manual-paid-reopen-confirmed",
-    "finding": "ACCT-F5401",
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-17"
-  },
-  "3757": {
-    "guard": "verify-matrix-banking-module-alias-recognized",
-    "finding": "ACCT-F5402",
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-17"
-  }
+  "total_claimed": 1165
 }
