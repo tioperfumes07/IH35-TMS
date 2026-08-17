@@ -1803,6 +1803,12 @@
     "lane": "cursor",
     "note": "LV-REPORTS-CUSTOMER-PROFITABILITY-RAW-UUID-LABELS"
   },
+  "3700": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-scenario-tracker-loading-not-fetch-failed",
+    "lane": "cursor",
+    "note": "LV-PROGRAM-SCENARIO-TRACKER-FETCH-FAILED"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
