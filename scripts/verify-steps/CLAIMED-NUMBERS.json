@@ -3985,5 +3985,6 @@
   },
   "total_claimed": 1165,
   "3780": "verify-dispatch-assignment-history-tombstone",
-  "3782": "verify-dispatch-border-crossing-history-tombstone"
+  "3782": "verify-dispatch-border-crossing-history-tombstone",
+  "3784": "verify-dispatch-late-arrivals-tombstone"
 }
