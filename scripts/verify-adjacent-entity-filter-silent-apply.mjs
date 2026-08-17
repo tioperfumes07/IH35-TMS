@@ -51,6 +51,10 @@ const TARGETS = [
     file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
     entityKeys: ["driverId", "loadId"],
   },
+  {
+    file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+    entityKeys: ["driverId", "unitId", "loadId", "trailerId"],
+  },
 ];
 
 function analyze(src, entityKeys) {

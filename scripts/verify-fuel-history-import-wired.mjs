@@ -94,6 +94,19 @@ function checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc) {
   if (!/dataTestId="fuel-history-filter-trailer"/.test(plannerSrc)) {
     failures.push("FuelPlannerHome History must expose trailer EntityPicker filter");
   }
+  // LST-F5214 — History entity filters commit only via staged Apply (no silent URL helpers).
+  if (!/useStagedListFilters/.test(plannerSrc) || !/CollapsedListFilters/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must use CollapsedListFilters + useStagedListFilters");
+  }
+  if (!/onApply=\{staged\.apply\}/.test(plannerSrc) || !/onReset=\{staged\.reset\}/.test(plannerSrc) || !/onCancel=\{staged\.cancel\}/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must wire Apply/Cancel/Reset to staged handlers");
+  }
+  if (/function patchHistoryFilter|const setDriverFilter\s*=|const setUnitFilter\s*=|const setLoadFilter\s*=|const setTrailerFilter\s*=/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must not keep silent set*Filter / patchHistoryFilter helpers");
+  }
+  if (!/staged\.draft\.driverId/.test(plannerSrc) || !/staged\.setDraft/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History EntityPickers must bind staged.draft");
+  }
   if (!/FUEL_HISTORY_KIND/.test(reverseSrc ?? "") || !/kind=\{FUEL_HISTORY_KIND\[filterKey\]\}/.test(reverseSrc ?? "") || !/fuel_history_driver/.test(reverseSrc ?? "") || !/fuel_history_trailer/.test(reverseSrc ?? "")) {
     failures.push("FuelTransactionsReverseSection Open Fuel History must use EntityLink FUEL_HISTORY_KIND filter map");
   }
@@ -212,12 +225,16 @@ function selftest() {
   const goodPlanner = `
     import { getFuelTransactions } from "../../api/fuelPlanner";
     import { ImportFuelTransactionsModal } from "./components/ImportFuelTransactionsModal";
+    import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
     const deepLinkTrailerId = searchParams.get("trailer_id");
+    const staged = useStagedListFilters({ applied: { driverId: "" }, empty: { driverId: "" }, onApply });
     const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId, { trailer_id: effectiveTrailerId }) });
+    <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel}>
     dataTestId="fuel-history-filter-driver" allowCreate={false}
     dataTestId="fuel-history-filter-unit"
     dataTestId="fuel-history-filter-load"
     dataTestId="fuel-history-filter-trailer"
+    staged.draft.driverId staged.setDraft
     <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
     <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
     <ImportFuelTransactionsModal open={importOpen} />
