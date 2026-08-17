@@ -1997,6 +1997,7 @@
   },
   "3762": "verify-docs-soft-delete-recoverable-copy",
   "3764": "verify-maint-wo-create-primary-opens",
+  "3766": "verify-dispatch-load-deeplink-opens-drawer",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
