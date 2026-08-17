@@ -1366,6 +1366,11 @@ export type JournalEntrySourceLink = {
   linked_object_id: string | null;
   relationship_role: string | null;
   source_link_created_at: string | null;
+  // LV-JE-SOURCE-LINKS-INVOICE-NOT-VISIBLE — resolved display_id for invoice/bill source types
+  // only (the two most common real types); null for every other linked_object_type, which still
+  // renders the honest entityLabel(null, ...) fallback.
+  source_transaction_display_id: string | null;
+  linked_object_display_id: string | null;
 };
 
 /** Reverse drill: what source document posted this JE (invoice/bill/expense/…). */
