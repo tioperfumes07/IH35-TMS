@@ -103,9 +103,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
-  // LV-MAINT-RM-STATUS-BOARD-SHELL: always derive from pathname — never leave a stale
-  // useState(initialTab) after client navigations between MaintenanceTabRoute mounts.
-  const tab = (maintenanceTabFromPath(location.pathname) as MaintenanceTabId) || initialTab;
+  // LV-MAINT-RM-STATUS-BOARD-SHELL / LV-MAINTENANCE-*-SHELL: derive from pathname when it
+  // matches a leaf; otherwise honor MaintenanceTabRoute initialTab (never invent active_wos).
+  const tab = (maintenanceTabFromPath(location.pathname) ?? initialTab) as MaintenanceTabId;
   const [sourceTypeFilter, setSourceTypeFilter] = useState("");
   const [externalVendorFilter, setExternalVendorFilter] = useState("");
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
@@ -297,6 +297,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {companyId && tab !== "rm_status_board" ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
 
       {tab === "active_wos" ? (
+        <div data-testid="maintenance-active-wos-tab" data-maintenance-tab="active_wos">
         <WorkOrdersTable
           rows={workOrdersQuery.data?.work_orders ?? []}
           operatingCompanyId={companyId}
@@ -306,6 +307,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           onSourceTypeChange={setSourceTypeFilter}
           onExternalVendorChange={setExternalVendorFilter}
         />
+        </div>
       ) : null}
 
       {tab === "rm_status_board" ? (
@@ -354,11 +356,23 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         </div>
       ) : null}
 
-      {tab === "fleet_table" ? <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns /> : null}
+      {tab === "fleet_table" ? (
+        <div data-testid="maintenance-fleet-table-tab" data-maintenance-tab="fleet_table">
+          <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />
+        </div>
+      ) : null}
 
-      {tab === "service_location" ? <ServiceLocationPage operatingCompanyId={companyId} /> : null}
+      {tab === "service_location" ? (
+        <div data-testid="maintenance-service-location-tab" data-maintenance-tab="service_location">
+          <ServiceLocationPage operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
-      {tab === "arriving_soon" ? <ArrivingSoonPage operatingCompanyId={companyId} /> : null}
+      {tab === "arriving_soon" ? (
+        <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
+          <ArrivingSoonPage operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
       {tab === "in_transit_issues"
         ? triageQuery.isError
@@ -391,7 +405,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {/* Damage Reports = the FORMAL register (safety.incidents, read-only). The driver-PWA intake queue
           moved to its own "Driver Reports" tab below — additive, nothing removed. */}
-      {tab === "damage_reports" ? <MaintenanceDamageRegisterTab operatingCompanyId={companyId} /> : null}
+      {tab === "damage_reports" ? (
+        <div data-testid="maintenance-damage-reports-tab" data-maintenance-tab="damage_reports">
+          <MaintenanceDamageRegisterTab operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
       {tab === "driver_reports" ? (
         <DriverReportsQueuePage

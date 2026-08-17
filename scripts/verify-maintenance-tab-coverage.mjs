@@ -59,6 +59,9 @@ function main() {
   if (!homeSrc.includes("maintenanceTabFromPath(location.pathname)")) {
     failures.push("rm_status_board tab must derive from location.pathname (not stale useState)");
   }
+  if (!homeSrc.includes("maintenanceTabFromPath(location.pathname) ?? initialTab")) {
+    failures.push("tab must prefer path leaf then MaintenanceTabRoute initialTab (never invent active_wos)");
+  }
   const bucketsPath = path.join(ROOT, "apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx");
   const bucketsSrc = readIfExists(bucketsPath);
   if (!bucketsSrc.includes('data-testid="rm-buckets-grid"')) {
@@ -81,14 +84,25 @@ function main() {
   if (!routeManifestSrc.includes('norm === "/maintenance/dvir"')) {
     failures.push("maintenanceTabFromPath must map /maintenance/dvir → pre_flight_dvir");
   }
+  if (!routeManifestSrc.includes("return null")) {
+    failures.push("maintenanceTabFromPath must return null for bare /maintenance and unknown paths");
+  }
   for (const testid of [
     "maintenance-parts-inventory-tab",
     "maintenance-road-service-tab",
     "maintenance-pre-flight-dvir-tab",
+    "maintenance-fleet-table-tab",
+    "maintenance-damage-reports-tab",
+    "maintenance-active-wos-tab",
+    "maintenance-service-location-tab",
+    "maintenance-arriving-soon-tab",
   ]) {
     if (!homeSrc.includes(`data-testid="${testid}"`)) {
       failures.push(`missing_testid:${testid}`);
     }
+  }
+  if (!manifestSource.includes('path="/settings/company"')) {
+    failures.push("missing_route:settings_company_alias:/settings/company");
   }
 
   for (const endpoint of requiredKpiEndpoints) {
