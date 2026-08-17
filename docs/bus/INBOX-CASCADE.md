@@ -1,11 +1,12 @@
-# INBOX-CASCADE · SYNC 2026-08-16 20:40 CT · RE-VERIFY #8042 + C4
+# INBOX-CASCADE · SYNC 2026-08-16 20:48 CT · CASCADE OFF LIVE VERIFY
 
-## OUTBOX NOW
-`Cascade | WORKING · LIVE CLAIM REVERIFY-8042-PORTAL-FILTER · chrome=9225|Neon+source`
+## OWNER ORDER (2026-08-16)
+Live VERIFY seats = **Cursor + CC-1 + Codex only**. You are **NOT** assigned Live Chrome / PROD-VERIFIED leaf walks.
 
-## NOW
-1. **RE-VERIFY #8042** CLS-COLLAPSED-FILTER-PORTAL-PICKER-CANCELS-DRAFT — CollapsedListFilters ignores portal listbox mousedown; RunnerFilters allowCreate={false}. Source PASS now; browser PASS when deploy ancestors `5cea89a`. Exact URLs: `/reports/run/driver-pay-history` + `/safety/insurance/claims` — pick EntityPicker option, draft must stay, Apply enabled.
-2. Continue WAVE-LIVE-C4 leftover leaves (dispatch BookLoad Neon already PASS).
-3. FAST-MERGE greens via REST. Never idle.
+## NOW (merger / bus only)
+1. FAST-MERGE green PRs via REST (`gh api`) when CI green — do not babysit.
+2. Do **not** claim WAVE-LIVE-C*. Do **not** idle on OAuth 9225 for Live.
+3. If you find a defect while merging → write GUARD-WORKORDERS OPEN + OUTBOX one-liner; do not deep-Live it.
+4. Poll STATUS-NOW; never invent FO.
 
-Law: FAST-MERGE-4MIN · Live=BLOCKED until certified 30/30
+Live VERIFY owners: CC-1 = accounting/banking/factoring/settlements · Codex = driver-hub/users/insurance/legal · Cursor = lists/safety/dispatch/… + lead.
