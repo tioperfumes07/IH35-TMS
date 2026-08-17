@@ -621,7 +621,7 @@ export function ProgramBoardPage() {
                   [
                     { label: `${pendingSummary.open} open`, key: "PENDING" },
                     { label: `${pendingSummary.pending} pending`, key: "PENDING" },
-                    { label: `${pendingSummary.gated} gated`, key: "PENDING (GATED)" },
+                    { label: `${pendingSummary.gated} legacy GATED (actionable)`, key: "PENDING (GATED)" },
                     { label: `${pendingSummary.needsVerify} needs-verify`, key: "NEEDS-VERIFY" },
                     { label: `${pendingSummary.done} done / ${pendingSummary.total} total`, key: "DONE" },
                   ] as const
@@ -643,7 +643,7 @@ export function ProgramBoardPage() {
                 <div className="h-full rounded" style={{ width: `${pendingSummary.pct}%`, background: "#1F2A44" }} />
               </div>
               <p className="text-[11px] text-slate-500">
-                Everything not yet concluded — pending, gated, and needs-verify. Live on every load; as items are
+                Everything not yet concluded — pending, legacy GATED (actionable; no owner approval), and needs-verify. Live on every load; as items are
                 finished they leave this list and the completion metric above rises.
               </p>
             </div>
@@ -902,7 +902,7 @@ export function ProgramBoardPage() {
         </div>
       ) : null}
 
-      {/* HOLD-FOR-JORGE tab — merged-but-gated PRs awaiting Jorge (mirrors master-tracker "11"). Snapshot-based. */}
+      {/* HOLD tab — merged PRs behind feature flags / deploy lag (historical inventory; not an owner merge hold). Snapshot-based. */}
       {!isLoading && !isError && tab === "hold" ? (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -915,7 +915,7 @@ export function ProgramBoardPage() {
             <span className="text-[11px] tabular-nums text-slate-500">{holdFiltered.length} held items</span>
           </div>
           <p className="text-[11px] text-slate-500">
-            Merged but gated — behind a flag or awaiting your financial ceremony. Nothing here is live until you act.
+            Merged but gated — typically behind a feature flag or awaiting deploy/ancestry. Not an owner merge-approval hold; flip flags or wait for deploy as applicable.
           </p>
           <div className="overflow-x-auto rounded border border-gray-200">
             <table className="w-full border-collapse text-[11px]">

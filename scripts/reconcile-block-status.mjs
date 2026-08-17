@@ -11,7 +11,7 @@
 //                     match, a partial set of signature files, a doc's own "shipped/done" self-report, or a
 //                     prior hardcoded built-claim. Treat as NOT trusted until GUARD confirms.
 //   PENDING         = not built; needs build
-//   PENDING (GATED) = not built AND financial/locked → needs Jorge's gate before building
+//   PENDING (GATED) = not built AND financial/locked historical tag — actionable Pending (no owner approval)
 //
 // 2026-06-24 hardening: PR-title token matches, partial-file presence, spec self-reports, and the old
 // docs/accounting `allBuilt:true` hardcode previously all printed DONE — overstating built. They are now
@@ -200,7 +200,7 @@ for (const fp of progFiles) {
   // OWN named artifacts/branch against main (classifyByEvidence). DONE only from real on-main evidence;
   // a gated forward spec with nothing built stays PENDING (GATED).
   let { status, evidence } = classifyByEvidence(lines.join("\n"), { fin, tokPrId: id });
-  if (status === "PENDING" && gated) { status = "PENDING (GATED)"; evidence = sl || "financial / locked — needs Jorge gate"; }
+  if (status === "PENDING" && gated) { status = "PENDING (GATED)"; evidence = sl || "financial / locked — historical GATED tag (actionable; no owner approval)"; }
   all.push({ id, source: "program", fin, tier, status, evidence: evidence.slice(0, 90), name });
 }
 
@@ -343,7 +343,7 @@ fs.writeFileSync(
       blocks: blocksOut,
       merged_prs: mergedPrsOut, // most-recent slice of the merged-PR spine (mirrors tracker tab "01 Merged PRs")
       merged_pr_total: mergedPrsAll.length, // TRUE full merged-PR count (slice above is capped for file size)
-      hold_for_jorge: holdForJorgeOut, // gated/held merged PRs awaiting Jorge (mirrors tracker tab "11")
+      hold_for_jorge: holdForJorgeOut, // historical inventory of flag/deploy-gated merged PRs (not an owner merge hold)
     },
     null,
     1
@@ -354,7 +354,7 @@ const legend = [
   `**DONE** = verified on main (branch merged or all signature files present).`,
   `**NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.`,
   `**PENDING** = needs build.`,
-  `**PENDING (GATED)** = financial/locked, needs Jorge's gate first.`,
+  `**PENDING (GATED)** = historical financial/locked tag; actionable Pending — no owner approval required.`,
 ].join("  ");
 fs.writeFileSync(path.join(ROOT, `docs/trackers/BLOCK-RECONCILIATION-${date}.md`),
 `# BLOCK RECONCILIATION — ${date} (every block, built vs pending — verified)
@@ -393,7 +393,7 @@ ws.mergeCells(1, 1, 1, 6); const t = ws.getCell(1, 1);
 t.value = `IH35-TMS — EVERY BLOCK, BUILT vs PENDING — ${date} (verified vs origin/main + ${mergedPRs.length} merged PRs)`;
 t.font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } }; t.fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } }; ws.getRow(1).height = 22;
 ws.mergeCells(2, 1, 2, 6); const lg = ws.getCell(2, 1);
-lg.value = "DONE = verified on main (branch merged or files present) · NEEDS-VERIFY = weak signal, not trusted until GUARD confirms · PENDING = needs build · PENDING (GATED) = financial/locked, needs Jorge's gate first";
+lg.value = "DONE = verified on main (branch merged or files present) · NEEDS-VERIFY = weak signal, not trusted until GUARD confirms · PENDING = needs build · PENDING (GATED) = historical financial/locked tag; actionable Pending (no owner approval required)";
 lg.font = { italic: true, size: 9, color: { argb: "FF6B7280" } };
 ws.getRow(3).values = ["Block", "Status", "Financial", "Tier", "Source", "Evidence / why"];
 ws.getRow(3).eachCell((c) => { c.font = { bold: true, size: 10 }; c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HDR } }; c.alignment = { wrapText: true, vertical: "middle" }; });
