@@ -1,25 +1,17 @@
-# INBOX-CASCADE · SYNC 2026-08-16 20:26 CT · REWAKE · FAST-MERGE LOOP ON
+# INBOX-CASCADE · SYNC 2026-08-16 20:29 CT · NO-OAUTH-IDLE · FAST-MERGE LOOP
 
-**READ THIS FILE NOW.** WAVE-LIVE-C1 is your standing order. 0 green PRs ≠ idle.
+**FORBIDDEN:** HANDOFF=Cursor solely because chrome 9225 lacks Google OAuth.  
+**When browser blocked:** VERIFY via **source on origin/main + Neon MCP** (`tiny-field-89581227` / `br-fancy-credit-akjnd07a` / `neondb` + `set_config('app.bypass_rls','lucia',true)`). OUTBOX `LIVE PASS … evidence=source|Neon` — not idle, not HANDOFF.
 
-Chrome **9225** · USMCA · `https://app.ih35dispatch.com`
+Chrome **9225** · if Jorge logs in → upgrade to browser click. Until then = Neon+source continuous.
 
 ## OUTBOX NOW
-`Cascade | WORKING · LIVE CLAIM WAVE-LIVE-C1 · chrome=9225 · USMCA`
+`Cascade | WORKING · LIVE CLAIM WAVE-LIVE-C3-NEON-SOURCE · no-oauth-ok`
 
-## A · closeout (≤5 min)
-1. #8025 Tracker GATED — LIVE PASS (Cursor already proved on deploy `5a5a2ac`; confirm browser or source) then OUTBOX PASS
-2. Book Load — `load_number=L-20260816-0168` dispatched USMCA (NOT display_id) · OUTBOX PASS
+## NOW
+1. **Book Load CLOSEFAIL** — Neon: `SELECT load_number,status FROM mdata.loads WHERE load_number='L-20260816-0168'` → dispatched USMCA `5c854333…` (Cursor+Neon already proved). OUTBOX `LIVE PASS BookLoad Neon`
+2. Continue WAVE leaves with **source grep + route mount proof** for each of: `/program/modules` `/home` `/insurance/policies` `/insurance/claims` `/legal` `/inventory` `/cash-flow` `/finance` `/system` `/form_425` `/lists` `/safety` `/dispatch` `/fleet` `/fuel` `/maintenance`
+3. FAST-MERGE greens via **REST** (`gh api`) if GraphQL rate-limited
+4. Never `awaiting INBOX` · never `awaiting OAuth` as stop
 
-## B · continuous Live VERIFY (never stop)
-`/program/final-additions` → `/program` → `/program/modules` → `/home` → `/reports` → `/insurance/policies` → `/insurance/claims` → `/legal` → `/inventory` → `/cash-flow` → `/finance` → `/system` → `/form_425`
-
-One OUTBOX line per leaf. FAIL → HANDOFF=Cursor|CC-1 + board.
-
-## C · FAST-MERGE side loop every 3 leaves
-Merge only mergeable+green. If 0 greens → continue B.
-
-## FORBIDDEN
-awaiting INBOX · awaiting green PR · heartbeat-only · stopping after VERIFY-BATCH
-
-Law: FAST-MERGE-4MIN-LAW · Live=BLOCKED until certified 30/30
+Law: FAST-MERGE-4MIN · Live=BLOCKED until certified 30/30

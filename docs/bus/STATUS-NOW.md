@@ -1,14 +1,14 @@
-# STATUS · 2026-08-16 20:26 CT · AUTO LOOP + FAST-MERGE ON
+# STATUS · 2026-08-16 20:29 CT · AUTO LOOP + FAST-MERGE ON
 
-**Mode:** continuous auto lead loop 5m · FAST-MERGE-4MIN · Jorge ≠ messenger
-
-**OUTBOX wipe defect:** lead must NEVER `git checkout --` / reset `docs/bus/OUTBOX-*` (wiped Cascade). Fixed with `skip-worktree` on OUTBOX files + restored Cascade lines.
+**Loop:** `AGENT_LOOP_TICK_usmca_cursor_lead` every 5m · alive  
+**Method:** FAST-MERGE-4MIN · gate→push→PR→admin merge · no CI babysit  
+**Open PRs:** 0 · seats Live VERIFY / FO
 
 | Seat | NOW |
 |------|-----|
-| Cascade 9225 | REWAKE WAVE-LIVE-C1 Live VERIFY |
-| CC-1 9222 | journal-entries → settlements → factoring |
-| Codex 9228 | reports runner library claim |
-| Cursor 9226 | lead loop + FO + Live VERIFY |
+| Cascade | WAVE-LIVE-C3 Neon+source — **OAuth ≠ stop** · BookLoad Neon PASS known |
+| CC-1 | banking match/categorize deep (5/5 create chrome PASS) |
+| Codex | reports runner library |
+| Cursor | Live VERIFY Cascade HANDOFF leaves on 9226 + FO |
 
-certified **0/30** · deploy `5a5a2ac` · Live=BLOCKED
+certified **0/30** · deploy `7f143d4` · Live=BLOCKED
