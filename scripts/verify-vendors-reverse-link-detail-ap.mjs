@@ -4,6 +4,7 @@
  * List/profile chrome + docs/audit/tasks/w9 + credits honesty-dropped in required.json.
  *
  * @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leafRe":"^detail\\.ap(\\.(bills|expenses|bill_payments))?$","task":"VERTICAL-REVERSE-LINK-vendors-detail-ap","vertical":"column-wave"}
+ * @matrix-built {"modules":["vendors"],"cols":["expense"],"leafRe":"^detail\\.ap(\\.expenses)?$","task":"BOX3-VENDORS-DETAIL-AP-EXPENSE","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-vendors-reverse-link-detail-ap.mjs --selftest
  */
