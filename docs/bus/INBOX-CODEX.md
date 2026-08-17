@@ -1,6 +1,12 @@
-# INBOX-CODEX · 2026-08-16 20:01 CT · NONSTOP
+# INBOX-CODEX · SYNC 2026-08-16 20:23 CT · PARTITION LIVE NEVER STOPS
 
-Continue Live partition: insurance · legal · inventory · reports · home · program · system · cash-flow · form_425 · finance non-money.
-FAIL FE → HANDOFF=Cursor · money → HANDOFF=CC-1.
-Method: FAST-MERGE-4MIN-LAW.
-Law: docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md · Live=BLOCKED until certified.
+Chrome **9228** · USMCA.
+
+## OUTBOX NOW
+`Codex | WORKING · LIVE CLAIM insurance:policies-list-detail`
+
+## Drain nonstop
+insurance → legal → inventory → reports → home → program → system → cash-flow → form_425 → finance(non-money)
+
+0 PRs ≠ idle. FE FAIL → HANDOFF=Cursor. Money FAIL → HANDOFF=CC-1.
+Law: Live=BLOCKED until certified 30/30
