@@ -45,6 +45,26 @@ const PILL: Record<TrackerPhase["status"], { label: string; cls: string }> = {
   queued: { label: "Queued", cls: "bg-slate-50 text-slate-500" },
 };
 
+/** Historical GATED tags are source history, not an owner hold (same law as Final Additions). */
+function isLegacyGatedStatus(status: string | null | undefined): boolean {
+  return (status || "").toUpperCase().includes("GATED");
+}
+
+function TrackerStatusCell({ status, kind }: { status: string; kind: "open" | "completed" }) {
+  const gated = isLegacyGatedStatus(status);
+  return (
+    <td
+      className="px-3 py-2 text-slate-600"
+      title={gated ? "Historical GATED tag; no owner approval required" : undefined}
+      data-testid={gated ? "tracker-status-legacy-gated" : undefined}
+    >
+      {status}
+      {kind === "completed" ? " · live" : ""}
+      {gated ? <span className="ml-1 text-[10px] uppercase tracking-wide text-slate-500">(actionable)</span> : null}
+    </td>
+  );
+}
+
 function StatCard({ n, label }: { n: string | number; label: string }) {
   return (
     <div className="min-w-[140px] flex-1 rounded-sm border border-gray-200 bg-white px-4 py-3">
@@ -139,7 +159,7 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
                   </div>
                 </td>
               ) : null}
-              <td className="px-3 py-2 text-slate-600">{r.status}{kind === "completed" ? " · live" : ""}</td>
+              <TrackerStatusCell status={r.status} kind={kind} />
               <td className="px-3 py-2 font-mono text-slate-500">{r.pr ? `#${r.pr}` : "—"}</td>
               <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
             </tr>
@@ -272,10 +292,23 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
         <StatCard n={data.registered_total} label="Registered (unique, live from .block-ready)" />
         <StatCard n={data.tracked_total} label="Tracked status rows (registry + legacy)" />
         <StatCard n={`${data.authored_registered_total}/${data.authored_total}`} label="Authored registered" />
-        <StatCard n={data.view_counts.pending} label="Tracked pending" />
+        <StatCard n={data.view_counts.pending} label="Tracked pending (includes legacy GATED tags)" />
         <StatCard n={data.view_counts.in_progress} label="Tracked in progress" />
         <StatCard n={data.view_counts.completed} label="Tracked completed & live" />
       </div>
+
+      {(() => {
+        const legacyGated = [...data.views.pending, ...data.views.in_progress].filter((r) =>
+          isLegacyGatedStatus(r.status),
+        ).length;
+        if (legacyGated <= 0) return null;
+        return (
+          <div className="rounded-sm border border-gray-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600" data-testid="tracker-legacy-gated-disclosure">
+            {legacyGated} open row{legacyGated === 1 ? " carries" : "s carry"} a historical GATED tag.
+            The tag is retained as source history; no owner approval is required and these rows remain actionable.
+          </div>
+        );
+      })()}
 
       {/* FIX B — "Since Jul 1": the same breakdown restricted to blocks created (git add-date) on/after
           2026-07-01, side-by-side with the full view. Undated blocks are surfaced, never guessed in. */}
