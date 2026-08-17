@@ -29,12 +29,19 @@ export const loadRefParamSchema = z.object({
 
 /**
  * SQL predicate: match alias.id when $n is a UUID, else alias.load_number.
- * Never cast a non-UUID string to uuid (would 22P02).
+ * CRITICAL: Postgres does NOT short-circuit AND — `cond AND $n::uuid` still casts
+ * a load_number and raises 22P02 (`invalid input syntax for type uuid: "L-…"`).
+ * Live FAIL Devin healthz 59e4d6b after #8631. Use CASE so the ::uuid cast never runs
+ * for non-UUID refs.
  */
 export function loadRefMatchSql(alias: string, paramIndex: number): string {
   return `(
-    ($${paramIndex}::text ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-      AND ${alias}.id = $${paramIndex}::uuid)
+    CASE
+      WHEN $${paramIndex}::text ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        THEN ${alias}.id = $${paramIndex}::uuid
+      ELSE false
+    END
     OR ${alias}.load_number = $${paramIndex}
   )`;
 }
+
