@@ -115,7 +115,11 @@ const JSX_TEXT_EXPR = />\s*\{\s*([A-Za-z_$][\w$.]*)\s*\}\s*</g;
 // string whenever the value is present — but the bare-expression pattern above cannot see it
 // because the container holds more than the member expression. Found while migrating C3
 // (border-crossing WizardStep6 rendered a full "YYYY-MM-DDTHH:mm" straight into the review step).
-const JSX_TEXT_FALLBACK = />\s*\{\s*([A-Za-z_$][\w$.]*)\s*(?:\|\||\?\?)\s*[^{}]*\}\s*</g;
+//
+// Also catches TypeScript cast wrappers that hid LV-DRIVER-PROFILE-RAW-ISO-DATES:
+// `>{(profileDriver.cdl_expires_at as string | null) ?? "—"}<` — the member is still rendered bare.
+const JSX_TEXT_FALLBACK =
+  />\s*\{\s*\(?\s*([A-Za-z_$][\w$.]*)\s*(?:as\s+[^)]+)?\)?\s*(?:\|\||\?\?)\s*[^{}]*\}\s*</g;
 
 // The third shape: a ParityTable/column `render:` callback whose whole body is the bare date value,
 // e.g. `render: (row) => row.hire_date ?? "—"`. There is no JSX text node at all here, so neither
@@ -260,7 +264,33 @@ function scan(root) {
 
 export function run() {
   const { files, nativeInputs, isoDisplays } = scan(SCAN_ROOT);
-  const ok = nativeInputs.length === 0 && isoDisplays.length === 0;
+  // LV-DRIVER-PROFILE-RAW-ISO-DATES — Compliance summary mixed "Expires {cast ?? —}" text
+  // nodes evade the sole-child JSX patterns above; pin the two consumers explicitly.
+  const profilePath = path.join(repoRoot, "apps/frontend/src/pages/drivers/DriverProfilePage.tsx");
+  const profileSrc = fs.existsSync(profilePath) ? fs.readFileSync(profilePath, "utf8") : "";
+  const profileFails = [];
+  if (profileSrc) {
+    if (!/formatDateUS\s*\(\s*profileDriver\.cdl_expires_at/.test(profileSrc)) {
+      profileFails.push("DriverProfilePage: CDL Expires must use formatDateUS(profileDriver.cdl_expires_at…)");
+    }
+    if (!/formatDateUS\s*\(\s*profileDriver\.dot_medical_expires_at/.test(profileSrc)) {
+      profileFails.push("DriverProfilePage: Medical Expires must use formatDateUS(profileDriver.dot_medical_expires_at…)");
+    }
+    if (
+      /\{\s*\(?\s*profileDriver\.cdl_expires_at\s+as\b/.test(profileSrc) &&
+      !/formatDateUS\s*\(\s*profileDriver\.cdl_expires_at/.test(profileSrc)
+    ) {
+      profileFails.push("DriverProfilePage: CDL expires still rendered bare behind a TypeScript cast");
+    }
+    if (
+      /\{\s*\(?\s*profileDriver\.dot_medical_expires_at\s+as\b/.test(profileSrc) &&
+      !/formatDateUS\s*\(\s*profileDriver\.dot_medical_expires_at/.test(profileSrc)
+    ) {
+      profileFails.push("DriverProfilePage: Medical expires still rendered bare behind a TypeScript cast");
+    }
+  }
+
+  const ok = nativeInputs.length === 0 && isoDisplays.length === 0 && profileFails.length === 0;
 
   if (!ok) {
     console.error("[verify-no-native-datetime-input] FAIL — C3 date worklist\n");
@@ -280,15 +310,22 @@ export function run() {
       for (const h of isoDisplays) console.error(`  ✗ ${h.rel}:${h.line}  {${h.expr}}`);
       console.error("");
     }
-    console.error(`TOTAL ${nativeInputs.length + isoDisplays.length} problem(s) across ${files.length} .tsx files.`);
-    return { ok: false, nativeInputs, isoDisplays };
+    if (profileFails.length) {
+      console.error(`(3) DRIVER PROFILE COMPLIANCE DATES — ${profileFails.length} failure(s):`);
+      for (const f of profileFails) console.error(`  ✗ ${f}`);
+      console.error("");
+    }
+    console.error(
+      `TOTAL ${nativeInputs.length + isoDisplays.length + profileFails.length} problem(s) across ${files.length} .tsx files.`
+    );
+    return { ok: false, nativeInputs, isoDisplays, profileFails };
   }
 
   console.log(
     `[verify-no-native-datetime-input] PASS — 0 native datetime-local inputs and 0 bare ISO date ` +
       `text nodes across ${files.length} .tsx files under ${SCAN_ROOT}.`
   );
-  return { ok: true, nativeInputs, isoDisplays };
+  return { ok: true, nativeInputs, isoDisplays, profileFails };
 }
 
 export function check() {
@@ -330,6 +367,12 @@ function selftest() {
     { d: detectsIso, n: "bare {d.effective_on} → CAUGHT", src: `<span>{d.effective_on}</span>`, want: true },
     { d: detectsIso, n: 'em-dash fallback {row.expiration_date ?? "—"} → CAUGHT', src: `<span>{row.expiration_date ?? "—"}</span>`, want: true },
     { d: detectsIso, n: 'em-dash fallback {f.pickup_date || "—"} → CAUGHT', src: `<dd>{f.pickup_date || "—"}</dd>`, want: true },
+    {
+      d: detectsIso,
+      n: 'TS cast fallback {(row.expires_at as string | null) ?? "—"} → CAUGHT',
+      src: `<span>{(row.expires_at as string | null) ?? "—"}</span>`,
+      want: true,
+    },
     { d: detectsIso, n: "camelCase form-state {form.plannedDate} → CAUGHT", src: `<dd>{form.plannedDate}</dd>`, want: true },
     { d: detectsIso, n: 'camelCase behind a fallback {form.plannedDate || "—"} → CAUGHT', src: `<dd>{form.plannedDate || "—"}</dd>`, want: true },
     // (2) corrected shape + controls — MUST NOT be flagged
