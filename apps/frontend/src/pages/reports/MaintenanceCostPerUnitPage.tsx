@@ -19,6 +19,10 @@ import { formatChartLegendLabel } from "../../lib/chartLegend";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import {
+  formatMaintCostFlagLabel,
+  MAINT_COST_FLAG_LABELS,
+} from "../../lib/formatMaintCostFlagLabel";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -34,10 +38,10 @@ function currentQuarterRange() {
 }
 
 const FLAG_META: Record<MaintenanceCostFlag, { label: string }> = {
-  high_cost: { label: "high_cost" },
-  low_cost: { label: "low_cost" },
-  inspection_due: { label: "inspection_due" },
-  reliable: { label: "reliable" },
+  high_cost: { label: MAINT_COST_FLAG_LABELS.high_cost },
+  low_cost: { label: MAINT_COST_FLAG_LABELS.low_cost },
+  inspection_due: { label: MAINT_COST_FLAG_LABELS.inspection_due },
+  reliable: { label: MAINT_COST_FLAG_LABELS.reliable },
 };
 
 const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b", "#1e293b"];
@@ -103,11 +107,18 @@ export function MaintenanceCostPerUnitPage() {
         label: "Flags",
         render: (r) => (
           <div className="flex flex-wrap gap-1">
-            {(r.flags ?? []).map((f) => (
-              <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
-                {FLAG_META[f].label}
-              </span>
-            ))}
+            {(r.flags ?? []).map((f) => {
+              const label = FLAG_META[f]?.label ?? formatMaintCostFlagLabel(f);
+              return (
+                <span
+                  key={f}
+                  className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700"
+                  title={label}
+                >
+                  {label}
+                </span>
+              );
+            })}
           </div>
         ),
       },
