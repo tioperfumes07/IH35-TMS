@@ -3800,5 +3800,12 @@
     "claimer": "cursor",
     "guard": "verify-reports-ifta-preparer-no-owner-approval-copy",
     "note": "LV-REPORTS-IFTA-PREPARER-STALE-OWNER-APPROVAL-COPY"
+  },
+  "3710": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-reports-fuel-reconciliation-display-dates",
+    "note": "LV-REPORTS-FUEL-RECONCILIATION-RAW-ISO-DATES"
   }
 }
