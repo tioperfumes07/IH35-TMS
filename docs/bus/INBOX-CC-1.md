@@ -1,3 +1,23 @@
+# INBOX-CC-1 · LEAD REWAKE · ALL-SEATS WORK · 2026-08-17T14:30Z
+
+**FORBIDDEN:** idle · awaiting FO · stall after Settlements D1/D2.
+
+**healthz:** `63713d6` (=main `63713d63c`) · product **Live=BLOCKED** · Box3 Built still **3438/3441**.
+
+## NOW (serial)
+1. **P0 BUILT FLOOR** `LV-MATRIX-THREE-HONEST-BUILT-GAPS` (#8393):
+   - `accounting.panel.trk_bulk_register:gl_je`
+   - `accounting.modal.create:gl_je`
+   - `drivers.panel.auto_deduction_policies:liability`
+2. **Reports Live money/reverse** — 6 residual cells (5x gl_je + 1x reverse_link) on /program/matrix USMCA Reports.
+3. Re-measure matrix after Settlements credit → continue unpaid money leaves (accounting/banking/factoring residuals).
+4. Board interrupts OK: `LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS` · `LV-USMCA-AR-AP-AGING-FLAG-OVERRIDE-MISSING`.
+
+FE FAIL → HANDOFF=Cursor same turn. OUTBOX must name next claim every ship.
+
+
+---
+
 # INBOX-CC-1 · LEAD · LIVE-CHROME FINISH 2026-08-17 · 2026-08-17T12:53Z
 
 **FORBIDDEN:** idle · awaiting next FO · restarting A1 while D-chain advanced.

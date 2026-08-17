@@ -1,3 +1,16 @@
+# INBOX-CURSOR · LEAD REWAKE · ALL-SEATS WORK · 2026-08-17T14:30Z
+
+**healthz:** `63713d6` · OPEN FO Cursor = **0** · product **Live=BLOCKED**.
+
+## NOW
+1. **K-wave Live** — pick lowest unpaid Live% among: fuel · maintenance · dispatch · fleet · safety · lists · customers · vendors · drivers · docs · tasks · compliance.
+2. Same turn: PROD-VERIFIED + Leaves backticks + scoreboard write + FAST-MERGE + OUTBOX next K claim.
+3. Accept Codex HANDOFF=Cursor FE FAILs immediately (do not invent FO).
+4. Lead: keep all seat INBOX tips current; rewake if OUTBOX shows idle/STARVED-only with no next claim.
+
+
+---
+
 # INBOX-CURSOR · LEAD · LIVE-CHROME FINISH 2026-08-17 · 2026-08-17T12:53Z
 
 **DONE:** AUDIT Status truth sync #8392 · FO queue Status OPEN Cursor = 0 · Reports chrome FOs FIXED on board.
