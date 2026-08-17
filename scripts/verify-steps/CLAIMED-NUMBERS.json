@@ -1737,6 +1737,12 @@
     "lane": "cursor",
     "note": "LV-FINANCE-SCENARIOS-FILTER-APPLY-MISSING"
   },
+  "3678": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-dispatcher-safety-events-reverse",
+    "lane": "cursor",
+    "note": "LV-LOAD-DISPATCHER-SAFETY-EVENTS-REVERSE-ERROR"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
