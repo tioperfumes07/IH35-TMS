@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PermitsPage } from "./PermitsPage";
 import { Form2290Filings } from "../compliance/Form2290Filings";
@@ -17,7 +18,9 @@ type Form2290DeadlinePayload = {
      Per IRS Form 2290 a vehicle is due the last day of the month following its first use — a truck
      placed in service in October is due Nov 30, not Aug 31. These fields carry the exceptions. */
   per_unit_deadlines?: Array<{ unit_id: string; unit_number: string; first_used_month: string; deadline: string }>;
-  units_missing_first_use?: string[];
+  // LV-SAFETY-PERMITS-2290-MISSING-UNIT-PLAIN-TEXT — API returns {unit_id, unit_number} (same as Form2290Filings).
+  // A string[] type + .join() after #8560 rendered "[object Object]" and blocked unit drills on Safety→Permits.
+  units_missing_first_use?: Array<{ unit_id: string | null; unit_number: string | null }>;
 };
 
 async function fetchForm2290Deadline(companyId: string) {
@@ -81,7 +84,17 @@ export function Permits({ operatingCompanyId }: Props) {
             <span className="font-semibold text-slate-900">
               {missingFirstUse.length} vehicle{missingFirstUse.length === 1 ? "" : "s"} missing a first-use date
             </span>{" "}
-            — due date cannot be computed · {missingFirstUse.slice(0, 6).join(", ")}
+            — due date cannot be computed ·{" "}
+            {missingFirstUse.slice(0, 6).map((unit, idx) => (
+              <Fragment key={unit.unit_id ?? `unresolved-unit-${idx}`}>
+                {idx > 0 ? ", " : ""}
+                {unit.unit_id ? (
+                  <EntityLink kind="unit" id={unit.unit_id} label={entityLabel(unit.unit_number, unit.unit_id, "Unit")} />
+                ) : (
+                  <span>{unit.unit_number ?? "Unit — not visible"}</span>
+                )}
+              </Fragment>
+            ))}
             {missingFirstUse.length > 6 ? `, +${missingFirstUse.length - 6} more` : ""}
           </div>
         ) : null}
