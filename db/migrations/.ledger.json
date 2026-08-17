@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:ledger:snapshot",
-  "migration_count": 955,
+  "migration_count": 956,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -3822,6 +3822,10 @@
     {
       "filename": "202612700000_usmca_archive_test_cash_advance_accounts.sql",
       "checksum": "a7b5fb628242bdff7c89250e2631d284168191efee5da193c6d9244a39151b38"
+    },
+    {
+      "filename": "202612710000_usmca_archive_test_driver_vendor_customer_fixtures.sql",
+      "checksum": "67be0d2b1e590b664953bc6c220655e37d17d6c52a3dbb6fe77646fae93fa3b0"
     }
   ]
 }
