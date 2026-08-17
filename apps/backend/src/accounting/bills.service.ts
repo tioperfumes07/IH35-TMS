@@ -339,12 +339,19 @@ const BILL_VENDOR_RESOLVE_JOIN_SQL = `
    )
 `;
 
+// LV-BILL-PAYMENTS-VENDOR-NOT-VISIBLE-TMS-NATIVE — bp.vendor_id holds two different shapes
+// depending on how the payment was created: a legacy QBO vendor id string (TRANSP, 6544/6544
+// rows) or the mdata.vendors.id uuid itself, stored as text, for TMS-native payments (USMCA has
+// no QuickBooks: 6/6 USMCA rows with a vendor_id are uuid-shaped). Matching only on
+// v.qbo_vendor_id left every USMCA bill payment showing "Vendor — not visible" even though the
+// FK genuinely resolves — confirmed live 2026-08-16. Try the direct uuid match first (the TMS-
+// native case), matching the same two-path pattern already correct for accounting.bills.vendor_id.
 const BILL_PAYMENT_MDATA_VENDOR_ID_SQL = `
   (
     SELECT v.id::text
       FROM mdata.vendors v
      WHERE v.operating_company_id = bp.operating_company_id
-       AND v.qbo_vendor_id = bp.vendor_id
+       AND (v.id::text = bp.vendor_id OR v.qbo_vendor_id = bp.vendor_id)
      LIMIT 1
   )
 `;
@@ -875,13 +882,7 @@ export async function listBillPaymentsForBill(userId: string, operatingCompanyId
     const res = await client.query<BillPaymentRow>(
       `
         SELECT bp.*,
-               -- ACCT-F84: entity-scoped resolve of the legacy TEXT vendor_id to the canonical
-               -- mdata.vendors uuid, so the UI can drill through instead of linking to a 404.
-               (SELECT v.id::text
-                  FROM mdata.vendors v
-                 WHERE v.qbo_vendor_id = bp.vendor_id
-                   AND v.operating_company_id = bp.operating_company_id
-                 LIMIT 1) AS mdata_vendor_id,
+               ${BILL_PAYMENT_MDATA_VENDOR_ID_SQL} AS mdata_vendor_id,
                ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
@@ -1223,17 +1224,19 @@ export async function listBillPayments(
     const res = await client.query<BillPaymentRow>(
       `
         SELECT bp.*,
-               -- ACCT-F84: entity-scoped resolve of the legacy TEXT vendor_id to the canonical
-               -- mdata.vendors uuid, so the UI can drill through instead of linking to a 404.
+               -- ACCT-F84 / LV-BILL-PAYMENTS-VENDOR-NOT-VISIBLE-TMS-NATIVE: entity-scoped resolve
+               -- of bp.vendor_id to the canonical mdata.vendors uuid. bp.vendor_id holds either a
+               -- legacy QBO vendor id (TRANSP) or the mdata.vendors.id uuid itself as text
+               -- (TMS-native payments -- USMCA has no QuickBooks). Try the direct uuid match first.
                (SELECT v.id::text
                   FROM mdata.vendors v
-                 WHERE v.qbo_vendor_id = bp.vendor_id
-                   AND v.operating_company_id = bp.operating_company_id
+                 WHERE v.operating_company_id = bp.operating_company_id
+                   AND (v.id::text = bp.vendor_id OR v.qbo_vendor_id = bp.vendor_id)
                  LIMIT 1) AS mdata_vendor_id,
                (SELECT v.vendor_name
                   FROM mdata.vendors v
-                 WHERE v.qbo_vendor_id = bp.vendor_id
-                   AND v.operating_company_id = bp.operating_company_id
+                 WHERE v.operating_company_id = bp.operating_company_id
+                   AND (v.id::text = bp.vendor_id OR v.qbo_vendor_id = bp.vendor_id)
                  LIMIT 1) AS vendor_name,
                b.bill_number,
                ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
@@ -1512,7 +1515,7 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
             SELECT v2.id
               FROM mdata.vendors v2
              WHERE v2.operating_company_id = bp.operating_company_id
-               AND v2.qbo_vendor_id = bp.vendor_id
+               AND (v2.id::text = bp.vendor_id OR v2.qbo_vendor_id = bp.vendor_id)
              LIMIT 1
           )
          AND v.operating_company_id = bp.operating_company_id
