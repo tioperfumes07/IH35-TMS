@@ -4,7 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { formatDateTimeUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -136,7 +136,7 @@ export function GeofenceReconciliationReport() {
           rowKey={(f) => f.uuid}
           loading={isLoading}
           storageKey="geofence-recon"
-          emptyText={`No anomalies found for ${appliedDate}.`}
+          emptyText={`No anomalies found for ${formatDateUS(appliedDate)}.`}
           exportFilename={`geofence-recon-${appliedDate}`}
           rowClassName={(f) => (f.resolved ? "opacity-50" : "")}
           rowActions={(f) =>
