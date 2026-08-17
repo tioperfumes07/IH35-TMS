@@ -72,3 +72,7 @@ CLAIM `LV-FINANCE-BREAK-EVEN-FILTERS-SILENT-APPLY`: selected-USMCA `/finance/bre
 ## CODEX LIVE HANDOFF · LEGAL MATTER PICKERS · 2026-08-16
 
 CLAIM `LV-LEGAL-MATTER-INSURANCE-LINK-PICKERS-NO-INLINE-CREATE`: selected-USMCA `/legal/matters/new` has canonical Insurance Claim and Insurance Lawsuit pickers but both set `allowCreate={false}` in `LegalMatterFormFields.tsx:277-309`. Live Claim showed existing human records with no `+ Add new`; sibling lawsuit creator correctly offers it. Enable each registry-backed same-table creator, ratchet independently, and Live prove open without saving. Preserve scoped reads and existing FK submit/reload. `BLOCKS=LIVE-LEGAL-MATTER-CREATE-PICKER-LAW`; OWNER-GATED=no.
+
+## CODEX LIVE HANDOFF · LEGAL TIMELINE CREATOR · 2026-08-16
+
+CLAIM `LV-LEGAL-MATTER-TIMELINE-RAW-JSON-CREATOR`: selected-USMCA matter detail Timeline exposes arbitrary `event_type`, raw `event_body JSON`, enabled-empty Create event, and raw JSON output in `LegalMatterDetailPage.tsx:404-437`. Replace manual authoring with a required plain-language Note mapped to fixed `event_type=note` and `{note}`, readiness-disable submit, and render manual notes as text. Preserve immutable system events, WORM append, actor audit, company scope, and truthful fallback for other event types. Ratchet all four failure modes. `BLOCKS=LIVE-LEGAL-MATTER-DETAIL-TIMELINE`; OWNER-GATED=no.
