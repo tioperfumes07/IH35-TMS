@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listPositionHistory, type PositionHistoryRecord } from "../../api/position-history";
@@ -150,14 +150,23 @@ export default function PositionHistoryPage() {
         label: "Actor",
         sortable: true,
         sortValue: (row) => entityLabel(row.actor_name, row.actor_id, "User"),
-        render: (row) =>
-          row.actor_id ? (
+        render: (row) => {
+          if (!row.actor_id) return <span className="text-gray-400">—</span>;
+          const label = entityLabel(row.actor_name, row.actor_id, "User");
+          // LV-SAFETY-POSITION-HISTORY-ACTOR-TOMBSTONE: unresolved actors must not drill.
+          if (isUnresolvedEntityTombstone(row.actor_name, row.actor_id, "User")) {
+            return (
+              <span className="text-gray-600" data-testid="position-history-actor-tombstone">
+                {label}
+              </span>
+            );
+          }
+          return (
             <span className="text-gray-900">
-              <EntityLink kind="user" id={row.actor_id} label={row.actor_name || entityLabel(null, row.actor_id, "User")} />
+              <EntityLink kind="user" id={row.actor_id} label={label} data-testid="position-history-actor-link" />
             </span>
-          ) : (
-            <span className="text-gray-400">—</span>
-          ),
+          );
+        },
       },
       {
         key: "notes",
