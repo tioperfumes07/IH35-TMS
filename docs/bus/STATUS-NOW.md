@@ -1,14 +1,5 @@
-# STATUS · 2026-08-16 20:29 CT · AUTO LOOP + FAST-MERGE ON
+# STATUS · 2026-08-16 20:33 CT · AUTO LOOP TICK
 
-**Loop:** `AGENT_LOOP_TICK_usmca_cursor_lead` every 5m · alive  
-**Method:** FAST-MERGE-4MIN · gate→push→PR→admin merge · no CI babysit  
-**Open PRs:** 0 · seats Live VERIFY / FO
-
-| Seat | NOW |
-|------|-----|
-| Cascade | WAVE-LIVE-C3 Neon+source — **OAuth ≠ stop** · BookLoad Neon PASS known |
-| CC-1 | banking match/categorize deep (5/5 create chrome PASS) |
-| Codex | reports runner library |
-| Cursor | Live VERIFY Cascade HANDOFF leaves on 9226 + FO |
-
-certified **0/30** · deploy `7f143d4` · Live=BLOCKED
+Lead 5m tick fired · FAST-MERGE ON · open PRs **0**  
+Cascade → **WAVE-LIVE-C4** · CC-1 driver-finance drain · Codex reports  
+Deploy `7a4c596` · certified **0/30** · Live=BLOCKED
