@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 // GLOBAL-TABLE-CONTROLS — shared free-text filter box. Narrows a list as you type.
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
   className?: string;
   /** Optional override; defaults to placeholder. Call sites may pass the same string for static a11y guards. */
   "aria-label"?: string;
+  "data-testid"?: string;
 };
 
 export function TableSearch({
@@ -16,16 +18,37 @@ export function TableSearch({
   placeholder = "Search…",
   className = "",
   "aria-label": ariaLabel,
+  "data-testid": testId,
 }: Props) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  // LV-FLEET-SEARCH-NO-FILTER: Live/CDP often sets .value without React's synthetic path.
+  // Native input/change listeners keep controlled state honest when automation fills the box.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const sync = () => {
+      if (el.value !== value) onChange(el.value);
+    };
+    el.addEventListener("input", sync);
+    el.addEventListener("change", sync);
+    return () => {
+      el.removeEventListener("input", sync);
+      el.removeEventListener("change", sync);
+    };
+  }, [onChange, value]);
+
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} data-testid={testId}>
       <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" aria-hidden />
       <input
+        ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onInput={(e) => onChange((e.target as HTMLInputElement).value)}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
+        data-testid={testId ? `${testId}-input` : undefined}
         className="h-8 w-full rounded-sm border border-gray-300 pl-7 pr-2 text-[13px]"
       />
     </div>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../lib/formatDate";
+import { customerStatusLabel } from "../lib/customerStatusLabel";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
@@ -206,10 +207,7 @@ function statusVariant(status: Customer["status"]): "crit" | "warn" | "neutral" 
 }
 
 function statusLabel(status: Customer["status"]) {
-  if (status === "credit_hold") return "Credit Hold";
-  if (status === "blacklist") return "Blacklist";
-  if (status === "inactive") return "Inactive";
-  return "Active";
+  return customerStatusLabel(status);
 }
 
 function departmentVariant(department: CustomerContactDepartment): "crit" | "warn" | "info" | "positive" | "neutral" {
@@ -468,27 +466,26 @@ export function CustomerDetailPage() {
     enabled: Boolean(operatingCompanyId && editMode),
     staleTime: 60_000,
   });
-  const parentCustomerOptions = useMemo(
-    () =>
-      (parentCandidatesQuery.data ?? [])
-        .filter((c) => !c.parent_customer_id && c.id !== id && c.status !== "inactive" && !c.deactivated_at)
-        .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name })),
-    [parentCandidatesQuery.data, id]
-  );
+  const parentCustomerOptions = useMemo(() => {
+    const rows = Array.isArray(parentCandidatesQuery.data) ? parentCandidatesQuery.data : [];
+    return rows
+      .filter((c) => !c.parent_customer_id && c.id !== id && c.status !== "inactive" && !c.deactivated_at)
+      .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name }));
+  }, [parentCandidatesQuery.data, id]);
   const paymentTermsQuery = useQuery({
     queryKey: ["payment-term-options", operatingCompanyId],
     queryFn: () => listPaymentTermOptions(operatingCompanyId!),
     enabled: Boolean(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
   });
-  const paymentTermOptions = useMemo(
-    () =>
-      (paymentTermsQuery.data?.payment_terms ?? []).map((term) => ({
-        value: term.id,
-        label: `${term.terms_name} (${term.days_until_due}d)`,
-      })),
-    [paymentTermsQuery.data]
-  );
+  const paymentTermOptions = useMemo(() => {
+    const raw = paymentTermsQuery.data?.payment_terms;
+    const terms = Array.isArray(raw) ? raw : [];
+    return terms.map((term) => ({
+      value: term.id,
+      label: `${term.terms_name} (${term.days_until_due}d)`,
+    }));
+  }, [paymentTermsQuery.data]);
   const lanesQuery = useQuery({
     queryKey: ["customer-lanes", id, operatingCompanyId, includeInactiveLanes],
     queryFn: () => listCustomerLanes(id, operatingCompanyId!, includeInactiveLanes).then((result) => result.lanes),

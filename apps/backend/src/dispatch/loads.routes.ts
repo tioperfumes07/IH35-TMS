@@ -45,6 +45,7 @@ import {
   ensureDriverBillArtifactsForLoad,
   type DriverBillMintOutcome,
 } from "./book-load.service.js";
+import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -705,7 +706,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    // LV-DOCS-LOAD-DISPLAY-ID-DEEPLINK: GET accepts UUID or human load_number (mutations stay UUID-only).
+    const params = loadRefParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
 
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
@@ -812,7 +814,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ORDER BY df.created_at DESC
             LIMIT 1
           ) rc ON true
-          WHERE l.id = $1
+          WHERE ${loadRefMatchSql("l", 1)}
             AND l.operating_company_id = $2::uuid
           LIMIT 1
         `,
@@ -821,21 +823,25 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const load = loadRes.rows[0] ?? null;
       if (!load) return null;
 
+      // LV-DOCS-LOAD-DEEPLINK-44FCB11: path may be a human load_number. Nested FK queries bind
+      // UUID columns (load_id) — always use the resolved row id, never params.data.id (22P02).
+      const resolvedLoadId = String(load.id);
+
       const stopsRes = await client.query(
         `
           SELECT *
           FROM mdata.load_stops
-          WHERE load_id = $1
+          WHERE load_id = $1::uuid
           ORDER BY sequence_number ASC
         `,
-        [params.data.id]
+        [resolvedLoadId]
       );
       const chargesRes = await client.query(
         `SELECT charge_code AS code, additional_charge_id, description, amount_cents
            FROM dispatch.load_charge_lines
-          WHERE load_id = $1 AND operating_company_id = $2::uuid AND is_active = true
+          WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true
           ORDER BY sort_order, created_at`,
-        [params.data.id, operatingCompanyId]
+        [resolvedLoadId, operatingCompanyId]
       );
       const charges = chargesRes.rows;
       return { ...load, stops: stopsRes.rows, charges, drivers: [] };

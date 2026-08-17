@@ -18,6 +18,8 @@ type Props = {
   pageSizeOptions?: number[];
   range: UniversalRange | null;
   onRangeApply: (range: UniversalRange | null) => void;
+  /** When true, hide TableSearch (page owns roster search so Showing X of Y stays honest). */
+  hideSearch?: boolean;
   /** List-filter dropdowns (Status, Type, Active/Inactive/All, …) — separate from bulk-edit. */
   children?: ReactNode;
 };
@@ -36,6 +38,7 @@ export function TableControls({
   pageSizeOptions,
   range,
   onRangeApply,
+  hideSearch = false,
   children,
 }: Props) {
   return (
@@ -49,6 +52,7 @@ export function TableControls({
         onRangeApply={onRangeApply}
         resultCount={filteredCount}
         totalCount={totalCount}
+        hideSearch={hideSearch}
       />
       {children}
       <div className="ml-auto">

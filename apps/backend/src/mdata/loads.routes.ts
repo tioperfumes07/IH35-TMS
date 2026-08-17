@@ -14,6 +14,7 @@ import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { companyBusinessDateCompact } from "../lib/company-business-date.js";
+import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
 import {
   loadStatusRequiresDeliveryDepartureStamp,
@@ -816,7 +817,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
+    // LV-DOCS-LOAD-DISPLAY-ID-DEEPLINK: GET accepts UUID or human load_number (mutations stay UUID-only).
+    const parsedParams = loadRefParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const detail = await withCurrentUser(authUser.uuid, async (client) => {
@@ -883,7 +885,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                                     AND sd.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
-          WHERE l.id = $1
+          WHERE ${loadRefMatchSql("l", 1)}
             -- Tier-1 entity-scope (money by-id IDOR): rate_total_cents is GROSS customer revenue.
             -- Defense-in-depth mirror of the two SELECT RLS policies (loads_select_office +
             -- loads_select_driver) so an office user only reads loads of their accessible companies
@@ -905,6 +907,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       const load = loadRes.rows[0] ?? null;
       if (!load) return null;
 
+      // LV-DOCS-LOAD-DEEPLINK-44FCB11: path may be load_number; stop FK is UUID — bind resolved id.
+      const resolvedLoadId = String(load.id);
+
       const stopsRes = await client.query(
         `
           SELECT
@@ -917,10 +922,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
             site_contact_name, site_contact_phone, gate_dock_text, postal_code
           FROM mdata.load_stops
-          WHERE load_id = $1
+          WHERE load_id = $1::uuid
           ORDER BY sequence_number ASC, created_at ASC
         `,
-        [parsedParams.data.id]
+        [resolvedLoadId]
       );
       return { ...load, stops: stopsRes.rows };
     });

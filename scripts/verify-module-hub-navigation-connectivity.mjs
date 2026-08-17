@@ -50,7 +50,12 @@ export function verify(source) {
 
   for (const id of ["home", "planner", "relay_inbox", "settings", "expense_mapping", "loves_prices", "compliance"]) need("fuelConfig", `id: "${id}"`, `fuel nav ${id} must remain canonical`);
   need("fuel", "onChange={(next) => goToTab(next as FuelTabId)}", "fuel subnav must navigate through the canonical path registry");
-  for (const route of ["/fuel", "/fuel/planner", "/fuel/inbox", "/fuel/settings", "/fuel/expense-mapping", "/fuel/loves-prices", "/fuel/compliance"]) need("routes", `path="${route}"`, `fuel route ${route} must remain mounted`);
+  for (const route of ["/fuel", "/fuel/planner", "/fuel/inbox", "/fuel/relay-inbox", "/fuel/settings", "/fuel/expense-mapping", "/fuel/loves-prices", "/fuel/compliance"]) need("routes", `path="${route}"`, `fuel route ${route} must remain mounted`);
+  need("routes", 'path="/fuel/relay-inbox"', "LV-FUEL-RELAY-INBOX-REDIRECT alias must stay mounted");
+  const routeManifest = fs.readFileSync("apps/frontend/src/router/route-manifest.ts", "utf8");
+  if (!routeManifest.includes('norm === "/fuel/relay-inbox"')) {
+    failures.push("fuelTabFromPath must map /fuel/relay-inbox → relay_inbox");
+  }
 
   for (const route of ["/help", "/help/overview", "/help/runbooks", "/help/:slug"]) need("routes", `path="${route}"`, `help route ${route} must remain mounted`);
   for (const route of ["/help", "/help/overview", "/help/runbooks"]) need("sidebar", `to: "${route}"`, `help flyout must expose ${route}`);

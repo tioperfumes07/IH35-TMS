@@ -6,7 +6,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
 import { resolveApiUrl } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 
 type CrossingRow = {
@@ -92,7 +92,15 @@ export function BorderCrossingHistoryPage() {
         </div>
       ),
     },
-    { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
+    { key: "unit_number", label: "Unit", sortable: true, render: (row) => {
+      if (!row.unit_id) return <span className="text-gray-400">—</span>;
+      const label = entityLabel(row.unit_number, row.unit_id, "Unit");
+      // LV-DISPATCH-BORDER-CROSSING-HISTORY-TOMBSTONE
+      if (isUnresolvedEntityTombstone(row.unit_number, row.unit_id, "Unit")) {
+        return <span className="text-gray-600" data-testid="border-history-unit-tombstone">{label}</span>;
+      }
+      return <EntityLink kind="unit" id={row.unit_id} label={label} data-testid="border-history-unit-link" />;
+    } },
     { key: "emanifest_reference", label: "eManifest", render: (row) => row.emanifest_reference ?? "—" },
   ];
 
@@ -141,17 +149,38 @@ export function BorderCrossingHistoryPage() {
                 <span className="text-gray-500">Commodity:</span> {selected.commodity ?? "—"}
               </p>
               <p>
-                <span className="text-gray-500">Driver:</span>{" "}<EntityLink kind="driver" id={selected.driver_id} label={entityLabel(selected.driver_name, selected.driver_id, "Driver")} />
+                <span className="text-gray-500">Driver:</span>{" "}{(() => {
+                  if (!selected.driver_id) return <span className="text-gray-400">—</span>;
+                  const label = entityLabel(selected.driver_name, selected.driver_id, "Driver");
+                  if (isUnresolvedEntityTombstone(selected.driver_name, selected.driver_id, "Driver")) {
+                    return <span className="text-gray-600" data-testid="border-history-driver-tombstone">{label}</span>;
+                  }
+                  return <EntityLink kind="driver" id={selected.driver_id} label={label} data-testid="border-history-driver-link" />;
+                })()}
               </p>
               <p>
-                <span className="text-gray-500">Load:</span>{" "}<EntityLink kind="load" id={selected.load_id} label={entityLabel(selected.load_number, selected.load_id, "Load")} />
+                <span className="text-gray-500">Load:</span>{" "}{(() => {
+                  if (!selected.load_id) return <span className="text-gray-400">—</span>;
+                  const label = entityLabel(selected.load_number, selected.load_id, "Load");
+                  if (isUnresolvedEntityTombstone(selected.load_number, selected.load_id, "Load")) {
+                    return <span className="text-gray-600" data-testid="border-history-load-tombstone">{label}</span>;
+                  }
+                  return <EntityLink kind="load" id={selected.load_id} label={label} data-testid="border-history-load-link" />;
+                })()}
               </p>
               <p>
                 <span className="text-gray-500">Broker status:</span> {selected.customs_broker_status ?? "—"}
               </p>
               <p>
                 <span className="text-gray-500">Customs broker:</span>{" "}
-                <EntityLink kind="vendor" id={selected.customs_broker_id} label={entityLabel(selected.customs_broker_name, selected.customs_broker_id, "Vendor")} />
+                {(() => {
+                  if (!selected.customs_broker_id) return <span className="text-gray-400">—</span>;
+                  const label = entityLabel(selected.customs_broker_name, selected.customs_broker_id, "Vendor");
+                  if (isUnresolvedEntityTombstone(selected.customs_broker_name, selected.customs_broker_id, "Vendor")) {
+                    return <span className="text-gray-600" data-testid="border-history-broker-tombstone">{label}</span>;
+                  }
+                  return <EntityLink kind="vendor" id={selected.customs_broker_id} label={label} data-testid="border-history-broker-link" />;
+                })()}
               </p>
               {pdfUrl ? (
                 <a href={pdfUrl} className="inline-block rounded-sm border px-3 py-1.5" target="_blank" rel="noreferrer">

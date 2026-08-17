@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Button } from "../../../components/Button";
+import { Combobox } from "../../../components/Combobox";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
@@ -13,6 +14,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { LegalTemplateNewModal } from "../templates/LegalTemplateNewModal";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
 // Flow: doc category -> template+version (active) -> EN/ES -> fill from variable_schema
@@ -48,6 +50,8 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   const [signerPhone, setSignerPhone] = useState("");
   const [leaseUnitIds, setLeaseUnitIds] = useState<string[]>([]);
   const [leaseElection, setLeaseElection] = useState<"option_a_fmv" | "option_b_payoff" | "">("");
+  // LV-LEGAL-CONTRACT-CREATE-TEMPLATE-PICKER-NO-ADD-FIRST — nested create via canonical LegalTemplateNewModal.
+  const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -63,6 +67,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
       setSignerPhone("");
       setLeaseUnitIds([]);
       setLeaseElection("");
+      setCreateTemplateOpen(false);
     }
   }, [open]);
 
@@ -71,7 +76,9 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () => legalTemplatesApi.list({ operating_company_id: operatingCompanyId, status: "active" }),
   });
-  const activeTemplates: LegalTemplateSummary[] = templatesQuery.data?.templates ?? [];
+  const activeTemplates: LegalTemplateSummary[] = Array.isArray(templatesQuery.data?.templates)
+    ? templatesQuery.data.templates
+    : [];
 
   // Safety net: when this entity has zero active templates (library never provisioned), offer a
   // one-click seed reusing the existing ensure-library mutation, instead of a silent empty picker.
@@ -192,6 +199,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   const canSubmit = canGoStep3 && signerName.trim().length >= 2 && (signerType === "other" || Boolean(signerEntityId));
 
   return (
+    <>
     <ParityDrawer open={open} onClose={onClose} title="Create contract" size="wide">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-1 text-xs">
@@ -244,20 +252,22 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </SelectCombobox>
             </label>
 
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-sm" data-testid="legal-contract-create-template-picker">
               <span className="font-semibold text-slate-700">Template (active versions)</span>
-              <SelectCombobox
-                value={templateCode}
-                onChange={(e) => setTemplateCode(e.target.value)}
-                className="w-full"
-              >
-                <option value="">Select a template…</option>
-                {templatesInCategory.map((t) => (
-                  <option key={t.id} value={t.template_code}>
-                    {t.display_name_en} (v{t.version}{t.requires_witness ? " · witness" : ""})
-                  </option>
-                ))}
-              </SelectCombobox>
+              <Combobox
+                value={templateCode || null}
+                onChange={(next) => setTemplateCode(next ?? "")}
+                options={templatesInCategory.map((t) => ({
+                  value: t.template_code,
+                  label: `${t.display_name_en} (v${t.version}${t.requires_witness ? " · witness" : ""})`,
+                }))}
+                placeholder="Select a template…"
+                loading={templatesQuery.isLoading}
+                allowAddNew={{
+                  label: "+ Add new template",
+                  onAdd: () => setCreateTemplateOpen(true),
+                }}
+              />
             </label>
 
             {ndaSuggestion && category === "employment" ? (
@@ -581,5 +591,17 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         )}
       </div>
     </ParityDrawer>
+    <LegalTemplateNewModal
+      open={createTemplateOpen}
+      onClose={() => setCreateTemplateOpen(false)}
+      onCreate={async (draft) => {
+        const created = await legalTemplatesApi.create(operatingCompanyId, draft);
+        await templatesQuery.refetch();
+        setTemplateCode(created.template_code);
+        if (created.category) setCategory(created.category);
+        pushToast(`Template ${created.template_code} created`, "success");
+      }}
+    />
+    </>
   );
 }

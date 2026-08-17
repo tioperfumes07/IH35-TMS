@@ -81,6 +81,10 @@ export function verify(source) {
   for (const token of ["<TableSearch", "<DatePicker", "<MoneyInput", "NUMBER_FIELD", 'aria-label="Range from number"', "applyUniversalListFilters", "onClick={reset}", "onClick={cancel}", "onClick={apply}", 'event.key === "Escape"', 'document.addEventListener("mousedown"']) {
     need(CORE.toolbar, token, `UniversalListToolbar must retain ${token}`);
   }
+  // LV-LEGAL-MATTERS-RANGE-OMITS-SOL-DATE — DATE_FIELD must recognize SOL / hearing / *_at.
+  for (const token of ["statute", "hearing", "sol", "|at|"]) {
+    need(CORE.toolbar, token, `UniversalListToolbar DATE_FIELD must retain ${token} (Legal SOL range)`);
+  }
   for (const file of [CORE.dataTable, CORE.listView, CORE.parityTable]) {
     need(file, "<UniversalListToolbar", `${file} must render UniversalListToolbar`);
     need(file, "applyUniversalListFilters", `${file} must apply toolbar filters to rows`);

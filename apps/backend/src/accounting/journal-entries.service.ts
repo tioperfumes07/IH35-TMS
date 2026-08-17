@@ -794,6 +794,16 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
     );
     if (!headerRes.rows[0]) throw new Error("journal_entry_not_found");
 
+    // LV-JE-SOURCE-LINKS-INVOICE-NOT-VISIBLE (audit row 1295/board): neither source_transaction_id
+    // nor linked_object_id ever carried a display name, so JournalEntryDetailPage.tsx's reverse-link
+    // always rendered the honest-but-avoidable "Source — not visible" tombstone for every row, even
+    // for the two most common real source types (invoice=38, bill=84 rows repo-wide at audit time).
+    // Both id columns are TEXT (verified live: information_schema.columns), never uuid — accounting.
+    // invoices.id / accounting.bills.id ARE uuid, so every join below casts the uuid side ::text
+    // (never the reverse), per this session's established uuid=text safe-cast direction. Scoped to
+    // invoice + bill only — the other ~15 linked_object_type values observed live (fuel_event,
+    // depreciation_schedule_row, loan_amortization_row, etc.) need their own per-table verification
+    // before a display column is added for them; this is not a corner cut, it is the guarded scope.
     const res = await client.query(
       `
         SELECT
@@ -807,9 +817,27 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           tsl.linked_object_type,
           tsl.linked_object_id,
           tsl.relationship_role,
-          tsl.created_at::text AS source_link_created_at
+          tsl.created_at::text AS source_link_created_at,
+          COALESCE(src_inv.display_id, src_bill.display_id) AS source_transaction_display_id,
+          COALESCE(link_inv.display_id, link_bill.display_id) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
+        LEFT JOIN accounting.invoices src_inv
+          ON jep.source_transaction_type = 'invoice'
+          AND src_inv.id::text = jep.source_transaction_id
+          AND src_inv.operating_company_id = $2::uuid
+        LEFT JOIN accounting.bills src_bill
+          ON jep.source_transaction_type = 'bill'
+          AND src_bill.id::text = jep.source_transaction_id
+          AND src_bill.operating_company_id = $2::uuid
+        LEFT JOIN accounting.invoices link_inv
+          ON tsl.linked_object_type = 'invoice'
+          AND link_inv.id::text = tsl.linked_object_id
+          AND link_inv.operating_company_id = $2::uuid
+        LEFT JOIN accounting.bills link_bill
+          ON tsl.linked_object_type = 'bill'
+          AND link_bill.id::text = tsl.linked_object_id
+          AND link_bill.operating_company_id = $2::uuid
         WHERE jep.journal_entry_uuid = $1
           AND jep.operating_company_id = $2::uuid
         ORDER BY jep.line_sequence ASC, tsl.created_at ASC NULLS LAST

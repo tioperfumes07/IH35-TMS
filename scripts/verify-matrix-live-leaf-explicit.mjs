@@ -53,14 +53,27 @@ export function leafExplicitlyNamedInLiveEvidence(leaf, text) {
   return false;
 }
 
+/** Lockstep with module-matrix.service.ts */
+export function explicitlyNamedLiveColumns(text) {
+  const declaration = String(text ?? "").match(/\bExact cells?\s*:\s*([^\n|]*?)(?:\.\s|$)/i)?.[1];
+  if (declaration === undefined) return null;
+  return new Set(
+    Array.from(declaration.matchAll(/`([a-z][a-z0-9_.-]*)`/gi), (match) => match[1].toLowerCase()),
+  );
+}
+
 function assertServiceWiring(src) {
   const errs = [];
   if (!/export function leafExplicitlyNamedInLiveEvidence\b/.test(src)) {
     errs.push("missing export leafExplicitlyNamedInLiveEvidence");
   }
-  const liveFn = src.match(
-    /function leafColumnLiveReason\([\s\S]*?\n\}/,
-  );
+  if (!/export function explicitlyNamedLiveColumns\b/.test(src)) {
+    errs.push("missing export explicitlyNamedLiveColumns");
+  }
+  if (!/declaration\.matchAll\(\/`\(\[a-z\]\[a-z0-9_\.\-\]\*\)`\/gi\)/.test(src)) {
+    errs.push("Exact cell(s) parser must retain dotted/hyphenated column ids");
+  }
+  const liveFn = src.match(/function leafColumnLiveReason\([\s\S]*?\n\}/);
   if (!liveFn) {
     errs.push("leafColumnLiveReason not found");
   } else {
@@ -69,6 +82,12 @@ function assertServiceWiring(src) {
     }
     if (/leafTouchesText\(leaf,\s*hay\)/.test(liveFn[0])) {
       errs.push("leafColumnLiveReason must NOT call leafTouchesText (fan-out)");
+    }
+    if (!/explicitlyNamedLiveColumns\(hay\)/.test(liveFn[0])) {
+      errs.push("leafColumnLiveReason must parse Exact cell(s) declarations");
+    }
+    if (!/declaredColumns\s*&&\s*!declaredColumns\.has\(colId\.toLowerCase\(\)\)/.test(liveFn[0])) {
+      errs.push("leafColumnLiveReason must reject columns outside the Exact cell(s) allowlist");
     }
   }
   if (!/no stem\/keyword fan-out/.test(src) && !/LV-MATRIX-LIVE-KEYWORD-FANOUT/.test(src)) {
@@ -96,6 +115,21 @@ function selftest() {
   if (leafExplicitlyNamedInLiveEvidence(otherLeaf, explicit)) {
     throw new Error(`${LABEL} SELFTEST FAIL — must not credit unrelated leaf from Leaves list`);
   }
+  const scopedEvidence =
+    "PROD-VERIFIED. Leaf: `md.new_transaction`. Exact cells: `customer`, `qbo_chrome`, `connectivity`, `scenario.dispatch`. Opened /accounting/invoices; reverse and invoice are not claimed.";
+  const scopedColumns = explicitlyNamedLiveColumns(scopedEvidence);
+  if (
+    !scopedColumns ||
+    !scopedColumns.has("customer") ||
+    !scopedColumns.has("qbo_chrome") ||
+    !scopedColumns.has("connectivity") ||
+    !scopedColumns.has("scenario.dispatch")
+  ) {
+    throw new Error(`${LABEL} SELFTEST FAIL — Exact cells declaration must retain simple and dotted columns`);
+  }
+  if (scopedColumns.has("invoice") || scopedColumns.has("reverse_link")) {
+    throw new Error(`${LABEL} SELFTEST FAIL — narrative route/non-claim words must not broaden Exact cells`);
+  }
 
   const src = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
   // Plant: temporarily require that wiring assertions pass on real source
@@ -115,6 +149,25 @@ function selftest() {
   const planted = assertServiceWiring(mutated);
   if (!planted.some((e) => /must NOT call leafTouchesText|must call leafExplicitlyNamedInLiveEvidence/.test(e))) {
     throw new Error(`${LABEL} SELFTEST FAIL — planted fan-out mutation was not detected`);
+  }
+  const widened = src.replace(
+    /declaredColumns\s*&&\s*!declaredColumns\.has\(colId\.toLowerCase\(\)\)/,
+    "false",
+  );
+  if (widened === src) {
+    throw new Error(`${LABEL} SELFTEST FAIL — could not plant Exact cells allowlist bypass`);
+  }
+  const widenedErrs = assertServiceWiring(widened);
+  if (!widenedErrs.some((e) => /outside the Exact cell\(s\) allowlist/.test(e))) {
+    throw new Error(`${LABEL} SELFTEST FAIL — planted Exact cells allowlist bypass was not detected`);
+  }
+  const dotBlind = src.replace("[a-z][a-z0-9_.-]*", "[a-z][a-z0-9_]*");
+  if (dotBlind === src) {
+    throw new Error(`${LABEL} SELFTEST FAIL — could not plant dotted-column parser regression`);
+  }
+  const dotBlindErrs = assertServiceWiring(dotBlind);
+  if (!dotBlindErrs.some((e) => /dotted\/hyphenated column ids/.test(e))) {
+    throw new Error(`${LABEL} SELFTEST FAIL — planted dotted-column parser regression was not detected`);
   }
   console.log(`${LABEL} --selftest PASS`);
 }

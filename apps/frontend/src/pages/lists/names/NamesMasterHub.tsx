@@ -12,6 +12,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListsSubNav } from "../ListsSubNav";
 
@@ -79,10 +80,31 @@ export function NamesMasterHub() {
         sortable: true,
         render: (row) => {
           const kind = LINKABLE_NAME_KINDS[row.entity_type];
-          return kind ? (
-            <EntityLink data-testid="names-master-record-link" kind={kind} id={row.entity_id} label={row.display_name} className="font-medium" />
-          ) : (
-            <span className="font-medium">{row.display_name}</span>
+          const noun =
+            row.entity_type === "customer"
+              ? "Customer"
+              : row.entity_type === "vendor"
+                ? "Vendor"
+                : row.entity_type === "driver"
+                  ? "Driver"
+                  : "Record";
+          const label = entityLabel(row.display_name, row.entity_id, noun);
+          // LV-LISTS-NAMES-MASTER-DEAD-TOMBSTONE-LINK: unresolved / UUID-shaped names must not drill.
+          if (!kind || isUnresolvedEntityTombstone(row.display_name, row.entity_id, noun)) {
+            return (
+              <span className="font-medium text-slate-600" data-testid="names-master-record-tombstone">
+                {label}
+              </span>
+            );
+          }
+          return (
+            <EntityLink
+              data-testid="names-master-record-link"
+              kind={kind}
+              id={row.entity_id}
+              label={label}
+              className="font-medium"
+            />
           );
         },
       },

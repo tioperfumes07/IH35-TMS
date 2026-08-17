@@ -95,6 +95,25 @@ for (const rel of collapsedFilterPages) {
   }
 }
 
+// LV-LEGAL-CONTRACT-CREATE-TEMPLATE-PICKER-NO-ADD-FIRST — contract create Template picker must
+// expose Combobox "+ Add new template" first row + canonical LegalTemplateNewModal writer.
+const contractCreate = read("apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx");
+if (!contractCreate.includes("LegalTemplateNewModal")) {
+  failures.push("UnifiedContractCreatorModal must reuse LegalTemplateNewModal for template create");
+}
+if (!/allowAddNew=\{\{[\s\S]*?label:\s*["']\+ Add new template["']/.test(contractCreate)) {
+  failures.push('UnifiedContractCreatorModal Template picker must allowAddNew label "+ Add new template"');
+}
+if (!contractCreate.includes("legalTemplatesApi.create")) {
+  failures.push("UnifiedContractCreatorModal must create templates via legalTemplatesApi.create");
+}
+if (!contractCreate.includes("templatesQuery.refetch")) {
+  failures.push("UnifiedContractCreatorModal must refetch active templates after inline create");
+}
+if (/Template \(active versions\)[\s\S]*?<SelectCombobox[\s\S]*?Select a template/.test(contractCreate)) {
+  failures.push("UnifiedContractCreatorModal Template picker must not regress to SelectCombobox without + Add new");
+}
+
 if (failures.length) {
   console.error("FAIL verify-insurance-legal-reference-select:");
   for (const f of failures) console.error(" -", f);

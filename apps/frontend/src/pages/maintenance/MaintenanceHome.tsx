@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation, useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, MaintenancePartRow, WorkOrderType } from "../../api/maintenance";
 import {
@@ -103,10 +103,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
-  const [tab, setTab] = useState<MaintenanceTabId>(initialTab);
-  useEffect(() => {
-    setTab(maintenanceTabFromPath(location.pathname) as MaintenanceTabId);
-  }, [location.pathname]);
+  // LV-MAINT-RM-STATUS-BOARD-SHELL / LV-MAINTENANCE-*-SHELL: derive from pathname when it
+  // matches a leaf; otherwise honor MaintenanceTabRoute initialTab (never invent active_wos).
+  const tab = (maintenanceTabFromPath(location.pathname) ?? initialTab) as MaintenanceTabId;
   const [sourceTypeFilter, setSourceTypeFilter] = useState("");
   const [externalVendorFilter, setExternalVendorFilter] = useState("");
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
@@ -272,17 +271,21 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         {SUBNAV.map((item) => {
           const active = item.id === tab;
           const target = MAINTENANCE_TAB_PATH[item.id] ?? "/maintenance";
+          // LV-MAINT-SUBNAV-ARIA-CURRENT-ALIAS: NavLink aria-current is URL-path based, so aliases
+          // (/maintenance/dvir → pre_flight_dvir) never get aria-current=page even when the leaf
+          // body is correct — Live walks mis-read that as "dashboard shell". Drive current from tab id.
           return (
-            <NavLink
+            <Link
               key={item.id}
               to={target}
               data-maintenance-subtab={item.id}
+              aria-current={active ? "page" : undefined}
               className={`pb-0.5 text-xs font-semibold ${
                 active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
               }`}
             >
               {item.label}
-            </NavLink>
+            </Link>
           );
         })}
       </SubTabRow>
@@ -298,6 +301,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {companyId && tab !== "rm_status_board" ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
 
       {tab === "active_wos" ? (
+        <div data-testid="maintenance-active-wos-tab" data-maintenance-tab="active_wos">
         <WorkOrdersTable
           rows={workOrdersQuery.data?.work_orders ?? []}
           operatingCompanyId={companyId}
@@ -307,14 +311,19 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           onSourceTypeChange={setSourceTypeFilter}
           onExternalVendorChange={setExternalVendorFilter}
         />
+        </div>
       ) : null}
-
-      {tab === "rm_status_board" ? <RMStatStrip kpis={kpis} /> : null}
 
       {tab === "rm_status_board" ? (
         // Approved rm-status-board.html: board LEFT + a compact ~168-180px right sidebar with
         // PM Countdown / PM Alerts / DTC / Road Service Active. Single-column stack on small screens.
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
+        <div
+          className="space-y-2"
+          data-testid="rm-status-board"
+          data-maintenance-tab="rm_status_board"
+        >
+          <RMStatStrip kpis={kpis} />
+          <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
           <div className="min-w-0">
             <RMBucketsGrid
               inHouse={rmStatusQuery.data?.in_house ?? []}
@@ -347,14 +356,27 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             />
             <SevereAlertsBand alerts={severeAlertsQuery.data?.alerts ?? []} />
           </aside>
+          </div>
         </div>
       ) : null}
 
-      {tab === "fleet_table" ? <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns /> : null}
+      {tab === "fleet_table" ? (
+        <div data-testid="maintenance-fleet-table-tab" data-maintenance-tab="fleet_table">
+          <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />
+        </div>
+      ) : null}
 
-      {tab === "service_location" ? <ServiceLocationPage operatingCompanyId={companyId} /> : null}
+      {tab === "service_location" ? (
+        <div data-testid="maintenance-service-location-tab" data-maintenance-tab="service_location">
+          <ServiceLocationPage operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
-      {tab === "arriving_soon" ? <ArrivingSoonPage operatingCompanyId={companyId} /> : null}
+      {tab === "arriving_soon" ? (
+        <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
+          <ArrivingSoonPage operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
       {tab === "in_transit_issues"
         ? triageQuery.isError
@@ -387,7 +409,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {/* Damage Reports = the FORMAL register (safety.incidents, read-only). The driver-PWA intake queue
           moved to its own "Driver Reports" tab below — additive, nothing removed. */}
-      {tab === "damage_reports" ? <MaintenanceDamageRegisterTab operatingCompanyId={companyId} /> : null}
+      {tab === "damage_reports" ? (
+        <div data-testid="maintenance-damage-reports-tab" data-maintenance-tab="damage_reports">
+          <MaintenanceDamageRegisterTab operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
       {tab === "driver_reports" ? (
         <DriverReportsQueuePage
@@ -399,16 +425,32 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 
-      {tab === "road_service" ? <RoadServiceList operatingCompanyId={companyId} /> : null}
+      {tab === "road_service" ? (
+        <div data-testid="maintenance-road-service-tab" data-maintenance-tab="road_service">
+          <RoadServiceList operatingCompanyId={companyId} />
+        </div>
+      ) : null}
 
-      {tab === "brake_wear" ? <BrakeWearDashboard /> : null}
+      {tab === "brake_wear" ? (
+        <div data-testid="maintenance-brake-wear-tab" data-maintenance-tab="brake_wear">
+          <BrakeWearDashboard />
+        </div>
+      ) : null}
 
-      {tab === "tire_wear" ? <TireWearDashboard /> : null}
+      {tab === "tire_wear" ? (
+        <div data-testid="maintenance-tire-wear-tab" data-maintenance-tab="tire_wear">
+          <TireWearDashboard />
+        </div>
+      ) : null}
 
-      {tab === "pre_flight_dvir" ? <PreFlightDvirQueue /> : null}
+      {tab === "pre_flight_dvir" ? (
+        <div data-testid="maintenance-pre-flight-dvir-tab" data-maintenance-tab="pre_flight_dvir">
+          <PreFlightDvirQueue />
+        </div>
+      ) : null}
 
       {tab === "parts_inventory" ? (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="maintenance-parts-inventory-tab" data-maintenance-tab="parts_inventory">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">Total Parts</div>

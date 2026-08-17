@@ -12,6 +12,11 @@ type SoftDeleteModalProps = {
   onDeleteSuccess: () => void;
 };
 
+/**
+ * LIVE FAIL LV-DOCS-SOFT-DELETE-DESTRUCTIVE-COPY (Codex HANDOFF):
+ * Modal said Soft Delete / Delete / "You are deleting" while the API is recoverable void.
+ * Match Fleet archive chrome: Archive + recoverable retention copy.
+ */
 export function SoftDeleteModal({ file, onClose, onDeleteSuccess }: SoftDeleteModalProps) {
   const { pushToast } = useToast();
   const [reason, setReason] = useState("");
@@ -20,27 +25,27 @@ export function SoftDeleteModal({ file, onClose, onDeleteSuccess }: SoftDeleteMo
   const deleteMutation = useMutation({
     mutationFn: () => softDeleteFile(file.id, reason.trim()),
     onSuccess: () => {
-      pushToast("Document deleted (recoverable for 90 days by Owner)", "info");
+      pushToast("Document archived (recoverable for 90 days by Owner)", "info");
       onDeleteSuccess();
       onClose();
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 403) {
-        setErrorMessage("You do not have permission to delete this document.");
+        setErrorMessage("You do not have permission to archive this document.");
         return;
       }
-      setErrorMessage("Failed to delete document.");
+      setErrorMessage("Failed to archive document.");
     },
   });
 
   return (
-    <Modal open onClose={onClose} title="Soft Delete Document">
+    <Modal open onClose={onClose} title="Archive Document">
       <form
         className="space-y-3"
         onSubmit={(event) => {
           event.preventDefault();
           if (reason.trim().length < 10) {
-            setErrorMessage("Delete reason must be at least 10 characters.");
+            setErrorMessage("Archive reason must be at least 10 characters.");
             return;
           }
           setErrorMessage(null);
@@ -48,10 +53,11 @@ export function SoftDeleteModal({ file, onClose, onDeleteSuccess }: SoftDeleteMo
         }}
       >
         <p className="text-sm text-gray-700">
-          You are deleting <strong>{file.original_filename}</strong>. This is soft-delete only and remains recoverable for audit retention.
+          Archive <strong>{file.original_filename}</strong>? This soft-archives the file (recoverable) — the
+          record is retained for audit for 90 days. It is not permanently deleted.
         </p>
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-gray-600">Delete reason (required)</label>
+          <label className="text-xs font-semibold text-gray-600">Archive reason (required)</label>
           <textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
@@ -66,7 +72,7 @@ export function SoftDeleteModal({ file, onClose, onDeleteSuccess }: SoftDeleteMo
             Cancel
           </Button>
           <Button type="submit" variant="danger" loading={deleteMutation.isPending}>
-            Delete
+            Archive
           </Button>
         </div>
       </form>
