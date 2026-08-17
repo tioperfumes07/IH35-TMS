@@ -1,8 +1,8 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-17T15:17Z
+Updated: 2026-08-17T15:23Z
 
 ## LIVE
-Built **3438/3441** · Live ~2371+/3441 · **Live=BLOCKED** · healthz lag vs tip
+Built **3438/3441** · Live climbing · **Live=BLOCKED** · healthz `7f41290` (lag vs tip OK for chrome Live)
 
 ## SPEED SHARE
 | Seat | Live NOW |
@@ -15,6 +15,6 @@ Built **3438/3441** · Live ~2371+/3441 · **Live=BLOCKED** · healthz lag vs ti
 Cascade CANCELLED. FAST-MERGE ON.
 
 ## LAST SHIPS (Cursor)
-- #8414 fuel History ISO date
-- #8415/#8416 customers Status label
-- #8418 claim · #8420 docs Entity UUID tombstone
+- #8421 bus Status closeout
+- LIVE lists `chrome.toolbar_filter` (this PR) · next safety K2 unpaid
+- prior #8414/#8416/#8420
