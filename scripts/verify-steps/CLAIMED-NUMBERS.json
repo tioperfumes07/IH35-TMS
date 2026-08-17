@@ -3084,6 +3084,11 @@
       "claimer": "cc-1",
       "name": "verify-usmca-categorization-rules-fuel-maint-reach"
     },
+    "3677": {
+      "claimed_at": "2026-08-16",
+      "claimer": "cc-1",
+      "name": "verify-accounting-hub-open-invoices-excludes-void"
+    },
     "37": "37-verify-safety-accidents-wire-up.mjs",
     "38": "38-verify-safety-count-nav-integrity.mjs",
     "39": [
