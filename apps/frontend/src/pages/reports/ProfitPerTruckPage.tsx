@@ -15,6 +15,13 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 
+/** API may send sentinel "unknown" for missing unit type — never show raw lowercase to operators. */
+function displayTruckType(truckType: string | null | undefined): string {
+  const raw = String(truckType ?? "").trim();
+  if (!raw || raw.toLowerCase() === "unknown") return "Type — not set";
+  return raw;
+}
+
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
@@ -85,7 +92,7 @@ export function ProfitPerTruckPage() {
           <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} className="font-medium text-gray-900" onClick={(event) => event.stopPropagation()} />
         ),
       },
-      { key: "truck_type", label: "Type", sortable: true },
+      { key: "truck_type", label: "Type", sortable: true, sortValue: (r) => r.truck_type, render: (r) => displayTruckType(r.truck_type) },
       {
         key: "primary_driver_name",
         label: "Driver",
