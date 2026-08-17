@@ -14,6 +14,7 @@ const REPORT_PAGES = [
   "apps/frontend/src/pages/reports/APAgingPage.tsx",
   "apps/frontend/src/pages/reports/ARAgingPage.tsx",
   "apps/frontend/src/pages/reports/BalanceSheetPage.tsx",
+  "apps/frontend/src/pages/reports/BookingGapReport.tsx",
   "apps/frontend/src/pages/reports/CashFlowOverviewPage.tsx",
   "apps/frontend/src/pages/reports/CashFlowReport.tsx",
   "apps/frontend/src/pages/reports/CashFlowStatementPage.tsx",
