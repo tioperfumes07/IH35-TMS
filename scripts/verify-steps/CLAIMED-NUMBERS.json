@@ -3877,5 +3877,10 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-booking-gap-staged-period-filter"
+  },
+  "3734": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-maint-cost-flag-human-labels"
   }
 }
