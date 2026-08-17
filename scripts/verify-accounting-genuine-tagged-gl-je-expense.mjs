@@ -21,16 +21,14 @@
  *     for a detail leaf (mirrors the list-vs-detail EntityLink-vs-entityLabel pattern used
  *     throughout this codebase's other verified leaves).
  *
- * Two SIBLING leaves on the same pages were investigated and deliberately NOT tagged here
- * because they are genuinely not built for gl_je, not merely undertagged:
- *   - accounting.panel.trk_bulk_register (FixedAssetsPage.tsx TrkBulkRegisterPanel): the route's
- *     own header comment states "Register writes accounting.fixed_assets rows only (no JE)" --
- *     no EntityLink kind="journal_entry" anywhere in the panel or its result summary.
- *   - accounting.modal.create (PrepaidExpensesPage.tsx CreateModal): the form itself renders
- *     "(GL posting GATED — flag OFF)" and contains no JE evidence at all.
- * Requiring gl_je on a pure CREATE action (before any posting can occur) is very likely a
- * Required-column-honesty issue on those two leaves, not a Built gap -- flagged for a separate
- * pass, not fixed here (scope discipline: this PR only adds tags for verified-real evidence).
+ * Two SIBLING leaves on the same pages were investigated and were false-Required for gl_je
+ * (LV-MATRIX-THREE-HONEST-BUILT-GAPS / Box3 floor 2026-08-17):
+ *   - accounting.panel.trk_bulk_register — Register writes fixed_assets only (no JE); depreciation JE
+ *     is sibling accounting.panel.detail (already Built).
+ *   - accounting.modal.create — create-before-post; sibling schedule already has JE links.
+ * This guard ratchets that those two leaves MUST NOT Require gl_je, and that honesty_audit
+ * box3_gl_je_2026_08_17 records the drops. Also ratchets drivers.panel.auto_deduction_policies
+ * MUST NOT Require liability (no liability_id FK; policy ≠ driver_liabilities).
  *
  * Usage: node scripts/verify-accounting-genuine-tagged-gl-je-expense.mjs [--selftest]
  */
@@ -48,6 +46,8 @@ const FILES = {
   expensesList: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
   expensesDetail: "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx",
   fixedAssetsRoute: "apps/backend/src/accounting/fixed-assets.routes.ts",
+  accountingRequired: "docs/specs/scoreboard/modules/accounting.required.json",
+  driversRequired: "docs/specs/scoreboard/modules/drivers.required.json",
 };
 
 export function checkAll(readFile) {
@@ -92,6 +92,38 @@ export function checkAll(readFile) {
   const fixedAssetsRoute = read(FILES.fixedAssetsRoute);
   if (!/Register writes accounting\.fixed_assets rows only \(no JE\)/.test(fixedAssetsRoute)) {
     failures.push(`${FILES.fixedAssetsRoute}: expected the TRK bulk register route to still document its no-JE design honestly`);
+  }
+
+  // Box3 floor — honesty-drop ratchet (LV-MATRIX-THREE-HONEST-BUILT-GAPS)
+  try {
+    const acct = JSON.parse(read(FILES.accountingRequired));
+    const byId = Object.fromEntries((acct.leaves || []).map((l) => [l.id, l]));
+    for (const id of ["accounting.panel.trk_bulk_register", "accounting.modal.create"]) {
+      const req = byId[id]?.required || [];
+      if (req.includes("gl_je")) {
+        failures.push(`${FILES.accountingRequired}: ${id} must NOT Require gl_je (Box3 honesty-drop — no JE on this leaf)`);
+      }
+    }
+    const drops = acct.honesty_audit?.box3_gl_je_2026_08_17?.drops || [];
+    if (!drops.some((d) => d.id === "accounting.panel.trk_bulk_register" && (d.removed || []).includes("gl_je"))) {
+      failures.push(`${FILES.accountingRequired}: honesty_audit.box3_gl_je_2026_08_17 must record trk_bulk_register gl_je drop`);
+    }
+    if (!drops.some((d) => d.id === "accounting.modal.create" && (d.removed || []).includes("gl_je"))) {
+      failures.push(`${FILES.accountingRequired}: honesty_audit.box3_gl_je_2026_08_17 must record modal.create gl_je drop`);
+    }
+
+    const drivers = JSON.parse(read(FILES.driversRequired));
+    const dById = Object.fromEntries((drivers.leaves || []).map((l) => [l.id, l]));
+    const polReq = dById["drivers.panel.auto_deduction_policies"]?.required || [];
+    if (polReq.includes("liability")) {
+      failures.push(`${FILES.driversRequired}: drivers.panel.auto_deduction_policies must NOT Require liability (no liability_id FK)`);
+    }
+    const liabDrops = drivers.honesty_audit?.box3_liability_2026_08_17?.drops || [];
+    if (!liabDrops.some((d) => d.id === "drivers.panel.auto_deduction_policies" && (d.removed || []).includes("liability"))) {
+      failures.push(`${FILES.driversRequired}: honesty_audit.box3_liability_2026_08_17 must record auto_deduction_policies liability drop`);
+    }
+  } catch (e) {
+    failures.push(`Box3 required.json parse/assert failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   return failures;
@@ -149,6 +181,36 @@ if (process.argv.includes("--selftest")) {
       name: "expenses detail drops its own identity resolution",
       file: FILES.expensesDetail,
       mutate: (s) => s.replace('entityLabel(expense.expense_number, expense.id, "Expense")', '"Expense"'),
+    },
+    {
+      name: "trk_bulk_register falsely Requires gl_je again",
+      file: FILES.accountingRequired,
+      mutate: (s) => {
+        const j = JSON.parse(s);
+        const leaf = j.leaves.find((l) => l.id === "accounting.panel.trk_bulk_register");
+        if (!leaf.required.includes("gl_je")) leaf.required.push("gl_je");
+        return `${JSON.stringify(j, null, 2)}\n`;
+      },
+    },
+    {
+      name: "modal.create falsely Requires gl_je again",
+      file: FILES.accountingRequired,
+      mutate: (s) => {
+        const j = JSON.parse(s);
+        const leaf = j.leaves.find((l) => l.id === "accounting.modal.create");
+        if (!leaf.required.includes("gl_je")) leaf.required.push("gl_je");
+        return `${JSON.stringify(j, null, 2)}\n`;
+      },
+    },
+    {
+      name: "auto_deduction_policies falsely Requires liability again",
+      file: FILES.driversRequired,
+      mutate: (s) => {
+        const j = JSON.parse(s);
+        const leaf = j.leaves.find((l) => l.id === "drivers.panel.auto_deduction_policies");
+        if (!leaf.required.includes("liability")) leaf.required.push("liability");
+        return `${JSON.stringify(j, null, 2)}\n`;
+      },
     },
   ];
 
