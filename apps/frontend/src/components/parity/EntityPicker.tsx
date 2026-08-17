@@ -42,6 +42,7 @@ import { mergePickerOptionsByValue } from "./mergePickerOptionsByValue";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { PolicyCreateModal } from "../insurance/PolicyCreateModal";
 import { ClaimCreateModal } from "../insurance/ClaimCreateModal";
+import { LawsuitCreateModal } from "../insurance/LawsuitCreateModal";
 import {
   entityAddNewLabel,
   entityPickerListLimit,
@@ -264,6 +265,15 @@ export function EntityPicker({
 
       {createOffered && kind === "insurance_claim" ? (
         <ClaimCreateModal
+          open={createOpen}
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={(id, label) => (id ? handleCreated(id, label) : setCreateOpen(false))}
+        />
+      ) : null}
+
+      {createOffered && kind === "insurance_lawsuit" ? (
+        <LawsuitCreateModal
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
           onClose={() => setCreateOpen(false)}

@@ -15,7 +15,8 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated: () => void;
+  /** Optional id/label so EntityPicker can auto-select the new row (LawsuitsTab may omit). */
+  onCreated: (id?: string, label?: string) => void;
 };
 
 type FormState = {
@@ -113,9 +114,9 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
         attorney_email: form.attorney_email.trim() || null,
         notes: form.notes.trim() || null,
       }),
-    onSuccess: () => {
+    onSuccess: (lawsuit) => {
       pushToast("Lawsuit created successfully.", "success");
-      onCreated();
+      onCreated(lawsuit.id, lawsuit.case_number);
     },
     onError: (error) => {
       if (!(error instanceof ApiError)) {

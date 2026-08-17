@@ -28,7 +28,7 @@ function currentQuarterRange() {
 export function DispatchMarginPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as const };
+  const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as "accrual" | "cash" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
     applied,

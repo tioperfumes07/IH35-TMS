@@ -401,8 +401,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     entityScoped: true,
     evidence: "apps/backend/src/insurance/lawsuit.routes.ts (company-scoped SELECT / INSERT)",
     inlineCreate: {
-      available: false,
-      reason: "A lawsuit is an audited legal transaction with parties, court, demand and settlement fields; create it in Insurance, then link it here.",
+      available: true,
     },
     serverSearch: false,
     async list(operatingCompanyId) {
