@@ -204,6 +204,8 @@ export const FUEL_TAB_PATH: Record<string, string> = {
 
 export function fuelTabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  // Live operators + Devin still hit the hyphen alias; map it to the canonical inbox leaf.
+  if (norm === "/fuel/relay-inbox") return "relay_inbox";
   for (const [id, routePath] of Object.entries(FUEL_TAB_PATH)) {
     if (routePath === norm) return id;
   }
