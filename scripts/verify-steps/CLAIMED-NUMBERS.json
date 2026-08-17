@@ -1743,6 +1743,12 @@
     "lane": "cursor",
     "note": "LV-LOAD-DISPATCHER-SAFETY-EVENTS-REVERSE-ERROR"
   },
+  "3680": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-legal-matter-insurance-lawsuit-picker-create",
+    "lane": "cursor",
+    "note": "LV-LEGAL-MATTER-INSURANCE-LINK-PICKERS-NO-INLINE-CREATE"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
