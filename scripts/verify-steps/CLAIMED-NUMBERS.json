@@ -1791,6 +1791,12 @@
     "lane": "cursor",
     "note": "LV-USERS-ROOT-FILTER-PANEL-ABSENT"
   },
+  "3696": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-driver-hub-report-issue-ownership",
+    "lane": "cursor",
+    "note": "LV-DRIVER-HUB-REPORT-ISSUE-MODAL-MISOWNED-LEAF"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
