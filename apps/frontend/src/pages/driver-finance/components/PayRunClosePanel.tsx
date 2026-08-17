@@ -24,6 +24,17 @@ type Props = {
   companyId: string;
   userRole: string | null | undefined;
   settlementStatus: string;
+  // LST-F113-class fix — the parent page already resolves the human settlement number
+  // (SettlementDetailPage.tsx's settlementDisplayId, already threaded to SettlementHeader /
+  // HoldDeductionModal / LiabilityBreakdownModal) but this panel was never given it, so its
+  // EntityLink always fell back to entityLabel(null, id, "Settlement") -> "Settlement — not
+  // visible" for every settlement, even though the number was sitting in scope one level up.
+  settlementDisplayId?: string | null;
+  // Same root cause as settlementDisplayId — SettlementHeader.tsx already renders this exact
+  // { id, number }[] shape as a "Loads in cycle" EntityLink strip from settlementLoadIds
+  // (settlement_lines.load_id, Jorge LOCKED 2026-06-27 direct-trace column); this panel simply
+  // never received it, even though the parent computes it one level up.
+  settlementLoadIds?: { id: string; number: string | null }[];
   onPosted?: () => void;
 };
 
@@ -53,7 +64,15 @@ function isCoaDesignationError(code: string): boolean {
  * GET …/payrun-preview and POST …/payrun-close (LAW-E2E #3168 hop 3).
  * Fail-loud on CoA designation gaps (link to CoA Roles — never invent bindings).
  */
-export function PayRunClosePanel({ settlementId, companyId, userRole, settlementStatus, onPosted }: Props) {
+export function PayRunClosePanel({
+  settlementId,
+  companyId,
+  userRole,
+  settlementStatus,
+  settlementDisplayId,
+  settlementLoadIds,
+  onPosted,
+}: Props) {
   const { pushToast } = useToast();
   const [paymentMethodId, setPaymentMethodId] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
@@ -180,9 +199,23 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
         <EntityLink
           kind="settlement"
           id={settlementId}
-          label={entityLabel(null, settlementId, "Settlement")}
+          label={entityLabel(settlementDisplayId ?? null, settlementId, "Settlement")}
         />
       </p>
+      {settlementLoadIds && settlementLoadIds.length > 0 ? (
+        <p className="mb-2 flex flex-wrap items-center gap-1 text-xs text-gray-700" data-testid="payrun-loads-link">
+          Loads in cycle:{" "}
+          {settlementLoadIds.map((load) => (
+            <EntityLink
+              key={load.id}
+              kind="load"
+              id={load.id}
+              label={entityLabel(load.number, load.id, "Load")}
+              className="text-slate-700 hover:underline"
+            />
+          ))}
+        </p>
+      ) : null}
       <p className="mb-2 text-xs text-gray-600">
         Preview computes balanced JE legs. Close posts only when{" "}
         <code className="rounded bg-slate-100 px-1">SETTLEMENT_GL_POSTING_ENABLED</code> is ON for this

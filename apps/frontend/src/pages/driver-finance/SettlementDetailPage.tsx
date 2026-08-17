@@ -470,6 +470,8 @@ export function SettlementDetailPage() {
               companyId={companyId}
               userRole={auth.user?.role}
               settlementStatus={String(settlement.status ?? "")}
+              settlementDisplayId={settlementDisplayId}
+              settlementLoadIds={settlementLoadIds}
               onPosted={() => void refreshSettlementViews()}
             />
           ) : null}
