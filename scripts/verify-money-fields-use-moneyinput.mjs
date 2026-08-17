@@ -123,6 +123,34 @@ export function findHelperGeneratedDollarFieldOffenders(files, readFile = readFi
   return offenders;
 }
 
+// LV-CUSTOMER-PROFILE-MONEY-FIELDS-GENERIC-NUMBER — a THIRD distinct false-negative class, same shape
+// of bug as ACCT-F5314 but a different call syntax: a JSX <TextField label="..."> whose label literally
+// says it is a dollar amount ("(USD)", "($/...)", or a bare "$"), routed through the plain TextField
+// component's raw <input> instead of the money-safe MoneyField (MoneyInput-backed). TextField's OWN
+// internal <input> carries no per-field money signal (its value prop is generically named `value`), so
+// neither the raw-input detector above nor the field(...) helper detector can see this — the money
+// signal exists ONLY on the call-site label attribute, exactly like the ACCT-F5314 class.
+const JSX_TEXTFIELD_DOLLAR_RE = /<TextField\b[^>]*\blabel=(["'])((?:(?!\1).)*)\1/g;
+const DOLLAR_LABEL_RE = /\$|\bUSD\b/i;
+
+export function findJsxTextFieldDollarOffenders(files, readFile = readFileSync) {
+  const offenders = [];
+  for (const file of files) {
+    const src = readFile(file, "utf8");
+    const lines = src.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      JSX_TEXTFIELD_DOLLAR_RE.lastIndex = 0;
+      const match = JSX_TEXTFIELD_DOLLAR_RE.exec(lines[i]);
+      if (!match) continue;
+      if (!DOLLAR_LABEL_RE.test(match[2])) continue;
+      const rel = file.replace(process.cwd() + "/", "");
+      if (ALLOWLIST.has(rel)) continue;
+      offenders.push({ file: rel, line: i + 1, snippet: lines[i].trim().slice(0, 110) });
+    }
+  }
+  return offenders;
+}
+
 function selftest() {
   const fixtures = {
     "apps/frontend/src/pages/example/GoodPage.tsx": `
@@ -136,6 +164,13 @@ function selftest() {
     "apps/frontend/src/pages/example/BadHelperPage.tsx": `
       {field("Purchase price ($)", "purchasePrice", "number")}
     `,
+    "apps/frontend/src/pages/example/GoodJsxTextFieldPage.tsx": `
+      <MoneyField label="Credit limit (USD)" value={values.credit_limit} onChange={...} />
+      <TextField label="Term (days)" type="number" value={values.term_days} onChange={...} />
+    `,
+    "apps/frontend/src/pages/example/BadJsxTextFieldPage.tsx": `
+      <TextField label="Credit limit (USD)" type="number" value={values.credit_limit} onChange={...} />
+    `,
   };
   const files = Object.keys(fixtures);
   const readFile = (f) => fixtures[f];
@@ -148,6 +183,11 @@ function selftest() {
   const helperGood = findHelperGeneratedDollarFieldOffenders(files, readFile);
   if (helperGood.length !== 1 || !helperGood[0].file.endsWith("BadHelperPage.tsx")) {
     console.error("verify:money-fields-use-moneyinput SELFTEST FAIL — helper-field detector mismatch (good/bad fixtures)");
+    process.exit(1);
+  }
+  const jsxTextFieldGood = findJsxTextFieldDollarOffenders(files, readFile);
+  if (jsxTextFieldGood.length !== 1 || !jsxTextFieldGood[0].file.endsWith("BadJsxTextFieldPage.tsx")) {
+    console.error("verify:money-fields-use-moneyinput SELFTEST FAIL — JSX TextField dollar-label detector mismatch (good/bad fixtures)");
     process.exit(1);
   }
 
@@ -182,7 +222,38 @@ function selftest() {
       process.exit(1);
     }
   }
-  console.log(`verify:money-fields-use-moneyinput SELFTEST PASS — raw-input + helper-field detectors correct; ${MUTATIONS.length}/7 real dollar-field mutations independently caught`);
+  // LV-CUSTOMER-PROFILE-MONEY-FIELDS-GENERIC-NUMBER — mutation-prove the 2 real dollar consumers this
+  // finding fixed independently: reverting either MoneyField(...) call in CustomerProfileForm.tsx back
+  // to the old TextField(..., type="number") shape must be caught.
+  const CUSTOMER_PROFILE_FORM = join(process.cwd(), "apps/frontend/src/components/customers/CustomerProfileForm.tsx");
+  const JSX_MUTATIONS = [
+    {
+      file: CUSTOMER_PROFILE_FORM,
+      from: '<MoneyField label="Credit limit (USD)" value={values.credit_limit} onChange={(credit_limit) => onPatch({ credit_limit })} />',
+      to: '<TextField label="Credit limit (USD)" type="number" value={values.credit_limit} onChange={(credit_limit) => onPatch({ credit_limit })} />',
+    },
+    {
+      file: CUSTOMER_PROFILE_FORM,
+      from: '<MoneyField label="Detention rate ($/hr)" value={values.detention_rate_per_hour} onChange={(detention_rate_per_hour) => onPatch({ detention_rate_per_hour })} />',
+      to: '<TextField label="Detention rate ($/hr)" type="number" value={values.detention_rate_per_hour} onChange={(detention_rate_per_hour) => onPatch({ detention_rate_per_hour })} />',
+    },
+  ];
+  for (const [i, mutation] of JSX_MUTATIONS.entries()) {
+    const realSrc = readFileSync(mutation.file, "utf8");
+    if (!realSrc.includes(mutation.from)) {
+      console.error(`verify:money-fields-use-moneyinput SELFTEST FAIL — JSX mutation ${i} anchor not found in ${mutation.file}: ${mutation.from}`);
+      process.exit(1);
+    }
+    const mutatedSrc = realSrc.replace(mutation.from, mutation.to);
+    const mutatedRead = (f) => (f === mutation.file ? mutatedSrc : readFileSync(f, "utf8"));
+    const found = findJsxTextFieldDollarOffenders([mutation.file], mutatedRead);
+    if (found.length === 0) {
+      console.error(`verify:money-fields-use-moneyinput SELFTEST FAIL — JSX mutation ${i} escaped detection: ${mutation.file} (${mutation.from})`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`verify:money-fields-use-moneyinput SELFTEST PASS — raw-input + helper-field + JSX TextField detectors correct; ${MUTATIONS.length}/7 real finance mutations + ${JSX_MUTATIONS.length}/2 real customer-profile mutations independently caught`);
   process.exit(0);
 }
 
@@ -192,6 +263,7 @@ const files = walk(ROOT);
 const offenders = [
   ...findRawInputOffenders(files),
   ...findHelperGeneratedDollarFieldOffenders(files),
+  ...findJsxTextFieldDollarOffenders(files),
 ];
 
 if (offenders.length > 0) {
@@ -202,6 +274,7 @@ if (offenders.length > 0) {
   console.error("  *_cents column            -> <MoneyInput valueCents=.. onChangeCents=..>");
   console.error("Detection keys on the value BINDING (not placeholder) so a misleading placeholder can't hide a money field.");
   console.error("A generic field(label, key, type) helper whose label says \"($)\" must route through a MoneyInput-backed moneyField(...) helper instead.");
+  console.error("A JSX <TextField label=\"...\"> whose label says \"$\" or \"USD\" must route through a MoneyInput-backed MoneyField(...) helper instead.");
   process.exit(1);
 }
 console.log("verify:money-fields-use-moneyinput PASS — no raw money <input> outside MoneyInput (modal + inline)");

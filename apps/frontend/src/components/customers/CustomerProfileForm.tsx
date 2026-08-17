@@ -22,6 +22,7 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { CreateCustomerInput, Customer, PaymentTermOption, UpdateCustomerInput } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import type { CustomerType, MilesBasis } from "../../types/api";
+import { MoneyInput } from "../forms/MoneyInput";
 
 export type CustomerProfileFormValues = {
   // Name & contact
@@ -391,6 +392,37 @@ function TextField({
   );
 }
 
+// LV-CUSTOMER-PROFILE-MONEY-FIELDS-GENERIC-NUMBER — Credit limit / Detention rate were the only two
+// dollar fields still routed through the plain TextField's native <input type="number">, bypassing
+// governed MoneyInput. Both already store/round-trip as a bare dollar number (never cents — M-1
+// ruling), so this wraps MoneyInput's existing valueDollars/onChangeDollars mode over the SAME string
+// form-state field, converting only at the seam: the emitted/patched value stays the identical string
+// shape onPatch already expects, byte-for-byte unchanged from the TextField it replaces.
+function MoneyField({
+  label,
+  value,
+  onChange,
+  dataField,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  dataField?: string;
+}) {
+  const fieldName = dataField ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return (
+    <label className="block text-sm" data-field={dataField}>
+      <span className="mb-1 block text-xs font-semibold text-gray-600">{label}</span>
+      <MoneyInput
+        id={fieldName}
+        ariaLabel={label}
+        valueDollars={value === "" ? null : Number(value)}
+        onChangeDollars={(dollars) => onChange(dollars == null ? "" : String(dollars))}
+      />
+    </label>
+  );
+}
+
 function SelectField({
   label,
   value,
@@ -593,7 +625,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               }}
             />
           </div>
-          <TextField label="Credit limit (USD)" type="number" value={values.credit_limit} onChange={(credit_limit) => onPatch({ credit_limit })} />
+          <MoneyField label="Credit limit (USD)" value={values.credit_limit} onChange={(credit_limit) => onPatch({ credit_limit })} />
           <SelectField
             label="Credit limit source"
             value={values.credit_limit_source}
@@ -738,7 +770,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       <Section title="Detention & free-time defaults">
         <TextField label="Free time — pickup (min)" type="number" value={values.free_time_pickup_minutes} onChange={(free_time_pickup_minutes) => onPatch({ free_time_pickup_minutes })} />
         <TextField label="Free time — delivery (min)" type="number" value={values.free_time_delivery_minutes} onChange={(free_time_delivery_minutes) => onPatch({ free_time_delivery_minutes })} />
-        <TextField label="Detention rate ($/hr)" type="number" value={values.detention_rate_per_hour} onChange={(detention_rate_per_hour) => onPatch({ detention_rate_per_hour })} />
+        <MoneyField label="Detention rate ($/hr)" value={values.detention_rate_per_hour} onChange={(detention_rate_per_hour) => onPatch({ detention_rate_per_hour })} />
         <SelectField
           label="Default miles basis"
           value={values.default_billing_miles_basis}
