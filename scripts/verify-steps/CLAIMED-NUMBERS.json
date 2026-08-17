@@ -1785,6 +1785,12 @@
     "lane": "cursor",
     "note": "LV-REPORT-RUNNER-EMPTY-FILTERS-THEATER"
   },
+  "3694": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-users-root-staged-filters",
+    "lane": "cursor",
+    "note": "LV-USERS-ROOT-FILTER-PANEL-ABSENT"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
