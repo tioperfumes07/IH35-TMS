@@ -50,6 +50,21 @@ function main() {
     }
   }
 
+  // LV-MAINT-RM-STATUS-BOARD-SHELL: dedicated board must be path-derived + Live-testidable.
+  const homePath = path.join(ROOT, "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx");
+  const homeSrc = readIfExists(homePath);
+  if (!homeSrc.includes('data-testid="rm-status-board"')) {
+    failures.push("missing_testid:rm-status-board on MaintenanceHome");
+  }
+  if (!homeSrc.includes("maintenanceTabFromPath(location.pathname)")) {
+    failures.push("rm_status_board tab must derive from location.pathname (not stale useState)");
+  }
+  const bucketsPath = path.join(ROOT, "apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx");
+  const bucketsSrc = readIfExists(bucketsPath);
+  if (!bucketsSrc.includes('data-testid="rm-buckets-grid"')) {
+    failures.push("missing_testid:rm-buckets-grid on RMBucketsGrid");
+  }
+
   for (const endpoint of requiredKpiEndpoints) {
     if (!dashboardSource.includes(endpoint)) {
       failures.push(`missing_kpi_endpoint:${endpoint}`);
