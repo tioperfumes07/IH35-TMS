@@ -231,7 +231,6 @@ const HelpPage = React.lazy(() => import("../pages/help/HelpPage").then((m) => (
 const RunbooksIndex = React.lazy(() => import("../pages/help/RunbooksIndex").then((m) => ({ default: m.RunbooksIndex })));
 const OnboardingWizard = React.lazy(() => import("../pages/onboarding/OnboardingWizard").then((m) => ({ default: m.OnboardingWizard })));
 const ReportsHomePage = React.lazy(() => import("../pages/reports/ReportsHome").then((m) => ({ default: m.ReportsHomePage })));
-import IFTAPreparer from "../pages/reports/ifta/IFTAPreparer";
 import IftaPreparer from "../pages/reports/tax-regulatory/IftaPreparer";
 const ReportsRunnerPage = React.lazy(() => import("../pages/reports/ReportsRunner").then((m) => ({ default: m.ReportsRunnerPage })));
 const ARAgingPage = React.lazy(() => import("../pages/reports/ARAgingPage").then((m) => ({ default: m.ARAgingPage })));
@@ -3118,7 +3117,8 @@ export const ROUTES = React.Children.toArray(
           path="/reports/ifta"
           element={
             <ProtectedRoute>
-              <IFTAPreparer />
+              {/* LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME: legacy alias → canonical preparer (no-ledger boundary). */}
+              <Navigate to="/reports/ifta-preparer" replace />
             </ProtectedRoute>
           }
         />
