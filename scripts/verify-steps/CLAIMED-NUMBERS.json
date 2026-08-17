@@ -1719,6 +1719,12 @@
     "lane": "cursor",
     "note": "CLS-FINANCE-READONLY-FILTER-APPLY-CANCEL-RESET"
   },
+  "3672": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-finance-preview-datepicker",
+    "lane": "cursor",
+    "note": "LV-FINANCE-CALCULATOR+LOAN-WIZARD-NATIVE-DATE-INPUT"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
