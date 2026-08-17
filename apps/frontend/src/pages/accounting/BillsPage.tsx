@@ -386,9 +386,42 @@ export function BillsPage() {
     );
   }
   const staged = useStagedListFilters({
-    applied: { category, status, vendorId, dateFrom, dateTo },
-    empty: { category: "" as const, status: "" as const, vendorId: "", dateFrom: "", dateTo: "" },
-    onApply: (next) => { setCategory(next.category); setStatus(next.status); setVendorId(next.vendorId); setDateFrom(next.dateFrom); setDateTo(next.dateTo); },
+    applied: {
+      category,
+      status,
+      vendorId,
+      dateFrom,
+      dateTo,
+      unitId: deepLinkUnitId || "",
+      loadId: deepLinkLoadId || "",
+    },
+    empty: {
+      category: "" as const,
+      status: "" as const,
+      vendorId: "",
+      dateFrom: "",
+      dateTo: "",
+      unitId: "",
+      loadId: "",
+    },
+    onApply: (next) => {
+      setCategory(next.category);
+      setStatus(next.status);
+      setVendorId(next.vendorId);
+      setDateFrom(next.dateFrom);
+      setDateTo(next.dateTo);
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next.unitId) params.set("unit_id", next.unitId);
+          else params.delete("unit_id");
+          if (next.loadId) params.set("load_id", next.loadId);
+          else params.delete("load_id");
+          return params;
+        },
+        { replace: true },
+      );
+    },
   });
 
   function setCreateOpen(next: boolean) {
@@ -505,38 +538,15 @@ export function BillsPage() {
   );
 
   const billsActiveFilterCount =
-    (category ? 1 : 0) + (status ? 1 : 0) + (vendorId ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
+    (category ? 1 : 0) +
+    (status ? 1 : 0) +
+    (vendorId ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0) +
+    (deepLinkUnitId ? 1 : 0) +
+    (deepLinkLoadId ? 1 : 0);
 
   const filterBar = (
     <div className="flex flex-col gap-2 w-full">
-      <div className="flex flex-wrap items-end gap-3" data-testid="bills-entity-filters">
-        <label className="text-[11px] text-slate-600">
-          Unit
-          <EntityPicker
-            kind="unit"
-            operatingCompanyId={companyId}
-            value={deepLinkUnitId || null}
-            onChange={(next) => patchEntityFilter("unit_id", next ?? "")}
-            allowCreate={false}
-            placeholder="All units"
-            className="mt-1"
-            dataTestId="bills-filter-unit"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Load
-          <EntityPicker
-            kind="load"
-            operatingCompanyId={companyId}
-            value={deepLinkLoadId || null}
-            onChange={(next) => patchEntityFilter("load_id", next ?? "")}
-            allowCreate={false}
-            placeholder="All loads"
-            className="mt-1"
-            dataTestId="bills-filter-load"
-          />
-        </label>
-      </div>
       {vendorsQuery.isError ? (
         <ListErrorBanner
           message={`Failed to load vendor filters: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
@@ -549,6 +559,34 @@ export function BillsPage() {
         testIdPrefix="bills"
         dataAttributes={{ "data-bills-filter-toolbar": "collapsed" }}
       >
+        <div className="flex flex-wrap items-end gap-3" data-testid="bills-entity-filters">
+          <label className="text-[11px] text-slate-600">
+            Unit
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={staged.draft.unitId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All units"
+              className="mt-1"
+              dataTestId="bills-filter-unit"
+            />
+          </label>
+          <label className="text-[11px] text-slate-600">
+            Load
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={staged.draft.loadId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All loads"
+              className="mt-1"
+              dataTestId="bills-filter-load"
+            />
+          </label>
+        </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-gray-600">Category:</span>
           <button

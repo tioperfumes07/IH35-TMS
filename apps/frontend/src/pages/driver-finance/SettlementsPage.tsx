@@ -57,15 +57,26 @@ export function SettlementsPage() {
   const selectedPaymentState = (searchParams.get("payment_state") as PaymentStateFilter | null) || null;
   // B-A3: KPI focus filter — same predicates as the KPI counts (not a guess-route).
   const focusFilter = parseFocus(searchParams.get("focus"));
-  // BANK-F5210 — chrome.toolbar_filter: staged Filters Apply triad (EntityPicker stays outside panel).
+  // BANK-F5210 + CLS-ADJACENT — driver FK stages with payment_state; URL only on Apply.
   const staged = useStagedListFilters({
-    applied: { paymentState: (selectedPaymentState ?? "") as PaymentStateFilter },
-    empty: { paymentState: "" as PaymentStateFilter },
+    applied: {
+      paymentState: (selectedPaymentState ?? "") as PaymentStateFilter,
+      driverId: driverPickerId || filterDriverId || "",
+    },
+    empty: { paymentState: "" as PaymentStateFilter, driverId: "" },
     onApply: (next) => {
-      const params = new URLSearchParams(searchParams);
-      if (next.paymentState) params.set("payment_state", next.paymentState);
-      else params.delete("payment_state");
-      setSearchParams(params, { replace: true });
+      setDriverPickerId(next.driverId);
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next.paymentState) params.set("payment_state", next.paymentState);
+          else params.delete("payment_state");
+          if (next.driverId) params.set("driver_id", next.driverId);
+          else params.delete("driver_id");
+          return params;
+        },
+        { replace: true },
+      );
     },
   });
 
@@ -226,23 +237,8 @@ export function SettlementsPage() {
 
       {activeTab === "settlements" ? (
         <>
-      <div className="flex flex-wrap items-end gap-3" data-testid="settlements-filters">
-        <label className="text-[11px] text-slate-600">
-          Driver
-          <EntityPicker
-            kind="driver"
-            operatingCompanyId={companyId}
-            value={driverPickerId || null}
-            onChange={(next) => setDriverFilter(next ?? "")}
-            allowCreate={false}
-            placeholder="All drivers"
-            className="mt-1"
-            dataTestId="settlements-filter-driver"
-          />
-        </label>
-      </div>
       <CollapsedListFilters
-        activeFilterCount={selectedPaymentState ? 1 : 0}
+        activeFilterCount={(selectedPaymentState ? 1 : 0) + (effectiveDriverId ? 1 : 0)}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -250,24 +246,39 @@ export function SettlementsPage() {
         testIdPrefix="settlements"
         dataAttributes={{ "data-settlements-filter-toolbar": "collapsed" }}
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Payment state
-          <SelectCombobox
-            value={staged.draft.paymentState}
-            onChange={(event) =>
-              staged.setDraft({ paymentState: event.target.value as PaymentStateFilter })
-            }
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-          >
-            <option value="">All</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="queued">Queued</option>
-            <option value="sent_to_bank">Sent</option>
-            <option value="cleared">Cleared</option>
-            <option value="bounced">Bounced</option>
-            <option value="manual_paid">Manual Paid</option>
-          </SelectCombobox>
-        </label>
+        <div className="flex flex-wrap gap-3" data-testid="settlements-filters">
+          <label className="text-[11px] text-slate-600">
+            Driver
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={companyId}
+              value={staged.draft.driverId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="mt-1"
+              dataTestId="settlements-filter-driver"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Payment state
+            <SelectCombobox
+              value={staged.draft.paymentState}
+              onChange={(event) =>
+                staged.setDraft({ ...staged.draft, paymentState: event.target.value as PaymentStateFilter })
+              }
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            >
+              <option value="">All</option>
+              <option value="unpaid">Unpaid</option>
+              <option value="queued">Queued</option>
+              <option value="sent_to_bank">Sent</option>
+              <option value="cleared">Cleared</option>
+              <option value="bounced">Bounced</option>
+              <option value="manual_paid">Manual Paid</option>
+            </SelectCombobox>
+          </label>
+        </div>
       </CollapsedListFilters>
       {/* B-A3: Total Unpaid / This Period / YTD → payment_state routes; Debt / Pending Acks / Held →
           ?focus= predicates matching the KPI counts on this same list (real data, not guess-routes).

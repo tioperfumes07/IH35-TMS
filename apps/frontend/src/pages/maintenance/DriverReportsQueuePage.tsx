@@ -55,7 +55,30 @@ export function DriverReportsQueuePage({
   const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
   const effectiveLoadId = loadPickerId.trim() || filterLoadId || undefined;
   const [statusFilter, setStatusFilter] = useState<"" | DriverReportRow["status"]>("");
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
+  const staged = useStagedListFilters({
+    applied: {
+      statusFilter,
+      driverId: driverPickerId || filterDriverId || "",
+      loadId: loadPickerId || filterLoadId || "",
+    },
+    empty: { statusFilter: "" as const, driverId: "", loadId: "" },
+    onApply: (next) => {
+      setStatusFilter(next.statusFilter);
+      setDriverPickerId(next.driverId);
+      setLoadPickerId(next.loadId);
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next.driverId) params.set("driver_id", next.driverId);
+          else params.delete("driver_id");
+          if (next.loadId) params.set("load_id", next.loadId);
+          else params.delete("load_id");
+          return params;
+        },
+        { replace: true },
+      );
+    },
+  });
   // Free-text search: ParityTable toolbar owns it (MAINT-F3474) — no page-local searchSlot.
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
 
@@ -169,37 +192,6 @@ export function DriverReportsQueuePage({
         <h2 className="text-lg font-semibold text-gray-900">Driver Reports Queue</h2>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3" data-testid="driver-reports-entity-filters">
-        <label className="text-[11px] text-slate-600">
-          Driver
-          <EntityPicker
-            kind="driver"
-            operatingCompanyId={operatingCompanyId}
-            value={driverPickerId || null}
-            onChange={(next) => setDriverFilter(next ?? "")}
-            allowCreate={false}
-            placeholder="All drivers"
-            className="mt-1"
-            dataTestId="driver-reports-filter-driver"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Load
-          <EntityPicker
-            kind="load"
-            operatingCompanyId={operatingCompanyId}
-            value={loadPickerId || null}
-            onChange={(next) => setLoadFilter(next ?? "")}
-            allowCreate={false}
-            placeholder="All loads"
-            className="mt-1"
-            dataTestId="driver-reports-filter-load"
-          />
-        </label>
-      </div>
-
-      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No driver reports found." — an outage presenting as
-          drivers reporting no defects. */}
       {q.isError ? (
         <ListErrorState
           title="Couldn't load driver reports"
@@ -221,24 +213,52 @@ export function DriverReportsQueuePage({
         filterBar={
           <div data-driver-reports-filter-toolbar="collapsed">
             <CollapsedListFilters
-              activeFilterCount={statusFilter ? 1 : 0}
+              activeFilterCount={(statusFilter ? 1 : 0) + (effectiveDriverId ? 1 : 0) + (effectiveLoadId ? 1 : 0)}
               onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="driver-reports"
             >
-              <label className="space-y-1 text-xs text-gray-600">
-                <span>Status</span>
-                <SelectCombobox
-                  className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                  value={staged.draft.statusFilter}
-                  onChange={(event) => staged.setDraft({ statusFilter: event.target.value as "" | DriverReportRow["status"] })}
-                >
-                  <option value="">All statuses</option>
-                  <option value="submitted">submitted</option>
-                  <option value="under_review">under_review</option>
-                  <option value="resolved">resolved</option>
-                  <option value="dismissed">dismissed</option>
-                </SelectCombobox>
-              </label>
+              <div className="flex flex-wrap items-end gap-3" data-testid="driver-reports-entity-filters">
+                <label className="text-[11px] text-slate-600">
+                  Driver
+                  <EntityPicker
+                    kind="driver"
+                    operatingCompanyId={operatingCompanyId}
+                    value={staged.draft.driverId || null}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
+                    allowCreate={false}
+                    placeholder="All drivers"
+                    className="mt-1"
+                    dataTestId="driver-reports-filter-driver"
+                  />
+                </label>
+                <label className="text-[11px] text-slate-600">
+                  Load
+                  <EntityPicker
+                    kind="load"
+                    operatingCompanyId={operatingCompanyId}
+                    value={staged.draft.loadId || null}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
+                    allowCreate={false}
+                    placeholder="All loads"
+                    className="mt-1"
+                    dataTestId="driver-reports-filter-load"
+                  />
+                </label>
+                <label className="space-y-1 text-xs text-gray-600">
+                  <span>Status</span>
+                  <SelectCombobox
+                    className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                    value={staged.draft.statusFilter}
+                    onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "" | DriverReportRow["status"] })}
+                  >
+                    <option value="">All statuses</option>
+                    <option value="submitted">submitted</option>
+                    <option value="under_review">under_review</option>
+                    <option value="resolved">resolved</option>
+                    <option value="dismissed">dismissed</option>
+                  </SelectCombobox>
+                </label>
+              </div>
             </CollapsedListFilters>
           </div>
         }

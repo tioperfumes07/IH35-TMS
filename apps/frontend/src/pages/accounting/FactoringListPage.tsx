@@ -67,7 +67,17 @@ export function FactoringListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const staged = useStagedListFilters({ applied: { status, fromDate, toDate }, empty: { status: "all" as const, fromDate: "", toDate: "" }, onApply: (next) => { setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); } });
+  const loadId = deepLinkLoadId ?? "";
+  const staged = useStagedListFilters({
+    applied: { status, fromDate, toDate, loadId },
+    empty: { status: "all" as const, fromDate: "", toDate: "", loadId: "" },
+    onApply: (next) => {
+      setStatus(next.status);
+      setFromDate(next.fromDate);
+      setToDate(next.toDate);
+      patchLoadFilter(next.loadId);
+    },
+  });
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const query = useQuery({
@@ -132,57 +142,54 @@ export function FactoringListPage() {
     (status !== "all" ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (deepLinkLoadId ? 1 : 0);
 
   const filterBar = (
-    <div className="flex flex-wrap items-end gap-3">
-      <label className="text-[11px] text-slate-600" data-testid="factoring-entity-filters">
-        Load
-        <EntityPicker
-          kind="load"
-          operatingCompanyId={selectedCompanyId ?? ""}
-          value={deepLinkLoadId || null}
-          onChange={(next) => patchLoadFilter(next ?? "")}
-          allowCreate={false}
-          placeholder="All loads"
-          className="mt-1"
-          dataTestId="factoring-filter-load"
+    <CollapsedListFilters
+      activeFilterCount={factoringActiveFilterCount}
+      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
+      testIdPrefix="factoring"
+      dataAttributes={{ "data-factoring-filter-toolbar": "collapsed" }}
+      searchSlot={
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="FAC-2026-00012"
+          className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+          aria-label="Search factoring advances"
         />
-      </label>
-      <CollapsedListFilters
-        activeFilterCount={factoringActiveFilterCount}
-        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
-        testIdPrefix="factoring"
-        dataAttributes={{ "data-factoring-filter-toolbar": "collapsed" }}
-        searchSlot={
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="FAC-2026-00012"
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
-            aria-label="Search factoring advances"
+      }
+    >
+      <div className="grid gap-2 md:grid-cols-4 w-full" data-testid="factoring-entity-filters">
+        <label className="flex flex-col gap-1 text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={selectedCompanyId ?? ""}
+            value={staged.draft.loadId || null}
+            onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
+            allowCreate={false}
+            placeholder="All loads"
+            dataTestId="factoring-filter-load"
           />
-        }
-      >
-        <div className="grid gap-2 md:grid-cols-3 w-full">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Status
-            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | FactoringAdvance["status"] })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Date from
-            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Date to
-            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9" />
-          </label>
-        </div>
-      </CollapsedListFilters>
-    </div>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Status
+          <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | FactoringAdvance["status"] })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Date from
+          <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9" />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Date to
+          <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9" />
+        </label>
+      </div>
+    </CollapsedListFilters>
   );
 
   return (
