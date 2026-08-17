@@ -40,6 +40,55 @@ describe("maintenance cost per unit flags", () => {
     });
     expect(flags).toContain("reliable");
   });
+
+  // ACCT-F5404 / LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS:
+  // a small/tied cohort (e.g. one unit with work orders) can collapse p25,
+  // median and p75 to the identical value, which previously satisfied the
+  // >= p75 AND <= p25 AND <= median comparisons on the same total at once —
+  // T149 rendered simultaneously high_cost, low_cost, and reliable.
+  it("never emits both high_cost and low_cost for the same unit, even in a fully tied cohort", () => {
+    const flags = computeMaintenanceUnitFlags({
+      totalCents: 100,
+      woCount: 3,
+      p75: 100,
+      p25: 100,
+      median: 100,
+      miles: 600,
+      inspectionDue: false,
+    });
+    expect(flags).not.toContain("high_cost");
+    expect(flags).not.toContain("low_cost");
+    // still an honest positive signal: cheap-relative-to-cohort and tame workload
+    expect(flags).toContain("reliable");
+  });
+
+  it("never emits reliable alongside high_cost, even when median ties p75", () => {
+    const flags = computeMaintenanceUnitFlags({
+      totalCents: 100,
+      woCount: 3,
+      p75: 100,
+      p25: 10,
+      median: 100,
+      miles: 600,
+      inspectionDue: false,
+    });
+    expect(flags).toContain("high_cost");
+    expect(flags).not.toContain("reliable");
+  });
+
+  it("still requires a genuine spread before asserting low_cost", () => {
+    const flags = computeMaintenanceUnitFlags({
+      totalCents: 10,
+      woCount: 2,
+      p75: 150,
+      p25: 10,
+      median: 50,
+      miles: 100,
+      inspectionDue: false,
+    });
+    expect(flags).toContain("low_cost");
+    expect(flags).not.toContain("high_cost");
+  });
 });
 
 describe("maintenance cost per unit runner projection", () => {
