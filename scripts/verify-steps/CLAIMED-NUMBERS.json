@@ -1810,6 +1810,13 @@
     "note": "LV-PROGRAM-SCENARIO-TRACKER-FETCH-FAILED"
   },
   "3702": "cursor/recon-qbo-transactional-startup-catchup",
+  "3704": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-sys-edi-picker-applicability",
+    "note": "SYS-EDI-PICKER-APPLICABILITY-THEATER \u2014 EDI wizard owes no picker_law"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
