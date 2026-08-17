@@ -3814,5 +3814,12 @@
     "claimer": "cursor",
     "guard": "verify-reports-geofence-reconciliation-display-dates",
     "note": "LV-REPORTS-GEOFENCE-RECONCILIATION-RAW-ISO-EMPTY-DATE"
+  },
+  "3714": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-reports-profit-per-truck-type-display",
+    "note": "LV-REPORTS-PROFIT-PER-TRUCK-RAW-UNKNOWN-TYPE"
   }
 }
