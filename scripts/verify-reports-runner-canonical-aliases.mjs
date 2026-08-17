@@ -13,7 +13,7 @@ const aliases = {
   "profit-truck-mtd": "/reports/profit-per-truck",
   "dispatch-board": "/dispatch",
   "cash-position": "/reports/cash-flow-overview",
-  "ifta-quarterly": "/reports/ifta",
+  "ifta-quarterly": "/reports/ifta-preparer",
 };
 
 function mounted(route) {
