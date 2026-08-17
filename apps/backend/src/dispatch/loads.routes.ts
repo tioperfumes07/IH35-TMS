@@ -45,6 +45,7 @@ import {
   ensureDriverBillArtifactsForLoad,
   type DriverBillMintOutcome,
 } from "./book-load.service.js";
+import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -705,7 +706,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    // LV-DOCS-LOAD-DISPLAY-ID-DEEPLINK: GET accepts UUID or human load_number (mutations stay UUID-only).
+    const params = loadRefParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
 
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
@@ -812,7 +814,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ORDER BY df.created_at DESC
             LIMIT 1
           ) rc ON true
-          WHERE l.id = $1
+          WHERE ${loadRefMatchSql("l", 1)}
             AND l.operating_company_id = $2::uuid
           LIMIT 1
         `,
