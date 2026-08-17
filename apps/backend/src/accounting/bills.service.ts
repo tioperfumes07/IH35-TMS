@@ -274,6 +274,43 @@ const BILL_JOURNAL_ENTRY_ID_SQL = `
   )
 `;
 
+/**
+ * ACCT-F5397 / LV-BILLPAY-CREATE-JE-NOT-VISIBLE — listAllBillsForCompany / listBillsByVendor carried
+ * BILL_JOURNAL_ENTRY_ID_SQL (the JE uuid) but never resolved the JE's own entry_date/memo, so every
+ * FE surface fed by the bills LIST endpoint (BillDetailPanel inside the bill-payment "unpaid bill
+ * selector", BillsPage's list rows) showed "Journal entry — not visible" for a JE that was real,
+ * dated, and drillable — getBillDetail (the single-bill endpoint) already joined journal_entries and
+ * never had this gap. Same correlation as BILL_JOURNAL_ENTRY_ID_SQL; no new GL math.
+ */
+const BILL_JOURNAL_ENTRY_DATE_SQL = `
+  (
+    SELECT je.entry_date::text
+    FROM accounting.journal_entry_postings jep
+    JOIN accounting.journal_entries je
+      ON je.id = jep.journal_entry_uuid
+     AND je.operating_company_id = jep.operating_company_id
+    WHERE jep.operating_company_id = b.operating_company_id
+      AND jep.source_transaction_type = 'bill'
+      AND jep.source_transaction_id = b.id::text
+    ORDER BY jep.created_at ASC
+    LIMIT 1
+  )
+`;
+const BILL_JOURNAL_ENTRY_MEMO_SQL = `
+  (
+    SELECT je.memo
+    FROM accounting.journal_entry_postings jep
+    JOIN accounting.journal_entries je
+      ON je.id = jep.journal_entry_uuid
+     AND je.operating_company_id = jep.operating_company_id
+    WHERE jep.operating_company_id = b.operating_company_id
+      AND jep.source_transaction_type = 'bill'
+      AND jep.source_transaction_id = b.id::text
+    ORDER BY jep.created_at ASC
+    LIMIT 1
+  )
+`;
+
 // AP_BILL column-wave: this query only ever checked the manual-reconciliation reverse hop
 // (bt.matched_bill_payment_id, set by accounting/bank-recon's accept flow). A bill payment created
 // by the bank-split flow (banking/bank-transaction-splits.service.ts) instead stamps
@@ -731,7 +768,9 @@ export async function listBillsByVendor(
     const res = await client.query<BillRow>(
       `
         SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
-               ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id
+               ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
+               ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
+               ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo
         FROM accounting.bills b
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
@@ -817,7 +856,9 @@ export async function listAllBillsForCompany(
     const res = await client.query<BillRow>(
       `
         SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
-               ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id
+               ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
+               ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
+               ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo
         FROM accounting.bills b
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
