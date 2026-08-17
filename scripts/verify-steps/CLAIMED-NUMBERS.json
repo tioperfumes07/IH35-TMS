@@ -2016,6 +2016,7 @@
   "3801": "verify-payrun-close-panel-settlement-load-links",
   "3805": "verify-je-source-links-invoice-bill-display-id",
   "3809": "verify-fuel-loves-prices-daily-table-and-report-guard",
+  "3813": "verify-cancellation-approver-actor-and-billable-charge",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
