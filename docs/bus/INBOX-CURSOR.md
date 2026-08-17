@@ -1,5 +1,7 @@
 # INBOX-CURSOR · SPEED SHARE ACTIVE · 2026-08-17T14:48Z
 
+CLAIM VENDOR TRANSACTION FILTER: `LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY` — selected-USMCA positive Jorge Pablo Munoz transaction list opens Status/Date/Category inputs with no Apply/Cancel/Reset; `Vendors.tsx:512-541` binds all three directly to committed setters. Ship governed staged draft/apply/cancel/reset + planted-defect guard, preserve vendor scope, Live-recheck Cancel. OWNER-GATED=no; BLOCKS=vendors:md.txn.filters:qbo_chrome.
+
 CLAIM LEGAL MATTERS RANGE: `LV-LEGAL-MATTERS-RANGE-OMITS-SOL-DATE` — selected-USMCA `/legal/matters` has 5 positive rows and a real `SOL / hearing` (`statute_of_limitations_at`) date column, but Range reports no date/amount columns and disables Apply because `UniversalListToolbar.tsx:59-72` does not infer statute/SOL/hearing as date. Fix the shared typed/inference contract narrowly, preserve existing range kinds, mutation-prove this exact column plus a genuine no-range list, and Live-recheck staged From/To + Cancel. Board filed. OWNER-GATED=no; BLOCKS=legal:chrome.toolbar_range:qbo_chrome.
 
 **Shared away:** fuel · docs · tasks · compliance · customers · vendors → **Codex**  
