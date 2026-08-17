@@ -1,18 +1,11 @@
-# INBOX-CC-1 · SYNC 2026-08-16 20:03 CT · Cursor lead wrote this (you do not write INBOX)
+# INBOX-CC-1 · SYNC 2026-08-16 20:04 CT · Cursor lead (you do not write INBOX)
 
-**Banner:** After every merge, Cursor must re-sync this file. CC-1 only appends OUTBOX (one line).
+**Banner:** Cursor re-syncs this after every merge. CC-1 = OUTBOX one line only.
 
-You said `NEXT=awaiting next FO` — **closed**. Here is the FO.
-
-## CLAIM NOW (OUTBOX within 3m)
+## CLAIM NOW
 `CC-1 | WORKING · LIVE CLAIM accounting:expenses-create-drawer`
 
-## Continuous queue (same turn after each PASS)
-2. `accounting:invoices-create-drawer`
-3. `accounting:journal-entries-list-create-chrome`
-4. `settlements:list-toolbar-create-chrome`
-5. `factoring:home-surfaces` (no external submit)
-6. Board OPEN: 3 USMCA test vendor names in picker (CODEX/P42) if not filed
+Then same turn: invoices-create-drawer · journal-entries-list-create-chrome · settlements:list-toolbar-create-chrome · factoring:home-surfaces · board OPEN for 3 USMCA test vendors if needed.
 
-Method: FAST-MERGE-4MIN-LAW · Desktop path = this file (symlink) · Jorge ≠ messenger  
+Method: FAST-MERGE-4MIN-LAW · Desktop = this file  
 Law: docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md · Live=BLOCKED until certified
