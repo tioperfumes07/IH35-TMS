@@ -3887,5 +3887,10 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-maint-cost-flag-human-labels"
+  },
+  "3736": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-customer-profitability-flag-human-labels"
   }
 }
