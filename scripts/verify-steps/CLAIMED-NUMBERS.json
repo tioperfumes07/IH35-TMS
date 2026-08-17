@@ -1689,6 +1689,12 @@
     "lane": "cursor",
     "note": "LV-INSURANCE-POLICY-MODAL-UNREACHABLE-THEATER"
   },
+  "3662": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-legal-matter-claim-picker-create",
+    "lane": "cursor",
+    "note": "LV-LEGAL-MATTER-CLAIM-PICKER-CREATOR-DISABLED"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
