@@ -3862,5 +3862,10 @@
     "claimed_at": "2026-08-17",
     "claimed_by": "cursor",
     "purpose": "verify-reports-account-type-human-labels"
+  },
+  "3730": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-profit-per-truck-flag-human-labels"
   }
 }
