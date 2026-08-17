@@ -51,6 +51,13 @@ function main() {
   if (!/export const loadRefParamSchema/.test(loadRef) || !/export function loadRefMatchSql/.test(loadRef)) {
     fail("apps/backend/src/lib/load-ref.ts must export loadRefParamSchema + loadRefMatchSql");
   }
+  // LV-DOCS-LOAD-DEEPLINK-59E4D6B: CASE WHEN … THEN id=$n::uuid ELSE false — never regex AND $n::uuid.
+  if (!/CASE[\s\S]{0,160}THEN[\s\S]{0,80}::uuid[\s\S]{0,40}ELSE false/.test(loadRef)) {
+    fail("loadRefMatchSql must CASE-guard ::uuid cast (Postgres does not short-circuit AND)");
+  }
+  if (/~\*[\s\S]{0,120}AND[\s\S]{0,60}::uuid/.test(loadRef)) {
+    fail("loadRefMatchSql must not use regex AND … ::uuid (22P02 on load_number)");
+  }
   if (!/loadRefParamSchema/.test(mdataLoads) || !/loadRefMatchSql\("l", 1\)/.test(mdataLoads)) {
     fail("GET /api/v1/mdata/loads/:id must use loadRefParamSchema + loadRefMatchSql (UUID or load_number)");
   }
