@@ -50,12 +50,28 @@ function assertGuard(sources) {
     }
   }
 
-  // 2 — API clients expose server total (not page-length-only)
-  if (!/export function listCustomers[\s\S]*?total:\s*payload\.total\s*\?\?\s*payload\.customers\.length/.test(sources.mdata)) {
-    errors.push(`${MDATA_API}: listCustomers must thread payload.total (with length fallback)`);
+  // 2 — API clients expose server total (not page-length-only) AND always normalize collection to T[]
+  // LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY: non-array `customers` crashed Full Edit `.map`.
+  if (!/function normalizeMdataListRows[\s\S]*?Array\.isArray\(raw\)/.test(sources.mdata)) {
+    errors.push(`${MDATA_API}: must export normalizeMdataListRows that Array.isArray-guards list envelopes`);
   }
-  if (!/export function listVendors[\s\S]*?total:\s*payload\.total\s*\?\?\s*payload\.vendors\.length/.test(sources.mdata)) {
-    errors.push(`${MDATA_API}: listVendors must thread payload.total (with length fallback)`);
+  const listCustomersBlock = (sources.mdata.match(
+    /export function listCustomers[\s\S]*?(?=export function listVendors|export function getVendor)/
+  ) || [])[0] || "";
+  const listVendorsBlock = (sources.mdata.match(
+    /export function listVendors[\s\S]*?(?=export function getVendor|export type CreateVendorInput|$)/
+  ) || [])[0] || "";
+  if (!/normalizeMdataListRows(?:<Customer>)?/.test(listCustomersBlock) || !/listEnvelopeTotal/.test(listCustomersBlock)) {
+    errors.push(`${MDATA_API}: listCustomers must normalize customers via normalizeMdataListRows + listEnvelopeTotal`);
+  }
+  if (!/normalizeMdataListRows(?:<VendorOption>)?/.test(listVendorsBlock) || !/listEnvelopeTotal/.test(listVendorsBlock)) {
+    errors.push(`${MDATA_API}: listVendors must normalize vendors via normalizeMdataListRows + listEnvelopeTotal`);
+  }
+  if (/total:\s*payload\.total\s*\?\?\s*payload\.customers\.length/.test(listCustomersBlock)) {
+    errors.push(`${MDATA_API}: listCustomers must not trust raw payload.customers.length without Array.isArray normalize`);
+  }
+  if (/total:\s*payload\.total\s*\?\?\s*payload\.vendors\.length/.test(listVendorsBlock)) {
+    errors.push(`${MDATA_API}: listVendors must not trust raw payload.vendors.length without Array.isArray normalize`);
   }
 
   // 3 — pages must not pass array .length into totalCount
@@ -106,15 +122,25 @@ function selftest() {
     return { vendors: result.rows, total: result.total };
   `;
   const goodMdata = `
+    export function normalizeMdataListRows(raw) {
+      if (Array.isArray(raw)) return raw;
+      return [];
+    }
+    function listEnvelopeTotal(payload, rows) {
+      if (payload && typeof payload === "object" && typeof payload.total === "number") return payload.total;
+      return rows.length;
+    }
     export function listCustomers(params = {}) {
-      return apiRequest(\`/api/v1/mdata/customers\`).then(
-        (payload) => ({ customers: payload.customers, total: payload.total ?? payload.customers.length })
-      );
+      return apiRequest(\`/api/v1/mdata/customers\`).then((payload) => {
+        const customers = normalizeMdataListRows(payload?.customers ?? payload);
+        return { customers, total: listEnvelopeTotal(payload, customers) };
+      });
     }
     export function listVendors(params = {}) {
-      return apiRequest(\`/api/v1/mdata/vendors\`).then(
-        (payload) => ({ vendors: payload.vendors, total: payload.total ?? payload.vendors.length })
-      );
+      return apiRequest(\`/api/v1/mdata/vendors\`).then((payload) => {
+        const vendors = normalizeMdataListRows(payload?.vendors ?? payload);
+        return { vendors, total: listEnvelopeTotal(payload, vendors) };
+      });
     }
   `;
   const goodCustomersPage = `
@@ -152,13 +178,38 @@ function selftest() {
       wantMin: 1,
     },
     {
-      name: "listCustomers drops total thread -> FAIL",
+      name: "listCustomers drops normalize -> FAIL",
       in: {
         ...base,
         mdata: goodMdata.replace(
-          "total: payload.total ?? payload.customers.length",
-          "total: payload.customers.length"
+          "const customers = normalizeMdataListRows(payload?.customers ?? payload);",
+          "const customers = payload.customers;"
         ),
+      },
+      wantMin: 1,
+    },
+    {
+      name: "listCustomers regresses to raw .length -> FAIL",
+      in: {
+        ...base,
+        mdata: `
+    export function normalizeMdataListRows(raw) {
+      if (Array.isArray(raw)) return raw;
+      return [];
+    }
+    function listEnvelopeTotal(payload, rows) { return rows.length; }
+    export function listCustomers(params = {}) {
+      return apiRequest(\`/api/v1/mdata/customers\`).then(
+        (payload) => ({ customers: payload.customers, total: payload.total ?? payload.customers.length })
+      );
+    }
+    export function listVendors(params = {}) {
+      return apiRequest(\`/api/v1/mdata/vendors\`).then((payload) => {
+        const vendors = normalizeMdataListRows(payload?.vendors ?? payload);
+        return { vendors, total: listEnvelopeTotal(payload, vendors) };
+      });
+    }
+        `,
       },
       wantMin: 1,
     },
