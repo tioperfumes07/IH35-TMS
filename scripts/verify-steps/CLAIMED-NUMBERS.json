@@ -3918,5 +3918,11 @@
     "finding": "LV-REPORTS-SCHEDULED-CUSTOM-RAW-CHROME-DELETE",
     "claimed_by": "cursor",
     "claimed_at": "2026-08-17"
+  },
+  "3748": {
+    "guard": "verify-reports-cancellations-by-date-iso-chrome",
+    "finding": "LV-REPORTS-CANCELLATIONS-BY-DATE-RAW-ISO",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
   }
 }
