@@ -14,6 +14,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -272,7 +273,7 @@ export function TrialBalancePage() {
                       row.account_name || "—"
                     )}
                   </td>
-                  <td className="px-3 py-2">{row.account_type || "—"}</td>
+                  <td className="px-3 py-2">{formatAccountTypeLabel(row.account_type)}</td>
                   <td className="px-3 py-2 text-right">{money(row.total_debits)}</td>
                   <td className="px-3 py-2 text-right">{money(row.total_credits)}</td>
                   <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}`}>{money(row.net_balance)}</td>
