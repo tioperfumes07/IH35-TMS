@@ -3857,5 +3857,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165
+  "total_claimed": 1165,
+  "3728": {
+    "claimed_at": "2026-08-17",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-account-type-human-labels"
+  }
 }
