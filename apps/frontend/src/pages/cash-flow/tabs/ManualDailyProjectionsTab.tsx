@@ -85,6 +85,8 @@ const MDP_COLUMNS: Record<Direction, MdpCol[]> = {
     { key: "category", label: "Expense", w: "flex-1 min-w-0" },
   ],
 };
+/** LV-CASH-FLOW-MANUAL-PROJECTION-PICKER-CLIPPING — create fields wrap; never a single non-wrapping shrink-0 strip. */
+const MDP_CREATE_FIELD = "min-w-[11rem] max-w-full basis-[11rem] grow";
 
 function ProjectionPanel({
   direction,
@@ -226,16 +228,20 @@ function ProjectionPanel({
             Editing existing {direction} line — change fields then press Save.
           </div>
         ) : null}
-        <div className="flex items-center gap-1.5">
+        <div
+          className="flex flex-wrap items-end gap-1.5"
+          data-mdp-create-row={direction}
+          data-mdp-create-row-layout="wrap"
+        >
           {columns.map((c) => c.key === "ref_label" && direction === "income" ? (
-            <EntityPicker key={c.key} kind="unit" operatingCompanyId={operatingCompanyId} value={form.ref_external_id || null} onChange={(id) => setForm((f) => ({ ...f, ref_kind: "unit", ref_external_id: id ?? "", ref_label: "" }))} placeholder="Select unit" className={`${c.w} shrink-0`} />
+            <EntityPicker key={c.key} kind="unit" operatingCompanyId={operatingCompanyId} value={form.ref_external_id || null} onChange={(id) => setForm((f) => ({ ...f, ref_kind: "unit", ref_external_id: id ?? "", ref_label: "" }))} placeholder="Select unit" className={MDP_CREATE_FIELD} />
           ) : c.key === "party_name" && direction === "income" ? (
-            <EntityPicker key={c.key} kind="customer" operatingCompanyId={operatingCompanyId} value={form.party_ref_id || null} onChange={(id) => setForm((f) => ({ ...f, party_ref_kind: "customer", party_ref_id: id ?? "", party_name: "" }))} placeholder="Select customer" className={`${c.w} shrink-0`} />
+            <EntityPicker key={c.key} kind="customer" operatingCompanyId={operatingCompanyId} value={form.party_ref_id || null} onChange={(id) => setForm((f) => ({ ...f, party_ref_kind: "customer", party_ref_id: id ?? "", party_name: "" }))} placeholder="Select customer" className={MDP_CREATE_FIELD} />
           ) : c.key === "party_name" && direction === "expense" ? (
-            <div key={c.key} className={`${c.w} flex shrink-0 gap-1`}>
+            <div key={c.key} className={`${MDP_CREATE_FIELD} flex gap-1`}>
               <SelectCombobox
                 aria-label="Vendor or driver type"
-                className="h-7 w-20 rounded-sm border border-gray-300 px-1"
+                className="h-7 w-20 shrink-0 rounded-sm border border-gray-300 px-1"
                 value={form.party_ref_kind}
                 onChange={(ev) => setForm((f) => ({ ...f, party_ref_kind: ev.target.value as RowForm["party_ref_kind"], party_ref_id: "", party_ref_label: "", party_name: "" }))}
               >
@@ -259,9 +265,9 @@ function ProjectionPanel({
               )}
             </div>
           ) : (
-            <input key={c.key} placeholder={c.label} aria-label={c.label} className={`h-7 ${c.w} shrink-0 rounded-sm border border-gray-300 px-2`} value={form[c.key]} onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))} />
+            <input key={c.key} placeholder={c.label} aria-label={c.label} className={`h-7 ${MDP_CREATE_FIELD} rounded-sm border border-gray-300 px-2`} value={form[c.key]} onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))} />
           ))}
-          <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm((f) => ({ ...f, amount_cents: c }))} placeholder="Total" ariaLabel="Total" className="w-24 shrink-0" />
+          <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm((f) => ({ ...f, amount_cents: c }))} placeholder="Total" ariaLabel="Total" className="w-24 min-w-[6rem] grow-0" />
         </div>
 
         <button type="button" className="text-[11px] text-slate-500 hover:underline" onClick={() => setShowMore((v) => !v)}>
