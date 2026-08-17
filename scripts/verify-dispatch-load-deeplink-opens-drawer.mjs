@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * LV-DISPATCH-LOAD-DEEPLINK-DRAWER
+ * LV-DISPATCH-LOAD-DEEPLINK-DRAWER / LV-WO-LOAD-DRAWER-PORTAL
  * /dispatch/loads/:id must open LoadDetailDrawer (Devin Live FAIL: board-only after WO load click).
+ * Harden: pathname fallback + pinned id + createPortal to document.body.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -22,22 +23,25 @@ function main() {
   const dispatch = fs.readFileSync(DISPATCH, "utf8");
   const drawer = fs.readFileSync(DRAWER, "utf8");
 
-  if (!/deepLinkLoadId=\{id\}/.test(manifest) && !/deepLinkLoadId=\{id\}/.test(manifest.replace(/\s/g, ""))) {
-    // allow multiline
-    if (!/DispatchPage[\s\S]{0,80}deepLinkLoadId=\{id\}/.test(manifest)) {
-      fail("DispatchLoadDetailRoute must pass deepLinkLoadId={id} to DispatchPage");
-    }
+  if (!/DispatchPage[\s\S]{0,120}deepLinkLoadId=\{id\}/.test(manifest) && !/deepLinkLoadId=\{id\}/.test(manifest)) {
+    fail("DispatchLoadDetailRoute must pass deepLinkLoadId={id} to DispatchPage");
   }
   if (!/deepLinkLoadId/.test(dispatch)) {
     fail("DispatchPage must accept deepLinkLoadId prop");
   }
-  if (!/routeLoadId = deepLinkLoadId \?\? routeParamLoadId/.test(dispatch)) {
-    fail("DispatchPage must prefer deepLinkLoadId over useParams for loadId");
+  if (!/pathLoadId/.test(dispatch) || !/pinnedLoadId/.test(dispatch)) {
+    fail("DispatchPage must pathname-fallback + pin deep-link load id until Close");
+  }
+  if (!/routeLoadId = deepLinkLoadId \?\? routeParamLoadId \?\? pathLoadId/.test(dispatch)) {
+    fail("DispatchPage must resolve loadId: deepLinkLoadId ?? useParams ?? pathname");
+  }
+  if (!/createPortal/.test(drawer) || !/document\.body/.test(drawer)) {
+    fail("LoadDetailDrawer must createPortal(..., document.body) so fixed panel is not clipped");
   }
   if (!/data-testid=["']load-detail-drawer["']/.test(drawer)) {
     fail("LoadDetailDrawer must expose data-testid=load-detail-drawer when open");
   }
-  console.log("OK verify-dispatch-load-deeplink-opens-drawer — deepLinkLoadId + drawer testid");
+  console.log("OK verify-dispatch-load-deeplink-opens-drawer — portal + pin + pathname fallback");
 }
 
 function selftest() {

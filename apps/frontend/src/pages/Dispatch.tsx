@@ -108,14 +108,25 @@ export function DispatchPage({
   // still ended on a query-param board bookmark. Reading the route param here is what makes the
   // canonical route real; `?load_id=` / `?load=` stay honoured below as legacy BOOKMARKS.
   const { id: routeParamLoadId } = useParams<{ id: string }>();
-  const routeLoadId = deepLinkLoadId ?? routeParamLoadId;
+  // Pathname fallback — Live FAIL (WO→load): useParams briefly empty while ?view=list is written.
+  const pathLoadId = useMemo(() => {
+    const m = location.pathname.match(/^\/dispatch\/loads\/([^/]+)\/?$/);
+    return m?.[1] && m[1] !== "banking" ? m[1] : null;
+  }, [location.pathname]);
+  const routeLoadId = deepLinkLoadId ?? routeParamLoadId ?? pathLoadId;
+  // Pin the deep-link id until Close — survives searchParam replace races that remount params.
+  const [pinnedLoadId, setPinnedLoadId] = useState<string | null>(null);
+  useEffect(() => {
+    if (routeLoadId) setPinnedLoadId(routeLoadId);
+  }, [routeLoadId]);
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
   // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
-  const loadsRoute = loadsDeepLink || location.pathname === "/dispatch/loads";
+  const onLoadDetailPath = Boolean(pathLoadId);
+  const loadsRoute = loadsDeepLink || onLoadDetailPath || location.pathname === "/dispatch/loads";
 
   useEffect(() => {
     setSubTab(dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId);
@@ -189,7 +200,7 @@ export function DispatchPage({
   // Canonical first: `/dispatch/loads/:id`. `?load_id=` and the older `?load=` are kept as LEGACY
   // BOOKMARKS (emailed board links, saved tabs) so nothing that already works stops working —
   // C5 forbids WRITING the query form, never reading it.
-  const loadId = routeLoadId ?? searchParams.get("load_id") ?? searchParams.get("load");
+  const loadId = pinnedLoadId ?? routeLoadId ?? searchParams.get("load_id") ?? searchParams.get("load");
   const canEdit = true;
 
   // "Reserve a Load" deep link (?book_load=1) must open the book-load modal — previously unread.
@@ -537,10 +548,11 @@ export function DispatchPage({
         canEdit={canEdit}
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
         onClose={() => {
+          setPinnedLoadId(null);
           // On the canonical route the load id lives in the PATH — deleting a query param there
           // would leave the drawer open forever, so step back to the board and keep the current
           // view/filters. The legacy query-param entry still closes by dropping the param.
-          if (routeLoadId) {
+          if (routeLoadId || pathLoadId) {
             const keep = searchParams.toString();
             navigate(`/dispatch/loads${keep ? `?${keep}` : ""}`, { replace: true });
             return;

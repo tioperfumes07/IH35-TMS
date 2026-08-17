@@ -15,7 +15,11 @@ function fail(msg) {
 }
 
 function assertSource(src) {
-  if (!src.includes('get("view") === "kanban"')) fail('must read ?view=kanban from searchParams');
+  const readsView =
+    src.includes('get("view") === "kanban"') ||
+    /viewParam\s*===\s*["']kanban["']/.test(src) ||
+    /toLowerCase\(\)[\s\S]{0,80}kanban/.test(src);
+  if (!readsView) fail("must read ?view=kanban from searchParams (case-insensitive OK)");
   if (!src.includes("work-orders-console-kanban")) fail("missing data-testid work-orders-console-kanban");
   if (!src.includes("work-orders-console-kanban-tab")) fail("missing kanban tab testid");
   if (!src.includes("kanbanColumns")) fail("missing kanbanColumns grouping");

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit } from "../../api/loads";
@@ -303,13 +304,17 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
 
   if (!isOpen || !loadId) return null;
 
-  return (
+  // LV-WO-LOAD-DRAWER: portal to document.body so parent overflow/transform cannot clip the fixed panel
+  // (Devin Live FAIL: WO→load reached /dispatch/loads/:id?view=list with no visible drawer).
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />
+      <div className="fixed inset-0 z-[200] bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />
       <aside
-        className="fixed right-0 top-0 z-50 h-full w-full overflow-y-auto bg-white shadow-xl md:w-[600px]"
+        className="fixed right-0 top-0 z-[210] h-full w-full overflow-y-auto bg-white shadow-xl md:w-[600px]"
         data-testid="load-detail-drawer"
         data-load-id={loadId}
+        role="dialog"
+        aria-modal="true"
       >
         <header className="sticky top-0 border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
@@ -1081,6 +1086,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           }}
         />
       ) : null}
-    </>
+    </>,
+    document.body
   );
 }

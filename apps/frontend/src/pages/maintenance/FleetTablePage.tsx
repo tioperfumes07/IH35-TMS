@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
@@ -47,8 +47,11 @@ function normalizeFleetStatusParam(raw: string | null): string {
 
 function rowMatchesFleetStatus(row: UnifiedUnitRow, status: string): boolean {
   if (!status) return true;
-  if (row.status === status) return true;
-  if (status === "OutOfService" && Boolean(row.is_oos)) return true;
+  // Normalize again here so deep links (?status=out-of-service) still match when the
+  // caller forgets to canonicalize — Live FAIL: KPI Out-of-Service=13, table 0 of 45.
+  const canonical = normalizeFleetStatusParam(status) || status;
+  if (row.status === canonical || row.status === status) return true;
+  if (canonical === "OutOfService" && Boolean(row.is_oos)) return true;
   return false;
 }
 
@@ -116,6 +119,21 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const effectiveStatus =
     rawStatus == null ? (defaultActiveOnly ? "InService" : "") : normalizeFleetStatusParam(rawStatus);
   const activeOnly = effectiveStatus === "InService";
+
+  // Canonicalize kebab deep links in the URL so refresh/share matches KPI click (OutOfService).
+  useEffect(() => {
+    if (rawStatus == null || rawStatus === "" || rawStatus === "all") return;
+    const canonical = normalizeFleetStatusParam(rawStatus);
+    if (!canonical || canonical === rawStatus) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("status", canonical);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [rawStatus, setSearchParams]);
 
   // Soft-delete (deactivated_at) dimension — independent of the 5 operational statuses.
   // Default Active. Inactive/All fetch with include_inactive=true so soft-deleted units
