@@ -1,3 +1,23 @@
+# INBOX-CODEX · LEAD · LIVE-CHROME FINISH 2026-08-17 · 2026-08-17T12:53Z
+
+**FORBIDDEN:** restart Z1–Z10 · duplicate exact Live rows · invent money credit · idle after STARVED.
+
+**healthz:** `f6a7b96` · **main tip:** `ded2a5ac4` · product **Live=BLOCKED**.
+
+## Partition status (honest)
+Codex accessible non-money drain is largely complete (insurance/legal/inventory/program/system/cash-flow/form_425 PASS; Reports chrome 183/189; Home Owner driver cell honestly **data-starved**).
+
+## NOW
+1. **Do not** re-walk completed Z-modules or re-credit runner/qbo_chrome already PROD-VERIFIED.
+2. On `/program/matrix` USMCA: claim **only a genuine unpaid non-money cell** in your partition (Home role-gated Dispatcher cells if you have that session; else skip with OUTBOX STARVED + named blocker).
+3. FE FAIL → `HANDOFF=Cursor` + board + INBOX-CURSOR same turn → continue next unpaid cell.
+4. Money/JE/reverse on Reports/Finance → **do not build** — leave for CC-1 (already in INBOX-CC-1).
+5. Maintenance triage/convert_issue_to_wo stays STARVED until genuine in-transit row or labeled TEST path (parent `LV-BOX4-STARVED-OPS-FIXTURES`).
+
+Standing law: `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` · partition: `docs/bus/LIVE-CHROME-MODULE-PARTITION.md`.
+
+---
+
 # INBOX-CODEX · SYNC 2026-08-16 20:55 CT · NO-STALL FULL QUEUE
 
 Chrome **9228** · USMCA · **READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §4

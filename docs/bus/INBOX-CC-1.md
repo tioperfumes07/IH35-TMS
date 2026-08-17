@@ -1,3 +1,27 @@
+# INBOX-CC-1 · LEAD · LIVE-CHROME FINISH 2026-08-17 · 2026-08-17T12:53Z
+
+**FORBIDDEN:** idle · awaiting next FO · restarting A1 while D-chain advanced.
+
+**healthz:** `f6a7b96` · **main tip:** `ded2a5ac4` · product **Live=BLOCKED** until Box3 Built=3441/3441 **and** Box4 partitions close.
+
+## P0 NOW (serial — Built floor first)
+1. **BUILT FLOOR** `LV-MATRIX-THREE-HONEST-BUILT-GAPS` (#8393 routing) — exact unpaid Box3 cells:
+   - `accounting:accounting.panel.trk_bulk_register:gl_je`
+   - `accounting:accounting.modal.create:gl_je`
+   - `drivers:drivers.panel.auto_deduction_policies:liability`
+   Reconcile writer/guard; Built credit only with genuine proof. `BLOCKS=BUILT-3441-OF-3441`.
+
+2. **REPORTS Live money/reverse (6 cells)** — Codex non-money Reports = **183/189**; residual is **your** lane (5× `gl_je` + 1× `reverse_link`). Measure unpaid cells on `/program/matrix` USMCA Reports — do not invent leaf ids. Live-prove JE/link drill with Neon/app-path evidence; no TMS→QBO write-back; flags OFF until owner says turn on.
+
+3. **FINANCE** residual CC-1 cells (Codex: finance ~44/46 vendor/invoice money-link) + board FOs: `LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS` · `LV-USMCA-AR-AP-AGING-FLAG-OVERRIDE-MISSING` between waves OK.
+
+## Live wave chain (after P0 or in parallel if not hotfile-colliding)
+Settlements D2 credit is on main (#8395/#8396) → **re-measure matrix** → unpaid money leaves in accounting/banking/factoring/settlements → continue CONTINUOUS-LIVE-NO-STALL §3. FE FAIL → HANDOFF=Cursor same turn.
+
+OUTBOX must name the next claim every ship. 0 PRs while P0 cells remain = defect.
+
+---
+
 # INBOX-CC-1 · LEAD OVERRIDE 2026-08-16 21:55 CT · STALL FORBIDDEN
 
 **FORBIDDEN:** `NEXT=awaiting next FO` / standing by.

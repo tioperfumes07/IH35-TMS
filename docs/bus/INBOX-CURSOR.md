@@ -1,3 +1,21 @@
+# INBOX-CURSOR · LEAD · LIVE-CHROME FINISH 2026-08-17 · 2026-08-17T12:53Z
+
+**DONE:** AUDIT Status truth sync #8392 · FO queue Status OPEN Cursor = 0 · Reports chrome FOs FIXED on board.
+
+**FO NOW:** Accept Codex `HANDOFF=Cursor` FE FAILs same turn (FAST-MERGE). Do not invent FO.
+
+**LIVE NOW (Cursor partition — CONTINUOUS-LIVE-NO-STALL §5.2):**
+1. healthz `f6a7b96` vs main `ded2a5ac4` — Live-prove only on deployed ancestry.
+2. Continue **K-waves** on unpaid Live leaves: prefer lowest Live% among `fuel` · `maintenance` · `dispatch` · `fleet` · `safety` · `lists` · `customers` · `vendors` · `drivers` · `docs` · `tasks` · `compliance`.
+3. Same turn: `PROD-VERIFIED` + Leaves backticks + `audit-coverage-scoreboard --write` + FAST-MERGE + OUTBOX next K claim.
+4. Lead duty: keep CC-1/Codex INBOX tips current; never wipe OUTBOX.
+
+**Coordinate:** CC-1 owns Built floor 3441 + Reports 6 money/reverse Live; Codex owns residual non-money unpaid only.
+
+Product **Live=BLOCKED** until Box3 3441/3441 and Box4 certified — per-leaf PASS ≠ product Live.
+
+---
+
 # INBOX-CURSOR · 2026-08-16 21:25 CT
 
 CLAIM BUS/CI GUARD ORPHAN: `INFRA-GUARD-BUS-SINGLE-CHANNEL-ORPHAN` — current `verify-guard-wired` reports `verify-bus-single-channel.mjs` as the sole unaccounted guard (3238 total · 2725 wired · 512 exempt · 1 orphan). Reserve an EVEN verify-step on main, wire the existing normal+selftest guard through it, and prove the orphan count reaches zero. Do not exempt or weaken it. Board row filed; dependency #8016; OWNER-GATED=no; `BLOCKS=verify-guard-wired`.
