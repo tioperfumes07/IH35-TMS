@@ -87,10 +87,7 @@ export function DOTComplianceTab() {
     },
   });
 
-  if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
-  }
-
+  // Hooks must run unconditionally (Rules of Hooks). Early return AFTER all hooks.
   const reminders = remindersQ.data ?? [];
   const orderedReminders = useMemo(
     () =>
@@ -140,6 +137,10 @@ export function DOTComplianceTab() {
     ],
     [acknowledgeMutation, remindersQ.isLoading],
   );
+
+  if (!companyId) {
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+  }
 
   return (
     <div className="space-y-4">
