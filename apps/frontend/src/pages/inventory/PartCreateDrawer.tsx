@@ -86,6 +86,8 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
     },
   });
 
+  const canSubmit = Boolean(formData.name.trim() && formData.category.trim());
+
   if (!isOpen) return null;
 
   return (
@@ -102,7 +104,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
           onSubmit={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (!formData.category.trim()) return;
+            if (!canSubmit || createMutation.isPending) return;
             createMutation.mutate(formData);
           }}
           className="space-y-4 p-4"
@@ -216,7 +218,14 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button type="submit" loading={createMutation.isPending}>Save</Button>
+            <Button
+              type="submit"
+              loading={createMutation.isPending}
+              disabled={!canSubmit || createMutation.isPending}
+              data-testid="inv-part-create-save"
+            >
+              Save
+            </Button>
           </div>
         </form>
       </div>
