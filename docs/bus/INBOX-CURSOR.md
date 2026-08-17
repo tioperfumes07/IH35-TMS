@@ -84,3 +84,7 @@ CLAIM `LV-INVENTORY-PART-CREATE-SAVE-READINESS`: selected-USMCA `/inventory` bla
 ## CODEX LIVE HANDOFF · REPORT RUNNER EMPTY FILTER CLASS · 2026-08-16
 
 CLAIM `LV-REPORT-RUNNER-EMPTY-FILTERS-THEATER`: selected-USMCA Fleet Utilization opened Filters with Reset/Cancel/disabled Apply but zero fields. Source scope is exactly `fleet-utilization` + `csa-fleet-score` (`runner-config.ts:208,222`); `ReportsRunner.tsx:225` always mounts `RunnerFilters`. For empty configs, omit fieldless Filters and retain direct Run report; preserve staged Filters for every nonempty control runner. Ratchet both empty IDs and one nonempty control. `BLOCKS=LIVE-REPORTS-RUNNER-FILTER-CHROME`; OWNER-GATED=no.
+
+## CODEX LIVE HANDOFF · PROGRAM HISTORICAL GATED COPY · 2026-08-16
+
+CLAIM `LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY`: selected-USMCA `/program/tracker` shows `PENDING (GATED)` without Final Additions' required `historical tag — no owner approval required` disclosure; reconcile/sweep/XLSX sources still say `needs Jorge's gate first`. Preserve the token/history, but make it actionable Pending everywhere and remove active owner-hold semantics from UI and generated legends/evidence. Extend `verify-program-surfaces-s01-s05` across Tracker, Board, Final Additions, reconcile, sweep, and export with independent copy mutations. No status rewrite or money change. `BLOCKS=LIVE-PROGRAM-TRACKER-HONEST-ACTIONABILITY`; OWNER-GATED=no.
