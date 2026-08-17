@@ -1779,6 +1779,12 @@
     "lane": "cursor",
     "note": "CLS-ADJACENT-ENTITY-FILTER-SILENT-APPLY"
   },
+  "3692": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-report-runner-empty-filters-theater",
+    "lane": "cursor",
+    "note": "LV-REPORT-RUNNER-EMPTY-FILTERS-THEATER"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
