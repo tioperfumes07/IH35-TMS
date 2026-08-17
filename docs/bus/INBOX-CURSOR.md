@@ -1,13 +1,12 @@
-# INBOX-CURSOR · LEAD REWAKE · ALL-SEATS WORK · 2026-08-17T14:30Z
+# INBOX-CURSOR · LIVE VERIFY NOW · 2026-08-17T14:39Z
 
-**healthz:** `63713d6` · OPEN FO Cursor = **0** · product **Live=BLOCKED**.
+**LIVE SCOREBOARD:** Built **3438/3441** · Live **2371/3441** · healthz `f2f3ae5`.
 
-## NOW
-1. **K-wave Live** — pick lowest unpaid Live% among: fuel · maintenance · dispatch · fleet · safety · lists · customers · vendors · drivers · docs · tasks · compliance.
-2. Same turn: PROD-VERIFIED + Leaves backticks + scoreboard write + FAST-MERGE + OUTBOX next K claim.
-3. Accept Codex HANDOFF=Cursor FE FAILs immediately (do not invent FO).
-4. Lead: keep all seat INBOX tips current; rewake if OUTBOX shows idle/STARVED-only with no next claim.
-
+## NOW (stop bus-only)
+1. Live-verify Cursor partition unpaid Live leaves — start lowest unpaid: **lists / safety / dispatch / fuel / fleet / maintenance**.
+2. Same turn: PROD-VERIFIED + Leaves backticks + scoreboard write + FAST-MERGE.
+3. Do **not** build the 3 money Built gaps — CC-1 owns; escalate only FE blockers.
+4. Lead: keep Devin local-a tipped; Cascade cancelled.
 
 ---
 

@@ -1,24 +1,25 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-17T14:30Z
+Updated: 2026-08-17T14:39Z
 
-## Deploy
-- healthz: 63713d6
-- main: 63713d63c
-- Product: **Live=BLOCKED** (Fully-Wired item 12 last; Box3 Built 3438/3441)
+## LIVE SCOREBOARD (not memory — Chrome USMCA `/program/matrix` + `GET /api/v1/program/module-matrix?scope=system`)
+- healthz: `f2f3ae5`
+- Box1 Required: **3441/3441**
+- Box2 Audited: **3441/3441**
+- Box3 Built: **3438/3441** (99% · 3 audited-only)
+- Box4 Live: **2371/3441** (69% · product **Live=BLOCKED**)
 
-## Module complete (two bars — do not conflate)
-- Rule-24 checklist complete:true: **30/30** manifests (acceptance lists closed)
-- Launch / Fully-Wired / Live Chrome: **NONE product-complete** — Live=BLOCKED until Built 3441/3441 + Box4 partitions certified
+### Exact unpaid Built (3) — CC-1 money NOW
+1. `drivers:drivers.panel.auto_deduction_policies:liability`
+2. `accounting:accounting.panel.trk_bulk_register:gl_je` (parent FO `FIXED-ASSETS-DEPRECIATION-GL-POSTING-NOT-BUILT`)
+3. `accounting:accounting.modal.create:gl_je` (prepaid create JE path)
 
-## Seat NOW (all working — rewake 2026-08-17T14:30Z)
-| Seat | NOW |
-|------|-----|
-| **CC-1** | Built floor 3 cells → Reports 6 money/reverse Live → unpaid money leaves |
-| **Codex** | Genuine unpaid non-money Live cell; STARVED≠idle |
-| **Cursor** | K-wave Live unpaid + FE handoffs; lead bus |
-| **CC-2** | Live-verify money/FO proofs (FAIL-A2 Void; accident gate) |
-| **CC-3** | Top mechanical OPEN FOs (entity-scope / display-id class) |
-| **Cascade** | FAST-MERGE / poll only — OFF Live VERIFY |
+## Seats (OWNER 2026-08-17)
+| Seat | Role |
+|------|------|
+| **CC-1** | Finish 3 Built cells NOW → then unpaid money Live (accounting/banking/factoring/settlements) |
+| **Codex** | Unpaid non-money Live only |
+| **Cursor** | Lead + Live verify Cursor partition (lists/safety/dispatch/fuel/…) |
+| **Devin local-a** | Live VERIFY assist (replaces Cascade) — `/private/tmp/IH35-devin-a` · CDP 9227 |
+| **Cascade** | **CANCELLED** — do not assign Live or merge duty |
 
-## Cursor OPEN FO
-0
+Product Live=BLOCKED until Built 3441/3441 **and** Box4 certified.
