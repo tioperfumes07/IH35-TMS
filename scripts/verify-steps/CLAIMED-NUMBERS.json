@@ -1683,6 +1683,12 @@
     "lane": "cursor",
     "note": "LV-USERS-DETAIL-DEFAULT-COMPANY-LABEL-MISSING"
   },
+  "3660": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-insurance-policy-modal-reachable",
+    "lane": "cursor",
+    "note": "LV-INSURANCE-POLICY-MODAL-UNREACHABLE-THEATER"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
