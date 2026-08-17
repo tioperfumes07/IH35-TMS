@@ -38,9 +38,29 @@ export function computeMaintenanceUnitFlags(input: {
   const flags: MaintCostFlag[] = [];
   if (input.inspectionDue) flags.push("inspection_due");
   if (input.woCount <= 0) return flags;
-  if (input.p75 > 0 && input.totalCents >= input.p75) flags.push("high_cost");
-  if (input.p25 > 0 && input.totalCents > 0 && input.totalCents <= input.p25) flags.push("low_cost");
-  if (input.woCount >= 3 && input.totalCents <= input.median && input.median > 0 && input.miles >= 500) flags.push("reliable");
+
+  // Exclusive-precedence classification contract: high_cost and low_cost are
+  // opposite economic signals about the SAME unit and can never both apply,
+  // and reliable is a positive signal that must not contradict high_cost.
+  // In a small/tied cohort every percentile can collapse to the same value
+  // (p25 === median === p75), which previously let a single unit satisfy the
+  // >= p75 AND <= p25 AND <= median comparisons simultaneously. Requiring a
+  // genuine spread (p75 > p25) before asserting either cost-outlier flag, and
+  // excluding units already flagged high_cost from reliable, removes every
+  // known contradictory combination without touching underlying spend/mileage.
+  const hasSpread = input.p75 > input.p25;
+  const isHighCost = hasSpread && input.p75 > 0 && input.totalCents >= input.p75;
+  const isLowCost = hasSpread && input.p25 > 0 && input.totalCents > 0 && input.totalCents <= input.p25;
+  const isReliable =
+    !isHighCost &&
+    input.woCount >= 3 &&
+    input.median > 0 &&
+    input.totalCents <= input.median &&
+    input.miles >= 500;
+
+  if (isHighCost) flags.push("high_cost");
+  if (isLowCost) flags.push("low_cost");
+  if (isReliable) flags.push("reliable");
   return flags;
 }
 
