@@ -1677,6 +1677,12 @@
     "note": "LV-SAFETY-DOT-COMPLIANCE-CRASH \u2014 hooks before early return",
     "purpose": "verify-safety-dot-compliance-hooks"
   },
+  "3658": {
+    "claimed_at": "2026-08-16",
+    "guard": "verify-users-detail-default-company-label",
+    "lane": "cursor",
+    "note": "LV-USERS-DETAIL-DEFAULT-COMPANY-LABEL-MISSING"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
