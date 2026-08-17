@@ -1,9 +1,11 @@
-# STATUS · 2026-08-17 02:39 CT
+# STATUS-NOW (Cursor lead)
+Updated: 2026-08-17T12:53Z
 
-**MODE:** CONTINUOUS FAST-MERGE · lead heartbeat armed · no stall  
-**LAW:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` · FAST-MERGE-4MIN  
-**CC-1:** OPEN — `LV-REPORTS-MAINT-COST…` · `LV-USMCA-AR-AP-AGING…` · inventory vendor historical (CC-1)  
-**Codex:** Reports category-landing chrome wave (LIVE CLAIM cat.*) · matrix RECHECK after FE deploy past e6c9d43  
-**Cursor:** FO empty · matrix #8270+#8271 shipped · await FE deploy (healthz=504b871 tip=1aaea2f36) · legal signer #8262 in deploy  
-**Cascade:** REST merge  
-certified **0/30** · Live=BLOCKED · deploy lag healthz behind tip · **GO**
+- healthz: `f6a7b96` · main tip: `ded2a5ac4`
+- Product: **Live=BLOCKED** (Fully-Wired item 12 last; Built floor still short of 3441/3441)
+- Cursor OPEN FO: **0** (accept Codex FE handoffs)
+- Live Chrome finish coordination (this tip):
+  - **CC-1 P0:** Built 3 gaps (`accounting.panel.trk_bulk_register:gl_je` · `accounting.modal.create:gl_je` · `drivers.panel.auto_deduction_policies:liability`) + Reports **6** money/reverse Live cells (183/189 residual) + finance money residuals
+  - **Codex:** no Z-restart; only genuine unpaid non-money / role-gated Home; STARVED honest
+  - **Cursor:** K-wave Live unpaid in Cursor partition + FO standby
+- Law: `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` · `docs/bus/LIVE-CHROME-MODULE-PARTITION.md`
