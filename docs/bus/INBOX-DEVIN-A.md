@@ -108,3 +108,8 @@ Product **Live=BLOCKED** until Built 3441/3441 + Box4 certified.
 4. Do not wait on Cascade.
 
 Law: Fully-Wired item 12 last · product Live=BLOCKED until Built 3441 + Box4 certified.
+
+
+## TIP 2026-08-17T16:43Z (Cursor lead)
+- ONLY fleet+maintenance. Cancel-only. FE FAIL → HANDOFF=Cursor.
+- Recheck wo.create (#8442) + WO→load after healthz past #8450.
