@@ -44,6 +44,22 @@ function fieldOrDash(value: unknown): string {
   return String(value);
 }
 
+/** Human timeline body for manual notes; other system events keep a readable summary (never raw JSON UI). */
+export function formatLegalMatterEventBody(ev: { event_type?: unknown; event_body?: unknown }): string {
+  const body = ev.event_body;
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const note = (body as Record<string, unknown>).note;
+    if (typeof note === "string" && note.trim()) return note.trim();
+  }
+  if (typeof body === "string" && body.trim()) return body.trim();
+  if (body == null) return "—";
+  try {
+    return JSON.stringify(body);
+  } catch {
+    return "—";
+  }
+}
+
 export function LegalMatterDetailPage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
@@ -60,8 +76,7 @@ export function LegalMatterDetailPage() {
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
-  const [eventType, setEventType] = useState("note");
-  const [eventBody, setEventBody] = useState("{}");
+  const [noteText, setNoteText] = useState("");
   const [dlType, setDlType] = useState("response");
   const [dlTitle, setDlTitle] = useState("");
   const [dlAt, setDlAt] = useState("");
@@ -86,14 +101,17 @@ export function LegalMatterDetailPage() {
   };
 
   const addEventMut = useMutation({
-    mutationFn: () =>
-      legalMattersApi.addEvent(companyId, id, {
-        event_type: eventType,
-        event_body: JSON.parse(eventBody || "{}") as Record<string, unknown>,
-      }),
+    mutationFn: () => {
+      const note = noteText.trim();
+      if (!note) throw new Error("Note is required.");
+      return legalMattersApi.addEvent(companyId, id, {
+        event_type: "note",
+        event_body: { note },
+      });
+    },
     onSuccess: () => {
       invalidate();
-      setEventBody("{}");
+      setNoteText("");
     },
   });
 
@@ -409,30 +427,32 @@ export function LegalMatterDetailPage() {
           {tab === "timeline" ? (
             <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
               {admin ? (
-                <div className="space-y-2 border-b border-gray-100 pb-3">
-                  <input
-                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                    placeholder="event_type"
-                    value={eventType}
-                    onChange={(e) => setEventType(e.target.value)}
-                  />
+                <div className="space-y-2 border-b border-gray-100 pb-3" data-testid="legal-matter-timeline-note-creator">
+                  <p className="text-xs font-medium text-slate-600">Add note</p>
                   <textarea
                     className="w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                    placeholder='event_body JSON e.g. {"note":"..."}'
-                    value={eventBody}
-                    onChange={(e) => setEventBody(e.target.value)}
+                    placeholder="Note"
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    rows={3}
+                    data-testid="legal-matter-timeline-note-input"
                   />
-                  <Button size="sm" disabled={addEventMut.isPending} onClick={() => void addEventMut.mutate()}>
-                    Create event
+                  <Button
+                    size="sm"
+                    disabled={addEventMut.isPending || noteText.trim().length === 0}
+                    onClick={() => void addEventMut.mutate()}
+                    data-testid="legal-matter-timeline-note-submit"
+                  >
+                    Create note
                   </Button>
                 </div>
               ) : null}
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2 text-sm" data-testid="legal-matter-timeline-list">
                 {(detailQuery.data.events ?? []).map((ev: LegalMatterEvent) => (
                   <li key={String(ev.id ?? Math.random())} className="rounded-sm bg-gray-50 px-2 py-1">
                     <span className="font-semibold">{String(ev.event_type ?? "")}</span>{" "}
                     <span className="text-xs text-gray-500">{String(ev.created_at ?? "")}</span>
-                    <pre className="mt-1 overflow-x-auto text-xs">{JSON.stringify(ev.event_body, null, 2)}</pre>
+                    <p className="mt-1 text-xs text-slate-700 whitespace-pre-wrap">{formatLegalMatterEventBody(ev)}</p>
                   </li>
                 ))}
               </ul>
