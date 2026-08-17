@@ -6,6 +6,7 @@ import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useToast } from "../../components/Toast";
@@ -20,6 +21,7 @@ import {
   type LineTemplate,
   type PeriodBasis,
   type Scenario,
+  type ScenarioStatus,
 } from "../../api/financeScenarios";
 
 // FIN-S06 follow-up: this surface previously had no data model, no backend endpoint, and no
@@ -59,12 +61,31 @@ export function FinanceScenariosPage() {
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
 
+  // LV-FINANCE-SCENARIOS-FILTER-APPLY-MISSING — staged status + period_basis Filters.
+  type ScenarioListFilter = { status: "all" | ScenarioStatus; periodBasis: "all" | PeriodBasis };
+  const emptyFilter: ScenarioListFilter = { status: "all", periodBasis: "all" };
+  const [appliedFilter, setAppliedFilter] = useState<ScenarioListFilter>(emptyFilter);
+  const staged = useStagedListFilters({
+    applied: appliedFilter,
+    empty: emptyFilter,
+    onApply: setAppliedFilter,
+  });
+  const activeFilterCount =
+    (appliedFilter.status === "all" ? 0 : 1) + (appliedFilter.periodBasis === "all" ? 0 : 1);
+
   const scenariosQuery = useQuery({
     queryKey: ["finance", "scenarios", companyId],
     queryFn: () => listScenarios(companyId),
     enabled: Boolean(companyId) && enabled,
   });
-  const scenarios = scenariosQuery.data?.scenarios ?? [];
+  const scenarios = useMemo(() => {
+    const rows = scenariosQuery.data?.scenarios ?? [];
+    return rows.filter((s) => {
+      if (appliedFilter.status !== "all" && s.status !== appliedFilter.status) return false;
+      if (appliedFilter.periodBasis !== "all" && s.period_basis !== appliedFilter.periodBasis) return false;
+      return true;
+    });
+  }, [scenariosQuery.data?.scenarios, appliedFilter]);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -189,7 +210,53 @@ export function FinanceScenariosPage() {
       <FinanceModuleTabs />
       {header}
 
-      <div className="mb-4 flex items-center justify-end">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <CollapsedListFilters
+          activeFilterCount={activeFilterCount}
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty}
+          testIdPrefix="finance-scenarios"
+          className="rounded-sm border border-slate-200 bg-white p-2"
+        >
+          <div className="flex flex-wrap gap-3">
+            <label className="text-xs font-semibold text-slate-600">
+              Status
+              <select
+                className="mt-1 block w-full min-w-[10rem] rounded-sm border border-slate-300 px-2 py-1 text-xs"
+                value={staged.draft.status}
+                onChange={(e) =>
+                  staged.setDraft({ ...staged.draft, status: e.target.value as ScenarioListFilter["status"] })
+                }
+                data-testid="finance-scenarios-status-filter"
+              >
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="superseded">Superseded</option>
+              </select>
+            </label>
+            <label className="text-xs font-semibold text-slate-600">
+              Period basis
+              <select
+                className="mt-1 block w-full min-w-[10rem] rounded-sm border border-slate-300 px-2 py-1 text-xs"
+                value={staged.draft.periodBasis}
+                onChange={(e) =>
+                  staged.setDraft({
+                    ...staged.draft,
+                    periodBasis: e.target.value as ScenarioListFilter["periodBasis"],
+                  })
+                }
+                data-testid="finance-scenarios-period-basis-filter"
+              >
+                <option value="all">All bases</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+              </select>
+            </label>
+          </div>
+        </CollapsedListFilters>
         <button
           onClick={() => setCreatorOpen((v) => !v)}
           className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white"
