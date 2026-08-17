@@ -14,6 +14,7 @@ import {
 } from "../../api/reports";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -31,17 +32,22 @@ function registerHref(accountId: string, asOfDate: string, basis: string) {
 export function BalanceSheetPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
-  const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
-  const [basis, setBasis] = useState<AccountingBasis>("accrual");
+  const today = new Date().toISOString().slice(0, 10);
+  const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
 
   const query = useQuery({
-    queryKey: ["reports", "balance-sheet", companyId, appliedAsOf, basis],
+    queryKey: ["reports", "balance-sheet", companyId, applied.asOfDate, applied.basis],
     queryFn: () =>
       getBalanceSheetReport({
         operating_company_id: companyId,
-        as_of_date: appliedAsOf,
-        basis,
+        as_of_date: applied.asOfDate,
+        basis: applied.basis,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -76,7 +82,7 @@ export function BalanceSheetPage() {
       <ReportsSubNav />
       <PageHeader
         title="Balance sheet"
-        subtitle={`As of ${formatDateUS(appliedAsOf)} · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
+        subtitle={`As of ${formatDateUS(applied.asOfDate)} · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref="/reports"
         breadcrumb={["Reports", "Balance Sheet"]}
         actions={
@@ -91,7 +97,7 @@ export function BalanceSheetPage() {
               onClick={() =>
                 exportBalanceSheetReport({
                   operating_company_id: companyId,
-                  as_of_date: appliedAsOf,
+                  as_of_date: applied.asOfDate,
                   format: "pdf",
                 })
               }
@@ -105,7 +111,7 @@ export function BalanceSheetPage() {
               onClick={() =>
                 exportBalanceSheetReport({
                   operating_company_id: companyId,
-                  as_of_date: appliedAsOf,
+                  as_of_date: applied.asOfDate,
                   format: "xlsx",
                 })
               }
@@ -119,16 +125,26 @@ export function BalanceSheetPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <BasisSelector value={basis} onChange={setBasis} />
-        <label className="text-xs text-gray-600">
-          As-of date
-          <DatePicker className="mt-1 block h-9" value={asOf} onChange={(next) => setAsOf(next)} />
-        </label>
-        <Button size="sm" onClick={() => setAppliedAsOf(asOf)}>
-          Apply
-        </Button>
-      </div>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-balance-sheet"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <BasisSelector
+            value={staged.draft.basis}
+            onChange={(next) => staged.setDraft((previous) => ({ ...previous, basis: next }))}
+          />
+          <label className="text-xs text-gray-600">
+            As-of date
+            <DatePicker className="mt-1 block h-9" value={staged.draft.asOfDate} onChange={(next) => staged.setDraft((previous) => ({ ...previous, asOfDate: next }))} />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-3">
@@ -176,7 +192,7 @@ export function BalanceSheetPage() {
                       <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
                       <td className="px-3 py-2">
                         {line.account_id ? (
-                          <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-slate-700 underline-offset-2 hover:underline">
+                          <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
                             {line.account_name || "—"}
                           </Link>
                         ) : (
@@ -221,7 +237,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
                         <td className="px-3 py-2">
                           {line.account_id ? (
-                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-slate-700 underline-offset-2 hover:underline">
+                            <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
                               {line.account_name || "—"}
                             </Link>
                           ) : (
@@ -265,7 +281,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
                         <td className="px-3 py-2">
                           {line.account_id ? (
-                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-slate-700 underline-offset-2 hover:underline">
+                            <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
                               {line.account_name || "—"}
                             </Link>
                           ) : (
@@ -276,7 +292,7 @@ export function BalanceSheetPage() {
                       </tr>
                     ))
                   )}
-                  {basis === "cash" ? (
+                  {applied.basis === "cash" ? (
                     <tr className="border-b border-gray-100">
                       <td className="px-3 py-2 font-medium text-gray-900">{cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ"}</td>
                       <td className="px-3 py-2">{cashBasisAdjustment?.account_name ?? "Cash Basis Adjustment"}</td>

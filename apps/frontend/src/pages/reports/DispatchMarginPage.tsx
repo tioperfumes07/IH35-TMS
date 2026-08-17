@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchMargin, type DispatchMarginRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -28,18 +28,22 @@ function currentQuarterRange() {
 export function DispatchMarginPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(currentQuarterRange);
-  const [applied, setApplied] = useState(currentQuarterRange);
-  const [basis, setBasis] = useState<"accrual" | "cash">("accrual");
+  const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as const };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
 
   const query = useQuery({
-    queryKey: ["reports", "dispatch-margin", companyId, applied.start, applied.end, basis],
+    queryKey: ["reports", "dispatch-margin", companyId, applied.start, applied.end, applied.basis],
     queryFn: () =>
       getDispatchMargin({
         operating_company_id: companyId,
         from: applied.start,
         to: applied.end,
-        basis,
+        basis: applied.basis,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -68,24 +72,37 @@ export function DispatchMarginPage() {
         breadcrumb={["Reports", "Dispatch Margin"]}
       />
 
-      <section className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
-        <label className="text-sm">
-          From
-          <DatePicker className="ml-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
-        </label>
-        <label className="text-sm">
-          To
-          <DatePicker className="ml-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
-        </label>
-        <label className="text-sm">
-          Basis
-          <select className="ml-2 rounded-sm border px-2 py-1" value={basis} onChange={(e) => setBasis(e.target.value as "accrual" | "cash")}>
-            <option value="accrual">Accrual</option>
-            <option value="cash">Cash</option>
-          </select>
-        </label>
-        <Button onClick={() => setApplied(period)}>Apply</Button>
-      </section>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-dispatch-margin"
+        className="rounded-sm border border-slate-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-sm">
+            From
+            <DatePicker className="ml-2" value={staged.draft.start} onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))} />
+          </label>
+          <label className="text-sm">
+            To
+            <DatePicker className="ml-2" value={staged.draft.end} onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))} />
+          </label>
+          <label className="text-sm">
+            Basis
+            <select
+              className="ml-2 rounded-sm border px-2 py-1"
+              value={staged.draft.basis}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, basis: e.target.value as "accrual" | "cash" }))}
+            >
+              <option value="accrual">Accrual</option>
+              <option value="cash">Cash</option>
+            </select>
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">Loading…</div> : null}
       {query.isError ? (

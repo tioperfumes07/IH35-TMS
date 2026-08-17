@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
-import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
@@ -56,10 +56,13 @@ const TAB_LABELS: Record<GroupBy, string> = {
 export function LateArrivalReport() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
-  const [from, setFrom] = useState(monthStart);
-  const [to, setTo] = useState(today);
-  const [groupBy, setGroupBy] = useState<GroupBy>("driver");
-  const [applied, setApplied] = useState({ from: monthStart(), to: today(), groupBy: "driver" as GroupBy });
+  const emptyFilters = { from: monthStart(), to: today(), groupBy: "driver" as GroupBy };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
 
   const reportQuery = useQuery({
     queryKey: ["reports", "late-arrival", operatingCompanyId, applied.from, applied.to, applied.groupBy],
@@ -95,33 +98,29 @@ export function LateArrivalReport() {
         breadcrumb={["Reports", "Late Arrival Analytics"]}
       />
 
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
-        <label className="text-xs text-slate-600">
-          From
-          <DatePicker
-            className="mt-1 block"
-            value={from}
-            onChange={(next) => setFrom(next)}
-          />
-        </label>
-        <label className="text-xs text-slate-600">
-          To
-          <DatePicker
-            className="mt-1 block"
-            value={to}
-            onChange={(next) => setTo(next)}
-          />
-        </label>
-        <Button
-          size="sm"
-          onClick={() => setApplied({ from, to, groupBy })}
-          disabled={!operatingCompanyId}
-        >
-          Apply
-        </Button>
-        <div className="ml-auto text-xs text-slate-500">
-          {summary.chronic} chronic (&gt;20%) · {summary.total} entities
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-late-arrival"
+        className="rounded-sm border border-slate-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-slate-600">
+            From
+            <DatePicker className="mt-1 block" value={staged.draft.from} onChange={(next) => staged.setDraft((p) => ({ ...p, from: next }))} />
+          </label>
+          <label className="text-xs text-slate-600">
+            To
+            <DatePicker className="mt-1 block" value={staged.draft.to} onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))} />
+          </label>
         </div>
+      </CollapsedListFilters>
+
+      <div className="text-xs text-slate-500">
+        {summary.chronic} chronic (&gt;20%) · {summary.total} entities
       </div>
 
       <div className="flex gap-2 border-b border-slate-200">
@@ -129,10 +128,9 @@ export function LateArrivalReport() {
           <button
             key={tab}
             type="button"
-            className={`px-3 py-2 text-sm ${groupBy === tab ? "border-b-2 border-slate-300 font-medium text-slate-700" : "text-slate-600"}`}
+            className={`px-3 py-2 text-sm ${staged.draft.groupBy === tab ? "border-b-2 border-slate-300 font-medium text-slate-700" : "text-slate-600"}`}
             onClick={() => {
-              setGroupBy(tab);
-              setApplied((current) => ({ ...current, groupBy: tab }));
+              staged.setDraft((current) => ({ ...current, groupBy: tab }));
             }}
           >
             {TAB_LABELS[tab]}

@@ -13,6 +13,7 @@ import {
 } from "../../api/reports";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -37,18 +38,22 @@ function registerHref(accountId: string, fromDate: string, toDate: string, basis
 export function ProfitLossPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(currentMonthRange);
-  const [applied, setApplied] = useState(currentMonthRange);
-  const [basis, setBasis] = useState<AccountingBasis>("accrual");
+  const emptyFilters = { ...currentMonthRange(), basis: "accrual" as AccountingBasis };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
 
   const query = useQuery({
-    queryKey: ["reports", "profit-loss", companyId, applied.start, applied.end, basis],
+    queryKey: ["reports", "profit-loss", companyId, applied.start, applied.end, applied.basis],
     queryFn: () =>
       getProfitLossReport({
         operating_company_id: companyId,
         from_date: applied.start,
         to_date: applied.end,
-        basis,
+        basis: applied.basis,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -66,7 +71,7 @@ export function ProfitLossPage() {
       <ReportsSubNav />
       <PageHeader
         title="Profit & loss"
-        subtitle={`Revenue, COGS, expenses, and net income — ${basis === "cash" ? "Cash" : "Accrual"} basis`}
+        subtitle={`Revenue, COGS, expenses, and net income — ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref="/reports"
         breadcrumb={["Reports", "Profit & Loss"]}
         actions={
@@ -113,28 +118,38 @@ export function ProfitLossPage() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <BasisSelector value={basis} onChange={setBasis} />
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.start}
-            onChange={(next) => setPeriod((previous) => ({ ...previous, start: next }))}
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-profit-loss"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <BasisSelector
+            value={staged.draft.basis}
+            onChange={(next) => staged.setDraft((previous) => ({ ...previous, basis: next }))}
           />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.end}
-            onChange={(next) => setPeriod((previous) => ({ ...previous, end: next }))}
-          />
-        </label>
-        <Button size="sm" onClick={() => setApplied({ ...period })}>
-          Apply
-        </Button>
-      </div>
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.start}
+              onChange={(next) => staged.setDraft((previous) => ({ ...previous, start: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.end}
+              onChange={(next) => staged.setDraft((previous) => ({ ...previous, end: next }))}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-3">
@@ -187,7 +202,7 @@ export function ProfitLossPage() {
                         <td className="px-3 py-2">
                           {line.account_id ? (
                             <Link
-                              to={registerHref(line.account_id, applied.start, applied.end, basis)}
+                              to={registerHref(line.account_id, applied.start, applied.end, applied.basis)}
                               className="text-slate-700 underline-offset-2 hover:underline"
                             >
                               {line.account_name || "—"}

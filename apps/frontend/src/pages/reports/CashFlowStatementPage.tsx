@@ -11,6 +11,7 @@ import {
 } from "../../api/reports";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -30,8 +31,13 @@ function sortLines(lines: AccountingCashFlowLine[]) {
 export function CashFlowStatementPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [period, setPeriod] = useState(currentMonthRange);
-  const [applied, setApplied] = useState(currentMonthRange);
+  const defaultRange = currentMonthRange();
+  const [applied, setApplied] = useState(defaultRange);
+  const staged = useStagedListFilters({
+    applied,
+    empty: defaultRange,
+    onApply: setApplied,
+  });
 
   const query = useQuery({
     queryKey: ["reports", "cash-flow-statement", companyId, applied.start, applied.end],
@@ -107,27 +113,34 @@ export function CashFlowStatementPage() {
       </p>
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
-      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.start}
-            onChange={(next) => setPeriod((previous) => ({ ...previous, start: next }))}
-          />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker
-            className="mt-1 block h-9"
-            value={period.end}
-            onChange={(next) => setPeriod((previous) => ({ ...previous, end: next }))}
-          />
-        </label>
-        <Button size="sm" onClick={() => setApplied({ ...period })}>
-          Apply
-        </Button>
-      </div>
+      <CollapsedListFilters
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(defaultRange) ? 1 : 0}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-cash-flow-statement"
+        className="no-print rounded-sm border border-gray-200 bg-white p-3"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-600">
+            From
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.start}
+              onChange={(next) => staged.setDraft((previous) => ({ ...previous, start: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            To
+            <DatePicker
+              className="mt-1 block h-9"
+              value={staged.draft.end}
+              onChange={(next) => staged.setDraft((previous) => ({ ...previous, end: next }))}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-4">
