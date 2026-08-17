@@ -3930,5 +3930,11 @@
     "finding": "LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME",
     "claimed_by": "cursor",
     "claimed_at": "2026-08-17"
+  },
+  "3752": {
+    "guard": "verify-bus-single-channel",
+    "finding": "INFRA-GUARD-BUS-SINGLE-CHANNEL-ORPHAN",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-17"
   }
 }
