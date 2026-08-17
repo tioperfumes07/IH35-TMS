@@ -9,10 +9,48 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getProfitLossReport, getBalanceSheetReport, getArAgingReport, getApAgingReport, getCustomerProfitability } from "../../api/reports";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 
 type PackageType = "company-overview" | "sales-performance" | "expenses-performance";
+
+/** LV-REPORTS-MANAGEMENT-DEAD-CUSTOMER-TOMBSTONE-LINK — unresolved names are not drillable. */
+function ManagementCustomerCell({
+  customerId,
+  customerName,
+}: {
+  customerId: string;
+  customerName: string | null | undefined;
+}) {
+  const label = entityLabel(customerName, customerId, "Customer");
+  if (isUnresolvedEntityTombstone(customerName, customerId, "Customer")) {
+    return (
+      <span className="text-slate-800" data-testid="management-report-customer-tombstone">
+        {label}
+      </span>
+    );
+  }
+  return <EntityLink kind="customer" id={customerId} label={label} />;
+}
+
+/** Same tombstone class for Expenses by Vendor / A/P aging when vendor cannot resolve. */
+function ManagementVendorCell({
+  vendorId,
+  vendorName,
+}: {
+  vendorId: string;
+  vendorName: string | null | undefined;
+}) {
+  const label = entityLabel(vendorName, vendorId, "Vendor");
+  if (isUnresolvedEntityTombstone(vendorName, vendorId, "Vendor")) {
+    return (
+      <span className="text-slate-800" data-testid="management-report-vendor-tombstone">
+        {label}
+      </span>
+    );
+  }
+  return <EntityLink kind="vendor" id={vendorId} label={label} />;
+}
 
 const PACKAGES: Record<PackageType, { label: string; description: string; sections: string[] }> = {
   "company-overview": {
@@ -210,7 +248,9 @@ function ARAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
         <tbody>
           {rows.map((row) => (
             <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800"><EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /></td>
+              <td className="py-0.5 text-slate-800">
+                <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
+              </td>
               <td className="py-0.5 text-right">{money(row.current_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_1_30_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_31_60_cents)}</td>
@@ -255,7 +295,9 @@ function APAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
         <tbody>
           {rows.map((row) => (
             <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800"><EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /></td>
+              <td className="py-0.5 text-slate-800">
+                <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
+              </td>
               <td className="py-0.5 text-right">{money(row.current_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_1_30_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_31_60_cents)}</td>
@@ -297,7 +339,9 @@ function CustomerSummarySection({ companyId, fromDate, toDate }: { companyId: st
         <tbody>
           {sorted.slice(0, 30).map((row) => (
             <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800"><EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /></td>
+              <td className="py-0.5 text-slate-800">
+                <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
+              </td>
               <td className="py-0.5 text-right">{money(row.revenue_cents)}</td>
               <td className="py-0.5 text-right">{row.load_count}</td>
             </tr>
@@ -335,7 +379,9 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate }: { companyI
         <tbody>
           {sorted.slice(0, 30).map((row) => (
             <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800"><EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /></td>
+              <td className="py-0.5 text-slate-800">
+                <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
+              </td>
               <td className="py-0.5 text-right">{money(row.total_open_cents)}</td>
               <td className="py-0.5 text-right">{row.open_bill_count}</td>
             </tr>
