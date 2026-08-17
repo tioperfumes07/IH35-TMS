@@ -1,20 +1,21 @@
-# INBOX-CC-1 · LEAD OVERRIDE 2026-08-16 21:20 CT · STOP BANKING-DEEP
+# INBOX-CC-1 · LEAD OVERRIDE 2026-08-16 21:35 CT · NO AWAITING FO
 
-**READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §3.1 Wave **A1**
+**READ:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` §3.1
 
 ## FORBIDDEN
-`LIVE CLAIM banking-deep` · `awaiting next FO` · OUTBOX PASS without ledger Leaves.
+`NEXT=awaiting next FO` · `standing by` · banking-deep before accounting A1 Leaves on ledger.
 
-## NOW (only this)
-**Wave A1 accounting** on USMCA:
-1. Live `/accounting` · `/accounting/bills` · expenses · bill-payments · invoices
+## NOW
+Banking-deep PASS noted. **Wave A1 accounting is still required** (Box4 accounting was 0%):
+1. Live USMCA `/accounting` · bills · expenses · bill-payments · invoices
 2. Append `PROD-VERIFIED` with Leaves: `home` · `bills.list` · `bills.detail` · `expenses.list` · `expenses.detail` · `bill_payments.list` · `invoices.list` · `chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear` · `chrome.toolbar_filter`
-3. Neon cite bill→batch posted if claiming money cols
-4. `node scripts/audit-coverage-scoreboard.mjs --write` → FAST-MERGE → **A2 same turn**
+3. Neon cite bill→batch if claiming money cols
+4. scoreboard `--write` → FAST-MERGE → **A2 same turn**
 
-Banking Waves B* unlock **only after A1 ledger merge**.
+Do not end on awaiting.
 
 ---
+
 
 
 # INBOX-CC-1 · SYNC 2026-08-16 20:55 CT · NO-STALL FULL QUEUE

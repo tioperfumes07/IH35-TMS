@@ -282,7 +282,7 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
             operatingCompanyId={operatingCompanyId}
             value={form.insurance_claim_id || null}
             onChange={(next) => setForm((f) => ({ ...f, insurance_claim_id: next ?? "" }))}
-            allowCreate={false}
+            allowCreate
             placeholder="None"
             className="w-full"
             dataField="legal-matter-insurance-claim"
