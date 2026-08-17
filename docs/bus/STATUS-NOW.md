@@ -1,9 +1,9 @@
-# STATUS · 2026-08-16 20:55 CT
+# STATUS · 2026-08-16 21:03 CT
 
-**LAW:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` — full wave chains · no `awaiting FO`  
-**CC-1:** Wave **A1 accounting** → A2–A4 → B banking → C factoring → D settlements  
-**Codex:** Z1 **driver-hub** → users → insurance…finance  
-**Cursor:** lead + K1–K10 partition Live  
-**Cascade:** OFF Live · REST merge loop  
-**Box4:** system ~54% · accounting/banking/factoring/driver-hub/users **0%** until PROD-VERIFIED Leaves  
-certified **0/30** · Live=BLOCKED · loop ON · **no stall**
+**MODE:** CONTINUOUS FAST-MERGE · loop PID armed · no stall  
+**LAW:** `docs/bus/CONTINUOUS-LIVE-NO-STALL.md`  
+**CC-1:** Wave **A1 accounting** (Box4 0%) — drop banking-deep  
+**Codex:** users Live #957 · detail FAIL #958 HANDOFF Cursor · next Z-chain  
+**Cursor:** K3/K4/K6/K9 Live ledger · FO: DOT crash #960 + users default-company #958  
+**Cascade:** OFF Live · REST merge  
+certified **0/30** · Live=BLOCKED · **GO**
