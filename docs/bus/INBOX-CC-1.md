@@ -30,3 +30,5 @@ FE FAIL → HANDOFF=Cursor + continue next leaf same turn.
 Flags OFF until owner says turn on. No invented GL.
 
 0 PRs while leaves remain = defect.
+
+CLAIM FINANCE FLAG-DATA HANDOFF: `LV-USMCA-AR-AP-AGING-FLAG-OVERRIDE-MISSING` — selected-USMCA `/finance/ar-ap-aging` is disabled. Neon shows `AR_AP_AGING_UI_ENABLED default_enabled=true` but zero USMCA company overrides; applied owner migration `202612581400` can silently return before inserts when no setter exists. Reconcile migration/postcondition, idempotently restore the USMCA non-QBO ON override with auditable setter, preserve every QBO sync flag OFF, guard silent skip, apply/rehearse via financial lane, then Live-prove page + As-of filter. Board + audit row 1002. OWNER-GATED=no. BLOCKS=LIVE-FINANCE-AGING-Z10.
