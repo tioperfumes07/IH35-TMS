@@ -98,7 +98,7 @@ const CANONICAL_REPORT_ALIASES: Record<string, string> = {
   "profit-truck-mtd": "/reports/profit-per-truck",
   "dispatch-board": "/dispatch",
   "cash-position": "/reports/cash-flow-overview",
-  "ifta-quarterly": "/reports/ifta",
+  "ifta-quarterly": "/reports/ifta-preparer",
   "saved-owner-pack": "/reports/scheduled?preset=owner-weekly",
   "saved-quarter-close": "/reports/scheduled?preset=quarter-close",
 };
