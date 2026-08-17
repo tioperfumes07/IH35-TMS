@@ -3983,10 +3983,11 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165,
+  "total_claimed": 1166,
   "3780": "verify-dispatch-assignment-history-tombstone",
   "3782": "verify-dispatch-border-crossing-history-tombstone",
   "3784": "verify-dispatch-late-arrivals-tombstone",
   "3786": "verify-fleet-oos-status-filter",
-  "3788": "verify-maint-wo-console-kanban-view"
+  "3788": "verify-maint-wo-console-kanban-view",
+  "3785": "verify-vendor-credits-vendor-id-safe-cast"
 }
