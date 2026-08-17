@@ -74,6 +74,12 @@ export function run() {
   assert(finalAdditions.includes("Pending (includes legacy GATED tags)"), "Final Additions must label the Pending denominator honestly", errors);
   assert(finalAdditions.includes("no owner approval is required"), "Final Additions must disclose that historical GATED tags require no owner approval", errors);
 
+  // Same no-owner-hold disclosure on Program Tracker (Cascade LIVE FAIL #8015 / LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY).
+  assert(!tracker.includes("Gated (owner)"), "Program Tracker must not label legacy GATED rows as owner-gated", errors);
+  assert(tracker.includes("Historical GATED tag; no owner approval required"), "Program Tracker status must tooltip historical GATED as non-blocking", errors);
+  assert(tracker.includes("no owner approval is required"), "Program Tracker must disclose historical GATED tags require no owner approval", errors);
+  assert(tracker.includes("includes legacy GATED tags"), "Program Tracker pending denominator must mention legacy GATED tags", errors);
+
   // S05: program board has merged-PR tab.
   assert(board.includes('id: "merged"') || board.includes("merged"), "ProgramBoardPage must have merged tab", errors);
   assert(board.includes("merged_pr_total") || board.includes("recent_merged"), "ProgramBoardPage must show merged PR data", errors);
@@ -110,6 +116,27 @@ function selftest() {
     const ownerGatePlanted = run();
     if (!ownerGatePlanted.some((e) => e.includes("owner-gated")) || !ownerGatePlanted.some((e) => e.includes("Pending denominator"))) {
       console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted owner-gate regression not detected");
+      process.exit(1);
+    }
+    fs.writeFileSync(finalPath, finalBackup, "utf8");
+    fs.writeFileSync(realPath, backup, "utf8");
+    const trackerPath = path.join(ROOT, "apps/frontend/src/pages/program/ProgramTrackerPage.tsx");
+    const trackerBackup = fs.readFileSync(trackerPath, "utf8");
+    fs.writeFileSync(
+      trackerPath,
+      trackerBackup
+        .replace("Historical GATED tag; no owner approval required", "Gated (owner)")
+        .replace("no owner approval is required", "owner approval is required")
+        .replace("includes legacy GATED tags", "Tracked pending"),
+      "utf8",
+    );
+    const trackerPlanted = run();
+    fs.writeFileSync(trackerPath, trackerBackup, "utf8");
+    if (
+      !trackerPlanted.some((e) => e.includes("Program Tracker")) ||
+      !trackerPlanted.some((e) => e.includes("owner approval") || e.includes("legacy GATED") || e.includes("owner-gated"))
+    ) {
+      console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted Program Tracker GATED regression not detected");
       process.exit(1);
     }
     const requiredJson = JSON.parse(requiredBackup);
