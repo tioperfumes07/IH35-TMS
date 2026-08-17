@@ -3833,5 +3833,11 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165
+  "total_claimed": 1165,
+  "3720": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-SYSTEM-MATRIX-LEAVES-NOT-ITERABLE",
+    "guard": "verify-program-matrix-system-querykey-disambiguate",
+    "lane": "cursor"
+  }
 }
