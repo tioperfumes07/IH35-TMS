@@ -3839,5 +3839,11 @@
     "finding": "LV-SYSTEM-MATRIX-LEAVES-NOT-ITERABLE",
     "guard": "verify-program-matrix-system-querykey-disambiguate",
     "lane": "cursor"
+  },
+  "3722": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-REPORTS-HOME-FILTER-LEAF-MISOWNED",
+    "guard": "verify-reports-home-filter-leaf-ownership",
+    "lane": "cursor"
   }
 }
