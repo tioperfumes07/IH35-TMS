@@ -1,17 +1,24 @@
-# IH35 Agent Bus — NOT in this git repo
+# IH35 Agent Bus — SINGLE CHANNEL
 
-If you grepped the repo for `INBOX-DEVIN` / `OUTBOX` / `00-AGENT-BUS` and got **no matches**, that is expected.
+**Canonical (in git):** `docs/bus/`
 
-**Canonical bus folder (absolute):**
-`/Users/jorgemunoz/Desktop/IH35-CURSOR-AUDIT/USMCA-WEEKEND-LEAD-2026-08-07/`
+| File | Purpose |
+|------|---------|
+| `docs/bus/STATUS-NOW.md` | Who does what now |
+| `docs/bus/INBOX-<SEAT>.md` | Orders for that seat |
+| `docs/bus/OUTBOX-<SEAT>.md` | Seat self-reporting (append one line) |
+| `docs/bus/INBOX-SYNC-LAW.md` | Single-channel + no stale-rewake law |
 
-| Seat | Read first | Write |
-|------|------------|-------|
-| Devin-A | `INBOX-DEVIN.md` + `STATUS-NOW.md` | `OUTBOX-DEVIN.md` line prefix `DEVIN-A \|` |
-| Devin-B | `INBOX-DEVIN-2.md` + `STATUS-NOW.md` | `OUTBOX-DEVIN.md` line prefix `DEVIN-B \|` |
+**Desktop mirror (symlinks only):**  
+`~/Desktop/IH35-CURSOR-AUDIT/USMCA-WEEKEND-LEAD-2026-08-07/` → same files as `docs/bus/`  
+Setup: `bash scripts/ops/bus-symlink-desktop.sh`
+
+| Seat | Read | Write |
+|------|------|-------|
 | Cascade | `INBOX-CASCADE.md` + `STATUS-NOW.md` | `OUTBOX-CASCADE.md` |
-| Cursor | authors bus | `OUTBOX-CURSOR.md` |
+| Codex | `INBOX-CODEX.md` + `STATUS-NOW.md` | `OUTBOX-CODEX.md` |
+| CC-1 | `INBOX-CC-1.md` + `STATUS-NOW.md` | `OUTBOX-CC-1.md` |
+| Cursor (lead) | all OUTBOX + STATUS | STATUS + all INBOX + `OUTBOX-CURSOR.md` |
 
-Law file: `00-AGENT-BUS.md` in that folder.
-
-**Every cycle:** Read STATUS-NOW → Read your INBOX → work → one OUTBOX line. Chat is not the command channel.
+**Every cycle:** `git pull` → STATUS → your INBOX → work → one OUTBOX line → push.  
+**Chat is not the bus.** Lead must not re-post an INBOX a seat already ACK'd.

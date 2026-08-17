@@ -1,12 +1,10 @@
-# STATUS-NOW · 2026-08-16 16:09 CT · NONSTOP CONTINUOUS AUTO
+# STATUS · 2026-08-16 20:03 CT · INBOX SYNCED BY CURSOR
 
-Heartbeats/pings: **OFF/KILLED**  
-Method: **FAST-MERGE-4MIN-LAW only**  
-Goal: USMCA fully ready · 1–11 · no stone unturned
+| Seat | INBOX synced | Next |
+|------|--------------|------|
+| **CC-1** | YES 2026-08-16 20:03 CT | expenses-create-drawer → invoices → JE → settlements → factoring |
+| **Cascade** | YES 2026-08-16 20:03 CT | continuous-verify + FAST-MERGE · do not stop at 0 PRs |
+| **Codex** | standing | non-money Live walk |
+| **Cursor** | lead | sync INBOXes after every merge · Book Load · FO |
 
-| Seat | Now |
-|------|-----|
-| Cascade | SUPERSEDE + VERIFY 693 |
-| CC-1 | 259 (+#7910 own) |
-| Codex | next OPEN FAST-MERGE |
-| Cursor | lead + ship FE OPEN |
+Desktop = docs/bus symlink. Jorge ≠ messenger. Live=BLOCKED until certified.
