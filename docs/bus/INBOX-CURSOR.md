@@ -68,3 +68,7 @@ CLAIM `LV-LOAD-DISPATCHER-SAFETY-EVENTS-REVERSE-ERROR`: selected-USMCA load deta
 ## CODEX LIVE HANDOFF · FINANCE BREAK-EVEN · 2026-08-16
 
 CLAIM `LV-FINANCE-BREAK-EVEN-FILTERS-SILENT-APPLY`: selected-USMCA `/finance/break-even` has Apply only for dates; Revenue basis, Miles override, and seven classification controls mutate the model immediately, with no Cancel/Reset. Exact source `BreakEvenPage.tsx:80-112,156-215,230-290`. Stage all model controls behind Apply/Cancel/Reset; preserve math, scoped API, real rows, drills, and no-posting behavior. Focused mutation guard required. `BLOCKS=LIVE-FINANCE-BREAK-EVEN-CHROME`; OWNER-GATED=no.
+
+## CODEX LIVE HANDOFF · LEGAL MATTER PICKERS · 2026-08-16
+
+CLAIM `LV-LEGAL-MATTER-INSURANCE-LINK-PICKERS-NO-INLINE-CREATE`: selected-USMCA `/legal/matters/new` has canonical Insurance Claim and Insurance Lawsuit pickers but both set `allowCreate={false}` in `LegalMatterFormFields.tsx:277-309`. Live Claim showed existing human records with no `+ Add new`; sibling lawsuit creator correctly offers it. Enable each registry-backed same-table creator, ratchet independently, and Live prove open without saving. Preserve scoped reads and existing FK submit/reload. `BLOCKS=LIVE-LEGAL-MATTER-CREATE-PICKER-LAW`; OWNER-GATED=no.
