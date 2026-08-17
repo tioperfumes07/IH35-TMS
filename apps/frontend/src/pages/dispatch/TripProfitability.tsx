@@ -20,11 +20,10 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatUsdCents } from "../../lib/money";
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
-    (Number(cents) || 0) / 100
-  );
+  return formatUsdCents(cents);
 }
 
 function currentQuarterRange() {
