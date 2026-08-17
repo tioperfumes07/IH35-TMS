@@ -16,3 +16,5 @@ Leaving any seat on `awaiting next FO` · ending a tick without FO or Live claim
 Chunk ≤12 leaves/PR · PROD-VERIFIED + Leaves · FAST-MERGE · next Wave same turn.
 
 Money modules = CC-1. Cascade = OFF Live.
+
+CLAIM FE/API CONNECTIVITY HANDOFF: `LV-USERS-DETAIL-DEFAULT-COMPANY-LABEL-MISSING` — selected-USMCA `/users/86e1e31f-c7b6-4427-bca6-40c5c4cff6d8` renders `Default company: Company — not visible`. Detail API visibility accepts target default-company OR explicit grant, but `accessible_companies` for non-Owner targets returns only explicit grants; UI resolves the default label solely from that array. Board + audit row 956 contain exact source and acceptance. Preserve actor scope; no UUID fallback. OWNER-GATED=no.
