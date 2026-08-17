@@ -6,7 +6,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { StatusBadge } from "../../components/StatusBadge";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
@@ -44,32 +44,60 @@ export function LateArrivalsPage() {
       label: "Load",
       sortable: true,
       className: "font-medium",
-      render: (load) => (
-        <EntityLink
-          kind="load"
-          id={load.id}
-          label={entityLabel(load.load_number, load.id, "Load")}
-          data-testid={`late-arrival-load-${load.id}`}
-        />
-      ),
+      render: (load) => {
+        const label = entityLabel(load.load_number, load.id, "Load");
+        // LV-DISPATCH-LATE-ARRIVALS-TOMBSTONE
+        if (isUnresolvedEntityTombstone(load.load_number, load.id, "Load")) {
+          return <span className="font-medium text-slate-600" data-testid="late-arrival-load-tombstone">{label}</span>;
+        }
+        return (
+          <EntityLink
+            kind="load"
+            id={load.id}
+            label={label}
+            data-testid={`late-arrival-load-${load.id}`}
+          />
+        );
+      },
     },
     {
       key: "customer_name",
       label: "Customer",
       sortable: true,
-      render: (load) => <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} />,
+      render: (load) => {
+        if (!load.customer_id) return <span className="text-slate-400">—</span>;
+        const label = entityLabel(load.customer_name, load.customer_id, "Customer");
+        if (isUnresolvedEntityTombstone(load.customer_name, load.customer_id, "Customer")) {
+          return <span className="text-slate-600" data-testid="late-arrival-customer-tombstone">{label}</span>;
+        }
+        return <EntityLink kind="customer" id={load.customer_id} label={label} data-testid="late-arrival-customer-link" />;
+      },
     },
     {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (load) => <EntityLink kind="driver" id={load.driver_id} label={entityLabel(load.driver_name, load.driver_id, "Driver")} />,
+      render: (load) => {
+        if (!load.driver_id) return <span className="text-slate-400">—</span>;
+        const label = entityLabel(load.driver_name, load.driver_id, "Driver");
+        if (isUnresolvedEntityTombstone(load.driver_name, load.driver_id, "Driver")) {
+          return <span className="text-slate-600" data-testid="late-arrival-driver-tombstone">{label}</span>;
+        }
+        return <EntityLink kind="driver" id={load.driver_id} label={label} data-testid="late-arrival-driver-link" />;
+      },
     },
     {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (load) => <EntityLink kind="unit" id={load.unit_id} label={entityLabel(load.unit_number, load.unit_id, "Unit")} />,
+      render: (load) => {
+        if (!load.unit_id) return <span className="text-slate-400">—</span>;
+        const label = entityLabel(load.unit_number, load.unit_id, "Unit");
+        if (isUnresolvedEntityTombstone(load.unit_number, load.unit_id, "Unit")) {
+          return <span className="text-slate-600" data-testid="late-arrival-unit-tombstone">{label}</span>;
+        }
+        return <EntityLink kind="unit" id={load.unit_id} label={label} data-testid="late-arrival-unit-link" />;
+      },
     },
     {
       key: "next_stop_city",
