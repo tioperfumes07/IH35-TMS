@@ -347,9 +347,6 @@ const QboVendorLinkagePage = React.lazy(() => import("../pages/admin/QboVendorLi
 const TripProfitabilityPage = React.lazy(() => import("../pages/dispatch/TripProfitability").then((m) => ({ default: m.TripProfitability })));
 const EdiSetupWizard = React.lazy(() => import("../pages/integrations/edi/EdiSetupWizard").then((m) => ({ default: m.EdiSetupWizard })));
 const EdiTransactionLog = React.lazy(() => import("../pages/integrations/edi/EdiTransactionLog").then((m) => ({ default: m.EdiTransactionLog })));
-const BrakeWearDashboard = React.lazy(() => import("../pages/maintenance/brakes/BrakeWearDashboard").then((m) => ({ default: m.BrakeWearDashboard })));
-const PreFlightDvirQueue = React.lazy(() => import("../pages/maintenance/pre-flight/PreFlightDvirQueue").then((m) => ({ default: m.PreFlightDvirQueue })));
-const TireWearDashboard = React.lazy(() => import("../pages/maintenance/tires/TireWearDashboard").then((m) => ({ default: m.TireWearDashboard })));
 const LateArrivalReport = React.lazy(() => import("../pages/reports/LateArrivalReport").then((m) => ({ default: m.LateArrivalReport })));
 const CSAMitigationQueuePage = React.lazy(() => import("../pages/safety/CSAMitigationQueue").then((m) => ({ default: m.CSAMitigationQueuePage })));
 const CSAFmcsaTrendPage = React.lazy(() => import("../pages/safety/CSAScore").then((m) => ({ default: m.CSAScorePage })));
