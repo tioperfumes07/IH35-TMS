@@ -64,6 +64,20 @@ function main() {
   if (!/loadRefParamSchema/.test(dispatchLoads) || !/loadRefMatchSql\("l", 1\)/.test(dispatchLoads)) {
     fail("GET /api/v1/dispatch/loads/:id must use loadRefParamSchema + loadRefMatchSql (UUID or load_number)");
   }
+  // LV-DOCS-LOAD-DEEPLINK-44FCB11: after resolving by load_number, nested load_id binds must use
+  // resolvedLoadId / load.id — never params.data.id / parsedParams.data.id (uuid cast 22P02).
+  if (!/resolvedLoadId\s*=\s*String\(load\.id\)/.test(dispatchLoads) || !/resolvedLoadId\s*=\s*String\(load\.id\)/.test(mdataLoads)) {
+    fail("GET load detail must set resolvedLoadId = String(load.id) before nested load_id queries");
+  }
+  if (/load_stops[\s\S]{0,400}WHERE load_id = \$1(?!::uuid)/.test(dispatchLoads) && /\[params\.data\.id\]/.test(dispatchLoads)) {
+    fail("dispatch GET must not bind params.data.id into load_stops.load_id");
+  }
+  if (/load_stops[\s\S]{0,500}\[parsedParams\.data\.id\]/.test(mdataLoads)) {
+    fail("mdata GET must not bind parsedParams.data.id into load_stops after load_number resolve");
+  }
+  if (!/\[resolvedLoadId\]/.test(dispatchLoads) || !/\[resolvedLoadId\]/.test(mdataLoads)) {
+    fail("GET load detail nested queries must bind [resolvedLoadId]");
+  }
   // Mutations must remain UUID-only (do not loosen PATCH / transition).
   if (!/dispatchLoadIdParamsSchema = z\.object\(\{\s*id: z\.string\(\)\.uuid\(\)/.test(dispatchLoads)) {
     fail("dispatchLoadIdParamsSchema must stay UUID-only for mutations");

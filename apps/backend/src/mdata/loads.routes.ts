@@ -907,6 +907,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       const load = loadRes.rows[0] ?? null;
       if (!load) return null;
 
+      // LV-DOCS-LOAD-DEEPLINK-44FCB11: path may be load_number; stop FK is UUID — bind resolved id.
+      const resolvedLoadId = String(load.id);
+
       const stopsRes = await client.query(
         `
           SELECT
@@ -919,10 +922,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
             site_contact_name, site_contact_phone, gate_dock_text, postal_code
           FROM mdata.load_stops
-          WHERE load_id = $1
+          WHERE load_id = $1::uuid
           ORDER BY sequence_number ASC, created_at ASC
         `,
-        [parsedParams.data.id]
+        [resolvedLoadId]
       );
       return { ...load, stops: stopsRes.rows };
     });
