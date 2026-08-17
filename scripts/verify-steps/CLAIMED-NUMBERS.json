@@ -3987,5 +3987,6 @@
   "3780": "verify-dispatch-assignment-history-tombstone",
   "3782": "verify-dispatch-border-crossing-history-tombstone",
   "3784": "verify-dispatch-late-arrivals-tombstone",
-  "3786": "verify-fleet-oos-status-filter"
+  "3786": "verify-fleet-oos-status-filter",
+  "3788": "verify-maint-wo-console-kanban-view"
 }
