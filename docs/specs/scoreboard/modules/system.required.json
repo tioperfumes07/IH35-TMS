@@ -144,7 +144,7 @@
     {
       "id": "tab.qbo_recon",
       "tab": "QuickBooks Reconciliation",
-      "sub": "TMS↔QBO tie-out (not bank recon)",
+      "sub": "TMS\u2194QBO tie-out (not bank recon)",
       "route_hint": "/system?tab=qbo-recon",
       "required": [
         "qbo_chrome"
@@ -222,7 +222,7 @@
     {
       "id": "law.no_tms_qbo_writeback",
       "tab": "Law",
-      "sub": "No TMS→QBO write-back",
+      "sub": "No TMS\u2192QBO write-back",
       "route_hint": "/system?tab=qbo-sync",
       "required": [],
       "note": "Connectivity N/A: no TMS-to-QBO write-back is an exclusion law, not a USMCA TMS-native navigation surface."
@@ -235,9 +235,9 @@
       "surface_kind": "wizard",
       "surface_path": "pages/integrations/edi/EdiSetupWizard.tsx",
       "required": [
-        "connectivity",
-        "picker_law"
-      ]
+        "connectivity"
+      ],
+      "note": "EDI Partner Setup wizard has no canonical-entity FK (partner name free text + ISA/GS/connection credentials). picker_law does not apply. SYS-EDI-PICKER-APPLICABILITY-THEATER."
     },
     {
       "id": "system.panel.usmcaactivation",
@@ -253,7 +253,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "Program Tracker tab list toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "Program Tracker tab list toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/system?tab=program",
       "surface_kind": "toolbar",
       "required": [
@@ -264,7 +264,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "Program Tracker tab list toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "Program Tracker tab list toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/system?tab=program",
       "surface_kind": "toolbar",
       "required": [
@@ -275,7 +275,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "Program Tracker tab list toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "Program Tracker tab list toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/system?tab=program",
       "surface_kind": "toolbar",
       "required": [
@@ -286,7 +286,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "Program Tracker tab list toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "Program Tracker tab list toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/system?tab=program",
       "surface_kind": "toolbar",
       "required": [
@@ -308,11 +308,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
       "drops": [
         {
           "id": "home",
@@ -525,6 +525,19 @@
           "removed": [
             "bank"
           ]
+        }
+      ]
+    },
+    "edi_picker_law_2026_08_17": {
+      "finding": "SYS-EDI-PICKER-APPLICABILITY-THEATER",
+      "note": "Required claimed picker_law for EdiSetupWizard, but the wizard field universe is Partner name free text plus ISA/GS/connection enum/endpoint \u2014 no EntityPicker / canonical FK. Drop picker_law only; keep connectivity.",
+      "drops": [
+        {
+          "id": "system.wizard.edi_setup",
+          "removed": [
+            "picker_law"
+          ],
+          "reason": "no canonical-entity field \u2014 picker_law is impossible theater"
         }
       ]
     }
