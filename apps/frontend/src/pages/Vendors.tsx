@@ -113,13 +113,23 @@ export function VendorsPage() {
   const [dateTo, setDateTo] = useState("");
   // transaction-list filter box (selected vendor bills) — not the roster By Category control
   const [txnCategoryFilter, setTxnCategoryFilter] = useState("");
+  // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Status/Date/Category stage until Apply (same CollapsedListFilters law as roster).
+  const txnFilters = useStagedListFilters({
+    applied: { statusFilter, dateFrom, dateTo, txnCategoryFilter },
+    empty: { statusFilter: "", dateFrom: "", dateTo: "", txnCategoryFilter: "" },
+    onApply: (next) => {
+      setStatusFilter(next.statusFilter);
+      setDateFrom(next.dateFrom);
+      setDateTo(next.dateTo);
+      setTxnCategoryFilter(next.txnCategoryFilter);
+    },
+  });
   // V8 — roster-level Category filter for the LEFT vendor list (distinct from By Category tab).
   const [rosterCategory, setRosterCategory] = useState("");
   const rosterFilters = useStagedListFilters({
     applied: { listStatus, rosterCategory }, empty: { listStatus: "active" as const, rosterCategory: "" },
     onApply: (next) => { setListStatus(next.listStatus); setRosterCategory(next.rosterCategory); },
   });
-  const [showFilterBox, setShowFilterBox] = useState(false);
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
   const [createOpen, setCreateOpen] = useState(false);
@@ -510,35 +520,59 @@ export function VendorsPage() {
                   emptyText="No transactions for current filters."
                   exportFilename="vendor-transactions"
                   filterBar={
-                    <div className="relative flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2" data-testid="vendor-txn-filter-bar">
                       <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm">
                         <option value="">Type: All</option>
                         <option value="bill">bill</option>
                       </SelectCombobox>
-                      <ActionButton onClick={() => setShowFilterBox((open) => !open)}>Filter</ActionButton>
                       <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
                         {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
                       </span>
-                      {showFilterBox ? (
-                        <div className="absolute left-0 top-9 z-20 w-[320px] rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
-                          <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
-                          <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm">
-                            <option value="">All</option>
-                            <option value="open">open</option>
-                            <option value="partial">partial</option>
-                            <option value="paid">paid</option>
-                            <option value="voided">voided</option>
-                            <option value="unpaid">unpaid</option>
-                          </SelectCombobox>
-                          <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
-                          <div className="mb-2 grid grid-cols-2 gap-2">
-                            <DatePicker value={dateFrom} onChange={setDateFrom} className="" />
-                            <DatePicker value={dateTo} onChange={setDateTo} className="" />
-                          </div>
-                          <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
-                          <input value={txnCategoryFilter} onChange={(event) => setTxnCategoryFilter(event.target.value)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
+                      <CollapsedListFilters
+                        activeFilterCount={
+                          (statusFilter ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (txnCategoryFilter ? 1 : 0)
+                        }
+                        onApply={txnFilters.apply}
+                        onReset={txnFilters.reset}
+                        onCancel={txnFilters.cancel}
+                        applyDisabled={!txnFilters.dirty}
+                        testIdPrefix="vendor-txn"
+                        dataAttributes={{ "data-vendor-txn-filter-toolbar": "collapsed" }}
+                      >
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
+                        <SelectCombobox
+                          value={txnFilters.draft.statusFilter}
+                          onChange={(event) => txnFilters.setDraft({ ...txnFilters.draft, statusFilter: event.target.value })}
+                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                        >
+                          <option value="">All</option>
+                          <option value="open">open</option>
+                          <option value="partial">partial</option>
+                          <option value="paid">paid</option>
+                          <option value="voided">voided</option>
+                          <option value="unpaid">unpaid</option>
+                        </SelectCombobox>
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
+                        <div className="mb-2 grid grid-cols-2 gap-2">
+                          <DatePicker
+                            value={txnFilters.draft.dateFrom}
+                            onChange={(next) => txnFilters.setDraft({ ...txnFilters.draft, dateFrom: next })}
+                            className=""
+                          />
+                          <DatePicker
+                            value={txnFilters.draft.dateTo}
+                            onChange={(next) => txnFilters.setDraft({ ...txnFilters.draft, dateTo: next })}
+                            className=""
+                          />
                         </div>
-                      ) : null}
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
+                        <input
+                          value={txnFilters.draft.txnCategoryFilter}
+                          onChange={(event) => txnFilters.setDraft({ ...txnFilters.draft, txnCategoryFilter: event.target.value })}
+                          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                          placeholder="Category text"
+                        />
+                      </CollapsedListFilters>
                     </div>
                   }
                 />
