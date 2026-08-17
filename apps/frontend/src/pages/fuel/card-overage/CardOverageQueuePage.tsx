@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
@@ -74,39 +74,16 @@ export function CardOverageQueuePage() {
   const driverId = searchParams.get("driver_id") ?? undefined;
   const unitId = searchParams.get("unit_id") ?? undefined;
   // BANK-F5167 + CLS-ADJACENT — EntityPicker FKs stage with status; URL only on Apply.
-  const [driverPickerId, setDriverPickerId] = useState(driverId ?? "");
-  const [unitPickerId, setUnitPickerId] = useState(unitId ?? "");
-  useEffect(() => {
-    setDriverPickerId(driverId ?? "");
-  }, [driverId]);
-  useEffect(() => {
-    setUnitPickerId(unitId ?? "");
-  }, [unitId]);
-  const setDriverFilter = (next: string) => {
-    setDriverPickerId(next);
-    const params = new URLSearchParams(searchParams);
-    if (next) params.set("driver_id", next);
-    else params.delete("driver_id");
-    setSearchParams(params, { replace: true });
-  };
-  const setUnitFilter = (next: string) => {
-    setUnitPickerId(next);
-    const params = new URLSearchParams(searchParams);
-    if (next) params.set("unit_id", next);
-    else params.delete("unit_id");
-    setSearchParams(params, { replace: true });
-  };
+  // LV-FUEL-TOOLBAR-LEAVES-POINT-HOME — do not keep dead set*Filter helpers that write URL immediately.
   const staged = useStagedListFilters({
     applied: {
       statusFilter,
-      driverId: driverPickerId || driverId || "",
-      unitId: unitPickerId || unitId || "",
+      driverId: driverId || "",
+      unitId: unitId || "",
     },
     empty: { statusFilter: "pending_review", driverId: "", unitId: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
-      setDriverPickerId(next.driverId);
-      setUnitPickerId(next.unitId);
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev);
@@ -120,8 +97,8 @@ export function CardOverageQueuePage() {
       );
     },
   });
-  const effectiveDriverId = driverPickerId.trim() || driverId || undefined;
-  const effectiveUnitId = unitPickerId.trim() || unitId || undefined;
+  const effectiveDriverId = driverId || undefined;
+  const effectiveUnitId = unitId || undefined;
   const hasEntityTarget = Boolean(eventId || effectiveDriverId || effectiveUnitId);
 
   const eventsQuery = useQuery({
