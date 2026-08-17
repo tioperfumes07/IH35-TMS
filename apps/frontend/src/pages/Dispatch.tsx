@@ -92,9 +92,12 @@ function serializeFilters(params: URLSearchParams, filters: DispatchFilterState)
 export function DispatchPage({
   loadsDeepLink = false,
   initialSubTab,
+  /** LV-DISPATCH-LOAD-DEEPLINK-DRAWER: route wrapper passes :id explicitly so the drawer cannot miss useParams. */
+  deepLinkLoadId = null,
 }: {
   loadsDeepLink?: boolean;
   initialSubTab?: DispatchSubTabId;
+  deepLinkLoadId?: string | null;
 } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -104,7 +107,8 @@ export function DispatchPage({
   // `/dispatch?load_id=`, so the canonical route was a facade and every EntityLink kind="load"
   // still ended on a query-param board bookmark. Reading the route param here is what makes the
   // canonical route real; `?load_id=` / `?load=` stay honoured below as legacy BOOKMARKS.
-  const { id: routeLoadId } = useParams<{ id: string }>();
+  const { id: routeParamLoadId } = useParams<{ id: string }>();
+  const routeLoadId = deepLinkLoadId ?? routeParamLoadId;
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
