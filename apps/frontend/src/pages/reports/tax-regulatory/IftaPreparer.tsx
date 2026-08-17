@@ -84,7 +84,7 @@ export function IftaPreparer() {
     <div className="space-y-3">
       <PageHeader
         title="IFTA Quarterly Preparer"
-        subtitle={`${quarter} · 4-step wizard (mileage, fuel, tax, owner approval)`}
+        subtitle={`${quarter} · 4-step wizard (mileage, fuel, tax, final review)`}
         backHref="/reports"
         breadcrumb={["Reports", "IFTA Quarterly Preparer"]}
       />
