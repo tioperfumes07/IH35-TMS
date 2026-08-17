@@ -2001,6 +2001,7 @@
   "3768": "verify-finance-loan-wizard-no-native-date-type",
   "3770": "verify-reports-ifta-runner-canonical-alias",
   "3772": "verify-lists-driver-teams-dead-tombstone-link",
+  "3774": "verify-lists-names-master-dead-tombstone-link",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
