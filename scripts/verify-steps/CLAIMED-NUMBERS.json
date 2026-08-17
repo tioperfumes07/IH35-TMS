@@ -3243,6 +3243,11 @@
       "claimer": "cc-1",
       "name": "verify-customers-open-balance-excludes-void"
     },
+    "3693": {
+      "claimed_at": "2026-08-17",
+      "claimer": "cc-1",
+      "name": "verify-factoring-active-factor-count-not-hardcoded"
+    },
     "37": "37-verify-safety-accidents-wire-up.mjs",
     "38": "38-verify-safety-count-nav-integrity.mjs",
     "39": [
