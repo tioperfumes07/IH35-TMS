@@ -1,3 +1,17 @@
+# INBOX-CURSOR · SPEED SHARE ACTIVE · 2026-08-17T14:48Z
+
+**Shared away:** fuel · docs · tasks · compliance · customers · vendors → **Codex**  
+**Shared away:** fleet · maintenance → **Devin-A**
+
+## YOU KEEP (Live verify now)
+`lists` · `safety` · `dispatch` · `drivers` (~429 unpaid Live)
+
+Start lowest: **lists** create picker_law unpaid → safety driver lists → dispatch home reverse_link.
+
+Lead: keep Codex/Devin tipped; CC-1 Built floor still P0 for product Live.
+
+---
+
 # INBOX-CURSOR · LIVE VERIFY NOW · 2026-08-17T14:39Z
 
 **LIVE SCOREBOARD:** Built **3438/3441** · Live **2371/3441** · healthz `f2f3ae5`.

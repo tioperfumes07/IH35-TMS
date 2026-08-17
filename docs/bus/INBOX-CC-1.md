@@ -1,3 +1,15 @@
+# INBOX-CC-1 · SPEED SHARE NOTE · 2026-08-17T14:48Z
+
+Cursor shared non-money Live to Codex/Devin. **Your lane unchanged.**
+
+## P0 still
+Built 3438→3441: `trk_bulk_register:gl_je` · `modal.create:gl_je` · `auto_deduction_policies:liability`
+
+## Then Live
+accounting · banking · factoring · settlements (~358 unpaid) + Reports 6 money/reverse cells.
+
+---
+
 # INBOX-CC-1 · LIVE SCOREBOARD · BUILT FLOOR NOW · 2026-08-17T14:39Z
 
 **FORBIDDEN:** idle · matrix theater · stall on Settlements while Box3 < 3441.

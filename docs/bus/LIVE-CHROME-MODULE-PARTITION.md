@@ -1,22 +1,18 @@
-# LIVE CHROME MODULE PARTITION · 2026-08-17T14:39Z (Cursor lead)
+# LIVE CHROME MODULE PARTITION · 2026-08-17T14:48Z (Cursor lead) · SPEED SHARE
 
-Owner: Box 3 Built **3438/3441** in flight · Box 4 Live **2371/3441** · seats must not re-walk the same module.
+Owner: Box3 Built **3438/3441** · Box4 Live **2371/3441** · **Cascade CANCELLED**.
 
-**OWNER 2026-08-17:** Live VERIFY = **Cursor + CC-1 + Codex + Devin local-a**. **Cascade = CANCELLED**.
+**OWNER speed:** Cursor shares Live pile with Codex + Devin-A. No seat idle on STARVED.
 
-| Seat | Live Chrome modules (USMCA · app.ih35dispatch.com) | Do NOT touch |
-|------|-----------------------------------------------------|--------------|
-| **Cursor** | `lists` · `safety` · `dispatch` · `fleet` · `fuel` · `maintenance` · `customers` · `vendors` · `drivers` · `docs` · `tasks` · `compliance` | accounting/banking/factoring money Built/Live (CC-1) |
-| **Codex** | `insurance` · `legal` · `inventory` · `reports` · `home` · `program` · `system` · `cash-flow` · `form_425` · `finance` (non-money) · `driver-hub` · `users` | CC-1 money cells |
-| **CC-1** | **`accounting` · `banking` · `factoring` · `settlements`** + **3 Built floor cells** | Cursor Lists create chrome |
-| **Devin local-a** | Live VERIFY assist / money-critical samples after CC-1 ships | code / GL math |
-| **Cascade** | — **CANCELLED** — | all Live VERIFY |
+| Seat | Live VERIFY modules (USMCA) | Do NOT touch |
+|------|------------------------------|--------------|
+| **Cursor** | `lists` · `safety` · `dispatch` · `drivers` | money Built/Live (CC-1) |
+| **Codex** | **OWN:** insurance · legal · inventory · reports(non-money) · home · program · system · cash-flow · form_425 · finance(non-money) · driver-hub · users | |
+| | **SHARED FROM CURSOR:** `fuel` · `docs` · `tasks` · `compliance` · `customers` · `vendors` | CC-1 money; lists/safety/dispatch/drivers (Cursor) |
+| **Devin-A** | **SHARED FROM CURSOR:** `fleet` · `maintenance` (Live click-through prove) | code / GL math |
+| | + money-critical samples after CC-1 Built ships · any OUTBOX handoff | |
+| **CC-1** | `accounting` · `banking` · `factoring` · `settlements` + **3 Built cells first** | Cursor Lists create chrome |
 
-**Rules**
-1. Claim in OUTBOX before walk: `LIVE CLAIM <module>`
-2. PASS lines alone are **not** Box 4 — append `PROD-VERIFIED` + Leaves backticks + scoreboard `--write` + FAST-MERGE
-3. Failures → GUARD-WORKORDERS OPEN + OUTBOX same turn
-4. Product-wide `Live=BLOCKED` until Built 3441/3441 and Box4 certified
-5. Never leave a seat on `awaiting next FO`
+**Collision rule:** OUTBOX `LIVE CLAIM <module>` before walk. If another seat claimed that module tip, skip. STARVED → next module **same turn**.
 
-Standing queue: `docs/bus/CONTINUOUS-LIVE-NO-STALL.md`
+**Approx unpaid Live at share time:** Cursor-kept ~429 · Codex shared+own ~17+~122 · Devin fleet+maint ~134 · CC-1 ~358.
