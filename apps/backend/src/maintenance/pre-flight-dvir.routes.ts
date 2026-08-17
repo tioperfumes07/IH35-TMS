@@ -105,8 +105,9 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
             COALESCE(lt.major_defect_code, d.major_defect_code)   AS major_defect_code,
             NULLIF(d.notes, '')                                   AS notes,
             s.submitted_at::text                                  AS submitted_at,
-            COALESCE(d.follow_up_wo_id, lt.auto_wo_id)::text      AS work_order_id,
-            lt.auto_wo_id::text                                   AS auto_wo_id,
+            -- Keep UUID typed through the outer JOIN (w.id uuid = text was 42883).
+            COALESCE(d.follow_up_wo_id, lt.auto_wo_id)            AS work_order_id,
+            lt.auto_wo_id                                         AS auto_wo_id,
             (COALESCE(lt.routed, false) OR d.follow_up_wo_id IS NOT NULL) AS routed,
             CASE
               WHEN d.resolved_at IS NOT NULL THEN 'closed'
@@ -127,7 +128,9 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           b.id, b.unit_id, b.unit_number, b.driver_id, b.driver_name, b.item_key,
           NULL::text AS item_label,
           b.severity, b.major_defect_code, b.notes, b.submitted_at,
-          b.work_order_id, w.display_id AS work_order_display_id, b.auto_wo_id,
+          b.work_order_id::text AS work_order_id,
+          w.display_id AS work_order_display_id,
+          b.auto_wo_id::text AS auto_wo_id,
           b.routed, b.status
         FROM base b
         LEFT JOIN maintenance.work_orders w ON w.id = b.work_order_id
