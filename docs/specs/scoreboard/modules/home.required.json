@@ -142,7 +142,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "load",
         "driver"
       ]
     },
