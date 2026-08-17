@@ -458,24 +458,20 @@ type Props = {
 
 export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, onParentCustomerCreated, parentCustomerOptions, customerId }: Props) {
   const queryClient = useQueryClient();
-  // LV-CUSTOMER-FULL-EDIT-CRASH: live prod crash "o.map is not a function" — this was the one memo
-  // in this file with no defensive fallback on its prop-sourced array (every sibling below it, e.g.
-  // parentOptions/incomeAccountOptions, already guards with `?? []`). A caller passing anything other
-  // than a live array (undefined during an in-flight refetch, a stale/mismatched cache entry) took the
-  // whole "Full Edit" modal down with it. Guard at the consumption point, not just at each call site.
-  const termOptions = useMemo(
-    () => (paymentTermOptions ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
-    [paymentTermOptions]
-  );
+  // LV-CUSTOMERS-FULL-EDIT-PAYMENT-TERMS-CACHE-SHAPE — Array.isArray (not `?? []`): a truthy non-array
+  // (react-query cache holding the `{ payment_terms }` envelope under a shared key) still crashes `.map`.
+  const termOptions = useMemo(() => {
+    const terms = Array.isArray(paymentTermOptions) ? paymentTermOptions : [];
+    return terms.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` }));
+  }, [paymentTermOptions]);
 
   // D1-4: parent-customer options, excluding the row being edited (a customer can't be its own parent).
-  const parentOptions = useMemo(
-    () =>
-      (parentCustomerOptions ?? [])
-        .filter((c) => c.id !== customerId)
-        .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name })),
-    [parentCustomerOptions, customerId]
-  );
+  const parentOptions = useMemo(() => {
+    const rows = Array.isArray(parentCustomerOptions) ? parentCustomerOptions : [];
+    return rows
+      .filter((c) => c.id !== customerId)
+      .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name }));
+  }, [parentCustomerOptions, customerId]);
 
   // Option-B (vendor-customer-categorization-option-b): default income account is a RECOMMENDATION
   // that pre-fills invoice lines — the user can always override it. Scoped to Income-type accounts.
@@ -492,7 +488,8 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
     staleTime: 5 * 60 * 1000,
   });
   const incomeAccountOptions = useMemo(() => {
-    const accounts = incomeAccountsQuery.data?.accounts ?? [];
+    const raw = incomeAccountsQuery.data?.accounts;
+    const accounts = Array.isArray(raw) ? raw : [];
     return accounts
       .filter((a) => a.account_type === "Income")
       .map((a) => ({ value: a.id, label: a.account_name }));

@@ -1142,7 +1142,7 @@ export function normalizeMdataListRows<T>(raw: unknown): T[] {
   if (Array.isArray(raw)) return raw as T[];
   if (raw && typeof raw === "object") {
     const o = raw as Record<string, unknown>;
-    for (const key of ["rows", "customers", "vendors", "data", "results"] as const) {
+    for (const key of ["rows", "customers", "vendors", "data", "results", "payment_terms"] as const) {
       const nested = o[key];
       if (Array.isArray(nested)) return nested as T[];
     }
@@ -1433,7 +1433,15 @@ export function listPaymentTermOptions(operatingCompanyId: string) {
     status: "active",
     limit: "200",
   });
-  return apiRequest<{ payment_terms: PaymentTermOption[] }>(`/api/v1/catalogs/payment-terms?${query.toString()}`);
+  // Normalize at the API boundary so shared react-query keys never cache a non-array `payment_terms`.
+  return apiRequest<{ payment_terms: PaymentTermOption[] } | PaymentTermOption[]>(
+    `/api/v1/catalogs/payment-terms?${query.toString()}`
+  ).then((payload) => {
+    const payment_terms = normalizeMdataListRows<PaymentTermOption>(
+      Array.isArray(payload) ? payload : (payload as { payment_terms?: unknown })?.payment_terms ?? payload
+    );
+    return { payment_terms };
+  });
 }
 
 // Inline "+ Add new payment term" support (reference-dropdown keystone). Non-financial

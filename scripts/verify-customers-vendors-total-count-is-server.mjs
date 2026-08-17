@@ -33,6 +33,7 @@ const VENDORS_PAGE = "apps/frontend/src/pages/Vendors.tsx";
 const CUSTOMERS_ROUTE = "apps/backend/src/mdata/customers.routes.ts";
 const VENDORS_ROUTE = "apps/backend/src/mdata/vendors.routes.ts";
 const MDATA_API = "apps/frontend/src/api/mdata.ts";
+const CUSTOMER_EDIT_MODAL = "apps/frontend/src/components/customers/CustomerEditModal.tsx";
 
 function assertGuard(sources) {
   const errors = [];
@@ -56,7 +57,7 @@ function assertGuard(sources) {
     errors.push(`${MDATA_API}: must export normalizeMdataListRows that Array.isArray-guards list envelopes`);
   }
   const listCustomersBlock = (sources.mdata.match(
-    /export function listCustomers[\s\S]*?(?=export function listVendors|export function getVendor)/
+    /export function listCustomers[\s\S]*?(?=export function (?:listPaymentTermOptions|listVendors|getVendor|getCustomer))/
   ) || [])[0] || "";
   const listVendorsBlock = (sources.mdata.match(
     /export function listVendors[\s\S]*?(?=export function getVendor|export type CreateVendorInput|$)/
@@ -72,6 +73,27 @@ function assertGuard(sources) {
   }
   if (/total:\s*payload\.total\s*\?\?\s*payload\.vendors\.length/.test(listVendorsBlock)) {
     errors.push(`${MDATA_API}: listVendors must not trust raw payload.vendors.length without Array.isArray normalize`);
+  }
+
+  // LV-CUSTOMERS-FULL-EDIT-PAYMENT-TERMS-CACHE-SHAPE — normalize payment_terms + shared react-query envelope.
+  const listPaymentTermsBlock = (sources.mdata.match(
+    /export function listPaymentTermOptions[\s\S]*?(?=export function createPaymentTermOption|export function listVendors|$)/
+  ) || [])[0] || "";
+  if (!/normalizeMdataListRows(?:<PaymentTermOption>)?/.test(listPaymentTermsBlock)) {
+    errors.push(`${MDATA_API}: listPaymentTermOptions must normalize payment_terms via normalizeMdataListRows`);
+  }
+  if (sources.customerEditModal) {
+    if (/listPaymentTermOptions\([^)]*\)\.then\(\s*\(?\s*r\s*\)?\s*=>\s*r\.payment_terms\s*\)/.test(sources.customerEditModal)) {
+      errors.push(
+        `${CUSTOMER_EDIT_MODAL}: must not unwrap payment_terms in queryFn under shared ["payment-term-options"] key (cache shape collision with CustomerDetail)`
+      );
+    }
+    if (!/paymentTermsQuery\.data\?\.payment_terms/.test(sources.customerEditModal)) {
+      errors.push(`${CUSTOMER_EDIT_MODAL}: must read payment_terms from listPaymentTermOptions envelope (same as CustomerDetail)`);
+    }
+    if (!/Array\.isArray\(\s*(?:raw|paymentTermsQuery\.data\?\.payment_terms)/.test(sources.customerEditModal)) {
+      errors.push(`${CUSTOMER_EDIT_MODAL}: must Array.isArray-guard payment_terms before mapping`);
+    }
   }
 
   // 3 — pages must not pass array .length into totalCount
@@ -136,12 +158,23 @@ function selftest() {
         return { customers, total: listEnvelopeTotal(payload, customers) };
       });
     }
+    export function listPaymentTermOptions(operatingCompanyId) {
+      return apiRequest(\`/api/v1/catalogs/payment-terms\`).then((payload) => {
+        const payment_terms = normalizeMdataListRows(payload?.payment_terms ?? payload);
+        return { payment_terms };
+      });
+    }
     export function listVendors(params = {}) {
       return apiRequest(\`/api/v1/mdata/vendors\`).then((payload) => {
         const vendors = normalizeMdataListRows(payload?.vendors ?? payload);
         return { vendors, total: listEnvelopeTotal(payload, vendors) };
       });
     }
+  `;
+  const goodCustomerEditModal = `
+    queryFn: () => listPaymentTermOptions(companyId),
+    const raw = paymentTermsQuery.data?.payment_terms;
+    return Array.isArray(raw) ? raw : [];
   `;
   const goodCustomersPage = `
     const customersServerTotal = customersQuery.data?.total ?? 0;
@@ -158,6 +191,7 @@ function selftest() {
     customersRoute: goodCustomersRoute,
     vendorsRoute: goodVendorsRoute,
     mdata: goodMdata,
+    customerEditModal: goodCustomerEditModal,
   };
 
   const cases = [
@@ -182,8 +216,14 @@ function selftest() {
       in: {
         ...base,
         mdata: goodMdata.replace(
-          "const customers = normalizeMdataListRows(payload?.customers ?? payload);",
-          "const customers = payload.customers;"
+          /export function listCustomers[\s\S]*?(?=export function listPaymentTermOptions)/,
+          `export function listCustomers(params = {}) {
+      return apiRequest(\`/api/v1/mdata/customers\`).then((payload) => ({
+        customers: payload.customers,
+        total: listEnvelopeTotal(payload, payload.customers || []),
+      }));
+    }
+    `
         ),
       },
       wantMin: 1,
@@ -203,12 +243,29 @@ function selftest() {
         (payload) => ({ customers: payload.customers, total: payload.total ?? payload.customers.length })
       );
     }
+    export function listPaymentTermOptions(operatingCompanyId) {
+      return apiRequest(\`/api/v1/catalogs/payment-terms\`).then((payload) => {
+        const payment_terms = normalizeMdataListRows(payload?.payment_terms ?? payload);
+        return { payment_terms };
+      });
+    }
     export function listVendors(params = {}) {
       return apiRequest(\`/api/v1/mdata/vendors\`).then((payload) => {
         const vendors = normalizeMdataListRows(payload?.vendors ?? payload);
         return { vendors, total: listEnvelopeTotal(payload, vendors) };
       });
     }
+        `,
+      },
+      wantMin: 1,
+    },
+    {
+      name: "Full Edit unwraps payment_terms under shared key -> FAIL",
+      in: {
+        ...base,
+        customerEditModal: `
+    queryFn: () => listPaymentTermOptions(companyId).then((r) => r.payment_terms),
+    const paymentTermOptions = paymentTermsQuery.data ?? [];
         `,
       },
       wantMin: 1,
@@ -241,6 +298,7 @@ const errors = assertGuard({
   customersRoute: readReal(CUSTOMERS_ROUTE),
   vendorsRoute: readReal(VENDORS_ROUTE),
   mdata: readReal(MDATA_API),
+  customerEditModal: readReal(CUSTOMER_EDIT_MODAL),
 });
 
 if (errors.length) {
@@ -248,4 +306,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — customers/vendors totalCount is server COUNT (not .length).`);
+console.log(`${LABEL} PASS — customers/vendors totalCount is server COUNT; Full Edit payment_terms cache shape locked.`);
