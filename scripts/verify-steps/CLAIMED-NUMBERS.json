@@ -3983,7 +3983,7 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1170,
+  "total_claimed": 1171,
   "3780": "verify-dispatch-assignment-history-tombstone",
   "3782": "verify-dispatch-border-crossing-history-tombstone",
   "3784": "verify-dispatch-late-arrivals-tombstone",
@@ -3993,5 +3993,6 @@
   "3789": "verify-payments-deposited-to-account-safe-cast",
   "3793": "verify-bill-allocation-assets-limit-in-bounds",
   "3797": "verify-cash-advances-view-load-column-present",
-  "3801": "verify-payrun-close-panel-settlement-load-links"
+  "3801": "verify-payrun-close-panel-settlement-load-links",
+  "3805": "verify-je-source-links-invoice-bill-display-id"
 }
