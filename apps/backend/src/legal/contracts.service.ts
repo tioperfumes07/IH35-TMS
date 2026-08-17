@@ -181,6 +181,7 @@ export async function listContractInstances(
         ci.template_code,
         ci.template_version,
         ci.signer_type,
+        ci.signer_entity_id,
         ci.signer_name,
         ci.signer_email,
         ci.signer_phone,
