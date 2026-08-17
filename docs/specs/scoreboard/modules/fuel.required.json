@@ -267,7 +267,7 @@
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
-      "route_hint": "/fuel",
+      "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
@@ -278,7 +278,7 @@
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
       "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
-      "route_hint": "/fuel",
+      "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
@@ -289,7 +289,7 @@
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
       "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
-      "route_hint": "/fuel",
+      "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
@@ -302,7 +302,9 @@
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/fuel/card-overage",
       "surface_kind": "toolbar",
-      "required": [],
+      "required": [
+        "connectivity"
+      ],
       "surface_path": "pages/fuel/card-overage/CardOverageQueuePage.tsx"
     }
   ],
