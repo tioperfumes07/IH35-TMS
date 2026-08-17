@@ -3,6 +3,7 @@
  * verify-reports-customer-tombstone-link-consumers.mjs
  * LV-REPORTS-CANCELLATIONS-DEAD-CUSTOMER-TOMBSTONE-LINK
  * LV-REPORTS-DISPATCH-MARGIN-DEAD-CUSTOMER-TOMBSTONE-LINK
+ * LV-REPORTS-MANAGEMENT-DEAD-CUSTOMER-TOMBSTONE-LINK
  *
  * Residual of #8180: unresolved / Unknown customer buckets must not mount
  * EntityLink (dead reverse → Failed to load customer details).
@@ -15,6 +16,7 @@ const LABEL = "verify-reports-customer-tombstone-link-consumers";
 const LIB = "apps/frontend/src/lib/entity-label.ts";
 const CANCELLATIONS = "apps/frontend/src/pages/reports/CancellationsReportPage.tsx";
 const DISPATCH = "apps/frontend/src/pages/reports/DispatchMarginPage.tsx";
+const MANAGEMENT = "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
@@ -57,6 +59,40 @@ function analyze() {
   if (!/EntityLink\s+kind="customer"/.test(disp)) {
     failures.push("DispatchMarginPage must still EntityLink resolvable customers");
   }
+
+  const mgmt = read(MANAGEMENT);
+  if (!/isUnresolvedEntityTombstone/.test(mgmt) || !/ManagementCustomerCell/.test(mgmt)) {
+    failures.push(
+      "ManagementReportPackagePage must gate customers via ManagementCustomerCell + isUnresolvedEntityTombstone",
+    );
+  }
+  if (!/ManagementVendorCell/.test(mgmt)) {
+    failures.push("ManagementReportPackagePage must gate vendors via ManagementVendorCell");
+  }
+  if (!/management-report-customer-tombstone/.test(mgmt)) {
+    failures.push("ManagementReportPackagePage must render management-report-customer-tombstone test id");
+  }
+  if (!/management-report-vendor-tombstone/.test(mgmt)) {
+    failures.push("ManagementReportPackagePage must render management-report-vendor-tombstone test id");
+  }
+  const unconditionalCust = (mgmt.match(/<EntityLink\s+kind="customer"\s+id=\{row\.customer_id\}/g) || []).length;
+  if (unconditionalCust > 0) {
+    failures.push(
+      "ManagementReportPackagePage must not unconditionally EntityLink row.customer_id (use ManagementCustomerCell)",
+    );
+  }
+  const unconditionalVend = (mgmt.match(/<EntityLink\s+kind="vendor"\s+id=\{row\.vendor_id\}/g) || []).length;
+  if (unconditionalVend > 0) {
+    failures.push(
+      "ManagementReportPackagePage must not unconditionally EntityLink row.vendor_id (use ManagementVendorCell)",
+    );
+  }
+  if (!/EntityLink\s+kind="customer"/.test(mgmt)) {
+    failures.push("ManagementReportPackagePage must still EntityLink resolvable customers");
+  }
+  if (!/EntityLink\s+kind="vendor"/.test(mgmt)) {
+    failures.push("ManagementReportPackagePage must still EntityLink resolvable vendors");
+  }
   return failures;
 }
 
@@ -69,11 +105,10 @@ function selftest() {
   const cancPath = path.join(process.cwd(), CANCELLATIONS);
   const cancOriginal = fs.readFileSync(cancPath, "utf8");
   try {
-    const bad =
-      cancOriginal.replace(
-        /if \(isUnresolvedEntityTombstone\(row\.label, row\.key, noun\)\) \{[\s\S]*?return <EntityLink kind=\{entityKind\} id=\{row\.key\} label=\{label\} className="font-medium text-gray-800" \/>;/,
-        'return <EntityLink kind={entityKind} id={row.key} label={label} className="font-medium text-gray-800" />;',
-      );
+    const bad = cancOriginal.replace(
+      /if \(isUnresolvedEntityTombstone\(row\.label, row\.key, noun\)\) \{[\s\S]*?return <EntityLink kind=\{entityKind\} id=\{row\.key\} label=\{label\} className="font-medium text-gray-800" \/>;/,
+      'return <EntityLink kind={entityKind} id={row.key} label={label} className="font-medium text-gray-800" />;',
+    );
     if (bad === cancOriginal) fail("selftest could not plant unconditional cancellations EntityLink");
     fs.writeFileSync(cancPath, bad);
     const planted = analyze();
@@ -101,6 +136,27 @@ function selftest() {
     fs.writeFileSync(dispPath, dispOriginal);
   }
 
+  const mgmtPath = path.join(process.cwd(), MANAGEMENT);
+  const mgmtOriginal = fs.readFileSync(mgmtPath, "utf8");
+  try {
+    let bad = mgmtOriginal.replace(
+      /<ManagementCustomerCell customerId=\{row\.customer_id\} customerName=\{row\.customer_name\} \/>/g,
+      '<EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />',
+    );
+    bad = bad.replace(
+      /<ManagementVendorCell vendorId=\{row\.vendor_id\} vendorName=\{row\.vendor_name\} \/>/g,
+      '<EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />',
+    );
+    if (bad === mgmtOriginal) fail("selftest could not plant unconditional management EntityLink");
+    fs.writeFileSync(mgmtPath, bad);
+    const planted = analyze();
+    if (!planted.some((m) => /ManagementReportPackagePage|unconditionally EntityLink/.test(m))) {
+      fail(`selftest expected management fail; got: ${planted.join("; ")}`);
+    }
+  } finally {
+    fs.writeFileSync(mgmtPath, mgmtOriginal);
+  }
+
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);
   console.log(`${LABEL} selftest PASS`);
@@ -113,4 +169,6 @@ if (process.argv.includes("--selftest")) {
 
 const failures = analyze();
 if (failures.length) fail(failures.join("; "));
-console.log(`${LABEL} PASS — cancellations + dispatch-margin tombstone consumers are non-interactive`);
+console.log(
+  `${LABEL} PASS — cancellations + dispatch-margin + management-report tombstone consumers are non-interactive`,
+);
