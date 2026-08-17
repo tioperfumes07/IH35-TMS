@@ -1668,6 +1668,15 @@
     "lane": "cursor",
     "note": "LV-CODEX-SHIPPED-GUARDS-ORPHANED-FROM-CI"
   },
+  "3656": {
+    "claimed_at": "2026-08-16",
+    "claimed_by": "cursor",
+    "guard": "verify-safety-dot-compliance-hooks",
+    "lane": "cursor",
+    "name": "verify-safety-dot-compliance-hooks",
+    "note": "LV-SAFETY-DOT-COMPLIANCE-CRASH \u2014 hooks before early return",
+    "purpose": "verify-safety-dot-compliance-hooks"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
