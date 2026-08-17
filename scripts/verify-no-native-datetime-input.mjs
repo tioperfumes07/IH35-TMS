@@ -290,6 +290,32 @@ export function run() {
     }
   }
 
+  // LV-DRIVER-PROFILE-RAW-ISO-DATES-REOPEN — #8551 only pinned DriverProfilePage summary;
+  // qualification LicenseSection + MedicalCardSection still String(expiration) → raw ISO.
+  const licensePath = path.join(repoRoot, "apps/frontend/src/components/driver-profile/LicenseSection.tsx");
+  const medicalPath = path.join(
+    repoRoot,
+    "apps/frontend/src/components/driver-profile/MedicalCardSection.tsx",
+  );
+  const licenseSrc = fs.existsSync(licensePath) ? fs.readFileSync(licensePath, "utf8") : "";
+  const medicalSrc = fs.existsSync(medicalPath) ? fs.readFileSync(medicalPath, "utf8") : "";
+  if (licenseSrc) {
+    if (!/formatDateUS\s*\(\s*license\.expiration/.test(licenseSrc)) {
+      profileFails.push("LicenseSection: Expires must use formatDateUS(license.expiration…)");
+    }
+    if (/Expires\s*\{\s*String\s*\(\s*license\.expiration/.test(licenseSrc)) {
+      profileFails.push("LicenseSection: still String(license.expiration) — raw ISO theater");
+    }
+  }
+  if (medicalSrc) {
+    if (!/formatDateUS\s*\(\s*medical\.expiration/.test(medicalSrc)) {
+      profileFails.push("MedicalCardSection: Expires must use formatDateUS(medical.expiration…)");
+    }
+    if (/Expires\s*\{\s*String\s*\(\s*medical\.expiration/.test(medicalSrc)) {
+      profileFails.push("MedicalCardSection: still String(medical.expiration) — raw ISO theater");
+    }
+  }
+
   const ok = nativeInputs.length === 0 && isoDisplays.length === 0 && profileFails.length === 0;
 
   if (!ok) {

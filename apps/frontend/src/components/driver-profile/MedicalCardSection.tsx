@@ -1,3 +1,5 @@
+import { formatDateUS } from "../../lib/formatDate";
+
 export function MedicalCardSection({ medical }: { medical: Record<string, unknown> }) {
   const color = String(medical.color_status ?? "gray");
   const colorClass =
@@ -8,7 +10,8 @@ export function MedicalCardSection({ medical }: { medical: Record<string, unknow
     <section className={`rounded-sm border p-4 ${colorClass}`}>
       <h2 className="mb-2 text-sm font-semibold text-slate-900">Medical card (DOT)</h2>
       <p className="text-xs text-slate-700">
-        Expires {String(medical.expiration ?? "—")}
+        {/* LV-DRIVER-PROFILE-RAW-ISO-DATES-REOPEN — display chrome only; day counts stay raw. */}
+        Expires {formatDateUS(medical.expiration as string | null) || "—"}
         {days != null ? ` · ${days} days` : ""}
       </p>
       <p className="text-xs text-slate-600">Examiner {String(medical.examiner ?? "—")}</p>
