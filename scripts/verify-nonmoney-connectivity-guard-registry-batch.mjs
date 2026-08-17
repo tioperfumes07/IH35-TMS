@@ -17,6 +17,7 @@ const REQUIRED = [
   "verify-reports-hos-violations-connectivity.mjs",
   "verify-reports-hub-connectivity.mjs",
   "verify-reports-maint-cost-runner-unit-linkage.mjs",
+  "verify-reports-audit-customer-vendor-subject-links.mjs",
   "verify-reports-runner-canonical-aliases.mjs",
   "verify-reports-runner-entity-link-vertical.mjs",
   "verify-reports-saved-preset-connectivity.mjs",

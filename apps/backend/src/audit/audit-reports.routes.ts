@@ -45,6 +45,8 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'load' THEN NULLIF(TRIM(audit_load.load_number), '')
       WHEN ${alias}.subject_type = 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', audit_driver.first_name, audit_driver.last_name)), '')
       WHEN ${alias}.subject_type = 'unit' THEN NULLIF(TRIM(audit_unit.unit_number), '')
+      WHEN ${alias}.subject_type = 'customer' THEN NULLIF(TRIM(audit_customer.customer_name), '')
+      WHEN ${alias}.subject_type = 'vendor' THEN NULLIF(TRIM(audit_vendor.vendor_name), '')
       WHEN ${alias}.subject_type = 'invoice' THEN NULLIF(TRIM(audit_invoice.display_id), '')
       WHEN ${alias}.subject_type = 'bill' THEN NULLIF(TRIM(COALESCE(audit_bill.display_id, audit_bill.bill_number)), '')
       WHEN ${alias}.subject_type = 'task' THEN CASE ${alias}.source_table
@@ -71,6 +73,14 @@ function auditSubjectJoins(alias: string) {
       ON ${alias}.subject_type = 'unit'
      AND audit_unit.id = ${alias}.subject_id
      AND COALESCE(audit_unit.currently_leased_to_company_id, audit_unit.owner_company_id) = ${alias}.operating_company_id
+    LEFT JOIN mdata.customers audit_customer
+      ON ${alias}.subject_type = 'customer'
+     AND audit_customer.id = ${alias}.subject_id
+     AND audit_customer.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN mdata.vendors audit_vendor
+      ON ${alias}.subject_type = 'vendor'
+     AND audit_vendor.id = ${alias}.subject_id
+     AND audit_vendor.operating_company_id = ${alias}.operating_company_id
     LEFT JOIN maintenance.work_orders audit_wo
       ON ${alias}.subject_type = 'task'
      AND ${alias}.source_table = 'maintenance.work_orders'

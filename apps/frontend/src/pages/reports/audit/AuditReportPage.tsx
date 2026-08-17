@@ -23,6 +23,8 @@ const SUBJECT_TYPE_TO_ENTITY_KIND: Partial<Record<string, EntityKind>> = {
   journal_entry: "journal_entry",
   driver: "driver",
   unit: "unit",
+  customer: "customer",
+  vendor: "vendor",
   work_order: "work_order",
 };
 
