@@ -57,7 +57,11 @@ export type UniversalRange = {
   to: string;
 };
 
-const DATE_FIELD = /(^|[_\s])(date|time|created|updated|due|pickup|delivery|effective|expires|period|as of)([_\s]|$)/i;
+// LV-LEGAL-MATTERS-RANGE-OMITS-SOL-DATE: include statute/SOL/hearing + *_at timestamps.
+// Postgres-style *_at keys (statute_of_limitations_at) and Legal "SOL / hearing" labels must
+// register as date range fields — otherwise Range mounts with zero eligible columns / Apply disabled.
+const DATE_FIELD =
+  /(^|[_\s])(date|time|created|updated|due|pickup|delivery|effective|expires|period|as of|at|statute|limitation|limitations|sol|hearing|deadline|filing)([_\s]|$)/i;
 const AMOUNT_FIELD = /(^|[_\s])(amount|total|cost|price|balance|revenue|pay|charge|fee|rate|cents|dollars)([_\s]|$)/i;
 const NUMBER_FIELD = /(^|[_\s])(year|odometer|mileage|miles|hours|count|quantity|qty|days)([_\s]|$)/i;
 
