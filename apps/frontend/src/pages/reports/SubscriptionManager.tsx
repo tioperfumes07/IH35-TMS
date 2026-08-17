@@ -12,6 +12,16 @@ import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { MobileOptimizedTable } from "../../components/shared/MobileOptimizedTable";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { formatDateTimeUS } from "../../lib/formatDate";
+
+function subscriptionStatusLabel(isActive: boolean): "Active" | "Inactive" {
+  return isActive ? "Active" : "Inactive";
+}
+
+function subscriptionTimestampLabel(value: string | null | undefined): string {
+  if (!value) return "—";
+  return formatDateTimeUS(value) || "—";
+}
 
 type SubscriptionRow = {
   uuid: string;
@@ -218,12 +228,12 @@ export function SubscriptionManager() {
             {
               key: "last",
               header: "Last sent",
-              render: (row) => row.last_sent_at?.slice(0, 19) ?? "—",
+              render: (row) => subscriptionTimestampLabel(row.last_sent_at),
             },
             {
               key: "next",
               header: "Next",
-              render: (row) => row.next_scheduled_at?.slice(0, 19) ?? "—",
+              render: (row) => subscriptionTimestampLabel(row.next_scheduled_at),
             },
             {
               key: "status",
@@ -236,7 +246,7 @@ export function SubscriptionManager() {
                       : "border-gray-200 bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {row.is_active ? "active" : "inactive"}
+                  {subscriptionStatusLabel(row.is_active)}
                 </span>
               ),
             },
