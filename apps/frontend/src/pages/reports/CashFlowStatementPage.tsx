@@ -12,6 +12,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -196,7 +197,7 @@ export function CashFlowStatementPage() {
                   ) : (
                     section.lines.map((line) => (
                       <tr key={`${section.key}-${line.label}`} className="border-b border-gray-100">
-                        <td className="px-3 py-2">{line.account_type || "—"}</td>
+                        <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
                         <td className="px-3 py-2">{line.account_subtype || "—"}</td>
                         <td className="px-3 py-2 font-medium text-gray-900">{line.label || "—"}</td>
                         <td className="px-3 py-2 text-right">{money(line.amount)}</td>

@@ -14,6 +14,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -211,7 +212,7 @@ export function ProfitLossPage() {
                             line.account_name || "—"
                           )}
                         </td>
-                        <td className="px-3 py-2">{line.account_type || "—"}</td>
+                        <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
                         <td className="px-3 py-2 text-right">{money(line.amount)}</td>
                       </tr>
                     ))
