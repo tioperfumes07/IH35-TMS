@@ -50,6 +50,11 @@ type Props = {
    * NOT pass this → it renders IDENTICALLY to before (8 registry cols + Edit, Unit plain text, row-click).
    */
   showMaintenanceColumns?: boolean;
+  /**
+   * When true, roster free-text search lives on FleetTablePage (so "Showing X of Y"
+   * stays honest). FleetTable still sorts/pages the already-search-filtered rows.
+   */
+  hideSearch?: boolean;
 };
 
 const FLEET_SELECTION_CAP = 100;
@@ -105,7 +110,14 @@ function fleetProfilePath(row: FleetRow): string {
 
 // Stable searchable text per row (module-level so the controller's memo stays stable).
 function fleetSearchText(row: FleetRow): string {
-  return [row.unit_number, row.vin, row.make, row.model].filter(Boolean).join(" ");
+  return [row.unit_number, row.vin, row.make, row.model, row.type, row.vehicle_type, row.equipment_type, row.status, row.id]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Shared by FleetTablePage page-level search so Showing X of Y matches the table. */
+export function fleetRosterSearchText(row: FleetRow): string {
+  return fleetSearchText(row);
 }
 
 // Stable per-column sort value (module-level for memo stability).
@@ -135,6 +147,7 @@ export function FleetTable({
   softDeleteFilter,
   onSoftDeleteFilterChange,
   showMaintenanceColumns = false,
+  hideSearch = false,
 }: Props) {
   const navigate = useNavigate();
 
@@ -415,6 +428,7 @@ export function FleetTable({
         onPageSizeChange={table.setPageSize}
         range={table.range}
         onRangeApply={table.setRange}
+        hideSearch={hideSearch}
       >
         <CollapsedListFilters
           activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter ? 1 : 0) + (typeListFilter ? 1 : 0)}

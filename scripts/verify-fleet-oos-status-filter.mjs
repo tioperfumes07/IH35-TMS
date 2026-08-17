@@ -28,6 +28,16 @@ function assertSource(src) {
   if (!src.includes('next.set("status", canonical)') && !src.includes("next.set(\"status\", canonical)")) {
     fail("must canonicalize kebab status deep links into the URL");
   }
+  // LV-FLEET-SEARCH-NO-FILTER: page-level search must narrow rows + Showing count.
+  if (!src.includes("rosterSearch") || !src.includes("searchedRows")) {
+    fail("must keep page-level rosterSearch → searchedRows so Showing X of Y tracks search");
+  }
+  if (!src.includes("fleet-roster-search") || !src.includes("fleet-roster-showing-count")) {
+    fail("must expose fleet-roster-search + fleet-roster-showing-count for Live VERIFY");
+  }
+  if (!src.includes("hideSearch")) {
+    fail("must pass hideSearch to FleetTable so page owns the single roster search");
+  }
 }
 
 function selftest() {

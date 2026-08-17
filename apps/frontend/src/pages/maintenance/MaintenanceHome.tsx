@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, MaintenancePartRow, WorkOrderType } from "../../api/maintenance";
@@ -103,10 +103,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
-  const [tab, setTab] = useState<MaintenanceTabId>(initialTab);
-  useEffect(() => {
-    setTab(maintenanceTabFromPath(location.pathname) as MaintenanceTabId);
-  }, [location.pathname]);
+  // LV-MAINT-RM-STATUS-BOARD-SHELL: always derive from pathname — never leave a stale
+  // useState(initialTab) after client navigations between MaintenanceTabRoute mounts.
+  const tab = (maintenanceTabFromPath(location.pathname) as MaintenanceTabId) || initialTab;
   const [sourceTypeFilter, setSourceTypeFilter] = useState("");
   const [externalVendorFilter, setExternalVendorFilter] = useState("");
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
@@ -309,12 +308,16 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         />
       ) : null}
 
-      {tab === "rm_status_board" ? <RMStatStrip kpis={kpis} /> : null}
-
       {tab === "rm_status_board" ? (
         // Approved rm-status-board.html: board LEFT + a compact ~168-180px right sidebar with
         // PM Countdown / PM Alerts / DTC / Road Service Active. Single-column stack on small screens.
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
+        <div
+          className="space-y-2"
+          data-testid="rm-status-board"
+          data-maintenance-tab="rm_status_board"
+        >
+          <RMStatStrip kpis={kpis} />
+          <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
           <div className="min-w-0">
             <RMBucketsGrid
               inHouse={rmStatusQuery.data?.in_house ?? []}
@@ -347,6 +350,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             />
             <SevereAlertsBand alerts={severeAlertsQuery.data?.alerts ?? []} />
           </aside>
+          </div>
         </div>
       ) : null}
 

@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
+import { FleetTable, fleetRosterSearchText, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
@@ -217,6 +217,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   }, [maintStatusQuery.data]);
 
   // Client-side kind sub-tab + status (KPI/toggle) filtering on top of the server type filter.
+  const [rosterSearch, setRosterSearch] = useState("");
   const rows = useMemo(
     () =>
       allRows.filter((r) => {
@@ -232,15 +233,24 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
     [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit, maintByUnit]
   );
 
+  // LV-FLEET-SEARCH-NO-FILTER: page-level search must narrow rows AND the "Showing X of Y"
+  // counter. Nested FleetTable search previously filtered the body while this counter stayed stale,
+  // so Live walks reported "search does not filter".
+  const searchedRows = useMemo(() => {
+    const q = rosterSearch.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => fleetRosterSearchText(r).toLowerCase().includes(q));
+  }, [rows, rosterSearch]);
+
   // Empty state renders only once the roster query settles (no first-fetch flash).
-  const listState = useListState(rowsQuery, rows.length === 0);
+  const listState = useListState(rowsQuery, searchedRows.length === 0);
 
   // Use the server's authoritative total (GO-LIVE Block 1A) so the count reflects the FULL fleet, not just
   // the fetched page — the unified/trailers endpoint previously returned no total, leaving "of 50".
   const totalVehicleCount =
     typeFilter !== "" ? (totalRowsQuery.data?.total ?? 0) : (rowsQuery.data?.total ?? allRows.length);
-  const filteredCount = rows.length;
-  const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "";
+  const filteredCount = searchedRows.length;
+  const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "" || rosterSearch.trim() !== "";
 
   const counters = useMemo(() => {
     // Count the same soft-delete slice the table uses (default: active / not deactivated).
@@ -337,6 +347,14 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs"
         data-fleet-page-filter-toolbar="collapsed"
       >
+        <TableSearch
+          value={rosterSearch}
+          onChange={setRosterSearch}
+          placeholder="Search Unit #, VIN, Make/Model…"
+          aria-label="Search Unit #, VIN, Make/Model…"
+          className="w-56"
+          data-testid="fleet-roster-search"
+        />
         <CollapsedListFilters
           activeFilterCount={(typeFilter ? 1 : 0) + (rawStatus != null && rawStatus !== "all" ? 1 : 0)}
           onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
@@ -365,7 +383,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
             </label>
           </div>
         </CollapsedListFilters>
-        <span className="text-gray-600">
+        <span className="text-gray-600" data-testid="fleet-roster-showing-count">
           Showing {filteredCount} of {totalVehicleCount} vehicles
         </span>
         <button
@@ -382,7 +400,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           <button
             type="button"
             className="rounded-sm border border-gray-300 bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            onClick={clearFilters}
+            onClick={() => {
+              setRosterSearch("");
+              clearFilters();
+            }}
           >
             Clear filters
           </button>
@@ -403,10 +424,11 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       ) : (
         <FleetTable
           operatingCompanyId={operatingCompanyId}
-          rows={rows}
+          rows={searchedRows}
           softDeleteFilter={softDeleteFilter}
           onSoftDeleteFilterChange={setSoftDeleteFilter}
           showMaintenanceColumns={showMaintenanceColumns}
+          hideSearch
         />
       )}
     </div>
