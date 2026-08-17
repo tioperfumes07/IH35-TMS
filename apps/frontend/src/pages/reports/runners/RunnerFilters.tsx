@@ -56,6 +56,24 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
     return count + (v != null && String(v) !== "" ? 1 : 0);
   }, 0);
 
+  // LV-REPORT-RUNNER-EMPTY-FILTERS-THEATER — fieldless configs must not mount empty Filters chrome.
+  if (filters.length === 0) {
+    return (
+      <section className="space-y-2" data-runner-filter-toolbar="none" data-testid="runner-no-filters">
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onRun}
+            disabled={isRunning}
+            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isRunning ? "Running..." : "Run report"}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-2" data-runner-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="runner" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
