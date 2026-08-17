@@ -202,6 +202,7 @@ export function CashAdvancesHomePage() {
         open={markDisbursedOpen}
         operatingCompanyId={companyId}
         advanceId={selectedId}
+        advance={detailQuery.data ?? null}
         onClose={() => setMarkDisbursedOpen(false)}
         onDone={() => {
           setMarkDisbursedOpen(false);
