@@ -116,7 +116,12 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       reserve_balance: 0,
       chargeback_balance: 0,
       last_advance_at: null,
-      active_factor_count: 0,
+      // ACCT-F5399 — was hardcoded 0/true regardless of whether a real active factor was already
+      // resolved above, so this fallback showed "Active factors: 0" on the same page that
+      // simultaneously displayed a real active factor's name/rates. resolveCanonicalActiveFactor()
+      // is deterministic (returns at most one factor by construction), so its presence/absence IS
+      // the count — no new query needed.
+      active_factor_count: summary.activeFactor ? 1 : 0,
       single_factor_invariant_ok: true,
       mtd_advances_count: 0,
       mtd_advanced_total: 0,
@@ -285,7 +290,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           active_factor_id: activeFactor?.id ?? null,
           active_factor_name: activeFactor?.vendor_name ?? null,
           recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
-          active_factor_count: 0,
+          // ACCT-F5399 — was hardcoded 0/true regardless of activeFactor, so a company with a real
+          // active factor but zero generated statements (the common no-statements-yet case) showed
+          // "Active factors: 0" beside its own real "ACTIVE FACTOR: <name>" header on the same tab.
+          active_factor_count: activeFactor ? 1 : 0,
           single_factor_invariant_ok: true,
         },
         activeFactor
