@@ -1824,6 +1824,40 @@
     "guard": "verify-finance-loan-wizard-picker-applicability",
     "note": "FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER"
   },
+  "3708": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-reports-ifta-preparer-no-owner-approval-copy",
+    "note": "LV-REPORTS-IFTA-PREPARER-STALE-OWNER-APPROVAL-COPY"
+  },
+  "3710": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-reports-fuel-reconciliation-display-dates",
+    "note": "LV-REPORTS-FUEL-RECONCILIATION-RAW-ISO-DATES"
+  },
+  "3712": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-reports-geofence-reconciliation-display-dates",
+    "note": "LV-REPORTS-GEOFENCE-RECONCILIATION-RAW-ISO-EMPTY-DATE"
+  },
+  "3714": {
+    "band": "cursor-even",
+    "claimed_at": "2026-08-17",
+    "claimer": "cursor",
+    "guard": "verify-reports-profit-per-truck-type-display",
+    "note": "LV-REPORTS-PROFIT-PER-TRUCK-RAW-UNKNOWN-TYPE"
+  },
+  "3716": {
+    "claimed_at": "2026-08-17",
+    "finding": "LV-REPORTS-CANCELLATIONS-DEAD-CUSTOMER-TOMBSTONE-LINK + LV-REPORTS-DISPATCH-MARGIN-DEAD-CUSTOMER-TOMBSTONE-LINK",
+    "guard": "verify-reports-customer-tombstone-link-consumers",
+    "lane": "cursor"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -3793,33 +3827,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1165,
-  "3708": {
-    "band": "cursor-even",
-    "claimed_at": "2026-08-17",
-    "claimer": "cursor",
-    "guard": "verify-reports-ifta-preparer-no-owner-approval-copy",
-    "note": "LV-REPORTS-IFTA-PREPARER-STALE-OWNER-APPROVAL-COPY"
-  },
-  "3710": {
-    "band": "cursor-even",
-    "claimed_at": "2026-08-17",
-    "claimer": "cursor",
-    "guard": "verify-reports-fuel-reconciliation-display-dates",
-    "note": "LV-REPORTS-FUEL-RECONCILIATION-RAW-ISO-DATES"
-  },
-  "3712": {
-    "band": "cursor-even",
-    "claimed_at": "2026-08-17",
-    "claimer": "cursor",
-    "guard": "verify-reports-geofence-reconciliation-display-dates",
-    "note": "LV-REPORTS-GEOFENCE-RECONCILIATION-RAW-ISO-EMPTY-DATE"
-  },
-  "3714": {
-    "band": "cursor-even",
-    "claimed_at": "2026-08-17",
-    "claimer": "cursor",
-    "guard": "verify-reports-profit-per-truck-type-display",
-    "note": "LV-REPORTS-PROFIT-PER-TRUCK-RAW-UNKNOWN-TYPE"
-  }
+  "total_claimed": 1165
 }
