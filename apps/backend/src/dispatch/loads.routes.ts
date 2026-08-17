@@ -571,7 +571,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `
           SELECT count(*)::int AS total
           FROM views.dispatch_load_with_driver_status l
-          JOIN mdata.customers c ON c.id = l.customer_id
+          -- LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END: deactivated customers are RLS-invisible — LEFT JOIN
+          -- so the load still counts / lists (customer_name may be null).
+          LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, state, scheduled_arrival_at
@@ -630,7 +632,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ml.loaded_miles AS loaded_miles,
             ml.miles_deadhead AS miles_deadhead
           FROM views.dispatch_load_with_driver_status l
-          JOIN mdata.customers c ON c.id = l.customer_id
+          LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
@@ -744,11 +746,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  df.flag_code AS flag_code,
                  df.display_name AS flag_display_name,
                  df.hex_color AS flag_hex_color,
-                 -- DISPATCH-MILES-GET (Cascade create-depth 2026-08-10): Book POST accepts
-                 -- miles_shortest/miles_practical and Neon stores them (e.g. L-20260809-0007 = 420/445),
-                 -- but views.dispatch_load_with_driver_status has ZERO mile columns (information_schema
-                 -- lucia 2026-08-10) so SELECT l.* omitted them and GET /dispatch/loads/:id could not
-                 -- round-trip miles. Same fix shape as trip_type — project from mdata.loads via ml.
+                 -- DISPATCH-MILES-GET: view has no mile cols — project from mdata.loads via ml.
                  ml.miles_shortest AS miles_shortest,
                  ml.miles_practical AS miles_practical,
                  ml.loaded_miles AS loaded_miles,
@@ -760,7 +758,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  rc.original_filename AS ratecon_file_name,
                  rc.uploaded_at AS ratecon_uploaded_at
           FROM views.dispatch_load_with_driver_status l
-          JOIN mdata.customers c ON c.id = l.customer_id
+          -- LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END: customers_select RLS hides deactivated_at IS NOT NULL
+          -- rows. An INNER JOIN here turned a live load (L-20260816-0168) into dispatch_load_not_found
+          -- while GET /mdata/loads/:id (no customer join) still 200'd — audit.trail → canonical path
+          -- opened an empty drawer. LEFT JOIN keeps the load visible; customer_name may be null.
+          LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
                                     AND sd.operating_company_id = l.operating_company_id
@@ -776,7 +778,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- carries the load's own operating_company_id predicate rather than trusting the view's row.
           LEFT JOIN mdata.loads ml ON ml.id = l.id
                                   AND ml.operating_company_id = l.operating_company_id
-          JOIN catalogs.dispatch_flag_colors df ON df.id = ml.dispatch_flag_color_id
+          -- Same class: flag catalog RLS / missing flag must not 404 the whole load detail.
+          LEFT JOIN catalogs.dispatch_flag_colors df ON df.id = ml.dispatch_flag_color_id
                                                 AND df.operating_company_id = ml.operating_company_id
           -- P39: Book Load persists the trailer on assignment history because mdata.loads has no
           -- trailer FK. Detail must read that same canonical sink; returning hard-coded NULL here
