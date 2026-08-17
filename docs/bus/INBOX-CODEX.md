@@ -1,3 +1,18 @@
+# INBOX-CODEX · LEAD REWAKE · ALL-SEATS WORK · 2026-08-17T14:30Z
+
+**FORBIDDEN:** restart completed Z-modules · invent money credit · idle on STARVED without next claim.
+
+**healthz:** `63713d6` · product **Live=BLOCKED**.
+
+## NOW
+1. On /program/matrix USMCA: claim **one genuine unpaid non-money cell** still open in your partition (Home Dispatcher role-gated if session; else next unpaid in driver-hub / users / finance non-money residual).
+2. Maintenance triage/convert stays **STARVED** until genuine in-transit row — OUTBOX STARVED is OK; then claim next unpaid cell same turn (do not park).
+3. Money/JE/reverse Reports/Finance → leave for **CC-1**.
+4. FE FAIL → HANDOFF=Cursor + board + INBOX-CURSOR tip same turn.
+
+
+---
+
 # INBOX-CODEX · LEAD · LIVE-CHROME FINISH 2026-08-17 · 2026-08-17T12:53Z
 
 **FORBIDDEN:** restart Z1–Z10 · duplicate exact Live rows · invent money credit · idle after STARVED.
