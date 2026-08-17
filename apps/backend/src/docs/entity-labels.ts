@@ -11,14 +11,19 @@ export type DocsEntityLink = {
 };
 
 const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string }> = {
-  driver: { table: "mdata.drivers", labelSelect: "COALESCE(NULLIF(d.first_name || ' ' || d.last_name, ' '), d.id::text)" },
-  customer: { table: "mdata.customers", labelSelect: "d.customer_name" },
-  vendor: { table: "mdata.vendors", labelSelect: "d.vendor_name" },
-  unit: { table: "mdata.units", labelSelect: "d.unit_number::text" },
-  equipment: { table: "mdata.equipment", labelSelect: "d.equipment_number" },
-  load: { table: "mdata.loads", labelSelect: "d.load_number" },
-  settlement: { table: "driver_finance.driver_settlements", labelSelect: "d.display_id" },
-  invoice: { table: "accounting.invoices", labelSelect: "d.display_id" },
+  // Never COALESCE to id::text — that ships raw UUIDs into entity_label and defeats FE chrome law.
+  driver: {
+    table: "mdata.drivers",
+    labelSelect:
+      "NULLIF(TRIM(BOTH FROM COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '')",
+  },
+  customer: { table: "mdata.customers", labelSelect: "NULLIF(TRIM(d.customer_name), '')" },
+  vendor: { table: "mdata.vendors", labelSelect: "NULLIF(TRIM(d.vendor_name), '')" },
+  unit: { table: "mdata.units", labelSelect: "NULLIF(TRIM(d.unit_number::text), '')" },
+  equipment: { table: "mdata.equipment", labelSelect: "NULLIF(TRIM(d.equipment_number), '')" },
+  load: { table: "mdata.loads", labelSelect: "NULLIF(TRIM(d.load_number), '')" },
+  settlement: { table: "driver_finance.driver_settlements", labelSelect: "NULLIF(TRIM(d.display_id), '')" },
+  invoice: { table: "accounting.invoices", labelSelect: "NULLIF(TRIM(d.display_id), '')" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */

@@ -5,6 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import { updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
+import { formatDateUS } from "../../lib/formatDate";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { AssignTruckModal } from "../../components/driver-profile/AssignTruckModal";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
@@ -506,11 +507,15 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             <div>
               {(profileDriver.cdl_number as string | null) ?? "—"} · {(profileDriver.cdl_state as string | null) ?? "—"}
             </div>
-            <div>Expires {(profileDriver.cdl_expires_at as string | null) ?? "—"}</div>
+            <div>
+              Expires {formatDateUS(profileDriver.cdl_expires_at as string | null) || "—"}
+            </div>
           </div>
           <div>
             <div className="font-semibold text-slate-800">Medical card</div>
-            <div>Expires {(profileDriver.dot_medical_expires_at as string | null) ?? "—"}</div>
+            <div>
+              Expires {formatDateUS(profileDriver.dot_medical_expires_at as string | null) || "—"}
+            </div>
           </div>
           <div>
             <div className="font-semibold text-slate-800">Contact</div>

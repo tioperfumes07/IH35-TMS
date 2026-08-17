@@ -14,6 +14,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
+type ConsoleView = "list" | "kanban";
 
 const WO_SORT_VALUES = new Set<WoSort>(["created_desc", "cost_desc", "wo_number_asc", "labor_cost_desc"]);
 const PAGE_SIZE = 100;
@@ -36,6 +37,21 @@ export function WorkOrdersConsoleListPage() {
   // header-click contract on the fleet table / dispatch board), so only the sort VALUE round-trips.
   const [searchParams, setSearchParams] = useSearchParams();
   const sort = parseWoSort(searchParams.get("sort"));
+  // LV-MAINT-WO-KANBAN-VIEW: ?view=kanban must render status columns (not silently ignore → table).
+  // Case-insensitive — Live FAIL when casing/stale param left the console stuck on ParityTable.
+  const viewParam = String(searchParams.get("view") ?? "").trim().toLowerCase();
+  const view: ConsoleView = viewParam === "kanban" ? "kanban" : "list";
+  const setView = (next: ConsoleView) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === "list") params.delete("view");
+        else params.set("view", "kanban");
+        return params;
+      },
+      { replace: true },
+    );
+  };
   const setSort = (next: WoSort) => {
     setSearchParams(
       (prev) => {
@@ -89,6 +105,33 @@ export function WorkOrdersConsoleListPage() {
     ],
     [tabCounts],
   );
+
+  const kanbanColumns = useMemo(() => {
+    const defs: Array<{ id: string; label: string; match: (status: string) => boolean }> = [
+      { id: "open", label: "Open", match: (s) => s === "open" || s === "draft" || s === "approved" },
+      {
+        id: "in_progress",
+        label: "In Progress",
+        match: (s) => s === "in_progress" || s === "in-progress" || s === "started",
+      },
+      { id: "completed", label: "Completed", match: (s) => s === "completed" || s === "closed" },
+      {
+        id: "cancelled",
+        label: "Cancelled",
+        match: (s) => s === "cancelled" || s === "canceled" || s === "void",
+      },
+    ];
+    const buckets = defs.map((d) => ({ ...d, rows: [] as WoConsoleRow[] }));
+    const other: WoConsoleRow[] = [];
+    for (const row of rows) {
+      const status = String(row.status ?? "").toLowerCase();
+      const hit = buckets.find((b) => b.match(status));
+      if (hit) hit.rows.push(row);
+      else other.push(row);
+    }
+    if (other.length) buckets.push({ id: "other", label: "Other", match: () => false, rows: other });
+    return buckets;
+  }, [rows]);
 
   const columns = useMemo<Array<ParityColumn<WoConsoleRow>>>(
     () => [
@@ -167,6 +210,50 @@ export function WorkOrdersConsoleListPage() {
     [],
   );
 
+  const filterBar = (
+    <div className="flex flex-wrap items-center gap-2">
+      <SelectCombobox
+        value={billing}
+        onChange={(event) => setBilling(event.target.value as typeof billing)}
+        className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+      >
+        <option value="all">Billing: All</option>
+        <option value="internal">Internal</option>
+        <option value="external">External</option>
+      </SelectCombobox>
+      <SelectCombobox
+        value={svc}
+        onChange={(event) => setSvc(event.target.value as typeof svc)}
+        className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+      >
+        <option value="all">Service class: All</option>
+        <option value="pm">PM</option>
+        <option value="corrective">Corrective</option>
+        <option value="accident">Accident</option>
+        <option value="inspection_dot">DOT inspection</option>
+        <option value="inspection_state">State inspection</option>
+        <option value="warranty">Warranty</option>
+        <option value="other">Other</option>
+      </SelectCombobox>
+      <SelectCombobox
+        value={sort}
+        onChange={(event) => setSort(event.target.value as typeof sort)}
+        className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+      >
+        <option value="created_desc">Sort: Newest</option>
+        <option value="cost_desc">Sort: Cost</option>
+        <option value="labor_cost_desc">Sort: Labor cost</option>
+        <option value="wo_number_asc">Sort: WO #</option>
+      </SelectCombobox>
+      <input
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search WO #, unit, vendor, driver…"
+        className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-[13px]"
+      />
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
       <PageHeader title="Work orders" subtitle="Operational console for vendor-ready work order PDFs" />
@@ -179,12 +266,74 @@ export function WorkOrdersConsoleListPage() {
 
       <SecondaryNavTabs activeId={segment} onChange={(id) => setSegment(id as SegmentId)} tabs={tabs} />
 
+      <div className="flex flex-wrap items-center gap-2" data-testid="work-orders-console-view-toggle">
+        <button
+          type="button"
+          className={`rounded-sm border px-2 py-1 text-xs font-semibold ${
+            view === "list" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-white text-gray-600"
+          }`}
+          aria-pressed={view === "list"}
+          onClick={() => setView("list")}
+        >
+          List
+        </button>
+        <button
+          type="button"
+          className={`rounded-sm border px-2 py-1 text-xs font-semibold ${
+            view === "kanban" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-white text-gray-600"
+          }`}
+          aria-pressed={view === "kanban"}
+          onClick={() => setView("kanban")}
+          data-testid="work-orders-console-kanban-tab"
+        >
+          Kanban
+        </button>
+      </div>
+
       {listQuery.isError ? (
         <ListErrorState
           title="Couldn't load work orders"
           {...formatQueryErrorDetail(listQuery.error)}
           onRetry={() => void listQuery.refetch()}
         />
+      ) : view === "kanban" ? (
+        <div className="space-y-2" data-testid="work-orders-console-kanban">
+          {filterBar}
+          {listQuery.isLoading ? (
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading work orders…</div>
+          ) : rows.length === 0 ? (
+            <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+              No work orders match the current filters.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+              {kanbanColumns.map((col) => (
+                <section
+                  key={col.id}
+                  className="rounded-sm border border-gray-200 bg-white"
+                  data-testid={`work-orders-console-kanban-col-${col.id}`}
+                >
+                  <header className="border-b border-gray-100 px-2 py-1.5 text-xs font-semibold text-slate-700">
+                    {col.label} ({col.rows.length})
+                  </header>
+                  <ul className="max-h-[28rem] space-y-1 overflow-y-auto p-2">
+                    {col.rows.map((row) => (
+                      <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-slate-50 px-2 py-1.5 text-xs">
+                        <EntityLink
+                          kind="work_order"
+                          id={String(row.id)}
+                          label={entityLabel(row.display_id, row.id, "Work order")}
+                          className="font-mono font-semibold text-slate-800"
+                        />
+                        <div className="mt-0.5 text-[11px] capitalize text-slate-600">{String(row.status ?? "")}</div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <ParityTable<WoConsoleRow>
           rows={rows}
@@ -197,49 +346,7 @@ export function WorkOrdersConsoleListPage() {
           initialPageSize={PAGE_SIZE}
           pageSizeOptions={[PAGE_SIZE]}
           suppressToolbarSearch
-          filterBar={
-            <div className="flex flex-wrap items-center gap-2">
-              <SelectCombobox
-                value={billing}
-                onChange={(event) => setBilling(event.target.value as typeof billing)}
-                className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-              >
-                <option value="all">Billing: All</option>
-                <option value="internal">Internal</option>
-                <option value="external">External</option>
-              </SelectCombobox>
-              <SelectCombobox
-                value={svc}
-                onChange={(event) => setSvc(event.target.value as typeof svc)}
-                className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-              >
-                <option value="all">Service class: All</option>
-                <option value="pm">PM</option>
-                <option value="corrective">Corrective</option>
-                <option value="accident">Accident</option>
-                <option value="inspection_dot">DOT inspection</option>
-                <option value="inspection_state">State inspection</option>
-                <option value="warranty">Warranty</option>
-                <option value="other">Other</option>
-              </SelectCombobox>
-              <SelectCombobox
-                value={sort}
-                onChange={(event) => setSort(event.target.value as typeof sort)}
-                className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-              >
-                <option value="created_desc">Sort: Newest</option>
-                <option value="cost_desc">Sort: Cost</option>
-                <option value="labor_cost_desc">Sort: Labor cost</option>
-                <option value="wo_number_asc">Sort: WO #</option>
-              </SelectCombobox>
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search WO #, unit, vendor, driver…"
-                className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-[13px]"
-              />
-            </div>
-          }
+          filterBar={filterBar}
         />
       )}
 

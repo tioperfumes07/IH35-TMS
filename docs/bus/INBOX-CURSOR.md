@@ -1,3 +1,49 @@
+# INBOX-CURSOR · SPEED SHARE ACTIVE · 2026-08-17T14:48Z
+
+CLAIM LEGAL MATTERS RANGE: `LV-LEGAL-MATTERS-RANGE-OMITS-SOL-DATE` — selected-USMCA `/legal/matters` has 5 positive rows and a real `SOL / hearing` (`statute_of_limitations_at`) date column, but Range reports no date/amount columns and disables Apply because `UniversalListToolbar.tsx:59-72` does not infer statute/SOL/hearing as date. Fix the shared typed/inference contract narrowly, preserve existing range kinds, mutation-prove this exact column plus a genuine no-range list, and Live-recheck staged From/To + Cancel. Board filed. OWNER-GATED=no; BLOCKS=legal:chrome.toolbar_range:qbo_chrome.
+
+**Shared away:** fuel · docs · tasks · compliance · customers · vendors → **Codex**  
+**Shared away:** fleet · maintenance → **Devin-A**
+
+## YOU KEEP (Live verify now)
+`lists` · `safety` · `dispatch` · `drivers` (~429 unpaid Live)
+
+Start lowest: **lists** create picker_law unpaid → safety driver lists → dispatch home reverse_link.
+
+Lead: keep Codex/Devin tipped; CC-1 Built floor still P0 for product Live.
+
+---
+
+# INBOX-CURSOR · LIVE VERIFY NOW · 2026-08-17T14:39Z
+
+**LIVE SCOREBOARD:** Built **3438/3441** · Live **2371/3441** · healthz `f2f3ae5`.
+
+## NOW (stop bus-only)
+1. Live-verify Cursor partition unpaid Live leaves — start lowest unpaid: **lists / safety / dispatch / fuel / fleet / maintenance**.
+2. Same turn: PROD-VERIFIED + Leaves backticks + scoreboard write + FAST-MERGE.
+3. Do **not** build the 3 money Built gaps — CC-1 owns; escalate only FE blockers.
+4. Lead: keep Devin local-a tipped; Cascade cancelled.
+
+---
+
+# INBOX-CURSOR · LEAD · LIVE-CHROME FINISH 2026-08-17 · 2026-08-17T12:53Z
+
+**DONE:** AUDIT Status truth sync #8392 · FO queue Status OPEN Cursor = 0 · Reports chrome FOs FIXED on board.
+
+**FO NOW:** Accept Codex `HANDOFF=Cursor` FE FAILs same turn (FAST-MERGE). Do not invent FO.
+
+**LIVE NOW (Cursor partition — CONTINUOUS-LIVE-NO-STALL §5.2):**
+1. healthz `f6a7b96` vs main `ded2a5ac4` — Live-prove only on deployed ancestry.
+2. Continue **K-waves** on unpaid Live leaves: prefer lowest Live% among `fuel` · `maintenance` · `dispatch` · `fleet` · `safety` · `lists` · `customers` · `vendors` · `drivers` · `docs` · `tasks` · `compliance`.
+3. Same turn: `PROD-VERIFIED` + Leaves backticks + `audit-coverage-scoreboard --write` + FAST-MERGE + OUTBOX next K claim.
+4. Lead duty: keep CC-1/Codex INBOX tips current; never wipe OUTBOX.
+
+**Coordinate:** CC-1 owns Built floor 3441 + Reports 6 money/reverse Live; Codex owns residual non-money unpaid only.
+
+Product **Live=BLOCKED** until Box3 3441/3441 and Box4 certified — per-leaf PASS ≠ product Live.
+
+---
+
 # INBOX-CURSOR · 2026-08-16 21:25 CT
 
 CLAIM BUS/CI GUARD ORPHAN: `INFRA-GUARD-BUS-SINGLE-CHANNEL-ORPHAN` — current `verify-guard-wired` reports `verify-bus-single-channel.mjs` as the sole unaccounted guard (3238 total · 2725 wired · 512 exempt · 1 orphan). Reserve an EVEN verify-step on main, wire the existing normal+selftest guard through it, and prove the orphan count reaches zero. Do not exempt or weaken it. Board row filed; dependency #8016; OWNER-GATED=no; `BLOCKS=verify-guard-wired`.
@@ -57,6 +103,8 @@ CLAIM: `FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER` — exact cells `nav.l
 CLAIM REPORTS COPY: `LV-REPORTS-IFTA-PREPARER-STALE-OWNER-APPROVAL-COPY` — selected-USMCA `/reports/ifta-preparer` visibly says `4-step wizard (mileage, fuel, tax, owner approval)`. Replace only the stale approval wording with accurate controlled-review language, preserve behavior, and mutation-ratchet the exact surface in the no-owner-approval product-copy guard. Board row filed. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-Z6-IFTA-PREPARER.
 CLAIM REPORTS ENTITYLINK RESIDUAL: `LV-REPORTS-CANCELLATIONS-DEAD-CUSTOMER-TOMBSTONE-LINK` — selected-USMCA `/reports/cancellations` renders `Unknown customer` id `01a29250-9bc1-4679-9613-79331056294d` as active link; target profile fails. Extend #8180's tombstone policy/guard to `CancellationsReportPage.bucketColumns`, preserving real driver/customer links. Board row filed. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-CANCELLATIONS-REVERSE.
 CLAIM REPORTS DATE CHROME: `LV-REPORTS-FUEL-RECONCILIATION-RAW-ISO-DATES` — selected-USMCA `/reports/fuel-reconciliation` renders unmatched Card date `2026-08-12` raw; both `transaction_date` and `wo_date` columns have no display renderer. Use canonical date display while preserving raw sort/filter/export values; ratchet both exact consumers independently. Board filed. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-FUEL-RECON-QBO-CHROME.
+CLAIM FUEL DATE CHROME: `LV-FUEL-HISTORY-RAW-ISO-DATETIME` — selected-USMCA `/fuel/history` renders positive transaction Date `2026-08-12T00:00:00.000Z` raw. Format only the visible `FuelTransactionsTable` Date column through the canonical shared display-date helper while preserving raw sort/filter/export/API values and all linkage/money behavior. Add an exact mutation-proven consumer guard and Live-prove the existing row. Board + audit row 1163. OWNER-GATED=no; BLOCKS=fuel:history:qbo_chrome.
+CLAIM CUSTOMER STATUS CHROME: `LV-CUSTOMERS-DETAIL-RAW-LOWERCASE-STATUS` — selected-USMCA `/customers?listTab=active&tab=customer_details` renders positive Customer Details Status as raw lowercase `active`. Reuse the governed customer status label for this exact master-detail field while preserving raw API/filter/sort/write values, and mutation-prove known statuses plus fallback. Board + audit row 1165. OWNER-GATED=no; BLOCKS=customers:md.customer_details:qbo_chrome.
 CLAIM REPORTS ENTITYLINK RESIDUAL: `LV-REPORTS-DISPATCH-MARGIN-DEAD-CUSTOMER-TOMBSTONE-LINK` — selected-USMCA `/reports/dispatch-margin` renders multiple `Customer — not visible` rows as active links, including known failed id `45226738-fcfa-40f0-944d-574e6725bcd6`. Extend #8180's tombstone policy/guard to `DispatchMarginPage.tsx:57`, preserving real customer and load links. Board filed. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-DISPATCH-MARGIN-REVERSE.
 CLAIM REPORTS DATE CHROME: `LV-REPORTS-GEOFENCE-RECONCILIATION-RAW-ISO-EMPTY-DATE` — selected-USMCA `/reports/geofence-reconciliation` shared picker displays `08/16/2026`, but empty state says raw `No anomalies found for 2026-08-16.` Fix `GeofenceReconciliationReport.tsx:139` through canonical display formatting and mutation-ratchet raw interpolation. Board filed. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-GEOFENCE-RECON-QBO-CHROME.
 CLAIM REPORTS TYPE CHROME: `LV-REPORTS-PROFIT-PER-TRUCK-RAW-UNKNOWN-TYPE` — selected-USMCA `/reports/profit-per-truck` renders raw lowercase `unknown` in all 10 positive Type cells. Backend forces the fallback at `profit-per-truck.routes.ts:159,239`; frontend renders it verbatim at `ProfitPerTruckPage.tsx:88`. Use governed human-facing unavailable copy without inventing a type; preserve raw sort/export/API semantics, calculations, links, filters and entity scope. Add a focused planted-defect guard and Live-prove after deploy. Board filed. OWNER-GATED=no; BLOCKS=report.profit_per_truck:qbo_chrome.
@@ -77,3 +125,15 @@ CLAIM REPORTS CASH-FLOW OVERVIEW DATE CHROME: `LV-REPORTS-CASH-FLOW-OVERVIEW-RAW
 CLAIM REPORTS SCHEDULED STATUS/DATE CHROME: `LV-REPORTS-SCHEDULED-RAW-STATUS-DATETIME-CHROME` — selected-USMCA `/reports/scheduled` has six positive subscriptions whose Status field renders raw lowercase `active`; `SubscriptionManager.tsx:218-243` also slices Last sent/Next timestamps directly. Humanize Active/Inactive and use canonical display date/time while preserving raw values and every subscription action. Mutation-prove both statuses/timestamps and Live-recheck without writes. Board + audit row 1105. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-SCHEDULED-CHROME.
 CLAIM REPORTS SCHEDULED-CUSTOM CHROME RESIDUAL: `LV-REPORTS-SCHEDULED-CUSTOM-RAW-CHROME-DELETE` — selected-USMCA `/reports/scheduled-custom` has six positive rows exposing raw report slugs, raw ISO Last/Next, lowercase active, and visible Delete despite the backend already doing audited soft void. Reuse governed labels/date/status and rename Delete/success/failure copy to Void or Deactivate; preserve backend and raw values. Mutation-prove all branches; Live-recheck without actions. Board + audit row 1106. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-SCHEDULED-CUSTOM-CHROME; dependency #8351.
 CLAIM REPORTS DATE CHROME: `LV-REPORTS-CANCELLATIONS-BY-DATE-RAW-ISO` — selected-USMCA `/reports/cancellations` visibly renders raw ISO `2026-08-08` and `2026-08-06` in the positive By date table because the generic bucket renderer passes date labels through unchanged. Format only the date bucket with the canonical display-date helper; preserve raw API/sort/group/filter values, counts/charges, driver/customer EntityLinks, and tombstone non-links. Add an exact planted-defect guard and Live-prove both dates. Board + audit rows 1117-1118. OWNER-GATED=no; BLOCKS=reports:report.cancellations:qbo_chrome.
+CLAIM DOCS ORPHAN LABEL CHROME: `LV-DOCS-ORPHAN-CUSTOMER-RAW-UUID-TOMBSTONE` — selected-USMCA `/docs` has 69 positive rows; one customer-linked Dispatch Instructions row exposes raw UUID `74d472a8-2f8a-4707-9285-5708346e8cd9` while sibling customer/driver/load links resolve human labels. Render governed unavailable-record tombstone when docs label hydration returns null; preserve canonical links and raw API/filter/sort keys. Extend existing docs-label guard with planted orphan branch and Live-recheck same row. Board + audit row 1169. OWNER-GATED=no; BLOCKS=docs:home:qbo_chrome.
+CLAIM DOCS VOID COPY: `LV-DOCS-SOFT-DELETE-DESTRUCTIVE-COPY` — selected-USMCA populated Driver Documents row opens a recoverable/audit-retained soft-delete dialog, but visible copy says Soft Delete/You are deleting/Delete reason/Delete. Replace the destructive vocabulary consistently with Void/Deactivate wording while preserving audited recoverability; guard every exact consumer and Live-prove same row without submitting. Board + audit row 1187. OWNER-GATED=no; BLOCKS=docs:docs.modal.soft_delete:qbo_chrome.
+CLAIM DOCS→LOAD REGRESSION: `LV-DOCS-HOME-LOAD-DRILL-REGRESSION` — selected-USMCA Docs positive `L-20260811-0032` preserves canonical `/dispatch/loads/473d1f1a-1f57-4d39-b501-642b18f6b6e6?view=list` but opens generic Dispatch with dialogs=0/no requested detail. Reproduce deploy-vs-route race, extend #8285 guard with Docs producer, and Live-prove same row. Board + audit row 1196. OWNER-GATED=no; BLOCKS=docs:home:load.
+CLAIM FUEL MATRIX HONESTY HANDOFF: `LV-FUEL-LOVES-UPLOAD-FALSE-LOAD-REQUIRED` — selected-USMCA Fuel Planner → Upload Loves Prices is a company-wide `.xlsx` price-feed import with no trip/load entity, but `fuel.required.json:244-255` assigns `load`. Remove only this false requirement with an exact applicability ratchet; preserve connectivity/import behavior and real Planner load wiring. Board filed. OWNER-GATED=no; BLOCKS=fuel:fuel.modal.upload_loves_prices:load.
+CLAIM DRIVER PROFILE DATE CHROME: `LV-DRIVER-PROFILE-RAW-ISO-DATES` — Compliance Overview → Leonel profile exposes raw ISO License/Medical expiration values at `DriverProfilePage.tsx:509,513`. Use canonical display date for both, preserve raw semantics/day counts, ratchet and Live-recheck. Board+audit 1210. OWNER-GATED=no; BLOCKS=drivers:profile:qbo_chrome.
+CLAIM DRIVER PROFILE TOMBSTONE LINK: `LV-DRIVER-PROFILE-DEAD-CUSTOMER-TOMBSTONE-LINK` — Leonel profile Loads row L-20260809-0007 renders `Customer — not visible` as active EntityLink at `LoadsSection.tsx:25-37`. Keep unresolved non-interactive and resolved customers drillable; ratchet both branches. Board+audit 1211. OWNER-GATED=no; BLOCKS=drivers:profile:reverse_link.
+CLAIM LOAD DETAIL TOMBSTONE LINK: `LV-LOAD-DETAIL-DEAD-CUSTOMER-TOMBSTONE-LINK` — Docs→Load now opens L-20260816-0168, but `LoadDetailDrawer.tsx:350-352` renders `Customer — not visible` as active customer link. Keep unresolved non-interactive and resolved customers drillable; mutation-prove both, Live-recheck same load. Board+audit 1216. OWNER-GATED=no; BLOCKS=dispatch:load.detail:customer.
+CLAIM CUSTOMER FULL-EDIT CRASH: `LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY` — selected-USMCA `/customers/857f4bf3-ff76-4665-95b3-73e404b0f4a8` → `Full Edit` crashes the whole route with `(o ?? []).map is not a function`. Root path: `CustomerEditModal.tsx:49-63` consumes `listCustomers(...).then(r => r.customers)` as an array without canonical response normalization. Fix at the API/client contract boundary, mutation-prove envelope/non-array variants, preserve company scope/parent eligibility/full-field R=W/picker law/cancel/save. Board row filed. OWNER-GATED=no; BLOCKS=customers:customers.modal.customer_edit:{connectivity,qbo_chrome,picker_law}.
+CLAIM COMPLIANCE FORM2290 UNIT DRILL: `LV-COMPLIANCE-FORM2290-UNIT-NAMES-NOT-DRILLABLE` — selected-USMCA `/compliance/form-2290` renders 29 positive human unit names in the missing-first-use warning, but all are plain text and none opens the canonical unit profile. Fix `Form2290Filings.tsx:163-176` with resolved unit EntityLinks plus noninteractive unresolved tombstones, preserve filing/tax behavior, add planted-defect guard, and Live-recheck without generating a draft. Board filed. OWNER-GATED=no; BLOCKS=compliance:form2290:unit.
+REOPEN DRIVER PROFILE DATE CHROME: `LV-DRIVER-PROFILE-RAW-ISO-DATES` — post-#8551 Live shows the later Compliance summary formatted, but `LicenseSection.tsx:18-24` and `MedicalCardSection.tsx:9-13` still visibly render raw `2026-11-30T00:00:00.000Z` on Leonel's canonical profile. Fix both shared consumers with the canonical helper, preserve day counts/raw API semantics, extend #8551 guard across both files, and recheck for zero visible ISO timestamps. Board REOPENED. OWNER-GATED=no; BLOCKS=drivers:profile:qbo_chrome.
+TAKEN OVER BY CODEX: `LV-COMPLIANCE-FORM2290-UNIT-NAMES-NOT-DRILLABLE` now has the canonical-ID API shape, resolved EntityLink, unresolved tombstone, and exact planted-defect guard in Codex's fast-merge PR. Do not duplicate; Live recheck remains after deploy.
+CLAIM LEGAL CONTRACT TEMPLATE PICKER: `LV-LEGAL-CONTRACT-CREATE-TEMPLATE-PICKER-NO-ADD-FIRST` — selected-USMCA `/legal/contracts?openCreate=1` real Create contract drawer owes `picker_law`, but Template starts with `Select a template…` and has no `+ Add new template` first row/same-flow creator. Integrate canonical `LegalTemplateNewModal` writer behavior without nested box-in-box chrome; refetch/select created template; exact planted-defect guard. Board + audit row 1278. OWNER-GATED=no; BLOCKS=legal:contracts.create:picker_law.

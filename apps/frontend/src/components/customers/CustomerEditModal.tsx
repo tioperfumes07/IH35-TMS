@@ -40,12 +40,20 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
   }, [open, customer]);
 
   const companyId = operatingCompanyId ?? customer?.operating_company_id ?? "";
+  // LV-CUSTOMERS-FULL-EDIT-PAYMENT-TERMS-CACHE-SHAPE — share the SAME queryKey+queryFn shape as
+  // CustomerDetail (full `{ payment_terms }` envelope). The modal previously `.then(r => r.payment_terms)`
+  // while Detail cached the envelope under identical keys → Full Edit consumed a non-array and crashed
+  // with `(o ?? []).map is not a function` after #8564 fixed the customers-list path.
   const paymentTermsQuery = useQuery({
     queryKey: ["payment-term-options", companyId],
-    queryFn: () => listPaymentTermOptions(companyId).then((r) => r.payment_terms),
+    queryFn: () => listPaymentTermOptions(companyId),
     enabled: open && Boolean(companyId),
+    staleTime: 5 * 60 * 1000,
   });
-  const paymentTermOptions = useMemo(() => paymentTermsQuery.data ?? [], [paymentTermsQuery.data]);
+  const paymentTermOptions = useMemo(() => {
+    const raw = paymentTermsQuery.data?.payment_terms;
+    return Array.isArray(raw) ? raw : [];
+  }, [paymentTermsQuery.data]);
 
   // D1-4: eligible parents = active, TOP-LEVEL customers in this company, excluding this customer itself.
   const parentCandidatesQuery = useQuery({
@@ -54,13 +62,12 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
     enabled: open && Boolean(companyId),
     staleTime: 60_000,
   });
-  const parentCustomerOptions = useMemo(
-    () =>
-      (parentCandidatesQuery.data ?? [])
-        .filter((c) => !c.parent_customer_id && c.id !== customer?.id && c.status !== "inactive" && !c.deactivated_at)
-        .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
-    [parentCandidatesQuery.data, customer?.id]
-  );
+  const parentCustomerOptions = useMemo(() => {
+    const rows = Array.isArray(parentCandidatesQuery.data) ? parentCandidatesQuery.data : [];
+    return rows
+      .filter((c) => !c.parent_customer_id && c.id !== customer?.id && c.status !== "inactive" && !c.deactivated_at)
+      .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code }));
+  }, [parentCandidatesQuery.data, customer?.id]);
 
   if (!open || !customer) return null;
 

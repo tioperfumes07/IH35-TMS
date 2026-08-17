@@ -135,17 +135,25 @@ export const MAINTENANCE_TAB_PATH: Record<string, string> = {
   severe_repairs: "/maintenance/severe-repairs",
   road_service: "/maintenance/road-service",
   parts_inventory: "/maintenance/parts-inventory",
+  // LV-MAINT-SUBNAV-ORPHAN-PATHS — these three lived in SUBNAV but were missing here, so
+  // NavLink fell through to `?? "/maintenance"` (dashboard shell) instead of the dedicated leaf.
+  brake_wear: "/maintenance/brake-wear",
+  tire_wear: "/maintenance/tire-wear",
+  pre_flight_dvir: "/maintenance/pre-flight-dvir",
   settings: "/maintenance/settings",
 };
 
-export function maintenanceTabFromPath(pathname: string): string {
+export function maintenanceTabFromPath(pathname: string): string | null {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  if (norm === "/maintenance") return "active_wos";
+  // Bare hub — let MaintenanceHomePage initialTab decide (R&M board by default).
+  if (norm === "/maintenance") return null;
   if (norm === "/maintenance/in-transit" || norm === "/maintenance/triage") return "in_transit_issues";
+  // Live operators + Devin still hit the short alias; map it to the canonical pre-flight leaf.
+  if (norm === "/maintenance/dvir") return "pre_flight_dvir";
   for (const [id, routePath] of Object.entries(MAINTENANCE_TAB_PATH)) {
     if (routePath === norm) return id;
   }
-  return "active_wos";
+  return null;
 }
 
 export const FACTORING_TAB_PATH: Record<string, string> = {
@@ -197,6 +205,8 @@ export const FUEL_TAB_PATH: Record<string, string> = {
 
 export function fuelTabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  // Live operators + Devin still hit the hyphen alias; map it to the canonical inbox leaf.
+  if (norm === "/fuel/relay-inbox") return "relay_inbox";
   for (const [id, routePath] of Object.entries(FUEL_TAB_PATH)) {
     if (routePath === norm) return id;
   }

@@ -122,20 +122,21 @@ function uniqueSourceRows(rows: JournalEntrySourceLink[]): Array<{
   key: string;
   type: string;
   id: string;
+  displayId: string | null;
 }> {
   const seen = new Set<string>();
-  const out: Array<{ key: string; type: string; id: string }> = [];
+  const out: Array<{ key: string; type: string; id: string; displayId: string | null }> = [];
   for (const row of rows) {
-    const candidates: Array<{ type: string | null; id: string | null }> = [
-      { type: row.source_transaction_type, id: row.source_transaction_id },
-      { type: row.linked_object_type, id: row.linked_object_id },
+    const candidates: Array<{ type: string | null; id: string | null; displayId: string | null }> = [
+      { type: row.source_transaction_type, id: row.source_transaction_id, displayId: row.source_transaction_display_id },
+      { type: row.linked_object_type, id: row.linked_object_id, displayId: row.linked_object_display_id },
     ];
     for (const candidate of candidates) {
       if (!candidate.type || !candidate.id) continue;
       const key = `${candidate.type}:${candidate.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ key, type: candidate.type, id: candidate.id });
+      out.push({ key, type: candidate.type, id: candidate.id, displayId: candidate.displayId });
     }
   }
   return out;
@@ -328,7 +329,7 @@ export function JournalEntryDetailPage() {
             {sourceRows.map((row) => (
               <li key={row.key} className="flex items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{row.type}</span>
-                <SourceEntityLink type={row.type} id={row.id} label={entityLabel(null, row.id, "Source")} />
+                <SourceEntityLink type={row.type} id={row.id} label={entityLabel(row.displayId, row.id, "Source")} />
               </li>
             ))}
           </ul>

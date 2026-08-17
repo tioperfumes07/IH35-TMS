@@ -3,6 +3,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 
 export type FuelTransactionRow = {
   id: string;
@@ -107,7 +108,12 @@ export function FuelTransactionsTable({ rows }: Props) {
         </div>
       )}
       columns={[
-        { key: "transaction_date", label: "Date", sortable: true },
+        {
+          key: "transaction_date",
+          label: "Date",
+          sortable: true,
+          render: (row) => formatDateUS(row.transaction_date) || "—",
+        },
         {
           key: "driver_name",
           label: "Driver",

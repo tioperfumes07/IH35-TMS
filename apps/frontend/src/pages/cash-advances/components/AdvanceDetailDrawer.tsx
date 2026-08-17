@@ -74,6 +74,24 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
         </div>
 
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
+          {/*
+           * ACCT-F5408 — views.cash_advances_with_context now selects a.load_id/load_display_id;
+           * this was always missing at the view layer, not a data gap — CreateAdvanceModal.tsx has
+           * required load_id for purpose=lumper/fuel_deposit all along.
+           */}
+          <div className="font-semibold">Linked Load</div>
+          {advance.load_id ? (
+            <EntityLink
+              kind="load"
+              id={String(advance.load_id)}
+              label={entityLabel(advance.load_display_id ? String(advance.load_display_id) : null, String(advance.load_id), "Load")}
+            />
+          ) : (
+            <div className="text-gray-500">No load linked to this advance.</div>
+          )}
+        </div>
+
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Linked Bill</div>
           {advance.linked_bill_id ? (
             <>

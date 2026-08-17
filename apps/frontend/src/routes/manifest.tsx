@@ -231,7 +231,6 @@ const HelpPage = React.lazy(() => import("../pages/help/HelpPage").then((m) => (
 const RunbooksIndex = React.lazy(() => import("../pages/help/RunbooksIndex").then((m) => ({ default: m.RunbooksIndex })));
 const OnboardingWizard = React.lazy(() => import("../pages/onboarding/OnboardingWizard").then((m) => ({ default: m.OnboardingWizard })));
 const ReportsHomePage = React.lazy(() => import("../pages/reports/ReportsHome").then((m) => ({ default: m.ReportsHomePage })));
-import IFTAPreparer from "../pages/reports/ifta/IFTAPreparer";
 import IftaPreparer from "../pages/reports/tax-regulatory/IftaPreparer";
 const ReportsRunnerPage = React.lazy(() => import("../pages/reports/ReportsRunner").then((m) => ({ default: m.ReportsRunnerPage })));
 const ARAgingPage = React.lazy(() => import("../pages/reports/ARAgingPage").then((m) => ({ default: m.ARAgingPage })));
@@ -348,9 +347,6 @@ const QboVendorLinkagePage = React.lazy(() => import("../pages/admin/QboVendorLi
 const TripProfitabilityPage = React.lazy(() => import("../pages/dispatch/TripProfitability").then((m) => ({ default: m.TripProfitability })));
 const EdiSetupWizard = React.lazy(() => import("../pages/integrations/edi/EdiSetupWizard").then((m) => ({ default: m.EdiSetupWizard })));
 const EdiTransactionLog = React.lazy(() => import("../pages/integrations/edi/EdiTransactionLog").then((m) => ({ default: m.EdiTransactionLog })));
-const BrakeWearDashboard = React.lazy(() => import("../pages/maintenance/brakes/BrakeWearDashboard").then((m) => ({ default: m.BrakeWearDashboard })));
-const PreFlightDvirQueue = React.lazy(() => import("../pages/maintenance/pre-flight/PreFlightDvirQueue").then((m) => ({ default: m.PreFlightDvirQueue })));
-const TireWearDashboard = React.lazy(() => import("../pages/maintenance/tires/TireWearDashboard").then((m) => ({ default: m.TireWearDashboard })));
 const LateArrivalReport = React.lazy(() => import("../pages/reports/LateArrivalReport").then((m) => ({ default: m.LateArrivalReport })));
 const CSAMitigationQueuePage = React.lazy(() => import("../pages/safety/CSAMitigationQueue").then((m) => ({ default: m.CSAMitigationQueuePage })));
 const CSAFmcsaTrendPage = React.lazy(() => import("../pages/safety/CSAScore").then((m) => ({ default: m.CSAScorePage })));
@@ -682,7 +678,8 @@ function DriverSafetyProfileTab() {
 function DispatchLoadDetailRoute() {
   const { id } = useParams<{ id: string }>();
   if (!id) return <Navigate to="/dispatch/loads" replace />;
-  return <DispatchPage loadsDeepLink />;
+  // Pass :id explicitly — Live FAIL: WO→load landed on board with ?view=list and drawer never opened.
+  return <DispatchPage loadsDeepLink deepLinkLoadId={id} />;
 }
 
 /** Legacy `/loads/:id` bookmarks → the canonical `/dispatch/loads/:id` (kept, never dropped). */
@@ -903,6 +900,15 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <NotificationPreferencesPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* LV-SETTINGS-COMPANY-REDIRECT — Live walks hit /settings/company; company ops live under /system */}
+        <Route
+          path="/settings/company"
+          element={
+            <ProtectedRoute>
+              <PreserveSearchNavigate to="/system" />
             </ProtectedRoute>
           }
         />
@@ -1396,6 +1402,15 @@ export const ROUTES = React.Children.toArray(
         />
         <Route
           path="/fuel/inbox"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="relay_inbox" />
+            </ProtectedRoute>
+          }
+        />
+        {/* LV-FUEL-RELAY-INBOX-REDIRECT — Live walks hit /fuel/relay-inbox; canonical leaf is /fuel/inbox */}
+        <Route
+          path="/fuel/relay-inbox"
           element={
             <ProtectedRoute>
               <FuelTabRoute tabId="relay_inbox" />
@@ -2076,9 +2091,7 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/brake-wear"
           element={
             <ProtectedRoute>
-              <MaintenanceShell>
-                <BrakeWearDashboard />
-              </MaintenanceShell>
+              <MaintenanceTabRoute tabId="brake_wear" />
             </ProtectedRoute>
           }
         />
@@ -2086,9 +2099,16 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/pre-flight-dvir"
           element={
             <ProtectedRoute>
-              <MaintenanceShell>
-                <PreFlightDvirQueue />
-              </MaintenanceShell>
+              <MaintenanceTabRoute tabId="pre_flight_dvir" />
+            </ProtectedRoute>
+          }
+        />
+        {/* LV-MAINTENANCE-DVIR-ROUTE-REDIRECTS — short alias used in Live walks; must not fall through to catch-all → /home */}
+        <Route
+          path="/maintenance/dvir"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="pre_flight_dvir" />
             </ProtectedRoute>
           }
         />
@@ -2096,9 +2116,7 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/tire-wear"
           element={
             <ProtectedRoute>
-              <MaintenanceShell>
-                <TireWearDashboard />
-              </MaintenanceShell>
+              <MaintenanceTabRoute tabId="tire_wear" />
             </ProtectedRoute>
           }
         />
@@ -3117,7 +3135,8 @@ export const ROUTES = React.Children.toArray(
           path="/reports/ifta"
           element={
             <ProtectedRoute>
-              <IFTAPreparer />
+              {/* LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME: legacy alias → canonical preparer (no-ledger boundary). */}
+              <Navigate to="/reports/ifta-preparer" replace />
             </ProtectedRoute>
           }
         />

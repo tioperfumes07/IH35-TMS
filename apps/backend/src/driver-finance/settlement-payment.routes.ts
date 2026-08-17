@@ -9,6 +9,7 @@ import {
   markPaidManually,
   markSentToBank,
   queuePayment,
+  reopenManualPaid,
 } from "./settlement-payment.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -19,6 +20,7 @@ const markManualBodySchema = z.object({
   payment_method: z.string().trim().min(2).max(60),
   reference: z.string().trim().max(200).optional(),
 });
+const reopenManualBodySchema = z.object({ reason: z.string().trim().min(3).max(500) });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -134,7 +136,10 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-pay/settlements/:id/mark-paid-manually", async (req, reply) => {
+  app.post(
+    "/api/v1/driver-pay/settlements/:id/mark-paid-manually",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -156,7 +161,33 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     } catch (error) {
       return mapServiceError(error, reply);
     }
-  });
+    }
+  );
+
+  // ACCT-F5401: correction path for an erroneous Mark Paid Manually — Owner/Admin only (same gate as
+  // mark-paid-manually itself), requires a written reason, and is a SEPARATE endpoint from the
+  // ordinary state-machine transitions (manual_paid stays terminal for those).
+  app.post(
+    "/api/v1/driver-pay/settlements/:id/reopen-manual-paid",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = reopenManualBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    try {
+      const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+      if (operatingCompanyId === null) return;
+      const settlement = await reopenManualPaid(params.data.id, operatingCompanyId, body.data.reason, user.uuid);
+      return { settlement };
+    } catch (error) {
+      return mapServiceError(error, reply);
+    }
+    }
+  );
 
   app.get("/api/v1/driver-pay/settlements/:id/payment-events", async (req, reply) => {
     const user = currentAuthUser(req, reply);

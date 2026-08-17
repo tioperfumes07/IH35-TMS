@@ -136,7 +136,9 @@ export async function registerForm2290Routes(app: FastifyInstance) {
       return res.rows;
     });
 
-    const unitsMissingFirstUse = perUnit.filter((u) => !u.acquired_date).map((u) => u.unit_number);
+    const unitsMissingFirstUse = perUnit
+      .filter((u) => !u.acquired_date)
+      .map((u) => ({ unit_id: u.id, unit_number: u.unit_number }));
     const perUnitDeadlines = perUnit
       .filter((u) => u.acquired_date)
       .map((u) => ({

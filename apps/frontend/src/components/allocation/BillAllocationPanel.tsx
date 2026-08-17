@@ -44,7 +44,10 @@ function previewEqual(totalCents: number, assets: AllocationAssetOption[]): Allo
 }
 
 async function fetchAssets(companyId: string): Promise<AllocationAssetOption[]> {
-  const params = new URLSearchParams({ operating_company_id: companyId, limit: "250" });
+  // ACCT-F5407: GET /api/v1/assets caps limit at 200 (assets.routes.ts listQuerySchema); requesting
+  // 250 always failed validation (400), which the catch() below silently swallowed as "service
+  // unavailable" — the reallocate panel never once fetched real assets, for any company, ever.
+  const params = new URLSearchParams({ operating_company_id: companyId, limit: "200" });
   const response = await fetch(resolveApiUrl(`/api/v1/assets?${params.toString()}`), { credentials: "include" });
   if (!response.ok) throw new Error(`asset list failed (${response.status})`);
   const payload = (await response.json()) as {

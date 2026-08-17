@@ -115,7 +115,7 @@ export function Form2290Filings() {
            the month of first use, so a truck placed in service in October is due Nov 30 — a date the
            annual banner alone can never show. These two fields carry the exceptions. */
         per_unit_deadlines?: Array<{ unit_id: string; unit_number: string; first_used_month: string; deadline: string }>;
-        units_missing_first_use?: string[];
+        units_missing_first_use?: Array<{ unit_id: string | null; unit_number: string | null }>;
       }
     | undefined;
   const perUnit = deadline?.per_unit_deadlines ?? [];
@@ -167,7 +167,17 @@ export function Form2290Filings() {
               <span className="font-semibold text-slate-900">
                 {missingFirstUse.length} vehicle{missingFirstUse.length === 1 ? "" : "s"} missing a first-use date
               </span>{" "}
-              — due date cannot be computed · {missingFirstUse.slice(0, 6).join(", ")}
+              — due date cannot be computed ·{" "}
+              {missingFirstUse.slice(0, 6).map((unit, idx) => (
+                <Fragment key={unit.unit_id ?? `unresolved-unit-${idx}`}>
+                  {idx > 0 ? ", " : ""}
+                  {unit.unit_id ? (
+                    <EntityLink kind="unit" id={unit.unit_id} label={unit.unit_number ?? "Unit"} />
+                  ) : (
+                    <span>{unit.unit_number ?? "Unit — not visible"}</span>
+                  )}
+                </Fragment>
+              ))}
               {missingFirstUse.length > 6 ? `, +${missingFirstUse.length - 6} more` : ""}
             </p>
           ) : null}

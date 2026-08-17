@@ -37,6 +37,7 @@ import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
+import { customerStatusLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
 
 type CustomerTabId =
@@ -150,7 +151,7 @@ function CustomerDetailsTab({
           <DetailRow label="Tax ID (EIN)" value={dash(customer.tax_id)} />
           <DetailRow label="Factoring" value={factoring} />
           <DetailRow label="Recourse type" value={dash(customer.factoring_recourse_type)} />
-          <DetailRow label="Status" value={dash(customer.status)} />
+          <DetailRow label="Status" value={customerStatusLabel(customer.status)} />
           <DetailRow label="Open balance" value={fmtMoney(summary?.aging_buckets?.total_open ?? 0)} />
         </div>
       </div>
