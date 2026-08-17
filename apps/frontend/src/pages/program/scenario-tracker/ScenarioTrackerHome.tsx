@@ -76,17 +76,21 @@ export function ScenarioTrackerHome() {
     return () => clearInterval(id);
   }, []);
 
-  const staleness = useMemo(
-    () =>
-      evaluateScenarioTrackerStaleness({
-        nowMs,
-        generatedAtUtc: payload?.generated_at_utc,
-        maxAgeSeconds: payload?.max_age_seconds ?? 20,
-        fetchFailed: fetchFailed || !payload,
-        sourceHealth: payload?.source_health,
-      }),
-    [nowMs, payload, fetchFailed],
-  );
+  // Loading (no payload yet) must NOT pretend the request failed or "missing generated_at" —
+  // that painted a permanent "STALE — scenario-tracker unreachable (fetch failed)" banner and
+  // dashed Now values while the first poll was still in flight (LV-PROGRAM-SCENARIO-TRACKER-FETCH-FAILED).
+  const staleness = useMemo(() => {
+    if (!fetchFailed && !payload) {
+      return { stale: false as const };
+    }
+    return evaluateScenarioTrackerStaleness({
+      nowMs,
+      generatedAtUtc: payload?.generated_at_utc,
+      maxAgeSeconds: payload?.max_age_seconds ?? 20,
+      fetchFailed,
+      sourceHealth: payload?.source_health,
+    });
+  }, [nowMs, payload, fetchFailed]);
 
   const stale = staleness.stale;
   const liveByKey = useMemo(() => {
