@@ -1,20 +1,17 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T14:04Z
+Updated: 2026-08-18T14:30Z
 
 ## ALERT
-**CC-2 ON (GUARD)** · **CODEX GO** with exact WAVE-1 Leaves (not idle on 0-unpaid).
+**CONTINUOUS FAST-MERGE ON** · Codex shipping Wave 1/2 · CC-2 GUARD · Cursor Leaves climb
 
 ## ACTIVE SEATS
 | Seat | Lane |
 |------|------|
-| **Cursor** | dispatch · drivers · lists · safety (+ FE HANDOFF) · lead |
-| **Codex** | customers · vendors · insurance · legal · fuel (+ capacity) — **WAVE-1 customers md.* NOW** |
+| **Cursor** | dispatch · drivers · lists · safety · lead — next unpaid after 2502 |
+| **Codex** | customers · vendors · insurance · legal · fuel (+ capacity) — WAVE shipping |
 | **Devin-A** | fleet → maintenance Live (CDP 9227) |
-| **CC-1** | money (accounting→banking→factoring→settlements) |
-| **CC-2** | GUARD live-verify · never build — **UNPARKED** |
-
-## PARKED
-Cascade assign — not this war
+| **CC-1** | money |
+| **CC-2** | GUARD live-verify · never build |
 
 ## LIVE
-Live=BLOCKED · tip `6fc7172fe` (#8921 Codex-back on main) · Leaves #8920 (2420–2460) do not re-credit
+Live=BLOCKED · Leaves 2502 settlements:reverse_link in flight · Codex 2470/2480 on main
