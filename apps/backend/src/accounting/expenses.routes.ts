@@ -125,6 +125,11 @@ const createExpenseBodySchema = z.object({
   load_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
   location_lng: z.number().finite().optional(),
+  // LV-G18-INERT-ON-EXPENSE-LINES: the escape hatch for a legitimate no-load over-the-road expense
+  // (diesel/def/toll/scale/lumper/parking/roadside_repair/detention_paid/over_road_other) in one of
+  // the 9 G18 categories. Mirrors accounting.enforce_load_fk_invariant()'s own >=20-char floor
+  // (migration 0093) so a too-short reason fails with the same clear DB error, not a generic 500.
+  load_exemption_reason: z.string().trim().min(20).max(2000).optional().nullable(),
 });
 
 const reattributeBodySchema = z.object({
@@ -720,6 +725,43 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           if (expenseCategoryId && (await columnExists(client, "accounting", "expense_lines", "expense_category_uuid"))) {
             lineColumns.push("expense_category_uuid");
             lineValues.push(expenseCategoryId);
+          }
+
+          // LV-G18-INERT-ON-EXPENSE-LINES: line_category was never written by this create path, so
+          // accounting.enforce_load_fk_invariant()'s `IF NEW.line_category IS NOT NULL` branch never
+          // ran and the G18 load-linkage invariant stayed dormant for 0 of 34,001 rows (board finding
+          // 2026-08-16). Derived here — NOT invented — from the operator's own already-chosen
+          // expense_category_uuid, lowercase-matched against the canonical
+          // accounting.line_category_load_required set (diesel/def/toll/scale/lumper/parking/
+          // roadside_repair/detention_paid/over_road_other). A category with no exact match (the
+          // large majority — repairs, insurance, permits, etc.) stays NULL, unchanged from today.
+          // Deliberately paired with load_id + load_exemption_reason below in the SAME insert — the
+          // withheld half of this fix was writing line_category ALONE, which would have turned a
+          // silently-succeeding no-load diesel/toll/lumper expense into a raw trigger exception with
+          // no escape hatch. RecordExpenseForm.tsx now requires a load OR a >=20-char reason before
+          // submit for these 9 categories, so this insert always carries one or the other for them.
+          let lineCategory: string | null = null;
+          if (expenseCategoryId && (await relationExists(client, "accounting.line_category_load_required"))) {
+            const categoryRow = await client.query(
+              `SELECT r.line_category
+                 FROM catalogs.expense_categories ec
+                 JOIN accounting.line_category_load_required r ON r.line_category = lower(ec.code)
+                WHERE ec.id = $1::uuid`,
+              [expenseCategoryId]
+            );
+            lineCategory = (categoryRow.rows[0] as { line_category?: string } | undefined)?.line_category ?? null;
+          }
+          if (lineCategory && (await columnExists(client, "accounting", "expense_lines", "line_category"))) {
+            lineColumns.push("line_category");
+            lineValues.push(lineCategory);
+          }
+          if (lineCategory && (await columnExists(client, "accounting", "expense_lines", "load_id"))) {
+            lineColumns.push("load_id");
+            lineValues.push(body.load_id ?? null);
+          }
+          if (lineCategory && (await columnExists(client, "accounting", "expense_lines", "load_exemption_reason"))) {
+            lineColumns.push("load_exemption_reason");
+            lineValues.push(body.load_exemption_reason ?? null);
           }
 
           await client.query(

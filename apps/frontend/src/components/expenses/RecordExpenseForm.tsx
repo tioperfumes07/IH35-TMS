@@ -21,6 +21,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { UploadZone } from "../UploadZone";
 import {
   initialRecordExpenseFormValues,
+  isOverTheRoadCategoryLabel,
   RECORD_EXPENSE_PAYMENT_METHODS,
   submitRecordExpense,
   type RecordExpenseFormValues,
@@ -69,6 +70,10 @@ export function RecordExpenseForm({
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   /** Once auto-filled from suggest-load, do not clobber an operator override until driver/unit/date change. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  // LV-G18-INERT-ON-EXPENSE-LINES: drives both the Load field's required asterisk and the no-load
+  // reason field's visibility. See recordExpenseSubmit.ts's OVER_THE_ROAD_CATEGORY_RE for why this
+  // exact taxonomy/regex, kept as the single source of truth so the two can never drift apart.
+  const isOverTheRoadCategory = isOverTheRoadCategoryLabel(values.categoryLabel);
 
   // Prefill unit from WO context without clobbering a user picker change.
   useEffect(() => {
@@ -425,7 +430,7 @@ export function RecordExpenseForm({
       </div>
 
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("load")}>
-        Trip / Load {/(?:fuel|diesel|gas|roadside|ifta)/i.test(values.categoryLabel) ? "*" : "(optional)"}
+        Trip / Load {isOverTheRoadCategory ? "*" : "(optional)"}
         <div className="mt-1">
           <EntityPicker
             kind="load"
@@ -439,6 +444,8 @@ export function RecordExpenseForm({
                 // same bug — EntityPicker already resolves a human option.label for the row the user
                 // just clicked; use it instead of re-painting the raw id the same way the FK is stored.
                 loadLabel: next ? entityLabel(option?.label, next, "Load") : "",
+                // Picking a real load supersedes any typed no-load reason.
+                loadExemptionReason: next ? "" : prev.loadExemptionReason,
               }))
             }
             placeholder="Search trip / load…"
@@ -453,6 +460,24 @@ export function RecordExpenseForm({
           ) : null}
         </div>
       </label>
+
+      {/* LV-G18-INERT-ON-EXPENSE-LINES: the escape hatch — a legitimate bulk/no-trip over-the-road
+          expense (diesel/toll/lumper/etc.) still needs a real path that isn't "guess a load". Only
+          shown when the category needs one and none is picked; the backend trigger enforces the same
+          >=20-char floor, so this can never silently regress even if this validation drifts. */}
+      {isOverTheRoadCategory && !values.loadId ? (
+        <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("load-exemption-reason")}>
+          No-load reason * (min 20 characters)
+          <textarea
+            id={fieldId("load-exemption-reason")}
+            data-testid={fieldId("load-exemption-reason")}
+            className="mt-1 min-h-[60px] w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            value={values.loadExemptionReason}
+            onChange={(event) => setValues((prev) => ({ ...prev, loadExemptionReason: event.target.value }))}
+            placeholder="Why this diesel/toll/lumper/etc. expense has no trip — e.g. a bulk fuel purchase, a yard/shop toll, an office-paid lumper fee…"
+          />
+        </label>
+      ) : null}
 
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("description")}>
         Description
