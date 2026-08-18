@@ -2326,6 +2326,13 @@ export function BankingTransactionsDesignView({
               </>
             )}
           </div>
+          {/* BANK-F5429 — honesty guard (verify-banking-attachments-notes-honesty.mjs) requires this
+          claim to be independently verifiable: attachments write to documents.attachments, which
+          does not accept bank_transaction as an attachable entity_type; notes would need a real
+          write path on PATCH /api/v1/banking/transactions/:id (today's row-edit endpoint, which
+          only updates the manual date). Cited here in a comment, not in the rendered banner text
+          below — an operator-facing banner must not print a raw schema.table name
+          (verify-no-internal-language-in-prod-ui.mjs). */}
           <div
             className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
             data-testid="banking-bank-row-attachments-notes-honesty-banner"
@@ -2334,13 +2341,14 @@ export function BankingTransactionsDesignView({
             <p className="mt-1">
               QBO-style paperclip and note icons stay visible but disabled.{" "}
               <strong>Attachments:</strong>{" "}
-              the attachment system does not support bank feed rows as an attachable record type, and the
+              the attachment system does not accept{" "}
+              <code className="text-[11px]">bank_transaction</code> as an attachable record type, and the
               file-upload endpoint rejects bank feed rows — attach
               receipts to the Bill, Expense, or JE this transaction posts to instead.{" "}
               <strong>Notes:</strong>{" "}
               bank transaction notes are reserved for system/skip/investigate
-              text only; there is no way to save an operator note here yet (today&apos;s row-edit endpoint
-              only updates the manual date).
+              text only; there is no way to save an operator note here yet (today&apos;s
+              row-edit endpoint only updates the manual date).
             </p>
           </div>
         </>
