@@ -109,7 +109,7 @@ async function processDueRow(
             last_run_error = $2,
             failure_count = $3,
             status = CASE WHEN $3 >= 3 THEN 'failed' ELSE status END,
-            next_run_at = CASE WHEN $3 >= 3 THEN NULL ELSE $4 END,
+            next_run_at = CASE WHEN $3 >= 3 THEN NULL ELSE $4::timestamptz END,
             updated_at = now()
         WHERE id = $1::uuid
       `,

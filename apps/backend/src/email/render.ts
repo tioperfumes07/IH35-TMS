@@ -24,6 +24,9 @@ const allowedKeys = new Set([
   "wo-approved",
   "qbo-sync-alert",
   "notification-dispatch",
+  // scheduled-report-file.eta has existed in templates/ since scheduled reports shipped,
+  // but was never registered here, so assertAllowedTemplateKey threw on every delivery.
+  "scheduled-report-file",
 ]);
 
 export function assertAllowedTemplateKey(templateKey: string): string {
