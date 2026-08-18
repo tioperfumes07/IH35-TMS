@@ -45,6 +45,20 @@ function analyze() {
   if (!/ReportIssueModal/.test(loadPage) || !/reportOpen/.test(loadPage)) {
     failures.push("DriverLoadDetailPage must mount ReportIssueModal with reportOpen");
   }
+  if (!/loadDisplayId=\{load\.display_id\}/.test(loadPage)) {
+    failures.push("DriverLoadDetailPage must pass loadDisplayId={load.display_id} into ReportIssueModal");
+  }
+  const modal = read("apps/frontend/src/pages/driver/ReportIssueModal.tsx");
+  // qbo_chrome + load Exact cells: governed Modal shell + visible load EntityLink (not prop-only FK).
+  if (!/from ["']\.\.\/\.\.\/components\/Modal["']/.test(modal) || !/<Modal\b/.test(modal)) {
+    failures.push("ReportIssueModal must use shared Modal (qbo_chrome) — not a bespoke overlay");
+  }
+  if (!/kind=["']load["']/.test(modal) || !/EntityLink/.test(modal)) {
+    failures.push("ReportIssueModal must render EntityLink kind=load when loadId is present");
+  }
+  if (!/load_id: loadId \?\? null/.test(modal)) {
+    failures.push("ReportIssueModal must still submit load_id: loadId ?? null");
+  }
   return failures;
 }
 
@@ -77,6 +91,17 @@ function selftest() {
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);
+  const modalPath = path.join(process.cwd(), "apps/frontend/src/pages/driver/ReportIssueModal.tsx");
+  const modalOrig = fs.readFileSync(modalPath, "utf8");
+  try {
+    fs.writeFileSync(modalPath, modalOrig.replace(/EntityLink/g, "SpanLink").replace(/kind=["']load["']/, 'kind="unit"'));
+    const planted = analyze();
+    if (!planted.some((m) => /EntityLink kind=load/.test(m))) {
+      fail("selftest expected EntityLink kind=load plant to fail");
+    }
+  } finally {
+    fs.writeFileSync(modalPath, modalOrig);
+  }
   console.log(`${LABEL} selftest PASS`);
 }
 

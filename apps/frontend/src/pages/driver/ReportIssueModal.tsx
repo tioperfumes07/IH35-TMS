@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { submitDriverReport } from "../../api/driver";
-import { ModalCloseButton } from "../../components/ModalCloseButton";
+import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { useEscapeKey } from "../../hooks/useEscapeKey";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   open: boolean;
   loadId?: string | null;
+  /** Optional human load display id for EntityLink label (server-generated). */
+  loadDisplayId?: string | null;
   onClose: () => void;
   onSubmitted?: () => void;
 };
@@ -26,7 +29,7 @@ function readFileAsBase64(file: File): Promise<{ content_base64: string; content
   });
 }
 
-export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) {
+export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmitted }: Props) {
   const { t } = useTranslation();
   const [reportType, setReportType] = useState<"damage" | "maintenance" | "accident" | "other">("damage");
   const [description, setDescription] = useState("");
@@ -36,10 +39,6 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
   const [error, setError] = useState<string | null>(null);
 
   const modalTitle = t("driver.report_modal_title");
-
-  useEscapeKey(onClose, open);
-
-  if (!open) return null;
 
   const submit = async () => {
     setBusy(true);
@@ -90,21 +89,26 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
-      onMouseDown={onClose}
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-lg border border-gray-200 bg-white p-4 shadow-lg sm:rounded-lg"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <div className="mb-2 flex items-start justify-between gap-2">
-          <h3 className="text-base font-semibold">{modalTitle}</h3>
-          <ModalCloseButton title={modalTitle} onClose={onClose} />
-        </div>
+    <Modal open={open} onClose={onClose} title={modalTitle}>
+      <div className="space-y-3 text-sm" data-testid="driver-report-issue-modal">
+        {loadId ? (
+          <p className="text-xs text-slate-600" data-testid="driver-report-issue-load-link">
+            Load:{" "}
+            <EntityLink
+              kind="load"
+              id={loadId}
+              label={entityLabel(loadDisplayId, loadId, "Load")}
+              data-testid="driver-report-issue-load-entity-link"
+            />
+          </p>
+        ) : (
+          <p className="text-xs text-slate-500" data-testid="driver-report-issue-load-absent">
+            No load linked — report will save without a load FK.
+          </p>
+        )}
         <label className="block text-xs text-gray-600">{t("driver.report_type")}</label>
         <SelectCombobox
-          className="mb-2 mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mb-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           value={reportType}
           onChange={(e) => setReportType(e.target.value as typeof reportType)}
         >
@@ -115,24 +119,35 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
         </SelectCombobox>
         <label className="block text-xs text-gray-600">{t("driver.report_desc")}</label>
         <textarea
-          className="mb-2 mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          data-testid="driver-report-issue-description"
         />
         <label className="block text-xs text-gray-600">{t("driver.report_pick_photos")}</label>
         <input
           type="file"
           accept="image/*"
           multiple
-          className="mb-2 mt-1 w-full text-xs"
+          className="w-full text-xs"
           onChange={(e) => setPhotos(Array.from(e.target.files ?? []))}
         />
         <label className="block text-xs text-gray-600">{t("driver.report_voice")}</label>
-        <input type="file" accept="audio/*" className="mb-3 mt-1 w-full text-xs" onChange={(e) => setVoice(e.target.files?.[0] ?? null)} />
-        {error ? <p className="mb-2 text-xs text-red-600">{error}</p> : null}
-        <div className="flex justify-end gap-2">
-          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm" onClick={onClose} disabled={busy}>
+        <input
+          type="file"
+          accept="audio/*"
+          className="w-full text-xs"
+          onChange={(e) => setVoice(e.target.files?.[0] ?? null)}
+        />
+        {error ? <p className="text-xs text-red-600">{error}</p> : null}
+        <div className="flex justify-end gap-2 pt-1">
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
+            onClick={onClose}
+            disabled={busy}
+          >
             Cancel
           </button>
           <button
@@ -140,11 +155,12 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
             className="rounded-sm bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
             onClick={() => void submit()}
             disabled={busy || description.trim().length < 3}
+            data-testid="driver-report-issue-submit"
           >
             {t("driver.report_submit")}
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

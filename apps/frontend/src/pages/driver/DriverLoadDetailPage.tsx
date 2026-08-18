@@ -58,7 +58,12 @@ export function DriverLoadDetailPage() {
           sandbox="allow-scripts allow-same-origin"
         />
       </div>
-      <ReportIssueModal open={reportOpen} loadId={load.id} onClose={() => setReportOpen(false)} />
+      <ReportIssueModal
+        open={reportOpen}
+        loadId={load.id}
+        loadDisplayId={load.display_id}
+        onClose={() => setReportOpen(false)}
+      />
     </div>
   );
 }
