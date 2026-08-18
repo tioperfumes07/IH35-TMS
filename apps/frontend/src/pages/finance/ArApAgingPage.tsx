@@ -24,6 +24,7 @@ import {
   type ArAgingInvoiceRow,
   type ApAgingBillRow,
 } from "../../api/arApAging";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -333,6 +334,75 @@ export function ArApAgingPage() {
     [mode, arRows, apRows, totals, appliedAsOf]
   );
 
+  function printLetter() {
+    if (rowCount === 0) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const partyLabel = mode === "ar" ? "Customer" : "Vendor";
+    const titleKind = mode === "ar" ? "Accounts receivable aging" : "Accounts payable aging";
+    const bucketHead = BUCKET_COLS.map((c) => `<th style="text-align:right">${esc(c.label)}</th>`).join("");
+    const rowsHtml =
+      mode === "ar"
+        ? arRows
+            .map(
+              (r) => `<tr>
+          <td>${esc(r.customer_name)}</td>
+          <td style="text-align:right">${esc(r.open_invoice_count)}</td>
+          ${BUCKET_COLS.map((c) => `<td style="text-align:right">${esc(fmtCents(r[c.key]))}</td>`).join("")}
+        </tr>`,
+            )
+            .join("")
+        : apRows
+            .map(
+              (r) => `<tr>
+          <td>${esc(r.vendor_name)}</td>
+          <td style="text-align:right">${esc(r.open_bill_count)}</td>
+          ${BUCKET_COLS.map((c) => `<td style="text-align:right">${esc(fmtCents(r[c.key]))}</td>`).join("")}
+        </tr>`,
+            )
+            .join("");
+    const totalsHtml = totals
+      ? `<tr>
+          <th>${esc("TOTAL")}</th>
+          <th></th>
+          ${BUCKET_COLS.map((c) => `<th style="text-align:right">${esc(fmtCents(totals[c.key]))}</th>`).join("")}
+        </tr>`
+      : "";
+    printLetterHtml({
+      title: `${mode === "ar" ? "A/R" : "A/P"} aging as of ${appliedAsOf}`,
+      bodyHtml: `
+        <h1>${esc(titleKind)}</h1>
+        <div class="meta">As of ${esc(fmtDate(appliedAsOf))} · printed ${esc(new Date().toLocaleString())}</div>
+        <table>
+          <tbody>
+            ${BUCKET_COLS.map(
+              (c) =>
+                `<tr><th>${esc(c.label)}</th><td>${esc(fmtCents(totals?.[c.key] ?? 0))}</td></tr>`,
+            ).join("")}
+          </tbody>
+        </table>
+        <h1 style="margin-top:20px">By ${esc(partyLabel.toLowerCase())}</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>${esc(partyLabel)}</th>
+              <th style="text-align:right">Open</th>
+              ${bucketHead}
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml || `<tr><td colspan="${2 + BUCKET_COLS.length}">No rows</td></tr>`}
+            ${totalsHtml}
+          </tbody>
+        </table>
+      `,
+    });
+  }
+
   if (!flagLoading && !enabled) {
     return (
       <div className="space-y-4">
@@ -386,8 +456,9 @@ export function ArApAgingPage() {
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
-              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              onClick={printLetter}
+              disabled={rowCount === 0}
+              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Print
             </button>
