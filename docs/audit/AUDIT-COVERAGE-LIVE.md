@@ -69,15 +69,15 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 
 | Metric | Value | As of |
 |---|---|---|
-| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-17 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-17 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-17 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **72 / 150** | 2026-08-17 |
-| Rows in this file | **1350** | 2026-08-17 |
-| Rows `FAIL` + `OPEN` | **2** | 2026-08-17 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-17 |
-| Rows `VERIFIED` by GUARD | **152** | 2026-08-17 |
-| Verdict tally (all rows) | FAIL=202 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=673 | 2026-08-17 |
+| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-18 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
+| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **72 / 150** | 2026-08-18 |
+| Rows in this file | **1351** | 2026-08-18 |
+| Rows `FAIL` + `OPEN` | **2** | 2026-08-18 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-18 |
+| Rows `VERIFIED` by GUARD | **152** | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=202 · PASS=222 · N/A=221 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=674 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1439,3 +1439,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 1348 | fleet · roster Trucks kind Devin PASS | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `roster.kind.trucks`. Exact cells: `unit`. Devin-A LIVE PASS: `/fleet?kind=truck` mounts 27 truck rows; Edit Vehicle T120. Does **not** claim reverse_link (STARVED). | LIVE PASS · 1 EXACT CELL | `https://app.ih35dispatch.com/fleet?kind=truck`; OUTBOX-DEVIN-A 2026-08-17T15:04Z | NO | 2026-08-17 | CURSOR (Devin-A evidence scribe) |
 | 1349 | fleet · roster Trailers kind Devin PASS | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `roster.kind.trailers`. Exact cells: `trailer`. Devin-A LIVE PASS: `/fleet?kind=trailer` mounts 5 trailer rows; Edit Trailer USMCA-T01. Does **not** claim reverse_link (STARVED). | LIVE PASS · 1 EXACT CELL | `https://app.ih35dispatch.com/fleet?kind=trailer`; OUTBOX-DEVIN-A 2026-08-17T15:03Z | NO | 2026-08-17 | CURSOR (Devin-A evidence scribe) |
 | 1350 | maintenance · road service ticket create Devin PASS | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `maintenance.modal.road_service_ticket`. Exact cells: `connectivity`. Devin-A LIVE PASS: `/maintenance/road-service` `+ Roadside WO` opens Road service ticket modal; Cancel; no save. | LIVE PASS · 1 EXACT CELL | `https://app.ih35dispatch.com/maintenance/road-service`; OUTBOX-DEVIN-A 2026-08-17T15:14Z | NO | 2026-08-17 | CURSOR (Devin-A evidence scribe) |
+| 1351 | home · Driver Manager attention connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaf:** `home.panel.driver_manager_attention`. Exact cell: `connectivity`. Selected-USMCA Owner `/home` rendered the positive `Open safety driver issues` attention action with count 3. Activating it navigated to canonical `/safety/complaints`, which mounted the Safety breadcrumb, Active Drivers 11, Drivers with Open Fines 2, and the governed Fines & Discipline surface. No complaint, filter, resolve/void, backend, data, QBO, GL or money mutation occurred. | LIVE PASS · 1 EXACT CELL | `https://app.ih35dispatch.com/home` → `https://app.ih35dispatch.com/safety/complaints`; backend `e2dc59b`; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
