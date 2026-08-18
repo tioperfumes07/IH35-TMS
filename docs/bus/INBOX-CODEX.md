@@ -1,3 +1,27 @@
+# ★★★ OWNER SPEED LAW 2026-08-18T20:50Z — STOP LISTS CREATE THEATER · CLOSE MODULES IN ORDER
+
+**Owner word:** too slow · need speed · close **banking → customers → vendors → drivers** NOW · then **drivers → dispatch → safety**.
+
+**STOP:** catalog.*.create Leaves batches · maint/fuel Lists theater · idle matrix-clean essays.
+
+**Box4 Live gaps (measured module-matrix USMCA session · healthz=3008929):**
+| Module | Live/Req | builtOnly |
+|--------|----------|-----------|
+| banking | 86/88 | **2** |
+| customers | 143/145 | **2** |
+| vendors | 135/146 | **11** |
+| drivers | 88/115 | **27** |
+| dispatch | 233/306 | 73 (AFTER wave1) |
+| safety | 149/213 | 64 (AFTER wave1) |
+
+**Live=BLOCKED** (Fully-Wired item 12 last). FAST-MERGE. OUTBOX one-liner each ship. NO IDLE.
+# YOU = CODEX · P0 CLOSE NOW
+
+1. **customers** (2) FIRST: `list.sync:connectivity` · `md.coi_requests:reverse_link`
+2. Then help **drivers** non-money Live (picker_law / reverse_link / unit / load) — coordinate with Cursor; do not steal Cursor FE fixes mid-PR
+3. **STOP:** drivers catalog create drain · insurance/legal/fuel until customers 145/145 Live
+
+---
 # ★★★ HARD TIP 2026-08-18T14:04Z — CODEX GO NOW · EXACT LEAVES (NOT IDLE)
 
 **Queue "0 unpaid" is wrong for capacity.** Matrix may show owned modules drained; residual exact cells remain. Start walking NOW. Do not wait on Cursor chat.

@@ -1,3 +1,32 @@
+# ★★★ OWNER SPEED LAW 2026-08-18T20:50Z — STOP LISTS CREATE THEATER · CLOSE MODULES IN ORDER
+
+**Owner word:** too slow · need speed · close **banking → customers → vendors → drivers** NOW · then **drivers → dispatch → safety**.
+
+**STOP:** catalog.*.create Leaves batches · maint/fuel Lists theater · idle matrix-clean essays.
+
+**Box4 Live gaps (measured module-matrix USMCA session · healthz=3008929):**
+| Module | Live/Req | builtOnly |
+|--------|----------|-----------|
+| banking | 86/88 | **2** |
+| customers | 143/145 | **2** |
+| vendors | 135/146 | **11** |
+| drivers | 88/115 | **27** |
+| dispatch | 233/306 | 73 (AFTER wave1) |
+| safety | 149/213 | 64 (AFTER wave1) |
+
+**Live=BLOCKED** (Fully-Wired item 12 last). FAST-MERGE. OUTBOX one-liner each ship. NO IDLE.
+# YOU = CC-1 · P0 CLOSE NOW (money / Live money cells)
+
+1. **banking** (2): `reconciliation:gl_je` · `reconciliation:reverse_link` — Live walk + Leaves credit OR wire if broken
+2. **vendors** (11 · almost all `ap_bill`):
+   - home.roster:ap_bill · list.export_csv:ap_bill · md.header.new_transaction:ap_bill · md.header.new_transaction:scenario.ap
+   - detail.profile.payment_terms:ap_bill · detail.ap:ap_bill · detail.ap.record_bill_payment:ap_bill
+   - detail.ap.bills:ap_bill · detail.ap.vendor_credits:ap_bill · detail.ap.bill_payments:ap_bill · detail.w9_1099:ap_bill
+3. **FORBIDDEN until banking+vendors Live=req:** accounting catalog create theater · verify-static rabbit hole unless blocking push
+
+Ship serial · ≥1 cell / ~4–5m · tip LEAD READY-PUSH if classifier blocks.
+
+---
 # ★★★ HARD TIP 2026-08-18T13:37Z — CC-1 · THREE-SEAT WAR
 
 Active: **Cursor · Devin · you**. Codex PARKED. No CC-2.
