@@ -100,7 +100,9 @@ describe("VendorsPage list tabs", () => {
     await screen.findAllByText("Fuel A");
     await user.click(screen.getByRole("button", { name: /by category/i }));
     const select = await screen.findByLabelText(/vendor type/i);
-    await user.selectOptions(select, "fuel");
+    await user.click(select);
+    expect(await screen.findByRole("option", { name: "+ Add new vendor type" })).toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: "fuel" }));
     await waitFor(() => {
       expect(router.state.location.search).toContain("listTab=by-category");
       expect(router.state.location.search).toContain("category=fuel");

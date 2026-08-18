@@ -25,6 +25,8 @@ import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
 import { EntityLink } from "../components/shared/EntityLink";
+import { ReferenceSelect, type ReferenceOption } from "../components/parity/ReferenceSelect";
+import { useCatalogQuery } from "../hooks/useCatalogQuery";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
@@ -147,6 +149,14 @@ export function VendorsPage() {
     enabled: Boolean(companyId),
   });
   const vendorsRoster = vendorsQuery.data?.vendors ?? [];
+  // LV-VENDORS-BY-CATEGORY-PICKER-LAW — this filter reads the same company-scoped catalog as
+  // VendorCreateModal. Deriving options only from existing vendors made new catalog values
+  // impossible to select and left the leaf with a bare <select> and no inline creator.
+  const vendorTypesQuery = useCatalogQuery({
+    catalogName: "vendors.vendor_types",
+    companyId,
+    enabled: Boolean(companyId),
+  });
   const vendorsServerTotal = vendorsQuery.data?.total ?? 0;
   const balancesQuery = useQuery({
     queryKey: ["accounting", "vendor-balances", companyId],
@@ -161,6 +171,23 @@ export function VendorsPage() {
     isFetching: vendorsQuery.isFetching,
   };
 
+  const vendorTypes = useMemo<ReferenceOption[]>(() => {
+    const options = new Map<string, ReferenceOption>();
+    for (const row of vendorTypesQuery.data?.rows ?? []) {
+      const label = String(
+        row.display_name ?? row.vendor_type_name ?? row.vendor_type_code ?? row.code ?? "",
+      ).trim();
+      const value = String(row.code ?? row.vendor_type_code ?? label).trim();
+      if (label && value) options.set(value, { value, label });
+    }
+    // Preserve legacy values already stamped on vendors even when a catalog row was retired.
+    for (const vendor of vendorsRoster) {
+      const value = String(vendor.vendor_type ?? "").trim();
+      if (value && !options.has(value)) options.set(value, { value, label: value });
+    }
+    return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [vendorTypesQuery.data?.rows, vendorsRoster]);
+
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active. By Category filters vendor_type.
   const visibleVendors = useMemo(() => {
@@ -168,12 +195,14 @@ export function VendorsPage() {
     if (listStatus === "inactive") all = all.filter((vendor) => vendor.deactivated_at != null);
     else if (listStatus === "active") all = all.filter((vendor) => vendor.deactivated_at == null);
     else if (listStatus === "by-category" && categoryFilter) {
-      all = all.filter((vendor) => vendor.vendor_type === categoryFilter);
+      const selected = vendorTypes.find((type) => type.value === categoryFilter);
+      const accepted = new Set([categoryFilter, selected?.label ?? ""].map((value) => value.toLowerCase()));
+      all = all.filter((vendor) => accepted.has(String(vendor.vendor_type ?? "").toLowerCase()));
     }
     // V8 roster filter — applied here so the sidebar + count + selection stay in sync.
     if (rosterCategory) all = all.filter((vendor) => (vendor.vendor_category ?? "") === rosterCategory);
     return all;
-  }, [vendorsRoster, listStatus, rosterCategory, categoryFilter]);
+  }, [vendorsRoster, listStatus, rosterCategory, categoryFilter, vendorTypes]);
 
   // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68). Counts off full roster BEFORE status filter.
   const vendorTabCounts = useMemo(
@@ -182,19 +211,16 @@ export function VendorsPage() {
       active: vendorsRoster.filter((vendor) => vendor.deactivated_at == null).length,
       inactive: vendorsRoster.filter((vendor) => vendor.deactivated_at != null).length,
       byCategory: categoryFilter
-        ? vendorsRoster.filter((vendor) => vendor.vendor_type === categoryFilter).length
+        ? vendorsRoster.filter((vendor) => {
+            const selected = vendorTypes.find((type) => type.value === categoryFilter);
+            return [categoryFilter, selected?.label ?? ""]
+              .map((value) => value.toLowerCase())
+              .includes(String(vendor.vendor_type ?? "").toLowerCase());
+          }).length
         : vendorsRoster.length,
     }),
-    [vendorsRoster, categoryFilter]
+    [vendorsRoster, categoryFilter, vendorTypes]
   );
-
-  const vendorTypes = useMemo(() => {
-    const set = new Set<string>();
-    for (const vendor of vendorsRoster) {
-      if (vendor.vendor_type) set.add(vendor.vendor_type);
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [vendorsRoster]);
 
   // V8 — distinct categories present across the full roster (before the category filter), sorted.
   const categoryOptions = useMemo(() => {
@@ -407,20 +433,18 @@ export function VendorsPage() {
           <label className="text-xs font-semibold text-gray-600" htmlFor="vendor-category-filter">
             Vendor type
           </label>
-          <select
+          <ReferenceSelect
             id="vendor-category-filter"
             value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            className="h-8 max-w-xs rounded border border-gray-300 px-2 text-[13px]"
-            aria-label="Vendor type"
-          >
-            <option value="">All types</option>
-            {vendorTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setCategoryFilter(value ?? "")}
+            options={vendorTypes}
+            createKind="vendor_type"
+            operatingCompanyId={companyId}
+            placeholder="All types"
+            addNewLabel="+ Add new vendor type"
+            createdValueField="code"
+            onOptionCreated={() => void vendorTypesQuery.refetch()}
+          />
         </div>
       ) : null}
       {viewMode === "list" ? (
