@@ -15,6 +15,7 @@ import { AccountingPendingApprovalsPanel } from "../../../components/home/Accoun
 import { ComplianceFilingsDueWidget } from "../../../components/home/ComplianceFilingsDueWidget";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatUsdFromCents } from "../HomeKpiCard";
+import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import "../home-print.css";
 
 type Props = {
@@ -69,6 +70,57 @@ export function AccountingHome({ auth }: Props) {
     void homeQuery.refetch();
   }
 
+  function printLetter() {
+    const data = homeQuery.data;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const bucketRows = (title: string, buckets: AccountingAgingBuckets | undefined) => {
+      const rows = [
+        { label: "Current", cents: buckets?.current_cents ?? 0 },
+        { label: "1–30 days", cents: buckets?.d1_30_cents ?? 0 },
+        { label: "31–60 days", cents: buckets?.d31_60_cents ?? 0 },
+        { label: "61–90 days", cents: buckets?.d61_90_cents ?? 0 },
+        { label: "90+ days", cents: buckets?.d90_plus_cents ?? 0 },
+        { label: "Total outstanding", cents: buckets?.total_outstanding_cents ?? 0 },
+      ];
+      return `
+        <h1 style="margin-top:16px">${esc(title)}</h1>
+        <table>
+          <tbody>
+            ${rows.map((r) => `<tr><th>${esc(r.label)}</th><td>${esc(formatUsdFromCents(r.cents))}</td></tr>`).join("")}
+          </tbody>
+        </table>`;
+    };
+    const days = data?.period_close.days_to_close;
+    const countdown = days == null ? "—" : days === 0 ? "Due today" : `${days} day${days === 1 ? "" : "s"} to close`;
+    printLetterHtml({
+      title: `Accounting Home — ${displayName}`,
+      bodyHtml: `
+        <h1>Accounting Home</h1>
+        <div class="meta">${esc(`AR/AP snapshot (${displayName})`)} · as of ${esc(data?.as_of_date ?? "—")} · printed ${esc(
+          new Date().toLocaleString(),
+        )}</div>
+        <table>
+          <tbody>
+            <tr><th>Outstanding A/R</th><td>${esc(
+              data ? formatUsdFromCents(data.ar_aging.total_outstanding_cents) : "—",
+            )}</td></tr>
+            <tr><th>Outstanding A/P</th><td>${esc(
+              data ? formatUsdFromCents(data.ap_aging.total_outstanding_cents) : "—",
+            )}</td></tr>
+            <tr><th>Period close</th><td>${esc(countdown)} · ${esc(data?.period_close.period_label ?? "No open period")}</td></tr>
+          </tbody>
+        </table>
+        ${bucketRows("Accounts Receivable Aging", data?.ar_aging)}
+        ${bucketRows("Accounts Payable Aging", data?.ap_aging)}
+      `,
+    });
+  }
+
   return (
     <div className="home-page flex flex-col gap-4">
       <PageHeader
@@ -76,7 +128,7 @@ export function AccountingHome({ auth }: Props) {
         subtitle={`AR/AP snapshot and period-close status (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={() => window.print()}>
+            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={printLetter}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refresh}>
