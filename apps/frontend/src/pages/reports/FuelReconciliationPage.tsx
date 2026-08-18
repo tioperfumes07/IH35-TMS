@@ -18,11 +18,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
@@ -156,7 +155,21 @@ export function FuelReconciliationPage() {
 
   const truckColumns = useMemo<ParityColumn<FuelReconciliationTruckRow>[]>(
     () => [
-      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} className="font-medium" onClick={(event) => event.stopPropagation()} /> },
+      {
+        key: "unit_number",
+        label: "Unit #",
+        sortable: true,
+        render: (r) => (
+          <EntityLinkOrTombstone
+            kind="unit"
+            id={r.unit_id}
+            name={r.unit_number}
+            noun="Unit"
+            className="font-medium"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
+      },
       { key: "card_amount_cents", label: "Card $", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.card_amount_cents) },
       { key: "wo_amount_cents", label: "WO $", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.wo_amount_cents) },
       { key: "delta_cents", label: "Delta", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.delta_cents) },

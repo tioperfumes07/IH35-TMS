@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ListErrorState } from "../components/ListErrorState";
-import { EntityLink } from "../components/shared/EntityLink";
-import { entityLabel } from "../lib/entity-label";
+import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -457,7 +456,7 @@ export function CustomersPage() {
       {
         key: "doc_no",
         label: "Doc #",
-        render: (r) => <EntityLink kind="invoice" id={r.id} label={entityLabel(r.display_id, r.id, "Invoice")} />,
+        render: (r) => <EntityLinkOrTombstone kind="invoice" id={r.id} name={r.display_id} noun="Invoice" />,
       },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "amount", label: "Amount", render: (r) => fmtMoney(r.total_cents) },
@@ -469,7 +468,12 @@ export function CustomersPage() {
         // dead click. Same canonical drill as every other load reference.
         render: (r) =>
           r.source_load_id ? (
-            <EntityLink kind="load" id={r.source_load_id} label={entityLabel(r.source_load_number, r.source_load_id, "Load")} />
+            <EntityLinkOrTombstone
+              kind="load"
+              id={r.source_load_id}
+              name={r.source_load_number}
+              noun="Load"
+            />
           ) : (
             "—"
           ),
