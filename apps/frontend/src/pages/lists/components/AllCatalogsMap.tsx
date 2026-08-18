@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CATALOG_IN_PREPARATION } from "../../../lib/prodEmptyStateCopy";
 import { DomainRowCountBadge } from "./DomainRowCountBadge";
 
@@ -381,6 +382,13 @@ type DomainSectionProps = {
 // One domain's card — header + catalog grid. Reused by AllCatalogsMap and DomainCatalogHubPage so
 // both surfaces render identically from DOMAIN_CONFIG.
 export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: DomainSectionProps) {
+  const { selectedCompany } = useCompanyContext();
+  // USMCA/TRK are TMS-native — QBO bulk-link is TRANSP-only (sync-health twin #8751).
+  const qboAvailable = selectedCompany?.code === "TRANSP";
+  const catalogs = domain.catalogs.filter(
+    (catalog) => catalog.catalogKey !== "qbo-bulk-link" || qboAvailable,
+  );
+
   return (
     <div id={listsDomainSectionId(domain.key)} className="rounded-sm border border-slate-100 px-2 py-2 text-xs">
       <div className="mb-2 flex items-center justify-between gap-3">
@@ -411,7 +419,7 @@ export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: 
         </div>
       </div>
       <div className="grid gap-1.5 md:grid-cols-2">
-        {domain.catalogs.map((catalog) => (
+        {catalogs.map((catalog) => (
           <div key={`${domain.key}-${catalog.name}`} className="rounded-sm border border-slate-100 px-2 py-1.5">
             {catalog.live && catalog.catalogKey ? (
               <button type="button" className="text-left font-semibold text-slate-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
