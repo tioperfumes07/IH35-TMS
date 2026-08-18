@@ -657,6 +657,7 @@ export type RefinedLoadStop = {
   longitude: number | null;
   signature_required: boolean;
   photo_required: boolean;
+  pickup_time_type_id?: string | null;
 };
 
 export function getLoadStopsForDispatch(loadId: string, operatingCompanyId: string) {
@@ -685,6 +686,7 @@ export function replaceLoadStopsDispatch(
       notes?: string | null;
       signature_required?: boolean;
       photo_required?: boolean;
+      pickup_time_type_id?: string | null;
     }>;
   }
 ) {

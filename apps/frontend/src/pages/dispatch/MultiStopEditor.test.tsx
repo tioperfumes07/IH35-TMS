@@ -29,6 +29,7 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
           longitude: null,
           signature_required: false,
           photo_required: false,
+          pickup_time_type_id: null,
         },
         {
           id: "s2",
@@ -47,12 +48,25 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
           longitude: null,
           signature_required: false,
           photo_required: false,
+          pickup_time_type_id: null,
         },
       ],
     }),
     replaceLoadStopsDispatch: vi.fn().mockResolvedValue({ ok: true, load_id: "L1" }),
   };
 });
+
+vi.mock("../../api/catalogs-dispatch", () => ({
+  pickupTimeTypesCatalogClient: {
+    list: vi.fn().mockResolvedValue({ rows: [{ id: "pt1", display_name: "Appointment", code: "APPT" }] }),
+  },
+}));
+
+vi.mock("../../components/parity/ReferenceSelect", () => ({
+  ReferenceSelect: ({ id, placeholder }: { id?: string; placeholder?: string }) => (
+    <input data-testid="mock-pickup-time-type" id={id} placeholder={placeholder ?? ""} readOnly />
+  ),
+}));
 
 vi.mock("../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),

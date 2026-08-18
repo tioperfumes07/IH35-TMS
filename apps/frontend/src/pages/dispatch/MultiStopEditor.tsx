@@ -3,10 +3,12 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { pickupTimeTypesCatalogClient } from "../../api/catalogs-dispatch";
 import { getLoadStopsForDispatch, replaceLoadStopsDispatch, type RefinedLoadStop } from "../../api/dispatch";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export type UiStopType = "pickup" | "dropoff" | "fuel" | "rest" | "customs";
@@ -26,6 +28,8 @@ export type MultiStopRow = {
   photo_required: boolean;
   latitude: string;
   longitude: string;
+  /** catalogs.pickup_time_types — Load drawer Stops picker_law (Book Load parity). */
+  pickup_time_type_id: string;
 };
 
 function apiStopToRow(s: RefinedLoadStop): MultiStopRow {
@@ -47,6 +51,7 @@ function apiStopToRow(s: RefinedLoadStop): MultiStopRow {
     photo_required: Boolean(s.photo_required),
     latitude: s.latitude != null ? String(s.latitude) : "",
     longitude: s.longitude != null ? String(s.longitude) : "",
+    pickup_time_type_id: s.pickup_time_type_id ?? "",
   };
 }
 
@@ -61,11 +66,19 @@ function padIsoLocal(draft: string): string | null {
 function SortableRow({
   row,
   index,
+  operatingCompanyId,
+  pickupTimeTypeOptions,
+  pickupTimeTypesLoading,
+  onPickupTimeTypeCreated,
   onChange,
   onRemove,
 }: {
   row: MultiStopRow;
   index: number;
+  operatingCompanyId: string;
+  pickupTimeTypeOptions: Array<{ value: string; label: string; type?: string }>;
+  pickupTimeTypesLoading: boolean;
+  onPickupTimeTypeCreated: () => void;
   onChange: (key: string, patch: Partial<MultiStopRow>) => void;
   onRemove: (key: string) => void;
 }) {
@@ -107,6 +120,24 @@ function SortableRow({
             <Button type="button" variant="secondary" size="sm" onClick={() => onRemove(row.key)}>
               Remove
             </Button>
+          </div>
+          <div className="col-span-2" data-testid={`stop-pickup-time-type-${index}`}>
+            <label htmlFor={`stop-pickup-time-type-${row.key}`} className="text-[10px] font-semibold text-gray-500">
+              Pickup / appointment type
+            </label>
+            <div className="mt-0.5">
+              <ReferenceSelect
+                id={`stop-pickup-time-type-${row.key}`}
+                value={row.pickup_time_type_id || null}
+                onChange={(value) => onChange(row.key, { pickup_time_type_id: value ?? "" })}
+                options={pickupTimeTypeOptions}
+                createKind="pickup_time_type"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select pickup type"
+                loading={pickupTimeTypesLoading}
+                onOptionCreated={onPickupTimeTypeCreated}
+              />
+            </div>
           </div>
           <div className="col-span-2">
             <div className="text-[10px] font-semibold text-gray-500">Address</div>
@@ -185,6 +216,17 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
     enabled: Boolean(loadId && operatingCompanyId),
   });
 
+  const pickupTimeTypesQuery = useQuery({
+    queryKey: ["dispatch", "pickup-time-types", operatingCompanyId],
+    queryFn: () => pickupTimeTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  const pickupTimeTypeOptions = useMemo(
+    () => (pickupTimeTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
+    [pickupTimeTypesQuery.data?.rows]
+  );
+
   useEffect(() => {
     if (q.data?.stops) setRows(q.data.stops.map(apiStopToRow));
   }, [q.data]);
@@ -237,6 +279,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
             notes: r.notes || null,
             signature_required: r.signature_required,
             photo_required: r.photo_required,
+            pickup_time_type_id: r.pickup_time_type_id || null,
           };
         }),
       };
@@ -280,6 +323,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
         photo_required: false,
         latitude: "",
         longitude: "",
+        pickup_time_type_id: "",
       },
     ]);
   };
@@ -293,13 +337,24 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
         <SortableContext items={rows.map((r) => r.key)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
             {rows.map((row, index) => (
-              <SortableRow key={row.key} row={row} index={index} onChange={patchRow} onRemove={removeRow} />
+              <SortableRow
+                key={row.key}
+                row={row}
+                index={index}
+                operatingCompanyId={operatingCompanyId}
+                pickupTimeTypeOptions={pickupTimeTypeOptions}
+                pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
+                onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
+                onChange={patchRow}
+                onRemove={removeRow}
+              />
             ))}
           </div>
         </SortableContext>
       </DndContext>
       <Button type="button" size="sm" variant="secondary" onClick={addStop}>
-        + Create stop      </Button>
+        + Create stop
+      </Button>
       <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
         Est. leg miles: ~{totals.dist} · Est. hours: ~{totals.hrs.toFixed(1)}
       </div>
