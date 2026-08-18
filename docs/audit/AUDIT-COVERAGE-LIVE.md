@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1602** | 2026-08-18 |
+| Rows in this file | **1603** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=883 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=884 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1692,3 +1692,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 3440 | lists · hub.domain.maintenance connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.maintenance`. Exact cell: `hub.domain.maintenance:connectivity`. Selected-USMCA `/lists/hub/maintenance` mounted **Maintenance catalogs** (81); activating **Labor Rates** navigated to live `/lists/catalogs/maintenance/labor-rates` with h1 Labor Rates and `+ Create`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `b33b270`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 3520 | lists · hub.domain.fuel connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.fuel`. Exact cell: `hub.domain.fuel:connectivity`. Selected-USMCA `/lists/hub/fuel` mounted **Fuel catalogs** (73); activating **Fuel Card Types** navigated to live `/lists/fuel/card-types` with h1 Fuel Card Types and `+ Create`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `6d85163`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 3600 | lists · hub.domain.fleet connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.fleet`. Exact cell: `hub.domain.fleet:connectivity`. Selected-USMCA `/lists/hub/fleet` mounted **Fleet catalogs** (23); activating **Equipment Types** navigated to live `/lists/fleet/equipment-types` with h1 Equipment Types and `+ Create`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `44b12b8`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 3610 | customers · contact creator connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `detail.contacts.create`. **Exact cell:** `detail.contacts.create:connectivity`. Selected-USMCA canonical D-06 Customer Detail → Contacts → `+ Create Contact` mounted the governed **Create Contact** dialog with Name, Title, Email, Phone, Mobile, Department, Primary contact, Notes, Back, Close, Cancel, and Save controls. Cancel dismissed the dialog and returned to the same scoped `Contacts (0)` surface. Picker-law and persistence are separately evidenced and not re-claimed. No contact, customer, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | canonical `/customers/:id` → Contacts → + Create Contact → Cancel; selected USMCA; scoped contact creator mounted and dismissed; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
