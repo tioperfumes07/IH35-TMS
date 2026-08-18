@@ -234,6 +234,17 @@ const DENSITY: Record<ParityDensity, { rowH: number; padY: number; font: number 
   ultra: { rowH: 20, padY: 1, font: 11 },
 };
 
+// LINK-F5171-PARITYTABLE-NESTED-DRILL — a clickable row is only the fallback target.
+// Every nested control owns its own action; otherwise an EntityLink/customer/load drill can
+// navigate correctly and then be overwritten by the row's detail navigation in the same click.
+// Keeping this in the shared table fixes the class across every module/leaf that uses ParityTable.
+const ROW_CLICK_INTERACTIVE_SELECTOR =
+  "a, button, input, select, textarea, [role='button'], [role='link'], [data-row-click-ignore]";
+
+function isParityTableInteractiveTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest(ROW_CLICK_INTERACTIVE_SELECTOR));
+}
+
 const DENSITY_LABEL: Record<ParityDensity, string> = {
   regular: "Regular",
   compact: "Compact",
@@ -721,7 +732,10 @@ export function ParityTable<T>({
           onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
         } ${rowClassName ? rowClassName(row) : ""}`}
         style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
-        onClick={onRowClick ? () => onRowClick(row) : undefined}
+        onClick={onRowClick ? (event) => {
+          if (isParityTableInteractiveTarget(event.target)) return;
+          onRowClick(row);
+        } : undefined}
         onContextMenu={onRowContextMenu ? (event) => onRowContextMenu(row, event) : undefined}
       >
         {renderExpanded ? (
