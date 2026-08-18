@@ -91,6 +91,16 @@ function measureListboxStyle(anchor: HTMLElement): CSSProperties {
   const maxHeight = Math.min(LISTBOX_MAX_HEIGHT, Math.max(120, openUp ? spaceAbove : spaceBelow));
   const width = Math.max(rect.width, 200);
 
+  // Two independent z-index tiers exist in this codebase: the ParityDrawer/Modal scale tops out at
+  // z-[70] (see Modal.tsx), and a separate, higher slide-over tier used by full-record detail drawers
+  // (e.g. LoadDetailDrawer's backdrop/panel) runs z-[200]/z-[210]. This portal's zIndex used to be 80 —
+  // correctly above the first tier, but a full tier BELOW the second one, so any Combobox/ReferenceSelect
+  // opened inside a z-[200]+ drawer (e.g. MultiStopEditor's "Pickup / appointment type" picker) rendered
+  // its listbox with real, matching options — confirmed reachable and clickable in the accessibility
+  // tree, with the underlying catalog fetch returning 200 — but the drawer's own opaque panel painted
+  // over it, so the dropdown was invisible and unusable to an actual user. 220 sits above every explicit
+  // z-index in the codebase (max found: z-[210]) so no known drawer/modal can occlude it again.
+  const LISTBOX_Z_INDEX = 220;
   if (openUp) {
     return {
       position: "fixed",
@@ -98,7 +108,7 @@ function measureListboxStyle(anchor: HTMLElement): CSSProperties {
       width,
       bottom: window.innerHeight - rect.top + gap,
       maxHeight,
-      zIndex: 80,
+      zIndex: LISTBOX_Z_INDEX,
     };
   }
   return {
@@ -107,7 +117,7 @@ function measureListboxStyle(anchor: HTMLElement): CSSProperties {
     width,
     top: rect.bottom + gap,
     maxHeight,
-    zIndex: 80,
+    zIndex: LISTBOX_Z_INDEX,
   };
 }
 
