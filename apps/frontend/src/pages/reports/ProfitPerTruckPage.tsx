@@ -18,6 +18,8 @@ import {
   formatProfitPerTruckFlagLabel,
   PROFIT_PER_TRUCK_FLAG_LABELS,
 } from "../../lib/formatProfitPerTruckFlagLabel";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 /** API may send sentinel "unknown" for missing unit type — never show raw lowercase to operators. */
 function displayTruckType(truckType: string | null | undefined): string {
@@ -211,6 +213,68 @@ export function ProfitPerTruckPage() {
     URL.revokeObjectURL(url);
   }
 
+  function printLetter() {
+    const data = query.data;
+    if (!data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const totals = data.totals;
+    const rowsHtml = sorted
+      .map(
+        (r) => `<tr>
+          <td>${esc(r.unit_number)}</td>
+          <td>${esc(displayTruckType(r.truck_type))}</td>
+          <td>${esc(r.primary_driver_name || "—")}</td>
+          <td style="text-align:right">${esc(r.load_count)}</td>
+          <td style="text-align:right">${esc(r.miles_driven)}</td>
+          <td style="text-align:right">${esc(money(r.revenue_cents))}</td>
+          <td style="text-align:right">${esc(money(r.net_profit_cents))}</td>
+          <td style="text-align:right">${esc(pct(r.margin_pct))}</td>
+          <td style="text-align:right">${esc(money(r.profit_per_mile_cents))}</td>
+          <td>${esc((r.flags ?? []).map((f) => formatProfitPerTruckFlagLabel(f)).join(", ") || "—")}</td>
+        </tr>`,
+      )
+      .join("");
+    printLetterHtml({
+      title: `Profit per truck ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Per-truck CPM dashboard</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
+          new Date().toLocaleString(),
+        )}</div>
+        <table>
+          <tbody>
+            <tr><th>Trucks</th><td>${esc(totals.truck_count)}</td></tr>
+            <tr><th>Revenue</th><td>${esc(money(totals.revenue_cents))}</td></tr>
+            <tr><th>Driver pay</th><td>${esc(money(totals.driver_pay_cents))}</td></tr>
+            <tr><th>Fuel</th><td>${esc(money(totals.fuel_cost_cents))}</td></tr>
+            <tr><th>Maintenance</th><td>${esc(money(totals.maintenance_cost_cents))}</td></tr>
+            <tr><th>Depreciation</th><td>${esc(money(totals.depreciation_cents))}</td></tr>
+            <tr><th>Other direct</th><td>${esc(money(totals.other_direct_cost_cents))}</td></tr>
+            <tr><th>Net profit</th><td>${esc(money(totals.net_profit_cents))}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">By truck</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Unit</th><th>Type</th><th>Driver</th>
+              <th style="text-align:right">Loads</th><th style="text-align:right">Miles</th>
+              <th style="text-align:right">Revenue</th><th style="text-align:right">Net</th>
+              <th style="text-align:right">Margin</th><th style="text-align:right">$/mi</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="10">No trucks in range</td></tr>`}</tbody>
+        </table>
+      `,
+    });
+  }
+
   const t = query.data?.totals;
   const fleetMiles = useMemo(() => sorted.reduce((sum, row) => sum + row.miles_driven, 0), [sorted]);
   const fleetRevenuePerMile = fleetMiles > 0 && t ? Math.round(t.revenue_cents / fleetMiles) : 0;
@@ -233,7 +297,7 @@ export function ProfitPerTruckPage() {
         breadcrumb={["Reports", "Per-Truck CPM Dashboard"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => query.data && exportCsv(query.data)}>
