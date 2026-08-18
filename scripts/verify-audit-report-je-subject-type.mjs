@@ -54,6 +54,31 @@ function findMigrationWideningSubjectType(root, overrides) {
   return null;
 }
 
+/**
+ * Every migration that independently satisfies the widening check, not just the first. CHECK
+ * constraints get cumulatively redefined by later migrations in this codebase — a second migration
+ * (202612601200_system_audit_master_data_spine_subjects.sql) also independently widens
+ * valid_subject_type to include all 3 JE_SUBJECTS, on top of the original
+ * (202612540000_widen_event_log_subject_type_je.sql). A selftest mutation that only patches the
+ * FIRST match found is inert: collectProblems() still finds the second, unmutated migration and
+ * never reports the regression. Used by the selftest ONLY — the real collectProblems() path
+ * correctly needs just one valid migration to exist (findMigrationWideningSubjectType above).
+ */
+function findAllMigrationsWideningSubjectType(root) {
+  const dir = path.join(root, MIGRATIONS_DIR);
+  if (!fs.existsSync(dir)) return [];
+  const matches = [];
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith(".sql")) continue;
+    const rel = `${MIGRATIONS_DIR}/${f}`;
+    const src = fs.readFileSync(path.join(dir, f), "utf8");
+    if (/valid_subject_type/.test(src) && JE_SUBJECTS.every((s) => src.includes(`'${s}'`))) {
+      matches.push({ rel, src });
+    }
+  }
+  return matches;
+}
+
 export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
 
@@ -114,7 +139,6 @@ function selftest() {
     process.exit(1);
   }
 
-  const migration = findMigrationWideningSubjectType(ROOT);
   const spineReal = readRel(ROOT, SPINE_EMIT);
   const pageReal = readRel(ROOT, PAGE);
 
@@ -126,9 +150,15 @@ function selftest() {
     }
   };
 
+  // Mutate EVERY migration that independently satisfies the widening check, not just the one
+  // findMigrationWideningSubjectType happens to return first — a second, later migration widening
+  // the same CHECK constraint would otherwise keep this plant silently inert.
+  const allWideningMigrations = findAllMigrationsWideningSubjectType(ROOT);
   plant(
     "migration-loses-journal-entry",
-    { [migration.rel]: migration.src.replaceAll("'journal_entry'", "'removed_type'") },
+    Object.fromEntries(
+      allWideningMigrations.map((m) => [m.rel, m.src.replaceAll("'journal_entry'", "'removed_type'")])
+    ),
     "no db/migrations"
   );
   plant(
