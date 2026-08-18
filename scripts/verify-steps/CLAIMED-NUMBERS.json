@@ -2091,6 +2091,12 @@
     "guard": "verify-trial-balance-print-letter",
     "note": "CLAIM-RESERVE \u2014 Trial Balance Print opens letter HTML, not SPA window.print"
   },
+  "3848": {
+    "claimed_at": "2026-08-18T04:20:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-cash-flow-statement-print-letter",
+    "note": "CLAIM-RESERVE \u2014 Cash Flow Statement Print opens letter HTML, not SPA window.print"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
