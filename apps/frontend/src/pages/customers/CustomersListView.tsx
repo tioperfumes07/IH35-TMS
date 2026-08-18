@@ -125,7 +125,14 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     onSuccess: async (result, vars) => {
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
       setTableResetKey((k) => k + 1);
-      pushToast(`${result.succeeded.length} customer(s) updated (${vars.action}).`, "success");
+      if (result.failed.length > 0) {
+        pushToast(
+          `${result.succeeded.length} customer(s) updated; ${result.failed.length} failed: ${result.failed[0]?.message ?? "Update failed"}`,
+          "error"
+        );
+      } else {
+        pushToast(`${result.succeeded.length} customer(s) updated (${vars.action}).`, "success");
+      }
     },
     onError: (error) => pushToast(userFacingApiError(error, "Bulk update failed"), "error"),
   });
