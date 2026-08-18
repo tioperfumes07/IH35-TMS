@@ -49,6 +49,7 @@ import { WeeklyRevenueChart } from "./charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "./charts/WOStatusPieChart";
 import { formatShortDate, formatUsdFromCents, HomeKpiCard } from "./HomeKpiCard";
 import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { QuickActionsBar } from "./QuickActionsBar";
@@ -223,6 +224,60 @@ export function OwnerHome({ auth }: Props) {
   const cp = cashPositionQuery.data;
   const fb = factoringBalanceQuery.data;
 
+  function printLetter() {
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const kpiHtml = kpiItems
+      .map((item) => `<tr><th>${esc(item.label)}</th><td>${esc(item.number)}</td><td>${esc(item.meta)}</td></tr>`)
+      .join("");
+    const fleetHtml = fleetRows
+      .map(
+        (row) =>
+          `<tr><td>${esc(row.leftLabel)}</td><td>${esc(row.leftValue)}</td><td>${esc(row.rightLabel)}</td><td>${esc(row.rightValue)}</td></tr>`,
+      )
+      .join("");
+    printLetterHtml({
+      title: `Home snapshot — ${displayName}`,
+      bodyHtml: `
+        <h1>Home</h1>
+        <div class="meta">${esc(`Workspace snapshot (${displayName})`)} · printed ${esc(new Date().toLocaleString())}</div>
+        <h1 style="margin-top:16px">KPIs</h1>
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th><th>Detail</th></tr></thead>
+          <tbody>${kpiHtml || `<tr><td colspan="3">No KPI rows</td></tr>`}</tbody>
+        </table>
+        <h1 style="margin-top:16px">Fleet snapshot</h1>
+        <table>
+          <thead><tr><th></th><th></th><th></th><th></th></tr></thead>
+          <tbody>${fleetHtml || `<tr><td colspan="4">No fleet rows</td></tr>`}</tbody>
+        </table>
+        <h1 style="margin-top:16px">Operations</h1>
+        <table>
+          <tbody>
+            <tr><th>Open loads</th><td>${esc(ol ? `${ol.total} loads` : "—")}</td></tr>
+            <tr><th>Drivers on duty</th><td>${esc(dd ? `${dd.active} / ${dd.total_drivers}` : "—")}</td></tr>
+            <tr><th>Open work orders</th><td>${esc(wo ? `${wo.open} WOs` : "—")}</td></tr>
+            <tr><th>Cash position</th><td>${esc(cp ? formatUsdFromCents(cp.balance_cents) : "—")}</td></tr>
+            <tr><th>Factoring balance</th><td>${esc(
+              !fb || fb.status === "unverifiable" || fb.status === "accounting_exception" || fb.outstanding_cents == null
+                ? "—"
+                : formatUsdFromCents(fb.outstanding_cents),
+            )}</td></tr>
+            <tr><th>Revenue (${esc(kpiRange)})</th><td>${esc(
+              tr == null || tr.status === "unverifiable" || tr.revenue_cents == null
+                ? "—"
+                : formatUsdFromCents(tr.revenue_cents),
+            )}</td></tr>
+          </tbody>
+        </table>
+      `,
+    });
+  }
+
   return (
     <div className="home-page flex flex-col gap-4">
       <PageHeader
@@ -230,7 +285,7 @@ export function OwnerHome({ auth }: Props) {
         subtitle={`Workspace snapshot for the last three days (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={() => window.print()}>
+            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={printLetter}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refreshAll}>
