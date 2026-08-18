@@ -2171,6 +2171,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-driver-detail-query-settles"
   },
+  "3876": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-vendors-list-view-surface-bar"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
