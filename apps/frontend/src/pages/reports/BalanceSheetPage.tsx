@@ -15,6 +15,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -74,6 +75,55 @@ export function BalanceSheetPage() {
     [equity],
   );
 
+  function printLetter() {
+    const data = query.data;
+    if (!data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const sectionHtml = (title: string, lines: AccountingBalanceSheetLine[], total: number) => {
+      const rows = lines
+        .map(
+          (line) => `<tr>
+            <td>${esc(line.account_code || "—")}</td>
+            <td>${esc(line.account_name || "—")}</td>
+            <td style="text-align:right">${esc(money(line.amount))}</td>
+          </tr>`,
+        )
+        .join("");
+      return `
+        <h1 style="margin-top:16px">${esc(title)}</h1>
+        <table>
+          <thead><tr><th>Account #</th><th>Account</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>
+            ${rows || `<tr><td colspan="3">No rows</td></tr>`}
+            <tr><th colspan="2">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+          </tbody>
+        </table>`;
+    };
+    printLetterHtml({
+      title: `Balance sheet as of ${applied.asOfDate}`,
+      bodyHtml: `
+        <h1>Balance sheet</h1>
+        <div class="meta">As of ${esc(formatDateUS(applied.asOfDate))} · ${esc(
+          applied.basis === "cash" ? "Cash" : "Accrual",
+        )} · printed ${esc(new Date().toLocaleString())}</div>
+        <table>
+          <tbody>
+            <tr><th>Total assets</th><td>${esc(money(data.assets.total))}</td></tr>
+            <tr><th>Total liabilities &amp; equity</th><td>${esc(money(data.total_liabilities_and_equity))}</td></tr>
+          </tbody>
+        </table>
+        ${sectionHtml("Assets", assets, data.assets.total)}
+        ${sectionHtml("Liabilities", liabilities, data.liabilities.total)}
+        ${sectionHtml("Equity", equityLinesWithoutAdjustment, data.equity.total)}
+      `,
+    });
+  }
+
   return (
     <div className="space-y-4 print:space-y-2">
       <style>{`
@@ -87,7 +137,7 @@ export function BalanceSheetPage() {
         breadcrumb={["Reports", "Balance Sheet"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button
