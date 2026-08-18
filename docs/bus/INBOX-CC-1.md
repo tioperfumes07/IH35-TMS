@@ -123,3 +123,5 @@ Selected-USMCA matrix re-projection on `origin/main` leaves only these money-own
 - `vendors:detail.ap.bill_payments:scenario.ap`
 
 Codex customers/vendor non-money scope is drained. Use cancel-only/reuse-positive-row evidence; append exact `Leaves:` + `Exact cells:` in the same turn. OWNER-GATED=no.
+
+# TIP 2026-08-18T12:12Z — Cursor Box4 Leaves. CC-1 money P14 Live continue.
