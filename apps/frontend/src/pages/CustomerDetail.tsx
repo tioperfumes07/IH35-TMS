@@ -101,6 +101,31 @@ import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombston
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
 
+/** AUDIT 2730 — every detail tab is addressable via ?tab=<slug>; Profile = clean URL. */
+const CUSTOMER_DETAIL_TAB_QUERY: Record<CustomerTab, string> = {
+  Profile: "profile",
+  Contacts: "contacts",
+  "Billing & Receivables": "billing",
+  "Quality & History": "quality",
+  "Lanes & Pricing": "lanes",
+  Documents: "documents",
+  COI: "coi",
+  Contracts: "contracts",
+  "Portal Users": "portal",
+  Tasks: "tasks",
+  Loads: "loads",
+  "Per-Customer P&L": "pnl",
+  "Audit History": "audit",
+};
+const CUSTOMER_DETAIL_TAB_FROM_QUERY: Record<string, CustomerTab> = Object.fromEntries(
+  Object.entries(CUSTOMER_DETAIL_TAB_QUERY).map(([label, slug]) => [slug, label as CustomerTab]),
+) as Record<string, CustomerTab>;
+
+function parseCustomerDetailPageTab(raw: string | null): CustomerTab {
+  if (!raw) return "Profile";
+  return CUSTOMER_DETAIL_TAB_FROM_QUERY[raw.trim().toLowerCase()] ?? "Profile";
+}
+
 // Per-Customer P&L default window — trailing 12 months (ISO yyyy-mm-dd), matching the report's date model.
 function trailing12mRange(): { start: string; end: string } {
   const now = new Date();
@@ -357,7 +382,7 @@ type SaferEntityStatus = {
 export function CustomerDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { user } = useAuth();
@@ -384,12 +409,21 @@ export function CustomerDetailPage() {
     onSortChange: onLaneSortChange,
   } = useUrlSort({ key: "lane_sort", dir: "lane_dir" });
 
-  const [activeTab, setActiveTab] = useState<CustomerTab>("Profile");
+  // AUDIT 2730 / LV-CUSTOMERS-DETAIL-TAB-DEEPLINKS-IGNORED — every detail tab must be
+  // addressable via ?tab=<slug> (not billing-only). Profile is the default (clean URL).
+  const [activeTab, setActiveTabState] = useState<CustomerTab>(() => parseCustomerDetailPageTab(searchParams.get("tab")));
+  const setActiveTab = (next: CustomerTab) => {
+    setActiveTabState(next);
+    const params = new URLSearchParams(searchParams);
+    const slug = CUSTOMER_DETAIL_TAB_QUERY[next];
+    if (next === "Profile") params.delete("tab");
+    else params.set("tab", slug);
+    setSearchParams(params, { replace: true });
+  };
   const [pnlRange, setPnlRange] = useState(trailing12mRange);
   useEffect(() => {
-    if (searchParams.get("tab") === "billing") {
-      setActiveTab("Billing & Receivables");
-    }
+    const fromUrl = parseCustomerDetailPageTab(searchParams.get("tab"));
+    setActiveTabState((prev) => (prev === fromUrl ? prev : fromUrl));
   }, [searchParams]);
   const [editMode, setEditMode] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
