@@ -78,7 +78,12 @@ export function collectProblems(svc, gen) {
     return problems;
   }
 
-  const stamp = /UPDATE\s+accounting\.bills[\s\S]{0,700}?display_id\s*=[\s\S]{0,700}?RETURNING/i.exec(s)?.[0] ?? "";
+  // Anchored on "SET display_id =" directly (not just "display_id" appearing anywhere within 700
+  // chars) — bills.service.ts has an EARLIER, unrelated `UPDATE accounting.bills SET
+  // legal_matter_id = …` statement whose 700-char lookahead window reaches far enough to swallow
+  // the real display_id stamp statement below it, producing a garbled multi-statement blob. Found
+  // live: the mutation-anchor bug below only surfaced because this extraction was already loose.
+  const stamp = /UPDATE\s+accounting\.bills[\s\S]{0,80}?SET\s+display_id\s*=[\s\S]{0,700}?RETURNING/i.exec(s)?.[0] ?? "";
   if (!stamp) {
     problems.push(`${SERVICE} calls the generator but no UPDATE assigns display_id on accounting.bills.`);
     return problems;
@@ -113,7 +118,17 @@ if (process.argv.includes("--selftest")) {
     ["generator removed", svc, gen.replace("export async function nextBillDisplayId", "async function unusedBillDisplayId")],
     ["createBill stops calling it (the ACCT-F186 defect verbatim)", svc.replaceAll("nextBillDisplayId", "unusedFn"), gen],
     ["stamp no longer TMS-native-only", svc.replace(/\s*AND qbo_bill_id IS NULL/, ""), gen],
-    ["stamp loses entity scope", svc.replace(/\s*AND operating_company_id = \$2::uuid/, ""), gen],
+    // Anchored with a lookahead requiring proximity to "qbo_bill_id IS NULL" — a phrase unique to
+    // the real display_id stamp statement. Unanchored, this hit the FIRST
+    // "AND operating_company_id = $2::uuid" in the whole file, an unrelated
+    // banking.bank_accounts balance UPDATE ~29KB earlier — found live: the mutation reported
+    // "changed something" but the real defect (display_id stamp losing entity scope) was never
+    // planted, so collectProblems() correctly stayed green and this selftest case was inert.
+    [
+      "stamp loses entity scope",
+      svc.replace(/\s*AND operating_company_id = \$2::uuid(?=[\s\S]{0,200}?qbo_bill_id IS NULL)/, ""),
+      gen,
+    ],
     ["generator loses its advisory lock", svc, gen.replace(/await withDisplayLock\(client, `accounting\.bill\.display_id[^`]*`\);/, "")],
   ];
   const inert = [];
