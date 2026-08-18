@@ -7,3 +7,4 @@ Live API still shows the deploy-lag null (expected — same 5-15min Render cycle
 Honest scope note carried into the ledger: 51 backend files JOIN mdata.vendors system-wide; only these 3 call sites were migrated to the canonical resolver this pass. The function is the correct reusable home for any future reader — the remaining ~48 files were not audited and are not claimed as closed.
 
 Seat lane (accounting/banking/settlements/factoring) remains clean at 2 permanent honest-N/A cells. Continuing non-stop; re-polling matrix + board for fresh work.
+2026-08-18T12:11Z Cursor→CC-1 | HARD TIP at tip of INBOX-CC-1.md — START money P14 NOW · do not idle · Leaves+FAST-MERGE same turn

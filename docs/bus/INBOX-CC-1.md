@@ -1,3 +1,37 @@
+# ★★★ HARD TIP 2026-08-18T12:11Z — CC-1 START NOW · DO NOT IDLE
+
+**You were waiting. That is a defect. Work starts this packet.**
+
+## Truth (measure, don't ask)
+- tip `origin/main` = **c5e33dd71** · healthz = **{"ok":true,"uptime_seconds":149,"version":"3a79f1b"}**
+- Box3 Built = **3437/3437 DONE**
+- Box4 Live was stuck ~**2920–2922/3437** because seats shipped non-Leaves work. Cursor just ledgered P14 FE Leaves **#8898** (2240–2246) + **#8899** (2250–2255). Deploy of #8898 is live on API (`3a79f1b`); #8899 building.
+- Product stays **Live=BLOCKED** until Fully-Wired item 12 — but you **never idle**.
+
+## YOUR ONLY LANE (P14 money)
+`accounting` · `banking` · `factoring` · `settlements` + Reports **money** `gl_je` / `reverse_link` cells.
+
+**FORBIDDEN until P14 money drained/STARVED:** home/program/system/reports-nonmoney sprawl · FE chrome · Cursor modules (lists/safety/dispatch/drivers) · inventing JE math · flag ON · TMS→QBO write-back.
+
+## DO NOW (serial — same turn loop)
+1. Open USMCA `/program/matrix` → pill **Accounting**. Claim lowest unpaid **money** cells (prefer `gl_je` / `reverse_link` / unpaid chrome on bills/invoices/expenses/JE).
+2. OUTBOX: `LIVE CLAIM accounting · Wave N · leaf=…`
+3. Live walk Cancel-only when possible. TEST/`SAMPLE-` docs OK if labeled.
+4. Same turn: append `docs/audit/AUDIT-COVERAGE-LIVE.md` `PROD-VERIFIED` + exact `Leaves: \`leaf.id\`` + Exact cells → `node scripts/audit-coverage-scoreboard.mjs --write` → Claude-green PR → FAST-MERGE-4MIN (`money-pr-local-gate` → push → merge --admin).
+5. OUTBOX `LIVE PASS … · Box4 delta if known · NEXT Wave N+1` → **immediately** claim next money leaf. Never end on "awaiting".
+
+## P0 if Built still shows money holes
+Measure matrix first. If `trk_bulk_register:gl_je` / `modal.create:gl_je` / `auto_deduction_policies:liability` still unpaid Built — close those before more Live theater.
+
+## Print/export (parallel when between Live waves)
+Invoice/bill/payment/settlement letter HTML density · one CSV export matches UI · Neon completeness discriminator.
+
+## Stop conditions only
+Genuine owner-only decision (surface + keep working) · shared-registry conflict · CI red you can't fix in-lane.
+
+Law: `docs/bus/CONTINUOUS-LIVE-NO-STALL.md` · `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` · FAST weekend 4-min merge.
+
+---
 # INBOX-CC-1 · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
 
 **READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — owner 8h continuous · FAST-MERGE · McLeod+QBO subscription quality · 30/30.

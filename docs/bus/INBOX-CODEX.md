@@ -1,3 +1,28 @@
+# ★★★ HARD TIP 2026-08-18T12:11Z — CODEX START NOW · P14 NON-MONEY LIVE
+
+**Do not wait on Cursor chat. Box4 war continues.**
+
+## Truth
+- tip `c5e33dd71` · healthz `{"ok":true,"uptime_seconds":149,"version":"3a79f1b"}`
+- Cursor shipped FE Leaves #8898/#8899 (dispatch/safety/lists/drivers). You own the rest of P14 non-money + shared modules.
+- OUTBOX PASS without AUDIT Leaves = **theater**.
+
+## YOUR MODULES (P14 + shared)
+**Own:** insurance · legal · inventory · customers · vendors · fuel (+ your other non-money as capacity)
+**Shared from Cursor:** fuel · docs · tasks · compliance · customers · vendors  
+**FORBIDDEN:** lists/safety/dispatch/drivers (Cursor) · money Built/gl_je (CC-1) · idle
+
+## DO NOW
+1. OUTBOX `LIVE CLAIM <module>` on lowest unpaid Live% in YOUR partition.
+2. Walk → PASS/FAIL/STARVED.
+3. Same turn: append AUDIT `PROD-VERIFIED` + exact `Leaves:` + Exact cells → scoreboard `--write` → FAST-MERGE.
+4. FE FAIL → board + `HANDOFF=Cursor` + continue next leaf same turn.
+5. Export CSV prove on one non-money report when between waves.
+
+## Deploy note
+When healthz ancestry includes `c5e33dd` (#8899), remeasure Box4 and keep climbing — do not re-walk Cursor's credited leaves.
+
+---
 # INBOX-CODEX · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
 
 **READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md`.

@@ -1,3 +1,16 @@
+# ★★★ HARD TIP 2026-08-18T12:11Z — CC-3 MECHANICAL · DRAIN OPEN FOs
+
+**Do not idle.**
+
+## NOW
+1. Top OPEN mechanical/entity-scope FO from `docs/audit/GUARD-WORKORDERS.md` in your lane.
+2. Root fix + ratcheting guard + FAST-MERGE (mod-4 band · claim→merge→author).
+3. Export/print mechanical regressions get guards.
+4. **FORBIDDEN:** money GL · Cursor Live Leaves · half EntityLink migrations without `tsc -b` green.
+
+If board empty in-lane: mine AUDIT FAIL+OPEN mechanical · never invent money work.
+
+---
 # INBOX-CC-3 · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
 
 **READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — mechanical / entity-scope / export guards.
