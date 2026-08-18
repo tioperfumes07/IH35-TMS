@@ -101,6 +101,7 @@ const STEPS = [
   ["verify-payrun-close-panel-settlement-load-links", "scripts/verify-payrun-close-panel-settlement-load-links.mjs"],
   ["verify-je-source-links-invoice-bill-display-id", "scripts/verify-je-source-links-invoice-bill-display-id.mjs"],
   ["verify-fuel-loves-prices-daily-table-and-report-guard", "scripts/verify-fuel-loves-prices-daily-table-and-report-guard.mjs"],
+  ["verify-cancellation-approver-actor-and-billable-charge", "scripts/verify-cancellation-approver-actor-and-billable-charge.mjs"],
 ];
 
 function runNode(rel) {
