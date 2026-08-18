@@ -1,7 +1,6 @@
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
-import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const DRIVER_LINK = "text-slate-700 hover:underline";
@@ -49,13 +48,8 @@ export function DriverAssignmentSection({
           <div className="text-xs font-semibold text-gray-500">Default driver</div>
           <div className="text-sm font-medium">
             {defaultDriver?.id ? (
-              <EntityLink
-                kind="driver"
-                id={String(defaultDriver.id)}
-                label={entityLabel(defaultDriver.name, defaultDriver.id, "Driver")}
-                className={DRIVER_LINK}
-                data-testid="vehicle-profile-default-driver-link"
-              />
+              <EntityLinkOrTombstone kind="driver" id={String(defaultDriver.id)} name={defaultDriver.name} noun="Driver" className={DRIVER_LINK}
+                data-testid="vehicle-profile-default-driver-link" />
             ) : (
               String(defaultDriver?.name ?? "Not set")
             )}
@@ -69,13 +63,8 @@ export function DriverAssignmentSection({
           <div className="text-xs font-semibold text-gray-500">Currently driving</div>
           <div className="text-sm font-medium">
             {currentDriver?.id ? (
-              <EntityLink
-                kind="driver"
-                id={String(currentDriver.id)}
-                label={entityLabel(currentDriver.name, currentDriver.id, "Driver")}
-                className={DRIVER_LINK}
-                data-testid="vehicle-profile-current-driver-link"
-              />
+              <EntityLinkOrTombstone kind="driver" id={String(currentDriver.id)} name={currentDriver.name} noun="Driver" className={DRIVER_LINK}
+                data-testid="vehicle-profile-current-driver-link" />
             ) : (
               String(currentDriver?.name ?? "—")
             )}

@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 
 export type InsurancePolicySummary = {
@@ -48,11 +48,7 @@ function PolicyCard({ label, policy }: { label: string; policy: InsurancePolicyS
           <dt>Policy #</dt>
           <dd>
             {policy.policy_id ? (
-              <EntityLink
-                kind="insurance_policy"
-                id={policy.policy_id}
-                label={entityLabel(policy.number, policy.policy_id, "Policy")}
-              />
+              <EntityLinkOrTombstone kind="insurance_policy" id={policy.policy_id} name={policy.number} noun="Policy" />
             ) : (
               String(policy.number ?? "—")
             )}

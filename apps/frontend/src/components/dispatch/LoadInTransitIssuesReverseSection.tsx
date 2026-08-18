@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDispatchIntransitIssues } from "../../api/dispatch";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Props = { operatingCompanyId: string; loadId: string; "data-testid"?: string };
 
@@ -31,8 +31,8 @@ export function LoadInTransitIssuesReverseSection({ operatingCompanyId, loadId, 
               <span className="text-gray-500"> · {row.severity} · {row.status} · {formatDateTimeUS(row.reported_at)}</span>
               <div className="text-xs text-gray-600">{row.issue_description}</div>
               <div className="flex gap-3 text-xs">
-                <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
-                <EntityLink kind="unit" id={row.unit_id ?? undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+                <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={row.driver_name} noun="Driver" />
+                <EntityLinkOrTombstone kind="unit" id={row.unit_id ?? undefined} name={row.unit_number} noun="Unit" />
               </div>
             </li>
           ))}

@@ -1,5 +1,4 @@
-import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export function CurrentLoadSection({
   currentLoad,
@@ -14,7 +13,7 @@ export function CurrentLoadSection({
     return (
       <section className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
         <h3 className="font-semibold text-gray-800">Current load</h3>
-        <p className="mt-1">Available — no active load assigned to unit <EntityLink kind="unit" id={unitId} label={entityLabel(unitNumber, unitId, "Unit")} data-testid="available-unit-record-link" />.</p>
+        <p className="mt-1">Available — no active load assigned to unit <EntityLinkOrTombstone kind="unit" id={unitId} name={unitNumber} noun="Unit" data-testid="available-unit-record-link" />.</p>
       </section>
     );
   }
@@ -28,12 +27,7 @@ export function CurrentLoadSection({
         Customer: {String(currentLoad.customer ?? "—")} · ETA {String(currentLoad.eta ?? "—")} · Status {String(currentLoad.status)}
       </p>
       {currentLoad.load_id ? (
-        <EntityLink
-          kind="load"
-          id={String(currentLoad.load_id)}
-          label={entityLabel(currentLoad.load_number, currentLoad.load_id, "Load")}
-          className="mt-2 inline-block text-xs font-semibold text-slate-700 underline"
-        />
+        <EntityLinkOrTombstone kind="load" id={String(currentLoad.load_id)} name={currentLoad.load_number} noun="Load" className="mt-2 inline-block text-xs font-semibold text-slate-700 underline" />
       ) : null}
     </section>
   );

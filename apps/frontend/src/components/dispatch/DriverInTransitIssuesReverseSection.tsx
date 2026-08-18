@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDispatchIntransitIssues } from "../../api/dispatch";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export function DriverInTransitIssuesReverseSection({ operatingCompanyId, driverId }: { operatingCompanyId: string; driverId: string }) {
   const query = useQuery({
@@ -25,10 +25,10 @@ export function DriverInTransitIssuesReverseSection({ operatingCompanyId, driver
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id} className="text-sm text-slate-700">
-              <EntityLink kind="load" id={row.load_id ?? undefined} label={entityLabel(row.load_number, row.load_id, "Load")} />
+              <EntityLinkOrTombstone kind="load" id={row.load_id ?? undefined} name={row.load_number} noun="Load" />
               <span className="text-gray-500"> · {row.issue_category} · {row.severity} · {row.status} · {formatDateTimeUS(row.reported_at)}</span>
               <div className="text-xs text-gray-600">{row.issue_description}</div>
-              <EntityLink kind="unit" id={row.unit_id ?? undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+              <EntityLinkOrTombstone kind="unit" id={row.unit_id ?? undefined} name={row.unit_number} noun="Unit" />
             </li>
           ))}
         </ul>
