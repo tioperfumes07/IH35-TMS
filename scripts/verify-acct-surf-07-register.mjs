@@ -102,7 +102,10 @@ function contractErrors(src) {
   if (!src.accountRegister.includes("onRowClick") || !src.accountRegister.includes("sourceRoute")) {
     errors.push("VERIFY-4: AccountRegisterPage ParityTable onRowClick must call sourceRoute");
   }
-  if (!src.accountRegister.includes('EntityLink kind="journal_entry"')) {
+  // Multi-line JSX (`<EntityLink\n  kind="journal_entry"`, the real formatting on both the Ref
+  // No. and audit-tab Journal entry columns) has a newline+indentation between the tag and the
+  // prop — a single-line substring check false-flagged the real, correct code.
+  if (!/<EntityLink[\s\S]{0,40}?kind\s*=\s*["']journal_entry["']/.test(src.accountRegister)) {
     errors.push("VERIFY-4: AccountRegisterPage audit tab must EntityLink journal_entry rows");
   }
   if (!src.accountRegister.includes("getAccountRegister")) {
@@ -178,7 +181,7 @@ function selftest() {
       "settlement_id=${reference}",
       'if (t === "transfer") return "/banking/transfers"',
       "onRowClick={(r) => navigate(sourceRoute",
-      'EntityLink kind="journal_entry"',
+      '<EntityLink\n  kind="journal_entry"',
       "getAccountRegister",
       "AccountingSubNavWrapper",
     ].join("\n"),
@@ -216,6 +219,14 @@ function selftest() {
   };
   if (!contractErrors(deadEnd).some((e) => e.includes("list-only"))) {
     console.error(`${LABEL} --selftest FAIL list-only bill detail_path not caught`);
+    process.exit(1);
+  }
+  const droppedJeLink = {
+    ...good,
+    accountRegister: good.accountRegister.replace('<EntityLink\n  kind="journal_entry"', "plain text, no drill"),
+  };
+  if (!contractErrors(droppedJeLink).some((e) => e.includes("EntityLink journal_entry"))) {
+    console.error(`${LABEL} --selftest FAIL dropped journal_entry EntityLink not caught`);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS`);
