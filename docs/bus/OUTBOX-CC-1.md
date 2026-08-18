@@ -437,3 +437,7 @@ verify:static: 12 of ~199 now closed this session. Continuing non-stop.
 2026-08-18T22:02Z CC-1 | ACCT-F5437 closed (PR #9120, merged d793907). A REAL code fix: SettlementsPage's OpenDriverBillsPanel rendered driver + load as real EntityLink drill-throughs but the bill reference was a bare inert <span>, even though bill.id was already on every row. Now a real <EntityLink kind="bill" .../>, matching the sibling BillDetailPanel/AllocationsPage/BillPaymentDetailPage convention. Also widened the render condition so the link doesn't vanish when bill_number happens to be null. Regenerated entity-link-adoption-baseline.json (1 narrow-ID finding removed — a real fix, not amnesty). verify-settlements-qbo-chrome-surfaces.mjs (unmodified) now passes.
 
 verify:static: 13 of ~199 now closed this session. Continuing non-stop, fast-merge, per "always fix, never defer."
+
+2026-08-18T22:05Z CC-1 | ACCT-F5438 closed (PR #9122, merged 31ad9b5). Same stale-inline-shape class as ACCT-F5432/F5433/F5432-adjacent fixes: verify-report-management-ap-aging.mjs required a literal inline <EntityLink kind="vendor" id={row.vendor_id}>, but the real A/P aging section shares an honest-tombstone ManagementVendorCell component with the Expenses-by-Vendor table below it (both need the same unresolved-vendor fallback) — a DRY improvement the guard was never updated for. Widened the check to accept both shapes; the guard's own selftest mutation was also stale and re-anchored. Zero product-code change.
+
+verify:static: 14 of ~199 now closed this session. Continuing non-stop.
