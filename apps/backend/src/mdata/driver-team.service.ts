@@ -49,18 +49,16 @@ export function normalizeShares(splitMethod: TeamSplitMethod, primaryPct?: numbe
 }
 
 async function assertDriverCompany(client: Queryable, driverId: string, operatingCompanyId: string) {
+  // Opco on the driver ROW is the membership gate. Do NOT JOIN org.user_company_access on
+  // identity_user_id: most office/ops drivers have identity_user_id NULL (no app login) and the
+  // join falsely threw E_DRIVER_NOT_IN_COMPANY for USMCA-native Active drivers (PEDRO/Neftali Live
+  // 2026-08-18). Cross-company leakage is already blocked by operating_company_id = $2.
   const res = await client.query(
     `
       SELECT d.id
       FROM mdata.drivers d
-      JOIN org.user_company_access uca ON uca.user_id = d.identity_user_id
       WHERE d.id = $1
-        AND uca.company_id = $2
-        -- The driver ROW must belong to the company too, not merely their user account. Without this a
-        -- driver whose identity_user_id has access to company X, but whose driver record lives in
-        -- company Y, passes the assert and can be added to X's team.
         AND d.operating_company_id = $2::uuid
-        AND uca.deactivated_at IS NULL
       LIMIT 1
     `,
     [driverId, operatingCompanyId]
