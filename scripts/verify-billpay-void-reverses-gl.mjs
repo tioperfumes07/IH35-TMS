@@ -160,9 +160,12 @@ export async function voidBillPayment(a, b, c, d) {
   } else {
     const real = readFileSync(abs, "utf8");
     if (audit(real).length !== 0) failures.push(`case6 FAIL — the REAL ${FILE} does not satisfy this guard`);
+    // Real code was refactored to gate the derivation on hasPostedBatch too (reversePostedGlIntent
+    // && hasPostedBatch) — a real safety improvement, not a regression, so the variable was renamed
+    // from reversePostedGl to reversePostedGlIntent. Anchor on the current shape.
     const mutated = real.replace(
-      "const reversePostedGl = input.reversePostedGl ?? payment.settlement_deduction_noncash !== true;",
-      "const reversePostedGl = input.reversePostedGl ?? false;"
+      "const reversePostedGlIntent = input.reversePostedGl ?? payment.settlement_deduction_noncash !== true;",
+      "const reversePostedGlIntent = input.reversePostedGl ?? false;"
     );
     if (mutated === real) failures.push(`case6 FAIL — the derivation line was not found in the REAL ${FILE}`);
     else if (audit(mutated).length === 0)
