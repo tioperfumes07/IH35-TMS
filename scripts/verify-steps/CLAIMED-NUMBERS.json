@@ -2176,6 +2176,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-vendors-list-view-surface-bar"
   },
+  "3878": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-inventory-parts-deactivated-vendor-tombstone"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
