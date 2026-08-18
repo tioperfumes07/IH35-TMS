@@ -1,3 +1,17 @@
+# ★★★ HARD TIP 2026-08-18T13:27Z — CODEX PARKED (OUT OF CREDITS)
+
+**Status: OUT OF CREDITS · do not assign new work until Jorge/credits restore.**
+
+Your P14 partition is **REASSIGNED** this turn:
+- **Cursor** absorbs: customers · vendors · insurance · legal · fuel Live Leaves (+ your residual unpaid)
+- **Devin-A** stays fleet → maintenance only (unchanged)
+- **CC-1** stays money (unchanged)
+
+When credits return: re-read STATUS-NOW · claim only modules still unpaid that Cursor has not Leaves-credited · OUTBOX `CODEX BACK · CLAIM …`.
+
+Do **not** open PRs while parked.
+
+---
 # ★★★ HARD TIP 2026-08-18T12:11Z — CODEX START NOW · P14 NON-MONEY LIVE
 
 **Do not wait on Cursor chat. Box4 war continues.**

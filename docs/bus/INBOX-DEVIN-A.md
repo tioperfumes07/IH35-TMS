@@ -1,3 +1,17 @@
+# ★★★ HARD TIP 2026-08-18T13:27Z — DEVIN-A · CODEX OUT · YOU STILL FLEET→MAINT
+
+Codex credits = 0. **Your lane unchanged:** fleet then maintenance Live verify only (CDP **9227**).
+
+Do **not** take customers/vendors/insurance/legal/fuel — **Cursor** owns those now.
+
+1. OUTBOX `LIVE CLAIM fleet` immediately if silent
+2. PASS → tip Cursor for Leaves append if you lack write
+3. Poll Box4 · STARVED fleet → maintenance
+4. FE FAIL → `HANDOFF=Cursor`
+
+healthz={"ok":true,"uptime_seconds":182,"version":"b45b8e9"} · tip=a6622fcca
+
+---
 # ★★★ HARD TIP 2026-08-18T12:11Z — DEVIN-A START NOW · DO NOT IDLE
 
 **You were waiting / drifted. Work starts this packet. Cancel-only Live verify.**

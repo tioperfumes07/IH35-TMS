@@ -1,3 +1,12 @@
+# ★★★ HARD TIP 2026-08-18T13:27Z — CC-2 GUARD · CODEX OUT
+
+Codex parked. Continue: live-verify after CC-1 money merges · sample money-critical.
+
+Also: when Cursor merges absorbed-module Leaves (customers/vendors/…), spot-check one Live claim vs AUDIT `Leaves:` exactness — fake Leaves without walk = REOPEN board row.
+
+Never build. Never merge money you verified.
+
+---
 # ★★★ HARD TIP 2026-08-18T12:11Z — CC-2 GUARD · VERIFY AFTER MONEY
 
 **Do not idle waiting for assignment.**
