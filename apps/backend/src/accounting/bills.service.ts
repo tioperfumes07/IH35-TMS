@@ -2096,12 +2096,18 @@ export async function createBill(input: CreateBillInput, userId: string) {
         [input.coaAccountId, input.operatingCompanyId]
       );
       if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
+      // ACCT-F5452: load_id is named explicitly, not omitted. This header-only path (caller supplied
+      // coaAccountId, no per-line lines[]) has no per-line loadId to draw from — CreateBillInput has
+      // no BILL-level loadId either, only CreateBillLineInput's per-line one used by the lines[]
+      // branch above — so NULL here is the honest value for "this synthesized line carries no load
+      // association," not a silently-dropped column. Naming it lets a report tell "never wired" from
+      // "wired, no load" for this bill-creation path.
       await client.query(
         `
           INSERT INTO accounting.bill_lines (
-            bill_id, line_sequence, amount, description, section, account_id
+            bill_id, line_sequence, amount, description, section, account_id, load_id
           )
-          VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid)
+          VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, NULL)
         `,
         [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId]
       );
