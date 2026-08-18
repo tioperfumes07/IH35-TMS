@@ -48,6 +48,20 @@ function ModalSection({ title, children }: { title?: string; children: ReactNode
   );
 }
 
+/**
+ * The `workOrder` prop is `Record<string, unknown>`, so every field reads as `unknown`
+ * (and narrows to `{}` inside a truthiness guard). EntityLinkOrTombstone takes
+ * `id: string | null | undefined` — it accepts `name: unknown` already, so only ids need this.
+ * Narrow at runtime rather than casting: a non-string id becomes null, and the component
+ * renders its "—" fallback instead of building a dead link out of an object.
+ */
+function asEntityId(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "number" || typeof value === "bigint") return String(value);
+  return null;
+}
+
 export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
   const [addPartsLinkOpen, setAddPartsLinkOpen] = useState(false);
   const workOrderId = workOrder ? String(workOrder.id ?? "") : "";
@@ -89,7 +103,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
         <ModalSection>
           <div>
             Display ID:{" "}
-            <EntityLinkOrTombstone kind="work_order" id={workOrder.id} name={workOrder.display_id} noun="Work order" />
+            <EntityLinkOrTombstone kind="work_order" id={asEntityId(workOrder.id)} name={workOrder.display_id} noun="Work order" />
           </div>
           <div>
             Source Type: <span className="rounded-sm bg-gray-200 px-1 py-0.5">{sourceType}</span>
@@ -98,7 +112,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <div>
             Unit:{" "}
             {workOrder.unit_id ? (
-              <EntityLinkOrTombstone kind="unit" id={workOrder.unit_id} name={workOrder.unit_number} noun="Unit" />
+              <EntityLinkOrTombstone kind="unit" id={asEntityId(workOrder.unit_id)} name={workOrder.unit_number} noun="Unit" />
             ) : (
               "—"
             )}
@@ -108,7 +122,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
             {workOrder.load_id ? (
               <EntityLinkOrTombstone
                 kind="load"
-                id={workOrder.load_id}
+                id={asEntityId(workOrder.load_id)}
                 name={workOrder.linked_load_number}
                 noun="Load"
               />
@@ -121,7 +135,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
             {workOrder.driver_id ? (
               <EntityLinkOrTombstone
                 kind="driver"
-                id={workOrder.driver_id}
+                id={asEntityId(workOrder.driver_id)}
                 name={workOrder.driver_name}
                 noun="Driver"
               />
@@ -163,7 +177,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
               {workOrder.external_vendor_id ? (
                 <EntityLinkOrTombstone
                   kind="vendor"
-                  id={workOrder.external_vendor_id}
+                  id={asEntityId(workOrder.external_vendor_id)}
                   name={typeof workOrder.external_vendor_name === "string" ? workOrder.external_vendor_name : null}
                   noun="Vendor"
                 />
