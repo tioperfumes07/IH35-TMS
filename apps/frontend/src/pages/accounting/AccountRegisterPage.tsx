@@ -305,7 +305,25 @@ export function AccountRegisterPage() {
       cellClass: "whitespace-nowrap",
       render: (r) => formatDateUS(r.entry_date),
     },
-    { key: "reference", label: "Ref No.", sortable: true, render: (r) => r.reference ?? "—" },
+    // LV-REPORTS-BALANCE-SHEET-GL-JE-DRILL: every register row already carries a real
+    // journal_entry_id (the row IS a posting on this account's own JE) — it just was never
+    // rendered as a link, so Ref No. dead-ended on plain reference text with no way back to the
+    // GL entry that produced it. The data was already there; only the render was missing.
+    {
+      key: "reference",
+      label: "Ref No.",
+      sortable: true,
+      render: (r) =>
+        r.journal_entry_id ? (
+          <EntityLink
+            kind="journal_entry"
+            id={r.journal_entry_id}
+            label={entityLabel(r.reference, r.journal_entry_id, "Journal entry")}
+          />
+        ) : (
+          r.reference ?? "—"
+        ),
+    },
     { key: "payee", label: "Payee", sortable: true, render: (r) => r.payee ?? "—" },
     { key: "memo", label: "Memo", sortable: true, render: (r) => r.memo ?? r.description ?? "—" },
     { key: "class_name", label: "Class", sortable: true, render: (r) => r.class_name ?? "—" },

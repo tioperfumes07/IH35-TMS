@@ -99,6 +99,10 @@ export function buildRegisterRows(
     running += normal === "debit" ? debit - credit : credit - debit;
     return {
       posting_id: p.posting_id,
+      // LV-REPORTS-BALANCE-SHEET-GL-JE-DRILL (ACCT-F5425): AccountRegisterPage.tsx's "Ref No."
+      // column now renders a real EntityLink kind="journal_entry" bound to this field — do not
+      // drop or rename journal_entry_id here without updating that column, or the balance-sheet
+      // -> register -> JE drill regresses back to dead plain text.
       journal_entry_id: p.journal_entry_id,
       entry_date: p.entry_date,
       type: p.source_transaction_type
