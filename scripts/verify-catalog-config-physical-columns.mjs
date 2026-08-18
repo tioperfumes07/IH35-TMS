@@ -79,6 +79,24 @@ export function findEntityScopeDefaultProblems(factorySource) {
   return problems;
 }
 
+/**
+ * LV-CAT-500 ORDER BY tie-break — secondary `, t.code ASC` 500s on alias catalogs whose physical
+ * code column is rate_code / location_code / etc. Must resolve via dbColumnForApiColumn("code").
+ */
+export function findBareCodeOrderByProblems(factorySource) {
+  const problems = [];
+  if (/,\s*t\.code\s+ASC/.test(factorySource)) {
+    problems.push("ORDER BY secondary must not hardcode t.code ASC — use codeSortColumn from dbColumnForApiColumn(\"code\")");
+  }
+  if (!/const codeSortColumn = dbColumnForApiColumn\("code", config\)/.test(factorySource)) {
+    problems.push("factory must define codeSortColumn = dbColumnForApiColumn(\"code\", config)");
+  }
+  if (!/t\.\$\{codeSortColumn\} ASC/.test(factorySource)) {
+    problems.push("ORDER BY secondary must use t.${codeSortColumn} ASC");
+  }
+  return problems;
+}
+
 function run() {
   const failures = [];
   const routesSrc = fs.readFileSync(path.join(ROOT, ROUTES_FILE), "utf8");
@@ -94,6 +112,7 @@ function run() {
     failures.push(`${FACTORY_FILE}:${off.line} — unconditional 'deactivated_at' reference, not gated on config.hasDeactivatedAt: ${off.text}`);
   }
   failures.push(...findEntityScopeDefaultProblems(factorySrc).map((p) => `${FACTORY_FILE}: ${p}`));
+  failures.push(...findBareCodeOrderByProblems(factorySrc).map((p) => `${FACTORY_FILE}: ${p}`));
 
   return failures;
 }
@@ -118,6 +137,16 @@ if (process.argv.includes("--selftest")) {
     ["a deactivated_at reference outside the gate window is still flagged", findUngatedDeactivatedAtRefs(badFactoryFarGate).length === 1],
     ["safe entity-scope default passes", findEntityScopeDefaultProblems(`const GLOBAL_CATALOG_TABLES = new Set(["account_types", "audit_event_types"]); function isEntityScopedCatalog(config) { if (config.entityScoped === false) throw new Error("entity_scoped_catalog_cannot_be_global"); return config.entityScoped ?? !GLOBAL_CATALOG_TABLES.has(config.tableName); } const entityScoped = isEntityScopedCatalog(config);`).length === 0],
     ["global-by-default regression is flagged", findEntityScopeDefaultProblems(`const entityScoped = config.entityScoped ?? false;`).length > 0],
+    [
+      "bare t.code ASC secondary ORDER BY is flagged",
+      findBareCodeOrderByProblems(`ORDER BY t.\${sortColumn} ASC, t.code ASC`).length > 0,
+    ],
+    [
+      "aliased codeSortColumn ORDER BY passes",
+      findBareCodeOrderByProblems(
+        `const codeSortColumn = dbColumnForApiColumn("code", config);\nORDER BY t.\${sortColumn} ASC, t.\${codeSortColumn} ASC`
+      ).length === 0,
+    ],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
