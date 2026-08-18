@@ -381,7 +381,9 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                     setLoadId(next ?? "");
                     setSuggestionPinned(true);
                   }}
-                  allowCreate={false}
+                  // CREATE drawer owes picker_law: + Add new load must be first row (Book Load).
+                  // allowCreate={false} blocked accidents.create Live credit (P14 Box4).
+                  allowCreate
                   nestedInDrawer
                   enabled={open && scopeReady}
                   placeholder="Search load…"

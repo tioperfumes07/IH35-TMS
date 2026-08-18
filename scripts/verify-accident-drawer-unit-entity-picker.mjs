@@ -33,6 +33,17 @@ export function collectProblems(root = ROOT) {
   if (!/kind=["']load["']/.test(code)) {
     problems.push(`${FILE}: must use EntityPicker kind="load"`);
   }
+  // P14 Box4 — accidents.create owes picker_law: Load must offer + Add new (never filter-mode).
+  if (/kind=["']load["'][\s\S]{0,500}allowCreate=\{false\}/.test(code)) {
+    problems.push(
+      `${FILE}: CREATE Load EntityPicker must not use allowCreate={false} — picker_law requires + Add new load`,
+    );
+  }
+  // Explicit allowCreate near the load picker (not only the default) so regressions stay visible.
+  const loadBlock = code.match(/kind=["']load["'][\s\S]{0,600}dataTestId=["']accident-load["']/);
+  if (!loadBlock || !/\ballowCreate\b/.test(loadBlock[0]) || /allowCreate=\{false\}/.test(loadBlock[0])) {
+    problems.push(`${FILE}: CREATE Load EntityPicker (accident-load) must set allowCreate (not false)`);
+  }
   if (/listUnits\(/.test(code)) {
     problems.push(`${FILE}: must not call listUnits directly (EntityPicker owns roster)`);
   }
@@ -68,6 +79,7 @@ if (process.argv.includes("--selftest")) {
       `listUnits({ limit: 200 })
 <div data-testid="accident-unit-picker"><Combobox options={unitOptions} onSearch={setUnitSearch} /></div>
 listDispatchLoads({ limit: 200 })
+<EntityPicker kind="load" allowCreate={false} dataTestId="accident-load" />
 `
     );
     const planted = collectProblems(stubRoot);
