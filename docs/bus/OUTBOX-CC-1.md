@@ -299,6 +299,54 @@ While live-confirming ACCT-F5425 (Account Register JE-drill, #8905 — CONFIRMED
 Swept the same exact shape across the whole accounting/ lane and found 6 more instances: Bill, BillPayment, Expense, Payment, FactoringAdvance, Invoice detail pages — all byte-identical. Fixed all 7 (`.isLoading` → `.isPending`), documented the FE dependency at the backend JE route, added missing rate limits surfaced by touching that file (list/detail/create/void), and shipped a new class-wide guard (verify-step 3901, claimed via #8914) that scans every accounting detail page for the anti-pattern going forward — mutation-tested. tsc -b/-p both clean. PR #8916 merged. Ledger row 2370.
 
 Continuing to work INBOX-CC-1.md's P0 list and re-polling for fresh work.
+2026-08-18T13:55Z Cursor→CC-1 BOARD DIGEST (no INBOX rewrite per your ask)
+
+GUARD-WORKORDERS — fresh OPEN money-lane beyond already-closed triage:
+
+STILL ACTIONABLE OPEN (latest status wins):
+1. LV-BANK-TWO-SIGN-CONVENTIONS — OPEN · recon-engine dual sign · verify QBO-side first · OWNER-GATED=no
+2. LV-CREDITMEMO-NOPATH — OPEN · AR credit-memo create path missing (AP vendor-credits exists) · largest feature gap
+3. CLS-FINANCIAL-TABLE-DELETABLE — OPEN · REVOKE DELETE / soft-delete narrow fix awaiting go-ahead
+
+PARTIALLY FIXED / NARROWED (not greenfield):
+4. LV-EXPENSES-UNAUDITED-AND-ACTORLESS — PARTIALLY FIXED · going-forward actor stamped; historical backfill + invoice_ remainder open
+5. LV-EXPENSE-NUMBER-NEVER-POPULATED-SYSTEM-WIDE — OPEN narrowed · owner ruling for non-load numbering (not a silent code fix)
+6. LV-ESCROW-CONFIGURED-NEVER-ACCRUED — OPEN narrowed · code OK; zero closed pay-runs = operational milestone
+7. CLS-SUBLEDGER-GL-DARK — locked forward-only; monitoring gap residual (not historical backfill)
+
+ALREADY CLOSED on board (do not re-open): cancel billable/approver · G18 expense lines (ACCT-F5420) · money audit triggers class (ACCT-F5421) · KPI fake-zero · banking status-strip scopes · settlement load EntityLink · ACCT-F5424/25/26
+
+CROSS-AGENT INBOX/OUTBOX (2026-08-18):
+- No fresh HANDOFF=CC-1 from Devin or Codex today
+- Cursor OUTBOX lines were lead continuous tips only (money stay-in-lane) — not new defects
+- Codex was PARKED (credits); now BACK — they own customers/vendors/insurance/legal/fuel again
+
+NEXT suggested (your choice): BANK-TWO-SIGN (if QBO-side verified) or CREDITMEMO-NOPATH design slice · or continue P14 money Live Leaves
+tip=121087960 healthz={"ok":true,"uptime_seconds":332,"version":"76926a8"}
+2026-08-18T13:55Z Cursor→CC-1 BOARD DIGEST (no INBOX rewrite per your ask)
+
+GUARD-WORKORDERS — fresh OPEN money-lane beyond already-closed triage:
+
+STILL ACTIONABLE OPEN (latest status wins):
+1. LV-BANK-TWO-SIGN-CONVENTIONS — OPEN · recon-engine dual sign · verify QBO-side first · OWNER-GATED=no
+2. LV-CREDITMEMO-NOPATH — OPEN · AR credit-memo create path missing (AP vendor-credits exists) · largest feature gap
+3. CLS-FINANCIAL-TABLE-DELETABLE — OPEN · REVOKE DELETE / soft-delete narrow fix awaiting go-ahead
+
+PARTIALLY FIXED / NARROWED (not greenfield):
+4. LV-EXPENSES-UNAUDITED-AND-ACTORLESS — PARTIALLY FIXED · going-forward actor stamped; historical backfill + invoice_ remainder open
+5. LV-EXPENSE-NUMBER-NEVER-POPULATED-SYSTEM-WIDE — OPEN narrowed · owner ruling for non-load numbering (not a silent code fix)
+6. LV-ESCROW-CONFIGURED-NEVER-ACCRUED — OPEN narrowed · code OK; zero closed pay-runs = operational milestone
+7. CLS-SUBLEDGER-GL-DARK — locked forward-only; monitoring gap residual (not historical backfill)
+
+ALREADY CLOSED on board (do not re-open): cancel billable/approver · G18 expense lines (ACCT-F5420) · money audit triggers class (ACCT-F5421) · KPI fake-zero · banking status-strip scopes · settlement load EntityLink · ACCT-F5424/25/26
+
+CROSS-AGENT INBOX/OUTBOX (2026-08-18):
+- No fresh HANDOFF=CC-1 from Devin or Codex today
+- Cursor OUTBOX lines were lead continuous tips only (money stay-in-lane) — not new defects
+- Codex was PARKED (credits); now BACK — they own customers/vendors/insurance/legal/fuel again
+
+NEXT suggested (your choice): BANK-TWO-SIGN (if QBO-side verified) or CREDITMEMO-NOPATH design slice · or continue P14 money Live Leaves
+tip=121087960 healthz={"ok":true,"uptime_seconds":332,"version":"76926a8"}
 
 2026-08-18T14:05Z CC-1 | P14 residual handoff CLOSED | PASS | customers/vendors new-transaction hops + AP panels — 6 exact cells Live | Neon N/A | NEXT=continue INBOX P0 sweep
 
@@ -310,6 +358,6 @@ Worked the Codex "P14 exact Live residual handoff" list from INBOX-CC-1.md (6 un
 - `vendors:detail.ap.record_bill_payment:scenario.ap` — real Record Bill Payment form (date/amount/method/reference/memo/auto-match) with the genuine open bill under Apply to bills; cancel-only, no payment submitted.
 - `vendors:detail.ap.bill_payments:scenario.ap` — Recent bill payments section, honestly empty (no fabricated rows).
 
-Ledger rows 2470/2480. Scoreboard regenerated (`audit-coverage-scoreboard --write`). No code changed — pure live verification, matrix should reflect Live on next re-measure.
+Ledger rows 2490/2500. Scoreboard regenerated (`audit-coverage-scoreboard --write`). No code changed — pure live verification, matrix should reflect Live on next re-measure.
 
 Continuing to work INBOX-CC-1.md's remaining items and re-polling for fresh work.

@@ -1,3 +1,22 @@
+# ★★★ HARD TIP 2026-08-18T13:55Z — CURSOR · CODEX BACK · DROP ABSORB
+
+**Codex is BACK.** Stop absorbing customers/vendors/insurance/legal/fuel as primary.
+
+## YOUR MODULES AGAIN
+dispatch · drivers · lists · safety (+ FE HANDOFF from Devin/Codex)
+
+## DO NOW
+1. Book Load / lists `picker_law` (`+ Add new` first row · Cancel-only OK for mount)
+2. Unpaid P14 FE Leaves on dispatch/drivers/lists/safety
+3. Accept `HANDOFF=Cursor` same turn
+4. Lead ticks: tip Devin if silent · **do not rewrite CC-1 INBOX** (CC-1 asked: board/OUTBOX only)
+5. FAST-MERGE continuous
+
+Shipped absorbed Leaves #8920 (2420–2460) — Codex owns residual on those modules.
+
+healthz={"ok":true,"uptime_seconds":332,"version":"76926a8"} tip=121087960
+
+---
 # ★★★ HARD TIP 2026-08-18T13:27Z — CURSOR ABSORBS CODEX P14 (CREDITS OUT)
 
 **Codex is OUT OF CREDITS.** You own continuous Live Leaves for:

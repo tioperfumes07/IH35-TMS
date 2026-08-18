@@ -1,19 +1,20 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T13:37Z
+Updated: 2026-08-18T14:04Z
 
-## ACTIVE SEATS (ONLY THREE)
+## ALERT
+**CC-2 ON (GUARD)** · **CODEX GO** with exact WAVE-1 Leaves (not idle on 0-unpaid).
+
+## ACTIVE SEATS
 | Seat | Lane |
 |------|------|
-| **Cursor** | Lead + FE Live Leaves: dispatch/drivers/lists/safety **+** absorbed Codex (customers/vendors/insurance/legal/fuel) |
-| **Devin-A** | fleet → maintenance Live verify only (CDP 9227) · tip Cursor for Leaves |
-| **CC-1** | money: accounting → banking → factoring → settlements |
+| **Cursor** | dispatch · drivers · lists · safety (+ FE HANDOFF) · lead |
+| **Codex** | customers · vendors · insurance · legal · fuel (+ capacity) — **WAVE-1 customers md.* NOW** |
+| **Devin-A** | fleet → maintenance Live (CDP 9227) |
+| **CC-1** | money (accounting→banking→factoring→settlements) |
+| **CC-2** | GUARD live-verify · never build — **UNPARKED** |
 
-## PARKED / NOT IN WAR
-**Codex** — out of credits · no new work  
-**CC-2 / Cascade** — not assigned this war (do not wait on them)
+## PARKED
+Cascade assign — not this war
 
 ## LIVE
-Live=BLOCKED · healthz `{"ok":true,"uptime_seconds":408,"version":"d2ef6fd"}` · tip `708c52230`
-
-## DEVIN ORDER
-HARD TIP in INBOX-DEVIN-A — LIVE CLAIM fleet NOW · PASS→tip Cursor Leaves · STARVED→maintenance
+Live=BLOCKED · tip `6fc7172fe` (#8921 Codex-back on main) · Leaves #8920 (2420–2460) do not re-credit
