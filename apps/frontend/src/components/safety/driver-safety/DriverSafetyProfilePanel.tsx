@@ -1,3 +1,5 @@
+import { EntityLink } from "../../shared/EntityLink";
+
 type ExpiryPill = "green" | "amber" | "red" | "unknown";
 
 type DriverSafetyProfilePanelProps = {
@@ -42,4 +44,3 @@ export function DriverSafetyProfilePanel({
     </section>
   );
 }
-import { EntityLink } from "../../shared/EntityLink";
