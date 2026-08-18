@@ -33,6 +33,8 @@ import {
   CUSTOMER_PROFITABILITY_FLAG_LABELS,
   formatCustomerProfitabilityFlagLabel,
 } from "../../lib/formatCustomerProfitabilityFlagLabel";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 const DEFAULT_MIN_REVENUE_CENTS = 100_000; // $1,000
 
@@ -223,6 +225,68 @@ export function CustomerProfitabilityPage() {
     URL.revokeObjectURL(url);
   }
 
+  function printLetter() {
+    const data = query.data;
+    if (!data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const t = data.totals;
+    const rowsHtml = (data.by_customer ?? [])
+      .map(
+        (r) => `<tr>
+          <td>${esc(customerDisplayLabel(r))}</td>
+          <td style="text-align:right">${esc(r.load_count)}</td>
+          <td style="text-align:right">${esc(money(r.revenue_cents))}</td>
+          <td style="text-align:right">${esc(money(r.direct_cost_cents))}</td>
+          <td style="text-align:right">${esc(money(r.gross_margin_cents))}</td>
+          <td style="text-align:right">${esc(`${(Number(r.gross_margin_pct) || 0).toFixed(1)}%`)}</td>
+          <td style="text-align:right">${esc(money(r.ar_aging_balance_cents))}</td>
+          <td style="text-align:right">${esc(r.days_since_last_load ?? "—")}</td>
+          <td>${esc((r.flags ?? []).map((f) => formatCustomerProfitabilityFlagLabel(f)).join(", ") || "—")}</td>
+        </tr>`,
+      )
+      .join("");
+    printLetterHtml({
+      title: `Customer profitability ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Customer profitability</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
+          new Date().toLocaleString(),
+        )}</div>
+        <table>
+          <tbody>
+            <tr><th>Customers</th><td>${esc(t.customer_count)}</td></tr>
+            <tr><th>Revenue</th><td>${esc(money(t.revenue_cents))}</td></tr>
+            <tr><th>Direct cost</th><td>${esc(money(t.direct_cost_cents))}</td></tr>
+            <tr><th>Gross margin</th><td>${esc(money(t.gross_margin_cents))}</td></tr>
+            <tr><th>Gross margin %</th><td>${esc(`${(Number(t.gross_margin_pct) || 0).toFixed(1)}%`)}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">By customer</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th style="text-align:right">Loads</th>
+              <th style="text-align:right">Revenue</th>
+              <th style="text-align:right">Direct cost</th>
+              <th style="text-align:right">Margin</th>
+              <th style="text-align:right">Margin %</th>
+              <th style="text-align:right">AR aging</th>
+              <th style="text-align:right">Days since load</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="9">No customers in range</td></tr>`}</tbody>
+        </table>
+      `,
+    });
+  }
+
   return (
     <div className="space-y-4 print:space-y-2">
       <style>{`
@@ -234,7 +298,7 @@ export function CustomerProfitabilityPage() {
         subtitle="Revenue, direct cost, and margin by customer"
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => query.data && exportCsv(query.data)}>
