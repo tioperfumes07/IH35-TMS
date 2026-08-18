@@ -1,15 +1,12 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T21:52Z
-
-## ALERT
-**OWNER SPEED** · customers CLOSED · CC-1 MUST take banking+vendors NOW
+Updated: 2026-08-18T22:00Z
 
 ## WAVE1
 | Module | Status |
 |--------|--------|
 | customers | **145/145 CLOSED** |
-| banking | 86/88 — **CC-1** reconciliation:gl_je + reverse_link |
-| vendors | 135/146 — **CC-1** ap_bill×11 |
-| drivers | 105/115 → shipping picker honesty + DriverPickerWithCreate Live (Cursor) |
+| banking | honesty #9118 (recon gl_je/reverse N/A-PRE-OP drop) — expect 88/88 after deploy |
+| vendors | shipping ap_bill×11 Live Leaves NOW |
+| drivers | residual report_issue N/A-PRE-OP + team_split reverse; #9115 honesty awaiting deploy |
 
 Live=BLOCKED
