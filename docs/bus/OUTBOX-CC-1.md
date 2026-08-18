@@ -503,3 +503,7 @@ verify:static: 27 of ~199 now closed this session. Continuing non-stop.
 CORRECTION: discovered docs/module-completion/accounting.json's real current progress is 39 of 39, not 40 of 40 as I've been writing in MODULE_PROGRESS lines all session (verify-no-money-theater's manifest cross-check caught it on this commit). Using the correct 39 of 39 going forward; not chasing down why earlier commits didn't trip the same check, out of scope for a fix-in-flight.
 
 verify:static: 28 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-18T23:56Z CC-1 | ACCT-F5453 closed (PR #9195, merged c80b2f5). Same landmine class as ACCT-F5430, same file (bills.service.ts, 7 UPDATE accounting.bills statements, 15+ operating_company_id predicates): verify-bill-display-id-stamped.mjs's own selftest reported a planted regression not detected. Two stacked bugs — the stamp-extraction regex drifted into an earlier unrelated legal_matter_id UPDATE, and the entity-scope mutation hit the FIRST operating_company_id predicate in the WHOLE FILE (an unrelated banking.bank_accounts balance UPDATE ~29KB earlier), leaving the real display_id stamp completely untouched. Tightened the extraction anchor + added a proximity lookahead to the mutation (qbo_bill_id IS NULL, unique to the real statement, confirmed via grep -c=1). Zero product-code change — real stamp was already correct.
+
+verify:static: 29 of ~199 now closed this session. Continuing non-stop.
