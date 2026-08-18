@@ -69,6 +69,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
           event.preventDefault();
           setSubmitError(null);
           if (!selectedReason || notes.trim().length < 20) return;
+          if (billable && !charge.trim()) return;
           setSubmitting(true);
           try {
             await onSubmit({
@@ -164,11 +165,13 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
             </div>
           )
         ) : null}
-        {!selectedReason || notes.trim().length < 20 ? (
+        {!selectedReason || notes.trim().length < 20 || (billable && !charge.trim()) ? (
           <p className="text-[11px] text-gray-500">
             {!selectedReason
               ? "Select a cancellation reason to continue."
-              : `Add ${20 - notes.trim().length} more character(s) of notes to enable Confirm Cancel.`}
+              : notes.trim().length < 20
+                ? `Add ${20 - notes.trim().length} more character(s) of notes to enable Confirm Cancel.`
+                : "Enter a cancellation charge amount — billable to customer requires one."}
           </p>
         ) : null}
         {submitError ? (
@@ -180,7 +183,12 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
           <Button type="button" variant="secondary" onClick={onClose}>
             Close
           </Button>
-          <Button type="submit" variant="danger" loading={submitting} disabled={!selectedReason || notes.trim().length < 20}>
+          <Button
+            type="submit"
+            variant="danger"
+            loading={submitting}
+            disabled={!selectedReason || notes.trim().length < 20 || (billable && !charge.trim())}
+          >
             {submitLabel}
           </Button>
         </div>

@@ -1156,6 +1156,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             // is approved.
             status: "approved",
             cancelled_by_user_id: authUser.uuid,
+            // ACT-F5412: this path always writes status='approved' — stamp the same actor as approver
+            // of record, matching the standalone approveCancellation() flow's provenance.
+            approved_by_user_id: authUser.uuid,
           });
           cancellationRecordId = rec.rows[0]?.id ?? null;
         }

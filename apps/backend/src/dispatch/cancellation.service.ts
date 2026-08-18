@@ -38,15 +38,21 @@ export async function writeLoadCancellationRecord(
     cancellation_charge_cents: number | null;
     status: "requested" | "approved";
     cancelled_by_user_id: string;
+    // ACT-F5412: a create-time "approved" cancellation (no owner-approval step needed, or an Owner
+    // cancelling directly) must still carry an approver of record — the same actor-provenance
+    // requirement the separate two-step approveCancellation() flow already honors. NULL for a
+    // "requested" (pending-approval) row; stamped only when status is written as 'approved' here.
+    approved_by_user_id: string | null;
   }
 ) {
   return client.query<{ id: string; status: string }>(
     `
       INSERT INTO dispatch.load_cancellations (
         operating_company_id, load_id, reason_code, reason_code_id, cancellation_notes,
-        billable_to_customer, cancellation_charge_cents, status, cancelled_by_user_id, cancelled_at
+        billable_to_customer, cancellation_charge_cents, status, cancelled_by_user_id, cancelled_at,
+        approved_by_user_id, approved_at
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now())
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10,CASE WHEN $10 IS NOT NULL THEN now() ELSE NULL END)
       ON CONFLICT (load_id) DO UPDATE
       SET reason_code = EXCLUDED.reason_code,
           reason_code_id = EXCLUDED.reason_code_id,
@@ -55,7 +61,9 @@ export async function writeLoadCancellationRecord(
           cancellation_charge_cents = EXCLUDED.cancellation_charge_cents,
           status = EXCLUDED.status,
           cancelled_by_user_id = EXCLUDED.cancelled_by_user_id,
-          cancelled_at = EXCLUDED.cancelled_at
+          cancelled_at = EXCLUDED.cancelled_at,
+          approved_by_user_id = EXCLUDED.approved_by_user_id,
+          approved_at = EXCLUDED.approved_at
       RETURNING id, status
     `,
     [
@@ -68,6 +76,7 @@ export async function writeLoadCancellationRecord(
       input.cancellation_charge_cents,
       input.status,
       input.cancelled_by_user_id,
+      input.approved_by_user_id,
     ]
   );
 }
@@ -130,6 +139,13 @@ export async function cancelLoad(
       const reason = reasonRes.rows[0];
       if (!reason) throw new Error("E_REASON_NOT_FOUND");
 
+      const resolvedBillable = input.billable_to_customer ?? reason.billable_to_customer_default;
+      // ACT-F5412: a cancellation marked billable to the customer with no charge amount silently
+      // loses the amount to charge — neither the FE nor this route previously enforced the pairing.
+      if (resolvedBillable && input.cancellation_charge_cents == null) {
+        throw new Error("E_CANCELLATION_CHARGE_REQUIRED_WHEN_BILLABLE");
+      }
+
       const pendingOwnerApproval = reason.requires_owner_approval && !isOwner(role);
       const row = await writeLoadCancellationRecord(client, {
         operating_company_id: input.operating_company_id,
@@ -137,10 +153,14 @@ export async function cancelLoad(
         reason_code: input.reason_code,
         reason_code_id: reason.id,
         cancellation_notes: input.cancellation_notes.trim(),
-        billable_to_customer: input.billable_to_customer ?? reason.billable_to_customer_default,
+        billable_to_customer: resolvedBillable,
         cancellation_charge_cents: input.cancellation_charge_cents ?? null,
         status: pendingOwnerApproval ? "requested" : "approved",
         cancelled_by_user_id: userId,
+        // ACT-F5412: stamp an approver of record whenever this path writes status='approved' directly
+        // (no owner-approval step needed, or the Owner is cancelling directly) — NULL while the
+        // cancellation is still "requested" and genuinely awaiting the separate approveCancellation().
+        approved_by_user_id: pendingOwnerApproval ? null : userId,
       });
 
       if (!pendingOwnerApproval) {
