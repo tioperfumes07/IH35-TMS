@@ -1,22 +1,21 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T12:11Z
+Updated: 2026-08-18T13:27Z
 
-## MISSION
-**Priority-14 Box4 Live climb** · all seats tipped · continuous FAST-MERGE · no idle
+## ALERT
+**CODEX OUT OF CREDITS — PARKED.** Partition redistributed.
 
 ## LIVE
-Live=BLOCKED · Box4 pre-credit ~2920/3437 · healthz `{"ok":true,"uptime_seconds":149,"version":"3a79f1b"}` · tip `c5e33dd71`
-Leaves on main: #8898 (2240–2246) · #8899 (2250–2255)
+Live=BLOCKED · healthz `{"ok":true,"uptime_seconds":182,"version":"b45b8e9"}` · tip `a6622fcca`
 
-## SEAT ORDERS (issued 2026-08-18T12:11Z)
+## SEAT ORDERS
 | Seat | Order |
 |------|--------|
-| **CC-1** | START NOW — P14 money Live (accounting→banking→factoring→settlements) + Leaves same turn |
-| **Devin-A** | START NOW — fleet then maintenance Live verify · tip ledger if no write · poll Box4 |
-| **Codex** | START NOW — P14 non-money + shared (customers/vendors/fuel/…) Leaves FAST-MERGE |
-| **CC-2** | GUARD live-verify after CC-1 money |
-| **CC-3** | Top OPEN mechanical FO |
-| **Cursor** | Continue P14 FE Leaves · picker_law next · lead ticks |
+| **Codex** | **PARKED** — no new PRs until credits |
+| **Cursor** | P14 original + **ABSORB** customers · vendors · insurance · legal · fuel Live Leaves |
+| **CC-1** | money only (accounting→banking→factoring→settlements) — do **not** take Codex FE |
+| **Devin-A** | fleet → maintenance Live only (unchanged) |
+| **CC-2** | GUARD after CC-1 money + Leaves exactness spot-check |
+| **CC-3** | mechanical FOs · guard-only on absorbed modules |
 
 ## FORBIDDEN
-EntityLink half-sweeps · OUTBOX PASS without Leaves · idle/"awaiting" · sprawl outside P14 until drained
+Idle · assign Codex work · OUTBOX PASS without Leaves · EntityLink half-sweeps

@@ -1,3 +1,16 @@
+# ★★★ HARD TIP 2026-08-18T13:27Z — CC-1 · CODEX OUT · STAY MONEY
+
+Codex is out of credits. **Do not absorb FE customers/vendors/insurance/legal/fuel** — Cursor owns those.
+
+**Your lane ONLY:** accounting · banking · factoring · settlements (+ money Reports gl_je/reverse).
+
+Keep continuous money Live Leaves + FAST-MERGE. Neon yourself. Flags OFF. No TMS→QBO.
+
+If you find a FE-only defect outside money → board OPEN + `HANDOFF=Cursor` · continue money same turn.
+
+healthz={"ok":true,"uptime_seconds":182,"version":"b45b8e9"} · tip=a6622fcca
+
+---
 # ★★★ HARD TIP 2026-08-18T12:11Z — CC-1 START NOW · DO NOT IDLE
 
 **You were waiting. That is a defect. Work starts this packet.**

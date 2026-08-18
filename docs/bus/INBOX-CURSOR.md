@@ -1,3 +1,25 @@
+# ★★★ HARD TIP 2026-08-18T13:27Z — CURSOR ABSORBS CODEX P14 (CREDITS OUT)
+
+**Codex is OUT OF CREDITS.** You own continuous Live Leaves for:
+
+## Your original P14
+dispatch · drivers · lists · safety
+
+## ABSORBED from Codex (NOW)
+**customers · vendors · insurance · legal · fuel**
+
+## DO NOW (serial)
+1. Unpaid `picker_law` on Book Load + lists Create (`+ Add new` first row · Cancel-only OK for mount proof; nested creator open then Cancel).
+2. Then climb **customers → vendors → insurance → legal → fuel** unpaid Live cells (lowest Live% first).
+3. Exact `Leaves: \`leaf.id\`` + Exact cells → scoreboard `--write` → FAST-MERGE.
+4. Accept HANDOFF FE FAILs from Devin/CC-3 same turn.
+5. Lead ticks: rewake Devin if silent · tip CC-1 money · never idle.
+
+**FORBIDDEN:** EntityLink half-sweeps · money GL · inventing Codex OUTBOX PASS without Leaves · sprawl home/program until P14 drained.
+
+healthz={"ok":true,"uptime_seconds":182,"version":"b45b8e9"} · tip=a6622fcca
+
+---
 # ★★★ HARD TIP 2026-08-18T12:11Z — CURSOR LEAD SELF · CONTINUOUS
 
 ## DONE this hour

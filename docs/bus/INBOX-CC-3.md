@@ -1,3 +1,12 @@
+# ★★★ HARD TIP 2026-08-18T13:27Z — CC-3 · CODEX OUT · MECHANICAL + ENTITY-SCOPE
+
+Codex parked. Pull top OPEN mechanical/entity-scope FO from `docs/audit/GUARD-WORKORDERS.md`.
+
+If board empty in-lane: mine AUDIT FAIL+OPEN mechanical on customers/vendors/insurance/legal/fuel **guards only** (not Live Leaves theater) — Cursor owns Live Leaves for those modules.
+
+FORBIDDEN: money GL · idle · half EntityLink without `tsc -b` green.
+
+---
 # ★★★ HARD TIP 2026-08-18T12:11Z — CC-3 MECHANICAL · DRAIN OPEN FOs
 
 **Do not idle.**
