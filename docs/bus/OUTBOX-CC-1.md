@@ -1,9 +1,11 @@
-CC-1 | P0 real-board-fixes | PASS | shipped 4 of 6 P0 items | Neon yourself | NEXT=LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS
+CC-1 | P0 real-board-fixes | PASS | shipped 6 of 6 P0 items | Neon yourself | NEXT=P1 SAMPLE-tagged live scenarios S1-S12
 
-2026-08-18T03:31Z CC-1 | Pivoted off P14 Box4 matrix-walking per owner directive ("stop re-poll-only matrix theater") onto the real P0 board list. Progress:
-1. CLS-MONEY-KPI-FAKE-ZERO-ON-FAILURE — re-verified: already fixed+guarded on main (Bills/Invoices/Settlements/Expenses/BillPayments/Payments all gate on isError, guard verify-money-kpi-strip-no-fake-zero-on-error.mjs PASS). Closed stale board row, no code change (PR #8765).
-2. LV-BANKING-STATUS-STRIP-MIXES-ACCOUNT-SCOPES — re-verified: already fixed on main (both Transactions/Uncategorized now derive from the same entity-scoped all-accounts population in banking.routes.ts). Live-confirmed on /banking: 245/165/165 all agree. Closed stale board row (PR #8765).
-3. LV-G18-INERT-ON-EXPENSE-LINES — REAL FIX shipped (ACCT-F5420, PR #8770): paired backend (line_category derivation + load_id + load_exemption_reason in the same INSERT) with FE (corrected G18 taxonomy regex, required no-load-reason field). Rehearsed on Neon both directions. New guard verify-step 3825, mutation-tested.
-4. Expense actor backfill — already shipped earlier this session (PR #8694). Audit trigger remainder — REAL FIX shipped (ACCT-F5421, PR #8776): 55 remaining unaudited tables in accounting/banking/driver_finance now carry audit.tg_audit_row(), closing class coverage to 133/134. Rehearsed on a disposable Neon branch, idempotency proven (0 duplicates on 2nd run), branch deleted after use.
+2026-08-18T03:37Z CC-1 | All 6 P0 items closed:
+1. CLS-MONEY-KPI-FAKE-ZERO-ON-FAILURE — already fixed+guarded on main, closed stale board row (PR #8765).
+2. LV-BANKING-STATUS-STRIP-MIXES-ACCOUNT-SCOPES — already fixed on main, live-confirmed 245/165/165 all agree (PR #8765).
+3. LV-G18-INERT-ON-EXPENSE-LINES — REAL FIX (ACCT-F5420, PR #8770): paired backend line_category derivation + load_id + load_exemption_reason, plus FE corrected taxonomy regex + required no-load-reason field. Guard verify-step 3825 mutation-tested.
+4. Expense actor backfill (earlier this session, PR #8694) + audit trigger remainder — REAL FIX (ACCT-F5421, PR #8776): 55 tables closed, class coverage 133/134, rehearsed on disposable Neon branch, idempotency proven.
+5. LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS — already fixed (PR #8475), re-verified live: vitest 7/7, T149 shows single coherent flag (PR #8782).
+6. Built-floor cells (trk_bulk_register:gl_je, prepaid modal.create:gl_je, auto_deduction_policies:liability) — already honesty-dropped from Required by commit d785abe0d, re-verified via live matrix API all 3 confirmed (PR #8782).
 
-Moving to item 5 (LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS) next, then the built-floor cells (trk_bulk_register:gl_je / prepaid modal.create:gl_je / auto_deduction_policies:liability), then the P1 SAMPLE-tagged live scenarios if time remains. No QBO backfill, no invented FKs, no reserve/PP&E touches, no flag flips without a chat DECISION — staying inside the owner's explicit boundaries.
+Moving to P1: SAMPLE-tagged live scenarios (Bill→pay→void; Expense; Invoice send→GL; Receive payment; Manual JE; UUID-only voids; Bank categorize→JE; Vendor AP/Customer invoice residual cells; Settlement load label if still "not visible"; AR/AP aging honesty). Staying inside owner boundaries: no QBO backfill, no invented load FKs, no reserve/PP&E touches, no flag flips without a chat DECISION, no AR credit-memo feature build.
