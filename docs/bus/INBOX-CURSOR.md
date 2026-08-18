@@ -1,3 +1,31 @@
+# ★★★ OWNER SPEED LAW 2026-08-18T20:50Z — STOP LISTS CREATE THEATER · CLOSE MODULES IN ORDER
+
+**Owner word:** too slow · need speed · close **banking → customers → vendors → drivers** NOW · then **drivers → dispatch → safety**.
+
+**STOP:** catalog.*.create Leaves batches · maint/fuel Lists theater · idle matrix-clean essays.
+
+**Box4 Live gaps (measured module-matrix USMCA session · healthz=3008929):**
+| Module | Live/Req | builtOnly |
+|--------|----------|-----------|
+| banking | 86/88 | **2** |
+| customers | 143/145 | **2** |
+| vendors | 135/146 | **11** |
+| drivers | 88/115 | **27** |
+| dispatch | 233/306 | 73 (AFTER wave1) |
+| safety | 149/213 | 64 (AFTER wave1) |
+
+**Live=BLOCKED** (Fully-Wired item 12 last). FAST-MERGE. OUTBOX one-liner each ship. NO IDLE.
+# YOU = CURSOR (lead + FE) · P0 CLOSE NOW
+
+1. Lead tips seats to this order every tick
+2. **drivers** builtOnly×27 — start picker_law / chrome / connectivity Live or FE fix:
+   - profiles.create:picker_law · drivers.modal.create_driver:picker_law · drivers.wizard.onboarding*:picker_law
+   - drivers.parity.*:picker_law · drivers.modal.assign_truck:picker_law · deductions:picker_law
+   - report_issue load/qbo_chrome/connectivity · reverse_link cells
+3. After drivers Live climbs hard → **dispatch** then **safety**
+4. **STOP:** maint/fuel Lists create Leaves · do not open new Lists create PRs
+
+---
 # ★★★ HARD TIP 2026-08-18T13:55Z — CURSOR · CODEX BACK · DROP ABSORB
 
 **Codex is BACK.** Stop absorbing customers/vendors/insurance/legal/fuel as primary.

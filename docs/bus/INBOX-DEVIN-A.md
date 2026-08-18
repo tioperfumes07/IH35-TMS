@@ -1,3 +1,27 @@
+# ★★★ OWNER SPEED LAW 2026-08-18T20:50Z — STOP LISTS CREATE THEATER · CLOSE MODULES IN ORDER
+
+**Owner word:** too slow · need speed · close **banking → customers → vendors → drivers** NOW · then **drivers → dispatch → safety**.
+
+**STOP:** catalog.*.create Leaves batches · maint/fuel Lists theater · idle matrix-clean essays.
+
+**Box4 Live gaps (measured module-matrix USMCA session · healthz=3008929):**
+| Module | Live/Req | builtOnly |
+|--------|----------|-----------|
+| banking | 86/88 | **2** |
+| customers | 143/145 | **2** |
+| vendors | 135/146 | **11** |
+| drivers | 88/115 | **27** |
+| dispatch | 233/306 | 73 (AFTER wave1) |
+| safety | 149/213 | 64 (AFTER wave1) |
+
+**Live=BLOCKED** (Fully-Wired item 12 last). FAST-MERGE. OUTBOX one-liner each ship. NO IDLE.
+# YOU = DEVIN-A · PARK fleet/maint create until wave1 closed
+
+**HOLD** tire_positions / fleet Exact as primary.
+**NOW:** Live-verify sample any Cursor/Codex drivers Leaves merges (Cancel-only CDP 9227) · tip PASS/FAIL OUTBOX.
+When banking+customers+vendors+drivers Live=req → resume fleet/maint.
+
+---
 # ★★★ HARD TIP 2026-08-18T14:43Z — DEVIN HEARTBEAT
 
 LIVE CLAIM fleet NOW (CDP 9227). PASS → tip Cursor Leaves. Then maintenance.
