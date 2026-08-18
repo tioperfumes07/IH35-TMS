@@ -84,6 +84,28 @@ const BASELINE = new Set([
   "202612330000_void_state_authoritative_bills_invoices.sql",
 ]);
 
+/**
+ * MARKER-SYNC-ONLY — applied, immutable migrations whose UPDATE assigns voided_at but creates NO
+ * new void and leaves NO unreversed residue, so listing them in BASELINE (which the comment above
+ * explicitly reserves for REAL, owner-gated residue) would misrepresent them as offenders they are
+ * not. Each entry here requires the SAME manual review BASELINE does — reading the full file and
+ * confirming its UPDATE is scoped by `WHERE status = 'void'` (or equivalent) with no EARLIER
+ * statement in the same file that could have just flipped a live row to 'void', so the WHERE clause
+ * cannot be gamed into laundering a genuine new void through this exemption.
+ *
+ * ACCT-F5436 (2026-08-18): 202612480900_bills_sync_void_markers.sql. Its ONLY
+ * data-mutating statement is `UPDATE accounting.bills SET voided_at = COALESCE(voided_at,
+ * revoked_at), ... WHERE status = 'void' AND (voided_at IS NULL OR revoked_at IS NULL)` — it only
+ * fills in whichever of the bill's TWO existing void-marker columns (voided_at/revoked_at) was left
+ * NULL by whichever writer voided the row, on rows that were ALREADY status='void' before this
+ * migration ran. It touches no amount_cents/paid_cents/total_amount, creates no row, and cannot
+ * un-void or re-void anything (the WHERE clause requires status='void' already). Any reversal that
+ * SHOULD have posted belongs to the ORIGINAL voiding writer — for the 4 rows this backfill actually
+ * reaches (per the migration's own measured LIVE PROOF), that writer is 202612230000, already in
+ * BASELINE above with its residue owner-gated there. This migration adds zero new residue.
+ */
+const MARKER_SYNC_ONLY = new Set(["202612480900_bills_sync_void_markers.sql"]);
+
 if (process.argv.includes("--selftest")) {
   const failures = [];
   const voidSql = "UPDATE accounting.bills b\n SET voided_at = now(), void_reason = 'x'\n WHERE 1=1;";
@@ -126,15 +148,30 @@ if (process.argv.includes("--selftest")) {
     failures.push("the two REAL baselined offenders are not detected with an empty baseline");
   }
 
+  // The marker-sync-only real file must ALSO be detected as an offender with an empty exemption
+  // set (proves the exemption is load-bearing) and cleared once MARKER_SYNC_ONLY is applied.
+  for (const n of MARKER_SYNC_ONLY) {
+    const p = path.join(MIGRATIONS, n);
+    if (!fs.existsSync(p)) continue;
+    const entry = [{ name: n, sql: fs.readFileSync(p, "utf8") }];
+    if (collectProblems(entry, none).length !== 1) {
+      failures.push(`${n} was not detected with an empty exemption set — exemption would be decorative`);
+    }
+    if (collectProblems(entry, MARKER_SYNC_ONLY).length !== 0) {
+      failures.push(`${n} was still reported once MARKER_SYNC_ONLY is applied`);
+    }
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 9/9 (detection, non-financial + status-only + commented-out correctly ignored, ` +
+    `${LABEL} SELFTEST OK — detection, non-financial + status-only + commented-out correctly ignored, ` +
       `defect verbatim caught, baseline honoured, exemption honoured, real reversal honoured, both REAL ` +
-      `offenders detected against an empty baseline)`
+      `BASELINE offenders detected against an empty baseline, the MARKER_SYNC_ONLY entry detected ` +
+      `against an empty exemption set and cleared once applied`
   );
   process.exit(0);
 }
@@ -145,7 +182,7 @@ const files = fs.existsSync(MIGRATIONS)
       .filter((f) => f.endsWith(".sql"))
       .map((f) => ({ name: f, sql: fs.readFileSync(path.join(MIGRATIONS, f), "utf8") }))
   : [];
-const problems = collectProblems(files, BASELINE);
+const problems = collectProblems(files, new Set([...BASELINE, ...MARKER_SYNC_ONLY]));
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} migration(s) void without reversing:`);
   for (const p of problems) console.error("  ✗ " + p);
@@ -153,5 +190,6 @@ if (problems.length) {
 }
 console.log(
   `${LABEL} OK — no NEW migration voids a financial row without posting reversals or declaring ` +
-    `VOID-REVERSAL-EXEMPT (${BASELINE.size} known offenders baselined; their residue is owner-gated).`
+    `VOID-REVERSAL-EXEMPT (${BASELINE.size} known offenders baselined, their residue owner-gated; ` +
+    `${MARKER_SYNC_ONLY.size} marker-sync-only migration(s) reviewed and confirmed to add no new residue).`
 );
