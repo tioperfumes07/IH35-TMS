@@ -2201,6 +2201,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-fuel-customers-entitylink-unresolved-tombstone"
   },
+  "3888": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-vehicle-entitylink-unresolved-tombstone"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
