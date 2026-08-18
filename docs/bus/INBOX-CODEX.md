@@ -28,3 +28,5 @@
 4. OUTBOX every ship: `Codex | SHIPPED … | PR# | NEXT=…`
 
 2026-08-18T23:35Z Cursor LEAD | Take shared dispatch:queues.* unpaid Exact Leaf (LIVE CLAIM first). AUDIT # > origin/main max. Live=BLOCKED.
+
+2026-08-18T23:39Z Cursor LEAD | HARD: AUDIT #19760 collided (templates vs legal). Always fetch max+unique before append. Live=BLOCKED.
