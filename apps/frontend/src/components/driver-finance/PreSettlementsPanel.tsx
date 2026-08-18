@@ -51,7 +51,25 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
                 id={settlement.id}
                 label={`${formatDateUS(settlement.period_start)} – ${formatDateUS(settlement.period_end)}`}
               />
-              {settlement.load_count > 0 ? (
+              {/* P14 settlements load reverse-link: real per-load EntityLinks when the ids are
+                  present (current API), falling back to the honest plain count if an older cached
+                  response still only carries load_count. */}
+              {(settlement.load_ids ?? []).length > 0 ? (
+                <>
+                  <span className="text-gray-400">·</span>
+                  {(settlement.load_ids ?? []).map((id, idx) => (
+                    <EntityLink
+                      key={id}
+                      kind="load"
+                      id={id}
+                      label={
+                        (settlement.load_ids?.length ?? 0) > 1 ? `load #${idx + 1}` : "load →"
+                      }
+                      className="text-xs text-gray-500 hover:underline"
+                    />
+                  ))}
+                </>
+              ) : settlement.load_count > 0 ? (
                 <>
                   <span className="text-gray-400">·</span>
                   <span className="text-xs text-gray-500">
