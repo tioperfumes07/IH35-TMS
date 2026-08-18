@@ -1,19 +1,10 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T13:37Z
-
-## ACTIVE SEATS (ONLY THREE)
-| Seat | Lane |
-|------|------|
-| **Cursor** | Lead + FE Live Leaves: dispatch/drivers/lists/safety **+** absorbed Codex (customers/vendors/insurance/legal/fuel) |
-| **Devin-A** | fleet → maintenance Live verify only (CDP 9227) · tip Cursor for Leaves |
-| **CC-1** | money: accounting → banking → factoring → settlements |
-
-## PARKED / NOT IN WAR
-**Codex** — out of credits · no new work  
-**CC-2 / Cascade** — not assigned this war (do not wait on them)
-
+Updated: 2026-08-18T13:43Z
+## MODE
+CONTINUOUS AUTO · FAST-MERGE 4min · Live=BLOCKED
+## ACTIVE (ONLY 3)
+Cursor=FE Live (P14+absorbed Codex) · Devin=fleet→maint verify · CC-1=money
+## PARKED
+Codex (credits) · no CC-2
 ## LIVE
-Live=BLOCKED · healthz `{"ok":true,"uptime_seconds":408,"version":"d2ef6fd"}` · tip `708c52230`
-
-## DEVIN ORDER
-HARD TIP in INBOX-DEVIN-A — LIVE CLAIM fleet NOW · PASS→tip Cursor Leaves · STARVED→maintenance
+healthz={"ok":true,"uptime_seconds":183,"version":"708c522"} tip=9b5e58884
