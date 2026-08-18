@@ -2202,7 +2202,6 @@
       "sub": "+ Create — Payment Terms",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2224,7 +2223,6 @@
       "sub": "+ Create — Posting Templates",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2419,7 +2417,6 @@
       "sub": "+ Create — Currency Codes",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -7901,6 +7898,27 @@
           "id": "catalog.accounting.currency_codes.create",
           "removed": ["picker_law"],
           "reason": "createCompanyScopedCatalogRoutes generic factory — zero FK/metadata support in the request contract, nothing to pick"
+        }
+      ]
+    },
+    "picker_law_column_2026_08_18_accounting_remainder_batch3": {
+      "finding": "CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM",
+      "note": "Third and final honesty-drop batch of the same sweep (see _remainder and _remainder_batch2). qbo_categories.create's backend contract (apps/backend/src/catalogs/accounting/factory.ts:registerQboCategoriesCatalogRoutes) is {code, display_name, description, metadata, is_active, sort_order} — zero FK columns. qbo_bulk_link.create is a category error, not a flat-catalog case: QBOBulkLinkPage.tsx is a QBO-vendor/class BULK-MATCHING wizard (getQboUnlinkedEntities/postQboBulkLink) that maps existing TMS drivers/assets to EXISTING QBO vendor/class records via QboCombobox — it never creates a new TMS catalog row at all, so 'picker_law' (a contract about creating NEW catalog rows inline) does not apply to this leaf's actual feature. abandonment_defaults.create is a single-row settings upsert (PUT /api/v1/abandonment-defaults, driver_finance.abandonment_defaults) — towing amount / rate-per-mile / premium % / threshold, all plain number inputs, not a list-of-rows catalog with a create action at all. Also confirms (not dropped, no code change needed — informational): journal_entry_types.create is ALREADY code-compliant via components/accounting/JournalEntryTypePicker.tsx's real inline '+ Add new journal entry type' Combobox+ParityDrawer flow (its owned_surface_paths pointer, unlike payment_methods.create's, does NOT contradict — it confirms); posting_templates.create is ALREADY code-compliant via PostingTemplateModal.tsx's 3 ReferenceSelect usages (debit/credit account, class); items.create is ALREADY code-compliant via ItemEditorModal.tsx's 3 ReferenceSelect usages (income/expense account, class). These three stay Required — a real picker already exists, they just need a live-proof pass, not a code fix or an honesty drop.",
+      "drops": [
+        {
+          "id": "catalog.accounting.qbo_categories.create",
+          "removed": ["picker_law"],
+          "reason": "registerQboCategoriesCatalogRoutes (factory.ts) — {code, display_name, description, metadata, is_active, sort_order}, zero FK columns"
+        },
+        {
+          "id": "catalog.accounting.qbo_bulk_link.create",
+          "removed": ["picker_law"],
+          "reason": "QBOBulkLinkPage.tsx is a bulk vendor/class-matching wizard against EXISTING QBO records (QboCombobox, no create capability) — never creates a new TMS catalog row, so picker_law's inline-create contract does not apply to this leaf's real feature"
+        },
+        {
+          "id": "catalog.accounting.abandonment_defaults.create",
+          "removed": ["picker_law"],
+          "reason": "single-row settings upsert (PUT /api/v1/abandonment-defaults) — 4 plain number inputs, not a list-of-rows catalog with a create action"
         }
       ]
     }
