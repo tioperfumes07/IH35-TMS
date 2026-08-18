@@ -154,6 +154,14 @@ export function isPostingFlag(flagKey: string): boolean {
 // ignored (treated OFF). Known keys are enumerated; the pattern fallback auto-covers any future flag
 // named with the `_PER_ENTITY_ONLY` convention suffix.
 export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
+  // ACCT-F5322/ORPH-003 (202612640000): gates read/write access to accounting.vendor_payment_methods
+  // (the vendor-side counterpart to driver_finance.driver_payment_methods) from the vendor detail
+  // surface. Master data only today (no consumer route wired yet), but the migration seeds it
+  // explicitly "per-entity owner-gated" — a global default/rollout enable would open vendor
+  // bank/payment-method read/write for EVERY entity (incl. USMCA / TRK) the moment a consumer route
+  // ships, bypassing the entity-by-entity owner flip the migration's own comment promises.
+  // Per-entity override only; default OFF.
+  "VENDOR_PAYMENT_METHODS_ENABLED",
   // DRIVER-PAYMENT-METHODS: repoints the settlement payment path to resolve a driver's default ACH/check
   // method from driver_finance.driver_payment_methods (instead of the non-existent mdata.drivers token
   // columns). It changes real payment behavior (ACH becomes possible where it always failed), so it must
