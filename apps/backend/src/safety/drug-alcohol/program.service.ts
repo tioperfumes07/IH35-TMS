@@ -94,8 +94,8 @@ export async function listEnrollments(
       FROM safety.da_program_enrollments e
       LEFT JOIN mdata.drivers d
         ON d.id = e.driver_uuid
-       AND d.operating_company_id = e.operating_company_id
-      WHERE e.operating_company_id = $1::uuid
+       AND d.operating_company_id::text = e.operating_company_id::text
+      WHERE e.operating_company_id::text = $1::uuid::text
         AND ($2 = false OR e.is_active = true)
       ORDER BY e.enrolled_at DESC, e.created_at DESC
     `,
@@ -114,7 +114,7 @@ export async function deactivateEnrollment(
       UPDATE safety.da_program_enrollments
       SET is_active = false
       WHERE uuid = $1::uuid
-        AND operating_company_id = $2::uuid
+        AND operating_company_id::text = $2::uuid::text
         AND is_active = true
       RETURNING uuid::text
     `,
@@ -137,7 +137,7 @@ export async function scheduleTest(
     `
       INSERT INTO safety.da_test_records
         (operating_company_id, driver_uuid, test_type, test_kind, scheduled_at, result)
-      SELECT $1::uuid, d.id, $3, $4, $5::timestamptz, 'pending'
+      SELECT $1, d.id, $3, $4, $5::timestamptz, 'pending'
       FROM mdata.drivers d
       WHERE d.id = $2::uuid
         AND d.operating_company_id = $1::uuid
@@ -169,7 +169,7 @@ export async function listTestRecords(
   operatingCompanyId: string,
   options: { driverUuid?: string; result?: TestResult; limit?: number } = {}
 ): Promise<DaTestRecord[]> {
-  const conditions: string[] = ["t.operating_company_id = $1::uuid"];
+  const conditions: string[] = ["t.operating_company_id::text = $1::uuid::text"];
   const values: unknown[] = [operatingCompanyId];
   let idx = 2;
 
@@ -205,7 +205,7 @@ export async function listTestRecords(
       FROM safety.da_test_records t
       LEFT JOIN mdata.drivers d
         ON d.id = t.driver_uuid
-       AND d.operating_company_id = t.operating_company_id
+       AND d.operating_company_id::text = t.operating_company_id::text
       WHERE ${where}
       ORDER BY t.created_at DESC
       ${limitClause}
@@ -233,7 +233,7 @@ export async function recordResult(
         chain_of_custody_id = COALESCE($4, chain_of_custody_id),
         collected_at        = COALESCE($5::timestamptz, collected_at)
       WHERE uuid = $1::uuid
-        AND operating_company_id = $2::uuid
+        AND operating_company_id::text = $2::uuid::text
       RETURNING
         uuid::text,
         operating_company_id,
@@ -271,7 +271,7 @@ export async function flagPositive(
         result            = 'positive',
         sap_referral_uuid = COALESCE($3::uuid, sap_referral_uuid)
       WHERE uuid = $1::uuid
-        AND operating_company_id = $2::uuid
+        AND operating_company_id::text = $2::uuid::text
       RETURNING
         uuid::text,
         operating_company_id,
