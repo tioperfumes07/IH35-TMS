@@ -186,8 +186,9 @@ export function CustomersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const qboAvailable = selectedCompany?.code === "TRANSP";
   const [search, setSearch] = useState("");
   // BANK-SORT-ROLLOUT-CRM — name sort persists in ?sort=name&dir= via shared useUrlSort
   // (same contract as accounting CustomersListView / #2609). Default (no params) = A→Z.
@@ -580,7 +581,7 @@ export function CustomersPage() {
           </div>
         }
       />
-      {companyId ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
+      {companyId && qboAvailable ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
       {/* §7 RESTORE — segment tabs, additive. Wired to the EXISTING `listStatus` state, which already filters
           the roster in `visibleCustomers`, so no filtering logic is added and no URL behaviour changes: this
           page's `?tab=` param stays owned by the customer DETAIL tabs, untouched. */}
