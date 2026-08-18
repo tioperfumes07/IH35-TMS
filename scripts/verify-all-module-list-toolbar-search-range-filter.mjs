@@ -85,6 +85,18 @@ export function verify(source) {
   for (const token of ["statute", "hearing", "sol", "|at|"]) {
     need(CORE.toolbar, token, `UniversalListToolbar DATE_FIELD must retain ${token} (Legal SOL range)`);
   }
+  // LV-RANGE-PANEL-FALSE-EMPTY-BEFORE-FIELD — "no date or amount column" only when
+  // rangeColumns.length === 0; otherwise prompt to choose a field (Legal SOL still listed).
+  need(
+    CORE.toolbar,
+    "rangeColumns.length === 0",
+    "UniversalListToolbar must gate the no-column empty copy on rangeColumns.length === 0",
+  );
+  need(
+    CORE.toolbar,
+    "Choose a field above to set From/To.",
+    "UniversalListToolbar must prompt Choose a field when columns exist but none selected",
+  );
   for (const file of [CORE.dataTable, CORE.listView, CORE.parityTable]) {
     need(file, "<UniversalListToolbar", `${file} must render UniversalListToolbar`);
     need(file, "applyUniversalListFilters", `${file} must apply toolbar filters to rows`);
