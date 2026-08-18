@@ -20,6 +20,9 @@ import {
   type AccountingBalanceSheetLine,
   type AccountingTrialBalanceRow,
 } from "../../api/reports";
+import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 // FIN-19 — Finance-Hub financial statements (P&L / Balance Sheet / Trial Balance).
 // READ-ONLY: every fetch is a GET against the existing accounting report endpoints; nothing
@@ -302,6 +305,157 @@ export function FinancialStatementsPage() {
 
   const usesRange = tab === "pl" || tab === "tb";
 
+  function printLetter() {
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const basisLabel = basis === "cash" ? "Cash" : "Accrual";
+    const printed = new Date().toLocaleString();
+
+    if (tab === "pl") {
+      const data = plQuery.data;
+      if (!data) return;
+      const sectionHtml = (title: string, lines: AccountingProfitLossLine[], total: number) => {
+        const rows = lines
+          .map(
+            (line) => `<tr>
+            <td>${esc(line.account_code || "—")}</td>
+            <td>${esc(line.account_name || "—")}</td>
+            <td>${esc(formatAccountTypeLabel(line.account_type))}</td>
+            <td style="text-align:right">${esc(money(line.amount))}</td>
+          </tr>`,
+          )
+          .join("");
+        return `
+        <h1 style="margin-top:16px">${esc(title)}</h1>
+        <table>
+          <thead><tr><th>Account #</th><th>Account</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>
+            ${rows || `<tr><td colspan="4">No rows</td></tr>`}
+            <tr><th colspan="3">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+          </tbody>
+        </table>`;
+      };
+      printLetterHtml({
+        title: `Profit & loss ${applied.start}_${applied.end}`,
+        bodyHtml: `
+        <h1>Profit &amp; loss</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · ${esc(
+          basisLabel,
+        )} · printed ${esc(printed)}</div>
+        <table>
+          <tbody>
+            <tr><th>Revenue total</th><td>${esc(money(data.revenue.total))}</td></tr>
+            <tr><th>Gross profit</th><td>${esc(money(data.gross_profit))}</td></tr>
+            <tr><th>Net income</th><td>${esc(money(data.net_income))}</td></tr>
+          </tbody>
+        </table>
+        ${sectionHtml("Revenue", plRevenue, data.revenue.total)}
+        ${sectionHtml("Cost of goods sold", plCogs, data.cogs.total)}
+        ${sectionHtml("Operating expenses", plExpenses, data.operating_expenses.total)}
+      `,
+      });
+      return;
+    }
+
+    if (tab === "bs") {
+      const data = bsQuery.data;
+      if (!data) return;
+      const sectionHtml = (title: string, lines: AccountingBalanceSheetLine[], total: number) => {
+        const rows = lines
+          .map(
+            (line) => `<tr>
+            <td>${esc(line.account_code || "—")}</td>
+            <td>${esc(line.account_name || "—")}</td>
+            <td style="text-align:right">${esc(money(line.amount))}</td>
+          </tr>`,
+          )
+          .join("");
+        return `
+        <h1 style="margin-top:16px">${esc(title)}</h1>
+        <table>
+          <thead><tr><th>Account #</th><th>Account</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>
+            ${rows || `<tr><td colspan="3">No rows</td></tr>`}
+            <tr><th colspan="2">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+          </tbody>
+        </table>`;
+      };
+      printLetterHtml({
+        title: `Balance sheet as of ${appliedAsOf}`,
+        bodyHtml: `
+        <h1>Balance sheet</h1>
+        <div class="meta">As of ${esc(formatDateUS(appliedAsOf))} · ${esc(basisLabel)} · printed ${esc(printed)}</div>
+        <table>
+          <tbody>
+            <tr><th>Total assets</th><td>${esc(money(data.assets.total))}</td></tr>
+            <tr><th>Total liabilities &amp; equity</th><td>${esc(money(data.total_liabilities_and_equity))}</td></tr>
+            <tr><th>Status</th><td>${esc(data.balanced ? "Balanced" : "Out of balance")}</td></tr>
+          </tbody>
+        </table>
+        ${sectionHtml("Assets", bsAssets, data.assets.total)}
+        ${sectionHtml("Liabilities", bsLiabilities, data.liabilities.total)}
+        ${sectionHtml("Equity", bsEquity, data.equity.total)}
+        <table>
+          <tbody>
+            <tr><th>Current year earnings</th><td>${esc(money(data.equity.current_year_earnings))}</td></tr>
+          </tbody>
+        </table>
+      `,
+      });
+      return;
+    }
+
+    const data = tbQuery.data;
+    if (!data) return;
+    const rowsHtml = tbRows
+      .map(
+        (row) => `<tr>
+          <td>${esc(row.account_code || "—")}</td>
+          <td>${esc(row.account_name || "—")}</td>
+          <td>${esc(formatAccountTypeLabel(row.account_type))}</td>
+          <td style="text-align:right">${esc(money(row.total_debits))}</td>
+          <td style="text-align:right">${esc(money(row.total_credits))}</td>
+          <td style="text-align:right">${esc(money(row.net_balance))}</td>
+        </tr>`,
+      )
+      .join("");
+    const s = data.summary;
+    printLetterHtml({
+      title: `Trial balance ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Trial balance</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · ${esc(
+          basisLabel,
+        )} · printed ${esc(printed)}</div>
+        <table>
+          <tbody>
+            <tr><th>Total debits</th><td>${esc(money(s?.grand_total_debits ?? 0))}</td></tr>
+            <tr><th>Total credits</th><td>${esc(money(s?.grand_total_credits ?? 0))}</td></tr>
+            <tr><th>Status</th><td>${esc(s?.balanced ? "Balanced" : "Out of balance")}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:20px">Accounts</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Account #</th><th>Account</th><th>Type</th>
+              <th style="text-align:right">Debits</th>
+              <th style="text-align:right">Credits</th>
+              <th style="text-align:right">Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml || `<tr><td colspan="6">No rows</td></tr>`}
+          </tbody>
+        </table>
+      `,
+    });
+  }
+
   function exportCurrentCsv() {
     if (tab === "pl" && plQuery.data) {
       const rows: string[][] = [["Section", "Account #", "Account", "Type", "Amount (USD)"]];
@@ -436,7 +590,14 @@ export function FinancialStatementsPage() {
           <Button size="sm" variant="secondary" onClick={exportCurrentCsv}>
             Export CSV
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => window.print()}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={printLetter}
+            disabled={
+              (tab === "pl" && !plQuery.data) || (tab === "bs" && !bsQuery.data) || (tab === "tb" && !tbQuery.data)
+            }
+          >
             Print
           </Button>
         </div>
