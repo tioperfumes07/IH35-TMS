@@ -172,7 +172,18 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
-            ) AS load_count
+            ) AS load_count,
+            (
+              -- P14 settlements load reverse-link: same COALESCE/JOIN rule as load_count directly
+              -- above (never let the two drift apart — see that comment for the ACCT-F275 history),
+              -- just returning the actual ids instead of counting them, so the FE can render a real
+              -- EntityLink per covered load instead of a plain "N load(s)" count.
+              SELECT array_agg(DISTINCT COALESCE(db.load_id, sl.load_id))
+              FROM driver_finance.settlement_lines sl
+              LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              WHERE sl.settlement_id = s.id
+                AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+            ) AS load_ids
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE ${where.join(" AND ")}
@@ -190,6 +201,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             ...row,
             display_id: row.display_id ?? null,
             load_count: Number(row.load_count ?? 0),
+            load_ids: Array.isArray(row.load_ids) ? (row.load_ids as unknown[]).map(String) : [],
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
             // LINK-F5187: debt.source_liabilities already carries the real driver_finance.driver_liabilities
@@ -272,7 +284,18 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
-            ) AS load_count
+            ) AS load_count,
+            (
+              -- P14 settlements load reverse-link: same COALESCE/JOIN rule as load_count directly
+              -- above (never let the two drift apart — see that comment for the ACCT-F275 history),
+              -- just returning the actual ids instead of counting them, so the FE can render a real
+              -- EntityLink per covered load instead of a plain "N load(s)" count.
+              SELECT array_agg(DISTINCT COALESCE(db.load_id, sl.load_id))
+              FROM driver_finance.settlement_lines sl
+              LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              WHERE sl.settlement_id = s.id
+                AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+            ) AS load_ids
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE ${where.join(" AND ")}
@@ -288,6 +311,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             ...row,
             display_id: row.display_id ?? null,
             load_count: Number(row.load_count ?? 0),
+            load_ids: Array.isArray(row.load_ids) ? (row.load_ids as unknown[]).map(String) : [],
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
             // LINK-F5187: same fix as the company-wide list above — thread the real liability ids

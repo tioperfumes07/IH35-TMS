@@ -14,6 +14,8 @@ export type SettlementListRow = {
   status: SettlementStatus;
   /** Distinct loads linked via settlement_lines → driver_bills.load_id */
   load_count: number;
+  /** P14 settlements load reverse-link: the actual ids behind load_count (same COALESCE/JOIN rule). */
+  load_ids?: string[];
   gross_pay: number;
   deductions_total: number;
   net_pay: number;
