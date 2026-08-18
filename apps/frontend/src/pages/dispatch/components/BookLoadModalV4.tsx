@@ -185,7 +185,8 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated: () => void;
+  /** Optional created load identity so nested EntityPicker callers can auto-select (picker law R=W). */
+  onCreated: (created?: { id: string; label?: string }) => void;
   /** B21-D7 OCR queue convert — applies template JSON at modal open (integration seam only). */
   templatePrefillJson?: Record<string, unknown> | null;
   /** Block 7 — when set, the wizard opens in EDIT mode: prefilled from this load, Save → guarded PATCH. */
@@ -278,6 +279,7 @@ export function BookLoadModalV4({
   // response. Same shape as the defect this file already fixed one branch above: an outcome asserted from
   // local state. Carrying the status forward is what lets the advisory path tell the truth too.
   const [advisoryServerStatus, setAdvisoryServerStatus] = useState<string | null>(null);
+  const [advisoryCreatedLoad, setAdvisoryCreatedLoad] = useState<{ id: string; label?: string } | null>(null);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
   const [creditLimitBlock, setCreditLimitBlock] = useState<{ exposure_cents: number; limit_cents: number; credit_limit_source: string | null; can_override: boolean } | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
@@ -693,7 +695,7 @@ export function BookLoadModalV4({
             "info"
           );
         }
-        onCreated();
+        onCreated({ id: editLoadId, label: editLoad?.load_number ? String(editLoad.load_number) : undefined });
         onClose();
       } catch (error) {
         const data = error instanceof ApiError ? ((error.data as Record<string, unknown>) ?? {}) : {};
@@ -889,6 +891,9 @@ export function BookLoadModalV4({
         : [];
       if (warnings.length > 0 && saveMode === "book_dispatch") {
         setAdvisoryServerStatus(serverStatusOf(payload));
+        const createdId = String((payload as { id?: string }).id ?? "");
+        const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
+        setAdvisoryCreatedLoad(createdId ? { id: createdId, label: createdLabel } : null);
         setPendingCloseAfterAdvisory(true);
         setGateBanner({
           type: "advisory",
@@ -912,7 +917,9 @@ export function BookLoadModalV4({
           "info"
         );
       }
-      onCreated();
+      const createdId = String((payload as { id?: string }).id ?? "");
+      const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
+      onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
@@ -1188,7 +1195,8 @@ export function BookLoadModalV4({
                         `${bookLoadToastMessage("book_dispatch", advisoryServerStatus)} · maintenance advisory`,
                         bookLoadToastTone("book_dispatch", advisoryServerStatus),
                       );
-                      onCreated();
+                      onCreated(advisoryCreatedLoad ?? undefined);
+                      setAdvisoryCreatedLoad(null);
                       setPendingCloseAfterAdvisory(false);
                       finalizeBookLoadClose();
                     }}

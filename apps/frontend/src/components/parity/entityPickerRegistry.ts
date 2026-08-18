@@ -274,11 +274,9 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     writeEndpoint: "POST /api/v1/mdata/loads",
     entityScoped: true,
     evidence: "apps/backend/src/mdata/loads.routes.ts:270 (SELECT) / dispatch/book-load.service.ts:994 (INSERT)",
-    inlineCreate: {
-      available: false,
-      reason:
-        "A load is a transaction, not master data. Book Load is an owner-ratified multi-step wide wizard with money, stops, status and audit consequences; McLeod, Alvys, NetSuite and QBO all refuse to bury a document of that weight inside a reference dropdown. Pick an existing load here; book a new one from Dispatch.",
-    },
+    // LV-FUEL-CREATE-LOAD-PICKER-LAW (#1541): picker law requires + Add new first row → real writer.
+    // Book Load remains the ONLY create surface (wide wizard); nesting it is correct R=W, not a shadow form.
+    inlineCreate: { available: true },
     serverSearch: true,
     async list(operatingCompanyId, opts) {
       const res = await listLoads({
