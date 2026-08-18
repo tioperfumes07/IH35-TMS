@@ -42,7 +42,8 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
           operatingCompanyId={companyId}
           value={unitId || null}
           onChange={(next) => setUnitId(next ?? "")}
-          allowCreate={false}
+          // CREATE chrome (Assign truck) — picker law: inline + Create unit FIRST ROW (not filter-mode).
+          allowCreate
           enabled={open}
           placeholder="Search truck…"
           className="w-full"

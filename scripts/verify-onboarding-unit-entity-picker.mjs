@@ -36,6 +36,12 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker/.test(stepCode) || !/kind=["']unit["']/.test(stepCode)) {
     problems.push(`${STEP}: must use EntityPicker kind="unit"`);
   }
+  if (/allowCreate=\{false\}/.test(stepCode)) {
+    problems.push(`${STEP}: wizard CREATE chrome must allow inline + Create unit (not allowCreate={false})`);
+  }
+  if (!/\ballowCreate\b/.test(stepCode)) {
+    problems.push(`${STEP}: must set allowCreate for picker-law inline create`);
+  }
   if (/<select[\s>]/.test(stepCode)) {
     problems.push(`${STEP}: must not use native <select> for unit`);
   }
@@ -65,6 +71,18 @@ if (process.argv.includes("--selftest")) {
     const planted = collectProblems(stubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
+      process.exit(1);
+    }
+    fs.writeFileSync(
+      path.join(stubRoot, WIZARD),
+      `// clean wizard`
+    );
+    fs.writeFileSync(
+      path.join(stubRoot, STEP),
+      `<EntityPicker kind="unit" allowCreate={false} />`
+    );
+    if (!collectProblems(stubRoot).some((p) => /allowCreate/.test(p))) {
+      console.error(`${LABEL} SELFTEST FAIL: planted allowCreate={false} did not FAIL`);
       process.exit(1);
     }
   } finally {

@@ -25,7 +25,8 @@ export function OnboardingStepVehicleAssignment({
           operatingCompanyId={operatingCompanyId}
           value={unitId || null}
           onChange={(next) => onChange(next ?? "")}
-          allowCreate={false}
+          // Wizard CREATE chrome — picker law: inline + Create unit (not allowCreate={false} filter-mode).
+          allowCreate
           disabled={disabled}
           placeholder="Search unit…"
           className="w-full"
