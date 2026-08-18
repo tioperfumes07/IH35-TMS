@@ -96,10 +96,11 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
               NB
             </span>
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="load"
               id={settlement.first_load_id}
-              label={settlement.first_load_number}
+              name={settlement.first_load_number}
+              noun="Load"
               className="font-mono text-xs font-semibold text-slate-700"
             />
           </div>
@@ -110,10 +111,11 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
               SB
             </span>
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="load"
               id={settlement.last_load_id}
-              label={settlement.last_load_number}
+              name={settlement.last_load_number}
+              noun="Load"
               className="font-mono text-xs font-semibold text-slate-700"
             />
           </div>

@@ -9,7 +9,6 @@ import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CappedListNotice } from "../../components/CappedListNotice";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 function bulkCallPreview(id: string | null | undefined): string {
