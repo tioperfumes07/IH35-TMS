@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1634** | 2026-08-18 |
+| Rows in this file | **1635** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=915 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=916 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1724,3 +1724,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 5680 | lists · catalog.safety.accident_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.safety.accident_types.create`. Exact cell: `catalog.safety.accident_types.create:connectivity`. Selected-USMCA `/lists/catalogs/safety/accident-types` mounted **Accident Types**; page CTA `+ Create` opened **Create Accident Types** drawer (Code, Accident Type, Description, Sort Order, Cancel/Create; catalog `safety.accident_types`). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `94c2926`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 5760 | lists · catalog.safety.workplace_incident_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.safety.workplace_incident_types.create`. Exact cell: `catalog.safety.workplace_incident_types.create:connectivity`. Selected-USMCA `/lists/catalogs/safety/workplace-incident-types` mounted **Workplace Incident Types**; page CTA `+ Create` opened **Create Workplace Incident Types** drawer (Code, Workplace Incident Type, Description, Sort Order, Cancel/Create; catalog `safety.workplace_incident_types`). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `94c2926`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 5840 | lists · catalog.safety.internal_fine_reasons.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.safety.internal_fine_reasons.create`. Exact cell: `catalog.safety.internal_fine_reasons.create:connectivity`. Selected-USMCA `/lists/safety/internal-fine-reasons` mounted **Internal Fine Reasons**; page CTA `+ Create` opened **Create Internal Fine Reason** drawer (Reason Code, Reason Name, Default Amount, Active, Cancel/Create). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `abf21f3`; CDP port 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 5920 | lists · catalog.safety.civil_fine_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.safety.civil_fine_types.create`. Exact cell: `catalog.safety.civil_fine_types.create:connectivity`. Selected-USMCA `/lists/safety/civil-fine-types` mounted **Civil Fine Types**; page CTA `+ Create` opened **Create Civil Fine Type** drawer (Code, Display Name, Description, Sort Order, Active, Cancel/Create). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `abf21f3`; CDP port 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
