@@ -38,8 +38,11 @@ export function ListsHubPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { pushToast } = useToast();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // USMCA/TRK are TMS-native — Lists QBO Sync Health + Force Sync is TRANSP-only
+  // (customers #8698 / vendors #8711 twin · LV-LISTS-USMCA-QBO-SYNC-HEALTH).
+  const qboAvailable = selectedCompany?.code === "TRANSP";
 
   const inventoryQuery = useQuery({
     queryKey: ["lists-hub", "inventory", companyId],
@@ -54,7 +57,7 @@ export function ListsHubPage() {
   const qboHealthQuery = useQuery({
     queryKey: ["lists-hub", "qbo-sync-health", companyId],
     queryFn: () => getListsQboSyncHealth(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId && qboAvailable),
   });
 
   const forceSyncMutation = useMutation({
@@ -103,16 +106,25 @@ export function ListsHubPage() {
   return (
     <div className="space-y-4">
       <ListsSubNav />
-      <PageHeader title="Lists & Catalogs" subtitle="Catalog inventory hub + QBO bidirectional sync health" />
+      <PageHeader
+        title="Lists & Catalogs"
+        subtitle={
+          qboAvailable
+            ? "Catalog inventory hub + QBO bidirectional sync health"
+            : "Catalog inventory hub (QBO sync health is TRANSP-only)"
+        }
+      />
 
       {inventoryQuery.isLoading ? <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading lists inventory...</div> : null}
       {!inventoryQuery.isLoading ? <DomainRibbon inventory={inventory} onCatalogClick={openCatalog} /> : null}
 
       <AllCatalogsMap onCatalogClick={openCatalog} onDomainClick={openDomainHub} />
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className={`grid grid-cols-1 gap-4${qboAvailable ? " xl:grid-cols-2" : ""}`}>
         <RecentActivityCard rows={activity} />
-        <QboSyncHealthCard rows={health} onForceSync={() => forceSyncMutation.mutate()} syncing={forceSyncMutation.isPending} />
+        {qboAvailable ? (
+          <QboSyncHealthCard rows={health} onForceSync={() => forceSyncMutation.mutate()} syncing={forceSyncMutation.isPending} />
+        ) : null}
       </div>
     </div>
   );
