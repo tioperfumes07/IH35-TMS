@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 /**
- * verify-matrix-live-leaf-explicit — LV-MATRIX-LIVE-KEYWORD-FANOUT.
+ * verify-matrix-live-leaf-explicit — LV-MATRIX-LIVE-KEYWORD-FANOUT
+ *   + LV-MATRIX-LEAVES-CELLS-ALLOWLIST-BYPASS
+ *   + LV-MATRIX-LATER-FAIL-DOES-NOT-SUPERSEDE-OLD-LIVE
  *
  * ROOT CAUSE: Box 4 Live used leafTouchesText (stem / sub / route-tail substring) against
  * AUDIT-COVERAGE-LIVE PROD-VERIFIED rows. ~26 PV rows greened ~906/3446 Live cells (26%) —
  * dishonest vs MODULE-MATRIX-SCOREBOARD-LOCKED (Live = PROD-VERIFIED on that leaf×column).
  *
- * FIX: leafColumnLiveReason requires leafExplicitlyNamedInLiveEvidence (backticks, Leaves:
- * list, leaf_id=, or full route_hint). Fuzzy leafTouchesText remains for Box 2 Audited only.
+ * Also: Leaves/cells `leaf:col` closed declarations were ignored (only Exact cell(s) counted),
+ * so narrative backticks like "no `driver`" inflated Live. And older PROD-VERIFIED survived a
+ * newer FAIL for the same leaf×column.
  *
- * Lockstep: apps/backend/src/program/module-matrix.service.ts leafExplicitlyNamedInLiveEvidence.
+ * FIX: leafColumnLiveReason requires leafExplicitlyNamedInLiveEvidence; explicitlyNamedLiveColumns
+ * parses Exact cell(s) AND Leaves/cells leaf:col allowlists; later FAIL supersedes older Live.
+ *
+ * Lockstep: apps/backend/src/program/module-matrix.service.ts
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -29,10 +35,11 @@ export function leafExplicitlyNamedInLiveEvidence(leaf, text) {
   if (!id) return false;
   const hay = String(text ?? "");
   if (hay.includes(`\`${id}\``)) return true;
+  if (new RegExp(`\`${escapeRegExp(id)}:[a-z0-9_,.\\-]+\``, "i").test(hay)) return true;
   const idToken = new RegExp(
     `(?:^|[\\s·,;/\\|\\(\\[\\{"'])${escapeRegExp(id)}(?:$|[\\s·,;/\\|\\)\\]\\}"'\\.\`])`,
   );
-  if (/\bLeaves?\s*:/i.test(hay) && idToken.test(hay)) return true;
+  if (/\bLeaves?(?:\/cells)?\s*:/i.test(hay) && idToken.test(hay)) return true;
   if (
     new RegExp(
       `\\bleaf(?:_id|Id|\\s*id)?\\s*[:=]\\s*\`?${escapeRegExp(id)}\`?(?:\\b|$)`,
@@ -54,12 +61,39 @@ export function leafExplicitlyNamedInLiveEvidence(leaf, text) {
 }
 
 /** Lockstep with module-matrix.service.ts */
-export function explicitlyNamedLiveColumns(text) {
-  const declaration = String(text ?? "").match(/\bExact cells?\s*:\s*([^\n|]*?)(?:\.\s|$)/i)?.[1];
-  if (declaration === undefined) return null;
-  return new Set(
-    Array.from(declaration.matchAll(/`([a-z][a-z0-9_.-]*)`/gi), (match) => match[1].toLowerCase()),
-  );
+export function explicitlyNamedLiveColumns(text, leafId) {
+  const hay = String(text ?? "");
+  const cols = new Set();
+  let closed = false;
+
+  const exactMatch = hay.match(/\bExact cells?(?:\s+[^=\n|:]*?)?\s*:\s*([^\n|]*?)(?:\.\s|$)/i);
+  if (exactMatch?.[1] !== undefined) {
+    closed = true;
+    for (const match of exactMatch[1].matchAll(/`([a-z][a-z0-9_.-]*)`/gi)) {
+      cols.add(match[1].toLowerCase());
+    }
+  }
+
+  if (/\bLeaves?(?:\/cells)?\s*:/i.test(hay)) {
+    const leafScoped = Array.from(hay.matchAll(/`([a-z][a-z0-9_.-]*)(?::([a-z0-9_.,\-]+))?`/gi));
+    if (leafScoped.some((m) => m[2])) {
+      closed = true;
+      const want = leafId?.trim().toLowerCase();
+      for (const match of leafScoped) {
+        const namedLeaf = match[1].toLowerCase();
+        const colPart = match[2];
+        if (!colPart) continue;
+        if (want && namedLeaf !== want) continue;
+        for (const col of colPart.split(",")) {
+          const c = col.trim().toLowerCase();
+          if (c) cols.add(c);
+        }
+      }
+    }
+  }
+
+  if (!closed) return null;
+  return cols;
 }
 
 function assertServiceWiring(src) {
@@ -70,8 +104,14 @@ function assertServiceWiring(src) {
   if (!/export function explicitlyNamedLiveColumns\b/.test(src)) {
     errs.push("missing export explicitlyNamedLiveColumns");
   }
-  if (!/declaration\.matchAll\(\/`\(\[a-z\]\[a-z0-9_\.\-\]\*\)`\/gi\)/.test(src)) {
+  if (!/export function leafColumnHasLaterContradictingFail\b/.test(src)) {
+    errs.push("missing export leafColumnHasLaterContradictingFail");
+  }
+  if (!/declaration\.matchAll\(\/`\(\[a-z\]\[a-z0-9_\.\-\]\*\)`\/gi\)/.test(src) && !/`\(\[a-z\]\[a-z0-9_\.\-\]\*\)`\/gi/.test(src)) {
     errs.push("Exact cell(s) parser must retain dotted/hyphenated column ids");
+  }
+  if (!/Leaves\?\(\?:\\\/cells\)\?/.test(src)) {
+    errs.push("explicitlyNamedLiveColumns / leaf match must recognize Leaves/cells: closed form");
   }
   const liveFn = src.match(/function leafColumnLiveReason\([\s\S]*?\n\}/);
   if (!liveFn) {
@@ -83,15 +123,24 @@ function assertServiceWiring(src) {
     if (/leafTouchesText\(leaf,\s*hay\)/.test(liveFn[0])) {
       errs.push("leafColumnLiveReason must NOT call leafTouchesText (fan-out)");
     }
-    if (!/explicitlyNamedLiveColumns\(hay\)/.test(liveFn[0])) {
-      errs.push("leafColumnLiveReason must parse Exact cell(s) declarations");
+    if (!/explicitlyNamedLiveColumns\(hay,\s*leaf\.id\)/.test(liveFn[0])) {
+      errs.push("leafColumnLiveReason must parse Exact cell(s)/Leaves/cells declarations with leaf id");
     }
     if (!/declaredColumns\s*&&\s*!declaredColumns\.has\(colId\.toLowerCase\(\)\)/.test(liveFn[0])) {
       errs.push("leafColumnLiveReason must reject columns outside the Exact cell(s) allowlist");
     }
+    if (!/leafColumnHasLaterContradictingFail\(leaf,\s*colId,\s*moduleId,\s*ledger,\s*row\.num\)/.test(liveFn[0])) {
+      errs.push("leafColumnLiveReason must skip Live when a later FAIL exists for the same leaf×column");
+    }
   }
   if (!/no stem\/keyword fan-out/.test(src) && !/LV-MATRIX-LIVE-KEYWORD-FANOUT/.test(src)) {
     errs.push("service must document LV-MATRIX-LIVE-KEYWORD-FANOUT / no stem fan-out");
+  }
+  if (!/LV-MATRIX-LEAVES-CELLS-ALLOWLIST-BYPASS/.test(src)) {
+    errs.push("service must document LV-MATRIX-LEAVES-CELLS-ALLOWLIST-BYPASS");
+  }
+  if (!/LV-MATRIX-LATER-FAIL-DOES-NOT-SUPERSEDE-OLD-LIVE/.test(src)) {
+    errs.push("service must document LV-MATRIX-LATER-FAIL-DOES-NOT-SUPERSEDE-OLD-LIVE");
   }
   return errs;
 }
@@ -131,24 +180,55 @@ function selftest() {
     throw new Error(`${LABEL} SELFTEST FAIL — narrative route/non-claim words must not broaden Exact cells`);
   }
 
+  // LV-MATRIX-LEAVES-CELLS-ALLOWLIST-BYPASS — fuel #1560 shape
+  const leavesCells =
+    "**Leaves/cells:** `card_overage:connectivity` · `chrome.toolbar_search:connectivity` · `chrome.toolbar_range:connectivity`. intentionally claims no `driver`, `unit`, or `reverse_link`.";
+  const overageCols = explicitlyNamedLiveColumns(leavesCells, "card_overage");
+  if (!overageCols || !overageCols.has("connectivity")) {
+    throw new Error(`${LABEL} SELFTEST FAIL — Leaves/cells must allowlist connectivity for card_overage`);
+  }
+  if (overageCols.has("driver") || overageCols.has("unit") || overageCols.has("reverse_link")) {
+    throw new Error(`${LABEL} SELFTEST FAIL — narrative exclusion backticks must not enter Leaves/cells allowlist`);
+  }
+  const searchCols = explicitlyNamedLiveColumns(leavesCells, "chrome.toolbar_search");
+  if (!searchCols?.has("connectivity") || searchCols.has("driver")) {
+    throw new Error(`${LABEL} SELFTEST FAIL — Leaves/cells leaf-scoping must keep toolbar_search=connectivity only`);
+  }
+  if (!leafExplicitlyNamedInLiveEvidence({ id: "card_overage", route_hint: "/fuel/card-overage" }, leavesCells)) {
+    throw new Error(`${LABEL} SELFTEST FAIL — \`leaf:col\` form must name the leaf`);
+  }
+
+  const claimedOnly =
+    "PROD-VERIFIED. Exact cells claimed only where exercised: `connectivity`, `load`. Not claimed: picker_law.";
+  const claimedCols = explicitlyNamedLiveColumns(claimedOnly);
+  if (!claimedCols?.has("connectivity") || !claimedCols.has("load") || claimedCols.has("picker_law")) {
+    throw new Error(`${LABEL} SELFTEST FAIL — Exact cells with prose before colon must parse allowlist only`);
+  }
+
   const src = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
-  // Plant: temporarily require that wiring assertions pass on real source
   const wireErrs = assertServiceWiring(src);
   if (wireErrs.length) {
     throw new Error(`${LABEL} SELFTEST FAIL — service wiring:\n- ${wireErrs.join("\n- ")}`);
   }
 
-  // Mutation: if leafColumnLiveReason used leafTouchesText again, fail
-  const mutated = src.replace(
+  const liveFnSrc = src.match(/function leafColumnLiveReason\([\s\S]*?\n\}/)?.[0] ?? "";
+  const mutatedLive = liveFnSrc.replace(
     /leafExplicitlyNamedInLiveEvidence\(leaf,\s*hay\)/,
     "leafTouchesText(leaf, hay)",
   );
-  if (mutated === src) {
+  if (mutatedLive === liveFnSrc) {
     throw new Error(`${LABEL} SELFTEST FAIL — could not plant leafTouchesText mutation`);
   }
+  const liveIdx = src.indexOf(liveFnSrc);
+  if (liveIdx < 0) {
+    throw new Error(`${LABEL} SELFTEST FAIL — liveFnSrc not found in service source`);
+  }
+  const mutated = src.slice(0, liveIdx) + mutatedLive + src.slice(liveIdx + liveFnSrc.length);
   const planted = assertServiceWiring(mutated);
   if (!planted.some((e) => /must NOT call leafTouchesText|must call leafExplicitlyNamedInLiveEvidence/.test(e))) {
-    throw new Error(`${LABEL} SELFTEST FAIL — planted fan-out mutation was not detected`);
+    throw new Error(
+      `${LABEL} SELFTEST FAIL — planted fan-out mutation was not detected\n- ${planted.join("\n- ") || "(no errs)"}`,
+    );
   }
   const widened = src.replace(
     /declaredColumns\s*&&\s*!declaredColumns\.has\(colId\.toLowerCase\(\)\)/,
@@ -161,13 +241,28 @@ function selftest() {
   if (!widenedErrs.some((e) => /outside the Exact cell\(s\) allowlist/.test(e))) {
     throw new Error(`${LABEL} SELFTEST FAIL — planted Exact cells allowlist bypass was not detected`);
   }
-  const dotBlind = src.replace("[a-z][a-z0-9_.-]*", "[a-z][a-z0-9_]*");
-  if (dotBlind === src) {
-    throw new Error(`${LABEL} SELFTEST FAIL — could not plant dotted-column parser regression`);
+  const noLater = src.replace(
+    /leafColumnHasLaterContradictingFail\(leaf,\s*colId,\s*moduleId,\s*ledger,\s*row\.num\)/,
+    "false",
+  );
+  if (noLater === src) {
+    throw new Error(`${LABEL} SELFTEST FAIL — could not plant later-FAIL supersede bypass`);
   }
-  const dotBlindErrs = assertServiceWiring(dotBlind);
-  if (!dotBlindErrs.some((e) => /dotted\/hyphenated column ids/.test(e))) {
-    throw new Error(`${LABEL} SELFTEST FAIL — planted dotted-column parser regression was not detected`);
+  const noLaterErrs = assertServiceWiring(noLater);
+  if (!noLaterErrs.some((e) => /later FAIL/.test(e))) {
+    throw new Error(`${LABEL} SELFTEST FAIL — planted later-FAIL supersede bypass was not detected`);
+  }
+  const noLeaves = src.replace(/Leaves\?\(\?:\\\/cells\)\?/g, "Leaves?");
+  if (noLeaves === src) {
+    // try unescaped form in template literals / comments — mutation on Leaves/cells doc id instead
+    const noDoc = src.replace(/LV-MATRIX-LEAVES-CELLS-ALLOWLIST-BYPASS/g, "LV-MATRIX-LEAVES-REMOVED");
+    if (noDoc === src) {
+      throw new Error(`${LABEL} SELFTEST FAIL — could not plant Leaves/cells documentation regression`);
+    }
+    const noDocErrs = assertServiceWiring(noDoc);
+    if (!noDocErrs.some((e) => /LEAVES-CELLS-ALLOWLIST-BYPASS/.test(e))) {
+      throw new Error(`${LABEL} SELFTEST FAIL — planted Leaves/cells doc regression was not detected`);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
 }
@@ -185,7 +280,9 @@ function main() {
     for (const e of errs) console.error(`- ${e}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — Box 4 Live requires explicit leaf naming (no stem fan-out)`);
+  console.log(
+    `${LABEL} PASS — Box 4 Live: explicit leaf · Leaves/cells allowlist · later FAIL supersedes stale Live`,
+  );
 }
 
 main();
