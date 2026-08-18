@@ -74,17 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1667** | 2026-08-18 |
+| Rows in this file | **1677** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=948 | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=947 | 2026-08-18 |
-| Rows in this file | **1675** | 2026-08-18 |
-| Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
-| Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=956 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=958 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1772,3 +1766,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 8240 | lists · catalog.maintenance.priority_levels.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.maintenance.priority_levels.create`. Exact cell: `catalog.maintenance.priority_levels.create:connectivity`. Selected-USMCA `/lists/catalogs/maintenance/priority-levels` mounted **Maintenance Priority Levels**; page CTA `+ Create` opened **Create Maintenance Priority Levels** (Code *, Maintenance Priority Level *, Description, Sort Order; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `fa9fe4b`; CDP port 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 8320 | lists · catalog.maintenance.service_tasks.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.maintenance.service_tasks.create`. Exact cell: `catalog.maintenance.service_tasks.create:connectivity`. Selected-USMCA `/lists/catalogs/maintenance/service-tasks` mounted **Maintenance Service Tasks**; page CTA `+ Create` opened **Create Maintenance Service Tasks** (Code *, Maintenance Service Task *, Description, Sort Order; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `fa9fe4b`; CDP port 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 8400 | lists · catalog.maintenance.vendors.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.maintenance.vendors.create`. Exact cell: `catalog.maintenance.vendors.create:connectivity`. Selected-USMCA `/lists/catalogs/maintenance/vendors` mounted **Maintenance Vendors**; page CTA `+ Create` opened **Create Maintenance Vendors** (Code *, Maintenance Vendor *, Description, Sort Order; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `fa9fe4b`; CDP port 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 8410 | customers · audit history connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `detail.audit`. **Exact cell:** `detail.audit:connectivity`. Selected-USMCA canonical D-06 Customer Detail activated **Audit History** and mounted Search, Range, shared From/To dates, Event type, Actor, Status, Source, Voids & Reversals, Refresh, Export, five governed audit columns, page size/pagination, and the honest `No audit events found for this record.` state. Filter/export/void actions are separately evidenced and not re-claimed. No filter apply, export, audit event, void, reversal, customer, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | canonical `/customers/:id` → Audit History; selected USMCA; scoped filters/table and empty state mounted; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
