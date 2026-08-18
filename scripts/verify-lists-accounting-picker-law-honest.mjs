@@ -1,23 +1,27 @@
 #!/usr/bin/env node
 /**
  * CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM — picker_law Required-column honesty
- * correction, accounting catalog-create remainder (2 batches).
+ * correction, accounting catalog-create remainder (3 batches — this closes the class).
  *
- * 10 `catalog.accounting.*.create` leaves in the Lists module claimed picker_law as Required
+ * 13 `catalog.accounting.*.create` leaves in the Lists module claimed picker_law as Required
  * even though their create forms carry zero cross-catalog reference fields (live DOM read,
- * schema grep for `uuid REFERENCES` columns, and — batch 2 — the actual backend registration
- * factory in apps/backend/src/catalogs/accounting/index.ts, which proves several of these
- * route through a generic zero-FK factory with no metadata support at all), or have no create
- * form to begin with (readOnly on both FE and BE, or the same disposition their own
- * already-dropped connectivity requirement documents). See
+ * schema grep for `uuid REFERENCES` columns, the actual backend registration factory in
+ * apps/backend/src/catalogs/accounting/index.ts and factory.ts, which proves several of these
+ * route through a generic zero-FK factory with no metadata support at all), have no create
+ * form to begin with (readOnly on both FE and BE), or are not a "create a new catalog row"
+ * feature at all (qbo_bulk_link is a bulk QBO-matching wizard against EXISTING records;
+ * abandonment_defaults is a single-row settings upsert). See
  * docs/specs/scoreboard/modules/lists.required.json's
- * honesty_audit.picker_law_column_2026_08_18_accounting_remainder (batch 1) and
- * .../_batch2 (batch 2) for the full per-leaf evidence. Does NOT touch chart_of_accounts.create
- * / detail_types*.create (a real cross-catalog reference, genuine gap) or
- * payment_methods.create (an owned_surface_paths pointer to a DIFFERENT, richer picker
- * component with a real gl_account_id FK contradicts the flat-factory signal — stays Required
- * pending its own dedicated investigation) — this guard fails if any of those four are
- * accidentally swept in.
+ * honesty_audit.picker_law_column_2026_08_18_accounting_remainder (batch 1), .../_batch2
+ * (batch 2) and .../_batch3 (batch 3) for the full per-leaf evidence. Does NOT touch
+ * chart_of_accounts.create (a genuine gap, now FIXED — see ACCT-F5427) / detail_types*.create
+ * (a real cross-catalog reference, still a genuine gap) / journal_entry_types.create /
+ * posting_templates.create / items.create (all three already code-compliant via a real picker
+ * component — JournalEntryTypePicker.tsx / PostingTemplateModal.tsx / ItemEditorModal.tsx —
+ * confirmed in batch 3, pending only a live-proof pass, not a fix) / payment_methods.create (an
+ * owned_surface_paths pointer to a DIFFERENT, richer picker component with a real gl_account_id
+ * FK contradicts the flat-factory signal — stays Required pending its own dedicated
+ * investigation) — this guard fails if any of those eight are accidentally swept in.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -39,6 +43,9 @@ const DROPPED = [
   "catalog.accounting.expense_categories.create",
   "catalog.accounting.tax_codes.create",
   "catalog.accounting.currency_codes.create",
+  "catalog.accounting.qbo_categories.create",
+  "catalog.accounting.qbo_bulk_link.create",
+  "catalog.accounting.abandonment_defaults.create",
 ];
 
 // These stay Required for picker_law — a mutation of these must NOT be caught by this guard,
@@ -48,6 +55,9 @@ const MUST_STAY_REQUIRED = [
   "catalog.accounting.chart_of_accounts.create",
   "catalog.accounting.detail_types.create",
   "catalog.accounting.detail_types_lookup.create",
+  "catalog.accounting.journal_entry_types.create",
+  "catalog.accounting.posting_templates.create",
+  "catalog.accounting.items.create",
   "catalog.accounting.payment_methods.create",
 ];
 
