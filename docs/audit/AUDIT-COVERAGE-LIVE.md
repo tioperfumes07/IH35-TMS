@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1595** | 2026-08-18 |
+| Rows in this file | **1596** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=876 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=877 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1685,3 +1685,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 3130 | vendors · selected-row bulk toolbar identity and connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `list.bulk`. **Exact cells:** `list.bulk:vendor` · `list.bulk:connectivity`. Selected-USMCA `/vendors` full **List view** rendered 36 company-scoped human vendors. Selecting exactly one vendor row mounted the governed bulk toolbar with `Deactivate` and `Export CSV` actions and exactly one checked row. Clearing that checkbox dismissed the toolbar, returned the selection count to zero, and preserved all 36 rows. No bulk action, vendor, status, bill, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 2 EXACT CELLS | `/vendors` → List view → select one vendor → inspect batch toolbar → clear selection; selected USMCA; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
 | 3280 | lists · hub.domain.safety connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.safety`. Exact cell: `hub.domain.safety:connectivity`. Selected-USMCA `/lists/hub/safety` mounted **Safety catalogs**; activating **Accident Types** navigated to live `/lists/catalogs/safety/accident-types` with h1 Accident Types and `+ Create`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `74bc062`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 3360 | lists · hub.domain.drivers connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.drivers`. Exact cell: `hub.domain.drivers:connectivity`. Selected-USMCA `/lists/hub/drivers` mounted **Drivers catalogs**; activating **Driver Deduction Types** navigated to live `/lists/driver/deduction-types` with h1 Driver Deduction Types and `+ Create`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `27bccc8`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 3440 | lists · hub.domain.maintenance connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.maintenance`. Exact cell: `hub.domain.maintenance:connectivity`. Selected-USMCA `/lists/hub/maintenance` mounted **Maintenance catalogs** (81); activating **Labor Rates** navigated to live `/lists/catalogs/maintenance/labor-rates` with h1 Labor Rates and `+ Create`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `b33b270`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
