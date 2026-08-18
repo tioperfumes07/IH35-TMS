@@ -75,7 +75,7 @@ export type ReferenceSelectProps = {
    */
   createdValueField?: "id" | "code";
   /** Extra create fields from parent form context (e.g. dispatcher event_type already selected). */
-  createExtras?: { event_type?: string; severity?: string };
+  createExtras?: { event_type?: string; severity?: string; account_type_id?: string };
   /**
    * C1-A11Y (second instance) — forwarded to the Combobox input so `<label htmlFor>` actually binds.
    * Without it, every call site pairing a htmlFor label with this picker renders a label bound to NOTHING:

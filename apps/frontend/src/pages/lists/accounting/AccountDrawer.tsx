@@ -1,6 +1,5 @@
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -159,6 +158,19 @@ export function AccountDrawer({
 
   const detailTypesForType = useMemo<AccountTypeCatalogEntry["detailTypes"]>(
     () => detailTypesForAccountTypeSelection(typeCatalogQuery.data, form.account_type),
+    [typeCatalogQuery.data, form.account_type],
+  );
+
+  // CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM — the catalog account_type_id (not the QBO
+  // COA-group enum in form.account_type) that a new inline-created detail type must be scoped to.
+  // Same "code === selection || accountType === selection" match detailTypesForAccountTypeSelection
+  // uses internally, kept independent of resolveAccountTypeCatalogEntry (below) since that one also
+  // factors in the currently-selected detail name and could resolve a different sibling entry.
+  const selectedAccountTypeEntry = useMemo(
+    () =>
+      (typeCatalogQuery.data ?? []).find(
+        (e) => e.code === form.account_type || e.accountType === form.account_type,
+      ) ?? null,
     [typeCatalogQuery.data, form.account_type],
   );
 
@@ -434,38 +446,40 @@ export function AccountDrawer({
               <FieldError msg={errors.account_type} />
             </FieldLabel>
 
-            {/* Detail Type (cascaded) — live catalogs.detail_types; manage customs via Lists */}
+            {/* Detail Type (cascaded) — live catalogs.detail_types, one level down from Account
+                Type. LST-PICKER-01: was a raw <select> beside a sibling create link that navigated
+                AWAY to the Detail Type catalog page, losing the in-progress account form
+                (QB-STD-3/4 violation). Now the governed inline "+ Add new" picker, scoped to the
+                already-selected Account Type via createExtras — never asked twice. */}
             <FieldLabel label="Detail Type">
-              <div className="mt-1 flex items-center justify-end">
-                <Link
-                  to="/lists/accounting/detail-types"
-                  className="text-[11px] font-semibold text-slate-700 hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  + Create detail type
-                </Link>
+              <div className="mt-1" data-testid="detail-type-picker">
+                <ReferenceSelect
+                  value={form.detail_type_id || null}
+                  onChange={(id) => {
+                    const dt = detailTypesForType.find((d) => d.id === id);
+                    setField("detail_type_id", id ?? "");
+                    setField("account_subtype", dt?.name ?? "");
+                  }}
+                  options={detailTypesForType.map((dt) => ({ value: dt.id, label: dt.name }))}
+                  createKind="detail_type"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder={
+                    !selectedAccountTypeEntry
+                      ? "Select an Account Type first"
+                      : detailTypesForType.length === 0
+                        ? "No detail types available"
+                        : "Select detail type…"
+                  }
+                  disabled={readOnly || !selectedAccountTypeEntry}
+                  createExtras={{ account_type_id: selectedAccountTypeEntry?.id }}
+                  onOptionCreated={(created) => {
+                    setField("detail_type_id", created.value);
+                    setField("account_subtype", created.label);
+                    void queryClient.invalidateQueries({ queryKey: ["account-type-catalog", operatingCompanyId] });
+                  }}
+                  id="account-detail-type-select"
+                />
               </div>
-              <select
-                value={form.detail_type_id || ""}
-                disabled={readOnly || detailTypesForType.length === 0}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  const dt = detailTypesForType.find((d) => d.id === id);
-                  setField("detail_type_id", id);
-                  setField("account_subtype", dt?.name ?? "");
-                }}
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
-                data-testid="account-detail-type-select"
-              >
-                <option value="">
-                  {detailTypesForType.length === 0 ? "No detail types available" : "Select detail type…"}
-                </option>
-                {detailTypesForType.map((dt) => (
-                  <option key={dt.id} value={dt.id}>
-                    {dt.name}
-                  </option>
-                ))}
-              </select>
             </FieldLabel>
 
             {/* Make this a subaccount — flat (no nested bordered card / box-in-box). */}
