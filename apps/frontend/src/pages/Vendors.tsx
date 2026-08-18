@@ -173,17 +173,24 @@ export function VendorsPage() {
 
   const vendorTypes = useMemo<ReferenceOption[]>(() => {
     const options = new Map<string, ReferenceOption>();
+    const knownLabels = new Set<string>();
     for (const row of vendorTypesQuery.data?.rows ?? []) {
       const label = String(
         row.display_name ?? row.vendor_type_name ?? row.vendor_type_code ?? row.code ?? "",
       ).trim();
       const value = String(row.code ?? row.vendor_type_code ?? label).trim();
-      if (label && value) options.set(value, { value, label });
+      if (label && value) {
+        options.set(value, { value, label });
+        knownLabels.add(label.toLocaleLowerCase());
+      }
     }
     // Preserve legacy values already stamped on vendors even when a catalog row was retired.
     for (const vendor of vendorsRoster) {
       const value = String(vendor.vendor_type ?? "").trim();
-      if (value && !options.has(value)) options.set(value, { value, label: value });
+      if (value && !options.has(value) && !knownLabels.has(value.toLocaleLowerCase())) {
+        options.set(value, { value, label: value });
+        knownLabels.add(value.toLocaleLowerCase());
+      }
     }
     return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [vendorTypesQuery.data?.rows, vendorsRoster]);
