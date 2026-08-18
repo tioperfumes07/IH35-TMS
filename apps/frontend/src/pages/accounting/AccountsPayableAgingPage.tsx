@@ -15,6 +15,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday } from "../../lib/businessDate";
 import { apAgingBillsListHref } from "../reports/agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 type ApAgingView = "by_vendor" | "by_type";
 
@@ -247,6 +248,59 @@ export function AccountsPayableAgingPage() {
     URL.revokeObjectURL(url);
   }
 
+  function printLetter() {
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const rowsHtml = typeFiltered
+      .map(
+        (v) => `<tr>
+          <td>${esc(v.vendor_name)}</td>
+          <td>${esc(v.display_group)}</td>
+          <td style="text-align:right">${esc(money(v.current))}</td>
+          <td style="text-align:right">${esc(money(v.d1_30))}</td>
+          <td style="text-align:right">${esc(money(v.d31_60))}</td>
+          <td style="text-align:right">${esc(money(v.d61_90))}</td>
+          <td style="text-align:right">${esc(money(v.d90_plus))}</td>
+          <td style="text-align:right">${esc(money(v.total_outstanding))}</td>
+        </tr>`,
+      )
+      .join("");
+    const tot = vendorTotals;
+    printLetterHtml({
+      title: `A/P aging as of ${asOf}`,
+      bodyHtml: `
+        <h1>Accounts payable aging</h1>
+        <div class="meta">As of ${esc(formatDateUS(asOf))} · view ${esc(view === "by_type" ? "By Vendor Type" : "By Vendor")} · printed ${esc(new Date().toLocaleString())}</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Vendor</th><th>Type</th><th style="text-align:right">Current</th>
+              <th style="text-align:right">1-30</th><th style="text-align:right">31-60</th>
+              <th style="text-align:right">61-90</th><th style="text-align:right">91+</th>
+              <th style="text-align:right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml || `<tr><td colspan="8">No open A/P</td></tr>`}
+            <tr>
+              <th colspan="2">TOTAL</th>
+              <td style="text-align:right">${esc(money(tot.current))}</td>
+              <td style="text-align:right">${esc(money(tot.d1_30))}</td>
+              <td style="text-align:right">${esc(money(tot.d31_60))}</td>
+              <td style="text-align:right">${esc(money(tot.d61_90))}</td>
+              <td style="text-align:right">${esc(money(tot.d90_plus))}</td>
+              <td style="text-align:right">${esc(money(tot.total_outstanding))}</td>
+            </tr>
+          </tbody>
+        </table>
+      `,
+    });
+  }
+
   return (
     <AccountingSubNavWrapper title="Accounts Payable" subtitle={apSubtitle}>
       <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden" data-ap-aging-filter-toolbar="collapsed">
@@ -279,7 +333,7 @@ export function AccountsPayableAgingPage() {
 
         <div className="ml-auto flex gap-2">
           <Button type="button" variant="secondary" onClick={exportCsv}>Export</Button>
-          <Button type="button" variant="secondary" onClick={() => window.print()}>Print</Button>
+          <Button type="button" variant="secondary" onClick={printLetter}>Print</Button>
         </div>
       </div>
 
