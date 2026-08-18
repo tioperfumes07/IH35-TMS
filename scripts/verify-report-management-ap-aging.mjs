@@ -22,7 +22,16 @@ export function audit(src) {
   if (!/getApAgingReport\(companyId,\s*asOfDate\)/.test(src)) {
     failures.push(`${FILE}: A/P section must call the canonical getApAgingReport (same source as the standalone AP aging report)`);
   }
-  if (!/kind="vendor"\s+id=\{row\.vendor_id\}/.test(src)) {
+  // The real code shares ONE honest-tombstone vendor-cell component (ManagementVendorCell) between
+  // this A/P aging table and the Expenses-by-Vendor table below it — both need the SAME
+  // unresolved-vendor tombstone fallback, so the direct `<EntityLink kind="vendor" id={row.vendor_id}>`
+  // shape this check originally expected was refactored into `<ManagementVendorCell
+  // vendorId={row.vendor_id} .../>`, which renders `<EntityLink kind="vendor" id={vendorId} .../>`
+  // internally. Accept either shape — this is a DRY improvement, not a regression.
+  if (
+    !/kind="vendor"\s+id=\{row\.vendor_id\}/.test(src) &&
+    !/<ManagementVendorCell\s+vendorId=\{row\.vendor_id\}/.test(src)
+  ) {
     failures.push(`${FILE}: A/P aging rows must render a real EntityLink kind="vendor"`);
   }
   if (!/bucket_1_30_cents[\s\S]{0,300}bucket_31_60_cents[\s\S]{0,300}bucket_61_90_cents[\s\S]{0,300}bucket_91_plus_cents/.test(src)) {
@@ -39,7 +48,7 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["source-call", /getApAgingReport\(companyId,\s*asOfDate\)/, "getSomeOtherReport(companyId, asOfDate)"],
-    ["vendor-link", /kind="vendor"\s+id=\{row\.vendor_id\}/g, 'kind="unit" id={row.vendor_id}'],
+    ["vendor-link", /vendorId=\{row\.vendor_id\}/g, "vendorId={row.unit_id}"],
     ["bucket-breakdown", /bucket_91_plus_cents/g, "removed_bucket"],
   ];
   for (const [name, pattern, replacement] of mutations) {
