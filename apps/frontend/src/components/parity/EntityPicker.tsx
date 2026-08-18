@@ -31,7 +31,7 @@
  *
  * Guard: scripts/verify-picker-law-no-raw-uuid.mjs (verify-step 1551).
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CappedListNotice } from "../CappedListNotice";
 import { Combobox } from "../Combobox";
@@ -43,6 +43,10 @@ import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { PolicyCreateModal } from "../insurance/PolicyCreateModal";
 import { ClaimCreateModal } from "../insurance/ClaimCreateModal";
 import { LawsuitCreateModal } from "../insurance/LawsuitCreateModal";
+// Lazy: BookLoadModalV4 imports EntityPicker — avoid init-time circular module cycle.
+const BookLoadModalV4 = lazy(() =>
+  import("../../pages/dispatch/components/BookLoadModalV4").then((m) => ({ default: m.BookLoadModalV4 })),
+);
 import {
   entityAddNewLabel,
   entityPickerListLimit,
@@ -279,6 +283,20 @@ export function EntityPicker({
           onClose={() => setCreateOpen(false)}
           onCreated={(id, label) => (id ? handleCreated(id, label) : setCreateOpen(false))}
         />
+      ) : null}
+
+      {createOffered && kind === "load" ? (
+        <Suspense fallback={null}>
+          <BookLoadModalV4
+            open={createOpen}
+            operatingCompanyId={operatingCompanyId}
+            onClose={() => setCreateOpen(false)}
+            onCreated={(created) => {
+              if (created?.id) handleCreated(created.id, created.label);
+              else setCreateOpen(false);
+            }}
+          />
+        </Suspense>
       ) : null}
 
       {createOffered && kind === "vendor" ? (

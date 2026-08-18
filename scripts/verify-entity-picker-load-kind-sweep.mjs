@@ -75,6 +75,23 @@ export function collectProblems(root = ROOT) {
     if (!/listLoads\(/.test(regCode)) {
       problems.push("entityPickerRegistry: load kind must call listLoads");
     }
+    // LV-FUEL-CREATE-LOAD-PICKER-LAW — Trip/Load must offer + Add new → Book Load (R=W).
+    const loadBlock = registry.match(/\n\s*load:\s*\{[\s\S]*?\n\s*\},?\n\s*(?:vendor|customer|driver|unit|trailer):/);
+    const loadSrc = loadBlock?.[0] ?? "";
+    if (!/inlineCreate:\s*\{\s*available:\s*true\s*\}/.test(loadSrc)) {
+      problems.push(
+        "entityPickerRegistry: load.inlineCreate.available must be true (picker law → Book Load wizard)",
+      );
+    }
+  }
+
+  const entityPicker = readRel(root, "apps/frontend/src/components/parity/EntityPicker.tsx");
+  if (!entityPicker) {
+    problems.push("missing EntityPicker.tsx");
+  } else {
+    if (!/kind === ["']load["']/.test(entityPicker) || !/BookLoadModalV4/.test(entityPicker)) {
+      problems.push("EntityPicker: load inline create must mount BookLoadModalV4 (canonical Book Load writer)");
+    }
   }
 
   for (const rel of SURFACES) {
