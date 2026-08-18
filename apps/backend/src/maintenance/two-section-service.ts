@@ -689,7 +689,7 @@ export async function autoCreateExpenseFromWO(
     vendor_uuid: string | null;
     unit_id: string | null;
     load_id: string | null;
-    total_amount: number | null;
+    total_amount_cents: number | null;
   }>(
     `
       SELECT
@@ -697,7 +697,12 @@ export async function autoCreateExpenseFromWO(
         COALESCE(w.external_vendor_id, w.vendor_id) AS vendor_uuid,
         w.unit_id::text AS unit_id,
         w.load_id,
-        COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) AS total_amount
+        -- ACT-F5414: accounting.expenses has no "total_amount" dollars column (unlike
+        -- accounting.bills, which this function's sibling autoCreateBillFromWO targets) — it only
+        -- has total_amount_cents. This INSERT always referenced the non-existent "total_amount"
+        -- column and would have thrown on the first live "paid same day" work-order completion.
+        -- Same cents derivation as autoCreateBillFromWO's amount_cents column (line ~641).
+        ROUND(COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) * 100)::bigint AS total_amount_cents
       FROM maintenance.work_orders w
       WHERE w.id = $1
       LIMIT 1
@@ -753,6 +758,9 @@ export async function autoCreateExpenseFromWO(
   // writer elsewhere in this file derives its sample status from).
   const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, wo.operating_company_id, wo.vendor_uuid as string | null | undefined);
 
+  // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): this writer already
+  // receives the authed userId as a parameter but never stamped created_by_user_id — the real actor
+  // was in scope the whole time.
   let expenseRes: { rows: { id: string }[] };
   if (hasUnitIdColumn && hasLoadIdColumn) {
     expenseRes = await client.query<{ id: string }>(
@@ -765,14 +773,15 @@ export async function autoCreateExpenseFromWO(
           load_id,
           status,
           transaction_date,
-          total_amount,
+          total_amount_cents,
           payment_account_uuid,
-          is_sample_data
+          is_sample_data,
+          created_by_user_id
         )
-        VALUES ($1, $2, $3, $4, $5, 'posted', CURRENT_DATE, $6, $7, $8)
+        VALUES ($1, $2, $3, $4, $5, 'posted', CURRENT_DATE, $6, $7, $8, $9)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.load_id, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.load_id, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
     );
   } else if (hasUnitIdColumn) {
     expenseRes = await client.query<{ id: string }>(
@@ -784,14 +793,15 @@ export async function autoCreateExpenseFromWO(
           unit_id,
           status,
           transaction_date,
-          total_amount,
+          total_amount_cents,
           payment_account_uuid,
-          is_sample_data
+          is_sample_data,
+          created_by_user_id
         )
-        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7, $8)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
     );
   } else if (hasLoadIdColumn) {
     expenseRes = await client.query<{ id: string }>(
@@ -803,14 +813,15 @@ export async function autoCreateExpenseFromWO(
           load_id,
           status,
           transaction_date,
-          total_amount,
+          total_amount_cents,
           payment_account_uuid,
-          is_sample_data
+          is_sample_data,
+          created_by_user_id
         )
-        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7, $8)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
     );
   } else {
     expenseRes = await client.query<{ id: string }>(
@@ -821,14 +832,15 @@ export async function autoCreateExpenseFromWO(
           linked_work_order_uuid,
           status,
           transaction_date,
-          total_amount,
+          total_amount_cents,
           payment_account_uuid,
-          is_sample_data
+          is_sample_data,
+          created_by_user_id
         )
-        VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5, $6)
+        VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5, $6, $7)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
     );
   }
   const expenseId = String(expenseRes.rows[0]?.id ?? "");
