@@ -1,3 +1,10 @@
+# ★★★ HARD TIP 2026-08-18T14:25Z — CONTINUOUS FAST · NEXT LEAVES
+
+**Auto mode ON.** After Leaves 2470 merges: claim `load.drawer.stops:picker_law` (open + Create stop → Add-new-first) OR lists create Exact cells not covered by 2026-08-15 chrome-only rows. Skip starved notify/pod picker until fixtures. FE FAIL → fix+guard same turn.
+
+tip healthz watch · Live=BLOCKED
+
+---
 # ★★★ HARD TIP 2026-08-18T13:55Z — CURSOR · CODEX BACK · DROP ABSORB
 
 **Codex is BACK.** Stop absorbing customers/vendors/insurance/legal/fuel as primary.
