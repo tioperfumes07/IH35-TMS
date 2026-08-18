@@ -30,7 +30,13 @@ const CHECKS = [
   { name: "DOTInspectionsTab", file: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx" },
   { name: "SafetyEventsPage", file: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx" },
   { name: "InternalFinesPage", file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx" },
-  { name: "PermitsPage", file: "apps/frontend/src/pages/safety/PermitsPage.tsx" },
+  {
+    name: "PermitsPage",
+    file: "apps/frontend/src/pages/safety/PermitsPage.tsx",
+    // Permit CREATE modal — unit EntityPicker must offer + Add new (never filter-mode allowCreate={false}).
+    require: [/EntityPicker/, /kind="unit"/, /\ballowCreate\b/],
+    forbid: [/kind="unit"[\s\S]{0,240}allowCreate=\{false\}/],
+  },
   {
     name: "DriverSchedulerGridPage",
     file: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx",
