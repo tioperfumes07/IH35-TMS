@@ -22,7 +22,7 @@ import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
-import { EntityLink } from "../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -309,11 +309,12 @@ export function UsersPage() {
         label: "Name",
         sortable: true,
         render: (row) => (
-          <EntityLink
+          <EntityLinkOrTombstone
             data-testid="user-roster-record-link"
             kind="user"
             id={row.id}
-            label={entityLabel(row.name, row.id, "User")}
+            name={row.name}
+            noun="User"
             onClick={(event) => event.stopPropagation()}
           />
         ),

@@ -8,7 +8,8 @@ import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { isoToDateTimeLocalValue } from "../../lib/formatDate";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { type EntityKind } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Link, useSearchParams } from "react-router-dom";
 
 const PAGE_SIZE = 100;
@@ -93,7 +94,7 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User"),
-    render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User") || "—"} className="text-gray-600" />,
+    render: (row) => <EntityLinkOrTombstone kind="user" id={row.actor_user_id} name={row.actor_email} noun="User" className="text-gray-600" />,
   },
   {
     key: "subject_type",
@@ -108,7 +109,7 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
           {subjectKind ?? "—"}
           {row.subject_id ? (
             kind ? (
-              <EntityLink kind={kind} id={row.subject_id} label={entityLabel(row.subject_label, row.subject_id, "Subject")} className="ml-1 text-gray-500" />
+              <EntityLinkOrTombstone kind={kind} id={row.subject_id} name={row.subject_label} noun="Subject" className="ml-1 text-gray-500" />
             ) : (
               <span className="ml-1 text-gray-400">{row.subject_label ?? "Subject label unavailable"}</span>
             )
@@ -249,7 +250,7 @@ export function AuditTrailPage() {
               <div><span className="font-semibold">When:</span> {fmtDate(exactAuditEvent.created_at)}</div>
               <div>
                 <span className="font-semibold">Actor:</span>{" "}
-                <EntityLink kind="user" id={exactAuditEvent.actor_user_id} label={entityLabel(exactAuditEvent.actor_email, exactAuditEvent.actor_user_id, "User")} />
+                <EntityLinkOrTombstone kind="user" id={exactAuditEvent.actor_user_id} name={exactAuditEvent.actor_email} noun="User" />
               </div>
               <div><span className="font-semibold">Source:</span> {exactAuditEvent.source ?? "—"}</div>
               <pre className="max-h-56 overflow-auto rounded-sm border bg-white p-2 text-[11px] md:col-span-2">{JSON.stringify(exactAuditEvent.payload, null, 2)}</pre>

@@ -16,8 +16,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { sumCents, toCents, computeProjectionTotals } from "./manualProjectionMath";
 import { formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { Link, useSearchParams } from "react-router-dom";
@@ -199,9 +198,14 @@ function ProjectionPanel({
               {columns.map((c) => (
                 <span key={c.key} className={`${c.w} shrink-0 truncate ${c.key === columns[0].key ? "font-medium text-gray-700" : ""}`} title={String(cellValue(e, c.key))}>
                   {c.key === "ref_label" && e.ref_kind === "unit" && e.ref_external_id ? (
-                    <EntityLink kind="unit" id={e.ref_external_id} label={entityLabel(e.ref_label, e.ref_external_id, "Unit")} />
+                    <EntityLinkOrTombstone kind="unit" id={e.ref_external_id} name={e.ref_label} noun="Unit" />
                   ) : c.key === "party_name" && (e.party_ref_kind === "driver" || e.party_ref_kind === "customer" || e.party_ref_kind === "vendor") && e.party_ref_id ? (
-                    <EntityLink kind={e.party_ref_kind} id={e.party_ref_id} label={entityLabel(e.party_ref_label ?? e.party_name, e.party_ref_id, e.party_ref_kind === "driver" ? "Driver" : e.party_ref_kind === "vendor" ? "Vendor" : "Customer")} />
+                    <EntityLinkOrTombstone
+                      kind={e.party_ref_kind}
+                      id={e.party_ref_id}
+                      name={e.party_ref_label ?? e.party_name}
+                      noun={e.party_ref_kind === "driver" ? "Driver" : e.party_ref_kind === "vendor" ? "Vendor" : "Customer"}
+                    />
                   ) : cellValue(e, c.key)}
                 </span>
               ))}
