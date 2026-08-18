@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { useState } from "react";
 
 function money(cents: number | string | null | undefined) {
@@ -123,6 +124,70 @@ export function ExpenseDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge variant={statusVariant(expense.status)}>{expense.status}</StatusBadge>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const esc = (v: unknown) =>
+                  String(v ?? "—")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+                const vendorLabel = expense.vendor_uuid
+                  ? entityLabel(expense.vendor_name, expense.vendor_uuid, "Vendor")
+                  : "—";
+                const payAcct = expense.payment_account_uuid
+                  ? accountLabel(
+                      expense.payment_account_number,
+                      expense.payment_account_name,
+                      expense.payment_account_uuid,
+                    )
+                  : "—";
+                const lineRows = lines
+                  .map(
+                    (line) =>
+                      `<tr><td>${esc(line.line_sequence)}</td><td>${esc(
+                        line.expense_account_uuid
+                          ? accountLabel(
+                              line.expense_account_number,
+                              line.expense_account_name,
+                              line.expense_account_uuid,
+                            )
+                          : "—",
+                      )}</td><td>${esc(line.description || "—")}</td><td style="text-align:right">${esc(
+                        money(line.amount_cents),
+                      )}</td></tr>`,
+                  )
+                  .join("");
+                printLetterHtml({
+                  title: `Expense ${displayId}`,
+                  bodyHtml: `
+                    <h1>Expense</h1>
+                    <div class="meta">${esc(displayId)} · printed ${esc(new Date().toLocaleString())}</div>
+                    <table>
+                      <tbody>
+                        <tr><th>Expense #</th><td>${esc(expense.expense_number ?? displayId)}</td></tr>
+                        <tr><th>Date</th><td>${esc(formatDateUS(expense.transaction_date))}</td></tr>
+                        <tr><th>Vendor</th><td>${esc(vendorLabel)}</td></tr>
+                        <tr><th>Amount</th><td>${esc(money(expense.total_amount_cents))}</td></tr>
+                        <tr><th>Payment account</th><td>${esc(payAcct)}</td></tr>
+                        <tr><th>Memo</th><td>${esc(expense.memo ?? "—")}</td></tr>
+                        <tr><th>Status</th><td>${esc(expense.status)}</td></tr>
+                        <tr><th>GL posting</th><td>${esc(expense.posting_status)}</td></tr>
+                      </tbody>
+                    </table>
+                    <h1 style="margin-top:20px">Lines</h1>
+                    <table>
+                      <thead><tr><th>Line</th><th>GL account</th><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+                      <tbody>${lineRows || `<tr><td colspan="4">No lines</td></tr>`}</tbody>
+                    </table>
+                  `,
+                });
+              }}
+            >
+              Print
+            </Button>
             {/* FAIL-A2 — the void ROUTE has always existed and is the better-built of the two void paths
                 (it posts a reversing JE and records `reversed_by_je_id`, which the invoice void does not).
                 It simply had no affordance, so the only way to void an expense was an API call. Reason is
