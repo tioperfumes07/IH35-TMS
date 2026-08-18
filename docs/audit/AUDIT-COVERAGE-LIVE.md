@@ -79,6 +79,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **152** | 2026-08-18 |
 | Verdict tally (all rows) | FAIL=204 · PASS=222 · N/A=229 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=729 | 2026-08-18 |
+| Rows in this file | **1413** | 2026-08-18 |
+| Rows `FAIL` + `OPEN` | **2** | 2026-08-18 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
+| Rows `VERIFIED` by GUARD | **152** | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=204 · PASS=222 · N/A=227 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=728 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 

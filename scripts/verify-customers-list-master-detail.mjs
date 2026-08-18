@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["customers"],"cols":["customer"],"leafRe":"^(home\\.roster|list\\.(view_list|view_master_detail|segment\\.(all|preferred|watch|active|inactive|factored)|create|sync|filters)|md\\.(transaction_list|customer_details|coi_requests|new_transaction|tasks)|customers\\.panel\\.customers_sync)$","task":"LINK-F5165-CUSTOMERS-LIST-MASTER-DETAIL"} */
+/** @matrix-built {"modules":["customers","vendors"],"cols":["customer","vendor"],"leafRe":"^(home\\.roster|list\\.(view_list|view_master_detail|segment\\.(all|preferred|watch|active|inactive|factored)|create|sync|filters)|md\\.(transaction_list|customer_details|coi_requests|new_transaction|tasks)|customers\\.panel\\.customers_sync|vendors\\.panel\\.vendors_sync)$","task":"LINK-F5165-CUSTOMERS-LIST-MASTER-DETAIL"} */
 /**
  * OWNER-EXECUTION-PLAN vertical customer-column sweep (2026-08-14): the customers module's own
  * list/master-detail surfaces are all genuinely customer-record-scoped (Customers.tsx +
  * CustomersListView.tsx + CustomersSyncPanel.tsx) — real deactivated_at/quality_overall_flag/
  * factoring_company_vendor_id segment filters over the real customer roster, a real createCustomer
  * call, a bulk update scoped to mdata.customers, and real customer_id-keyed sub-tab queries.
+ *
+ * Also ratchets vendors.panel.vendors_sync TRANSP-only mount (Cursor #1420 twin of customers #8698).
  *
  * Self-test: node scripts/verify-customers-list-master-detail.mjs --selftest
  */
@@ -19,6 +21,7 @@ const FILES = {
   listView: "apps/frontend/src/pages/customers/CustomersListView.tsx",
   sidebar: "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
   sync: "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
+  vendors: "apps/frontend/src/pages/Vendors.tsx",
 };
 const LABEL = "verify-customers-list-master-detail";
 
@@ -57,6 +60,12 @@ export function audit(src) {
   if (!/companyId\s*&&\s*qboAvailable\s*\?\s*<CustomersSyncPanel operatingCompanyId=\{companyId\} \/>\s*:\s*null/.test(src.customers)) {
     failures.push(`${FILES.customers}: customers.panel.customers_sync must mount only for selected TRANSP`);
   }
+  if (!/qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/.test(src.vendors)) {
+    failures.push(`${FILES.vendors}: QBO capability must derive from the canonical selected TRANSP company`);
+  }
+  if (!/companyId\s*&&\s*qboAvailable\s*\?\s*<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>\s*:\s*null/.test(src.vendors)) {
+    failures.push(`${FILES.vendors}: vendors.panel.vendors_sync must mount only for selected TRANSP`);
+  }
   if (!/bulkUpdate\(\{ domain: "mdata", resource: "customers"/.test(src.listView)) {
     failures.push(`${FILES.listView}: list.view_list bulk actions must target the real mdata.customers resource`);
   }
@@ -71,6 +80,7 @@ function loadSrc(root) {
     customers: fs.readFileSync(path.join(root, FILES.customers), "utf8"),
     listView: fs.readFileSync(path.join(root, FILES.listView), "utf8"),
     sidebar: fs.readFileSync(path.join(root, FILES.sidebar), "utf8"),
+    vendors: fs.readFileSync(path.join(root, FILES.vendors), "utf8"),
   };
 }
 
@@ -83,14 +93,26 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["create-call", "customers", /createCustomer\(profileValuesToCreatePayload\(/, "createSomethingElse("],
     ["inactive-filter", "customers", /customer\.deactivated_at != null/g, "false"],
-    ["preferred-filter", "customers", /c\.quality_overall_flag === "preferred"/g, 'false'],
-    ["watch-filter", "customers", /c\.quality_overall_flag === "caution"/g, 'false'],
+    ["preferred-filter", "customers", /c\.quality_overall_flag === "preferred"/g, "false"],
+    ["watch-filter", "customers", /c\.quality_overall_flag === "caution"/g, "false"],
     ["factored-filter", "customers", /Boolean\(c\.factoring_company_vendor_id\)/g, "false"],
     ["transaction-list-scope", "customers", /customer_id: selectedCustomer!\.id/, "customer_id: undefined"],
     ["new-transaction-nav", "customers", /customer_id=\$\{selectedCustomer\.id\}/, "customer_id=none"],
     ["tasks-target-type", "customers", /targetType="customer"/, 'targetType="unit"'],
-    ["qbo-capability", "customers", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, 'qboAvailable = true'],
-    ["sync-panel-capability-gate", "customers", /companyId\s*&&\s*qboAvailable\s*\?\s*<CustomersSyncPanel operatingCompanyId=\{companyId\} \/>\s*:\s*null/, 'companyId ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null'],
+    ["qbo-capability", "customers", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, "qboAvailable = true"],
+    [
+      "sync-panel-capability-gate",
+      "customers",
+      /companyId\s*&&\s*qboAvailable\s*\?\s*<CustomersSyncPanel operatingCompanyId=\{companyId\} \/>\s*:\s*null/,
+      "companyId ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null",
+    ],
+    ["vendors-qbo-capability", "vendors", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, "qboAvailable = true"],
+    [
+      "vendors-sync-panel-capability-gate",
+      "vendors",
+      /companyId\s*&&\s*qboAvailable\s*\?\s*<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>\s*:\s*null/,
+      "companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null",
+    ],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "customers"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],
     ["sidebar-link", "sidebar", /CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/, 'CardLink href="/customers"'],
   ];
@@ -114,4 +136,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — customers list/master-detail surfaces are genuinely customer-record-scoped`);
+console.log(`${LABEL} PASS — customers list/master-detail + vendors QBO sync TRANSP-only gate`);
