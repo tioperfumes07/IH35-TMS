@@ -18,6 +18,8 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -120,6 +122,76 @@ export function SettlementSummaryPage() {
     URL.revokeObjectURL(url);
   }
 
+  function printLetter() {
+    const data = query.data;
+    if (!data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const t = data.totals;
+    const dedRows = Object.entries(data.by_deduction_type ?? {})
+      .filter(([, cents]) => Number(cents) > 0)
+      .map(([name, cents]) => `<tr><td>${esc(name)}</td><td style="text-align:right">${esc(money(Number(cents)))}</td></tr>`)
+      .join("");
+    const rowsHtml = sortedDrivers
+      .map(
+        (r) => `<tr>
+          <td>${esc(r.driver_name)}</td>
+          <td style="text-align:right">${esc(r.load_count)}</td>
+          <td style="text-align:right">${esc(r.settlement_count)}</td>
+          <td style="text-align:right">${esc(money(r.gross_pay_cents))}</td>
+          <td style="text-align:right">${esc(money(r.deduction_cents))}</td>
+          <td style="text-align:right">${esc(money(r.chargeback_cents))}</td>
+          <td style="text-align:right">${esc(money(r.net_pay_cents))}</td>
+          <td style="text-align:right">${esc(money(r.avg_per_load_cents))}</td>
+        </tr>`,
+      )
+      .join("");
+    printLetterHtml({
+      title: `Settlement summary ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Settlement summary</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
+          new Date().toLocaleString(),
+        )}</div>
+        <table>
+          <tbody>
+            <tr><th>Drivers</th><td>${esc(t.driver_count)}</td></tr>
+            <tr><th>Settlements</th><td>${esc(t.settlement_count)}</td></tr>
+            <tr><th>Gross pay</th><td>${esc(money(t.gross_pay_cents))}</td></tr>
+            <tr><th>Deductions</th><td>${esc(money(t.deduction_total_cents))}</td></tr>
+            <tr><th>Chargebacks</th><td>${esc(money(t.chargeback_total_cents))}</td></tr>
+            <tr><th>Net pay</th><td>${esc(money(t.net_pay_cents))}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">By deduction type</h1>
+        <table>
+          <thead><tr><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${dedRows || `<tr><td colspan="2">No deductions</td></tr>`}</tbody>
+        </table>
+        <h1 style="margin-top:16px">By driver</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th style="text-align:right">Loads</th>
+              <th style="text-align:right">Settlements</th>
+              <th style="text-align:right">Gross</th>
+              <th style="text-align:right">Deductions</th>
+              <th style="text-align:right">Chargebacks</th>
+              <th style="text-align:right">Net</th>
+              <th style="text-align:right">Avg/Load</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="8">No drivers in range</td></tr>`}</tbody>
+        </table>
+      `,
+    });
+  }
+
   return (
     <div className="space-y-4 print:space-y-2">
       <style>{`
@@ -133,7 +205,7 @@ export function SettlementSummaryPage() {
         breadcrumb={["Reports", "Settlement Summary"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => query.data && exportCsv(query.data)}>
