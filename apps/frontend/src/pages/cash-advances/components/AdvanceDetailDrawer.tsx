@@ -3,6 +3,7 @@ import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
@@ -178,7 +179,46 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           >
             Reverse
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => window.print()}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const esc = (v: unknown) =>
+                String(v ?? "—")
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/"/g, "&quot;");
+              const id = esc(advance.display_id ?? advance.id ?? "—");
+              const amount = Number(advance.amount ?? 0).toFixed(2);
+              const purpose = esc(advance.purpose ?? "—");
+              const method = esc(advance.disbursement_method ?? "—");
+              const driver = esc(
+                entityLabel(
+                  advance.driver_name as string | null | undefined,
+                  advance.driver_id ? String(advance.driver_id) : null,
+                  "Driver"
+                )
+              );
+              printLetterHtml({
+                title: `Cash advance ${String(advance.display_id ?? advance.id ?? "")}`,
+                bodyHtml: `
+                  <h1>Cash advance receipt</h1>
+                  <div class="meta">${id} · printed ${esc(new Date().toLocaleString())}</div>
+                  <table>
+                    <tbody>
+                      <tr><th>Advance</th><td>${id}</td></tr>
+                      <tr><th>Driver</th><td>${driver}</td></tr>
+                      <tr><th>Amount</th><td>$${amount}</td></tr>
+                      <tr><th>Purpose</th><td>${purpose}</td></tr>
+                      <tr><th>Method</th><td>${method}</td></tr>
+                      <tr><th>Status</th><td>${esc(status)}</td></tr>
+                    </tbody>
+                  </table>
+                `,
+              });
+            }}
+          >
             Print Receipt
           </Button>
         </div>
