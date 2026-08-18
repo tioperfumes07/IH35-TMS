@@ -314,13 +314,14 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               <label className="text-xs">
                 Unit (optional)
                 <div className="mt-1">
+                  {/* CREATE chrome: unit owes first-row inline create (picker law), not filter mode. */}
                   <EntityPicker
                     kind="unit"
                     operatingCompanyId={operatingCompanyId}
                     value={draft.unit_id || null}
                     onChange={(next) => setDraft((prev) => ({ ...prev, unit_id: next ?? "" }))}
                     enabled={createOpen && Boolean(operatingCompanyId)}
-                    allowCreate={false}
+                    allowCreate
                     placeholder="Company-wide permit"
                     dataField="safety-permit-unit"
                   />
