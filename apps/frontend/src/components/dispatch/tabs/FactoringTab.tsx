@@ -23,6 +23,7 @@ import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -453,13 +454,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             ok={hasInvoice}
             note={
               hasInvoice && linkedInvoice?.id ? (
-                <EntityLink
-                  kind="invoice"
-                  id={linkedInvoice.id}
-                  label={entityLabel(linkedInvoice.display_id, linkedInvoice.id, "Invoice")}
-                  className="text-slate-700 hover:underline"
-                  data-testid="load-factoring-invoice-link"
-                />
+                <EntityLinkOrTombstone kind="invoice" id={linkedInvoice.id} name={linkedInvoice.display_id} noun="Invoice" className="text-slate-700 hover:underline" data-testid="load-factoring-invoice-link" />
               ) : (
                 "Create invoice from Overview tab"
               )

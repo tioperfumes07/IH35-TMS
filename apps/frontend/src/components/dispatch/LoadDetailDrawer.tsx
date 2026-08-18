@@ -40,8 +40,8 @@ import { BillsReverseSection } from "../accounting/BillsReverseSection";
 import { InvoicesReverseSection } from "../accounting/InvoicesReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
-import { EntityLink } from "../shared/EntityLink";
-import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { entityLabel } from "../../lib/entity-label";
 import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 
@@ -322,7 +322,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
                 Load{" "}
-                <EntityLink kind="load" id={load?.id ?? loadId} label={entityLabel(load?.load_number, load?.id ?? loadId, "Load")} />
+                <EntityLinkOrTombstone kind="load" id={load?.id ?? loadId} name={load?.load_number} noun="Load" />
               </h2>
               <p className="text-xs text-gray-500">{routeSummary}</p>
             </div>
@@ -351,20 +351,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     fields={[
                       {
                         label: "Customer",
-                        value: (() => {
-                          const label = entityLabel(load.customer_name, load.customer_id, "Customer");
-                          // LV-LOAD-DETAIL-DEAD-CUSTOMER-TOMBSTONE-LINK — unresolved stays visible, non-drillable.
-                          if (isUnresolvedEntityTombstone(load.customer_name, load.customer_id, "Customer")) {
-                            return (
-                              <span className="text-slate-800" data-testid="load-detail-customer-tombstone">
-                                {label}
-                              </span>
-                            );
-                          }
-                          return (
-                            <EntityLink kind="customer" id={load.customer_id} label={label} />
-                          );
-                        })(),
+                        value: (
+                          <EntityLinkOrTombstone
+                            kind="customer"
+                            id={load.customer_id}
+                            name={load.customer_name}
+                            noun="Customer"
+                            tombstoneTestId="load-detail-customer-tombstone"
+                          />
+                        ),
                       },
                       {
                         label: "Status",
@@ -447,21 +442,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       {
                         label: "Truck unit",
                         value: (
-                          <EntityLink
-                            kind="unit"
-                            id={load.assigned_unit_id}
-                            label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
-                          />
+                          <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" />
                         ),
                       },
                       {
                         label: "Trailer unit",
                         value: load.trailer_id ? (
-                          <EntityLink
-                            kind="trailer"
-                            id={load.trailer_id}
-                            label={entityLabel(load.trailer_number, load.trailer_id, "Trailer")}
-                          />
+                          <EntityLinkOrTombstone kind="trailer" id={load.trailer_id} name={load.trailer_number} noun="Trailer" />
                         ) : (
                           entityLabel(load.trailer_number, load.trailer_id, "Trailer")
                         ),
@@ -469,11 +456,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       {
                         label: "Driver",
                         value: load.assigned_primary_driver_id ? (
-                          <EntityLink
-                            kind="driver"
-                            id={load.assigned_primary_driver_id}
-                            label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
-                          />
+                          <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.assigned_primary_driver_name} noun="Driver" />
                         ) : (
                           entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
                         ),
@@ -481,11 +464,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       {
                         label: "Team driver",
                         value: load.assigned_secondary_driver_id ? (
-                          <EntityLink
-                            kind="driver"
-                            id={load.assigned_secondary_driver_id}
-                            label={entityLabel(load.assigned_secondary_driver_name, load.assigned_secondary_driver_id, "Driver")}
-                          />
+                          <EntityLinkOrTombstone kind="driver" id={load.assigned_secondary_driver_id} name={load.assigned_secondary_driver_name} noun="Driver" />
                         ) : (
                           "Solo"
                         ),

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 /**
  * LOAD-WO-REVERSE — the load↔work-order link existed in the database and appeared on no screen.
@@ -95,14 +95,11 @@ export function LoadWorkOrdersReverseSection({
               >
                 {/* The WO display_id is the human label (WO-{UNIT}-{TYPE}-{DATE}-{NNNN}-{V5}); fall
                     back to a short id only when a row genuinely has none, never to the raw uuid. */}
-                <EntityLink
+                <EntityLinkOrTombstone
                   kind="work_order"
                   id={row.id}
-                  label={entityLabel(
-                    row.display_id || null,
-                    row.id,
-                    "Work order",
-                  )}
+                  name={row.display_id || null}
+                  noun="Work order"
                 />
                 <span className="ml-2 inline-flex flex-wrap items-center gap-1 text-xs text-gray-500">
                   {row.opened_at
@@ -112,11 +109,7 @@ export function LoadWorkOrdersReverseSection({
                   {row.unit_id ? (
                     <>
                       <span>·</span>
-                      <EntityLink
-                        kind="unit"
-                        id={String(row.unit_id)}
-                        label={entityLabel(String(row.unit_number), String(row.unit_id ?? ""), "Unit")}
-                      />
+                      <EntityLinkOrTombstone kind="unit" id={String(row.unit_id)} name={String(row.unit_number)} noun="Unit" />
                     </>
                   ) : null}
                   {row.description ? ` · ${row.description}` : ""}
