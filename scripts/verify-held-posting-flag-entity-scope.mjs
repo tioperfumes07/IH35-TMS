@@ -113,6 +113,39 @@ export function blockArmsFlag(block, flag) {
   return /\benabled\s*=\s*true\b/i.test(flat) || /,\s*true\s*[,)]/i.test(flat);
 }
 
+/**
+ * Is a push flag actually armed (enabled=true) in this block? Deliberately NOT blockArmsFlag —
+ * that check is correct for the HELD_FLAG_SCOPE arm-detection above (block-level "contains the
+ * literal AND an enable" is the right granularity there, since entity scope and the enable
+ * legitimately live in different statements of the same block), but it is too coarse for a
+ * FORBIDDEN check: a dynamic per-row loop can legitimately contain the push-flag literal (in an
+ * exclusion-gate IN-list routing it to enabled=false) AND a completely unrelated enabled=true for
+ * OTHER flags in the same block (202612581400_owner_all_entities_non_qbo_flags_on.sql's real,
+ * live-confirmed-safe shape — Neon-confirmed both push flags default_enabled=false, 0 overrides).
+ * blockArmsFlag flags that block as "armed" on the strength of an unrelated enable; this doesn't —
+ * it finds the NEAREST `enabled = true|false` token to each literal occurrence and trusts only
+ * that. Same fix already shipped for the sibling guard, verify-posting-flags-require-bound-accounts.mjs.
+ */
+export function pushFlagArmed(block, flag) {
+  const flat = block.replace(/\s+/g, " ");
+  if (!/\b(insert\s+into|update)\s+lib\.feature_flag_overrides\b/i.test(flat)) return false;
+  const literalRe = new RegExp(flag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+  const enabledMatches = [...flat.matchAll(/\benabled\s*=\s*(true|false)\b/gi)].map((m) => ({
+    idx: m.index,
+    val: m[1].toLowerCase(),
+  }));
+  if (!enabledMatches.length) return false;
+  let literalMatch;
+  while ((literalMatch = literalRe.exec(flat))) {
+    const pos = literalMatch.index;
+    const nearest = enabledMatches.reduce((best, e) =>
+      Math.abs(e.idx - pos) < Math.abs(best.idx - pos) ? e : best
+    );
+    if (nearest.val === "true") return true;
+  }
+  return false;
+}
+
 /** Entity codes an org.companies predicate in this block resolves to. */
 export function entityCodesIn(block) {
   const codes = new Set();
@@ -191,7 +224,7 @@ export function checkMigrationSources(sources) {
       }
 
       for (const push of PUSH_FLAGS) {
-        if (blockArmsFlag(block, push)) problems.push(`${name}: FORBIDDEN enable of ${push}`);
+        if (pushFlagArmed(block, push)) problems.push(`${name}: FORBIDDEN enable of ${push}`);
       }
 
       if (fuzzyAccountNameMatch(block)) {
@@ -350,6 +383,52 @@ END $$;
     fail("QBO push-flag enable not detected");
   }
   console.log("SELFTEST: QBO push-flag enable detected");
+
+  // Plant 4b — negative control. The real shape of 202612581400_owner_all_entities_non_qbo_flags_on.sql:
+  // a dynamic per-row loop that routes push flags to enabled=false via an exclusion gate and
+  // everything ELSE to enabled=true via a loop variable. Must NOT be flagged — Neon-confirmed both
+  // push flags are genuinely OFF live (default_enabled=false, 0 overrides).
+  const safeDynamic = `
+DO $$
+DECLARE r record; is_qbo_sync boolean;
+BEGIN
+  FOR r IN SELECT flag_key FROM lib.feature_flags LOOP
+    is_qbo_sync := (r.flag_key IN ('QBO_ENTITY_PUSH_ENABLED', 'QBO_JE_PUSH_ENABLED'));
+    IF is_qbo_sync THEN
+      INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled)
+      VALUES (r.flag_key, '00000000-0000-0000-0000-000000000001', false)
+      ON CONFLICT (flag_key, operating_company_id) DO UPDATE SET enabled = false;
+    ELSE
+      INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled)
+      VALUES (r.flag_key, '00000000-0000-0000-0000-000000000001', true)
+      ON CONFLICT (flag_key, operating_company_id) DO UPDATE SET enabled = true;
+    END IF;
+  END LOOP;
+END $$;
+`;
+  if (scan(safeDynamic).some((p) => /FORBIDDEN enable of/.test(p))) {
+    fail("safe dynamic-exclusion pattern false-flagged as FORBIDDEN");
+  }
+  console.log("SELFTEST: safe dynamic-exclusion pattern passes (both push flags routed to enabled=false)");
+
+  // Plant 4c — positive control. A genuinely dangerous dynamic bulk-enable with NO exclusion at
+  // all — every flag, including push flags, goes to enabled=true via the same loop variable. Must
+  // STILL be flagged: there is no nearby enabled=false for the nearest-match rule to prefer.
+  const unguardedDynamic = `
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT flag_key FROM lib.feature_flags WHERE flag_key = 'QBO_JE_PUSH_ENABLED' LOOP
+    INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled)
+    VALUES (r.flag_key, '00000000-0000-0000-0000-000000000001', true)
+    ON CONFLICT (flag_key, operating_company_id) DO UPDATE SET enabled = true;
+  END LOOP;
+END $$;
+`;
+  if (!scan(unguardedDynamic).some((p) => /FORBIDDEN enable of QBO_JE_PUSH_ENABLED/.test(p))) {
+    fail("unguarded dynamic bulk-enable (no exclusion) not detected");
+  }
+  console.log("SELFTEST: unguarded dynamic bulk-enable (no exclusion) detected");
 
   // Plant 5 — the real defect: accum_depr_default bound to whatever '~* accumulated depreciation'
   // matches first, which on TRK is one truck's per-unit ledger.
