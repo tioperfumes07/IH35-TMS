@@ -122,12 +122,12 @@ function selftest() {
     // plain .replace() hit that one instead, leaving ping untouched. The selftest caught it.
     ["entity scoping dropped", (s) =>
       s.replace(
-        /SELECT assigned_primary_driver_id, assigned_secondary_driver_id, team_id\s*\n\s*FROM mdata\.loads\s*\n\s*WHERE id = \$1 AND operating_company_id = \$2 AND soft_deleted_at IS NULL/,
+        /SELECT assigned_primary_driver_id, assigned_secondary_driver_id, team_id\s*\n\s*FROM mdata\.loads\s*\n\s*WHERE id = \$1 AND operating_company_id = \$2(?:::uuid)? AND soft_deleted_at IS NULL/,
         "SELECT assigned_primary_driver_id, assigned_secondary_driver_id, team_id\n      FROM mdata.loads\n      WHERE id = $1"
       )],
     ["soft-deleted loads included", (s) =>
       s.replace(
-        /SELECT assigned_primary_driver_id, assigned_secondary_driver_id, team_id\s*\n\s*FROM mdata\.loads\s*\n\s*WHERE id = \$1 AND operating_company_id = \$2 AND soft_deleted_at IS NULL/,
+        /SELECT assigned_primary_driver_id, assigned_secondary_driver_id, team_id\s*\n\s*FROM mdata\.loads\s*\n\s*WHERE id = \$1 AND operating_company_id = \$2(?:::uuid)? AND soft_deleted_at IS NULL/,
         "SELECT assigned_primary_driver_id, assigned_secondary_driver_id, team_id\n      FROM mdata.loads\n      WHERE id = $1 AND operating_company_id = $2"
       )],
     ["secondary team driver unpaid", (s) => s.replace(/driverId: team\.secondaryDriverId,/, "driverId: team.primaryDriverId,").replace("secondaryDriverId", "primaryDriverId")],
