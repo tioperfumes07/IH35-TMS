@@ -729,10 +729,12 @@ export function leafExplicitlyNamedInLiveEvidence(leaf: RequiredLeaf, text: stri
   if (!id) return false;
   const hay = text;
   if (hay.includes(`\`${id}\``)) return true;
+  // Leaves/cells closed form: `card_overage:connectivity` names leaf card_overage.
+  if (new RegExp(`\`${escapeRegExp(id)}:[a-z0-9_,.\\-]+\``, "i").test(hay)) return true;
   const idToken = new RegExp(
     `(?:^|[\\s·,;/\\|\\(\\[\\{"'])${escapeRegExp(id)}(?:$|[\\s·,;/\\|\\)\\]\\}"'\\.\`])`,
   );
-  if (/\bLeaves?\s*:/i.test(hay) && idToken.test(hay)) return true;
+  if (/\bLeaves?(?:\/cells)?\s*:/i.test(hay) && idToken.test(hay)) return true;
   if (
     new RegExp(
       `\\bleaf(?:_id|Id|\\s*id)?\\s*[:=]\\s*\`?${escapeRegExp(id)}\`?(?:\\b|$)`,
@@ -752,16 +754,83 @@ export function leafExplicitlyNamedInLiveEvidence(leaf: RequiredLeaf, text: stri
 }
 
 /**
- * An evidence row that declares `Exact cell:` / `Exact cells:` is making a closed, auditable
- * column claim. Narrative words elsewhere in that row (including route names and explicit
- * non-claims) must not broaden the declaration into additional Live credit.
+ * An evidence row that declares a closed column claim is making an auditable allowlist.
+ * Recognized forms (LV-MATRIX-LEAVES-CELLS-ALLOWLIST-BYPASS):
+ * - `Exact cell:` / `Exact cells:` / `Exact cells claimed …:` → bare `` `col` `` tokens
+ * - `Leaves:` / `Leaves/cells:` → `` `leaf:col` `` / `` `leaf:col1,col2` `` (leaf-scoped)
+ *
+ * Narrative words elsewhere (including intentional non-claims like "no `driver`") must not
+ * broaden Live credit when a closed declaration is present.
  */
-export function explicitlyNamedLiveColumns(text: string): Set<string> | null {
-  const declaration = text.match(/\bExact cells?\s*:\s*([^\n|]*?)(?:\.\s|$)/i)?.[1];
-  if (declaration === undefined) return null;
-  return new Set(
-    Array.from(declaration.matchAll(/`([a-z][a-z0-9_.-]*)`/gi), (match) => match[1].toLowerCase()),
-  );
+export function explicitlyNamedLiveColumns(text: string, leafId?: string): Set<string> | null {
+  const hay = String(text ?? "");
+  const cols = new Set<string>();
+  let closed = false;
+
+  // Exact cell(s) — optional prose between "cells" and ":" (e.g. "Exact cells claimed only where exercised:")
+  const exactMatch = hay.match(/\bExact cells?(?:\s+[^=\n|:]*?)?\s*:\s*([^\n|]*?)(?:\.\s|$)/i);
+  if (exactMatch?.[1] !== undefined) {
+    closed = true;
+    for (const match of exactMatch[1].matchAll(/`([a-z][a-z0-9_.-]*)`/gi)) {
+      cols.add(match[1].toLowerCase());
+    }
+  }
+
+  // Leaves / Leaves/cells — `leaf:col` or `leaf:col1,col2` (and bare `leaf` does not declare columns)
+  if (/\bLeaves?(?:\/cells)?\s*:/i.test(hay)) {
+    const leafScoped = Array.from(
+      hay.matchAll(/`([a-z][a-z0-9_.-]*)(?::([a-z0-9_.,\-]+))?`/gi),
+    );
+    if (leafScoped.some((m) => m[2])) {
+      closed = true;
+      const want = leafId?.trim().toLowerCase();
+      for (const match of leafScoped) {
+        const namedLeaf = match[1].toLowerCase();
+        const colPart = match[2];
+        if (!colPart) continue;
+        if (want && namedLeaf !== want) continue;
+        for (const col of colPart.split(",")) {
+          const c = col.trim().toLowerCase();
+          if (c) cols.add(c);
+        }
+      }
+    }
+  }
+
+  if (!closed) return null;
+  return cols;
+}
+
+/**
+ * LV-MATRIX-LATER-FAIL-DOES-NOT-SUPERSEDE-OLD-LIVE — a newer FAIL/OPEN row for the same
+ * leaf×column invalidates older PROD-VERIFIED Live credit for that cell.
+ */
+export function leafColumnHasLaterContradictingFail(
+  leaf: RequiredLeaf,
+  colId: string,
+  moduleId: string,
+  ledger: LedgerRow[],
+  afterNum: number,
+): boolean {
+  const col = colId.toLowerCase();
+  for (const row of ledger) {
+    if (row.num <= afterNum) continue;
+    if (!rowTouchesModule(row, moduleId)) continue;
+    if (isSupersededRow(row)) continue;
+    const hay = moduleHay(row);
+    const blob = `${row.verdict} ${row.status} ${hay}`.replace(/\*\*/g, "");
+    if (!/\bFAIL\b/i.test(blob)) continue;
+    if (!leafExplicitlyNamedInLiveEvidence(leaf, hay)) continue;
+    const declared = explicitlyNamedLiveColumns(hay, leaf.id);
+    if (declared) {
+      if (declared.has(col)) return true;
+      continue;
+    }
+    if (hay.includes(`\`${colId}\``) || hay.includes(`\`${col}\``) || columnTouches(colId, hay)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function cellState(audited: boolean, built: boolean, live: boolean): MatrixCellState {
@@ -874,11 +943,13 @@ function leafColumnLiveReason(
     if (!isProdVerifiedBlob(hay)) continue;
     // Explicit leaf only — never stem/sub fan-out (LV-MATRIX-LIVE-KEYWORD-FANOUT).
     if (!leafExplicitlyNamedInLiveEvidence(leaf, hay)) continue;
-    const declaredColumns = explicitlyNamedLiveColumns(hay);
+    const declaredColumns = explicitlyNamedLiveColumns(hay, leaf.id);
     if (declaredColumns && !declaredColumns.has(colId.toLowerCase())) continue;
     if (!declaredColumns && !columnTouches(colId, hay) && !hay.includes(`\`${colId}\``) && !new RegExp(`\\b${escapeRegExp(colId)}\\b`).test(hay)) {
       continue;
     }
+    // Newer FAIL for same leaf×column wins over stale Live (LV-MATRIX-LATER-FAIL-DOES-NOT-SUPERSEDE-OLD-LIVE).
+    if (leafColumnHasLaterContradictingFail(leaf, colId, moduleId, ledger, row.num)) continue;
     return `ledger #${row.num} PROD-VERIFIED`;
   }
   return undefined;
