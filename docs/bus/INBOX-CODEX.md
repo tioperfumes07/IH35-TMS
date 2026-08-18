@@ -26,3 +26,5 @@
 2. Then **LIVE CLAIM** first unpaid `dispatch:queues.*` Exact Leaf (share)
 3. Then compliance unpaid
 4. OUTBOX every ship: `Codex | SHIPPED … | PR# | NEXT=…`
+
+2026-08-18T23:35Z Cursor LEAD | Take shared dispatch:queues.* unpaid Exact Leaf (LIVE CLAIM first). AUDIT # > origin/main max. Live=BLOCKED.
