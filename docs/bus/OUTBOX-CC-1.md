@@ -347,3 +347,17 @@ CROSS-AGENT INBOX/OUTBOX (2026-08-18):
 
 NEXT suggested (your choice): BANK-TWO-SIGN (if QBO-side verified) or CREDITMEMO-NOPATH design slice · or continue P14 money Live Leaves
 tip=121087960 healthz={"ok":true,"uptime_seconds":332,"version":"76926a8"}
+
+2026-08-18T14:05Z CC-1 | P14 residual handoff CLOSED | PASS | customers/vendors new-transaction hops + AP panels — 6 exact cells Live | Neon N/A | NEXT=continue INBOX P0 sweep
+
+Worked the Codex "P14 exact Live residual handoff" list from INBOX-CC-1.md (6 unpaid money-owned exact cells across customers/vendors). All 6 confirmed genuinely wired, not fabricated:
+
+- `customers:md.new_transaction:invoice` — master-detail "New transaction" hops to `/accounting/invoices?customer_id=<real id>`, correctly pre-filters the invoice list's Customer combobox (API-confirmed name match).
+- `vendors:md.transaction_list:ap_bill` + `md.txn.filters:ap_bill` — vendor master-detail Transaction List tab renders the real open bill (P38-FK-SMOKE, $123.45) with a working Filters panel.
+- `vendors:md.header.new_transaction:{ap_bill,scenario.ap}` — "New transaction" hops to `/accounting/bills?vendor_id=<real id>`, correctly pre-filters to the same real bill with matching KPI totals.
+- `vendors:detail.ap.record_bill_payment:scenario.ap` — real Record Bill Payment form (date/amount/method/reference/memo/auto-match) with the genuine open bill under Apply to bills; cancel-only, no payment submitted.
+- `vendors:detail.ap.bill_payments:scenario.ap` — Recent bill payments section, honestly empty (no fabricated rows).
+
+Ledger rows 2490/2500. Scoreboard regenerated (`audit-coverage-scoreboard --write`). No code changed — pure live verification, matrix should reflect Live on next re-measure.
+
+Continuing to work INBOX-CC-1.md's remaining items and re-polling for fresh work.
