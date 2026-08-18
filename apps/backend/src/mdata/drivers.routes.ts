@@ -145,6 +145,10 @@ const bulkInviteBodySchema = z.object({
 
 const driverAggregateQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  // The by-id route also serves the lightweight canonical driver row. Requiring an explicit
+  // aggregate opt-in prevents ordinary profile/link pickers from running the full DQ/HOS/docs
+  // aggregate query just because they correctly supplied their company scope.
+  aggregate: z.literal("true"),
 });
 
 // Simple by-id GET (non-aggregate branch): operating_company_id is OPTIONAL here. When present it
@@ -1339,6 +1343,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
+    // Aggregate reads are explicit. Historically operating_company_id alone selected this branch,
+    // making every getDriver() call execute the much heavier DQ/HOS/documents aggregate and leaving
+    // /drivers/:id in a long-lived loading state when one aggregate dependency stalled. The normal
+    // scoped by-id read below is the canonical fast path; dedicated aggregate consumers opt in.
     const parsedAggregateQuery = driverAggregateQuerySchema.safeParse(req.query ?? {});
     if (parsedAggregateQuery.success) {
       const aggregate = await withCurrentUser(authUser.uuid, async (client) =>

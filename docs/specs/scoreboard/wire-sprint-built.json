@@ -2616,6 +2616,15 @@
       "modules": ["docs"],
       "cols": ["driver", "customer", "vendor", "unit", "load", "connectivity"],
       "leafRe": "^table\\.entity_link$"
+    },
+    {
+      "task": "LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-detail-company-scope.mjs",
+      "modules": ["drivers", "compliance", "safety"],
+      "cols": ["driver", "connectivity", "reverse_link"],
+      "leafRe": "^(profiles\\.detail|fleet\\.hos_board|safety\\.panel\\.driver_safety_profile)$",
+      "live": "BLOCKED"
     }
   ]
 }

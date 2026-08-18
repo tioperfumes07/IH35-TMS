@@ -1,57 +1,65 @@
 #!/usr/bin/env node
-// verify-driver-detail-company-scope.mjs
-// Regression guard for the DriverDetailPage "Driver not found" 404 (follow-up to #1882).
-// The /drivers/:id detail page must fetch the driver scoped to the SELECTED company
-// (operating_company_id from CompanyContext), NOT the bare getDriver(id) which resolves
-// only the user's default company and 404s under any other selected company.
-//
-// Fails if DriverDetail.tsx reverts to calling getDriver(id) without the company scope,
-// or stops sourcing selectedCompanyId from CompanyContext.
+// @matrix-built drivers:profile:{driver,connectivity,reverse_link}; safety:driver.safety.profile:{driver,connectivity}; maintenance:wo.create:{driver,connectivity}; tasks:tasks.drawer.task:{driver,reverse_link}
+// Canonical driver by-id contract: lightweight scoped reads stay separate from explicit aggregates.
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-detail-company-scope";
-const file = "apps/frontend/src/pages/DriverDetail.tsx";
-const src = (() => {
-  try { return fs.readFileSync(path.join(ROOT, file), "utf8"); } catch { return ""; }
-})();
+const FILES = {
+  detail: "apps/frontend/src/pages/DriverDetail.tsx",
+  api: "apps/frontend/src/api/mdata.ts",
+  profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  backend: "apps/backend/src/mdata/drivers.routes.ts",
+};
+const read = (file) => fs.readFileSync(file, "utf8");
 
-const errs = [];
-if (!src) errs.push(`${file} not found`);
-else {
-  if (!/useCompanyContext\s*\(/.test(src))
-    errs.push("DriverDetailPage must read the selected company via useCompanyContext()");
-  // getDriver must be called WITH a second (company) argument — not the bare getDriver(id).
-  const bareCall = /getDriver\(\s*id\s*\)/.test(src);
-  const scopedCall = /getDriver\(\s*id\s*,\s*[A-Za-z0-9_]+/.test(src);
-  if (bareCall && !scopedCall)
-    errs.push("getDriver(id) is called WITHOUT the company scope — pass the selected operating_company_id (regression of the #1882 follow-up 404 fix)");
-  if (!scopedCall)
-    errs.push("expected getDriver(id, <companyId>) scoped call in DriverDetailPage");
+function verify(source) {
+  const failures = [];
+  const need = (condition, message) => { if (!condition) failures.push(message); };
+  need(/useCompanyContext\s*\(/.test(source.detail), "DriverDetail must read selected company context");
+  need(/getDriver\(\s*id\s*,\s*[A-Za-z0-9_]+/.test(source.detail), "DriverDetail must call getDriver(id, companyId)");
+  need(!/getDriver\(\s*id\s*\)/.test(source.detail), "DriverDetail must not perform a bare unscoped getDriver(id) read");
+
+  const getDriverBlock = source.api.slice(source.api.indexOf("export async function getDriver"), source.api.indexOf("export type DriverSafetyAggregate"));
+  need(/const qs = `\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}`;/.test(getDriverBlock), "lightweight getDriver must send only operating_company_id, without aggregate opt-in");
+
+  const safetyStart = source.api.indexOf("export function getDriverSafetyAggregate");
+  const safetyAggregateBlock = source.api.slice(safetyStart, source.api.indexOf("export function createDriver(", safetyStart));
+  need(/aggregate:\s*"true"/.test(safetyAggregateBlock), "DriverSafety aggregate consumer must request aggregate=true");
+  need(/aggregate:\s*"true"/.test(source.profile), "DriverProfile aggregate consumer must request aggregate=true");
+  need(/const driverAggregateQuerySchema = z\.object\(\{[\s\S]*aggregate:\s*z\.literal\("true"\)/.test(source.backend), "backend aggregate schema must require aggregate=true");
+
+  const routeStart = source.backend.indexOf('app.get("/api/v1/mdata/drivers/:id"');
+  const routeEnd = source.backend.indexOf('"/api/v1/mdata/drivers/:id/ap-vendor"', routeStart);
+  const handler = routeStart >= 0 && routeEnd > routeStart ? source.backend.slice(routeStart, routeEnd) : "";
+  need(Boolean(handler), "GET /api/v1/mdata/drivers/:id handler missing");
+  need(/driverAggregateQuerySchema\.safeParse/.test(handler), "by-id route must retain explicit aggregate parsing");
+  need(/driverByIdQuerySchema\.safeParse/.test(handler), "by-id route must retain lightweight scoped parsing");
+  need(/driver_company_authorizations/.test(handler), "lightweight by-id scope must retain driver authorization fallback");
+  return failures;
 }
 
-// Backend source-level guard: the non-aggregate by-id GET must scope by home company OR an active
-// driver_company_authorizations fallback (mirrors buildDriverAggregate). Without the fallback a
-// driver the caller is authorized to see 404s even when the frontend does not pass the param.
-const backendFile = "apps/backend/src/mdata/drivers.routes.ts";
-const backendSrc = (() => {
-  try { return fs.readFileSync(path.join(ROOT, backendFile), "utf8"); } catch { return ""; }
-})();
-if (!backendSrc) errs.push(`${backendFile} not found`);
-else {
-  const getIdx = backendSrc.indexOf('app.get("/api/v1/mdata/drivers/:id"');
-  const nextRouteIdx = backendSrc.indexOf('app.post("/api/v1/mdata/drivers/:id/resend-invite"');
-  const handler = getIdx >= 0 && nextRouteIdx > getIdx ? backendSrc.slice(getIdx, nextRouteIdx) : "";
-  if (!handler) errs.push(`could not locate GET /api/v1/mdata/drivers/:id handler in ${backendFile}`);
-  else if (!/driver_company_authorizations/.test(handler))
-    errs.push("GET /api/v1/mdata/drivers/:id non-aggregate scope dropped the driver_company_authorizations fallback — an authorized driver will false-404 (regression of the backend #1899 fix)");
-}
-
-if (errs.length) {
-  console.error(`[${LABEL}] FAILED`);
-  for (const e of errs) console.error(`  ✗ ${e}`);
+const source = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, read(file)]));
+const failures = verify(source);
+if (failures.length) {
+  console.error(`[${LABEL}] FAILED\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — DriverDetailPage scopes getDriver to the selected company.`);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    { key: "detail", text: source.detail.replace("getDriver(id, companyId)", "getDriver(id)") },
+    { key: "api", text: source.api.replace("const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;", "const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}&aggregate=true`;") },
+    { key: "api", text: source.api.replace('operating_company_id: operatingCompanyId, aggregate: "true"', "operating_company_id: operatingCompanyId") },
+    { key: "profile", text: source.profile.replace(', aggregate: "true"', "") },
+    { key: "backend", text: source.backend.replace('aggregate: z.literal("true"),', "") },
+    { key: "backend", text: source.backend.replaceAll("driver_company_authorizations", "driver_authorizations_broken") },
+  ];
+  for (const [index, mutation] of mutations.entries()) {
+    if (verify({ ...source, [mutation.key]: mutation.text }).length === 0) {
+      console.error(`[${LABEL}] SELFTEST FAILED — mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`[${LABEL}] SELFTEST PASS — ${mutations.length}/${mutations.length} scope/shape/stall regressions rejected`);
+}
+console.log(`[${LABEL}] PASS — scoped driver reads are lightweight; aggregate consumers opt in explicitly`);
