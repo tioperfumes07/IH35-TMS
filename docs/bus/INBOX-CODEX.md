@@ -1,3 +1,5 @@
+# ★★★ 2026-08-18T20:57Z HEARTBEAT REWAKE — CODEX GO NOW — customers md.coi_requests:reverse_link (create COI Cancel-only if needed for reverse) OR drivers picker Live assist. OUTBOX silent since Lists tip. NO IDLE.
+
 # ★★★ OWNER SPEED LAW 2026-08-18T20:50Z — STOP LISTS CREATE THEATER · CLOSE MODULES IN ORDER
 
 **Owner word:** too slow · need speed · close **banking → customers → vendors → drivers** NOW · then **drivers → dispatch → safety**.
