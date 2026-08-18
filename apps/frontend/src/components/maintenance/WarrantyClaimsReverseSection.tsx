@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenanceWarrantyClaims } from "../../api/maintenance";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 type Props = {
@@ -27,7 +26,12 @@ export function WarrantyClaimsReverseSection({ operatingCompanyId, filter, conte
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No warranty claims linked to {contextLabel}.</p> : null}
       {rows.map((row) => (
         <div key={row.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
-          <EntityLink kind="warranty_claim" id={row.id} label={entityLabel(row.claim_number || row.part_description, row.id, "Warranty claim")} />
+          <EntityLinkOrTombstone
+            kind="warranty_claim"
+            id={row.id}
+            name={row.claim_number || row.part_description}
+            noun="Warranty claim"
+          />
           <span className="text-gray-500">{row.status_label ?? row.status}</span>
         </div>
       ))}

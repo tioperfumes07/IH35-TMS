@@ -9,6 +9,8 @@ type Props = {
   className?: string;
   /** data-testid when unresolved (default entity-link-tombstone) */
   tombstoneTestId?: string;
+  /** Forwarded to EntityLink when resolved (and overrides tombstone test id when set). */
+  "data-testid"?: string;
 };
 
 /**
@@ -22,6 +24,7 @@ export function EntityLinkOrTombstone({
   noun,
   className,
   tombstoneTestId = "entity-link-tombstone",
+  "data-testid": dataTestId,
 }: Props) {
   const trimmedId = id != null ? String(id).trim() : "";
   if (!trimmedId) {
@@ -29,11 +32,13 @@ export function EntityLinkOrTombstone({
   }
   if (isUnresolvedEntityTombstone(name, trimmedId, noun)) {
     return (
-      <span className="text-gray-500" data-testid={tombstoneTestId}>
+      <span className="text-gray-500" data-testid={dataTestId ?? tombstoneTestId}>
         {entityLabel(name, trimmedId, noun)}
       </span>
     );
   }
   const label = name != null ? String(name).trim() : "";
-  return <EntityLink kind={kind} id={trimmedId} label={label} className={className} />;
+  return (
+    <EntityLink kind={kind} id={trimmedId} label={label} className={className} data-testid={dataTestId} />
+  );
 }

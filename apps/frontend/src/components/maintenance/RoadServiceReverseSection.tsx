@@ -1,6 +1,5 @@
 import { useRoadServiceTickets } from "../../hooks/useRoadServiceTickets";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 type Filter =
@@ -34,10 +33,11 @@ export function RoadServiceReverseSection({
       ) : null}
       {tickets.map((ticket) => (
         <div key={ticket.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="road_service_ticket"
             id={ticket.id}
-            label={entityLabel(ticket.ticket_number, ticket.id, "Road-service ticket")}
+            name={ticket.ticket_number}
+            noun="Road-service ticket"
             className="font-medium text-slate-700 hover:underline"
           />
           <span className="text-gray-500">

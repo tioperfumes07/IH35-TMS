@@ -2,7 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listUnitPartsHistory, type PartsAssignmentRow } from "../../api/maintenance";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -30,10 +30,11 @@ const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
     sortable: true,
     sortValue: (row) => entityLabel(row.work_order_display_id, row.work_order_id, "Order"),
     render: (row) => (
-      <EntityLink
+      <EntityLinkOrTombstone
         kind="work_order"
         id={row.work_order_id}
-        label={entityLabel(row.work_order_display_id, row.work_order_id, "Order")}
+        name={row.work_order_display_id}
+        noun="Order"
       />
     ),
   },
@@ -60,7 +61,7 @@ const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
     sortValue: (row) => entityLabel(row.vendor_name, row.vendor_id, "Vendor"),
     render: (row) =>
       row.vendor_id ? (
-        <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
+        <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" />
       ) : (
         "—"
       ),

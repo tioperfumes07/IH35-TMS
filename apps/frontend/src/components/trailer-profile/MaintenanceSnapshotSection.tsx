@@ -1,5 +1,4 @@
-import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Record<string, unknown> }) {
   const workOrders = (Array.isArray(maintenance.work_orders) ? maintenance.work_orders : []) as Array<
@@ -13,10 +12,11 @@ export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Recor
         <ul className="mt-1 space-y-0.5">
           {workOrders.map((wo) => (
             <li key={String(wo.wo_id)} className="text-xs">
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="work_order"
                 id={String(wo.wo_id)}
-                label={entityLabel(wo.display_id, wo.wo_id, "Work order")}
+                name={wo.display_id}
+                noun="Work order"
                 className="text-slate-700 hover:underline"
                 data-testid="trailer-maint-snapshot-wo-link"
               />
