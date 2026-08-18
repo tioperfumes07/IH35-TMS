@@ -21,9 +21,17 @@ const CHECKS = [
     pattern: /<EntityLink kind="vendor" id=\{v\.vendor_id\} label=\{entityLabel\(v\.vendor_name, v\.vendor_id, "Vendor"\)\}/,
   },
   {
+    // ACCT-F3568 migrated the By Vendor Type grouped rollup onto the SAME shared VENDOR_COLUMNS
+    // ParityTable columns as By Vendor (see verify-accounts-payable-aging-page-uses-paritytable),
+    // so both grids render through the identical EntityLink call — real className is
+    // "font-medium text-slate-700", not the bare "text-slate-700" this check originally assumed
+    // from a since-retired, separately-styled hand-rolled row. Match on the class being PRESENT,
+    // not exact-equal, so real Tailwind class list growth doesn't false-fail while still catching
+    // a genuine regression (link removed or de-styled).
     name: "AP aging vendor EntityLink (by-type expand)",
     file: "apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx",
-    pattern: /<EntityLink kind="vendor" id=\{v\.vendor_id\} label=\{entityLabel\(v\.vendor_name, v\.vendor_id, "Vendor"\)\} className="text-slate-700"/,
+    pattern:
+      /<EntityLink kind="vendor" id=\{v\.vendor_id\} label=\{entityLabel\(v\.vendor_name, v\.vendor_id, "Vendor"\)\} className="[^"]*text-slate-700[^"]*"/,
   },
   {
     name: "Pay bill modal vendor EntityLink via billVendorDrillId",
