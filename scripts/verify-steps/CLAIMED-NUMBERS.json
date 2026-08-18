@@ -4215,10 +4215,15 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1177,
+  "total_claimed": 1178,
   "3906": {
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-load-drawer-stops-picker-law"
+  },
+  "3908": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-customers-transaction-filter-staged-apply"
   }
 }
