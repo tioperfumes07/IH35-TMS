@@ -414,14 +414,18 @@ function OpenDriverBillsPanel({
                   id={bill.load_id ?? ""}
                   label={entityLabel(bill.load_number, bill.load_id, "Load")}
                 />
-                {bill.bill_number ? (
-                  <span
-                    className="text-[10px] text-gray-400"
-                    data-testid="settlements-open-driver-bill-number"
-                  >
-                    ({entityLabel(bill.bill_number, bill.id, "Driver bill")})
-                  </span>
-                ) : null}
+                <span
+                  className="text-[10px] text-gray-400"
+                  data-testid="settlements-open-driver-bill-number"
+                >
+                  (
+                  <EntityLink
+                    kind="bill"
+                    id={bill.id}
+                    label={entityLabel(bill.bill_number, bill.id, "Driver bill")}
+                  />
+                  )
+                </span>
               </span>
               <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
             </div>
