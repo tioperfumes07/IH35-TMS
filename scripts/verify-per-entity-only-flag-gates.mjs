@@ -106,7 +106,17 @@ for (const file of migrationFiles) {
     if (!keyMatch) continue;
     const flagKey = keyMatch[1];
     if (/per-entity/i.test(stmt)) {
-      const covered = perEntityKeys.has(flagKey) || postingKeys.has(flagKey);
+      // Mirror isPostingFlag()/isPerEntityOnlyFlag()'s pattern fallbacks (service.ts), not just the
+      // explicit Set literals — a flag matching one of these suffixes is auto-recognized as
+      // posting/per-entity-gated at RUNTIME without needing explicit enumeration (that auto-coverage
+      // is the whole point of the pattern fallback), so checking only the Set false-flagged e.g.
+      // REIMBURSEMENT_GL_POSTING_ENABLED, which the _GL_POSTING(_ENABLED)?$ pattern already covers.
+      const patternCovered =
+        /_GL_POSTING(_ENABLED)?$/.test(flagKey) ||
+        /_POSTING_ENABLED$/.test(flagKey) ||
+        /_VOID_ENABLED$/.test(flagKey) ||
+        /_PER_ENTITY_ONLY$/.test(flagKey);
+      const covered = perEntityKeys.has(flagKey) || postingKeys.has(flagKey) || patternCovered;
       if (!covered) {
         failures.push(
           `${file}: flag '${flagKey}' is seeded with a "per-entity" description but is NOT in PER_ENTITY_ONLY_FLAG_KEYS or POSTING_FLAG_KEYS — it would silently fall through to the global rollout/default path`
