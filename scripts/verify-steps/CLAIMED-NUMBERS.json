@@ -2231,6 +2231,7 @@
   "3897": "verify-account-register-ref-no-journal-entry-link",
   "3901": "verify-money-detail-page-uses-ispending",
   "3905": "verify-lists-accounting-picker-law-honest",
+  "3909": "verify-lst-picker01-account-drawer-detail-type-inline-create",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -4215,7 +4216,7 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1178,
+  "total_claimed": 1179,
   "3906": {
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
