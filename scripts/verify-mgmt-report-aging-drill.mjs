@@ -193,12 +193,15 @@ export function check(sources) {
     f.push(`${PATHS.arTest}: entity-scoping coverage missing`);
   }
   // LST-F5179 — reverse customer filter must be visible EntityPicker (not URL→name-seed only).
+  // The page adopted the shared useStagedListFilters pattern (staged.draft.customerId /
+  // appliedFilters.customerId), which never carries a bare `effectiveCustomerId` variable —
+  // accept either shape; both apply the same customer_id filter, just via different naming.
   if (
     !/dataTestId="ar-aging-filter-customer"/.test(ar) ||
     !/kind="customer"/.test(ar) ||
     !/allowCreate=\{false\}/.test(ar) ||
     !/searchParams\.get\("customer_id"\)/.test(ar) ||
-    !/effectiveCustomerId/.test(ar)
+    !(/effectiveCustomerId/.test(ar) || /(?:appliedFilters|staged\.draft)\.customerId/.test(ar))
   ) {
     f.push(`${PATHS.ar}: must render EntityPicker customer filter (allowCreate=false) synced to ?customer_id=`);
   }
@@ -223,12 +226,14 @@ export function check(sources) {
     f.push(`${PATHS.apTest}: keyboard/a11y coverage missing`);
   }
   // LST-F5179 — reverse vendor filter must be visible EntityPicker synced to ?vendor_id=.
+  // Same shared-staged-filter shape as the A/R side above — accept effectiveVendorId OR
+  // appliedFilters.vendorId / staged.draft.vendorId.
   if (
     !/dataTestId="ap-aging-filter-vendor"/.test(ap) ||
     !/kind="vendor"/.test(ap) ||
     !/allowCreate=\{false\}/.test(ap) ||
     !/searchParams\.get\("vendor_id"\)/.test(ap) ||
-    !/effectiveVendorId/.test(ap)
+    !(/effectiveVendorId/.test(ap) || /(?:appliedFilters|staged\.draft)\.vendorId/.test(ap))
   ) {
     f.push(`${PATHS.ap}: must render EntityPicker vendor filter (allowCreate=false) synced to ?vendor_id=`);
   }
@@ -434,6 +439,32 @@ function selftest() {
       "missing route caught",
       check({ ...good, manifest: good.manifest.replace('path="/reports/management"', "") }).some((x) =>
         x.includes("/reports/management")
+      ),
+    ],
+    [
+      "staged-filter shape (appliedFilters.customerId, no effectiveCustomerId) passes — real ARAgingPage.tsx shape",
+      check({
+        ...good,
+        ar: good.ar.replace("effectiveCustomerId", "appliedFilters.customerId"),
+      }).length === 0,
+    ],
+    [
+      "staged-filter shape (appliedFilters.vendorId, no effectiveVendorId) passes — real APAgingPage.tsx shape",
+      check({
+        ...good,
+        ap: good.ap.replace("effectiveVendorId", "appliedFilters.vendorId"),
+      }).length === 0,
+    ],
+    [
+      "neither effectiveCustomerId nor appliedFilters.customerId/staged.draft.customerId caught",
+      check({ ...good, ar: good.ar.replace("effectiveCustomerId", "") }).some((x) =>
+        x.includes("EntityPicker customer filter")
+      ),
+    ],
+    [
+      "neither effectiveVendorId nor appliedFilters.vendorId/staged.draft.vendorId caught",
+      check({ ...good, ap: good.ap.replace("effectiveVendorId", "") }).some((x) =>
+        x.includes("EntityPicker vendor filter")
       ),
     ],
   ];
