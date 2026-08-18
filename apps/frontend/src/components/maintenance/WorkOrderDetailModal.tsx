@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { listPartsAssignments } from "../../api/maintenance";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
@@ -87,7 +87,10 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
     <Modal open={open} onClose={onClose} title={modalTitle} modalKind="work_order_detail" sizePreset="md" resizable>
       <div className="space-y-3 text-xs">
         <ModalSection>
-          <div>Display ID: <EntityLink kind="work_order" id={String(workOrder.id ?? "")} label={displayId} /></div>
+          <div>
+            Display ID:{" "}
+            <EntityLinkOrTombstone kind="work_order" id={workOrder.id} name={workOrder.display_id} noun="Work order" />
+          </div>
           <div>
             Source Type: <span className="rounded-sm bg-gray-200 px-1 py-0.5">{sourceType}</span>
           </div>
@@ -95,7 +98,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <div>
             Unit:{" "}
             {workOrder.unit_id ? (
-              <EntityLink kind="unit" id={String(workOrder.unit_id)} label={entityLabel(workOrder.unit_number, workOrder.unit_id, "Unit")} />
+              <EntityLinkOrTombstone kind="unit" id={workOrder.unit_id} name={workOrder.unit_number} noun="Unit" />
             ) : (
               "—"
             )}
@@ -103,10 +106,11 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <div>
             Load:{" "}
             {workOrder.load_id ? (
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="load"
-                id={String(workOrder.load_id)}
-                label={entityLabel(workOrder.linked_load_number, workOrder.load_id, "Load")}
+                id={workOrder.load_id}
+                name={workOrder.linked_load_number}
+                noun="Load"
               />
             ) : (
               "—"
@@ -115,10 +119,11 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <div>
             Driver:{" "}
             {workOrder.driver_id ? (
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="driver"
-                id={String(workOrder.driver_id)}
-                label={entityLabel(workOrder.driver_name, workOrder.driver_id, "Driver")}
+                id={workOrder.driver_id}
+                name={workOrder.driver_name}
+                noun="Driver"
               />
             ) : (
               "—"
@@ -156,14 +161,11 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
             <div>
               Vendor:{" "}
               {workOrder.external_vendor_id ? (
-                <EntityLink
+                <EntityLinkOrTombstone
                   kind="vendor"
-                  id={String(workOrder.external_vendor_id)}
-                  label={entityLabel(
-                    typeof workOrder.external_vendor_name === "string" ? workOrder.external_vendor_name : null,
-                    workOrder.external_vendor_id,
-                    "Vendor"
-                  )}
+                  id={workOrder.external_vendor_id}
+                  name={typeof workOrder.external_vendor_name === "string" ? workOrder.external_vendor_name : null}
+                  noun="Vendor"
                 />
               ) : (
                 "—"
@@ -203,7 +205,12 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
                       <span>{link.part_description}</span>
                       <span className="text-gray-500">×{link.qty_used}</span>
                       <span className="text-gray-500">·</span>
-                      <EntityLink kind="vendor" id={link.vendor_id} label={entityLabel(link.vendor_name, link.vendor_id, "Vendor")} />
+                      <EntityLinkOrTombstone
+                        kind="vendor"
+                        id={link.vendor_id}
+                        name={link.vendor_name}
+                        noun="Vendor"
+                      />
                       <span className="text-gray-500">
                         {link.vendor_invoice_number ? `inv ${link.vendor_invoice_number}` : ""} {money(link.vendor_invoice_amount)}
                       </span>

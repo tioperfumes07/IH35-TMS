@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { Button } from "../Button";
 
 const OPEN_WO_STATUSES = new Set(["open", "in_progress", "awaiting_parts", "awaiting_approval", "scheduled"]);
@@ -38,10 +38,11 @@ export function MaintenanceSnapshotSection({
         <ul className="mt-1 space-y-0.5">
           {openWorkOrders.map((wo) => (
             <li key={String(wo.wo_id)} className="text-xs">
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="work_order"
                 id={String(wo.wo_id)}
-                label={entityLabel(wo.display_id, wo.wo_id, "Work order")}
+                name={wo.display_id}
+                noun="Work order"
                 className="text-slate-700 hover:underline"
                 data-testid="vehicle-maint-snapshot-wo-link"
               />
