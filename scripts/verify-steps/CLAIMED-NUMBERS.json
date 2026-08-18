@@ -2161,6 +2161,11 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-08-18"
   },
+  "3872": {
+    "guard": "verify-banking-print-letter",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-18"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
