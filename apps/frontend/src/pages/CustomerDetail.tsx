@@ -1081,9 +1081,21 @@ export function CustomerDetailPage() {
               <Button variant="secondary" onClick={() => setEditModalOpen(true)}>Full Edit</Button>
             </div>
           ) : (
-            <Button onClick={() => void saveCustomer()} loading={updateCustomerMutation.isPending}>
-              Save
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                disabled={updateCustomerMutation.isPending}
+                onClick={() => {
+                  setForm({});
+                  setEditMode(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={() => void saveCustomer()} loading={updateCustomerMutation.isPending}>
+                Save
+              </Button>
+            </div>
           )
         }
       />
