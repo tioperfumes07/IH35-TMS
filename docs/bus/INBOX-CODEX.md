@@ -1,3 +1,48 @@
+# ★★★ HARD TIP 2026-08-18T14:04Z — CODEX GO NOW · EXACT LEAVES (NOT IDLE)
+
+**Queue "0 unpaid" is wrong for capacity.** Matrix may show owned modules drained; residual exact cells remain. Start walking NOW. Do not wait on Cursor chat.
+
+## SETUP
+```bash
+git fetch origin main && git reset --hard origin/main
+# tip must include 6fc7172 (#8921 Codex-back partition)
+```
+
+## OWNED (still claim residuals — skip Leaves 2420–2460 already #8920)
+**customers · vendors · insurance · legal · fuel**
+
+### WAVE-1 (customers — claim first, ≤12 cells)
+OUTBOX: `LIVE CLAIM customers · WAVE-1`
+| leaf | cells | URL |
+|------|-------|-----|
+| `md.transaction_list` | connectivity · qbo_chrome · customer · load · reverse_link | `/customers` (master-detail txn list) |
+| `md.customer_details` | connectivity · reverse_link | same |
+| `md.new_transaction` | customer · connectivity · qbo_chrome | open New Transaction chrome — **no money save** |
+| `customers.modal.customer_drill` | connectivity · qbo_chrome | open/cancel |
+| `customers.modal.fmcsaverification` | connectivity · qbo_chrome | open/cancel only |
+
+### WAVE-2 (vendors — next same turn if WAVE-1 ships)
+| leaf | cells | URL |
+|------|-------|-----|
+| `md.transaction_list` | vendor · reverse_link · qbo_chrome | `/vendors` |
+| `md.vendor_details` | qbo_chrome | |
+| `md.header.edit` | vendor · connectivity · qbo_chrome | open Full Edit → Cancel |
+| `md.header.new_transaction` | vendor · connectivity · qbo_chrome | chrome only — no AP save |
+| `md.notes` | vendor · connectivity | |
+
+### CAPACITY (if owned residuals STARVED / money-boundary)
+Order: **inventory** (`assignments.*.connectivity`, `inventory.drawer.part_create:{connectivity,picker_law}`) → **home** panels connectivity → **compliance** notification panels → **users** create/detail connectivity · **reports** non-money connectivity (no gl_je math).
+
+## RULES
+1. OUTBOX `LIVE CLAIM` before walk · PASS/FAIL/STARVED same turn
+2. AUDIT append row id **>2460** · exact `Leaves:` + Exact cells · `node scripts/audit-coverage-scoreboard.mjs --write` · FAST-MERGE
+3. FE FAIL → board + `HANDOFF=Cursor` · continue next leaf same turn
+4. Money cells (`invoice`/`ap_bill`/`gl_je`/…) → `HANDOFF=CC-1` · do not invent GL
+5. Never re-credit #8920 Leaves 2420–2460 · never idle on "0 unpaid"
+
+tip=`6fc7172fe` · Live=BLOCKED until Fully-Wired item 12 · CC-2 is ON (GUARD)
+
+---
 # ★★★ HARD TIP 2026-08-18T13:55Z — CODEX BACK ONLINE
 
 **Credits restored. You are UNPARKED.** Resume your P14 partition.

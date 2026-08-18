@@ -1,23 +1,20 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T13:55Z
+Updated: 2026-08-18T14:04Z
 
 ## ALERT
-**CODEX BACK ONLINE** — partition restored. Cursor drops absorb.
+**CC-2 ON (GUARD)** · **CODEX GO** with exact WAVE-1 Leaves (not idle on 0-unpaid).
 
 ## ACTIVE SEATS
 | Seat | Lane |
 |------|------|
 | **Cursor** | dispatch · drivers · lists · safety (+ FE HANDOFF) · lead |
-| **Codex** | customers · vendors · insurance · legal · fuel Live Leaves |
-| **Devin-A** | fleet → maintenance Live verify (CDP 9227) |
-| **CC-1** | money (accounting→banking→factoring→settlements) — **INBOX untouched this tip** |
+| **Codex** | customers · vendors · insurance · legal · fuel (+ capacity) — **WAVE-1 customers md.* NOW** |
+| **Devin-A** | fleet → maintenance Live (CDP 9227) |
+| **CC-1** | money (accounting→banking→factoring→settlements) |
+| **CC-2** | GUARD live-verify · never build — **UNPARKED** |
 
-## PARKED / NOT IN WAR
-CC-2 / Cascade assign — not this war
+## PARKED
+Cascade assign — not this war
 
 ## LIVE
-Live=BLOCKED · healthz `{"ok":true,"uptime_seconds":332,"version":"76926a8"}` · tip `121087960`
-Leaves #8920 (2420–2460) on main
-
-## CC-1 BOARD NOTE (OUTBOX only — no INBOX rewrite)
-See OUTBOX-CC-1 board digest 2026-08-18T13:55Z: fresh OPEN beyond triage = BANK-TWO-SIGN · CREDITMEMO-NOPATH · FINANCIAL-TABLE-DELETABLE (+ partials). No fresh cross-agent money HANDOFF today.
+Live=BLOCKED · tip `6fc7172fe` (#8921 Codex-back on main) · Leaves #8920 (2420–2460) do not re-credit
