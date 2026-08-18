@@ -92,3 +92,15 @@ Flags OFF until owner says turn on. No invented GL.
 CLAIM FINANCE FLAG-DATA HANDOFF: `LV-USMCA-AR-AP-AGING-FLAG-OVERRIDE-MISSING` — selected-USMCA `/finance/ar-ap-aging` is disabled. Neon shows `AR_AP_AGING_UI_ENABLED default_enabled=true` but zero USMCA company overrides; applied owner migration `202612581400` can silently return before inserts when no setter exists. Reconcile migration/postcondition, idempotently restore the USMCA non-QBO ON override with auditable setter, preserve every QBO sync flag OFF, guard silent skip, apply/rehearse via financial lane, then Live-prove page + As-of filter. Board + audit row 1002. OWNER-GATED=no. BLOCKS=LIVE-FINANCE-AGING-Z10.
 CLAIM REPORTS ECONOMICS: `LV-REPORTS-MAINT-COST-CONTRADICTORY-CLASSIFICATION-FLAGS` — selected-USMCA `/reports/maintenance-cost-per-unit` renders T149 simultaneously `high_cost`, `low_cost`, and `reliable`. Fix the backend classifier at root with exclusive precedence for overlapping p25/median/p75 in small/tied cohorts; keep `inspection_due` orthogonal; mutation-prove overlap and normal cohorts. Board filed. OWNER-GATED=no; BLOCKS=LIVE-REPORTS-MAINT-COST-ECONOMICS.
 2026-08-17T20:39Z | CLAIMING LV-CUSTOMER-PROFILE-MONEY-FIELDS-GENERIC-NUMBER — CC-1 | Live USMCA Customer Create/Edit `Credit limit (USD)` + `Detention rate ($/hr)` are generic number spinboxes at `CustomerProfileForm.tsx:596,741`; use shared MoneyInput, preserve units/state, extend `verify-money-fields-use-moneyinput.mjs` with 2 planted helper-generated regressions | audit=1282 | BLOCKS=customers.create:money,qbo_chrome | OWNER-GATED=no
+## P14 exact Live residual handoff — Codex 2026-08-17
+
+Selected-USMCA matrix re-projection on `origin/main` leaves only these money-owned exact cells after the Codex non-money walks. No defect is asserted; these are unpaid Box4 verification cells:
+
+- `customers:md.new_transaction:{reverse_link,invoice}`
+- `vendors:md.transaction_list:ap_bill`
+- `vendors:md.header.new_transaction:{ap_bill,scenario.ap}`
+- `vendors:md.txn.filters:ap_bill`
+- `vendors:detail.ap.record_bill_payment:scenario.ap`
+- `vendors:detail.ap.bill_payments:scenario.ap`
+
+Codex customers/vendor non-money scope is drained. Use cancel-only/reuse-positive-row evidence; append exact `Leaves:` + `Exact cells:` in the same turn. OWNER-GATED=no.
