@@ -56,7 +56,16 @@ export function assertBankAccountReconciliationReverse(sources) {
   if (!/getReconciliationSessions\(companyId,\s*id\)/.test(detail)) {
     problems.push(`${DETAIL}: must call getReconciliationSessions scoped to this account's id`);
   }
-  if (!/reconciliation-sessions/.test(detail) || !/reconciliationSessions\.map/.test(detail)) {
+  // Rendering the list as a hand-rolled `.map()` OR as `rows={reconciliationSessions}` passed to
+  // the governed ParityTable component are both real renders — this codebase's own convention
+  // (verify-*-uses-paritytable.mjs, repo-wide) is to PREFER ParityTable over hand-rolled
+  // <table>/<tbody> markup, so a shipped implementation using `rows={reconciliationSessions}`
+  // is the CORRECT pattern, not a workaround. This regex originally required the literal
+  // `.map(` shape and false-failed a real, complete ParityTable-based implementation.
+  if (
+    !/reconciliation-sessions/.test(detail) ||
+    !(/reconciliationSessions\.map/.test(detail) || /rows=\{reconciliationSessions\}/.test(detail))
+  ) {
     problems.push(`${DETAIL}: must render the reconciliation sessions list`);
   }
   return problems;
@@ -93,6 +102,26 @@ function selftest() {
     process.exit(1);
   }
 
+  // The real shipped implementation uses ParityTable (rows={reconciliationSessions}), not a
+  // hand-rolled .map — must ALSO pass, not just the legacy .map shape above.
+  const goodParityTable = {
+    ...good,
+    [DETAIL]: `
+      const reconciliationQuery = useQuery({
+        queryKey: ["banking", "reconciliation-sessions", "by-account", id, companyId],
+        queryFn: () => getReconciliationSessions(companyId, id),
+        enabled: Boolean(id && companyId),
+      });
+      data-testid="bank-account-detail-reconciliation-sessions"
+      <ParityTable rows={reconciliationSessions} columns={reconciliationColumns} rowKey={(s) => s.id} />
+    `,
+  };
+  const goodParityTableProblems = assertBankAccountReconciliationReverse(goodParityTable);
+  if (goodParityTableProblems.length) {
+    console.error(`${LABEL} SELFTEST FAIL — ParityTable fixture flagged: ${goodParityTableProblems.join("; ")}`);
+    process.exit(1);
+  }
+
   const mutations = [
     { ...good, [ROUTES]: good[ROUTES].replace("bank_account_id: z.string().uuid().optional(),", "") },
     { ...good, [ROUTES]: good[ROUTES].replace('AND bank_account_id = $2::uuid', "") },
@@ -106,6 +135,13 @@ function selftest() {
     { ...good, [API]: good[API].replace('if (bankAccountId) params.set("bank_account_id", bankAccountId);', "") },
     { ...good, [DETAIL]: good[DETAIL].replace("getReconciliationSessions(companyId, id)", "getReconciliationSessions(companyId)") },
     { ...good, [DETAIL]: good[DETAIL].replace("{reconciliationSessions.map((s) => (<tr key={s.id} />))}", "") },
+    {
+      ...goodParityTable,
+      [DETAIL]: goodParityTable[DETAIL].replace(
+        "<ParityTable rows={reconciliationSessions} columns={reconciliationColumns} rowKey={(s) => s.id} />",
+        ""
+      ),
+    },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertBankAccountReconciliationReverse(mutated).length === 0) {
