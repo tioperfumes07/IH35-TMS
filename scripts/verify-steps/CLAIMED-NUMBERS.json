@@ -2133,6 +2133,12 @@
     "guard": "verify-settlement-summary-print-letter",
     "note": "CLAIM-RESERVE \u2014 Settlement Summary Print opens letter HTML, not SPA window.print"
   },
+  "3862": {
+    "claimed_at": "2026-08-18T05:00:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-customer-profitability-print-letter",
+    "note": "CLAIM-RESERVE \u2014 Customer Profitability Print opens letter HTML, not SPA window.print"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
