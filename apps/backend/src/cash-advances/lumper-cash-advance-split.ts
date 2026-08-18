@@ -148,12 +148,14 @@ export async function disburseCashAdvanceSplit(
             [leg.load_id, companyId],
           );
 
+          // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): actorUserUuid
+          // is already threaded into this function — it was just never stamped on the expense row.
           const exp = await client.query(
             `INSERT INTO accounting.expenses
-               (operating_company_id, status, transaction_date, total_amount_cents, load_id, is_sample_data)
-             VALUES ($1::uuid, 'posted', CURRENT_DATE, $2, $3::uuid, $4)
+               (operating_company_id, status, transaction_date, total_amount_cents, load_id, is_sample_data, created_by_user_id)
+             VALUES ($1::uuid, 'posted', CURRENT_DATE, $2, $3::uuid, $4, $5::uuid)
              RETURNING id::text AS id`,
-            [companyId, leg.amount_cents, leg.load_id, loadSample.rows[0]?.is_sample_data === true],
+            [companyId, leg.amount_cents, leg.load_id, loadSample.rows[0]?.is_sample_data === true, actorUserUuid],
           );
           const expenseId = String((exp.rows[0] as { id: string }).id);
           expenseIds.push(expenseId);

@@ -672,6 +672,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           values.push(body.insurance_claim_id ?? null);
         }
 
+        // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half): the audit-trigger half of this
+        // finding was already fixed under ACCT-F261 (append-only audit.audit_events row on every
+        // insert), but created_by_user_id itself — the row's own actor-of-record column — was never
+        // written on this TMS-native create path even though the authed user is already in scope.
+        const hasCreatedByUserId = await columnExists(client, "accounting", "expenses", "created_by_user_id");
+        if (hasCreatedByUserId) {
+          columns.push(`created_by_user_id`);
+          values.push(user.uuid);
+        }
+
         // Explicit load_id from caller — do not silently drop (WAVE-H2 CLS-LINKAGE-ONEWAY).
         if (hasLoadId && body.load_id) {
           columns.push(`load_id`);

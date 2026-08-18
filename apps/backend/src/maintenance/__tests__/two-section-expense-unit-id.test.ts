@@ -43,7 +43,7 @@ function makeClient(opts?: { hasUnitId?: boolean; hasLoadId?: boolean }) {
             vendor_uuid: "vendor-1",
             unit_id: "unit-1",
             load_id: null,
-            total_amount: 100,
+            total_amount_cents: 100,
           },
         ],
       };
@@ -70,8 +70,24 @@ describe("autoCreateExpenseFromWO — unit_id stamp (Law §9)", () => {
     expect(expenseInsert, "expenses INSERT must run").toBeTruthy();
     expect(expenseInsert!.sql).toMatch(/\bunit_id\b/);
     expect(expenseInsert!.sql).toMatch(/\bvendor_uuid\b/);
+    expect(expenseInsert!.sql).toMatch(/\btotal_amount_cents\b/);
     expect(expenseInsert!.params).toEqual(
       expect.arrayContaining(["oc-1", "vendor-1", "wo-1", "unit-1", 100])
     );
+  });
+
+  // ACT-F5413/ACT-F5414 regression: created_by_user_id must be stamped, and the column this writer
+  // targets must be the real total_amount_cents (accounting.expenses has no "total_amount" column).
+  it("stamps created_by_user_id and targets total_amount_cents (not the non-existent total_amount)", async () => {
+    mockAudit.mockResolvedValue(undefined);
+    const { client, calls } = makeClient();
+
+    await autoCreateExpenseFromWO(client, "user-1", "wo-1", null, null);
+
+    const expenseInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.expenses"));
+    expect(expenseInsert, "expenses INSERT must run").toBeTruthy();
+    expect(expenseInsert!.sql).toMatch(/\bcreated_by_user_id\b/);
+    expect(expenseInsert!.sql).not.toMatch(/[^_]\btotal_amount\b(?!_cents)/);
+    expect(expenseInsert!.params).toContain("user-1");
   });
 });
