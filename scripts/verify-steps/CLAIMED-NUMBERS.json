@@ -2005,6 +2005,13 @@
     "finding": "ACCT-F5403",
     "guard": "verify-banking-register-virtual-account-id-accepted"
   },
+  "3790": {
+    "guard": "verify-print-opens-canonical-document",
+    "claimed_by": "cursor",
+    "claimed_at": "2026-08-18T03:15:00Z",
+    "note": "CLAIM-RESERVE — Print opens wrapPdfDocument HTML (invoice/settlement/dispatch-sheet), not SPA window.print chrome"
+  },
+
   "3762": "verify-docs-soft-delete-recoverable-copy",
   "3764": "verify-maint-wo-create-primary-opens",
   "3766": "verify-dispatch-load-deeplink-opens-drawer",
