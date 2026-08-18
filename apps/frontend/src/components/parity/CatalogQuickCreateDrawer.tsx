@@ -22,7 +22,7 @@ type Props = {
   onClose: () => void;
   onCreated: (created: CatalogCreateResult) => void;
   /** Merged into create() for catalogs that need form context (e.g. event_type from parent). */
-  createExtras?: { event_type?: string; severity?: string };
+  createExtras?: { event_type?: string; severity?: string; account_type_id?: string };
 };
 
 type FieldValues = Record<string, string>;
@@ -86,6 +86,7 @@ export function CatalogQuickCreateDrawer({
         description: values.description?.trim() || undefined,
         event_type: createExtras?.event_type,
         severity: createExtras?.severity,
+        account_type_id: createExtras?.account_type_id,
         days_until_due: daysUntilDue,
         hex_color: values.hex_color?.trim() || undefined,
       });

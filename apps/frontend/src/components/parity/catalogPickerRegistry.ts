@@ -104,6 +104,8 @@ export type CatalogCreateValues = {
   /** Payment terms (and similar) — days until due for Net-N style rows. */
   days_until_due?: number | string;
   hex_color?: string;
+  /** Detail Type (and similar cascaded catalogs) — the parent FK already selected in the form. */
+  account_type_id?: string;
 };
 
 /**
@@ -320,6 +322,53 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence:
       "apps/backend/src/catalogs/accounting/index.ts:328 (tableName expense_categories) — createCompanyScopedCatalogRoutes SELECT+INSERT same table; WAVE-H1 Bill Section A",
   }),
+
+  // CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM (2026-08-18) — AccountDrawer.tsx's Detail Type
+  // field was a raw <select> beside a "+ Create detail type" link that navigated AWAY to
+  // /lists/accounting/detail-types (QB-STD-3/4 violation: loses the in-progress account form).
+  // catalogs.detail_types is cascaded by account_type_id (a real FK, not a flat catalog — that is
+  // why account_types.create/audit_event_types.create etc. were honestly dropped from picker_law
+  // but this one is a genuine gap), so a custom create() is required: the generic catalogCreate()
+  // helper only knows {code, display_name, description} and this table's own dedicated route
+  // (detail-types-catalog.routes.ts, NOT the generic factory) requires account_type_id and a `name`
+  // column, not `display_name`. account_type_id is threaded in via createExtras from the parent
+  // form's already-selected Account Type — never asked twice.
+  detail_type: {
+    key: "detail_type",
+    label: "Detail Type",
+    backend: "catalog",
+    readTable: "catalogs.detail_types",
+    writeTable: "catalogs.detail_types",
+    readEndpoint: "/api/v1/catalogs/accounting/detail-types",
+    writeEndpoint: "/api/v1/catalogs/accounting/detail-types",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/accounting/detail-types-catalog.routes.ts:55 (GET) and :111 (POST) — both catalogs.detail_types, same collection",
+    consumerPath: "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx",
+    fields: [
+      { name: "display_name", label: "Detail type name", required: true, maxLength: 160 },
+      { name: "code", label: "Code (optional)", maxLength: 120 },
+      { name: "description", label: "Description", maxLength: 500, multiline: true },
+    ],
+    create: async (operatingCompanyId, values) => {
+      if (!values.account_type_id) {
+        throw new Error("Select an Account Type before creating a detail type.");
+      }
+      const displayName = values.display_name.trim();
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string }>(`/api/v1/catalogs/accounting/detail-types?${query.toString()}`, {
+        method: "POST",
+        body: {
+          account_type_id: values.account_type_id,
+          name: displayName,
+          code: values.code?.trim() || undefined,
+          description: values.description?.trim() || undefined,
+        },
+      });
+      return { id: String(created.id), label: displayName };
+    },
+  },
 
   class: {
     key: "class",
