@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { listPartsAssignments, type PartsAssignmentRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -85,10 +84,11 @@ export function InventoryAssignmentsPage() {
       label: "Work Order",
       sortable: true,
       render: (row) => (
-        <EntityLink
+        <EntityLinkOrTombstone
           kind="work_order"
           id={row.work_order_id}
-          label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")}
+          name={row.work_order_display_id}
+          noun="Work order"
         />
       ),
     },
@@ -98,7 +98,7 @@ export function InventoryAssignmentsPage() {
       sortable: true,
       render: (row) =>
         row.unit_id ? (
-          <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+          <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />
         ) : (
           "—"
         ),
@@ -125,7 +125,7 @@ export function InventoryAssignmentsPage() {
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
+          <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" />
         ) : (
           "—"
         ),
