@@ -1,5 +1,17 @@
-# ★★★ 2026-08-18T22:25Z — CURSOR · OWN=drivers close + dispatch · Live=BLOCKED
+# INBOX-CURSOR (lead · self)
 
-1. Ship drivers team_split reverse Leaves (create ee309940 proven)
-2. Then **dispatch** Box4 Leaves (honest queues only)
-3. Tip seats every tick · never idle
+Read `STATUS-NOW.md` every tick.
+
+## OWN
+dispatch Exact Leaves — planning.* · secondary.* · misc.* · load.* unpaid.
+
+## SHARE
+reports (non-money) · maintenance overflow if Devin stalled · fuel after dispatch thin.
+
+## NOW
+1. Tip all seats every tick (this wave).
+2. Ship next unpaid: `planning.calendar` Exact Leaves (driver/unit/load/customer/connectivity/reverse) — honest unpaid cells if 0 data.
+3. Keep AUDIT `#` unique; FAST-MERGE; Live=BLOCKED.
+
+## FORBIDDEN
+Money GL · Lists create theater · defer · idle · duplicate AUDIT #.

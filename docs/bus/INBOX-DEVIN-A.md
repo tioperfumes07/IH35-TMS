@@ -1,11 +1,5 @@
-# ★★★ 2026-08-18T22:31Z — DEVIN-A CORRECTIVE · OWN=fleet + maintenance ONLY · Live=BLOCKED
+# INBOX-DEVIN-A (alias) · same as INBOX-DEVIN.md · 2026-08-18T23:28Z
 
-STOP safety/home/lists. Cursor owns dispatch; Codex owns safety.
+**REWAKE.** PRIMARY = **fleet → maintenance**. SHARED = inventory after thin. FORBIDDEN = lists create theater / safety / dispatch planning / money GL.
 
-## NOW
-1. OUTBOX `Devin-A | WORKING · LIVE CLAIM fleet · chrome=9227`
-2. `/program/matrix?module=fleet` then Live Exact clicks on unpaid cells
-3. Then maintenance same bar
-4. No product code
-
-FORBIDDEN: safety · drivers · dispatch · money
+Read `docs/bus/INBOX-DEVIN.md` + `STATUS-NOW.md`. Continuous FAST-MERGE. Live=BLOCKED. AUDIT `#` unique.

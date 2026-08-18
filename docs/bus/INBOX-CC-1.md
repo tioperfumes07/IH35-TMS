@@ -1,17 +1,30 @@
-# ★★★ 2026-08-18T22:25Z — CC-1 GO · OWN=money modules · wave1 banking/vendors CLOSED by Cursor · Live=BLOCKED
+# INBOX-CC-1 · 2026-08-18T23:28Z · PARTITION REWRITE (Cursor lead)
 
-## OWN
-1. **accounting** unpaid money Leaves / Built honesty (no theater)
-2. **banking** residual if any after #9118
-3. **factoring** · **settlements** money Leaves
-4. Neon apply yourself on money/migrations
+`git pull --ff-only origin main` → `STATUS-NOW.md` → work → `OUTBOX-CC-1.md` one line → push.  
+**Fix never defer. FAST-MERGE. Live=BLOCKED. You own all money.**
+
+## YOUR PRIMARY (largest money cluster — do not share GL)
+| Module | Action |
+|--------|--------|
+| **accounting (84)** | Unpaid Exact Leaves + verify:static money guards — non-stop |
+| **banking (33)** | Residual Exact Leaves / dual-path honesty |
+| **factoring (29)** | Residual Exact Leaves (reserve accounts = owner-manual — do not create) |
+| **settlements (22)** | Residual Exact Leaves |
+| **cash flow / 425C / finance hub** | Money leaves only |
+
+## SHARED
+| Module | Your slice |
+|--------|------------|
+| **reports (89)** | **Money reports only** (P&L, BS, TB, AP/AR aging, registers). Cursor takes non-money ops reports. |
+| **lists** | Do not build create theater. CoA list honesty only if it blocks a money leaf. |
 
 ## FORBIDDEN
-- drivers/dispatch/safety FE pile (Cursor/Codex)
-- fleet/maint Live primary (Devin)
-- Lists create theater
+FE pile · Lists catalog create · EntityLink-only theater · inventing GL math (reuse poster) · posting flags ON without owner chat decision
 
-## OUTBOX NOW
-`CC-1 | WORKING · LIVE CLAIM accounting · Live=BLOCKED`
+## HARD
+- AUDIT / FINDING ids unique; money commits need full DoD + VERIFY + MODULE_PROGRESS
+- Neon yourself for migrations/flags when in lane
+- OUTBOX every ship with NEXT=
 
-FAST-MERGE. NO IDLE. NO #8905-era silence.
+## NEXT FO
+Continue verify:static drain + next unpaid Exact Leaf in accounting/banking — same turn, no pause.
