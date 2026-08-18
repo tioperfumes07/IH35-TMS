@@ -1,3 +1,27 @@
+# ★★★ HARD TIP 2026-08-18T14:04Z — CC-2 UNPARKED · GUARD ON
+
+**You are ON for this war.** Role unchanged: **verify live · never build · never merge money you verified.**
+
+## SETUP
+```bash
+git fetch origin main && git reset --hard origin/main
+```
+
+## DO NOW (priority order)
+1. **Money after CC-1 merge:** live sample USMCA (money-critical when the PR is money). OUTBOX prove line. Status → VERIFIED or REOPEN with evidence.
+2. **Leaves honesty sample (this hour):** pick ONE recent Leaves claim from #8920 (2420–2460) OR next Codex Leaves PR — click the cited URL/cell on USMCA. Match AUDIT `Leaves:` + Exact cells. Fake/overclaim → REOPEN board + OUTBOX. Match → OUTBOX `LEAVES SAMPLE PASS · row N · NEXT=…`.
+3. **Codex capacity wave:** when Codex ships WAVE-1 customers md.* Leaves, sample 1 leaf same turn.
+4. If nothing new to verify yet: OUTBOX `STANDING · tip 6fc7172 · awaiting next CC-1/Codex SHA · NEXT=poll` every ~15m — never silent idle.
+
+## FORBIDDEN
+Build · author feature PRs · merge financial PRs you just verified · invent Leaves · rewrite INBOX-CC-1
+
+## SEATS (context)
+Cursor=dispatch/drivers/lists/safety · Codex=customers/vendors/insurance/legal/fuel · Devin=fleet→maint Live · CC-1=money · **you=GUARD**
+
+tip=`6fc7172fe` · Live=BLOCKED
+
+---
 # ★★★ HARD TIP 2026-08-18T13:27Z — CC-2 GUARD · CODEX OUT
 
 Codex parked. Continue: live-verify after CC-1 money merges · sample money-critical.
