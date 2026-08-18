@@ -15,6 +15,17 @@ function audit(body) {
   if (!/if \(form\.related_load_uuid \|\| suggestionPinned\) return/.test(body)) failures.push("resolver must not overwrite an operator-selected load");
   if (!/related_load_uuid:\s*suggested\.load_id/.test(body)) failures.push("suggested load id must reach controlled create state");
   if (!/body\.related_load_uuid = form\.related_load_uuid/.test(body)) failures.push("create payload must forward related_load_uuid");
+  // P14 Box4 — CREATE related load owes picker_law (never allowCreate={false}).
+  if (/dataTestId=\"internal-fine-related-load\"[\s\S]{0,200}allowCreate=\{false\}|kind=\"load\"[\s\S]{0,350}dataTestId=\"internal-fine-related-load\"[\s\S]{0,80}allowCreate=\{false\}/.test(body)) {
+    failures.push("CREATE related load must not use allowCreate={false}");
+  }
+  if (!/dataTestId=\"internal-fine-related-load\"/.test(body) || !/kind=\"load\"[\s\S]{0,500}dataTestId=\"internal-fine-related-load\"/.test(body)) {
+    failures.push("related load EntityPicker (internal-fine-related-load) must be present");
+  }
+  const createLoad = body.match(/kind=\"load\"[\s\S]{0,500}dataTestId=\"internal-fine-related-load\"/);
+  if (!createLoad || !/\ballowCreate\b/.test(createLoad[0]) || /allowCreate=\{false\}/.test(createLoad[0])) {
+    failures.push("CREATE related load EntityPicker must set allowCreate");
+  }
   return failures;
 }
 
@@ -24,6 +35,10 @@ if (process.argv.includes("--selftest")) {
     ["driver_id: form.driver_uuid", "driver_id: undefined"],
     ["if (form.related_load_uuid || suggestionPinned) return", "if (suggestionPinned) return"],
     ["related_load_uuid: suggested.load_id", "notes: suggested.load_id"],
+    [
+      'dataTestId="internal-fine-related-load"',
+      'allowCreate={false}\n            dataTestId="internal-fine-related-load"',
+    ],
   ];
   for (const [from, to] of mutations) {
     const requestStart = source.indexOf("suggestExpenseLoad({");

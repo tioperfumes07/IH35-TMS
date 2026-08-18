@@ -296,13 +296,13 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             <option value="approved">Approved</option>
           </SelectCombobox>
           {/* SAF-B29: native <select> of limit:200 dispatch loads truncated silently. EntityPicker
-              server-searches mdata.loads (allowCreate=false — a load is a transaction). */}
+              server-searches mdata.loads. CREATE chrome owes picker_law — allowCreate (+ Add new load). */}
           <EntityPicker
             kind="load"
             operatingCompanyId={operatingCompanyId}
             value={form.related_load_uuid || null}
             onChange={(next) => setForm((v) => ({ ...v, related_load_uuid: next ?? "" }))}
-            allowCreate={false}
+            allowCreate
             placeholder="Related load (optional)"
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             dataTestId="internal-fine-related-load"

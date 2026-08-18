@@ -811,7 +811,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       operatingCompanyId={operatingCompanyId}
                       value={str(selected?.load_id) || null}
                       onChange={(next) => setField("load_id", next ?? "")}
-                      allowCreate={false}
+                      allowCreate
                       nestedInDrawer
                       enabled={drawerOpen && formEditable}
                       placeholder="Select load"
