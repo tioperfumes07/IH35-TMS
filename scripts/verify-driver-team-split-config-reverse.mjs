@@ -4,6 +4,7 @@ import fs from "node:fs";
 const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
   routes: read("apps/backend/src/settlements/team-splits/team-splits.routes.ts"),
+  service: read("apps/backend/src/mdata/driver-team.service.ts"),
   hook: read("apps/frontend/src/hooks/useTeamSplits.ts"),
   reverse: read("apps/frontend/src/components/driver-profile/DriverTeamSplitConfigReverseSection.tsx"),
   profile: read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx"),
@@ -18,6 +19,8 @@ function failures(s = files) { return [
   ["honest panel failure state", s.panel.includes("Team split configurations unavailable.") && s.panel.includes("!isLoading && !isError") && s.panel.includes("void refetch()")],
   // LST-F5185 — list reverse filter must be EntityPicker + URL write
   ["visible driver EntityPicker filter", s.panel.includes('dataTestId="team-split-config-filter-driver"') && s.panel.includes("allowCreate={false}") && s.panel.includes("setSearchParams") && s.panel.includes("EntityPicker")],
+  // LV-DRIVERS-TEAM-SPLIT-NULL-IDENTITY — opco-only membership (no uca join on nullable identity_user_id)
+  ["assertDriverCompany opco-only", /FROM mdata\.drivers d\s+WHERE d\.id = \$1\s+AND d\.operating_company_id = \$2::uuid/.test(s.service) && !/FROM mdata\.drivers d\s+JOIN org\.user_company_access/.test(s.service)],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   const checks = [
@@ -28,9 +31,10 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, reverse: files.reverse.replace('kind="driver_team_splits_filter"', 'kind="driver"') }).includes("driver target preserved"),
     failures({ ...files, panel: files.panel.replace("!isLoading && !isError", "!isLoading") }).includes("honest panel failure state"),
     failures({ ...files, panel: files.panel.replace('dataTestId="team-split-config-filter-driver"', 'dataTestId="gone"') }).includes("visible driver EntityPicker filter"),
+    failures({ ...files, service: files.service.replace("AND d.operating_company_id = $2::uuid", "AND FALSE") }).includes("assertDriverCompany opco-only"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-driver-team-split-config-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-driver-team-split-config-reverse selftest PASS — 7/7 filter/profile/target/error/picker mutations red"); process.exit(0);
+  console.log("verify-driver-team-split-config-reverse selftest PASS — 8/8 filter/profile/target/error/picker/opco mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-driver-team-split-config-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }

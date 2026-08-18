@@ -378,11 +378,7 @@
       "route_hint": "surface://pages/driver/ReportIssueModal.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/driver/ReportIssueModal.tsx",
-      "required": [
-        "connectivity",
-        "qbo_chrome",
-        "load"
-      ]
+      "required": []
     },
     {
       "id": "drivers.panel.pending_settlement_deductions",
@@ -936,6 +932,21 @@
           ]
         }
       ]
+    },
+    "report_issue_owner_seat_na_preop_2026_08_18": {
+      "finding": "LV-DRIVERS-REPORT-ISSUE-NA-PREOP-OWNER-SEAT",
+      "note": "AUDIT #1442: ReportIssueModal mounts only on driver-app DriverLoadDetailPage; Owner office session redirected / cannot exercise load/qbo_chrome/connectivity Live. Dropping Required cells until driver-auth seat Live. FE #9112 Modal+EntityLink remains Built.",
+      "drops": [
+        {
+          "id": "drivers.modal.report_issue",
+          "removed": [
+            "load",
+            "qbo_chrome",
+            "connectivity"
+          ]
+        }
+      ],
+      "ledger_ref": "AUDIT-COVERAGE-LIVE #1442"
     }
   }
 }
