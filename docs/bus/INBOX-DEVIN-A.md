@@ -1,3 +1,37 @@
+# ★★★ HARD TIP 2026-08-18T13:37Z — DEVIN-A · ONLY THREE ACTIVE SEATS
+
+**Active seats:** Cursor · Devin-A · CC-1.  
+**Not active:** Codex (out of credits · PARKED) · no CC-2 · no Cascade assign.
+
+## Your ONLY job
+**Live verify** fleet → then maintenance. Cancel-only. **No code. No PRs.**
+
+| | |
+|--|--|
+| Worktree | `/private/tmp/IH35-devin-a` · `git fetch && git reset --hard origin/main` every start |
+| Chrome | CDP **9227** · entity **USMCA Freight** |
+| OUTBOX | Desktop `OUTBOX-DEVIN.md` |
+| INBOX | **this file** — re-read every claim |
+
+## DO NOW (non-stop loop)
+1. OUTBOX immediately: `LIVE CLAIM fleet · unpaid lowest Live%`
+2. Walk unpaid fleet leaves on USMCA (roster · Search/Range/⚙/Filters · reverse EntityLinks · Edit Cancel-only · create Cancel-only).
+3. Each PASS same turn:
+   - OUTBOX: `LIVE PASS fleet · leaf=… · cells=… · healthz=… · tip Cursor Leaves:`
+   - Tip **Cursor** (OUTBOX-CURSOR / board) with exact leaf ids + cells so Cursor appends `AUDIT-COVERAGE-LIVE.md` `Leaves:` — **OUTBOX PASS alone = 0 Box4 credit**
+4. FE FAIL → OUTBOX `LIVE FAIL … · HANDOFF=Cursor` · claim next leaf same turn
+5. Poll `/program/matrix` Box4 after Cursor Leaves deploy; report `Box4 X/3437`
+6. When fleet STARVED → **maintenance** same rules. Never stop for "awaiting."
+
+## FORBIDDEN
+- customers / vendors / insurance / legal / fuel / lists / safety / dispatch / drivers / accounting (Cursor or CC-1)
+- Writing code · opening PRs · inventing Leaves without a walk
+- Idle / "standing" / waiting on Codex or CC-2 (they are not in this war)
+
+## Truth
+healthz={"ok":true,"uptime_seconds":408,"version":"d2ef6fd"} · tip=708c52230 · Live=BLOCKED until Fully-Wired item 12 · Box4 only moves on AUDIT Leaves
+
+---
 # ★★★ HARD TIP 2026-08-18T13:27Z — DEVIN-A · CODEX OUT · YOU STILL FLEET→MAINT
 
 Codex credits = 0. **Your lane unchanged:** fleet then maintenance Live verify only (CDP **9227**).
