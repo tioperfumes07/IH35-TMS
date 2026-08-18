@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1614** | 2026-08-18 |
+| Rows in this file | **1615** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=895 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=896 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1704,3 +1704,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 4080 | lists · catalog.vendors.vendor_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.vendors.vendor_types.create`. Exact cell: `catalog.vendors.vendor_types.create:connectivity`. Selected-USMCA `/lists/catalogs/vendors/vendor-types` mounted **Vendor Types**; `+ Create` opened **Create Vendor Types** drawer (Code *, Vendor Type *, Description, Sort Order, Cancel/Create). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `699a1eb`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 4160 | lists · catalog.customers.customer_quality_event_reasons.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.customers.customer_quality_event_reasons.create`. Exact cell: `catalog.customers.customer_quality_event_reasons.create:connectivity`. Selected-USMCA `/lists/catalogs/customers/customer-quality-event-reasons` mounted **Customer Quality Event Reasons**; `+ Create` opened **Create Customer Quality Event Reasons** drawer (Code *, Label *, Event Type *, Severity *, Description, Cancel/Create). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `c903a20`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 4240 | lists · catalog.fleet.equipment_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.equipment_types.create`. Exact cell: `catalog.fleet.equipment_types.create:connectivity`. Selected-USMCA `/lists/fleet/equipment-types` mounted **Equipment Types**; `+ Create` opened **New Equipment Types** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `69dfb23`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 4320 | lists · catalog.fleet.trailer_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.trailer_types.create`. Exact cell: `catalog.fleet.trailer_types.create:connectivity`. Selected-USMCA `/lists/fleet/trailer-types` mounted **Trailer Types**; `+ Create` opened **New Trailer Types** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `24434d7`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
