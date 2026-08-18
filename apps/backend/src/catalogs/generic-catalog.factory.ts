@@ -181,6 +181,9 @@ export function createCatalogRoutes(
   ];
 
   const sortColumn = dbColumnForApiColumn(config.defaultSort.column, config);
+  // LV-CAT-500 secondary tie-break: never hardcode `t.code` — alias catalogs use rate_code /
+  // location_code / etc. Bare `t.code ASC` 500s (42703) on labor_rates + maintenance_part_locations.
+  const codeSortColumn = dbColumnForApiColumn("code", config);
   const sortDir = config.defaultSort.dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
   if (mode === "all" || mode === "extensions") {
@@ -236,7 +239,7 @@ export function createCatalogRoutes(
               SELECT ${selectColumns.join(", ")}
               FROM catalogs.${config.tableName} t
               ${whereClause}
-              ORDER BY t.${sortColumn} ${sortDir}, t.code ASC
+              ORDER BY t.${sortColumn} ${sortDir}, t.${codeSortColumn} ASC
               LIMIT $${values.length - 1}
               OFFSET $${values.length}
             `,
@@ -504,7 +507,7 @@ export function createCatalogRoutes(
           `
             SELECT ${selectColumns.join(", ").replaceAll("t.", "")}
             FROM catalogs.${config.tableName} t
-            ORDER BY t.${sortColumn} ${sortDir}, t.code ASC
+            ORDER BY t.${sortColumn} ${sortDir}, t.${codeSortColumn} ASC
           `
         );
         return res.rows;
