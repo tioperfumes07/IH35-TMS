@@ -1,9 +1,24 @@
-# ★★★ 2026-08-18T22:25Z — CC-2 GO · GUARD + lists honesty · Live=BLOCKED
+# INBOX-CC-2 · 2026-08-18T23:28Z · PARTITION REWRITE (Cursor lead)
 
-## OWN
-1. **GUARD** Live sample every Cursor/Codex/CC-1 merge this hour (PASS/FAIL OUTBOX)
-2. **lists** — honesty / connectivity Live ONLY · **STOP catalog.*.create theater**
-3. Sample first: drivers team_split reverse after Cursor #Leaves lands · safety Leaves when Codex ships
+`git pull --ff-only origin main` → `STATUS-NOW.md` → work → `OUTBOX-CC-2.md` one line → push.  
+**Fix never defer. Live=BLOCKED.**
 
-## OUTBOX NOW
-`CC-2 | WORKING · GUARD sample drivers team_split reverse · Live=BLOCKED`
+## YOUR PRIMARY
+1. **GUARD** — live verify AFTER money merges (never merge what you alone verified if maker≠checker applies)
+2. **lists (266 — largest module)** — **honesty only**: false Required drops · picker_law honest · no fabricated create paths
+
+## SHARED
+Lists is too large for one seat to "finish" by creating catalogs. Drain by **honesty / Exact Leaves that are already wired**. Hand overflow honesty leaves to Cursor only if you mark them in OUTBOX.
+
+## FORBIDDEN
+- `catalog.*.create` theater · inventing list wizards to green Required
+- Money poster / GL math (CC-1)
+- Dispatch/fleet product Leaves (other seats)
+
+## HARD
+- AUDIT `#` unique
+- OUTBOX: `CC-2 | … | NEXT=…`
+
+## NEXT FO
+1. Next lists honesty unpaid Exact Leaf OR GUARD sample on latest CC-1 money merge
+2. Continuous — no idle

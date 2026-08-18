@@ -1,13 +1,10 @@
-# INBOX-CASCADE · 8H LAUNCH · 2026-08-18T03:20Z
+# INBOX-CASCADE · 2026-08-18T23:28Z · PARTITION NOTE (Cursor lead)
 
-**CANCELLED this wave.** Do not wait on Cascade. Coders use CONTINUOUS-LIVE-NO-STALL + LAUNCH-8H packet.
+Merge/scribe lane when active. Do **not** steal Exact Leaves from seat OWN tables unless verifying.
 
----
+## NOW
+- Prefer merge-on-green for ready seat PRs if auto-merge broken
+- Do not append conflicting AUDIT `#`s
+- Read `STATUS-NOW.md` partition — seats OWN as written
 
-# INBOX-CASCADE · CANCELLED · 2026-08-17T14:39Z
-
-**OWNER DECISION:** Cascade seat **CANCELLED** for this wave.
-
-Do **not** Live VERIFY. Do **not** merge-poll as primary. Devin local-a (`INBOX-DEVIN-A.md`) owns Live-assist prove.
-
-If Cascade process still running: stop Live claims; OUTBOX `Cascade | CANCELLED · handed to Devin local-a`.
+Live=BLOCKED. Fix never defer for seats you tip.

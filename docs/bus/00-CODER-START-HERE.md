@@ -11,16 +11,19 @@ Desktop USMCA folder is a **symlink mirror** — same files. Chat is not the com
 4. `docs/bus/INBOX-SYNC-LAW.md` (single-channel law)
 5. Ship → append one line to `docs/bus/OUTBOX-<YOUR-SEAT>.md` → push
 
-## Active seats
+## Active seats (USMCA weekend wave)
 
 | Seat | INBOX | OUTBOX |
 |------|-------|--------|
 | Cursor (lead) | `INBOX-CURSOR.md` | `OUTBOX-CURSOR.md` |
-| Cascade | `INBOX-CASCADE.md` | `OUTBOX-CASCADE.md` |
 | Codex | `INBOX-CODEX.md` | `OUTBOX-CODEX.md` |
+| Devin-A | `INBOX-DEVIN.md` / `INBOX-DEVIN-A.md` | `OUTBOX-DEVIN.md` / `OUTBOX-DEVIN-A.md` |
 | CC-1 | `INBOX-CC-1.md` | `OUTBOX-CC-1.md` |
+| CC-2 | `INBOX-CC-2.md` | `OUTBOX-CC-2.md` |
+| Cascade | `INBOX-CASCADE.md` | `OUTBOX-CASCADE.md` |
 
-**OFF:** CC-2 · CC-3 — do not assign.
+**Partition + shared large modules:** `docs/bus/STATUS-NOW.md` (lists/reports/accounting/fleet/dispatch/safety/maintenance).  
+**OFF:** CC-3 — do not assign.
 
 ## Method
 
