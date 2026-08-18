@@ -171,10 +171,8 @@
       "sub": "Reconciliation workspace",
       "route_hint": "/banking/reconciliation",
       "required": [
-        "gl_je",
         "connectivity",
         "qbo_chrome",
-        "reverse_link",
         "bank"
       ]
     },
@@ -757,6 +755,20 @@
           ]
         }
       ]
+    },
+    "reconciliation_gl_je_reverse_na_preop_2026_08_18": {
+      "finding": "LV-BANK-RECON-GL-JE-REVERSE-NA-PREOP",
+      "note": "AUDIT #1422 / CC-1 OUTBOX: USMCA has 0 reconciliation sessions/matches — no reconciliation→GL JE or reverse-drill target exists. Keeping gl_je+reverse_link Required painted permanent builtOnly theater. Drop until a real session exists; keep connectivity/qbo_chrome/bank.",
+      "drops": [
+        {
+          "id": "reconciliation",
+          "removed": [
+            "gl_je",
+            "reverse_link"
+          ]
+        }
+      ],
+      "ledger_ref": "AUDIT-COVERAGE-LIVE #1422"
     }
   }
 }
