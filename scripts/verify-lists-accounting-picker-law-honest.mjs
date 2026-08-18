@@ -1,18 +1,23 @@
 #!/usr/bin/env node
 /**
  * CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM — picker_law Required-column honesty
- * correction, accounting catalog-create remainder.
+ * correction, accounting catalog-create remainder (2 batches).
  *
- * 5 `catalog.accounting.*.create` leaves in the Lists module claimed picker_law as Required
- * even though their create forms carry zero cross-catalog reference fields (live DOM read +
- * schema grep — no `uuid REFERENCES` column on the underlying table), or in the case of
- * account_types.create/audit_event_types.create, no create form exists at all (same
- * disposition their own connectivity drop already documents). See
+ * 10 `catalog.accounting.*.create` leaves in the Lists module claimed picker_law as Required
+ * even though their create forms carry zero cross-catalog reference fields (live DOM read,
+ * schema grep for `uuid REFERENCES` columns, and — batch 2 — the actual backend registration
+ * factory in apps/backend/src/catalogs/accounting/index.ts, which proves several of these
+ * route through a generic zero-FK factory with no metadata support at all), or have no create
+ * form to begin with (readOnly on both FE and BE, or the same disposition their own
+ * already-dropped connectivity requirement documents). See
  * docs/specs/scoreboard/modules/lists.required.json's
- * honesty_audit.picker_law_column_2026_08_18_accounting_remainder for the full per-leaf
- * evidence. Does NOT touch chart_of_accounts.create or detail_types*.create, which DO carry a
- * real cross-catalog reference (Detail Type / Account Type) and stay Required pending a real
- * fix — this guard would fail if either of those were accidentally swept in.
+ * honesty_audit.picker_law_column_2026_08_18_accounting_remainder (batch 1) and
+ * .../_batch2 (batch 2) for the full per-leaf evidence. Does NOT touch chart_of_accounts.create
+ * / detail_types*.create (a real cross-catalog reference, genuine gap) or
+ * payment_methods.create (an owned_surface_paths pointer to a DIFFERENT, richer picker
+ * component with a real gl_account_id FK contradicts the flat-factory signal — stays Required
+ * pending its own dedicated investigation) — this guard fails if any of those four are
+ * accidentally swept in.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -29,6 +34,11 @@ const DROPPED = [
   "catalog.accounting.void_cancel_reasons.create",
   "catalog.accounting.account_types.create",
   "catalog.accounting.audit_event_types.create",
+  "catalog.accounting.account_role_bindings.create",
+  "catalog.accounting.chart_of_accounts_seeds.create",
+  "catalog.accounting.expense_categories.create",
+  "catalog.accounting.tax_codes.create",
+  "catalog.accounting.currency_codes.create",
 ];
 
 // These stay Required for picker_law — a mutation of these must NOT be caught by this guard,
@@ -38,6 +48,7 @@ const MUST_STAY_REQUIRED = [
   "catalog.accounting.chart_of_accounts.create",
   "catalog.accounting.detail_types.create",
   "catalog.accounting.detail_types_lookup.create",
+  "catalog.accounting.payment_methods.create",
 ];
 
 function readJson(rel) {

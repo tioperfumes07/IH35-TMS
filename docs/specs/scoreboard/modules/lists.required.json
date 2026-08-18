@@ -2268,7 +2268,6 @@
       "sub": "+ Create — QBO bulk-link",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2290,7 +2289,6 @@
       "sub": "+ Create — Product & Service Categories",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2312,7 +2310,6 @@
       "sub": "+ Create — Items",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2359,7 +2356,6 @@
       "sub": "+ Create — Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2381,7 +2377,6 @@
       "sub": "+ Create — Expense Categories",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -7875,6 +7870,37 @@
           "id": "catalog.accounting.audit_event_types.create",
           "removed": ["picker_law"],
           "reason": "same disposition as this leaf's own already-dropped connectivity: 'readOnly:true, Create button hidden' — no create form exists to carry a picker"
+        }
+      ]
+    },
+    "picker_law_column_2026_08_18_accounting_remainder_batch2": {
+      "finding": "CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM",
+      "note": "Second batch of the same picker_law honesty sweep (see picker_law_column_2026_08_18_accounting_remainder for batch 1). Source-verified via apps/backend/src/catalogs/accounting/index.ts, the single registration file for these routes: chart_of_accounts_seeds/expense_categories/tax_codes/currency_codes register through createCompanyScopedCatalogRoutes (the generic ../fuel/factory.js path) with zero metadata/createMapper/FK support at all — structurally cannot carry a picker, unlike chart-of-accounts/classes/payment-terms/items/posting-templates in the same file, which use registerLegacyAccountingCatalogRoutes WITH rich FK-carrying metadata mappers. account_role_bindings registers with readOnly:true on BOTH the backend route AND the frontend page (AccountRoleBindingsListPage.tsx passes readOnly to AccountingCatalogListPage, whose own actions block renders the '+ Create' button only `!readOnly ?` — no create form exists at all). Explicitly excludes payment_methods.create from this batch despite also using the generic factory: its required.json entry carries an owned_surface_paths pointer to components/driver-finance/PaymentMethodPicker.tsx, a DIFFERENT, richer picker component (apps/backend/src/driver-finance/payment-methods-catalog.service.ts has a real gl_account_id FK and an explicit 'Inline + Add new method' comment) — that contradicting signal means picker_law may genuinely apply there via the other surface, so it stays Required pending its own dedicated investigation rather than being swept in here.",
+      "drops": [
+        {
+          "id": "catalog.accounting.account_role_bindings.create",
+          "removed": ["picker_law"],
+          "reason": "backend registerLegacyAccountingCatalogRoutes({tableName:'account_role_bindings', readOnly:true}) + frontend AccountRoleBindingsListPage.tsx readOnly prop — no create form exists at all"
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts_seeds.create",
+          "removed": ["picker_law"],
+          "reason": "createCompanyScopedCatalogRoutes generic factory — zero FK/metadata support in the request contract, nothing to pick"
+        },
+        {
+          "id": "catalog.accounting.expense_categories.create",
+          "removed": ["picker_law"],
+          "reason": "createCompanyScopedCatalogRoutes generic factory — zero FK/metadata support in the request contract, nothing to pick"
+        },
+        {
+          "id": "catalog.accounting.tax_codes.create",
+          "removed": ["picker_law"],
+          "reason": "createCompanyScopedCatalogRoutes generic factory — zero FK/metadata support in the request contract, nothing to pick"
+        },
+        {
+          "id": "catalog.accounting.currency_codes.create",
+          "removed": ["picker_law"],
+          "reason": "createCompanyScopedCatalogRoutes generic factory — zero FK/metadata support in the request contract, nothing to pick"
         }
       ]
     }
