@@ -24,7 +24,8 @@ import {
   buildRelayFuelBreakdown,
   formatRelayFuelBreakdownSummary,
 } from "./relayFuelLineBreakdown";
-import { PrintOrientationDialog, applyPrintOrientationStyles } from "./PrintOrientationDialog";
+import { PrintOrientationDialog } from "./PrintOrientationDialog";
+import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
@@ -2868,13 +2869,45 @@ export function BankingTransactionsDesignView({
         onCancel={() => setPrintDialogOpen(false)}
         onConfirm={(orientation) => {
           setPrintDialogOpen(false);
-          const cleanup = applyPrintOrientationStyles(orientation);
-          const done = () => {
-            cleanup();
-            window.removeEventListener("afterprint", done);
-          };
-          window.addEventListener("afterprint", done);
-          window.setTimeout(() => window.print(), 50);
+          const esc = (v: unknown) =>
+            String(v ?? "—")
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
+          const rowsHtml = tableRows
+            .map((tx) => {
+              const { spent, received } = spentReceived(tx);
+              return `<tr>
+                <td>${esc(formatBankTransactionDate(tx.transaction_date))}</td>
+                <td>${esc(transactionLabel(tx))}</td>
+                <td style="text-align:right">${esc(spent > 0 ? formatUsdCents(spent) : "")}</td>
+                <td style="text-align:right">${esc(received > 0 ? formatUsdCents(received) : "")}</td>
+              </tr>`;
+            })
+            .join("");
+          printLetterHtml({
+            title: `Bank transactions — ${selectedAccount?.account_name ?? "all accounts"}`,
+            orientation,
+            bodyHtml: `
+              <h1>Bank transactions</h1>
+              <div class="meta">${esc(selectedAccount?.account_name ?? "All accounts")} · tab ${esc(
+                activeReviewTab,
+              )} · ${esc(orientation)} · printed ${esc(new Date().toLocaleString())}</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Description</th>
+                    <th style="text-align:right">Spent</th>
+                    <th style="text-align:right">Received</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml || `<tr><td colspan="4">No rows</td></tr>`}
+                </tbody>
+              </table>
+            `,
+          });
         }}
       />
       <MatchDrawer

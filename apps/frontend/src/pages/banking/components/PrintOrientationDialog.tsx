@@ -4,7 +4,7 @@ type Props = {
   open: boolean;
   title?: string;
   onCancel: () => void;
-  /** Called after orientation CSS is applied; caller should trigger window.print(). */
+  /** Called with chosen orientation; caller opens a letter HTML print (never SPA window.print). */
   onConfirm: (orientation: "portrait" | "landscape") => void;
 };
 
