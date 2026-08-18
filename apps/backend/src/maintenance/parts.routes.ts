@@ -157,7 +157,12 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             pi.vendor_id::text AS vendor_id,
             -- CLS-SILENT-CAP / CLS-UUID-LABEL: same-opco vendor name on the list path so the FE
             -- never enriches from a capped listVendors(limit:N) roster (drops names past the page).
-            v.vendor_name AS vendor_name,
+            -- LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL: the join alone silently drops
+            -- a vendor once deactivated (mdata.vendors' own RLS excludes deactivated_at IS NOT NULL
+            -- rows for a non-bypass reader) even though the FK is still valid and the part still
+            -- legitimately cites it. mdata.resolve_vendor_label_same_company (migration 202612780000)
+            -- is the canonical, same-company-only, label-only fallback used only when the join misses.
+            COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(pi.vendor_id, pi.operating_company_id)) AS vendor_name,
             pi.last_purchase_amount AS unit_cost,
             pi.on_hand_qty AS qty_on_hand,
             pi.reorder_threshold,
