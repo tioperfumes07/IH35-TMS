@@ -2061,6 +2061,12 @@
     "guard": "verify-account-register-print-letter",
     "note": "CLAIM-RESERVE \u2014 Account register Print opens letter HTML, not SPA window.print"
   },
+  "3838": {
+    "claimed_at": "2026-08-18T04:05:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-ap-aging-print-letter",
+    "note": "CLAIM-RESERVE \u2014 AP aging Print opens letter HTML, not SPA window.print"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
