@@ -72,6 +72,8 @@ const GATE = "apps/backend/src/dispatch/driver-qualification.service.ts";
 const DISPATCH_STATUS = "apps/backend/src/dispatch/loads.routes.ts";
 const SAFETY_STATUS = "apps/backend/src/safety/drug-program.routes.ts";
 const SAFETY_HOME = "apps/backend/src/safety-officer/role-views/safety-home.service.ts";
+const DA_PROGRAM = "apps/backend/src/safety/drug-alcohol/program.service.ts";
+const DA_RANDOM_POOL = "apps/backend/src/safety/drug-alcohol/random-pool.service.ts";
 /** Every file that scopes a safety.da_test_records read. See the COMP-01-B assertion below. */
 const DA_TEST_RECORDS_READERS = [GATE, SAFETY_HOME];
 const LABEL = "verify-comp01-drug-alcohol-unified-source";
@@ -103,6 +105,8 @@ export function auditUnifiedDrugAlcoholSource(sources) {
   const gate = strip(sources?.[GATE] ?? read(GATE));
   const dispatchStatus = strip(sources?.[DISPATCH_STATUS] ?? read(DISPATCH_STATUS));
   const safetyStatus = strip(sources?.[SAFETY_STATUS] ?? read(SAFETY_STATUS));
+  const daProgram = strip(sources?.[DA_PROGRAM] ?? read(DA_PROGRAM));
+  const daRandomPool = strip(sources?.[DA_RANDOM_POOL] ?? read(DA_RANDOM_POOL));
   const problems = [];
 
   const violations = between(gate, "WITH violations AS", "clearances AS");
@@ -204,20 +208,50 @@ export function auditUnifiedDrugAlcoholSource(sources) {
     while (from >= 0) {
       // The arm runs to the next FROM of another relation, or 500 chars, whichever is shorter.
       const arm = src.slice(from, from + 500).split(/\bFROM\s+(?!safety\.da_test_records)/)[0];
-      if (/operating_company_id\s*=\s*\$\d+::uuid/.test(arm)) {
+      if (/operating_company_id(?:::text)?\s*=\s*\$\d+::uuid(?!::text)/.test(arm)) {
         problems.push(
           `${file}: casts operating_company_id to ::uuid while reading safety.da_test_records — that ` +
             `column is TEXT on PROD, so Postgres raises "operator does not exist: text = uuid" at plan ` +
             `time and the query never runs. Use ::text.`
         );
-      } else if (/operating_company_id\s*=\s*\$\d+(?!::)/.test(arm)) {
+      } else if (!/operating_company_id::text\s*=\s*\$\d+::uuid::text/.test(arm)) {
         problems.push(
-          `${file}: scopes a safety.da_test_records read with a bare $n and no ::text cast — the PROD ` +
-            `column type is TEXT, and leaving the cast implicit is one edit away from becoming ::uuid ` +
-            `again, which kills the query at plan time.`
+          `${file}: does not normalize both safety.da_test_records.operating_company_id and the UUID ` +
+            `parameter through ::text — the PROD column type is TEXT, so a UUID-only comparison kills ` +
+            `the query at plan time.`
         );
       }
       from = src.indexOf("safety.da_test_records", from + 1);
+    }
+  }
+
+  // 4c. The same PROD type drift affects every GAP-81 reader, not only the dispatch gate. Migration
+  // 0327 declares UUID, but the live pre-existing da_* tables are TEXT for operating_company_id.
+  // Every comparison against those tables must normalize both operands to text; joins to the UUID
+  // mdata company key must do the same. Otherwise the program's enrollment roster, positive-result
+  // queue and random-draw history all throw 42883 before they can return even an honest empty list.
+  for (const [file, src, required] of [
+    [DA_PROGRAM, daProgram, [
+      ["e.operating_company_id::text = $1::uuid::text", 1],
+      ["t.operating_company_id::text = $1::uuid::text", 1],
+      ["AND operating_company_id::text = $2::uuid::text", 3],
+      ["d.operating_company_id::text = e.operating_company_id::text", 1],
+      ["d.operating_company_id::text = t.operating_company_id::text", 1],
+    ]],
+    [DA_RANDOM_POOL, daRandomPool, [
+      ["e.operating_company_id::text = $1::uuid::text", 2],
+      ["WHERE operating_company_id::text = $1::uuid::text", 1],
+    ]],
+  ]) {
+    for (const [needle, minimum] of required) {
+      const actual = src.split(needle).length - 1;
+      if (actual < minimum) {
+        problems.push(
+          `${file}: expected at least ${minimum} portable GAP-81 company-scope occurrence(s) of ` +
+            `\`${needle}\`, found ${actual}; PROD da_* operating_company_id is TEXT, so a UUID-only ` +
+            `comparison or UUID↔TEXT join raises 42883 and the Live surface returns HTTP 500.`
+        );
+      }
     }
   }
 
@@ -285,6 +319,8 @@ if (SELFTEST) {
     [DISPATCH_STATUS]: read(DISPATCH_STATUS),
     [SAFETY_STATUS]: read(SAFETY_STATUS),
     [SAFETY_HOME]: read(SAFETY_HOME),
+    [DA_PROGRAM]: read(DA_PROGRAM),
+    [DA_RANDOM_POOL]: read(DA_RANDOM_POOL),
   };
   const failures = [];
   const expectCaught = (name, overrides, needle) => {
@@ -339,18 +375,38 @@ if (SELFTEST) {
   // COMP-01-B: the text-vs-uuid cast that made the whole gate throw.
   expectCaught(
     "gate-da-test-records-scoped-as-uuid-again",
-    { [GATE]: live[GATE].split("dr2.operating_company_id = $2::text").join("dr2.operating_company_id = $2::uuid") },
+    { [GATE]: live[GATE].split("dr2.operating_company_id::text = $2::uuid::text").join("dr2.operating_company_id = $2::uuid") },
     "casts operating_company_id to ::uuid while reading safety.da_test_records"
   );
   expectCaught(
     "safety-home-da-test-records-scoped-as-uuid-again",
-    { [SAFETY_HOME]: live[SAFETY_HOME].replace("operating_company_id = $1::text", "operating_company_id = $1::uuid") },
+    { [SAFETY_HOME]: live[SAFETY_HOME].replace("operating_company_id::text = $1::uuid::text", "operating_company_id = $1::uuid") },
     "casts operating_company_id to ::uuid while reading safety.da_test_records"
   );
   expectCaught(
     "safety-home-scoping-cast-dropped",
-    { [SAFETY_HOME]: live[SAFETY_HOME].replace("operating_company_id = $1::text", "operating_company_id = $1") },
-    "scopes a safety.da_test_records read with a bare $n and no ::text cast"
+    { [SAFETY_HOME]: live[SAFETY_HOME].replace("operating_company_id::text = $1::uuid::text", "operating_company_id = $1") },
+    "does not normalize both safety.da_test_records.operating_company_id"
+  );
+  expectCaught(
+    "program-enrollment-scope-regresses-to-uuid",
+    { [DA_PROGRAM]: live[DA_PROGRAM].replace("e.operating_company_id::text = $1::uuid::text", "e.operating_company_id = $1::uuid") },
+    "expected at least 1 portable GAP-81 company-scope occurrence"
+  );
+  expectCaught(
+    "program-driver-enrollment-join-regresses-to-mixed-types",
+    { [DA_PROGRAM]: live[DA_PROGRAM].replace("d.operating_company_id::text = e.operating_company_id::text", "d.operating_company_id = e.operating_company_id") },
+    "UUID↔TEXT join raises 42883"
+  );
+  expectCaught(
+    "program-test-update-scope-regresses-to-uuid",
+    { [DA_PROGRAM]: live[DA_PROGRAM].replace("operating_company_id::text = $2::uuid::text", "operating_company_id = $2::uuid") },
+    "expected at least 3 portable GAP-81 company-scope occurrence"
+  );
+  expectCaught(
+    "random-draw-history-scope-regresses-to-uuid",
+    { [DA_RANDOM_POOL]: live[DA_RANDOM_POOL].replace("WHERE operating_company_id::text = $1::uuid::text", "WHERE operating_company_id = $1::uuid") },
+    "expected at least 1 portable GAP-81 company-scope occurrence"
   );
   expectCaught(
     "dilute-becomes-a-violation",
@@ -402,7 +458,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 18 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 22 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
