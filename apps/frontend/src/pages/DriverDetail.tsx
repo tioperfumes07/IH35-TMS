@@ -170,7 +170,7 @@ function formatReasonLabel(reason: string) {
 export function DriverDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
   const { pushToast } = useToast();
@@ -249,10 +249,13 @@ export function DriverDetailPage() {
   // Scope the driver lookup to the SELECTED company (+ its authorizations),
   // mirroring the DQF list and DriverProfilePage (#1882). Without this, opening
   // a driver under a non-default company 404s as "Driver not found."
+  // LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING: pass RQ AbortSignal so a
+  // hung aggregate cannot leave this page on "Loading driver..." forever.
   const driverQuery = useQuery({
     queryKey: ["driver", id, companyId],
-    queryFn: () => getDriver(id, companyId),
+    queryFn: ({ signal }) => getDriver(id, companyId, signal),
     enabled: Boolean(id && companyId),
+    retry: 1,
   });
 
   const qualificationsQuery = useQuery({
@@ -716,7 +719,24 @@ export function DriverDetailPage() {
     [terminationReasons]
   );
 
-  if (driverQuery.isLoading) {
+  // Wait for company context before treating a missing company as not-found —
+  // otherwise Compliance→/drivers/:id flashes "Driver not found" while companies hydrate.
+  if (companyLoading && !companyId) {
+    return <div className="text-sm text-gray-500">Loading driver...</div>;
+  }
+
+  if (!companyId) {
+    return (
+      <div className="space-y-3">
+        <div className="text-sm text-crit">Select an operating company to load this driver.</div>
+        <Button variant="secondary" onClick={() => navigate("/drivers")}>
+          Back to Drivers
+        </Button>
+      </div>
+    );
+  }
+
+  if (driverQuery.isLoading || (driverQuery.isFetching && !driver && !driverQuery.isError)) {
     return <div className="text-sm text-gray-500">Loading driver...</div>;
   }
 
