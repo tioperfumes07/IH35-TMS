@@ -483,3 +483,7 @@ verify:static: 23 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-18T23:27Z CC-1 | ACCT-F5448 closed (PR #9169, merged bf790a6). verify-acct-surf-07-register.mjs required single-line literal 'EntityLink kind="journal_entry"', but real AccountRegisterPage.tsx formats it as multi-line JSX (newline+indentation between tag and prop) on both affected columns — a plain .includes() can never match that. The guard's own synthetic "good" selftest fixture had the identical single-line bug baked in, hiding the defect from its own selftest. Fixed with a whitespace-tolerant regex, corrected the fixture to real JSX shape, added a new drop-link mutation case (this clause had zero prior mutation coverage).
 
 verify:static: 24 of ~199 now closed this session. Continuing non-stop.
+
+2026-08-18T23:30Z CC-1 | ACCT-F5449 closed (PR #9173, merged 0384cb9). verify-disp-wire-08-settlement-ping.mjs's own --selftest self-diagnosed as stale ("mutation changed nothing") — CC-1 money lane (driver_finance.driver_settlements load-bookended open/close hop) filed under a dispatch-wiring task id. Real check() was already passing correctly; only the selftest's own mutation regex was stale (expected operating_company_id = $2 with no cast, real query gained an explicit ::uuid cast at some point). 2 of 5 mutations shared the broken anchor. Widened to accept the optional cast; zero product-code change.
+
+verify:static: 25 of ~199 now closed this session. Continuing non-stop.
