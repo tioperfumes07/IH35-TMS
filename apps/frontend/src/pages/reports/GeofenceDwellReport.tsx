@@ -8,8 +8,7 @@ import { getGeofenceDwellReport, listGeofences, type GeofenceDwellRow, type Geof
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
 
@@ -110,8 +109,8 @@ export function GeofenceDwellReport() {
     () => [
       { key: "geofence_label", label: "Geofence", sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.geofence_label}</span> },
       { key: "location_kind", label: "Kind", sortable: true },
-      { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
-      { key: "driver", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(driverName(row.first_name, row.last_name), row.driver_id, "Driver")} /> },
+      { key: "unit_number", label: "Unit", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
+      { key: "driver", label: "Driver", render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={driverName(row.first_name, row.last_name)} noun="Driver" /> },
       { key: "entered_at", label: "Entered", sortable: true, render: (row) => `${formatDateTimeUS(row.entered_at)} CT` },
       { key: "exited_at", label: "Exited", render: (row) => (row.exited_at ? `${formatDateTimeUS(row.exited_at)} CT` : "In yard") },
       { key: "dwell_minutes", label: "Dwell", sortable: true, render: (row) => minutesToClock(row.dwell_minutes) },

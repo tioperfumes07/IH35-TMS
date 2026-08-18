@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listVehicleDriverHistory, type VehicleDriverHistoryRow } from "../../api/vehicleDriverPairing";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 function formatDateTime(value: string | null) {
   if (!value) return "Current";
@@ -18,14 +17,14 @@ const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
     key: "unit_number",
     label: "Unit",
     sortable: true,
-    render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} className="font-medium text-gray-900" />,
+    render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" className="font-medium text-gray-900" />,
   },
   {
     key: "driver_name",
     label: "Driver",
     sortable: true,
     render: (row) =>
-      row.driver_name ? <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> : "Unassigned",
+      row.driver_name ? <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" /> : "Unassigned",
   },
   {
     key: "started_at",

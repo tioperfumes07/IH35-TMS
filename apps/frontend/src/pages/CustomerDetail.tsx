@@ -97,7 +97,7 @@ import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLink } from "../components/shared/EntityLink";
-import { entityLabel } from "../lib/entity-label";
+import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -286,7 +286,7 @@ function CustomerFinancialOverviewSection(props: {
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
           {props.summary.recent_loads.map((l) => (
             <div key={l.id} className="flex justify-between gap-2 border-b border-gray-100 py-1">
-              <EntityLink kind="load" id={l.id} label={entityLabel(l.load_number, l.id, "Load")} className="truncate text-slate-700 hover:underline" />
+              <EntityLinkOrTombstone kind="load" id={l.id} name={l.load_number} noun="Load" className="truncate text-slate-700 hover:underline" />
               <StatusBadge variant="neutral">{l.status ?? "—"}</StatusBadge>
               <span>{formatUsdCents(Number(l.rate_total_cents ?? 0))}</span>
             </div>
@@ -1691,25 +1691,13 @@ export function CustomerDetailPage() {
                   {event.related_load_id ? (
                     <div className="mt-1 text-xs text-gray-600">
                       Load:{" "}
-                      <EntityLink
-                        kind="load"
-                        id={event.related_load_id}
-                        label={entityLabel(event.related_load_number, event.related_load_id, "Load")}
-                        className="text-slate-700 hover:underline"
-                        data-testid="customer-quality-related-load-link"
-                      />
+                      <EntityLinkOrTombstone kind="load" id={event.related_load_id} name={event.related_load_number} noun="Load" className="text-slate-700 hover:underline" data-testid="customer-quality-related-load-link" />
                     </div>
                   ) : null}
                   {event.related_invoice_id ? (
                     <div className="mt-1 text-xs text-gray-600">
                       Invoice:{" "}
-                      <EntityLink
-                        kind="invoice"
-                        id={event.related_invoice_id}
-                        label={entityLabel(event.related_invoice_display_id, event.related_invoice_id, "Invoice")}
-                        className="text-slate-700 hover:underline"
-                        data-testid="customer-quality-related-invoice-link"
-                      />
+                      <EntityLinkOrTombstone kind="invoice" id={event.related_invoice_id} name={event.related_invoice_display_id} noun="Invoice" className="text-slate-700 hover:underline" data-testid="customer-quality-related-invoice-link" />
                     </div>
                   ) : null}
                   {event.details ? <div className="mt-1 text-xs text-gray-600">{event.details}</div> : null}
@@ -1807,7 +1795,7 @@ export function CustomerDetailPage() {
                 sortable: true,
                 cellClass: "font-medium",
                 render: (load) => (
-                  <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="text-slate-700 hover:underline" />
+                  <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" className="text-slate-700 hover:underline" />
                 ),
               },
               {
@@ -1828,11 +1816,7 @@ export function CustomerDetailPage() {
                 label: "Driver",
                 sortable: true,
                 render: (load) => (
-                  <EntityLink
-                    kind="driver"
-                    id={load.assigned_primary_driver_id}
-                    label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
-                  />
+                  <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.assigned_primary_driver_name} noun="Driver" />
                 ),
               },
               {
@@ -1840,11 +1824,7 @@ export function CustomerDetailPage() {
                 label: "Unit",
                 sortable: true,
                 render: (load) => (
-                  <EntityLink
-                    kind="unit"
-                    id={load.assigned_unit_id}
-                    label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
-                  />
+                  <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" />
                 ),
               },
               {
@@ -2058,7 +2038,19 @@ export function CustomerDetailPage() {
             <div className="space-y-1 text-sm text-gray-700">
               <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
               <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
-              <div>Company Vendor: <EntityLink kind="vendor" id={billingSummary?.factoring_company_vendor_id ?? undefined} label={billingSummary?.factoring_company_vendor_id ? entityLabel(null, billingSummary.factoring_company_vendor_id, "Vendor") : "Not set"} /></div>
+              <div>
+                Company Vendor:{" "}
+                {billingSummary?.factoring_company_vendor_id ? (
+                  <EntityLinkOrTombstone
+                    kind="vendor"
+                    id={billingSummary.factoring_company_vendor_id}
+                    name={null}
+                    noun="Vendor"
+                  />
+                ) : (
+                  "Not set"
+                )}
+              </div>
             </div>
           </DataPanel>
           <DataPanel title="Credit Terms">
@@ -2171,7 +2163,7 @@ export function CustomerDetailPage() {
                             onChange={(e) => setPayInvoiceInclude((p) => ({ ...p, [inv.id]: e.target.checked }))}
                           />
                         ) : null}
-                        <EntityLink kind="invoice" id={inv.id} label={entityLabel(inv.display_id, inv.id, "Invoice")} className="font-medium text-gray-800 hover:underline" />
+                        <EntityLinkOrTombstone kind="invoice" id={inv.id} name={inv.display_id} noun="Invoice" className="font-medium text-gray-800 hover:underline" />
                         <span className="text-gray-600">Open {formatCurrencyCents(inv.amount_open_cents)}</span>
                         {!payAutoApply ? (
                           // M-1: dollars-mode; Math.round(payInvoiceAmount*100)=cents byte-for-byte (per-invoice apply).
@@ -2242,7 +2234,7 @@ export function CustomerDetailPage() {
                     key: "id",
                     label: "Payment",
                     sortable: true,
-                    render: (p) => <EntityLink kind="payment" id={p.id} label={entityLabel(p.display_id, p.id, "Payment")} />,
+                    render: (p) => <EntityLinkOrTombstone kind="payment" id={p.id} name={p.display_id} noun="Payment" />,
                   },
                   { key: "date", label: "Date", sortable: true, render: (p) => formatDateUS(p.date) },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => formatCurrencyCents(p.amount_cents) },
@@ -2332,7 +2324,7 @@ export function CustomerDetailPage() {
                   label: "Invoice",
                   render: (invoice) => (
                     <span onClick={(e) => e.stopPropagation()}>
-                      <EntityLink kind="invoice" id={invoice.id} label={entityLabel(invoice.display_id, invoice.id, "Invoice")} />
+                      <EntityLinkOrTombstone kind="invoice" id={invoice.id} name={invoice.display_id} noun="Invoice" />
                     </span>
                   ),
                 },
