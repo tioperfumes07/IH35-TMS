@@ -2217,6 +2217,7 @@
     "claimed_by": "cursor",
     "purpose": "verify-customer-compliance-entitylink-unresolved-tombstone"
   },
+  "3893": "verify-bill-payment-print-letter-html",
   "3894": {
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
@@ -4206,5 +4207,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1173
+  "total_claimed": 1174
 }
