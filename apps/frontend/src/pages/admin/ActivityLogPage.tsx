@@ -7,7 +7,6 @@ import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 function formatEntity(row: AdminActivityItem): string {

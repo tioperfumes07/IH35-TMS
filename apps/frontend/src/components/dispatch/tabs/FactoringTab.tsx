@@ -21,7 +21,6 @@ import { Button } from "../../Button";
 import { Combobox } from "../../Combobox";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 

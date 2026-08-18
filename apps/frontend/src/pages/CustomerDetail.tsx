@@ -96,7 +96,6 @@ import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
-import { EntityLink } from "../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
