@@ -15,6 +15,8 @@ import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -114,6 +116,57 @@ export function TrialBalancePage() {
 
   const summary = query.data?.summary;
 
+  function printLetter() {
+    if (!query.data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const rowsHtml = rows
+      .map(
+        (row) => `<tr>
+          <td>${esc(row.account_code || "—")}</td>
+          <td>${esc(row.account_name || "—")}</td>
+          <td>${esc(formatAccountTypeLabel(row.account_type))}</td>
+          <td style="text-align:right">${esc(money(row.total_debits))}</td>
+          <td style="text-align:right">${esc(money(row.total_credits))}</td>
+          <td style="text-align:right">${esc(money(row.net_balance))}</td>
+        </tr>`,
+      )
+      .join("");
+    const s = summary;
+    printLetterHtml({
+      title: `Trial balance ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Trial balance</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · ${esc(
+          applied.basis === "cash" ? "Cash" : "Accrual",
+        )} · printed ${esc(new Date().toLocaleString())}</div>
+        <table>
+          <tbody>
+            <tr><th>Total debits</th><td>${esc(money(s?.grand_total_debits ?? 0))}</td></tr>
+            <tr><th>Total credits</th><td>${esc(money(s?.grand_total_credits ?? 0))}</td></tr>
+            <tr><th>Status</th><td>${esc(s?.balanced ? "Balanced" : "Out of balance")}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:20px">Accounts</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Account #</th><th>Account</th><th>Type</th>
+              <th style="text-align:right">Debits</th>
+              <th style="text-align:right">Credits</th>
+              <th style="text-align:right">Net</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="6">No rows</td></tr>`}</tbody>
+        </table>
+      `,
+    });
+  }
+
   return (
     <div className="space-y-4 print:space-y-2">
       <style>{`
@@ -127,7 +180,7 @@ export function TrialBalancePage() {
         breadcrumb={["Reports", "Trial Balance"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button
