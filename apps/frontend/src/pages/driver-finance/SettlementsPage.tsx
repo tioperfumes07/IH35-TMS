@@ -414,17 +414,17 @@ function OpenDriverBillsPanel({
                   id={bill.load_id ?? ""}
                   label={entityLabel(bill.load_number, bill.load_id, "Load")}
                 />
+                {/* ACCT-F5444: driver_finance.driver_bills is NOT accounting.bills — kind="bill"
+                    drills to /accounting/bills/:id and live-404s for a driver_finance.driver_bills
+                    row (real repro: B-20260810-0003 -> 31f155f3-...). "Open" bills here are, by
+                    definition, not yet settled (no settled_in_settlement_id on this shape), so
+                    there is no legitimate drill target yet — plain honest text, matching the
+                    same-class fix already shipped for LoadDetailDriverPayTab.tsx (ACCT-F5443). */}
                 <span
                   className="text-[10px] text-gray-400"
                   data-testid="settlements-open-driver-bill-number"
                 >
-                  (
-                  <EntityLink
-                    kind="bill"
-                    id={bill.id}
-                    label={entityLabel(bill.bill_number, bill.id, "Driver bill")}
-                  />
-                  )
+                  ({entityLabel(bill.bill_number, bill.id, "Driver bill")})
                 </span>
               </span>
               <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>

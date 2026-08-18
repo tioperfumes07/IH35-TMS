@@ -37,10 +37,26 @@ const CHECKS = [
     pattern: /\+ Create driver/,
   },
   {
-    name: "SettlementsPage OpenDriverBillsPanel EntityLink drill (driver/load/bill)",
+    // ACCT-F5444: NOT kind="bill" — that was this check's original ask, and it is WRONG.
+    // driver_finance.driver_bills is a different table from accounting.bills; kind="bill" drills
+    // to /accounting/bills/:id, which live-404s for a driver_finance.driver_bills row (real repro,
+    // verify-load-detail-driver-pay-bills.mjs's own comment: B-20260810-0003 -> 31f155f3-...).
+    // These are OPEN (unsettled) bills — no settlement exists yet to reverse-link to either — so
+    // driver + load are the only legitimate drills; the bill number itself stays honest plain text.
+    name: "SettlementsPage OpenDriverBillsPanel EntityLink drill (driver/load, never bill)",
     file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-    pattern:
-      /function OpenDriverBillsPanel[\s\S]*kind="driver"[\s\S]*kind="load"[\s\S]*kind="bill"/,
+    pattern: /function OpenDriverBillsPanel[\s\S]*kind="driver"[\s\S]*kind="load"/,
+    forbiddenNear: {
+      // Forbid a REAL JSX kind="bill" prop near this function — not a prose mention of it in a
+      // comment (which is exactly why this check exists and cites the live repro). Fixed-width
+      // window, not a "match to closing brace" regex: OpenDriverBillsPanel's own destructured
+      // props parameter list has its own `\n}` well before the function body even starts, so a
+      // lazy [\s\S]*?\n} stops there instead of reaching the real body (found live: matched only
+      // 86 chars, the props list, never the JSX). The real function body runs ~2400 chars total.
+      pattern: /function OpenDriverBillsPanel[\s\S]{0,3000}/,
+      forbid: /<EntityLink[\s\S]{0,200}?kind\s*=\s*["']bill["']/,
+      message: 'must NOT EntityLink kind="bill" in OpenDriverBillsPanel — driver_finance.driver_bills has no /accounting/bills/:id row, this 404s live',
+    },
   },
   {
     name: "SettlementsTable ParityTable storageKey (gear/column chrome)",
@@ -86,6 +102,12 @@ function runChecks(root = ROOT) {
     }
     const src = fs.readFileSync(abs, "utf8");
     if (!c.pattern.test(src)) fails.push(`${c.name}: pattern miss in ${c.file}`);
+    if (c.forbiddenNear) {
+      const scope = c.forbiddenNear.pattern.exec(src)?.[0] ?? src;
+      if (c.forbiddenNear.forbid.test(scope)) {
+        fails.push(`${c.name}: ${c.forbiddenNear.message}`);
+      }
+    }
   }
   return fails;
 }
@@ -105,6 +127,33 @@ function selftest() {
       process.exit(1);
     }
     console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
+
+    // Dedicated proof for the forbiddenNear check: poisoning the whole file (above) trivially
+    // satisfies "no kind=bill JSX present" too, so that alone never exercises this detection path.
+    // Plant a REAL kind="bill" regression on the live SettlementsPage.tsx content specifically.
+    const settlementsFile = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+    const liveSrc = fs.readFileSync(path.join(ROOT, settlementsFile), "utf8");
+    const regressed = liveSrc.replace(/kind="load"/, 'kind="bill"');
+    if (regressed === liveSrc) {
+      console.error(`${LABEL} SELFTEST FAIL — kind="load" anchor not found, re-anchor mutation`);
+      process.exit(1);
+    }
+    const regressedDir = path.join(tmp, "regressed");
+    const regressedAbs = path.join(regressedDir, settlementsFile);
+    fs.mkdirSync(path.dirname(regressedAbs), { recursive: true });
+    fs.writeFileSync(regressedAbs, regressed);
+    for (const c of CHECKS) {
+      if (c.file === settlementsFile) continue;
+      const abs = path.join(regressedDir, c.file);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.copyFileSync(path.join(ROOT, c.file), abs);
+    }
+    const caughtRegression = runChecks(regressedDir).some((f) => f.includes('kind="bill"'));
+    if (!caughtRegression) {
+      console.error(`${LABEL} SELFTEST FAIL — planted kind="bill" regression in OpenDriverBillsPanel not caught`);
+      process.exit(1);
+    }
+    console.log(`${LABEL} SELFTEST PASS (kind="bill" regression detected)`);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
