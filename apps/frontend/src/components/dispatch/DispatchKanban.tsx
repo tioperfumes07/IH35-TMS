@@ -16,6 +16,7 @@ import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
@@ -474,7 +475,14 @@ function KanbanCompactCard({
     >
       <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
       <span className="min-w-0 flex-1 truncate font-semibold text-gray-900">{driverUnitLabel(load)}</span>
-      <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="shrink-0 font-mono text-[10px]" onClick={(event) => event.stopPropagation()} />
+      <EntityLinkOrTombstone
+        kind="load"
+        id={load.id}
+        name={load.load_number}
+        noun="Load"
+        className="shrink-0 font-mono text-[10px]"
+        onClick={(event) => event.stopPropagation()}
+      />
       {/* KANBAN-COMPACT-TRUNCATE (owner-live): the driver label was truncating because this SECONDARY lane
           text held up to 120px of the same row at every width above `sm`. The driver is the identifying
           field on a compact card, so the lane now yields first — it appears only on wide boards and takes
