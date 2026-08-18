@@ -29,31 +29,44 @@ describe("UniversalListToolbar", () => {
     expect(applyUniversalListFilters(rows, "", { key: "total_cents", kind: "amount", from: "100", to: "200" })).toEqual([rows[0]]);
   });
 
-  it("keeps range edits draft-only until Apply and cancels them on Escape", async () => {
+  it("does not claim no range columns when SOL/hearing is available but unselected", async () => {
     const user = userEvent.setup();
-    const onRangeApply = vi.fn();
     render(
       <UniversalListToolbar
         search=""
         onSearchChange={vi.fn()}
-        columns={[{ key: "created_at", label: "Created date" }, { key: "total_cents", label: "Total" }]}
+        columns={[
+          { key: "statute_of_limitations_at", label: "SOL / hearing" },
+          { key: "status", label: "Status" },
+        ]}
         range={null}
-        onRangeApply={onRangeApply}
+        onRangeApply={vi.fn()}
+        resultCount={5}
+        totalCount={5}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Date or amount range" }));
+    expect(screen.getByText("Choose a field above to set From/To.")).toBeInTheDocument();
+    expect(screen.queryByText("This list has no date or amount column to range-filter.")).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "SOL / hearing" })).toBeInTheDocument();
+  });
+
+  it("claims no range columns only when inference finds zero fields", async () => {
+    const user = userEvent.setup();
+    render(
+      <UniversalListToolbar
+        search=""
+        onSearchChange={vi.fn()}
+        columns={[{ key: "status", label: "Status" }, { key: "type", label: "Type" }]}
+        range={null}
+        onRangeApply={vi.fn()}
         resultCount={2}
         totalCount={2}
       />,
     );
 
     await user.click(screen.getByRole("button", { name: "Date or amount range" }));
-    await user.selectOptions(screen.getByLabelText("Range field"), "total_cents");
-    expect(onRangeApply).not.toHaveBeenCalled();
-    await user.keyboard("{Escape}");
-    expect(onRangeApply).not.toHaveBeenCalled();
-    expect(screen.queryByLabelText("Range field")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Date or amount range" }));
-    await user.selectOptions(screen.getByLabelText("Range field"), "total_cents");
-    await user.click(screen.getByRole("button", { name: "Apply" }));
-    expect(onRangeApply).toHaveBeenCalledWith({ key: "total_cents", kind: "amount", from: "", to: "" });
+    expect(screen.getByText("This list has no date or amount column to range-filter.")).toBeInTheDocument();
   });
 });
