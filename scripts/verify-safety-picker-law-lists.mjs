@@ -31,7 +31,13 @@ const CHECKS = [
   { name: "SafetyEventsPage", file: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx" },
   { name: "InternalFinesPage", file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx" },
   { name: "PermitsPage", file: "apps/frontend/src/pages/safety/PermitsPage.tsx" },
-  { name: "DriverSchedulerGridPage", file: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx" },
+  {
+    name: "DriverSchedulerGridPage",
+    file: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx",
+    // Assign Temp Cover is CREATE chrome — unit EntityPicker must offer + Add new (never filter-mode allowCreate={false}).
+    require: [/EntityPicker/, /kind="unit"/, /DriverPickerWithCreate/, /Assign Temp Cover/],
+    forbid: [/kind="unit"[\s\S]{0,240}allowCreate=\{false\}/],
+  },
   {
     name: "DrugAlcoholTab",
     file: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
@@ -57,9 +63,17 @@ function run(root = ROOT) {
       for (const re of c.require) {
         if (!re.test(src)) fails.push(`${c.name}: missing ${re}`);
       }
-      if (/<DriverPickerWithCreate[\s>]/.test(src)) fails.push(`${c.name}: must not use DriverPickerWithCreate on reverse filter`);
+      // Filter reverse pages must not use DriverPickerWithCreate (URL-synced EntityPicker only).
+      if ((c.name === "IdvrPage" || c.name === "DrugAlcoholTab") && /<DriverPickerWithCreate[\s>]/.test(src)) {
+        fails.push(`${c.name}: must not use DriverPickerWithCreate on reverse filter`);
+      }
     } else if (!/EntityPicker|ReferenceSelect/.test(src)) {
       fails.push(`${c.name}: no picker`);
+    }
+    if (Array.isArray(c.forbid)) {
+      for (const re of c.forbid) {
+        if (re.test(src)) fails.push(`${c.name}: forbidden ${re}`);
+      }
     }
   }
   return fails;

@@ -1,17 +1,17 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T14:30Z
+Updated: 2026-08-18T14:38Z
 
 ## ALERT
-**CONTINUOUS FAST-MERGE ON** · Codex shipping Wave 1/2 · CC-2 GUARD · Cursor Leaves climb
+**CONTINUOUS FAST ON** · loop re-armed · Cursor shipping scheduler picker_law fix
 
 ## ACTIVE SEATS
 | Seat | Lane |
 |------|------|
-| **Cursor** | dispatch · drivers · lists · safety · lead — next unpaid after 2502 |
-| **Codex** | customers · vendors · insurance · legal · fuel (+ capacity) — WAVE shipping |
-| **Devin-A** | fleet → maintenance Live (CDP 9227) |
+| **Cursor** | dispatch · drivers · lists · safety · lead |
+| **Codex** | customers · vendors · insurance · legal · fuel |
+| **Devin-A** | fleet → maintenance Live |
 | **CC-1** | money |
-| **CC-2** | GUARD live-verify · never build |
+| **CC-2** | GUARD |
 
 ## LIVE
-Live=BLOCKED · Leaves 2502 settlements:reverse_link in flight · Codex 2470/2480 on main
+Live=BLOCKED · #8929 settlements reverse on main · next 2504/2506 scheduler picker + leave/training connectivity
