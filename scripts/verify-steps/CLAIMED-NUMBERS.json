@@ -2229,6 +2229,7 @@
     "purpose": "verify-safety-reverse-entitylink-unresolved-tombstone"
   },
   "3897": "verify-account-register-ref-no-journal-entry-link",
+  "3901": "verify-money-detail-page-uses-ispending",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -4208,5 +4209,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1175
+  "total_claimed": 1176
 }
