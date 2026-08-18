@@ -6,8 +6,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 // SAFETY-1: the roster date defaults to the current duty day in the CARRIER timezone
 // (America/Chicago), never the UTC calendar date (which rolls to "tomorrow" after ~19:00 CT).
@@ -113,7 +112,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         sortable: true,
         render: (driver) => (
           <span className="font-medium text-slate-900">
-            <EntityLink kind="driver" id={driver.driver_id} label={entityLabel(driver.driver_name, driver.driver_id, "Driver")} />
+            <EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={driver.driver_name} noun="Driver" />
           </span>
         ),
       },
@@ -123,7 +122,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         sortable: true,
         cellClass: "font-mono",
         render: (driver) => (
-          <EntityLink kind="unit" id={driver.unit_id} label={entityLabel(driver.unit_number, driver.unit_id, "Unit")} />
+          <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
         ),
       },
       {
@@ -272,16 +271,11 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
               <div>
                 <div className="text-sm font-semibold text-slate-900">
-                  <EntityLink kind="driver" id={selectedDriver.driver_id} label={entityLabel(selectedDriver.driver_name, selectedDriver.driver_id, "Driver")} />
+                  <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={selectedDriver.driver_name} noun="Driver" />
                 </div>
                 <div className="text-[11px] text-slate-500">
                   Unit{" "}
-                  <EntityLink
-                    kind="unit"
-                    id={selectedDriver.unit_id}
-                    label={entityLabel(selectedDriver.unit_number, selectedDriver.unit_id, "Unit")}
-                    data-testid="hos-tracker-detail-unit-link"
-                  />{" "}
+                  <EntityLinkOrTombstone kind="unit" id={selectedDriver.unit_id} name={selectedDriver.unit_number} noun="Unit" data-testid="hos-tracker-detail-unit-link" />{" "}
                   · {selectedDate} · HOS cycle detail
                 </div>
               </div>

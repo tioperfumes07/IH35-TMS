@@ -17,8 +17,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatChartLegendLabel } from "../../lib/chartLegend";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import {
   formatMaintCostFlagLabel,
   MAINT_COST_FLAG_LABELS,
@@ -88,10 +87,11 @@ export function MaintenanceCostPerUnitPage() {
         label: "Unit #",
         sortable: true,
         render: (r) => (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="unit"
             id={r.unit_id}
-            label={entityLabel(r.unit_number, r.unit_id, "Unit")}
+            name={r.unit_number}
+            noun="Unit"
             className="font-medium"
             onClick={(event) => event.stopPropagation()}
           />
