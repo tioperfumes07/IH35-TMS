@@ -143,6 +143,10 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
         {bills.map((bill) => {
           const cents = Number(bill.gross_amount_cents ?? 0);
           const isVoid = bill.status === "void";
+          // driver_finance.driver_bills ≠ accounting.bills — kind="bill" drills to
+          // /accounting/bills/:id and live-returns bill_not_found (L-20260810-0003 /
+          // B-20260810-0003 → 31f155f3-…). No per-id driver-bill route yet; reverse to
+          // settlement when settled, else driver profile. Never invent an AP bill link.
           return (
             <div key={bill.id} className="flex items-center justify-between rounded-sm border border-gray-100 p-2 text-sm">
               <div className="flex min-w-0 flex-col gap-0.5">
@@ -150,13 +154,30 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
                   <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${statusBadge(bill.status)}`}>
                     {statusLabel(bill.status)}
                   </span>
-                  <EntityLink
-                    kind="bill"
-                    id={bill.id}
-                    label={entityLabel(bill.bill_number, bill.id, "Bill")}
+                  <span
                     className="truncate text-xs font-medium text-gray-800"
-                    data-testid="load-driver-pay-bill-link"
-                  />
+                    data-testid="load-driver-pay-bill-number"
+                  >
+                    {entityLabel(bill.bill_number, bill.id, "Driver bill")}
+                  </span>
+                  {bill.settled_in_settlement_id ? (
+                    <EntityLink
+                      kind="settlement"
+                      id={bill.settled_in_settlement_id}
+                      label="Settlement"
+                      className="truncate text-xs font-medium text-gray-800"
+                      data-testid="load-driver-pay-settlement-link"
+                    />
+                  ) : null}
+                  {bill.driver_id ? (
+                    <EntityLink
+                      kind="driver"
+                      id={bill.driver_id}
+                      label="Driver"
+                      className="truncate text-xs font-medium text-gray-800"
+                      data-testid="load-driver-pay-driver-link"
+                    />
+                  ) : null}
                 </div>
                 <span className="truncate text-xs text-gray-600">{billDescription(bill)}</span>
               </div>
