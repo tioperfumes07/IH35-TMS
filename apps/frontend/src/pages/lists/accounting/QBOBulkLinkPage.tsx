@@ -25,8 +25,10 @@ function unlinkedErrorStatus(error: unknown) {
 
 export function QBOBulkLinkPage() {
   const { pushToast } = useToast();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // USMCA/TRK are TMS-native — QBO bulk-link chrome is TRANSP-only (hub twin #8751).
+  const qboAvailable = selectedCompany?.code === "TRANSP";
   const [step, setStep] = useState<Step>(1);
   const [entityType, setEntityType] = useState<EntityType>("drivers");
   const [rows, setRows] = useState<RowEdit[]>([]);
@@ -34,7 +36,7 @@ export function QBOBulkLinkPage() {
   const unlinkedQuery = useQuery({
     queryKey: ["qbo", "unlinked", companyId, entityType],
     queryFn: () => getQboUnlinkedEntities(companyId, entityType),
-    enabled: Boolean(companyId) && step >= 2,
+    enabled: Boolean(companyId && qboAvailable) && step >= 2,
     staleTime: 60_000,
   });
 
@@ -166,8 +168,13 @@ export function QBOBulkLinkPage() {
     <div className="space-y-4">
       <BackArrowHeader backTo="/lists" breadcrumb={["Lists", "Accounting", "QBO bulk-link"]} title="QBO vendor / class bulk-link" />
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {companyId && !qboAvailable ? (
+        <p className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-600" data-testid="qbo-bulk-link-transp-only">
+          QBO bulk-link is available for TRANSP only. USMCA and Trucking are TMS-native and do not use a QuickBooks vendor/class mirror.
+        </p>
+      ) : null}
 
-      {step === 1 ? (
+      {qboAvailable && step === 1 ? (
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
           <p className="text-gray-600">Link drivers and fleet assets to existing QuickBooks Online vendors and classes (snapshot archive).</p>
           <div className="space-y-2">
@@ -195,7 +202,7 @@ export function QBOBulkLinkPage() {
         </div>
       ) : null}
 
-      {step === 2 ? (
+      {qboAvailable && step === 2 ? (
         <div className="space-y-3">
           {unlinkedQuery.isLoading ? <p className="text-sm text-gray-500">Loading suggestions…</p> : null}
           {unlinkedQuery.isError ? (
@@ -262,7 +269,7 @@ export function QBOBulkLinkPage() {
         </div>
       ) : null}
 
-      {step === 3 ? (
+      {qboAvailable && step === 3 ? (
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
           <div>
             Summary: <strong>{rows.filter((r) => r.accept && r.entity_kind === "driver").length}</strong> drivers,{" "}
