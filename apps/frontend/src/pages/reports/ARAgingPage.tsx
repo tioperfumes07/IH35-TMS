@@ -17,6 +17,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -120,6 +121,55 @@ export function ARAgingPage() {
     a.download = `ar-aging-${appliedFilters.asOfDate}.csv`;
     a.click();
     URL.revokeObjectURL(ur);
+  }
+
+  function printLetter() {
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const rowsHtml = filtered
+      .map(
+        (r) => `<tr>
+          <td>${esc(r.customer_name)}</td>
+          <td style="text-align:right">${esc(money(r.total_open_cents))}</td>
+          <td style="text-align:right">${esc(money(r.bucket_0_30_cents))}</td>
+          <td style="text-align:right">${esc(money(r.bucket_31_60_cents))}</td>
+          <td style="text-align:right">${esc(money(r.bucket_61_90_cents))}</td>
+          <td style="text-align:right">${esc(money(r.bucket_91_plus_cents))}</td>
+          <td>${esc(r.last_payment_date ? formatDateUS(r.last_payment_date) : "—")}</td>
+        </tr>`,
+      )
+      .join("");
+    printLetterHtml({
+      title: `A/R aging as of ${appliedFilters.asOfDate}`,
+      bodyHtml: `
+        <h1>Accounts receivable aging</h1>
+        <div class="meta">As of ${esc(formatDateUS(appliedFilters.asOfDate))} · Accrual · printed ${esc(new Date().toLocaleString())}</div>
+        <table>
+          <tbody>
+            <tr><th>Total open</th><td>${esc(money(kpis.total))}</td></tr>
+            <tr><th>0-30</th><td>${esc(money(kpis.day0_30))}</td></tr>
+            <tr><th>31-60</th><td>${esc(money(kpis.day31_60))}</td></tr>
+            <tr><th>61+</th><td>${esc(money(kpis.day61p))}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:20px">By customer</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th><th style="text-align:right">Total</th>
+              <th style="text-align:right">0-30</th><th style="text-align:right">31-60</th>
+              <th style="text-align:right">61-90</th><th style="text-align:right">91+</th>
+              <th>Last payment</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="7">No open A/R</td></tr>`}</tbody>
+        </table>
+      `,
+    });
   }
 
   return (
