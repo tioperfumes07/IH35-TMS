@@ -1,26 +1,25 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T03:20Z
+Updated: 2026-08-18T03:27Z
 
 ## MISSION
-**8H LAUNCH NON-STOP** · McLeod+QBO subscription quality · **30/30 modules** · print/PDF/CSV letter-correct.
+**8H LAUNCH NON-STOP** · McLeod+QBO · 30/30 · print/PDF/CSV letter-correct
 Packet: `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md`
-FAST-MERGE ON · Continuous mode · **ZERO IDLE**.
 
 ## LIVE
-Product **Live=BLOCKED** until certified — seats never idle.
-Cursor shipping **print canonical docs** (claim 3790 on main → feature).
+Product Live=BLOCKED until certified — **ZERO IDLE**.
+Print canonical **SHIPPED #8773** @ `7c8e8d78e`.
 
 ## SPEED SHARE
 | Seat | NOW |
 |------|-----|
-| **CC-1** | Money Built floor → Live money · invoice/settlement economics · CSV money reports |
-| **CC-2** | GUARD live-verify after money ships |
-| **CC-3** | Mechanical FOs + export guards |
-| **Cursor** | Print stack + lists/safety/dispatch/drivers Live + lead |
-| **Codex** | Own+shared Live modules · non-money export |
-| **Devin-A** | fleet · maintenance Live only |
+| **CC-1** | Money Live + CSV money reports · Built floor if unpaid |
+| **CC-2** | GUARD prove print letter after deploy ancestry |
+| **CC-3** | Mechanical FOs |
+| **Cursor** | lists/safety/dispatch/drivers Live + export chrome |
+| **Codex** | Own+shared Live |
+| **Devin-A** | fleet · maintenance Live |
 | **Cascade** | CANCELLED |
 
-## LAST
-- CLAIM-RESERVE 3790 merged (#8767)
-- Feature: cursor/print-docs-canonical in flight
+## LAST SHIPS
+- #8773 ACCT-F3790 Print→letter HTML
+- #8767 CLAIM 3790
