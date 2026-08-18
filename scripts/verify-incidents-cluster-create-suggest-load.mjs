@@ -22,6 +22,14 @@ function audit(body) {
     const pageBody = fs.readFileSync(`apps/frontend/src/pages/safety/${page}`, "utf8");
     if (!/SafetyIncidentsClusterSurface/.test(pageBody)) failures.push(`${page} must consume the guarded shared creator`);
   }
+  // P14 Box4 — editable CREATE/EDIT load field owes picker_law (filter pickers remain allowCreate={false}).
+  if (/setField\(\"load_id\"[\s\S]{0,200}allowCreate=\{false\}/.test(body)) {
+    failures.push("CREATE/EDIT load EntityPicker must not use allowCreate={false}");
+  }
+  const editLoad = body.match(/setField\(\"load_id\"[\s\S]{0,250}allowCreate\b/);
+  if (!editLoad || /allowCreate=\{false\}/.test(editLoad[0])) {
+    failures.push("CREATE/EDIT load EntityPicker must set allowCreate");
+  }
   return failures;
 }
 
@@ -31,6 +39,10 @@ if (process.argv.includes("--selftest")) {
     ["trailer_id: str(selected?.trailer_id)", "trailer_id: undefined"],
     ["if (str(selected?.load_id) || suggestionPinned) return", "if (suggestionPinned) return"],
     ["load_id: suggested.load_id", "description: suggested.load_id"],
+    [
+      'setField("load_id", next ?? "")}\n                      allowCreate',
+      'setField("load_id", next ?? "")}\n                      allowCreate={false}',
+    ],
   ];
   for (const [from, to] of mutations) {
     const start = source.indexOf("suggestExpenseLoad({");
