@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { EntityLink, type EntityKind } from "./EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 
@@ -7,6 +8,7 @@ type Props = {
   name: unknown;
   noun: string;
   className?: string;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
   /** data-testid when unresolved (default entity-link-tombstone) */
   tombstoneTestId?: string;
   /** Forwarded to EntityLink when resolved (and overrides tombstone test id when set). */
@@ -23,6 +25,7 @@ export function EntityLinkOrTombstone({
   name,
   noun,
   className,
+  onClick,
   tombstoneTestId = "entity-link-tombstone",
   "data-testid": dataTestId,
 }: Props) {
@@ -39,6 +42,13 @@ export function EntityLinkOrTombstone({
   }
   const label = name != null ? String(name).trim() : "";
   return (
-    <EntityLink kind={kind} id={trimmedId} label={label} className={className} data-testid={dataTestId} />
+    <EntityLink
+      kind={kind}
+      id={trimmedId}
+      label={label}
+      className={className}
+      onClick={onClick}
+      data-testid={dataTestId}
+    />
   );
 }
