@@ -84,7 +84,7 @@ export function CustomerListSidebar({
   const listState = useListState(status, pagedCustomers.length === 0);
 
   return (
-    <aside className="w-full min-w-[300px] max-w-[560px] shrink-0 rounded-sm border border-gray-200 bg-white p-2" data-customer-list-sidebar="true">
+    <aside className="w-full min-w-0 max-w-none shrink-0 rounded-sm border border-gray-200 bg-white p-2 xl:min-w-[300px] xl:max-w-[560px]" data-customer-list-sidebar="true">
       <SidebarPagination
         page={safePage}
         pageSize={pageSize}
