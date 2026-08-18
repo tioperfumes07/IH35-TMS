@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1608** | 2026-08-18 |
+| Rows in this file | **1609** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=889 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=890 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1698,3 +1698,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 3680 | lists · hub.domain.customers connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.customers`. Exact cell: `hub.domain.customers:connectivity`. Selected-USMCA `/lists/hub/customers` mounted **Customers catalogs**; activating **Customers** navigated to live `/customers` with h1 Customers and `+ Create Customer`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `8e09a67`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 3640 | customers · lanes and pricing connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `detail.lanes`. **Exact cell:** `detail.lanes:connectivity`. Selected-USMCA canonical D-06 Customer Detail activated **Lanes & Pricing** and mounted the scoped Customer lane pricing definitions surface with Search, Range, `+ Create Lane`, Export, Table settings, Show inactive, seven governed business columns, pagination, and honest `Add your first lane to track customer pricing.` empty state. Creator and money cells are separately evidenced and not re-claimed. No lane, rate, customer, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | canonical `/customers/:id` → Lanes & Pricing; selected USMCA; scoped toolbar/table/creator mounted; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
 | 3760 | lists · hub.domain.vendors connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.vendors`. Exact cell: `hub.domain.vendors:connectivity`. Selected-USMCA `/lists/hub/vendors` mounted **Vendors catalogs**; activating **Vendors** navigated to live `/vendors` with h1 Vendors and `+ Create Vendor`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `1d29bda`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 3840 | lists · hub.domain.names_master connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.names_master`. Exact cell: `hub.domain.names_master:connectivity`. Selected-USMCA `/lists/hub/names_master` mounted **Names master catalogs**; activating **Brokers** navigated to live `/lists/names/brokers` with h1 Brokers and live broker directory rows (create path is customer-record, not a page-local `+ Create`). No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `bcfc371`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
