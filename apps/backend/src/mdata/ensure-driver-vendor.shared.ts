@@ -114,6 +114,20 @@ export async function ensureDriverVendor(
   );
   if (nameMatch.rows[0]?.id) return "already_present";
 
+  // ACCT-F5435: is_sample_data is how a report answers "is this real money?" — a row minted
+  // without it is indistinguishable from real financial data no matter what its memo says (that
+  // is exactly the shape of prod's existing 12-row ACCT-F208 contamination: SAMPLE in the free
+  // text, false in the boolean). This function's own header names TEST/SAMPLE-tagged drivers
+  // (TEST DRIVER-USMCA, SAMPLE Cascade-1612) minted through this exact path, so a hardcoded
+  // false would repeat ACCT-F208 for every sample driver hired through it. Inherit the driver's
+  // OWN is_sample_data instead — the payee's sample status must match the payee it was minted
+  // for, not a create-path constant.
+  const driverSample = await client.query<{ is_sample_data: boolean }>(
+    `SELECT is_sample_data FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`,
+    [input.driverId]
+  );
+  const isSampleData = driverSample.rows[0]?.is_sample_data ?? false;
+
   // SAVEPOINT, not a bare try/catch: the caller may run this inside ONE transaction across many
   // drivers, and an un-savepointed unique violation aborts it so every later driver fails 25P02.
   // Only 23505 is absorbed — anything else is re-thrown so the caller fails loudly.
@@ -129,11 +143,20 @@ export async function ensureDriverVendor(
       `
         INSERT INTO mdata.vendors (
           vendor_name, vendor_code, vendor_type, phone, email, driver_id,
-          operating_company_id, created_by_user_id, updated_by_user_id
+          operating_company_id, created_by_user_id, updated_by_user_id, is_sample_data
         )
-        VALUES ($1, $2, 'Other', $3, $4, $7::uuid, $5::uuid, $6::uuid, $6::uuid)
+        VALUES ($1, $2, 'Other', $3, $4, $7::uuid, $5::uuid, $6::uuid, $6::uuid, $8)
       `,
-      [displayName, vendorCode, input.phone, input.email, input.operatingCompanyId, input.actorUserId, input.driverId]
+      [
+        displayName,
+        vendorCode,
+        input.phone,
+        input.email,
+        input.operatingCompanyId,
+        input.actorUserId,
+        input.driverId,
+        isSampleData,
+      ]
     );
     await client.query("RELEASE SAVEPOINT ensure_driver_vendor");
     return "created";
