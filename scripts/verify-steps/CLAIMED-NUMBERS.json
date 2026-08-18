@@ -2127,6 +2127,12 @@
     "guard": "verify-maintenance-cost-per-unit-print-letter",
     "note": "CLAIM-RESERVE \u2014 Maintenance Cost Per Unit Print opens letter HTML, not SPA window.print"
   },
+  "3860": {
+    "claimed_at": "2026-08-18T04:55:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-settlement-summary-print-letter",
+    "note": "CLAIM-RESERVE \u2014 Settlement Summary Print opens letter HTML, not SPA window.print"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
