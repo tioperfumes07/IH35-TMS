@@ -1,3 +1,17 @@
+# ★★★ HARD TIP 2026-08-18T12:11Z — CURSOR LEAD SELF · CONTINUOUS
+
+## DONE this hour
+- Stopped EntityLink thrash that blanked FE (#8894 class)
+- P14 Leaves #8898 + #8899 merged
+- Tipped CC-1 / Devin / Codex / CC-2 / CC-3
+
+## YOU NOW
+1. Keep P14 `lists/safety/dispatch/drivers` unpaid Live → Leaves FAST-MERGE
+2. Next: Book Load + lists Create `picker_law` (`+ Add new` proven)
+3. Accept HANDOFF=Cursor FE FAILs same turn
+4. 5m lead tick: healthz vs tip · tip idle seats · STATUS-NOW · never ask Jorge
+
+---
 # INBOX-CURSOR · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
 
 **READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — you are lead + print stack + lists/safety/dispatch/drivers Live.

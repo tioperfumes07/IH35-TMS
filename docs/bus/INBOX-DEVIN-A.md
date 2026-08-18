@@ -1,3 +1,38 @@
+# ★★★ HARD TIP 2026-08-18T12:11Z — DEVIN-A START NOW · DO NOT IDLE
+
+**You were waiting / drifted. Work starts this packet. Cancel-only Live verify.**
+
+## Truth
+- tip `c5e33dd71` · healthz `{"ok":true,"uptime_seconds":149,"version":"3a79f1b"}` (API now has Cursor Leaves #8898; #8899 deploying)
+- Box4 moves **only** on AUDIT `PROD-VERIFIED` + exact `Leaves:` — OUTBOX PASS alone = **0 credit**
+- You do **not** write code. You prove Live. FE FAIL → `HANDOFF=Cursor` same turn.
+
+## YOUR ONLY MODULES
+1. **fleet** (first)
+2. **maintenance** (after fleet STARVED or wave complete)
+
+**FORBIDDEN:** lists · safety · dispatch · drivers · home · accounting · inventing Leaves outside fleet/maintenance · editing Codex worktree · idle.
+
+## Paths (LOCKED)
+| | |
+|--|--|
+| Worktree | `/private/tmp/IH35-devin-a` · `git fetch && git reset --hard origin/main` every start |
+| Chrome | CDP **9227** · USMCA Freight |
+| OUTBOX | Desktop `OUTBOX-DEVIN.md` (alias OUTBOX-DEVIN-A) |
+| INBOX | **this file** — re-read every claim |
+
+## DO NOW
+1. OUTBOX: `LIVE CLAIM fleet · unpaid lowest Live%`
+2. Walk unpaid fleet leaves on USMCA (roster · chrome Search/Range/⚙/Filters · reverse EntityLinks · create Cancel-only).
+3. If PASS and you **cannot** append AUDIT: OUTBOX `LIVE PASS … · TIP=Codex/Cursor ledger Leaves: \`leaf\` · cells=… · healthz=…` **same turn** then claim next.
+4. Prefer: after each PASS tip **Codex** (or Cursor) to append Leaves if you lack write lane — Box4 will not move otherwise.
+5. Poll `/program/matrix` Box4 after API healthz ≥ `c5e33dd` / tip — report `Box4 X/3437 (+N)` in OUTBOX.
+6. STARVED fleet → maintenance same turn. Never lists/safety.
+
+## After Cursor Leaves deploy
+Confirm Box4 climbed vs pre-credit ~2920. OUTBOX one line. Continue fleet/maint unpaid.
+
+---
 # INBOX-DEVIN-A · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
 
 **READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md`.

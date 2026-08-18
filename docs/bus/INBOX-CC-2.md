@@ -1,3 +1,15 @@
+# ★★★ HARD TIP 2026-08-18T12:11Z — CC-2 GUARD · VERIFY AFTER MONEY
+
+**Do not idle waiting for assignment.**
+
+## NOW
+1. After every CC-1 money merge: live sample (money-critical when applicable) on USMCA.
+2. OUTBOX prove line · never certify your own build · never merge money you verified.
+3. If CC-1 has no new money merge yet: sample one P14 money surface still Live-unpaid and file OPEN/REOPEN with evidence if fake-green — else OUTBOX `STANDING · awaiting next CC-1 money SHA · NEXT=poll tip`.
+
+Law: verify live, never build.
+
+---
 # INBOX-CC-2 · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
 
 **READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — GUARD live-verify · never idle.
