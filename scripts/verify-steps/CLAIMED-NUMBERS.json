@@ -1152,6 +1152,11 @@
     "claimed_by": "codex",
     "purpose": "verify-collapsed-list-filters-single-frame-vertical"
   },
+  "3440": {
+    "claimed_at": "2026-08-18",
+    "lane": "cursor",
+    "purpose": "verify-lists-qbo-bulk-link-transp-only"
+  },
   "3437": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
