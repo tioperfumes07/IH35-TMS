@@ -1448,7 +1448,9 @@ export function CustomerDetailPage() {
                 operatingCompanyId={detailQuery.data?.operating_company_id ?? operatingCompanyId ?? ""}
                 value={hydratedForm.factoring_company_vendor_id || null}
                 onChange={(value) => setForm((current) => ({ ...current, factoring_company_vendor_id: value ?? "" }))}
-                enabled={editMode && Boolean(detailQuery.data?.operating_company_id ?? operatingCompanyId)}
+                enabled={Boolean(detailQuery.data?.operating_company_id ?? operatingCompanyId)}
+                disabled={!editMode}
+                allowCreate={editMode}
                 placeholder="Search factoring company…"
                 dataField="customer-factoring-company-vendor"
                 className="w-full"

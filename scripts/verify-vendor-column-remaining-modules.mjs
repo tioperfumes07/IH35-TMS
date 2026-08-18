@@ -30,6 +30,7 @@ const FILES = {
   uploadModal: "apps/frontend/src/components/documents/UploadModal.tsx",
   customers: "apps/frontend/src/pages/Customers.tsx",
   customerDetail: "apps/frontend/src/pages/CustomerDetail.tsx",
+  customerProfileForm: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
   maintSnapshot: "apps/frontend/src/components/vehicle-profile/MaintenanceSnapshotSection.tsx",
   vehicleProfile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
   financeLinkage: "apps/frontend/src/pages/units/UnitFinanceLinkageTab.tsx",
@@ -56,7 +57,8 @@ export function audit(src) {
   need(/id: "vendor", label: "Vendors"/.test(src.docsHome), `${FILES.docsHome}: docs must have a real Vendors filter tab`);
   need(/"driver" \| "unit" \| "vendor" \| "customer"/.test(src.uploadModal), `${FILES.uploadModal}: upload modal must support real vendor link type`);
   need(/factoring_company_vendor_id(?!_)/.test(src.customers), `${FILES.customers}: list.segment.factored must filter real factoring_company_vendor_id`);
-  need(/factoring_company_vendor_id(?!_)/.test(src.customerDetail) && /kind=["']vendor["']/.test(src.customerDetail) && /allowCreate/.test(src.customerDetail), `${FILES.customerDetail}: customer detail must edit factoring_company_vendor_id via EntityPicker`);
+  need(/factoring_company_vendor_id(?!_)/.test(src.customerDetail) && /kind=["']vendor["']/.test(src.customerDetail) && /enabled=\{Boolean\(detailQuery\.data\?\.operating_company_id \?\? operatingCompanyId\)\}/.test(src.customerDetail) && /disabled=\{!editMode\}/.test(src.customerDetail), `${FILES.customerDetail}: customer detail must resolve the factoring vendor label in view mode and disable mutation outside edit mode`);
+  need(/factoring_company_vendor_id: string/.test(src.customerProfileForm) && /kind=["']vendor["']/.test(src.customerProfileForm) && /factoring_company_vendor_id: value \?\? ""/.test(src.customerProfileForm), `${FILES.customerProfileForm}: canonical create/edit form must bind the factoring-company vendor picker to its FK payload`);
   need(/lastService\.vendor/.test(src.maintSnapshot), `${FILES.maintSnapshot}: maintenance snapshot must show the real backend-joined vendor`);
   need(/entityType="vendor"/.test(src.vehicleProfile), `${FILES.vehicleProfile}: unit QBO mapping must have a real vendor combobox`);
   need(/lender_vendor_name(?!_)/.test(src.financeLinkage), `${FILES.financeLinkage}: finance linkage must show the real linked lender vendor`);
@@ -66,7 +68,7 @@ export function audit(src) {
   need(/kind=["']vendor["']/.test(src.factoringHome) && /allowCreate/.test(src.factoringHome) && /createDriverVendorMerge/.test(src.factoringHome), `${FILES.factoringHome}: equipment loans and vendor merges must be real vendor-scoped surfaces`);
   need(/type === "driver" \|\| type === "customer" \|\| type === "vendor"/.test(src.contractsList), `${FILES.contractsList}: contracts list must resolve a real vendor signer via signerKind`);
   need(/kind=["']vendor["']/.test(src.contractsCreate) && /allowCreate/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real vendor EntityPicker`);
-  need(/kind="vendor" id=\{row\.vendor_id\}/.test(src.management), `${FILES.management}: management report must render a real vendor EntityLink`);
+  need(/function ManagementVendorCell/.test(src.management) && /EntityLink kind="vendor" id=\{vendorId\}/.test(src.management) && /ManagementVendorCell vendorId=\{row\.vendor_id\}/.test(src.management), `${FILES.management}: management report must render vendor rows through the real vendor EntityLink helper`);
   need(/function isVendorUuid/.test(src.apAging), `${FILES.apAging}: AP aging must have a real vendor UUID guard`);
   need(/kind="vendor" id=\{r\.vendor_id\}/.test(src.arApAging), `${FILES.arApAging}: AR/AP aging must render a real vendor EntityLink`);
   need(/kind="vendor"/.test(src.fuelCreate), `${FILES.fuelCreate}: fuel transaction create must have a real vendor picker`);
@@ -87,11 +89,13 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["docs-kind-map", "docsHome", /case "vendor":/, 'case "vendor_unused":'],
+    ["docs-kind-map", "docsHome", /case "vendor":/g, 'case "vendor_unused":'],
     ["docs-tab", "docsHome", /id: "vendor", label: "Vendors"/, 'id: "vendor_unused", label: "Vendors"'],
     ["upload-type", "uploadModal", /"driver" \| "unit" \| "vendor" \| "customer"/, '"driver" | "unit" | "customer"'],
     ["customers-factored-filter", "customers", /factoring_company_vendor_id/g, "factoring_company_vendor_id_unused"],
     ["customer-detail-field", "customerDetail", /kind=["']vendor["']/g, 'kind="unit"'],
+    ["customer-detail-view-label", "customerDetail", /enabled=\{Boolean\(detailQuery\.data\?\.operating_company_id \?\? operatingCompanyId\)\}/, "enabled={editMode}"],
+    ["customer-profile-factor-picker", "customerProfileForm", /factoring_company_vendor_id: value \?\? ""/, 'factoring_company_vendor_id: ""'],
     ["maint-snapshot-field", "maintSnapshot", /lastService\.vendor/g, "lastService_unused"],
     ["vehicle-profile-combobox", "vehicleProfile", /entityType="vendor"/, 'entityType="unit"'],
     ["finance-linkage-field", "financeLinkage", /lender_vendor_name/g, "lender_vendor_name_unused"],
@@ -101,7 +105,7 @@ if (process.argv.includes("--selftest")) {
     ["factoring-loans-picker", "factoringHome", /kind=["']vendor["']/g, 'kind="unit"'],
     ["contracts-list-link", "contractsList", /type === "driver" \|\| type === "customer" \|\| type === "vendor"/, 'type === "driver" || type === "customer"'],
     ["contracts-create-picker", "contractsCreate", /kind=["']vendor["']/g, 'kind="customer"'],
-    ["management-link", "management", /kind="vendor" id=\{row\.vendor_id\}/g, 'kind="unit" id={row.unit_id}'],
+    ["management-link", "management", /EntityLink kind="vendor" id=\{vendorId\}/g, 'EntityLink kind="unit" id={vendorId}'],
     ["ap-aging-guard", "apAging", /function isVendorUuid/, "function isUnusedGuard"],
     ["ar-ap-aging-link", "arApAging", /kind="vendor" id=\{r\.vendor_id\}/g, 'kind="unit" id={r.unit_id}'],
     ["fuel-create-link", "fuelCreate", /kind="vendor"/g, 'kind="unit"'],

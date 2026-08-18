@@ -23,6 +23,7 @@ import type { CreateCustomerInput, Customer, PaymentTermOption, UpdateCustomerIn
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import type { CustomerType, MilesBasis } from "../../types/api";
 import { MoneyInput } from "../forms/MoneyInput";
+import { EntityPicker } from "../parity/EntityPicker";
 
 export type CustomerProfileFormValues = {
   // Name & contact
@@ -63,6 +64,7 @@ export type CustomerProfileFormValues = {
   default_billing_miles_basis: "" | MilesBasis;
   // Factoring
   factoring_eligible: boolean;
+  factoring_company_vendor_id: string;
   factoring_recourse_type: "" | "recourse" | "non_recourse";
   factoring_advance_rate_override: string;
   factoring_reserve_pct_override: string;
@@ -122,6 +124,7 @@ export function emptyCustomerProfileValues(): CustomerProfileFormValues {
     detention_rate_per_hour: "",
     default_billing_miles_basis: "",
     factoring_eligible: false,
+    factoring_company_vendor_id: "",
     factoring_recourse_type: "",
     factoring_advance_rate_override: "",
     factoring_reserve_pct_override: "",
@@ -180,6 +183,7 @@ export function customerToProfileValues(c: Customer): CustomerProfileFormValues 
     detention_rate_per_hour: str(c.detention_rate_per_hour),
     default_billing_miles_basis: c.default_billing_miles_basis ?? "",
     factoring_eligible: Boolean(c.factoring_eligible),
+    factoring_company_vendor_id: c.factoring_company_vendor_id ?? "",
     factoring_recourse_type: c.factoring_recourse_type ?? "",
     factoring_advance_rate_override: str(c.factoring_advance_rate_override),
     factoring_reserve_pct_override: str(c.factoring_reserve_pct_override),
@@ -271,6 +275,7 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     detention_rate_per_hour: numOrUndef(v.detention_rate_per_hour),
     default_billing_miles_basis: v.default_billing_miles_basis || undefined,
     factoring_eligible: v.factoring_eligible,
+    factoring_company_vendor_id: v.factoring_company_vendor_id || null,
     factoring_recourse_type: v.factoring_recourse_type || null,
     factoring_advance_rate_override: numOrNull(v.factoring_advance_rate_override),
     factoring_reserve_pct_override: numOrNull(v.factoring_reserve_pct_override),
@@ -329,6 +334,7 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     detention_rate_per_hour: numOrUndef(v.detention_rate_per_hour),
     default_billing_miles_basis: v.default_billing_miles_basis || undefined,
     factoring_eligible: v.factoring_eligible,
+    factoring_company_vendor_id: v.factoring_company_vendor_id || null,
     factoring_recourse_type: v.factoring_recourse_type || null,
     factoring_advance_rate_override: numOrNull(v.factoring_advance_rate_override),
     factoring_reserve_pct_override: numOrNull(v.factoring_reserve_pct_override),
@@ -796,6 +802,18 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
           Factoring eligible
         </label>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <label className="block text-sm md:col-span-2">
+            <span className="mb-1 block text-xs font-semibold text-gray-600">Factoring company</span>
+            <EntityPicker
+              kind="vendor"
+              allowCreate
+              operatingCompanyId={operatingCompanyId}
+              value={values.factoring_company_vendor_id || null}
+              onChange={(value) => onPatch({ factoring_company_vendor_id: value ?? "" })}
+              placeholder="Search factoring company…"
+              dataField="customer-factoring-company-vendor"
+            />
+          </label>
           <SelectField
             label="Recourse type"
             value={values.factoring_recourse_type}
