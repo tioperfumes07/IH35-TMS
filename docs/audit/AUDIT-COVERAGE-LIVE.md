@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1685** | 2026-08-18 |
+| Rows in this file | **1686** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=966 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=967 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1775,3 +1775,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 8880 | lists · catalog.drivers.pay_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.drivers.pay_types.create`. Exact cell: `catalog.drivers.pay_types.create:connectivity`. Selected-USMCA `/lists/catalogs/driver/pay-types` mounted **Driver Pay Types**; page CTA `+ Create` opened **Create Driver Pay Types** (Code *, Driver Pay Type *, Description, Sort Order; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `9af1559`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 8960 | lists · catalog.drivers.escrow_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.drivers.escrow_types.create`. Exact cell: `catalog.drivers.escrow_types.create:connectivity`. Selected-USMCA `/lists/catalogs/driver/escrow-types` mounted **Escrow Types**; page CTA `+ Create` opened **Create Escrow Types** (Code *, Escrow Type *, Description, Sort Order; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `9af1559`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 9040 | lists · catalog.drivers.teams.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.drivers.teams.create`. Exact cell: `catalog.drivers.teams.create:connectivity`. Selected-USMCA `/lists/driver/teams` mounted **Driver Teams**; page CTA `+ Create` opened **Create Driver Team** (Team Name, Relationship, Notes; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `9af1559`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 9050 | customers · FMCSA verification connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `detail.fmcsa_verify`. **Exact cell:** `detail.fmcsa_verify:connectivity`. Selected-USMCA canonical D-06 Customer Detail opened **Verify FMCSA Authority**. The governed dialog mounted USDOT and MC/Docket lookup modes, human-number input, Verify, Close, and correctly disabled pre-result Apply to Customer and Save as Verified controls. Close dismissed the dialog and preserved the same customer route. Verification/write cells are separately evidenced and not re-claimed. No lookup, apply, verification save, customer, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | canonical `/customers/:id` → Verify FMCSA Authority → Close; selected USMCA; no lookup/save; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
