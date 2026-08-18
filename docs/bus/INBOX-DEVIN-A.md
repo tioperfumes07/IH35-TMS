@@ -1,3 +1,19 @@
+# ★★★ HARD TIP 2026-08-18T13:55Z — DEVIN-A · CODEX BACK · LANE UNCHANGED
+
+**Active seats:** Cursor · Devin · CC-1 · **Codex (back)**. No CC-2.
+
+## YOUR ONLY JOB (unchanged)
+fleet → maintenance Live verify · CDP **9227** · Cancel-only · **no code**
+
+1. OUTBOX `LIVE CLAIM fleet` immediately
+2. PASS → tip **Cursor** for Leaves append (OUTBOX PASS alone = 0 Box4)
+3. FE FAIL → `HANDOFF=Cursor`
+4. STARVED fleet → maintenance
+5. Do **not** take Codex modules (customers/vendors/insurance/legal/fuel)
+
+healthz={"ok":true,"uptime_seconds":332,"version":"76926a8"} tip=121087960
+
+---
 # ★★★ HARD TIP 2026-08-18T13:37Z — DEVIN-A · ONLY THREE ACTIVE SEATS
 
 **Active seats:** Cursor · Devin-A · CC-1.  
