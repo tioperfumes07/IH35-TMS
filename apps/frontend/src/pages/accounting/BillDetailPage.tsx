@@ -20,6 +20,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { openCanonicalDocument, /*PLANTED*/ window.print(); void openPrintableDocument } from "../../lib/openPrintableDocument";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -208,6 +209,28 @@ export function BillDetailPage() {
                 Matched
               </span>
             ) : null}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                openPrintableDocument(
+                  `/api/v1/accounting/bills/${encodeURIComponent(id)}.html?operating_company_id=${encodeURIComponent(selectedCompanyId!)}`
+                )
+              }
+            >
+              Print
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                openCanonicalDocument(
+                  `/api/v1/accounting/bills/${encodeURIComponent(id)}.html?operating_company_id=${encodeURIComponent(selectedCompanyId!)}`
+                )
+              }
+            >
+              View bill PDF
+            </Button>
             <Button
               variant="danger"
               size="sm"
