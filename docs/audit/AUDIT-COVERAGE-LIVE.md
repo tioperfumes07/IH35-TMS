@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1747** | 2026-08-18 |
+| Rows in this file | **1749** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=249 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1021 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=249 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1023 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1837,3 +1837,5 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 13360 | fleet · catalog.fleet.trailer_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.trailer_types.create`. Exact cell: `catalog.fleet.trailer_types.create:connectivity`. Selected-USMCA `/lists/fleet/trailer-types` → **+ Create** → dialog → **Cancel**. Tip Devin-A residual fleet. | LIVE PASS · 1 EXACT CELL | healthz `5d072a5`; CDP 9226; `/tmp/tick65-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 13440 | fleet · catalog.fleet.equipment_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.equipment_types.create`. Exact cell: `catalog.fleet.equipment_types.create:connectivity`. Selected-USMCA `/lists/fleet/equipment-types` → **+ Create** → dialog → **Cancel**. | LIVE PASS · 1 EXACT CELL | healthz `8486cf3`; CDP 9226; `/tmp/tick66-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 13520 | fleet · catalog.fleet.ownership_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.ownership_types.create`. Exact cell: `catalog.fleet.ownership_types.create:connectivity`. Selected-USMCA `/lists/fleet/ownership-types` → **+ Create** → dialog → **Cancel**. | LIVE PASS · 1 EXACT CELL | healthz `8486cf3`; CDP 9226; `/tmp/tick66-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 13600 | fleet · catalog.fleet.condition_codes.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.condition_codes.create`. Exact cell: `catalog.fleet.condition_codes.create:connectivity`. Selected-USMCA `/lists/fleet/condition-codes` → **+ Create** → dialog → **Cancel**. | LIVE PASS · 1 EXACT CELL | healthz `d6fa8de`; CDP 9226; `/tmp/tick67b-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 13680 | fleet · catalog.fleet.asset_statuses.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.asset_statuses.create`. Exact cell: `catalog.fleet.asset_statuses.create:connectivity`. Selected-USMCA `/lists/catalogs/fleet/asset-statuses` → **+ Create** → dialog → **Cancel** (bespoke `/lists/fleet/asset-statuses` empty/redirect; factory path is live create owner). | LIVE PASS · 1 EXACT CELL | healthz `d6fa8de`; CDP 9226; `/tmp/tick67b-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
