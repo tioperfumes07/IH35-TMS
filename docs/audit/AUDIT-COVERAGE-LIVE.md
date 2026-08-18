@@ -74,16 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1686** | 2026-08-18 |
+| Rows in this file | **1703** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=967 | 2026-08-18 |
-| Rows in this file | **1701** | 2026-08-18 |
-| Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
-| Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=982 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=984 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1797,3 +1792,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 10160 | lists · catalog.accounting.payment_methods.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.accounting.payment_methods.create`. Exact cell: `catalog.accounting.payment_methods.create:connectivity`. Selected-USMCA `/lists/accounting/payment-methods` mounted **Payment Methods**; page CTA `+ Create` opened **New Payment Methods** (Code, Display Name, Description, Sort orderDropdown display order (lower = earlier). Defaults to next available., Active; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `dee2943`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 10240 | lists · catalog.accounting.currency_codes.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.accounting.currency_codes.create`. Exact cell: `catalog.accounting.currency_codes.create:connectivity`. Selected-USMCA `/lists/accounting/currency-codes` mounted **Currency Codes**; page CTA `+ Create` opened **New Currency Codes** (Code, Display Name, ISO numeric (optional), Description, Sort orderDropdown display order (lower = earlier). Defaults to next available., Active; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `dee2943`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 10320 | lists · catalog.accounting.void_cancel_reasons.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.accounting.void_cancel_reasons.create`. Exact cell: `catalog.accounting.void_cancel_reasons.create:connectivity`. Selected-USMCA `/lists/accounting/void-cancel-reasons` mounted **Void/Cancel Reasons**; page CTA `+ Create` opened **Void/Cancel Reasons · Create Entry** (Code, Label, Require a note when this reason is chosen, Sort Order; Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `dee2943`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 10330 | customers · inline edit connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `detail.edit`. **Exact cell:** `detail.edit:connectivity`. Selected-USMCA canonical D-06 Customer Detail opened inline **Edit** after #9040 deployed. The governed identity, relationship, contact, billing, terms, detention, layover, factoring, notes, and reverse bank-link fields mounted with both Save and the repaired secondary Cancel action. Cancel cleared the staged edit UI, restored the header Edit action, and preserved the same customer route without saving. Persistence/money cells are separately evidenced and not re-claimed. No customer, relationship, term, rate, factor, bank link, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | canonical `/customers/:id` → Edit → Cancel; selected USMCA; #9040 Cancel live; no save; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
