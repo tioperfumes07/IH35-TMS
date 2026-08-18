@@ -145,6 +145,10 @@
     "202612770000": {
       "claimed_by": "claude",
       "purpose": "lv_money_tables_have_no_audit_trigger_accounting_banking_driver_finance_remaining_54"
+    },
+    "202612780000": {
+      "claimed_by": "claude",
+      "purpose": "lv_inventory_parts_deactivated_vendor_historical_label_canonical_resolver"
     }
   }
 }
