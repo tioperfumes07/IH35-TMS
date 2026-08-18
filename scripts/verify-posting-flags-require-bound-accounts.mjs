@@ -55,6 +55,17 @@ const GRANDFATHERED = new Set([
   "202607890000_qbo_expenses_projection_key_and_flags.sql",
   "202607930000_qbo_ar_payments_projection_flags.sql",
   "202609100040_fact_01_factoring_flag_transp_only.sql",
+  // ACCT-F5434 (2026-08-18): applied, already-live migration that dynamically force-enables
+  // every TMS posting-class flag for USMCA (PREPAID_EXPENSES_POST_ENABLED,
+  // FINANCE_HUB_AMORTIZATION_POST_ENABLED, FIXED_ASSET_AUTOPOST_ENABLED,
+  // FUEL_CARD_OVERAGE_GL_POSTING_ENABLED) without naming any role in the same file — this guard
+  // caught a REAL gap: depr_expense_default/accum_depr_default were unbound for USMCA on prod
+  // (Neon-confirmed live). Closed by 202608180900_usmca_fixed_asset_depr_coa_roles.sql, which
+  // binds both; the other 3 flags' roles (prepaid_asset_default, amortization_expense_default,
+  // fuel_overage_receivable) were already bound for USMCA by separate, already-applied
+  // migrations. This file itself is immutable (applied) and can never be brought up to the
+  // same-file naming standard retroactively — same class as the other GRANDFATHERED entries.
+  "202608121800_usmca_posting_on_qbo_off.sql",
 ]);
 
 function stripComments(sql) {
@@ -114,6 +125,48 @@ function enablesFlag(sql, flag) {
     .some((stmt) => statementEnablesFlag(stmt.replace(/\s+/g, " ").trim(), flag));
 }
 
+/**
+ * Is a push flag actually armed (enabled=true), anywhere in this file?
+ *
+ * The original check was "does the whole flattened file contain the push-flag literal AND ANY
+ * enabled=true write" — too coarse for the codebase's own established, SAFE idiom (used by
+ * 202612581400_owner_all_entities_non_qbo_flags_on.sql): a dynamic per-row loop that computes a
+ * boolean gate from an IN-list containing the push-flag literal, routes gated rows to an
+ * enabled=false branch, and routes everything ELSE to a separate enabled=true branch keyed by a
+ * loop variable (not a literal). That file force-KEEPS both push flags OFF (Neon-confirmed live,
+ * 2026-08-18: both default_enabled=false, zero per-company overrides) — the whole-file fallback
+ * false-flagged it because the file also happens to contain an unrelated enabled=true write for
+ * every OTHER (non-push) flag.
+ *
+ * Fix: for each literal occurrence of the push flag, find the NEAREST `enabled = true|false`
+ * token by raw character distance and use ONLY that verdict. A legitimate exclusion-branch
+ * pattern always has its own `enabled = false` textually adjacent (same IF/loop body) — closer
+ * than any unrelated enabled=true elsewhere in the file. A genuine unguarded dynamic bulk-enable
+ * (no exclusion at all) has no nearby enabled=false to compete with, so the nearest match stays
+ * `true` and this still fires. Requires an actual INSERT/UPDATE INTO lib.feature_flag_overrides
+ * write signal somewhere in the file too, so an unrelated "enabled = true" in a comment or
+ * unrelated statement can't manufacture a false positive on its own.
+ */
+export function pushFlagArmed(sql, push) {
+  const flat = sql.replace(/\s+/g, " ");
+  if (!/\b(insert\s+into|update)\s+lib\.feature_flag_overrides\b/i.test(flat)) return false;
+  const literalRe = new RegExp(push.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+  const enabledMatches = [...flat.matchAll(/\benabled\s*=\s*(true|false)\b/gi)].map((m) => ({
+    idx: m.index,
+    val: m[1].toLowerCase(),
+  }));
+  if (!enabledMatches.length) return false;
+  let literalMatch;
+  while ((literalMatch = literalRe.exec(flat))) {
+    const pos = literalMatch.index;
+    const nearest = enabledMatches.reduce((best, e) =>
+      Math.abs(e.idx - pos) < Math.abs(best.idx - pos) ? e : best
+    );
+    if (nearest.val === "true") return true;
+  }
+  return false;
+}
+
 /** @param {Array<{name: string, sql: string}>} sources */
 export function analyseSources(sources) {
   const problems = [];
@@ -134,15 +187,7 @@ export function analyseSources(sources) {
     // Push flags must never be armed anywhere — no grandfathering (belt to guard 1723).
     for (const push of PUSH_FLAGS) {
       if (!sql.includes(push)) continue;
-      const armed = [sql.replace(/\s+/g, " ").trim(), ...sql.split(";")].some((chunk) => {
-        const flat = chunk.replace(/\s+/g, " ").trim();
-        return (
-          flat.includes(push) &&
-          /\b(insert\s+into|update)\s+lib\.feature_flag_overrides\b/i.test(flat) &&
-          /\benabled\s*=\s*true\b/i.test(flat)
-        );
-      });
-      if (armed) problems.push(`${name}: FORBIDDEN enable of ${push}`);
+      if (pushFlagArmed(sql, push)) problems.push(`${name}: FORBIDDEN enable of ${push}`);
     }
   }
   return [...new Set(problems)];
@@ -186,6 +231,43 @@ const PUSH_ENABLE = `
 UPDATE lib.feature_flag_overrides SET enabled = true WHERE flag_key = 'QBO_JE_PUSH_ENABLED';
 `;
 
+// Real shape of 202612581400_owner_all_entities_non_qbo_flags_on.sql — a dynamic per-row loop
+// that routes push/sync flags to enabled=false and everything else to enabled=true via a loop
+// variable, never a literal. Must NOT be flagged (Neon-confirmed both flags OFF live).
+const SAFE_DYNAMIC_EXCLUSION = `
+DO $$
+DECLARE r record; is_qbo_sync boolean;
+BEGIN
+  FOR r IN SELECT flag_key FROM lib.feature_flags LOOP
+    is_qbo_sync := (r.flag_key IN ('QBO_ENTITY_PUSH_ENABLED', 'QBO_JE_PUSH_ENABLED'));
+    IF is_qbo_sync THEN
+      INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled)
+      VALUES (r.flag_key, '00000000-0000-0000-0000-000000000001', false)
+      ON CONFLICT (flag_key, operating_company_id) DO UPDATE SET enabled = false;
+    ELSE
+      INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled)
+      VALUES (r.flag_key, '00000000-0000-0000-0000-000000000001', true)
+      ON CONFLICT (flag_key, operating_company_id) DO UPDATE SET enabled = true;
+    END IF;
+  END LOOP;
+END $$;
+`;
+
+// A genuinely dangerous dynamic bulk-enable with NO exclusion at all — every flag, including
+// push flags, goes to enabled=true via the same loop variable. Must STILL be flagged: there is
+// no nearby enabled=false for the nearest-match rule to prefer.
+const UNGUARDED_DYNAMIC_ENABLE = `
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT flag_key FROM lib.feature_flags WHERE flag_key = 'QBO_JE_PUSH_ENABLED' LOOP
+    INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled)
+    VALUES (r.flag_key, '00000000-0000-0000-0000-000000000001', true)
+    ON CONFLICT (flag_key, operating_company_id) DO UPDATE SET enabled = true;
+  END LOOP;
+END $$;
+`;
+
 function selftest() {
   // Plant into a TEMP dir, never db/migrations: a killed process must not be able to leave a stray
   // .sql behind that db:migrate would then apply to prod.
@@ -195,6 +277,12 @@ function selftest() {
       ["9999_unbound.sql", UNBOUND_ENABLE, "PREPAID_EXPENSES_POST_ENABLED", "bare enable"],
       ["9999_partial.sql", PARTIAL_ENABLE, "factoring_advance_liability", "partially-bound enable"],
       ["9999_push.sql", PUSH_ENABLE, "FORBIDDEN enable of QBO_JE_PUSH_ENABLED", "push-flag enable"],
+      [
+        "9999_unguarded_dynamic.sql",
+        UNGUARDED_DYNAMIC_ENABLE,
+        "FORBIDDEN enable of QBO_JE_PUSH_ENABLED",
+        "unguarded dynamic bulk-enable (no exclusion)",
+      ],
     ];
     for (const [name, sql, needle, label] of cases) {
       writeFileSync(join(dir, name), sql);
@@ -214,6 +302,16 @@ function selftest() {
       process.exit(1);
     }
     console.log("SELFTEST: fully-named enable passes");
+
+    // Negative control — the real, safe dynamic-exclusion shape must NOT be flagged.
+    const dynExclusionProblems = analyseSources([
+      { name: "9999_safe_dynamic.sql", sql: SAFE_DYNAMIC_EXCLUSION },
+    ]);
+    if (dynExclusionProblems.some((p) => p.includes("FORBIDDEN enable"))) {
+      console.error("SELFTEST FAIL: safe dynamic-exclusion pattern false-flagged as FORBIDDEN:", dynExclusionProblems);
+      process.exit(1);
+    }
+    console.log("SELFTEST: safe dynamic-exclusion pattern passes (both push flags routed to enabled=false)");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
