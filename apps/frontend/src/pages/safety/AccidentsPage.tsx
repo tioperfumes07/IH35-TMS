@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSafetyAccidents } from "../../api/safety";
+import { getSafetyAccidentDetail, getSafetyAccidents } from "../../api/safety";
 import { Button } from "../../components/Button";
 import { AccidentReportDrawer } from "../../components/safety/AccidentReportDrawer";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -95,13 +95,22 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
+  // Reverse links must resolve the requested record directly. The list endpoint is capped and can
+  // legitimately omit an older accident, so searching only its current page made a valid
+  // ?accident_id= link land on an empty table instead of the record drawer.
+  const linkedAccidentQuery = useQuery({
+    queryKey: ["safety", "accident", operatingCompanyId, accidentIdParam],
+    queryFn: () => getSafetyAccidentDetail(String(accidentIdParam), operatingCompanyId),
+    enabled: Boolean(operatingCompanyId && accidentIdParam),
+  });
+
   const allRows = accidentsQuery.data?.accidents ?? [];
 
   // SAF-F33 reverse drill-through: another module linking here as
-  // /safety/accidents?accident_id=<id> opens that accident's drawer once the list has loaded.
+  // /safety/accidents?accident_id=<id> opens that exact accident even when it is not in the capped list.
   useEffect(() => {
-    if (!accidentIdParam || allRows.length === 0) return;
-    const match = allRows.find((r) => String(r.id) === accidentIdParam);
+    if (!accidentIdParam) return;
+    const match = linkedAccidentQuery.data;
     if (match) {
       setSelectedAccident(match);
       setDrawerOpen(true);
@@ -109,7 +118,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
       next.delete("accident_id");
       setSearchParams(next, { replace: true });
     }
-  }, [accidentIdParam, allRows, searchParams, setSearchParams]);
+  }, [accidentIdParam, linkedAccidentQuery.data, searchParams, setSearchParams]);
 
   const rows = useMemo(() => {
     return allRows.filter((row) => {
