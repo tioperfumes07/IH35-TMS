@@ -3,15 +3,21 @@
  * verify-accounts-payable-aging-page-uses-paritytable — qbo-parity-a1 (AccountsPayableAgingPage surface)
  *
  * Accounting-module A/P aging report (/accounting/accounts-payable, read-only — TMS bills are the
- * canonical A/P subledger). Owner-greenlit DISPLAY-ONLY migration: the By Vendor grid must use the
- * shared ParityTable grammar (sort / resize / gear / pager) with the same 8 columns in the same
- * order (Vendor / Vendor type / Current / 1-30 / 31-60 / 61-90 / 91+ / Total), the vendor +
- * "Open bills" deep-links, the 61-90 / 91+ red flags, URL-persisted sort via useUrlSort feeding
- * ParityTable's controlled-sort props, and the TOTAL row values preserved 1:1 as a strip under the
- * grid. EXACTLY ONE hand-rolled <table> may remain: the By Vendor Type grouped rollup
- * (GroupBlock expand/collapse + per-group subtotal rows) — ParityTable has no grouped-subtotal
- * grammar, so migrating it would change the display (default-expanded groups, aligned subtotal
- * rows). Query errors surface ListErrorState (never a bare red banner); the honest
+ * canonical A/P subledger). Owner-greenlit DISPLAY-ONLY migration: BOTH the By Vendor grid AND the
+ * By Vendor Type grid must use the shared ParityTable grammar (sort / resize / gear / pager) with
+ * the same 8 columns in the same order (Vendor / Vendor type / Current / 1-30 / 31-60 / 61-90 /
+ * 91+ / Total), the vendor + "Open bills" deep-links, the 61-90 / 91+ red flags, URL-persisted
+ * sort via useUrlSort feeding ParityTable's controlled-sort props, and the TOTAL row values
+ * preserved 1:1 as a strip under each grid.
+ *
+ * ACCT-F3568 (already shipped, confirmed live in this file) went further than this guard's
+ * original spec assumed: the By Vendor Type grouped rollup was ALSO migrated onto ParityTable
+ * (same VENDOR_COLUMNS grammar + typeFilter, storageKey="acct-ap-aging-by-type"), so there is no
+ * longer any hand-rolled "GroupBlock" table anywhere in this file — ZERO hand-rolled JSX <table>s
+ * are expected now. The only remaining <table> markup at all is printList()'s printLetterHtml()
+ * call, a raw HTML STRING built for a separate print window (not JSX, not part of the React tree,
+ * a ParityTable cannot render there) — that one is legitimate and exempt from the hand-rolled-table
+ * check below. Query errors surface ListErrorState (never a bare red banner); the honest
  * mirror-provenance empty states stay. This is a report surface — it must never post or mutate
  * (no useMutation), and the QBO-mirror provenance strip (verify-ap-aging-qbo-tie) stays intact.
  */
@@ -30,18 +36,19 @@ function assertMigrated(src) {
   if (!src.includes("ParityTable")) {
     errors.push(`${PAGE}: must import ParityTable from components/parity/ParityTable`);
   }
-  if ((src.match(/<ParityTable\b/g) ?? []).length < 1) {
-    errors.push(`${PAGE}: expected ≥1 <ParityTable> (By Vendor grid)`);
+  if ((src.match(/<ParityTable\b/g) ?? []).length < 2) {
+    errors.push(`${PAGE}: expected ≥2 <ParityTable> (By Vendor grid + By Vendor Type grid, ACCT-F3568)`);
   }
-  const handRolledTables = (src.match(/<table[\s>]/g) ?? []).length;
-  if (handRolledTables > 1) {
+  // printList()'s printLetterHtml({ bodyHtml: `...` }) call builds a raw HTML STRING for a
+  // separate print window, not JSX — <table>/<thead> there are legitimate print-document markup,
+  // not a hand-rolled React table. Strip that one template literal before scanning for hand-rolled
+  // markup, so the check still fires on a REAL accidental JSX <table> anywhere else in the file.
+  const srcNoBodyHtml = src.replace(/bodyHtml:\s*`[\s\S]*?`,/, "bodyHtml: ``,");
+  const handRolledTables = (srcNoBodyHtml.match(/<table[\s>]/g) ?? []).length;
+  if (handRolledTables > 0) {
     errors.push(
-      `${PAGE}: expected at most 1 remaining hand-rolled <table> (the By Vendor Type grouped rollup), found ${handRolledTables}`,
-    );
-  }
-  if (handRolledTables === 1 && !src.includes("GroupBlock")) {
-    errors.push(
-      `${PAGE}: the single allowed hand-rolled <table> is the GroupBlock grouped rollup — GroupBlock is missing`,
+      `${PAGE}: expected 0 hand-rolled JSX <table> — By Vendor Type was migrated to ParityTable too ` +
+        `(ACCT-F3568, same as By Vendor), found ${handRolledTables}`,
     );
   }
   for (const label of REQUIRED_LABELS) {
@@ -104,7 +111,30 @@ function selftest() {
       onSortChange={onSortChange}
     />
     <div data-testid="ap-aging-by-vendor-total"><span>TOTAL</span></div>
-    <table className="w-full">{groups.map((g) => <GroupBlock key={g.group} />)}</table>
+    <ParityTable
+      storageKey="acct-ap-aging-by-type"
+      tableTestId="ap-aging-by-type-table"
+      sortKey={sortKey}
+      sortDirection={sortDirection}
+      onSortChange={onSortChange}
+    />
+  `;
+  // The real page's printList() builds a raw print-window HTML string via printLetterHtml — a
+  // legitimate <table>/<thead> there must NOT be flagged as a hand-rolled JSX table.
+  const goodWithPrintTemplate =
+    good +
+    `
+    const printList = () => {
+      printLetterHtml({
+        title: "A/P aging",
+        bodyHtml: \`
+          <table>
+            <thead><tr><th>Vendor</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        \`,
+      });
+    };
   `;
   const bad = `
     import { useMutation } from "@tanstack/react-query";
@@ -118,9 +148,14 @@ function selftest() {
     }
   `;
   const goodErrors = assertMigrated(good);
+  const goodWithPrintErrors = assertMigrated(goodWithPrintTemplate);
   const badErrors = assertMigrated(bad);
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
+    process.exit(1);
+  }
+  if (goodWithPrintErrors.length) {
+    console.error(`${LABEL} --selftest FAIL good-with-print-template fixture (print HTML string false-flagged):`, goodWithPrintErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
@@ -143,7 +178,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `OK ${LABEL}: ${PAGE} By Vendor grid uses ParityTable; columns/TOTAL/red flags/URL sort preserved; grouped rollup unchanged; read-only.`,
+    `OK ${LABEL}: ${PAGE} both By Vendor and By Vendor Type grids use ParityTable; columns/TOTAL/red flags/URL sort preserved; read-only.`,
   );
 }
 
