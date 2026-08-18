@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type CertSeverity = "critical" | "warn" | "info";
 type CertType = "cdl" | "medical_card" | "hazmat_endorsement" | "twic" | "passport" | "drug_test";
@@ -85,7 +86,18 @@ export function ExpiryDashboard() {
 
   const columns = useMemo<Array<ParityColumn<CertExpiryAlert>>>(
     () => [
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => entityLabel(row.driver_name, row.driver_uuid, "Driver") },
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="driver"
+            id={row.driver_uuid}
+            label={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
+          />
+        ),
+      },
       { key: "cert_label", label: "Certificate", sortable: true, render: (row) => row.cert_label },
       { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => formatDateUS(row.expiry_date) },
       { key: "days_until_expiry", label: "Days", sortable: true, render: (row) => row.days_until_expiry },
