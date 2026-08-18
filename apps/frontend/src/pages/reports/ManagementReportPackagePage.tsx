@@ -11,6 +11,8 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 type PackageType = "company-overview" | "sales-performance" | "expenses-performance";
 
@@ -412,6 +414,45 @@ export function ManagementReportPackagePage() {
 
   const preparedDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
+  function printLetter() {
+    if (!companyId) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const toc = pkg.sections
+      .map((section, i) => `<tr><td>${esc(i + 1)}</td><td>${esc(section)}</td></tr>`)
+      .join("");
+    printLetterHtml({
+      title: `${pkg.label} ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <div class="meta">Management report package</div>
+        <h1>${esc(pkg.label)}</h1>
+        <div class="meta">${esc(pkg.description)}</div>
+        <table>
+          <tbody>
+            <tr><th>Entity</th><td>${esc(entityName)}</td></tr>
+            <tr><th>Period</th><td>${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))}</td></tr>
+            <tr><th>Basis</th><td>${esc(applied.basis === "cash" ? "Cash" : "Accrual")}</td></tr>
+            <tr><th>Prepared</th><td>${esc(preparedDate)}</td></tr>
+            <tr><th>Printed</th><td>${esc(new Date().toLocaleString())}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">Table of contents</h1>
+        <table>
+          <thead><tr><th>#</th><th>Section</th></tr></thead>
+          <tbody>${toc}</tbody>
+        </table>
+        <p style="margin-top:16px;color:#555;font-size:11px">
+          Letter cover for this package. Open each named report leaf for full section tables with letter Print
+          (P&amp;L, Balance Sheet, A/R aging, A/P aging, customer / vendor summaries).
+        </p>
+      `,
+    });
+  }
+
   return (
     <div className="space-y-4 print:space-y-2">
       <style>{`
@@ -429,7 +470,7 @@ export function ManagementReportPackagePage() {
         breadcrumb={["Reports", "Management reports", pkg.label]}
         actions={
           <div className="no-print flex gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!companyId}>
               Print / Save PDF
             </Button>
           </div>
