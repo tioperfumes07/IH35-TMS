@@ -1,6 +1,6 @@
 # Module completion — Factoring (FACT)
 
-**PROGRESS: 10 of 10** · complete: `true` · as_of: 2026-08-10T06:26:05.362Z · live_sha: `ed061c2`
+**PROGRESS: 10 of 10** · complete: `false` · as_of: 2026-08-18T22:00Z · live_sha: `ed061c2`
 
 | Status | Count |
 |---|---:|
