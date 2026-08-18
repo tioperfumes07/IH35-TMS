@@ -58,9 +58,22 @@ function check(src) {
   return errors;
 }
 
+function checkSettlementsOpenBillsPanel() {
+  const rel = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+  const abs = path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) {
+    return [`missing ${rel}`];
+  }
+  const src = fs.readFileSync(abs, "utf8");
+  if (/<EntityLink[\s\S]{0,200}?kind\s*=\s*["']bill["']/.test(src)) {
+    return [`${rel} must not EntityLink kind=bill for open driver_finance.driver_bills rows`];
+  }
+  return [];
+}
+
 function main() {
   const src = read(TARGET);
-  const errors = check(src);
+  const errors = [...check(src), ...checkSettlementsOpenBillsPanel()];
   if (errors.length) {
     console.error(`[${LABEL}] FAIL:\n  - ${errors.join("\n  - ")}`);
     process.exit(1);
