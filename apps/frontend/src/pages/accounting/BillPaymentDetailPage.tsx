@@ -8,9 +8,11 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
+import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -55,7 +57,46 @@ export function BillPaymentDetailPage() {
           { label: displayId },
         ]}
         actions={
-          <StatusBadge variant={isVoided ? "neutral" : "positive"}>{isVoided ? "voided" : "posted"}</StatusBadge>
+          <div className="flex items-center gap-2">
+            <StatusBadge variant={isVoided ? "neutral" : "positive"}>{isVoided ? "voided" : "posted"}</StatusBadge>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const esc = (v: unknown) =>
+                  String(v ?? "—")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+                const billLabel = entityLabel(payment.bill_number, payment.bill_id, "Bill");
+                const vendorLabel = entityLabel(payment.vendor_name, payment.vendor_id, "Vendor");
+                printLetterHtml({
+                  title: `Bill payment ${displayId}`,
+                  bodyHtml: `
+                    <h1>Bill payment receipt</h1>
+                    <div class="meta">${esc(displayId)} · printed ${esc(new Date().toLocaleString())}</div>
+                    <table>
+                      <tbody>
+                        <tr><th>Payment</th><td>${esc(displayId)}</td></tr>
+                        <tr><th>Date</th><td>${esc(formatDateUS(payment.payment_date))}</td></tr>
+                        <tr><th>Amount</th><td>${esc(money(payment.amount_cents))}</td></tr>
+                        <tr><th>Method</th><td>${esc(payment.payment_method)}</td></tr>
+                        <tr><th>Bill</th><td>${esc(billLabel)}</td></tr>
+                        <tr><th>Vendor</th><td>${esc(vendorLabel)}</td></tr>
+                        <tr><th>Check #</th><td>${esc(payment.check_number ?? "—")}</td></tr>
+                        <tr><th>Reference</th><td>${esc(payment.reference_number ?? "—")}</td></tr>
+                        <tr><th>Memo</th><td>${esc(payment.memo ?? "—")}</td></tr>
+                        <tr><th>Status</th><td>${esc(isVoided ? "voided" : "posted")}</td></tr>
+                      </tbody>
+                    </table>
+                  `,
+                });
+              }}
+            >
+              Print
+            </Button>
+          </div>
         }
       />
 
