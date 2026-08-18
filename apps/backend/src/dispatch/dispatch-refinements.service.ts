@@ -50,6 +50,8 @@ export type LoadStopInput = {
   notes?: string | null;
   signature_required?: boolean;
   photo_required?: boolean;
+  /** catalogs.pickup_time_types — picker_law on Load drawer Stops (parity with Book Load). */
+  pickup_time_type_id?: string | null;
 };
 
 export async function manualReassignLoad(userId: string, input: ReassignBody) {
@@ -317,6 +319,7 @@ export async function listLoadStopsRefined(userId: string, operatingCompanyId: s
           ls.longitude,
           ls.signature_required,
           ls.photo_required,
+          ls.pickup_time_type_id,
           ls.created_at,
           ls.updated_at
         FROM mdata.load_stops ls
@@ -364,7 +367,7 @@ export async function replaceLoadStopsRefined(
               scheduled_arrival_at, appointment_start_at, appointment_end_at,
               notes, stop_notes, status,
               latitude, longitude, signature_required, photo_required,
-              time_window_type
+              time_window_type, pickup_time_type_id
             )
             VALUES (
               $1,$2,$3::mdata.stop_type_enum,
@@ -372,7 +375,8 @@ export async function replaceLoadStopsRefined(
               $9,$10,$11,
               $12,$12,'pending'::mdata.stop_status_enum,
               $13,$14,$15,$16,
-              CASE WHEN $10 IS NOT NULL THEN 'appointment'::mdata.time_window_type_enum ELSE 'first_come_first_serve'::mdata.time_window_type_enum END
+              CASE WHEN $10 IS NOT NULL THEN 'appointment'::mdata.time_window_type_enum ELSE 'first_come_first_serve'::mdata.time_window_type_enum END,
+              $17
             )
           `,
           [
@@ -392,6 +396,7 @@ export async function replaceLoadStopsRefined(
             s.longitude ?? null,
             Boolean(s.signature_required),
             Boolean(s.photo_required),
+            s.pickup_time_type_id ?? null,
           ]
         );
       }

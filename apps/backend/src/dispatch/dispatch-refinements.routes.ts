@@ -43,6 +43,7 @@ const stopBodyItem = z.object({
   notes: z.string().trim().max(2000).optional().nullable(),
   signature_required: z.boolean().optional(),
   photo_required: z.boolean().optional(),
+  pickup_time_type_id: z.string().uuid().optional().nullable(),
 });
 
 const replaceStopsBody = z.object({
