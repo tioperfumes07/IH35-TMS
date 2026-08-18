@@ -23,6 +23,8 @@ import {
   formatMaintCostFlagLabel,
   MAINT_COST_FLAG_LABELS,
 } from "../../lib/formatMaintCostFlagLabel";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -140,6 +142,74 @@ export function MaintenanceCostPerUnitPage() {
     URL.revokeObjectURL(url);
   }
 
+  function printLetter() {
+    const data = query.data;
+    if (!data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const totals = data.totals;
+    const catRows = Object.entries(data.by_category ?? {})
+      .filter(([, cents]) => Number(cents) > 0)
+      .map(([category, cents]) => `<tr><td>${esc(category)}</td><td style="text-align:right">${esc(money(Number(cents)))}</td></tr>`)
+      .join("");
+    const rowsHtml = rows
+      .map(
+        (r) => `<tr>
+          <td>${esc(r.unit_number)}</td>
+          <td style="text-align:right">${esc(r.wo_count)}</td>
+          <td style="text-align:right">${esc(money(r.parts_cents))}</td>
+          <td style="text-align:right">${esc(money(r.labor_cents))}</td>
+          <td style="text-align:right">${esc(money(r.outsourced_cents))}</td>
+          <td style="text-align:right">${esc(money(r.total_cents))}</td>
+          <td style="text-align:right">${esc(r.miles_driven)}</td>
+          <td style="text-align:right">${esc(r.cost_per_mile_cents === null ? "—" : money(r.cost_per_mile_cents))}</td>
+          <td>${esc((r.flags ?? []).map((f) => FLAG_META[f]?.label ?? formatMaintCostFlagLabel(f)).join(", ") || "—")}</td>
+        </tr>`,
+      )
+      .join("");
+    printLetterHtml({
+      title: `Maintenance cost per unit ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Maintenance cost per unit</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · ${esc(
+          data.basis,
+        )} · printed ${esc(new Date().toLocaleString())}</div>
+        <table>
+          <tbody>
+            <tr><th>Trucks</th><td>${esc(totals.truck_count)}</td></tr>
+            <tr><th>WO count</th><td>${esc(totals.wo_count)}</td></tr>
+            <tr><th>Parts</th><td>${esc(money(totals.total_parts_cents))}</td></tr>
+            <tr><th>Labor</th><td>${esc(money(totals.total_labor_cents))}</td></tr>
+            <tr><th>Outsourced</th><td>${esc(money(totals.total_outsourced_cents))}</td></tr>
+            <tr><th>Grand total</th><td>${esc(money(totals.grand_total_cents))}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">By category</h1>
+        <table>
+          <thead><tr><th>Category</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${catRows || `<tr><td colspan="2">No category spend</td></tr>`}</tbody>
+        </table>
+        <h1 style="margin-top:16px">By truck</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Unit</th><th style="text-align:right">WOs</th>
+              <th style="text-align:right">Parts</th><th style="text-align:right">Labor</th>
+              <th style="text-align:right">Outsourced</th><th style="text-align:right">Total</th>
+              <th style="text-align:right">Miles</th><th style="text-align:right">$/mi</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="9">No trucks in range</td></tr>`}</tbody>
+        </table>
+      `,
+    });
+  }
+
   const t = query.data?.totals;
 
   return (
@@ -153,7 +223,7 @@ export function MaintenanceCostPerUnitPage() {
         breadcrumb={["Reports", "Maintenance Cost Per Unit"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => query.data && exportCsv(query.data)}>
