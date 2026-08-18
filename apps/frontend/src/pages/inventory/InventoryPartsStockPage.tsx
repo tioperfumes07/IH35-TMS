@@ -1,4 +1,4 @@
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { listMaintenanceParts, type MaintenancePartRow } from "../../api/maintenance";
 import { useQuery } from "@tanstack/react-query";
@@ -68,12 +68,30 @@ const columns: ParityColumn<InventoryPartRow>[] = [
   {
     key: "vendor_id",
     label: "Vendor",
-    render: (row) =>
-      row.vendor_id ? (
-        <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_label, row.vendor_id, "Vendor")} />
-      ) : (
-        <span className="text-gray-400">—</span>
-      ),
+    render: (row) => {
+      if (!row.vendor_id) {
+        return <span className="text-gray-400">—</span>;
+      }
+      // LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL (FE half):
+      // When the API join cannot resolve a same-opco vendor name (often deactivated
+      // under active-only RLS), do not mount EntityLink — dead drill → Failed to load.
+      // Historical human-name recovery remains CC-1 schema/RLS; this ratchets chrome.
+      if (isUnresolvedEntityTombstone(row.vendor_label, row.vendor_id, "Vendor")) {
+        return (
+          <span className="text-gray-500" data-testid="inventory-parts-vendor-tombstone">
+            {entityLabel(row.vendor_label, row.vendor_id, "Vendor")}
+          </span>
+        );
+      }
+      return (
+        <EntityLink
+          kind="vendor"
+          id={row.vendor_id}
+          label={String(row.vendor_label).trim()}
+          data-testid="inventory-parts-vendor-link"
+        />
+      );
+    },
   },
   {
     key: "status",

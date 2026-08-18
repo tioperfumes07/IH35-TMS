@@ -34,6 +34,12 @@ describe("InventoryPartsStockPage read path", () => {
     expect(partsStockPage).not.toMatch(/listVendors/);
     expect(partsStockPage).not.toMatch(/CappedListNotice/);
   });
+
+  it("LV-INVENTORY-PARTS-DEACTIVATED-VENDOR: tombstones unresolved vendor labels (no dead EntityLink)", () => {
+    expect(partsStockPage).toMatch(/isUnresolvedEntityTombstone/);
+    expect(partsStockPage).toMatch(/inventory-parts-vendor-tombstone/);
+    expect(partsStockPage).not.toMatch(/label=\{entityLabel\(row\.vendor_label/);
+  });
 });
 
 describe("mapMaintenancePartsToInventoryRows", () => {
