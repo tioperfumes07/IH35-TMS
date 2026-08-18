@@ -7,8 +7,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getAccountingSourceLineage, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { getLoad } from "../../api/loads";
-import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
+import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -311,18 +311,21 @@ export function InvoiceDetailPage() {
                 Record Payment
               </Button>
             ) : null}
-            <Button variant="secondary" onClick={() => window.print()}>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                openPrintableDocument(
+                  `/api/v1/accounting/invoices/${encodeURIComponent(id)}.html?operating_company_id=${encodeURIComponent(selectedCompanyId!)}`
+                )
+              }
+            >
               Print
             </Button>
             <Button
               variant="secondary"
               onClick={() =>
-                window.open(
-                  resolveApiUrl(
-                    `/api/v1/accounting/invoices/${encodeURIComponent(id)}.html?operating_company_id=${encodeURIComponent(selectedCompanyId!)}`
-                  ),
-                  "_blank",
-                  "noopener,noreferrer"
+                openCanonicalDocument(
+                  `/api/v1/accounting/invoices/${encodeURIComponent(id)}.html?operating_company_id=${encodeURIComponent(selectedCompanyId!)}`
                 )
               }
             >

@@ -59,3 +59,26 @@ body {
   -webkit-hyphens: none;
   font-variant-numeric: tabular-nums;
 }
+
+/* SPA in-app report print: hide chrome so P&L/BS/aging/etc. print as the table, not the shell.
+   Money letters (invoice/settlement/dispatch-sheet) use openPrintableDocument → backend HTML. */
+@media print {
+  .sidebar,
+  .top-bar,
+  .quick-actions,
+  [data-app-chrome="sidebar"],
+  [data-app-chrome="topbar"],
+  nav[aria-label="Primary"],
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  #root {
+    min-height: 0 !important;
+  }
+}

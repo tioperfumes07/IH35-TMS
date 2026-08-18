@@ -1,19 +1,26 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-17T15:29Z
+Updated: 2026-08-18T03:20Z
+
+## MISSION
+**8H LAUNCH NON-STOP** · McLeod+QBO subscription quality · **30/30 modules** · print/PDF/CSV letter-correct.
+Packet: `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md`
+FAST-MERGE ON · Continuous mode · **ZERO IDLE**.
 
 ## LIVE
-Built **3438/3441** · Live climbing · **Live=BLOCKED** · healthz `7f41290`
+Product **Live=BLOCKED** until certified — seats never idle.
+Cursor shipping **print canonical docs** (claim 3790 on main → feature).
 
 ## SPEED SHARE
-| Seat | Live NOW |
-|------|----------|
-| **Cursor** | lists · safety · dispatch · drivers |
-| **Codex** | residual + fuel · docs · tasks · compliance · customers · vendors |
-| **Devin-A** | fleet · maintenance |
-| **CC-1** | Built 3 cells → money Live |
+| Seat | NOW |
+|------|-----|
+| **CC-1** | Money Built floor → Live money · invoice/settlement economics · CSV money reports |
+| **CC-2** | GUARD live-verify after money ships |
+| **CC-3** | Mechanical FOs + export guards |
+| **Cursor** | Print stack + lists/safety/dispatch/drivers Live + lead |
+| **Codex** | Own+shared Live modules · non-money export |
+| **Devin-A** | fleet · maintenance Live only |
+| **Cascade** | CANCELLED |
 
-Cascade CANCELLED. FAST-MERGE ON.
-
-## LAST SHIPS (Cursor)
-- #8422 lists `chrome.toolbar_filter`
-- LIVE safety K2 chunk (this PR) · next remaining safety unpaid / dispatch
+## LAST
+- CLAIM-RESERVE 3790 merged (#8767)
+- Feature: cursor/print-docs-canonical in flight

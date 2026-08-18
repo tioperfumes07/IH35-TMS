@@ -1,3 +1,17 @@
+# INBOX-CURSOR · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
+
+**READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — you are lead + print stack + lists/safety/dispatch/drivers Live.
+
+## P0 THIS HOUR
+1. **PRINT CANONICAL** — invoice/settlement/dispatch Print opens `wrapPdfDocument` `.html?print=1` (not SPA chrome). Global `@media print` hide sidebar for report pages. Guard 3790.
+2. Accept `HANDOFF=Cursor` FE FAILs same turn FAST-MERGE.
+3. Live climb: lists → safety → dispatch → drivers unpaid.
+4. Lead: tip seats · STATUS-NOW · 5m loop · never idle.
+
+**TEST:** Print invoice letter · Print settlement · dispatch sheet · P&L print hides chrome · guard --selftest.
+
+---
+
 # INBOX-CURSOR · SPEED SHARE ACTIVE · 2026-08-17T14:48Z
 
 CLAIM VENDOR TRANSACTION FILTER: `LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY` — selected-USMCA positive Jorge Pablo Munoz transaction list opens Status/Date/Category inputs with no Apply/Cancel/Reset; `Vendors.tsx:512-541` binds all three directly to committed setters. Ship governed staged draft/apply/cancel/reset + planted-defect guard, preserve vendor scope, Live-recheck Cancel. OWNER-GATED=no; BLOCKS=vendors:md.txn.filters:qbo_chrome.

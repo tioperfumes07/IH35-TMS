@@ -19,8 +19,8 @@ import {
   type SettlementDisputeCategory,
   type OpenDriverBill,
 } from "../../api/driverFinance";
-import { resolveApiUrl } from "../../api/client";
 import { formatUsdCents } from "../../lib/money";
+import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -236,21 +236,30 @@ export function SettlementDetailPage() {
         title={settlementDisplayId ? `Settlement ${settlementDisplayId}` : "Settlement Detail"}
         subtitle="Debt-alert invariant enforced"
         actions={
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() =>
-              window.open(
-                resolveApiUrl(
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                openPrintableDocument(
                   `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}.html?operating_company_id=${encodeURIComponent(companyId)}`
-                ),
-                "_blank",
-                "noopener,noreferrer"
-              )
-            }
-          >
-            View settlement PDF
-          </Button>
+                )
+              }
+            >
+              Print
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                openCanonicalDocument(
+                  `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}.html?operating_company_id=${encodeURIComponent(companyId)}`
+                )
+              }
+            >
+              View settlement PDF
+            </Button>
+          </div>
         }
       />
       {hasEngineTeamSplitLines ? (

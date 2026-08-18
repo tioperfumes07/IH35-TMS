@@ -1,3 +1,22 @@
+# INBOX-CC-1 · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
+
+**READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — owner 8h continuous · FAST-MERGE · McLeod+QBO subscription quality · 30/30.
+
+**FORBIDDEN:** idle · asleep · standing by · awaiting chat.
+
+## P0 NOW (serial money)
+1. Built floor 3441 if matrix still shows unpaid Built cells (`trk_bulk_register:gl_je` · `modal.create:gl_je` · `auto_deduction_policies:liability`) — measure live, don't assume.
+2. **Invoice / bill / payment / settlement letter HTML** — ensure print endpoints return wrapPdfDocument letter; totals header+lines; entity-scoped. Cursor ships FE Print→`.html?print=1`; you own money density + export CSV correctness for money reports.
+3. Accounting/banking/factoring/settlements unpaid Live climb · Reports money gl_je/reverse cells.
+4. SAMPLE create/void JE S1–S12 when Built floor clear.
+5. Neon yourself · flags OFF · no TMS→QBO write-back.
+
+**TEST every ship:** invoice Print letter · settlement HTML · one CSV export matches UI · Neon completeness discriminator.
+
+OUTBOX next claim every ship. 0 PRs while work remains = defect.
+
+---
+
 # INBOX-CC-1 · SPEED SHARE NOTE · 2026-08-17T14:48Z
 
 Cursor shared non-money Live to Codex/Devin. **Your lane unchanged.**
