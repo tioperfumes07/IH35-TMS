@@ -299,3 +299,17 @@ While live-confirming ACCT-F5425 (Account Register JE-drill, #8905 — CONFIRMED
 Swept the same exact shape across the whole accounting/ lane and found 6 more instances: Bill, BillPayment, Expense, Payment, FactoringAdvance, Invoice detail pages — all byte-identical. Fixed all 7 (`.isLoading` → `.isPending`), documented the FE dependency at the backend JE route, added missing rate limits surfaced by touching that file (list/detail/create/void), and shipped a new class-wide guard (verify-step 3901, claimed via #8914) that scans every accounting detail page for the anti-pattern going forward — mutation-tested. tsc -b/-p both clean. PR #8916 merged. Ledger row 2370.
 
 Continuing to work INBOX-CC-1.md's P0 list and re-polling for fresh work.
+
+2026-08-18T14:05Z CC-1 | P14 residual handoff CLOSED | PASS | customers/vendors new-transaction hops + AP panels — 6 exact cells Live | Neon N/A | NEXT=continue INBOX P0 sweep
+
+Worked the Codex "P14 exact Live residual handoff" list from INBOX-CC-1.md (6 unpaid money-owned exact cells across customers/vendors). All 6 confirmed genuinely wired, not fabricated:
+
+- `customers:md.new_transaction:invoice` — master-detail "New transaction" hops to `/accounting/invoices?customer_id=<real id>`, correctly pre-filters the invoice list's Customer combobox (API-confirmed name match).
+- `vendors:md.transaction_list:ap_bill` + `md.txn.filters:ap_bill` — vendor master-detail Transaction List tab renders the real open bill (P38-FK-SMOKE, $123.45) with a working Filters panel.
+- `vendors:md.header.new_transaction:{ap_bill,scenario.ap}` — "New transaction" hops to `/accounting/bills?vendor_id=<real id>`, correctly pre-filters to the same real bill with matching KPI totals.
+- `vendors:detail.ap.record_bill_payment:scenario.ap` — real Record Bill Payment form (date/amount/method/reference/memo/auto-match) with the genuine open bill under Apply to bills; cancel-only, no payment submitted.
+- `vendors:detail.ap.bill_payments:scenario.ap` — Recent bill payments section, honestly empty (no fabricated rows).
+
+Ledger rows 2470/2480. Scoreboard regenerated (`audit-coverage-scoreboard --write`). No code changed — pure live verification, matrix should reflect Live on next re-measure.
+
+Continuing to work INBOX-CC-1.md's remaining items and re-polling for fresh work.
