@@ -22,6 +22,7 @@ import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 const PAYROLL_ALERT_CENTS = 50_000_00;
 const DIP_ATTENTION_CENTS = 25_000_00;
@@ -142,6 +143,56 @@ export function CashFlowOverviewPage() {
     URL.revokeObjectURL(url);
   }
 
+  function printLetter() {
+    const d = query.data;
+    if (!d) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const row = (label: string, cents: number) =>
+      `<tr><th>${esc(label)}</th><td style="text-align:right">${esc(money(cents))}</td></tr>`;
+    printLetterHtml({
+      title: `Cash flow overview ${appliedAsOf}`,
+      bodyHtml: `
+        <h1>Cash flow overview</h1>
+        <div class="meta">As of ${esc(formatDateUS(appliedAsOf) || appliedAsOf)} · printed ${esc(new Date().toLocaleString())}</div>
+        <h1 style="margin-top:16px">Current state</h1>
+        <table>
+          <tbody>
+            ${row("Operating balance", d.current_state.operating_balance_cents)}
+            ${row("DIP balance", d.current_state.dip_balance_cents)}
+            ${row("Payroll balance", d.current_state.payroll_balance_cents)}
+            ${row("Factoring reserves held", d.current_state.factoring_reserves_held_cents)}
+            ${row("Factoring advances funded MTD", d.current_state.factoring_advances_funded_mtd_cents)}
+            <tr><th>Uncategorized transactions</th><td style="text-align:right">${esc(d.current_state.uncategorized_transactions_count)}</td></tr>
+            ${row("Open chargebacks", d.current_state.chargebacks_open_cents)}
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">Next 30 days</h1>
+        <table>
+          <tbody>
+            ${row("Expected AR collections", d.next_30_days.expected_ar_collections_cents)}
+            ${row("Expected AP outflows", d.next_30_days.expected_ap_outflows_cents)}
+            ${row("Expected settlement outflows", d.next_30_days.expected_settlement_outflows_cents)}
+            ${row("Net projected change", d.next_30_days.net_projected_change_cents)}
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">Historical</h1>
+        <table>
+          <tbody>
+            ${row("Last 7 days inflows", d.historical.last_7_days_inflows_cents)}
+            ${row("Last 7 days outflows", d.historical.last_7_days_outflows_cents)}
+            ${row("Last 30 days avg daily inflow", d.historical.last_30_days_avg_daily_inflow_cents)}
+            ${row("Last 30 days avg daily outflow", d.historical.last_30_days_avg_daily_outflow_cents)}
+          </tbody>
+        </table>
+      `,
+    });
+  }
+
   return (
     <div className="space-y-4 print:space-y-2">
       <style>{`
@@ -155,7 +206,7 @@ export function CashFlowOverviewPage() {
         breadcrumb={["Reports", "Cash Flow Overview"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!query.data}>
