@@ -47,14 +47,27 @@ export function collectProblems(svc, routes) {
   if (routes == null) return [`missing ${ROUTES}`];
 
   // Comments are stripped: this fix ships with a long explanatory comment naming every term below,
-  // so an un-stripped check would pass on the comment alone after the code was removed.
-  const code = svc.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
-  const routeCode = routes.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  // so an un-stripped check would pass on the comment alone after the code was removed. The dup-check
+  // SQL itself carries a `-- ACCT-F202:` comment (real SQL syntax, inside a template literal — the
+  // JS `//`/`/* */` strip below never touches it) that literally contains the phrase "voided_at IS
+  // NULL" while explaining why it's checked, so a naive strip left that phrase surviving even after
+  // the real WHERE-clause line was mutated away — found live via this guard's own selftest. Strip
+  // ` -- comment` style SQL comments too (space-dash-dash-space, the only style this codebase uses;
+  // deliberately narrow so it can never eat a real `i--`/`i --` decrement elsewhere in the file).
+  const stripSql = (s) => s.replace(/[ \t]--[ \t][^\n]*/g, "");
+  const code = stripSql(svc.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, ""));
+  const routeCode = stripSql(routes.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, ""));
 
   // Pick the duplicate-detection query specifically. `.exec` returns the FIRST match in the file,
   // which is some unrelated lookup — that mistake made this guard red against its own fix on the
   // first run. Scan every candidate and take the one that actually tests bill_number.
-  const candidates = [...code.matchAll(/SELECT[\s\S]{0,200}?FROM\s+accounting\.bills\b[\s\S]{0,900}?LIMIT\s+1/gi)].map(
+  //
+  // The FROM->LIMIT window was 900 chars, but the real dup-check query's WHERE clause carries a
+  // long explanatory SQL `--` comment block (ACCT-F202, entity-scope/void-exclusion rationale) —
+  // real SQL comments, not JS `//`/`/* */`, so the comment-strip above never touches them. That
+  // pushed the real gap to 948 chars, 48 over the cap, and this guard false-failed against its
+  // OWN already-complete, already-correct fix. Widened with real margin for future comment growth.
+  const candidates = [...code.matchAll(/SELECT[\s\S]{0,200}?FROM\s+accounting\.bills\b[\s\S]{0,1500}?LIMIT\s+1/gi)].map(
     (m) => m[0]
   );
   const dupQuery = candidates.find((q) => /bill_number\s*=/i.test(q)) ?? "";
@@ -128,8 +141,22 @@ if (process.argv.includes("--selftest")) {
   // itself (verify-acct-r17-expense-duplicates does exactly that). Those cannot fail.
   const mutations = [
     ["control removed entirely", svc.replaceAll("DuplicateBillNumberError", "Removed"), routes],
-    ["entity scope dropped", svc.replace(/b\.operating_company_id = \$1::uuid\n\s*AND /, ""), routes],
-    ["voided bills no longer excluded", svc.replace(/AND b\.voided_at IS NULL\n/, ""), routes],
+    // Both mutations below are disambiguated with a lookahead requiring `b.bill_number = $2` within
+    // reach — bills.service.ts has 15 other `FROM accounting.bills` queries, several with their own
+    // unrelated `operating_company_id = $1::uuid` / `voided_at IS NULL` text, so an unanchored
+    // regex.replace mutates the WRONG query and this selftest silently proves nothing (found live:
+    // the unanchored version mutated an unrelated work-order-linked-bill lookup, not the dup-check
+    // query, and both mutations came back "NOT DETECTED" — inert against the real control).
+    [
+      "entity scope dropped",
+      svc.replace(/b\.operating_company_id = \$1::uuid(?=[\s\S]{0,1200}?b\.bill_number = \$2)/, "TRUE"),
+      routes,
+    ],
+    [
+      "voided bills no longer excluded",
+      svc.replace(/AND b\.voided_at IS NULL\n(?=[\s\S]{0,600}?b\.bill_number = \$2)/, ""),
+      routes,
+    ],
     ["override no longer audited", svc.replaceAll("bill_duplicate_number_override", "noop"), routes],
     ["override field removed from the API", svc, routes.replaceAll("duplicate_override_reason", "gone")],
     ["409 downgraded", svc, routes.replace(/reply\.code\(409\)/, "reply.code(500)")],
