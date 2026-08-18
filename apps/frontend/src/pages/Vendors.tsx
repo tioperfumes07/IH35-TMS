@@ -68,8 +68,10 @@ function vendorQualityLabel(notes: string | null | undefined) {
 
 export function VendorsPage() {
   const navigate = useNavigate();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // USMCA/TRK are TMS-native — QBO vendor sync chrome is TRANSP-only (customers twin #8698 / LV #1420).
+  const qboAvailable = selectedCompany?.code === "TRANSP";
   const [search, setSearch] = useState("");
   // BANK-SORT-ROLLOUT-CRM — name sort persists in ?sort=name&dir= via shared useUrlSort
   // (same contract as accounting VendorsListView / #2609). Default (no params) = A→Z.
@@ -386,7 +388,7 @@ export function VendorsPage() {
           </div>
         }
       />
-      {companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
+      {companyId && qboAvailable ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
       {/* §7 RESTORE — segment tabs (All/Active/Inactive/By Category). listTab≠detail tab. */}
       <SecondaryNavTabs
         activeId={listStatus}
