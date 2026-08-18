@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { listPartsPurchases, voidPartsPurchase, type PartsPurchaseRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -120,7 +120,7 @@ export function InventoryPurchasesPage() {
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
+          <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" />
         ) : (
           "—"
         ),
@@ -142,10 +142,11 @@ export function InventoryPurchasesPage() {
       sortable: true,
       render: (row) =>
         row.work_order_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="work_order"
             id={row.work_order_id}
-            label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")}
+            name={row.work_order_display_id}
+            noun="Work order"
           />
         ) : (
           "—"
