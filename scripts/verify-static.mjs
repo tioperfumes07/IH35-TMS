@@ -48,11 +48,33 @@ export const STATIC_RESULT_CATEGORIES = Object.freeze({
   FAIL_TEST: "FAIL-test",
 });
 
+/**
+ * STOP-THE-THRASH-2026-07-17: package.json edits to register a new verify:* are FORBIDDEN — the
+ * ONLY correct wiring path for a new guard is scripts/verify-steps/. ciRunGuardSet() (below) already
+ * recognizes that path when deciding whether a guard is CI-run at all. This name resolver — used
+ * ONLY for the capability preflight's dbGated lookup — did not get the same update, so a guard wired
+ * exclusively via verify-steps (no package.json entry, by design) could never be recognized as
+ * db-gated: it would correctly show up as CI-run (gated:true, via ciRunGuardSet's verify-steps scan)
+ * but then hard-fail on ECONNREFUSED every static run instead of soft-skipping, because
+ * policy.dbGated.has(verifyName) needs a resolvable name first. Fall back to a verify-steps scan,
+ * deriving the same "verify:<slug>" shape scripts/verify-meta.json's db_gated_verify_scripts already
+ * uses, so existing entries need no reshaping.
+ */
 function guardVerifyName(file, root = ROOT) {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
   const relative = path.relative(root, file).replace(/\\/g, "/");
   for (const [name, command] of Object.entries(pkg.scripts ?? {})) {
     if (name.startsWith("verify:") && String(command).includes(relative)) return name;
+  }
+  const m = relative.match(/^scripts\/(verify-[a-z0-9-]+)\.mjs$/i);
+  if (!m) return null;
+  const stepsDir = path.join(SCRIPTS_DIR, "verify-steps");
+  let stepFiles;
+  try { stepFiles = fs.readdirSync(stepsDir); } catch { return null; }
+  for (const f of stepFiles) {
+    let txt;
+    try { txt = fs.readFileSync(path.join(stepsDir, f), "utf8"); } catch { continue; }
+    if (txt.includes(relative)) return `verify:${m[1].slice("verify-".length)}`;
   }
   return null;
 }
