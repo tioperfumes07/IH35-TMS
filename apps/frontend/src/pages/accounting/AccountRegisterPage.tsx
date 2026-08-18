@@ -19,6 +19,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -379,7 +380,60 @@ export function AccountRegisterPage() {
     },
   ];
 
-  const printList = () => window.print();
+  const printList = () => {
+    if (!report) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const acct = report.account;
+    const acctLabel = `${acct.account_code ?? ""} ${acct.account_name ?? ""}`.trim() || accountId;
+    const nb = acct.normal_balance;
+    const rowsHtml = report.rows
+      .map((r) => {
+        const increase = nb === "debit" ? r.debit_cents : r.credit_cents;
+        const decrease = nb === "debit" ? r.credit_cents : r.debit_cents;
+        return `<tr>
+          <td>${esc(formatDateUS(r.entry_date))}</td>
+          <td>${esc(r.type)}</td>
+          <td>${esc(r.reference ?? "—")}</td>
+          <td>${esc(r.payee ?? "—")}</td>
+          <td>${esc(r.memo ?? r.description ?? "—")}</td>
+          <td style="text-align:right">${esc(increase ? fmtCents(increase) : "")}</td>
+          <td style="text-align:right">${esc(decrease ? fmtCents(decrease) : "")}</td>
+          <td style="text-align:right">${esc(fmtCents(r.running_balance_cents))}</td>
+        </tr>`;
+      })
+      .join("");
+    printLetterHtml({
+      title: `Account register ${acctLabel}`,
+      bodyHtml: `
+        <h1>Account register</h1>
+        <div class="meta">${esc(acctLabel)} · ${esc(fromDate)} → ${esc(toDate)} · printed ${esc(new Date().toLocaleString())}</div>
+        <table>
+          <tbody>
+            <tr><th>Opening balance</th><td>${esc(fmtCents(report.opening_balance_cents))}</td></tr>
+            <tr><th>Closing balance</th><td>${esc(fmtCents(report.closing_balance_cents))}</td></tr>
+            <tr><th>Debits (period)</th><td>${esc(fmtCents(report.total_debit_cents))}</td></tr>
+            <tr><th>Credits (period)</th><td>${esc(fmtCents(report.total_credit_cents))}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:20px">Transactions</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Type</th><th>Ref</th><th>Payee</th><th>Memo</th>
+              <th style="text-align:right">Increase</th><th style="text-align:right">Decrease</th>
+              <th style="text-align:right">Balance</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      `,
+    });
+  };
 
   const kpiStrip = report ? (
     <div className="grid gap-2 md:grid-cols-4">
