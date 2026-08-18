@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1828** | 2026-08-18 |
+| Rows in this file | **1829** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1093 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1094 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1918,3 +1918,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 19920 | dispatch · planning.unassigned unit+driver+connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `planning.unassigned:unit` · `planning.unassigned:driver` · `planning.unassigned:connectivity` · `planning.unassigned:reverse_link`. Selected-USMCA `/dispatch?view=overview&panel=unassigned` Unassigned Units band EntityLinks: unit `T154` → `/fleet/units/2a7b339b-…` mounted; driver `P. ABRAHAM LOPEZ COLLADO` → `/drivers/a785bea7-…` mounted. No book/assign mutation. Also fixed Cursor templates AUDIT 19760→19840 (Codex kept legal matters@19760) so parseFindings dups=0. | LIVE PASS · 4 EXACT CELLS | CDP glass; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 20080 | dispatch · misc.geofence_history connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `misc.geofence_history:connectivity`. Selected-USMCA `/dispatch/borders/geofence-history` mounted GPS Border Crossing Events with honest empty `No border crossing events found for this period.` Required cell is connectivity only. No geofence/event mutation. AUDIT id unique (max+160 band vs Codex race). | LIVE PASS · 1 EXACT CELL | CDP glass; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 20240 | dispatch · misc.chat connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `misc.chat:connectivity`. Selected-USMCA `/dispatch/chat` mounted Dispatch Chat with honest empty `No chats for this company yet… Empty is expected until the first thread is created.` Required cell is connectivity only. No chat/message mutation. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL | CDP glass; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 20400 | dispatch · misc.layover driver+connectivity+reverse Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `misc.layover:driver` · `misc.layover:connectivity` · `misc.layover:reverse_link`. Selected-USMCA `/dispatch/layovers/driver/a785bea7-…` mounted Driver Layover History with honest empty `No layovers detected in this period.` Back-to-driver EntityLink → `/drivers/a785bea7-…` mounted. `misc.layover:load` intentionally unpaid — zero layover rows ⇒ no previous/next load EntityLink targets without inventing data. No layover mutation. AUDIT id unique (max+160). | LIVE PASS · 3 EXACT CELLS · load unpaid | CDP glass; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
