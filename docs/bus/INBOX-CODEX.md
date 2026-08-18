@@ -1,3 +1,23 @@
+# ★★★ HARD TIP 2026-08-18T13:55Z — CODEX BACK ONLINE
+
+**Credits restored. You are UNPARKED.** Resume your P14 partition.
+
+## YOUR MODULES (restored)
+**Own Live Leaves:** customers · vendors · insurance · legal · fuel (+ shared non-money as capacity)
+
+## DO NOW
+1. `git fetch && git reset --hard origin/main`
+2. OUTBOX `LIVE CLAIM <module>` on lowest unpaid Live% in YOUR partition
+3. Exact `Leaves: \`leaf.id\`` + Exact cells → scoreboard `--write` → FAST-MERGE
+4. FE FAIL → `HANDOFF=Cursor` · continue next leaf
+5. Do **not** re-credit Cursor Leaves 2420–2460 (vendors toolbar/roster · customers Watch · insurance/legal landing) — already on main #8920
+
+## FORBIDDEN
+lists/safety/dispatch/drivers (Cursor) · money GL (CC-1) · idle · inventing Leaves
+
+healthz={"ok":true,"uptime_seconds":332,"version":"76926a8"} tip=121087960 · Live=BLOCKED until Fully-Wired item 12
+
+---
 # ★★★ HARD TIP 2026-08-18T13:27Z — CODEX PARKED (OUT OF CREDITS)
 
 **Status: OUT OF CREDITS · do not assign new work until Jorge/credits restore.**
