@@ -1,4 +1,4 @@
-import { apiRequest, apiRequestFormData } from "./client";
+import { ApiError, apiRequest, apiRequestFormData } from "./client";
 import { filterHumanDrivers } from "../lib/driver-pseudo-user";
 import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
 
@@ -225,13 +225,48 @@ export function previewTeamSettlementSplit(loadId: string, operatingCompanyId: s
   );
 }
 
-export async function getDriver(id: string, operatingCompanyId: string): Promise<Driver> {
+export async function getDriver(
+  id: string,
+  operatingCompanyId: string,
+  signal?: AbortSignal
+): Promise<Driver> {
   // operating_company_id is required — scopes the lookup to the SELECTED company +
   // its driver_company_authorizations (matching the DQF list + aggregate fetch).
   // Without the param, opening a driver under a non-default selected company 404s
   // even though the driver is reachable — the DriverDetailPage "Driver not found" bug.
+  //
+  // LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING: a hung /api fetch left
+  // DriverDetail on "Loading driver..." forever. Bound the read with AbortSignal.timeout
+  // and honor React Query's abort signal so the UI always reaches success or ListErrorState.
   const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
-  const payload = await apiRequest<Driver | { driver: Driver }>(`/api/v1/mdata/drivers/${id}${qs}`);
+  const timeoutSignal =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(15_000)
+      : undefined;
+  const ctrl = new AbortController();
+  const forwardAbort = () => {
+    if (!ctrl.signal.aborted) ctrl.abort();
+  };
+  if (signal?.aborted || timeoutSignal?.aborted) forwardAbort();
+  signal?.addEventListener("abort", forwardAbort, { once: true });
+  timeoutSignal?.addEventListener("abort", forwardAbort, { once: true });
+  let payload: Driver | { driver: Driver };
+  try {
+    payload = await apiRequest<Driver | { driver: Driver }>(`/api/v1/mdata/drivers/${id}${qs}`, {
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    const name = err instanceof Error ? err.name : "";
+    if (name === "AbortError" || name === "TimeoutError") {
+      throw new ApiError(408, {
+        message: "Driver request timed out or was cancelled. Retry to load the profile.",
+      });
+    }
+    throw err;
+  } finally {
+    signal?.removeEventListener("abort", forwardAbort);
+    timeoutSignal?.removeEventListener("abort", forwardAbort);
+  }
 
   // LV-DRIVER-DETAIL-PAGE-CRASHES (P0) — tolerate both historical response shapes while the ordinary
   // scoped request intentionally uses the lightweight flat-row branch. Dedicated aggregate readers
