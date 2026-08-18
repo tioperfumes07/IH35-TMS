@@ -99,7 +99,7 @@ describe("DOT inspection CSA canonical rollup", () => {
     const sqlText = mockQuery.mock.calls.map((call) => String(call[0])).join("\n");
     expect(sqlText).not.toMatch(/score_date|source_dot_inspection_count/);
     expect(sqlText).toMatch(/inspection_level, fmcsa_level/);
-    expect(sqlText).toMatch(/\$7,\$7/);
+    expect(sqlText).toMatch(/\$7::smallint,\$7::integer/);
   });
 
   it("persists an exact per-category breakdown for multi-category inspections", async () => {

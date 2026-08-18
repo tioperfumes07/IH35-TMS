@@ -280,7 +280,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
               inspection_level, fmcsa_level, location, outcome,
               csa_basic_categories, csa_points, violations_jsonb, auto_spawned_wo_id, created_by, notes
             )
-            VALUES ($1,$2,$3,$4,$5::date,$6,$7,$7,$8,$9,$10,$11,$12,NULL,$13,$14)
+            VALUES ($1,$2,$3,$4,$5::date,$6,$7::smallint,$7::integer,$8,$9,$10,$11,$12,NULL,$13,$14)
             RETURNING *
           `,
           [
