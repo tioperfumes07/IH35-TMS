@@ -9,7 +9,7 @@ import { followUpDotInspectionEvent, listDotInspectionEvents } from "../../../ap
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
@@ -146,10 +146,11 @@ export function DOTInspectionsTab() {
       key: "driver_id",
       label: "Driver",
       render: (row) => (
-        <EntityLink
+        <EntityLinkOrTombstone
           kind="driver"
           id={row.driver_id as string | undefined}
-          label={entityLabel((row.driver_name as string | undefined)?.trim(), String(row.driver_id ?? ""), "Driver")}
+          name={(row.driver_name as string | undefined)?.trim()}
+          noun="Driver"
         />
       ),
     },
@@ -157,10 +158,11 @@ export function DOTInspectionsTab() {
       key: "unit_id",
       label: "Unit",
       render: (row) => (
-        <EntityLink
+        <EntityLinkOrTombstone
           kind="unit"
           id={row.unit_id as string | undefined}
-          label={entityLabel((row.unit_number as string | undefined)?.trim(), row.unit_id as string | undefined, "Unit")}
+          name={(row.unit_number as string | undefined)?.trim()}
+          noun="Unit"
         />
       ),
     },
@@ -168,14 +170,11 @@ export function DOTInspectionsTab() {
       key: "trailer_id",
       label: "Trailer",
       render: (row) => (
-        <EntityLink
+        <EntityLinkOrTombstone
           kind="trailer"
           id={row.trailer_id as string | undefined}
-          label={entityLabel(
-            (row.trailer_number as string | undefined)?.trim(),
-            row.trailer_id as string | undefined,
-            "Trailer"
-          )}
+          name={(row.trailer_number as string | undefined)?.trim()}
+          noun="Trailer"
         />
       ),
     },
@@ -187,14 +186,11 @@ export function DOTInspectionsTab() {
       label: "WO Spawned",
       render: (row) =>
         row.auto_spawned_wo_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="work_order"
             id={row.auto_spawned_wo_id as string}
-            label={entityLabel(
-              (row.work_order_display_id as string | undefined)?.trim(),
-              row.auto_spawned_wo_id as string,
-              "Work order"
-            )}
+            name={(row.work_order_display_id as string | undefined)?.trim()}
+            noun="Work order"
           />
         ) : (
           "—"
@@ -375,13 +371,13 @@ export function DOTInspectionsTab() {
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-slate-800">
                     {String(row.station_label ?? "DOT station")} · Unit{" "}
-                    <EntityLink kind="unit" id={row.unit_id as string | undefined} label={entityLabel(String(row.unit_number ?? ""), row.unit_id as string | undefined, "Unit")} />
+                    <EntityLinkOrTombstone kind="unit" id={row.unit_id as string | undefined} name={row.unit_number} noun="Unit" />
                   </span>
                   <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">{String(row.dwell_minutes ?? 0)} min</span>
                 </div>
                 <p className="mt-1 text-slate-600">
                   Driver:{" "}
-                  <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel(String(row.driver_name ?? ""), row.driver_id as string | undefined, "Driver")} />{" "}
+                  <EntityLinkOrTombstone kind="driver" id={row.driver_id as string | undefined} name={row.driver_name} noun="Driver" />{" "}
                   · Departed: {String(row.departed_at ?? "n/a")}
                 </p>
                 <div className="mt-2 flex items-center gap-2">

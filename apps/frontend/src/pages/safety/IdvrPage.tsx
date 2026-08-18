@@ -6,7 +6,7 @@ import { getSafetyDvirSubmissions } from "../../api/safety";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 
@@ -85,24 +85,25 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         key: "driver_id",
         label: "Driver",
         render: (row) => (
-          <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+          <EntityLinkOrTombstone kind="driver" id={row.driver_id as string | undefined} name={row.driver_name} noun="Driver" />
         ),
       },
       {
         key: "unit_id",
         label: "Unit",
         render: (row) => (
-          <EntityLink kind="unit" id={row.unit_id as string | undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+          <EntityLinkOrTombstone kind="unit" id={row.unit_id as string | undefined} name={row.unit_number} noun="Unit" />
         ),
       },
       {
         key: "trailer_id",
         label: "Trailer",
         render: (row) => (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="trailer"
             id={row.trailer_id as string | undefined}
-            label={entityLabel(row.trailer_number ?? row.equipment_number, row.trailer_id, "Trailer")}
+            name={row.trailer_number ?? row.equipment_number}
+            noun="Trailer"
           />
         ),
       },

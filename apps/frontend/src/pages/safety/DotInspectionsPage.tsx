@@ -14,8 +14,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 type Props = {
   operatingCompanyId: string;
@@ -122,13 +121,13 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-gray-800">
                     {String(row.station_label ?? "DOT station")} · Unit{" "}
-                    <EntityLink kind="unit" id={row.unit_id as string | undefined} label={entityLabel(String(row.unit_number ?? ""), row.unit_id as string | undefined, "Unit")} />
+                    <EntityLinkOrTombstone kind="unit" id={row.unit_id as string | undefined} name={row.unit_number} noun="Unit" />
                   </span>
                   <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">{String(row.dwell_minutes ?? 0)} min</span>
                 </div>
                 <p className="mt-1 text-gray-600">
                   Driver:{" "}
-                  <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel(String(row.driver_name ?? ""), row.driver_id as string | undefined, "Driver")} />{" "}
+                  <EntityLinkOrTombstone kind="driver" id={row.driver_id as string | undefined} name={row.driver_name} noun="Driver" />{" "}
                   · Departed: {String(row.departed_at ?? "n/a")}
                 </p>
                 <div className="mt-2 flex items-center gap-2">

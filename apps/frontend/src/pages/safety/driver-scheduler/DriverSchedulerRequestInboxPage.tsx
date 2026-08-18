@@ -8,7 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 
@@ -29,7 +29,7 @@ export function DriverSchedulerRequestInboxPage() {
   const columns = useMemo<ParityColumn<PendingRequestRow>[]>(
     () => [
       { key: "request_number", label: "Request", sortable: true, className: "font-mono", cellClass: "font-mono", render: (r) => String(r.request_number) },
-      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLink kind="driver" id={String(r.driver_id ?? "")} label={entityLabel(String(r.driver_name ?? ""), String(r.driver_id ?? ""), "Driver")} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver" /> },
       { key: "leave_type", label: "Type", sortable: true, render: (r) => String(r.leave_type) },
       {
         key: "dates",
