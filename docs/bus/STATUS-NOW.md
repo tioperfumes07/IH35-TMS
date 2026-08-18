@@ -1,15 +1,16 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T22:30Z
+Updated: 2026-08-18T22:31Z · tick heartbeat
 
-## 5-CODER PARTITION (LOCKED)
+## 5-CODER PARTITION
 | Seat | OWN |
 |------|-----|
-| Cursor | drivers CLOSED (#9136) → **dispatch** |
-| Codex | **safety** → driver hub |
-| Devin-A | **fleet** → maintenance |
+| Cursor | dispatch Box4 |
+| Codex | safety → driver hub |
+| Devin-A | fleet → maintenance |
 | CC-1 | accounting/banking/factoring/settlements |
 | CC-2 | GUARD + lists honesty |
 
-## WAVE1
-customers/banking/vendors/drivers CLOSED · dispatch assignments Leaves shipping
+## CLOSED
+customers · banking · vendors · drivers (#9136) · assignments Leaves (#9137)
+healthz=e095499
 Live=BLOCKED
