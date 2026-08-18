@@ -295,6 +295,14 @@ export function DOTInspectionsTab() {
           + Create
         </button>
       </div>
+      {createMutation.isError ? (
+        <ListErrorState
+          title="Couldn't create DOT inspection"
+          status={0}
+          message={(createMutation.error as Error)?.message}
+          onRetry={() => createMutation.mutate()}
+        />
+      ) : null}
 
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed list query must not fall through to emptyText
           "No DOT inspections found." — that presents an outage as a clean carrier history. */}

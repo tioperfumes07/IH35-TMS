@@ -276,10 +276,11 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         const createdRes = await client.query(
           `
             INSERT INTO safety.dot_inspections (
-              operating_company_id, driver_id, unit_id, trailer_id, inspection_date, inspector_name, fmcsa_level, location, outcome,
+              operating_company_id, driver_id, unit_id, trailer_id, inspection_date, inspector_name,
+              inspection_level, fmcsa_level, location, outcome,
               csa_basic_categories, csa_points, violations_jsonb, auto_spawned_wo_id, created_by, notes
             )
-            VALUES ($1,$2,$3,$4,$5::timestamptz,$6,$7,$8,$9,$10,$11,$12,NULL,$13,$14)
+            VALUES ($1,$2,$3,$4,$5::date,$6,$7,$7,$8,$9,$10,$11,$12,NULL,$13,$14)
             RETURNING *
           `,
           [
