@@ -1,10 +1,11 @@
-# PASTE → CC-1 · 2026-08-16 20:10 CT
+# PASTE CC-1 NOW · 2026-08-18T03:23Z
 
-Folder: `~/Desktop/IH35-CURSOR-AUDIT/USMCA-WEEKEND-LEAD-2026-08-07/`
+**8H NON-STOP.** Full law: `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md`
 
-1. Open **INBOX-CC-1.md** in THAT folder only
-2. OUTBOX: `CC-1 | WORKING · LIVE CLAIM accounting:expenses-create-drawer`
-3. Drain queue in INBOX · one OUTBOX line per leaf
-4. Do not write INBOX — Cursor syncs it
+1. `git fetch && git pull --ff-only origin main`
+2. Read `docs/bus/INBOX-CC-1.md` tip
+3. Built floor 3441 if unpaid → money Live accounting/banking/factoring/settlements
+4. Invoice/settlement letter density + CSV money reports
+5. FAST-MERGE every ship · OUTBOX next claim · NEVER IDLE
 
-Method: FAST-MERGE-4MIN-LAW
+Print FE is Cursor (canonical `.html?print=1`). You own money correctness.

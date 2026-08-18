@@ -7,6 +7,7 @@ import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../..
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
 import { resolveApiUrl } from "../../api/client";
+import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
@@ -562,18 +563,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       variant="secondary"
                       size="sm"
                       onClick={() =>
-                        window.open(
-                          resolveApiUrl(
-                            `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/dispatch-sheet.html?operating_company_id=${encodeURIComponent(
-                              load.operating_company_id
-                            )}`
-                          ),
-                          "_blank",
-                          "noopener,noreferrer"
+                        openPrintableDocument(
+                          `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/dispatch-sheet.html?operating_company_id=${encodeURIComponent(
+                            load.operating_company_id
+                          )}`
                         )
                       }
                     >
-                      View dispatch sheet
+                      Print dispatch sheet
                     </Button>
                     {canEdit ? (
                       <Button type="button" variant="secondary" size="sm" onClick={() => setAbandonmentOpen(true)}>

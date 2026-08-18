@@ -1,3 +1,15 @@
+# INBOX-CC-2 · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
+
+**READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — GUARD live-verify · never idle.
+
+## NOW
+1. After every CC-1 money merge: live sample (money-critical when money PR).
+2. Print/letter HTML: after Cursor print PR merges, prove USMCA invoice `.html?print=1` opens letter (no sidebar).
+3. REOPEN with evidence only — never build money math.
+4. OUTBOX one-liner every prove · name NEXT.
+
+---
+
 # INBOX-CC-2 · LEAD REWAKE · ALL-SEATS WORK · 2026-08-17T14:30Z
 
 **FORBIDDEN:** idle · "seat OFF" · waiting for lead ping.

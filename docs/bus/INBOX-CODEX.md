@@ -1,3 +1,18 @@
+# INBOX-CODEX · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
+
+**READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md`.
+
+## YOUR Live modules
+Own: insurance · legal · inventory · home · program · system · cash-flow · form_425 · finance(non-money) · driver-hub · users · reports(non-money)
+Shared: fuel · docs · tasks · compliance · customers · vendors
+
+## NOW
+OUTBOX `LIVE CLAIM` → walk → PASS/FAIL/STARVED + next **same turn**.
+Prove Export CSV on non-money reports. FE FAIL → HANDOFF=Cursor.
+Do not end on STARVED. Do not touch lists/safety/dispatch/drivers or money Built.
+
+---
+
 # INBOX-CODEX · SPEED SHARE · CURSOR HANDS YOU MODULES · 2026-08-17T14:48Z
 
 **You looked idle.** Cursor is sharing Live modules so Box4 moves faster.

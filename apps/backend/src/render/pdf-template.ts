@@ -50,6 +50,8 @@ export function docIdFromLoadNumber(prefix: string, loadNumber: string | null | 
 }
 
 export function wrapPdfDocument(opts: { title: string; body: string }): string {
+  // ?print=1 on the document URL opens the browser print dialog after load so operators
+  // get the letter HTML (invoice/settlement/dispatch-sheet), never the SPA chrome.
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -59,6 +61,17 @@ export function wrapPdfDocument(opts: { title: string; body: string }): string {
 </head>
 <body>
 <div class="scene">${opts.body}</div>
+<script>
+(function () {
+  try {
+    var q = new URLSearchParams(window.location.search || "");
+    if (q.get("print") !== "1") return;
+    window.addEventListener("load", function () {
+      setTimeout(function () { window.print(); }, 200);
+    });
+  } catch (_e) { /* ignore */ }
+})();
+</script>
 </body>
 </html>`;
 }

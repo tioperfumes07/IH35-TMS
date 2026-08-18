@@ -1,3 +1,14 @@
+# INBOX-DEVIN-A · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
+
+**READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md`.
+
+## ONLY modules
+`fleet` then `maintenance` Live verify. CDP 9227 · USMCA.
+
+OUTBOX one-liner every claim/pass/fail. HANDOFF=Cursor for FE defects. No code. No other modules. No idle.
+
+---
+
 # INBOX-DEVIN-A · CORRECTIVE · STAY IN LANE · 2026-08-17T14:51Z
 
 **You drifted.** STOP proving `lists` / `safety` / `home`. Those are **not** your speed-share modules.
