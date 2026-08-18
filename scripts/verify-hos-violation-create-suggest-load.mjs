@@ -23,6 +23,13 @@ function audit(body) {
     failures.push("createHosViolation payload must forward related_load_id");
   }
   if (!/kind=\"load\"/.test(body)) failures.push("related load EntityPicker must be present");
+  // P14 Box4 — HOS create owes picker_law on related load (never filter-mode allowCreate={false}).
+  if (/kind=\"load\"[\s\S]{0,600}allowCreate=\{false\}/.test(body)) {
+    failures.push("CREATE related load EntityPicker must not use allowCreate={false} — picker_law requires + Add new load");
+  }
+  if (!/kind=\"load\"[\s\S]{0,600}\ballowCreate\b/.test(body)) {
+    failures.push("CREATE related load EntityPicker must set allowCreate");
+  }
   return failures;
 }
 
@@ -33,6 +40,7 @@ if (process.argv.includes("--selftest")) {
     ["if (form.related_load_id || suggestionPinned) return", "if (suggestionPinned) return"],
     ["related_load_id: suggested.load_id", "related_load_id: \"\""],
     ["related_load_id: form.related_load_id.trim() || null", "related_load_id: null"],
+    ["allowCreate\n", "allowCreate={false}\n"],
   ];
   for (const [from, to] of mutations) {
     const requestStart = source.indexOf("suggestExpenseLoad({");

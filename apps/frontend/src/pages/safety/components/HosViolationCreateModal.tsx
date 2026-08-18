@@ -221,7 +221,8 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
                 setForm((v) => ({ ...v, related_load_id: next ?? "" }));
                 setSuggestionPinned(true);
               }}
-              allowCreate={false}
+              // CREATE modal owes picker_law: + Add new load first row (same class as accidents #8949 / fuel #8741).
+              allowCreate
               nestedInDrawer
               enabled={open && Boolean(operatingCompanyId)}
               placeholder="Search load…"
