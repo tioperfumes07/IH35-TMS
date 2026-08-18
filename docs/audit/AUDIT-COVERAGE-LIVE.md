@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1540** | 2026-08-18 |
+| Rows in this file | **1542** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=216 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=826 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=216 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=828 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
