@@ -2085,6 +2085,12 @@
     "guard": "verify-balance-sheet-print-letter",
     "note": "CLAIM-RESERVE \u2014 Balance Sheet Print opens letter HTML, not SPA window.print"
   },
+  "3846": {
+    "claimed_at": "2026-08-18T04:16:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-trial-balance-print-letter",
+    "note": "CLAIM-RESERVE \u2014 Trial Balance Print opens letter HTML, not SPA window.print"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
