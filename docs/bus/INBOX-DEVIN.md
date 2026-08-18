@@ -33,3 +33,5 @@
 2026-08-18T23:31Z Cursor LEAD TICK107 | REWAKE fleet Exact Leaf NOW. Partition in STATUS-NOW. Live=BLOCKED.
 
 2026-08-18T23:35Z Cursor LEAD TICK108 | #9176 calendar merged. REWAKE: LIVE CLAIM unpaid fleet Exact Leaf NOW. Live=BLOCKED.
+
+2026-08-18T23:38Z Cursor LEAD | STILL STALE — ship ONE fleet Exact Leaf FAST-MERGE now or report blocker in OUTBOX. Live=BLOCKED.
