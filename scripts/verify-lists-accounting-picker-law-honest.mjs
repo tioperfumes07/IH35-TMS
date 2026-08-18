@@ -13,15 +13,17 @@
  * abandonment_defaults is a single-row settings upsert). See
  * docs/specs/scoreboard/modules/lists.required.json's
  * honesty_audit.picker_law_column_2026_08_18_accounting_remainder (batch 1), .../_batch2
- * (batch 2) and .../_batch3 (batch 3) for the full per-leaf evidence. Does NOT touch
- * chart_of_accounts.create (a genuine gap, now FIXED — see ACCT-F5427) / detail_types*.create
- * (a real cross-catalog reference, still a genuine gap) / journal_entry_types.create /
- * posting_templates.create / items.create (all three already code-compliant via a real picker
- * component — JournalEntryTypePicker.tsx / PostingTemplateModal.tsx / ItemEditorModal.tsx —
- * confirmed in batch 3, pending only a live-proof pass, not a fix) / payment_methods.create (an
- * owned_surface_paths pointer to a DIFFERENT, richer picker component with a real gl_account_id
- * FK contradicts the flat-factory signal — stays Required pending its own dedicated
- * investigation) — this guard fails if any of those eight are accidentally swept in.
+ * (batch 2), .../_batch3 (batch 3) and .../_final_confirmation for the full per-leaf evidence.
+ * Does NOT touch chart_of_accounts.create (a genuine gap, now FIXED — see ACCT-F5427) or the 6
+ * leaves confirmed already code-compliant via a real picker component and correctly left
+ * Required: journal_entry_types.create (JournalEntryTypePicker.tsx), posting_templates.create
+ * (PostingTemplateModal.tsx), items.create (ItemEditorModal.tsx), payment_methods.create
+ * (PaymentMethodPicker.tsx — the owned_surface_paths pointer that looked contradictory in batch
+ * 2 turned out to be the correct, already-built surface), and detail_types.create /
+ * detail_types_lookup.create (SelectCombobox with no allowAddNew — correct, since their own
+ * Account Type field is an explicitly fixed/read-only taxonomy with no create affordance to
+ * omit). All 7 need only a live-proof pass, not a fix. This guard fails if any of those seven
+ * are accidentally swept into DROPPED.
  */
 import fs from "node:fs";
 import path from "node:path";

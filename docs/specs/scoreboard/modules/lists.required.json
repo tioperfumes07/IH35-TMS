@@ -7921,6 +7921,10 @@
           "reason": "single-row settings upsert (PUT /api/v1/abandonment-defaults) — 4 plain number inputs, not a list-of-rows catalog with a create action"
         }
       ]
+    },
+    "picker_law_column_2026_08_18_accounting_final_confirmation": {
+      "finding": "CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM",
+      "note": "Closes the class with zero remaining ambiguity — no required[] change (both leaves already correctly stay Required, confirmed compliant not dropped). detail_types.create/detail_types_lookup.create's own Account Type field (DetailTypeModal in DetailTypesListPage.tsx) uses SelectCombobox — the governed picker component — with no allowAddNew, which is CORRECT: Account Type is an explicit fixed/read-only global taxonomy (confirmed by this page's own in-product copy), never user-creatable, so no '+ Add new' affordance should exist for it. payment_methods.create's real surface (owned_surface_paths: components/driver-finance/PaymentMethodPicker.tsx) is fully code-compliant: a real Combobox with '+ Add new payment method' as the permanent first row (QB-STD-1/2), an inline create panel that never navigates away (QB-STD-3/4), and createPaymentMethod() writes the SAME catalogs.payment_methods table listPaymentMethods() reads (QB-STD-5) — resolving the contradiction flagged in batch 2 as needing its own investigation. All 20 originally-flagged catalog.accounting.*.create leaves are now fully classified: 13 honesty-dropped (batches 1-3), 1 genuine gap FIXED (chart_of_accounts.create, ACCT-F5427, PR #9070), 6 confirmed already code-compliant pending only a live-proof pass (journal_entry_types, posting_templates, items, detail_types, detail_types_lookup, payment_methods). No leaf remains unclassified."
     }
   }
 }
