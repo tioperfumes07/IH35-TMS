@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1610** | 2026-08-18 |
+| Rows in this file | **1611** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=891 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=892 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1700,3 +1700,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 3760 | lists · hub.domain.vendors connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.vendors`. Exact cell: `hub.domain.vendors:connectivity`. Selected-USMCA `/lists/hub/vendors` mounted **Vendors catalogs**; activating **Vendors** navigated to live `/vendors` with h1 Vendors and `+ Create Vendor`. No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `1d29bda`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 3840 | lists · hub.domain.names_master connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.names_master`. Exact cell: `hub.domain.names_master:connectivity`. Selected-USMCA `/lists/hub/names_master` mounted **Names master catalogs**; activating **Brokers** navigated to live `/lists/names/brokers` with h1 Brokers and live broker directory rows (create path is customer-record, not a page-local `+ Create`). No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `bcfc371`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 3920 | lists · hub.domain.reference connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `hub.domain.reference`. Exact cell: `hub.domain.reference:connectivity`. Selected-USMCA `/lists/hub/reference` mounted **Reference catalogs**; activating **US States** navigated to live `/lists/reference/us-states` with h1 US States and 56 view-only rows (no operator `+ Create` — fixed geographic reference). No catalog mutate. | LIVE PASS · 1 EXACT CELL | healthz `f66022a`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 4000 | lists · catalog.customers.customer_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.customers.customer_types.create`. Exact cell: `catalog.customers.customer_types.create:connectivity`. Selected-USMCA `/lists/catalogs/customers/customer-types` mounted **Customer Types**; `+ Create` opened **Create Customer Types** drawer (Code *, Customer Type *, Cancel/Create). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `699a1eb`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
