@@ -122,10 +122,13 @@ export async function createCoiRequest(client: Queryable, input: CreateCoiReques
     if (!policyRes.rows[0]) return { kind: "policy_not_found" as const };
   }
 
+  // RLS policy coi_request_opco_scope WITH CHECK keys operating_company_id (not tenant_id).
+  // Inserting tenant_id alone leaves operating_company_id NULL → Postgres 42501 on every create.
   const insert = await client.query(
     `
       INSERT INTO insurance.coi_request (
         tenant_id,
+        operating_company_id,
         customer_id,
         policy_id,
         requested_by,
@@ -135,7 +138,7 @@ export async function createCoiRequest(client: Queryable, input: CreateCoiReques
         expires_at,
         responded_at
       )
-      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, 'pending', $5, NULL, $6::date, NULL)
+      VALUES ($1::uuid, $1::uuid, $2::uuid, $3::uuid, $4::uuid, 'pending', $5, NULL, $6::date, NULL)
       RETURNING ${selectColumns()}
     `,
     [
