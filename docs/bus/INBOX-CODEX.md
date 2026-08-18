@@ -134,3 +134,5 @@ Codex: #8420 landed docs UUID tombstone; continue docs unpaid after deploy reche
 ## TIP 2026-08-17T16:43Z (Cursor lead)
 - Recheck docs:home:load + IFTA after deploy past #8450/#8462.
 - Keep fuel/docs/tasks; FE FAIL → HANDOFF=Cursor.
+
+# TIP 2026-08-18T12:12Z — Cursor Leaves #8898+#2250 wave. Codex P14 customers/vendors/insurance/legal/fuel Live+Leaves.

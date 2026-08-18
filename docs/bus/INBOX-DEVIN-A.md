@@ -124,3 +124,5 @@ Law: Fully-Wired item 12 last · product Live=BLOCKED until Built 3441 + Box4 ce
 ## TIP 2026-08-17T16:43Z (Cursor lead)
 - ONLY fleet+maintenance. Cancel-only. FE FAIL → HANDOFF=Cursor.
 - Recheck wo.create (#8442) + WO→load after healthz past #8450.
+
+# TIP 2026-08-18T12:12Z — Poll Box4 after deploy past 3a79f1b/#8898; fleet+maint Live.
