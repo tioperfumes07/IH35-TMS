@@ -24,6 +24,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -92,6 +93,62 @@ export function FuelReconciliationPage() {
   });
 
   const sorted = query.data?.by_truck ?? [];
+
+  function printLetter() {
+    const data = query.data;
+    if (!data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const t = data.totals;
+    const rowsHtml = sorted
+      .map(
+        (r) => `<tr>
+          <td>${esc(r.unit_number)}</td>
+          <td style="text-align:right">${esc(money(r.card_amount_cents))}</td>
+          <td style="text-align:right">${esc(money(r.wo_amount_cents))}</td>
+          <td style="text-align:right">${esc(money(r.delta_cents))}</td>
+          <td style="text-align:right">${esc(`${(Number(r.matched_pct) || 0).toFixed(1)}%`)}</td>
+          <td>${esc((r.flags ?? []).map((f) => FLAG_META[f]?.label ?? f).join(", ") || "—")}</td>
+        </tr>`,
+      )
+      .join("");
+    printLetterHtml({
+      title: `Fuel reconciliation ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Fuel reconciliation</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
+          new Date().toLocaleString(),
+        )}</div>
+        <table>
+          <tbody>
+            <tr><th>Card total</th><td>${esc(money(t.card_amount_cents))}</td></tr>
+            <tr><th>WO total</th><td>${esc(money(t.wo_amount_cents))}</td></tr>
+            <tr><th>Delta</th><td>${esc(money(t.delta_cents))}</td></tr>
+            <tr><th>Match rate</th><td>${esc(`${(Number(t.match_rate_pct) || 0).toFixed(1)}%`)}</td></tr>
+            <tr><th>Unmatched count</th><td>${esc(t.unmatched_count)}</td></tr>
+          </tbody>
+        </table>
+        <h1 style="margin-top:16px">By truck</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Unit</th>
+              <th style="text-align:right">Card</th>
+              <th style="text-align:right">WO</th>
+              <th style="text-align:right">Delta</th>
+              <th style="text-align:right">Matched %</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="6">No trucks in range</td></tr>`}</tbody>
+        </table>
+      `,
+    });
+  }
 
   function isSuspicious(r: FuelReconciliationTruckRow) {
     return r.card_amount_cents > 0 && Math.abs(r.delta_cents) / r.card_amount_cents > 0.1;
@@ -184,7 +241,7 @@ export function FuelReconciliationPage() {
         breadcrumb={["Reports", "Fuel Reconciliation"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => query.data && exportCsv(query.data)}>
