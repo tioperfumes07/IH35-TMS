@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-safety-dot-inspection-unit-entitypicker";
 const FILE = "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx";
+const ROUTE = "apps/backend/src/routes/safety/dot-inspections.ts";
 
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -22,6 +23,8 @@ export function collectProblems(root = ROOT) {
   const problems = [];
   const src = readRel(root, FILE);
   if (!src) return [`missing ${FILE}`];
+  const route = readRel(root, ROUTE);
+  if (!route) return [`missing ${ROUTE}`];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 
   if (!/EntityPicker/.test(code) || !/kind=["']unit["']/.test(code)) {
@@ -57,6 +60,14 @@ export function collectProblems(root = ROOT) {
   ) {
     problems.push(`${FILE}: list driver filter must EntityPicker + setSearchParams ?driver_id=`);
   }
+  // Live Neon retains the legacy NOT NULL inspection_level column beside fmcsa_level. The canonical
+  // creator must write both at this compatibility boundary or PostgreSQL rolls the whole create back.
+  if (!/inspection_level, fmcsa_level/.test(route) || !/\$7,\$7/.test(route)) {
+    problems.push(`${ROUTE}: DOT create must dual-write inspection_level + fmcsa_level from the validated level`);
+  }
+  if (!/createMutation\.isError/.test(code) || !/Couldn't create DOT inspection/.test(code)) {
+    problems.push(`${FILE}: create mutation errors must render an actionable error instead of silently preserving the form`);
+  }
 
   return problems;
 }
@@ -81,6 +92,9 @@ listUnits({ search: unitSearch });
 <DriverPickerWithCreate />
 `
     );
+    const routeDir = path.join(stubRoot, "apps/backend/src/routes/safety");
+    fs.mkdirSync(routeDir, { recursive: true });
+    fs.writeFileSync(path.join(routeDir, "dot-inspections.ts"), "INSERT INTO safety.dot_inspections (fmcsa_level) VALUES ($7)");
     const planted = collectProblems(stubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
