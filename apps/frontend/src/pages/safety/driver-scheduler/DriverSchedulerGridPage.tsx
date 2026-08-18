@@ -326,7 +326,7 @@ export function DriverSchedulerGridPage() {
                 operatingCompanyId={operatingCompanyId}
                 value={tempCoverForm.unitId}
                 onChange={(unitId) => setTempCoverForm((f) => ({ ...f, unitId }))}
-                allowCreate={false}
+                allowCreate
               />
             </div>
           </label>
