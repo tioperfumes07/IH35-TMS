@@ -613,7 +613,7 @@ export function CustomersPage() {
           }}
         />
       ) : (
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 xl:flex-row">
         <CustomerListSidebar
           customers={visibleCustomers}
           status={customersStatus}

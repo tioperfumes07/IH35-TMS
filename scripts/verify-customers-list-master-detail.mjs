@@ -72,6 +72,12 @@ export function audit(src) {
   if (!/CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/.test(src.sidebar)) {
     failures.push(`${FILES.sidebar}: home.roster rows must link to the real customer's own record`);
   }
+  if (!/className="flex flex-col gap-3 xl:flex-row"/.test(src.customers)) {
+    failures.push(`${FILES.customers}: master-detail must stack below xl so detail tabs stay reachable`);
+  }
+  if (!/min-w-0 max-w-none[^"]*xl:min-w-\[300px\][^"]*xl:max-w-\[560px\]/.test(src.sidebar)) {
+    failures.push(`${FILES.sidebar}: roster sidebar must release its desktop width below xl`);
+  }
   return failures;
 }
 
@@ -115,6 +121,8 @@ if (process.argv.includes("--selftest")) {
     ],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "customers"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],
     ["sidebar-link", "sidebar", /CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/, 'CardLink href="/customers"'],
+    ["responsive-stack", "customers", /className="flex flex-col gap-3 xl:flex-row"/, 'className="flex gap-3"'],
+    ["responsive-sidebar", "sidebar", /min-w-0 max-w-none/, "min-w-[300px] max-w-[560px]"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
