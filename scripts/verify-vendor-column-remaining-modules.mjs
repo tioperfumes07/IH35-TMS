@@ -58,6 +58,7 @@ export function audit(src) {
   need(/"driver" \| "unit" \| "vendor" \| "customer"/.test(src.uploadModal), `${FILES.uploadModal}: upload modal must support real vendor link type`);
   need(/factoring_company_vendor_id(?!_)/.test(src.customers), `${FILES.customers}: list.segment.factored must filter real factoring_company_vendor_id`);
   need(/factoring_company_vendor_id(?!_)/.test(src.customerDetail) && /kind=["']vendor["']/.test(src.customerDetail) && /enabled=\{Boolean\(detailQuery\.data\?\.operating_company_id \?\? operatingCompanyId\)\}/.test(src.customerDetail) && /disabled=\{!editMode\}/.test(src.customerDetail), `${FILES.customerDetail}: customer detail must resolve the factoring vendor label in view mode and disable mutation outside edit mode`);
+  need(/allowCreate=\{editMode\}/.test(src.customerDetail) && !/kind="vendor"\s+allowCreate\s+operatingCompanyId/.test(src.customerDetail), `${FILES.customerDetail}: factoring vendor picker must offer inline create only in edit mode and must not duplicate the allowCreate JSX attribute`);
   need(/factoring_company_vendor_id: string/.test(src.customerProfileForm) && /kind=["']vendor["']/.test(src.customerProfileForm) && /factoring_company_vendor_id: value \?\? ""/.test(src.customerProfileForm), `${FILES.customerProfileForm}: canonical create/edit form must bind the factoring-company vendor picker to its FK payload`);
   need(/lastService\.vendor/.test(src.maintSnapshot), `${FILES.maintSnapshot}: maintenance snapshot must show the real backend-joined vendor`);
   need(/entityType="vendor"/.test(src.vehicleProfile), `${FILES.vehicleProfile}: unit QBO mapping must have a real vendor combobox`);
@@ -95,6 +96,7 @@ if (process.argv.includes("--selftest")) {
     ["customers-factored-filter", "customers", /factoring_company_vendor_id/g, "factoring_company_vendor_id_unused"],
     ["customer-detail-field", "customerDetail", /kind=["']vendor["']/g, 'kind="unit"'],
     ["customer-detail-view-label", "customerDetail", /enabled=\{Boolean\(detailQuery\.data\?\.operating_company_id \?\? operatingCompanyId\)\}/, "enabled={editMode}"],
+    ["customer-detail-duplicate-create-attribute", "customerDetail", /kind="vendor"/, 'kind="vendor"\n                allowCreate'],
     ["customer-profile-factor-picker", "customerProfileForm", /factoring_company_vendor_id: value \?\? ""/, 'factoring_company_vendor_id: ""'],
     ["maint-snapshot-field", "maintSnapshot", /lastService\.vendor/g, "lastService_unused"],
     ["vehicle-profile-combobox", "vehicleProfile", /entityType="vendor"/, 'entityType="unit"'],

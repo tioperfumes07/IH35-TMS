@@ -1444,7 +1444,6 @@ export function CustomerDetailPage() {
               {/* CLS-SILENT-CAP: EntityPicker server-search — no active-roster listVendors page. */}
               <EntityPicker
                 kind="vendor"
-                allowCreate
                 operatingCompanyId={detailQuery.data?.operating_company_id ?? operatingCompanyId ?? ""}
                 value={hydratedForm.factoring_company_vendor_id || null}
                 onChange={(value) => setForm((current) => ({ ...current, factoring_company_vendor_id: value ?? "" }))}
