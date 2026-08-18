@@ -64,8 +64,16 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
       const values: unknown[] = [query.data.operating_company_id];
       const vendorFilter = query.data.vendor_id ? "AND pi.vendor_id = $2::uuid" : "";
       if (query.data.vendor_id) values.push(query.data.vendor_id);
+      // LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL: the LEFT JOIN alone silently drops
+      // a vendor row once it's deactivated (mdata.vendors' own RLS SELECT policy excludes any
+      // deactivated_at IS NOT NULL row for a non-bypass reader) even though the FK is still valid —
+      // the part still legitimately cites that vendor, it just isn't selectable for NEW work anymore.
+      // mdata.resolve_vendor_label_same_company (migration 202612780000) is the canonical,
+      // security-scoped fallback: same-company-only, label-only, used only when the join comes back
+      // NULL. Active vendors keep resolving via the fast join exactly as before — unchanged.
       const res = await client.query(
-        `SELECT pi.*, v.vendor_name AS vendor_name
+        `SELECT pi.*,
+                COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(pi.vendor_id, pi.operating_company_id)) AS vendor_name
          FROM maintenance.parts_inventory pi
          LEFT JOIN mdata.vendors v
            ON v.id = pi.vendor_id
@@ -93,7 +101,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
       if (query.data.vendor_id) values.push(query.data.vendor_id);
       const res = await client.query(
         `SELECT pp.*, pi.part_description, pi.part_number,
-                v.vendor_name AS vendor_name,
+                COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(pp.vendor_id, pp.operating_company_id)) AS vendor_name,
                 wo.display_id AS work_order_display_id
          FROM maintenance.parts_purchases pp
          JOIN maintenance.parts_inventory pi ON pi.id = pp.parts_inventory_id
@@ -121,7 +129,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     const row = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `SELECT pp.*, pi.part_description, pi.part_number,
-                v.vendor_name AS vendor_name,
+                COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(pp.vendor_id, pp.operating_company_id)) AS vendor_name,
                 wo.display_id AS work_order_display_id
          FROM maintenance.parts_purchases pp
          JOIN maintenance.parts_inventory pi ON pi.id = pp.parts_inventory_id
