@@ -89,6 +89,29 @@ for (const catalog of FACTORY_CATALOGS) {
   }
 }
 
+// LV-CATALOG-API-PATH-IGNORES-CATALOG-KEY — API base must prefer registry catalogKey
+// (same contract as FE routes + backend urlSegment). Table-name kebab derivation 404s
+// when the table is domain-prefixed (maintenance.maintenance_part_locations).
+{
+  const fnMatch = hookSource.match(
+    /export function catalogNameToApiBasePath\([\s\S]*?\n\}/
+  );
+  if (!fnMatch) fail("catalogNameToApiBasePath missing from useCatalogQuery.ts");
+  const fn = fnMatch[0];
+  if (!/GENERIC_CATALOG_REGISTRY\[catalogName\]/.test(fn) || !/\.catalogKey/.test(fn)) {
+    fail(
+      "catalogNameToApiBasePath must resolve API segment from GENERIC_CATALOG_REGISTRY[].catalogKey (not table-name kebab alone)"
+    );
+  }
+  // Planted known mismatch: derived table kebab ≠ catalogKey.
+  if (!hookSource.includes('"maintenance.maintenance_part_locations"')) {
+    fail("registry missing maintenance.maintenance_part_locations (API-path plant)");
+  }
+  if (!hookSource.includes('catalogKey: "part-locations"')) {
+    fail("maintenance.maintenance_part_locations must declare catalogKey part-locations");
+  }
+}
+
 const listsRoot = path.join(ROOT, "apps/frontend/src/pages/lists");
 const listPages = walkTsxFiles(listsRoot).map(relative);
 
