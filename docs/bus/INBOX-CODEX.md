@@ -1,3 +1,6 @@
+# ★★★ 2026-08-18T21:01Z TICK77 — customers NOW 144/145 · ONLY residual md.coi_requests:reverse_link · ship NOW (create COI Cancel-only if empty then reverse drill) · Live=BLOCKED
+
+# ★★★ 2026-08-18T20:57Z HEARTBEAT REWAKE — CODEX GO NOW — customers md.coi_requests:reverse_link (create COI Cancel-only if needed for reverse) OR drivers picker Live assist. OUTBOX silent since Lists tip. NO IDLE.
 # ★★★ 2026-08-18T20:57Z HEARTBEAT REWAKE — CODEX GO NOW — customers md.coi_requests:reverse_link (create COI Cancel-only if needed for reverse) OR drivers picker Live assist. OUTBOX silent since Lists tip. NO IDLE.
 
 # ★★★ OWNER SPEED LAW 2026-08-18T20:50Z — STOP LISTS CREATE THEATER · CLOSE MODULES IN ORDER
