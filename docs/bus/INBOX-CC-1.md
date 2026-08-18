@@ -1,3 +1,12 @@
+# ★★★ HARD TIP 2026-08-18T13:37Z — CC-1 · THREE-SEAT WAR
+
+Active: **Cursor · Devin · you**. Codex PARKED. No CC-2.
+
+Stay **money only** (accounting→banking→factoring→settlements). Cursor owns all FE Live including former Codex modules. Devin = fleet/maint verify only.
+
+healthz={"ok":true,"uptime_seconds":408,"version":"d2ef6fd"} tip=708c52230
+
+---
 # ★★★ HARD TIP 2026-08-18T13:27Z — CC-1 · CODEX OUT · STAY MONEY
 
 Codex is out of credits. **Do not absorb FE customers/vendors/insurance/legal/fuel** — Cursor owns those.
