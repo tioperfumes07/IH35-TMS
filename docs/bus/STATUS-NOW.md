@@ -1,14 +1,25 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T22:13Z
+Updated: 2026-08-18T22:25Z
+
+## 5-CODER PARTITION
+| Seat | OWN |
+|------|-----|
+| Cursor | drivers → dispatch |
+| Codex | safety → driver hub |
+| Devin-A | fleet → maintenance |
+| CC-1 | accounting/banking/factoring/settlements |
+| CC-2 | GUARD + lists honesty |
 
 ## WAVE1 BOX4
-| Module | Live/Req | Status |
-|--------|----------|--------|
-| customers | 145/145 | **CLOSED** |
-| banking | 86/86 | **CLOSED** (#9118 honesty) |
-| vendors | 146/146 | **CLOSED** (#9119 Leaves) |
-| drivers | 106/110 | await #9125 deploy → report_issue N/A drop + team-split create/reverse |
+| Module | Status |
+|--------|--------|
+| customers | CLOSED |
+| banking | CLOSED |
+| vendors | CLOSED |
+| drivers | team_split reverse LIVE proven · Leaves ship NOW |
+| dispatch | Cursor next |
+| safety | Codex OWN |
+| fleet/maint | Devin OWN |
 
-## NEXT
-drivers close after healthz≥8e36261 · then **dispatch → safety**
+healthz=57e454a
 Live=BLOCKED
