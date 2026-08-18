@@ -3841,7 +3841,12 @@
     ],
     "997": "997-verify-expenses-canonical-route-is-list.mjs",
     "998": "998-verify-drivers-subnav-routes-registered.mjs",
-    "999": "999-verify-fuel-recon-manual-match-honest.mjs"
+    "999": "999-verify-fuel-recon-manual-match-honest.mjs",
+    "3906": {
+      "claimed_at": "2026-08-18",
+      "claimed_by": "cursor",
+      "purpose": "verify-load-drawer-stops-picker-law"
+    }
   },
   "generated_at": "2026-08-09T02:10:17.093Z",
   "known_duplicates_frozen": {
@@ -4210,5 +4215,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1177
+  "total_claimed": 1177,
+  "3906": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-drawer-stops-picker-law"
+  }
 }
