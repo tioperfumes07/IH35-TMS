@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1743** | 2026-08-18 |
+| Rows in this file | **1745** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=249 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1017 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=249 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1019 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1833,3 +1833,5 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 13040 | lists · catalog.maintenance.truck_parts.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.maintenance.truck_parts.create`. Exact cell connectivity. Selected-USMCA → **+ Create** → **CREATE TRUCK PARTS** → **Cancel**. | LIVE PASS · 1 EXACT CELL | healthz `7c5438d`; CDP 9226; `/tmp/tick-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 13120 | lists · catalog.maintenance.vendors.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.maintenance.vendors.create`. Exact cell connectivity. Selected-USMCA `/lists/maintenance/vendors` → **+ Create** → **NEW MAINTENANCE VENDORS** → **Cancel**. | LIVE PASS · 1 EXACT CELL | healthz `7c5438d`; CDP 9226; `/tmp/tick-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 13200 | lists · catalog.maintenance.parts_catalog.create honesty Live | D | USMCA | N/A — no +Create on bespoke page | **Leaves:** `catalog.maintenance.parts_catalog.create`. Selected-USMCA `/lists/maintenance/parts-catalog` mounts **Maintenance Parts Catalog** — no page `+ Create`. Honest N/A. | LIVE N/A · honesty | healthz `7c5438d`; CDP 9226; `/tmp/tick-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 13280 | lists · catalog.maintenance.pm_intervals.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.maintenance.pm_intervals.create`. Exact cell: `catalog.maintenance.pm_intervals.create:connectivity`. Selected-USMCA `/lists/catalogs/maintenance/pm-intervals` → **+ Create** → dialog → **Cancel**. | LIVE PASS · 1 EXACT CELL | healthz `5d072a5`; CDP 9226; `/tmp/tick65-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 13360 | fleet · catalog.fleet.trailer_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.trailer_types.create`. Exact cell: `catalog.fleet.trailer_types.create:connectivity`. Selected-USMCA `/lists/fleet/trailer-types` → **+ Create** → dialog → **Cancel**. Tip Devin-A residual fleet. | LIVE PASS · 1 EXACT CELL | healthz `5d072a5`; CDP 9226; `/tmp/tick65-leaves.json`; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
