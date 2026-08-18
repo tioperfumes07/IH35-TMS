@@ -132,7 +132,11 @@ export function FactoringDetailPage() {
     };
   }, [detail]);
 
-  if (query.isLoading) return <div className="text-sm text-gray-500">Loading factoring batch...</div>;
+  // LV-JE-DETAIL-COLD-NAV-FALSE-NOT-FOUND class fix: react-query v5 isLoading = isPending &&
+  // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
+  // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
+  // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
+  if (query.isPending) return <div className="text-sm text-gray-500">Loading factoring batch...</div>;
   if (query.isError)
     return (
       <ListErrorState

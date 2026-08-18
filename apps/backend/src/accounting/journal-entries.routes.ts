@@ -76,7 +76,7 @@ function canAccessAccounting(role: string) {
 }
 
 export async function registerJournalEntryRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/journal-entries", async (req, reply) => {
+  app.post("/api/v1/accounting/journal-entries", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -114,7 +114,7 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/journal-entries", async (req, reply) => {
+  app.get("/api/v1/accounting/journal-entries", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -135,7 +135,15 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     return { journal_entries: items };
   });
 
-  app.get("/api/v1/accounting/journal-entries/:id", async (req, reply) => {
+  // LV-JE-DETAIL-COLD-NAV-FALSE-NOT-FOUND (ACCT-F5426): operating_company_id is required here
+  // (companyQuerySchema), which is exactly why JournalEntryDetailPage.tsx's query is
+  // `enabled: Boolean(selectedCompanyId && id)` — it cannot call this route until the FE's
+  // CompanyContext has resolved which company is selected. That resolution is itself async (GET
+  // /api/v1/org/me/companies), so on a cold direct navigation the FE query is briefly disabled. The
+  // FE's terminal "not found" guard must check `.isPending`, not `.isLoading` (react-query v5:
+  // isLoading = isPending && isFetching, false while disabled) — do not make operating_company_id
+  // optional here without re-checking that FE guard, or a real JE will falsely show "not found."
+  app.get("/api/v1/accounting/journal-entries/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -174,7 +182,7 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/journal-entries/:id/void", async (req, reply) => {
+  app.post("/api/v1/accounting/journal-entries/:id/void", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});

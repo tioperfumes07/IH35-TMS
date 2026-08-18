@@ -57,7 +57,11 @@ export function ExpenseDetailPage() {
     enabled: Boolean(id && selectedCompanyId),
   });
 
-  if (detailQuery.isLoading) return <div className="p-4 text-sm text-slate-500">Loading expense…</div>;
+  // LV-JE-DETAIL-COLD-NAV-FALSE-NOT-FOUND class fix: react-query v5 isLoading = isPending &&
+  // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
+  // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
+  // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
+  if (detailQuery.isPending) return <div className="p-4 text-sm text-slate-500">Loading expense…</div>;
   if (detailQuery.isError) {
     return (
       <ListErrorState
