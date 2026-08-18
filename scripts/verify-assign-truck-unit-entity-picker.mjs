@@ -18,6 +18,12 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker/.test(code) || !/kind=["']unit["']/.test(code)) {
     problems.push(`${FILE}: must use EntityPicker kind="unit"`);
   }
+  if (/allowCreate=\{false\}/.test(code)) {
+    problems.push(`${FILE}: CREATE chrome must allow inline + Create unit (not allowCreate={false})`);
+  }
+  if (!/\ballowCreate\b/.test(code)) {
+    problems.push(`${FILE}: must set allowCreate for picker-law inline create`);
+  }
   if (/listUnits\(/.test(code)) problems.push(`${FILE}: must not call listUnits directly`);
   if (/SelectCombobox/.test(code) || /<select[\s>]/.test(code)) {
     problems.push(`${FILE}: must not use SelectCombobox/select for unit`);
@@ -34,6 +40,14 @@ if (process.argv.includes("--selftest")) {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, "AssignTruckModal.tsx"), `listUnits({ limit: 500 })\n<SelectCombobox><option/></SelectCombobox>\n`);
     if (!collectProblems(stubRoot).length) { console.error("planted miss"); process.exit(1); }
+    fs.writeFileSync(
+      path.join(dir, "AssignTruckModal.tsx"),
+      `<EntityPicker kind="unit" allowCreate={false} />\n`
+    );
+    if (!collectProblems(stubRoot).some((p) => /allowCreate/.test(p))) {
+      console.error("planted allowCreate={false} miss");
+      process.exit(1);
+    }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");
 } else {
