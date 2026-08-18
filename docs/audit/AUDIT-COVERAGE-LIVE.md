@@ -74,16 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1703** | 2026-08-18 |
+| Rows in this file | **1706** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=984 | 2026-08-18 |
-| Rows in this file | **1704** | 2026-08-18 |
-| Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
-| Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=985 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=987 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1800,3 +1795,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 10330 | customers · inline edit connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `detail.edit`. **Exact cell:** `detail.edit:connectivity`. Selected-USMCA canonical D-06 Customer Detail opened inline **Edit** after #9040 deployed. The governed identity, relationship, contact, billing, terms, detention, layover, factoring, notes, and reverse bank-link fields mounted with both Save and the repaired secondary Cancel action. Cancel cleared the staged edit UI, restored the header Edit action, and preserved the same customer route without saving. Persistence/money cells are separately evidenced and not re-claimed. No customer, relationship, term, rate, factor, bank link, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | canonical `/customers/:id` → Edit → Cancel; selected USMCA; #9040 Cancel live; no save; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
 | 10400 | lists · catalog.drivers.driver_load_statuses.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.drivers.driver_load_statuses.create`. Exact cell: `catalog.drivers.driver_load_statuses.create:connectivity`. Selected-USMCA `/lists/drivers/driver-load-statuses` mounted **Driver Load Statuses Catalog**; page CTA `+ Create Status` opened **Create Driver Load Status** (Cancel dismissed without mutate). | LIVE PASS · 1 EXACT CELL | healthz `e4f8b86`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 10480 | lists · catalogs.driver_load_statuses.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalogs.driver_load_statuses.create`. Exact cell: `catalogs.driver_load_statuses.create:connectivity`. Same Live walk as `catalog.drivers.driver_load_statuses.create` (canonical `/lists/drivers/driver-load-statuses`). | LIVE PASS · 1 EXACT CELL | healthz `e4f8b86`; CDP 9226; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 10490 | lists · driver termination-reason creator connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.drivers.termination_reasons.create`. **Exact cell:** `catalog.drivers.termination_reasons.create:connectivity`. Selected-USMCA `/lists/drivers/termination-reasons` rendered 50 governed human rows. Page `+ Create` mounted **Create Termination Reason** with Code, Label, Severity, Description, Back, Close, Cancel, and Create. Cancel dismissed the dialog and preserved all 50 rows. Picker/persistence cells are separately evidenced and not re-claimed. No reason, driver, catalog, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | `/lists/drivers/termination-reasons` → + Create → Cancel; selected USMCA; 50 rows preserved; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
