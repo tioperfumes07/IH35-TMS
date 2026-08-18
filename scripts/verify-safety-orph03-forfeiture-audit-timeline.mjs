@@ -56,12 +56,16 @@ export function assertOrph03(root = ROOT) {
       continue;
     }
     for (const chunk of chunks) {
-      if (/order\s+by\s+posted_at/i.test(chunk)) {
+      // Allow an optional table-alias prefix (e.g. `ORDER BY el.created_at`) — the real
+      // escrow-visualizer.routes.ts query joins escrow_ledger against driver_settlement_gl_runs
+      // and journal_entries, so it aliases the ledger as `el` and qualifies every column,
+      // including the ORDER BY. An unqualified-only regex false-flagged that real, correct query.
+      if (/order\s+by\s+(?:\w+\.)?posted_at/i.test(chunk)) {
         problems.push(
           `${rel}: driver_finance.escrow_ledger query orders by posted_at — column does not exist (Postgres 42703)`
         );
       }
-      if (!/order\s+by\s+created_at/i.test(chunk)) {
+      if (!/order\s+by\s+(?:\w+\.)?created_at/i.test(chunk)) {
         problems.push(`${rel}: driver_finance.escrow_ledger query must ORDER BY created_at`);
       }
     }
@@ -103,6 +107,16 @@ function selftest() {
       file: DEDUCTIONS_ROUTES,
       find: "ORDER BY created_at DESC LIMIT 200",
       replace: "ORDER BY posted_at DESC LIMIT 200",
+    },
+    {
+      // ESCROW_VIZ_ROUTES was never actually mutation-tested before — its ORDER BY el.created_at
+      // shape (aliased, unlike deductions.routes.ts's bare created_at) is the only occurrence in
+      // this file, so this proves both the alias-prefix match works on the real query AND that a
+      // genuine posted_at regression on this specific file is still caught.
+      name: "posted_at resurrected on escrow-visualizer.routes.ts read",
+      file: ESCROW_VIZ_ROUTES,
+      find: "ORDER BY el.created_at DESC",
+      replace: "ORDER BY el.posted_at DESC",
     },
     {
       name: "timeline failures treated as empty success",
