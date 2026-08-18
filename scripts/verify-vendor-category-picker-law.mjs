@@ -20,6 +20,7 @@ function problems(src) {
   if (!block.includes('createKind="vendor_type"')) result.push("missing canonical vendor_type creator");
   if (!block.includes('addNewLabel="+ Add new vendor type"')) result.push("missing first-row + Add new label");
   if (!code.includes('catalogName: "vendors.vendor_types"')) result.push("missing company-scoped canonical catalog read");
+  if (!code.includes("label && value && !knownLabels.has(label.toLocaleLowerCase())")) result.push("missing duplicate catalog-label dedupe");
   if (!code.includes("knownLabels.has(value.toLocaleLowerCase())")) result.push("missing case-insensitive catalog/legacy label dedupe");
   if (/<select[\s\S]{0,500}?id="vendor-category-filter"/.test(block)) result.push("bare select regressed");
   return result;
@@ -31,6 +32,7 @@ if (SELFTEST) {
     .replace("<ReferenceSelect", "<select")
     .replace('createKind="vendor_type"', "")
     .replace('addNewLabel="+ Add new vendor type"', "")
+    .replace("label && value && !knownLabels.has(label.toLocaleLowerCase())", "label && value")
     .replace("knownLabels.has(value.toLocaleLowerCase())", "false");
   if (!problems(planted).length) {
     console.error("verify-vendor-category-picker-law SELFTEST FAILED: planted defect not caught");

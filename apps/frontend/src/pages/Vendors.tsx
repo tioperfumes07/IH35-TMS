@@ -179,7 +179,7 @@ export function VendorsPage() {
         row.display_name ?? row.vendor_type_name ?? row.vendor_type_code ?? row.code ?? "",
       ).trim();
       const value = String(row.code ?? row.vendor_type_code ?? label).trim();
-      if (label && value) {
+      if (label && value && !knownLabels.has(label.toLocaleLowerCase())) {
         options.set(value, { value, label });
         knownLabels.add(label.toLocaleLowerCase());
       }
