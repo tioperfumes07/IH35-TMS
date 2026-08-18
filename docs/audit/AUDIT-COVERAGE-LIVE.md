@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **72 / 150** | 2026-08-18 |
-| Rows in this file | **1411** | 2026-08-18 |
+| Rows in this file | **1412** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **2** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **152** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=204 · PASS=222 · N/A=227 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=726 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=204 · PASS=222 · N/A=227 · UNVERIFIED=19 · SUPERSEDED=13 · OTHER=727 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1501,3 +1501,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 1440 | safety · training programs create | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `training_programs.create`. Exact cells: `connectivity` · `qbo_chrome`. Selected-USMCA `/safety/training/programs` **+ Create Training Program** opened Create Training Program (name/category/recertify); **Cancel** without Create. Does not claim picker_law (native selects). No program write, backend, data or money mutation. | LIVE PASS · 2 EXACT CELLS | training programs create Cancel; Cursor Live 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 1441 | safety · training records create | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `training_records.create`. Exact cells: `driver` · `connectivity` · `qbo_chrome`. Selected-USMCA `/safety/training/records` **+ Create Record** opened Create Training Record (Driver combobox, training name, completed date); **Cancel** without Create. No training write, backend, data or money mutation. | LIVE PASS · 3 EXACT CELLS | training records create Cancel; Cursor Live 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 1442 | drivers · report_issue modal STARVED | D | USMCA | N/A-PRE-OP · PROD-INSPECTED · VERIFY-1 | **Leaves:** `drivers.modal.report_issue`. Exact cells: N/A-PRE-OP (Owner office session cannot exercise driver-app surface). Leaf mounts only from driver-app `DriverLoadDetailPage` (`/driver/loads/:id`); Owner session is redirected to driver login — cannot open ReportIssueModal without a driver auth seat. Not a missing office chrome defect. No Live PASS credit claimed. | N/A-PRE-OP · driver-auth STARVE | surface ReportIssueModal; Cursor Live 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 1450 | fuel · settings connectivity | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaf:** `settings`. Exact cell: `connectivity`. Selected-USMCA `/fuel/settings` mounted the real Fuel shell and Planner settings surface with max miles/shift, off-highway miles, backwards miles, overfill threshold, governed expensive-state creator, preserved saved state codes, and Save settings action; no 404, wrong tab, dead route, ErrorBoundary, or raw UUID. The surface was inspected read-only and no Save or creator action was invoked. No setting, state, fuel transaction, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 1 EXACT CELL | `https://app.ih35dispatch.com/fuel/settings`; LIVE 2026-08-17 | NO | 2026-08-17 | CODEX |
