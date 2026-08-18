@@ -2206,6 +2206,7 @@
     "claimed_by": "cursor",
     "purpose": "verify-dispatch-vehicle-entitylink-unresolved-tombstone"
   },
+  "3889": "verify-inventory-vendor-historical-label-resolver",
   "3890": {
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
@@ -4190,5 +4191,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1172
+  "total_claimed": 1173
 }
