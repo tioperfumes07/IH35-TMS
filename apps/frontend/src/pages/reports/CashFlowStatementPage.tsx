@@ -15,6 +15,8 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { formatCashFlowCompoundLabel } from "../../lib/formatCashFlowCompoundLabel";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
+import { formatDateUS } from "../../lib/formatDate";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -58,6 +60,57 @@ export function CashFlowStatementPage() {
   const investingLines = useMemo(() => sortLines(query.data?.investing.lines ?? []), [query.data?.investing.lines]);
   const financingLines = useMemo(() => sortLines(query.data?.financing.lines ?? []), [query.data?.financing.lines]);
 
+  function printLetter() {
+    const data = query.data;
+    if (!data) return;
+    const esc = (v: unknown) =>
+      String(v ?? "—")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    const sectionHtml = (title: string, lines: AccountingCashFlowLine[], total: number) => {
+      const rows = lines
+        .map(
+          (line) => `<tr>
+            <td>${esc(formatCashFlowCompoundLabel(line.label) || line.label)}</td>
+            <td>${esc(formatAccountTypeLabel(line.account_type))}</td>
+            <td style="text-align:right">${esc(money(line.amount))}</td>
+          </tr>`,
+        )
+        .join("");
+      return `
+        <h1 style="margin-top:16px">${esc(title)}</h1>
+        <table>
+          <thead><tr><th>Line</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>
+            ${rows || `<tr><td colspan="3">No rows</td></tr>`}
+            <tr><th colspan="2">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+          </tbody>
+        </table>`;
+    };
+    printLetterHtml({
+      title: `Cash flow statement ${applied.start}_${applied.end}`,
+      bodyHtml: `
+        <h1>Cash flow statement</h1>
+        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · Accrual · printed ${esc(
+          new Date().toLocaleString(),
+        )}</div>
+        <table>
+          <tbody>
+            <tr><th>Net cash change</th><td>${esc(money(data.net_cash_change))}</td></tr>
+            <tr><th>Cash at start</th><td>${esc(money(data.cash_at_start))}</td></tr>
+            <tr><th>Cash at end</th><td>${esc(money(data.cash_at_end))}</td></tr>
+            <tr><th>Reconciliation</th><td>${esc(data.reconciled ? "Reconciled" : "Needs review")}</td></tr>
+          </tbody>
+        </table>
+        ${sectionHtml("Operating activities", operatingLines, data.operating.total)}
+        ${sectionHtml("Investing activities", investingLines, data.investing.total)}
+        ${sectionHtml("Financing activities", financingLines, data.financing.total)}
+      `,
+    });
+  }
+
   return (
     <div className="space-y-4 print:space-y-2">
       <style>{`
@@ -71,7 +124,7 @@ export function CashFlowStatementPage() {
         breadcrumb={["Reports", "Cash Flow Statement"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
             <Button
