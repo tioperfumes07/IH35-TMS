@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1623** | 2026-08-18 |
+| Rows in this file | **1624** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=904 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=905 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1713,3 +1713,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 4800 | lists · catalog.fleet.asset_statuses.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.asset_statuses.create`. Exact cell: `catalog.fleet.asset_statuses.create:connectivity`. Selected-USMCA `/lists/fleet/asset-statuses` mounted **Asset Statuses**; `+ Create` opened **New Asset Statuses** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `70d1783`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 4880 | lists · catalog.fleet.asset_locations.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.asset_locations.create`. Exact cell: `catalog.fleet.asset_locations.create:connectivity`. Selected-USMCA `/lists/fleet/asset-locations` mounted **Asset Locations**; `+ Create` opened **New Asset Locations** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `712365a`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 4960 | lists · catalog.dispatch.load_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.dispatch.load_types.create`. Exact cell: `catalog.dispatch.load_types.create:connectivity`. Selected-USMCA `/lists/dispatch/load-types` mounted **Load Types**; page CTA `+ Create Entry` opened **Load Types · Create Entry** drawer (Code, Display Name, Description, Sort Order, Active, Cancel/Create Entry). Cancel dismissed without mutate. (Note: page uses `+ Create Entry` / Create Entry — not `+ Create` vocabulary.) | LIVE PASS · 1 EXACT CELL | healthz `41d67f8`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 5040 | lists · catalog.dispatch.detention_reasons.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.dispatch.detention_reasons.create`. Exact cell: `catalog.dispatch.detention_reasons.create:connectivity`. Selected-USMCA `/lists/dispatch/detention-reasons` mounted **Detention Reasons**; page CTA `+ Create Entry` opened **Detention Reasons · Create Entry** drawer (Code, Display Name, Description, Sort Order, Active, Cancel/Create Entry). Cancel dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `7c4c5c0`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
