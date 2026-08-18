@@ -1750,6 +1750,12 @@ export function catalogNameToRoutePath(catalogName: string): string {
 }
 
 export function catalogNameToApiBasePath(catalogName: string): string {
+  // Prefer registry catalogKey — it is the same contract as FE routes and backend
+  // urlSegment. Deriving the segment from the table half of catalogName breaks when
+  // the table is domain-prefixed (e.g. maintenance.maintenance_part_locations →
+  // maintenance-part-locations 404 while the live route is …/part-locations).
+  const def = GENERIC_CATALOG_REGISTRY[catalogName];
+  if (def) return `/api/v1/catalogs/${def.domain}/${def.catalogKey}`;
   const [domain, table] = catalogName.split(".");
   const segment = (table ?? "").replace(/_/g, "-");
   return `/api/v1/catalogs/${domain}/${segment}`;
