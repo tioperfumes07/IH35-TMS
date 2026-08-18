@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1616** | 2026-08-18 |
+| Rows in this file | **1617** | 2026-08-18 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
 | Rows `VERIFIED` by GUARD | **151** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=897 | 2026-08-18 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=242 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=898 | 2026-08-18 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1706,3 +1706,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 4240 | lists · catalog.fleet.equipment_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.equipment_types.create`. Exact cell: `catalog.fleet.equipment_types.create:connectivity`. Selected-USMCA `/lists/fleet/equipment-types` mounted **Equipment Types**; `+ Create` opened **New Equipment Types** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `69dfb23`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 4320 | lists · catalog.fleet.trailer_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.trailer_types.create`. Exact cell: `catalog.fleet.trailer_types.create:connectivity`. Selected-USMCA `/lists/fleet/trailer-types` mounted **Trailer Types**; `+ Create` opened **New Trailer Types** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `24434d7`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 4400 | lists · catalog.fleet.ownership_types.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.ownership_types.create`. Exact cell: `catalog.fleet.ownership_types.create:connectivity`. Selected-USMCA `/lists/fleet/ownership-types` mounted **Ownership Types**; `+ Create` opened **New Ownership Types** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `24434d7`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 4480 | lists · catalog.fleet.tractor_statuses.create connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves:** `catalog.fleet.tractor_statuses.create`. Exact cell: `catalog.fleet.tractor_statuses.create:connectivity`. Selected-USMCA `/lists/fleet/tractor-statuses` mounted **Tractor Statuses**; `+ Create` opened **New Tractor Statuses** drawer (Code, Display Name, Description, Sort Order, Active, Close/Create). Close dismissed without mutate. | LIVE PASS · 1 EXACT CELL | healthz `b3e620a`; CDP browser; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
