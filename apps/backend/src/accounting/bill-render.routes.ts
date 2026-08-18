@@ -15,6 +15,7 @@ function canViewBillHtml(role: string) {
 
 export async function registerAccountingBillHtmlRoutes(app: FastifyInstance) {
   app.get(
+    // ACCT-F3834 — letter HTML for BillDetail Print (openPrintableDocument ?print=1)
     "/api/v1/accounting/bills/:id.html",
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req: FastifyRequest, reply: FastifyReply) => {

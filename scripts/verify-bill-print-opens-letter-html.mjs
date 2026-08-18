@@ -61,16 +61,10 @@ function selftest() {
   assertSource();
   const pagePath = TARGETS.billPage;
   const backup = fs.readFileSync(pagePath, "utf8");
-  // Plant SPA print defect: remove letter helper + force window.print on Print.
-  const planted = backup
-    .replaceAll("openPrintableDocument", "openBrokenPrint")
-    .replace(
-      /onClick=\{\(\) =>\s*openBrokenPrint\([\s\S]*?\)\s*\}/,
-      'onClick={() => window.print()}'
-    );
-  if (!planted.includes("window.print()")) {
-    fail("selftest could not plant window.print defect");
-  }
+  // Plant SPA print on the Print button only — never rewrite the import line.
+  const re = /onClick=\{\(\) =>\s*\n?\s*openPrintableDocument\([\s\S]*?\)\s*\}/;
+  if (!re.test(backup)) fail("selftest could not find openPrintableDocument onClick to plant");
+  const planted = backup.replace(re, "onClick={() => window.print()}");
   fs.writeFileSync(pagePath, planted);
   try {
     const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
