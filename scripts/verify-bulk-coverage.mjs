@@ -5,6 +5,9 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 const backendSrc = path.join(repoRoot, "apps/backend/src");
+const frontendBulkApi = path.join(repoRoot, "apps/frontend/src/api/bulk.ts");
+const customerListView = path.join(repoRoot, "apps/frontend/src/pages/customers/CustomersListView.tsx");
+const vendorListView = path.join(repoRoot, "apps/frontend/src/pages/vendors/VendorsListView.tsx");
 
 function walkRouteFiles(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
@@ -56,6 +59,30 @@ const bulkRouteFiles = routeFiles.filter(
 
 const failures = [];
 
+function frontendHonestyFailures({ api, customers, vendors }) {
+  const found = [];
+  if (/succeeded:\s*normalized\.succeeded\.length\s*>\s*0\s*\?\s*normalized\.succeeded\s*:\s*ids/.test(api)) {
+    found.push("apps/frontend/src/api/bulk.ts must not rewrite an empty backend succeeded array to every requested id");
+  }
+  for (const [file, source, noun] of [
+    ["apps/frontend/src/pages/customers/CustomersListView.tsx", customers, "customer"],
+    ["apps/frontend/src/pages/vendors/VendorsListView.tsx", vendors, "vendor"],
+  ]) {
+    if (!/result\.failed\.length\s*>\s*0/.test(source) || !/pushToast\([\s\S]*?"error"/.test(source)) {
+      found.push(`${file} must surface backend per-${noun} failures as an error instead of unconditional success`);
+    }
+  }
+  return found;
+}
+
+const frontendSources = {
+  api: fs.readFileSync(frontendBulkApi, "utf8"),
+  customers: fs.readFileSync(customerListView, "utf8"),
+  vendors: fs.readFileSync(vendorListView, "utf8"),
+};
+
+failures.push(...frontendHonestyFailures(frontendSources));
+
 for (const file of bulkRouteFiles) {
   const source = fs.readFileSync(file, "utf8");
   const rel = relative(file);
@@ -87,6 +114,22 @@ if (failures.length > 0) {
     console.error(`  - ${message}`);
   }
   process.exit(1);
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = {
+    ...frontendSources,
+    api: frontendSources.api.replace(
+      "requested: normalized.requested || ids.length,",
+      "requested: normalized.requested || ids.length,\n    succeeded: normalized.succeeded.length > 0 ? normalized.succeeded : ids,"
+    ),
+  };
+  if (frontendHonestyFailures(planted).length === 0) {
+    console.error("[verify-bulk-coverage] SELFTEST FAIL — planted fabricated-success regression escaped");
+    process.exit(1);
+  }
+  console.log("[verify-bulk-coverage] SELFTEST OK — planted fabricated-success regression caught");
+  process.exit(0);
 }
 
 console.log(`[verify-bulk-coverage] OK (${bulkRouteFiles.length} bulk route files scanned)`);

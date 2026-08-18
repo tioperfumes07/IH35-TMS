@@ -97,6 +97,5 @@ export async function bulkUpdate<TPayload = Record<string, unknown>>(
   return {
     ...normalized,
     requested: normalized.requested || ids.length,
-    succeeded: normalized.succeeded.length > 0 ? normalized.succeeded : ids,
   };
 }

@@ -34,4 +34,50 @@ describe("bulkUpdate API helper", () => {
     expect(res.succeeded).toEqual(["a", "b"]);
     expect(res.bulk_call_id).toBe("bulk-1");
   });
+
+  it("never fabricates success when the backend reports an item failure", async () => {
+    vi.spyOn(clientApi, "apiRequest").mockResolvedValue({
+      requested: 1,
+      succeeded: [],
+      failed: [{ id: "customer-1", code: "E_UPDATE_FAILED", message: "Customer update failed" }],
+      audit_log_ids: [],
+      bulk_call_id: "bulk-failed",
+    });
+
+    const res = await bulkUpdate({
+      domain: "mdata",
+      resource: "customers",
+      ids: ["customer-1"],
+      action: "classify",
+      payload: { classification: "preferred" },
+      operatingCompanyId: "oc-1",
+    });
+
+    expect(res.succeeded).toEqual([]);
+    expect(res.failed).toEqual([
+      { id: "customer-1", code: "E_UPDATE_FAILED", message: "Customer update failed" },
+    ]);
+  });
+
+  it("preserves legacy affected_ids compatibility without guessing selected ids", async () => {
+    vi.spyOn(clientApi, "apiRequest").mockResolvedValue({
+      requested: 1,
+      affected_ids: ["customer-1"],
+      failed: [],
+      audit_log_ids: [],
+      bulk_call_id: "bulk-legacy",
+    });
+
+    const res = await bulkUpdate({
+      domain: "mdata",
+      resource: "customers",
+      ids: ["customer-1"],
+      action: "classify",
+      payload: { classification: "preferred" },
+      operatingCompanyId: "oc-1",
+    });
+
+    expect(res.succeeded).toEqual(["customer-1"]);
+    expect(res.failed).toEqual([]);
+  });
 });

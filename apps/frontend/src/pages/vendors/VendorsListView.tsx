@@ -134,7 +134,14 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
     onSuccess: async (result, vars) => {
       await queryClient.invalidateQueries({ queryKey: ["vendors"] });
       setTableResetKey((k) => k + 1);
-      pushToast(`${result.succeeded.length} vendor(s) updated (${vars.action}).`, "success");
+      if (result.failed.length > 0) {
+        pushToast(
+          `${result.succeeded.length} vendor(s) updated; ${result.failed.length} failed: ${result.failed[0]?.message ?? "Update failed"}`,
+          "error"
+        );
+      } else {
+        pushToast(`${result.succeeded.length} vendor(s) updated (${vars.action}).`, "success");
+      }
     },
     onError: (error) => pushToast(userFacingApiError(error, "Bulk update failed"), "error"),
   });
