@@ -872,7 +872,6 @@
       "surface_path": "pages/safety/TrainingProgramsPage.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ]
     },
