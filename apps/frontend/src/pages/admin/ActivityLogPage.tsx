@@ -8,6 +8,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 function formatEntity(row: AdminActivityItem): string {
   const type = row.entity_type?.trim() ?? "Record";
@@ -31,7 +32,7 @@ const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
-    render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"} className="text-gray-800" />,
+    render: (row) => <EntityLinkOrTombstone kind="user" id={row.actor_user_id} name={row.actor_email} noun="User" className="text-gray-800" />,
   },
   {
     key: "action",

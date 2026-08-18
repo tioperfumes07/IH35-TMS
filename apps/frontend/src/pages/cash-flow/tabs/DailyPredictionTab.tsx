@@ -12,7 +12,7 @@ import {
 import { addDaysIso, companyToday, localDateFromIso } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 function fmtDate(iso: string): string {
   return localDateFromIso(iso).toLocaleDateString("en-US", {
@@ -251,12 +251,21 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-sm hover:bg-gray-50"
                 >
                   <div className="min-w-0 flex-1">
-                    <EntityLink kind="load" id={item.load_id} label={entityLabel(item.load_number, item.load_id, "Load")} className="font-medium text-gray-900" data-testid="cash-flow-predicted-load-link" onClick={(event) => event.stopPropagation()} />
+                    <EntityLinkOrTombstone
+                      kind="load"
+                      id={item.load_id}
+                      name={item.load_number}
+                      noun="Load"
+                      className="font-medium text-gray-900"
+                      data-testid="cash-flow-predicted-load-link"
+                      onClick={(event) => event.stopPropagation()}
+                    />
                     {item.customer_id ? (
-                      <EntityLink
+                      <EntityLinkOrTombstone
                         kind="customer"
                         id={item.customer_id}
-                        label={entityLabel(item.customer_name, item.customer_id, "Customer")}
+                        name={item.customer_name}
+                        noun="Customer"
                         className="ml-2 text-gray-600 hover:underline"
                         data-testid="cash-flow-predicted-customer-link"
                         onClick={(event) => event.stopPropagation()}
@@ -326,30 +335,33 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                           {item.kind === "driver_pay" ? "Driver Pay" : item.kind === "bill_due" ? "Bill Due" : "Manual"}
                         </span>
                         {item.load_id ? (
-                          <EntityLink
+                          <EntityLinkOrTombstone
                             kind="load"
                             id={item.load_id}
-                            label={item.label}
+                            name={item.label}
+                            noun="Load"
                             className="text-gray-700 hover:underline"
                             data-testid="cash-flow-predicted-expense-load-link"
                           />
                         ) : item.settlement_id ? (
                           // LINK-F5187 (cash-flow:tab.daily_prediction) -- driver-pay rows without
                           // a first_load_id still have a real settlement to drill into.
-                          <EntityLink
+                          <EntityLinkOrTombstone
                             kind="settlement"
                             id={item.settlement_id}
-                            label={item.label}
+                            name={item.label}
+                            noun="Settlement"
                             className="text-gray-700 hover:underline"
                             data-testid="cash-flow-predicted-expense-settlement-link"
                           />
                         ) : item.bill_id ? (
                           // LINK-F5187 (cash-flow:tab.daily_prediction) -- bill_due rows have a
                           // real accounting.bills id.
-                          <EntityLink
+                          <EntityLinkOrTombstone
                             kind="bill"
                             id={item.bill_id}
-                            label={item.label}
+                            name={item.label}
+                            noun="Bill"
                             className="text-gray-700 hover:underline"
                             data-testid="cash-flow-predicted-expense-bill-link"
                           />
