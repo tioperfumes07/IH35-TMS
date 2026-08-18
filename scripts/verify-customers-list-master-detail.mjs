@@ -51,8 +51,11 @@ export function audit(src) {
   if (!/customer_id: customerId/.test(fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/customers/CoiTab.tsx"), "utf8"))) {
     failures.push("apps/frontend/src/pages/customers/CoiTab.tsx: md.coi_requests must submit a real customer_id");
   }
-  if (!/<CustomersSyncPanel operatingCompanyId=\{companyId\} \/>/.test(src.customers)) {
-    failures.push(`${FILES.customers}: customers.panel.customers_sync must mount the real sync panel`);
+  if (!/qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/.test(src.customers)) {
+    failures.push(`${FILES.customers}: QBO capability must derive from the canonical selected TRANSP company`);
+  }
+  if (!/companyId\s*&&\s*qboAvailable\s*\?\s*<CustomersSyncPanel operatingCompanyId=\{companyId\} \/>\s*:\s*null/.test(src.customers)) {
+    failures.push(`${FILES.customers}: customers.panel.customers_sync must mount only for selected TRANSP`);
   }
   if (!/bulkUpdate\(\{ domain: "mdata", resource: "customers"/.test(src.listView)) {
     failures.push(`${FILES.listView}: list.view_list bulk actions must target the real mdata.customers resource`);
@@ -86,7 +89,8 @@ if (process.argv.includes("--selftest")) {
     ["transaction-list-scope", "customers", /customer_id: selectedCustomer!\.id/, "customer_id: undefined"],
     ["new-transaction-nav", "customers", /customer_id=\$\{selectedCustomer\.id\}/, "customer_id=none"],
     ["tasks-target-type", "customers", /targetType="customer"/, 'targetType="unit"'],
-    ["sync-panel-mount", "customers", /<CustomersSyncPanel operatingCompanyId=\{companyId\} \/>/, "null"],
+    ["qbo-capability", "customers", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, 'qboAvailable = true'],
+    ["sync-panel-capability-gate", "customers", /companyId\s*&&\s*qboAvailable\s*\?\s*<CustomersSyncPanel operatingCompanyId=\{companyId\} \/>\s*:\s*null/, 'companyId ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null'],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "customers"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],
     ["sidebar-link", "sidebar", /CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/, 'CardLink href="/customers"'],
   ];
