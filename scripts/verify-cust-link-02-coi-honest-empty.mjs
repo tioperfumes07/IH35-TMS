@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * CUST-LINK-02 — COI Requests tab must show honest empty copy when
- * insurance.coi_request has 0 rows (not a silent blank panel).
+ * CUST-LINK-02 — COI Requests tab honest empty + create writer stamps operating_company_id.
  *
- * Live Neon 2026-08-03 (bypass_rls=lucia, br-fancy-credit-akjnd07a):
- *   count(*)=0 AND n_live_tup=0 — legitimately empty.
+ * Live Neon: coi_request RLS WITH CHECK keys operating_company_id. INSERT that only sets
+ * tenant_id leaves operating_company_id NULL → 42501 on every + Create COI (blocks reverse_link).
  *
  *   node scripts/verify-cust-link-02-coi-honest-empty.mjs
  *   node scripts/verify-cust-link-02-coi-honest-empty.mjs --selftest
@@ -17,8 +16,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-cust-link-02-coi-honest-empty";
 const FILE = "apps/frontend/src/pages/customers/CoiTab.tsx";
+const SERVICE = "apps/backend/src/insurance/coi.service.ts";
 
-function assert(src) {
+function assertUi(src) {
   const problems = [];
   if (!/emptyText=/.test(src)) {
     problems.push(`${FILE}: ParityTable/list must set emptyText`);
@@ -26,7 +26,6 @@ function assert(src) {
   if (!/No COI requests yet/.test(src)) {
     problems.push(`${FILE}: emptyText must say "No COI requests yet" (honest empty)`);
   }
-  // Must not use a silent "" empty or hide the table with no message.
   if (/emptyText=\{?\s*["']\s*["']\s*\}?/.test(src)) {
     problems.push(`${FILE}: emptyText must not be blank`);
   }
@@ -36,26 +35,52 @@ function assert(src) {
   return problems;
 }
 
-const src = readFileSync(path.join(ROOT, FILE), "utf8");
+function assertWriter(src) {
+  const problems = [];
+  const insert = src.match(/INSERT INTO insurance\.coi_request\s*\(([\s\S]*?)\)\s*VALUES/i);
+  if (!insert) {
+    problems.push(`${SERVICE}: createCoiRequest must INSERT INTO insurance.coi_request`);
+    return problems;
+  }
+  const cols = insert[1];
+  if (!/\boperating_company_id\b/.test(cols)) {
+    problems.push(
+      `${SERVICE}: INSERT must stamp operating_company_id (RLS WITH CHECK) — tenant_id alone → 42501`,
+    );
+  }
+  if (!/\btenant_id\b/.test(cols)) {
+    problems.push(`${SERVICE}: INSERT must keep tenant_id for legacy readers`);
+  }
+  return problems;
+}
+
+const uiSrc = readFileSync(path.join(ROOT, FILE), "utf8");
+const svcSrc = readFileSync(path.join(ROOT, SERVICE), "utf8");
 
 if (SELFTEST) {
-  const planted = src.replace(/No COI requests yet[^"]*/g, "");
-  const caught = assert(planted);
-  if (!caught.length) {
+  const plantedUi = uiSrc.replace(/No COI requests yet[^"]*/g, "");
+  const caughtUi = assertUi(plantedUi);
+  if (!caughtUi.length) {
     console.error(`${LABEL} SELFTEST FAIL — planted blank empty not caught`);
+    process.exit(1);
+  }
+  const plantedSvc = svcSrc.replace(/\boperating_company_id\b/g, "opco_missing");
+  const caughtSvc = assertWriter(plantedSvc);
+  if (!caughtSvc.length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted missing operating_company_id not caught`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);
 }
 
-const problems = assert(src);
+const problems = [...assertUi(uiSrc), ...assertWriter(svcSrc)];
 if (problems.length) {
   console.error(`${LABEL} FAIL:`);
   for (const p of problems) console.error("  - " + p);
   process.exit(1);
 }
 console.log(
-  `${LABEL}: OK — CoiTab honest emptyText locked (Neon lucia count insurance.coi_request=0 / n_live_tup=0)`,
+  `${LABEL}: OK — CoiTab honest empty + createCoiRequest stamps operating_company_id for RLS`,
 );
 process.exit(0);
