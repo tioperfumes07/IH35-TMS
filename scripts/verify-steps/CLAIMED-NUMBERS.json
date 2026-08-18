@@ -1172,6 +1172,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-matrix-live-leaf-explicit"
   },
+  "3448": {
+    "claimed_at": "2026-08-18",
+    "lane": "cursor",
+    "purpose": "verify-lists-hub-qbo-sync-transp-only"
+  },
   "3449": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
