@@ -146,8 +146,9 @@ export type DriverProfileAggregate = {
 };
 
 function fetchDriverProfile(driverId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId, aggregate: "true" });
   return apiRequest<DriverProfileAggregate>(
-    `/api/v1/mdata/drivers/${driverId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/mdata/drivers/${encodeURIComponent(driverId)}?${query.toString()}`
   );
 }
 

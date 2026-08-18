@@ -233,11 +233,12 @@ export async function getDriver(id: string, operatingCompanyId: string): Promise
   const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   const payload = await apiRequest<Driver | { driver: Driver }>(`/api/v1/mdata/drivers/${id}${qs}`);
 
-  // LV-DRIVER-DETAIL-PAGE-CRASHES (P0) — this endpoint has TWO response shapes and we always trigger
-  // the wrapped one.
+  // LV-DRIVER-DETAIL-PAGE-CRASHES (P0) — tolerate both historical response shapes while the ordinary
+  // scoped request intentionally uses the lightweight flat-row branch. Dedicated aggregate readers
+  // opt in with `aggregate=true`; operating_company_id is scope, not a response-shape switch.
   //
-  // `GET /api/v1/mdata/drivers/:id` parses the query with driverAggregateQuerySchema, which REQUIRES
-  // operating_company_id (drivers.routes.ts). We always send it, so the aggregate branch always wins
+  // `GET /api/v1/mdata/drivers/:id` historically used operating_company_id both for scope and to select
+  // the aggregate branch. It now requires explicit aggregate=true, so this call receives the flat row
   // and the response is the ENVELOPE `{ driver, license, medical_card, documents, ... }` — never the
   // flat row this function's return type promised. Every caller then read flat fields off the
   // envelope and got `undefined`.
@@ -273,7 +274,7 @@ export type DriverSafetyAggregate = {
 
 /** Full company-scoped aggregate for the dedicated Safety profile (do not unwrap to the flat driver). */
 export function getDriverSafetyAggregate(id: string, operatingCompanyId: string) {
-  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId, aggregate: "true" });
   return apiRequest<DriverSafetyAggregate>(`/api/v1/mdata/drivers/${encodeURIComponent(id)}?${qs.toString()}`);
 }
 
