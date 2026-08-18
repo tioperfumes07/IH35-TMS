@@ -26,6 +26,10 @@ export type RecordExpenseFormValues = {
   trailerLabel: string;
   loadId: string;
   loadLabel: string;
+  /** LV-G18-INERT-ON-EXPENSE-LINES escape hatch — required (>=20 chars) instead of a load for the 9
+   * canonical over-the-road categories (diesel/def/toll/scale/lumper/parking/roadside_repair/
+   * detention_paid/over_road_other) when no load applies. Mirrors the DB trigger's own floor. */
+  loadExemptionReason: string;
   paymentAccountId: string;
   paymentAccountLabel: string;
   billDate: string;
@@ -63,6 +67,18 @@ export function buildRecordExpenseMemo(values: RecordExpenseFormValues, linkage?
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// LV-G18-INERT-ON-EXPENSE-LINES: matches the live G18 category taxonomy (diesel/def/toll/scale/
+// lumper/parking/roadside_repair/detention_paid/over_road_other) against the real GL account names
+// this picker offers today ("Fuel & Diesel", "Tolls & Scales", "Driver Trip-Lumper Reimbursement") —
+// NOT the old heuristic, which matched "gas"/"ifta" (not G18 categories; "Permits & Licenses
+// (IFTA/IRP/DOT)" is a false-positive trap) and missed toll/scale/lumper/parking/detention entirely.
+// Exported so RecordExpenseForm.tsx's field label/hint and this submit-blocking check can never drift.
+export const OVER_THE_ROAD_CATEGORY_RE = /(?:fuel|diesel|\bdef\b|toll|scale|lumper|parking|roadside|detention)/i;
+
+export function isOverTheRoadCategoryLabel(categoryLabel: string) {
+  return OVER_THE_ROAD_CATEGORY_RE.test(categoryLabel);
+}
+
 export async function submitRecordExpense(
   operatingCompanyId: string,
   values: RecordExpenseFormValues,
@@ -75,9 +91,16 @@ export async function submitRecordExpense(
   if (!values.categoryQboId && !values.categoryId) throw new Error("Category is required");
   if (!values.paymentAccountId) throw new Error("Payment account is required");
   if (!values.paymentMethod) throw new Error("Payment method is required");
-  // LV-EXP-NOLOAD: diesel/fuel/roadside expenses must link to a load for IFTA attribution and per-load cost.
-  const isFuelRoadside = /(?:fuel|diesel|gas|roadside|ifta)/i.test(values.categoryLabel);
-  if (isFuelRoadside && !values.loadId) throw new Error("Load / Trip is required for fuel, diesel, or roadside expenses");
+  const isOverTheRoadCategory = isOverTheRoadCategoryLabel(values.categoryLabel);
+  const exemptionReason = values.loadExemptionReason.trim();
+  if (isOverTheRoadCategory && !values.loadId) {
+    if (!exemptionReason) {
+      throw new Error("Load / Trip is required for over-the-road expenses (diesel, tolls, lumper, etc.) — or explain why no load applies");
+    }
+    if (exemptionReason.length < 20) {
+      throw new Error("No-load reason must be at least 20 characters");
+    }
+  }
   const cents = dollarsToCents(values.amount);
   if (cents <= 0) throw new Error("Amount must be greater than zero");
 
@@ -102,6 +125,7 @@ export async function submitRecordExpense(
     ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
     ...(values.trailerId && UUID_RE.test(values.trailerId) ? { trailer_id: values.trailerId } : {}),
     ...(values.loadId ? { load_id: values.loadId } : {}),
+    ...(!values.loadId && exemptionReason ? { load_exemption_reason: exemptionReason } : {}),
     // FAIL-F2 class-B: always SUPPLIED, never omitted — an absent field is what left the merged writer inert.
     is_sample_data: values.isSampleData === true,
   });
@@ -132,6 +156,7 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     trailerLabel: "",
     loadId: "",
     loadLabel: "",
+    loadExemptionReason: "",
     paymentAccountId: "",
     paymentAccountLabel: "",
     billDate: companyToday(),

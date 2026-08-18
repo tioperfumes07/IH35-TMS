@@ -1005,6 +1005,9 @@ export function createExpense(
     trailer_id?: string;
     /** WAVE-H2 — optional ops load FK (not silently dropped server-side). */
     load_id?: string;
+    /** LV-G18-INERT-ON-EXPENSE-LINES — escape hatch (>=20 chars) for a legitimate no-load
+     * over-the-road expense line; the backend trigger enforces the same floor. */
+    load_exemption_reason?: string;
     /**
      * FAIL-F2 class-B — accounting.expenses.is_sample_data. The backend has accepted this since
      * expenses.routes.ts:114 and NOTHING in the FE supplied it, so every expense created through the app
