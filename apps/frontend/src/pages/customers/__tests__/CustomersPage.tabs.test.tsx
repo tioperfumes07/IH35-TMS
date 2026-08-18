@@ -167,4 +167,20 @@ describe("CustomersPage list tabs", () => {
     // tabs so existing detail deep-links keep working. The old assertion predates that ruling.
     expect(router.state.location.search).toContain("listTab=preferred");
   });
+
+  it("keeps the roster segment while secondary tabs update the detail route", async () => {
+    const user = userEvent.setup();
+    listCustomersMock.mockResolvedValue({
+      customers: [minimalCustomer({ id: "1", name: "COI Customer" })],
+    });
+    const router = renderCustomersAt("/customers?listTab=all");
+
+    await screen.findAllByText("COI Customer");
+    await user.click(screen.getByRole("button", { name: "COI Requests" }));
+
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("?listTab=all&tab=coi_requests");
+    });
+    expect(await screen.findByText("COI Requests · COI Customer")).toBeInTheDocument();
+  });
 });

@@ -54,6 +54,12 @@ export function audit(src) {
   if (!/customer_id: customerId/.test(fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/customers/CoiTab.tsx"), "utf8"))) {
     failures.push("apps/frontend/src/pages/customers/CoiTab.tsx: md.coi_requests must submit a real customer_id");
   }
+  if (!/params\.set\("tab", next\)/.test(src.customers)) {
+    failures.push(`${FILES.customers}: secondary detail tabs must write their canonical tab id to the URL`);
+  }
+  if (!/activeId=\{activeTab\} onChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/.test(src.customers)) {
+    failures.push(`${FILES.customers}: secondary detail tab controls must drive the canonical URL-backed active tab`);
+  }
   if (!/qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/.test(src.customers)) {
     failures.push(`${FILES.customers}: QBO capability must derive from the canonical selected TRANSP company`);
   }
@@ -105,6 +111,8 @@ if (process.argv.includes("--selftest")) {
     ["transaction-list-scope", "customers", /customer_id: selectedCustomer!\.id/, "customer_id: undefined"],
     ["new-transaction-nav", "customers", /customer_id=\$\{selectedCustomer\.id\}/, "customer_id=none"],
     ["tasks-target-type", "customers", /targetType="customer"/, 'targetType="unit"'],
+    ["detail-tab-url", "customers", /params\.set\("tab", next\)/, 'params.set("panel", next)'],
+    ["detail-tab-control", "customers", /activeId=\{activeTab\} onChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/, 'activeId={activeTab} onChange={() => undefined}'],
     ["qbo-capability", "customers", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, "qboAvailable = true"],
     [
       "sync-panel-capability-gate",
