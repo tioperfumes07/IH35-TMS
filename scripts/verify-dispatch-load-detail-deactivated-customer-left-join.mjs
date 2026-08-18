@@ -61,10 +61,25 @@ function check(src, drawerSrc) {
     problems.push(`${TARGET}: GET /dispatch/loads/:id still INNER JOINs dispatch_flag_colors`);
   }
 
-  // Drawer: when dispatch fails, fall back to mdata so the path-param drawer still shows the load.
-  if (!/dispatchFailed/.test(drawerSrc) || !/useLoad\(operatingCompanyId \? \(dispatchFailed \? loadId : null\) : loadId\)/.test(drawerSrc)) {
+  // Drawer: ALWAYS race mdata with dispatch (not wait for dispatchFailed). Error-only gating
+  // left Overview on "Loading load overview..." while a slow dispatch GET hung 20s+
+  // (LV-CUSTOMERS-LOADS-DRAWER-INDEFINITE-LOADING). Prefer dispatch data when present.
+  if (!/useDispatchLoad\(loadId,\s*operatingCompanyId\)/.test(drawerSrc)) {
+    problems.push(`${DRAWER}: must call useDispatchLoad(loadId, operatingCompanyId)`);
+  }
+  if (!/useLoad\(loadId\)/.test(drawerSrc)) {
     problems.push(
-      `${DRAWER}: must fall back to useLoad/mdata when dispatch GET errors (dispatchFailed gate)`,
+      `${DRAWER}: must always race useLoad(loadId) in parallel with dispatch (not gate on dispatchFailed)`,
+    );
+  }
+  if (/useLoad\(operatingCompanyId \? \(dispatchFailed \? loadId : null\) : loadId\)/.test(drawerSrc)) {
+    problems.push(
+      `${DRAWER}: must not gate useLoad on dispatchFailed — that leaves Overview loading while dispatch is slow-but-not-failed`,
+    );
+  }
+  if (!/dispatchLoadQuery\.data \?\? mdataLoadQuery\.data/.test(drawerSrc)) {
+    problems.push(
+      `${DRAWER}: must prefer dispatchLoadQuery.data ?? mdataLoadQuery.data so mdata settles the drawer first`,
     );
   }
 
@@ -94,12 +109,35 @@ function main() {
         console.error(`${LABEL} --selftest FAIL: planted INNER JOIN customers did not trip the guard`);
         process.exit(1);
       }
+      // Plant the pre-fix drawer gate: mdata only after dispatchFailed — must FAIL.
+      const gatedDrawer = drawerSrc
+        .replace(/useLoad\(loadId\)/g, "useLoad(operatingCompanyId ? (dispatchFailed ? loadId : null) : loadId)")
+        .replace(
+          /dispatchLoadQuery\.data \?\? mdataLoadQuery\.data/g,
+          "dispatchLoadQuery.data ? dispatchLoadQuery.data : mdataLoadQuery.data",
+        );
+      // Ensure planted drawer still mentions dispatchFailed so the positive-control regex can fire.
+      const gatedDrawerFull = gatedDrawer.includes("dispatchFailed")
+        ? gatedDrawer
+        : gatedDrawer.replace(
+            "const mdataLoadQuery = useLoad(",
+            "const dispatchFailed = Boolean(operatingCompanyId && dispatchLoadQuery.isError);\n  const mdataLoadQuery = useLoad(",
+          );
+      const gatedProblems = check(src, gatedDrawerFull);
+      if (!gatedProblems.some((p) => /gate useLoad on dispatchFailed|always race useLoad/.test(p))) {
+        console.error(
+          `${LABEL} --selftest FAIL: gated-on-dispatchFailed drawer did not trip the race assertion:\n${gatedProblems.join("\n")}`,
+        );
+        process.exit(1);
+      }
       const good = check(src, drawerSrc);
       if (good.length) {
         console.error(`${LABEL} --selftest FAIL: real source already red:\n${good.join("\n")}`);
         process.exit(1);
       }
-      console.log(`${LABEL} --selftest OK — planted INNER JOIN fails; fixed source passes`);
+      console.log(
+        `${LABEL} --selftest OK — planted INNER JOIN fails; gated mdata drawer fails; fixed source passes`,
+      );
       return;
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -112,7 +150,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — GET /dispatch/loads/:id LEFT JOINs customers + flag colors; drawer falls back to mdata on dispatch error`,
+    `${LABEL} OK — GET /dispatch/loads/:id LEFT JOINs customers + flag colors; drawer races mdata+dispatch (prefer dispatch)`,
   );
 }
 

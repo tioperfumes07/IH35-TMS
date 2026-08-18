@@ -151,19 +151,27 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   const [abandonmentOpen, setAbandonmentOpen] = useState(false);
   const { pushToast } = useToast();
 
-  // BUG 1 fix: prefer entity-scoped dispatch GET. When that 404s (historically: INNER JOIN on a
-  // deactivated customer — LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END), fall back to mdata GET so the
-  // canonical /dispatch/loads/:id drawer still shows the load.
+  // Prefer entity-scoped dispatch GET (fuller payload). ALWAYS race mdata GET in parallel —
+  // do not wait for dispatchFailed. A slow-but-not-failed dispatch GET left customers→load
+  // reverse drills on "Loading load overview..." for 20s+ while mdata would have settled in
+  // ~160ms (LV-CUSTOMERS-LOADS-DRAWER-INDEFINITE-LOADING). When dispatch 404s (historically:
+  // INNER JOIN on a deactivated customer — LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END), mdata still
+  // fills the drawer.
   const dispatchLoadQuery = useDispatchLoad(loadId, operatingCompanyId);
-  const dispatchFailed = Boolean(operatingCompanyId && dispatchLoadQuery.isError);
-  const mdataLoadQuery = useLoad(operatingCompanyId ? (dispatchFailed ? loadId : null) : loadId);
-  const loadQuery = !operatingCompanyId
-    ? mdataLoadQuery
-    : dispatchLoadQuery.data
-      ? dispatchLoadQuery
-      : dispatchFailed
-        ? mdataLoadQuery
-        : dispatchLoadQuery;
+  const mdataLoadQuery = useLoad(loadId);
+  const load = (dispatchLoadQuery.data ?? mdataLoadQuery.data) as LoadDetail | undefined;
+  const loadQueryIsLoading =
+    !load && (mdataLoadQuery.isLoading || Boolean(operatingCompanyId && dispatchLoadQuery.isLoading));
+  const loadQueryIsError =
+    !load &&
+    !loadQueryIsLoading &&
+    mdataLoadQuery.isError &&
+    (!operatingCompanyId || dispatchLoadQuery.isError);
+  const loadQueryError = (dispatchLoadQuery.error ?? mdataLoadQuery.error) as Error | undefined;
+  const refetchLoad = () => {
+    void dispatchLoadQuery.refetch();
+    void mdataLoadQuery.refetch();
+  };
   const auditQuery = useLoadAudit(loadId);
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
@@ -178,7 +186,6 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     onSuccess: () => pushToast("Driver instructions distributed", "success"),
   });
 
-  const load = loadQuery.data;
   const flagColorsQuery = useQuery({
     queryKey: ["dispatch-flag-colors", load?.operating_company_id],
     queryFn: () => listDispatchFlagColors(load!.operating_company_id),
@@ -270,7 +277,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         notes: serializeFactoringPackageNotes(nextMeta, packageState.visibleNotes),
       },
     });
-    void loadQuery.refetch();
+    refetchLoad();
   }
 
   async function generateFactoringPackage(auto = false) {
@@ -383,7 +390,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                             onChange={(value) => {
                               if (!value) return;
                               void updateMutation.mutateAsync({ id: load.id, body: { dispatch_flag_color_id: value } }).then(() => {
-                                void loadQuery.refetch();
+                                refetchLoad();
                                 void queryClient.invalidateQueries({ queryKey: ["loads"] });
                               });
                             }}
@@ -674,16 +681,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   />
                 ) : null}
               </div>
-            ) : loadQuery.isError ? (
+            ) : loadQueryIsError ? (
               // BUG 1: never hang silently — surface the error + a retry instead of an endless "Loading…".
               <div className="space-y-2 text-sm">
                 <div className="text-red-700">Couldn't load this load’s overview.</div>
-                <div className="text-xs text-gray-500">{String((loadQuery.error as Error | undefined)?.message ?? "Request failed")}</div>
-                <Button size="sm" variant="secondary" onClick={() => void loadQuery.refetch()}>
+                <div className="text-xs text-gray-500">{String(loadQueryError?.message ?? "Request failed")}</div>
+                <Button size="sm" variant="secondary" onClick={() => refetchLoad()}>
                   Retry
                 </Button>
               </div>
-            ) : loadQuery.isLoading ? (
+            ) : loadQueryIsLoading ? (
               <div className="text-sm text-gray-500">Loading load overview...</div>
             ) : (
               <div className="text-sm text-gray-500">Load not found.</div>
@@ -907,7 +914,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               <PreSettlementPanel
                 driverId={load.assigned_primary_driver_id}
                 operatingCompanyId={load.operating_company_id}
-                onSettled={() => void loadQuery.refetch()}
+                onSettled={() => refetchLoad()}
               />
             ) : (
               <div className="text-sm text-gray-500">No driver assigned to this load.</div>
@@ -921,7 +928,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               loadId={load.id}
               operatingCompanyId={load.operating_company_id}
               canEdit={canEdit}
-              onPacketUpdated={() => void loadQuery.refetch()}
+              onPacketUpdated={() => refetchLoad()}
             />
           ) : null}
 
@@ -990,7 +997,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           onClose={() => setEditWizardOpen(false)}
           onCreated={() => {
             setEditWizardOpen(false);
-            void loadQuery.refetch();
+            refetchLoad();
           }}
         />
       ) : null}
@@ -1000,7 +1007,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           open={reassignOpen}
           onClose={() => {
             setReassignOpen(false);
-            void loadQuery.refetch();
+            refetchLoad();
             void assignmentHistoryQuery.refetch();
           }}
           loadId={load.id}
@@ -1042,7 +1049,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           operatingCompanyId={load.operating_company_id}
           defaultDriverId={load.assigned_primary_driver_id ?? load.assigned_secondary_driver_id}
           onClose={() => setAbandonmentOpen(false)}
-          onRecorded={() => void loadQuery.refetch()}
+          onRecorded={() => refetchLoad()}
         />
       ) : null}
 
@@ -1064,7 +1071,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               "success"
             );
             setCancelOpen(false);
-            void loadQuery.refetch();
+            refetchLoad();
             void auditQuery.refetch();
           }}
         />
