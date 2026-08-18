@@ -226,7 +226,17 @@ export function JournalEntryDetailPage() {
     enabled: Boolean(selectedCompanyId && id),
   });
 
-  if (detailQuery.isLoading) {
+  // LV-JE-DETAIL-COLD-NAV-FALSE-NOT-FOUND: react-query v5 defines isLoading as
+  // `isPending && isFetching` (query-core queryObserver.js). detailQuery is deliberately
+  // `enabled: Boolean(selectedCompanyId && id)`, and on a cold direct navigation (bookmark, shared
+  // link, EntityLink from another tab) selectedCompanyId starts null until CompanyContext's own async
+  // company-list fetch resolves — during that window the query is disabled, so isPending=true but
+  // isFetching=false, making isLoading FALSE even though the query has never run once. That fell
+  // through both guards below straight into "Journal entry not found." for a real, posted JE
+  // (live-reproduced 2026-08-18: JE 0e3bdf59-b242-4dd8-8e43-218687184954 showed "not found" on direct
+  // nav, then loaded correctly on reload). isPending is the version-correct check: true whenever there
+  // is no data yet, whether disabled-and-never-fetched or actively fetching — do not revert to isLoading.
+  if (detailQuery.isPending) {
     return <div className="text-sm text-gray-500">Loading journal entry...</div>;
   }
   if (detailQuery.isError) {
