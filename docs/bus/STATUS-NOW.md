@@ -1,12 +1,14 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T22:00Z
+Updated: 2026-08-18T22:13Z
 
-## WAVE1
-| Module | Status |
-|--------|--------|
-| customers | **145/145 CLOSED** |
-| banking | honesty #9118 (recon gl_je/reverse N/A-PRE-OP drop) — expect 88/88 after deploy |
-| vendors | shipping ap_bill×11 Live Leaves NOW |
-| drivers | residual report_issue N/A-PRE-OP + team_split reverse; #9115 honesty awaiting deploy |
+## WAVE1 BOX4
+| Module | Live/Req | Status |
+|--------|----------|--------|
+| customers | 145/145 | **CLOSED** |
+| banking | 86/86 | **CLOSED** (#9118 honesty) |
+| vendors | 146/146 | **CLOSED** (#9119 Leaves) |
+| drivers | 106/110 | await #9125 deploy → report_issue N/A drop + team-split create/reverse |
 
+## NEXT
+drivers close after healthz≥8e36261 · then **dispatch → safety**
 Live=BLOCKED
