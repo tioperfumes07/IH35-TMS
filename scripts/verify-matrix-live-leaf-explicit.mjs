@@ -142,6 +142,22 @@ function assertServiceWiring(src) {
   if (!/LV-MATRIX-LATER-FAIL-DOES-NOT-SUPERSEDE-OLD-LIVE/.test(src)) {
     errs.push("service must document LV-MATRIX-LATER-FAIL-DOES-NOT-SUPERSEDE-OLD-LIVE");
   }
+  if (!/LV-MATRIX-LEDGER-PARSE-SWALLOW-ZEROS-BOX4/.test(src)) {
+    errs.push("service must document LV-MATRIX-LEDGER-PARSE-SWALLOW-ZEROS-BOX4");
+  }
+  const loadLedger = src.match(/async function loadLedgerRows\([\s\S]*?\n\}/);
+  if (!loadLedger) {
+    errs.push("loadLedgerRows not found");
+  } else {
+    if (/catch\s*\{[\s\S]*?return\s*\[\s*\]\s*;/.test(loadLedger[0])) {
+      errs.push(
+        "loadLedgerRows must NOT catch-and-return [] (silent empty ledger zeros Box 4 Live)",
+      );
+    }
+    if (!/parseFindings\(md\)/.test(loadLedger[0])) {
+      errs.push("loadLedgerRows must call parseFindings(md)");
+    }
+  }
   return errs;
 }
 

@@ -460,18 +460,17 @@ async function loadLedgerRows(): Promise<LedgerRow[]> {
   if (ledgerCache && now - ledgerCache.atMs < MATRIX_CACHE_MS) {
     return ledgerCache.rows;
   }
-  try {
-    const mod = (await import(pathToFileURL(SCOREBOARD_SCRIPT).href)) as {
-      parseFindings: (md: string) => LedgerRow[];
-    };
-    const md = readFileSync(LEDGER_MD, "utf8");
-    const rows = mod.parseFindings(md);
-    ledgerCache = { atMs: now, rows };
-    return rows;
-  } catch {
-    ledgerCache = { atMs: now, rows: [] };
-    return [];
-  }
+  // LV-MATRIX-LEDGER-PARSE-SWALLOW-ZEROS-BOX4 — never return [] on parse failure.
+  // Empty ledger made Box 4 show "0 of N LIVE" while Box 3 stayed 100% Built from disk
+  // @matrix-built tags (looked like Live vanished). Fail closed so /program/matrix errors
+  // loudly until AUDIT-COVERAGE-LIVE.md parseFindings succeeds (no duplicate # / bad pipes).
+  const mod = (await import(pathToFileURL(SCOREBOARD_SCRIPT).href)) as {
+    parseFindings: (md: string) => LedgerRow[];
+  };
+  const md = readFileSync(LEDGER_MD, "utf8");
+  const rows = mod.parseFindings(md);
+  ledgerCache = { atMs: now, rows };
+  return rows;
 }
 
 function loadGuardHits(moduleId: string): string[] {
