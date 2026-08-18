@@ -28,10 +28,15 @@ function assertMigrated(src) {
   if ((src.match(/<ParityTable\b/g) ?? []).length < 2) {
     errors.push(`${PAGE}: expected ≥2 <ParityTable> (register view + audit-history view)`);
   }
-  if (/<table[\s>]/.test(src)) {
+  // printList()'s printLetterHtml({ bodyHtml: `...` }) call builds a raw HTML STRING for a
+  // separate print window, not JSX — <table>/<thead> there are legitimate print-document markup,
+  // not a hand-rolled React table. Strip that one template literal before scanning for hand-rolled
+  // markup, so the check still fires on a REAL accidental JSX <table> anywhere else in the file.
+  const srcNoBodyHtml = src.replace(/bodyHtml:\s*`[\s\S]*?`,/, "bodyHtml: ``,");
+  if (/<table[\s>]/.test(srcNoBodyHtml)) {
     errors.push(`${PAGE}: must not contain hand-rolled <table>`);
   }
-  if (/<thead[\s>]/.test(src)) {
+  if (/<thead[\s>]/.test(srcNoBodyHtml)) {
     errors.push(`${PAGE}: must not contain hand-rolled <thead>`);
   }
   for (const label of [...REGISTER_LABELS, ...AUDIT_LABELS]) {
@@ -115,6 +120,23 @@ function selftest() {
     <ListErrorState title="Couldn't load audit history" status={0} onRetry={() => {}} />
     <ParityTable storageKey="account-register-audit" emptyText="No audit events for this account." />
   `;
+  // The real page's printList() builds a raw print-window HTML string via printLetterHtml — a
+  // legitimate <table>/<thead> there must NOT be flagged as a hand-rolled JSX table.
+  const goodWithPrintTemplate =
+    good +
+    `
+    const printList = () => {
+      printLetterHtml({
+        title: "Account register",
+        bodyHtml: \`
+          <table>
+            <thead><tr><th>Date</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        \`,
+      });
+    };
+  `;
   const bad = `
     import { useMutation } from "@tanstack/react-query";
     export function AccountRegisterPage() {
@@ -126,9 +148,14 @@ function selftest() {
     }
   `;
   const goodErrors = assertMigrated(good);
+  const goodWithPrintErrors = assertMigrated(goodWithPrintTemplate);
   const badErrors = assertMigrated(bad);
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
+    process.exit(1);
+  }
+  if (goodWithPrintErrors.length) {
+    console.error(`${LABEL} --selftest FAIL good-with-print-template fixture (print HTML string false-flagged):`, goodWithPrintErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
