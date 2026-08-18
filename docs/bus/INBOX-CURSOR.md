@@ -3,6 +3,7 @@
 **READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — you are lead + print stack + lists/safety/dispatch/drivers Live.
 
 ## P0 THIS HOUR
+0. **CLAIM HANDOFF:** `LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING` — T149 assigned PEDRO link reaches canonical `/drivers/a785bea7-6dde-4bf9-81b9-b9135c2df4b5` but remains forever on `Loading driver...`; board + audit row 2050; `BLOCKS=compliance:fleet.hos_board:{driver,reverse_link}`.
 1. **PRINT CANONICAL** — invoice/settlement/dispatch Print opens `wrapPdfDocument` `.html?print=1` (not SPA chrome). Global `@media print` hide sidebar for report pages. Guard 3790.
 2. Accept `HANDOFF=Cursor` FE FAILs same turn FAST-MERGE.
 3. Live climb: lists → safety → dispatch → drivers unpaid.
