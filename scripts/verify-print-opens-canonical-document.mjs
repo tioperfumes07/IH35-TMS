@@ -17,6 +17,7 @@ const TARGETS = {
   invoice: path.join(ROOT, "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx"),
   settlement: path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"),
   dispatch: path.join(ROOT, "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
+  cashAdvance: path.join(ROOT, "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx"),
   wrap: path.join(ROOT, "apps/backend/src/render/pdf-template.ts"),
   spaPrint: path.join(ROOT, "apps/frontend/src/index.css"),
 };
@@ -30,6 +31,9 @@ function assertSource() {
   const helper = fs.readFileSync(TARGETS.helper, "utf8");
   if (!helper.includes("export function openPrintableDocument")) {
     fail("missing openPrintableDocument helper");
+  }
+  if (!helper.includes("export function printLetterHtml")) {
+    fail("missing printLetterHtml for client letters (cash advance / confirmations)");
   }
   if (!helper.includes('searchParams.set("print", "1")') && !helper.includes("searchParams.set('print', '1')")) {
     fail("openPrintableDocument must set print=1");
@@ -68,6 +72,14 @@ function assertSource() {
   }
   if (!dispatch.includes("dispatch-sheet.html")) {
     fail("LoadDetailDrawer must open dispatch-sheet.html");
+  }
+
+  const cash = fs.readFileSync(TARGETS.cashAdvance, "utf8");
+  if (/onClick=\{\(\) => window\.print\(\)\}/.test(cash) || cash.includes("onClick={() => window.print()}")) {
+    fail("AdvanceDetailDrawer Print Receipt must not call window.print() on SPA");
+  }
+  if (!cash.includes("printLetterHtml")) {
+    fail("AdvanceDetailDrawer must use printLetterHtml for Print Receipt");
   }
 
   const spa = fs.readFileSync(TARGETS.spaPrint, "utf8");
