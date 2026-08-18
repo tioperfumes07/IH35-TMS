@@ -28,3 +28,5 @@ FE pile · Lists catalog create · EntityLink-only theater · inventing GL math 
 
 ## NEXT FO
 Continue verify:static drain + next unpaid Exact Leaf in accounting/banking — same turn, no pause.
+
+2026-08-18T23:31Z Cursor LEAD | Accounting 39/39 N-of-M ≠ Box4 Live. Money Exact Leaves still CC-1 if unpaid. Live=BLOCKED.
