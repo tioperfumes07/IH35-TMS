@@ -25,8 +25,15 @@ export function openCanonicalDocument(pathWithQuery: string): void {
  * Client-built letter (cash-advance receipt, confirmations without a backend .html route yet).
  * Opens a blank document window — never window.print() on the SPA shell.
  */
-export function printLetterHtml(opts: { title: string; bodyHtml: string }): void {
+export function printLetterHtml(opts: {
+  title: string;
+  bodyHtml: string;
+  /** Optional @page size for wide tables (banking recon / register). */
+  orientation?: "portrait" | "landscape";
+}): void {
   const title = escapeHtml(opts.title);
+  const pageSize = opts.orientation === "landscape" ? "landscape" : "portrait";
+  const maxWidth = opts.orientation === "landscape" ? "1100px" : "720px";
   const doc = `<!doctype html>
 <html lang="en">
 <head>
@@ -35,13 +42,14 @@ export function printLetterHtml(opts: { title: string; bodyHtml: string }): void
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; font-family: Inter, Helvetica, Arial, sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; }
-  .doc { max-width: 720px; margin: 24px auto; padding: 28px 32px; border: 1px solid #d0d0d0; }
+  .doc { max-width: ${maxWidth}; margin: 24px auto; padding: 28px 32px; border: 1px solid #d0d0d0; }
   h1 { font-size: 16px; margin: 0 0 4px; }
   .meta { color: #555; font-size: 11px; margin-bottom: 16px; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #e5e5e5; font-size: 11px; }
   th { color: #555; font-weight: 600; }
-  @media print { .doc { border: none; margin: 0; padding: 12px; } }
+  @page { size: ${pageSize}; margin: 0.4in; }
+  @media print { .doc { border: none; margin: 0; padding: 12px; max-width: none; } }
 </style>
 </head>
 <body>

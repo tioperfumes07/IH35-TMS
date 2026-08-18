@@ -24,7 +24,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { PrintOrientationDialog, applyPrintOrientationStyles } from "./components/PrintOrientationDialog";
+import { PrintOrientationDialog } from "./components/PrintOrientationDialog";
+import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -307,13 +308,64 @@ export function ReconciliationWorkspacePage() {
         onCancel={() => setPrintDialogOpen(false)}
         onConfirm={(orientation) => {
           setPrintDialogOpen(false);
-          const cleanup = applyPrintOrientationStyles(orientation);
-          const done = () => {
-            cleanup();
-            window.removeEventListener("afterprint", done);
-          };
-          window.addEventListener("afterprint", done);
-          window.setTimeout(() => window.print(), 50);
+          const esc = (v: unknown) =>
+            String(v ?? "—")
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
+          const rowsHtml = visibleTransactions
+            .map((tx) => {
+              const matched = Boolean(
+                tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id,
+              );
+              return `<tr>
+                <td>${esc(tx.transaction_date ? formatDateUS(tx.transaction_date) : "—")}</td>
+                <td>${esc(tx.description || "Bank transaction")}</td>
+                <td style="text-align:right">${esc(money(Number(tx.amount_cents ?? 0)))}</td>
+                <td>${esc(matched ? "Matched" : "Unmatched")}</td>
+              </tr>`;
+            })
+            .join("");
+          printLetterHtml({
+            title: `Reconciliation ${session?.period_start ?? ""}–${session?.period_end ?? ""}`,
+            orientation,
+            bodyHtml: `
+              <h1>Bank reconciliation</h1>
+              <div class="meta">${esc(entityLabel(null, effectiveBankAccountId, "Bank account"))} · ${esc(
+                session?.period_start ? formatDateUS(session.period_start) : "—",
+              )} → ${esc(session?.period_end ? formatDateUS(session.period_end) : "—")} · ${esc(
+                orientation,
+              )} · printed ${esc(new Date().toLocaleString())}</div>
+              <table>
+                <tbody>
+                  <tr><th>Beginning balance</th><td>${esc(
+                    balanceHeader ? money(balanceHeader.beginningCents) : "—",
+                  )}</td></tr>
+                  <tr><th>Ending balance</th><td>${esc(
+                    balanceHeader?.endingCents != null ? money(balanceHeader.endingCents) : "—",
+                  )}</td></tr>
+                  <tr><th>Last reconciled</th><td>${esc(
+                    balanceHeader ? formatReconciledDate(balanceHeader.lastReconciledAt) : "—",
+                  )}</td></tr>
+                  <tr><th>Book (matched)</th><td>${esc(money(summary.bookBalanceCents))}</td></tr>
+                  <tr><th>Variance</th><td>${esc(money(summary.varianceCents))}</td></tr>
+                </tbody>
+              </table>
+              <h1 style="margin-top:20px">Transactions (${esc(visibleTransactions.length)})</h1>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Description</th>
+                    <th style="text-align:right">Amount</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml || `<tr><td colspan="4">No rows</td></tr>`}
+                </tbody>
+              </table>
+            `,
+          });
         }}
       />
 
