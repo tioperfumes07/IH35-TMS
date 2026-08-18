@@ -1152,15 +1152,15 @@
     "claimed_by": "codex",
     "purpose": "verify-collapsed-list-filters-single-frame-vertical"
   },
-  "3440": {
-    "claimed_at": "2026-08-18",
-    "lane": "cursor",
-    "purpose": "verify-lists-qbo-bulk-link-transp-only"
-  },
   "3437": {
     "claimed_at": "2026-08-15",
     "claimed_by": "claude-1",
     "purpose": "verify-customer-payment-history-scope-label"
+  },
+  "3440": {
+    "claimed_at": "2026-08-18",
+    "lane": "cursor",
+    "purpose": "verify-lists-qbo-bulk-link-transp-only"
   },
   "3441": {
     "claimed_at": "2026-08-15",
@@ -2005,13 +2005,6 @@
     "finding": "ACCT-F5403",
     "guard": "verify-banking-register-virtual-account-id-accepted"
   },
-  "3790": {
-    "guard": "verify-print-opens-canonical-document",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-18T03:15:00Z",
-    "note": "CLAIM-RESERVE — Print opens wrapPdfDocument HTML (invoice/settlement/dispatch-sheet), not SPA window.print chrome"
-  },
-
   "3762": "verify-docs-soft-delete-recoverable-copy",
   "3764": "verify-maint-wo-create-primary-opens",
   "3766": "verify-dispatch-load-deeplink-opens-drawer",
@@ -2028,6 +2021,12 @@
   "3786": "verify-fleet-oos-status-filter",
   "3788": "verify-maint-wo-console-kanban-view",
   "3789": "verify-payments-deposited-to-account-safe-cast",
+  "3790": {
+    "claimed_at": "2026-08-18T03:15:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-print-opens-canonical-document",
+    "note": "CLAIM-RESERVE \u2014 Print opens wrapPdfDocument HTML (invoice/settlement/dispatch-sheet), not SPA window.print chrome"
+  },
   "3793": "verify-bill-allocation-assets-limit-in-bounds",
   "3797": "verify-cash-advances-view-load-column-present",
   "3801": "verify-payrun-close-panel-settlement-load-links",
@@ -2038,6 +2037,30 @@
   "3821": "verify-settlements-load-ids-reverse-link",
   "3822": "verify-paritytable-nested-interactive-row-click",
   "3825": "verify-g18-expense-line-category-and-load-exemption",
+  "3830": {
+    "claimed_at": "2026-08-18T03:35:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-bill-print-opens-letter-html",
+    "note": "CLAIM-RESERVE \u2014 Bill Print opens letter HTML (wrapPdfDocument), not SPA window.print"
+  },
+  "3832": {
+    "claimed_at": "2026-08-18T03:40:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-bill-payment-print-letter",
+    "note": "CLAIM-RESERVE \u2014 Bill payment Print opens letter HTML, not SPA window.print"
+  },
+  "3834": {
+    "claimed_at": "2026-08-18T03:50:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-expense-print-letter",
+    "note": "CLAIM-RESERVE \u2014 Expense Print opens letter HTML, not SPA window.print"
+  },
+  "3836": {
+    "claimed_at": "2026-08-18T04:00:00Z",
+    "claimed_by": "cursor",
+    "guard": "verify-account-register-print-letter",
+    "note": "CLAIM-RESERVE \u2014 Account register Print opens letter HTML, not SPA window.print"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2045,24 +2068,6 @@
     "cursor": "even (n%2===0)",
     "locked": "2026-08-04",
     "note": "Supersedes 2026-07-28 odd/even-only. Claim-before-write required."
-  },
-  "3830": {
-    "guard": "verify-bill-print-opens-letter-html",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-18T03:35:00Z",
-    "note": "CLAIM-RESERVE — Bill Print opens letter HTML (wrapPdfDocument), not SPA window.print"
-  },
-  "3832": {
-    "guard": "verify-bill-payment-print-letter",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-18T03:40:00Z",
-    "note": "CLAIM-RESERVE — Bill payment Print opens letter HTML, not SPA window.print"
-  },
-  "3834": {
-    "guard": "verify-expense-print-letter",
-    "claimed_by": "cursor",
-    "claimed_at": "2026-08-18T03:50:00Z",
-    "note": "CLAIM-RESERVE — Expense Print opens letter HTML, not SPA window.print"
   },
   "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = \u22611 (mod 4) via claude|/cc-1|/cc1; CC-2 = \u22613 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
