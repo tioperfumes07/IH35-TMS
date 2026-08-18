@@ -1,8 +1,7 @@
-import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type SettlementLeg = {
   load_id: string;
@@ -59,7 +58,7 @@ function LegRow({ label, leg, isCurrent }: { label: string; leg: SettlementLeg |
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className={`w-5 text-xs font-bold ${isCurrent ? "text-slate-700" : "text-gray-500"}`}>{label}</span>
-      <EntityLink kind="load" id={leg.load_id} label={entityLabel(leg.load_number, leg.load_id, "Load")} className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`} />
+      <EntityLinkOrTombstone kind="load" id={leg.load_id} name={leg.load_number} noun="Load" className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`} />
       {isCurrent && (
         <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
           this load
@@ -109,14 +108,10 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-xs text-gray-500">Settlement</div>
-          <div className="font-semibold text-gray-900"><EntityLink kind="settlement" id={settlement.id} label={entityLabel(settlement.display_id, settlement.id, "Record")} /></div>
+          <div className="font-semibold text-gray-900"><EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlement.display_id} noun="Record" /></div>
           {settlement.driver_id ? (
             <div className="text-xs text-gray-600">
-              <EntityLink
-                kind="driver"
-                id={settlement.driver_id}
-                label={entityLabel(settlement.driver_name, settlement.driver_id, "Driver")}
-              />
+              <EntityLinkOrTombstone kind="driver" id={settlement.driver_id} name={settlement.driver_name} noun="Driver" />
             </div>
           ) : null}
         </div>

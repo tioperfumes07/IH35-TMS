@@ -1,10 +1,9 @@
-import { entityLabel } from "../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPreSettlementForDriver, settleAndPay } from "../../api/driverFinance";
 import { formatDateUS } from "../../lib/formatDate";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Props = {
   driverId: string;
@@ -72,7 +71,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
           <div className="font-semibold text-gray-900">
-            <EntityLink kind="settlement" id={settlement.id} label={entityLabel(settlement.display_id, settlement.id, "Record")} />
+            <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlement.display_id} noun="Record" />
           </div>
           <div className="mt-0.5 text-[11px] text-gray-500">
             {settlement.period_start ? formatDateUS(settlement.period_start) : "—"}

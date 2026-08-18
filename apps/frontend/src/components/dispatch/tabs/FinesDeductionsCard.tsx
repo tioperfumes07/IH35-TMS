@@ -9,7 +9,7 @@
 import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EntityLink } from "../../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 import {
   approvePendingEscrowDeduction,
   getPreSettlementForDriver,
@@ -267,11 +267,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
         <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="load-settlement-resolved">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
             Settlement for this load (
-            <EntityLink
-              kind="settlement"
-              id={resolvedSettlement.settlement_id}
-              label={entityLabel(resolvedSettlement.display_id, resolvedSettlement.settlement_id, "Record")}
-            />
+            <EntityLinkOrTombstone kind="settlement" id={resolvedSettlement.settlement_id} name={resolvedSettlement.display_id} noun="Record" />
             )
           </h4>
           <div className="flex items-center justify-between text-xs">
@@ -287,7 +283,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       ) : preSettlementQ.data?.settlement ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
-            Open pre-settlement, no lines yet (<EntityLink kind="settlement" id={preSettlementQ.data.settlement.id} label={entityLabel(preSettlementQ.data.settlement.display_id, preSettlementQ.data.settlement.id, "Record")} />)
+            Open pre-settlement, no lines yet (<EntityLinkOrTombstone kind="settlement" id={preSettlementQ.data.settlement.id} name={preSettlementQ.data.settlement.display_id} noun="Record" />)
           </h4>
           <p className="mb-2 text-xs text-slate-700">
             This is the driver's current open cycle — it does not necessarily mean this load is unpaid; check the
@@ -354,11 +350,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               </div>
               <div className="text-xs text-gray-500">
                 Driver:{" "}
-                <EntityLink
-                  kind="driver"
-                  id={selectedPending.driver_id}
-                  label={entityLabel(selectedPending.driver_name, selectedPending.driver_id, "Driver")}
-                />
+                <EntityLinkOrTombstone kind="driver" id={selectedPending.driver_id} name={selectedPending.driver_name} noun="Driver" />
               </div>
             </div>
             <label className="block text-xs font-semibold uppercase text-gray-600">
