@@ -188,7 +188,7 @@ export function ARAgingPage() {
         breadcrumb={["Reports", "A/R Aging"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Button size="sm" variant="secondary" onClick={printLetter}>
               Print this page
             </Button>
             <Button size="sm" variant="secondary" onClick={exportCsv}>
