@@ -51,11 +51,15 @@ try {
   assertMatches(service, /bp\.payment_date <= \$2::date/, "AP Aging bill_payments must be as-of dated");
   assertMatches(service, /vendor_credit_applications/, "AP Aging must net vendor_credit_applications");
   assertMatches(service, /b\.revoked_at/, "AP Aging must exclude revoked bills (as-of aware)");
-  assertMatches(
-    service,
-    /b\.status NOT IN \('voided', 'draft'\)/,
-    "AP Aging must exclude voided/draft bills",
-  );
+  // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS: accounting.bills.status carries the live value
+  // 'void', never 'voided' — a bare NOT IN ('voided', 'draft') was dead (no row has ever matched
+  // 'voided'), and revoked_at was the only thing actually excluding voided bills. Fixed to
+  // NOT IN ('void', 'voided', 'draft') — 'voided' kept (no-churn precedent, matches
+  // ar-aging.service.ts's identical fix), 'void' added so this clause is no longer decorative.
+  // Require all three values present, not an exact substring match on one fixed ordering.
+  assertMatches(service, /b\.status NOT IN \([^)]*'void'[^)]*\)/, "AP Aging must exclude 'void' status bills (the live value; NOT 'voided')");
+  assertMatches(service, /b\.status NOT IN \([^)]*'voided'[^)]*\)/, "AP Aging must exclude 'voided' status bills (no-churn precedent, kept alongside 'void')");
+  assertMatches(service, /b\.status NOT IN \([^)]*'draft'[^)]*\)/, "AP Aging must exclude draft bills");
 
   assertIncludes(
     service,
