@@ -1,3 +1,13 @@
+# ★★★ HARD TIP 2026-08-18T14:43Z — CC-2 HEARTBEAT REWAKE
+
+GUARD ON. OUTBOX was stale. NOW:
+1. Sample Leaves #8933/#8934 honesty OR next CC-1 money merge
+2. OUTBOX one-liner this hour
+3. Never build
+
+tip=f4aee90d2 · healthz=bf5c05e · Live=BLOCKED
+
+---
 # ★★★ HARD TIP 2026-08-18T14:04Z — CC-2 UNPARKED · GUARD ON
 
 **You are ON for this war.** Role unchanged: **verify live · never build · never merge money you verified.**

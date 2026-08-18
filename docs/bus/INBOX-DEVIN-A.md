@@ -1,3 +1,9 @@
+# ★★★ HARD TIP 2026-08-18T14:43Z — DEVIN HEARTBEAT
+
+LIVE CLAIM fleet NOW (CDP 9227). PASS → tip Cursor Leaves. Then maintenance.
+Do not idle. tip=f4aee90d2 · Live=BLOCKED
+
+---
 # ★★★ HARD TIP 2026-08-18T13:55Z — DEVIN-A · CODEX BACK · LANE UNCHANGED
 
 **Active seats:** Cursor · Devin · CC-1 · **Codex (back)**. No CC-2.
