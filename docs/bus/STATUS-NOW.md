@@ -1,5 +1,5 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-19T10:25Z · continuous FAST-MERGE · fix-never-defer · no idle
+Updated: 2026-08-19T10:40Z · continuous FAST-MERGE · fix-never-defer · no idle
 
 ## LIVE
 **Live=BLOCKED** until Render ancestry catches tip. API healthz=`d3ba75b` · main tip ahead (`3dd5c0f`+). App `/api/v1/healthz/shallow` still SPA HTML — use `https://api.ih35dispatch.com/api/v1/healthz/shallow`.
@@ -18,7 +18,7 @@ Priority-10 Required+`@matrix-built`: **100%** for dispatch · safety · fleet �
 | **Cascade** | merge + audit append · wave cards | builder seat |
 
 ## TIP THIS LOOP
-Cursor silent-apply drain through #9548 Fleet HOS. Next Cursor = residual FE defect OR Live Leaves when healthz==tip. Tip all seats NOW — continuous.
+Devin-A: **FULL INBOX written** — LIVE CLAIM fleet `/fleet` roster now (CDP 9227). Cursor: residual FE / Leaves when tipped. Live=BLOCKED.
 
 ## LAW
 FAST-MERGE (~4m) · fix never defer · Live=BLOCKED · owner not messenger
