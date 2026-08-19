@@ -189,16 +189,20 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get("/api/v1/driver-pay/settlements/:id/payment-events", async (req, reply) => {
+  app.get("/api/v1/driver-pay/settlements/:id/payment-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
+    // ACCT-F5564: every sibling route in this file routes through parseCompanyQuery (which asserts
+    // membership before returning the opco), but this one parsed the query directly and skipped it —
+    // a real cross-tenant leak of payment event history (queued/sent/cleared/bounced timestamps, bank
+    // references). Matched to the established pattern.
+    const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+    if (operatingCompanyId === null) return;
 
-    const events = await listPaymentEvents(params.data.id, query.data.operating_company_id, user.uuid);
+    const events = await listPaymentEvents(params.data.id, operatingCompanyId, user.uuid);
     return { events };
   });
 }

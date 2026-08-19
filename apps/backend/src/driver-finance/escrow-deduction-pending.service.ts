@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { sendEmail } from "../notifications/email.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 type QueryClient = {
   query: <T extends Record<string, unknown> = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -363,6 +364,11 @@ export async function approvePendingDeduction(
   if (userRole !== "Owner") {
     throw new Error("E_OWNER_ONLY: escrow deduction approval is Owner-only");
   }
+  // ACCT-F5564: "Owner" is a per-company role, not global — without this, an Owner of ANY company
+  // could approve a REAL money-deducting record for a driver in ANOTHER company (RLS on both
+  // driver_finance.escrow_deductions_pending and .driver_settlement_deductions has no
+  // org.user_accessible_company_ids() clause, live-verified).
+  await assertCompanyMembership(userId, input.operating_company_id);
 
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
@@ -469,6 +475,8 @@ export async function rejectPendingDeduction(
   if (!input.review_notes || input.review_notes.trim().length < 10) {
     throw new Error("E_REASON_REQUIRED: review_notes >=10 chars required for rejection");
   }
+  // ACCT-F5564: same class as approvePendingDeduction above — "Owner" is per-company.
+  await assertCompanyMembership(userId, input.operating_company_id);
 
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
