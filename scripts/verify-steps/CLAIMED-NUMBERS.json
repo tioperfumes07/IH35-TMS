@@ -4471,5 +4471,9 @@
   "4012": {
     "owner": "cursor",
     "note": "LV-FACTORING-HOME-FILTER-SILENT-APPLY"
+  },
+  "4014": {
+    "owner": "cursor",
+    "note": "LV-FACTORING-SUBMISSION-QUEUE-FILTER-SILENT-APPLY"
   }
 }
