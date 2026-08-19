@@ -875,28 +875,41 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 const method = String(r.assignment_method ?? "");
                 const reason = r.reason_code != null ? String(r.reason_code) : "";
                 const notes = r.notes != null ? String(r.notes) : "";
-                // CLS-UUID-LABEL. This used to render a truncated uuid prefix for the driver — an
-                // 8-character uuid prefix, on the tab that records who a load was taken away from and
-                // given to. The names now come resolved and entity-scoped from the endpoint
-                // (quick-assign.service.ts getAssignmentHistory). Fall back to "Unassigned" when the
-                // id is genuinely null, and to "Driver — not visible" when there IS an id but no name,
-                // which means the driver belongs to another entity and the scoped join found nothing:
-                // that is a real signal and must not be disguised as a name.
-                const driverLabel = (id: unknown, name: unknown) =>
-                  name != null && String(name).trim() !== ""
-                    ? String(name)
-                    : id != null
-                      ? "Driver — not visible"
-                      : "Unassigned";
-                const prev = driverLabel(r.previous_driver_id, r.previous_driver_name);
-                const next = driverLabel(r.new_driver_id, r.new_driver_name);
+                // CLS-UUID-LABEL + Exact Leaves load.drawer.assignment_history:reverse_link —
+                // names resolve entity-scoped from getAssignmentHistory; drill with EntityLinkOrTombstone
+                // (sibling AssignmentHistoryPage). Id null → Unassigned; id+no name → honest tombstone.
+                const prevId = r.previous_driver_id != null ? String(r.previous_driver_id) : null;
+                const nextId = r.new_driver_id != null ? String(r.new_driver_id) : null;
                 return (
                   <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
                     <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
                     <div className="text-xs text-gray-500">{at}</div>
                     <div className="text-sm font-semibold text-gray-800">{method.replace(/_/g, " ")}</div>
-                    <div className="text-xs text-gray-600">
-                      Driver {prev} → {next}
+                    <div className="text-xs text-gray-600" data-testid="load-drawer-assignment-history-driver-links">
+                      Driver{" "}
+                      {prevId ? (
+                        <EntityLinkOrTombstone
+                          kind="driver"
+                          id={prevId}
+                          name={r.previous_driver_name}
+                          noun="Driver"
+                          data-testid="load-drawer-assignment-prev-driver-link"
+                        />
+                      ) : (
+                        <span className="text-slate-400">Unassigned</span>
+                      )}{" "}
+                      →{" "}
+                      {nextId ? (
+                        <EntityLinkOrTombstone
+                          kind="driver"
+                          id={nextId}
+                          name={r.new_driver_name}
+                          noun="Driver"
+                          data-testid="load-drawer-assignment-new-driver-link"
+                        />
+                      ) : (
+                        <span className="text-slate-400">Unassigned</span>
+                      )}
                     </div>
                     {reason ? <div className="mt-1 text-xs text-gray-700">Reason: {reason}</div> : null}
                     {notes ? <div className="mt-1 text-xs text-gray-600">Notes: {notes}</div> : null}
