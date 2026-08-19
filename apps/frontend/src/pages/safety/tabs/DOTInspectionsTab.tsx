@@ -8,6 +8,7 @@ import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDo
 import { followUpDotInspectionEvent, listDotInspectionEvents } from "../../../api/safety";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
+import { Button } from "../../../components/Button";
 import { useListState } from "../../../components/list-state";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
@@ -16,21 +17,52 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../../components/table";
 import { entityLabel } from "../../../lib/entity-label";
+
+const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "" };
 
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  // LST-F5189 — list EntityPicker filters must write URL params (not local-only state).
+  // LST-F5189 — list EntityPicker filters must write URL params on Apply (not silent draft).
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
-  // LST-F5163C: list filters are EntityPickers (allowCreate=false); reverse ?trailer_id= seeds trailerFilter.
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
-  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
-  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
+
+  // LV-SAFETY-DOT-INSPECTIONS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  function patchSearchParam(next: { driverId: string; unitId: string; trailerId: string }) {
+    const p = new URLSearchParams(searchParams);
+    const pairs: Array<["driver_id" | "unit_id" | "trailer_id", string]> = [
+      ["driver_id", next.driverId],
+      ["unit_id", next.unitId],
+      ["trailer_id", next.trailerId],
+    ];
+    for (const [key, value] of pairs) {
+      if (value) p.set(key, value);
+      else p.delete(key);
+    }
+    setSearchParams(p, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    unitId: unitIdFromUrl,
+    trailerId: trailerIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
   const [form, setForm] = useState({
     inspection_date: companyToday(),
     driver_id: "",
@@ -45,52 +77,28 @@ export function DOTInspectionsTab() {
   });
 
   useEffect(() => {
-    setDriverFilterState(driverIdFromUrl);
-  }, [driverIdFromUrl]);
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      unitId: unitIdFromUrl,
+      trailerId: trailerIdFromUrl,
+    }));
+  }, [driverIdFromUrl, unitIdFromUrl, trailerIdFromUrl]);
+
+  // LST-F5163C: reverse ?trailer_id= also seeds create form when empty.
   useEffect(() => {
-    setUnitFilterState(unitIdFromUrl);
-  }, [unitIdFromUrl]);
-  useEffect(() => {
-    setTrailerFilterState(trailerIdFromUrl);
     if (trailerIdFromUrl) {
       setForm((prev) => (prev.trailer_id ? prev : { ...prev, trailer_id: trailerIdFromUrl }));
     }
   }, [trailerIdFromUrl]);
 
-  function patchSearchParam(key: "driver_id" | "unit_id" | "trailer_id", next: string) {
-    const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
-    setSearchParams(p, { replace: true });
-  }
-  function setDriverFilter(next: string) {
-    setDriverFilterState(next);
-    patchSearchParam("driver_id", next);
-  }
-  function setUnitFilter(next: string) {
-    setUnitFilterState(next);
-    patchSearchParam("unit_id", next);
-  }
-  function setTrailerFilter(next: string) {
-    setTrailerFilterState(next);
-    patchSearchParam("trailer_id", next);
-  }
-
   const query = useQuery({
-    queryKey: [
-      "safety-v64",
-      "dot-inspections",
-      companyId,
-      driverFilter,
-      unitFilter,
-      trailerFilter,
-      trailerIdFromUrl,
-    ],
+    queryKey: ["safety-v64", "dot-inspections", companyId, applied.driverId, applied.unitId, applied.trailerId],
     queryFn: () =>
       listDotInspections(companyId, {
-        driver_id: driverFilter.trim() || driverIdFromUrl || undefined,
-        unit_id: unitFilter.trim() || unitIdFromUrl || undefined,
-        trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
+        driver_id: applied.driverId.trim() || undefined,
+        unit_id: applied.unitId.trim() || undefined,
+        trailer_id: applied.trailerId.trim() || undefined,
       }),
     enabled: Boolean(companyId),
   });
@@ -323,14 +331,14 @@ export function DOTInspectionsTab() {
         storageKey="safety-dot-inspections"
         exportFilename="dot-inspections"
         filterBar={
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-wrap items-end gap-3" data-testid="dot-inspections-filters">
             <label className="text-[11px] text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={companyId}
-                value={driverFilter || null}
-                onChange={(next) => setDriverFilter(next ?? "")}
+                value={draft.driverId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
@@ -342,8 +350,8 @@ export function DOTInspectionsTab() {
               <EntityPicker
                 kind="unit"
                 operatingCompanyId={companyId}
-                value={unitFilter || null}
-                onChange={(next) => setUnitFilter(next ?? "")}
+                value={draft.unitId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
@@ -355,14 +363,33 @@ export function DOTInspectionsTab() {
               <EntityPicker
                 kind="trailer"
                 operatingCompanyId={companyId}
-                value={trailerFilter || null}
-                onChange={(next) => setTrailerFilter(next ?? "")}
+                value={draft.trailerId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All trailers"
                 className="mt-1"
                 dataTestId="dot-inspections-trailer-filter"
               />
             </label>
+            <Button type="button" size="sm" data-testid="dot-inspections-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button type="button" size="sm" variant="secondary" data-testid="dot-inspections-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="dot-inspections-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchSearchParam(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
           </div>
         }
       />
