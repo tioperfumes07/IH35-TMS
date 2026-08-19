@@ -10,11 +10,11 @@ export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Recor
       <p className="mt-2 text-xs text-gray-700">Open work orders: {String(maintenance.open_wo_count ?? 0)}</p>
       {workOrders.length > 0 ? (
         <ul className="mt-1 space-y-0.5">
-          {workOrders.map((wo) => (
-            <li key={String(wo.wo_id)} className="text-xs">
+          {workOrders.map((wo, index) => (
+            <li key={wo.wo_id == null ? `work-order-${index}` : String(wo.wo_id)} className="text-xs">
               <EntityLinkOrTombstone
                 kind="work_order"
-                id={String(wo.wo_id)}
+                id={wo.wo_id == null ? null : String(wo.wo_id)}
                 name={wo.display_id}
                 noun="Work order"
                 className="text-slate-700 hover:underline"
