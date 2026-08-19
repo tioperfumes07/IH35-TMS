@@ -781,7 +781,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/compliance/HosTrackerSection.tsx",
     bad: /driver\.driver_name\s*\?\?\s*"—"|driver\.unit_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*driver\.driver_name\s*,\s*driver\.driver_id\s*,\s*"Driver"\s*\)/,
+    // Migrated to EntityLinkOrTombstone — accept either shape.
+    good: /entityLabel\(\s*driver\.driver_name\s*,\s*driver\.driver_id\s*,\s*"Driver"\s*\)|kind="driver"\s+id=\{driver\.driver_id\}\s+name=\{driver\.driver_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
@@ -937,7 +938,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/compliance/HosTrackerSection.tsx",
     bad: /selectedDriver\.unit_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*selectedDriver\.unit_number\s*,\s*selectedDriver\.unit_id\s*,\s*"Unit"\s*\)/,
+    // Migrated to EntityLinkOrTombstone — accept either shape.
+    good: /entityLabel\(\s*selectedDriver\.unit_number\s*,\s*selectedDriver\.unit_id\s*,\s*"Unit"\s*\)|kind="unit"\s+id=\{selectedDriver\.unit_id\}\s+name=\{selectedDriver\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx",
