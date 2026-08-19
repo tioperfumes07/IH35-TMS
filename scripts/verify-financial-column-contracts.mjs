@@ -42,7 +42,12 @@ const KNOWN_COLUMNS = {
     "account_id", "class_id", "entity_uuid", "debit_or_credit", "amount_cents",
     "description", "source_transaction_type", "source_transaction_id",
     "source_transaction_line_id", "posting_batch_id", "idempotency_key",
-    "reversal_of_line_id", "created_at", "updated_at",
+    "reversal_of_line_id", "reversed_by_line_id", "created_at", "updated_at",
+    // BANK-F5330/P23 (202612670000_je_posting_entity_type_discriminator_p23.sql): paired
+    // entity_type discriminator for the polymorphic entity_uuid column, CHECK-constrained to
+    // customer|vendor|driver|unit and to (entity_uuid IS NULL) = (entity_type IS NULL). Live-
+    // verified present on prod 2026-08-19 (information_schema.columns, tiny-field-89581227).
+    "entity_type",
   ]),
   "accounting.posting_batches": new Set([
     "id", "operating_company_id", "batch_status", "source_transaction_type",
