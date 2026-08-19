@@ -3,7 +3,8 @@
  * LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES
  *
  * showMaintenanceColumns must control the Unit cell: maintenance → Link;
- * base /fleet → plain text (row-click navigates). Identical Link arms made the flag dead.
+ * base /fleet → EntityLink (unit|trailer) so reverse_link is Live-clickable.
+ * Identical Link arms made the flag dead — arms must stay distinct.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -23,7 +24,7 @@ export function collectFailures(src) {
     failures.push("FleetTable must keep a showMaintenanceColumns Unit-cell ternary");
   }
   if (!/LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES/.test(src)) {
-    failures.push("Base Unit arm must cite LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES (plain-text contract)");
+    failures.push("Base Unit arm must cite LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES");
   }
 
   const linkUnit = (
@@ -37,12 +38,26 @@ export function collectFailures(src) {
     );
   }
 
+  if (!/from ["']\.\/shared\/EntityLink["']/.test(src) && !/from ["']\.\.\/.*EntityLink["']/.test(src)) {
+    failures.push("FleetTable must import EntityLink for base /fleet Unit cell");
+  }
+
   if (
-    !/Base \/fleet mode:[\s\S]{0,200}<td className="px-2 py-1 font-semibold text-slate-700">\s*\{entityLabel\(row\.unit_number,\s*row\.id,\s*"Unit"\)\}/.test(
+    !/Base \/fleet:[\s\S]{0,400}<EntityLink[\s\S]{0,200}kind=\{row\.kind === "trailer" \? "trailer" : "unit"\}/.test(
       src
     )
   ) {
-    failures.push("Base /fleet Unit cell must be plain-text entityLabel (no Link)");
+    failures.push(
+      "Base /fleet Unit cell must be EntityLink kind unit|trailer (not plain text, not Link)"
+    );
+  }
+
+  if (
+    /Base \/fleet:[\s\S]{0,200}<td className="px-2 py-1 font-semibold text-slate-700">\s*\{entityLabel\(row\.unit_number/.test(
+      src
+    )
+  ) {
+    failures.push("Base /fleet Unit cell must not regress to plain-text entityLabel");
   }
 
   const identicalArms =
@@ -68,7 +83,7 @@ function selftest() {
   }
 
   const plantedIdentical = clean.replace(
-    /\/\* Base \/fleet mode:[\s\S]*?<\/td>/,
+    /\/\* Base \/fleet:[\s\S]*?<\/td>/,
     `<td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
                         <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
                           {entityLabel(row.unit_number, row.id, "Unit")}
@@ -78,6 +93,20 @@ function selftest() {
   if (!collectFailures(plantedIdentical).length) {
     console.error(
       "verify-fleettable-unit-cell-maintenance-mode --selftest FAILED — planted identical Link arms escaped"
+    );
+    process.exit(1);
+  }
+
+  const plantedPlain = clean.replace(
+    /\/\* Base \/fleet:[\s\S]*?<\/td>/,
+    `/* Base /fleet: LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES */
+                      <td className="px-2 py-1 font-semibold text-slate-700">
+                        {entityLabel(row.unit_number, row.id, "Unit")}
+                      </td>`
+  );
+  if (!collectFailures(plantedPlain).length) {
+    console.error(
+      "verify-fleettable-unit-cell-maintenance-mode --selftest FAILED — planted plain-text base escaped"
     );
     process.exit(1);
   }
