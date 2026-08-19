@@ -323,6 +323,11 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // ACCT-F5578: this route (and 4 siblings below) had no role gate -- currentAuthUser only requires
+    // a session. Reusing the file's own void/cancel executor role set (Owner/Administrator/Accountant,
+    // Jorge-locked 2026-06-29) since creating/advancing/holding/releasing a factoring advance is the
+    // same tier of financial-executor operation as this file's own already-gated void route.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = createBodySchema.safeParse(req.body ?? {});
@@ -449,6 +454,8 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/advance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -514,6 +521,8 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/reserve-held", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -587,6 +596,8 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/release", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -694,6 +705,8 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/recourse-return", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
