@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useEffect, useState } from "react";
 import {
   bridgeDetentionBilling,
@@ -15,7 +15,6 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
-import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
@@ -134,15 +133,13 @@ export function DetentionBoardPage() {
       label: "Load",
       sortable: true,
       className: "font-medium",
-      render: (event) => (
-        <EntityLink kind="load" id={event.load_id} label={entityLabel(event.load_number, event.load_id, "Load")} />
-      ),
+      render: (event) => <EntityLinkOrTombstone kind="load" id={event.load_id} name={event.load_number} noun="Load" />,
     },
     {
       key: "customer_name",
       label: "Customer",
       sortable: true,
-      render: (event) => <EntityLink kind="customer" id={event.customer_id} label={entityLabel(event.customer_name, event.customer_id, "Customer")} />,
+      render: (event) => <EntityLinkOrTombstone kind="customer" id={event.customer_id} name={event.customer_name} noun="Customer" />,
     },
     {
       key: "stop_city",
@@ -158,13 +155,13 @@ export function DetentionBoardPage() {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (event) => <EntityLink kind="driver" id={event.driver_id} label={entityLabel(event.driver_name, event.driver_id, "Driver")} />,
+      render: (event) => <EntityLinkOrTombstone kind="driver" id={event.driver_id} name={event.driver_name} noun="Driver" />,
     },
     {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (event) => <EntityLink kind="unit" id={event.unit_id} label={entityLabel(event.unit_number, event.unit_id, "Unit")} />,
+      render: (event) => <EntityLinkOrTombstone kind="unit" id={event.unit_id} name={event.unit_number} noun="Unit" />,
     },
     {
       key: "started_at",
