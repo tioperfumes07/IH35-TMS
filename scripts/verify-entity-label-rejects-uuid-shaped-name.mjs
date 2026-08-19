@@ -513,7 +513,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
     bad: /unit_number\s*\?\?\s*undefined/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /name=\{row\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
@@ -767,17 +767,17 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
     bad: /entityLabel\(\s*load\.unit_number\s*,\s*null\s*,\s*"Unit"\s*\)/,
-    good: /<EntityLink kind="unit" id=\{load\.(?:assigned_unit_id|unit_id)\}/,
+    good: /<(?:EntityLink|EntityLinkOrTombstone) kind="unit" id=\{load\.(?:assigned_unit_id|unit_id)\}/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
     bad: /entityLabel\(\s*load\.(?:driver_short_name|driver_name)\s*,\s*null\s*,\s*"Driver"\s*\)/,
-    good: /<EntityLink kind="driver" id=\{load\.(?:assigned_primary_driver_id|driver_id)\}/,
+    good: /<(?:EntityLink|EntityLinkOrTombstone) kind="driver" id=\{load\.(?:assigned_primary_driver_id|driver_id)\}/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
     bad: /entityLabel\(\s*load\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
-    good: /<EntityLink kind="customer" id=\{load\.customer_id\}/,
+    good: /<(?:EntityLink|EntityLinkOrTombstone) kind="customer" id=\{load\.customer_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/compliance/HosTrackerSection.tsx",
@@ -1100,7 +1100,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/dispatch/LoadWorkOrdersReverseSection.tsx",
     bad: /`\s*·\s*\$\{row\.unit_number\}`/,
-    good: /entityLabel\(String\(row\.unit_number\),\s*String\(row\.unit_id \?\? ""\),\s*"Unit"\)|name=\{String\(row\.unit_number\)\}/,
+    good: /entityLabel\(String\(row\.unit_number\),\s*String\(row\.unit_id \?\? ""\),\s*"Unit"\)|name=\{row\.unit_number \?\? null\}|name=\{String\(row\.unit_number\)\}/,
   },
   {
     rel: "apps/frontend/src/components/safety/LoadSafetyReverseSection.tsx",

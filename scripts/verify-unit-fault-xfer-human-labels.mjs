@@ -19,7 +19,7 @@ function assertAll(srcs) {
     if (/id\.slice\(0,\s*8\)/.test(src) || /deepLinkUnitId\.slice\(0,\s*8\)/.test(src) || /driver_uuid\?\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: still UUID-slices`);
     }
-    if (!/entityLabel\(/.test(src)) {
+    if (!/entityLabel\(/.test(src) && !/EntityLinkOrTombstone/.test(src)) {
       problems.push(`${file}: missing entityLabel`);
     }
   }
