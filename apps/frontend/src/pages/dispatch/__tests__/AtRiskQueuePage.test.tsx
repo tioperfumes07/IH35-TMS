@@ -52,6 +52,35 @@ describe("AtRiskQueuePage", () => {
     expect(screen.getByRole("link", { name: "T169" }).getAttribute("href")).toBe("/fleet/units/unit-1");
   });
 
+  it("renders unavailable related identities as non-interactive tombstones", async () => {
+    vi.spyOn(dispatchApi, "listAtRiskDispatchLoads").mockResolvedValue({
+      loads: [
+        {
+          id: "load-orphan",
+          load_number: null,
+          status: "in_transit",
+          customer_id: "customer-orphan",
+          unit_id: "unit-orphan",
+          driver_id: "driver-orphan",
+          customer_name: null,
+          unit_number: null,
+          driver_name: null,
+          latest_eta_prediction: null,
+          next_stop_scheduled_at: null,
+          delivery_city: null,
+          delivery_state: null,
+        },
+      ],
+    });
+
+    wrap(<AtRiskQueuePage />);
+    expect(await screen.findByText("Load — not visible")).toBeTruthy();
+    expect(screen.getByText("Customer — not visible")).toBeTruthy();
+    expect(screen.getByText("Driver — not visible")).toBeTruthy();
+    expect(screen.getByText("Unit — not visible")).toBeTruthy();
+    expect(screen.queryAllByRole("link")).toHaveLength(1); // Dispatch Home only.
+  });
+
   it("surfaces query failures via ListErrorState (not false-empty)", async () => {
     const user = userEvent.setup();
     const listSpy = vi
