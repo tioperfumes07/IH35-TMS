@@ -5,6 +5,7 @@ import { listDrivers } from "../../api/mdata";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
@@ -184,6 +185,23 @@ export function AssignDriverDropdown({
           onSelectId(next);
         }}
       />
+      {/* Exact Leaves dispatch.modal.load_reassign:driver / assign_driver_dropdown:driver —
+          Combobox labels alone are not a reverse/forward EntityLink. When a driver is selected,
+          expose a real profile hop (cancel-safe; no assign mutation from the link). */}
+      {value ? (
+        <div className="text-xs text-slate-600" data-testid="assign-driver-selected-entitylink">
+          Selected:{" "}
+          <EntityLink
+            kind="driver"
+            id={value}
+            label={entityLabel(
+              optionsRows.find((d) => d.driver_id === value)?.display_name ?? createdOption?.display_name ?? null,
+              value,
+              "Driver"
+            )}
+          />
+        </div>
+      ) : null}
       {pendingUnsafe ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
           <p className="font-semibold">Driver is out of hours today</p>
