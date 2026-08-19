@@ -15,6 +15,7 @@ import {
 } from "./fuel-transaction-import.js";
 import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { flushFuelCardOverageAfterCommit } from "./fuel-card-overage.service.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -43,12 +44,29 @@ async function withCompanyScope<T>(
   });
 }
 
+// ACCT-F5587: POST /fuel/transactions/import (bulk fleet-card spreadsheet import) had no role gate
+// at all -- currentAuthUser only requires a session. This is MORE severe than ACCT-F5586's manual
+// single-row create: a bulk import can inject many fabricated expenses at once, triggers real GL
+// posting (flushFuelGlPostsAfterCommit) AND, when FUEL_CARD_OVERAGE_RECOVERY_ENABLED is on, can
+// create real driver receivables that flow into settlement deductions -- actual money withheld from
+// a driver's pay. Reuses the canonical void/cancel executor role predicate
+// (Owner/Administrator/Accountant), matching accounting/expenses.routes.ts's own accountingRoles and
+// the fix already applied to the sibling fuel-transactions.routes.ts (ACCT-F5586).
+function requireFuelWriteRole(reply: FastifyReply, role: string) {
+  if (!canVoidCancel(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "importing fuel transactions requires an accounting role" });
+    return false;
+  }
+  return true;
+}
+
 export async function registerFuelTransactionImportRoutes(app: FastifyInstance) {
   // Upload a fleet-card TRANSACTION export (Love's / WEX / EFS / Comdata) and
   // persist each purchase into fuel.fuel_transactions (FUEL-1). Idempotent.
-  app.post("/api/v1/fuel/transactions/import", async (req, reply) => {
+  app.post("/api/v1/fuel/transactions/import", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
