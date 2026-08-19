@@ -1307,6 +1307,7 @@ export function DispatchBoard({
         <QuickAssignModal
           open={Boolean(quickAssignLoad)}
           operatingCompanyId={quickAssignLoad.operating_company_id}
+          loadId={quickAssignLoad.id}
           loadNumber={quickAssignLoad.load_number}
           hardWarnings={[]}
           onClose={() => setQuickAssignLoad(null)}
