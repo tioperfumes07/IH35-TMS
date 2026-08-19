@@ -73,7 +73,10 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx",
     bad: /selectedPending\.driver_name\s*\?\?\s*selectedPending\.driver_id/,
-    good: /entityLabel\(\s*selectedPending\.driver_name\s*,\s*selectedPending\.driver_id\s*,\s*"Driver"\s*\)/,
+    // Either the raw entityLabel() call, or the canonical EntityLinkOrTombstone component (which
+    // calls entityLabel/isUnresolvedEntityTombstone internally) wired to the same id/name pair —
+    // both are equally honest; the page migrated to the shared component after this entry was written.
+    good: /entityLabel\(\s*selectedPending\.driver_name\s*,\s*selectedPending\.driver_id\s*,\s*"Driver"\s*\)|id=\{selectedPending\.driver_id\}\s*name=\{selectedPending\.driver_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
@@ -725,7 +728,9 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx",
     bad: /driver_full_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*[\s\S]*driver_full_name[\s\S]*"Driver"\s*\)/,
+    // Trailing-comma tolerant: this call site's args wrap onto their own lines with a trailing
+    // comma before the closing paren (this repo's Prettier default), which the bare \) here missed.
+    good: /entityLabel\(\s*[\s\S]*driver_full_name[\s\S]*"Driver"\s*,?\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/liabilities/components/LiabilityDetailDrawer.tsx",
@@ -958,9 +963,12 @@ const SIBLINGS = [
     good: /entityLabel\(\s*r\.driver_name\s*,\s*r\.driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
+    // The inline entityLabel(r.customer_name, ...) call was extracted into a shared
+    // customerDisplayLabel(row) helper (param renamed r -> row) reused by both the cell render and
+    // the tombstone check — same call, different variable name.
     rel: "apps/frontend/src/pages/reports/CustomerProfitabilityPage.tsx",
     bad: />\{r\.customer_name\}</,
-    good: /entityLabel\(\s*r\.customer_name\s*,\s*r\.customer_id\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*\w+\.customer_name\s*,\s*\w+\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/reports/DeadheadReportPage.tsx",
@@ -1018,9 +1026,12 @@ const SIBLINGS = [
     good: /entityLabel\(\s*String\(row\.driver_name \?\? ""\)\s*,\s*String\(row\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)/,
   },
   {
+    // Both raw paints migrated to governed EntityLinkOrTombstone `name=` props
+    // (id={leg.load_id} name={leg.load_number}, id={settlement.driver_id} name={settlement.driver_name}) —
+    // same shape as ManagementReportPackagePage.tsx / DailyPredictionTab.tsx above.
     rel: "apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx",
-    bad: /\{leg\.load_number\}|\{settlement\.driver_name\}/,
-    good: /entityLabel\(\s*leg\.load_number\s*,\s*leg\.load_id\s*,\s*"Load"\s*\)/,
+    bad: /(?<!=)\{leg\.load_number\}|(?<!=)\{settlement\.driver_name\}/,
+    good: /entityLabel\(\s*leg\.load_number\s*,\s*leg\.load_id\s*,\s*"Load"\s*\)|id=\{leg\.load_id\}\s*name=\{leg\.load_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/reports/MaintenanceCostPerUnitPage.tsx",
@@ -1057,8 +1068,11 @@ const SIBLINGS = [
     good: /entityLabel\(\s*row\.customer_name\s*,\s*row\.customer_id\s*,\s*"Customer"\s*\)|entityLabel\(\s*customerName\s*,\s*customerId\s*,\s*"Customer"\s*\)/,
   },
   {
+    // Same shape as ManagementReportPackagePage.tsx above: `{item.customer_name}` is a legitimate
+    // `name={item.customer_name}` prop value on the governed EntityLinkOrTombstone component when
+    // item.customer_id exists — only a bare (non-prop) paint is the violation.
     rel: "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
-    bad: /\{item\.customer_name\}/,
+    bad: /(?<!=)\{item\.customer_name\}/,
     good: /entityLabel\(\s*item\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
   },
   {
@@ -1620,12 +1634,14 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
     bad: /\(\{bill\.bill_number\}\)/,
-    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"Bill"\s*\)/,
+    // "Driver bill" (not "Bill") is the correct noun here — driver_finance.driver_bills is a
+    // distinct table from accounting.bills; either honest noun satisfies the invariant.
+    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"(?:Bill|Driver bill)"\s*\)/,
   },
   {
     rel: "apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx",
     bad: /\{bill\.bill_number\}/,
-    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"Bill"\s*\)/,
+    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"(?:Bill|Driver bill)"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/PaymentsListPage.tsx",
@@ -1713,9 +1729,10 @@ const SIBLINGS = [
     good: /entityLabel\(\s*c\.display_id\s*,\s*c\.id\s*,\s*"Vendor credit"\s*\)/,
   },
   {
+    // Migrated to governed EntityLinkOrTombstone: id={linkedInvoice.id} name={linkedInvoice.display_id}.
     rel: "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
     bad: /linkedInvoice\.display_id\s*\?\?\s*linkedInvoice\.id/,
-    good: /entityLabel\(\s*linkedInvoice\.display_id\s*,\s*linkedInvoice\.id\s*,\s*"Invoice"\s*\)/,
+    good: /entityLabel\(\s*linkedInvoice\.display_id\s*,\s*linkedInvoice\.id\s*,\s*"Invoice"\s*\)|id=\{linkedInvoice\.id\}\s*name=\{linkedInvoice\.display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx",
