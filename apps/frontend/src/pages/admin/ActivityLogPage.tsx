@@ -8,6 +8,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { useStagedListFilters } from "../../components/table";
 
 function formatEntity(row: AdminActivityItem): string {
   const type = row.entity_type?.trim() ?? "Record";
@@ -15,6 +16,8 @@ function formatEntity(row: AdminActivityItem): string {
   if (!id) return type || "—";
   return `${type} · ${entityLabel(null, id, type) ?? id}`;
 }
+
+const EMPTY_FILTERS = { actorUserId: "", action: "", entityType: "", since: "" };
 
 const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
   {
@@ -58,16 +61,14 @@ export function ActivityLogPage() {
   const auth = useAuth();
   const allowed = auth.user?.role === "Owner" || auth.user?.role === "SuperAdmin";
 
-  const [actorUserId, setActorUserId] = useState("");
-  const [action, setAction] = useState("");
-  const [entityType, setEntityType] = useState("");
-  const [since, setSince] = useState("");
-  const [applied, setApplied] = useState({
-    actorUserId: "",
-    action: "",
-    entityType: "",
-    since: "",
+  // LV-ADMIN-ACTIVITY-LOG-FILTER-NO-CANCEL — draft/applied via useStagedListFilters; Cancel restores draft.
+  const [applied, setApplied] = useState(EMPTY_FILTERS);
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: setApplied,
   });
+  const draft = staged.draft;
 
   const queryKey = useMemo(
     () => ["admin-activity", applied.actorUserId, applied.action, applied.entityType, applied.since],
@@ -102,14 +103,14 @@ export function ActivityLogPage() {
     <div className="space-y-4">
       <PageHeader title="Activity log" subtitle="Latest audit.append_event rows (newest first)" />
 
-      <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800" data-testid="activity-log-filters">
         <div className="grid gap-3 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Actor user id
             <input
               className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
-              value={actorUserId}
-              onChange={(e) => setActorUserId(e.target.value)}
+              value={draft.actorUserId}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, actorUserId: e.target.value }))}
               placeholder="UUID"
             />
           </label>
@@ -117,8 +118,8 @@ export function ActivityLogPage() {
             Action contains
             <input
               className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
+              value={draft.action}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, action: e.target.value }))}
               placeholder="event_class substring"
             />
           </label>
@@ -126,8 +127,8 @@ export function ActivityLogPage() {
             Entity type contains
             <input
               className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
-              value={entityType}
-              onChange={(e) => setEntityType(e.target.value)}
+              value={draft.entityType}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, entityType: e.target.value }))}
               placeholder="payload.entity_type"
             />
           </label>
@@ -136,35 +137,37 @@ export function ActivityLogPage() {
             <DateTimePicker
               className="normal-case"
               aria-label="Since (local)"
-              value={since}
-              onChange={setSince}
+              value={draft.since}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, since: next }))}
             />
           </label>
         </div>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
-            className="rounded-sm bg-slate-900 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-slate-800"
-            onClick={() =>
-              setApplied({
-                actorUserId,
-                action,
-                entityType,
-                since,
-              })
-            }
+            data-testid="activity-log-filter-apply"
+            className="rounded-sm bg-slate-900 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-slate-800 disabled:opacity-50"
+            disabled={!staged.dirty}
+            onClick={staged.apply}
           >
             Apply filters
           </button>
           <button
             type="button"
+            data-testid="activity-log-filter-cancel"
+            className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            disabled={!staged.dirty}
+            onClick={staged.cancel}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            data-testid="activity-log-filter-reset"
             className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:bg-gray-50"
             onClick={() => {
-              setActorUserId("");
-              setAction("");
-              setEntityType("");
-              setSince("");
-              setApplied({ actorUserId: "", action: "", entityType: "", since: "" });
+              staged.cancel();
+              setApplied(EMPTY_FILTERS);
             }}
           >
             Reset
