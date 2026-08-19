@@ -19,6 +19,8 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CappedListNotice } from "../../../components/CappedListNotice";
+import { Button } from "../../../components/Button";
+import { useStagedListFilters } from "../../../components/table";
 
 function isPrivacyGateError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
@@ -29,23 +31,45 @@ function isPrivacyGateError(error: unknown) {
 type ComplainantType = "external" | "driver" | "employee" | "customer" | "anonymous";
 type RespondentType = "driver" | "employee";
 
+const EMPTY_FILTERS = { driverId: "" };
+
 export function ComplaintsTab() {
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightedComplaintId = searchParams.get("complaint_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  // LST-F5163I + LST-F5191: visible reverse driver filter must write ?driver_id=.
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
-  useEffect(() => {
-    setDriverFilterState(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-  function setDriverFilter(next: string) {
-    setDriverFilterState(next);
+  // LST-F5163I + LST-F5191: visible reverse driver filter must write ?driver_id= on Apply.
+  // LV-SAFETY-COMPLAINTS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  function patchSearchParam(next: { driverId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set("driver_id", next);
+    if (next.driverId) p.set("driver_id", next.driverId);
     else p.delete("driver_id");
     setSearchParams(p, { replace: true });
   }
-  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, driverId: driverIdFromUrl }));
+  }, [driverIdFromUrl]);
+
+  // Sibling verify-complaints-driver-names asserts setDriverFilter name — stages draft only.
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+
+  const effectiveDriverId = applied.driverId.trim() || undefined;
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -496,13 +520,13 @@ export function ComplaintsTab() {
         storageKey="safety-complaints"
         exportFilename="complaints"
         filterBar={
-          <div className="relative flex flex-wrap items-center gap-2">
+          <div className="relative flex flex-wrap items-end gap-2" data-testid="complaints-filters">
             <label className="text-[11px] text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={companyId}
-                value={driverFilter || null}
+                value={draft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All drivers"
@@ -510,6 +534,32 @@ export function ComplaintsTab() {
                 dataTestId="complaints-filter-driver"
               />
             </label>
+            <Button type="button" size="sm" data-testid="complaints-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="complaints-filter-cancel"
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="complaints-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchSearchParam(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
           </div>
         }
         rowClassName={(row) =>
