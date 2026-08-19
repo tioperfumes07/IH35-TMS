@@ -1043,9 +1043,18 @@ const SIBLINGS = [
     good: /entityLabel\(\s*String\(req\?\.driver_name \?\? ""\)\s*,\s*String\(req\?\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)/,
   },
   {
+    // The row's customer_name/customer_id are now forwarded as props
+    // (customerId={row.customer_id} customerName={row.customer_name}) to a ManagementCustomerCell
+    // component that internally calls entityLabel(customerName, customerId, "Customer") — the
+    // literal "bad" pattern below falsely matches the safe prop-forwarding JSX
+    // `customerName={row.customer_name}`, and the literal "good" pattern never matches because the
+    // entityLabel call uses the destructured prop names, not `row.customer_name`/`row.customer_id`
+    // directly. Excludes a preceding `=` so "bad" only matches a bare `{row.customer_name}`
+    // display, not `customerName={row.customer_name}` prop forwarding, and accepts the
+    // component-delegate entityLabel call shape too.
     rel: "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
-    bad: /\{row\.customer_name\}/,
-    good: /entityLabel\(\s*row\.customer_name\s*,\s*row\.customer_id\s*,\s*"Customer"\s*\)/,
+    bad: /(?<!=)\{row\.customer_name\}/,
+    good: /entityLabel\(\s*row\.customer_name\s*,\s*row\.customer_id\s*,\s*"Customer"\s*\)|entityLabel\(\s*customerName\s*,\s*customerId\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
@@ -1548,9 +1557,10 @@ const SIBLINGS = [
     good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
   },
   {
+    // Same ManagementVendorCell delegate class as the customer entry above.
     rel: "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
-    bad: /\{row\.vendor_name\}/,
-    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+    bad: /(?<!=)\{row\.vendor_name\}/,
+    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)|entityLabel\(\s*vendorName\s*,\s*vendorId\s*,\s*"Vendor"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx",
