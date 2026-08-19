@@ -4,14 +4,20 @@ import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   issues: InTransitIssue[];
+  totalCount: number;
   onTriage: (issue: InTransitIssue) => void;
 };
 
-export function InTransitTriageBand({ issues, onTriage }: Props) {
+export function InTransitTriageBand({ issues, totalCount, onTriage }: Props) {
   return (
     <div className="rounded-sm border border-slate-300 bg-slate-50">
       <div className="border-b border-slate-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-800">In-Transit Issues</div>
       <div className="max-h-40 overflow-y-auto">
+        {totalCount > issues.length ? (
+          <div className="border-b border-slate-100 px-2 py-1 text-xs text-slate-600" data-testid="in-transit-triage-band-range">
+            Showing {issues.length} of {totalCount} issues.
+          </div>
+        ) : null}
         {issues.map((issue) => (
           <button
             key={issue.id}

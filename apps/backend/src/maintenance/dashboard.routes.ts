@@ -108,13 +108,14 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const companyId = parsed.data.operating_company_id;
 
-    const rows = await withCompany(user.uuid, companyId, async (client) => {
+    const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await relationExists(client, "views.maintenance_intransit_triage_queue"))) {
         if (shouldUseDevFixturesForMaintenance()) {
           console.warn("Maintenance triage queue using DEV fixtures because view is unavailable.");
-          return triageDevFixtures();
+          const issues = triageDevFixtures();
+          return { issues, total_count: issues.length };
         }
-        return [];
+        return { issues: [], total_count: 0 };
       }
       // Reproduces views.maintenance_intransit_triage_queue (0041) EXACTLY — same SELECT/joins/filters/order
       // — and additionally exposes Load # + ETA for design-parity (in-transit-issues.html) without a gated
@@ -139,7 +140,8 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           EXTRACT(epoch FROM (now() - i.reported_at)) / 3600 AS hours_since_report,
           i.load_id,
           CASE WHEN l.id IS NOT NULL THEN COALESCE(l.load_number, l.id::text) END AS load_display_id,
-          s.scheduled_arrival_at::text AS eta_at
+          s.scheduled_arrival_at::text AS eta_at,
+          COUNT(*) OVER()::int AS total_count
         FROM dispatch.intransit_issues i
         JOIN mdata.units u ON u.id = i.unit_id
                           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
@@ -155,14 +157,15 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         ORDER BY i.reported_at DESC
         LIMIT 50
       `, [companyId]);
-      if (res.rows.length > 0) return res.rows;
+      if (res.rows.length > 0) return { issues: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
       if (shouldUseDevFixturesForMaintenance()) {
         console.warn("Maintenance triage queue using DEV fixtures because queue is empty.");
-        return triageDevFixtures();
+        const issues = triageDevFixtures();
+        return { issues, total_count: issues.length };
       }
-      return [];
+      return { issues: [], total_count: 0 };
     });
-    return { issues: rows };
+    return result;
   });
 
   app.get("/api/v1/maintenance/dashboard/recent-activity", async (req, reply) => {

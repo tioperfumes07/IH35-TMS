@@ -352,6 +352,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             />
             <InTransitTriageBand
               issues={triageQuery.data?.issues ?? []}
+              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues.length ?? 0}
               onTriage={(issue) => setTriageIssue(issue)}
             />
             <SevereAlertsBand alerts={severeAlertsQuery.data?.alerts ?? []} />
@@ -398,6 +399,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           : (
             <InTransitIssuesTable
               issues={triageQuery.data?.issues ?? []}
+              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues.length ?? 0}
               loading={
                 triageQuery.isPending ||
                 (triageQuery.isFetching && (triageQuery.data?.issues?.length ?? 0) === 0)
