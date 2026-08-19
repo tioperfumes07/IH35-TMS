@@ -36,7 +36,9 @@ function failures(overrides = {}) {
     ["catalog card routes mounted", [...c.matchAll(/route:\s*"([^"]+)"/g)].map((match) => match[1]).every((route) =>
       manifest.includes(`path="${route}"`) || (route.startsWith("/reports/run/") && manifest.includes('path="/reports/run/:reportId"'))
     )],
-    ["shared page selects exact category", cp.includes("categories.find((value) => value.id === categoryId)")],
+    // Tolerate optional chaining (categories?.find) — the real page added a null-safety `?.` before
+    // .find() that the literal-substring check never accounted for.
+    ["shared page selects exact category", /categories\??\.find\(\(value\) => value\.id === categoryId\)/.test(cp)],
     ["shared page renders canonical cards", cp.includes("category.reports.map") && cp.includes("route={report.route}") && cp.includes("icon={report.icon}")],
     ["shared page honest states", cp.includes("Loading report category") && cp.includes("Couldn't load report category") && cp.includes("Report category not found")],
     ["hub category EntityLink", h.includes('kind="report_category"') && h.includes("id={category.id}")],
