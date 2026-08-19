@@ -15,6 +15,7 @@ vi.mock("../Toast", () => ({
 const truck: UnitsWithoutLoad = {
   id: "u-171",
   unit_number: "T171",
+  trailer_id: null,
   trailer_number: null,
   driver_id: "d-1",
   driver_name: "Joe Driver",
