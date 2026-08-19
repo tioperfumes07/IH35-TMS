@@ -5,6 +5,7 @@ import { Form2290Filings } from "../compliance/Form2290Filings";
 import { resolveApiUrl } from "../../api/client";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -27,7 +28,9 @@ async function fetchForm2290Deadline(companyId: string) {
   const res = await fetch(resolveApiUrl(`/api/v1/compliance/form-2290/upcoming-deadline?operating_company_id=${encodeURIComponent(companyId)}`),
     { credentials: "include" }
   );
-  if (!res.ok) return null;
+  // SAF-PERMITS-DEADLINE-QUERY-ERROR: returning null on !res.ok made deadlineQ succeed with empty
+  // data and the banner say "due date unavailable" — indistinguishable from a real missing deadline.
+  if (!res.ok) throw new Error(`request_failed_${res.status}`);
   return res.json() as Promise<Form2290DeadlinePayload>;
 }
 
@@ -50,6 +53,11 @@ export function Permits({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-4">
+      {deadlineQ.isError ? (
+        <p className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700" data-testid="permits-2290-deadline-query-error">
+          {userFacingApiError(deadlineQ.error, "Could not load Form 2290 deadline.")}
+        </p>
+      ) : (
       <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
         <div className="font-semibold">
           {deadline ? `Form 2290 due ${deadline}` : "Form 2290 due date unavailable"}
@@ -99,6 +107,7 @@ export function Permits({ operatingCompanyId }: Props) {
           </div>
         ) : null}
       </div>
+      )}
       <Form2290Filings />
       <PermitsPage operatingCompanyId={operatingCompanyId} />
     </div>
