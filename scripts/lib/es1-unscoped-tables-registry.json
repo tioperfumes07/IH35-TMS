@@ -365,7 +365,7 @@
       "disposition": "inherit_via_parent",
       "parentIdCol": "task_id",
       "parent": "tasks.task",
-      "fkStatus": "deferred",
+      "fkStatus": "enforced",
       "parentIsolationStatus": "enforced"
     },
     {
@@ -374,7 +374,7 @@
       "disposition": "inherit_via_parent",
       "parentIdCol": "task_id",
       "parent": "tasks.task",
-      "fkStatus": "deferred",
+      "fkStatus": "enforced",
       "parentIsolationStatus": "enforced"
     },
     {
