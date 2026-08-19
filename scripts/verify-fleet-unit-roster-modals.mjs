@@ -31,7 +31,8 @@ export function audit(src) {
   if (!/if \(kindFilter && r\.kind !== kindFilter\) return false/.test(src.tablePage)) {
     failures.push(`${FILES.tablePage}: kind filter must actually apply to the real row set`);
   }
-  if (!/if \(softDeleteFilter === "active" && effectiveStatus && r\.status !== effectiveStatus\) return false/.test(src.tablePage)) {
+  if (!/function rowMatchesFleetStatus\(row: UnifiedUnitRow, status: string\): boolean \{/.test(src.tablePage) ||
+      !/if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false/.test(src.tablePage)) {
     failures.push(`${FILES.tablePage}: roster.filter.status_* must apply a real status filter to truck rows`);
   }
   if (!/const truckBulkMutation = useMutation\(\{/.test(src.table)) {
@@ -68,7 +69,8 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["kind-filter-decl", "tablePage", /const kindFilter = searchParams\.get\("kind"\) \?\? ""/, 'const kindFilter = ""'],
     ["kind-filter-apply", "tablePage", /if \(kindFilter && r\.kind !== kindFilter\) return false/, "if (false) return false"],
-    ["status-filter-apply", "tablePage", /if \(softDeleteFilter === "active" && effectiveStatus && r\.status !== effectiveStatus\) return false/, "if (false) return false"],
+    ["status-filter-helper", "tablePage", /function rowMatchesFleetStatus\(row: UnifiedUnitRow, status: string\): boolean \{/, "function removedFleetStatusFilter(row: UnifiedUnitRow, status: string): boolean {"],
+    ["status-filter-apply", "tablePage", /if \(softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus\(r, effectiveStatus\)\) return false/, "if (false) return false"],
     ["bulk-mutation", "table", /const truckBulkMutation = useMutation\(\{/, "const truckBulkMutationUnused = useMutation({"],
     ["profile-path-fn", "table", /function fleetProfilePath\(row: FleetRow\): string \{/, "function fleetProfilePathUnused(row: FleetRow): string {"],
     ["edit-unit-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, "open={false}"],
