@@ -3,6 +3,7 @@ import { EntityLink } from "../../shared/EntityLink";
 import { apiRequest } from "../../../api/client";
 import { formatDateUS } from "../../../lib/formatDate";
 import { ListErrorBanner } from "../../shared/ListErrorBanner";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = { loadId: string; operatingCompanyId: string; canEdit: boolean };
 
@@ -26,7 +27,12 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No completed border crossings linked to this load.</p> : null}
       {rows.map((row) => (
         <div key={row.id} className="px-2 py-1.5 text-sm">
-          <EntityLink kind="border_crossing" id={row.id} label={row.port_of_entry} className="font-semibold text-slate-700 underline" />
+          <EntityLink
+            kind="border_crossing"
+            id={row.id}
+            label={entityLabel(row.port_of_entry, row.id, "Border crossing")}
+            className="font-semibold text-slate-700 underline"
+          />
           <span className="ml-2 text-xs text-gray-600">{row.direction} · {formatDateUS(row.planned_crossing_date ?? row.crossing_date)} · {row.emanifest_reference ?? "eManifest pending"}</span>
         </div>
       ))}
