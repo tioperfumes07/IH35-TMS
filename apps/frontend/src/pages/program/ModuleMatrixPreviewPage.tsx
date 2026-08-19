@@ -849,9 +849,9 @@ const CSS = `
 .ih35mm .metric .n{font-size:22px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .ih35mm .metric .l{font-size:10px;color:var(--slate-lt);text-transform:uppercase;letter-spacing:.3px;margin-top:8px;line-height:1.3}
 .ih35mm .metric.good .n{color:var(--green)}.ih35mm .metric.amb .n{color:var(--amber)}.ih35mm .metric.big .n{color:var(--red)}
-.ih35mm h2{font-size:13.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);margin:22px 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.ih35mm h2{font-size:13.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);margin:28px 0 14px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .ih35mm h2 .sub{text-transform:none;letter-spacing:0;color:var(--slate-lt);font-weight:400;font-size:12px;margin-left:8px}
-.ih35mm .legend{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--slate)}
+.ih35mm .legend{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 16px;font-size:12px;color:var(--slate)}
 .ih35mm .legend span{display:inline-flex;align-items:center;gap:6px}
 .ih35mm .tri{display:inline-grid;grid-template-columns:repeat(3,14px);gap:2px}
 .ih35mm .bx{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.08);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;line-height:1}
@@ -862,7 +862,7 @@ const CSS = `
 .ih35mm .bx.empty{background:transparent;border-color:transparent}
 .ih35mm .scroll{overflow-x:auto;border-radius:10px;border:1px solid var(--line);background:var(--card)}
 .ih35mm table{width:100%;border-collapse:collapse;min-width:1100px}
-.ih35mm th,.ih35mm td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--line);font-size:12.5px;vertical-align:middle}
+.ih35mm th,.ih35mm td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);font-size:12.5px;vertical-align:middle}
 .ih35mm th{background:#f1f5f9;font-size:10px;text-transform:uppercase;letter-spacing:.25px;color:var(--slate-lt)}
 .ih35mm th.col{text-align:center;min-width:80px;max-width:96px;white-space:normal;line-height:1.2;padding:8px 5px;font-size:9.5px;letter-spacing:.12px}
 .ih35mm th.grp{font-size:10px;letter-spacing:.35px;padding:6px 4px}
@@ -879,7 +879,7 @@ const CSS = `
 .ih35mm td.leaf-cell .pct.lo{background:var(--red-bg);color:var(--red)}
 .ih35mm td.gc{text-align:center;padding:6px 4px}
 .ih35mm tr.section td{background:#f8fafc;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.35px;color:var(--slate)}
-.ih35mm th.sum-col,.ih35mm td.sum-val{text-align:center;min-width:52px;background:#f8fafc;font-variant-numeric:tabular-nums;font-weight:700}
+.ih35mm th.sum-col,.ih35mm td.sum-val{text-align:center;min-width:64px;padding:10px 12px;background:#f8fafc;font-variant-numeric:tabular-nums;font-weight:700}
 .ih35mm td.sum-val.amb{color:var(--amber)}.ih35mm td.sum-val.good{color:var(--green)}.ih35mm td.sum-val.big{color:var(--red)}
 .ih35mm tr.module-total td{background:var(--accent-bg);border-top:2px solid var(--line)}
 .ih35mm .tri4{display:inline-grid;grid-template-columns:repeat(4,14px);gap:2px}
@@ -887,7 +887,7 @@ const CSS = `
 .ih35mm .cell4 .bx{width:16px;height:16px;font-size:10px}
 .ih35mm .bx.live-y{background:#e2e8f0;color:#1F2A44;border-color:#94a3b8}
 .ih35mm .scroll-system{overflow-x:auto;max-width:100%}
-.ih35mm .system-table{min-width:1200px}
+.ih35mm .system-table{min-width:1280px}
 .ih35mm .system-table .sticky-col{position:sticky;left:0;background:var(--card);z-index:1;min-width:140px}
 .ih35mm .system-table .mod-id{display:block;font-size:10px;color:var(--slate-lt);font-weight:400}
 .ih35mm .system-column-board{min-width:1600px}

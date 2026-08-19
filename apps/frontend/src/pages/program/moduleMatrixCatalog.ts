@@ -159,49 +159,58 @@ export const FULLY_WIRED_SYSTEM_COLS: ReadonlyArray<{ id: string; label: string 
   { id: "fw12_live", label: "12 Clicked" },
 ];
 
-export const URGENT_14_MODULE_IDS: readonly MatrixModuleId[] = [
+/** Owner 2026-08-19: 16 modules, A–Z by matrix id (legal + finance hub included). */
+export const URGENT_16_MODULE_IDS: readonly MatrixModuleId[] = [
   "accounting",
-  "customers",
-  "drivers",
-  "vendors",
-  "dispatch",
-  "safety",
-  "fleet",
-  "maintenance",
-  "lists",
-  "settlements",
-  "factoring",
   "banking",
-  "fuel",
-  "inventory",
+  "cash-flow",
+  "customers",
+  "dispatch",
+  "drivers",
+  "factoring",
+  "finance",
+  "fleet",
+  "insurance",
+  "legal",
+  "lists",
+  "maintenance",
+  "safety",
+  "settlements",
+  "vendors",
 ] as const;
 
+/** @deprecated use URGENT_16_MODULE_IDS */
+export const URGENT_14_MODULE_IDS = URGENT_16_MODULE_IDS;
+
+export function isUrgent16Module(id: string): boolean {
+  return (URGENT_16_MODULE_IDS as readonly string[]).includes(id);
+}
+
 export function isUrgent14Module(id: string): boolean {
-  return (URGENT_14_MODULE_IDS as readonly string[]).includes(id);
+  return isUrgent16Module(id);
 }
 
 export function isPriority10Module(id: string): boolean {
   return (PRIORITY_10_MODULE_IDS as readonly string[]).includes(id);
 }
 
-/** Sort: urgent 14 (owner seq) first, then remaining sidebar order. */
+/** Sort: urgent 16 A–Z first, then remaining modules A–Z by label. */
 export function sortModulesPriority10First<T extends { module: string }>(rows: T[]): T[] {
   const byId = new Map(rows.map((r) => [r.module, r]));
   const out: T[] = [];
-  for (const id of URGENT_14_MODULE_IDS) {
+  for (const id of URGENT_16_MODULE_IDS) {
     const hit = byId.get(id);
     if (hit) {
       out.push(hit);
       byId.delete(id);
     }
   }
-  for (const m of MATRIX_MODULES_SIDEBAR_ORDER) {
-    const hit = byId.get(m.id);
-    if (hit) {
-      out.push(hit);
-      byId.delete(m.id);
-    }
-  }
-  for (const leftover of byId.values()) out.push(leftover);
-  return out;
+  const rest = [...byId.values()].sort((a, b) =>
+    matrixModuleLabel(a.module as MatrixModuleId).localeCompare(
+      matrixModuleLabel(b.module as MatrixModuleId),
+      "en",
+      { sensitivity: "base" },
+    ),
+  );
+  return out.concat(rest);
 }
