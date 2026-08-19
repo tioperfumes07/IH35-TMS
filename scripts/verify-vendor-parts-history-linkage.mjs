@@ -20,10 +20,11 @@ function audit(s) {
   if (!/linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid links must fail before insert");
   if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/pil\.vendor_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("list route must apply exact vendor predicate");
   if (!/filters\?: \{ vendor_id\?: string; work_order_id\?: string \}/.test(s.api) || !/query\.set\("vendor_id", filters\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor reverse filter");
-  if (!/listPartsAssignments\(operatingCompanyId, \{ vendor_id: vendorId \}\)/.test(s.reverse)) failures.push("vendor profile must request exact reverse set");
+  if (!/getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId \}\)/.test(s.reverse)) failures.push("vendor profile must request exact reverse page");
   if (/\.filter\(\(row\) => row\.vendor_id === vendorId\)/.test(s.reverse)) failures.push("vendor profile must not browser-filter capped company response");
   if (!/ListErrorBanner/.test(s.reverse) || !/No parts invoices are linked/.test(s.reverse)) failures.push("reverse surface must preserve honest states");
   if (!/kind="work_order"[\s\S]{0,100}work_order_id/.test(s.reverse)) failures.push("reverse rows must drill to canonical work order");
+  if (!/totalCount > rows\.length/.test(s.reverse) || !/Showing \{rows\.length\} of \{totalCount\} parts invoices/.test(s.reverse)) failures.push("capped vendor reverse must disclose exact range");
   if (!/case "work_order":[\s\S]{0,100}maintenance\/work-orders/.test(s.link)) failures.push("work order route must be canonical");
   return failures;
 }
@@ -38,10 +39,11 @@ if (process.argv.includes("--selftest")) {
     ["schema", "route", /vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, ""],
     ["filter", "route", /pil\.vendor_id = \$\$\{values\.length\}::uuid/, "TRUE"],
     ["api", "api", /query\.set\("vendor_id", filters\.vendor_id\)/g, 'query.set("status", filters.vendor_id)'],
-    ["reverse", "reverse", /listPartsAssignments\(operatingCompanyId, \{ vendor_id: vendorId \}\)/, "listPartsAssignments(operatingCompanyId)"],
+    ["reverse", "reverse", /getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId \}\)/, "getPartsAssignmentsPage(operatingCompanyId)"],
     ["error", "reverse", /ListErrorBanner/g, "MissingError"],
     ["drill", "reverse", /kind="work_order"/, 'kind="vendor"'],
     ["route", "link", /case "work_order":/, 'case "work_order_missing":'],
+    ["range", "reverse", /totalCount > rows\.length/, "false"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
