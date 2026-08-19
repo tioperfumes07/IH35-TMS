@@ -787,3 +787,7 @@ verify:static: 99 of ~199 now closed this session. Continuing non-stop, fast-mer
 
 verify:static: 100 of ~199 now closed this session. Continuing non-stop, fast-merge. Halfway point crossed.
 2026-08-19T13:47Z · Cursor LEAD | docs/bus SYNC · OWN money Box4 · Live=BLOCKED
+
+2026-08-19T13:54Z CC-1 | ACCT-F5525 closed (PR #9736, merged a4ede46). GUARD FIX (FIN-19): verify-financial-statements-page-uses-paritytable.mjs FAILed the same print-template <table>/<thead> false positive as ACCT-F5522/F5523/F5524 -- a FOURTH independent guard hitting the identical class, this time on FinancialStatementsPage.tsx's own printLetter() bodyHtml template (P&L/Balance Sheet/Trial Balance printable letter). Added stripTemplateLiterals() (same helper as the 3 prior fixes) before the table checks; 2 new selftest cases prove the exemption is precise. Hand-planted a real <table /> on the live file, guard caught it, restored byte-for-byte. Zero product code touched.
+
+verify:static: 101 of ~199 now closed this session. Continuing non-stop, fast-merge.
