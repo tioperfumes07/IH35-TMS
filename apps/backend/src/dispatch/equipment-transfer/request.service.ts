@@ -48,7 +48,7 @@ export async function initiateTransfer(
 ): Promise<string> {
   const drivers = await client.query(
     `
-      SELECT id::text, equipment_type
+      SELECT id::text
       FROM mdata.drivers
       WHERE id = ANY($1::uuid[])
         AND operating_company_id = $2::uuid
