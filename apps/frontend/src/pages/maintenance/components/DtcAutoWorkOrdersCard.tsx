@@ -19,19 +19,22 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
   });
 
   const rows = query.data?.rows ?? [];
+  const visibleRows = rows.slice(0, 10);
+  const totalCount = query.data?.total_count ?? rows.length;
 
   if (compact) {
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">DTC Auto Work Orders</span>
-          <span className="rounded-sm bg-white px-1.5 text-[10px] font-bold text-gray-600">{rows.length}</span>
+          <span className="rounded-sm bg-white px-1.5 text-[10px] font-bold text-gray-600">{totalCount}</span>
         </div>
         {rows.length === 0 ? (
           <div className="px-2 py-1.5 text-[11px] text-gray-400">No auto-created DTC work orders</div>
         ) : (
+          <div>
           <ul className="flex flex-col">
-            {rows.slice(0, 10).map((row) => {
+            {visibleRows.map((row) => {
               return (
                 <li key={row.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
                   <div className="flex items-center justify-between gap-1">
@@ -46,6 +49,12 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
               );
             })}
           </ul>
+          {totalCount > visibleRows.length ? (
+            <p className="border-t border-gray-100 px-2 py-1 text-[10px] text-slate-500" data-testid="dtc-auto-work-orders-compact-range">
+              Showing {visibleRows.length} of {totalCount} open DTC work orders.
+            </p>
+          ) : null}
+          </div>
         )}
       </section>
     );
@@ -55,13 +64,18 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">DTC Auto Work Orders</h3>
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{rows.length}</span>
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{totalCount}</span>
       </div>
       {rows.length === 0 ? (
         <p className="text-xs text-gray-500">No open auto-created DTC work orders.</p>
       ) : (
         <div className="space-y-2">
-          {rows.slice(0, 10).map((row) => (
+          {totalCount > visibleRows.length ? (
+            <p className="text-xs text-slate-500" data-testid="dtc-auto-work-orders-range">
+              Showing {visibleRows.length} of {totalCount} open DTC work orders.
+            </p>
+          ) : null}
+          {visibleRows.map((row) => (
             <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">
