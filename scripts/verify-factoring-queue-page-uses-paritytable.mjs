@@ -54,8 +54,11 @@ function assertMigrated(src) {
   if (src.includes("/dispatch?view=loads&load_id=")) {
     errors.push(`${PAGE}: must not deep-link the query-param form — canonical is /dispatch/loads/:id`);
   }
-  if (!src.includes("/accounting/invoices/")) {
-    errors.push(`${PAGE}: must keep invoice deep-link`);
+  // Same C5 tightening as the load deep-link above: the invoice cell was also migrated to the
+  // canonical <EntityLink kind="invoice"> primitive (not a hand-rolled /accounting/invoices/ URL
+  // string) — a stricter, shared-component requirement than any raw URL substring.
+  if (!/<EntityLink[^>]*kind=["']invoice["']/.test(src)) {
+    errors.push(`${PAGE}: must keep invoice deep-link — <EntityLink kind="invoice"> (/accounting/invoices/:id)`);
   }
   if (!src.includes("STAGE_PILL")) {
     errors.push(`${PAGE}: must keep packet stage pill styling`);
@@ -79,7 +82,7 @@ function selftest() {
     ];
     const emptyText = rows.length === 0 ? "No delivered loads in factoring queue." : "No loads match the current filter.";
     <EntityLink kind="load" id={row.load_id} label={row.load_number} />
-    <Link to={\`/accounting/invoices/\${row.invoice_id}\`} />
+    <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_display_id} />
     <ParityTable
       storageKey="dispatch-factoring-queue"
       tableTestId="factoring-queue-table"
