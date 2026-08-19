@@ -93,6 +93,13 @@ function run(root = ROOT) {
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact action-log FK/name tombstone coupling missing`);
       if (/entry\.unit_number \?/.test(src)) fails.push(`${c.name}: unit drill incorrectly gated on optional display label`);
     }
+    if (c.name === "FaultDraftsPage") {
+      for (const pattern of [
+        /kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/,
+        /kind="unit" id=\{selected\.unit_id\} name=\{selected\.unit_number\} noun="Unit"/,
+        /kind="work_order"[\s\S]{0,80}id=\{selected\.id\}/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact list/modal reverse identity coupling missing`);
+    }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
       fails.push(`${c.name}: dead generic load or driver action remains`);
     }

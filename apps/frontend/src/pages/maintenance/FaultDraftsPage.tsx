@@ -221,6 +221,9 @@ export function FaultDraftsPage() {
           <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
             <h3 className="text-base font-semibold">{selected.wo_title ?? selected.display_id ?? "Draft WO"}</h3>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{selected.description}</p>
+            <div className="mt-3 text-sm text-slate-700">
+              Unit: <EntityLinkOrTombstone kind="unit" id={selected.unit_id} name={selected.unit_number} noun="Unit" className="font-semibold" />
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <EntityLink
                 kind="work_order"
