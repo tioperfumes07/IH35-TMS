@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { DEFAULT_BASIS } from "./cash-basis/engine.js";
 import { CashBasisSnapshotMissingError, resolveCashBasisRead } from "./cash-basis/read-policy.service.js";
 import { transformProfitLossToCashBasis } from "./cash-basis/report-transforms.js";
@@ -24,13 +25,18 @@ function todayIsoDate() {
 }
 
 export async function registerProfitLossRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/profit-loss", async (req, reply) => {
+  app.get("/api/v1/accounting/profit-loss", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessProfitLoss(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const query = profitLossQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5562: the cash-basis branch below already ran assertCompanyMembership INSIDE
+    // withCompanyScope, but the accrual (default) branch calls getProfitLossReport directly,
+    // bypassing withCompanyScope entirely — a real cross-tenant P&L leak (role-only gate, no
+    // membership check, RLS on accounting.invoices/expenses has no membership clause either).
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const basis = query.data.basis ?? DEFAULT_BASIS;
     const anchorDate = query.data.to_date ?? query.data.from_date ?? todayIsoDate();
 

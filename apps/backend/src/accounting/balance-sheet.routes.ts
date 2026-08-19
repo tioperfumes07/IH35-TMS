@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { getBalanceSheetReport } from "./balance-sheet.service.js";
 import { DEFAULT_BASIS } from "./cash-basis/engine.js";
 import { CashBasisSnapshotMissingError, resolveCashBasisRead } from "./cash-basis/read-policy.service.js";
@@ -24,13 +25,17 @@ function todayIsoDate() {
 }
 
 export async function registerBalanceSheetRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/balance-sheet", async (req, reply) => {
+  app.get("/api/v1/accounting/balance-sheet", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessBalanceSheet(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const query = balanceSheetQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5562: the cash-basis branch below already ran assertCompanyMembership INSIDE
+    // withCompanyScope, but the accrual (default) branch calls getBalanceSheetReport directly,
+    // bypassing withCompanyScope entirely — a real cross-tenant balance-sheet leak.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const asOfDate = query.data.as_of_date ?? todayIsoDate();
     const basis = query.data.basis ?? DEFAULT_BASIS;
