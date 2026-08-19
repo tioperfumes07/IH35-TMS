@@ -172,10 +172,11 @@ function IncidentsBlock({
         <li key={s(incident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
           {/* SAF-B30: was plain text with the comment "no per-record detail surface to open". The
               surface exists — the cluster list now honours ?incident_id= — so this drills through. */}
-          <EntityLink
+          <EntityLinkOrTombstone
             kind={kind.type}
-            id={s(incident.id)}
-            label={s(incident.description) || kind.title}
+            id={s(incident.id) || null}
+            name={s(incident.description) || null}
+            noun={kind.title.slice(0, -1)}
             className="font-semibold"
           />
           <span className="ml-2 text-gray-600">{s(incident.status) || "open"}</span>
@@ -259,10 +260,11 @@ export function AssetSafetyReverseSection({
       >
         {accidents.map((accident) => (
           <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="accident"
               id={s(accident.id) || null}
-              label={entityLabel(s(accident.description) || null, s(accident.id), "Accident")}
+              name={s(accident.description) || null}
+              noun="Accident"
               className="font-semibold text-slate-700"
             />
             <div className="mt-1 text-xs text-gray-600">
@@ -299,10 +301,11 @@ export function AssetSafetyReverseSection({
       >
         {inspections.map((inspection) => (
           <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="dot_inspection"
               id={s(inspection.id) || null}
-              label={`Level ${s(inspection.inspection_level) || "—"} · ${s(inspection.outcome) || "—"}`}
+              name={`Level ${s(inspection.inspection_level) || "—"} · ${s(inspection.outcome) || "—"}`}
+              noun="DOT inspection"
               className="font-semibold text-slate-700"
             />
             <div className="mt-1 text-xs text-gray-600">
@@ -328,10 +331,11 @@ export function AssetSafetyReverseSection({
       >
         {dvirs.map((dvir) => (
           <li key={s(dvir.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="dvir"
               id={s(dvir.id) || null}
-              label={`${s(dvir.type) || "DVIR"} · ${s(dvir.defect_severity) || "none"}`}
+              name={`${s(dvir.type) || "DVIR"} · ${s(dvir.defect_severity) || "none"}`}
+              noun="DVIR"
               className="font-semibold text-slate-700"
             />
             {dvir.driver_id || dvir.driver_name ? (
@@ -352,10 +356,11 @@ export function AssetSafetyReverseSection({
             {dvir.follow_up_wo_id ? (
               <div className="mt-1 text-xs text-gray-600">
                 Follow-up work order{" "}
-                <EntityLink
+                <EntityLinkOrTombstone
                   kind="work_order"
                   id={s(dvir.follow_up_wo_id) || null}
-                  label={entityLabel(dvir.follow_up_wo_display_id, s(dvir.follow_up_wo_id), "Work order")}
+                  name={entityLabel(dvir.follow_up_wo_display_id, s(dvir.follow_up_wo_id), "Work order")}
+                  noun="Work order"
                   className="font-semibold text-slate-700"
                 />
               </div>
