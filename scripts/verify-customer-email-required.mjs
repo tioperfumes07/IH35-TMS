@@ -27,8 +27,8 @@ const TARGETS = [
     ] },
   { rel: "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx", checks: [
       /Email is required/,
-      /invoiceEmail\s*=\s*form\.email\.trim\(\);?\s*$/m,
-      /Billing \/ invoice email[^\n]*\*/,
+      /validateCustomerProfileForCreate\(values\)/,
+      /profileValuesToCreatePayload\(values, operatingCompanyId\)/,
     ] },
   { rel: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx", checks: [
       /Email is required for a customer/,
