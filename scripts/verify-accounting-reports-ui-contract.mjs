@@ -112,9 +112,19 @@ try {
   for (const page of [arAging, apAging]) {
     assertIncludes(page, "Export PDF", "AR/AP aging page must include Export PDF action");
     assertIncludes(page, "Export XLSX", "AR/AP aging page must include Export XLSX action");
-    // CLS-FILTER-GEAR-APPLY — as-of DatePicker must draft; queryKey uses appliedAsOf only after Apply.
-    assertIncludes(page, "appliedAsOf", "AR/AP aging must stage as-of date (appliedAsOf) before refetch");
-    assertIncludes(page, "setAppliedAsOf(asOf)", "AR/AP aging must Apply staged as-of date");
+    // CLS-FILTER-GEAR-APPLY — as-of DatePicker must draft; queryKey uses the applied (post-Apply)
+    // as-of date only. Both pages migrated onto the shared useStagedListFilters(...) primitive
+    // (staged.draft.asOfDate / appliedFilters.asOfDate / staged.apply) instead of the older bespoke
+    // appliedAsOf/setAppliedAsOf(asOf) state pair — CashFlowOverviewPage.tsx (checked separately
+    // below) still uses the bespoke pair, so both shapes are real and current. Accept either.
+    const hasBespokePair = page.includes("appliedAsOf") && page.includes("setAppliedAsOf(asOf)");
+    const hasStagedFilterAsOf =
+      /useStagedListFilters/.test(page) &&
+      /(?:staged\.draft\.asOfDate|appliedFilters\.asOfDate)/.test(page) &&
+      /onApply=\{staged\.apply\}/.test(page);
+    if (!hasBespokePair && !hasStagedFilterAsOf) {
+      throw new Error("AR/AP aging must stage as-of date before refetch (appliedAsOf pair, or useStagedListFilters with asOfDate)");
+    }
   }
   assertIncludes(arAging, "exportArAging(", "AR aging page must call exportArAging");
   assertIncludes(apAging, "exportApAging(", "AP aging page must call exportApAging");
@@ -122,12 +132,21 @@ try {
   const cashFlowOverviewPath = "apps/frontend/src/pages/reports/CashFlowOverviewPage.tsx";
   const cashFlowOverview = read(cashFlowOverviewPath);
   assertIncludes(cashFlowOverview, "appliedAsOf", "Cash flow overview must stage as-of date (appliedAsOf)");
-  assertIncludes(cashFlowOverview, "setAppliedAsOf(asOf)", "Cash flow overview must Apply staged as-of date");
+  // The page now wires the bespoke appliedAsOf setter through useStagedListFilters's onApply(next)
+  // callback — onApply: (next) => setAppliedAsOf(next.asOfDate) — rather than a bare
+  // setAppliedAsOf(asOf) onChange. Accept either shape (bounded, not an unbounded window).
+  if (!/setAppliedAsOf\((?:asOf|next\.asOfDate)\)/.test(cashFlowOverview)) {
+    throw new Error("Cash flow overview must Apply staged as-of date");
+  }
 
   const geofenceReconPath = "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx";
   const geofenceRecon = read(geofenceReconPath);
   assertIncludes(geofenceRecon, "appliedDate", "Geofence recon must stage report date (appliedDate)");
-  assertIncludes(geofenceRecon, "setAppliedDate(date)", "Geofence recon must Apply staged report date");
+  // Same useStagedListFilters onApply(next) wrapping as CashFlowOverviewPage.tsx above:
+  // onApply: (next) => setAppliedDate(next.reportDate), not a bare setAppliedDate(date).
+  if (!/setAppliedDate\((?:date|next\.reportDate)\)/.test(geofenceRecon)) {
+    throw new Error("Geofence recon must Apply staged report date");
+  }
   assertIncludes(scheduleModal, "option.name", "ScheduleReportModal must render report name, not raw id");
   assertIncludes(scheduleModal, "selectedReportName", "ScheduleReportModal must submit a human-readable report name");
   assertIncludes(geofenceReport, "entityLabel(f.geofence_label, f.geofence_id", "GeofenceReconciliationReport must consume the resolved geofence label, not render raw UUID");
