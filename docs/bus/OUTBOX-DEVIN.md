@@ -232,3 +232,14 @@ Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.at_risk | URL=https://a
 Use your Google account or email and password.
 
 Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.detention
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.at_risk | URL=https://app.ih35dispatch.com/dispatch?view=at-risk | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch?view=at-risk ; marker 'At-Risk' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=cf9ca0f | mutation=none | NEXT=dispatch.dispatch.detention
