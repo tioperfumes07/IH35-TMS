@@ -373,11 +373,10 @@
       "tab": "Vehicle Profile",
       "sub": "Trip cost calculator",
       "route_hint": "/fleet/units/:id",
+      "surface_path": "components/vehicle-profile/TripCostCalculator.tsx",
       "required": [
         "unit",
-        "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1037,6 +1036,16 @@
     }
   ],
   "honesty_audit": {
+    "trip_cost_2026_08_19_load_reverse": {
+      "finding": "FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION",
+      "note": "TripCostCalculator is a ZIP-only unit estimator (POST /mdata/units/:id/trip-cost). It does not select, create, or reverse-drill a load — Required load+reverse_link was matrix inflation. Built keeps unit+connectivity with EntityLinkOrTombstone on the unit.",
+      "drops": [
+        {
+          "id": "unit.profile.trip_cost",
+          "removed": ["load", "reverse_link"]
+        }
+      ]
+    },
     "surface_inventory_2026_08_12": {
       "added_leaves": 1,
       "new_columns": [
