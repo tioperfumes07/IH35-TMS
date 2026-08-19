@@ -11,7 +11,11 @@ import {
 import { resolveReversalDate, todayIso } from "./void.service.js";
 // ACCT-F59 second arm — single source of truth for "this load is delivered"; see
 // loadReachedDeliveryEvidence below for why this is imported rather than re-listed.
-import { isDeliveryEvidenceStatus } from "../dispatch/delivery-evidence-latch.js";
+// SYS-F5509 — imported from the small leaf module the predicate lives in, not the full latch module
+// (which itself depends on accounting/invoice-send.service.ts) — importing the latch module here
+// closed an import cycle: invoice-gl -> posting-engine -> delivery-evidence-latch -> invoice-send ->
+// invoice-gl. Same function, same behavior, just a narrower dependency.
+import { isDeliveryEvidenceStatus } from "../dispatch/delivery-evidence-status.js";
 
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
