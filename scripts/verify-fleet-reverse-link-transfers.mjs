@@ -16,7 +16,7 @@ const PAGE = "apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx";
 
 function check(src) {
   const fails = [];
-  if (!/EntityLink/.test(src)) fails.push(`${PAGE}: must import/render EntityLink`);
+  if (!/EntityLink(?:OrTombstone)?/.test(src)) fails.push(`${PAGE}: must import/render EntityLink`);
   if (!/kind="unit"/.test(src) && !/kind="trailer"/.test(src)) fails.push(`${PAGE}: must EntityLink unit or trailer (equipment_id)`);
   if (!/kind="driver"/.test(src) || (src.match(/kind="driver"/g) || []).length < 2) {
     fails.push(`${PAGE}: must EntityLink from_driver and to_driver`);
