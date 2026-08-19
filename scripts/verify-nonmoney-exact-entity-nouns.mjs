@@ -48,6 +48,7 @@ function failures(candidate = files) {
   }
   if (!candidate.claimsReverse.includes('EntityLinkOrTombstone') || !candidate.claimsReverse.includes('kind="claim"') || !candidate.claimsReverse.includes("id={claim.id}") || !candidate.claimsReverse.includes('noun="Claim"')) found.push("claim reverse loses canonical resolved/tombstoned drill");
   if (!candidate.mattersReverse.includes("name={m.matter_number}")) found.push("legal-matter reverse loses canonical human identity");
+  if (!candidate.mattersReverse.includes("const id = m.id == null ? null : String(m.id)")) found.push("legal-matter reverse manufactures an empty historical record id");
   if (!candidate.mattersReverse.includes('kind="matter"') || !candidate.mattersReverse.includes("id={id}")) found.push("legal-matter reverse loses canonical EntityLink");
   if (!candidate.dtc.includes('kind="work_order"') || !candidate.dtc.includes("id={row.id}")) found.push("DTC work-order drill loses canonical EntityLink");
   if (!candidate.woCreate.includes('kind="work_order"') || !candidate.woCreate.includes("id={createdWO.uuid}")) found.push("created work order loses canonical EntityLink");
@@ -68,6 +69,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["claimsReverse", 'kind="claim"', 'kind="load"'],
     ["mattersReverse", 'kind="matter"', 'kind="claim"'],
     ["mattersReverse", 'name={m.matter_number}', 'name={m.id}'],
+    ["mattersReverse", 'const id = m.id == null ? null : String(m.id)', 'const id = String(m.id ?? "")'],
     ["dtc", 'kind="work_order"', 'kind="unit"'],
     ["woCreate", 'id={createdWO.uuid}', 'id={createdWO.display_id}'],
   ];
