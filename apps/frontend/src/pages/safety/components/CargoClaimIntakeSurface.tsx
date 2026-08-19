@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyIncident,
@@ -95,6 +95,7 @@ export function CargoClaimIntakeSurface({
   title,
   subtitle,
 }: Props) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [creating, setCreating] = useState(false);
@@ -319,6 +320,7 @@ export function CargoClaimIntakeSurface({
               kind="customer"
               id={String(row.claimant_customer_id)}
               label={entityLabel(row.claimant_customer_name ?? customerNameById.get(String(row.claimant_customer_id)), row.claimant_customer_id, "Customer")}
+              onClick={() => navigate(`/customers/${String(row.claimant_customer_id)}`)}
             />
           ) : (
             "—"
@@ -347,6 +349,7 @@ export function CargoClaimIntakeSurface({
               kind="driver"
               id={String(row.driver_id)}
               label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+              onClick={() => navigate(`/drivers/${String(row.driver_id)}`)}
             />
           ) : (
             "—"
@@ -952,6 +955,7 @@ export function CargoClaimIntakeSurface({
                     kind="customer"
                     id={String(detail.claimant_customer_id)}
                     label={entityLabel(customerNameById.get(String(detail.claimant_customer_id)), detail.claimant_customer_id, "Customer")}
+                    onClick={() => navigate(`/customers/${String(detail.claimant_customer_id)}`)}
                   />
                 ) : (
                   "—"
@@ -976,6 +980,7 @@ export function CargoClaimIntakeSurface({
                     kind="driver"
                     id={String(detail.driver_id)}
                     label={entityLabel(detail.driver_name, detail.driver_id, "Driver")}
+                    onClick={() => navigate(`/drivers/${String(detail.driver_id)}`)}
                   />
                 ) : (
                   "—"

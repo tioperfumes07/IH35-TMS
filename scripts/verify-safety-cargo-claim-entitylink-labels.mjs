@@ -32,6 +32,14 @@ function assert(sources) {
   if (!/Driver:\{" "\}[\s\S]{0,500}?detail\?\.driver_id[\s\S]{0,500}?kind=["']driver["']/.test(src)) {
     problems.push(`${FE}: cargo claim detail must render the persisted driver FK as an EntityLink`);
   }
+  if (!/onClick=\{\(\) => navigate\(`\/customers\/\$\{String\(row\.claimant_customer_id\)\}`\)\}/.test(src)
+      || !/onClick=\{\(\) => navigate\(`\/customers\/\$\{String\(detail\.claimant_customer_id\)\}`\)\}/.test(src)) {
+    problems.push(`${FE}: customer EntityLinks must explicitly navigate from list and detail surfaces`);
+  }
+  if (!/onClick=\{\(\) => navigate\(`\/drivers\/\$\{String\(row\.driver_id\)\}`\)\}/.test(src)
+      || !/onClick=\{\(\) => navigate\(`\/drivers\/\$\{String\(detail\.driver_id\)\}`\)\}/.test(src)) {
+    problems.push(`${FE}: driver EntityLinks must explicitly navigate from list and detail surfaces`);
+  }
   return problems;
 }
 
@@ -52,6 +60,13 @@ if (process.argv.includes("--selftest")) {
   const noDriver = assert({ [FE]: live[FE].replaceAll('kind="driver"', 'kind="user"') });
   if (!noDriver.some((p) => p.includes("customer/load/driver") || p.includes("driver FK"))) {
     console.error(`${LABEL} SELFTEST FAIL: planted missing driver links not caught`, noDriver);
+    process.exit(1);
+  }
+  const deadCustomer = assert({
+    [FE]: live[FE].replaceAll("onClick={() => navigate(`/customers/${String(row.claimant_customer_id)}`)}", ""),
+  });
+  if (!deadCustomer.some((p) => p.includes("explicitly navigate"))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted dead customer link not caught`, deadCustomer);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
