@@ -2754,6 +2754,11 @@
     "purpose": "verify-saf-photo-session-detail-query-error-surface",
     "date": "2026-08-19"
   },
+  "4126": {
+    "claimed_at": "2026-08-19",
+    "claimed_by": "cursor",
+    "purpose": "verify-fleet-unit-profile-query-settles"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
