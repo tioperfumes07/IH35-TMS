@@ -256,6 +256,14 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       return true;
     });
   }, [allRows, typeFilter, driverFilter, unitFilter, fromDate, toDate]);
+
+  // LV-SAFETY-EVENT-DETAIL-FALLBACK: the list already owns the complete event projection. Keep the
+  // drawer meaningful while the exact detail request settles (or if that request fails transiently)
+  // instead of replacing a populated row with an all-dash panel.
+  const selectedEvent = useMemo(
+    () => detailQuery.data ?? allRows.find((row) => String(row.id) === selectedEventId) ?? null,
+    [detailQuery.data, allRows, selectedEventId],
+  );
   // Bulk-select + CSV export table (SafetyEventsTable) — adapt the v2 events-log row shape onto the
   // table's generic field names. Detail remains one click away via the existing side panel.
   const bulkTableRows = useMemo(
@@ -477,32 +485,32 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           </div>
 
           <div className="mt-3 space-y-2 text-xs text-gray-700">
-            <div><span className="font-semibold">Title:</span> {detailQuery.data?.title ?? "—"}</div>
-            <div><span className="font-semibold">Subject:</span> {detailQuery.data ? renderSubject(detailQuery.data) : "—"}</div>
-            <div><span className="font-semibold">Type:</span> {detailQuery.data?.event_type ?? "—"}</div>
-            <div><span className="font-semibold">Severity:</span> {detailQuery.data?.severity ?? "—"}</div>
-            <div><span className="font-semibold">Status:</span> {detailQuery.data?.status ?? "—"}</div>
-            <div><span className="font-semibold">Occurred:</span> {String(detailQuery.data?.occurred_at ?? "").slice(0, 19).replace("T", " ") || "—"}</div>
-            <div><span className="font-semibold">Location:</span> {detailQuery.data?.location_text ?? "—"}</div>
-            <div><span className="font-semibold">Injuries:</span> {detailQuery.data?.injury_count ?? 0}</div>
-            <div><span className="font-semibold">Fatalities:</span> {detailQuery.data?.fatality_count ?? 0}</div>
-            <div><span className="font-semibold">Tow-away required:</span> {detailQuery.data?.tow_away_required ? "Yes" : "No"}</div>
-            <div><span className="font-semibold">DOT reportable:</span> {detailQuery.data?.dot_reportable ? "Yes" : "No"}</div>
-            <div><span className="font-semibold">Police report #:</span> {detailQuery.data?.police_report_number ?? "—"}</div>
+            <div><span className="font-semibold">Title:</span> {selectedEvent?.title ?? "—"}</div>
+            <div><span className="font-semibold">Subject:</span> {selectedEvent ? renderSubject(selectedEvent) : "—"}</div>
+            <div><span className="font-semibold">Type:</span> {selectedEvent?.event_type ?? "—"}</div>
+            <div><span className="font-semibold">Severity:</span> {selectedEvent?.severity ?? "—"}</div>
+            <div><span className="font-semibold">Status:</span> {selectedEvent?.status ?? "—"}</div>
+            <div><span className="font-semibold">Occurred:</span> {String(selectedEvent?.occurred_at ?? "").slice(0, 19).replace("T", " ") || "—"}</div>
+            <div><span className="font-semibold">Location:</span> {selectedEvent?.location_text ?? "—"}</div>
+            <div><span className="font-semibold">Injuries:</span> {selectedEvent?.injury_count ?? 0}</div>
+            <div><span className="font-semibold">Fatalities:</span> {selectedEvent?.fatality_count ?? 0}</div>
+            <div><span className="font-semibold">Tow-away required:</span> {selectedEvent?.tow_away_required ? "Yes" : "No"}</div>
+            <div><span className="font-semibold">DOT reportable:</span> {selectedEvent?.dot_reportable ? "Yes" : "No"}</div>
+            <div><span className="font-semibold">Police report #:</span> {selectedEvent?.police_report_number ?? "—"}</div>
             <div>
               <span className="font-semibold">Related load:</span>{" "}
-              {detailQuery.data?.related_load_id ? (
+              {selectedEvent?.related_load_id ? (
                 <EntityLink
                   kind="load"
-                  id={detailQuery.data.related_load_id}
-                  label={entityLabel(detailQuery.data.related_load_number, detailQuery.data.related_load_id, "Load")}
+                  id={selectedEvent.related_load_id}
+                  label={entityLabel(selectedEvent.related_load_number, selectedEvent.related_load_id, "Load")}
                   data-testid="safety-event-related-load-link"
                 />
               ) : (
                 "—"
               )}
             </div>
-            <div><span className="font-semibold">Description:</span> {detailQuery.data?.description ?? "—"}</div>
+            <div><span className="font-semibold">Description:</span> {selectedEvent?.description ?? "—"}</div>
           </div>
 
           <div className="mt-4 border-t border-gray-200 pt-3">
