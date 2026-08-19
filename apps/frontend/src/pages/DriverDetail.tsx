@@ -1448,6 +1448,12 @@ export function DriverDetailPage() {
             ))}
             {qualificationsListState.isEmpty ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
           </div>
+          {driver?.operating_company_id ? (
+            <DriverEquipmentTransfersReverseSection
+              operatingCompanyId={String(driver.operating_company_id)}
+              driverId={id}
+            />
+          ) : null}
         </div>
       ) : null}
 
@@ -1570,7 +1576,6 @@ export function DriverDetailPage() {
                   />
                   <DriverReportsReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <DriverTempCoverReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
-                  <DriverEquipmentTransfersReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <DriverHosViolationsReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <MedicalCardsHistorySection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <BackgroundChecksSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
