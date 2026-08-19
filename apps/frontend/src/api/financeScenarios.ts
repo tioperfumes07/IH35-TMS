@@ -31,6 +31,11 @@ export type ForecastLine = {
   gl_account_id: string | null;
   customer_id: string | null;
   vendor_id: string | null;
+  // Human labels for the linkage column, resolved server-side by an entity-scoped join — never
+  // derive a label from the id (FAIL-CP1: EntityLink prints a raw uuid when given an id with no label).
+  customer_name: string | null;
+  vendor_name: string | null;
+  account_name: string | null;
   assumption_note: string;
   estimate_amount_cents: number;
   actual_amount_cents: number | null;

@@ -65,6 +65,12 @@ export type ForecastLineRecord = {
   gl_account_id: string | null;
   customer_id: string | null;
   vendor_id: string | null;
+  // Human labels for the linkage column — resolved by an entity-scoped join in getScenarioDetail(),
+  // never derived from the id. Null when the row has no linkage on that field, or the joined record
+  // could not be resolved in this company (FAIL-CP1 — EntityLink must never fall back to a raw uuid).
+  customer_name: string | null;
+  vendor_name: string | null;
+  account_name: string | null;
   assumption_note: string;
   estimate_amount_cents: number;
   actual_amount_cents: number | null;
@@ -116,6 +122,9 @@ function mapLineRow(row: Record<string, unknown>): ForecastLineRecord {
     gl_account_id: row.gl_account_id == null ? null : String(row.gl_account_id),
     customer_id: row.customer_id == null ? null : String(row.customer_id),
     vendor_id: row.vendor_id == null ? null : String(row.vendor_id),
+    customer_name: row.customer_name == null ? null : String(row.customer_name),
+    vendor_name: row.vendor_name == null ? null : String(row.vendor_name),
+    account_name: row.account_name == null ? null : String(row.account_name),
     assumption_note: String(row.assumption_note),
     estimate_amount_cents: Number(row.estimate_amount_cents),
     actual_amount_cents: row.actual_amount_cents == null ? null : Number(row.actual_amount_cents),
@@ -203,8 +212,18 @@ export async function getScenarioDetail(
   const scenarioRow = scenarioRes.rows[0];
   if (!scenarioRow) return null;
   const linesRes = await client.query<Record<string, unknown>>(
-    `SELECT * FROM finance.forecast_lines WHERE scenario_id = $1::uuid AND operating_company_id = $2::uuid
-     ORDER BY period_index ASC, category_kind ASC, category_label ASC`,
+    `
+      SELECT fl.*, c.customer_name, v.vendor_name, a.account_name
+      FROM finance.forecast_lines fl
+      LEFT JOIN mdata.customers c
+        ON c.id = fl.customer_id AND c.operating_company_id = fl.operating_company_id
+      LEFT JOIN mdata.vendors v
+        ON v.id = fl.vendor_id AND v.operating_company_id = fl.operating_company_id
+      LEFT JOIN catalogs.accounts a
+        ON a.id = fl.gl_account_id AND a.operating_company_id = fl.operating_company_id
+      WHERE fl.scenario_id = $1::uuid AND fl.operating_company_id = $2::uuid
+      ORDER BY fl.period_index ASC, fl.category_kind ASC, fl.category_label ASC
+    `,
     [scenarioId, operatingCompanyId]
   );
   return { scenario: mapScenarioRow(scenarioRow), lines: linesRes.rows.map(mapLineRow) };
