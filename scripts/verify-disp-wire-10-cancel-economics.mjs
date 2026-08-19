@@ -124,11 +124,10 @@ function selftest() {
     ["outcome made silent", (s) => s.split("cancellation_money_artifacts").join("nothing_recorded")],
     [
       "void status without voided_at",
-      (s) =>
-        s.replace(
-          /SET status = 'void',\s*voided_at = now\(\),\s*updated_at = now\(\),\s*updated_by_user_id = \$3/,
-          "SET status = 'void', updated_at = now(), updated_by_user_id = $3"
-        ),
+      // Strips ONLY the `voided_at = now(),` clause right after `SET status = 'void',` — not the
+      // whole SET list — so a later SET-clause addition between voided_at and updated_at (e.g.
+      // void_reason, added after this guard was written) can never make the mutation a silent no-op.
+      (s) => s.replace(/SET status = 'void',\s*voided_at = now\(\),/, "SET status = 'void',"),
     ],
   ];
 
