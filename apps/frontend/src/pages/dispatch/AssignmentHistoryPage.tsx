@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { useStagedListFilters } from "../../components/table";
 
 type Filters = {
   driverId: string;
@@ -25,9 +26,16 @@ const EMPTY_FILTERS: Filters = { driverId: "", from: "", to: "", reason: "" };
 export function AssignmentHistoryPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  // Draft vs applied — filter/gear law: change fields freely; query runs only after Apply.
-  const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
+  // LV-DISPATCH-ASSIGNMENT-HISTORY-FILTER-NO-CANCEL — draft/applied via useStagedListFilters;
+  // Apply commits, Cancel restores draft to applied, Reset clears both (filter/gear law).
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: setApplied,
+  });
+  const draft = staged.draft;
+  const setDraft = staged.setDraft;
 
   const historyQ = useQuery({
     queryKey: [
@@ -184,18 +192,26 @@ render: (row) => {
             size="sm"
             variant="secondary"
             data-testid="assignment-history-filter-reset"
-            onClick={() => {
-              setDraft(EMPTY_FILTERS);
-              setApplied(EMPTY_FILTERS);
-            }}
+            onClick={staged.reset}
           >
             Reset
           </Button>
           <Button
             type="button"
             size="sm"
+            variant="secondary"
+            data-testid="assignment-history-filter-cancel"
+            onClick={staged.cancel}
+            disabled={!staged.dirty}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
             data-testid="assignment-history-filter-apply"
-            onClick={() => setApplied(draft)}
+            onClick={staged.apply}
+            disabled={!staged.dirty}
           >
             Apply
           </Button>
