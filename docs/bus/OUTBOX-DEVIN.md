@@ -321,3 +321,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=430d389 | mutation=none | NEXT=fuel.fuel.list
+Devin-A | LIVE PASS | module=fuel | leaf=fuel.list | URL=https://app.ih35dispatch.com/fuel | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fuel ; marker 'Fuel' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=430d389 | mutation=none | NEXT=settlements.settlements.list
