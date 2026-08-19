@@ -239,7 +239,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/PositionHistoryPage.tsx",
     bad: /unit_number\s*\?\?\s*row\.unit_id|unit_number\?\.trim\(\)\s*\|\|\s*"Unit"/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{row\.unit_id\}\s+name=\{row\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/audit/AuditTrailPage.tsx",
@@ -551,7 +551,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx",
     bad: /unit_number\s*\?\?\s*undefined|driver_name\s*\?\?\s*undefined/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{row\.unit_id\}\s+name=\{row\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/components/TrainingTable.tsx",
@@ -958,7 +958,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx",
     bad: /returnEstimate\?\.unit_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*returnEstimate\?\.unit_number\s*,\s*returnEstimate\?\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{returnEstimate\?\.unit_id\}\s+name=\{returnEstimate\?\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/reports/ARAgingPage.tsx",
