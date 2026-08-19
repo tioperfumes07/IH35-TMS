@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyPermits } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Props = {
   operatingCompanyId: string;
@@ -34,13 +33,14 @@ export function UnitPermitsReverseSection({
         <p className="text-xs text-gray-500">No permits linked to this unit.</p>
       ) : null}
       {permits.map((permit) => {
-        const id = String(permit.id ?? "");
+        const id = permit.id == null ? null : String(permit.id);
         return (
           <div key={id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="permit"
               id={id}
-              label={entityLabel(String(permit.permit_number ?? permit.permit_type ?? ""), id, "Permit")}
+              name={permit.permit_number ?? permit.permit_type}
+              noun="Permit"
             />
             <span className="text-gray-500">Expires {formatDateUS(String(permit.expiry_date ?? ""))}</span>
           </div>
