@@ -19,9 +19,9 @@ const LABEL = "verify-lists-driver-search-and-teams";
 
 const CHECKS = [
   ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /driver: "driver",/],
-  ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /kind=\{kind\} id=\{row\.entity_id\}/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /kind="driver" id=\{row\.primary_driver_id\}/],
-  ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /kind="driver" id=\{row\.secondary_driver_id\}/],
+  ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /kind=\{kind\}\s+id=\{row\.entity_id\}/],
+  ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /slot === "primary" \? row\.primary_driver_id : row\.secondary_driver_id/],
+  ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink\s+kind="driver"\s+id=\{driverId\}/],
   ["apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /<DriverPickerWithCreate\s*\n\s*dataField="primary_driver_id"/],
   ["apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx", /<EntityPicker\s*\n\s*kind="driver"/],
 ];
