@@ -508,7 +508,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx",
     bad: /unit_number\s*\?\?\s*undefined|driver_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /name=\{row\.unit_number\} noun="Unit"|entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
