@@ -183,3 +183,14 @@ Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.overview | URL=https://
 Use your Google account or email and password.
 
 Sign in with | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.kanban
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.kanban | URL=https://app.ih35dispatch.com/dispatch?view=kanban | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch?view=kanban ; marker 'Kanban' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.round_trips
