@@ -4251,5 +4251,10 @@
     "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
     "purpose": "verify-pre-dispatch-validation-entitylinks"
+  },
+  "3920": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-auth-gate-panel-entitylinks"
   }
 }
