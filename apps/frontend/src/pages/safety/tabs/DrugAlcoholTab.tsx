@@ -27,6 +27,10 @@ import { RandomTestingPool } from "../RandomTestingPool";
 import { ReturnToDuty } from "../ReturnToDuty";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DrugAlcoholProgramTab } from "../drug-alcohol/DrugAlcoholProgramTab";
+import { Button } from "../../../components/Button";
+import { useStagedListFilters } from "../../../components/table";
+
+const EMPTY_HISTORY_FILTERS = { type: "", result: "", from: "", to: "" };
 
 const TEST_TYPES = [
   "pre_employment",
@@ -91,10 +95,17 @@ export function DrugAlcoholTab() {
   const [testDate, setTestDate] = useState(() => companyToday());
   const [consortiumName, setConsortiumName] = useState("");
   // Drug-test history filters (client-side over the fetched list).
-  const [filterType, setFilterType] = useState("");
-  const [filterResult, setFilterResult] = useState("");
-  const [filterFrom, setFilterFrom] = useState("");
-  const [filterTo, setFilterTo] = useState("");
+  // LV-SAFETY-DRUG-ALCOHOL-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  // Driver picker stays immediate (create/status context + LST-F5183 URL reverse).
+  const [appliedHistory, setAppliedHistory] = useState(EMPTY_HISTORY_FILTERS);
+  const stagedHistory = useStagedListFilters({
+    applied: appliedHistory,
+    empty: EMPTY_HISTORY_FILTERS,
+    onApply: (next) => {
+      setAppliedHistory(next);
+    },
+  });
+  const historyDraft = stagedHistory.draft;
 
   useEffect(() => {
     setDriverIdState(deepLinkDriverId);
@@ -220,14 +231,14 @@ export function DrugAlcoholTab() {
     const rows = testsQ.data ?? [];
     return rows.filter((row) => {
       if (effectiveDriverId && String(row.driver_id) !== effectiveDriverId) return false;
-      if (filterType && String(row.test_type) !== filterType) return false;
-      if (filterResult && String(row.result) !== filterResult) return false;
+      if (appliedHistory.type && String(row.test_type) !== appliedHistory.type) return false;
+      if (appliedHistory.result && String(row.result) !== appliedHistory.result) return false;
       const testDateStr = String(row.test_date ?? "").slice(0, 10);
-      if (filterFrom && (!testDateStr || testDateStr < filterFrom)) return false;
-      if (filterTo && (!testDateStr || testDateStr > filterTo)) return false;
+      if (appliedHistory.from && (!testDateStr || testDateStr < appliedHistory.from)) return false;
+      if (appliedHistory.to && (!testDateStr || testDateStr > appliedHistory.to)) return false;
       return true;
     });
-  }, [testsQ.data, effectiveDriverId, filterType, filterResult, filterFrom, filterTo]);
+  }, [testsQ.data, effectiveDriverId, appliedHistory]);
 
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
@@ -431,13 +442,13 @@ export function DrugAlcoholTab() {
 
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-slate-900">Drug test history</h2>
-        <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
+        <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="drug-alcohol-history-filters">
           <label className="text-xs text-slate-600">
             Type
             <select
               className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              value={historyDraft.type}
+              onChange={(e) => stagedHistory.setDraft((d) => ({ ...d, type: e.target.value }))}
             >
               <option value="">All types</option>
               {TEST_TYPES.map((type) => (
@@ -451,8 +462,8 @@ export function DrugAlcoholTab() {
             Result
             <select
               className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              value={filterResult}
-              onChange={(e) => setFilterResult(e.target.value)}
+              value={historyDraft.result}
+              onChange={(e) => stagedHistory.setDraft((d) => ({ ...d, result: e.target.value }))}
             >
               <option value="">All results</option>
               {TEST_RESULTS.map((result) => (
@@ -464,26 +475,47 @@ export function DrugAlcoholTab() {
           </label>
           <label className="text-xs text-slate-600">
             From
-            <DatePicker className="mt-1 w-40" value={filterFrom} onChange={(next) => setFilterFrom(next)} placeholder="Any" />
+            <DatePicker
+              className="mt-1 w-40"
+              value={historyDraft.from}
+              onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, from: next }))}
+              placeholder="Any"
+            />
           </label>
           <label className="text-xs text-slate-600">
             To
-            <DatePicker className="mt-1 w-40" value={filterTo} onChange={(next) => setFilterTo(next)} placeholder="Any" />
+            <DatePicker
+              className="mt-1 w-40"
+              value={historyDraft.to}
+              onChange={(next) => stagedHistory.setDraft((d) => ({ ...d, to: next }))}
+              placeholder="Any"
+            />
           </label>
-          {(filterType || filterResult || filterFrom || filterTo) ? (
-            <button
-              type="button"
-              className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700"
-              onClick={() => {
-                setFilterType("");
-                setFilterResult("");
-                setFilterFrom("");
-                setFilterTo("");
-              }}
-            >
-              Clear filters
-            </button>
-          ) : null}
+          <Button type="button" size="sm" data-testid="drug-alcohol-history-filter-apply" onClick={stagedHistory.apply} disabled={!stagedHistory.dirty}>
+            Apply
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid="drug-alcohol-history-filter-cancel"
+            onClick={stagedHistory.cancel}
+            disabled={!stagedHistory.dirty}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid="drug-alcohol-history-filter-reset"
+            onClick={() => {
+              stagedHistory.cancel();
+              setAppliedHistory(EMPTY_HISTORY_FILTERS);
+            }}
+          >
+            Reset
+          </Button>
         </div>
         <DrugAlcoholTable rows={filteredTests as Array<Record<string, unknown>>} />
       </div>
