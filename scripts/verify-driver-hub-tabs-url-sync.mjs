@@ -33,7 +33,9 @@ function assertWiring(readSource = (relativePath) => fs.readFileSync(path.join(R
   }
   if (!inbox.includes('<EntityLink kind="driver"')) throw new Error(`${LABEL}: ${INBOX} must link requests to driver detail`);
   if (!scheduler.includes('<EntityLink kind="driver"')) throw new Error(`${LABEL}: ${SCHEDULER} must link rows to driver detail`);
-  if (!leaveRequests.includes('<EntityLink kind="driver"')) throw new Error(`${LABEL}: ${LEAVE_REQUESTS} must link rows to driver detail`);
+  if (!leaveRequests.includes('<EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver"')) {
+    throw new Error(`${LABEL}: ${LEAVE_REQUESTS} must link rows to driver detail with an honest tombstone fallback`);
+  }
   if (!scheduler.includes("No drivers are available for this operating company.")) throw new Error(`${LABEL}: ${SCHEDULER} must keep an honest empty state`);
   if (!scheduler.includes("Select an operating company") || !leaveRequests.includes("Select an operating company")) {
     throw new Error(`${LABEL}: scheduler surfaces must explain missing company context`);
@@ -49,11 +51,12 @@ function selftest() {
   const originals = new Map([PAGE, INBOX, SCHEDULER, LEAVE_REQUESTS].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
   const cases = [
     [SCHEDULER, '<EntityLink kind="driver"', "driver link"],
+    [LEAVE_REQUESTS, '<EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver"', "leave-request driver link"],
     [SCHEDULER, "No drivers are available for this operating company.", "honest empty state"],
     [LEAVE_REQUESTS, "Select an operating company", "company-context state"],
   ];
   for (const [file, needle, label] of cases) {
-    const mutated = originals.get(file).replace(needle, "");
+    const mutated = originals.get(file).replaceAll(needle, "");
     if (mutated === originals.get(file)) throw new Error(`${LABEL}: inert selftest mutation for ${file}`);
     let failed = false;
     try {

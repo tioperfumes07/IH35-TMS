@@ -41,7 +41,7 @@ function assertWiring(readSourceFn = readSource) {
     [FILES.reporting, reporting, ["ListErrorBanner", "EntityLink", "getInboxReporting", 'data-testid="driver-hub-reporting-need-company"']],
     [FILES.inbox, inbox, ['<EntityLink kind="driver"', "cascadePreview", "Linkage — what posts on approve", "ListErrorBanner", "cashAdvanceRequestsOfficeApi.listPending", 'data-testid="driver-inbox-list-error"', '<SelectCombobox', 'aria-label="Pay from account"']],
     [FILES.scheduler, scheduler, ['<EntityLink kind="driver"', "No drivers are available for this operating company.", "Select an operating company"]],
-    [FILES.leaveRequests, leave, ['<EntityLink kind="driver"', "Select an operating company to view leave requests."]],
+    [FILES.leaveRequests, leave, ['<EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver"', "Select an operating company to view leave requests."]],
   ]) {
     for (const needle of needles) {
       if (!src.includes(needle)) problems.push(`${name} missing ${JSON.stringify(needle)}`);
@@ -72,9 +72,10 @@ function selftest() {
     [FILES.inbox, "Linkage — what posts on approve", "cascade linkage panel"],
     [FILES.inbox, '<SelectCombobox', "searchable pay-from account adapter"],
     [FILES.scheduler, "No drivers are available for this operating company.", "scheduler honest empty"],
+    [FILES.leaveRequests, '<EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver"', "leave-request driver reverse link"],
   ];
   for (const [file, needle, label] of cases) {
-    const mutated = originals[file].replace(needle, "");
+    const mutated = originals[file].replaceAll(needle, "");
     if (mutated === originals[file]) throw new Error(`${LABEL}: inert selftest mutation for ${file}`);
     const problems = assertWiring((rel) => (rel === file ? mutated : originals[rel]));
     if (!problems.length) throw new Error(`${LABEL}: selftest did not reject missing ${label}`);
