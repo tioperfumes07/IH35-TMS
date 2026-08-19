@@ -9,11 +9,12 @@ import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import {
   MATRIX_MODULES_SIDEBAR_ORDER,
-  PRIORITY_10_MODULE_IDS,
-  isPriority10Module,
+  URGENT_14_MODULE_IDS,
+  isUrgent14Module,
   matrixColumnHeaderLabel,
   matrixGroupHeaderLabel,
   sortModulesPriority10First,
+  FULLY_WIRED_SYSTEM_COLS,
 } from "./moduleMatrixCatalog";
 import {
   MatrixBoxTracker,
@@ -38,6 +39,15 @@ type SystemModuleRow = {
   metrics: TierMetrics;
   boxAbl: AblPct;
   columnAbl: Record<string, AblPct>;
+  closedCells?: number;
+  leafCount?: number;
+  modalLeafCount?: number;
+  clickedCells?: number;
+  frozenOps?: number;
+  opsClicked?: number;
+  missOpsClicked?: number;
+  readyAbl?: AblPct;
+  fwAbl?: Record<string, AblPct>;
 };
 
 type SystemPayload = {
@@ -50,6 +60,15 @@ type SystemPayload = {
     moduleCount: number;
     modulesAvailable: number;
     boxAbl: AblPct;
+    closedCells?: number;
+    leafCount?: number;
+    modalLeafCount?: number;
+    clickedCells?: number;
+    frozenOps?: number;
+    opsClicked?: number;
+    missOpsClicked?: number;
+    readyAbl?: AblPct;
+    fwAbl?: Record<string, AblPct>;
   };
   meta?: { tipSha?: string; probeSource?: string; honesty?: string };
 };
@@ -163,8 +182,8 @@ export function ModuleMatrixSystemView() {
     return sortModulesPriority10First(source);
   }, [data?.modules]);
 
-  const priorityRows = orderedRows.filter((r) => isPriority10Module(r.module));
-  const restRows = orderedRows.filter((r) => !isPriority10Module(r.module));
+  const priorityRows = orderedRows.filter((r) => isUrgent14Module(r.module));
+  const restRows = orderedRows.filter((r) => !isUrgent14Module(r.module));
 
   // Feed the tracker with the API's exact integer tallies. Reconstructing counts from rounded
   // percentages can paint 3444/3446 as 3446/3446 and contradict the exact Software total row.
@@ -195,12 +214,19 @@ export function ModuleMatrixSystemView() {
     };
   }, [sys]);
 
-  const colSpan = 1 + columns.length + 3;
+  const colSpan = 1 + columns.length + 11 + FULLY_WIRED_SYSTEM_COLS.length;
 
   const renderModuleRow = (row: SystemModuleRow) => {
     const built = row.metrics?.builtCells ?? Math.round(((row.boxAbl?.builtPct ?? 0) / 100) * (row.boxAbl?.requiredCells ?? 0));
     const live = row.metrics?.liveCells ?? Math.round(((row.boxAbl?.livePct ?? 0) / 100) * (row.boxAbl?.requiredCells ?? 0));
     const queue = row.metrics?.buildQueue ?? Math.max(0, (row.boxAbl?.requiredCells ?? 0) - live);
+    const closed = row.closedCells ?? 0;
+    const leaves = row.leafCount ?? row.metrics?.leafCount ?? 0;
+    const modals = row.modalLeafCount ?? 0;
+    const clicked = row.clickedCells ?? 0;
+    const frozenOps = row.frozenOps ?? 0;
+    const opsClicked = row.opsClicked ?? 0;
+    const missC = row.missOpsClicked ?? Math.max(0, frozenOps - opsClicked);
     return (
       <tr key={row.module} className={row.available ? "" : "dim-row"} data-testid={`system-row-${row.module}`}>
         <td className="sticky-col">
@@ -227,6 +253,33 @@ export function ModuleMatrixSystemView() {
             "—"
           )}
         </td>
+        <td className="sum-val amb">{row.available ? closed : "—"}</td>
+        <td className="sum-val">{row.available ? leaves : "—"}</td>
+        <td className="sum-val">{row.available ? modals : "—"}</td>
+        <td className="sum-val good">{row.available ? clicked : "—"}</td>
+        <td className="sum-val">{row.available ? frozenOps : "—"}</td>
+        <td className="sum-val">{row.available ? opsClicked : "—"}</td>
+        <td className="sum-val big">{row.available ? missC : "—"}</td>
+        <td className="gc">
+          {row.available ? (
+            <AblCell4
+              abl={row.readyAbl ?? EMPTY_ABL}
+              liveOk={ok && row.available}
+              testId={`system-${row.module}-ready-cell4`}
+            />
+          ) : (
+            "—"
+          )}
+        </td>
+        {FULLY_WIRED_SYSTEM_COLS.map((fw) => (
+          <td key={fw.id} className="gc">
+            <AblCell4
+              abl={row.fwAbl?.[fw.id] ?? EMPTY_ABL}
+              liveOk={ok && row.available}
+              testId={`system-${row.module}-${fw.id}-cell4`}
+            />
+          </td>
+        ))}
       </tr>
     );
   };
@@ -254,9 +307,10 @@ export function ModuleMatrixSystemView() {
         </div>
       ) : ok ? (
         <div className="banner live" data-testid="module-matrix-system-live">
-          <b>ALL MODULES — SAME 4-BOX MATRIX.</b> Same LINK · MONEY · CHROME · WIRE columns and ✓/●/✕
-          cells as each module board. Rows: <b>priority 10 first</b> ({PRIORITY_10_MODULE_IDS.length}), then
-          remainder ({restRows.length}). Hover a cell for Audited% · Built% · Live% detail.
+          <b>FROZEN MAP. READY is the 100.</b> Do not add leaves. Ignore Box 4 Live. MONEY parked.
+          READY Live✓ only when Miss C = 0 on frozen ops (non-money) USMCA Clicked+Built. Miss C = true
+          unpaid. LINK/MONEY/CHROME/WIRE/PROC kept. Urgent 14 first ({URGENT_14_MODULE_IDS.length}), then
+          remainder ({restRows.length}).
           {tip ? (
             <>
               {" "}
@@ -352,6 +406,33 @@ export function ModuleMatrixSystemView() {
                 <th className="sum-col" rowSpan={2}>
                   Queue
                 </th>
+                <th className="sum-col" rowSpan={2} title="Named `leaf:col` allowlist — not Box 4">
+                  Named
+                </th>
+                <th className="sum-col" rowSpan={2} title="Required-map leaf count">
+                  Leaves
+                </th>
+                <th className="sum-col" rowSpan={2} title="Leaves whose id/tab looks like create/modal/drawer/wizard">
+                  Modals
+                </th>
+                <th className="sum-col" rowSpan={2} title="Clicked Chrome — USMCA only">
+                  Clicked
+                </th>
+                <th className="sum-col" rowSpan={2} title="Frozen ops Required (excludes money group)">
+                  Frozen
+                </th>
+                <th className="sum-col" rowSpan={2} title="USMCA Clicked on frozen ops cells">
+                  Ops click
+                </th>
+                <th className="sum-col" rowSpan={2} title="True missing — frozen ops cells with no USMCA Clicked">
+                  Miss C
+                </th>
+                <th className="sum-col" rowSpan={2} title="Live ✓ only at 100% Frozen=Ops click and Built. Not Box 4.">
+                  READY
+                </th>
+                <th className="grp" colSpan={FULLY_WIRED_SYSTEM_COLS.length} title="fully_wired">
+                  {matrixGroupHeaderLabel("fully_wired")}
+                </th>
               </tr>
               <tr>
                 {columns.map((c) => (
@@ -359,11 +440,16 @@ export function ModuleMatrixSystemView() {
                     {matrixColumnHeaderLabel(c.id, c.label)}
                   </th>
                 ))}
+                {FULLY_WIRED_SYSTEM_COLS.map((fw) => (
+                  <th key={fw.id} className="col" title={fw.label}>
+                    {fw.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               <tr className="section" data-testid="module-matrix-system-section-priority-10">
-                <td colSpan={colSpan}>Priority 10 — most urgent</td>
+                <td colSpan={colSpan}>Urgent 14 — owner seq</td>
               </tr>
               {priorityRows.map((row) => (
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
@@ -396,6 +482,29 @@ export function ModuleMatrixSystemView() {
                   <td className="sum-val amb">{sys.builtCells ?? "—"}</td>
                   <td className="sum-val good">{sys.liveCells ?? "—"}</td>
                   <td className="sum-val big">{sys.buildQueue ?? "—"}</td>
+                  <td className="sum-val amb">{sys.closedCells ?? "—"}</td>
+                  <td className="sum-val">{sys.leafCount ?? "—"}</td>
+                  <td className="sum-val">{sys.modalLeafCount ?? "—"}</td>
+                  <td className="sum-val good">{sys.clickedCells ?? "—"}</td>
+                  <td className="sum-val">{sys.frozenOps ?? "—"}</td>
+                  <td className="sum-val">{sys.opsClicked ?? "—"}</td>
+                  <td className="sum-val big">{sys.missOpsClicked ?? "—"}</td>
+                  <td className="gc">
+                    <AblCell4
+                      abl={data?.system?.readyAbl ?? EMPTY_ABL}
+                      liveOk={ok}
+                      testId="system-total-ready-cell4"
+                    />
+                  </td>
+                  {FULLY_WIRED_SYSTEM_COLS.map((fw) => (
+                    <td key={fw.id} className="gc">
+                      <AblCell4
+                        abl={data?.system?.fwAbl?.[fw.id] ?? EMPTY_ABL}
+                        liveOk={ok}
+                        testId={`system-total-${fw.id}-cell4`}
+                      />
+                    </td>
+                  ))}
                 </tr>
               </tfoot>
             ) : null}

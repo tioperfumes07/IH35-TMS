@@ -82,6 +82,18 @@ const MATRIX_COLUMN_SHORT: Record<string, string> = {
   legal_matter: "LEGAL",
   invoice: "AR/INV",
   bank: "BANK",
+  fw1_place: "1 PLACE",
+  fw2_canonical: "2 CANON",
+  fw3_money: "3 MONEY",
+  fw4_fwd: "4 FWD",
+  fw5_rev: "5 REV",
+  fw6_matrix: "6 MATRIX",
+  fw7_surface: "7 SURF",
+  fw8_chrome: "8 CHROME",
+  fw9_pickers: "9 PICK+",
+  fw10_rls: "10 RLS",
+  fw11_guard: "11 GUARD",
+  fw12_live: "12 CLICK",
 };
 
 const MATRIX_GROUP_SHORT: Record<string, string> = {
@@ -90,6 +102,7 @@ const MATRIX_GROUP_SHORT: Record<string, string> = {
   chrome: "CHROME",
   wiring: "WIRE",
   process: "PROC",
+  fully_wired: "FULLY WIRED 1–12",
 };
 
 export function matrixColumnHeaderLabel(columnId: string, fullLabel: string): string {
@@ -131,15 +144,51 @@ export const PRIORITY_10_MODULE_IDS: readonly MatrixModuleId[] = [
   "safety",
 ] as const;
 
+export const FULLY_WIRED_SYSTEM_COLS: ReadonlyArray<{ id: string; label: string }> = [
+  { id: "fw1_place", label: "1 Place" },
+  { id: "fw2_canonical", label: "2 Canonical" },
+  { id: "fw3_money", label: "3 Money" },
+  { id: "fw4_fwd", label: "4 Fwd" },
+  { id: "fw5_rev", label: "5 Rev" },
+  { id: "fw6_matrix", label: "6 Matrix" },
+  { id: "fw7_surface", label: "7 Surface" },
+  { id: "fw8_chrome", label: "8 Chrome" },
+  { id: "fw9_pickers", label: "9 Pickers" },
+  { id: "fw10_rls", label: "10 RLS" },
+  { id: "fw11_guard", label: "11 Guard" },
+  { id: "fw12_live", label: "12 Clicked" },
+];
+
+export const URGENT_14_MODULE_IDS: readonly MatrixModuleId[] = [
+  "accounting",
+  "customers",
+  "drivers",
+  "vendors",
+  "dispatch",
+  "safety",
+  "fleet",
+  "maintenance",
+  "lists",
+  "settlements",
+  "factoring",
+  "banking",
+  "fuel",
+  "inventory",
+] as const;
+
+export function isUrgent14Module(id: string): boolean {
+  return (URGENT_14_MODULE_IDS as readonly string[]).includes(id);
+}
+
 export function isPriority10Module(id: string): boolean {
   return (PRIORITY_10_MODULE_IDS as readonly string[]).includes(id);
 }
 
-/** Sort module rows: priority 10 (locked order) first, then remaining sidebar order. */
+/** Sort: urgent 14 (owner seq) first, then remaining sidebar order. */
 export function sortModulesPriority10First<T extends { module: string }>(rows: T[]): T[] {
   const byId = new Map(rows.map((r) => [r.module, r]));
   const out: T[] = [];
-  for (const id of PRIORITY_10_MODULE_IDS) {
+  for (const id of URGENT_14_MODULE_IDS) {
     const hit = byId.get(id);
     if (hit) {
       out.push(hit);

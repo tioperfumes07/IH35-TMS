@@ -618,6 +618,18 @@ export function ModuleMatrixPreviewPage() {
           <div className="l">Leaves<br />on board</div>
         </div>
         <div className="metric">
+          <div className="n">{(metrics as { modalLeafCount?: number }).modalLeafCount ?? "—"}</div>
+          <div className="l">Modals<br />create/drawer</div>
+        </div>
+        <div className="metric">
+          <div className="n">{(metrics as { closedCells?: number }).closedCells ?? "—"}</div>
+          <div className="l">Named<br />`leaf:col`</div>
+        </div>
+        <div className="metric">
+          <div className="n">{(metrics as { clickedCells?: number }).clickedCells ?? "—"}</div>
+          <div className="l">Clicked<br />Chrome 1–3</div>
+        </div>
+        <div className="metric">
           <div className="n">{metrics.unauditedCells}</div>
           <div className="l">Unaudited cells<br />not started</div>
         </div>

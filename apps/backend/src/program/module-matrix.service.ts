@@ -21,10 +21,12 @@ import {
   classifyMatrixCellTier,
   emptyTierBucket,
   finalizeTierMetrics,
+  fullyWiredColumnMatches,
   groupLabel,
   mergeTierBuckets,
   sortGroupRollups,
   matrixPct,
+  FULLY_WIRED_MATRIX_ITEMS,
   type MatrixCellTier,
   type MatrixGroupRollup,
   type MatrixTierMetrics,
@@ -46,6 +48,24 @@ const REPO_ROOT = (() => {
 const SCOREBOARD_SCRIPT = path.join(REPO_ROOT, "scripts/audit-coverage-scoreboard.mjs");
 const PROGRAM_SCOREBOARD_JSON = path.join(REPO_ROOT, "docs/audit/program-scoreboard.json");
 const LEDGER_MD = path.join(REPO_ROOT, "docs/audit/AUDIT-COVERAGE-LIVE.md");
+const OUTBOX_CLICKED_FILES = [
+  "docs/bus/OUTBOX-DEVIN.md",
+  "docs/bus/OUTBOX-DEVIN-A.md",
+  "docs/bus/OUTBOX-CODEX.md",
+];
+const CLICKED_EXACT_N = /LIVE PASS\s*[·|-]\s*([1-3])\s+EXACT CELLS?/i;
+const MODALISH_LEAF_RE = /create|modal|drawer|wizard|popup|dialog|\bpicker\b/i;
+
+/** Frozen READY excludes money-group cells (QBO books parked). USMCA-only Clicked. */
+function isOpsReadyColumn(group: string): boolean {
+  return (group || "other") !== "money";
+}
+
+function isUsmcaClickedHay(hay: string): boolean {
+  const h = hay.replace(/\*\*/g, "");
+  if (/\bTRANSP\b/i.test(h) && !/\bUSMCA\b/i.test(h)) return false;
+  return /\bUSMCA\b/i.test(h) || /selected-usmca/i.test(h);
+}
 const GUARD_MD = path.join(REPO_ROOT, "docs/audit/GUARD-WORKORDERS.md");
 const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
 const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
@@ -68,6 +88,12 @@ export type MatrixCell = {
   /** Mutually exclusive tier used for ribbon % (required cells only) */
   tier?: MatrixCellTier;
   liveReason?: string;
+  /** Closed `leaf:col` / Exact cells allowlist — not keyword fan-out Box 4. */
+  closed?: boolean;
+  closedReason?: string;
+  /** Chrome click — OUTBOX `leaf=module:leaf:col` or ledger LIVE PASS · 1–3 Exact cells. */
+  clicked?: boolean;
+  clickedReason?: string;
   /** @deprecated use builtReason/liveReason */
   doneReason?: string;
 };
@@ -255,7 +281,7 @@ export type ModuleMatrixPayload = {
     required: string[];
     cells: Record<string, MatrixCell>;
   }>;
-  metrics: MatrixTierMetrics & {
+    metrics: MatrixTierMetrics & {
     leafCount: number;
     colCount: number;
     /** @deprecated use liveCells */
@@ -264,6 +290,12 @@ export type ModuleMatrixPayload = {
     auditedPct: number;
     /** @deprecated use builtOnlyPct — wire-sprint only, excludes live */
     builtPct: number;
+    /** Closed `leaf:col` cells — not in exclusive tier tally. */
+    closedCells?: number;
+    /** Required leaves that look like create/modal/drawer/wizard/popup. */
+    modalLeafCount?: number;
+    /** Clicked Live cells (not Box 4). */
+    clickedCells?: number;
   };
   groupRollups: MatrixGroupRollup[];
 };
@@ -954,6 +986,81 @@ function leafColumnLiveReason(
   return undefined;
 }
 
+/** Item 12 / Closed column — only explicit `leaf:col` or Exact cells allowlist. */
+function leafColumnClosedAllowlistReason(
+  leaf: RequiredLeaf,
+  colId: string,
+  moduleId: string,
+  ledger: LedgerRow[],
+): string | undefined {
+  for (const row of ledger) {
+    if (!rowTouchesModule(row, moduleId)) continue;
+    if (isSupersededRow(row)) continue;
+    const hay = moduleHay(row);
+    if (!isProdVerifiedBlob(hay)) continue;
+    if (!leafExplicitlyNamedInLiveEvidence(leaf, hay)) continue;
+    const declaredColumns = explicitlyNamedLiveColumns(hay, leaf.id);
+    if (!declaredColumns || !declaredColumns.has(colId.toLowerCase())) continue;
+    if (leafColumnHasLaterContradictingFail(leaf, colId, moduleId, ledger, row.num)) continue;
+    return `ledger #${row.num} closed \`leaf:col\``;
+  }
+  return undefined;
+}
+
+function isModalishLeaf(leaf: RequiredLeaf): boolean {
+  return MODALISH_LEAF_RE.test(`${leaf.id} ${leaf.tab} ${leaf.sub ?? ""} ${leaf.route_hint}`);
+}
+
+let clickedOutboxCache: { atMs: number; keys: Set<string> } | null = null;
+
+function loadOutboxClickedKeys(): Set<string> {
+  const now = Date.now();
+  if (clickedOutboxCache && now - clickedOutboxCache.atMs < MATRIX_CACHE_MS) {
+    return clickedOutboxCache.keys;
+  }
+  const keys = new Set<string>();
+  for (const rel of OUTBOX_CLICKED_FILES) {
+    const full = path.join(REPO_ROOT, rel);
+    if (!existsSync(full)) continue;
+    const text = readFileSync(full, "utf8");
+    for (const line of text.split("\n")) {
+      if (!/LIVE PASS/i.test(line)) continue;
+      if (!isUsmcaClickedHay(line)) continue;
+      for (const m of line.matchAll(/leaf=([a-z0-9_-]+):([a-z0-9_.-]+):([a-z0-9_.-]+)/gi)) {
+        keys.add(`${m[1]}:${m[2]}:${m[3]}`.toLowerCase());
+      }
+    }
+  }
+  clickedOutboxCache = { atMs: now, keys };
+  return keys;
+}
+
+/** Clicked ≠ Named. Fan-out rows with 4+ Exact cells do not credit Clicked. */
+function leafColumnClickedReason(
+  leaf: RequiredLeaf,
+  colId: string,
+  moduleId: string,
+  ledger: LedgerRow[],
+  outboxKeys: Set<string>,
+): string | undefined {
+  const k = `${moduleId}:${leaf.id}:${colId}`.toLowerCase();
+  if (outboxKeys.has(k)) return `OUTBOX LIVE PASS ${k}`;
+  for (const row of ledger) {
+    if (!rowTouchesModule(row, moduleId)) continue;
+    if (isSupersededRow(row)) continue;
+    const hay = moduleHay(row);
+    if (!isProdVerifiedBlob(hay)) continue;
+    if (!isUsmcaClickedHay(hay)) continue;
+    if (!CLICKED_EXACT_N.test(hay)) continue;
+    if (!leafExplicitlyNamedInLiveEvidence(leaf, hay)) continue;
+    const declaredColumns = explicitlyNamedLiveColumns(hay, leaf.id);
+    if (!declaredColumns || !declaredColumns.has(colId.toLowerCase())) continue;
+    if (leafColumnHasLaterContradictingFail(leaf, colId, moduleId, ledger, row.num)) continue;
+    return `ledger #${row.num} LIVE PASS 1–3 Exact`;
+  }
+  return undefined;
+}
+
 /** @deprecated use leafColumnBuiltReason + leafColumnLiveReason */
 function leafColumnDoneReason(
   leaf: RequiredLeaf,
@@ -978,12 +1085,13 @@ export async function buildModuleMatrix(
   }
 
   const required = loadRequiredMap(moduleId);
-  const [ledger, completion, probePack, guardHits, waveHits] = await Promise.all([
+  const [ledger, completion, probePack, guardHits, waveHits, outboxClicked] = await Promise.all([
     loadLedgerRows(),
     Promise.resolve(loadCompletion(moduleId)),
     Promise.resolve(loadModuleProbes(moduleId)),
     Promise.resolve(loadGuardHits(moduleId)),
     Promise.resolve(loadWaveHits(moduleId)),
+    Promise.resolve(loadOutboxClickedKeys()),
   ]);
 
   const moduleBucket = emptyTierBucket();
@@ -1018,9 +1126,13 @@ export async function buildModuleMatrix(
 
       const builtReason = leafColumnBuiltReason(leaf, col.id, moduleId);
       const liveReason = leafColumnLiveReason(leaf, col.id, moduleId, ledger);
+      const closedReason = leafColumnClosedAllowlistReason(leaf, col.id, moduleId, ledger);
+      const clickedReason = leafColumnClickedReason(leaf, col.id, moduleId, ledger, outboxClicked);
       const probeReason = probeDoneReason(moduleId, leaf, col.id, probePack.slices);
       const built = Boolean(builtReason) || Boolean(liveReason);
       const live = Boolean(liveReason);
+      const closed = Boolean(closedReason);
+      const clicked = Boolean(clickedReason);
 
       let audited = live || built;
       let auditedReason: string | undefined = liveReason || builtReason;
@@ -1056,6 +1168,10 @@ export async function buildModuleMatrix(
         ...(builtReason ? { builtReason } : {}),
         ...(probeReason ? { probeReason } : {}),
         ...(liveReason ? { liveReason } : {}),
+        ...(closed ? { closed: true } : {}),
+        ...(closedReason ? { closedReason } : {}),
+        ...(clicked ? { clicked: true } : {}),
+        ...(clickedReason ? { clickedReason } : {}),
         ...(liveReason || builtReason ? { doneReason: liveReason ?? builtReason } : {}),
       };
     }
@@ -1128,6 +1244,21 @@ export async function buildModuleMatrix(
       doneCells: tierMetrics.liveCells,
       auditedPct: matrixPct(tierMetrics.auditedOnlyCells + tierMetrics.probeOnlyCells, tierMetrics.requiredCells),
       builtPct: tierMetrics.builtOnlyPct,
+      closedCells: leaves.reduce((n, lf) => {
+        let c = 0;
+        for (const col of required.columns) {
+          if (lf.cells[col.id]?.closed) c += 1;
+        }
+        return n + c;
+      }, 0),
+      modalLeafCount: required.leaves.filter((lf) => isModalishLeaf(lf)).length,
+      clickedCells: leaves.reduce((n, lf) => {
+        let c = 0;
+        for (const col of required.columns) {
+          if (lf.cells[col.id]?.clicked) c += 1;
+        }
+        return n + c;
+      }, 0),
     },
   };
 
@@ -1163,6 +1294,17 @@ export type SystemModuleMatrixRow = {
   boxAbl: MatrixAblPct;
   /** Same A/B/L % per matrix column (union columns; missing = required 0). */
   columnAbl: Record<string, MatrixAblPct>;
+  /** Closed `leaf:col` count (not Box 4 fan-out). */
+  closedCells: number;
+  leafCount: number;
+  modalLeafCount: number;
+  clickedCells: number;
+  frozenOps: number;
+  opsClicked: number;
+  missOpsClicked: number;
+  readyAbl: MatrixAblPct;
+  /** Fully-Wired 1–12 4-box rollups (1–11 from Built on mapped cols; 12 from Clicked). */
+  fwAbl: Record<string, MatrixAblPct>;
   groupRollups?: MatrixGroupRollup[];
   probeProgress?: number | null;
   probeSource?: "neon_live" | "committed_stale";
@@ -1187,6 +1329,15 @@ export type SystemModuleMatrixPayload = {
     /** Box 3 cumulative fill % */
     builtPct: number;
     boxAbl: MatrixAblPct;
+    closedCells: number;
+    leafCount: number;
+    modalLeafCount: number;
+    clickedCells: number;
+    frozenOps: number;
+    opsClicked: number;
+    missOpsClicked: number;
+    readyAbl: MatrixAblPct;
+    fwAbl: Record<string, MatrixAblPct>;
   };
   meta: {
     tipSha?: string;
@@ -1216,20 +1367,33 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
   columns: SystemMatrixColumn[];
   columnCounts: Record<string, { req: number; aud: number; bu: number; li: number }>;
   boxCounts: { req: number; aud: number; bu: number; li: number };
+  closedCells: number;
+  clickedCells: number;
+  frozenOps: number;
+  opsClicked: number;
+  missOpsClicked: number;
+  readyAbl: MatrixAblPct;
+  fwAbl: Record<string, MatrixAblPct>;
+  fwCounts: Record<string, { req: number; aud: number; bu: number; li: number }>;
 } {
-  type C = { req: number; aud: number; bu: number; li: number };
+  type C = { req: number; aud: number; bu: number; li: number; cl: number };
   const byCol = new Map<string, C>();
   let mReq = 0;
   let mAud = 0;
   let mBu = 0;
   let mLi = 0;
+  let mClosed = 0;
+  let mClicked = 0;
+  let opsReq = 0;
+  let opsBu = 0;
+  let opsClicked = 0;
   const columns: SystemMatrixColumn[] = board.columns.map((c) => ({
     id: c.id,
     label: c.label,
     group: c.group || "other",
   }));
   for (const col of board.columns) {
-    byCol.set(col.id, { req: 0, aud: 0, bu: 0, li: 0 });
+    byCol.set(col.id, { req: 0, aud: 0, bu: 0, li: 0, cl: 0 });
   }
   for (const leaf of board.leaves) {
     for (const col of board.columns) {
@@ -1238,6 +1402,11 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
       const bucket = byCol.get(col.id)!;
       bucket.req += 1;
       mReq += 1;
+      if (cell.closed) {
+        bucket.cl += 1;
+        mClosed += 1;
+      }
+      if (cell.clicked) mClicked += 1;
       const live = Boolean(cell.live);
       const built = Boolean(cell.built) || live;
       const audited = Boolean(cell.audited) || built || cell.tier === "probe";
@@ -1257,20 +1426,63 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
         bucket.aud += 1;
         mAud += 1;
       }
+      if (isOpsReadyColumn(col.group || "other")) {
+        opsReq += 1;
+        if (built) opsBu += 1;
+        if (cell.clicked) opsClicked += 1;
+      }
     }
   }
   const columnAbl: Record<string, MatrixAblPct> = {};
-  const columnCounts: Record<string, C> = {};
+  const columnCounts: Record<string, { req: number; aud: number; bu: number; li: number }> = {};
   for (const [id, c] of byCol.entries()) {
-    columnCounts[id] = c;
+    columnCounts[id] = { req: c.req, aud: c.aud, bu: c.bu, li: c.li };
     columnAbl[id] = ablFromCounts(c.req, c.aud, c.bu, c.li);
   }
+
+  const fwAbl: Record<string, MatrixAblPct> = {};
+  const fwCounts: Record<string, { req: number; aud: number; bu: number; li: number }> = {};
+  for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
+    if (spec.closedAllowlist) {
+      fwCounts[spec.id] = { req: mReq, aud: mClicked, bu: 0, li: mClicked };
+      fwAbl[spec.id] = ablFromCounts(mReq, mClicked, 0, mClicked);
+      continue;
+    }
+    let req = 0;
+    let aud = 0;
+    let bu = 0;
+    for (const col of board.columns) {
+      const group = col.group || "other";
+      if (!fullyWiredColumnMatches(spec, col.id, group)) continue;
+      const c = byCol.get(col.id);
+      if (!c || c.req <= 0) continue;
+      req += c.req;
+      aud += c.aud;
+      bu += c.bu;
+    }
+    fwCounts[spec.id] = { req, aud, bu, li: 0 };
+    fwAbl[spec.id] = ablFromCounts(req, aud, bu, 0);
+  }
+
   return {
     boxAbl: ablFromCounts(mReq, mAud, mBu, mLi),
     columnAbl,
     columns,
     columnCounts,
     boxCounts: { req: mReq, aud: mAud, bu: mBu, li: mLi },
+    closedCells: mClosed,
+    clickedCells: mClicked,
+    frozenOps: opsReq,
+    opsClicked,
+    missOpsClicked: Math.max(0, opsReq - opsClicked),
+    readyAbl: ablFromCounts(
+      opsReq,
+      opsClicked,
+      opsBu,
+      opsReq > 0 && opsClicked === opsReq && opsBu === opsReq ? opsReq : 0,
+    ),
+    fwAbl,
+    fwCounts,
   };
 }
 
@@ -1295,6 +1507,9 @@ function emptyModuleMetrics(): ModuleMatrixPayload["metrics"] {
     doneCells: 0,
     auditedPct: 0,
     builtPct: 0,
+    closedCells: 0,
+    modalLeafCount: 0,
+    clickedCells: 0,
   };
 }
 
@@ -1322,6 +1537,16 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
   let modulesAvailable = 0;
   let probeSource: "neon_live" | "committed_stale" = "committed_stale";
   let sysAblCounts = { req: 0, aud: 0, bu: 0, li: 0 };
+  let sysClosed = 0;
+  let sysClicked = 0;
+  let sysLeaves = 0;
+  let sysModals = 0;
+  let sysFrozenOps = 0;
+  let sysOpsClicked = 0;
+  const sysFwCounts = new Map<string, { req: number; aud: number; bu: number; li: number }>();
+  for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
+    sysFwCounts.set(spec.id, { req: 0, aud: 0, bu: 0, li: 0 });
+  }
 
   for (const entry of order) {
     try {
@@ -1337,6 +1562,17 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
         addCounts(systemColCounts.get(colId)!, counts);
       }
       addCounts(sysAblCounts, abl.boxCounts);
+      sysClosed += abl.closedCells;
+      sysClicked += abl.clickedCells;
+      sysLeaves += Number(board.metrics.leafCount) || 0;
+      sysModals += Number(board.metrics.modalLeafCount) || 0;
+      sysFrozenOps += abl.frozenOps;
+      sysOpsClicked += abl.opsClicked;
+      for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
+        const from = abl.fwCounts[spec.id];
+        if (!from) continue;
+        addCounts(sysFwCounts.get(spec.id)!, from);
+      }
       modules.push({
         module: entry.id,
         label: entry.label,
@@ -1344,6 +1580,15 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
         metrics: board.metrics,
         boxAbl: abl.boxAbl,
         columnAbl: abl.columnAbl,
+        closedCells: abl.closedCells,
+        leafCount: board.metrics.leafCount,
+        modalLeafCount: board.metrics.modalLeafCount ?? 0,
+        clickedCells: board.metrics.clickedCells ?? abl.clickedCells,
+        frozenOps: abl.frozenOps,
+        opsClicked: abl.opsClicked,
+        missOpsClicked: abl.missOpsClicked,
+        readyAbl: abl.readyAbl,
+        fwAbl: abl.fwAbl,
         groupRollups: board.groupRollups,
         probeProgress: board.meta.probeProgress,
         probeSource: board.meta.probeSource,
@@ -1375,6 +1620,15 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
         metrics: emptyModuleMetrics(),
         boxAbl: emptyAbl(),
         columnAbl: {},
+        closedCells: 0,
+        leafCount: 0,
+        modalLeafCount: 0,
+        clickedCells: 0,
+        frozenOps: 0,
+        opsClicked: 0,
+        missOpsClicked: 0,
+        readyAbl: emptyAbl(),
+        fwAbl: {},
         groupRollups: [],
       });
     }
@@ -1417,6 +1671,11 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     columnAbl[id] = ablFromCounts(c.req, c.aud, c.bu, c.li);
   }
   const boxAbl = ablFromCounts(sysAblCounts.req, sysAblCounts.aud, sysAblCounts.bu, sysAblCounts.li);
+  const fwAbl: Record<string, MatrixAblPct> = {};
+  for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
+    const c = sysFwCounts.get(spec.id)!;
+    fwAbl[spec.id] = ablFromCounts(c.req, c.aud, c.bu, c.li);
+  }
 
   const payload: SystemModuleMatrixPayload = {
     sample: false,
@@ -1433,12 +1692,26 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
       auditedPct: boxAbl.auditedPct,
       builtPct: boxAbl.builtPct,
       boxAbl,
+      closedCells: sysClosed,
+      leafCount: sysLeaves,
+      modalLeafCount: sysModals,
+      clickedCells: sysClicked,
+      frozenOps: sysFrozenOps,
+      opsClicked: sysOpsClicked,
+      missOpsClicked: Math.max(0, sysFrozenOps - sysOpsClicked),
+      readyAbl: ablFromCounts(
+        sysFrozenOps,
+        sysOpsClicked,
+        sysOpsClicked,
+        sysFrozenOps > 0 && sysOpsClicked === sysFrozenOps ? sysFrozenOps : 0,
+      ),
+      fwAbl,
     },
     meta: {
       tipSha: tipSha(),
       orderSource: "docs/specs/scoreboard/matrix-module-order.json",
       honesty:
-        "All-modules board = same column set as module boards (LINK/MONEY/CHROME/WIRE). Each cell = Audited% · Built% · Live% (Box 2/3/4 cumulative fill ÷ Required for that module×column).",
+        "FROZEN Required maps (no new leaves). READY Live✓ = USMCA Clicked+Built on every non-money Required cell. Miss C = unpaid Clicked. Box 4 Live is NOT ready. MONEY group parked (QBO books later). TRANSP clicks do not count.",
       probeSource,
     },
   };
@@ -1452,4 +1725,5 @@ export function clearModuleMatrixCache(): void {
   cache = null;
   systemCache = null;
   ledgerCache = null;
+  clickedOutboxCache = null;
 }
