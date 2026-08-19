@@ -1,5 +1,5 @@
 import type { WorkOrder } from "../../../api/maintenance";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
@@ -99,21 +99,21 @@ export function WorkOrdersTable({
       key: "display_id",
       label: "WO #",
       sortable: true,
-      render: (row) => <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} />,
+      render: (row) => <EntityLinkOrTombstone kind="work_order" id={row.id} name={row.display_id} noun="Work order" />,
     },
     { key: "source_type", label: "Source", sortable: true, render: (row) => row.source_type ?? "—" },
     {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />,
+      render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />,
     },
     {
       key: "load_id",
       label: "Load",
       render: (row) =>
         row.load_id ? (
-          <EntityLink kind="load" id={row.load_id} label={entityLabel(row.linked_load_number, row.load_id, "Load")} />
+          <EntityLinkOrTombstone kind="load" id={row.load_id} name={row.linked_load_number} noun="Load" />
         ) : (
           "—"
         ),
@@ -122,10 +122,11 @@ export function WorkOrdersTable({
       key: "driver_id",
       label: "Driver",
       render: (row) => (
-        <EntityLink
+        <EntityLinkOrTombstone
           kind="driver"
           id={row.driver_id ?? undefined}
-          label={row.driver_id ? entityLabel(row.driver_name, row.driver_id, "Driver") : undefined}
+          name={row.driver_name}
+          noun="Driver"
         />
       ),
     },
@@ -134,10 +135,11 @@ export function WorkOrdersTable({
       label: "Vendor",
       render: (row) =>
         row.resolved_vendor_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="vendor"
             id={row.resolved_vendor_id}
-            label={entityLabel(row.resolved_vendor_name, row.resolved_vendor_id, "Vendor")}
+            name={row.resolved_vendor_name}
+            noun="Vendor"
           />
         ) : (
           "—"

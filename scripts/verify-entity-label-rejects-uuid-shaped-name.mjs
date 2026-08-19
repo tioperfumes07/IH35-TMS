@@ -443,7 +443,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
     bad: /linked_load_number\s*\?\?\s*undefined/,
-    good: /entityLabel\(\s*row\.linked_load_number\s*,\s*row\.load_id\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*row\.linked_load_number\s*,\s*row\.load_id\s*,\s*"Load"\s*\)|EntityLinkOrTombstone kind="load" id=\{row\.load_id\} name=\{row\.linked_load_number\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
