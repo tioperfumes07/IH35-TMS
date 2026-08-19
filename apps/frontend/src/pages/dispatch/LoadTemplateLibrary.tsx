@@ -5,6 +5,8 @@ import { listLoadTemplates, createLoadTemplate, type LoadTemplateRow } from "../
 import { Button } from "../../components/Button";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { Modal } from "../../components/Modal";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useSearchParams } from "react-router-dom";
@@ -298,10 +300,15 @@ type SaveModalProps = {
   onClose: () => void;
   operatingCompanyId: string;
   initialJson: Record<string, unknown>;
+  /** Source load for Exact Leaves reverse EntityLinks (optional). */
+  loadId?: string | null;
+  loadNumber?: string | null;
+  customerId?: string | null;
+  customerName?: string | null;
   onSaved?: () => void;
 };
 
-export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initialJson, onSaved }: SaveModalProps) {
+export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initialJson, loadId, loadNumber, customerId, customerName, onSaved }: SaveModalProps) {
   const [name, setName] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -334,6 +341,26 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
           }
         }}
       >
+
+        {(loadId || customerId) ? (
+          <div
+            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+            data-testid="save-load-template-modal-entitylinks"
+          >
+            {loadId ? (
+              <span>
+                Load:{" "}
+                <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber ?? null, loadId, "Load")} />
+              </span>
+            ) : null}
+            {customerId ? (
+              <span>
+                Customer:{" "}
+                <EntityLink kind="customer" id={customerId} label={entityLabel(customerName ?? null, customerId, "Customer")} />
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <label className="text-xs font-semibold text-gray-600">
           Template name
           <input value={name} onChange={(ev) => setName(ev.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
