@@ -200,6 +200,7 @@ export async function listPendingForDriver(
   const res = await client.query(
     `
       SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+             e.equipment_number,
              r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
              r.outbound_confirmed_at::text, r.outbound_evidence_uuid::text,
              r.inbound_confirmed_at::text, r.inbound_evidence_uuid::text,
@@ -213,6 +214,9 @@ export async function listPendingForDriver(
                                 AND fd.operating_company_id = r.operating_company_id
       LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
                                 AND td.operating_company_id = r.operating_company_id
+      LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
+                                 AND (e.owner_company_id = r.operating_company_id
+                                      OR e.currently_leased_to_company_id = r.operating_company_id)
       WHERE r.operating_company_id = $1::uuid
         AND r.${driverCol} = $2::uuid
         AND r.status = $3
@@ -275,6 +279,7 @@ export async function listInProgress(
   const res = await client.query(
     `
       SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+             e.equipment_number,
              r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
              r.outbound_confirmed_at::text, r.outbound_evidence_uuid::text,
              r.inbound_confirmed_at::text, r.inbound_evidence_uuid::text,
@@ -288,6 +293,9 @@ export async function listInProgress(
                                 AND fd.operating_company_id = r.operating_company_id
       LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
                                 AND td.operating_company_id = r.operating_company_id
+      LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
+                                 AND (e.owner_company_id = r.operating_company_id
+                                      OR e.currently_leased_to_company_id = r.operating_company_id)
       WHERE r.operating_company_id = $1::uuid
         AND r.status NOT IN ('completed', 'cancelled')
       ORDER BY r.created_at DESC

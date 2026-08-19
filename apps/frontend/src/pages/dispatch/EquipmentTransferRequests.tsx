@@ -11,6 +11,8 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 
 type TransferRow = {
   uuid: string;
+  equipment_uuid: string;
+  equipment_number?: string | null;
   equipment_kind: string;
   status: string;
   transfer_location: string;
@@ -39,7 +41,22 @@ export function EquipmentTransferRequests() {
   const columns = useMemo<ParityColumn<TransferRow>[]>(
     () => [
       { key: "status", label: "Status", sortable: true },
-      { key: "equipment_kind", label: "Kind", sortable: true },
+      {
+        key: "equipment_uuid",
+        label: "Equipment",
+        sortable: true,
+        sortValue: (row) => row.equipment_number ?? row.equipment_kind,
+        render: (row) => (
+          <EntityLinkOrTombstone
+            kind="trailer"
+            id={row.equipment_uuid}
+            name={row.equipment_number}
+            noun={row.equipment_kind === "chassis" ? "Chassis" : "Trailer"}
+            data-testid="equipment-transfer-trailer-link"
+          />
+        ),
+      },
+      { key: "equipment_kind", label: "Kind", sortable: true, defaultHidden: true },
       { key: "transfer_location", label: "Location", sortable: true },
       {
         key: "from_driver_uuid",
