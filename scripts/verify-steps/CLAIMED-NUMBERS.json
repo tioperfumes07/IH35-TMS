@@ -2634,6 +2634,11 @@
     "purpose": "verify-saf-drug-alcohol-dashboard-query-error-surface",
     "date": "2026-08-19"
   },
+  "4078": {
+    "claimed_by": "cursor",
+    "purpose": "verify-saf-csa-score-tab-query-error-surface",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
