@@ -61,10 +61,27 @@ function auditQuality(src, api, route) {
   if (!/LEFT JOIN accounting\.invoices ri[\s\S]{0,220}ri\.operating_company_id = \$2::uuid[\s\S]{0,100}ri\.customer_id = e\.customer_id/.test(route)) {
     failures.push(`${ROUTE}: invoice label join must enforce caller company and event customer`);
   }
-  if (!/entityLabel\(event\.related_load_number, event\.related_load_id, "Load"\)/.test(src)) {
+  // The real row renders through <EntityLinkOrTombstone kind="load" name={event.related_load_number}
+  // noun="Load"> / <EntityLinkOrTombstone kind="invoice" name={event.related_invoice_display_id}
+  // noun="Invoice"> instead of a bare entityLabel(...) call — EntityLinkOrTombstone calls
+  // entityLabel(name, id, noun) internally for its unresolved/tombstone branch (apps/frontend/src/
+  // components/shared/EntityLinkOrTombstone.tsx), so it carries the SAME "must consume the real
+  // label" guarantee, plus it additionally withholds the EntityLink drill when unresolved. Accept
+  // either shape.
+  const consumesLoadNumber =
+    /entityLabel\(event\.related_load_number, event\.related_load_id, "Load"\)/.test(src) ||
+    /<EntityLinkOrTombstone[\s\S]{0,40}?kind\s*=\s*["']load["'][\s\S]{0,200}?name=\{event\.related_load_number\}[\s\S]{0,200}?noun\s*=\s*["']Load["']/.test(
+      src,
+    );
+  if (!consumesLoadNumber) {
     failures.push(`${QUAL}: related load link must consume related_load_number`);
   }
-  if (!/entityLabel\(event\.related_invoice_display_id, event\.related_invoice_id, "Invoice"\)/.test(src)) {
+  const consumesInvoiceLabel =
+    /entityLabel\(event\.related_invoice_display_id, event\.related_invoice_id, "Invoice"\)/.test(src) ||
+    /<EntityLinkOrTombstone[\s\S]{0,40}?kind\s*=\s*["']invoice["'][\s\S]{0,200}?name=\{event\.related_invoice_display_id\}[\s\S]{0,200}?noun\s*=\s*["']Invoice["']/.test(
+      src,
+    );
+  if (!consumesInvoiceLabel) {
     failures.push(`${QUAL}: related invoice link must consume related_invoice_display_id`);
   }
   if (!/FROM mdata\.loads l[\s\S]{0,180}l\.operating_company_id = \$2::uuid[\s\S]{0,100}l\.customer_id = \$3::uuid/.test(route) ||
