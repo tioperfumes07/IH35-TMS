@@ -16,7 +16,7 @@ const failures=(d=defect,p=preflight,a=alerts,r=defectsRoute,i=inbox)=>[
  ["defect inbox display join",(r.match(/wo\.display_id AS follow_up_wo_display_id/g)??[]).length>=2&&(r.match(/wo\.operating_company_id = dd\.operating_company_id/g)??[]).length>=2],
  ["defect inbox WO drill",i.includes('kind="work_order"')&&i.includes("id={row.follow_up_wo_id}")&&i.includes("row.follow_up_wo_display_id")],
  ["defect inbox duplicate conversion suppressed",i.includes("!row.follow_up_wo_id ? (")],
- ["preflight WO drill",p.includes('kind="work_order" id={row.work_order_id ?? row.auto_wo_id}')&&p.includes("row.work_order_display_id")],
+ ["preflight WO drill",p.includes('EntityLinkOrTombstone kind="work_order" id={row.work_order_id} name={row.work_order_display_id} noun="Work order"')],
  ["scheduled query",a.includes('listMaintenancePmAlerts(operatingCompanyId, "scheduled")')],
  ["scheduled reverse surface",a.includes('data-testid="pm-alerts-scheduled-reverse"')],
  ["scheduled WO drill",a.includes('kind="work_order" id={alert.scheduled_work_order_id}')&&a.includes("alert.scheduled_work_order_display_id")],
@@ -27,7 +27,10 @@ if (process.argv.includes("--selftest")) {
   const d = defect.replace('kind="work_order" id={defect.follow_up_wo_id}', 'kind="unit" id={defect.follow_up_wo_id}');
   const unitDefect = defect.replace('name={defect.unit_number}', 'name={null}');
   const driverDefect = defect.replace('name={defect.driver_name}', 'name={null}');
-  const p = preflight.replace('kind="work_order" id={row.work_order_id ?? row.auto_wo_id}', 'kind="unit" id={row.work_order_id ?? row.auto_wo_id}');
+  const p = preflight.replace(
+    'EntityLinkOrTombstone kind="work_order" id={row.work_order_id} name={row.work_order_display_id} noun="Work order"',
+    'EntityLinkOrTombstone kind="unit" id={row.work_order_id} name={null} noun="Unit"'
+  );
   const a = alerts.replace('kind="work_order" id={alert.scheduled_work_order_id}', 'kind="unit" id={alert.scheduled_work_order_id}');
   const checks = [
     failures(d, preflight, alerts).includes("defect WO drill"),
