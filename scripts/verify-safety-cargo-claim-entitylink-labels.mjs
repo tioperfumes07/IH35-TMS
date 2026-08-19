@@ -17,11 +17,20 @@ function read(rel) {
 function assert(sources) {
   const problems = [];
   const src = sources?.[FE] ?? read(FE);
-  if (!/EntityLink/.test(src) || !/kind=["']customer["']/.test(src) || !/kind=["']load["']/.test(src)) {
-    problems.push(`${FE}: missing customer/load EntityLinks`);
+  if (!/EntityLink/.test(src) || !/kind=["']customer["']/.test(src) || !/kind=["']load["']/.test(src) || !/kind=["']driver["']/.test(src)) {
+    problems.push(`${FE}: missing customer/load/driver EntityLinks`);
   }
   if (/claimant_customer_id\)\.slice\(0,\s*8\)/.test(src) || /load_id\)\.slice\(0,\s*8\)/.test(src)) {
     problems.push(`${FE}: UUID-slice EntityLink fallback is forbidden`);
+  }
+  if (!/row\.claimant_customer_name\s*\?\?/.test(src) || !/row\.load_number\s*\?\?/.test(src)) {
+    problems.push(`${FE}: list labels must prefer names returned by the incident reader before picker-map fallback`);
+  }
+  if (!/key:\s*["']driver_id["'][\s\S]{0,500}?kind=["']driver["']/.test(src)) {
+    problems.push(`${FE}: cargo claim list must render the persisted driver FK as an EntityLink`);
+  }
+  if (!/Driver:\{" "\}[\s\S]{0,500}?detail\?\.driver_id[\s\S]{0,500}?kind=["']driver["']/.test(src)) {
+    problems.push(`${FE}: cargo claim detail must render the persisted driver FK as an EntityLink`);
   }
   return problems;
 }
@@ -38,6 +47,11 @@ if (process.argv.includes("--selftest")) {
   });
   if (!planted.some((p) => p.includes("UUID-slice"))) {
     console.error(`${LABEL} SELFTEST FAIL: planted slice not caught`, planted);
+    process.exit(1);
+  }
+  const noDriver = assert({ [FE]: live[FE].replaceAll('kind="driver"', 'kind="user"') });
+  if (!noDriver.some((p) => p.includes("customer/load/driver") || p.includes("driver FK"))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted missing driver links not caught`, noDriver);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
