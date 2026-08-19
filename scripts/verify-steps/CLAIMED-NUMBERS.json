@@ -4316,5 +4316,10 @@
     "guard": "verify-book-load-equipment-selected-entitylinks",
     "claimer": "cursor",
     "claimed_at": "2026-08-19"
+  },
+  "3946": {
+    "guard": "verify-deadhead-optimizer-unit-entitylink",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-19"
   }
 }
