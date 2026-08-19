@@ -611,3 +611,7 @@ verify:static: 55 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:34Z CC-1 | ACCT-F5479 closed (PR #9372, merged a7325e9). verify-inv2-no-hard-delete-accounting.mjs FAILed on hard DELETE FROM accounting.invoice_lines in 2 *.db.test.ts integration suites' afterAll() teardown — deleting rows scoped by a test-local id the same test created, standard test hygiene, not a production write path. Guard's own comment already said "scan only TypeScript runtime files" but never excluded *.test.ts. Filtered them out. No --selftest harness; load-bearing proof done by hand (planted genuine non-test offender, still caught). Zero product-code change.
 
 verify:static: 56 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:38Z CC-1 | ACCT-F5480 closed (PR #9376, merged fbee94f). verify-recurring-bills.mjs FAILed 4 checks against real code shaped differently than the guard's original assumption: real routes are /api/v1/accounting/recurring-bill-templates (versioned, singular-hyphenated) — confirmed the frontend API client calls this exact path end-to-end; Recurring Bills is architected as its own standalone route (DUALPATH-08's canonical live surface) with its own sub-nav entry, not a tab embedded in BillsPage.tsx. Retargeted checks to the real, live, working shapes. No --selftest harness; load-bearing proof done by hand for both retargeted groups. Zero product-code change.
+
+verify:static: 57 of ~199 now closed this session. Continuing non-stop, fast-merge.
