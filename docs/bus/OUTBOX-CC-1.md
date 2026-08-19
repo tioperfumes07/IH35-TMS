@@ -595,3 +595,7 @@ verify:static: 51 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:24Z CC-1 | ACCT-F5475 closed (PR #9355, merged b544dde). Same truncated-UUID-vs-entityLabel class as ACCT-F5473: verify-bill-payment-panel-labels.mjs required payment.journal_entry_id.slice(0, 8) / payment.matched_bank_transaction_id.slice(0, 8), but real code uses entityLabel(null, payment.X_id, "...") — a stricter fix than the guard's own ask. Widened both checks. No --selftest harness; load-bearing proof done by hand (both mutations caught). Zero product-code change.
 
 verify:static: 52 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:26Z CC-1 | ACCT-F5476 closed (PR #9359, merged d07a625). verify-dispute-recon-payments-je-human-labels.mjs FAILed DailyReconPage.tsx for "missing entityLabel" — the file imports the helper aliased (entityLabel as formatEntityLabel) and calls it consistently; the guard's case-sensitive substring check never matched "formatEntityLabel(" (capital E). Only this 1 of 7 checked files aliases the import. Widened to also accept formatEntityLabel(. Existing --selftest re-verified PASS. Zero product-code change.
+
+verify:static: 53 of ~199 now closed this session. Continuing non-stop, fast-merge.
