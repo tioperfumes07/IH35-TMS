@@ -18,6 +18,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -314,6 +315,12 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         )}
       </div>
 
+      {evaluateMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="integrity-evaluate-error">
+          {userFacingApiError(evaluateMutation.error, "Could not run the integrity evaluator.")}
+        </p>
+      ) : null}
+
       {pageTab === "inbox" && alertsQuery.isError ? (
         <ListErrorBanner message="Integrity alerts could not be loaded." onRetry={() => void alertsQuery.refetch()} />
       ) : null}
@@ -480,6 +487,11 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
               />
             </label>
           </div>
+          {saveRuleMutation.isError ? (
+            <p className="mt-2 text-xs text-red-700" data-testid="integrity-rule-save-error">
+              {userFacingApiError(saveRuleMutation.error, "Could not save the integrity alert rule.")}
+            </p>
+          ) : null}
           <div className="mt-3 flex gap-2">
             <button
               type="button"

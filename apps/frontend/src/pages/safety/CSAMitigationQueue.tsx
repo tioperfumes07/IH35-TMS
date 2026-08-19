@@ -217,6 +217,12 @@ export function CSAMitigationQueuePage() {
         </div>
       </div>
 
+      {completeMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="csa-mitigation-complete-error">
+          {userFacingApiError(completeMutation.error, "Could not mark the mitigation action complete.")}
+        </p>
+      ) : null}
+
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No open mitigation actions." — an outage
           presenting as a CSA queue with nothing outstanding. */}
       {queueQuery.isError ? (
