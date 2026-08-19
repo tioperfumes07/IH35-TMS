@@ -13,12 +13,12 @@ const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) =>
 function verify(source) {
   const failures = [];
   const need = (key, text, message) => { if (!source[key].includes(text)) failures.push(message); };
-  need("unit", '<EntityLink kind="unit" id={unitId}', "vehicle profile heading must drill through by canonical unit id");
+  need("unit", '<EntityLinkOrTombstone kind="unit" id={unitId}', "vehicle profile heading must use unresolved-safe drill through by canonical unit id");
   need("audit", 'const SUBJECT_ENTITY_KINDS: Readonly<Record<string, EntityKind>>', "audit subjects must use an explicit canonical kind map");
   for (const [subject, kind] of [["load", "load"], ["driver", "driver"], ["unit", "unit"], ["customer", "customer"], ["vendor", "vendor"], ["work_order", "work_order"]]) {
     need("audit", `${subject}: "${kind}"`, `audit subject map must cover ${subject}`);
   }
-  need("audit", '<EntityLink kind={kind} id={row.subject_id}', "mapped audit subjects must drill through by canonical subject id");
+  need("audit", '<EntityLinkOrTombstone kind={kind} id={row.subject_id} name={row.subject_label}', "mapped audit subjects must use unresolved-safe drill through by canonical subject id and label");
   need("recon", '<EntityLink kind="geofence" id={f.geofence_id ?? undefined}', "reconciliation geofence must drill through to the canonical geofence surface");
   let matrix;
   try { matrix = JSON.parse(source.systemMatrix); } catch (error) { failures.push(`system matrix must parse: ${error.message}`); }
@@ -32,12 +32,12 @@ const failures = verify(source);
 if (failures.length) { console.error("context identity reverse-link guard failed:"); failures.forEach((failure) => console.error(`- ${failure}`)); process.exit(1); }
 if (process.argv.includes("--self-test")) {
   const mutations = [
-    ["unit", '<EntityLink kind="unit" id={unitId}', '<span data-id={unitId}'],
+    ["unit", '<EntityLinkOrTombstone kind="unit" id={unitId}', '<span data-id={unitId}'],
     ["audit", 'const SUBJECT_ENTITY_KINDS: Readonly<Record<string, EntityKind>>', 'const SUBJECT_ENTITY_KINDS = {} as Record<string, EntityKind> //'],
     ["audit", 'load: "load"', 'load: "driver"'],
     ["audit", 'driver: "driver"', 'driver: "unit"'],
     ["audit", 'customer: "customer"', 'customer: "vendor"'],
-    ["audit", '<EntityLink kind={kind} id={row.subject_id}', '<span data-id={row.subject_id}'],
+    ["audit", '<EntityLinkOrTombstone kind={kind} id={row.subject_id} name={row.subject_label}', '<span data-id={row.subject_id}'],
     ["recon", '<EntityLink kind="geofence" id={f.geofence_id ?? undefined}', '<span data-id={f.geofence_id ?? undefined}'],
     ["systemMatrix", '"id": "audit.trail"', '"id": "audit.trail.broken"'],
   ];
