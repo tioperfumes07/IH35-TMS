@@ -4261,5 +4261,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-optimal-drivers-panel-entitylinks"
+  },
+  "3924": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-equipment-transfer-modal-entitylinks"
   }
 }
