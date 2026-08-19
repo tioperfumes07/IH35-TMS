@@ -51,10 +51,12 @@ function main() {
     fail("migration must extend settlement line type for auto_deduction");
   }
 
-  if (!policyRoutes.includes('app.post("/api/v1/auto-deductions/policies"')) {
+  // policy.routes.ts formats app.post(/app.get( with the path string on its own line
+  // (Prettier multi-line call) — whitespace-tolerant so the check survives reformatting.
+  if (!/app\.post\(\s*["']\/api\/v1\/auto-deductions\/policies["']/.test(policyRoutes)) {
     fail("routes must expose POST /api/v1/auto-deductions/policies");
   }
-  if (!policyRoutes.includes('app.get("/api/v1/auto-deductions/policies"')) {
+  if (!/app\.get\(\s*["']\/api\/v1\/auto-deductions\/policies["']/.test(policyRoutes)) {
     fail("routes must expose GET /api/v1/auto-deductions/policies");
   }
 
