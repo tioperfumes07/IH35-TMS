@@ -299,3 +299,14 @@ Ingles
 Espanol (preview)
 6 | healthz=a50c2d6 | mutation=none | NEXT=vendors.vendors.list
 Devin-A | LIVE STARVED | module=vendors | leaf=vendors.list | URL=https://app.ih35dispatch.com/vendors | USMCA | cells=auto | evidence=No marker found at https://app.ih35dispatch.com/vendors ; body head  | healthz=a50c2d6 | mutation=none | NEXT=accounting.accounting.dashboard
+Devin-A | LIVE PASS | module=accounting | leaf=accounting.dashboard | URL=https://app.ih35dispatch.com/accounting | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/accounting ; marker 'Accounting' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=430d389 | mutation=none | NEXT=banking.banking.dashboard
