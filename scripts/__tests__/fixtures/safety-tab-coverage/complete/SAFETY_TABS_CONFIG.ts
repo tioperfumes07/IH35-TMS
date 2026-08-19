@@ -13,7 +13,7 @@ export const SAFETY_GROUPS = [
   { label: "Driver Financial Safety", tabs: [{ id: "escrow-record" }] },
   {
     label: "Compliance Docs & Monitoring",
-    tabs: [{ id: "geofence-alerts" }, { id: "insurance" }, { id: "permits" }, { id: "integrity-reports" }],
+    tabs: [{ id: "geofence-alerts" }, { id: "insurance" }, { id: "permits" }, { id: "integrity-reports" }, { id: "position-history" }],
   },
   { label: "Workforce Planning", tabs: [{ id: "driver-scheduler" }, { id: "leave-requests" }, { id: "leave-balances" }] },
   { label: "Settings", tabs: [{ id: "settings" }] },

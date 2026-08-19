@@ -22,6 +22,7 @@ const defs = [
   ["compliance-monitoring", "insurance"],
   ["compliance-monitoring", "permits"],
   ["compliance-monitoring", "integrity-reports"],
+  ["compliance-monitoring", "position-history"],
   ["workforce-planning", "driver-scheduler"],
   ["workforce-planning", "leave-requests"],
   ["workforce-planning", "leave-balances"],
