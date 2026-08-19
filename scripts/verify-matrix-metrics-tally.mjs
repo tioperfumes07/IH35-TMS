@@ -161,6 +161,12 @@ function repoProblems() {
     if (!/Urgent 16/.test(view) || !/URGENT_16_MODULE_IDS/.test(view)) {
       problems.push("system matrix must label Urgent 16 A–Z (legal + finance included)");
     }
+    if (!/module-matrix-kpi-frozen/.test(view) || !/module-matrix-kpi-miss-c/.test(view)) {
+      problems.push("system matrix must show Frozen and Miss C KPIs as opsClicked of frozenOps");
+    }
+    if (!/ops Clicked of frozen cells/.test(view) || !/unpaid Clicked of frozen/.test(view)) {
+      problems.push("Frozen/Miss C KPI labels must be X of frozen (not Box 4)");
+    }
   }
   if (!fs.existsSync(CATALOG)) problems.push(`MISSING ${CATALOG}`);
   else {
