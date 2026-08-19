@@ -9,6 +9,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { BackgroundChecksSection } from "../../../components/safety/BackgroundChecksSection";
 import { MedicalCardsHistorySection } from "../../../components/safety/MedicalCardsHistorySection";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type DotReferenceCard = {
   cfr: string;
@@ -170,6 +171,11 @@ export function DOTComplianceTab() {
             exportFilename="dot-compliance-reminders"
           />
         </div>
+        {acknowledgeMutation.isError ? (
+          <p className="mt-2 text-xs text-red-700" data-testid="dot-compliance-dismiss-error">
+            {userFacingApiError(acknowledgeMutation.error, "Could not dismiss the compliance reminder.")}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">

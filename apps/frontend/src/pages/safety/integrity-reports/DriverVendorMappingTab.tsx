@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type FindingRow = { driver_uuid: string; severity: string; drift_reason: string; _rowId: string };
 
@@ -97,6 +98,11 @@ export function DriverVendorMappingTab() {
       >
         Run scan
       </button>
+      {scanMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="driver-vendor-scan-error">
+          {userFacingApiError(scanMutation.error, "Could not run the driver-vendor mapping scan.")}
+        </p>
+      ) : null}
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No drift findings." — an outage presenting as a
           clean driver-to-vendor mapping, which is exactly the integrity claim this tab exists to test. */}
       {query.isError ? (

@@ -14,6 +14,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type FineRow = Record<string, unknown>;
 
@@ -369,6 +370,11 @@ export function FinesPage({ operatingCompanyId }: Props) {
         onConvertToLiability={(fineId) => convertMutation.mutate(fineId)}
         onUpdated={() => void queryClient.invalidateQueries({ queryKey: ["safety", "fines", operatingCompanyId] })}
       />
+      {convertMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="fine-convert-liability-error">
+          {userFacingApiError(convertMutation.error, "Could not convert the fine to a liability.")}
+        </p>
+      ) : null}
     </div>
   );
 }
