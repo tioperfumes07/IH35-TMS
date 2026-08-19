@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { apiRequest } from "../../api/client";
+import { ApiError, apiRequest } from "../../api/client";
 import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
+import { ListErrorState } from "../../components/ListErrorState";
 import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
 import { listClassesForJe } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Button } from "../../components/Button";
 import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -87,10 +87,40 @@ export type UnitProfileAggregate = {
   comparable_metrics?: Record<string, unknown>;
 };
 
-function fetchUnitProfile(unitId: string, operatingCompanyId: string) {
-  return apiRequest<UnitProfileAggregate>(
-    `/api/v1/mdata/units/${unitId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
-  );
+/** LV-fleet-unit-profile-loading-20260819 — bound hung aggregates so the page cannot stick on "Unit Loading…". */
+async function fetchUnitProfile(
+  unitId: string,
+  operatingCompanyId: string,
+  signal?: AbortSignal
+): Promise<UnitProfileAggregate> {
+  const timeoutSignal =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(15_000)
+      : undefined;
+  const ctrl = new AbortController();
+  const forwardAbort = () => {
+    if (!ctrl.signal.aborted) ctrl.abort();
+  };
+  if (signal?.aborted || timeoutSignal?.aborted) forwardAbort();
+  signal?.addEventListener("abort", forwardAbort, { once: true });
+  timeoutSignal?.addEventListener("abort", forwardAbort, { once: true });
+  try {
+    return await apiRequest<UnitProfileAggregate>(
+      `/api/v1/mdata/units/${unitId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+      { signal: ctrl.signal }
+    );
+  } catch (err) {
+    const name = err instanceof Error ? err.name : "";
+    if (name === "AbortError" || name === "TimeoutError") {
+      throw new ApiError(408, {
+        message: "Unit profile request timed out or was cancelled. Retry to load the profile.",
+      });
+    }
+    throw err;
+  } finally {
+    signal?.removeEventListener("abort", forwardAbort);
+    timeoutSignal?.removeEventListener("abort", forwardAbort);
+  }
 }
 
 function postQuickAvailability(unitId: string, operatingCompanyId: string, value: string | null) {
@@ -103,7 +133,7 @@ function postQuickAvailability(unitId: string, operatingCompanyId: string, value
 export function VehicleProfilePage() {
   const { id = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qboAvailable = selectedCompany?.code === "TRANSP";
   const { pushToast } = useToast();
@@ -113,11 +143,12 @@ export function VehicleProfilePage() {
   const [qboVendorId, setQboVendorId] = useState<string | null>(null);
   const [qboVendorLabel, setQboVendorLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
+  const canFetchProfile = Boolean(id && companyId);
 
   const profileQuery = useQuery({
     queryKey: ["unit-profile", id, companyId],
-    queryFn: () => fetchUnitProfile(id, companyId),
-    enabled: Boolean(id && companyId),
+    queryFn: ({ signal }) => fetchUnitProfile(id, companyId, signal),
+    enabled: canFetchProfile,
     staleTime: 30_000,
   });
 
@@ -127,14 +158,14 @@ export function VehicleProfilePage() {
       apiRequest<{ items: Array<{ id: string; auto_wo_id: string | null }> }>(
         `/api/v1/maintenance/fault-history?operating_company_id=${encodeURIComponent(companyId)}&unit_id=${encodeURIComponent(id)}&unresolved_only=true&limit=100`
       ),
-    enabled: Boolean(id && companyId),
+    enabled: canFetchProfile,
     staleTime: 30_000,
   });
 
   const telemetryQuery = useQuery({
     queryKey: ["unit-profile-telemetry", id, companyId],
-    queryFn: () => fetchUnitProfile(id, companyId),
-    enabled: Boolean(id && companyId),
+    queryFn: ({ signal }) => fetchUnitProfile(id, companyId, signal),
+    enabled: canFetchProfile,
     refetchInterval: 30_000,
     staleTime: 30_000,
   });
@@ -147,7 +178,12 @@ export function VehicleProfilePage() {
 
   const profile = profileQuery.data;
   const unit = profile?.unit;
-  const unitNumber = profileQuery.isPending ? "Loading…" : String(entityLabel(unit?.unit_number, id, "Unit"));
+  // Disabled RQ queries stay isPending forever — never paint "Unit Loading…" while company is missing.
+  const unitNumber = !companyId
+    ? companyLoading
+      ? "Loading…"
+      : "—"
+    : profileQuery.isPending ? "Loading…" : String(entityLabel(unit?.unit_number, id, "Unit"));
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -218,8 +254,26 @@ export function VehicleProfilePage() {
         <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" />
         {unit ? <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} /> : null}
       </div>
-      {profileQuery.isError ? <ListErrorBanner onRetry={() => void profileQuery.refetch()} /> : null}
-      {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {companyLoading && !companyId ? (
+        <p className="text-sm text-slate-500">Loading company context…</p>
+      ) : null}
+      {!companyLoading && !companyId ? (
+        <p className="text-sm text-red-600">Select an operating company to load this unit.</p>
+      ) : null}
+      {profileQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load unit profile"
+          status={0}
+          message={(profileQuery.error as Error)?.message}
+          onRetry={() => void profileQuery.refetch()}
+        />
+      ) : null}
+      {canFetchProfile && profileQuery.isPending && !profileQuery.isError ? (
+        <p className="text-sm text-slate-500">Loading unit profile…</p>
+      ) : null}
+      {canFetchProfile && !profileQuery.isPending && !profileQuery.isError && !profile ? (
+        <p className="text-sm text-slate-500">Unit not found for the selected company.</p>
+      ) : null}
 
       {profile ? (
         <>

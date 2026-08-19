@@ -27,7 +27,7 @@ const LABEL = "verify-fleet-unit-profile-edit-detail";
 
 export function audit(src) {
   const failures = [];
-  if (!/fetchUnitProfile\(id, companyId\)/.test(src.profile)) {
+  if (!/fetchUnitProfile\(id, companyId/.test(src.profile)) {
     failures.push(`${FILES.profile}: unit.profile.* sections must all be fed by a real fetchUnitProfile(id, ...) query`);
   }
   if (!/patchUnit\(id, \{/.test(src.profile)) {
@@ -44,6 +44,12 @@ export function audit(src) {
   }
   if (!/profileQuery\.isPending \? ["']Loading…["'] : String\(entityLabel/.test(src.profile)) {
     failures.push(`${FILES.profile}: loading state must not render a false Unit — not visible identity`);
+  }
+  if (!/AbortSignal\.timeout\(15_000\)/.test(src.profile) && !/AbortSignal\.timeout\(15000\)/.test(src.profile)) {
+    failures.push(`${FILES.profile}: hung unit aggregate must AbortSignal.timeout(15_000) so Loading cannot stick forever`);
+  }
+  if (!/profileQuery\.isError[\s\S]{0,160}<ListErrorState/.test(src.profile)) {
+    failures.push(`${FILES.profile}: unit profile outage must be explicit ListErrorState + retry`);
   }
   if (!/\{profile \? <div id=["']asset-financial["']/.test(src.profile)) {
     failures.push(`${FILES.profile}: classification controls must not render before the profile resolves`);
@@ -82,12 +88,14 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["profile-query", "profile", /fetchUnitProfile\(id, companyId\)/g, "fetchSomethingElse(id, companyId)"],
+    ["profile-query", "profile", /fetchUnitProfile\(id, companyId(?:, signal)?\)/g, "fetchSomethingElse(id, companyId)"],
     ["profile-patch", "profile", /patchUnit\(id, \{/, "patchSomethingElse(id, {"],
     ["profile-qbo-capability", "profile", /const qboAvailable = selectedCompany\?\.code === "TRANSP";/, "const qboAvailable = true;"],
     ["profile-qbo-control", "profile", /qboAvailable \? <label/, "true ? <label"],
     ["profile-qbo-write", "profile", /\.\.\.\(qboAvailable \? \{ qbo_vendor_id:/, "...({ qbo_vendor_id:"],
     ["profile-loading-label", "profile", /profileQuery\.isPending \? "Loading…" : String\(entityLabel/, "String(entityLabel"],
+    ["profile-timeout", "profile", /AbortSignal\.timeout\(15_000\)/, "AbortSignal.timeout(999_000)"],
+    ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(unitId!, patchPayload\)/, "patchUnit(undefined, patchPayload)"],
