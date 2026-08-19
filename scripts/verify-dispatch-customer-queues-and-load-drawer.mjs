@@ -41,7 +41,7 @@ const ENTITY_LINK_CHECKS = [
   ["factoringQueue", /id=\{row\.customer_id\}/],
   ["timeline", /kind="customer" id=\{load\.customer_id\}/],
   ["loadsPlanner", /kind="customer" id=\{load\.customer_id\}/],
-  ["calendar", /kind="customer" id=\{load\.customer_id\}/],
+  ["calendar", /<EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/],
   ["ocr", /EntityLinkOrTombstone kind="customer" id=\{f\.customer_id\} name=\{f\.customer_name_raw\} noun="Customer"/],
 ];
 
