@@ -338,6 +338,69 @@ export function ModuleMatrixSystemView() {
         showChanges={false}
       />
 
+      {sys ? (
+        <div className="metrics metrics-secondary" data-testid="module-matrix-system-ready-kpis">
+          <div className={`metric ${ok && (sys.missOpsClicked ?? 0) === 0 ? "good" : "amb"}`}>
+            <div className="n" data-testid="module-matrix-kpi-frozen">
+              {ok ? `${sys.opsClicked ?? 0} of ${sys.frozenOps ?? 0}` : "—"}
+            </div>
+            <div className="l">
+              Frozen
+              <br />
+              ops Clicked of frozen cells
+            </div>
+          </div>
+          <div className={`metric ${ok && (sys.missOpsClicked ?? 0) > 0 ? "big" : "good"}`}>
+            <div className="n" data-testid="module-matrix-kpi-miss-c">
+              {ok ? `${sys.missOpsClicked ?? 0} of ${sys.frozenOps ?? 0}` : "—"}
+            </div>
+            <div className="l">
+              Miss C
+              <br />
+              unpaid Clicked of frozen
+            </div>
+          </div>
+          <div className="metric">
+            <div className="n">{ok ? (sys.closedCells ?? "—") : "—"}</div>
+            <div className="l">
+              Named
+              <br />
+              ledger `leaf:col` allowlist
+            </div>
+          </div>
+          <div className="metric">
+            <div className="n">{ok ? (sys.leafCount ?? "—") : "—"}</div>
+            <div className="l">
+              Leaves
+              <br />
+              required.json surfaces
+            </div>
+          </div>
+          <div className="metric">
+            <div className="n">{ok ? (sys.modalLeafCount ?? "—") : "—"}</div>
+            <div className="l">
+              Modals
+              <br />
+              create/drawer/wizard leaves
+            </div>
+          </div>
+          <div className="metric good">
+            <div className="n">{ok ? (sys.clickedCells ?? "—") : "—"}</div>
+            <div className="l">
+              Clicked
+              <br />
+              Chrome USMCA all cells
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <p className="foot" data-testid="module-matrix-kpi-glossary">
+        <b>Named</b> = PROD-VERIFIED rows with an explicit <code>leaf:col</code> (not Box 4 fan-out).{" "}
+        <b>Leaves</b> = required-map surfaces (tabs/pages), not cells. <b>Modals</b> = those leaves whose
+        id looks like create/modal/drawer/wizard. <b>Clicked</b> = Chrome USMCA click credit (1–3 exact
+        cells; same as column 12 Clicked). Frozen / Miss C ignore MONEY.
+      </p>
+
       <div className="legend" data-testid="module-matrix-system-legend">
         <span>
           <span className="tri4">

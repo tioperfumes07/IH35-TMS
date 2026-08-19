@@ -1,31 +1,23 @@
-# INBOX-DEVIN-A · 2026-08-19T22:01Z · AUTO MODE · NEVER PAUSE
+# INBOX-DEVIN-A · NOW · AUTO · NO ARCHIVE
 
-**18:20Z is VOID.** “Continue” / 0-of-N tasks / waiting on Jorge = **defect**.
+**YOU ARE DEVIN-A. Clicked Live. chrome=9227.** Urgent 16 A–Z. Miss C = 0 is the 100.
 
-**YOU ARE DEVIN-A. Clicked Live. chrome=9227. AUTO until Miss C = 0 on the frozen ops map.**
+**502 / healthz not 200:** Keep auto-polling `https://api.ih35dispatch.com/api/v1/healthz/shallow`. Resume Clicked the **instant** it returns 200 and 9227 is authed. **Do not** batch-generate leaf:col templates, do not invent evidence, do not ask Jorge A-or-B. Frontend up + API 502 = wait+retry, not a second job.
 
-Read: `docs/bus/SESSION-BOOT-MANDATE.md` + `docs/bus/CODER-INSTRUCTIONS-NOW.md`.
-
-## AUTO (no human)
-
-After **every** PASS / STARVED / FAIL / merge: **immediately** the next unpaid `leaf=module:leafId:col` in urgent 16 (A–Z). Do not stop. Do not ask. Do not wait for Cursor. Session expire → re-login 9227 → **same loop**, not a pause.
-
-OUTBOX first two lines every session (then keep appending PASSes):
-
+OUTBOX:
 ```text
 Devin-A | ACK | STANDARD=MATRIX-READY | NOW=Clicked AUTO | chrome=9227 | GO
-Devin-A | WORKING | NOW=maintenance Clicked | NEXT=<next leaf:col> | GO
+Devin-A | WORKING | NOW=<module> Clicked | NEXT=<leaf:col> | GO
 ```
 
-## NOW
+## AUTO
+After every PASS/STARVED/FAIL: next unpaid `leaf=module:leafId:col` in urgent 16 A–Z. Session expire → re-login 9227 → same loop.
 
-1. `git pull --ff-only origin main`
-2. Healthz: `https://api.ih35dispatch.com/api/v1/healthz/shallow` (not app HTML).
-3. **#10119 `fleet:map.redirect`:** Record **LIVE PASS** as the **fleet** leaf (not a new dispatch leaf). URL may be `/dispatch/map` — that **is** the hop. One line per owed col you actually clicked (`driver`, `load`, `connectivity`). Then **maintenance** — do not idle after “Done.”
-4. Seq A–Z urgent 16: accounting, banking, cash-flow, customers, dispatch, drivers, factoring, finance, fleet, insurance, legal, lists, maintenance, safety, settlements, vendors. Unpaid only; **no re-loop**.
-5. Format: `Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | URL=… | healthz=<sha> | mutation=none | NEXT=<next cell>`
-6. Code PR: FAST-MERGE same turn. Never `gh pr checks --watch`.
-7. LIVE FAIL → board OPEN + owner INBOX same turn.
+## NOW
+1. Poll healthz until 200 (not app HTML).
+2. Continue unpaid frozen ops Clicked (Cancel-only, USMCA). Seq A–Z: accounting, banking, cash-flow, customers, dispatch, drivers, factoring, finance, fleet, insurance, legal, lists, maintenance, safety, settlements, vendors.
+3. Format: `Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | URL=… | healthz=<sha> | mutation=none | NEXT=<next cell>`
+4. LIVE FAIL → board OPEN same turn.
 
 ## FORBIDDEN
-Pause for continue · 0/2 theater · invent Leaves · treating Box 4 / healthz-only as Clicked · Codex CDP 9228 · CC-3/Cascade
+Pause for continue · invent Leaves · treating Box 4 / healthz-only as Clicked · Codex CDP · CC-3/Cascade
