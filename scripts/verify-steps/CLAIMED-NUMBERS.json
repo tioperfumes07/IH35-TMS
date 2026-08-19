@@ -2644,6 +2644,11 @@
     "purpose": "verify-saf-rtd-query-error-surface",
     "date": "2026-08-19"
   },
+  "4082": {
+    "claimed_by": "cursor",
+    "purpose": "verify-saf-geofence-breaches-query-error-surface",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
