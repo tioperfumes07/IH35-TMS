@@ -60,7 +60,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.work_orders"))) return { rows: [], total_count: 0 };
+      if (!(await relationExists(client, "maintenance.work_orders"))) return [];
       // XE-SCOPE: views.maintenance_severe_repair_alerts (0041) has NO company column and runs under
       // role-based RLS, so a plain `SELECT * FROM views.maintenance_severe_repair_alerts` BLENDS
       // TRANSP+TRK+USMCA repair alerts for a multi-entity Owner. We reproduce the view's exact
@@ -98,7 +98,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       );
       return res.rows;
     });
-    return { alerts: rows };
+    return { alerts: result };
   });
 
   app.get("/api/v1/maintenance/dashboard/intransit-triage-queue", async (req, reply) => {
@@ -219,7 +219,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const rows = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.work_orders"))) return [];
+      if (!(await relationExists(client, "maintenance.work_orders"))) return { rows: [], total_count: 0 };
       const res = await client.query(
         `
           SELECT
@@ -245,7 +245,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       );
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
     });
-    return result;
+    return rows;
   });
 
   app.get("/api/v1/maintenance/fleet-table/kpis", async (req, reply) => {
