@@ -141,7 +141,12 @@ export function checker(sources) {
   forbidExec("service", /WITH candidates AS/, "service_must_not_sole_factor_candidates_cte");
   // Canonical entity code only — forbid legal_name / TRANSPORTATION string inference.
   forbidExec("service", /\blegal_name\b/i, "service_must_not_infer_legal_name");
-  requireExec("service", "isTranspContractEntityCode", "service_must_use_canonical_entity_code_helper");
+  // ACCT-F5332 (owner-confirmed 2026-08-16): USMCA began factoring with Faro too, so the
+  // TRANSP-only gate isTranspContractEntityCode was widened and renamed isFaroContractEntityCode
+  // (still a prefix match, still excludes TRK) — the old name now only survives in an explanatory
+  // comment (stripped by requireExec), which correctly made this check fail against a rename that
+  // never touched behavior.
+  requireExec("service", "isFaroContractEntityCode", "service_must_use_canonical_entity_code_helper");
   forbidExec("service", /\/TRANSPORTATION\/i/, "service_must_not_regex_legal_transportation");
   forbidExec("service", /\/IH\\s\*35\/i/, "service_must_not_regex_legal_ih35");
 
