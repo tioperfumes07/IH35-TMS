@@ -12,10 +12,22 @@ const importBodySchema = z.object({
   preview_only: z.boolean().optional(),
 });
 
+// ACCT-F5577: this route had no role gate at all -- any authenticated company member could commit a
+// Faro factoring statement import (real reserve-balance-affecting transactions), not just office
+// accounting staff. Matches factor.routes.ts's own canMutate role set for the same domain, minus
+// dispatcher (a factoring statement import is an accounting operation, not a dispatch one).
+function canImport(role: string) {
+  const normalized = String(role || "").toLowerCase();
+  return ["owner", "administrator", "accountant"].includes(normalized);
+}
+
 export async function registerFaroCsvImportRoutes(app: FastifyInstance) {
-  app.post("/api/v1/factoring/import/faro", async (req, reply) => {
+  app.post("/api/v1/factoring/import/faro", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canImport(String((user as { role?: string }).role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
 
     const body = importBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
