@@ -22,6 +22,14 @@ function assert(cond, msg) {
 }
 
 function checkSource(modal) {
+  assert(
+    /import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["'][^"']*\/EntityLinkOrTombstone["']/.test(modal),
+    "EntityLinkOrTombstone must come from its real module",
+  );
+  assert(
+    !/import\s*\{[^}]*EntityLinkOrTombstone[^}]*\}\s*from\s*["'][^"']*\/EntityLink["']/.test(modal),
+    "must not import EntityLinkOrTombstone from EntityLink",
+  );
   assert(/EntityLinkOrTombstone/.test(modal), "selected identities must use label-aware tombstones");
   assert(/kind=["']driver["'] id=\{driverId\} name=\{null\} noun=["']Driver["']/.test(modal), "driver must not derive a label from its UUID");
   assert(/kind=["']unit["'] id=\{unitId\} name=\{null\} noun=["']Unit["']/.test(modal), "unit must not derive a label from its UUID");
@@ -46,6 +54,7 @@ function check() {
 function selftest() {
   const original = fs.readFileSync(MODAL, "utf8");
   const mutations = [
+    [/import \{ EntityLinkOrTombstone \} from "\.\.\/\.\.\/\.\.\/components\/shared\/EntityLinkOrTombstone";/, 'import { EntityLinkOrTombstone } from "../../../components/shared/EntityLink";'],
     [/data-testid=["']quick-assign-modal-entitylinks["']/, 'data-testid="planted-missing"'],
     [/kind="driver" id=\{driverId\} name=\{null\}/, 'kind="driver" id={driverId} name={driverId}'],
     [/kind="unit" id=\{unitId\} name=\{null\}/, 'kind="unit" id={unitId} name={unitId}'],
