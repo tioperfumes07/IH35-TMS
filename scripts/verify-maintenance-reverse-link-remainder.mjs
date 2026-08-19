@@ -108,6 +108,17 @@ function run(root = ROOT) {
         /kind="work_order" id=\{fileTarget\?\.work_order_id\} name=\{fileTarget\?\.work_order_display_id\} noun="Work order"/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact list/file-modal reverse identity coupling missing`);
     }
+    if (c.name === "RoadServiceList") {
+      for (const pattern of [
+        /kind="work_order"[\s\S]{0,100}id=\{row\.wo_id\}[\s\S]{0,100}name=\{row\.work_order_display_id\}/,
+        /kind="unit" id=\{row\.unit_id\} name=\{row\.unit_display_id\} noun="Unit"/,
+        /kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/,
+        /kind="vendor" id=\{row\.vendor_id\} name=\{row\.vendor_name\} noun="Vendor"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact ticket reverse identity coupling missing`);
+      if (/kind="work_order"[\s\S]{0,100}name=\{row\.ticket_number\}/.test(src)) {
+        fails.push(`${c.name}: road-service ticket number mislabeled as work-order identity`);
+      }
+    }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
       fails.push(`${c.name}: dead generic load or driver action remains`);
     }

@@ -22,6 +22,7 @@ export type RoadServiceTicket = {
   status: RoadServiceStatus;
   location_address?: string | null;
   wo_id?: string | null;
+  work_order_display_id?: string | null;
   bill_id?: string | null;
   created_at: string;
   // ETA / RESPONSE — when the provider arrived on-scene (real column, returned via t.* by the tickets list).
