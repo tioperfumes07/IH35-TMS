@@ -35,6 +35,9 @@ function assert(files) {
   if (!/EntityLink/.test(page) || !/kind=\"driver\"/.test(page)) {
     problems.push(`${PAGE}: driver column must use EntityLink kind=driver`);
   }
+  if (!/useNavigate/.test(page) || !page.includes('onClick={() => navigate(`/drivers/${row.driver_id}`)}')) {
+    problems.push(`${PAGE}: live driver link must explicitly navigate to the canonical driver profile`);
+  }
   if (/\b(amber|emerald|yellow)-\d{2,3}\b/.test(page)) {
     problems.push(`${PAGE}: §7 nonfinancial — no amber/emerald/yellow status classes on Leave Balances`);
   }
@@ -111,6 +114,15 @@ if (SELFTEST) {
   const caughtAmber = assert(plantedAmber);
   if (!caughtAmber.some((p) => /amber|§7/i.test(p))) {
     console.error("SELFTEST FAIL — planted amber palette defect not caught");
+    process.exit(1);
+  }
+  const plantedDeadLink = {
+    ...files,
+    [PAGE]: files[PAGE].replace('onClick={() => navigate(`/drivers/${row.driver_id}`)}', ""),
+  };
+  const caughtDeadLink = assert(plantedDeadLink);
+  if (!caughtDeadLink.some((p) => /explicitly navigate/i.test(p))) {
+    console.error("SELFTEST FAIL — planted dead driver link not caught");
     process.exit(1);
   }
   const live = assert(files);

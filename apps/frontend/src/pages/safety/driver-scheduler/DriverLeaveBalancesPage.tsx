@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -26,6 +26,7 @@ type BalanceRow = {
 };
 
 export function DriverLeaveBalancesPage() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const year = new Date().getFullYear();
@@ -50,7 +51,12 @@ export function DriverLeaveBalancesPage() {
         key: "driver_id",
         label: "Driver",
         render: (row) => (
-          <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+          <EntityLink
+            kind="driver"
+            id={row.driver_id}
+            label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+            onClick={() => navigate(`/drivers/${row.driver_id}`)}
+          />
         ),
       },
       {
@@ -76,7 +82,7 @@ export function DriverLeaveBalancesPage() {
         render: (row) => String(row.plan_year),
       },
     ],
-    []
+    [navigate]
   );
 
   return (
