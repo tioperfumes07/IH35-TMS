@@ -27,6 +27,7 @@ import { ExpensesReverseSection } from "../../components/accounting/ExpensesReve
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
 import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
+import { entityLabel } from "../../lib/entity-label";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -103,10 +104,11 @@ export function TrailerProfilePage() {
   const aggregate = profileQ.data;
   const equipment = aggregate.equipment;
   const isReefer = String(equipment.equipment_type) === "Reefer";
+  const trailerLabel = entityLabel(equipment.equipment_number, id, "Trailer");
 
   return (
     <div className="space-y-4 pb-20">
-      <PageHeader backHref="/fleet" breadcrumb={["Fleet", String(equipment.equipment_number ?? "Trailer")]} title={String(equipment.equipment_number ?? "Trailer")} subtitle="Trailer profile" />
+      <PageHeader backHref="/fleet" breadcrumb={["Fleet", trailerLabel]} title={trailerLabel} subtitle="Trailer profile" />
       <div data-testid="tp-section-1-identity">
         <IdentityStatusHeader
           equipment={equipment}
@@ -200,7 +202,7 @@ export function TrailerProfilePage() {
       <div data-testid="tp-section-7-documents">
         <DocumentsSection
           equipmentId={id}
-          equipmentNumber={String(equipment.equipment_number ?? id)}
+          equipmentNumber={trailerLabel}
           companyId={companyId}
           documents={aggregate.documents}
           onUploaded={invalidateProfile}
@@ -210,7 +212,7 @@ export function TrailerProfilePage() {
         <LinkedBankTransactionsPanel
           companyId={companyId}
           linkage={{ kind: "trailer_id", id }}
-          entityLabel={String(equipment.equipment_number ?? "Trailer")}
+          entityLabel={trailerLabel}
         />
       </div>
       <div data-testid="tp-section-7c-legal-matters">
@@ -237,7 +239,7 @@ export function TrailerProfilePage() {
         <ActionBar
           equipmentId={id}
           companyId={companyId}
-          equipmentNumber={String(equipment.equipment_number ?? id)}
+          equipmentNumber={trailerLabel}
           onEdit={() => setEditModalOpen(true)}
           onChangeStatus={() => setStatusModalOpen(true)}
           onArchive={handleArchive}

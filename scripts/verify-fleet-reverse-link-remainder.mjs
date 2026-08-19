@@ -37,6 +37,8 @@ function failures(s = {}) {
     ["trailer service event drill", tl.includes("navigate(event.detail_path)")],
     ["trailer insurance reverse filter", /InsuranceClaimsReverseSection[\s\S]{0,180}filter=\{\{ trailer_id: id \}\}/.test(tp)],
     ["trailer document exact drill", td.includes('EntityLinkOrTombstone kind="document"') && td.includes('id={d.file_id == null ? null : String(d.file_id)}') && td.includes('name={d.name}')],
+    ["trailer governed profile label", tp.includes('const trailerLabel = entityLabel(equipment.equipment_number, id, "Trailer")') && !tp.includes("equipment.equipment_number ?? id")],
+    ["trailer upload governed label", td.includes('entityName={entityLabel(equipmentNumber, equipmentId, "Trailer")}') && !td.includes("equipmentNumber ?? equipmentId")],
     ["QBO mapping reverse N/A", !qboMappingRequiresReverse(fm)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -52,13 +54,15 @@ if (process.argv.includes("--selftest")) {
     failures({ maintenance: maintenance.replaceAll('kind="work_order"', 'kind="unit"') }).includes("trailer maintenance WO drill"),
     failures({ trailerProfile: trailerProfile.replace('filter={{ trailer_id: id }}', 'filter={{ unit_id: id }}') }).includes("trailer insurance reverse filter"),
     failures({ trailerDocs: trailerDocs.replace('EntityLinkOrTombstone kind="document"', 'EntityLinkOrTombstone kind="trailer"') }).includes("trailer document exact drill"),
+    failures({ trailerProfile: trailerProfile.replace('const trailerLabel = entityLabel(equipment.equipment_number, id, "Trailer")', 'const trailerLabel = String(equipment.equipment_number ?? id)') }).includes("trailer governed profile label"),
+    failures({ trailerDocs: trailerDocs.replace('entityName={entityLabel(equipmentNumber, equipmentId, "Trailer")}', 'entityName={equipmentNumber ?? equipmentId}') }).includes("trailer upload governed label"),
     failures({ fleetMap: JSON.stringify(parsed) }).includes("QBO mapping reverse N/A"),
   ];
   if (checks.some((ok) => !ok)) {
     console.error(`verify-fleet-reverse-link-remainder selftest FAIL — mutations ${checks.map((ok, index) => ok ? null : index + 1).filter(Boolean).join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-fleet-reverse-link-remainder selftest PASS — 8/8 drill/applicability mutations red");
+  console.log(`verify-fleet-reverse-link-remainder selftest PASS — ${checks.length}/${checks.length} drill/label/applicability mutations red`);
   process.exit(0);
 }
 

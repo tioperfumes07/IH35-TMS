@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { UploadModal } from "../documents/UploadModal";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { entityLabel } from "../../lib/entity-label";
 
 export function DocumentsSection({
   equipmentId,
@@ -44,7 +45,7 @@ export function DocumentsSection({
         <UploadModal
           entityType="equipment"
           entityId={equipmentId}
-          entityName={equipmentNumber ?? equipmentId}
+          entityName={entityLabel(equipmentNumber, equipmentId, "Trailer")}
           operatingCompanyId={companyId}
           onClose={() => setUploadOpen(false)}
           onUploadSuccess={() => {
