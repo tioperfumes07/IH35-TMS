@@ -59,8 +59,18 @@ export function validateWaveQueue(data) {
       if (typeof dp.guard_green !== "boolean") bad("drain_proof.guard_green must be boolean");
       if (typeof dp.money_critical !== "boolean") bad("drain_proof.money_critical must be boolean");
       if (typeof dp.guard_sample !== "string") bad("drain_proof.guard_sample must be a string");
+      // A money-lane wave that was reclassified with an honest "not actually a defect" disposition
+      // (e.g. N/A-PRE-OPERATIONAL — imported history is not a defect, owner ruling
+      // FINDING-LOAD-LINKAGE-SCOPE-RULING) legitimately carries money_critical=false: forcing
+      // money_critical=true on a correctly-dispositioned non-defect would itself be a false claim
+      // of active risk. The exception requires BOTH an explicit N/A-prefixed disposition AND a
+      // non-trivial guard_sample explaining the reclassification — a bare money_critical=false with
+      // no honest disposition still fails, same as before.
+      const honestlyReclassified = typeof dp.disposition === "string" && /^N\/A/i.test(dp.disposition.trim());
       if (w.lane === "money" || dp.money_critical === true) {
-        if (dp.money_critical !== true) bad("money lane requires drain_proof.money_critical=true");
+        if (dp.money_critical !== true && !honestlyReclassified) {
+          bad("money lane requires drain_proof.money_critical=true (or an honest N/A-* disposition)");
+        }
         if (!dp.guard_sample || dp.guard_sample.trim().length < 3) {
           bad("money/false-green: drain_proof.guard_sample must name a money-bearing instance");
         }
@@ -117,6 +127,48 @@ if (SELFTEST) {
   });
   if (!moneyBad.some((e) => /money_critical|guard_sample/i.test(e))) {
     console.error(`${LABEL} SELFTEST FAIL — money card without critical sample not caught`);
+    process.exit(1);
+  }
+  // Positive: an honestly-reclassified money card (N/A-* disposition, real guard_sample) must NOT
+  // be forced to claim money_critical=true — this is the exact shape of the live
+  // CLS-LINKAGE-ONEWAY wave (imported-history-is-not-a-defect, owner-ruled N/A-PRE-OPERATIONAL).
+  const moneyHonestNA = validateWaveQueue({
+    waves: [
+      goodCard({
+        id: "CLS-EXAMPLE-NA",
+        lane: "money",
+        layer: "D",
+        drain_proof: {
+          guard_green: true,
+          guard_sample: "Reclassified per owner ruling — imported history, not a defect.",
+          money_critical: false,
+          disposition: "N/A-PRE-OPERATIONAL",
+        },
+      }),
+    ],
+  });
+  if (moneyHonestNA.length) {
+    console.error(`${LABEL} SELFTEST FAIL — honest N/A-disposition money card wrongly rejected:`, moneyHonestNA);
+    process.exit(1);
+  }
+  // Negative: money_critical=false WITHOUT an honest N/A-* disposition must still fail, even with
+  // a real guard_sample — the exception is narrow, not a blanket weakening.
+  const moneyFalseNoDisposition = validateWaveQueue({
+    waves: [
+      goodCard({
+        id: "CLS-EXAMPLE-NO-DISPOSITION",
+        lane: "money",
+        layer: "D",
+        drain_proof: {
+          guard_green: true,
+          guard_sample: "Some real reasoning but no honest disposition field.",
+          money_critical: false,
+        },
+      }),
+    ],
+  });
+  if (!moneyFalseNoDisposition.some((e) => /money_critical/i.test(e))) {
+    console.error(`${LABEL} SELFTEST FAIL — money_critical=false with no honest disposition escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
