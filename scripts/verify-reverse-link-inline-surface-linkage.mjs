@@ -42,7 +42,16 @@ function failures(current = files, overrides = new Map()) {
     ["prepaid schedule account drills", current.prepaid.includes('id={detail.asset_account_id}') && current.prepaid.includes('id={detail.expense_account_id}')],
     ["receipt source drill", current.receipts.includes('kind={receiptEntityKind(data)}') && current.receipts.includes('id={data.entity_id}')],
     ["leakage load drill", current.revenue.includes('<EntityLink kind="load" id={row.load_id}')],
-    ["cash-flow party drills", current.cashFlow.includes('<EntityLink kind="unit" id={e.ref_external_id}') && current.cashFlow.includes('<EntityLink kind={e.party_ref_kind} id={e.party_ref_id}') && current.cashFlow.includes('e.party_ref_kind === "driver"') && current.cashFlow.includes('e.party_ref_kind === "customer"') && current.cashFlow.includes('e.party_ref_kind === "vendor"')],
+    // Widened to accept EntityLinkOrTombstone (the honest-tombstone-safe upgrade from bare EntityLink)
+    // and multi-line JSX props — same underlying render, tag name and formatting changed, not the drill.
+    [
+      "cash-flow party drills",
+      /<EntityLink(?:OrTombstone)?\s+kind="unit"\s+id=\{e\.ref_external_id\}/.test(current.cashFlow) &&
+        /<EntityLink(?:OrTombstone)?[\s\S]{0,60}kind=\{e\.party_ref_kind\}[\s\S]{0,60}id=\{e\.party_ref_id\}/.test(current.cashFlow) &&
+        current.cashFlow.includes('e.party_ref_kind === "driver"') &&
+        current.cashFlow.includes('e.party_ref_kind === "customer"') &&
+        current.cashFlow.includes('e.party_ref_kind === "vendor"'),
+    ],
     ["task drawer subject drill", current.tasks.includes('<TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} subjectLabel={task.subject_label} />')],
     ["task subject maps load", current.subjects.includes('load: "load"')],
   ];
