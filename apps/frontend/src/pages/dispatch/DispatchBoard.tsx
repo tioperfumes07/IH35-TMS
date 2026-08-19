@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
@@ -675,7 +676,7 @@ export function DispatchBoard({
         }
       />
     ) : (
-      <EntityLink kind="unit" id={load.assigned_unit_id} label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")} />
+      <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" />
     );
 
   const renderDriverCell = (load: DispatchLoadRow) =>
@@ -700,7 +701,7 @@ export function DispatchBoard({
         }
       />
     ) : (
-      <EntityLink kind="driver" id={load.assigned_primary_driver_id} label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")} />
+      <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.assigned_primary_driver_name} noun="Driver" />
     );
 
   const renderTrailerCell = (load: BoardLoad) =>
@@ -725,10 +726,11 @@ export function DispatchBoard({
         }
       />
     ) : (
-      <EntityLink
+      <EntityLinkOrTombstone
         kind="trailer"
         id={(load as { trailer_id?: string | null }).trailer_id ?? null}
-        label={entityLabel(load.trailer_number, (load as { trailer_id?: string | null }).trailer_id, "Trailer")}
+        name={load.trailer_number}
+        noun="Trailer"
       />
     );
 

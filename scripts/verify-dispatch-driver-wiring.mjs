@@ -28,6 +28,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="driver" id=\{event\.driver_uuid\} name=\{event\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /kind="load" id=\{event\.load_uuid\} label=\{entityLabel\(event\.load_number, event\.load_uuid, "Load"\)\}/],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="driver" id=\{unit\.driver_id\} name=\{unit\.driver_name\} noun="Driver"/],
+  ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /EntityLinkOrTombstone kind="driver" id=\{load\.assigned_primary_driver_id\} name=\{load\.assigned_primary_driver_name\} noun="Driver"/],
   ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind="driver" id=\{load\.assigned_primary_driver_id\}/],
   ["apps/frontend/src/components/dispatch/DispatchList.tsx", /<InlineDriverPicker/],
   ["apps/frontend/src/pages/dispatch/RoundTrips.tsx", /kind="driver"/],
