@@ -4,6 +4,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { resolveApiUrl } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // SAF-F06: these page-local helpers called bare fetch(path), so with
 // VITE_API_BASE_URL set and NO /api rewrite on the static site the request hit
@@ -108,6 +109,11 @@ export function ReturnToDuty() {
           ))}
           {positivePending.length === 0 ? <li className="text-slate-700">All positives reported or none on file.</li> : null}
         </ul>
+        {reportMutation.isError ? (
+          <p className="mt-2 text-xs text-red-700" data-testid="rtd-clearinghouse-report-error">
+            {userFacingApiError(reportMutation.error, "Could not mark the Clearinghouse report as submitted.")}
+          </p>
+        ) : null}
       </div>
     </div>
   );
