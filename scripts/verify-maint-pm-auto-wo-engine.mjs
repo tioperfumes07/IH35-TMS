@@ -34,7 +34,7 @@ function labelFailures(service, maintenanceApi, page) {
   return [
     ["PM log must project work-order display id", service.includes("wo.display_id AS work_order_display_id")],
     ["PM log work-order join must be company scoped", service.includes("wo.operating_company_id = l.operating_company_id")],
-    ["typed work-order label must reach mounted action log", maintenanceApi.includes("work_order_display_id?: string | null") && page.includes('entityLabel(entry.work_order_display_id, entry.work_order_id, "Work order")')],
+    ["typed work-order label must reach mounted action log", maintenanceApi.includes("work_order_display_id?: string | null") && /<EntityLinkOrTombstone kind="work_order" id=\{entry\.work_order_id\} name=\{entry\.work_order_display_id\} noun="Work order" \/>/.test(page)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -55,7 +55,7 @@ function main() {
     const mutations = [
       labelFailures(service.replace("wo.display_id AS work_order_display_id", "NULL AS work_order_display_id"), maintenanceApi, page).length > 0,
       labelFailures(service.replace("wo.operating_company_id = l.operating_company_id", "TRUE"), maintenanceApi, page).length > 0,
-      labelFailures(service, maintenanceApi, page.replace('entityLabel(entry.work_order_display_id, entry.work_order_id, "Work order")', "entry.work_order_id")).length > 0,
+      labelFailures(service, maintenanceApi, page.replace('name={entry.work_order_display_id} noun="Work order"', 'name={null} noun="Work order"')).length > 0,
     ];
     if (mutations.some((caught) => !caught)) fail("PM work-order label mutation escaped");
     console.log("verify:maint-pm-auto-wo-engine SELFTEST PASS — 3/3 work-order label mutations red");
