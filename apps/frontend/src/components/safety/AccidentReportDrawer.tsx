@@ -268,7 +268,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 value={accidentTypeId || null}
                 onChange={(next) => {
                   setAccidentTypeId(next ?? "");
-                  const row = accidentTypesQuery.data?.rows.find((item) => item.id === next);
+                  const row = accidentTypesQuery.data?.rows?.find((item) => item.id === next);
                   if (row && ["ACCIDENT", "DAMAGE", "VANDALISM"].includes(row.code)) setRecordType(row.code.toLowerCase() as typeof recordType);
                 }}
                 options={(accidentTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code }))}

@@ -143,7 +143,7 @@ export function Form425CHome() {
   });
 
   const availableCompanies = useMemo<CompanyKey[]>(() => {
-    const keys = profilesQuery.data?.profiles.map((row) => row.company_key) ?? [];
+    const keys = profilesQuery.data?.profiles?.map((row) => row.company_key) ?? [];
     return keys.length > 0 ? [...new Set(keys)] : [activeCompany];
   }, [activeCompany, profilesQuery.data?.profiles]);
 

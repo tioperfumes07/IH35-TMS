@@ -75,7 +75,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   });
   useEffect(() => {
     if (!watch || !setValue || watch("load_trailer_equipment_id")) return;
-    const match = trailerEquipmentQuery.data?.rows.find((row) => row.code.toLowerCase() === trailerType);
+    const match = trailerEquipmentQuery.data?.rows?.find((row) => row.code.toLowerCase() === trailerType);
     if (match) setValue("load_trailer_equipment_id", match.id);
   }, [setValue, trailerEquipmentQuery.data?.rows, trailerType, watch]);
   // C9: all six equipment requirement chips persist on mdata.loads (requires_tarps historically;
@@ -98,7 +98,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <ReferenceSelect
             value={watch ? String(watch("load_trailer_equipment_id") ?? "") || null : null}
             onChange={(next) => {
-              const row = trailerEquipmentQuery.data?.rows.find((item) => item.id === next);
+              const row = trailerEquipmentQuery.data?.rows?.find((item) => item.id === next);
               setValue?.("load_trailer_equipment_id", next ?? "", { shouldDirty: true });
               if (row) setValue?.("trailer_type", row.code.toLowerCase(), { shouldDirty: true });
             }}

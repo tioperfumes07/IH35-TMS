@@ -28,11 +28,11 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
         />
       ) : query.isLoading ? (
         <p className="text-xs text-gray-500">Loading work orders…</p>
-      ) : (query.data?.work_orders.length ?? 0) === 0 ? (
+      ) : (query.data?.work_orders?.length ?? 0) === 0 ? (
         <p className="text-xs text-gray-500">No work orders are linked to this vendor.</p>
       ) : (
         <div className="space-y-1" data-testid="vendor-work-orders-reverse">
-          {query.data?.work_orders.map((workOrder) => (
+          {query.data?.work_orders?.map((workOrder) => (
             <div key={workOrder.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
               <EntityLink
                 kind="work_order"

@@ -11,7 +11,7 @@ export function ReportCategoryPage({ categoryId }: { categoryId: string }) {
     queryKey: ["reports", "category-catalog"],
     queryFn: fetchReportCategoryCatalog,
   });
-  const category = catalogQuery.data?.categories.find((value) => value.id === categoryId);
+  const category = catalogQuery.data?.categories?.find((value) => value.id === categoryId);
 
   return (
     <div className="space-y-3" data-testid={`reports-category-${categoryId}`}>
