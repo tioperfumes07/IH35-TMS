@@ -91,7 +91,18 @@ export function findMissing(root = ROOT) {
     "scripts/verify-matrix-built-leaf-specific.mjs",
     "apps/backend/src/program/matrix-built-auto.ts",
   ]) {
-    const src = fs.readFileSync(path.join(root, rel), "utf8");
+    const abs = path.join(root, rel);
+    if (!fs.existsSync(abs)) {
+      // The --selftest temp root only creates docs/lockdown/<LAW> — these 2 files live in the real
+      // repo tree and are not (and should not need to be) mirrored into the disposable fixture just
+      // to exercise the law-completeness assertion this loop is not testing. A bare fs.readFileSync
+      // here used to throw ENOENT and crash --selftest outright (not even a clean FAIL) every single
+      // run, on real origin/main, independent of any other change — confirmed via `git stash` +
+      // re-run on a clean tree before writing this fix.
+      missing.push(`${rel} (missing file)`);
+      continue;
+    }
+    const src = fs.readFileSync(abs, "utf8");
     if (!src.includes("HONEST-BUILT-LAUNCH-LAW 2026-08-14")) {
       missing.push(`${rel} (missing HONEST-BUILT-LAUNCH-LAW harden marker on isLeafSpecific)`);
     }

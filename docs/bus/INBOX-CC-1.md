@@ -16,3 +16,5 @@
 Fleet/maint Built · CC-3/Cascade · steal CC-2 lists
 
 OUTBOX: `CC-1 | WORKING · OWN=accounting/banking/settlements money Box4 · GO`
+
+**Law:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — Launch-ready without Live Chrome means Fully-Wired 1-11 with leaf-specific Built only; no word-blanket Built.
