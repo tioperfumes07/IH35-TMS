@@ -19,6 +19,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
+import { useStagedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
@@ -29,6 +30,13 @@ import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { suggestExpenseLoad } from "../../../api/maintenance";
+
+const EMPTY_FILTERS = {
+  driverId: "",
+  unitId: "",
+  loadId: "",
+  trailerId: "",
+};
 
 type Props = {
   operatingCompanyId: string;
@@ -130,46 +138,66 @@ export function CargoClaimIntakeSurface({
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
-  // LST-F5163D + LST-F5194: visible list filters write URL params.
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
-  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
-  const [loadFilter, setLoadFilterState] = useState(loadIdFromUrl);
-  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
-
-  useEffect(() => {
-    setDriverFilterState(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-  useEffect(() => {
-    setUnitFilterState(unitIdFromUrl);
-  }, [unitIdFromUrl]);
-  useEffect(() => {
-    setLoadFilterState(loadIdFromUrl);
-  }, [loadIdFromUrl]);
-  useEffect(() => {
-    setTrailerFilter(trailerIdFromUrl);
-  }, [trailerIdFromUrl]);
-
-  function patchSearchParam(key: "driver_id" | "unit_id" | "load_id" | "trailer_id", next: string) {
+  // LST-F5163D + LST-F5194 + LV-SAFETY-CARGO-CLAIMS-FILTER-SILENT-APPLY — stage until Apply;
+  // URL driver_id/unit_id/load_id/trailer_id sync on Apply/Reset only.
+  function patchListSearchParam(next: {
+    driverId: string;
+    unitId: string;
+    loadId: string;
+    trailerId: string;
+  }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    const pairs: Array<["driver_id" | "unit_id" | "load_id" | "trailer_id", string]> = [
+      ["driver_id", next.driverId],
+      ["unit_id", next.unitId],
+      ["load_id", next.loadId],
+      ["trailer_id", next.trailerId],
+    ];
+    for (const [key, value] of pairs) {
+      if (value) p.set(key, value);
+      else p.delete(key);
+    }
     setSearchParams(p, { replace: true });
   }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    unitId: unitIdFromUrl,
+    loadId: loadIdFromUrl,
+    trailerId: trailerIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      unitId: unitIdFromUrl,
+      loadId: loadIdFromUrl,
+      trailerId: trailerIdFromUrl,
+    }));
+  }, [driverIdFromUrl, unitIdFromUrl, loadIdFromUrl, trailerIdFromUrl]);
+
   function setDriverFilter(next: string) {
-    setDriverFilterState(next);
-    patchSearchParam("driver_id", next);
+    staged.setDraft((d) => ({ ...d, driverId: next }));
   }
   function setUnitFilter(next: string) {
-    setUnitFilterState(next);
-    patchSearchParam("unit_id", next);
+    staged.setDraft((d) => ({ ...d, unitId: next }));
   }
   function setLoadFilter(next: string) {
-    setLoadFilterState(next);
-    patchSearchParam("load_id", next);
+    staged.setDraft((d) => ({ ...d, loadId: next }));
   }
   function setTrailerFilter(next: string) {
-    setTrailerFilterState(next);
-    patchSearchParam("trailer_id", next);
+    staged.setDraft((d) => ({ ...d, trailerId: next }));
   }
 
   const suggestionQuery = useQuery({
@@ -214,17 +242,17 @@ export function CargoClaimIntakeSurface({
       "incidents",
       "cargo_claim",
       operatingCompanyId,
-      loadFilter,
-      driverFilter,
-      unitFilter,
-      trailerFilter,
+      applied.loadId,
+      applied.driverId,
+      applied.unitId,
+      applied.trailerId,
     ],
     queryFn: () =>
       listSafetyIncidents(operatingCompanyId, "cargo_claim", {
-        load_id: loadFilter.trim() || loadIdFromUrl || undefined,
-        driver_id: driverFilter.trim() || driverIdFromUrl || undefined,
-        unit_id: unitFilter.trim() || unitIdFromUrl || undefined,
-        trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
+        load_id: applied.loadId.trim() || undefined,
+        driver_id: applied.driverId.trim() || undefined,
+        unit_id: applied.unitId.trim() || undefined,
+        trailer_id: applied.trailerId.trim() || undefined,
       }),
     enabled: companyEnabled,
   });
@@ -766,13 +794,13 @@ export function CargoClaimIntakeSurface({
         tableTestId={`${pageTestId}-table`}
         rowTestId={(row) => `${pageTestId}-row-${String(row.id ?? "")}`}
         filterBar={
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="relative flex flex-wrap items-end gap-3" data-testid={`${pageTestId}-filters`}>
             <label className="text-[11px] text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
-                value={driverFilter || null}
+                value={filterDraft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All drivers"
@@ -785,7 +813,7 @@ export function CargoClaimIntakeSurface({
               <EntityPicker
                 kind="unit"
                 operatingCompanyId={operatingCompanyId}
-                value={unitFilter || null}
+                value={filterDraft.unitId || null}
                 onChange={(next) => setUnitFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All units"
@@ -798,7 +826,7 @@ export function CargoClaimIntakeSurface({
               <EntityPicker
                 kind="load"
                 operatingCompanyId={operatingCompanyId}
-                value={loadFilter || null}
+                value={filterDraft.loadId || null}
                 onChange={(next) => setLoadFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All loads"
@@ -811,7 +839,7 @@ export function CargoClaimIntakeSurface({
               <EntityPicker
                 kind="trailer"
                 operatingCompanyId={operatingCompanyId}
-                value={trailerFilter || null}
+                value={filterDraft.trailerId || null}
                 onChange={(next) => setTrailerFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All trailers"
@@ -819,6 +847,32 @@ export function CargoClaimIntakeSurface({
                 dataTestId={`${pageTestId}-trailer-filter`}
               />
             </label>
+            <Button type="button" size="sm" data-testid={`${pageTestId}-filter-apply`} onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={`${pageTestId}-filter-cancel`}
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={`${pageTestId}-filter-reset`}
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchListSearchParam(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
           </div>
         }
       />
