@@ -9,6 +9,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { listCompanyViolationTypes } from "../../../api/catalogs-safety";
 import { companyToday } from "../../../lib/businessDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 
 type Props = {
   open: boolean;
@@ -28,6 +29,10 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   // had and nothing ever populated. The enum above is the DOT CATEGORY and is a different axis; both
   // are kept (additive), neither replaces the other.
   const [violationTypeUuid, setViolationTypeUuid] = useState<string | null>(null);
+  // SAF-F31: the detail drawer and reverse profile read the normalized FK join tables. Collect the
+  // canonical entities here so newly-created violations can actually populate those surfaces.
+  const [relatedDriverId, setRelatedDriverId] = useState<string | null>(null);
+  const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
   // SAF-B29 wave-4: catalog capped at 200 — typed term must reach listCompanyViolationTypes.
   const [typeSearch, setTypeSearch] = useState("");
   const queryClient = useQueryClient();
@@ -62,6 +67,8 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
         reported_date: reportedDate,
         description,
         corrective_action_plan: correctivePlan || null,
+        related_drivers: relatedDriverId ? [relatedDriverId] : [],
+        related_units: relatedUnitId ? [relatedUnitId] : [],
       });
     },
     onSuccess: () => {
@@ -156,6 +163,32 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               value={reportedDate}
               onChange={(next) => setReportedDate(next)}
               className=""
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Related driver</label>
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
+              value={relatedDriverId}
+              onChange={setRelatedDriverId}
+              enabled={open}
+              placeholder="Select driver"
+              nestedInDrawer
+              dataTestId="company-violation-related-driver"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Related unit</label>
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
+              value={relatedUnitId}
+              onChange={setRelatedUnitId}
+              enabled={open}
+              placeholder="Select unit"
+              nestedInDrawer
+              dataTestId="company-violation-related-unit"
             />
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">

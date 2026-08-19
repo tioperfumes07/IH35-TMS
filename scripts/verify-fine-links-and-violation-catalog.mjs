@@ -128,6 +128,19 @@ export function assertFineLinksAndViolationCatalog(sources) {
   if (!hasLegacySelectOnCreate && !hasReferenceSelectOnCreate) {
     problems.push(`${VIOLATION_MODAL}: the inline create does not return with the new type SELECTED — the picker-law contract is create-then-select, not create-then-hunt.`);
   }
+  // SAF-F31: backend writes normalized FK joins and detail/profile readers consume them. The create
+  // surface must collect and submit those same canonical ids or every new detail is born orphaned.
+  for (const [state, kind, payload] of [
+    ["relatedDriverId", "driver", "related_drivers"],
+    ["relatedUnitId", "unit", "related_units"],
+  ]) {
+    if (!modal.includes(state) || !modal.includes(`kind="${kind}"`)) {
+      problems.push(`${VIOLATION_MODAL}: missing canonical ${kind} picker state ${state}.`);
+    }
+    if (!modal.includes(`${payload}: ${state} ? [${state}] : []`)) {
+      problems.push(`${VIOLATION_MODAL}: does not submit ${payload} to the normalized FK join writer.`);
+    }
+  }
 
   return problems;
 }
@@ -189,6 +202,16 @@ if (SELFTEST) {
     },
     "opens an external page"
   );
+  expectCaught(
+    "violation-driver-link-dropped",
+    { ...live, [VIOLATION_MODAL]: live[VIOLATION_MODAL].replace("related_drivers: relatedDriverId ? [relatedDriverId] : [],", "related_drivers: [],") },
+    "does not submit related_drivers"
+  );
+  expectCaught(
+    "violation-unit-picker-dropped",
+    { ...live, [VIOLATION_MODAL]: live[VIOLATION_MODAL].replace('kind="unit"', 'kind="asset"') },
+    "missing canonical unit picker"
+  );
   expectCaught("load-filter-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("cf.related_load_id = $${values.length}", "TRUE") }, "related_load_id");
   expectCaught("unit-filter-dropped", { ...live, [FINES_API]: live[FINES_API].replace('qs.set("related_unit_id"', 'qs.set("ignored"') }, "related_unit_id");
   expectCaught("writer-integrity-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("related_entity_not_in_operating_company", "invalid") }, "cross-company");
@@ -205,7 +228,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 14 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 16 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
@@ -215,4 +238,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — fines collect + display their load/unit links (entity-scoped names), company violations carry the catalog FK with an inline + Add new`);
+console.log(`${LABEL} OK — fines collect + display load/unit links; company violations carry catalog, driver, and unit FKs`);
