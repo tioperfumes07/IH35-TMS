@@ -26,7 +26,12 @@ const remove = (needle) => (source) => source.replaceAll(needle, "__PLANTED_DISP
 const contracts = [
   ["at-risk page identity", "atRiskPage", hasAll("dispatch-at-risk-page"), remove("dispatch-at-risk-page")],
   ["in-transit create flow", "intransitPage", hasAll("+ Create Issue"), remove("+ Create Issue")],
-  ["in-transit canonical unit drill", "intransitPage", matches(/<EntityLink kind="unit" id=\{issue\.unit_id \?\? undefined\}/), remove('<EntityLink kind="unit" id={issue.unit_id ?? undefined}')],
+  [
+    "in-transit canonical unit drill",
+    "intransitPage",
+    matches(/<EntityLinkOrTombstone kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_number\} noun="Unit"/),
+    remove('<EntityLinkOrTombstone kind="unit" id={issue.unit_id} name={issue.unit_number} noun="Unit"'),
+  ],
   ["in-transit honest error retry", "intransitPage", hasAll("issuesQ.isError", "ListErrorState", "issuesQ.refetch()"), remove("issuesQ.isError")],
   ["assignment-history page identity", "historyPage", hasAll("dispatch-assignment-history-page"), remove("dispatch-assignment-history-page")],
   ["at-risk API route", "routes", hasAll("/api/v1/dispatch/at-risk-loads"), remove("/api/v1/dispatch/at-risk-loads")],
