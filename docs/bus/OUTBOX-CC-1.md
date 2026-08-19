@@ -527,3 +527,7 @@ verify:static: 34 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T02:26Z CC-1 | ACCT-F5458 closed (PR #9298, merged cf6d5a3). verify-fact-profile-canonical-factor.mjs required an inline from_vendor_id !== to_vendor_id expression, but real DuplicateVendorsBanner.tsx extracts a named isSelfPair(p) predicate checking BOTH id equality AND normalized-name equality, reused for both the visible pair list and the count — a superset of what the guard expected, just via an extracted helper. This clause also had zero mutation coverage before; added it. Zero product-code change.
 
 verify:static: 35 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T02:29Z CC-1 | ACCT-F5459 closed (PR #9302, merged c69ed77). Same C5-tightening class the guard's own comment already documents for the load deep-link: verify-factoring-queue-page-uses-paritytable.mjs required the literal /accounting/invoices/ URL substring, but FactoringQueuePage.tsx's invoice cell was migrated to the canonical EntityLink kind="invoice" primitive — the check (and its own synthetic selftest fixture) was never updated to match, so --selftest passed on a stale fixture while the real-file check failed. Widened to mirror the load check's own pattern; updated the selftest fixture too. Zero product-code change.
+
+verify:static: 36 of ~199 now closed this session. Continuing non-stop, fast-merge.
