@@ -69,6 +69,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const initialTrailerId = accident ? String(accident.trailer_id ?? "") : "";
   const initialVendorId = accident ? String(accident.vendor_id ?? "") : "";
   const initialLoadId = accident ? String(accident.load_id ?? "") : "";
+  const initialLoadName = accident ? String(accident.load_number ?? "").trim() : "";
   const initialIncidentDate = accident ? String(accident.accident_at ?? "").slice(0, 10) : "";
   const initialMemo = accident ? String(accident.notes ?? accident.description ?? "") : "";
   const initialAtFault = accident ? String(accident.at_fault ?? "") : "";
@@ -383,6 +384,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   kind="load"
                   operatingCompanyId={operatingCompanyId}
                   value={loadId || null}
+                  selectedOption={
+                    initialLoadId && initialLoadName
+                      ? { value: initialLoadId, label: initialLoadName }
+                      : null
+                  }
                   onChange={(next) => {
                     setLoadId(next ?? "");
                     setSuggestionPinned(true);
