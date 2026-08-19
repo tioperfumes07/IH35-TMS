@@ -19,6 +19,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type IntegrityRow = IntegrityReportRow & { _rowKey: string };
 
@@ -273,6 +274,11 @@ export function IntegrityReportsTab() {
         exportFilename="integrity-reports"
       />
       )}
+      {reviewMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="integrity-review-error">
+          {userFacingApiError(reviewMutation.error, "Could not mark the integrity observation as reviewed.")}
+        </p>
+      ) : null}
     </div>
   );
 }

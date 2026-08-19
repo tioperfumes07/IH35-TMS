@@ -21,6 +21,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Button } from "../../../components/Button";
 import { useStagedListFilters } from "../../../components/table";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 function isPrivacyGateError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
@@ -568,6 +569,11 @@ export function ComplaintsTab() {
             : ""
         }
       />
+      {patchMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="complaint-resolve-error">
+          {userFacingApiError(patchMutation.error, "Could not resolve the complaint.")}
+        </p>
+      ) : null}
       <VoidReasonModal
         open={voidTargetId !== null}
         title="Void Complaint"

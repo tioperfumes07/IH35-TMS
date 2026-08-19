@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const FILTERS: GeofenceBreachFilter[] = ["active", "acknowledged", "all"];
 
@@ -103,6 +104,11 @@ export function GeofenceBreachesTab() {
         {eventsQuery.isLoading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading geofence alerts...</div> : null}
         {!eventsQuery.isLoading && (eventsQuery.data?.events ?? []).length === 0 ? (
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">No geofence alerts for selected filter.</div>
+        ) : null}
+        {acknowledgeMutation.isError ? (
+          <p className="text-xs text-red-700" data-testid="geofence-acknowledge-error">
+            {userFacingApiError(acknowledgeMutation.error, "Could not acknowledge the geofence breach.")}
+          </p>
         ) : null}
       </div>
     </div>
