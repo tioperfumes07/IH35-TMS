@@ -798,16 +798,28 @@ export type PartsAssignmentRow = {
   created_by_user_id: string | null;
 };
 
-export function listPartsAssignments(
+export type PartsAssignmentsResponse = {
+  rows: PartsAssignmentRow[];
+  total_count: number;
+};
+
+export function getPartsAssignmentsPage(
   operatingCompanyId: string,
   filters?: { vendor_id?: string; work_order_id?: string },
 ) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (filters?.vendor_id) query.set("vendor_id", filters.vendor_id);
   if (filters?.work_order_id) query.set("work_order_id", filters.work_order_id);
-  return apiRequest<{ rows: PartsAssignmentRow[] }>(
+  return apiRequest<PartsAssignmentsResponse>(
     `/api/v1/maintenance/parts-invoice-links?${query.toString()}`
-  ).then((result) => result.rows);
+  );
+}
+
+export function listPartsAssignments(
+  operatingCompanyId: string,
+  filters?: { vendor_id?: string; work_order_id?: string },
+) {
+  return getPartsAssignmentsPage(operatingCompanyId, filters).then((result) => result.rows);
 }
 
 export type CreatePartsAssignmentInput = {

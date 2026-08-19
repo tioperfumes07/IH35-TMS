@@ -79,7 +79,8 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
             pil.vendor_invoice_number,
             pil.vendor_invoice_amount::float8 AS vendor_invoice_amount,
             pil.created_at,
-            pil.created_by_user_id::text AS created_by_user_id
+            pil.created_by_user_id::text AS created_by_user_id,
+            COUNT(*) OVER()::int AS total_count
           FROM maintenance.parts_invoice_links pil
           INNER JOIN maintenance.work_orders wo
             ON wo.id = pil.work_order_id
@@ -99,7 +100,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
       return res.rows;
     });
 
-    return { rows };
+    return { rows, total_count: Number(rows[0]?.total_count ?? 0) };
   });
 
   /**
