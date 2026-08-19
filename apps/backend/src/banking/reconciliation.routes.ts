@@ -47,6 +47,17 @@ const unmatchBodySchema = z.object({
   transaction_id: z.string().uuid(),
 });
 
+// ACCT-F5574: table-scoped existence check for POST /:sessionId/match's matched_event_id, mirroring
+// obligation-reconcile.routes.ts's OBLIGATION_EXISTENCE_SQL (ACCT-F5573) -- the same class of bug,
+// a second route in this module that also writes a caller-supplied id straight onto
+// matched_load_id/matched_bill_id/matched_settlement_id with no check it exists or belongs to this
+// company.
+const MATCHED_EVENT_EXISTENCE_SQL: Record<z.infer<typeof matchBodySchema.shape.matched_event_type>, string> = {
+  load: `SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
+  bill: `SELECT 1 FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL`,
+  settlement: `SELECT 1 FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+};
+
 const completeBodySchema = z.object({
   force_complete: z.boolean().optional().default(false),
   reason: z.string().trim().max(500).optional(),
@@ -765,6 +776,15 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       );
       if (!txCheck.rows[0]) return false;
 
+      // ACCT-F5574: verify matched_event_id exists and belongs to this company BEFORE writing it
+      // onto the transaction -- previously trusted outright, silently marking a real transaction
+      // "matched" against a bogus/foreign id.
+      const eventExists = await client.query(
+        MATCHED_EVENT_EXISTENCE_SQL[body.data.matched_event_type],
+        [body.data.matched_event_id, query.data.operating_company_id]
+      );
+      if (!eventExists.rows[0]) return "event_not_found" as const;
+
       let loadId: string | null = null;
       let billId: string | null = null;
       let settlementId: string | null = null;
@@ -802,6 +822,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       return true;
     });
 
+    if (updated === "event_not_found") return reply.code(404).send({ error: "matched_event_not_found" });
     if (!updated) return reply.code(404).send({ error: "transaction_not_in_session_period" });
     return { ok: true };
   });
