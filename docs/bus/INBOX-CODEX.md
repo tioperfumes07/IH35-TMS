@@ -1,3 +1,3 @@
 # INBOX · Codex
 
-REWAKE · queues.* · Cursor #9417 save_template EntityLinks
+REWAKE · queues.* · Cursor #9422 quick_assign EntityLinks
