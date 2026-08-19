@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { depositEscrow, getEscrowAccountForHolder, listEscrowAccounts, listEscrowPostings, openEscrow, releaseEscrow } from "./service.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 const openBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -44,6 +45,12 @@ export async function registerEscrowRoutes(app: FastifyInstance) {
     if (!canAccessEscrow(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = openBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5596: this whole file had no membership check at all (route or service layer) --
+    // escrow_accounts/escrow_postings' RLS policy only compares against the same
+    // app.operating_company_id GUC these routes set from caller input, same non-backstop class as
+    // ACCT-F5592-F5595. A company member of one entity could open/read/deposit-into/release-from
+    // another entity's escrow account (driver bond / repair reserve / factor reserve liability).
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       return await openEscrow(body.data, { userId: user.uuid, role: user.role });
     } catch (error) {
@@ -59,6 +66,8 @@ export async function registerEscrowRoutes(app: FastifyInstance) {
     if (!canAccessEscrow(user.role)) return reply.code(403).send({ error: "forbidden" });
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5596: no backstop -- see the comment on POST /escrow/open above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     return { rows: await listEscrowAccounts(query.data.operating_company_id, user.uuid) };
   });
 
@@ -72,6 +81,8 @@ export async function registerEscrowRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5596: no backstop -- see the comment on POST /escrow/open above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const account = await getEscrowAccountForHolder(
       {
         operating_company_id: query.data.operating_company_id,
@@ -92,6 +103,8 @@ export async function registerEscrowRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = postingQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5596: no backstop -- see the comment on POST /escrow/open above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const rows = await listEscrowPostings(
       {
         operating_company_id: query.data.operating_company_id,
@@ -109,6 +122,9 @@ export async function registerEscrowRoutes(app: FastifyInstance) {
     if (!canAccessEscrow(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = postBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5596: no backstop -- see the comment on POST /escrow/open above. This route moves real
+    // money (cash-clearing GL posting into another entity's escrow liability).
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       return await depositEscrow(body.data, { userId: user.uuid, role: user.role });
     } catch (error) {
@@ -126,6 +142,9 @@ export async function registerEscrowRoutes(app: FastifyInstance) {
     if (!canAccessEscrow(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = postBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5596: no backstop -- see the comment on POST /escrow/open above. This route moves real
+    // money OUT of an entity's escrow liability -- the most severe of the 6 routes in this file.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       return await releaseEscrow(body.data, { userId: user.uuid, role: user.role });
     } catch (error) {
