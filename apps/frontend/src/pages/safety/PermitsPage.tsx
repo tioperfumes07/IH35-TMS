@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -345,7 +346,13 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 />
               </label>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex flex-col items-end gap-2">
+              {createMutation.isError ? (
+                <p className="w-full text-xs text-red-700" data-testid="permit-create-error">
+                  {userFacingApiError(createMutation.error, "Could not create the permit.")}
+                </p>
+              ) : null}
+              <div className="flex justify-end gap-2">
               <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={() => setCreateOpen(false)}>
                 Cancel
               </button>
@@ -357,6 +364,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               >
                 Create
               </button>
+              </div>
             </div>
           </div>
         </div>

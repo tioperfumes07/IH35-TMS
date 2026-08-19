@@ -21,6 +21,7 @@ import { suggestExpenseLoad } from "../../api/maintenance";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type InternalFineRow = Record<string, unknown>;
 
@@ -342,6 +343,11 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           {/* FIX 2 — no silent dead control: explain WHY the button is disabled. */}
           {missing.length > 0 ? (
             <span className="text-[11px] text-gray-500">Select a driver and a reason to create the fine.</span>
+          ) : null}
+          {createMutation.isError ? (
+            <p className="w-full text-xs text-red-700" data-testid="internal-fine-create-error">
+              {userFacingApiError(createMutation.error, "Could not create the internal fine.")}
+            </p>
           ) : null}
           {/* FIX 3 (frontend) — approver transparency: approving instantly creates a driver liability. */}
           {form.status === "approved" && approverName ? (

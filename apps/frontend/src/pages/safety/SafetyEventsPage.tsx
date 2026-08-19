@@ -21,6 +21,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { suggestExpenseLoad } from "../../api/maintenance";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -782,7 +783,12 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           />
         </div>
 
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex flex-col items-end gap-2">
+          {createMutation.isError ? (
+            <p className="w-full text-xs text-red-700" data-testid="safety-event-create-error">
+              {userFacingApiError(createMutation.error, "Could not save the safety event.")}
+            </p>
+          ) : null}
           <button
             type="button"
             onClick={() => createMutation.mutate()}
