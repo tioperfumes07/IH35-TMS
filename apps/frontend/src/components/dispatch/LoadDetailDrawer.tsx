@@ -1021,6 +1021,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           open={saveTemplateOpen}
           onClose={() => setSaveTemplateOpen(false)}
           operatingCompanyId={load.operating_company_id}
+          loadId={load.id}
+          loadNumber={load.load_number}
+          customerId={load.customer_id}
+          customerName={load.customer_name}
           initialJson={templateJsonFromLoadDetail({
             customer_id: load.customer_id,
             customer_name: load.customer_name,
