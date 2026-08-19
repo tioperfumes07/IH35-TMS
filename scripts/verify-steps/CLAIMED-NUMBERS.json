@@ -2554,6 +2554,11 @@
     "purpose": "verify-safety-b24-label-tests-mock-get-driver-labels",
     "date": "2026-08-19"
   },
+  "4046": {
+    "claimed_by": "cursor",
+    "purpose": "verify-saf-meet-train-create-error-surface",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
