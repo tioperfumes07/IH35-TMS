@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
@@ -8,10 +8,15 @@ import { useTeamSplits } from "../../hooks/useTeamSplits";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { useStagedListFilters } from "../../components/table";
 import { Link, useSearchParams } from "react-router-dom";
 
 type Props = {
   operatingCompanyId: string;
+};
+
+const EMPTY_FILTERS = {
+  driverId: "",
 };
 
 const RATIO_PRESETS = [
@@ -33,7 +38,40 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const teamId = searchParams.get("team_id");
   // LST-F5185 — visible EntityPicker (URL-only ?driver_id= is not reverse chrome).
-  const driverId = searchParams.get("driver_id")?.trim() ?? "";
+  // LV-DRIVERS-TEAM-SPLIT-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+
+  function patchListSearchParam(next: { driverId: string }) {
+    const p = new URLSearchParams(searchParams);
+    if (next.driverId) p.set("driver_id", next.driverId);
+    else p.delete("driver_id");
+    setSearchParams(p, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, driverId: driverIdFromUrl }));
+  }, [driverIdFromUrl]);
+
+  function setDriverId(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+
+  // Sibling reverse guard matches `driverId` in the active-list filter predicate.
+  const driverId = applied.driverId.trim();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [primaryDriverId, setPrimaryDriverId] = useState("");
@@ -42,13 +80,6 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const [secondaryRatio, setSecondaryRatio] = useState(0.4);
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  function setDriverId(next: string) {
-    const p = new URLSearchParams(searchParams);
-    if (next) p.set("driver_id", next);
-    else p.delete("driver_id");
-    setSearchParams(p, { replace: true });
-  }
 
   const configs = data?.configs ?? [];
   const active = useMemo(
@@ -81,30 +112,58 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3 px-2" data-testid="team-split-config-panel">
-      <div className="flex flex-wrap items-end justify-between gap-2">
+      <div className="relative flex flex-wrap items-end justify-between gap-2" data-testid="team-split-config-filters">
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-gray-900">Team split configs</h2>
-          <label className="block min-w-[240px] text-xs text-slate-600">
-            Driver
-            <div className="mt-1">
-              <EntityPicker
-                kind="driver"
-                operatingCompanyId={operatingCompanyId}
-                value={driverId || null}
-                onChange={(next) => setDriverId(next ?? "")}
-                allowCreate={false}
-                placeholder="All drivers"
-                className="w-full"
-                dataTestId="team-split-config-filter-driver"
-              />
-            </div>
-          </label>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="block min-w-[240px] text-xs text-slate-600">
+              Driver
+              <div className="mt-1">
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={operatingCompanyId}
+                  value={filterDraft.driverId || null}
+                  onChange={(next) => setDriverId(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All drivers"
+                  className="w-full"
+                  dataTestId="team-split-config-filter-driver"
+                />
+              </div>
+            </label>
+            <Button type="button" size="sm" data-testid="team-split-config-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="team-split-config-filter-cancel"
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="team-split-config-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchListSearchParam(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
+          </div>
         </div>
         <Button type="button" onClick={() => setCreateOpen(true)}>
           Create config
         </Button>
       </div>
-      {teamId || driverId ? (
+      {teamId || driverId || staged.dirty ? (
         <Link className="text-xs font-semibold text-slate-700 underline" to="/drivers/team-splits">
           Clear driver/config target
         </Link>
