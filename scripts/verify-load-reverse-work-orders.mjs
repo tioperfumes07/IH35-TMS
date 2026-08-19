@@ -44,7 +44,11 @@ function claimLabelFailures(routeSource, clientSource, detailSource) {
   return [
     ["work-order detail must project claim number", routeSource.includes("ic.claim_number AS insurance_claim_number")],
     ["work-order claim join must use the claim tenant scope", routeSource.includes("ic.tenant_id = w.operating_company_id")],
-    ["typed claim number must reach the mounted claim drill", clientSource.includes("insurance_claim_number?: string | null") && detailSource.includes('entityLabel(wo.insurance_claim_number, wo.insurance_claim_id, "Claim")')],
+    [
+      "typed claim number must reach the mounted claim drill",
+      clientSource.includes("insurance_claim_number?: string | null") &&
+        detailSource.includes('<EntityLinkOrTombstone kind="claim" id={wo.insurance_claim_id as string | null} name={wo.insurance_claim_number} noun="Claim"'),
+    ],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -161,7 +165,14 @@ if (selftest) {
   const claimMutations = [
     claimLabelFailures(route.replace("ic.claim_number AS insurance_claim_number", "NULL AS insurance_claim_number"), client, woDetail).length > 0,
     claimLabelFailures(route.replace("ic.tenant_id = w.operating_company_id", "TRUE"), client, woDetail).length > 0,
-    claimLabelFailures(route, client, woDetail.replace('entityLabel(wo.insurance_claim_number, wo.insurance_claim_id, "Claim")', 'entityLabel(null, wo.insurance_claim_id, "Claim")')).length > 0,
+    claimLabelFailures(
+      route,
+      client,
+      woDetail.replace(
+        '<EntityLinkOrTombstone kind="claim" id={wo.insurance_claim_id as string | null} name={wo.insurance_claim_number} noun="Claim"',
+        '<EntityLinkOrTombstone kind="claim" id={wo.insurance_claim_id as string | null} name={null} noun="Claim"'
+      )
+    ).length > 0,
   ];
   if (claimMutations.some((caught) => !caught)) {
     console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted claim-label defect escaped");
