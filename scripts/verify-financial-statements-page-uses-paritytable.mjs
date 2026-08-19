@@ -39,18 +39,29 @@ const REQUIRED_TOTAL_LABELS = [
   "Grand total",
 ];
 
+/**
+ * Strip backtick template-literal CONTENT (keep the delimiters) so a raw `<table>`/`<thead>`
+ * inside this page's own printLetter() bodyHtml template (a standalone printable document, never
+ * rendered as live React JSX) is not mistaken for a hand-rolled UI table. Same class fixed for
+ * AccountsPayableAgingPage.tsx (ACCT-F5522/ACCT-F5524) and ArApAgingPage.tsx (ACCT-F5523).
+ */
+function stripTemplateLiterals(src) {
+  return src.replace(/`(?:\\.|[^`\\])*`/g, "``");
+}
+
 function assertMigrated(src) {
   const errors = [];
+  const liveSrc = stripTemplateLiterals(src);
   if (!src.includes("ParityTable")) {
     errors.push(`${PAGE}: must import ParityTable from components/parity/ParityTable`);
   }
   if ((src.match(/<ParityTable\b/g) ?? []).length < 2) {
     errors.push(`${PAGE}: expected ≥2 <ParityTable> (statement sections + trial balance)`);
   }
-  if (/<table[\s>]/.test(src)) {
+  if (/<table[\s>]/.test(liveSrc)) {
     errors.push(`${PAGE}: must not contain hand-rolled <table>`);
   }
-  if (/<thead[\s>]/.test(src)) {
+  if (/<thead[\s>]/.test(liveSrc)) {
     errors.push(`${PAGE}: must not contain hand-rolled <thead>`);
   }
   for (const label of REQUIRED_LABELS) {
@@ -132,6 +143,21 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
+
+  // A print-template <table> inside a backtick literal must NOT be flagged (the real page's own
+  // printLetter() bodyHtml shape) — but a real raw <table> in live JSX still must be.
+  const printTemplateOk = good + '\n    function printLetter() { const bodyHtml = `<table><thead /></table>`; }\n';
+  const printTemplateErrors = assertMigrated(printTemplateOk);
+  if (printTemplateErrors.length) {
+    console.error(`${LABEL} --selftest FAIL: a print-template <table> inside a template literal was wrongly flagged:`, printTemplateErrors);
+    process.exit(1);
+  }
+  const liveTableBad = good + "\n    <table />\n";
+  if (!assertMigrated(liveTableBad).includes(`${PAGE}: must not contain hand-rolled <table>`)) {
+    console.error(`${LABEL} --selftest FAIL: a real <table> in live JSX (outside any template literal) was NOT caught`);
+    process.exit(1);
+  }
+
   console.log(`${LABEL} --selftest PASS`);
 }
 
