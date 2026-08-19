@@ -3,6 +3,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createCompanyViolation } from "../../../api/safety";
 import { Button } from "../../../components/Button";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -210,6 +211,11 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             />
           </div>
         </div>
+        {mutation.isError ? (
+          <p className="text-xs text-red-700" data-testid="company-violation-create-error">
+            {userFacingApiError(mutation.error, "Could not create the company violation.")}
+          </p>
+        ) : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
