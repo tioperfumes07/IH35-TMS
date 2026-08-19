@@ -29,8 +29,13 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
+  // ACCT-F5571: real code evolved from entityLabel(null, e.journal_entry_id, "Journal entry") (the
+  // original planted-defect target) to entityLabel(e.memo, e.journal_entry_id, "Journal entry") — a
+  // more honest label using the entry's real memo when available, entityLabel's own id-fallback
+  // otherwise. The old .replace() target no longer matched anything, so the "planted defect" was
+  // silently never planted and this selftest was passing on an empty diff. Target the real call site.
   planted[FILES[4]] = planted[FILES[4]].replace(
-    /entityLabel\(null,\s*e\.journal_entry_id,\s*"Journal entry"\)/,
+    /entityLabel\(e\.memo,\s*e\.journal_entry_id,\s*"Journal entry"\)/,
     "e.journal_entry_id.slice(0, 8)",
   );
   if (!assertAll(planted).length) {
