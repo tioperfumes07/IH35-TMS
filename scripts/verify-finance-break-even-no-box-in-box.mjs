@@ -14,7 +14,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/finance/BreakEvenPage.tsx";
 const LABEL = "verify-finance-break-even-no-box-in-box";
-const CONTROLS_MARKER = 'data-testid="break-even-controls"';
+// Two forms are equivalent: a literal JSX attribute (data-testid="…", the original hand-rolled
+// pattern) or the CollapsedListFilters `dataAttributes={{ "data-testid": "…" }}` prop (the shared
+// governed-filters component spreads this object onto its own DOM node).
+const CONTROLS_MARKER_RE = /data-testid=["']break-even-controls["']|"data-testid":\s*"break-even-controls"/;
 const EXPENSE_MARKER = 'data-testid="break-even-expense-frame"';
 const NESTED_TILE_RE = /className="[^"]*rounded-sm border border-slate-200[^"]*"/g;
 
@@ -29,8 +32,19 @@ function stripComments(src) {
 /** @param {string} src full page source */
 export function controlsSection(src) {
   const body = stripComments(src);
-  const marker = body.indexOf(CONTROLS_MARKER);
-  if (marker < 0) return "";
+  const m = CONTROLS_MARKER_RE.exec(body);
+  if (!m) return "";
+  const marker = m.index;
+  // Governed CollapsedListFilters slims controls into a toggle + popover (no permanently-visible
+  // bordered card to nest tiles inside) and self-strips border/rounded/bg from its own className
+  // via singleFrameLayoutClassName() — the box-in-box concern this guard exists for is handled by
+  // the shared component itself, not by this page. Scope the slice to the <CollapsedListFilters …>
+  // tag rather than a <section>, which this pattern never wraps the marker in.
+  const collapsedOpen = body.lastIndexOf("<CollapsedListFilters", marker);
+  if (collapsedOpen >= 0) {
+    const collapsedClose = body.indexOf("</CollapsedListFilters>", marker);
+    if (collapsedClose >= 0) return body.slice(collapsedOpen, collapsedClose + "</CollapsedListFilters>".length);
+  }
   const open = body.lastIndexOf("<section", marker);
   const close = body.indexOf("</section>", marker);
   if (open < 0 || close < 0) return body.slice(open >= 0 ? open : marker);
@@ -51,10 +65,15 @@ export function expenseSection(src) {
 /** @param {string} section controls JSX slice */
 export function collectControlsProblems(section) {
   const problems = [];
-  if (!section.includes(CONTROLS_MARKER)) {
+  if (!CONTROLS_MARKER_RE.test(section)) {
     problems.push(`${TARGET}: missing break-even-controls section wrapper`);
     return problems;
   }
+  // Governed CollapsedListFilters owns its own frame (singleFrameLayoutClassName strips any
+  // border/rounded/bg the caller passes) — the hand-rolled single-section-frame / border-b-strip /
+  // no-nested-tile checks below are about a DIFFERENT, older always-visible-card pattern that does
+  // not apply to the collapsed toggle+popover shape. Presence + Apply wiring is checked separately.
+  if (/<CollapsedListFilters\b/.test(section)) return problems;
   if (!/overflow-hidden rounded-sm border border-slate-200 bg-white/.test(section)) {
     problems.push(`${TARGET}: controls must use a single overflow-hidden section frame`);
   }
@@ -104,10 +123,20 @@ export function collectExpenseProblems(section) {
   return problems;
 }
 
-/** Apply button must route through shared navy primary Button component. */
+/**
+ * Apply for period-range controls must be real and governed — either the original hand-rolled navy
+ * Button pattern, OR the CLS-FILTER-GEAR-APPLY shared pattern (CollapsedListFilters +
+ * useStagedListFilters, Apply wired via onApply={x.apply}) that legitimately replaced it on this
+ * page. Same widening as ACCT-F5526 (FinancialStatementsPage.tsx).
+ */
 export function collectNavyProblems(src) {
   const problems = [];
   const body = stripComments(src);
+  const hasGovernedApply =
+    body.includes("CollapsedListFilters") &&
+    body.includes("useStagedListFilters") &&
+    /onApply=\{[^}]*\.apply\}/.test(body);
+  if (hasGovernedApply) return problems;
   if (!body.includes('from "../../components/Button"')) {
     problems.push(`${TARGET}: must import navy Button for Apply controls`);
   }
@@ -152,12 +181,34 @@ function selftest() {
     </section>`;
   const goodNavy = `import { Button } from "../../components/Button";\n<Button size="sm" onClick={() => setAppliedRange({ from: fromDate, to: toDate })}>Apply</Button>`;
 
+  // Governed CollapsedListFilters controls (this page's real shape): dataAttributes-form marker,
+  // self-owned frame (no <section> wrapper needed), Apply via onApply={staged.apply}.
+  const goodCollapsedControls = `
+    <CollapsedListFilters
+      activeFilterCount={activeFilterCount}
+      onApply={staged.apply}
+      onReset={staged.reset}
+      onCancel={staged.cancel}
+      className="mb-4 rounded-sm border border-slate-200 bg-white p-3"
+      dataAttributes={{ "data-testid": "break-even-controls" }}
+    >
+      <DatePicker />
+    </CollapsedListFilters>`;
+  const goodCollapsedNavy = `
+    import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+    const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
+    <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} />`;
+  const brokenCollapsedNavy = goodCollapsedNavy.replace("onApply={staged.apply}", "onApply={() => {}}");
+
   const cases = [
     { name: "flat controls section", fn: () => collectControlsProblems(goodControls), want: 0 },
     { name: "nested controls tile", fn: () => collectControlsProblems(badControls), wantMin: 1 },
     { name: "flat expense section", fn: () => collectExpenseProblems(goodExpense), want: 0 },
     { name: "nested expense tiles", fn: () => collectExpenseProblems(badExpense), wantMin: 2 },
     { name: "navy Apply via Button import", fn: () => collectNavyProblems(goodNavy), want: 0 },
+    { name: "governed CollapsedListFilters controls (real page's shape)", fn: () => collectControlsProblems(goodCollapsedControls), want: 0 },
+    { name: "governed Apply via CollapsedListFilters", fn: () => collectNavyProblems(goodCollapsedNavy), want: 0 },
+    { name: "governed Apply present but not wired to staged.apply must still fail", fn: () => collectNavyProblems(brokenCollapsedNavy), wantMin: 2 },
   ];
   let failed = 0;
   for (const c of cases) {
