@@ -10,8 +10,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 const LINK = "text-slate-700 hover:underline";
 
@@ -110,20 +109,9 @@ export function DriverReportsQueuePage({
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (row) =>
-        row.driver_id ? (
-          <EntityLink
-            kind="driver"
-            id={row.driver_id}
-            label={entityLabel(row.driver_name, row.driver_id, "Driver")}
-            className={LINK}
-            data-testid="driver-reports-queue-driver-link"
-          />
-        ) : (
-          "—"
-        ),
+      render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" className={LINK} data-testid="driver-reports-queue-driver-link" />,
     },
-    { key: "load_number", label: "Load", render: (row) => <EntityLink kind="load" id={row.load_id ?? undefined} label={entityLabel(row.load_number, row.load_id, "Load")} /> },
+    { key: "load_number", label: "Load", render: (row) => <EntityLinkOrTombstone kind="load" id={row.load_id ?? undefined} name={row.load_number} noun="Load" /> },
     {
       key: "description",
       label: "Description",

@@ -116,7 +116,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
     bad: /row\.driver_name\s*\?\?\s*row\.driver_id/,
-    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)|EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
@@ -518,7 +518,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
     bad: /load_number\s*\?\?\s*undefined/,
-    good: /entityLabel\(\s*row\.load_number\s*,\s*row\.load_id\s*,\s*"Load"\s*\)/,
+    good: /name=\{row\.load_number\}\s+noun="Load"|entityLabel\(\s*row\.load_number\s*,\s*row\.load_id\s*,\s*"Load"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx",
