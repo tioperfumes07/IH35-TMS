@@ -22,12 +22,13 @@ const PAGES = [
   {
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
     label: "Customer Detail",
-    minSortedParityTables: 4,
+    minSortedParityTables: 5,
     requiredPrefixes: [
       { key: "load_sort", dir: "load_dir" },
       { key: "contact_sort", dir: "contact_dir" },
       { key: "pay_sort", dir: "pay_dir" },
       { key: "lane_sort", dir: "lane_dir" },
+      { key: "invoice_sort", dir: "invoice_dir" },
     ],
   },
   {
@@ -135,6 +136,7 @@ function selftest() {
     useUrlSort({ key: "contact_sort", dir: "contact_dir" });
     useUrlSort({ key: "pay_sort", dir: "pay_dir" });
     useUrlSort({ key: "lane_sort", dir: "lane_dir" });
+    useUrlSort({ key: "invoice_sort", dir: "invoice_dir" });
     { key: "load_number", label: "Load #", sortable: true }
     { key: "name", label: "Name", sortable: true }
     { key: "date", label: "Date", sortable: true }
@@ -143,6 +145,7 @@ function selftest() {
     <ParityTable sortKey={contactSortKey} sortDirection={contactSortDirection} onSortChange={onContactSortChange} />
     <ParityTable sortKey={paySortKey} sortDirection={paySortDirection} onSortChange={onPaySortChange} />
     <ParityTable sortKey={laneSortKey} sortDirection={laneSortDirection} onSortChange={onLaneSortChange} />
+    <ParityTable sortKey={invoiceSortKey} sortDirection={invoiceSortDirection} onSortChange={onInvoiceSortChange} />
   `;
   const goodVendor = `
     import { useUrlSort } from "../hooks/useUrlSort";
@@ -161,7 +164,7 @@ function selftest() {
     {
       file: PAGES[0].file,
       label: PAGES[0].label,
-      minSortedParityTables: 4,
+      minSortedParityTables: 5,
       requiredPrefixes: PAGES[0].requiredPrefixes,
       pageSrc: goodCustomer,
     },
@@ -271,5 +274,5 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} — OK (CustomerDetail 4 tables + VendorDetail 2 tables — URL sort via useUrlSort with distinct prefixes)`,
+  `${LABEL} — OK (CustomerDetail 5 tables + VendorDetail 2 tables — URL sort via useUrlSort with distinct prefixes)`,
 );
