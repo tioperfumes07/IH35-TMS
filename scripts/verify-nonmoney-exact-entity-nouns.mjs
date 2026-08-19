@@ -28,7 +28,7 @@ const required = [
   ["fines", 'entityLabel(f.violation_code ?? f.jurisdiction, id, "Fine")'],
   ["fines", 'entityLabel(f.reason_code, id, "Internal fine")'],
   ["claimsReverse", 'entityLabel(claim.claim_number, claim.id, "Claim")'],
-  ["mattersReverse", 'entityLabel(m.matter_number, id, "Legal matter")'],
+  ["mattersReverse", 'noun="Legal matter"'],
   ["matterList", 'entityLabel(row.matter_number, row.id, "Legal matter")'],
   ["woModal", 'entityLabel(workOrder.display_id, workOrder.id, "Work order")'],
   ["vehicle", 'entityLabel(unit?.unit_number, id, "Unit")'],
@@ -46,7 +46,8 @@ function failures(candidate = files) {
     const source = candidate[key];
     if (/entityLabel\([^\n]{0,180},\s*"Record"\)/.test(source)) found.push(`${paths[key]}: generic Record noun remains on governed entity surface`);
   }
-  if (!candidate.claimsReverse.includes('kind="claim"') || !candidate.claimsReverse.includes("id={claim.id}")) found.push("claim reverse loses canonical EntityLink");
+  if (!candidate.claimsReverse.includes('EntityLinkOrTombstone') || !candidate.claimsReverse.includes('kind="claim"') || !candidate.claimsReverse.includes("id={claim.id}") || !candidate.claimsReverse.includes('noun="Claim"')) found.push("claim reverse loses canonical resolved/tombstoned drill");
+  if (!candidate.mattersReverse.includes("name={m.matter_number}")) found.push("legal-matter reverse loses canonical human identity");
   if (!candidate.mattersReverse.includes('kind="matter"') || !candidate.mattersReverse.includes("id={id}")) found.push("legal-matter reverse loses canonical EntityLink");
   if (!candidate.dtc.includes('kind="work_order"') || !candidate.dtc.includes("id={row.id}")) found.push("DTC work-order drill loses canonical EntityLink");
   if (!candidate.woCreate.includes('kind="work_order"') || !candidate.woCreate.includes("id={createdWO.uuid}")) found.push("created work order loses canonical EntityLink");
@@ -57,12 +58,16 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   const escaped = [];
   for (const [key, needle] of required) {
     if (!files[key].includes(needle)) { escaped.push(`${key}: mutation anchor missing`); continue; }
-    const mutant = { ...files, [key]: files[key].replace(needle, needle.replace(/"(?:Driver|Work order|Fine|Internal fine|Claim|Legal matter|Unit|Incident)"\)$/, '"Record")')) };
+    const replacement = needle.includes("entityLabel(")
+      ? needle.replace(/"(?:Driver|Work order|Fine|Internal fine|Claim|Legal matter|Unit|Incident)"\)$/, '"Record")')
+      : needle.replace(/Legal matter/g, "Record");
+    const mutant = { ...files, [key]: files[key].replace(needle, replacement) };
     if (mutant[key] === files[key] || failures(mutant).length === 0) escaped.push(`${key}: planted generic noun escaped (${needle})`);
   }
   const drillMutations = [
     ["claimsReverse", 'kind="claim"', 'kind="load"'],
     ["mattersReverse", 'kind="matter"', 'kind="claim"'],
+    ["mattersReverse", 'name={m.matter_number}', 'name={m.id}'],
     ["dtc", 'kind="work_order"', 'kind="unit"'],
     ["woCreate", 'id={createdWO.uuid}', 'id={createdWO.display_id}'],
   ];
