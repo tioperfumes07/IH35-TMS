@@ -23,6 +23,19 @@ function assertAll(srcs) {
       problems.push(`${file}: missing entityLabel`);
     }
   }
+  const transfer = srcs[FILES[2]];
+  if (!/import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["'][^"']*\/EntityLinkOrTombstone["']/.test(transfer)) {
+    problems.push(`${FILES[2]}: tombstone component must come from its canonical module`);
+  }
+  if (!/EntityLinkOrTombstone/.test(transfer)) {
+    problems.push(`${FILES[2]}: unresolved drivers must render as non-clickable tombstones`);
+  }
+  if (!/id=\{row\.from_driver_uuid\}[\s\S]*?name=\{row\.from_driver_name\}[\s\S]*?noun="Driver"/.test(transfer)) {
+    problems.push(`${FILES[2]}: from-driver must couple canonical id with its human name`);
+  }
+  if (!/id=\{row\.to_driver_uuid\}[\s\S]*?name=\{row\.to_driver_name\}[\s\S]*?noun="Driver"/.test(transfer)) {
+    problems.push(`${FILES[2]}: to-driver must couple canonical id with its human name`);
+  }
   return problems;
 }
 
@@ -37,6 +50,11 @@ if (SELFTEST) {
   );
   if (planted[FILES[0]] === srcs[FILES[0]] || !assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+    process.exit(1);
+  }
+  const badTransfer = { ...srcs, [FILES[2]]: srcs[FILES[2]].replace("EntityLinkOrTombstone", "EntityLink") };
+  if (badTransfer[FILES[2]] === srcs[FILES[2]] || !assertAll(badTransfer).length) {
+    console.error(`${LABEL} SELFTEST FAILED: unresolved-transfer planted defect not caught`);
     process.exit(1);
   }
   const live = assertAll(srcs);
