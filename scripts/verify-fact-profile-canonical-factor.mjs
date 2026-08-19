@@ -73,7 +73,14 @@ export function collectProblems(sources = {
     problems.push(`${HOME}: must not use vendor-notes dual-path for factor profile`);
   }
 
-  if (!/from_vendor_id !== p\.to_vendor_id/.test(banner)) {
+  // The real code extracts an isSelfPair(p) predicate (from_vendor_id === to_vendor_id OR
+  // normalized-name equality — MORE thorough than a bare id inequality, and reused for both the
+  // visible list and the count) and filters with !isSelfPair(p), rather than an inline
+  // `from_vendor_id !== p.to_vendor_id` expression. Accept either shape.
+  const hasInlineFilter = /from_vendor_id !== p\.to_vendor_id/.test(banner);
+  const hasExtractedPredicate =
+    /from_vendor_id\s*===\s*p\.to_vendor_id/.test(banner) && /!isSelfPair\(p\)/.test(banner);
+  if (!hasInlineFilter && !hasExtractedPredicate) {
     problems.push(`${BANNER}: must filter self-match pairs client-side`);
   }
 
@@ -99,6 +106,16 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   };
   if (collectProblems(broken).length === 0) {
     console.error(`[${LABEL}] --selftest FAIL: broken fixture not flagged`);
+    process.exit(1);
+  }
+  // The self-match filter clause had no dedicated mutation coverage before — plant its own
+  // regression (drop the isSelfPair id-equality check) independently of the other 3 mutations.
+  const brokenBanner = {
+    ...real,
+    banner: real.banner.replace("p.from_vendor_id === p.to_vendor_id ||", ""),
+  };
+  if (!collectProblems(brokenBanner).some((p) => p.includes("must filter self-match pairs"))) {
+    console.error(`[${LABEL}] --selftest FAIL: dropped self-match filter not flagged`);
     process.exit(1);
   }
   const good = collectProblems(real);
