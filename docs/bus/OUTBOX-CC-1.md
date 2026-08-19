@@ -571,3 +571,7 @@ verify:static: 45 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:08Z CC-1 | ACCT-F5469 closed (PR #9337, merged e786cae). verify-accounting-audit-trail-lineage.mjs required a direct value={accountId} binding on the account filter SelectCombobox, but the real filter was migrated to a staged-filter draft pattern (Apply/Cancel/Reset) — value={staged.draft.accountId}. accountId still flows into the real query unchanged; only the UI staging layer changed. Widened to accept both shapes. No --selftest harness exists for this flat-assertion guard; load-bearing proof done by hand on the real file. Zero product-code change.
 
 verify:static: 46 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:10Z CC-1 | ACCT-F5470 closed (PR #9340, merged f49462f). verify-accounting-hub-honest-labels.mjs blanket-forbade any occurrence of item.entity_id, but the only occurrence is entityLabel(item.display_id, item.entity_id, "Record") — entity_id passed as entityLabel's safe id-fallback param, never rendered raw; entityLabel() prefers display_id and falls back to an honest "Record — not visible" sentinel, never the raw uuid. This IS the correct fix the guard's header describes; the assertion was just too broad. Narrowed to only flag entity_id references exceeding the count safely wrapped in entityLabel(...). No --selftest harness; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 47 of ~199 now closed this session. Continuing non-stop, fast-merge.
