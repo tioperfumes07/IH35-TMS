@@ -29,6 +29,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
@@ -721,105 +722,37 @@ export function WorkOrderDetailPage() {
               <div>
                 <div className="text-[11px] text-gray-500">Unit</div>
                 <p>
-                  {wo.unit_id ? (
-                    <EntityLink
-                      kind="unit"
-                      id={String(wo.unit_id)}
-                      label={entityLabel(
-                        typeof wo.unit_number === "string" ? wo.unit_number : null,
-                        wo.unit_id,
-                        "Unit"
-                      )}
-                    />
-                  ) : (
-                    "—"
-                  )}
+                  <EntityLinkOrTombstone kind="unit" id={wo.unit_id as string | null} name={wo.unit_number} noun="Unit" />
                 </p>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Load</div>
                 <p>
-                  {wo.load_id ? (
-                    <EntityLink
-                      kind="load"
-                      id={String(wo.load_id)}
-                      label={entityLabel(
-                        typeof wo.linked_load_number === "string" ? wo.linked_load_number : null,
-                        wo.load_id,
-                        "Load"
-                      )}
-                    />
-                  ) : (
-                    "—"
-                  )}
+                  <EntityLinkOrTombstone kind="load" id={wo.load_id as string | null} name={wo.linked_load_number} noun="Load" />
                 </p>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Roadside breakdown load</div>
                 <p>
-                  {wo.roadside_breakdown_load_id ? (
-                    <EntityLink
-                      kind="load"
-                      id={String(wo.roadside_breakdown_load_id)}
-                      label={entityLabel(
-                        typeof wo.roadside_breakdown_load_number === "string" ? wo.roadside_breakdown_load_number : null,
-                        wo.roadside_breakdown_load_id,
-                        "Load"
-                      )}
-                    />
-                  ) : (
-                    "—"
-                  )}
+                  <EntityLinkOrTombstone kind="load" id={wo.roadside_breakdown_load_id as string | null} name={wo.roadside_breakdown_load_number} noun="Load" />
                 </p>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Driver</div>
                 <p>
-                  {wo.driver_id ? (
-                    <EntityLink
-                      kind="driver"
-                      id={String(wo.driver_id)}
-                      label={entityLabel(
-                        typeof wo.driver_name === "string" ? wo.driver_name : null,
-                        wo.driver_id,
-                        "Driver"
-                      )}
-                    />
-                  ) : (
-                    "—"
-                  )}
+                  <EntityLinkOrTombstone kind="driver" id={wo.driver_id as string | null} name={wo.driver_name} noun="Driver" />
                 </p>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Vendor</div>
                 <p>
-                  {wo.resolved_vendor_id ? (
-                    <EntityLink
-                      kind="vendor"
-                      id={String(wo.resolved_vendor_id)}
-                      label={entityLabel(
-                        typeof wo.resolved_vendor_name === "string" ? wo.resolved_vendor_name : null,
-                        wo.resolved_vendor_id,
-                        "Vendor"
-                      )}
-                    />
-                  ) : (
-                    "—"
-                  )}
+                  <EntityLinkOrTombstone kind="vendor" id={wo.resolved_vendor_id as string | null} name={wo.resolved_vendor_name} noun="Vendor" />
                 </p>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Insurance claim</div>
                 <p>
-                  {wo.insurance_claim_id ? (
-                    <EntityLink
-                      kind="claim"
-                      id={String(wo.insurance_claim_id)}
-                      label={entityLabel(wo.insurance_claim_number, wo.insurance_claim_id, "Claim")}
-                    />
-                  ) : (
-                    "—"
-                  )}
+                  <EntityLinkOrTombstone kind="claim" id={wo.insurance_claim_id as string | null} name={wo.insurance_claim_number} noun="Claim" />
                 </p>
               </div>
             </div>
@@ -853,15 +786,7 @@ export function WorkOrderDetailPage() {
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asset</div>
                 <div className="mt-1 flex items-center gap-2">
-                  {wo.unit_id ? (
-                    <EntityLink
-                      kind="unit"
-                      id={String(wo.unit_id)}
-                      label={entityLabel(wo.unit_number ?? wo.unit_display_id, wo.unit_id, "Unit")}
-                    />
-                  ) : (
-                    <span>Unassigned</span>
-                  )}
+                  <EntityLinkOrTombstone kind="unit" id={wo.unit_id as string | null} name={wo.unit_number ?? wo.unit_display_id} noun="Unit" />
                   <Button type="button" size="sm" variant="secondary" disabled={!editTarget} onClick={() => setEditing(true)}>
                     Change in Edit
                   </Button>
