@@ -694,3 +694,7 @@ verify:static: 75 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:46Z CC-1 | ACCT-F5499 closed (PR #9573, merged 9345cbe). SELF-CORRECTION + guard fix: verify-join-entity-scoped.mjs FAILed 2 offenders — (1) my own earlier ACCT-F5435 query (SELECT is_sample_data FROM mdata.drivers WHERE id = $1::uuid) had no operating_company_id predicate despite it being in scope and used by every sibling query — a genuine cross-entity read gap, fixed now; (2) drug-alcohol/program.service.ts's joins ARE correctly scoped (d.operating_company_id::text = e.operating_company_id::text) but the guard's regex never tolerated a Postgres cast between column and operator — a real false positive, guard fixed. Added 2 new selftest cases proving the widening is precise. tsc -b clean.
 
 verify:static: 76 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:51Z CC-1 | ACCT-F5500 closed (PR #9579, merged 7362476). verify-driver-profile-scope.mjs FAILed getDriver's function-declaration + call-site checks, but the real signature is correct — a legitimate later fix added a trailing optional signal?: AbortSignal param and reformatted to multi-line. Guard's regex required no whitespace after the open paren and no trailing param/arg. Widened both checks (leading whitespace + trailing-param/arg tolerance). Existing --selftest re-verified; added 2 new dedicated cases proving the widening is precise. Zero product-code change.
+
+verify:static: 77 of ~199 now closed this session. Continuing non-stop, fast-merge.
