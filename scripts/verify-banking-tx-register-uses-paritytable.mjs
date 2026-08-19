@@ -39,7 +39,14 @@ function stripComments(src) {
 
 export function assertMigrated(src) {
   const errors = [];
-  const body = stripComments(src);
+  const commentsStripped = stripComments(src);
+  // The Print dialog's printLetterHtml({ bodyHtml: `...` }) call builds a raw HTML STRING for a
+  // separate print window, not JSX — the <table>/<thead>/<tbody> inside that template literal are
+  // legitimate print-document markup, not a hand-rolled React table. Strip that one template
+  // literal before scanning for hand-rolled markup, so the check still fires on a REAL accidental
+  // JSX <table> anywhere else in the file (same pattern as verify-account-register-page-uses-
+  // paritytable.mjs / verify-accounts-payable-aging-page-uses-paritytable.mjs).
+  const body = commentsStripped.replace(/bodyHtml:\s*`[\s\S]*?`,/, "bodyHtml: ``,");
 
   if (!body.includes('from "../../../components/parity/ParityTable"') && !body.includes("ParityTable")) {
     errors.push(`${PAGE}: must import ParityTable from components/parity/ParityTable`);
@@ -169,14 +176,44 @@ function selftest() {
       return <table><thead /><tbody /></table>;
     }
   `;
+  // The real file's Print dialog builds a raw HTML string for a separate print window via
+  // printLetterHtml({ bodyHtml: \`<table>...\` }) — that <table>/<thead>/<tbody> is legitimate
+  // print-document markup, not a hand-rolled JSX table, and must NOT trip the forbidden-markup
+  // check. Prove it independently of the `good` fixture above (which has no bodyHtml at all).
+  const goodWithPrintBodyHtml =
+    good +
+    `
+    printLetterHtml({
+      title: "Bank transactions",
+      bodyHtml: \`
+        <table>
+          <thead><tr><th>Date</th></tr></thead>
+          <tbody>\${rowsHtml}</tbody>
+        </table>
+      \`,
+    });
+  `;
   const goodErrors = assertMigrated(good);
+  const goodPrintErrors = assertMigrated(goodWithPrintBodyHtml);
   const badErrors = assertMigrated(bad);
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
   }
+  if (goodPrintErrors.length) {
+    console.error(`${LABEL} --selftest FAIL good+print-bodyHtml fixture (false positive on print template):`, goodPrintErrors);
+    process.exit(1);
+  }
   if (badErrors.length < 8) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // A REAL hand-rolled JSX <table> sitting alongside a legitimate print bodyHtml must still be
+  // caught — the strip must be scoped to the bodyHtml template literal only.
+  const realTableBesidePrint = goodWithPrintBodyHtml + `\n<table><thead /><tbody /></table>`;
+  const realTableErrors = assertMigrated(realTableBesidePrint);
+  if (!realTableErrors.some((e) => e.includes("hand-rolled table markup"))) {
+    console.error(`${LABEL} --selftest FAIL: real JSX <table> beside a print bodyHtml must still be caught`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
