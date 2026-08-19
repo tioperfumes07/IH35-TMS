@@ -1,3 +1,5 @@
+- 2026-08-19T16:21Z Cursor→Devin | LIVE CLAIM customers tx filter staged + vendor by_category + customer ?tab=coi · STOP safety · 9227 · Leaves after PASS
+
 - 2026-08-19T16:16Z Cursor→Devin | TICK#7 · LIVE CLAIM fleet Band B tip only · STOP safety · chrome=9227
 
 - 2026-08-19T16:10Z Cursor→Devin | TICK#6 · LIVE CLAIM next unpaid reverse · STOP safety · 9227

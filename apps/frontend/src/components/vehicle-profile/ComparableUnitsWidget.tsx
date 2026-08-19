@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Comparable = {
   fleet_avg_maintenance_per_mile_cents?: number | null;
@@ -13,7 +14,15 @@ function usdPerMile(cents: number | null | undefined) {
   return `$${(cents / 100).toFixed(2)}/mi`;
 }
 
-export function ComparableUnitsWidget({ unitNumber, comparable }: { unitNumber: string; comparable: Comparable }) {
+export function ComparableUnitsWidget({
+  unitId,
+  unitNumber,
+  comparable,
+}: {
+  unitId: string;
+  unitNumber: string;
+  comparable: Comparable;
+}) {
   const [open, setOpen] = useState(false);
   const dev = comparable.deviation_pct ?? 0;
   const showBanner = dev > 15;
@@ -26,7 +35,9 @@ export function ComparableUnitsWidget({ unitNumber, comparable }: { unitNumber: 
         </div>
       ) : null}
       <p className="text-sm text-gray-800">
-        Truck {unitNumber} is rank {comparable.rank_in_fleet ?? "—"} of {comparable.total_units_in_fleet ?? "—"} in fleet.
+        Truck{" "}
+        <EntityLinkOrTombstone kind="unit" id={unitId} name={unitNumber} noun="Unit" className="font-medium text-slate-700 hover:underline" />{" "}
+        is rank {comparable.rank_in_fleet ?? "—"} of {comparable.total_units_in_fleet ?? "—"} in fleet.
       </p>
       <p className="text-xs text-gray-600">
         Maintenance per mile: {usdPerMile(comparable.this_unit_maintenance_per_mile_cents)} (fleet avg:{" "}

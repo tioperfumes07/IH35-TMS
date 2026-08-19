@@ -245,13 +245,14 @@ export function CustomersPage() {
   // behind Apply/Cancel/Reset (same CollapsedListFilters law as roster Filters). Do not mutate the
   // live invoice query until Apply.
   const txFilters = useStagedListFilters({
-    applied: { statusFilter, dateFrom, dateTo, categoryFilter },
-    empty: { statusFilter: "", dateFrom: "", dateTo: "", categoryFilter: "" },
+    applied: { statusFilter, dateFrom, dateTo, categoryFilter, typeFilter },
+    empty: { statusFilter: "", dateFrom: "", dateTo: "", categoryFilter: "", typeFilter: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
       setDateFrom(next.dateFrom);
       setDateTo(next.dateTo);
       setCategoryFilter(next.categoryFilter);
+      setTypeFilter(next.typeFilter);
     },
   });
   const [sidebarPage, setSidebarPage] = useState(1);
@@ -725,20 +726,14 @@ export function CustomersPage() {
                   exportFilename="customer-transactions"
                   filterBar={
                     <div className="flex flex-wrap items-center gap-2">
-                      <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm">
-                        <option value="">Type: All</option>
-                        <option value="from_load">from_load</option>
-                        <option value="driver_damage">driver_damage</option>
-                        <option value="driver_misc">driver_misc</option>
-                        <option value="vendor_chargeback">vendor_chargeback</option>
-                        <option value="customer_adjustment">customer_adjustment</option>
-                        <option value="manual">manual</option>
-                      </SelectCombobox>
                       <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
                         {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
                       </span>
+                      <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
+                        {typeFilter ? `Type: ${typeFilter}` : "Type: All"}
+                      </span>
                       <CollapsedListFilters
-                        activeFilterCount={(statusFilter ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (categoryFilter ? 1 : 0)}
+                        activeFilterCount={(statusFilter ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (categoryFilter ? 1 : 0) + (typeFilter ? 1 : 0)}
                         onApply={txFilters.apply}
                         onReset={txFilters.reset}
                         onCancel={txFilters.cancel}
@@ -746,6 +741,20 @@ export function CustomersPage() {
                         testIdPrefix="customers-tx"
                         dataAttributes={{ "data-customers-tx-filter-toolbar": "collapsed" }}
                       >
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Type</label>
+                        <SelectCombobox
+                          value={txFilters.draft.typeFilter}
+                          onChange={(event) => txFilters.setDraft({ ...txFilters.draft, typeFilter: event.target.value })}
+                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                        >
+                          <option value="">Type: All</option>
+                          <option value="from_load">from_load</option>
+                          <option value="driver_damage">driver_damage</option>
+                          <option value="driver_misc">driver_misc</option>
+                          <option value="vendor_chargeback">vendor_chargeback</option>
+                          <option value="customer_adjustment">customer_adjustment</option>
+                          <option value="manual">manual</option>
+                        </SelectCombobox>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
                         <SelectCombobox
                           value={txFilters.draft.statusFilter}

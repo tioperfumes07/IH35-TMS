@@ -34,11 +34,20 @@ function check() {
   assert(/txFilters\.draft\.dateFrom/.test(src), "DateFrom must bind draft.dateFrom");
   assert(/txFilters\.draft\.dateTo/.test(src), "DateTo must bind draft.dateTo");
   assert(/txFilters\.draft\.categoryFilter/.test(src), "Category must bind draft.categoryFilter");
+  assert(/txFilters\.draft\.typeFilter/.test(src), "Type control must bind draft.typeFilter, not live typeFilter");
+  assert(
+    /applied:\s*\{[^}]*typeFilter/.test(src) && /setTypeFilter\(next\.typeFilter\)/.test(src),
+    "typeFilter must be staged through useStagedListFilters onApply",
+  );
   // Ban the pre-fix live-bind pattern inside a custom showFilterBox panel.
   assert(!/setShowFilterBox/.test(src), "Must not use ad-hoc showFilterBox for transaction filters");
   assert(
     !/<SelectCombobox value=\{statusFilter\} onChange=\{\(event\) => setStatusFilter/.test(src),
     "Status must not live-bind setStatusFilter inside the filter panel",
+  );
+  assert(
+    !/<SelectCombobox value=\{typeFilter\} onChange=\{\(event\) => setTypeFilter/.test(src),
+    "Type must not live-bind setTypeFilter outside staged draft",
   );
 }
 
