@@ -31,11 +31,16 @@ if (!/formatDateUS\(payment\.journal_entry_date\)/.test(detailPage)) {
 if (!/formatDateUS\(payment\.matched_bank_transaction_date\)/.test(detailPage)) {
   errors.push("BillPaymentDetailPage does not render bank transaction date");
 }
-if (!/payment\.journal_entry_id\.slice\(0,\s*8\)/.test(detailPage)) {
-  errors.push("BillPaymentDetailPage missing UUID fallback for journal entry");
+// The real fallback now renders entityLabel(null, payment.X_id, "...") instead of a truncated
+// `.slice(0, 8)` UUID — entityLabel() turns a name-less id into an honest "... — not visible"
+// sentinel rather than 8 meaningless hex characters (entity-label.ts's documented law against
+// exactly this truncated-slice anti-pattern, same class already fixed for BillDetailPage.tsx
+// this session). Accept either shape.
+if (!/payment\.journal_entry_id\.slice\(0,\s*8\)/.test(detailPage) && !/entityLabel\(null,\s*payment\.journal_entry_id,/.test(detailPage)) {
+  errors.push("BillPaymentDetailPage missing an honest fallback for journal entry");
 }
-if (!/payment\.matched_bank_transaction_id\.slice\(0,\s*8\)/.test(detailPage)) {
-  errors.push("BillPaymentDetailPage missing UUID fallback for bank transaction");
+if (!/payment\.matched_bank_transaction_id\.slice\(0,\s*8\)/.test(detailPage) && !/entityLabel\(null,\s*payment\.matched_bank_transaction_id,/.test(detailPage)) {
+  errors.push("BillPaymentDetailPage missing an honest fallback for bank transaction");
 }
 
 if (errors.length > 0) {
