@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/useAuth";
 import { getArrivingSoon, logArrivingSoonView, type ArrivingSoonCard as ArrivingSoonCardType } from "../../api/maintenance";
@@ -112,7 +113,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       label: "Unit",
       sortable: true,
       render: (card) => (
-        <EntityLink kind="unit" id={card.unit_id} label={entityLabel(card.unit_number, card.unit_id, "Unit")} className="font-semibold" />
+        <EntityLinkOrTombstone kind="unit" id={card.unit_id} name={card.unit_number} noun="Unit" className="font-semibold" />
       ),
     },
     {
@@ -120,19 +121,16 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       label: "Load",
       sortable: true,
       render: (card) => (
-        <EntityLink kind="load" id={card.load_id} label={entityLabel(card.load_display_id, card.load_id, "Load")} />
+        <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" />
       ),
     },
     {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (card) =>
-        card.driver_id ? (
-          <EntityLink kind="driver" id={card.driver_id} label={entityLabel(card.driver_name, card.driver_id, "Driver")} />
-        ) : (
-          <span className="text-gray-400">Unassigned</span>
-        ),
+      render: (card) => (
+        <EntityLinkOrTombstone kind="driver" id={card.driver_id} name={card.driver_name} noun="Driver" />
+      ),
     },
     { key: "hours_until_yard_arrival", label: "ETA", sortable: true, render: (card) => formatEta(card) },
     { key: "final_dest_name", label: "Destination", render: (card) => formatDest(card) },

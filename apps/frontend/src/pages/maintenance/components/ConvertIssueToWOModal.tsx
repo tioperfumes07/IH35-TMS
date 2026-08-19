@@ -2,7 +2,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { convertIssueToWo, type ArrivingSoonCard } from "../../../api/maintenance";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../../components/Button";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
@@ -55,9 +55,9 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
 
         <div className="space-y-2">
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
-            <EntityLink kind="unit" id={card.unit_id} label={entityLabel(card.unit_number, card.unit_id, "Unit")} /> ·{" "}
-            <EntityLink kind="driver" id={card.driver_id} label={entityLabel(card.driver_name, card.driver_id, "Driver")} /> ·{" "}
-            <EntityLink kind="load" id={card.load_id} label={entityLabel(card.load_display_id, card.load_id, "Load")} />
+            <EntityLinkOrTombstone kind="unit" id={card.unit_id} name={card.unit_number} noun="Unit" /> ·{" "}
+            <EntityLinkOrTombstone kind="driver" id={card.driver_id} name={card.driver_name} noun="Driver" /> ·{" "}
+            <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" />
           </div>
           <label className="space-y-1">
             <span>WO Source Type</span>
