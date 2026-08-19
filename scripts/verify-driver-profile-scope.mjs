@@ -55,9 +55,14 @@ export function check({ mdataApi, pages }) {
     // (LV-DRIVER-DETAIL-PAGE-CRASHES: the endpoint returns { driver, … } whenever the company id is
     // sent, so getDriver must await and unwrap). Widened to the SHAPE, never to the requirement —
     // both the optional-param arm and the must-be-declared arm still fire, mutation-proven.
-  } else if (/export (?:async )?function getDriver\(id: string, operatingCompanyId\?\: string\)/.test(mdataApi)) {
+    // A trailing optional 3rd param (`signal?: AbortSignal`, added for
+    // LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING's abort-timeout fix) is tolerated —
+    // the REQUIRED-ness of operatingCompanyId (2nd param) is what this guard actually protects.
+    // Multi-line Prettier params (`getDriver(\n  id: string,\n  operatingCompanyId: string,`) are
+    // also tolerated — whitespace between `getDriver(` and `id:` is allowed, not just after.
+  } else if (/export (?:async )?function getDriver\(\s*id: string,\s*operatingCompanyId\?\: string[\s\S]{0,80}?\)/.test(mdataApi)) {
     errs.push("getDriver(id, operatingCompanyId?) must require operatingCompanyId (remove optional ?)");
-  } else if (!/export (?:async )?function getDriver\(id: string, operatingCompanyId: string\)/.test(mdataApi)) {
+  } else if (!/export (?:async )?function getDriver\(\s*id: string,\s*operatingCompanyId: string[\s\S]{0,80}?\)/.test(mdataApi)) {
     errs.push("getDriver must be declared as getDriver(id: string, operatingCompanyId: string) (async is allowed)");
   }
 
@@ -72,7 +77,9 @@ export function check({ mdataApi, pages }) {
       errs.push(`${file}: must read selected company via useCompanyContext()`);
     }
     const bareCall = new RegExp(`getDriver\\(\\s*${idArg}\\s*\\)`).test(src);
-    const scopedCall = new RegExp(`getDriver\\(\\s*${idArg}\\s*,\\s*${companyVar}\\s*\\)`).test(src);
+    // Tolerate a trailing 3rd call-site arg (e.g. `, signal`) — the entity-scope requirement this
+    // guard protects is that companyVar is present as the 2nd arg, not that nothing follows it.
+    const scopedCall = new RegExp(`getDriver\\(\\s*${idArg}\\s*,\\s*${companyVar}\\s*(?:,[^)]*)?\\)`).test(src);
     if (bareCall && !scopedCall) {
       errs.push(`${file}: getDriver(${idArg}) called without ${companyVar} — entity-scope regression`);
     }
@@ -127,6 +134,46 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL`);
     process.exit(1);
   }
+
+  // The real getDriver() shape as of LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING:
+  // multi-line Prettier params + a trailing optional 3rd `signal` param, and call sites passing a
+  // 3rd `signal` argument. Both must still be accepted as scoped.
+  const multilineApi = `export async function getDriver(\n  id: string,\n  operatingCompanyId: string,\n  signal?: AbortSignal\n): Promise<Driver> {`;
+  const threeArgPage = `
+    useCompanyContext();
+    const operatingCompanyId = "x";
+    queryFn: ({ signal }) => getDriver(id, operatingCompanyId, signal),
+    enabled: Boolean(id && operatingCompanyId),
+  `;
+  const okReal = check({
+    mdataApi: multilineApi,
+    pages: {
+      "apps/frontend/src/pages/drivers/DriverHosDetailPage.tsx": threeArgPage,
+    },
+  });
+  if (okReal.length > 0) {
+    console.error(`${LABEL} --selftest FAIL — real multi-line/3-arg shape wrongly rejected:`, okReal);
+    process.exit(1);
+  }
+
+  // Negative: the 3-arg tolerance must not become a blanket escape hatch — a call site missing
+  // operatingCompanyId entirely (even with a signal arg following) must still be caught.
+  const badThreeArgPage = `
+    useCompanyContext();
+    queryFn: ({ signal }) => getDriver(id, signal),
+    enabled: Boolean(id),
+  `;
+  const badReal = check({
+    mdataApi: multilineApi,
+    pages: {
+      "apps/frontend/src/pages/drivers/DriverHosDetailPage.tsx": badThreeArgPage,
+    },
+  });
+  if (badReal.length === 0) {
+    console.error(`${LABEL} --selftest FAIL — missing operatingCompanyId with a trailing arg escaped detection`);
+    process.exit(1);
+  }
+
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
