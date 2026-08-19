@@ -1,5 +1,5 @@
 # STATUS-NOW (Cursor lead)
-Updated: 2026-08-18T23:28Z · PARTITION WAVE · continuous FAST-MERGE
+Updated: 2026-08-19T02:52Z · PARTITION WAVE · continuous FAST-MERGE
 
 ## LAW (every seat · non-negotiable)
 - **Fix never defer.** Continuous. FAST-MERGE ~4 min (`cursor-ship-preflight` → push → `gh pr create` → squash `--admin`).
@@ -29,7 +29,7 @@ healthz tip on deploy lag vs main · Box4 restored from false 0 (#9153–#9162) 
 ## NEXT (immediate)
 | Seat | NEXT FO |
 |------|---------|
-| Cursor | `planning.calendar` unpaid Exact Leaves (or next unpaid dispatch planning/misc) |
+| Cursor | `secondary.assignments:picker_law` / `auth_gate` unit·trailer unpaid Exact Leaves (#9322 trailer done) |
 | Codex | legal residual exact after deploy · then `dispatch:queues.*` share · then compliance |
 | Devin-A | **REWAKE NOW** — LIVE CLAIM next unpaid `fleet:*` reverse/connectivity (not lists) |
 | CC-1 | next verify:static / money Exact Leaf in OWN modules — non-stop |
