@@ -36,15 +36,24 @@ function* walkSkillMarkdown(dir) {
   }
 }
 
-export function run() {
+function checkText(file, text, problems) {
+  for (const pattern of BAD_PATTERNS) {
+    pattern.lastIndex = 0;
+    if (pattern.test(text)) {
+      problems.push(`${file}: matches ${pattern.toString()}`);
+    }
+  }
+}
+
+/** @param {Array<{file: string, text: string}>} [filesOverride] in-memory files for the selftest */
+export function run(filesOverride) {
   const problems = [];
-  for (const file of walkSkillMarkdown(SKILLS_DIR)) {
-    const text = readFileSync(file, "utf8");
-    for (const pattern of BAD_PATTERNS) {
-      pattern.lastIndex = 0;
-      if (pattern.test(text)) {
-        problems.push(`${file.replace(`${ROOT}/`, "")}: matches ${pattern.toString()}`);
-      }
+  if (filesOverride) {
+    for (const { file, text } of filesOverride) checkText(file, text, problems);
+  } else {
+    for (const file of walkSkillMarkdown(SKILLS_DIR)) {
+      const text = readFileSync(file, "utf8");
+      checkText(file.replace(`${ROOT}/`, ""), text, problems);
     }
   }
 
@@ -57,14 +66,32 @@ export function run() {
   };
 }
 
+/**
+ * Exercises the real run() assertion — against the live repo's actual skill files, and against an
+ * in-memory planted-bad fixture. The prior version tested BAD_PATTERNS against two hardcoded
+ * strings directly, never calling run() or walkSkillMarkdown() at all — a bug in the file-walking or
+ * in how patterns are applied within run() would have gone completely undetected.
+ */
 function selftest() {
-  const good = "USMCA is the active test entity for live transaction batteries.";
-  const bad = "USMCA is a future carrier that launches July 2026 and is hidden until then with 0 balances.";
-  for (const pattern of BAD_PATTERNS) {
-    pattern.lastIndex = 0;
-    if (pattern.test(good)) throw new Error(`selftest false positive on: ${good}`);
-    pattern.lastIndex = 0;
-    if (!pattern.test(bad)) throw new Error(`selftest false negative on: ${bad}`);
+  const real = run();
+  if (!real.ok) {
+    console.error(`verify-usmca-active-not-hidden-skills SELFTEST FAIL: real tree flagged:\n${real.message}`);
+    return false;
+  }
+  const good = { file: "fixture-good.md", text: "USMCA is the active test entity for live transaction batteries." };
+  const bad = {
+    file: "fixture-bad.md",
+    text: "USMCA is a future carrier that launches July 2026 and is hidden until then with 0 balances.",
+  };
+  const goodResult = run([good]);
+  if (!goodResult.ok) {
+    console.error(`verify-usmca-active-not-hidden-skills SELFTEST FAIL: false positive on: ${good.text}`);
+    return false;
+  }
+  const badResult = run([bad]);
+  if (badResult.ok) {
+    console.error(`verify-usmca-active-not-hidden-skills SELFTEST FAIL: false negative on: ${bad.text}`);
+    return false;
   }
   return true;
 }

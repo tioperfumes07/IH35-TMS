@@ -26,6 +26,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { findMatchingBraceEnd } from "./lib/brace-balance.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPTS = path.join(ROOT, "scripts");
@@ -33,19 +34,20 @@ const DEBT_FILE = path.join(SCRIPTS, "selftests-can-fail-known-debt.json");
 const LABEL = "verify-selftests-can-fail";
 const WRITE_BASELINE = process.argv.includes("--write-baseline");
 
-/** Brace-balanced body of `function selftest(...) { ... }`, or null. */
+/**
+ * Brace-balanced body of `function selftest(...) { ... }`, or null.
+ *
+ * Syntax-aware (scripts/lib/brace-balance.mjs) — a naive char-by-char brace count previously
+ * truncated this early whenever a selftest's fixture string/regex contained a bare `}` (e.g. a
+ * regex literal like `/…\};…/` used to plant a mutation), misreporting a real, exit(1)-capable
+ * selftest as fake-green. Real repro: verify-matrix-banking-module-alias-recognized.mjs.
+ */
 function selftestBody(source) {
   const m = /function\s+selftest\s*\([^)]*\)\s*\{/.exec(source);
   if (!m) return null;
-  let i = m.index + m[0].length;
-  let depth = 1;
-  while (i < source.length && depth > 0) {
-    const ch = source[i];
-    if (ch === "{") depth++;
-    else if (ch === "}") depth--;
-    i++;
-  }
-  return source.slice(m.index, i);
+  const openIndex = m.index + m[0].length - 1; // index of the `{` itself
+  const end = findMatchingBraceEnd(source, openIndex);
+  return source.slice(m.index, end);
 }
 
 /** Names of functions/consts defined at the top level of this guard file. */
