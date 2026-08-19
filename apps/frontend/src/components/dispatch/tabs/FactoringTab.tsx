@@ -22,6 +22,7 @@ import { Combobox } from "../../Combobox";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { EntityLink } from "../../shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 
 // ─── constants ───────────────────────────────────────────────────────────────
@@ -347,6 +348,17 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
   return (
     <div className="space-y-4 text-sm">
+      {/* Exact Leaves load.drawer.factoring:customer — customer_id was used for invoice queries only. */}
+      {load.customer_id ? (
+        <div className="text-xs text-slate-600" data-testid="factoring-tab-customer-entitylink">
+          Customer:{" "}
+          <EntityLink
+            kind="customer"
+            id={load.customer_id}
+            label={entityLabel(load.customer_name ?? null, load.customer_id, "Customer")}
+          />
+        </div>
+      ) : null}
       {/* Status badge + stepper */}
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-3">
         <div className="mb-2 flex items-center gap-2">
