@@ -39,16 +39,11 @@ import { enqueueAfterCommit } from "../lib/after-commit.js";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-
-/**
- * Load statuses that constitute delivery evidence. Kept in ONE place so the driver paths and the
- * office path cannot drift apart on what "delivered" means.
- */
-const DELIVERY_EVIDENCE_STATUSES = new Set(["delivered_pending_docs", "completed_docs_received"]);
-
-export function isDeliveryEvidenceStatus(status: string): boolean {
-  return DELIVERY_EVIDENCE_STATUSES.has(status);
-}
+// SYS-F5509 — moved to its own leaf module so accounting/posting-engine.service.ts can depend on the
+// status definition without depending on this whole latch module (which itself depends on
+// accounting/invoice-send.service.ts) — that indirect path was the import cycle. Re-imported here so
+// this file's own call site below keeps working unchanged.
+import { isDeliveryEvidenceStatus } from "./delivery-evidence-status.js";
 
 /**
  * The caller's transaction client. Used as the after-commit queue key AND (ACCT-F351) to run the
