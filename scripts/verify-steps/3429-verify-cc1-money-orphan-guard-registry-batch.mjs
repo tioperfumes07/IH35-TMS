@@ -27,6 +27,7 @@ const guards = [
   "verify-factoring-reverse-link-remainder.mjs",
   "verify-financial-document-reverse-leaves.mjs",
   "verify-fleet-expense-reverse-leaves.mjs",
+  "verify-fleet-unit-financial-pl-load-reverse.mjs",
   "verify-fleet-gl-je-required-honest.mjs",
   "verify-fuel-card-overage-profile-reverse.mjs",
   "verify-fuel-expense-identity-honesty.mjs",

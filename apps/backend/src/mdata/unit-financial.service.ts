@@ -3,6 +3,13 @@ import { createTtlCache } from "../lib/ttl-cache.js";
 
 export type FinancialPeriod = "YTD" | "quarter" | "month";
 
+export type UnitFinancialContributingLoad = {
+  id: string;
+  load_number: string | null;
+  rate_total_cents: number;
+  date: string;
+};
+
 export type UnitFinancialSnapshot = {
   revenue_cents: number;
   fuel_cost_cents: number;
@@ -23,6 +30,12 @@ export type UnitFinancialSnapshot = {
   period: FinancialPeriod;
   period_start: string;
   period_end: string;
+  // FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE-MISSING — real contributing-load identities for the
+  // selected period, not a decorative link: these are the exact mdata.loads rows load_scope (below)
+  // summed to produce revenue_cents/total_miles above, so the drill-through always points at rows
+  // that actually fed the math. Capped and counted (never a silent cap — CLS-NO-SILENT-LIST-CAPS).
+  contributing_loads: UnitFinancialContributingLoad[];
+  contributing_loads_total_count: number;
 };
 
 export type ComparableMetrics = {
@@ -161,6 +174,58 @@ async function queryUnitFinancialRow(
   };
 }
 
+// FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE-MISSING — the real load rows contributing to this unit's
+// period revenue, same WHERE clause as load_scope in queryUnitFinancialRow above so the identities
+// returned always match what was actually summed. Capped, with an honest total count so the UI can
+// say "+N more" instead of silently truncating (CLS-NO-SILENT-LIST-CAPS).
+const CONTRIBUTING_LOADS_LIMIT = 25;
+
+async function queryContributingLoads(
+  client: DbClient,
+  operatingCompanyId: string,
+  unitId: string,
+  periodStart: string,
+  periodEnd: string
+): Promise<{ loads: UnitFinancialContributingLoad[]; totalCount: number }> {
+  const res = await client.query<{
+    id: string;
+    load_number: string | null;
+    rate_total_cents: string;
+    date: string;
+    total_count: string;
+  }>(
+    `
+      WITH load_scope AS (
+        SELECT l.id, l.load_number, l.rate_total_cents, l.created_at
+        FROM mdata.loads l
+        WHERE l.operating_company_id = $1::uuid
+          AND l.assigned_unit_id = $2::uuid
+          AND l.soft_deleted_at IS NULL
+          AND l.created_at::date BETWEEN $3::date AND $4::date
+      )
+      SELECT
+        id::text AS id,
+        load_number,
+        COALESCE(rate_total_cents, 0)::text AS rate_total_cents,
+        created_at::date::text AS date,
+        COUNT(*) OVER ()::text AS total_count
+      FROM load_scope
+      ORDER BY created_at DESC
+      LIMIT $5
+    `,
+    [operatingCompanyId, unitId, periodStart, periodEnd, CONTRIBUTING_LOADS_LIMIT]
+  );
+  return {
+    loads: res.rows.map((r) => ({
+      id: r.id,
+      load_number: r.load_number,
+      rate_total_cents: num(r.rate_total_cents),
+      date: r.date,
+    })),
+    totalCount: res.rows.length > 0 ? num(res.rows[0].total_count) : 0,
+  };
+}
+
 async function queryFleetAverages(client: DbClient, operatingCompanyId: string, periodStart: string, periodEnd: string) {
   const res = await client.query<{
     unit_count: string;
@@ -248,6 +313,7 @@ export async function getUnitFinancialYTD(
 
   const row = await queryUnitFinancialRow(client, operatingCompanyId, unitId, start, end);
   const fleet_avg = await queryFleetAverages(client, operatingCompanyId, start, end);
+  const contributing = await queryContributingLoads(client, operatingCompanyId, unitId, start, end);
 
   const insurance_cost_cents = 0;
   const total_operating_cost_cents =
@@ -274,6 +340,8 @@ export async function getUnitFinancialYTD(
     period,
     period_start: start,
     period_end: end,
+    contributing_loads: contributing.loads,
+    contributing_loads_total_count: contributing.totalCount,
   };
 
   financialCache.set(cacheKey, snapshot, FINANCIAL_CACHE_TTL_MS);
