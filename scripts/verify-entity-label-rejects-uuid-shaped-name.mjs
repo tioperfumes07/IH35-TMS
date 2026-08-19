@@ -618,7 +618,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
     bad: /unit_number\s*\?\?\s*""\)\s*\|\|\s*undefined|linked_load_number\s*\?\?\s*""/,
-    good: /entityLabel\(\s*workOrder\.unit_number\s*,\s*workOrder\.unit_id\s*,\s*"Unit"\s*\)/,
+    // Migrated to EntityLinkOrTombstone for unit/load — accept either shape.
+    good: /entityLabel\(\s*workOrder\.unit_number\s*,\s*workOrder\.unit_id\s*,\s*"Unit"\s*\)|kind="unit"[\s\S]*?name=\{workOrder\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
@@ -920,7 +921,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
     bad: />\{row\.unit_number\}<|row\.driver_name\s*\?\?\s*"Unassigned"/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    // Migrated to EntityLinkOrTombstone (calls entityLabel internally) — accept either shape.
+    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)|kind="unit"\s+id=\{row\.unit_id\}\s+name=\{row\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
@@ -1163,7 +1165,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/vehicle-profile/IdentityStatusHeader.tsx",
     bad: /String\(unit\.unit_number \?\? unitId\)/,
-    good: /entityLabel\(\s*String\(unit\.unit_number \?\? ""\)\s*,\s*unitId\s*,\s*"Unit"\s*\)/,
+    // Migrated to EntityLinkOrTombstone — accept either shape.
+    good: /entityLabel\(\s*String\(unit\.unit_number \?\? ""\)\s*,\s*unitId\s*,\s*"Unit"\s*\)|kind="unit"\s+id=\{unitId\}\s+name=\{String\(unit\.unit_number \?\? ""\)\}/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/OpeningBalanceRegisterPage.tsx",
@@ -1483,7 +1486,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
     bad: /<EntityLink kind="vendor" id=\{String\(workOrder\.external_vendor_id\)\} \/>/,
-    good: /entityLabel\(\s*typeof workOrder\.external_vendor_name === "string"/,
+    // EntityLinkOrTombstone with honest name= (entityLabel inside) OR raw entityLabel().
+    good: /entityLabel\(\s*typeof workOrder\.external_vendor_name === "string"|kind="vendor"[\s\S]*?name=\{typeof workOrder\.external_vendor_name === "string"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx",
