@@ -99,35 +99,48 @@ async function listIntegrityAlertsHandler(
   query: z.infer<typeof listQuerySchema>
 ) {
   return withCompanyScope(user.uuid, query.operating_company_id, async (client) => {
-    const filters = ["operating_company_id = $1::uuid", "(snoozed_until IS NULL OR snoozed_until <= now())"];
+    const filters = ["ia.operating_company_id = $1::uuid", "(ia.snoozed_until IS NULL OR ia.snoozed_until <= now())"];
     const values: unknown[] = [query.operating_company_id];
     if (query.alert_category) {
       values.push(query.alert_category);
-      filters.push(`alert_category = $${values.length}`);
+      filters.push(`ia.alert_category = $${values.length}`);
     }
     if (query.severity) {
       values.push(query.severity);
-      filters.push(`severity = $${values.length}`);
+      filters.push(`ia.severity = $${values.length}`);
     }
     if (query.resolution_status) {
       values.push(query.resolution_status);
-      filters.push(`resolution_status = $${values.length}`);
+      filters.push(`ia.resolution_status = $${values.length}`);
     }
     if (query.subject_type) {
       values.push(query.subject_type);
-      filters.push(`subject_type = $${values.length}`);
+      filters.push(`ia.subject_type = $${values.length}`);
     }
     for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"] as const) {
       if (!query[column]) continue;
       values.push(query[column]);
-      filters.push(`${column} = $${values.length}::uuid`);
+      filters.push(`ia.${column} = $${values.length}::uuid`);
     }
     const res = await client.query(
       `
-        SELECT *
-        FROM safety.integrity_alerts
+        SELECT ia.*,
+               NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS subject_driver_name,
+               u.unit_number AS subject_unit_number,
+               v.vendor_name AS subject_vendor_name
+        FROM safety.integrity_alerts ia
+        LEFT JOIN mdata.drivers d
+          ON d.id = ia.subject_driver_id
+         AND d.operating_company_id = ia.operating_company_id
+        LEFT JOIN mdata.units u
+          ON u.id = ia.subject_unit_id
+         AND (u.owner_company_id = ia.operating_company_id
+              OR u.currently_leased_to_company_id = ia.operating_company_id)
+        LEFT JOIN mdata.vendors v
+          ON v.id = ia.subject_vendor_id
+         AND v.operating_company_id = ia.operating_company_id
         WHERE ${filters.join(" AND ")}
-        ORDER BY created_at DESC
+        ORDER BY ia.created_at DESC
         LIMIT 500
       `,
       values
@@ -272,7 +285,23 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.integrity_alerts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT ia.*,
+                NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS subject_driver_name,
+                u.unit_number AS subject_unit_number,
+                v.vendor_name AS subject_vendor_name
+           FROM safety.integrity_alerts ia
+           LEFT JOIN mdata.drivers d
+             ON d.id = ia.subject_driver_id
+            AND d.operating_company_id = ia.operating_company_id
+           LEFT JOIN mdata.units u
+             ON u.id = ia.subject_unit_id
+            AND (u.owner_company_id = ia.operating_company_id
+                 OR u.currently_leased_to_company_id = ia.operating_company_id)
+           LEFT JOIN mdata.vendors v
+             ON v.id = ia.subject_vendor_id
+            AND v.operating_company_id = ia.operating_company_id
+          WHERE ia.id = $1 AND ia.operating_company_id = $2::uuid
+          LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows[0] ?? null;
