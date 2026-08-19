@@ -30,9 +30,11 @@ import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { listAuditEvents, type AuditEventListItem } from "../../../api/audit";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../../components/table";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
@@ -140,22 +142,32 @@ export default function Audit425cPage() {
   const companyId = selectedCompanyId ?? "";
   const enabled = Boolean(companyId);
 
-  const [section, setSection] = useState<Form425cSectionId>("all");
-  const [actionFilter, setActionFilter] = useState("");
-  const [actorFilter, setActorFilter] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  // LV-SAFETY-AUDIT-425C-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  const EMPTY_FILTERS = {
+    section: "all" as Form425cSectionId,
+    action: "",
+    actor: "",
+    from: "",
+    to: "",
+  };
+  const [applied, setApplied] = useState(EMPTY_FILTERS);
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: setApplied,
+  });
+  const draft = staged.draft;
 
-  const fromIso = fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined;
-  const toIso = toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined;
+  const fromIso = applied.from ? new Date(`${applied.from}T00:00:00`).toISOString() : undefined;
+  const toIso = applied.to ? new Date(`${applied.to}T23:59:59`).toISOString() : undefined;
 
   const auditQuery = useQuery({
-    queryKey: ["saf-b31", "audit-425c", companyId, actorFilter, fromIso, toIso],
+    queryKey: ["saf-b31", "audit-425c", companyId, applied.actor, fromIso, toIso],
     queryFn: () =>
       listAuditEvents({
         operatingCompanyId: companyId,
         eventType: [FORM_425C_EVENT_FILTER],
-        actor: actorFilter.trim() || undefined,
+        actor: applied.actor.trim() || undefined,
         from: fromIso,
         to: toIso,
         limit: PAGE_LIMIT,
@@ -171,13 +183,13 @@ export default function Audit425cPage() {
   );
 
   const rows = useMemo(() => {
-    const wantedResourceType = SECTIONS.find((s) => s.id === section)?.resourceType ?? null;
+    const wantedResourceType = SECTIONS.find((s) => s.id === applied.section)?.resourceType ?? null;
     return allEvents.filter((row) => {
-      if (actionFilter && row.event_type !== actionFilter) return false;
+      if (applied.action && row.event_type !== applied.action) return false;
       if (!wantedResourceType) return true;
       return payloadOf(row).resource_type === wantedResourceType;
     });
-  }, [allEvents, section, actionFilter]);
+  }, [allEvents, applied.section, applied.action]);
 
   const totalCount = auditQuery.data?.total_count ?? 0;
 
@@ -265,13 +277,13 @@ export default function Audit425cPage() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3">
+      <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="audit-425c-filters">
         <label className="text-xs text-slate-600">
           425C section
           <select
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={section}
-            onChange={(event) => setSection(event.target.value as Form425cSectionId)}
+            value={draft.section}
+            onChange={(event) => staged.setDraft((d) => ({ ...d, section: event.target.value as Form425cSectionId }))}
             data-testid="audit-425c-section-filter"
           >
             {SECTIONS.map((option) => (
@@ -285,8 +297,9 @@ export default function Audit425cPage() {
           Action
           <select
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={actionFilter}
-            onChange={(event) => setActionFilter(event.target.value)}
+            value={draft.action}
+            onChange={(event) => staged.setDraft((d) => ({ ...d, action: event.target.value }))}
+            data-testid="audit-425c-action-filter"
           >
             <option value="">All actions</option>
             {actionOptions.map((value) => (
@@ -300,27 +313,48 @@ export default function Audit425cPage() {
           Actor
           <input
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={actorFilter}
-            onChange={(event) => setActorFilter(event.target.value)}
+            value={draft.actor}
+            onChange={(event) => staged.setDraft((d) => ({ ...d, actor: event.target.value }))}
             placeholder="email or user id"
+            data-testid="audit-425c-actor-filter"
           />
         </label>
         <label className="text-xs text-slate-600">
           From
           <DatePicker
             className="mt-1 block"
-            value={fromDate}
-            onChange={(next) => setFromDate(next)}
+            value={draft.from}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
+            data-testid="audit-425c-from-date"
           />
         </label>
         <label className="text-xs text-slate-600">
           To
           <DatePicker
             className="mt-1 block"
-            value={toDate}
-            onChange={(next) => setToDate(next)}
+            value={draft.to}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
+            data-testid="audit-425c-to-date"
           />
         </label>
+        <Button type="button" size="sm" data-testid="audit-425c-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button type="button" size="sm" variant="secondary" data-testid="audit-425c-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="audit-425c-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
 
       {enabled && !auditQuery.isLoading && !auditQuery.isError ? (
