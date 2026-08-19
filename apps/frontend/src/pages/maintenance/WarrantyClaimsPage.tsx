@@ -273,6 +273,10 @@ export function WarrantyClaimsPage() {
       >
         <div className="space-y-3 text-sm">
           <p className="text-xs text-gray-600">File warranty claim for {fileTarget?.part_description}.</p>
+          <div className="flex flex-wrap gap-3 text-xs text-slate-700">
+            <span>Vendor: <EntityLinkOrTombstone kind="vendor" id={fileTarget?.vendor_id} name={fileTarget?.vendor_name} noun="Vendor" /></span>
+            <span>Work order: <EntityLinkOrTombstone kind="work_order" id={fileTarget?.work_order_id} name={fileTarget?.work_order_display_id} noun="Work order" /></span>
+          </div>
           <label className="block text-xs">
             Vendor claim number
             <input
