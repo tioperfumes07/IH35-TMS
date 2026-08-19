@@ -56,8 +56,19 @@ export function checkAll(readFile) {
   }
 
   const detail = read(FILES.detailPage);
-  if (!/entityLabel\(p\.display_id, p\.id, "Payment"\)/.test(detail)) {
-    failures.push(`${FILES.detailPage}: payment row must render entityLabel(p.display_id, p.id, "Payment"), not a null-display_id fallback to raw uuid`);
+  // The row now renders through <EntityLinkOrTombstone kind="payment" name={p.display_id} noun="Payment">
+  // instead of a raw `entityLabel(...)` call — EntityLinkOrTombstone calls entityLabel(name, id, noun)
+  // internally for its unresolved/tombstone case (apps/frontend/src/components/shared/
+  // EntityLinkOrTombstone.tsx), so it carries the SAME "never a raw uuid" guarantee, plus it additionally
+  // withholds the EntityLink drill when unresolved (a strictly stronger check than the old bare call).
+  // Accept either shape.
+  const hasRawEntityLabel = /entityLabel\(p\.display_id, p\.id, "Payment"\)/.test(detail);
+  const hasEntityLinkOrTombstone =
+    /<EntityLinkOrTombstone[\s\S]{0,40}?kind\s*=\s*["']payment["'][\s\S]{0,200}?name=\{p\.display_id\}[\s\S]{0,200}?noun\s*=\s*["']Payment["']/.test(
+      detail,
+    );
+  if (!hasRawEntityLabel && !hasEntityLinkOrTombstone) {
+    failures.push(`${FILES.detailPage}: payment row must render its real display_id (entityLabel or EntityLinkOrTombstone), not a null-display_id fallback to raw uuid`);
   }
   if (!/listCustomerPayments\(id, operatingCompanyId!/.test(detail)) {
     failures.push(`${FILES.detailPage}: customerPaymentsQuery must call listCustomerPayments with operatingCompanyId`);
@@ -97,6 +108,40 @@ if (process.argv.includes("--selftest")) {
   );
   if (!labelRegressed.some((f) => f.includes(FILES.detailPage))) {
     console.error(`[${LABEL}] selftest FAIL: reverting to entityLabel(null, ...) must be caught`);
+    process.exit(1);
+  }
+
+  // The real file today renders through <EntityLinkOrTombstone>, not a bare entityLabel() call —
+  // prove that shape independently classifies as good, and that dropping either the display_id
+  // wiring or the noun still trips the check (not a permissive regex that accepts anything tagged
+  // kind="payment").
+  const TOMBSTONE_GOOD = {
+    ...GOOD_FIXTURES,
+    [FILES.detailPage]:
+      'queryFn: () => listCustomerPayments(id, operatingCompanyId!, { limit: 50 }),\n' +
+      'render: (p) => <EntityLinkOrTombstone kind="payment" id={p.id} name={p.display_id} noun="Payment" />,',
+  };
+  const tombstoneGoodFailures = checkAll((f) => TOMBSTONE_GOOD[f] ?? null);
+  if (tombstoneGoodFailures.length) {
+    console.error(`[${LABEL}] selftest FAIL: EntityLinkOrTombstone fixture should pass — ${tombstoneGoodFailures.join("; ")}`);
+    process.exit(1);
+  }
+  const tombstoneRegressedName = checkAll((f) =>
+    f === FILES.detailPage
+      ? TOMBSTONE_GOOD[f].replace("name={p.display_id}", "name={undefined}")
+      : (TOMBSTONE_GOOD[f] ?? null)
+  );
+  if (!tombstoneRegressedName.some((f) => f.includes(FILES.detailPage))) {
+    console.error(`[${LABEL}] selftest FAIL: dropping name={p.display_id} on EntityLinkOrTombstone must be caught`);
+    process.exit(1);
+  }
+  const tombstoneRegressedNoun = checkAll((f) =>
+    f === FILES.detailPage
+      ? TOMBSTONE_GOOD[f].replace('noun="Payment"', 'noun="Record"')
+      : (TOMBSTONE_GOOD[f] ?? null)
+  );
+  if (!tombstoneRegressedNoun.some((f) => f.includes(FILES.detailPage))) {
+    console.error(`[${LABEL}] selftest FAIL: weakening noun="Payment" on EntityLinkOrTombstone must be caught`);
     process.exit(1);
   }
   console.log(`[${LABEL}] selftest: PASS — good/regressed/targeted-regression fixtures classify correctly`);
