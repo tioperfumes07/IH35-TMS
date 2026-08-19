@@ -34,7 +34,7 @@ const FILES = {
 const LABEL = "verify-dispatch-customer-queues-and-load-drawer";
 
 const ENTITY_LINK_CHECKS = [
-  ["overview", /kind="customer" id=\{load\.customer_id\}/],
+  ["overview", /EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/],
   ["atRisk", /kind="customer" id=\{load\.customer_id\}/],
   ["detention", /kind="customer" id=\{event\.customer_id\}/],
   ["late", /kind="customer" id=\{load\.customer_id\}/],

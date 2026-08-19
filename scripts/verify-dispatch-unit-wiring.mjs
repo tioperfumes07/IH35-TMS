@@ -17,7 +17,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-dispatch-unit-wiring";
 
 const CHECKS = [
-  ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /kind="unit" id=\{load\.assigned_unit_id\}/],
+  ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="unit" id=\{load\.assigned_unit_id\} name=\{load\.unit_number\} noun="Unit"/],
   ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind=\{load\.assigned_unit_id \? "unit" : "load"\}/],
   ["apps/frontend/src/components/dispatch/DispatchList.tsx", /<InlineUnitPicker/],
   ["apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx", /kind="unit" id=\{row\.previous_unit_id\}/],
