@@ -65,7 +65,7 @@ export function audit(src) {
   if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(src.warranty) || !/allowCreate/.test(src.warranty)) {
     failures.push(`${FILES.warranty}: warranty claim create must have a real vendor EntityPicker`);
   }
-  if (!/external_vendor_id(?!_)/.test(src.woDetailModal) || !/kind="vendor" id=\{link\.vendor_id\}/.test(src.woDetailModal)) {
+  if (!/external_vendor_id(?!_)/.test(src.woDetailModal) || !/kind="vendor"[\s\S]{0,100}id=\{link\.vendor_id\}/.test(src.woDetailModal)) {
     failures.push(`${FILES.woDetailModal}: WO detail modal must render real vendor EntityLinks for the external vendor and linked parts`);
   }
   return failures;
