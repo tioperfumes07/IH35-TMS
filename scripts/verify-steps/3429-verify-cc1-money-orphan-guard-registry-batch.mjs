@@ -63,6 +63,7 @@ const guards = [
   "verify-reverse-link-inline-surface-linkage.mjs",
   "verify-safety-required-money-honest.mjs",
   "verify-scenario-ap-insurance-honest.mjs",
+  "verify-settlement-dispute-driver-self-ownership.mjs",
   "verify-settlement-inline-surface-linkage.mjs",
   "verify-settlement-write-role-and-driver-existence.mjs",
   "verify-settlements-driver-wiring.mjs",
