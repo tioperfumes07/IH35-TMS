@@ -148,6 +148,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = listBillsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: this route had no membership assert -- the RLS policy on accounting.bills only
+    // compares operating_company_id against the SAME app.operating_company_id GUC this route itself
+    // sets from the caller-supplied query param, so it is no backstop at all. See the full sweep of
+    // this file in board row 2782 (MEMBERSHIP-ASSERT-PASS3-MONEY-LANE-SCOPE) for the complete list.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     const listOptions = {
       status: query.data.status === "unpaid" ? ("open" as const) : query.data.status,
@@ -191,6 +196,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     const result = await listWorkOrderLinkedFinancials(
       String(user.uuid),
       query.data.operating_company_id,
@@ -211,6 +218,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     return listClaimLinkedFinancials(
       String(user.uuid),
       query.data.operating_company_id,
@@ -232,6 +241,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       if (!params.success) return validationError(reply, params.error);
       const query = companyQuerySchema.safeParse(req.query ?? {});
       if (!query.success) return validationError(reply, query.error);
+      // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+      await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
       return listLegalMatterLinkedCosts(
         String(user.uuid),
         query.data.operating_company_id,
@@ -252,6 +263,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     return listUnitLinkedFinancials(
       String(user.uuid),
       query.data.operating_company_id,
@@ -267,6 +280,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     const payments = await listBillPaymentsForBill(String(user.uuid), query.data.operating_company_id, params.data.id);
     if (payments === null) return reply.code(404).send({ error: "bill_not_found" });
@@ -285,6 +300,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     const detail = await getBillDetail(String(user.uuid), query.data.operating_company_id, params.data.id);
     if (!detail) return reply.code(404).send({ error: "bill_not_found" });
@@ -301,6 +318,12 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = createBillBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5592: this WRITE route had no membership assert at all -- any accounting-role user of
+    // one company could create a real accounts-payable liability under another company's books by
+    // passing that company's operating_company_id, and the RLS policy on accounting.bills provides
+    // no backstop (see the comment on GET /bills above). The sibling /pay route already had this
+    // check (see its own G1-2 comment) -- create was simply missed.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     try {
       const bill = await createBill(
@@ -494,7 +517,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/bill-payments/:id/void", async (req, reply) => {
+  app.post("/api/v1/accounting/bill-payments/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // VOID-EVERYWHERE PR-3: replaced the hand-rolled Owner-only gate with the shared executor check
@@ -537,12 +560,14 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/bill-payments", async (req, reply) => {
+  app.get("/api/v1/accounting/bill-payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = listBillPaymentsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     const rows = await listBillPayments(String(user.uuid), query.data.operating_company_id, {
       vendorId: query.data.vendor_id,
       dateFrom: query.data.date_from,
@@ -565,6 +590,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5592: no backstop -- see the comment on GET /bills above.
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     const detail = await getBillPaymentDetail(String(user.uuid), query.data.operating_company_id, params.data.id);
     if (!detail) return reply.code(404).send({ error: "bill_payment_not_found" });

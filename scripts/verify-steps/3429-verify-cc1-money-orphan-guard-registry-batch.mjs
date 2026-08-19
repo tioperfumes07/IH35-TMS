@@ -14,6 +14,7 @@ const guards = [
   "verify-banking-factoring-liability-built.mjs",
   "verify-banking-matched-bill-drill.mjs",
   "verify-banking-reverse-link-list-surfaces.mjs",
+  "verify-bills-membership-assert-full-coverage.mjs",
   "verify-cash-forecast-profile-reverse.mjs",
   "verify-categorize-field-existence-checked.mjs",
   "verify-customer-payment-write-role-gated.mjs",
