@@ -36,14 +36,49 @@ export function stripComments(src) {
   return out;
 }
 
+/**
+ * [start, end) spans of every `LATERAL (...)` subquery body in `src` (paren-balanced).
+ *
+ * A `LIMIT 1` inside a LATERAL subquery — paired with an ORDER BY, as in
+ * `LEFT JOIN LATERAL (SELECT … ORDER BY … LIMIT 1) x ON TRUE` — is the standard "pick exactly one
+ * canonical row per OUTER row" SQL idiom (e.g. exhibit-c-bank-reconciliation.ts picking the one
+ * reconciliation session that backs an account's opening balance). It can never drop a row from the
+ * exhibit's own result set — only select which single record backs one field on one row that was
+ * already going to be included. That is a different shape from the banned one: a LIMIT on the
+ * exhibit's own top-level row list, which silently omits records from the filed schedule.
+ */
+function lateralSpans(src) {
+  const spans = [];
+  const re = /LATERAL\s*\(/gi;
+  let m;
+  while ((m = re.exec(src))) {
+    const open = src.indexOf("(", m.index);
+    if (open === -1) continue;
+    let depth = 1;
+    let i = open + 1;
+    while (i < src.length && depth > 0) {
+      if (src[i] === "(") depth++;
+      else if (src[i] === ")") depth--;
+      i++;
+    }
+    spans.push([open, i]);
+  }
+  return spans;
+}
+
 export function auditSource(relPath, rawSrc) {
   const problems = [];
   const src = stripComments(rawSrc);
 
-  const limitMatch = src.match(/\bLIMIT\s+\d+/i);
-  if (limitMatch) {
+  const spans = lateralSpans(src);
+  const limitRe = /\bLIMIT\s+(\d+)/gi;
+  let lm;
+  while ((lm = limitRe.exec(src))) {
+    const n = lm[1];
+    const insideLateral = spans.some(([s, e]) => lm.index >= s && lm.index < e);
+    if (insideLateral && n === "1") continue;
     problems.push(
-      `${relPath}: exhibit SQL contains "${limitMatch[0]}" — a court schedule must not silently truncate. ` +
+      `${relPath}: exhibit SQL contains "LIMIT ${n}" — a court schedule must not silently truncate. ` +
         `Remove the cap and fail loud above a safety ceiling instead.`
     );
   }
@@ -116,11 +151,35 @@ function selftest() {
     if (auditSource("prose.ts", proseOnly).length !== 0)
       failures.push("case4 FAIL — guard flagged commented-out prose (comment stripping broken)");
 
+    // Case 5 — a LATERAL(...) subquery's LIMIT 1 (pick-one-canonical-row-per-outer-row idiom, the
+    // real shape of exhibit-c-bank-reconciliation.ts) must NOT be flagged.
+    const lateralOk =
+      "const q = `SELECT a.id FROM t a LEFT JOIN LATERAL (SELECT rs.id FROM rs WHERE rs.a_id = a.id ORDER BY rs.updated_at DESC LIMIT 1) s ON TRUE`;";
+    if (auditSource("lateral-ok.ts", lateralOk).length !== 0)
+      failures.push("case5 FAIL — a LATERAL(...) LIMIT 1 (canonical pick-one idiom) was wrongly flagged");
+
+    // Case 6 — a LATERAL(...) subquery capped at something OTHER than 1 (a real multi-row truncation
+    // hiding inside a subquery) must still be caught — the exemption is narrow, not a blanket escape.
+    const lateralBad =
+      "const q = `SELECT a.id FROM t a LEFT JOIN LATERAL (SELECT rs.id FROM rs WHERE rs.a_id = a.id ORDER BY rs.updated_at DESC LIMIT 5) s ON TRUE`;";
+    if (auditSource("lateral-bad.ts", lateralBad).length === 0)
+      failures.push("case6 FAIL — a LATERAL(...) LIMIT 5 (a real multi-row cap) was NOT caught");
+
+    // Case 7 — a bare, top-level LIMIT 1 OUTSIDE any LATERAL body (capping the exhibit's own row
+    // list to a single record) must still be caught.
+    const bareLimitOne = "const q = `SELECT id FROM docs ORDER BY created_at DESC LIMIT 1`;";
+    if (auditSource("bare-limit-one.ts", bareLimitOne).length === 0)
+      failures.push("case7 FAIL — a bare top-level LIMIT 1 outside any LATERAL was NOT caught");
+
     if (failures.length) {
       for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
       process.exit(1);
     }
-    console.log(`${LABEL}: selftest PASS — 2 planted defects caught, corrected tree clean, prose not flagged`);
+    console.log(
+      `${LABEL}: selftest PASS — 2 planted defects caught, corrected tree clean, prose not flagged, ` +
+        `LATERAL(...) LIMIT 1 pick-one idiom exempted precisely (LATERAL LIMIT>1 and bare top-level ` +
+        `LIMIT 1 both still caught)`
+    );
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
