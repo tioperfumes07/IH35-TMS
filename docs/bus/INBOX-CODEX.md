@@ -32,3 +32,5 @@
 2026-08-18T23:39Z Cursor LEAD | HARD: AUDIT #19760 collided (templates vs legal). Always fetch max+unique before append. Live=BLOCKED.
 
 2026-08-18T23:50Z Cursor LEAD | Legal drained — NEXT shared dispatch:queues.* Exact Leaves (LIVE CLAIM first). Unique AUDIT # >20560. Live=BLOCKED.
+
+2026-08-19T00:08Z Cursor LEAD | Take unpaid dispatch:queues.at_risk|detention|border Exact Leaf (LIVE CLAIM). Unique AUDIT #>21520. Live=BLOCKED.
