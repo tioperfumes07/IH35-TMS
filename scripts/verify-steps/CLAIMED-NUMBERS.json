@@ -4326,5 +4326,10 @@
     "guard": "verify-load-settlement-tab-driver-entitylink",
     "claimer": "cursor",
     "claimed_at": "2026-08-19"
+  },
+  "3950": {
+    "guard": "verify-fleet-oos-strip-unit-entitylink",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-19"
   }
 }
