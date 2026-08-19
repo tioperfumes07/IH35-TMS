@@ -31,8 +31,16 @@ if (!/unit_display_id/.test(backend)) {
 if (!/u\.unit_number AS unit_display_id/.test(backend)) {
   errors.push("Backend does not join mdata.units.unit_number as unit_display_id");
 }
-if (!/bill\.unit_display_id\s*\?\?\s*bill\.unit_id\.slice\(0,\s*8\)/.test(detailPage)) {
-  errors.push("BillDetailPage unit label does not prefer unit_display_id with UUID fallback");
+// The real row now renders through entityLabel(bill.unit_display_id, bill.unit_id, "Unit") instead
+// of a `?? bill.unit_id.slice(0, 8)` truncated-UUID fallback — entityLabel() prefers the display
+// id and, when missing, renders an honest "Unit — not visible" sentinel rather than 8 meaningless
+// hex characters (apps/frontend/src/lib/entity-label.ts's own documented law: a truncated-UUID
+// fallback is WORSE than an honest blank). This is a stricter fix than the guard's original ask,
+// not a regression — accept either shape.
+const hasUuidSliceFallback = /bill\.unit_display_id\s*\?\?\s*bill\.unit_id\.slice\(0,\s*8\)/.test(detailPage);
+const hasEntityLabelFallback = /entityLabel\(bill\.unit_display_id,\s*bill\.unit_id,\s*["']Unit["']\)/.test(detailPage);
+if (!hasUuidSliceFallback && !hasEntityLabelFallback) {
+  errors.push("BillDetailPage unit label does not prefer unit_display_id with an honest fallback");
 }
 
 if (errors.length > 0) {
