@@ -702,3 +702,7 @@ verify:static: 77 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:55Z CC-1 | ACCT-F5501 closed (PR #9583, merged 6088c5d). verify-es1-unscoped-tables-scope-proof.mjs correctly FAILed a stale registry entry: tasks.note and tasks.status_history carried fkStatus="deferred", but the FK has been present since the ORIGINAL creation migration — not a guard false positive. Promoted fkStatus to "enforced" for both; forceRlsStatus correctly left untouched (verified no FORCE ROW LEVEL SECURITY exists for either table). Data correction, no guard-logic change.
 
 verify:static: 78 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T11:06Z CC-1 | ACCT-F5502 closed (PR #9590, merged 7d49297). REAL FIX: verify-prepaid-fixedassets-url-sort.mjs FAILed — the 6 depreciation-schedule columns on FixedAssetsPage.tsx (period_number, period_date, depreciation_amount_cents, accumulated_to_date_cents, book_value_end_cents, posted_journal_entry_id) lacked sortable: true, while the page's main asset-list table already carries that contract on every column. Genuine UX gap, not a guard defect — added sortable: true to all 6 columns. --selftest re-verified (3 planted regressions caught). tsc -b clean.
+
+verify:static: 79 of ~199 now closed this session. Continuing non-stop, fast-merge.
