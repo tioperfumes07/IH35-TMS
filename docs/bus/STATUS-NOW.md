@@ -1,6 +1,5 @@
-# STATUS-NOW · 2026-08-19T15:28Z · Cursor lead · MODULE SHARE · BOX4 3103/3413*
+# STATUS-NOW · 2026-08-19T15:28Z · Cursor lead · MODULE SHARE · BOX4 3103/3413
 
-\*trailer Leaves FO in flight may move meter — only after **honest Live proof**.
 
 **CHANNEL:** Canonical bus = `docs/bus/` after `git pull --ff-only origin main`. Desktop = mirror; **repo wins**.
 **healthz (API):** `https://api.ih35dispatch.com/api/v1/healthz/shallow`
