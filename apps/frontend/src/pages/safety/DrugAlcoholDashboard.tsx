@@ -107,34 +107,46 @@ export function DrugAlcoholDashboard() {
           {userFacingApiError(drawMutation.error, "Could not run the random drug/alcohol draw.")}
         </p>
       ) : null}
+      {rateQ.isError || poolQ.isError || rtdQ.isError ? (
+        <p className="text-xs text-red-700" data-testid="drug-alcohol-dashboard-query-error">
+          {userFacingApiError(
+            rateQ.error ?? poolQ.error ?? rtdQ.error,
+            "Could not load drug/alcohol compliance rates.",
+          )}
+        </p>
+      ) : null}
 
       {/* Flat KPI grid — each tile is its own single frame; no outer bordered card (CLS-BOX-IN-BOX). */}
       <div className="grid gap-3 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Pool size</div>
-          <div className="mt-1 text-lg font-semibold">{poolSize}</div>
+          <div className="mt-1 text-lg font-semibold">{rateQ.isError || poolQ.isError ? "—" : poolSize}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Drug rate</div>
           <div className="mt-1 text-lg font-semibold">
-            {rate?.drug_rate_pct ?? 0}%{" "}
-            <span className={rate?.drug_on_track ? "text-slate-700" : "text-slate-700"}>
-              (min {rate?.drug_minimum_pct ?? 50}%)
-            </span>
+            {rateQ.isError ? "—" : `${rate?.drug_rate_pct ?? 0}%`}{" "}
+            {!rateQ.isError ? (
+              <span className={rate?.drug_on_track ? "text-slate-700" : "text-slate-700"}>
+                (min {rate?.drug_minimum_pct ?? 50}%)
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Alcohol rate</div>
           <div className="mt-1 text-lg font-semibold">
-            {rate?.alcohol_rate_pct ?? 0}%{" "}
-            <span className={rate?.alcohol_on_track ? "text-slate-700" : "text-slate-700"}>
-              (min {rate?.alcohol_minimum_pct ?? 10}%)
-            </span>
+            {rateQ.isError ? "—" : `${rate?.alcohol_rate_pct ?? 0}%`}{" "}
+            {!rateQ.isError ? (
+              <span className={rate?.alcohol_on_track ? "text-slate-700" : "text-slate-700"}>
+                (min {rate?.alcohol_minimum_pct ?? 10}%)
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Open RTD processes</div>
-          <div className="mt-1 text-lg font-semibold">{openRtd}</div>
+          <div className="mt-1 text-lg font-semibold">{rtdQ.isError ? "—" : openRtd}</div>
         </div>
       </div>
     </section>
