@@ -2,7 +2,7 @@
   "module": "customers",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 8 CUSTOMERS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 8 CUSTOMERS",
     "nav": "apps/frontend/src/pages/Customers.tsx list segments + CUSTOMER_TABS",
     "detail": "apps/frontend/src/pages/CustomerDetail.tsx tabs",
     "routes": "apps/frontend/src/routes/manifest.tsx /customers, /customers/:id"
@@ -165,7 +165,7 @@
     {
       "id": "list.segment.all",
       "tab": "All Customers",
-      "sub": "Segment · All",
+      "sub": "Segment \u00b7 All",
       "route_hint": "/customers?listTab=all",
       "required": [
         "customer",
@@ -175,7 +175,7 @@
     {
       "id": "list.segment.preferred",
       "tab": "By Quality Flag",
-      "sub": "Segment · Preferred",
+      "sub": "Segment \u00b7 Preferred",
       "route_hint": "/customers?listTab=preferred",
       "required": [
         "customer",
@@ -186,7 +186,7 @@
     {
       "id": "list.segment.watch",
       "tab": "By Quality Flag",
-      "sub": "Segment · Watch",
+      "sub": "Segment \u00b7 Watch",
       "route_hint": "/customers?listTab=watch",
       "required": [
         "customer",
@@ -197,7 +197,7 @@
     {
       "id": "list.segment.active",
       "tab": "All Customers",
-      "sub": "Segment · Active",
+      "sub": "Segment \u00b7 Active",
       "route_hint": "/customers?listTab=active",
       "required": [
         "customer",
@@ -207,7 +207,7 @@
     {
       "id": "list.segment.inactive",
       "tab": "All Customers",
-      "sub": "Segment · Inactive",
+      "sub": "Segment \u00b7 Inactive",
       "route_hint": "/customers?listTab=inactive",
       "required": [
         "customer",
@@ -217,7 +217,7 @@
     {
       "id": "list.segment.factored",
       "tab": "Factoring Config",
-      "sub": "Segment · Factored",
+      "sub": "Segment \u00b7 Factored",
       "route_hint": "/customers?listTab=factored",
       "required": [
         "customer",
@@ -254,7 +254,7 @@
     {
       "id": "list.filters",
       "tab": "All Customers",
-      "sub": "Roster filters (type · credit status)",
+      "sub": "Roster filters (type \u00b7 credit status)",
       "route_hint": "/customers",
       "required": [
         "customer",
@@ -389,7 +389,9 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome"
+        "qbo_chrome",
+        "bank",
+        "gl_je"
       ]
     },
     {
@@ -420,7 +422,7 @@
     {
       "id": "detail.billing",
       "tab": "Billing & Receivables",
-      "sub": "AR aging · invoices · payments",
+      "sub": "AR aging \u00b7 invoices \u00b7 payments",
       "route_hint": "/customers/:id?tab=billing",
       "required": [
         "customer",
@@ -446,7 +448,7 @@
     {
       "id": "detail.quality",
       "tab": "Quality & History",
-      "sub": "Scoring · quality events",
+      "sub": "Scoring \u00b7 quality events",
       "route_hint": "/customers/:id?tab=quality",
       "required": [
         "customer",
@@ -664,7 +666,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -676,7 +678,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -688,7 +690,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -700,7 +702,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -723,7 +725,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_remainder": {
       "finding": "VERTICAL-REVERSE-LINK-CUSTOMERS-REMAINDER",
@@ -841,7 +843,7 @@
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "8 of 45 leaves in the customers module itself are FALSE — the 8 md.* master-detail sub-tabs (activity_feed/statements/recurring_transactions/projects/late_fees/notes/opportunities/conversations) render only a static CustomerTabComingState placeholder, zero data query wired to any customer_id. All other 37 leaves are genuinely customer-scoped (list rows are customer records, or the detail page is keyed on the route's own :id, which IS the customer).",
+      "note": "8 of 45 leaves in the customers module itself are FALSE \u2014 the 8 md.* master-detail sub-tabs (activity_feed/statements/recurring_transactions/projects/late_fees/notes/opportunities/conversations) render only a static CustomerTabComingState placeholder, zero data query wired to any customer_id. All other 37 leaves are genuinely customer-scoped (list rows are customer records, or the detail page is keyed on the route's own :id, which IS the customer).",
       "drops": [
         {
           "id": "md.activity_feed",
@@ -895,7 +897,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "2 of 5 customers leaves flagged here are false: list.create (CustomerProfileForm.tsx) is customer creation only, zero vendor fields; md.customer_details shows only a boolean factoring-eligibility flag, no vendor_id/EntityLink/picker. list.segment.factored, detail.profile, and detail.edit (not touched here — already correctly not flagged) all genuinely reference the real factoring_company_vendor_id field sourced from listVendors().",
+      "note": "2 of 5 customers leaves flagged here are false: list.create (CustomerProfileForm.tsx) is customer creation only, zero vendor fields; md.customer_details shows only a boolean factoring-eligibility flag, no vendor_id/EntityLink/picker. list.segment.factored, detail.profile, and detail.edit (not touched here \u2014 already correctly not flagged) all genuinely reference the real factoring_company_vendor_id field sourced from listVendors().",
       "drops": [
         {
           "id": "list.create",

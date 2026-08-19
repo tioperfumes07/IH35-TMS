@@ -1855,7 +1855,7 @@
         "connectivity",
         "reverse_link"
       ],
-      "leafRe": "^(unit\\.profile\\.bank_txns|trailer\\.profile\\.bank_txns)$"
+      "leafRe": "^(unit\\.profile\\.bank_txns|trailer\\.profile\\.bank_txns|profiles\\.detail|detail\\.profile|banking\\.panel\\.linked_bank_transactions|load\\.banking)$"
     },
     {
       "task": "LINK-F5132-EMBEDDED-ASSIGNMENT-REVERSE-LINKS",
@@ -2437,192 +2437,338 @@
       "task": "VERTICAL-REVERSE-LINK-ACCOUNTING-EXISTING-QUERIES",
       "pr": "this PR",
       "guard": "scripts/verify-accounting-existing-query-reverse-drills.mjs",
-      "modules": ["accounting"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "accounting"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(payments\\.receive|accounting\\.parity\\.vendor_credits_page|accounting\\.panel\\.(trk_bulk_register|detail))$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-DRIVER-TEAMS",
       "pr": "this PR",
       "guard": "scripts/verify-driver-team-profile-reverse.mjs",
-      "modules": ["lists"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "lists"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^catalog\\.drivers\\.teams\\.list$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-UNIT-TASKS",
       "pr": "this PR",
       "guard": "scripts/verify-unit-task-reverse-drill.mjs",
-      "modules": ["fleet"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "fleet"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^unit\\.detail\\.tasks$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-FLEET-REMAINDER",
       "pr": "this PR",
       "guard": "scripts/verify-fleet-reverse-link-remainder.mjs",
-      "modules": ["fleet"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "fleet"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(unit\\.profile\\.documents|unit\\.edit\\.quick_availability|trailer\\.profile\\.(assignment|maintenance|insurance_claims_reverse|documents))$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-COMPLIANCE-HOS",
       "pr": "this PR",
       "guard": "scripts/verify-compliance-hos-profile-reverse.mjs",
-      "modules": ["compliance"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "compliance"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(tab\\.hos_tracker|fleet\\.hos_board)$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-COMPLIANCE-TAX-FILINGS",
       "pr": "this PR",
       "guard": "scripts/verify-compliance-tax-filings-unit-reverse.mjs",
-      "modules": ["compliance"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "compliance"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(property_tax\\.(list|detail)|form2290)$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-SAFETY-ALERTS",
       "pr": "this PR",
       "guard": "scripts/verify-safety-alert-profile-reverse.mjs",
-      "modules": ["safety"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "safety"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^safety\\.(drawer|parity)\\.(company_violation_detail|integrity_alert_detail|anomaly_detail)$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-INSURANCE-PROFILES",
       "pr": "this PR",
       "guard": "scripts/verify-insurance-profile-reverse.mjs",
-      "modules": ["insurance"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "insurance"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^(coverage_gaps|lawsuits\\.list)$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-FUEL-CARD-OVERAGE",
       "pr": "this PR",
       "guard": "scripts/verify-fuel-card-overage-profile-reverse.mjs",
-      "modules": ["fuel"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "fuel"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^card_overage$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-DRIVER-TEAM-SPLIT-CONFIG",
       "pr": "this PR",
       "guard": "scripts/verify-driver-team-split-config-reverse.mjs",
-      "modules": ["drivers"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "drivers"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^drivers\\.panel\\.team_split_config$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-CASH-FORECAST-PROFILES",
       "pr": "this PR",
       "guard": "scripts/verify-cash-forecast-profile-reverse.mjs",
-      "modules": ["cash-flow"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "cash-flow"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^cash-flow\\.panel\\.projection$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-LOAD-TEMPLATE-CUSTOMER",
       "pr": "this PR",
       "guard": "scripts/verify-load-template-customer-reverse.mjs",
-      "modules": ["dispatch"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^dispatch\\.modal\\.save_load_template$"
     },
     {
       "task": "VERTICAL-REVERSE-LINK-SYSTEM-AUDIT-RECORD",
       "pr": "this PR",
       "guard": "scripts/verify-system-audit-record-reverse.mjs",
-      "modules": ["system"],
-      "cols": ["reverse_link"],
+      "modules": [
+        "system"
+      ],
+      "cols": [
+        "reverse_link"
+      ],
       "leafRe": "^audit\\.trail$"
     },
     {
       "task": "LINK-F5170-CUSTOMER-PICKER-CANONICAL-LABELS",
       "pr": "this PR",
       "guard": "scripts/verify-customer-picker-canonical-labels.mjs",
-      "modules": ["legal", "dispatch", "docs", "safety"],
-      "cols": ["customer", "connectivity"],
+      "modules": [
+        "legal",
+        "dispatch",
+        "docs",
+        "safety"
+      ],
+      "cols": [
+        "customer",
+        "connectivity"
+      ],
       "leafRe": "^(legal\\.(modal|parity)\\.unified_contract_creator|settings\\.notify|docs\\.modal\\.upload|complaints\\.list)$"
     },
     {
       "task": "LINK-F5170-ASSIGNABLE-USER-COMPANY-SCOPE-LABELS",
       "pr": "this PR",
       "guard": "scripts/verify-assignable-user-company-scope-labels.mjs",
-      "modules": ["tasks", "maintenance", "users"],
-      "cols": ["connectivity"],
+      "modules": [
+        "tasks",
+        "maintenance",
+        "users"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^(nav\\.chat|chat\\.mentions|tasks\\.modal\\.create_task|hop\\.daily_tasks|daily_tasks\\.create|wo\\.create|maintenance\\.modal\\.(work_order_create|create_work_order)|create)$"
     },
     {
       "task": "REVERSE-PROFILE-PREVIEWS-SILENT-FIVE-ROW-CAP",
       "pr": "this PR",
       "guard": "scripts/verify-reverse-profile-preview-all-row-access.mjs",
-      "modules": ["cash-flow", "customers", "drivers", "fleet", "vendors", "dispatch"],
-      "cols": ["connectivity", "reverse_link"],
+      "modules": [
+        "cash-flow",
+        "customers",
+        "drivers",
+        "fleet",
+        "vendors",
+        "dispatch"
+      ],
+      "cols": [
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(cash-flow\\.panel\\.projection|detail\\.profile|profiles\\.detail|unit\\.profile\\.safety_reverse|dispatch\\.modal\\.save_load_template)$"
     },
     {
       "task": "SAFETY-DRIVER-PROFILE-UUID-FRAGMENT-LABEL",
       "pr": "this PR",
       "guard": "scripts/verify-safety-driver-profile-honest-identity.mjs",
-      "modules": ["safety"],
-      "cols": ["driver", "connectivity"],
+      "modules": [
+        "safety"
+      ],
+      "cols": [
+        "driver",
+        "connectivity"
+      ],
       "leafRe": "^safety\\.panel\\.driver_safety_profile$"
     },
     {
       "task": "DISPATCH-ASSIGN-DRIVER-PICKER-RAW-UUID-FALLBACK",
       "pr": "this PR",
       "guard": "scripts/verify-dispatch-assign-driver-honest-label.mjs",
-      "modules": ["dispatch"],
-      "cols": ["driver", "connectivity"],
+      "modules": [
+        "dispatch"
+      ],
+      "cols": [
+        "driver",
+        "connectivity"
+      ],
       "leafRe": "^dispatch\\.parity\\.assign_driver_dropdown$"
     },
     {
       "task": "ENTITY-PICKER-REGISTRY-RAW-UUID-LABEL-FALLBACKS",
       "pr": "this PR",
       "guard": "scripts/verify-entity-picker-registry-honest-labels.mjs",
-      "modules": ["dispatch", "drivers", "factoring", "fleet", "insurance", "safety", "banking", "settlements", "maintenance"],
-      "cols": ["driver", "unit", "trailer", "connectivity", "picker_law"],
+      "modules": [
+        "dispatch",
+        "drivers",
+        "factoring",
+        "fleet",
+        "insurance",
+        "safety",
+        "banking",
+        "settlements",
+        "maintenance"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "trailer",
+        "connectivity",
+        "picker_law"
+      ],
       "leafRe": "^(dispatch\\.(modal\\.(equipment_transfer|quick_assign)|parity\\.book_load_equipment_section)|drivers\\.parity\\.driver_picker_with_create|factoring\\.parity\\.driver_autocomplete|fleet\\.modal\\.edit_vehicle|insurance\\.(modal|parity)\\.claim_create|safety\\.(drawer|parity)\\.accident_report|banking\\.(modal|parity)\\.bank_transaction_split|settlements\\.(modal|parity)\\.create_advance|maintenance\\.(modal|parity)\\.(road_service_ticket|create_bill|create_expense)|safety\\.(modal|parity)\\.fine_create|safety\\.panel\\.test_scheduling)$"
     },
     {
       "task": "DRIVER-TEAM-MEMBER-RAW-UUID-LABEL",
       "pr": "this PR",
       "guard": "scripts/verify-driver-team-member-honest-label.mjs",
-      "modules": ["lists", "drivers"],
-      "cols": ["driver", "connectivity", "reverse_link"],
+      "modules": [
+        "lists",
+        "drivers"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(catalog\\.drivers\\.teams\\.(list|create)|lists\\.modal\\.driver_team|profiles\\.detail)$"
     },
     {
       "task": "INSURANCE-POLICY-UNIT-FALLBACK-WRONG-NOUN",
       "pr": "this PR",
       "guard": "scripts/verify-insurance-policy-unit-honest-label.mjs",
-      "modules": ["insurance"],
-      "cols": ["unit", "connectivity"],
+      "modules": [
+        "insurance"
+      ],
+      "cols": [
+        "unit",
+        "connectivity"
+      ],
       "leafRe": "^(policies\\.create|insurance\\.(modal|parity|wizard)\\.policy_create)$"
     },
     {
       "task": "NONMONEY-ENTITY-LABEL-GENERIC-RECORD-NOUN",
       "pr": "this PR",
       "guard": "scripts/verify-nonmoney-exact-entity-nouns.mjs",
-      "modules": ["compliance", "safety", "drivers", "insurance", "dispatch", "fleet", "legal", "maintenance"],
-      "cols": ["driver", "unit", "work_order", "connectivity", "reverse_link"],
+      "modules": [
+        "compliance",
+        "safety",
+        "drivers",
+        "insurance",
+        "dispatch",
+        "fleet",
+        "legal",
+        "maintenance"
+      ],
+      "cols": [
+        "driver",
+        "unit",
+        "work_order",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(tab\\.violations|safety\\.(drawer|parity)\\.accident_report|profiles\\.detail|claims\\.list|load\\.detail|unit\\.profile\\.(identity|legal_reverse|insurance_claims_reverse)|trailer\\.profile\\.(legal_reverse|insurance_claims_reverse)|matters\\.list|wo\\.console\\.list|home\\.rm_status_board|maintenance\\.modal\\.(work_order_detail|work_order_create|create_work_order))$"
     },
     {
       "task": "LV-DOCS-ENTITY-LINKS-RAW-UUID-LABELS",
       "pr": "this PR",
       "guard": "scripts/verify-docs-entity-labels.mjs",
-      "modules": ["docs"],
-      "cols": ["driver", "customer", "vendor", "unit", "load", "connectivity"],
+      "modules": [
+        "docs"
+      ],
+      "cols": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity"
+      ],
       "leafRe": "^table\\.entity_link$"
     },
     {
       "task": "LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING",
       "pr": "this PR",
       "guard": "scripts/verify-driver-detail-company-scope.mjs",
-      "modules": ["drivers", "compliance", "safety"],
-      "cols": ["driver", "connectivity", "reverse_link"],
+      "modules": [
+        "drivers",
+        "compliance",
+        "safety"
+      ],
+      "cols": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(profiles\\.detail|fleet\\.hos_board|safety\\.panel\\.driver_safety_profile)$",
       "live": "BLOCKED"
     }

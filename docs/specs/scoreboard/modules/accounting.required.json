@@ -1245,15 +1245,29 @@
     {
       "id": "unit.detail.finance_linkage",
       "tab": "Unit Detail",
-      "sub": "Loan / Lease / Depr. finance linkage — accounting-owned data surfaced on the fleet-owned Unit Detail page",
+      "sub": "Loan / Lease / Depr. finance linkage \u2014 accounting-owned data surfaced on the fleet-owned Unit Detail page",
       "route_hint": "/fleet/units/:id/detail?tab=finance",
       "surface_kind": "tab",
       "surface_path": "pages/units/UnitFinanceLinkageTab.tsx",
-      "note": "Cross-module leaf: fleet.required.json already carries this leaf (real, KEPT — verified GET /api/v1/accounting/units/:id/linked-financials backed by accounting.bills/accounting.expenses, EntityLink kind=\"bill\"/kind=\"journal_entry\" per row). This is accounting's own registry copy of the same real surface — UNIT-FINANCE-LINKAGE-GL-JE-REVERSE (verify-unit-finance-gl-je-reverse.mjs) lists both fleet and accounting in its modules, and only fleet's copy existed.",
+      "note": "Cross-module leaf: fleet.required.json already carries this leaf (real, KEPT \u2014 verified GET /api/v1/accounting/units/:id/linked-financials backed by accounting.bills/accounting.expenses, EntityLink kind=\"bill\"/kind=\"journal_entry\" per row). This is accounting's own registry copy of the same real surface \u2014 UNIT-FINANCE-LINKAGE-GL-JE-REVERSE (verify-unit-finance-gl-je-reverse.mjs) lists both fleet and accounting in its modules, and only fleet's copy existed.",
       "required": [
         "unit",
         "ap_bill",
         "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "banking.panel.linked_bank_transactions",
+      "tab": "Cross-module",
+      "sub": "Linked bank transactions panel (JE drill shared)",
+      "route_hint": "surface://components/banking/LinkedBankTransactionsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/banking/LinkedBankTransactionsPanel.tsx",
+      "required": [
+        "bank",
         "gl_je",
         "connectivity",
         "reverse_link"
