@@ -106,6 +106,7 @@ function run(root = ROOT) {
     }
     if (c.name === "FaultDraftsPage") {
       for (const pattern of [
+        /kind="work_order" id=\{row\.id\} name=\{row\.display_id\} noun="Work order"/,
         /kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/,
         /kind="unit" id=\{selected\.unit_id\} name=\{selected\.unit_number\} noun="Unit"/,
         /kind="work_order"[\s\S]{0,80}id=\{selected\.id\}/,
@@ -138,7 +139,7 @@ function run(root = ROOT) {
         /kind="driver" id=\{wo\.driver_id as string \| null\} name=\{wo\.driver_name\} noun="Driver"/,
         /kind="vendor" id=\{wo\.resolved_vendor_id as string \| null\} name=\{wo\.resolved_vendor_name\} noun="Vendor"/,
         /kind="claim" id=\{wo\.insurance_claim_id as string \| null\} name=\{wo\.insurance_claim_number\} noun="Claim"/,
-        /kind="trailer" id=\{wo\.equipment_id\} name=\{wo\.equipment_number\} noun="Trailer"/,
+        /kind="trailer" id=\{wo\.equipment_id as string \| null\} name=\{wo\.equipment_number\} noun="Trailer"/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact forward-link identity coupling missing`);
     }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {

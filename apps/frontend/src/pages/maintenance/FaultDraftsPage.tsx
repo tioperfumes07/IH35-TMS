@@ -111,6 +111,13 @@ export function FaultDraftsPage() {
 
   const columns = useMemo<ParityColumn<FaultDraft>[]>(
     () => [
+      {
+        key: "display_id",
+        label: "Work order",
+        render: (row) => (
+          <EntityLinkOrTombstone kind="work_order" id={row.id} name={row.display_id} noun="Work order" />
+        ),
+      },
       { key: "unit_id", label: "Unit", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
       { key: "fault_code", label: "Fault code", sortable: true, render: (row) => row.fault_code ?? "—" },
       { key: "fault_severity", label: "Severity", sortable: true, render: (row) => <span className="capitalize">{row.fault_severity ?? "—"}</span> },
@@ -219,7 +226,14 @@ export function FaultDraftsPage() {
       {selected ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
-            <h3 className="text-base font-semibold">{selected.wo_title ?? selected.display_id ?? "Draft WO"}</h3>
+            <h3 className="text-base font-semibold">
+              <EntityLinkOrTombstone
+                kind="work_order"
+                id={selected.id}
+                name={selected.wo_title ?? selected.display_id}
+                noun="Work order"
+              />
+            </h3>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{selected.description}</p>
             <div className="mt-3 text-sm text-slate-700">
               Unit: <EntityLinkOrTombstone kind="unit" id={selected.unit_id} name={selected.unit_number} noun="Unit" className="font-semibold" />
