@@ -82,7 +82,7 @@ describe("OcrQueuePage (B21-D7)", () => {
         extracted_fields: {
           ...readyItem.extracted_fields,
           customer_id: "customer-orphan",
-          customer_name_raw: null,
+          customer_name_raw: "",
         },
       }],
     });

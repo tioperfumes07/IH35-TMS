@@ -57,7 +57,7 @@ describe("AtRiskQueuePage", () => {
       loads: [
         {
           id: "load-orphan",
-          load_number: null,
+          load_number: "",
           status: "in_transit",
           customer_id: "customer-orphan",
           unit_id: "unit-orphan",
