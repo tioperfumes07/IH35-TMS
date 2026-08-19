@@ -13,3 +13,5 @@
 CC-3/Cascade · steal Codex Band B · invent Leaves · money steal from CC-1
 
 OUTBOX: `Cursor | WORKING · OWN=fleet Band A Built + maint Built · tip seats · GO`
+
+**Law:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — Launch-ready without Live Chrome means Fully-Wired 1-11 with leaf-specific Built only; no word-blanket Built.

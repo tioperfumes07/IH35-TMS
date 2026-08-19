@@ -13,3 +13,5 @@
 Money (CC-1) · fleet Band A/B collision · CC-3/Cascade
 
 OUTBOX: `CC-2 | WORKING · OWN=lists Box4 · GO`
+
+**Law:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — Launch-ready without Live Chrome means Fully-Wired 1-11 with leaf-specific Built only; no word-blanket Built.

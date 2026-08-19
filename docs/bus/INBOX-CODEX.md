@@ -34,3 +34,5 @@
 Wait for Cursor · tip CC-3/Cascade · money GL · collide Band A Built · OUTBOX-only without FO/Leaves
 
 OUTBOX: `Codex | WORKING · REWAKE · OWN=fleet Band B trailer.profile reverse + maint/dispatch reverse · GO`
+
+**Law:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — Launch-ready without Live Chrome means Fully-Wired 1-11 with leaf-specific Built only; no word-blanket Built.
