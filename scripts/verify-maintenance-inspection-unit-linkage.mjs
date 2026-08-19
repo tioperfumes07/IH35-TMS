@@ -25,6 +25,8 @@ function audit(s) {
   if (!/<UnitMaintenanceInspectionsReverseSection[^>]+unitId=\{id\}/.test(s.detail)) failures.push("secondary unit detail route must mount unit inspection reverse");
   if (!/case "maintenance_inspection":[\s\S]{0,100}inspections\?inspection_id=/.test(s.link)) failures.push("inspection must drill to canonical highlighted list");
   if (!/deepLinkInspectionId === String\(row\.id\)/.test(s.page)) failures.push("inspection list must highlight deep-linked row");
+  if (!/EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/.test(s.page)) failures.push("inspection unit identity must use the unresolved-safe canonical drill");
+  if (!/<EntityLinkOrTombstone[\s\S]{0,80}kind="dvir"[\s\S]{0,80}id=\{row\.dvir_submission_id\}[\s\S]{0,240}noun="DVIR"/.test(s.page)) failures.push("nullable DVIR identity must use the unresolved-safe canonical drill");
   return failures;
 }
 
@@ -40,6 +42,8 @@ if (process.argv.includes("--selftest")) {
     ["detail", "detail", /UnitMaintenanceInspectionsReverseSection/g, "MissingInspectionSection"],
     ["drill", "link", /case "maintenance_inspection":/, 'case "inspection_missing":'],
     ["highlight", "page", /deepLinkInspectionId === String\(row\.id\)/, "false"],
+    ["unit tombstone", "page", /EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/, 'EntityLink kind="unit" id={row.unit_id} label={row.unit_number}'],
+    ["DVIR tombstone", "page", /(<EntityLinkOrTombstone\s*\n\s*)kind="dvir"/, '$1kind="load"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
