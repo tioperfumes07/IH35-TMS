@@ -60,7 +60,13 @@ export function audit(src) {
   need(/factoring_company_vendor_id(?!_)/.test(src.customerDetail) && /kind=["']vendor["']/.test(src.customerDetail) && /enabled=\{Boolean\(detailQuery\.data\?\.operating_company_id \?\? operatingCompanyId\)\}/.test(src.customerDetail) && /disabled=\{!editMode\}/.test(src.customerDetail), `${FILES.customerDetail}: customer detail must resolve the factoring vendor label in view mode and disable mutation outside edit mode`);
   need(/allowCreate=\{editMode\}/.test(src.customerDetail) && !/kind="vendor"\s+allowCreate\s+operatingCompanyId/.test(src.customerDetail), `${FILES.customerDetail}: factoring vendor picker must offer inline create only in edit mode and must not duplicate the allowCreate JSX attribute`);
   need(/factoring_company_vendor_id: string/.test(src.customerProfileForm) && /kind=["']vendor["']/.test(src.customerProfileForm) && /factoring_company_vendor_id: value \?\? ""/.test(src.customerProfileForm), `${FILES.customerProfileForm}: canonical create/edit form must bind the factoring-company vendor picker to its FK payload`);
-  need(/lastService\.vendor/.test(src.maintSnapshot), `${FILES.maintSnapshot}: maintenance snapshot must show the real backend-joined vendor`);
+  need(
+    /lastService\.vendor/.test(src.maintSnapshot) &&
+      /lastService\.vendor_id/.test(src.maintSnapshot) &&
+      /kind="vendor"/.test(src.maintSnapshot) &&
+      /vp-maint-snapshot-last-service-vendor-link/.test(src.maintSnapshot),
+    `${FILES.maintSnapshot}: maintenance snapshot must EntityLinkOrTombstone the backend-joined last-service vendor (not plain text)`,
+  );
   need(/entityType="vendor"/.test(src.vehicleProfile), `${FILES.vehicleProfile}: unit QBO mapping must have a real vendor combobox`);
   need(/lender_vendor_name(?!_)/.test(src.financeLinkage), `${FILES.financeLinkage}: finance linkage must show the real linked lender vendor`);
   need(/kind="vendor"/.test(src.banking), `${FILES.banking}: banking transactions must render a real vendor EntityLink`);
@@ -98,7 +104,9 @@ if (process.argv.includes("--selftest")) {
     ["customer-detail-view-label", "customerDetail", /enabled=\{Boolean\(detailQuery\.data\?\.operating_company_id \?\? operatingCompanyId\)\}/, "enabled={editMode}"],
     ["customer-detail-duplicate-create-attribute", "customerDetail", /kind="vendor"/, 'kind="vendor"\n                allowCreate'],
     ["customer-profile-factor-picker", "customerProfileForm", /factoring_company_vendor_id: value \?\? ""/, 'factoring_company_vendor_id: ""'],
-    ["maint-snapshot-field", "maintSnapshot", /lastService\.vendor/g, "lastService_unused"],
+    ["maint-snapshot-field", "maintSnapshot", /lastService\.vendor_id/g, "lastService_vendor_id_unused"],
+    ["maint-snapshot-vendor-kind", "maintSnapshot", /kind="vendor"/g, 'kind="unit"'],
+    ["maint-snapshot-vendor-testid", "maintSnapshot", /vp-maint-snapshot-last-service-vendor-link/g, "vp-maint-last-svc-vendor-gone"],
     ["vehicle-profile-combobox", "vehicleProfile", /entityType="vendor"/, 'entityType="unit"'],
     ["finance-linkage-field", "financeLinkage", /lender_vendor_name/g, "lender_vendor_name_unused"],
     ["banking-link", "banking", /kind="vendor"/g, 'kind="unit"'],
