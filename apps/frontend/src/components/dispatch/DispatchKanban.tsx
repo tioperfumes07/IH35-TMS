@@ -597,16 +597,17 @@ function KanbanStandardCard({
 // onBookForUnit and had no visible affordance. This is a purpose-built, NON-draggable card with an
 // explicit "+ Book load" button; clicking anywhere opens the Book wizard pre-filled with this truck.
 function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (id: string) => void }) {
-  const unit = load.assigned_unit_number
+  const unitLabel = load.assigned_unit_number
     ? entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")
     : entityLabel(load.load_number, load.id, "Load");
-  const driver =
+  const driverLabel =
     load.assigned_primary_driver_name || load.assigned_primary_driver_id
       ? entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
       : null;
   // Clicking anywhere on the card OR the explicit "+ Book load" button opens the Book wizard pre-filled with
   // this truck. The button is a real <button> (not a span) so it's an unmistakable, findable affordance; it
   // stops propagation only to avoid a harmless double-fire with the card click.
+  // Exact Leaves home.kanban:unit|driver — unit/driver were plain labels despite IDs.
   return (
     <div
       role="button"
@@ -622,7 +623,18 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
       className="cursor-pointer rounded-sm border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate text-xs font-semibold text-gray-900">{unit}</span>
+        {load.assigned_unit_id ? (
+          <EntityLink
+            kind="unit"
+            id={load.assigned_unit_id}
+            label={unitLabel}
+            className="min-w-0 truncate text-xs font-semibold text-gray-900"
+            data-testid="awaiting-truck-unit-link"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span className="min-w-0 truncate text-xs font-semibold text-gray-900">{unitLabel}</span>
+        )}
         <button
           type="button"
           data-testid={`awaiting-truck-book-${load.id}`}
@@ -635,7 +647,19 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           + Book load
         </button>
       </div>
-      <div className="mt-0.5 truncate text-[11px] text-gray-500">{driver ?? "No driver assigned"}</div>
+      <div className="mt-0.5 truncate text-[11px] text-gray-500">
+        {load.assigned_primary_driver_id ? (
+          <EntityLink
+            kind="driver"
+            id={load.assigned_primary_driver_id}
+            label={driverLabel ?? entityLabel(null, load.assigned_primary_driver_id, "Driver")}
+            data-testid="awaiting-truck-driver-link"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          driverLabel ?? "No driver assigned"
+        )}
+      </div>
     </div>
   );
 }
