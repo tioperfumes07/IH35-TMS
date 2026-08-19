@@ -1,7 +1,6 @@
-import { entityLabel } from "../../../lib/entity-label";
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 import { useMemo, useState } from "react";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { confirmUpload, requestUploadUrlFromFile } from "../../../api/docs";
@@ -211,23 +210,22 @@ export function InspectionsPage() {
     () => [
       { key: "inspection_date", label: "Date", sortable: true, render: (row) => String(row.inspection_date ?? row.scheduled_date ?? "—") },
       { key: "inspection_type", label: "Type", sortable: true, render: (row) => row.inspection_type_label ?? row.inspection_type },
-      { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_id ?? undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
+      { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
       { key: "inspector_name", label: "Inspector", sortable: true, render: (row) => String(row.inspector_name ?? "—") },
       { key: "outcome", label: "Outcome", sortable: true, render: (row) => humanizeEnumLabel(row.outcome ?? row.status ?? "—") },
       {
         key: "dvir_submission_id",
         label: "DVIR",
         render: (row) => (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="dvir"
             id={row.dvir_submission_id}
-            label={entityLabel(
+            name={
               row.dvir_type && row.dvir_submitted_at
                 ? `${humanizeEnumLabel(row.dvir_type)} · ${String(row.dvir_submitted_at).slice(0, 10)}`
-                : row.dvir_type,
-              row.dvir_submission_id,
-              "DVIR"
-            )}
+                : row.dvir_type
+            }
+            noun="DVIR"
           />
         ),
       },
