@@ -104,6 +104,9 @@ async function appendSyncAudit(
 
 async function pickExpenseAccountId(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
+    // ACCT-F5559: dead code — verified (grep, whole-repo) this function has NO callers anywhere;
+    // unreachable, so there is no request principal to assert against.
+    // membership-scope-exempt: unreachable dead code, no caller, no request principal
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ qbo_entity_id: string }>(
       `
@@ -123,6 +126,9 @@ async function pickExpenseAccountId(operatingCompanyId: string) {
 
 async function pickClassId(operatingCompanyId: string, className: string) {
   return withLuciaBypass(async (client) => {
+    // ACCT-F5559: dead code — verified (grep, whole-repo) this function has NO callers anywhere;
+    // unreachable, so there is no request principal to assert against.
+    // membership-scope-exempt: unreachable dead code, no caller, no request principal
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ qbo_entity_id: string }>(
       `
@@ -142,6 +148,9 @@ async function pickClassId(operatingCompanyId: string, className: string) {
 
 async function loadBankTxnContext(operatingCompanyId: string, entityId: string) {
   return withLuciaBypass(async (client) => {
+    // ACCT-F5559: called only with job.operating_company_id from an internally-fetched queue row
+    // inside processSyncQueueBatch — no request principal, no caller-supplied opco.
+    // membership-scope-exempt: job-derived, no request principal
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<BankTxnContext>(
       `
@@ -179,6 +188,8 @@ async function loadBankTxnContext(operatingCompanyId: string, entityId: string) 
 
 async function syncTransferPreview(job: QueueRow) {
   return withLuciaBypass(async (client) => {
+    // ACCT-F5559: job-derived (internal batch processor's own queue row), no request principal.
+    // membership-scope-exempt: job-derived, no request principal
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
     const transferRes = await client.query<{ revoked_at: string | null }>(
       `
@@ -252,6 +263,15 @@ export async function enqueueSyncJob(
   } catch {
     return null;
   }
+  // ACCT-F5559: actorUserId present means a real human/request-derived principal initiated this
+  // (vs. the cron/worker no-actor path below, which stays withLuciaBypass by design). The RLS policy
+  // on integrations.qbo_sync_queue only checks operating_company_id = current_setting(...) — the
+  // SAME caller-supplied value being set here — so it provides ZERO real tenant-membership
+  // protection on its own (verified live on prod, tiny-field-89581227: policy qbo_sync_queue_company_
+  // scope has no org.user_accessible_company_ids() clause). This assert is the actual boundary.
+  if (actorUserId) {
+    await assertCompanyMembership(actorUserId, operatingCompanyId);
+  }
   const upsertQueue = async (client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
@@ -324,6 +344,8 @@ async function markJobResult(
   patch: { qboId?: string | null; syncToken?: string | null; errorMessage?: string | null; errorDetails?: unknown; nextAttemptAt?: string | null }
 ) {
   await withLuciaBypass(async (client) => {
+    // ACCT-F5559: job-derived (internal batch processor's own queue row), no request principal.
+    // membership-scope-exempt: job-derived, no request principal
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
     await client.query(
       `
@@ -496,6 +518,8 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
       // must NEVER create a QBO Purchase unless the owner explicitly turns QBO_ENTITY_PUSH_ENABLED ON
       // for this company. Default OFF ⇒ this path makes ZERO QBO calls. Gate BEFORE any token fetch.
       const bankPushEnabled = await withLuciaBypass(async (client) => {
+        // ACCT-F5559: job-derived (internal batch processor's own queue row), no request principal.
+        // membership-scope-exempt: job-derived, no request principal
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
         return isEntityPushEnabled(client, job.operating_company_id);
       });
@@ -634,10 +658,19 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
 
 export async function listSyncQueue(params: {
   operatingCompanyId: string;
+  actorUserId: string;
   status?: QueueStatus;
   limit: number;
   offset: number;
 }) {
+  // ACCT-F5559: this route only checked role (Owner/Administrator), never company membership, and
+  // runs under withLuciaBypass (RLS fully OFF) — the GUC set below was the ONLY tenant boundary, and
+  // it was unauthenticated against the caller's own company access. An Owner/Administrator of ANY
+  // company could pass another company's operating_company_id and read its full QBO sync queue
+  // (bill/invoice/payment/settlement/factoring-advance identifiers). Live-verified: the RLS policy
+  // itself (qbo_sync_queue_company_scope) only checks operating_company_id = current_setting(...),
+  // not org.user_accessible_company_ids() — no backstop exists without this assert.
+  await assertCompanyMembership(params.actorUserId, params.operatingCompanyId);
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [params.operatingCompanyId]);
     const res = await client.query(
@@ -816,7 +849,10 @@ export async function dismissOutboundSyncQueueItem(
   return { ok: true, id: queueId };
 }
 
-export async function getSyncQueueStats(operatingCompanyId: string) {
+export async function getSyncQueueStats(operatingCompanyId: string, actorUserId: string) {
+  // ACCT-F5559: same class as listSyncQueue above — role-only gate + withLuciaBypass with no
+  // membership assert let any Owner/Administrator read another company's QBO sync stats.
+  await assertCompanyMembership(actorUserId, operatingCompanyId);
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const countsRes = await client.query<{ sync_status: QueueStatus; count: string }>(

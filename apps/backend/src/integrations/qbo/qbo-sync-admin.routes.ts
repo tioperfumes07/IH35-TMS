@@ -65,13 +65,23 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
 
     const query = queueListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
-    const rows = await listSyncQueue({
-      operatingCompanyId: query.data.operating_company_id,
-      status: query.data.status,
-      limit: query.data.limit,
-      offset: query.data.offset,
-    });
-    return { items: rows };
+    // ACCT-F5559 — listSyncQueue now asserts membership itself and throws a 403-shaped Error; this
+    // route has no other error mapping, so catch it here (same pattern as /retry, /skip below).
+    try {
+      const rows = await listSyncQueue({
+        operatingCompanyId: query.data.operating_company_id,
+        actorUserId: user.uuid,
+        status: query.data.status,
+        limit: query.data.limit,
+        offset: query.data.offset,
+      });
+      return { items: rows };
+    } catch (err) {
+      if ((err as Error & { statusCode?: number })?.statusCode === 403) {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      throw err;
+    }
   });
 
   app.post("/api/v1/integrations/qbo/sync-queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -140,7 +150,7 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/api/v1/integrations/qbo/sync-queue/stats", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/sync-queue/stats", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireOwnerOrAdmin(user, reply)) return;
@@ -150,8 +160,16 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
       .safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
-    const stats = await getSyncQueueStats(query.data.operating_company_id);
-    return stats;
+    // ACCT-F5559 — getSyncQueueStats now asserts membership itself and throws a 403-shaped Error.
+    try {
+      const stats = await getSyncQueueStats(query.data.operating_company_id, user.uuid);
+      return stats;
+    } catch (err) {
+      if ((err as Error & { statusCode?: number })?.statusCode === 403) {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      throw err;
+    }
   });
 }
 
