@@ -603,3 +603,7 @@ verify:static: 53 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:29Z CC-1 | ACCT-F5477 closed (PR #9364, merged b0ef302). verify-expense-load-field-for-fuel.mjs required the literal "Load / Trip is required for fuel" text, but the category predicate generalized from a hand-rolled fuel/diesel/roadside/ifta regex to a proper isOverTheRoadCategoryLabel() function (G18 taxonomy), and the copy widened to match with an added exemption-reason escape hatch. Load/Trip requirement itself unchanged/still enforced. Widened check to accept either text paired with confirming the predicate is actually used. No mutation harness; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 54 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:31Z CC-1 | ACCT-F5478 closed (PR #9368, merged 3324b8d). verify-factoring-customer-retention-human-labels.mjs FAILed CustomerDetail.tsx for "missing entityLabel" — file has 0 direct entityLabel(...) calls, every call site migrated onto EntityLinkOrTombstone (11 occurrences), same class already fixed for two other sections of this file this session (ACCT-F5460, ACCT-F5465). Widened check to also accept EntityLinkOrTombstone as evidence. UUID-slice negative check untouched. Existing --selftest re-verified PASS. Zero product-code change.
+
+verify:static: 55 of ~199 now closed this session. Continuing non-stop, fast-merge.
