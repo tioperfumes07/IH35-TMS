@@ -39,7 +39,9 @@ export function GeofenceBreachesTab() {
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-slate-900">Geofence Alerts</h3>
-          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">{activeCount} active</span>
+          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+            {eventsQuery.isError ? "—" : `${activeCount} active`}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {FILTERS.map((item) => (
@@ -56,7 +58,13 @@ export function GeofenceBreachesTab() {
       </div>
 
       <div className="space-y-2">
-        {(eventsQuery.data?.events ?? []).map((event) => (
+        {eventsQuery.isError ? (
+          <p className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700" data-testid="geofence-breaches-query-error">
+            {userFacingApiError(eventsQuery.error, "Could not load geofence alerts.")}
+          </p>
+        ) : (
+          <>
+            {(eventsQuery.data?.events ?? []).map((event) => (
           <div key={event.id} className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -100,11 +108,13 @@ export function GeofenceBreachesTab() {
               )}
             </div>
           </div>
-        ))}
-        {eventsQuery.isLoading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading geofence alerts...</div> : null}
-        {!eventsQuery.isLoading && (eventsQuery.data?.events ?? []).length === 0 ? (
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">No geofence alerts for selected filter.</div>
-        ) : null}
+            ))}
+            {eventsQuery.isLoading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading geofence alerts...</div> : null}
+            {!eventsQuery.isLoading && (eventsQuery.data?.events ?? []).length === 0 ? (
+              <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">No geofence alerts for selected filter.</div>
+            ) : null}
+          </>
+        )}
         {acknowledgeMutation.isError ? (
           <p className="text-xs text-red-700" data-testid="geofence-acknowledge-error">
             {userFacingApiError(acknowledgeMutation.error, "Could not acknowledge the geofence breach.")}
