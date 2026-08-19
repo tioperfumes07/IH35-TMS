@@ -12,12 +12,15 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useStagedListFilters } from "../../components/table";
 
 type AccidentRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
 };
+
+const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "", from: "", to: "" };
 
 // SAFE-1: render the persisted fault / DOT-preventability determinations. Null = not yet assessed.
 function formatAtFault(value: unknown): string {
@@ -50,12 +53,14 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedAccident, setSelectedAccident] = useState<Record<string, unknown> | null>(null);
-  // S-08 / S-04 + SAF-F26: driver/unit/trailer filters are EntityPickers (allowCreate=false).
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [trailerFilter, setTrailerFilter] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  // LV-SAFETY-ACCIDENTS-FILTER-SILENT-APPLY — client-side filters stage until Apply; Cancel restores.
+  const [applied, setApplied] = useState(EMPTY_FILTERS);
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: setApplied,
+  });
+  const draft = staged.draft;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const accidentIdParam = searchParams.get("accident_id");
@@ -64,16 +69,16 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
 
-  // Seed picker filters from reverse Open-queue deep links (LINK-F5171).
+  // Seed picker filters from reverse Open-queue deep links (LINK-F5171) into applied (draft syncs when clean).
   useEffect(() => {
-    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-  useEffect(() => {
-    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
-  }, [unitIdFromUrl]);
-  useEffect(() => {
-    if (trailerIdFromUrl) setTrailerFilter(trailerIdFromUrl);
-  }, [trailerIdFromUrl]);
+    if (!driverIdFromUrl && !unitIdFromUrl && !trailerIdFromUrl) return;
+    setApplied((prev) => ({
+      ...prev,
+      ...(driverIdFromUrl ? { driverId: driverIdFromUrl } : {}),
+      ...(unitIdFromUrl ? { unitId: unitIdFromUrl } : {}),
+      ...(trailerIdFromUrl ? { trailerId: trailerIdFromUrl } : {}),
+    }));
+  }, [driverIdFromUrl, unitIdFromUrl, trailerIdFromUrl]);
 
   const accidentsQuery = useQuery({
     queryKey: [
@@ -123,30 +128,30 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const rows = useMemo(() => {
     return allRows.filter((row) => {
       // SAF-F26: picker sets the canonical id; also accept name/number substring if typed legacy.
-      if (driverFilter) {
+      if (applied.driverId) {
         const id = String(row.driver_id ?? "");
         const name = String(row.driver_name ?? "").toLowerCase();
-        const needle = driverFilter.trim().toLowerCase();
-        if (id !== driverFilter && !name.includes(needle) && id.toLowerCase() !== needle) return false;
+        const needle = applied.driverId.trim().toLowerCase();
+        if (id !== applied.driverId && !name.includes(needle) && id.toLowerCase() !== needle) return false;
       }
-      if (unitFilter) {
+      if (applied.unitId) {
         const id = String(row.unit_id ?? "");
         const num = String(row.unit_number ?? "").toLowerCase();
-        const needle = unitFilter.trim().toLowerCase();
-        if (id !== unitFilter && !num.includes(needle) && id.toLowerCase() !== needle) return false;
+        const needle = applied.unitId.trim().toLowerCase();
+        if (id !== applied.unitId && !num.includes(needle) && id.toLowerCase() !== needle) return false;
       }
-      if (trailerFilter) {
+      if (applied.trailerId) {
         const id = String(row.trailer_id ?? "");
         const num = String(row.trailer_number ?? row.equipment_number ?? "").toLowerCase();
-        const needle = trailerFilter.trim().toLowerCase();
-        if (id !== trailerFilter && !num.includes(needle) && id.toLowerCase() !== needle) return false;
+        const needle = applied.trailerId.trim().toLowerCase();
+        if (id !== applied.trailerId && !num.includes(needle) && id.toLowerCase() !== needle) return false;
       }
       const accidentDate = String(row.accident_at ?? "").slice(0, 10);
-      if (fromDate && accidentDate && accidentDate < fromDate) return false;
-      if (toDate && accidentDate && accidentDate > toDate) return false;
+      if (applied.from && accidentDate && accidentDate < applied.from) return false;
+      if (applied.to && accidentDate && accidentDate > applied.to) return false;
       return true;
     });
-  }, [allRows, driverFilter, unitFilter, trailerFilter, fromDate, toDate]);
+  }, [allRows, applied]);
   const createMode = String(selectedAccident?.id ?? "") === "__create__";
 
   const openAccident = (row: Record<string, unknown>) => {
@@ -272,15 +277,15 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         tableTestId="accidents-table"
         rowTestId={(row) => `accident-row-${String(row.id)}`}
         filterBar={
-          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          <div className="flex flex-wrap items-center gap-2 text-[11px]" data-testid="accidents-filters">
             {/* SAF-F26: filters, not creators — allowCreate={false} (same law as IdvrPage). */}
             <label className="text-[11px] text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
-                value={driverFilter || null}
-                onChange={(next) => setDriverFilter(next ?? "")}
+                value={draft.driverId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1 w-48"
@@ -293,8 +298,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
               <EntityPicker
                 kind="unit"
                 operatingCompanyId={operatingCompanyId}
-                value={unitFilter || null}
-                onChange={(next) => setUnitFilter(next ?? "")}
+                value={draft.unitId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All units"
                 className="mt-1 w-48"
@@ -307,8 +312,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
               <EntityPicker
                 kind="trailer"
                 operatingCompanyId={operatingCompanyId}
-                value={trailerFilter || null}
-                onChange={(next) => setTrailerFilter(next ?? "")}
+                value={draft.trailerId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All trailers"
                 className="mt-1 w-48"
@@ -317,24 +322,39 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
               />
             </label>
             <span className="font-semibold text-slate-500">From:</span>
-            <DatePicker value={fromDate} onChange={setFromDate} className="w-32" max={toDate || undefined} data-testid="accidents-from-date" />
+            <DatePicker
+              value={draft.from}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
+              className="w-32"
+              max={draft.to || undefined}
+              data-testid="accidents-from-date"
+            />
             <span className="font-semibold text-slate-500">To:</span>
-            <DatePicker value={toDate} onChange={setToDate} className="w-32" min={fromDate || undefined} data-testid="accidents-to-date" />
-            {driverFilter || unitFilter || trailerFilter || fromDate || toDate ? (
-              <button
-                type="button"
-                className="rounded-full border border-gray-300 px-2 py-0.5 text-slate-500 hover:bg-gray-100"
-                onClick={() => {
-                  setDriverFilter("");
-                  setUnitFilter("");
-                  setTrailerFilter("");
-                  setFromDate("");
-                  setToDate("");
-                }}
-              >
-                Clear
-              </button>
-            ) : null}
+            <DatePicker
+              value={draft.to}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
+              className="w-32"
+              min={draft.from || undefined}
+              data-testid="accidents-to-date"
+            />
+            <Button type="button" size="sm" data-testid="accidents-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button type="button" size="sm" variant="secondary" data-testid="accidents-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="accidents-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
           </div>
         }
       />
