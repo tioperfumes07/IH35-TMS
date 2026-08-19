@@ -543,3 +543,7 @@ verify:static: 38 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T02:40Z CC-1 | ACCT-F5462 closed (PR #9312, merged 86ac8b0). Same ACCT-F351 relocation class as ACCT-F5461 (PR #9309), a separate guard file (verify-invoice-pipeline-proforma-to-factoring.mjs) independently duplicating the stale assumption that convertProformaToOfficial + sendDraftInvoice live in loads.routes.ts. Guard now reads loads.routes.ts + delivery-evidence-latch.ts concatenated for the check; assertion logic unchanged. Zero product-code change.
 
 verify:static: 39 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T02:42Z CC-1 | ACCT-F5463 closed (PR #9316, merged e796510). verify-banking-tx-register-uses-paritytable.mjs FAILed on the only <table>/<thead>/<tbody> in BankingTransactionsDesignView.tsx, which is inside the Print dialog's printLetterHtml({ bodyHtml: `...` }) call — a raw HTML string for a separate print window, not JSX. Main register correctly uses one <ParityTable> with A1-A5 wired. Same false-positive class already fixed for two sibling ParityTable-migration guards on other pages this session. Stripped the bodyHtml template literal before scanning; added 2 new selftest cases (false-positive fixed + real regression still caught). Zero product-code change.
+
+verify:static: 40 of ~199 now closed this session. Continuing non-stop, fast-merge.
