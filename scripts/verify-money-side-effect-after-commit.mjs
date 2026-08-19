@@ -94,6 +94,43 @@ function stripNonCode(src) {
   return out;
 }
 
+/**
+ * Given `code` and the index right after a matched `function NAME`, skip past an optional generic
+ * `<...>` and the parameter list `(...)` — which may itself contain balanced `()`, `<>`, and an
+ * inline TS object-type literal `{...}` on a parameter — and return the index of the function BODY's
+ * own opening brace, or -1 if none is found.
+ *
+ * WHY THIS EXISTS: a naive `code.indexOf("{", afterName)` finds the body's brace UNLESS a parameter
+ * has an inline object type before the body (`opts?: { actorUserId?: string | null; sessionId?:
+ * string | null }`) — that type literal is itself a balanced `{...}` span, so the naive scan latches
+ * onto IT and returns its contents as the "body", silently missing the real one entirely. Caught
+ * live: `db.ts`'s `withLuciaBypass()` and `withCurrentUser()` both have exactly this shape (a
+ * trailing `opts?: {...}` / `sessionId?: {...}`-shaped param), so every wiring check inside them
+ * false-failed as "missing" even though the real ~150-line wrapper bodies were fully wired.
+ */
+function findBodyOpenBrace(code, i) {
+  while (i < code.length && /\s/.test(code[i])) i++;
+  if (code[i] === "<") {
+    let depth = 1;
+    i++;
+    while (i < code.length && depth > 0) {
+      if (code[i] === "<") depth++;
+      else if (code[i] === ">") depth--;
+      i++;
+    }
+  }
+  while (i < code.length && /\s/.test(code[i])) i++;
+  if (code[i] !== "(") return -1;
+  let depth = 1;
+  i++;
+  while (i < code.length && depth > 0) {
+    if (code[i] === "(") depth++;
+    else if (code[i] === ")") depth--;
+    i++;
+  }
+  return code.indexOf("{", i);
+}
+
 /** [start, end) of the argument list of every `NAME(` call in `code`. */
 function callArgSpans(code, name) {
   const spans = [];
@@ -145,7 +182,7 @@ export function discoverScopeOpeners(files) {
     const re = /export\s+(?:async\s+)?function\s+([A-Za-z0-9_$]+)/g;
     let m;
     while ((m = re.exec(code))) {
-      const open = code.indexOf("{", re.lastIndex);
+      const open = findBodyOpenBrace(code, re.lastIndex);
       if (open === -1) continue;
       let depth = 1;
       let i = open + 1;
@@ -234,7 +271,7 @@ export function exportedFunctionNames(src) {
   const re = /export\s+(?:async\s+)?function\s+([A-Za-z0-9_$]+)/g;
   let m;
   while ((m = re.exec(code))) {
-    const open = code.indexOf("{", re.lastIndex);
+    const open = findBodyOpenBrace(code, re.lastIndex);
     if (open === -1) continue;
     let depth = 1;
     let i = open + 1;
@@ -309,7 +346,7 @@ export function auditSources(files, posterNamesByFile) {
 function functionBody(code, name) {
   const m = new RegExp(`function\\s+${name}\\b`).exec(code);
   if (!m) return "";
-  const open = code.indexOf("{", m.index + m[0].length);
+  const open = findBodyOpenBrace(code, m.index + m[0].length);
   if (open === -1) return "";
   let depth = 1;
   let i = open + 1;
@@ -585,6 +622,48 @@ ${wrapperWiring("withLuciaBypass")}`;
   };
   if (auditSources([posterFile, helper, deferredInBypass], POSTERS).problems.length !== 0)
     failures.push("case15b FAIL — a correctly deferred call inside withLuciaBypass was flagged");
+
+  // case16..18 — INLINE OBJECT-TYPE PARAM BEFORE THE BODY. This is the real shape of db.ts's
+  // withLuciaBypass()/withCurrentUser(): a trailing `opts?: { actorUserId?: string | null }`-style
+  // param whose type literal is itself a balanced {...} span. A naive first-`{` scan latches onto
+  // THAT instead of the real function body — asserted here for all three extraction sites that use
+  // findBodyOpenBrace (auditPrimitive's functionBody, discoverScopeOpeners, exportedFunctionNames).
+  const inlineObjParamDb = `export async function withLuciaBypass<T>(\n  fn: (client: object) => Promise<T>,\n  opts?: { actorUserId?: string | null; sessionId?: string | null }\n): Promise<T> {\n  beginAfterCommitScope(scoped);\n  if (committed) { await drainAfterCommit(scoped); } else { discardAfterCommit(scoped); }\n}\nexport async function withCurrentUser<T>(\n  fn: (client: object) => Promise<T>,\n  opts?: { sessionId?: string | null }\n): Promise<T> {\n  beginAfterCommitScope(scoped);\n  if (committed) { await drainAfterCommit(scoped); } else { discardAfterCommit(scoped); }\n}\nexport async function withSavepoint(){ const mark = afterCommitMark(client); try {} catch { afterCommitRollbackTo(client, mark); } }`;
+  if (auditPrimitive(inlineObjParamDb, goodQueue).length !== 0)
+    failures.push(
+      "case16 FAIL — a correctly wired wrapper with an inline object-type param before its body (db.ts's real shape) was flagged as missing its wiring"
+    );
+
+  // case17 — the same inline-object-type-param shape, but the wiring really IS missing. The fix to
+  // case16 must not make this class impossible to catch again.
+  const inlineObjParamDbBroken = inlineObjParamDb.replace("await drainAfterCommit(scoped);", "");
+  if (auditPrimitive(inlineObjParamDbBroken, goodQueue).length === 0)
+    failures.push("case17 FAIL — a real missing drainAfterCommit(), masked behind an inline object-type param, was NOT caught");
+
+  // case18 — exportedFunctionNames / discoverScopeOpeners must also see past an inline object-type
+  // param to find the real body (poster discovery and opener discovery share the same bug class).
+  const posterWithObjParam = {
+    rel: "apps/backend/src/accounting/r/poster.service.ts",
+    src: `import { withLuciaBypass } from "../../auth/db.js";\nimport { createJournalEntry } from "../journal-entries.service.js";\nexport async function postOther(i: number, opts?: { dryRun?: boolean }) {\n  return withLuciaBypass(async (c) => createJournalEntry(c, i));\n}`,
+  };
+  if (exportedFunctionNames(posterWithObjParam.src).length === 0)
+    failures.push("case18 FAIL — a poster with an inline object-type param was not discovered as a poster");
+  const callerOfObjParamPoster = {
+    rel: "apps/backend/src/accounting/settlement-posting/other.service.ts",
+    src: `await withCurrentUser(u, async (client) => {\n  await postOther(1, { dryRun: false });\n});`,
+  };
+  if (
+    auditSources([posterWithObjParam, callerOfObjParamPoster], {
+      "apps/backend/src/accounting/r/poster.service.ts": ["postOther"],
+    }).problems.length === 0
+  )
+    failures.push("case18b FAIL — an inline poster call (discovered via an object-type-param signature) was NOT caught");
+  const openerWithObjParam = {
+    rel: "apps/backend/src/catalogs/dispatch/other-shared.ts",
+    src: `export async function withOtherScope(userId: string, opts?: { readOnly?: boolean }) {\n  return withCurrentUser(userId, async (client) => client);\n}`,
+  };
+  if (!discoverScopeOpeners([openerWithObjParam]).has("withOtherScope"))
+    failures.push("case18c FAIL — a wrapper with an inline object-type param before its body was not discovered as a transaction-scope opener");
 
   return failures;
 }
