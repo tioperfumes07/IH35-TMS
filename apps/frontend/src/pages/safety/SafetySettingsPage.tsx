@@ -1,5 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "../../api/client";
 import { getSafetySettings } from "../../api/safety";
+import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { SafetySettingsForm } from "./components/SafetySettingsForm";
 
 type Props = {
@@ -15,6 +18,18 @@ export function SafetySettingsPage({ operatingCompanyId }: Props) {
   });
 
   if (settingsQuery.isLoading) return <div className="text-sm text-gray-500">Loading settings...</div>;
+  if (settingsQuery.isError) {
+    return (
+      <div data-testid="safety-settings-query-error">
+        <ListErrorState
+          title="Couldn't load Safety settings"
+          status={settingsQuery.error instanceof ApiError ? settingsQuery.error.status : 0}
+          message={userFacingApiError(settingsQuery.error, "Couldn't load Safety settings.")}
+          onRetry={() => void settingsQuery.refetch()}
+        />
+      </div>
+    );
+  }
   if (!settingsQuery.data) return <div className="text-sm text-gray-500">Settings not found.</div>;
 
   return (
