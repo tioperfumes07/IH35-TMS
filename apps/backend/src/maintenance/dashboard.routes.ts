@@ -98,7 +98,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       );
       return res.rows;
     });
-    return { alerts: rows };
+    return { alerts: result };
   });
 
   app.get("/api/v1/maintenance/dashboard/intransit-triage-queue", async (req, reply) => {
@@ -245,7 +245,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       );
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
     });
-    return result;
+    return rows;
   });
 
   app.get("/api/v1/maintenance/fleet-table/kpis", async (req, reply) => {
