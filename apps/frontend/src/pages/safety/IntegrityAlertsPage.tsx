@@ -16,6 +16,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { Button } from "../../components/Button";
+import { useStagedListFilters } from "../../components/table";
 
 type Props = {
   operatingCompanyId: string;
@@ -26,6 +28,15 @@ type IntegrityAlertRuleRow = Record<string, unknown>;
 
 type PageTab = "inbox" | "rules";
 const INTEGRITY_TAB_IDS = new Set<string>(["inbox", "rules"]);
+
+const EMPTY_FILTERS = {
+  category: "",
+  severity: "",
+  status: "",
+  driverId: "",
+  unitId: "",
+  vendorId: "",
+};
 
 function parseIntegrityAlertsTab(raw: string | null): PageTab {
   if (raw && INTEGRITY_TAB_IDS.has(raw)) return raw as PageTab;
@@ -42,16 +53,57 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
-  const [category, setCategory] = useState("");
-  const [severity, setSeverity] = useState("");
-  const [status, setStatus] = useState("");
   const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
   const subjectUnitFromUrl = searchParams.get("subject_unit_id")?.trim() ?? "";
   const subjectVendorFromUrl = searchParams.get("subject_vendor_id")?.trim() ?? "";
   // LST-F5163H: visible reverse subject filters (allowCreate=false); URL seeds pickers.
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [vendorFilter, setVendorFilter] = useState("");
+  // LV-SAFETY-INTEGRITY-ALERTS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  function patchSearchParam(next: { driverId: string; unitId: string; vendorId: string }) {
+    const p = new URLSearchParams(searchParams);
+    if (next.driverId) p.set("subject_driver_id", next.driverId);
+    else p.delete("subject_driver_id");
+    if (next.unitId) p.set("subject_unit_id", next.unitId);
+    else p.delete("subject_unit_id");
+    if (next.vendorId) p.set("subject_vendor_id", next.vendorId);
+    else p.delete("subject_vendor_id");
+    setSearchParams(p, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: subjectDriverFromUrl,
+    unitId: subjectUnitFromUrl,
+    vendorId: subjectVendorFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      ...(subjectDriverFromUrl ? { driverId: subjectDriverFromUrl } : {}),
+      ...(subjectUnitFromUrl ? { unitId: subjectUnitFromUrl } : {}),
+      ...(subjectVendorFromUrl ? { vendorId: subjectVendorFromUrl } : {}),
+    }));
+  }, [subjectDriverFromUrl, subjectUnitFromUrl, subjectVendorFromUrl]);
+
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+  function setUnitFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, unitId: next }));
+  }
+  function setVendorFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, vendorId: next }));
+  }
+
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const [editingRule, setEditingRule] = useState<Record<string, unknown> | null>(null);
   const [createRuleOpen, setCreateRuleOpen] = useState(false);
@@ -65,40 +117,26 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
     enabled: true,
   });
 
-  useEffect(() => {
-    if (subjectDriverFromUrl) setDriverFilter(subjectDriverFromUrl);
-  }, [subjectDriverFromUrl]);
-  useEffect(() => {
-    if (subjectUnitFromUrl) setUnitFilter(subjectUnitFromUrl);
-  }, [subjectUnitFromUrl]);
-  useEffect(() => {
-    if (subjectVendorFromUrl) setVendorFilter(subjectVendorFromUrl);
-  }, [subjectVendorFromUrl]);
-
-  const effectiveDriverId = driverFilter.trim() || subjectDriverFromUrl || undefined;
-  const effectiveUnitId = unitFilter.trim() || subjectUnitFromUrl || undefined;
-  const effectiveVendorId = vendorFilter.trim() || subjectVendorFromUrl || undefined;
-
   const alertsQuery = useQuery({
     queryKey: [
       "safety",
       "integrity-alerts",
       operatingCompanyId,
-      category,
-      severity,
-      status,
-      effectiveDriverId,
-      effectiveUnitId,
-      effectiveVendorId,
+      applied.category,
+      applied.severity,
+      applied.status,
+      applied.driverId,
+      applied.unitId,
+      applied.vendorId,
     ],
     queryFn: () =>
       getIntegrityAlerts(operatingCompanyId, {
-        alert_category: category,
-        severity,
-        resolution_status: status,
-        subject_driver_id: effectiveDriverId,
-        subject_unit_id: effectiveUnitId,
-        subject_vendor_id: effectiveVendorId,
+        alert_category: applied.category || undefined,
+        severity: applied.severity || undefined,
+        resolution_status: applied.status || undefined,
+        subject_driver_id: applied.driverId || undefined,
+        subject_unit_id: applied.unitId || undefined,
+        subject_vendor_id: applied.vendorId || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -293,20 +331,28 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
           storageKey="safety-integrity-alerts"
           exportFilename="integrity-alerts"
           filterBar={
-            <div className="relative flex flex-wrap items-center gap-2">
+            <div className="relative flex flex-wrap items-end gap-2" data-testid="integrity-alerts-filters">
               <input
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                value={draft.category}
+                onChange={(event) => staged.setDraft((d) => ({ ...d, category: event.target.value }))}
                 className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 placeholder="Category"
               />
-              <SelectCombobox value={severity} onChange={(event) => setSeverity(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
+              <SelectCombobox
+                value={draft.severity}
+                onChange={(event) => staged.setDraft((d) => ({ ...d, severity: event.target.value }))}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              >
                 <option value="">All severities</option>
                 <option value="info">Info</option>
                 <option value="warning">Warning</option>
                 <option value="critical">Critical</option>
               </SelectCombobox>
-              <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
+              <SelectCombobox
+                value={draft.status}
+                onChange={(event) => staged.setDraft((d) => ({ ...d, status: event.target.value }))}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              >
                 <option value="">All statuses</option>
                 <option value="unresolved">Unresolved</option>
                 <option value="investigating">Investigating</option>
@@ -319,7 +365,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 <EntityPicker
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
-                  value={driverFilter || null}
+                  value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All drivers"
@@ -332,7 +378,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 <EntityPicker
                   kind="unit"
                   operatingCompanyId={operatingCompanyId}
-                  value={unitFilter || null}
+                  value={draft.unitId || null}
                   onChange={(next) => setUnitFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All units"
@@ -345,7 +391,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 <EntityPicker
                   kind="vendor"
                   operatingCompanyId={operatingCompanyId}
-                  value={vendorFilter || null}
+                  value={draft.vendorId || null}
                   onChange={(next) => setVendorFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All vendors"
@@ -353,6 +399,32 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                   dataTestId="integrity-alerts-filter-vendor"
                 />
               </label>
+              <Button type="button" size="sm" data-testid="integrity-alerts-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                Apply
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="integrity-alerts-filter-cancel"
+                onClick={staged.cancel}
+                disabled={!staged.dirty}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="integrity-alerts-filter-reset"
+                onClick={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchSearchParam(EMPTY_FILTERS);
+                }}
+              >
+                Reset
+              </Button>
             </div>
           }
         />

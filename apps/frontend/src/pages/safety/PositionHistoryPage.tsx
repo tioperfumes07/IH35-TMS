@@ -59,12 +59,12 @@ export default function PositionHistoryPage() {
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
 
-  const [applied, setApplied] = useState(() => ({
+  const [applied, setApplied] = useState<{ unitId: string; action: ActionFilter }>(() => ({
     ...EMPTY_FILTERS,
     unitId: unitIdFromUrl,
     action: actionFromUrl,
   }));
-  const staged = useStagedListFilters({
+  const staged = useStagedListFilters<{ unitId: string; action: ActionFilter }>({
     applied,
     empty: EMPTY_FILTERS,
     onApply: (next) => {
