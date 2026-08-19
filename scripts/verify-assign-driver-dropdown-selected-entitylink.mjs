@@ -20,10 +20,9 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
-  assert(/EntityLink/.test(src), "must import/use EntityLink");
-  assert(/kind=["']driver["']/.test(src), "EntityLink must be kind=driver");
+function checkSource(src) {
+  assert(/import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["'][^"']*\/EntityLinkOrTombstone["']/.test(src), "must import canonical label-aware tombstones");
+  assert(/kind="driver"[\s\S]{0,80}id=\{value\}[\s\S]{0,220}name=\{optionsRows\.find\(\(d\) => d\.driver_id === value\)\?\.display_name \?\? createdOption\?\.display_name \?\? null\}[\s\S]{0,60}noun="Driver"/.test(src), "selected driver must couple canonical id to its resolved human name");
   assert(
     /data-testid=["']assign-driver-selected-entitylink["']/.test(src),
     "must expose data-testid=assign-driver-selected-entitylink"
@@ -31,22 +30,24 @@ function check() {
   assert(/\{value \?/.test(src) || /\{value\s*\?/.test(src), "EntityLink strip must gate on selected value");
 }
 
+function check() { checkSource(fs.readFileSync(FILE, "utf8")); }
+
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(/data-testid=["']assign-driver-selected-entitylink["']/, 'data-testid="planted-missing"');
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const mutations = [
+    [/data-testid=["']assign-driver-selected-entitylink["']/, 'data-testid="planted-missing"'],
+    [/name=\{optionsRows\.find\(\(d\) => d\.driver_id === value\)\?\.display_name \?\? createdOption\?\.display_name \?\? null\}/, "name={value}"],
+    [/EntityLinkOrTombstone/, "EntityLink"],
+  ];
+  for (const [pattern, replacement] of mutations) {
+    const broken = original.replace(pattern, replacement);
+    assert(broken !== original, `--selftest plant must mutate ${pattern}`);
+    let failed = false;
+    try { checkSource(broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
-  assert(failed, "--selftest expected FAIL when EntityLink testid removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
