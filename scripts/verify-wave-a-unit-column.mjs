@@ -3,10 +3,13 @@
 import fs from "node:fs";
 
 const checks = [
-  ["fuel reconciliation unit drill", "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx", /<EntityLink kind="unit" id=\{r\.unit_id\}/],
+  // Both migrated onto <EntityLinkOrTombstone kind="unit" id={...} name={...} noun="Unit">
+  // (withholds the drill when unresolved — strictly stronger than a bare EntityLink). Accept
+  // either primitive.
+  ["fuel reconciliation unit drill", "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx", /<EntityLink(?:OrTombstone)?[\s\S]{0,40}?kind="unit"[\s\S]{0,80}?id=\{r\.unit_id\}/],
   ["profit-per-truck unit drill", "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx", /<EntityLink kind="unit" id=\{r\.unit_id\}/],
   ["fleet HOS unit drill", "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", /<EntityLink kind="unit" id=\{row\.unit_id\}/],
-  ["unit-driver history drill", "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", /<EntityLink kind="unit" id=\{row\.unit_id\}/],
+  ["unit-driver history drill", "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", /<EntityLink(?:OrTombstone)?[\s\S]{0,40}?kind="unit"[\s\S]{0,80}?id=\{row\.unit_id\}/],
   ["border crossing unit FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /unit_id:\s*form\.unitId/],
   ["road-service unit FK", "apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /unit_id:\s*unitId/],
   ["insurance policy unit FKs", "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnitIds/],
