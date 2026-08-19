@@ -2599,6 +2599,11 @@
     "purpose": "verify-saf-action-mutation-error-wave3",
     "date": "2026-08-19"
   },
+  "4064": {
+    "claimed_by": "cursor",
+    "purpose": "verify-saf-action-mutation-error-wave4",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
