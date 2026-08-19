@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -168,10 +168,11 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
                 {row.name}
               </button>
             ) : (
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="driver"
                 id={row.driverId}
-                label={row.name}
+                name={row.name}
+                noun="Driver"
                 className="font-medium text-slate-900 hover:text-slate-700 hover:underline"
                 data-testid="drivers-table-name-link"
               />
@@ -209,10 +210,11 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
                 Open profile
               </button>
             ) : (
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="driver"
                 id={row.driverId}
-                label="Open profile"
+                name={row.name}
+                noun="Driver"
                 className="text-xs font-semibold text-slate-700 hover:underline"
                 data-testid="drivers-table-open-profile-link"
               />

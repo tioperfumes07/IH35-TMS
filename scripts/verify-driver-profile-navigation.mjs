@@ -55,9 +55,12 @@ if (/>\s*\{row\.name\}\s*<\/td>/.test(table)) {
 }
 const d1Routed =
   /\/drivers\/\$\{row\.driverId\}\/profile/.test(table) ||
-  /kind="driver"[\s\S]{0,80}id=\{row\.driverId\}/.test(table);
+  /kind="driver"[\s\S]{0,120}id=\{row\.driverId\}/.test(table);
 if (!/onOpenProfile\(row\.driverId\)/.test(table) || !d1Routed) {
   failures.push(`${tablePath}: driver name must wire to onOpenProfile(row.driverId) and EntityLink kind=driver (or /drivers/:id/profile) [D1].`);
+}
+if (!/EntityLinkOrTombstone/.test(table)) {
+  failures.push(`${tablePath}: routed driver hops must use EntityLinkOrTombstone so unresolved identities are not clickable.`);
 }
 
 if (failures.length > 0) {
