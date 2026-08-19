@@ -8,6 +8,15 @@
  * + EntityLink kind="driver") and DriverTeamModal.tsx (real DriverPickerWithCreate -> EntityPicker
  * kind="driver", sourced from mdata.drivers).
  *
+ * CC-2 GUARD 2026-08-19: DriverTeamsPage.tsx was legitimately refactored to extract a shared
+ * DriverTeamMemberCell({row, slot}) component (adds LV-LISTS-DRIVER-TEAMS-DEAD-TOMBSTONE-LINK
+ * honesty — unresolved/UUID-shaped names render plain text, never a dead EntityLink). The real
+ * driver_id -> EntityLink kind="driver" wiring this guard exists to protect is still fully intact
+ * (confirmed by direct source read + live GUARD re-verify of the Driver Teams reverse-link, OUTBOX
+ * 2026-08-18T22:30Z); only the literal source text the old 2 checks pattern-matched moved into the
+ * cell component. Re-anchored to the new shape (4 checks: driverId derivation, the EntityLink call,
+ * and both column call-sites) rather than weakening or deleting the guard.
+ *
  * Self-test: node scripts/verify-lists-driver-search-and-teams.mjs --selftest
  */
 import fs from "node:fs";
@@ -19,6 +28,8 @@ const LABEL = "verify-lists-driver-search-and-teams";
 
 const CHECKS = [
   ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /driver: "driver",/],
+  // Independently fixed by Codex-1 (c3590c164) — same guard-anchor-drift diagnosis; kept this
+  // already-integrated, more general version (\s+ matches both same-line and multi-line JSX).
   ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /kind=\{kind\}\s+id=\{row\.entity_id\}/],
   ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /slot === "primary" \? row\.primary_driver_id : row\.secondary_driver_id/],
   ["apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink\s+kind="driver"\s+id=\{driverId\}/],
