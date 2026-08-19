@@ -243,3 +243,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=cf9ca0f | mutation=none | NEXT=dispatch.dispatch.detention
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.detention | URL=https://app.ih35dispatch.com/dispatch?view=detention | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch?view=detention ; marker 'Detention' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=cf9ca0f | mutation=none | NEXT=fleet.fleet.units
