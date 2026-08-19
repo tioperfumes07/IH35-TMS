@@ -318,7 +318,7 @@ export function CargoClaimIntakeSurface({
             <EntityLink
               kind="customer"
               id={String(row.claimant_customer_id)}
-              label={entityLabel(customerNameById.get(String(row.claimant_customer_id)), row.claimant_customer_id, "Customer")}
+              label={entityLabel(row.claimant_customer_name ?? customerNameById.get(String(row.claimant_customer_id)), row.claimant_customer_id, "Customer")}
             />
           ) : (
             "—"
@@ -332,7 +332,21 @@ export function CargoClaimIntakeSurface({
             <EntityLink
               kind="load"
               id={String(row.load_id)}
-              label={entityLabel(loadNumberById.get(String(row.load_id)), row.load_id, "Load")}
+              label={entityLabel(row.load_number ?? loadNumberById.get(String(row.load_id)), row.load_id, "Load")}
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "driver_id",
+        label: "Driver",
+        render: (row) =>
+          row.driver_id ? (
+            <EntityLink
+              kind="driver"
+              id={String(row.driver_id)}
+              label={entityLabel(row.driver_name, row.driver_id, "Driver")}
             />
           ) : (
             "—"
@@ -950,6 +964,18 @@ export function CargoClaimIntakeSurface({
                     kind="load"
                     id={String(detail.load_id)}
                     label={entityLabel(loadNumberById.get(String(detail.load_id)), detail.load_id, "Load")}
+                  />
+                ) : (
+                  "—"
+                )}
+              </div>
+              <div>
+                Driver:{" "}
+                {detail?.driver_id ? (
+                  <EntityLink
+                    kind="driver"
+                    id={String(detail.driver_id)}
+                    label={entityLabel(detail.driver_name, detail.driver_id, "Driver")}
                   />
                 ) : (
                   "—"
