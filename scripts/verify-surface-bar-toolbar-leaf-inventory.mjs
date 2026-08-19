@@ -25,6 +25,19 @@ const ALLOWED = new Set([
   "components/DataTable.tsx",
   "components/lists/ListView/ListView.tsx",
 ]);
+// The canonical shared components a toolbar leaf's surface_path may legitimately point at — either
+// directly (surface_path IS one of ALLOWED, e.g. a leaf documenting the shared component itself) or
+// indirectly (surface_path is the PAGE/component that MOUNTS one of these). Every real toolbar leaf
+// across the whole codebase uses the latter shape (surface_path = the concrete page, e.g.
+// pages/accounting/BillsPage.tsx) — that page importing/rendering ParityTable or the governed
+// CollapsedListFilters+useStagedListFilters pattern (CLS-FILTER-GEAR-APPLY, the toggle+popover
+// successor to the older always-visible UniversalListToolbar/TableControls cards) IS the real,
+// honest toolbar wiring this guard exists to verify; checking the surface_path STRING against
+// ALLOWED (a set of 6 generic shared-component filenames no page's own path could ever equal) was
+// always going to fail every single leaf in the registry, which is exactly what it did — confirmed
+// via a live run: all ~115 chrome.toolbar_* leaves across every module failed identically.
+const CANONICAL_USAGE_RE =
+  /\b(UniversalListToolbar|TableControls|TableSearch|ParityTable|DataTable|ListView|CollapsedListFilters)\b/;
 
 export function audit(dir = MODULES) {
   const failures = [];
@@ -41,12 +54,15 @@ export function audit(dir = MODULES) {
         failures.push(`${name} :: ${id} — missing surface_path`);
         continue;
       }
-      if (!ALLOWED.has(sp)) {
-        failures.push(`${name} :: ${id} — surface_path ${sp} not in toolbar allowlist`);
-      }
       const abs = path.join(ROOT, "apps/frontend/src", sp);
       if (!fs.existsSync(abs)) {
         failures.push(`${name} :: ${id} — surface_path file missing: ${sp}`);
+        continue;
+      }
+      if (ALLOWED.has(sp)) continue;
+      const content = fs.readFileSync(abs, "utf8");
+      if (!CANONICAL_USAGE_RE.test(content)) {
+        failures.push(`${name} :: ${id} — surface_path ${sp} does not mount a canonical list-toolbar component`);
       }
     }
   }
