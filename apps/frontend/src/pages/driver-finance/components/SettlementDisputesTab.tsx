@@ -17,10 +17,15 @@ import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../../components/table";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
+
+const EMPTY_FILTERS = {
+  driverId: "",
+};
 
 function money(cents: number | null | undefined) {
   return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
@@ -37,24 +42,41 @@ function statusBadgeClass(status: SettlementDisputeStatus) {
 export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5182 — visible EntityPicker (URL seed + DriverPickerWithCreate without URL write is not reverse chrome).
-  const deepLinkDriverId = searchParams.get("driver_id")?.trim() ?? "";
+  // LV-DRIVER-FINANCE-SETTLEMENT-DISPUTES-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const [status, setStatus] = useState<"open" | "all">("open");
-  const [driverId, setDriverIdState] = useState(deepLinkDriverId);
   const [selected, setSelected] = useState<SettlementDisputeRow | null>(null);
 
-  useEffect(() => {
-    setDriverIdState(deepLinkDriverId);
-  }, [deepLinkDriverId]);
-
-  function setDriverId(next: string) {
-    setDriverIdState(next);
+  function patchListSearchParam(next: { driverId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set("driver_id", next);
+    if (next.driverId) p.set("driver_id", next.driverId);
     else p.delete("driver_id");
     setSearchParams(p, { replace: true });
   }
 
-  const effectiveDriverId = driverId || deepLinkDriverId;
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, driverId: driverIdFromUrl }));
+  }, [driverIdFromUrl]);
+
+  function setDriverId(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+
+  const effectiveDriverId = applied.driverId.trim();
   const [resolution, setResolution] = useState<"in_favor" | "rejected" | "partial">("in_favor");
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [resolutionAmount, setResolutionAmount] = useState("");
@@ -63,7 +85,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
 
   const disputesQuery = useQuery({
     queryKey: ["driver-finance", "settlement-disputes", companyId, status, effectiveDriverId],
-    queryFn: () => listSettlementDisputes(companyId, { status, driver_id: effectiveDriverId.trim() || undefined }),
+    queryFn: () => listSettlementDisputes(companyId, { status, driver_id: effectiveDriverId || undefined }),
     enabled: Boolean(companyId),
   });
 
@@ -177,7 +199,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="grid gap-2 md:grid-cols-3">
+        <div className="relative grid gap-2 md:grid-cols-3" data-testid="settlement-disputes-filters">
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Status</div>
             <SelectCombobox
@@ -194,7 +216,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             <EntityPicker
               kind="driver"
               operatingCompanyId={companyId}
-              value={effectiveDriverId || null}
+              value={filterDraft.driverId || null}
               onChange={(next) => setDriverId(next ?? "")}
               allowCreate={false}
               placeholder="All drivers"
@@ -202,7 +224,33 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
               dataTestId="settlement-disputes-filter-driver"
             />
           </label>
-          <div className="flex items-end">
+          <div className="flex flex-wrap items-end gap-2">
+            <Button type="button" size="sm" data-testid="settlement-disputes-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="settlement-disputes-filter-cancel"
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="settlement-disputes-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchListSearchParam(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
             <Button size="sm" variant="secondary" onClick={() => void disputesQuery.refetch()}>
               Refresh
             </Button>
