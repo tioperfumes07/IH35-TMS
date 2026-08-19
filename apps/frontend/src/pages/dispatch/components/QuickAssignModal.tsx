@@ -3,7 +3,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLink, EntityLinkOrTombstone } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
@@ -109,18 +109,18 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
             {driverId ? (
               <span>
                 Driver:{" "}
-                <EntityLink kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />
+                <EntityLinkOrTombstone kind="driver" id={driverId} name={null} noun="Driver" />
               </span>
             ) : null}
             {unitId ? (
               <span>
-                Unit: <EntityLink kind="unit" id={unitId} label={entityLabel(null, unitId, "Unit")} />
+                Unit: <EntityLinkOrTombstone kind="unit" id={unitId} name={null} noun="Unit" />
               </span>
             ) : null}
             {trailerId ? (
               <span>
                 Trailer:{" "}
-                <EntityLink kind="trailer" id={trailerId} label={entityLabel(null, trailerId, "Trailer")} />
+                <EntityLinkOrTombstone kind="trailer" id={trailerId} name={null} noun="Trailer" />
               </span>
             ) : null}
           </div>
