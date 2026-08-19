@@ -555,3 +555,7 @@ verify:static: 41 of ~199 now closed this session (InvoiceCreateModal.tsx fix pe
 2026-08-19T02:54Z CC-1 | ACCT-F5465 closed (PR #9323, merged 65abd20). Same class as ACCT-F5460 (PR #9306) — verify-roundtrips-quality-load-entitylink.mjs pinned the exact literal entityLabel(...) calls on CustomerDetail.tsx's customer-quality related-load/invoice rows, but both were migrated to <EntityLinkOrTombstone kind="load"/"invoice" name={...} noun="Load"/"Invoice">, a separate guard on a different section of the same file independently pinned the pre-migration shape. Widened both checks to accept either shape. Zero product-code change.
 
 verify:static: 42 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T02:57Z CC-1 | ACCT-F5466 closed (PR #9326, merged add90e8). Third occurrence of the EntityLinkOrTombstone-migration guard-staleness class this session (ACCT-F5460/ACCT-F5465): verify-wave-a-load-column.mjs's 2 pre-settlement checks pinned bare EntityLink label={...}, real PreSettlementPanel.tsx uses EntityLinkOrTombstone name={...}. Bonus find while fixing: the checks' unbounded [\s\S]* window between kind/id/label could bleed across the file's two near-identical back-to-back load blocks (first-load/last-load), a latent false-negative risk — bounded to [^>]{0,300}? so each match stays inside one JSX tag. Hand-verified the bound catches a block-2 kind regression the old unbounded window would have missed. Zero product-code change.
+
+verify:static: 43 of ~199 now closed this session. Continuing non-stop, fast-merge.
