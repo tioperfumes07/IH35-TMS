@@ -7,6 +7,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -208,6 +209,11 @@ export function CSAMitigationQueuePage() {
           >
             Create suggested action
           </button>
+          {createMutation.isError ? (
+            <p className="text-xs text-red-700 md:col-span-full" data-testid="csa-mitigation-create-error">
+              {userFacingApiError(createMutation.error, "Could not create the mitigation action.")}
+            </p>
+          ) : null}
         </div>
       </div>
 

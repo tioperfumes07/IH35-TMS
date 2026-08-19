@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateSafetySettings } from "../../../api/safety";
 import { Button } from "../../../components/Button";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -78,6 +79,11 @@ export function SafetySettingsForm({ operatingCompanyId, settings, onSaved }: Pr
           />
         </div>
       </div>
+      {mutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="safety-settings-save-error">
+          {userFacingApiError(mutation.error, "Could not save safety settings.")}
+        </p>
+      ) : null}
       <div className="flex justify-end">
         <Button type="submit" loading={mutation.isPending}>
           Save settings

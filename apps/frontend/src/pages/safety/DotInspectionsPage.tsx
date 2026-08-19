@@ -14,6 +14,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 type Props = {
@@ -88,6 +89,11 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
         <button type="button" onClick={() => createMutation.mutate()} disabled={!form.inspector_name.trim() || createMutation.isPending} className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white">
           + Create DOT Inspection
         </button>
+        {createMutation.isError ? (
+          <p className="text-xs text-red-700 md:col-span-5" data-testid="dot-inspection-create-error">
+            {userFacingApiError(createMutation.error, "Could not create the DOT inspection.")}
+          </p>
+        ) : null}
       </div>
       {query.isError ? (
         <ListErrorState

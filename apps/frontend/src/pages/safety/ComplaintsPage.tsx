@@ -14,6 +14,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -143,6 +144,11 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
         <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!complainantReady || !form.respondent_driver_id || !form.complaint_type || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Complaint
         </button>
+        {createMutation.isError ? (
+          <p className="w-full text-xs text-red-700" data-testid="complaint-create-error">
+            {userFacingApiError(createMutation.error, "Could not create the complaint.")}
+          </p>
+        ) : null}
       </div>
       {query.isError ? (
         <ListErrorState
