@@ -48,8 +48,8 @@ function assertLive() {
   if (!/ListErrorBanner/.test(grid)) problems.push("S28 grid missing ListErrorBanner");
   if (!/data-testid="dispatch-driver-planner-honest-empty"/.test(grid)) problems.push("S28 missing honest empty");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(grid)) problems.push("S28 grid not company-gated");
-  if (!/<EntityLink kind="driver" id=\{driverId\}/.test(grid)) problems.push("S28 grid missing canonical driver links");
-  if (!/<EntityLink kind="unit" id=\{unitId\}/.test(grid)) problems.push("S28 grid missing canonical unit links");
+  if (!/<EntityLinkOrTombstone kind="driver" id=\{driverId\} name=\{name\} noun="Driver"/.test(grid)) problems.push("S28 grid missing canonical driver links");
+  if (!/<EntityLinkOrTombstone kind="unit" id=\{unitId\} name=\{unit\} noun="Unit"/.test(grid)) problems.push("S28 grid missing canonical unit links");
 
   const loads = read(FILES.loads);
   if (!/data-testid="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 missing need-company");
@@ -74,8 +74,8 @@ function assertLive() {
   if (!/ListErrorBanner/.test(truck)) problems.push("S31 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(truck)) problems.push("S31 not company-gated");
   if (!/driverId:\s*dr\.driver_id \? String\(dr\.driver_id\) : null/.test(truck)) problems.push("S31 drops driver FK while shaping truck rows");
-  if (!/<EntityLink kind="unit" id=\{row\.unitId\}/.test(truck)) problems.push("S31 missing canonical unit links");
-  if (!/<EntityLink kind="driver" id=\{row\.driverId\}/.test(truck)) problems.push("S31 missing canonical driver links");
+  if (!/<EntityLinkOrTombstone kind="unit" id=\{row\.unitId\} name=\{row\.unitNumber\} noun="Unit"/.test(truck)) problems.push("S31 missing canonical unit links");
+  if (!/<EntityLinkOrTombstone kind="driver" id=\{row\.driverId\} name=\{row\.driverName\} noun="Driver"/.test(truck)) problems.push("S31 missing canonical driver links");
 
   return problems;
 }
@@ -86,18 +86,32 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
     process.exit(1);
   }
-  const pagePath = path.join(ROOT, FILES.timeline);
-  const orig = fs.readFileSync(pagePath, "utf8");
-  fs.writeFileSync(pagePath, orig.replace(/data-testid="dispatch-timeline-honest-empty"/, 'data-testid="x"'));
-  try {
-    if (!assertLive().length) {
-      console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+  const cases = [
+    [FILES.timeline, 'data-testid="dispatch-timeline-honest-empty"'],
+    [FILES.grid, '<EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver"'],
+    [FILES.grid, '<EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit"'],
+    [FILES.truck, '<EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit"'],
+    [FILES.truck, '<EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver"'],
+  ];
+  for (const [relativePath, needle] of cases) {
+    const pagePath = path.join(ROOT, relativePath);
+    const orig = fs.readFileSync(pagePath, "utf8");
+    const planted = orig.replace(needle, "__PLANTED_PLANNER_DEFECT__");
+    if (planted === orig) {
+      console.error(`${LABEL} SELFTEST FAILED: inert mutation ${relativePath}`);
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(pagePath, orig);
+    fs.writeFileSync(pagePath, planted);
+    try {
+      if (!assertLive().length) {
+        console.error(`${LABEL} SELFTEST FAILED: planted defect not caught in ${relativePath}`);
+        process.exit(1);
+      }
+    } finally {
+      fs.writeFileSync(pagePath, orig);
+    }
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  console.log(`${LABEL} SELFTEST PASS — ${cases.length}/${cases.length} mutations caught`);
   process.exit(0);
 }
 
