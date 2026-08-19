@@ -579,3 +579,7 @@ verify:static: 47 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:14Z CC-1 | ACCT-F5471 closed (PR #9343, merged 58d086c). verify-accounting-reports-ui-contract.mjs FAILed 3 real staged-filter as-of/report-date checks (AR/AP aging, cash flow overview, geofence recon) — all migrated onto (or wrapped through) the shared useStagedListFilters primitive, whose onApply(next) callback shape differs from the guard's pinned bare-setter literals. All 3 are real, honest Apply/Cancel/Reset staging, just a different callback shape. Widened all 3 checks. No --selftest harness; load-bearing proof done by hand (3 distinct planted mutations, all caught, all restored clean). Zero product-code change.
 
 verify:static: 48 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:16Z CC-1 | ACCT-F5472 closed (PR #9347, merged 0a2aef7). verify-auto-deduction-applies-to-next-settlement.mjs required the single-line literal app.post("/api/v1/auto-deductions/policies" (and GET sibling), but policy.routes.ts formats both route registrations with the path string on its own line (routine Prettier multi-line call) — both routes present and correctly registered. Same multi-line-formatting false-positive class fixed several times earlier this session. Whitespace-tolerant regex instead of rigid substring check. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 49 of ~199 now closed this session. Continuing non-stop, fast-merge.
