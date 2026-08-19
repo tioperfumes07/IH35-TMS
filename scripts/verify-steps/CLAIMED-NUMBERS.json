@@ -4296,5 +4296,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-load-reassign-modal-load-entitylink"
+  },
+  "3938": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-factoring-tab-customer-entitylink"
   }
 }
