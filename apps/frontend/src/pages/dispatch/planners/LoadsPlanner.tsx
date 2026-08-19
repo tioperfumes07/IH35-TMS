@@ -6,8 +6,6 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
-import { entityLabel } from "../../../lib/entity-label";
-import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 function toDayKey(iso: string | null | undefined): string | null {
@@ -129,10 +127,11 @@ export function LoadsPlanner() {
                           colSpan={span.span}
                           className="border-l border-gray-50 bg-slate-100 px-1 py-0.5 text-center"
                         >
-                          <EntityLink
+                          <EntityLinkOrTombstone
                             kind="load"
                             id={load.id}
-                            label={entityLabel(load.load_number, load.id, "Load")}
+                            name={load.load_number}
+                            noun="Load"
                             className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
                             data-testid={`loads-planner-bar-${load.load_number}`}
                           />
@@ -148,7 +147,7 @@ export function LoadsPlanner() {
                   return (
                     <tr key={load.id} className="border-t border-gray-100">
                       <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
-                        <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />
+                        <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />
                         <span className="block text-[9px]"><EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /></span>
                       </td>
                       <td className="border-r px-1 py-0.5 text-gray-600">{lane}</td>
