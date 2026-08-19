@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-19 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-19 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-19 |
-| Rows in this file | **1884** | 2026-08-19 |
+| Rows in this file | **1885** | 2026-08-19 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-19 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-19 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-19 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1149 | 2026-08-19 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1150 | 2026-08-19 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1974,3 +1974,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 28400 | dispatch · settings.notify Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-3 | **Leaves/cells:** `settings.notify:connectivity`. Live USMCA `/settings/notifications` — Notifications preferences chrome (channels / quiet hours). `qbo_chrome` unpaid if not QBO-parity chrome on this leaf; customer/load/picker already partially credited prior or unpaid on empty prefs. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 28560 | dispatch · load.banking Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `load.banking:connectivity` · `load.banking:load` · `load.banking:reverse_link`. Live USMCA `/dispatch/loads/7589cc9c-…/banking` — Load·bank feed linkage chrome; reverse 'Open on Dispatch board' → load; BANKING nav present. `bank` money cell unpaid (CC-1). AUDIT id unique (max+160). | LIVE PASS · 3 EXACT CELLS · bank unpaid | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 28720 | dispatch · dispatch.panel.rate_con_upload Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-3 | **Leaves/cells:** `dispatch.panel.rate_con_upload:connectivity`. Live USMCA Book Load wizard — Upload Rate Con panel (PDF/image · fills wizard · never auto-books). No mutation. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 28880 | dispatch · dispatch.modal.book_load_modal_v4 Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `dispatch.modal.book_load_modal_v4:connectivity`. Live USMCA Book Load wizard/modal (trip type NB/TR/SB · CUSTOMER·INVOICE·CHARGES · reserved LOAD # L-20260818-0017). picker_law/customer/driver/unit/trailer/load EntityLink cells unpaid this pass (no `+ Add new` first-row proof / no EntityLink click). No mutation beyond reserved load chrome already on surface. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL · residual unpaid | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
