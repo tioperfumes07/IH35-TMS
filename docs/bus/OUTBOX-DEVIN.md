@@ -254,3 +254,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=cf9ca0f | mutation=none | NEXT=fleet.fleet.units
+Devin-A | LIVE PASS | module=fleet | leaf=fleet.units | URL=https://app.ih35dispatch.com/fleet/units | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet ; marker 'FLEET' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=cf9ca0f | mutation=none | NEXT=fleet.fleet.trailers
