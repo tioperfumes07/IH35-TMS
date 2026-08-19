@@ -4301,5 +4301,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-factoring-tab-customer-entitylink"
+  },
+  "3940": {
+    "guard": "verify-pre-settlement-panel-driver-entitylink",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-19"
   }
 }
