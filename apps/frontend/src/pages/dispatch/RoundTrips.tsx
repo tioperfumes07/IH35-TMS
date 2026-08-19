@@ -9,6 +9,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 const ACTIVE_STATUSES = new Set([
   "assigned",
@@ -24,7 +25,7 @@ const NEEDS_RETURN_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", 
 
 type UnitPair = {
   unitId: string;
-  unitNumber: string;
+  unitNumber: string | null;
   driverName: string | null;
   driverId: string | null;
   outbound: DispatchLoadRow | null;
@@ -79,20 +80,22 @@ function TripCard({
         </div>
       </div>
       <div className="mt-1 text-xs text-gray-700">
-        <EntityLink
+        <EntityLinkOrTombstone
           kind="customer"
           id={load.customer_id}
-          label={entityLabel(load.customer_name, load.customer_id, "Customer")}
+          name={load.customer_name}
+          noun="Customer"
           onClick={(e) => e.stopPropagation()}
         />
       </div>
       <div className="mt-1 text-[11px] text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-600">
         <span>
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="driver"
             id={load.assigned_primary_driver_id}
-            label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+            name={load.assigned_primary_driver_name}
+            noun="Driver"
             onClick={(e) => e.stopPropagation()}
           />
         </span>
@@ -165,7 +168,7 @@ function buildUnitPairs(
 
     pairByUnit.set(unitId, {
       unitId,
-      unitNumber: outbound?.assigned_unit_number ?? sorted[0]?.assigned_unit_number ?? unitId,
+      unitNumber: outbound?.assigned_unit_number ?? sorted[0]?.assigned_unit_number ?? null,
       driverName: outbound?.assigned_primary_driver_name ?? sorted[0]?.assigned_primary_driver_name ?? null,
       driverId: outbound?.assigned_primary_driver_id ?? sorted[0]?.assigned_primary_driver_id ?? null,
       outbound,
@@ -194,7 +197,7 @@ function buildUnitPairs(
     if (!unitId || pairByUnit.has(unitId)) continue;
     pairByUnit.set(unitId, {
       unitId,
-      unitNumber: outbound.assigned_unit_number ?? unitId,
+      unitNumber: outbound.assigned_unit_number ?? null,
       driverName: outbound.assigned_primary_driver_name ?? null,
       driverId: outbound.assigned_primary_driver_id ?? null,
       outbound,
@@ -203,7 +206,7 @@ function buildUnitPairs(
     });
   }
 
-  return [...pairByUnit.values()].sort((a, b) => a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true }));
+  return [...pairByUnit.values()].sort((a, b) => (a.unitNumber ?? "").localeCompare(b.unitNumber ?? "", undefined, { numeric: true }));
 }
 
 export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLoadClick, onBookReturn }: Props) {
@@ -268,14 +271,15 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
             <div
               key={pair.unitId}
               className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-gray-50/80 p-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
-              data-testid={`round-trip-row-${pair.unitNumber}`}
+              data-testid={`round-trip-row-${pair.unitNumber ?? pair.unitId}`}
             >
               <div className="flex min-w-0 flex-col gap-1">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  <EntityLink
+                  <EntityLinkOrTombstone
                     kind="unit"
                     id={pair.unitId}
-                    label={entityLabel(pair.unitNumber, pair.unitId, "Unit")}
+                    name={pair.unitNumber}
+                    noun="Unit"
                     className="text-gray-500 hover:underline"
                     data-testid="round-trip-unit-link"
                     onClick={(e) => e.stopPropagation()}
@@ -283,10 +287,11 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
                   {pair.driverId || pair.driverName ? (
                     <>
                       {" · "}
-                      <EntityLink
+                      <EntityLinkOrTombstone
                         kind="driver"
                         id={pair.driverId ?? undefined}
-                        label={entityLabel(pair.driverName, pair.driverId, "Driver")}
+                        name={pair.driverName}
+                        noun="Driver"
                         className="text-gray-500 hover:underline"
                         data-testid="round-trip-driver-link"
                         onClick={(e) => e.stopPropagation()}
