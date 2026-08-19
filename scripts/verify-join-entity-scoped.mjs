@@ -138,8 +138,13 @@ function refIsScoped(block, alias, columns) {
   return columns.some((col) => {
     // With an alias: d.operating_company_id = ... ; bare: operating_company_id = ...
     const q = alias ? `\\b${alias}\\.${col}` : `\\b${col}`;
-    const direct = new RegExp(`${q}\\s*(?:=|<>|!=|\\bIN\\b|\\bIS\\b)`, "i");
-    const inCoalesce = new RegExp(`COALESCE\\s*\\([^)]*${q}\\b[^)]*\\)\\s*(?:=|\\bIN\\b)`, "i");
+    // Tolerate an optional Postgres cast (`::text`, `::uuid`, …) between the column reference and
+    // the comparison operator — a common, legitimate pattern (e.g.
+    // `d.operating_company_id::text = e.operating_company_id::text`) that a bare
+    // `col\s*(?:=|...)` never matched, false-flagging genuinely scoped JOINs.
+    const cast = "(?:::[a-zA-Z_][a-zA-Z0-9_]*)?";
+    const direct = new RegExp(`${q}${cast}\\s*(?:=|<>|!=|\\bIN\\b|\\bIS\\b)`, "i");
+    const inCoalesce = new RegExp(`COALESCE\\s*\\([^)]*${q}\\b[^)]*\\)${cast}\\s*(?:=|\\bIN\\b)`, "i");
     return direct.test(block) || inCoalesce.test(block);
   });
 }
@@ -290,6 +295,20 @@ function selftest() {
     'const q = `SELECT unit_number FROM mdata.units WHERE id = $1 AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)`;';
   if (auditSql(unitBareScoped).length !== 0)
     failures.push("case10 FAIL — a scoped bare units read was flagged (WHERE parsed as an alias?)");
+
+  // A cast between the column and the operator (`::text`, `::uuid`, …) is common, legitimate SQL
+  // and must not defeat scope detection — the real drug-alcohol program.service.ts shape.
+  const castScoped =
+    'const q = `SELECT * FROM safety.da_program_enrollments e LEFT JOIN mdata.drivers d ON d.id = e.driver_uuid AND d.operating_company_id::text = e.operating_company_id::text`;';
+  if (auditSql(castScoped).length !== 0)
+    failures.push(`case11 FAIL — a cast-scoped JOIN (::text = ::text) was flagged: ${auditSql(castScoped).join(" | ")}`);
+
+  // A cast must not become a blanket escape hatch — an unscoped JOIN with an unrelated cast
+  // elsewhere in the block must still be caught.
+  const castUnscoped =
+    'const q = `SELECT e.created_at::text FROM safety.da_program_enrollments e LEFT JOIN mdata.drivers d ON d.id = e.driver_uuid WHERE e.operating_company_id::text = $1::uuid::text`;';
+  if (auditSql(castUnscoped).length === 0)
+    failures.push("case12 FAIL — an unscoped JOIN with an unrelated cast nearby escaped detection");
 
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case8 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
