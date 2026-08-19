@@ -156,6 +156,10 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = reverseBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5567: another WRITE with no membership check — reversePostedSourceTransaction reverses a
+    // REAL posted GL transaction, the same class of severity as ACCT-F5565's journal-entry void. The
+    // sibling /post route in this file already asserts.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     try {
       const result = await reversePostedSourceTransaction(
