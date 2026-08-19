@@ -1053,6 +1053,16 @@
         "connectivity"
       ],
       "surface_path": "components/reports/FrequentlyRunTable.tsx"
+    },
+    {
+      "id": "chrome.toolbar_filter",
+      "tab": "Chrome controls",
+      "sub": "Runner filters panel \u2014 staged Apply/Reset/Cancel (CLS-LIST-TOOLBAR)",
+      "route_hint": "/reports/run/:reportKey",
+      "surface_kind": "toolbar",
+      "required": [],
+      "note": "Correctly owned by ReportsRunner (per-report run pages), not Reports home \u2014 see honesty_audit.reports_home_toolbar_filter_2026_08_17 (LV-REPORTS-HOME-FILTER-LEAF-MISOWNED), which dropped this claim from the home leaf but never added the right-owner claim here.",
+      "surface_path": "pages/reports/runners/RunnerFilters.tsx"
     }
   ],
   "honesty_audit": {
