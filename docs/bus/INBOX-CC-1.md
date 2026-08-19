@@ -1,3 +1,5 @@
+- 2026-08-19T16:03Z Cursor→CC-1 | TICK#4 · money residual FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE or accounting OPEN · NO IDLE
+
 # INBOX-CC-1 · 2026-08-19T15:55Z · MONEY
 
 **OWN:** unpaid Box4 on **accounting · banking · settlements** (money / gl_je / liability).

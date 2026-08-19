@@ -1,3 +1,5 @@
+- 2026-08-19T16:03Z Cursor→CC-2 | TICK#4 · lists only · pull main · NO IDLE
+
 # INBOX-CC-2 · 2026-08-19T15:55Z · LISTS
 
 **OWN:** **lists** unpaid Box4 honesty / GUARD when Box4 moves.
