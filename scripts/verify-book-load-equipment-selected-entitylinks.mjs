@@ -23,9 +23,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
-  assert(/EntityLink/.test(src), "must use EntityLink");
+function checkSource(src) {
+  assert(/EntityLinkOrTombstone/.test(src), "must use EntityLinkOrTombstone");
   assert(
     /data-testid=["']book-load-equipment-selected-entitylinks["']/.test(src),
     "must expose book-load-equipment-selected-entitylinks"
@@ -39,30 +38,34 @@ function check() {
     /data-testid=["']book-load-equipment-driver-link["']/.test(src),
     "must expose driver link testid"
   );
-  assert(/kind=["']unit["']/.test(src), "must EntityLink kind=unit");
-  assert(/kind=["']trailer["']/.test(src), "must EntityLink kind=trailer");
-  assert(/kind=["']driver["']/.test(src), "must EntityLink kind=driver");
+  assert(src.includes('<EntityLinkOrTombstone kind="unit" id={assignedUnitId} name={null} noun="Unit"'), "must use unresolved-safe unit identity");
+  assert(src.includes('<EntityLinkOrTombstone kind="trailer" id={assignedTrailerUnitId} name={null} noun="Trailer"'), "must use unresolved-safe trailer identity");
+  assert(src.includes('<EntityLinkOrTombstone kind="driver" id={primaryDriverId} name={null} noun="Driver"'), "must use unresolved-safe primary driver identity");
+  assert(src.includes('<EntityLinkOrTombstone kind="driver" id={secondaryDriverId} name={null} noun="Driver"'), "must use unresolved-safe team driver identity");
+}
+
+function check() {
+  checkSource(fs.readFileSync(FILE, "utf8"));
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(
-    /data-testid=["']book-load-equipment-selected-entitylinks["']/,
-    'data-testid="planted-missing"'
-  );
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const mutations = [
+    [/data-testid=["']book-load-equipment-selected-entitylinks["']/, 'data-testid="planted-missing"'],
+    [/id=\{assignedUnitId\} name=\{null\}/, "id={assignedUnitId} name={assignedUnitId}"],
+    [/id=\{assignedTrailerUnitId\} name=\{null\}/, "id={assignedTrailerUnitId} name={assignedTrailerUnitId}"],
+    [/id=\{primaryDriverId\} name=\{null\}/, "id={primaryDriverId} name={primaryDriverId}"],
+    [/id=\{secondaryDriverId\} name=\{null\}/, "id={secondaryDriverId} name={secondaryDriverId}"],
+  ];
+  for (const [pattern, replacement] of mutations) {
+    const broken = original.replace(pattern, replacement);
+    assert(broken !== original, "--selftest plant must mutate source");
+    let failed = false;
+    try { checkSource(broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
-  assert(failed, "--selftest expected FAIL when selected-entitylinks testid removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
