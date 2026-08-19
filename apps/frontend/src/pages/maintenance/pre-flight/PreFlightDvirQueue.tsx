@@ -92,7 +92,7 @@ export function PreFlightDvirQueue() {
         render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"),
       },
       { key: "unit_id", label: "Unit", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={row.driver_name} noun="Driver" /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" /> },
       { key: "item_key", label: "Item", sortable: true, render: (row) => <span title={row.notes ?? undefined}>{row.item_key}</span> },
       { key: "severity", label: "Severity", sortable: true, render: (row) => <DvirSeverityBadge severity={row.severity} /> },
       { key: "major_defect_code", label: "CFR Code", render: (row) => row.major_defect_code ?? "—" },
@@ -100,8 +100,8 @@ export function PreFlightDvirQueue() {
         key: "auto_wo_id",
         label: "Work Order",
         render: (row) =>
-          row.auto_wo_id ? (
-            <EntityLinkOrTombstone kind="work_order" id={row.work_order_id ?? row.auto_wo_id} name={row.work_order_display_id} noun="Work order" data-testid={`dvir-wo-link-${row.id}`} />
+          row.work_order_id ? (
+            <EntityLinkOrTombstone kind="work_order" id={row.work_order_id} name={row.work_order_display_id} noun="Work order" data-testid={`dvir-wo-link-${row.id}`} />
           ) : (
             "—"
           ),

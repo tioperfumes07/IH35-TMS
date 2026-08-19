@@ -75,6 +75,16 @@ function run(root = ROOT) {
         /kind="work_order"[\s\S]{0,120}id=\{row\.follow_up_wo_id\}[\s\S]{0,120}name=\{row\.follow_up_wo_display_id\}[\s\S]{0,80}noun="Work order"/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact nullable FK/name tombstone coupling missing`);
     }
+    if (c.name === "PreFlightDvirQueue") {
+      for (const pattern of [
+        /kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/,
+        /kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/,
+        /row\.work_order_id \? \([\s\S]{0,120}<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact canonical FK/name tombstone coupling missing`);
+      if (/row\.auto_wo_id \?|id=\{row\.work_order_id \?\? row\.auto_wo_id\}/.test(src)) {
+        fails.push(`${c.name}: legacy auto_wo_id controls canonical work-order drill`);
+      }
+    }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
       fails.push(`${c.name}: dead generic load or driver action remains`);
     }
