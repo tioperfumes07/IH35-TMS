@@ -104,6 +104,9 @@ if (!/listWorkOrdersFiltered\s*\(/.test(section) || !/load_id:\s*loadId/.test(se
 if (!/load-reverse-work-orders/.test(section)) {
   failures.push(`${SECTION}: lost its data-testid — the reverse block is no longer addressable in tests.`);
 }
+if (!/EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number \?\? null\} noun="Unit"/.test(section)) {
+  failures.push(`${SECTION}: unit drill must preserve a missing unit_number as null instead of rendering the literal label "null".`);
+}
 
 const drawer = read(DRAWER);
 // Anchored to the JSX element with a trailing boundary: a bare substring test also matches a typo'd
@@ -148,6 +151,11 @@ if (selftest) {
   const planted = drvSection.replace("wo.linked_load_number", "null");
   if (planted === drvSection || driverLoadLabelPattern.test(planted)) {
     console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted driver WO load-label defect escaped");
+    process.exit(1);
+  }
+  const plantedUnitLabel = section.replace("name={row.unit_number ?? null}", "name={String(row.unit_number)}");
+  if (plantedUnitLabel === section || /EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number \?\? null\} noun="Unit"/.test(plantedUnitLabel)) {
+    console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted literal-null unit label escaped");
     process.exit(1);
   }
   const claimMutations = [

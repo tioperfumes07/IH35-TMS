@@ -109,7 +109,7 @@ export function LoadWorkOrdersReverseSection({
                   {row.unit_id ? (
                     <>
                       <span>·</span>
-                      <EntityLinkOrTombstone kind="unit" id={String(row.unit_id)} name={String(row.unit_number)} noun="Unit" />
+                      <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number ?? null} noun="Unit" />
                     </>
                   ) : null}
                   {row.description ? ` · ${row.description}` : ""}
