@@ -388,7 +388,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
     bad: /driver_name.*\|\|\s*"Driver"/,
-    good: /entityLabel\(\s*\(row\.driver_name as string \| undefined\)\?\.trim\(\)\s*,\s*String\(row\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*\(row\.driver_name as string \| undefined\)\?\.trim\(\)\s*,\s*String\(row\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)|name=\{row\.driver_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx",
@@ -483,7 +483,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
     bad: /unit_number.*\|\|\s*"Unit"/,
-    good: /entityLabel\(\s*\(row\.unit_number as string \| undefined\)\?\.trim\(\)\s*,\s*row\.unit_id as string \| undefined\s*,\s*"Unit"\s*\)/,
+    good: /entityLabel\(\s*\(row\.unit_number as string \| undefined\)\?\.trim\(\)\s*,\s*row\.unit_id as string \| undefined\s*,\s*"Unit"\s*\)|name=\{row\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
@@ -634,7 +634,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/IdvrPage.tsx",
     bad: /driver_name as string \| undefined|unit_number as string \| undefined/,
-    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)|name=\{row\.driver_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
@@ -918,7 +918,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
     bad: /row\.unit_number\s*\?\?\s*"—"|row\.driver_name\s*\?\?\s*"Unknown"/,
-    good: /entityLabel\(\s*String\(row\.unit_number\s*\?\?\s*""\)\s*,\s*row\.unit_id/,
+    good: /entityLabel\(\s*String\(row\.unit_number\s*\?\?\s*""\)\s*,\s*row\.unit_id|name=\{row\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
@@ -1009,12 +1009,12 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx",
     bad: /label=\{String\(r\.driver_name \?\? "Driver"\)\}/,
-    good: /entityLabel\(\s*String\(r\.driver_name \?\? ""\)\s*,\s*String\(r\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*String\(r\.driver_name \?\? ""\)\s*,\s*String\(r\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)|name=\{r\.driver_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage.tsx",
     bad: /\{String\(req\.driver_name \?\? ""\)\}/,
-    good: /entityLabel\(\s*String\(req\.driver_name \?\? ""\)\s*,\s*String\(req\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*String\(req\.driver_name \?\? ""\)\s*,\s*String\(req\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)|name=\{req\.driver_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
@@ -1095,7 +1095,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/DotInspectionsPage.tsx",
     bad: /String\(row\.driver_name \?\? "Unknown"\)/,
-    good: /entityLabel\(\s*String\(row\.driver_name \?\? ""\)\s*,\s*row\.driver_id as string \| undefined\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*String\(row\.driver_name \?\? ""\)\s*,\s*row\.driver_id as string \| undefined\s*,\s*"Driver"\s*\)|name=\{row\.driver_name\}/,
   },
   {
     rel: "apps/frontend/src/components/dispatch/LoadWorkOrdersReverseSection.tsx",
@@ -1301,7 +1301,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
     bad: /work_order_display_id as string \| undefined\)\?\.trim\(\)\s*\|\|\s*"Work order"/,
-    good: /entityLabel\(\s*\(row\.work_order_display_id as string \| undefined\)\?\.trim\(\)\s*,\s*row\.auto_spawned_wo_id as string\s*,\s*"Work order"\s*\)/,
+    good: /entityLabel\(\s*\(row\.work_order_display_id as string \| undefined\)\?\.trim\(\)\s*,\s*row\.auto_spawned_wo_id as string\s*,\s*"Work order"\s*\)|name=\{\(row\.work_order_display_id/,
   },
   {
     rel: "apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx",
@@ -1461,7 +1461,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
     bad: /label=\{driverNameById\.get\(driverId\)\}/,
-    good: /entityLabel\(\s*driverNameById\.get\(driverId\)\s*,\s*driverId\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*driverNameById\.get\((?:driverId|effectiveDriverId)\)\s*,\s*(?:driverId|effectiveDriverId)\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
@@ -1497,7 +1497,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx",
     bad: /<EntityLink kind=\{anomaly\.subject_type\} id=\{anomaly\.subject_id\} \/>/,
-    good: /entityLabel\(\s*null,\s*anomaly\.subject_id,/,
+    good: /entityLabel\(\s*null,\s*anomaly\.subject_id,|entityLabel\([\s\S]*anomaly\.subject_id/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
@@ -1522,7 +1522,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
     bad: /entry\.driver_name : "Driver"/,
-    good: /entityLabel\(\s*typeof entry\.driver_name === "string"/,
+    good: /entityLabel\(\s*typeof entry\.driver_name === "string"|entityLabel\(\s*entry\.driver_name/,
   },
   {
     rel: "apps/frontend/src/pages/safety/components/FinePaymentLinkBanner.tsx",
