@@ -1,3 +1,3 @@
 # INBOX · Codex
 
-REWAKE · queues.* · Cursor #9435 abandonment EntityLinks
+REWAKE · queues.* · Cursor #9437 reassign load EntityLink
