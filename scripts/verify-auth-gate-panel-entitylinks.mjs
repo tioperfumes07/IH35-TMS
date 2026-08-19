@@ -20,38 +20,45 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
-  assert(/EntityLink/.test(src), "must import/use EntityLink");
+function checkSource(src) {
+  assert(/EntityLinkOrTombstone/.test(src), "must import/use EntityLinkOrTombstone");
   assert(
     /data-testid=["']auth-gate-panel-entitylinks["']/.test(src),
     "must expose auth-gate-panel-entitylinks"
   );
-  assert(/kind=["']load["']/.test(src), "must EntityLink kind=load");
-  assert(/kind=["']driver["']/.test(src), "must EntityLink kind=driver");
-  assert(/kind=["']unit["']/.test(src), "must EntityLink kind=unit");
-  assert(/kind=["']trailer["']/.test(src), "must EntityLink kind=trailer");
+  for (const [kind, id, name, noun] of [
+    ["load", "props.loadUuid", "props.loadLabel", "Load"],
+    ["driver", "props.driverUuid", "props.driverLabel", "Driver"],
+    ["unit", "props.unitUuid", "props.unitLabel", "Unit"],
+    ["trailer", "props.trailerUuid", "props.trailerLabel", "Trailer"],
+  ]) {
+    assert(src.includes(`<EntityLinkOrTombstone kind="${kind}" id={${id}} name={${name}} noun="${noun}"`), `must use unresolved-safe ${kind} drill`);
+  }
+  assert(/loadLabel\?: string \| null/.test(src), "must accept parent-resolved human labels");
+}
+
+function check() {
+  checkSource(fs.readFileSync(FILE, "utf8"));
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(
-    /data-testid=["']auth-gate-panel-entitylinks["']/,
-    'data-testid="planted-missing"'
-  );
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const mutations = [
+    [/data-testid=["']auth-gate-panel-entitylinks["']/, 'data-testid="planted-missing"'],
+    [/name=\{props\.loadLabel\}/, "name={null}"],
+    [/name=\{props\.driverLabel\}/, "name={null}"],
+    [/name=\{props\.unitLabel\}/, "name={null}"],
+    [/name=\{props\.trailerLabel\}/, "name={null}"],
+  ];
+  for (const [pattern, replacement] of mutations) {
+    const broken = original.replace(pattern, replacement);
+    assert(broken !== original, "--selftest plant must mutate source");
+    let failed = false;
+    try { checkSource(broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
-  assert(failed, "--selftest expected FAIL when entitylinks testid removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";

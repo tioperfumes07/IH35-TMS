@@ -103,6 +103,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
             operatingCompanyId={operatingCompanyId}
             action="assign_driver"
             loadUuid={loadId}
+            loadLabel={loadNumber}
             driverUuid={driverId}
             onBlockersChange={setGateBlocked}
           />

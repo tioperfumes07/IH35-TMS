@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export type AuthGatePanelProps = {
   operatingCompanyId: string;
@@ -11,6 +10,10 @@ export type AuthGatePanelProps = {
   unitUuid?: string;
   driverUuid?: string;
   trailerUuid?: string;
+  loadLabel?: string | null;
+  unitLabel?: string | null;
+  driverLabel?: string | null;
+  trailerLabel?: string | null;
   onBlockersChange?: (hasBlockers: boolean) => void;
 };
 
@@ -50,24 +53,24 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
           {props.loadUuid ? (
             <span>
               Load:{" "}
-              <EntityLink kind="load" id={props.loadUuid} label={entityLabel(null, props.loadUuid, "Load")} />
+              <EntityLinkOrTombstone kind="load" id={props.loadUuid} name={props.loadLabel} noun="Load" />
             </span>
           ) : null}
           {props.driverUuid ? (
             <span>
               Driver:{" "}
-              <EntityLink kind="driver" id={props.driverUuid} label={entityLabel(null, props.driverUuid, "Driver")} />
+              <EntityLinkOrTombstone kind="driver" id={props.driverUuid} name={props.driverLabel} noun="Driver" />
             </span>
           ) : null}
           {props.unitUuid ? (
             <span>
-              Unit: <EntityLink kind="unit" id={props.unitUuid} label={entityLabel(null, props.unitUuid, "Unit")} />
+              Unit: <EntityLinkOrTombstone kind="unit" id={props.unitUuid} name={props.unitLabel} noun="Unit" />
             </span>
           ) : null}
           {props.trailerUuid ? (
             <span>
               Trailer:{" "}
-              <EntityLink kind="trailer" id={props.trailerUuid} label={entityLabel(null, props.trailerUuid, "Trailer")} />
+              <EntityLinkOrTombstone kind="trailer" id={props.trailerUuid} name={props.trailerLabel} noun="Trailer" />
             </span>
           ) : null}
         </div>

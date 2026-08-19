@@ -1672,6 +1672,7 @@ export function BookLoadModalV4({
                   operatingCompanyId={operatingCompanyId}
                   action={isEditMode ? "assign_driver" : "book_load"}
                   loadUuid={editLoadId || undefined}
+                  loadLabel={editLoad?.load_number ?? null}
                   unitUuid={assignedUnitId || undefined}
                   driverUuid={assignedPrimaryDriverId || undefined}
                   trailerUuid={assignedTrailerUnitId || undefined}
