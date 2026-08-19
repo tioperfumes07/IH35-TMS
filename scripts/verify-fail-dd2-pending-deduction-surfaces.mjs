@@ -98,9 +98,13 @@ function selftest() {
       ],
     },
     {
+      // Real code now casts the bound param (`$1::uuid`, a legitimate hardening) — the mutation's
+      // old uncast string never matched, making this probe a silent no-op (it never reached
+      // check() at all; the guard aborted at "SELFTEST INERT" before ever running the real
+      // assertion). Match the real cast form.
       name: "explicit opco predicate removed",
       apply: () => [
-        routes.replace('const where = ["d.operating_company_id = $1"];', 'const where = ["1=1"];'),
+        routes.replace('const where = ["d.operating_company_id = $1::uuid"];', 'const where = ["1=1"];'),
         drivers,
         panel,
         api,
