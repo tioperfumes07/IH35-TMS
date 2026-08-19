@@ -12,6 +12,8 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { Button } from "../../components/Button";
+import { useStagedListFilters } from "../../components/table";
 
 type FineRow = Record<string, unknown>;
 
@@ -22,6 +24,8 @@ type Props = {
 /** A23-9: merged company violations into External Fines via record-type filter (RBC option a). */
 type RecordTypeFilter = "driver-fine" | "company-violation";
 
+const EMPTY_FILTERS = { status: "", subjectType: "", driverId: "", unitId: "" };
+
 export function FinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,44 +35,72 @@ export function FinesPage({ operatingCompanyId }: Props) {
   const initialRecordType: RecordTypeFilter =
     recordTypeFromUrl === "company-violation" ? "company-violation" : "driver-fine";
   const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>(initialRecordType);
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [subjectTypeFilter, setSubjectTypeFilter] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedFine, setSelectedFine] = useState<Record<string, unknown> | null>(null);
   const relatedLoadFromUrl = searchParams.get("related_load_id")?.trim() ?? "";
   const relatedUnitFromUrl = searchParams.get("related_unit_id")?.trim() ?? "";
   const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
   // LST-F5163F: visible reverse filters (allowCreate=false); URL seeds pickers.
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
+  // LV-SAFETY-EXTERNAL-FINES-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  function patchSearchParam(next: { driverId: string; unitId: string }) {
+    const p = new URLSearchParams(searchParams);
+    if (next.driverId) p.set("subject_driver_id", next.driverId);
+    else p.delete("subject_driver_id");
+    if (next.unitId) p.set("related_unit_id", next.unitId);
+    else p.delete("related_unit_id");
+    setSearchParams(p, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: subjectDriverFromUrl,
+    unitId: relatedUnitFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
 
   useEffect(() => {
-    if (subjectDriverFromUrl) setDriverFilter(subjectDriverFromUrl);
-  }, [subjectDriverFromUrl]);
-  useEffect(() => {
-    if (relatedUnitFromUrl) setUnitFilter(relatedUnitFromUrl);
-  }, [relatedUnitFromUrl]);
+    setApplied((prev) => ({
+      ...prev,
+      ...(subjectDriverFromUrl ? { driverId: subjectDriverFromUrl } : {}),
+      ...(relatedUnitFromUrl ? { unitId: relatedUnitFromUrl } : {}),
+    }));
+  }, [subjectDriverFromUrl, relatedUnitFromUrl]);
+
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+  function setUnitFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, unitId: next }));
+  }
 
   const finesQuery = useQuery({
     queryKey: [
       "safety",
       "fines",
       operatingCompanyId,
-      statusFilter,
-      subjectTypeFilter,
+      applied.status,
+      applied.subjectType,
       relatedLoadFromUrl,
-      unitFilter,
-      driverFilter,
+      applied.unitId,
+      applied.driverId,
       relatedUnitFromUrl,
       subjectDriverFromUrl,
     ],
     queryFn: () =>
       getSafetyFines(operatingCompanyId, {
-        status: statusFilter || undefined,
-        subject_type: subjectTypeFilter ? (subjectTypeFilter as "driver" | "company") : undefined,
+        status: applied.status || undefined,
+        subject_type: applied.subjectType ? (applied.subjectType as "driver" | "company") : undefined,
         related_load_id: relatedLoadFromUrl || undefined,
-        related_unit_id: unitFilter.trim() || relatedUnitFromUrl || undefined,
-        subject_driver_id: driverFilter.trim() || subjectDriverFromUrl || undefined,
+        related_unit_id: applied.unitId.trim() || relatedUnitFromUrl || undefined,
+        subject_driver_id: applied.driverId.trim() || subjectDriverFromUrl || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -82,11 +114,11 @@ export function FinesPage({ operatingCompanyId }: Props) {
           "safety",
           "fines",
           operatingCompanyId,
-          statusFilter,
-          subjectTypeFilter,
+          applied.status,
+          applied.subjectType,
           relatedLoadFromUrl,
-          unitFilter,
-          driverFilter,
+          applied.unitId,
+          applied.driverId,
           relatedUnitFromUrl,
           subjectDriverFromUrl,
         ],
@@ -232,7 +264,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
         storageKey="safety-external-fines"
         exportFilename="external-fines"
         filterBar={
-          <div className="relative flex flex-wrap items-center gap-2">
+          <div className="relative flex flex-wrap items-end gap-2" data-testid="external-fines-filters">
             <div data-testid="fines-record-type-filter">
               <SelectCombobox
                 value={recordTypeFilter}
@@ -244,8 +276,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
               </SelectCombobox>
             </div>
             <SelectCombobox
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+              value={draft.status}
+              onChange={(event) => staged.setDraft((d) => ({ ...d, status: event.target.value }))}
               className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             >
               <option value="">All statuses</option>
@@ -256,8 +288,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
               <option value="reduced">Reduced</option>
             </SelectCombobox>
             <SelectCombobox
-              value={subjectTypeFilter}
-              onChange={(event) => setSubjectTypeFilter(event.target.value)}
+              value={draft.subjectType}
+              onChange={(event) => staged.setDraft((d) => ({ ...d, subjectType: event.target.value }))}
               className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             >
               <option value="">All subjects</option>
@@ -269,7 +301,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
-                value={driverFilter || null}
+                value={draft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All drivers"
@@ -282,7 +314,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
               <EntityPicker
                 kind="unit"
                 operatingCompanyId={operatingCompanyId}
-                value={unitFilter || null}
+                value={draft.unitId || null}
                 onChange={(next) => setUnitFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All units"
@@ -290,6 +322,32 @@ export function FinesPage({ operatingCompanyId }: Props) {
                 dataTestId="fines-filter-unit"
               />
             </label>
+            <Button type="button" size="sm" data-testid="external-fines-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="external-fines-filter-cancel"
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="external-fines-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchSearchParam(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
           </div>
         }
       />
