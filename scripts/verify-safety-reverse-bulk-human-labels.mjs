@@ -22,7 +22,9 @@ function assertAll(srcs) {
   const problems = [];
   for (const [file, src] of Object.entries(srcs)) {
     if (/\.slice\(0,\s*8\)/.test(src)) problems.push(`${file}: still UUID-slices`);
-    if (!/entityLabel\(/.test(src)) problems.push(`${file}: missing entityLabel`);
+    if (!/entityLabel\(|<EntityLinkOrTombstone\b/.test(src)) {
+      problems.push(`${file}: missing governed human-label resolver`);
+    }
   }
   return problems;
 }
@@ -33,8 +35,8 @@ if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
   planted[FILES[4]] = planted[FILES[4]].replace(
-    /entityLabel\(row\.display_id \|\| null,\s*row\.id,\s*"Work order"\)/,
-    "row.display_id || `WO ${row.id.slice(0, 8)}`",
+    /<EntityLinkOrTombstone\s+kind="work_order"\s+id=\{row\.id\}\s+name=\{row\.display_id \|\| null\}\s+noun="Work order"\s*\/>/,
+    '{row.display_id || `WO ${row.id.slice(0, 8)}`}',
   );
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
