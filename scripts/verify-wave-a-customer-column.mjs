@@ -12,7 +12,8 @@ const checks = [
   ["apps/frontend/src/pages/reports/DispatchMarginPage.tsx", /<EntityLink kind="customer" id=\{row\.customer_id\}/],
   ["apps/backend/src/factoring/submission-queue.service.ts", /i\.customer_id::text/],
   // Multi-line JSX (kind/id/label on separate lines) — same whitespace-tolerant pattern already
-  // used for DriverLoadsPage.tsx above.
+  // used for DriverLoadsPage.tsx above. Independently converged fix (CC-2 had the same re-anchor
+  // via a616eed3c/01b9b2f5f; kept this already-integrated, slightly more general version).
   ["apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx", /<EntityLink[\s\S]{0,80}kind="customer"[\s\S]{0,80}id=\{item\.customer_id\}/],
 ];
 const files = Object.fromEntries([...new Set(checks.map(([file]) => file))].map((file) => [file, fs.readFileSync(file, "utf8")]));

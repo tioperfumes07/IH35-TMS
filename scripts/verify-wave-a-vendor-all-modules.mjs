@@ -34,7 +34,8 @@ const contracts = [
   ["apps/frontend/src/pages/compliance/RequiredDocumentsSection.tsx", /\{ id: "vendor", label: "Vendors" \}/],
   ["apps/frontend/src/pages/inventory/PartCreateDrawer.tsx", /vendor_id:\s*data\.vendor_id\.trim\(\) \|\| undefined/],
   // Multi-line JSX (kind/id/label on separate lines, plus an honest tombstone branch for
-  // unresolved vendors — LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL).
+  // unresolved vendors — LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL). Independently
+  // converged fix (CC-2 had the same re-anchor via 01b9b2f5f; kept this already-integrated version).
   ["apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx", /<EntityLink[\s\S]{0,60}kind="vendor"[\s\S]{0,60}id=\{row\.vendor_id\}/],
   ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", /<EntityLink kind="vendor" id=\{r\.vendor_id\}/],
   ["apps/frontend/src/pages/reports/APAgingPage.tsx", /<EntityLink kind="vendor" id=\{r\.vendor_id\}/],
