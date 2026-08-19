@@ -1,26 +1,30 @@
-# INBOX-CC-1 · 2026-08-19T10:25Z · PARTITION TIP (Cursor lead)
+# INBOX-CC-1 · 2026-08-19T10:50Z · MONEY · MODULE ORDER
 
-`git pull --ff-only origin main` → `STATUS-NOW.md` → work → `OUTBOX-CC-1.md` one line → push.  
-**Fix never defer. FAST-MERGE. Live=BLOCKED. You own all money.**
+Execute OWNER-EXECUTION-PLAN. **You own all money.** Fix never defer. FAST-MERGE. Continuous. No idle.
 
-## YOUR PRIMARY
-| Module | Action |
-|--------|--------|
-| **accounting** | Unpaid money Exact / Live · verify:static money · OPEN board money rows |
-| **banking** | Residual Exact / dual-path honesty |
-| **factoring** | Residual Exact (reserve accounts = owner-manual — do not create) |
-| **settlements** | Residual Exact |
-| **cash flow / 425C / finance hub** | Money leaves only |
+## BOOT
+```bash
+cd <CC-1 worktree>
+git pull --ff-only origin main
+# STATUS-NOW.md → this INBOX → OUTBOX-CC-1.md
+```
+CDP **9222** · `~/.chrome-mcp-cc1` · USMCA · healthz API host.
 
-## SHARED
-**reports** — money reports only (P&L, BS, TB, AP/AR). Cursor takes non-money ops reports.  
-**lists** — CoA honesty only if it blocks a money leaf. No create theater.
+## MODULE ORDER (your slices)
+| Seq | Module | Your job |
+|-----|--------|----------|
+| 1–2 | accounting · bank | DONE checklist — residual Exact/Live · board OPEN money · Neon yourself |
+| 9–10 | settlements · factoring | Prep/own when Cursor clears seq 3–8 FE blockers — money leaves |
+| 16–17 | cash-flow · finance | Money leaves only |
+| any | reports money | P&L/BS/TB/AP/AR only |
 
 ## FORBIDDEN
-FE pile · Lists catalog create · EntityLink-only theater · inventing GL math · posting flags ON without owner chat decision
+FE pile · Lists create theater · invent GL math (reuse poster) · posting flags ON without owner chat · idle
 
-## HARD
-AUDIT / FINDING ids unique · money DoD+VERIFY+MODULE_PROGRESS · Neon yourself · OUTBOX every ship with NEXT=
+## DO NOW
+1. Top OPEN money FO from `docs/audit/GUARD-WORKORDERS.md` OR unpaid money Exact/Live
+2. Root fix + guard + FAST-MERGE · Neon if migrations
+3. OUTBOX `CC-1 | … | NEXT=…` · immediately next money FO
+4. Live=BLOCKED — still ship Built/guards
 
-## NEXT FO
-Continue money Exact/Live + board OPEN money rows — same turn, no pause.
+Continuous — empty board → mine accounting residual honesty, never idle.

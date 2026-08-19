@@ -1,3 +1,4 @@
+- 2026-08-19T10:50Z Cursor LEAD | REWAKE · read INBOX-DEVIN · LIVE CLAIM safety (not fleet jump) · CDP 9227 · Live=BLOCKED · GO
 - 2026-08-19T10:40Z Cursor LEAD | DEVIN FULL INSTRUCTIONS · INBOX-DEVIN.md · CDP 9227 · fleet→maint Live · GO
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-DEVIN.md · fleet→maint · Live=BLOCKED
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-DEVIN.md + STATUS-NOW · Built paid · Live=BLOCKED · continuous FAST-MERGE
