@@ -30,6 +30,7 @@ const guards = [
   "verify-factoring-list-gl-je-built.mjs",
   "verify-factoring-required-liability-honest.mjs",
   "verify-factoring-advances-write-role-gated.mjs",
+  "verify-factoring-reserve-balances-membership-assert.mjs",
   "verify-factoring-reverse-link-remainder.mjs",
   "verify-faro-csv-import-role-gated.mjs",
   "verify-financial-column-contracts.mjs",

@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./factoring-fees-posting/poster.service.js";
 import { postFactoringAdvanceEvent, postFactoringCustomerPaymentEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
 import {
@@ -135,11 +136,16 @@ async function fetchAdvanceDetail(client: any, advanceId: string) {
 }
 
 export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/factoring-reserve-balances", async (req, reply) => {
+  app.get("/api/v1/accounting/factoring-reserve-balances", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5594: no backstop -- listFactorReserveBalances sets app.operating_company_id directly
+    // from this caller-supplied value with no membership check of its own, and the underlying
+    // factoring_reserve_movements RLS policy only compares against that same GUC (same class as
+    // ACCT-F5592/ACCT-F5593).
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const payload = await listFactorReserveBalances({
       operating_company_id: query.data.operating_company_id,
     });
@@ -150,11 +156,13 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   // migration 202607130000, HELD). Complements the customer-level estimate above (which splits
   // reserve_amount_cents/release_amount_cents proportionally off the advance header, no JE linkage) with
   // the true per-advance HELD/RELEASED events and their journal_entry_id. Read-only; not flag-gated.
-  app.get("/api/v1/accounting/factoring-advances/reserve-tracker", async (req, reply) => {
+  app.get("/api/v1/accounting/factoring-advances/reserve-tracker", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5594: no backstop -- same class as GET /factoring-reserve-balances above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const [balances, rollup] = await Promise.all([
       listFactoringReserveBalancesByAdvance(query.data.operating_company_id),
       getFactoringReserveRollup(query.data.operating_company_id),
@@ -171,6 +179,8 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5594: no backstop -- same class as GET /factoring-reserve-balances above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const packet = await getFactoringAdvancePacket(query.data.operating_company_id, params.data.id);
     if (!packet) return reply.code(404).send({ error: "factoring_advance_not_found" });
     return packet;
