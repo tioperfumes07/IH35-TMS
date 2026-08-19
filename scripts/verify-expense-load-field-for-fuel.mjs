@@ -32,7 +32,16 @@ function run() {
     ["loadId in form values type", /loadId:\s*string/.test(submit)],
     ["loadLabel in form values type", /loadLabel:\s*string/.test(submit)],
     ["initial loadId empty", /loadId:\s*[""]+/.test(submit)],
-    ["fuel/roadside validation", /Load \/ Trip is required for fuel/.test(submit)],
+    // The category predicate generalized from a hand-rolled fuel/diesel/roadside/ifta regex to a
+    // proper isOverTheRoadCategoryLabel() function (G18 taxonomy), and the validation copy widened
+    // to match — "for over-the-road expenses (diesel, tolls, lumper, etc.)" — with an added
+    // exemption-reason escape hatch. Still requires Load/Trip; the category set only got broader
+    // and more accurate. Accept either the original fuel-specific text or the current one.
+    [
+      "fuel/roadside validation",
+      /Load \/ Trip is required for fuel/.test(submit) ||
+        (/Load \/ Trip is required for over-the-road expenses/.test(submit) && /isOverTheRoadCategoryLabel/.test(submit)),
+    ],
     ["load_id in createExpense payload", /load_id:\s*values\.loadId/.test(submit) || /load_id:\s*values\.loadId/.test(submit.replace(/\s+/g, " "))],
   ];
 
