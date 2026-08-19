@@ -193,11 +193,20 @@ export function DrugAlcoholTab() {
     },
   });
 
-  const activeDriverCount = activeDriverTotalQ.data ?? 0;
+  const activeDriverCount = activeDriverTotalQ.isError ? null : (activeDriverTotalQ.data ?? 0);
+  const listQueryError =
+    activeDriverTotalQ.isError || testsQ.isError || poolQ.isError || clearinghouseQ.isError
+      ? activeDriverTotalQ.error ?? testsQ.error ?? poolQ.error ?? clearinghouseQ.error
+      : null;
+  const driverDetailQueryError =
+    effectiveDriverId && (drugStatusQ.isError || eligibilityQ.isError || rtdCaseQ.isError)
+      ? drugStatusQ.error ?? eligibilityQ.error ?? rtdCaseQ.error
+      : null;
 
   function handleBulkEnroll() {
     const name = consortiumName.trim();
     if (!name) return;
+    if (activeDriverCount == null) return;
     const ok = window.confirm(
       `Enroll all ${activeDriverCount} active CDL drivers into the "${name}" FMCSA random pool? ` +
         `Already-enrolled drivers are skipped (idempotent).`
@@ -284,35 +293,58 @@ export function DrugAlcoholTab() {
         </div>
 
         {effectiveDriverId ? (
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <div className="rounded-sm border border-gray-100 p-3 text-xs">
-              <div className="font-medium text-slate-800">Drug status</div>
-              <div className="mt-1">
-                {drugStatusQ.data?.is_blocked ? (
-                  <span className="rounded-sm bg-red-50 px-2 py-0.5 text-red-800">Blocked ({drugStatusQ.data.block_reason})</span>
-                ) : (
-                  <span className="rounded-sm bg-slate-50 px-2 py-0.5 text-slate-700">Clear</span>
-                )}
+          <div className="mt-3 space-y-2">
+            {driverDetailQueryError ? (
+              <p className="text-xs text-red-700" data-testid="drug-alcohol-driver-detail-query-error">
+                {userFacingApiError(driverDetailQueryError, "Could not load driver drug / eligibility status.")}
+              </p>
+            ) : null}
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-sm border border-gray-100 p-3 text-xs">
+                <div className="font-medium text-slate-800">Drug status</div>
+                <div className="mt-1">
+                  {drugStatusQ.isError ? (
+                    <span className="text-slate-500">—</span>
+                  ) : drugStatusQ.data?.is_blocked ? (
+                    <span className="rounded-sm bg-red-50 px-2 py-0.5 text-red-800">Blocked ({drugStatusQ.data.block_reason})</span>
+                  ) : (
+                    <span className="rounded-sm bg-slate-50 px-2 py-0.5 text-slate-700">Clear</span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="rounded-sm border border-gray-100 p-3 text-xs">
-              <div className="font-medium text-slate-800">Dispatch eligibility</div>
-              <div className="mt-1">
-                <span className={`rounded-sm px-2 py-0.5 ${eligibilityBadgeClass(Boolean(eligibilityQ.data?.eligible))}`}>
-                  {eligibilityQ.data?.eligible ? "Eligible" : "Ineligible"}
-                </span>
-                {!eligibilityQ.data?.eligible ? (
-                  <div className="mt-1 text-[11px] text-red-700">{(eligibilityQ.data?.reasons ?? []).join(", ")}</div>
-                ) : null}
+              <div className="rounded-sm border border-gray-100 p-3 text-xs">
+                <div className="font-medium text-slate-800">Dispatch eligibility</div>
+                <div className="mt-1">
+                  {eligibilityQ.isError ? (
+                    <span className="text-slate-500">—</span>
+                  ) : (
+                    <>
+                      <span className={`rounded-sm px-2 py-0.5 ${eligibilityBadgeClass(Boolean(eligibilityQ.data?.eligible))}`}>
+                        {eligibilityQ.data?.eligible ? "Eligible" : "Ineligible"}
+                      </span>
+                      {!eligibilityQ.data?.eligible ? (
+                        <div className="mt-1 text-[11px] text-red-700">{(eligibilityQ.data?.reasons ?? []).join(", ")}</div>
+                      ) : null}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="rounded-sm border border-gray-100 p-3 text-xs">
-              <div className="font-medium text-slate-800">RTD case</div>
-              <div className="mt-1">{rtdCase ? stageLabel(rtdCase.stage) : "None open"}</div>
+              <div className="rounded-sm border border-gray-100 p-3 text-xs">
+                <div className="font-medium text-slate-800">RTD case</div>
+                <div className="mt-1">
+                  {rtdCaseQ.isError ? "—" : rtdCase ? stageLabel(rtdCase.stage) : "None open"}
+                </div>
+              </div>
             </div>
           </div>
         ) : null}
       </div>
+
+      {listQueryError ? (
+        <p className="text-xs text-red-700" data-testid="drug-alcohol-tab-query-error">
+          {userFacingApiError(listQueryError, "Could not load drug & alcohol program lists.")}
+        </p>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
@@ -441,11 +473,16 @@ export function DrugAlcoholTab() {
           </label>
           <button
             type="button"
-            disabled={!consortiumName.trim() || bulkEnrollMutation.isPending}
+            disabled={
+              !consortiumName.trim() ||
+              bulkEnrollMutation.isPending ||
+              activeDriverTotalQ.isError ||
+              activeDriverCount == null
+            }
             className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             onClick={handleBulkEnroll}
           >
-            Enroll all {activeDriverCount} active CDL drivers
+            Enroll all {activeDriverCount == null ? "—" : activeDriverCount} active CDL drivers
           </button>
         </div>
         {bulkEnrollMutation.isSuccess ? (
@@ -535,49 +572,67 @@ export function DrugAlcoholTab() {
             Reset
           </Button>
         </div>
-        <DrugAlcoholTable rows={filteredTests as Array<Record<string, unknown>>} />
+        {testsQ.isError ? (
+          <p className="text-xs text-red-700" data-testid="drug-alcohol-tests-query-error">
+            {userFacingApiError(testsQ.error, "Could not load drug test history.")}
+          </p>
+        ) : (
+          <DrugAlcoholTable rows={filteredTests as Array<Record<string, unknown>>} />
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <h3 className="text-sm font-semibold text-slate-900">Random pool roster</h3>
-          <ul className="mt-2 space-y-1">
-            {(poolQ.data ?? []).slice(0, 8).map((entry) => (
-              <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
-                <EntityLink
-                  kind="driver"
-                  id={entry.driver_id ? String(entry.driver_id) : undefined}
-                  label={entityLabel(
-                    typeof entry.driver_name === "string" ? entry.driver_name.trim() || null : null,
-                    entry.driver_id ? String(entry.driver_id) : null,
-                    "Driver"
-                  )}
-                />
-                <span>{String(entry.status ?? "selected")}</span>
-              </li>
-            ))}
-            {(poolQ.data ?? []).length === 0 ? <li className="text-slate-500">No pool entries.</li> : null}
-          </ul>
+          {poolQ.isError ? (
+            <p className="mt-2 text-xs text-red-700" data-testid="drug-alcohol-pool-query-error">
+              {userFacingApiError(poolQ.error, "Could not load the random pool roster.")}
+            </p>
+          ) : (
+            <ul className="mt-2 space-y-1">
+              {(poolQ.data ?? []).slice(0, 8).map((entry) => (
+                <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
+                  <EntityLink
+                    kind="driver"
+                    id={entry.driver_id ? String(entry.driver_id) : undefined}
+                    label={entityLabel(
+                      typeof entry.driver_name === "string" ? entry.driver_name.trim() || null : null,
+                      entry.driver_id ? String(entry.driver_id) : null,
+                      "Driver"
+                    )}
+                  />
+                  <span>{String(entry.status ?? "selected")}</span>
+                </li>
+              ))}
+              {(poolQ.data ?? []).length === 0 ? <li className="text-slate-500">No pool entries.</li> : null}
+            </ul>
+          )}
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <h3 className="text-sm font-semibold text-slate-900">Clearinghouse queries</h3>
-          <ul className="mt-2 space-y-1">
-            {(clearinghouseQ.data ?? []).slice(0, 8).map((entry) => (
-              <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
-                <EntityLink
-                  kind="driver"
-                  id={entry.driver_id ? String(entry.driver_id) : undefined}
-                  label={entityLabel(
-                    typeof entry.driver_name === "string" ? entry.driver_name.trim() || null : null,
-                    entry.driver_id ? String(entry.driver_id) : null,
-                    "Driver"
-                  )}
-                />
-                <span>{String(entry.query_status ?? "pending")}</span>
-              </li>
-            ))}
-            {(clearinghouseQ.data ?? []).length === 0 ? <li className="text-slate-500">No queries logged.</li> : null}
-          </ul>
+          {clearinghouseQ.isError ? (
+            <p className="mt-2 text-xs text-red-700" data-testid="drug-alcohol-clearinghouse-query-error">
+              {userFacingApiError(clearinghouseQ.error, "Could not load clearinghouse queries.")}
+            </p>
+          ) : (
+            <ul className="mt-2 space-y-1">
+              {(clearinghouseQ.data ?? []).slice(0, 8).map((entry) => (
+                <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
+                  <EntityLink
+                    kind="driver"
+                    id={entry.driver_id ? String(entry.driver_id) : undefined}
+                    label={entityLabel(
+                      typeof entry.driver_name === "string" ? entry.driver_name.trim() || null : null,
+                      entry.driver_id ? String(entry.driver_id) : null,
+                      "Driver"
+                    )}
+                  />
+                  <span>{String(entry.query_status ?? "pending")}</span>
+                </li>
+              ))}
+              {(clearinghouseQ.data ?? []).length === 0 ? <li className="text-slate-500">No queries logged.</li> : null}
+            </ul>
+          )}
         </div>
       </div>
 
