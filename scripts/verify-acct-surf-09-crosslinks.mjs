@@ -228,7 +228,11 @@ function selftest() {
     ].join("\n"),
     factoringList: 'EntityLink kind="factoring_advance"\nAccountingSubNavWrapper',
     escrowPage: 'EntityLink kind={kind}\n"driver_settlement"\n"factoring_advance"',
-    settlementsPage: 'to: "/accounting/escrow"\nlistSettlements\nytdYear\ngetFullYear\nthis_period: settlements.filter(isInThisPeriod).length\nytd_settlements: settlements.filter(isYtd).length',
+    // Includes the unfiltered kpiBaseQuery/kpiSettlements pipeline (FAIL-SETL-KPI-PERIOD) and the
+    // manual_paid payment-state filter (VERIFY-1) — both checked below but missing from this fixture
+    // until now, so the selftest's own "good" baseline always failed regardless of real code.
+    settlementsPage:
+      'to: "/accounting/escrow"\nlistSettlements\n"settlements-kpi-base"\nkpiSettlements\nmanual_paid\nytdYear\ngetFullYear\nthis_period: kpiSettlements.filter(isInThisPeriod).length\nytd_settlements: kpiSettlements.filter(isYtd).length',
     hubPage: '/accounting/factoring\n/driver-finance/settlements',
     accountRegister: "/driver-finance/settlements",
     factoringApi: "listFactoringAdvances /api/v1/accounting/factoring-advances\nlistEscrowAccounts /api/v1/accounting/escrow/accounts",
