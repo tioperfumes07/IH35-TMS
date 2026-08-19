@@ -19,12 +19,16 @@ import { CappedListNotice } from "../../components/CappedListNotice";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { suggestExpenseLoad } from "../../api/maintenance";
 import { useSearchParams } from "react-router-dom";
+import { Button } from "../../components/Button";
+import { useStagedListFilters } from "../../components/table";
 
 type InternalFineRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
 };
+
+const EMPTY_FILTERS = { driverId: "", loadId: "" };
 
 export function InternalFinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -33,9 +37,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   const linkedFineId = searchParams.get("fine_id");
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  // LST-F5163L + LST-F5191: visible reverse filters must write URL params.
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
-  const [loadFilter, setLoadFilterState] = useState(loadIdFromUrl);
+  // LST-F5163L + LST-F5191: visible reverse filters must write URL params on Apply.
+  // LV-SAFETY-INTERNAL-FINES-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
   // SAF-F12: which fine a lifecycle action is open for, and which action.
   const [lifecycleTarget, setLifecycleTarget] = useState<{ row: InternalFineRow; action: "dispute" | "void" } | null>(null);
   const [form, setForm] = useState({
@@ -50,30 +53,48 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   /** Preserve an operator-selected load after the active-trip resolver has populated the field. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
 
-  useEffect(() => {
-    setDriverFilterState(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-  useEffect(() => {
-    setLoadFilterState(loadIdFromUrl);
-  }, [loadIdFromUrl]);
-
-  function patchSearchParam(key: "driver_id" | "load_id", next: string) {
+  function patchSearchParam(next: { driverId: string; loadId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    if (next.driverId) p.set("driver_id", next.driverId);
+    else p.delete("driver_id");
+    if (next.loadId) p.set("load_id", next.loadId);
+    else p.delete("load_id");
     setSearchParams(p, { replace: true });
   }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    loadId: loadIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      loadId: loadIdFromUrl,
+    }));
+  }, [driverIdFromUrl, loadIdFromUrl]);
+
+  // Sibling verify-internal-fine-load-reverse asserts setter names + URL seed vars.
   function setDriverFilter(next: string) {
-    setDriverFilterState(next);
-    patchSearchParam("driver_id", next);
+    staged.setDraft((d) => ({ ...d, driverId: next }));
   }
   function setLoadFilter(next: string) {
-    setLoadFilterState(next);
-    patchSearchParam("load_id", next);
+    staged.setDraft((d) => ({ ...d, loadId: next }));
   }
 
-  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
-  const effectiveLoadId = loadFilter.trim() || loadIdFromUrl || undefined;
+  const effectiveDriverId = applied.driverId.trim() || undefined;
+  const effectiveLoadId = applied.loadId.trim() || undefined;
 
   const suggestionQuery = useQuery({
     queryKey: ["safety", "internal-fine-create", "suggest-load", operatingCompanyId, form.driver_uuid, form.imposed_date],
@@ -345,13 +366,13 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           storageKey="safety-internal-fines"
           exportFilename="internal-fines"
           filterBar={
-            <div className="relative flex flex-wrap items-center gap-2">
+            <div className="relative flex flex-wrap items-end gap-2" data-testid="internal-fines-filters">
               <label className="text-[11px] text-slate-600">
                 Driver
                 <EntityPicker
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
-                  value={driverFilter || null}
+                  value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All drivers"
@@ -364,7 +385,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
                 <EntityPicker
                   kind="load"
                   operatingCompanyId={operatingCompanyId}
-                  value={loadFilter || null}
+                  value={draft.loadId || null}
                   onChange={(next) => setLoadFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All loads"
@@ -372,6 +393,32 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
                   dataTestId="internal-fines-filter-load"
                 />
               </label>
+              <Button type="button" size="sm" data-testid="internal-fines-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                Apply
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="internal-fines-filter-cancel"
+                onClick={staged.cancel}
+                disabled={!staged.dirty}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="internal-fines-filter-reset"
+                onClick={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchSearchParam(EMPTY_FILTERS);
+                }}
+              >
+                Reset
+              </Button>
             </div>
           }
           rowClassName={(row) => String(row.id ?? "") === linkedFineId ? "bg-slate-100 ring-1 ring-inset ring-slate-300" : ""}
