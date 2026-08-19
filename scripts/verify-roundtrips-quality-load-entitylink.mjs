@@ -19,6 +19,9 @@ const ROUTE = "apps/backend/src/mdata/customer-quality-events.routes.ts";
 
 function auditRound(src) {
   const failures = [];
+  if (!/import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["'][^"']*\/EntityLinkOrTombstone["']/.test(src)) {
+    failures.push(`${ROUND}: must import canonical label-aware tombstones`);
+  }
   if (!/data-testid=["']round-trip-unit-link["']/.test(src)) {
     failures.push(`${ROUND}: missing data-testid=round-trip-unit-link`);
   }
@@ -30,6 +33,16 @@ function auditRound(src) {
   }
   if (/\{pair\.unitNumber\}/.test(src) && !/round-trip-unit-link/.test(src)) {
     failures.push(`${ROUND}: unitNumber still plain text without EntityLink`);
+  }
+  const exact = [
+    [/kind="customer"[\s\S]{0,120}id=\{load\.customer_id\}[\s\S]{0,120}name=\{load\.customer_name\}[\s\S]{0,80}noun="Customer"/, "trip customer"],
+    [/kind="driver"[\s\S]{0,140}id=\{load\.assigned_primary_driver_id\}[\s\S]{0,140}name=\{load\.assigned_primary_driver_name\}[\s\S]{0,80}noun="Driver"/, "trip driver"],
+    [/kind="unit"[\s\S]{0,100}id=\{pair\.unitId\}[\s\S]{0,100}name=\{pair\.unitNumber\}[\s\S]{0,80}noun="Unit"/, "pair unit"],
+    [/kind="driver"[\s\S]{0,120}id=\{pair\.driverId \?\? undefined\}[\s\S]{0,100}name=\{pair\.driverName\}[\s\S]{0,80}noun="Driver"/, "pair driver"],
+  ];
+  for (const [pattern, label] of exact) if (!pattern.test(src)) failures.push(`${ROUND}: ${label} must couple canonical id to its human label`);
+  if (/assigned_unit_number\s*\?\?\s*(?:sorted\[0\]\?\.assigned_unit_number\s*\?\?\s*)?unitId/.test(src)) {
+    failures.push(`${ROUND}: unit display label must never fall back to unit UUID`);
   }
   return failures;
 }
@@ -114,6 +127,10 @@ if (process.argv.includes("--selftest")) {
   const brokenRound = round.replace(/round-trip-unit-link/g, "x");
   const mutations = [
     [brokenRound, qual, api, route],
+    [round.replace("name={load.customer_name}", "name={load.customer_id}"), qual, api, route],
+    [round.replace("name={load.assigned_primary_driver_name}", "name={load.assigned_primary_driver_id}"), qual, api, route],
+    [round.replace("name={pair.unitNumber}", "name={pair.unitId}"), qual, api, route],
+    [round.replace("name={pair.driverName}", "name={pair.driverId}"), qual, api, route],
     [round, qual.replace("event.related_load_number", "null"), api, route],
     [round, qual, api.replace("related_load_number: string | null", "related_load_number?: string | null"), route],
     [round, qual, api, route.replace("rl.load_number AS related_load_number", "NULL AS related_load_number")],
