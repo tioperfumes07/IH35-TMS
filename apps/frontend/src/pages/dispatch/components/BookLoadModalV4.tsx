@@ -372,6 +372,7 @@ export function BookLoadModalV4({
   const assignedPrimaryDriverId = form.watch("assigned_primary_driver_id");
   const assignedTrailerUnitId = form.watch("assigned_trailer_unit_id");
   const watchedCustomerId = form.watch("customer_id");
+  const watchedCustomerName = form.watch("customer_name");
   const watchedTripType = form.watch("trip_type");
   const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean }>({
     canDispatch: true,
@@ -1646,6 +1647,7 @@ export function BookLoadModalV4({
                   unitUuid={assignedUnitId || null}
                   trailerUuid={assignedTrailerUnitId || null}
                   customerId={watchedCustomerId || null}
+                  customerLabel={watchedCustomerName || null}
                   onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
                   // OWNER-ALWAYS-OVERRIDE: these two props were NEVER passed. Both are optional, so
                   // inside the panel `value={overrideReason ?? ""}` was permanently "" and onChange

@@ -3,8 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
-import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ValidationPanel, type ValidationResult } from "../shared/ValidationPanel";
 
 type Props = {
@@ -140,24 +139,24 @@ export function PreDispatchValidationPanel({
           {driverUuid ? (
             <span>
               Driver:{" "}
-              <EntityLink kind="driver" id={driverUuid} label={entityLabel(driverLabel, driverUuid, "Driver")} />
+              <EntityLinkOrTombstone kind="driver" id={driverUuid} name={driverLabel} noun="Driver" />
             </span>
           ) : null}
           {unitUuid ? (
             <span>
-              Unit: <EntityLink kind="unit" id={unitUuid} label={entityLabel(unitLabel, unitUuid, "Unit")} />
+              Unit: <EntityLinkOrTombstone kind="unit" id={unitUuid} name={unitLabel} noun="Unit" />
             </span>
           ) : null}
           {trailerUuid ? (
             <span>
               Trailer:{" "}
-              <EntityLink kind="trailer" id={trailerUuid} label={entityLabel(trailerLabel, trailerUuid, "Trailer")} />
+              <EntityLinkOrTombstone kind="trailer" id={trailerUuid} name={trailerLabel} noun="Trailer" />
             </span>
           ) : null}
           {customerId ? (
             <span>
               Customer:{" "}
-              <EntityLink kind="customer" id={customerId} label={entityLabel(customerLabel, customerId, "Customer")} />
+              <EntityLinkOrTombstone kind="customer" id={customerId} name={customerLabel} noun="Customer" />
             </span>
           ) : null}
         </div>

@@ -20,38 +20,44 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
-  assert(/EntityLink/.test(src), "must import/use EntityLink");
+function checkSource(src) {
+  assert(/EntityLinkOrTombstone/.test(src), "must import/use EntityLinkOrTombstone");
   assert(
     /data-testid=["']pre-dispatch-validation-entitylinks["']/.test(src),
     "must expose pre-dispatch-validation-entitylinks"
   );
-  assert(/kind=["']driver["']/.test(src), "must EntityLink kind=driver");
-  assert(/kind=["']unit["']/.test(src), "must EntityLink kind=unit");
-  assert(/kind=["']trailer["']/.test(src), "must EntityLink kind=trailer");
-  assert(/kind=["']customer["']/.test(src), "must EntityLink kind=customer");
+  for (const [kind, id, name, noun] of [
+    ["driver", "driverUuid", "driverLabel", "Driver"],
+    ["unit", "unitUuid", "unitLabel", "Unit"],
+    ["trailer", "trailerUuid", "trailerLabel", "Trailer"],
+    ["customer", "customerId", "customerLabel", "Customer"],
+  ]) {
+    assert(src.includes(`<EntityLinkOrTombstone kind="${kind}" id={${id}} name={${name}} noun="${noun}"`), `must use unresolved-safe ${kind} drill`);
+  }
+}
+
+function check() {
+  checkSource(fs.readFileSync(FILE, "utf8"));
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(
-    /data-testid=["']pre-dispatch-validation-entitylinks["']/,
-    'data-testid="planted-missing"'
-  );
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const mutations = [
+    [/data-testid=["']pre-dispatch-validation-entitylinks["']/, 'data-testid="planted-missing"'],
+    [/name=\{driverLabel\}/, "name={null}"],
+    [/name=\{unitLabel\}/, "name={null}"],
+    [/name=\{trailerLabel\}/, "name={null}"],
+    [/name=\{customerLabel\}/, "name={null}"],
+  ];
+  for (const [pattern, replacement] of mutations) {
+    const broken = original.replace(pattern, replacement);
+    assert(broken !== original, "--selftest plant must mutate source");
+    let failed = false;
+    try { checkSource(broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
-  assert(failed, "--selftest expected FAIL when entitylinks testid removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
