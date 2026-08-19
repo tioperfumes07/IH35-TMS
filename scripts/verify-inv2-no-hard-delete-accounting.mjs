@@ -34,8 +34,12 @@ function walkDir(dir, exts, results = []) {
 }
 
 // Scan only TypeScript runtime files — SQL migrations may reference these table names
-// in comments documenting the fix and are not runtime DELETE callers.
-const allFiles = walkDir(join(root, "apps/backend/src"), [".ts"]);
+// in comments documenting the fix and are not runtime DELETE callers. *.test.ts / *.db.test.ts
+// suites also DELETE their own fixture rows in beforeEach/afterAll teardown (identified by a
+// test-scoped id, e.g. `WHERE invoice_id=$1`) — that erases test data the test itself created
+// within its own lifecycle, not a production financial audit trail, so it is not the invariant
+// this guard protects. Excluded the same way other guards in this repo exclude test files.
+const allFiles = walkDir(join(root, "apps/backend/src"), [".ts"]).filter((fp) => !/\.test\.ts$/.test(fp));
 
 const offenders = [];
 for (const fp of allFiles) {
