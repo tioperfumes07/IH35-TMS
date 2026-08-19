@@ -39,7 +39,14 @@ const contracts = [
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /case "customer":/],
   ["apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx", /createKind="customer"/],
   ["apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx", /customer_id:\s*values\.customer_id \|\| undefined/],
-  ["apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx", /<EntityLink kind="customer" id=\{row\.customer_id\}/],
+  // Direct inline EntityLink OR the extracted ManagementCustomerCell component (honest-label +
+  // tombstone handling, internally wires kind="customer" id={customerId} — see its own
+  // definition) called with customerId={row.customer_id}. Both wire the same FK. Two lookaheads
+  // (call site + component definition) so both must be true, not just one in isolation.
+  [
+    "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
+    /<EntityLink kind="customer" id=\{row\.customer_id\}|(?=[\s\S]*<ManagementCustomerCell customerId=\{row\.customer_id\})(?=[\s\S]*function ManagementCustomerCell[\s\S]{0,600}kind="customer" id=\{customerId\})/,
+  ],
   ["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx", /<EntityLink kind="customer" id=\{row\.customer_id\}/],
   ["apps/frontend/src/pages/insurance/InsuranceLanding.tsx", /customer's COI tab/],
 ];
