@@ -58,8 +58,9 @@ Unmerged focused-green PR = process defect.
 - Share the module: different files, same hour. Do not wait for another seat to “finish the module.”
 - Live=BLOCKED until healthz ancestry includes merge SHAs. Do not sit idle on lag — keep shipping.
 
-**OWNER SEQ (do not skip unpaid in YOUR lane):**  
-accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → rest.
+**OWNER SEQ (owner 2026-08-19 — urgency, do not skip unpaid in YOUR lane):**  
+accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch.  
+Then rest (safety / fleet / maintenance / lists / other). Money/GL = CC-1 only. Cursor Built + Codex reverse + Devin Clicked follow this order, not A–Z and not fleet/maint first.
 
 ---
 
@@ -67,11 +68,11 @@ accounting → customers → drivers → vendors → dispatch → safety → fle
 
 | Seat | CDP | NOW | THEN (same turn) | OUTBOX WORKING line |
 |------|-----|-----|------------------|---------------------|
-| **Cursor** | 9226 | remaining **maintenance Built** identity tombstones (inspections / warranty / remaining queues) | rest Built (never accounting EntityLink-only) | `Cursor \| WORKING \| NOW=maint Built inspections/warranty \| GO` |
-| **Codex** | 9228 | **REWAKE.** Dispatch **reverse PRIMARY** unpaid (load↔driver/unit/customer). If customers/drivers/vendors reverse still unpaid, those first. | fleet Band B `trailer.profile.*` reverse → maint reverse | `Codex \| WORKING \| NOW=dispatch reverse PRIMARY \| NEXT=fleet Band B \| GO` |
-| **Devin-A** | **9227** | Live Cancel-only on **current** healthz. Named `leaf:col`. STARVED skip. **No safety PASS re-loop.** **FAST-MERGE your own PRs.** | next unpaid leaf same module → next seq module | `Devin-A \| WORKING \| NOW=Live current healthz \| chrome=9227 \| GO` |
-| **CC-1** | 9222 | accounting money/GL unpaid | banking → settlements → factoring | `CC-1 \| WORKING \| NOW=accounting money \| GO` |
-| **CC-2** | 9223 | lists/catalogs unblocking **customers** | drivers catalogs → vendors catalogs | `CC-2 \| WORKING \| NOW=lists customers pickers \| GO` |
+| **Cursor** | 9226 | **drivers Built** identity/EntityLink leftover | customers → vendors → dispatch Built (never accounting EntityLink-only) | `Cursor \| WORKING \| NOW=drivers Built \| GO` |
+| **Codex** | 9228 | **drivers reverse FE** unpaid | customers reverse → vendors reverse → dispatch reverse PRIMARY | `Codex \| WORKING \| NOW=drivers reverse FE \| NEXT=customers reverse \| GO` |
+| **Devin-A** | **9227** | Clicked on **OWNER SEQ** modules (accounting first if unpaid cells). Named `leaf:col`. STARVED skip. **No safety PASS re-loop.** **FAST-MERGE your own PRs.** | next unpaid leaf same module → next OWNER SEQ module | `Devin-A \| WORKING \| NOW=Clicked OWNER SEQ \| chrome=9227 \| GO` |
+| **CC-1** | 9222 | **accounting** money/GL unpaid | banking → factoring → settlements | `CC-1 \| WORKING \| NOW=accounting money \| GO` |
+| **CC-2** | 9223 | lists/catalogs unblocking **drivers** | customers catalogs → vendors catalogs | `CC-2 \| WORKING \| NOW=lists drivers +Add new \| GO` |
 | **CC-3** | — | **OFF. Do not build.** | — | `CC-3 \| OFF \| no dispatch this wave` |
 | **Cascade** | — | **OFF. Do not build.** Merge tips → Cursor lead. | — | `Cascade \| OFF \| no dispatch this wave` |
 

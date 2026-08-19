@@ -1,3 +1,20 @@
+# STATUS-NOW · 2026-08-19T23:45Z
+
+**Lead:** Cursor · FAST-MERGE ON · **OWNER SEQ (urgency):** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch · then rest
+
+| Seat | NOW |
+|------|-----|
+| CC-1 | **accounting** money/GL unpaid · then banking → factoring → settlements |
+| Cursor | **drivers Built** identity · then customers → vendors → dispatch |
+| Codex | **drivers reverse FE** · then customers → vendors → dispatch PRIMARY · no CDP · factoring cap VOID #10144 |
+| CC-2 | lists **drivers** `+ Add new` · then customers → vendors catalogs |
+| Devin-A | Clicked AUTO 9227 on **OWNER SEQ** when healthz JSON 200 · no 502 PRs |
+| CC-3 / Cascade | OFF |
+
+---
+
+# ARCHIVE · older STATUS (VOID if it contradicts 23:45Z)
+
 # STATUS-NOW · 2026-08-19T23:22Z
 
 **Lead:** Cursor · FAST-MERGE ON · **`SEAT-COMMS-LAW.md`** · Live=BLOCKED (API 502 bounce)
@@ -22,7 +39,7 @@ Last-10 merged + CT time lives on **Program → Legacy certification board** (`R
 **Lead:** Cursor · **INSTRUCTIONS COMPLETE** in `CODER-INSTRUCTIONS-NOW.md` · FAST-MERGE ON · continuous · Live=BLOCKED  
 **Bus:** `docs/bus/` after `git pull`. Desktop mirror. Idle = defect. Unmerged focused-green = defect.
 
-**OWNER SEQ:** accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → rest
+**OWNER SEQ:** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch. Then rest.
 
 | Seat | NOW | THEN AUTO |
 |------|-----|-----------|
