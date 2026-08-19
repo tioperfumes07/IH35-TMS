@@ -24,7 +24,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{issue\.driver_id\}\s+name=\{issue\.driver_full_name\}\s+noun="Driver"/],
   ["apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx", /kind="driver"[\s\S]{0,120}id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/RoadServiceList.tsx", /kind="driver" id=\{row\.driver_id\}/],
-  ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", /kind="driver" id=\{row\.driver_id \?\? undefined\}/],
+  ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
   ["apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx", /kind="driver" id=\{row\.driver_id \?\? undefined\}/],
 ];
 

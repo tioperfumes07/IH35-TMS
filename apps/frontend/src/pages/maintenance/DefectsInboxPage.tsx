@@ -63,7 +63,7 @@ export function DefectsInboxPage() {
         render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"),
       },
       { key: "unit_id", label: "Unit", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={row.driver_name} noun="Driver" /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" /> },
       { key: "item_key", label: "Item", sortable: true, render: (row) => row.item_key },
       {
         key: "severity",
