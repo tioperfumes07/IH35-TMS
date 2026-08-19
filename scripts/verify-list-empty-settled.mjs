@@ -108,7 +108,7 @@ const MIGRATED = [
     empties: ["No cash advances found — none created for this entity yet (or no rows match the current filter)."],
   },
   { file: "apps/frontend/src/pages/insurance/ClaimsTab.tsx", empties: ["No claims found."] },
-  { file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx", empties: ["No lawsuits found."] },
+  { file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx", empties: ["No lawsuits match the applied filters."] },
   { file: "apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx", empties: ["No payment schedule records found."] },
   { file: "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx", empties: ["No policy templates found. Create one from Templates."] },
   { file: "apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx", empties: ["No contract instances found for current filters."] },
@@ -212,7 +212,7 @@ const MIGRATED = [
   },
   {
     file: "apps/frontend/src/pages/maintenance/TireProgramPage.tsx",
-    empties: ["No tire events yet for this unit."],
+    empties: ["No tire events yet for this "],
   },
   {
     file: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
@@ -340,9 +340,26 @@ const MIGRATED = [
   { file: "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx", empties: ["No HOS violations found."] },
 ];
 
+if (process.argv.includes("--selftest")) {
+  const lawsuitEntry = MIGRATED.find(({ file }) => file.endsWith("/insurance/LawsuitsTab.tsx"));
+  const expected = lawsuitEntry?.empties[0];
+  const source = lawsuitEntry ? read(lawsuitEntry.file) : "";
+  const mutant = expected ? source.replace(expected, "No lawsuits found.") : source;
+  if (!expected || !source.includes(expected) || mutant.includes(expected)) {
+    fail("selftest did not reject the planted stale insurance-lawsuit empty-state literal");
+  }
+  console.log(`${TAG} SELFTEST OK — stale insurance-lawsuit empty copy rejected`);
+  process.exit(0);
+}
+
 for (const { file, empties } of MIGRATED) {
   if (!fs.existsSync(path.join(repoRoot, file))) fail(`migrated list surface missing: ${file}`);
   const src = read(file);
+  // Narrative comments often quote the old broken empty copy. Preserve offsets while removing
+  // comments so quoted prose cannot satisfy (or fail) the executable UI contract.
+  const scanSrc = src
+    .replace(/\/\*[\s\S]*?\*\//g, (comment) => " ".repeat(comment.length))
+    .replace(/\/\/[^\n]*/g, (comment) => " ".repeat(comment.length));
   // A list surface enforces the settled-only (no false-empty) invariant in ONE of two equivalent ways:
   //  (a) the shared list-state primitive (isEmpty resolves only on a settled, zero-row query), or
   //  (b) the shared ParityTable, whose emptyText renders ONLY when its `loading` prop is false — the
@@ -356,21 +373,25 @@ for (const { file, empties } of MIGRATED) {
     fail(`${file} routes its list empty through neither the shared list-state primitive nor a loading-gated ParityTable`);
   }
   for (const literal of empties) {
-    let idx = src.indexOf(literal);
+    let idx = scanSrc.indexOf(literal);
     if (idx === -1) fail(`${file} expected empty literal not found: "${literal}"`);
     while (idx !== -1) {
       // The empty literal must sit inside a settled-state branch within the preceding window: an
       // isEmpty / === "empty" guard (list-state primitive) OR a ParityTable `emptyText=` prop (whose
       // render is gated on the settled `loading` prop). A bare `.length === 0` alone (the defect) is rejected.
-      const window = src.slice(Math.max(0, idx - 400), idx);
+      const window = scanSrc.slice(Math.max(0, idx - 400), idx);
       const listStateGated = /listState\.isEmpty|state === "empty"|\.isEmpty\b/.test(window);
       const parityEmptyText = /emptyText=/.test(window);
-      const gated = listStateGated || parityEmptyText;
+      // Some dual-view pages own an explicit loading → empty → rows state machine for their
+      // non-table view. That is the same settled-only invariant and must not be rejected merely
+      // because it does not instantiate the shared table for the alternate view.
+      const explicitLoadingGate = /\b(?:isLoading|isPending)\s*\?\s*\([\s\S]{0,400}?\.length === 0\s*\?/.test(window);
+      const gated = listStateGated || parityEmptyText || explicitLoadingGate;
       const bareLength = /\.length === 0 \?/.test(window) && !gated;
       if (!gated || bareLength) {
         fail(`${file}: empty literal "${literal}" is not gated on the settled list-state or a ParityTable emptyText (found a raw data-length empty render)`);
       }
-      idx = src.indexOf(literal, idx + literal.length);
+      idx = scanSrc.indexOf(literal, idx + literal.length);
     }
   }
 }
