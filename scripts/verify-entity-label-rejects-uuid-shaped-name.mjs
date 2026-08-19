@@ -1158,7 +1158,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx",
     bad: /`\(\$\{entry\.unit_number\}\)`/,
-    good: /entityLabel\(\s*entry\.unit_number\s*,\s*entry\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{entry\.unit_id\}\s+name=\{entry\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx",
