@@ -8,6 +8,7 @@ import {
 } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -61,8 +62,8 @@ export function DefectsInboxPage() {
         sortable: true,
         render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"),
       },
-      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> },
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={row.driver_name} noun="Driver" /> },
       { key: "item_key", label: "Item", sortable: true, render: (row) => row.item_key },
       {
         key: "severity",
@@ -77,10 +78,11 @@ export function DefectsInboxPage() {
         key: "follow_up_wo_id",
         label: "Work order",
         render: (row) => row.follow_up_wo_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="work_order"
             id={row.follow_up_wo_id}
-            label={entityLabel(row.follow_up_wo_display_id, row.follow_up_wo_id, "Work order")}
+            name={row.follow_up_wo_display_id}
+            noun="Work order"
             data-testid={`defect-work-order-link-${row.id}`}
           />
         ) : "—",
