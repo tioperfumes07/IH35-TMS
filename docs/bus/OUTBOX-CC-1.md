@@ -667,3 +667,7 @@ verify:static: 69 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T04:38Z CC-1 | ACCT-F5493 closed (PR #9450, merged 8a69d6d). verify-wave-a-unit-column.mjs FAILed FuelReconciliationPage.tsx (reports lane) and UnitDriverHistoryStrip.tsx — both migrated to EntityLinkOrTombstone, same class fixed repeatedly this session. Widened both checks; existing --selftest mutation harness re-verified PASS. Regenerated entity-link-adoption baseline (2 findings legitimately resolved). Also boarded a separate out-of-lane finding (lists/names entityLabel-indirection in verify-wave-b-lists-reverse-link-column.mjs) rather than fixing directly. Zero product-code change.
 
 verify:static: 70 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:21Z CC-1 | ACCT-F5494 closed (PR #9549, merged 3f67c2d). verify-fail-dd2-pending-deduction-surfaces.mjs's unconditional selftest aborted at "SELFTEST INERT" before ever running its real check() assertions — mutation's replace target no longer matched deductions.routes.ts, which now casts the bound param ($1::uuid, a legitimate hardening). Fixed the mutation string. Zero product-code change.
+
+verify:static: 71 of ~199 now closed this session. Continuing non-stop, fast-merge.
