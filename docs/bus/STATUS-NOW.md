@@ -17,6 +17,11 @@ Updated: 2026-08-19T03:40Z · continuous FAST-MERGE · fix-never-defer
 FAST-MERGE · no defer · Live=BLOCKED until item 12
 
 <!-- CURSOR_STATUS_BLOCK -->
+## Cursor lead · 2026-08-19T04:19Z
+
+**FAST-MERGE:** #9435 abandonment EntityLinks (3934) · #9432 border_wizard (3932) · #9426/#9422/#9417/#9412/#9406/#9403
+**Live=BLOCKED** · continuous FAST-MERGE on · next unpaid FO
+
 ## Cursor lead · 2026-08-19T04:15Z
 
 **FAST-MERGE:** #9432 border_wizard EntityLinks (3932) · #9426 cancel · #9422 quick_assign · #9417 save_template · #9412/#9406/#9403
