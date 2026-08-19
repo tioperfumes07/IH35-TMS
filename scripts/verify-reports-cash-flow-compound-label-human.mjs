@@ -27,8 +27,17 @@ function analyze(overrides = {}) {
   }
 
   const page = overrides.page ?? read(PAGE);
-  if (!/formatCashFlowCompoundLabel\(line\.label\)/.test(page)) {
-    failures.push("CashFlowStatementPage Label cell must call formatCashFlowCompoundLabel(line.label)");
+  // ACCT-F5551: this page has TWO independent render sites for the Label cell — the print/PDF HTML
+  // string builder and the live JSX table row. A bare `.test()` only checks the pattern appears
+  // SOMEWHERE in the file, so a regression at one site (the other left correct) escaped detection
+  // entirely — confirmed live: this guard's own selftest plants the mutation with a non-global
+  // `.replace()` (first occurrence only) and the resulting "bad" fixture still passed analyze()
+  // because the second, untouched occurrence satisfied the presence check. Require both call sites.
+  const callSites = (page.match(/formatCashFlowCompoundLabel\(line\.label\)/g) || []).length;
+  if (callSites < 2) {
+    failures.push(
+      `CashFlowStatementPage Label cell must call formatCashFlowCompoundLabel(line.label) at both the print/PDF row builder and the live table row (found ${callSites})`,
+    );
   }
   if (/\{line\.label \|\| "—"\}/.test(page)) {
     failures.push("Label cell must not paint raw line.label");
@@ -52,11 +61,27 @@ function fail(msg) {
  */
 function selftest() {
   const originalPage = read(PAGE);
-  const bad = originalPage.replace(/formatCashFlowCompoundLabel\(line\.label\)/, 'line.label || "—"');
-  if (bad === originalPage) fail("selftest could not plant raw line.label");
-  const planted = analyze({ page: bad });
-  if (!planted.some((m) => /formatCashFlowCompoundLabel|raw line\.label/.test(m))) {
-    fail(`selftest expected page fail; got: ${planted.join("; ")}`);
+
+  // Mutation 1: regress the FIRST call site (print/PDF row builder) only.
+  const badFirst = originalPage.replace(/formatCashFlowCompoundLabel\(line\.label\)/, 'line.label || "—"');
+  if (badFirst === originalPage) fail("selftest could not plant raw line.label at the first call site");
+  const plantedFirst = analyze({ page: badFirst });
+  if (!plantedFirst.some((m) => /formatCashFlowCompoundLabel|raw line\.label/.test(m))) {
+    fail(`selftest expected first-site page fail; got: ${plantedFirst.join("; ")}`);
+  }
+
+  // Mutation 2: regress the SECOND call site (live JSX table row) only, leaving the first intact —
+  // this is the exact shape a naive presence-only check missed (ACCT-F5551).
+  const firstIndex = originalPage.indexOf("formatCashFlowCompoundLabel(line.label)");
+  const secondIndex = originalPage.indexOf("formatCashFlowCompoundLabel(line.label)", firstIndex + 1);
+  if (secondIndex === -1) fail("selftest could not locate a second call site to mutate");
+  const badSecond =
+    originalPage.slice(0, secondIndex) +
+    'line.label || "—"' +
+    originalPage.slice(secondIndex + "formatCashFlowCompoundLabel(line.label)".length);
+  const plantedSecond = analyze({ page: badSecond });
+  if (!plantedSecond.some((m) => /formatCashFlowCompoundLabel|raw line\.label/.test(m))) {
+    fail(`selftest expected second-site page fail; got: ${plantedSecond.join("; ")}`);
   }
 
   const good = analyze();
