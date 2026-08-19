@@ -26,6 +26,15 @@ const FILES = {
 };
 const LABEL = "verify-safety-trailer-incident-wiring";
 
+/** Reverse ?trailer_id= seed — legacy setTrailerFilter* or staged applied.trailerId. */
+function seedsTrailerFromUrl(src) {
+  return (
+    /setTrailerFilter(?:State)?\(trailerIdFromUrl\)/.test(src) ||
+    /trailerId:\s*trailerIdFromUrl/.test(src) ||
+    /\{\s*trailerId:\s*trailerIdFromUrl\s*\}/.test(src)
+  );
+}
+
 export function audit(src) {
   const failures = [];
   if (!/trailer_id:\s*trailerId \|\| null/.test(src.accident)) {
@@ -37,7 +46,7 @@ export function audit(src) {
   if (!/kind="trailer"/.test(src.accidentsList) || !/key:\s*"trailer_id"/.test(src.accidentsList)) {
     failures.push(`${FILES.accidentsList}: list must show Trailer column EntityLink kind=trailer`);
   }
-  if (!/trailerIdFromUrl/.test(src.accidentsList) || !/setTrailerFilter\(trailerIdFromUrl\)/.test(src.accidentsList)) {
+  if (!/trailerIdFromUrl/.test(src.accidentsList) || !seedsTrailerFromUrl(src.accidentsList)) {
     failures.push(`${FILES.accidentsList}: ?trailer_id= reverse deep-link must seed trailerFilter`);
   }
   if (!/dataTestId="idvr-filter-trailer"/.test(src.idvrList)) {
@@ -46,7 +55,7 @@ export function audit(src) {
   if (!/kind="trailer"/.test(src.idvrList) || !/key:\s*"trailer_id"/.test(src.idvrList)) {
     failures.push(`${FILES.idvrList}: DVIR list must show Trailer column EntityLink kind=trailer`);
   }
-  if (!/setTrailerFilter\(trailerIdFromUrl\)/.test(src.idvrList)) {
+  if (!seedsTrailerFromUrl(src.idvrList)) {
     failures.push(`${FILES.idvrList}: ?trailer_id= reverse deep-link must seed trailerFilter`);
   }
   if (!/kind="trailer"/.test(src.cluster)) {
@@ -71,7 +80,7 @@ export function audit(src) {
   if (!/key:\s*"trailer_id"/.test(src.dotInspections) || !/kind="trailer"/.test(src.dotInspections)) {
     failures.push(`${FILES.dotInspections}: list must show Trailer EntityLink column`);
   }
-  if (!/setTrailerFilter\(trailerIdFromUrl\)/.test(src.dotInspections)) {
+  if (!seedsTrailerFromUrl(src.dotInspections)) {
     failures.push(`${FILES.dotInspections}: ?trailer_id= reverse deep-link must seed trailerFilter`);
   }
   if (!/trailer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\),\n\s*inspector_name:/.test(src.dotInspectionsApi)) {
@@ -93,7 +102,7 @@ export function audit(src) {
   if (!/key:\s*"trailer_id"/.test(src.cargoClaims) || !/kind="trailer"/.test(src.cargoClaims)) {
     failures.push(`${FILES.cargoClaims}: list must show Trailer EntityLink column`);
   }
-  if (!/setTrailerFilter\(trailerIdFromUrl\)/.test(src.cargoClaims)) {
+  if (!seedsTrailerFromUrl(src.cargoClaims)) {
     failures.push(`${FILES.cargoClaims}: ?trailer_id= reverse deep-link must seed trailerFilter`);
   }
   return failures;
@@ -122,17 +131,17 @@ if (process.argv.includes("--selftest")) {
     ["accident-submit", "accident", /trailer_id:\s*trailerId \|\| null/, "trailer_id: null"],
     ["list-filter", "accidentsList", /dataTestId="accidents-trailer-filter"/, 'dataTestId="accidents-unit-filter"'],
     ["list-column", "accidentsList", /key:\s*"trailer_id"/, 'key: "unit_id"'],
-    ["list-seed", "accidentsList", /setTrailerFilter\(trailerIdFromUrl\)/, "setUnitFilter(trailerIdFromUrl)"],
+    ["list-seed", "accidentsList", /trailerId:\s*trailerIdFromUrl/g, "trailerId: unitIdFromUrl"],
     ["idvr-filter", "idvrList", /dataTestId="idvr-filter-trailer"/, 'dataTestId="idvr-filter-unit"'],
     ["idvr-column", "idvrList", /key:\s*"trailer_id"/, 'key: "unit_id"'],
-    ["idvr-seed", "idvrList", /setTrailerFilter\(trailerIdFromUrl\)/, "setUnitFilter(trailerIdFromUrl)"],
+    ["idvr-seed", "idvrList", /trailerId:\s*trailerIdFromUrl/g, "trailerId: unitIdFromUrl"],
     ["cluster-kind", "cluster", /kind="trailer"/g, 'kind="unit"'],
     ["cluster-required-check", "cluster", /requiredExtraFields\.includes\("trailer_id"\)/g, "false"],
     ["interchanges-required", "interchanges", /requiredExtraFields:\s*\["trailer_id"\]/, "requiredExtraFields: []"],
     ["dot-create-picker", "dotInspections", /data-testid="dot-inspection-trailer-picker"/, 'data-testid="dot-inspection-unit-picker"'],
     ["dot-create-submit", "dotInspections", /trailer_id:\s*form\.trailer_id \|\| undefined/, "unit_id: form.unit_id || undefined"],
     ["dot-list-filter", "dotInspections", /dataTestId="dot-inspections-trailer-filter"/, 'dataTestId="dot-inspections-filter-unit"'],
-    ["dot-list-seed", "dotInspections", /setTrailerFilter\(trailerIdFromUrl\)/, "setUnitFilter(trailerIdFromUrl)"],
+    ["dot-list-seed", "dotInspections", /setTrailerFilterState\(trailerIdFromUrl\)/, "setUnitFilterState(trailerIdFromUrl)"],
     ["dot-api-schema", "dotInspectionsApi", /trailer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\),\n\s*inspector_name:/, "inspector_name:"],
     ["dot-api-insert", "dotInspectionsApi", /unit_id, trailer_id, inspection_date/, "unit_id, inspection_date"],
     ["dot-api-bind", "dotInspectionsApi", /body\.data\.trailer_id \?\? null/g, "body.data.unit_id ?? null"],
