@@ -105,10 +105,22 @@ export function collectTrialBalanceProblems(section) {
   return problems;
 }
 
-/** Apply button must route through shared navy primary Button component. */
+/**
+ * Apply for both period-range and as-of controls must be real and governed — either the original
+ * hand-rolled navy Button pattern, OR the CLS-FILTER-GEAR-APPLY shared pattern (CollapsedListFilters
+ * + useStagedListFilters, Apply wired via onApply={x.apply}) that legitimately replaced it. The two
+ * separate setApplied/setAppliedAsOf state setters this guard originally pinned were consolidated
+ * into one appliedFilter object staged together — both controls Apply through the SAME governed
+ * panel, not because Apply was dropped for either one.
+ */
 export function collectNavyProblems(src) {
   const problems = [];
   const body = stripComments(src);
+  const hasGovernedApply =
+    body.includes("CollapsedListFilters") &&
+    body.includes("useStagedListFilters") &&
+    /onApply=\{[^}]*\.apply\}/.test(body);
+  if (hasGovernedApply) return problems;
   if (!body.includes('from "../../components/Button"')) {
     problems.push(`${TARGET}: must import navy Button for Apply controls`);
   }
@@ -166,12 +178,20 @@ function selftest() {
     </div>
   `;
   const goodNavy = `<Button size="sm" onClick={() => setApplied({ ...period })}>Apply</Button>`;
+  const goodGovernedApply = `
+    import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+    const staged = useStagedListFilters({ applied: appliedFilter, empty: defaults, onApply: (next) => setAppliedFilter(next) });
+    <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} />
+  `;
+  const brokenGovernedApply = goodGovernedApply.replace("onApply={staged.apply}", "onApply={() => {}}");
   const cases = [
     { name: "flat StatementSection", fn: () => collectStatementSectionProblems(goodStatement), want: 0 },
     { name: "nested StatementSection tiles", fn: () => collectStatementSectionProblems(badStatement), wantMin: 2 },
     { name: "flat trial balance section", fn: () => collectTrialBalanceProblems(goodTb), want: 0 },
     { name: "nested trial balance footer", fn: () => collectTrialBalanceProblems(badTb), wantMin: 1 },
     { name: "navy Apply via Button import", fn: () => collectNavyProblems(`import { Button } from "../../components/Button";\n${goodNavy}\n<Button size="sm" onClick={() => setAppliedAsOf(asOf)}>Apply</Button>`), want: 0 },
+    { name: "governed Apply via CollapsedListFilters (real page's shape)", fn: () => collectNavyProblems(goodGovernedApply), want: 0 },
+    { name: "governed Apply present but not wired to staged.apply must still fail", fn: () => collectNavyProblems(brokenGovernedApply), wantMin: 2 },
   ];
   let failed = 0;
   for (const c of cases) {
