@@ -344,3 +344,10 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=67be15a | mutation=none | NEXT=safety.safety.unpaid.dvir
+Devin-A | LIVE STARVED | module=safety | leaf=safety.unpaid.dvir | URL=https://app.ih35dispatch.com/safety/dvir | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/home ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | healthz=67be15a | mutation=none | NEXT=safety.safety.unpaid.accidents
