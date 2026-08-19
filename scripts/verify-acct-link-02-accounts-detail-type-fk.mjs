@@ -107,11 +107,17 @@ export function findProblems(src) {
     if (!/value=\{form\.detail_type_id/.test(drawer)) {
       problems.push(`${FILES.drawer}: Detail Type <select> must bind value to detail_type_id`);
     }
-    if (!/option key=\{dt\.id\} value=\{dt\.id\}/.test(drawer) && !/<option key=\{dt\.id\} value=\{dt\.id\}/.test(drawer)) {
-      // allow multiline option tags
-      if (!/value=\{dt\.id\}/.test(drawer)) {
-        problems.push(`${FILES.drawer}: Detail Type options must use dt.id as value (FK wire)`);
-      }
+    // LST-PICKER-01 migrated the raw <select><option> away to the governed ReferenceSelect
+    // component (inline "+ Add new" creator, entity-scoped) — its options prop is a plain object
+    // array `{ value: dt.id, label: dt.name }`, not a JSX `<option value={dt.id}>` attribute. The
+    // FK wire is the same (dt.id as the option's value), just expressed as an object property.
+    if (
+      !/option key=\{dt\.id\} value=\{dt\.id\}/.test(drawer) &&
+      !/<option key=\{dt\.id\} value=\{dt\.id\}/.test(drawer) &&
+      !/value=\{dt\.id\}/.test(drawer) &&
+      !/\{\s*value:\s*dt\.id,\s*label:\s*dt\.name\s*\}/.test(drawer)
+    ) {
+      problems.push(`${FILES.drawer}: Detail Type options must use dt.id as value (FK wire)`);
     }
     const typeChange = drawer.indexOf('setField("account_type", e.target.value)');
     const typeBlock = typeChange >= 0 ? drawer.slice(typeChange, typeChange + 280) : "";
