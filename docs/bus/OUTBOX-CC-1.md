@@ -631,3 +631,7 @@ verify:static: 60 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:51Z CC-1 | ACCT-F5484 closed (PR #9396, merged d596618). verify-aging-report-reverse-leaves.mjs's company-scoping checks required the pre-ACCT-F5471 appliedAsOf variable; real call sites now use appliedFilters.asOfDate (staged-filter migration this session). A second, independent guard file pinned to the same pre-migration shape as verify-accounting-reports-ui-contract.mjs (fixed earlier as ACCT-F5471). Widened both checks. Existing --self-test re-verified PASS. Zero product-code change.
 
 verify:static: 61 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:54Z CC-1 | ACCT-F5485 closed (PR #9401, merged 5c33205). verify-cancellations-report-wired.mjs's 2 checks pinned weaker/differently-shaped code than what's real: renderer now wraps the label in entityLabel(...) + withholds the drill for an unresolved tombstone (stronger); sentinel now written as its logically-equivalent De Morgan early-return guard, matching the sibling formatAsDate branch's style. Widened both checks. Also found and fixed: the --selftest's own "sentinel safety" mutation still targeted the old positive-form literal (silent no-op) — retargeted it to the real De Morgan form. Zero product-code change.
+
+verify:static: 62 of ~199 now closed this session. Continuing non-stop, fast-merge.
