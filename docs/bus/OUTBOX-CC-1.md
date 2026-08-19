@@ -635,3 +635,7 @@ verify:static: 61 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:54Z CC-1 | ACCT-F5485 closed (PR #9401, merged 5c33205). verify-cancellations-report-wired.mjs's 2 checks pinned weaker/differently-shaped code than what's real: renderer now wraps the label in entityLabel(...) + withholds the drill for an unresolved tombstone (stronger); sentinel now written as its logically-equivalent De Morgan early-return guard, matching the sibling formatAsDate branch's style. Widened both checks. Also found and fixed: the --selftest's own "sentinel safety" mutation still targeted the old positive-form literal (silent no-op) — retargeted it to the real De Morgan form. Zero product-code change.
 
 verify:static: 62 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T04:00Z CC-1 | ACCT-F5486 closed (PR #9408, merged 83f85dc). verify-wave-a-customer-column.mjs FAILed SubmissionWorkqueue.tsx (multi-line JSX false positive); verify-wave-a-customer-all-modules.mjs FAILed ManagementReportPackagePage.tsx (extracted ManagementCustomerCell component delegate, real FK preserved). Widened both checks. Boarded 2 genuinely out-of-lane findings from the same composed-guard run (legal/contracts real gap; lists/names false positive) rather than fixing directly. Existing --selftests re-verified; load-bearing proof for new branch done by hand. Zero product-code change.
+
+verify:static: 63 of ~199 now closed this session. Continuing non-stop, fast-merge.
