@@ -4321,5 +4321,10 @@
     "guard": "verify-deadhead-optimizer-unit-entitylink",
     "claimer": "cursor",
     "claimed_at": "2026-08-19"
+  },
+  "3948": {
+    "guard": "verify-load-settlement-tab-driver-entitylink",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-19"
   }
 }
