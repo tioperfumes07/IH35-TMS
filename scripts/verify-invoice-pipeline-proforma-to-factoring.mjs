@@ -16,6 +16,12 @@ const FROM_LOAD = path.join(ROOT, "apps/backend/src/accounting/from-load.ts");
 const CONVERT = path.join(ROOT, "apps/backend/src/accounting/proforma-convert.service.ts");
 const BOOK = path.join(ROOT, "apps/backend/src/dispatch/book-load.service.ts");
 const LOADS = path.join(ROOT, "apps/backend/src/dispatch/loads.routes.ts");
+// ACCT-F351 moved the convertProformaToOfficial -> sendDraftInvoice call pair OUT of loads.routes.ts
+// (which still triggers the delivered_pending_docs transition and now just calls
+// latchOnDeliveryEvidence) and INTO this dedicated latch module — see loads.routes.ts's own inline
+// comment at the call site. The pipeline is one coupled unit across both files; check() below reads
+// them concatenated so the requirement still holds without demanding they live in one file.
+const LATCH = path.join(ROOT, "apps/backend/src/dispatch/delivery-evidence-latch.ts");
 const INVOICES = path.join(ROOT, "apps/backend/src/accounting/invoices.routes.ts");
 const HELD = path.join(ROOT, "db/migrations/.held-migrations.json");
 
@@ -52,6 +58,9 @@ export function check(sources) {
     problems.push("bookLoad must create proforma when INVOICE_PROFORMA_PIPELINE_ENABLED");
   }
 
+  // `loads` here is loads.routes.ts + delivery-evidence-latch.ts concatenated (see LATCH comment
+  // above) — ACCT-F351 split the transition trigger from the convert+send call pair across the
+  // two files, so the checks below hold for the coupled pipeline, not a single file.
   if (!loads) problems.push("missing loads.routes.ts");
   else {
     if (!/convertProformaToOfficial/.test(loads) || !/delivered_pending_docs/.test(loads)) {
@@ -137,7 +146,7 @@ const problems = check({
   fromLoad: read(FROM_LOAD),
   convert: read(CONVERT),
   book: read(BOOK),
-  loads: read(LOADS),
+  loads: read(LOADS) + "\n" + read(LATCH),
   invoices: read(INVOICES),
   held: read(HELD),
 });
