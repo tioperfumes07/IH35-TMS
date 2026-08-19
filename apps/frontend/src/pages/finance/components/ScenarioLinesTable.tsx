@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
@@ -48,11 +48,11 @@ export function ScenarioLinesTable({ lines, operatingCompanyId, editable, invali
         label: "Linked to",
         render: (row) =>
           row.customer_id ? (
-            <EntityLink kind="customer" id={row.customer_id} />
+            <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
           ) : row.vendor_id ? (
-            <EntityLink kind="vendor" id={row.vendor_id} />
+            <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" />
           ) : row.gl_account_id ? (
-            <EntityLink kind="account" id={row.gl_account_id} />
+            <EntityLinkOrTombstone kind="account" id={row.gl_account_id} name={row.account_name} noun="Account" />
           ) : (
             <span className="text-slate-400">—</span>
           ),
