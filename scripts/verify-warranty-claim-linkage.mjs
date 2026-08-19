@@ -17,10 +17,11 @@ function audit(s) {
   const failures = [];
   if (!/EntityPicker[\s\S]{0,400}kind="work_order"[\s\S]{0,400}dataField="warranty-claim-work-order"/.test(s.page)) failures.push("claim creator must use the canonical work-order picker");
   if (!/work_order_id:\s*claimDraft\.work_order_id \|\| undefined/.test(s.page)) failures.push("claim creator must submit the selected work_order_id");
-  if (!/<EntityLink kind="work_order"[^>]+row\.work_order_id/.test(s.page)) failures.push("claim list must drill to its work order");
+  if (!/<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/.test(s.page)) failures.push("claim list must use an unresolved-safe work-order drill");
   if (!/wo\.display_id AS work_order_display_id/.test(s.route)) failures.push("claim list must project the work-order display id");
   if (!/LEFT JOIN maintenance\.work_orders wo[\s\S]{0,180}wo\.operating_company_id = wc\.operating_company_id/.test(s.route)) failures.push("claim list work-order label join must be company scoped");
-  if (!/work_order_display_id\?: string \| null/.test(s.api) || !/entityLabel\(row\.work_order_display_id, row\.work_order_id, "Work order"\)/.test(s.page)) failures.push("typed work-order display id must reach the mounted claim list");
+  if (!/work_order_display_id\?: string \| null/.test(s.api) || !/name=\{row\.work_order_display_id\}/.test(s.page)) failures.push("typed work-order display id must reach the mounted claim list");
+  if (!/<EntityLinkOrTombstone kind="vendor" id=\{row\.vendor_id\} name=\{row\.vendor_name\} noun="Vendor"/.test(s.page)) failures.push("nullable vendor identity must use the unresolved-safe canonical drill");
   if (!/row\.id === highlightedClaimId/.test(s.page)) failures.push("claim list must honor warranty_claim deep links");
   if (!/AS warranty_ok/.test(s.route) || !/AS work_order_ok/.test(s.route) || !/AS vendor_ok/.test(s.route) || !/linked_entity_not_in_operating_company/.test(s.route)) failures.push("claim writer must validate warranty/work-order/vendor before insert");
   if (!/if \(body\.vendor_id\)[\s\S]{0,500}FROM mdata\.vendors[\s\S]{0,250}operating_company_id = \$2::uuid[\s\S]{0,180}deactivated_at IS NULL[\s\S]{0,250}invalid_vendor/.test(s.route)) failures.push("claim update must validate an active tenant vendor before replacing vendor_id");
@@ -40,7 +41,8 @@ if (process.argv.includes("--selftest")) {
     ["payload", "page", /work_order_id:\s*claimDraft\.work_order_id \|\| undefined/, "work_order_id: undefined"],
     ["WO label projection", "route", /wo\.display_id AS work_order_display_id/, "NULL AS work_order_display_id"],
     ["WO label scope", "route", /wo\.operating_company_id = wc\.operating_company_id/, "TRUE"],
-    ["WO label consumer", "page", /entityLabel\(row\.work_order_display_id, row\.work_order_id, "Work order"\)/, 'entityLabel(null, row.work_order_id, "Work order")'],
+    ["WO label consumer", "page", /name=\{row\.work_order_display_id\}/, "name={null}"],
+    ["vendor tombstone", "page", /EntityLinkOrTombstone kind="vendor" id=\{row\.vendor_id\} name=\{row\.vendor_name\} noun="Vendor"/, 'EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name}'],
     ["writer", "route", /AS work_order_ok/, "AS wo_ok"],
     ["update writer", "route", /(if \(body\.vendor_id\)[\s\S]{0,500})operating_company_id = \$2::uuid/, "$1TRUE"],
     ["update error", "route", /outcome\.kind === "invalid_vendor"/, 'outcome.kind === "ok"'],
