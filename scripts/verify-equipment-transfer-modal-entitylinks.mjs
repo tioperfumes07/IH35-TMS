@@ -22,13 +22,18 @@ function assert(cond, msg) {
 
 function check() {
   const src = fs.readFileSync(FILE, "utf8");
-  assert(/EntityLink/.test(src), "must import/use EntityLink");
+  assert(/EntityLinkOrTombstone/.test(src), "must import/use EntityLinkOrTombstone");
   assert(
     /data-testid=["']equipment-transfer-modal-entitylinks["']/.test(src),
     "must expose equipment-transfer-modal-entitylinks"
   );
   assert(/kind=["']trailer["']/.test(src), "must EntityLink kind=trailer");
   assert(/kind=["']driver["']/.test(src), "must EntityLink kind=driver");
+  assert(/onChange=\{\(next, option\)/.test(src), "pickers must retain the canonical selected option label");
+  assert(/id=\{equipmentUuid\}\s+name=\{equipmentOption\?\.label\}/.test(src), "trailer FK must be coupled to its selected label");
+  assert(/id=\{fromDriver\}\s+name=\{fromDriverOption\?\.label\}/.test(src), "from-driver FK must be coupled to its selected label");
+  assert(/id=\{toDriver\}\s+name=\{toDriverOption\?\.label\}/.test(src), "to-driver FK must be coupled to its selected label");
+  assert(!/entityLabel\(null,\s*(?:equipmentUuid|fromDriver|toDriver)/.test(src), "must not fabricate selected labels from UUIDs");
 }
 
 function selftest() {
@@ -48,6 +53,18 @@ function selftest() {
     fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when entitylinks testid removed");
+  const rawUuid = original.replace(/name=\{fromDriverOption\?\.label\}/, 'name={fromDriver}');
+  assert(rawUuid !== original, "--selftest label plant must match");
+  fs.writeFileSync(FILE, rawUuid);
+  let labelFailed = false;
+  try {
+    check();
+  } catch {
+    labelFailed = true;
+  } finally {
+    fs.writeFileSync(FILE, original);
+  }
+  assert(labelFailed, "--selftest expected FAIL when UUID replaces selected label");
   check();
   console.log(`${LABEL}: OK — selftest PASS`);
 }
