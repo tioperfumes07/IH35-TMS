@@ -28,6 +28,11 @@
       "label": "Unit"
     },
     {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
       "id": "load",
       "group": "linkage",
       "label": "Load"
