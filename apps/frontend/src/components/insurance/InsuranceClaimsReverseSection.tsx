@@ -185,10 +185,11 @@ export function InsuranceClaimsReverseSection({
         <ul className="space-y-2">
           {claims.map((claim) => (
             <li key={claim.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="claim"
                 id={claim.id}
-                label={entityLabel(claim.claim_number, claim.id, "Claim")}
+                name={entityLabel(claim.claim_number, claim.id, "Claim")}
+                noun="Claim"
                 className="font-semibold text-slate-700"
               />
               <span className="ml-2 text-gray-600">{claim.status}</span>
