@@ -31,8 +31,8 @@ function failures(s = {}) {
     ["unit document exact drill", u.includes('kind="document" id={row.file_id}')],
     ["quick availability driver FK", e.includes('{ key: "assigned_driver_id", label: "Default Driver", type: "driver", tab: "Quick-availability" }')],
     ["default-driver reverse unit drill", da.includes('kind="unit"') && da.includes('id={String(def.unit_id)}')],
-    ["trailer assignment unit drill", ta.includes('kind="unit"') && ta.includes('id={String(unit.unit_id)}')],
-    ["trailer assignment load drill", ta.includes('kind="load"') && ta.includes('id={String(load.load_id)}')],
+    ["trailer assignment unit drill", ta.includes('EntityLinkOrTombstone') && ta.includes('kind="unit"') && ta.includes('id={String(unit.unit_id)}') && ta.includes('name={unit.unit_number}')],
+    ["trailer assignment load drill", ta.includes('EntityLinkOrTombstone') && ta.includes('kind="load"') && ta.includes('id={String(load.load_id)}') && ta.includes('name={load.load_number}')],
     ["trailer maintenance WO drill", /kind="work_order"/.test(m) || m.includes('/maintenance/work-orders/${String(wo.wo_id)}')],
     ["trailer service event drill", tl.includes("navigate(event.detail_path)")],
     ["trailer insurance reverse filter", /InsuranceClaimsReverseSection[\s\S]{0,180}filter=\{\{ trailer_id: id \}\}/.test(tp)],
@@ -48,6 +48,7 @@ if (process.argv.includes("--selftest")) {
     failures({ unitDocs: unitDocs.replace('kind="document" id={row.file_id}', 'kind="unit" id={row.file_id}') }).includes("unit document exact drill"),
     failures({ driverAssignment: driverAssignment.replace('id={String(def.unit_id)}', 'id={driverId}') }).includes("default-driver reverse unit drill"),
     failures({ trailerAssignment: trailerAssignment.replace('id={String(unit.unit_id)}', 'id={String(load.load_id)}') }).includes("trailer assignment unit drill"),
+    failures({ trailerAssignment: trailerAssignment.replace('name={load.load_number}', 'name={load.load_id}') }).includes("trailer assignment load drill"),
     failures({ maintenance: maintenance.replaceAll('kind="work_order"', 'kind="unit"') }).includes("trailer maintenance WO drill"),
     failures({ trailerProfile: trailerProfile.replace('filter={{ trailer_id: id }}', 'filter={{ unit_id: id }}') }).includes("trailer insurance reverse filter"),
     failures({ trailerDocs: trailerDocs.replace('kind="document" id={String(d.file_id)}', 'kind="trailer" id={String(d.file_id)}') }).includes("trailer document exact drill"),
@@ -57,7 +58,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-fleet-reverse-link-remainder selftest FAIL — mutations ${checks.map((ok, index) => ok ? null : index + 1).filter(Boolean).join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-fleet-reverse-link-remainder selftest PASS — 7/7 drill/applicability mutations red");
+  console.log("verify-fleet-reverse-link-remainder selftest PASS — 8/8 drill/applicability mutations red");
   process.exit(0);
 }
 

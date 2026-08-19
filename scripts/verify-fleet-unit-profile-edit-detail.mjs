@@ -71,8 +71,8 @@ export function audit(src) {
   if (!/breadcrumb=\{\["Fleet", "Units", unitLabel\]\}/.test(src.unitDetail) || !/title=\{unitLabel\}/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: breadcrumb/title must consume resolved unit identity`);
   if (!/targetLabel=\{unitLabel\}/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: tasks must consume resolved unit identity`);
   if (!/unitQuery\.isError[\s\S]{0,220}<ListErrorState/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: unit identity outage must be explicit and retryable`);
-  if (!/unit\?\.unit_id \?[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}/.test(src.assignment)) {
-    failures.push(`${FILES.assignment}: trailer.profile.assignment must render a real EntityLink to the attached unit`);
+  if (!/unit\?\.unit_id \?[\s\S]{0,120}EntityLinkOrTombstone[\s\S]{0,100}id=\{String\(unit\.unit_id\)\}[\s\S]{0,80}name=\{unit\.unit_number\}/.test(src.assignment)) {
+    failures.push(`${FILES.assignment}: trailer.profile.assignment must render a real or tombstoned attached-unit drill`);
   }
   return failures;
 }
