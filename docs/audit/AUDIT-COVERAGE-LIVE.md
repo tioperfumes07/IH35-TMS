@@ -70,15 +70,15 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 
 | Metric | Value | As of |
 |---|---|---|
-| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-18 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-18 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-18 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-18 |
-| Rows in this file | **1835** | 2026-08-18 |
-| Rows `FAIL` + `OPEN` | **1** | 2026-08-18 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-18 |
-| Rows `VERIFIED` by GUARD | **156** | 2026-08-18 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1100 | 2026-08-18 |
+| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-19 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-19 |
+| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-19 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-19 |
+| Rows in this file | **1836** | 2026-08-19 |
+| Rows `FAIL` + `OPEN` | **1** | 2026-08-19 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-19 |
+| Rows `VERIFIED` by GUARD | **156** | 2026-08-19 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1101 | 2026-08-19 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1925,3 +1925,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 20560 | dispatch · planning.reserve Book Load Leaves/cells Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `planning.reserve:driver` · `planning.reserve:customer` · `planning.reserve:unit` · `planning.reserve:trailer` · `planning.reserve:load` · `planning.reserve:qbo_chrome` · `planning.reserve:connectivity`. Selected-USMCA `/dispatch/book-load` mounted Book Load reserve wizard (Load # `L-20260818-0010`) with Customer/Truck/Trailer/Driver pickers, trip type NB/TR/SB, Cancel without Book. Supersedes shorthand `**Leaves:**` row 1431 for Box4 explicit Leaves/cells credit. `planning.reserve:reverse_link` intentionally unpaid this walk — no EntityLink drill off the open draft without Book mutation. No book/dispatch/money mutation. AUDIT id unique (max+160). | LIVE PASS · 7 EXACT CELLS · reverse unpaid | CDP glass; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 20720 | dispatch · queues.alerts load+connectivity+reverse Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `queues.alerts:load` · `queues.alerts:connectivity` · `queues.alerts:reverse_link`. Selected-USMCA `/dispatch/alerts` mounted Dispatch alerts KPIs; drilled Late arrivals → `/dispatch/alerts/late-arrivals` with load EntityLinks; load `L-20260810-0003` → `/dispatch/loads/96ecc9cb-…` mounted. No alert/load mutation. AUDIT id unique (max+160). | LIVE PASS · 3 EXACT CELLS | CDP glass; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 20880 | dispatch · queues.live_map connectivity Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `queues.live_map:connectivity`. Selected-USMCA `/dispatch/geofencing` mounted Geofences with honest empty `No geofences configured yet. Use the form above to create one.` Required cell is connectivity only. No geofence mutation. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL | CDP glass; LIVE 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 21040 | safety · accident list linkage and exact reverse Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `accidents.list:driver` · `accidents.list:unit` · `accidents.list:load` · `accidents.list:reverse_link`. Selected-USMCA `/safety/accidents` rendered persisted accident `b99b9461-e593-4376-a501-21bb36453a41` with human EntityLinks for driver `Juan USMCA-Battery`, unit `TEST-UNIT-20260806-01`, and load `L-20260806-0005`; each canonical target mounted. The unit profile's Accidents reverse section linked back to `/safety/accidents?accident_id=b99b9461-e593-4376-a501-21bb36453a41`; after #9198 the exact company-scoped detail read opened `Accident Damage Details` for that record and removed the query parameter only after drawer hydration. Existing positive data only; no create, edit, upload, accident, driver, unit, load, backend, database, QBO, GL, JE, or money mutation occurred. | LIVE PASS · 4 EXACT CELLS | CDP glass; PR #9198 @ b3147fa52; selected USMCA; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
