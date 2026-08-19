@@ -1,9 +1,9 @@
-# STATUS-NOW · 2026-08-19T13:22Z · Cursor lead · MODULE SHARE · BOX4 URGENT
+# STATUS-NOW · 2026-08-19T15:13Z · Cursor lead · BOX4 3103/3413
 
 
 **CHANNEL FIX:** Canonical bus = `docs/bus/` (pull main). Desktop mirror was diverging — seats MUST `git pull` for INBOX.
 **healthz (API):** `9e0d0dd` · tip advancing · Live=BLOCKED until ancestry.
-**METER:** `program.matrix.all` Box4 Live ≈ **3087/3413**. Move the numerator. PR volume ≠ success.
+**METER:** `program.matrix.all` Box4 Live ≈ **3103/3413**. Move the numerator. PR volume ≠ success.
 
 **Law:** Fix never defer · FAST-MERGE · continuous · Jorge is NOT the bus · Live=BLOCKED (deploy lag ≠ stop Leaves)
 
