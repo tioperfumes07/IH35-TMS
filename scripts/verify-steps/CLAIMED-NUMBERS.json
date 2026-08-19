@@ -2402,6 +2402,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-activity-log-staged-filters"
   },
+  "3974": {
+    "claimed_at": "2026-08-19",
+    "claimed_by": "cursor",
+    "purpose": "verify-accidents-staged-filters"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
