@@ -101,6 +101,13 @@ export function assertAssetSafetyReverse(sources) {
   if (!/entityLabel\(dvir\.follow_up_wo_display_id, s\(dvir\.follow_up_wo_id\), "Work order"\)/.test(src[SECTION])) {
     problems.push(`${SECTION}: mounted DVIR reverse link does not consume the canonical work-order display identity.`);
   }
+  for (const [kind, noun] of [["accident", "Accident"], ["dot_inspection", "DOT inspection"], ["dvir", "DVIR"], ["work_order", "Work order"]]) {
+    const pattern = new RegExp(`EntityLinkOrTombstone[\\s\\S]{0,180}kind="${kind}"[\\s\\S]{0,220}noun="${noun}"`);
+    if (!pattern.test(src[SECTION])) problems.push(`${SECTION}: ${kind} rows must use the governed resolved/tombstoned drill`);
+  }
+  if (!/EntityLinkOrTombstone[\s\S]{0,160}kind=\{kind\.type\}[\s\S]{0,220}id=\{s\(incident\.id\) \|\| null\}/.test(src[SECTION])) {
+    problems.push(`${SECTION}: incident rows must preserve nullable IDs through the governed tombstone drill`);
+  }
   // Band A Built — unit.profile.safety_reverse owes driver drills when the API already returns driver_id.
   // Plain-text driver_name on accidents/DVIRs was the remaining reverse gap after WO EntityLinks shipped.
   if (!/EntityLinkOrTombstone[\s\S]{0,220}kind="driver"[\s\S]{0,220}accident\.driver_id|accident\.driver_id[\s\S]{0,280}EntityLinkOrTombstone[\s\S]{0,120}kind="driver"/.test(src[SECTION])) {
@@ -225,6 +232,16 @@ if (SELFTEST) {
     "dvir-wo-label-consumer-removed",
     { ...live, [SECTION]: live[SECTION].replace(/entityLabel\(dvir\.follow_up_wo_display_id, s\(dvir\.follow_up_wo_id\), "Work order"\)/g, 'entityLabel(null, s(dvir.follow_up_wo_id), "Work order")') },
     "does not consume the canonical work-order"
+  );
+  expectCaught(
+    "accident-record-tombstone-removed",
+    { ...live, [SECTION]: live[SECTION].replace(/<EntityLinkOrTombstone\s+kind="accident"/, '<EntityLink kind="accident"') },
+    "accident rows must use the governed"
+  );
+  expectCaught(
+    "incident-nullable-drill-removed",
+    { ...live, [SECTION]: live[SECTION].replace(/id=\{s\(incident\.id\) \|\| null\}/, 'id={s(incident.id)}') },
+    "incident rows must preserve nullable IDs"
   );
   expectCaught(
     "accident-driver-plain-text",
