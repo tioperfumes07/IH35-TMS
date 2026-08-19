@@ -2,9 +2,18 @@
 /** @matrix-built {"modules":["accounting","dispatch","safety","reports"],"cols":["load"],"leafRe":"^(expenses\\.create|load\\.drawer\\.pre_settlement|dispatch\\.wizard\\.border_crossing_wizard_page|cargo_claims\\.create|report\\.dispatch_margin)$","task":"WAVE-A-load-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
+// The real rows use <EntityLinkOrTombstone kind="load" id={settlement.X_load_id}
+// name={settlement.X_load_number} noun="Load" /> (not a bare <EntityLink label={...}>) —
+// EntityLinkOrTombstone additionally withholds the drill when the load is unresolved (own
+// component contract), a strictly stronger guarantee than a raw EntityLink. Accept either
+// component name and either the `label=` or `name=` prop. Bounded with `[^>]` (never crosses a
+// `>`) so the match stays inside ONE JSX tag — PreSettlementPanel.tsx has two near-identical
+// <EntityLink.../> blocks (first-load and last-load) back to back; an unbounded `[\s\S]*` window
+// would let a check for one block's id/kind pair up with the OTHER block's label, silently
+// passing even if a block's own kind/label were wrong.
 const checks = [
-  ["pre-settlement first-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink[\s\S]*kind="load"[\s\S]*id=\{settlement\.first_load_id\}[\s\S]*label=\{settlement\.first_load_number\}/],
-  ["pre-settlement last-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink[\s\S]*kind="load"[\s\S]*id=\{settlement\.last_load_id\}[\s\S]*label=\{settlement\.last_load_number\}/],
+  ["pre-settlement first-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink(?:OrTombstone)?[^>]{0,300}?kind="load"[^>]{0,300}?id=\{settlement\.first_load_id\}[^>]{0,300}?(?:label|name)=\{settlement\.first_load_number\}/],
+  ["pre-settlement last-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink(?:OrTombstone)?[^>]{0,300}?kind="load"[^>]{0,300}?id=\{settlement\.last_load_id\}[^>]{0,300}?(?:label|name)=\{settlement\.last_load_number\}/],
   ["banking matched-load drill", "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx", /<EntityLink kind="load" id=\{t\.matched_load_id\}/],
   ["expense create load FK", "apps/frontend/src/components/expenses/recordExpenseSubmit.ts", /values\.loadId\s*\?\s*\{\s*load_id:\s*values\.loadId\s*\}/],
   ["insurance claim create load FK", "apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /load_id:\s*form\.load_id\s*\|\|\s*null/],
