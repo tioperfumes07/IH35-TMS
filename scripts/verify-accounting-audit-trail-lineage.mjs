@@ -34,10 +34,15 @@ if (!serviceSource.includes("accounting.transaction_source_links")) {
 if (!pageSource.includes("Source lineage")) {
   fail("audit trail page must expose source lineage action");
 }
-if (!/<SelectCombobox[\s\S]*?value=\{accountId\}/.test(pageSource)) {
+// The real filter now reads/writes through a staged-filter draft (Apply/Cancel/Reset —
+// staged.draft.accountId / staged.setDraft({ ..., accountId })) rather than binding the
+// SelectCombobox directly to the applied `accountId` state — a later, stricter UX pattern than an
+// immediate-apply binding. Accept either `value={accountId}` or `value={staged.draft.accountId}`
+// (bounded to a plain dotted-identifier chain, not an unbounded window).
+if (!/<SelectCombobox[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageSource)) {
   fail("audit trail account filter must use the searchable select adapter");
 }
-if (/<select[\s\S]*?value=\{accountId\}/.test(pageSource)) {
+if (/<select[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageSource)) {
   fail("audit trail account filter must not regress to a native account-ID select");
 }
 
