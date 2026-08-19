@@ -42,7 +42,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx", /dataTestId="fault-drafts-filter-unit"/],
   ["apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx", /allowCreate=\{false\}/],
   ["apps/frontend/src/pages/maintenance/TireProgramPage.tsx", /assetKind === "unit" \? "Select unit…"/],
-  ["apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx", /entityLabel\(row\.unit_number, row\.unit_id, "Unit"\)/],
+  ["apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx", /kind="unit"[\s\S]{0,80}id=\{row\.unit_id\}[\s\S]{0,100}label=\{entityLabel\(row\.unit_number, row\.unit_id, "Unit"\)\}/],
   ["apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx", /kind="unit"[\s\S]{0,100}id=\{(?:String|asEntityId)\(workOrder\.unit_id\)\}/],
   ["apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /unit_id: unitId/],
   ["apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx", /kind="unit" id=\{card\.unit_id\}/],

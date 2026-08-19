@@ -53,7 +53,7 @@ function KanbanCard({
   onAdvanceStatus?: (id: string, nextStatus: "in_progress" | "waiting_parts" | "complete") => void;
 }) {
   const age = ageDays(row.opened_at);
-  const meta = [entityLabel(row.unit_number, row.unit_id, "Unit"), row.driver_id ? "driver" : null, row.description ?? row.wo_type].filter(Boolean).join(" · ");
+  const description = row.description ?? row.wo_type;
   return (
     <div className="rounded-sm border border-gray-200 bg-white" style={{ borderLeft: `3px solid ${accent}` }}>
       <div className="block w-full px-2 py-1.5 text-left hover:bg-gray-50">
@@ -61,7 +61,27 @@ function KanbanCard({
           <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="text-[11px] font-semibold text-gray-800" onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />
           {row.source_type ? <span className="rounded-sm bg-gray-100 px-1 text-[9px] font-bold tracking-wide text-gray-600">{row.source_type}</span> : null}
         </div>
-        <div className="truncate text-[10px] text-gray-500">{meta}</div>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-[10px] text-gray-500">
+          <EntityLink
+            kind="unit"
+            id={row.unit_id}
+            label={entityLabel(row.unit_number, row.unit_id, "Unit")}
+            onClick={(event) => event.stopPropagation()}
+          />
+          {row.driver_id ? (
+            <>
+              <span aria-hidden="true">·</span>
+              <EntityLink
+                kind="driver"
+                id={row.driver_id}
+                label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+                onClick={(event) => event.stopPropagation()}
+              />
+            </>
+          ) : null}
+          <span aria-hidden="true">·</span>
+          <span className="min-w-0 truncate">{description}</span>
+        </div>
         {age ? <div className="text-[9px] text-gray-400">{age}</div> : null}
       </div>
       {onAdvanceStatus && row.status !== "complete" ? (
