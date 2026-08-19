@@ -681,3 +681,7 @@ verify:static: 72 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:29Z CC-1 | ACCT-F5496 closed (PR #9554, merged cbef0b3). Two independent RPT-S06 guards required ScheduledReportsPanel.tsx's zero-row message to literally say "No active schedules", but the real, honest copy is "No custom schedules — add daily dispatch board or AR aging." — more specific, equally honest. Widened both checks. Also fixed one guard's own stale --selftest mutation (silent no-op). Both --selftest suites re-verified; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 73 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:36Z CC-1 | ACCT-F5497 closed (PR #9561, merged a257a0b). REAL FIX: verify-no-dead-kpi-cards.mjs (C8) FAILed 6 dead KPI cards on FinanceOverviewPage.tsx — a genuine defect. Aggregates are computed from finance.forecast_lines; the scenario detail page (/finance/scenarios/:id, ScenarioLinesTable) already shows those exact line items, same destination the page's own "View scenario →" link goes to, just never wired onto the 6 tiles. Tile factory now wraps the shared DrillKpiCard with a real `to` target. Did not use the unavailable state (budget near/at cap elsewhere). tsc -b clean.
+
+verify:static: 74 of ~199 now closed this session. Continuing non-stop, fast-merge.
