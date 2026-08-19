@@ -3,12 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
+import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { useStagedListFilters } from "../../components/table";
 
 type Props = {
   operatingCompanyId: string;
@@ -16,51 +18,58 @@ type Props = {
 
 type DvirRow = Record<string, unknown>;
 
+const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "", from: "", to: "" };
+
 export function IdvrPage({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  // LST-F5188 — EntityPicker filters must write URL params (not local-only state).
+  // LST-F5188 — EntityPicker filters must write URL params (on Apply, not silent draft).
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
-  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
-  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
 
-  useEffect(() => { setDriverFilterState(driverIdFromUrl); }, [driverIdFromUrl]);
-  useEffect(() => { setUnitFilterState(unitIdFromUrl); }, [unitIdFromUrl]);
-  useEffect(() => { setTrailerFilterState(trailerIdFromUrl); }, [trailerIdFromUrl]);
+  // LV-SAFETY-IDVR-FILTER-SILENT-APPLY — stage until Apply; Cancel restores; URL sync on Apply/Reset.
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    unitId: unitIdFromUrl,
+    trailerId: trailerIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      const p = new URLSearchParams(searchParams);
+      if (next.driverId) p.set("driver_id", next.driverId);
+      else p.delete("driver_id");
+      if (next.unitId) p.set("unit_id", next.unitId);
+      else p.delete("unit_id");
+      if (next.trailerId) p.set("trailer_id", next.trailerId);
+      else p.delete("trailer_id");
+      setSearchParams(p, { replace: true });
+    },
+  });
+  const draft = staged.draft;
 
-  function patchSearchParam(key: "driver_id" | "unit_id" | "trailer_id", next: string) {
-    const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
-    setSearchParams(p, { replace: true });
-  }
-  function setDriverFilter(next: string) {
-    setDriverFilterState(next);
-    patchSearchParam("driver_id", next);
-  }
-  function setUnitFilter(next: string) {
-    setUnitFilterState(next);
-    patchSearchParam("unit_id", next);
-  }
-  function setTrailerFilter(next: string) {
-    setTrailerFilterState(next);
-    patchSearchParam("trailer_id", next);
-  }
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      unitId: unitIdFromUrl,
+      trailerId: trailerIdFromUrl,
+    }));
+  }, [driverIdFromUrl, unitIdFromUrl, trailerIdFromUrl]);
 
   const queryParams = useMemo(
     () => ({
-      driver_id: driverFilter.trim() || undefined,
-      unit_id: unitFilter.trim() || undefined,
-      trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
-      from: fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined,
-      to: toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined,
+      driver_id: applied.driverId.trim() || undefined,
+      unit_id: applied.unitId.trim() || undefined,
+      trailer_id: applied.trailerId.trim() || undefined,
+      from: applied.from ? new Date(`${applied.from}T00:00:00`).toISOString() : undefined,
+      to: applied.to ? new Date(`${applied.to}T23:59:59`).toISOString() : undefined,
     }),
-    [driverFilter, unitFilter, trailerFilter, trailerIdFromUrl, fromDate, toDate]
+    [applied]
   );
 
   const listQuery = useQuery({
@@ -161,12 +170,12 @@ export function IdvrPage({ operatingCompanyId }: Props) {
           if (id) navigate(`/safety/idvr/${encodeURIComponent(id)}`);
         }}
         filterBar={
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-wrap items-end gap-3" data-testid="idvr-filters">
             <label className="text-[11px] text-slate-600">
               From
               <DatePicker
-                value={fromDate}
-                onChange={(next) => setFromDate(next)}
+                value={draft.from}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
                 className="mt-1 block h-8 w-full"
                 data-testid="idvr-filter-from"
               />
@@ -174,8 +183,8 @@ export function IdvrPage({ operatingCompanyId }: Props) {
             <label className="text-[11px] text-slate-600">
               To
               <DatePicker
-                value={toDate}
-                onChange={(next) => setToDate(next)}
+                value={draft.to}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
                 className="mt-1 block h-8 w-full"
                 data-testid="idvr-filter-to"
               />
@@ -187,8 +196,8 @@ export function IdvrPage({ operatingCompanyId }: Props) {
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
-                value={driverFilter || null}
-                onChange={(next) => setDriverFilter(next ?? "")}
+                value={draft.driverId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
@@ -201,8 +210,8 @@ export function IdvrPage({ operatingCompanyId }: Props) {
               <EntityPicker
                 kind="unit"
                 operatingCompanyId={operatingCompanyId}
-                value={unitFilter || null}
-                onChange={(next) => setUnitFilter(next ?? "")}
+                value={draft.unitId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
@@ -215,8 +224,8 @@ export function IdvrPage({ operatingCompanyId }: Props) {
               <EntityPicker
                 kind="trailer"
                 operatingCompanyId={operatingCompanyId}
-                value={trailerFilter || null}
-                onChange={(next) => setTrailerFilter(next ?? "")}
+                value={draft.trailerId || null}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
                 allowCreate={false}
                 placeholder="All trailers"
                 className="mt-1"
@@ -224,6 +233,29 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 dataTestId="idvr-filter-trailer"
               />
             </label>
+            <Button type="button" size="sm" data-testid="idvr-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button type="button" size="sm" variant="secondary" data-testid="idvr-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="idvr-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                const p = new URLSearchParams(searchParams);
+                p.delete("driver_id");
+                p.delete("unit_id");
+                p.delete("trailer_id");
+                setSearchParams(p, { replace: true });
+              }}
+            >
+              Reset
+            </Button>
           </div>
         }
       />
