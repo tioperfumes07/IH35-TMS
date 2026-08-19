@@ -6,8 +6,7 @@ import {
   listMaintenancePmSchedules,
   type PmScheduleRow,
 } from "../../../api/maintenance";
-import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
@@ -94,7 +93,7 @@ export function PmSchedulePage() {
 
   const columns = useMemo<ParityColumn<PmScheduleRow>[]>(
     () => [
-      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_display_id, row.unit_id, "Unit")} /> },
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_display_id} noun="Unit" /> },
       { key: "pm_type", label: "PM Type", sortable: true, render: (row) => row.pm_type },
       { key: "interval_value", label: "Interval", render: (row) => `${row.interval_value} ${row.interval_kind}` },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status },
