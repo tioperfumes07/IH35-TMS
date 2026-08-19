@@ -591,3 +591,7 @@ verify:static: 50 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:21Z CC-1 | ACCT-F5474 closed (PR #9353, merged b109632). verify-bill-header-only-refused.mjs's synthesis check FAILed because this session's own earlier fix (ACCT-F5452, PR #9190) added a ~6-line load_id honesty comment to bills.service.ts, pushing the real gap between the branch open and the INSERT past the guard's fixed 1200-char window — self-inflicted, caught by a fresh guard re-run. Widened window to 2000 chars (measured exact real gap via isolated probe first). Existing --selftest re-verified PASS. Zero product-code change.
 
 verify:static: 51 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:24Z CC-1 | ACCT-F5475 closed (PR #9355, merged b544dde). Same truncated-UUID-vs-entityLabel class as ACCT-F5473: verify-bill-payment-panel-labels.mjs required payment.journal_entry_id.slice(0, 8) / payment.matched_bank_transaction_id.slice(0, 8), but real code uses entityLabel(null, payment.X_id, "...") — a stricter fix than the guard's own ask. Widened both checks. No --selftest harness; load-bearing proof done by hand (both mutations caught). Zero product-code change.
+
+verify:static: 52 of ~199 now closed this session. Continuing non-stop, fast-merge.
