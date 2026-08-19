@@ -21,12 +21,14 @@ const DISPATCH = "apps/frontend/src/pages/reports/DispatchMarginPage.tsx";
 const MANAGEMENT = "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx";
 const LOAD_DETAIL = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
 const DRIVER_LOADS = "apps/frontend/src/components/driver-profile/LoadsSection.tsx";
+const ENTITY_LINK_OR_TOMBSTONE = "apps/frontend/src/components/shared/EntityLinkOrTombstone.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
-function analyze() {
+/** @param {{loadDetail?: string, sharedLib?: string}} overrides in-memory content overrides (ACCT-F5552) */
+function analyze(overrides = {}) {
   const failures = [];
   const lib = read(LIB);
   if (!/export function isUnresolvedEntityTombstone/.test(lib)) {
@@ -98,18 +100,35 @@ function analyze() {
     failures.push("ManagementReportPackagePage must still EntityLink resolvable vendors");
   }
 
-  const loadDetail = read(LOAD_DETAIL);
-  if (!/isUnresolvedEntityTombstone/.test(loadDetail) || !/load-detail-customer-tombstone/.test(loadDetail)) {
-    failures.push("LoadDetailDrawer must tombstone unresolved customers (load-detail-customer-tombstone)");
-  }
-  if (
-    /label:\s*"Customer"[\s\S]{0,220}<EntityLink\s+kind="customer"\s+id=\{load\.customer_id\}/.test(loadDetail) &&
-    !/isUnresolvedEntityTombstone\(load\.customer_name, load\.customer_id, "Customer"\)/.test(loadDetail)
-  ) {
-    failures.push("LoadDetailDrawer Customer field must not unconditionally EntityLink load.customer_id");
-  }
-  if (!/EntityLink\s+kind="customer"/.test(loadDetail)) {
-    failures.push("LoadDetailDrawer must still EntityLink resolvable customers");
+  const loadDetail = overrides.loadDetail ?? read(LOAD_DETAIL);
+  // ACCT-F5552: LoadDetailDrawer now delegates its Customer field to the shared
+  // <EntityLinkOrTombstone> component (apps/frontend/src/components/shared/EntityLinkOrTombstone.tsx)
+  // instead of inlining isUnresolvedEntityTombstone + a raw <EntityLink> itself — a strictly DRYer
+  // implementation of the identical guarantee. Trust-but-verify: accept the delegation only if the
+  // shared component itself still gates on isUnresolvedEntityTombstone before mounting EntityLink.
+  const delegatesToSharedTombstone = /<EntityLinkOrTombstone\b[^>]*\bkind="customer"[^>]*\btombstoneTestId="load-detail-customer-tombstone"[^>]*\/?>/s.test(
+    loadDetail,
+  ) || /<EntityLinkOrTombstone\b[^>]*\btombstoneTestId="load-detail-customer-tombstone"[^>]*\bkind="customer"[^>]*\/?>/s.test(loadDetail);
+  if (delegatesToSharedTombstone) {
+    const sharedLib = overrides.sharedLib ?? read(ENTITY_LINK_OR_TOMBSTONE);
+    if (!/isUnresolvedEntityTombstone/.test(sharedLib) || !/<EntityLink\b/.test(sharedLib)) {
+      failures.push(
+        "EntityLinkOrTombstone (delegated to by LoadDetailDrawer) must itself gate with isUnresolvedEntityTombstone before mounting EntityLink",
+      );
+    }
+  } else {
+    if (!/isUnresolvedEntityTombstone/.test(loadDetail) || !/load-detail-customer-tombstone/.test(loadDetail)) {
+      failures.push("LoadDetailDrawer must tombstone unresolved customers (load-detail-customer-tombstone)");
+    }
+    if (
+      /label:\s*"Customer"[\s\S]{0,220}<EntityLink\s+kind="customer"\s+id=\{load\.customer_id\}/.test(loadDetail) &&
+      !/isUnresolvedEntityTombstone\(load\.customer_name, load\.customer_id, "Customer"\)/.test(loadDetail)
+    ) {
+      failures.push("LoadDetailDrawer Customer field must not unconditionally EntityLink load.customer_id");
+    }
+    if (!/EntityLink\s+kind="customer"/.test(loadDetail)) {
+      failures.push("LoadDetailDrawer must still EntityLink resolvable customers");
+    }
   }
 
   const driverLoads = read(DRIVER_LOADS);
@@ -201,6 +220,17 @@ function selftest() {
     }
   } finally {
     fs.writeFileSync(loadPath, loadOriginal);
+  }
+
+  // ACCT-F5552: prove the trust-but-verify branch actually reads EntityLinkOrTombstone.tsx rather than
+  // blindly trusting its name — mutate the SHARED component in-memory only (real LoadDetailDrawer.tsx
+  // delegation left untouched on disk) and confirm the guard still catches a regressed guarantee there.
+  const sharedLibOriginal = read(ENTITY_LINK_OR_TOMBSTONE);
+  const sharedLibBad = sharedLibOriginal.replace(/isUnresolvedEntityTombstone/g, "NEVER_TOMBSTONE");
+  if (sharedLibBad === sharedLibOriginal) fail("selftest could not plant EntityLinkOrTombstone tombstone regression");
+  const plantedShared = analyze({ sharedLib: sharedLibBad });
+  if (!plantedShared.some((m) => /EntityLinkOrTombstone/.test(m))) {
+    fail(`selftest expected EntityLinkOrTombstone fail; got: ${plantedShared.join("; ")}`);
   }
 
   const driverPath = path.join(process.cwd(), DRIVER_LOADS);
