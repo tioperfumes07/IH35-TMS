@@ -118,13 +118,22 @@ export function CSAScoreTab() {
         FMCSA BASIC measures or percentiles. Missing values remain unavailable and are never displayed as zero.
       </div>
 
+      {currentQuery.isError || historyQuery.isError ? (
+        <p className="text-xs text-red-700" data-testid="csa-score-tab-query-error">
+          {userFacingApiError(
+            currentQuery.error ?? historyQuery.error,
+            "Could not load CSA score data.",
+          )}
+        </p>
+      ) : null}
+
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
         {basics.map((basic) => (
           <div key={basic.label} className="rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">{basic.label}</span>
               <span className="font-semibold text-slate-700">
-                {basic.value == null ? "-" : Number(basic.value).toFixed(2)}
+                {currentQuery.isError ? "—" : basic.value == null ? "-" : Number(basic.value).toFixed(2)}
               </span>
             </div>
             <div className="mt-1 text-[11px] text-slate-500">
@@ -136,15 +145,21 @@ export function CSAScoreTab() {
         ))}
       </div>
 
-      <ParityTable<CsaScoreRow>
-        columns={historyColumns}
-        rows={historyQuery.data?.csa_scores ?? []}
-        rowKey={(row) => String(row.id)}
-        loading={historyQuery.isLoading}
-        emptyText="No CSA score history found."
-        storageKey="safety-csa-history"
-        exportFilename="csa-score-history"
-      />
+      {historyQuery.isError ? (
+        <p className="text-xs text-red-700" data-testid="csa-score-history-query-error">
+          {userFacingApiError(historyQuery.error, "Could not load CSA score history.")}
+        </p>
+      ) : (
+        <ParityTable<CsaScoreRow>
+          columns={historyColumns}
+          rows={historyQuery.data?.csa_scores ?? []}
+          rowKey={(row) => String(row.id)}
+          loading={historyQuery.isLoading}
+          emptyText="No CSA score history found."
+          storageKey="safety-csa-history"
+          exportFilename="csa-score-history"
+        />
+      )}
     </div>
   );
 }
