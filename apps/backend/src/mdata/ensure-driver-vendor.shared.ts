@@ -123,8 +123,8 @@ export async function ensureDriverVendor(
   // OWN is_sample_data instead — the payee's sample status must match the payee it was minted
   // for, not a create-path constant.
   const driverSample = await client.query<{ is_sample_data: boolean }>(
-    `SELECT is_sample_data FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`,
-    [input.driverId]
+    `SELECT is_sample_data FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [input.driverId, input.operatingCompanyId]
   );
   const isSampleData = driverSample.rows[0]?.is_sample_data ?? false;
 
