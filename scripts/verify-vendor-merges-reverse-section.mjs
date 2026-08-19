@@ -105,6 +105,12 @@ export function assertVendorMergesReverse(sources) {
   if (!/kind="factoring_vendor_merges_vendor"/.test(vendorSection) || /from "react-router-dom"/.test(vendorSection)) {
     problems.push(`${VENDOR_SECTION}: Open queue must EntityLink kind=factoring_vendor_merges_vendor (no bare Link)`);
   }
+  for (const [file, section] of [[DRIVER_SECTION, driverSection], [VENDOR_SECTION, vendorSection]]) {
+    if (!/entityLabel\(m\.from_vendor_name, m\.from_qbo_vendor_id, "Vendor"\)/.test(section) ||
+        !/entityLabel\(m\.to_vendor_name, m\.to_qbo_vendor_id, "Vendor"\)/.test(section)) {
+      problems.push(`${file}: merge labels must reject raw QBO vendor-id fallbacks`);
+    }
+  }
   return problems;
 }
 
@@ -144,13 +150,17 @@ function selftest() {
       dataTestId="factoring-home-filter-driver"
     `,
     [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)
-      kind="factoring_vendor_merges_driver"`,
+      kind="factoring_vendor_merges_driver"
+      entityLabel(m.from_vendor_name, m.from_qbo_vendor_id, "Vendor")
+      entityLabel(m.to_vendor_name, m.to_qbo_vendor_id, "Vendor")`,
     [DRIVER_PROFILE]: `
       import { DriverVendorMergesReverseSection } from "../../components/driver-profile/DriverVendorMergesReverseSection";
       <DriverVendorMergesReverseSection operatingCompanyId={companyId} driverId={id} />
     `,
     [VENDOR_SECTION]: `listDriverVendorMerges(operatingCompanyId, { vendor_id: vendorId }).then((r) => r.rows)
-      kind="factoring_vendor_merges_vendor"`,
+      kind="factoring_vendor_merges_vendor"
+      entityLabel(m.from_vendor_name, m.from_qbo_vendor_id, "Vendor")
+      entityLabel(m.to_vendor_name, m.to_qbo_vendor_id, "Vendor")`,
     [VENDOR_DETAIL]: `
       import { VendorMergesReverseSection } from "../components/vendors/VendorMergesReverseSection";
       <VendorMergesReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
@@ -177,6 +187,8 @@ function selftest() {
     { ...good, [VENDOR_SECTION]: good[VENDOR_SECTION].replace("{ vendor_id: vendorId }", "{}") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("import { VendorMergesReverseSection }", "// removed") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("vendorId={vendor.id}", "") },
+    { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace(/entityLabel/g, "rawLabel") },
+    { ...good, [VENDOR_SECTION]: good[VENDOR_SECTION].replace(/entityLabel/g, "rawLabel") },
     {
       ...good,
       [DRIVER_SECTION]: good[DRIVER_SECTION].replace('kind="factoring_vendor_merges_driver"', 'from "react-router-dom"'),

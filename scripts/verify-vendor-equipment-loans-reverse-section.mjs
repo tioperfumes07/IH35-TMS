@@ -87,6 +87,9 @@ export function assertVendorEquipmentLoansReverse(sources) {
   if (/from "react-router-dom"/.test(section)) {
     problems.push(`${SECTION}: must not import react-router Link`);
   }
+  if (!/entityLabel\(loan\.equipment_number, loan\.equipment_id, "Equipment"\)/.test(section)) {
+    problems.push(`${SECTION}: equipment label must reject raw equipment-id fallback`);
+  }
 
   return problems;
 }
@@ -121,7 +124,8 @@ function selftest() {
       dataTestId="factoring-home-filter-vendor"
     `,
     [SECTION]: `listEquipmentLoans(operatingCompanyId, vendorId).then((r) => r.rows)
-      equipment_loans_vendor`,
+      equipment_loans_vendor
+      entityLabel(loan.equipment_number, loan.equipment_id, "Equipment")`,
     [VENDOR_DETAIL]: `
       import { VendorEquipmentLoansReverseSection } from "../components/vendors/VendorEquipmentLoansReverseSection";
       <VendorEquipmentLoansReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
@@ -145,6 +149,7 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace("listEquipmentLoans(operatingCompanyId, vendorId)", "") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("import { VendorEquipmentLoansReverseSection }", "// removed") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("vendorId={vendor.id}", "") },
+    { ...good, [SECTION]: good[SECTION].replace("entityLabel", "rawLabel") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertVendorEquipmentLoansReverse(mutated).length === 0) {
