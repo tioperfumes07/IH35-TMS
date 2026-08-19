@@ -10,7 +10,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -188,10 +188,10 @@ export function HOSViolationsTab() {
   const columns = useMemo<Array<ParityColumn<HosViolationRow>>>(
     () => [
       { key: "driver_id", label: "Driver", sortable: true, render: (row) => (
-        <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+        <EntityLinkOrTombstone kind="driver" id={row.driver_id as string | undefined} name={row.driver_name} noun="Driver" />
       ) },
       { key: "related_load_id", label: "Load", sortable: true, render: (row) => (
-        <EntityLink kind="load" id={row.related_load_id as string | undefined} label={entityLabel(row.related_load_number, row.related_load_id, "Load")} />
+        <EntityLinkOrTombstone kind="load" id={row.related_load_id as string | undefined} name={row.related_load_number} noun="Load" />
       ) },
       {
         key: "violation_type",

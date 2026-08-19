@@ -558,7 +558,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx",
     bad: /driver_name as string \| undefined\)\s*\?\?\s*undefined/,
-    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)|EntityLinkOrTombstone kind="driver" id=\{row\.driver_id as string \| undefined\} name=\{row\.driver_name\} noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
