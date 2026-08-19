@@ -397,9 +397,9 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
           FROM mdata.dispatcher_safety_events e
           LEFT JOIN catalogs.dispatcher_error_reasons r ON r.id = e.error_reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
-          LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $2
-          LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $2
-          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $2
+          LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $2::uuid
+          LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $2::uuid
+          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $2::uuid
           WHERE ${filters.join(" AND ")}
           ORDER BY e.event_date DESC, e.created_at DESC
         `,
@@ -446,9 +446,9 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
             e.created_at, e.updated_at
           FROM mdata.dispatcher_safety_events e
           JOIN identity.users du ON du.id = e.dispatcher_user_id
-          LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $1
-          LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $1
-          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $1
+          LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $1::uuid
+          LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $1::uuid
+          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $1::uuid
           WHERE e.voided_at IS NULL AND ${filter.sql}
           ORDER BY e.event_date DESC, e.created_at DESC
           LIMIT 200

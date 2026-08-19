@@ -61,7 +61,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
           SELECT *
           FROM dispatch.intransit_issues
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND promoted_to_wo_id IS NULL
             AND promoted_to_damage_report_id IS NULL
           LIMIT 1
@@ -136,7 +136,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
         `UPDATE dispatch.intransit_issues
          SET promoted_to_wo_id = $2
          WHERE id = $1
-           AND operating_company_id = $3`,
+           AND operating_company_id = $3::uuid`,
         [params.data.issue_id, workOrderId, query.data.operating_company_id]
       );
 
@@ -200,7 +200,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
           SELECT *
           FROM dispatch.intransit_issues
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND promoted_to_wo_id IS NULL
             AND promoted_to_damage_report_id IS NULL
           LIMIT 1
@@ -245,7 +245,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
         `UPDATE dispatch.intransit_issues
          SET promoted_to_damage_report_id = $2
          WHERE id = $1
-           AND operating_company_id = $3`,
+           AND operating_company_id = $3::uuid`,
         [params.data.issue_id, damageReportId, query.data.operating_company_id]
       );
 
