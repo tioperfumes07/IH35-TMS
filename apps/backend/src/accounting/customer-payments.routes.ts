@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -11,6 +11,7 @@ import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -50,6 +51,20 @@ const createCustomerPaymentBodySchema = z.object({
     )
     .default([]),
 });
+
+// ACCT-F5581: POST /:id/payments records a real cash receipt and, when
+// CUSTOMER_PAYMENT_GL_POSTING_ENABLED is on, posts a real journal entry (see the CLS-SUBLEDGER-GL-DARK
+// comment below on the route itself) -- yet had no role gate at all, any authenticated company member
+// could fabricate a "payment received" record. Reuses the canonical void/cancel executor role set
+// (Owner/Administrator/Accountant, Jorge-locked 2026-06-29) since recording cash receipt is the same
+// tier of financial-executor operation, not because this is a void/cancel action.
+function requirePaymentWriteRole(reply: FastifyReply, role: string) {
+  if (!canVoidCancel(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "recording a customer payment requires an accounting role" });
+    return false;
+  }
+  return true;
+}
 
 export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
   // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing gap surfaced because this PR touched
@@ -140,6 +155,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!requirePaymentWriteRole(reply, String(user.role ?? ""))) return;
 
     const params = customerIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
