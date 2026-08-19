@@ -14,8 +14,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -45,17 +44,18 @@ const LOG_COLUMNS: Array<ParityColumn<CustomerNotifyLogEntry>> = [
     key: "load_number",
     label: "Load",
     sortable: true,
-    render: (entry) => <EntityLink kind="load" id={entry.load_id} label={entityLabel(entry.load_number, entry.load_id, "Load")} />,
+    render: (entry) => <EntityLinkOrTombstone kind="load" id={entry.load_id} name={entry.load_number} noun="Load" />,
   },
   {
     key: "customer_name",
     label: "Customer",
     sortable: true,
     render: (entry) => (
-      <EntityLink
+      <EntityLinkOrTombstone
         kind="customer"
         id={entry.customer_id}
-        label={entityLabel(entry.customer_name, entry.customer_id, "Customer")}
+        name={entry.customer_name}
+        noun="Customer"
       />
     ),
   },
