@@ -21,7 +21,10 @@ function assertAll(srcs) {
   const problems = [];
   for (const [file, src] of Object.entries(srcs)) {
     if (/\.slice\(0,\s*8\)/.test(src)) problems.push(`${file}: still UUID-slices`);
-    if (!/entityLabel\(/.test(src)) problems.push(`${file}: missing entityLabel`);
+    // DailyReconPage.tsx aliases the import (`entityLabel as formatEntityLabel`) — a plain
+    // /entityLabel\(/ substring check is case-sensitive and never matches "formatEntityLabel("
+    // (capital E). Accept the call under either name.
+    if (!/entityLabel\(/.test(src) && !/formatEntityLabel\(/.test(src)) problems.push(`${file}: missing entityLabel`);
   }
   return problems;
 }
