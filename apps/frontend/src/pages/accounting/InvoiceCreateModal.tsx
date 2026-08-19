@@ -169,7 +169,12 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                   key: "load",
                   label: "Load #",
                   cellClass: "font-medium",
-                  render: (load) => entityLabel(load.load_number, load.id, "Load"),
+                  // C5 — a "Load #" column header promises a load reference; render it through the
+                  // canonical EntityLink drill instead of a plain (unclickable) label. The row's
+                  // "Select" action stays the primary picker control in its own column.
+                  render: (load) => (
+                    <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />
+                  ),
                 },
                 {
                   key: "customer",
