@@ -4,6 +4,7 @@ import { listUnits } from "../../api/mdata";
 import { listSevereRepairEstimates } from "../../api/maintenance";
 import { capNotice, listCapInfo } from "../../lib/list-cap";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 
 /**
  * The route's own maximum (units.routes.ts). Named rather than inlined so the cap and the truncation
@@ -162,7 +163,13 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
               data-testid={`fleet-oos-unit-${row.unitNumber}`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold text-gray-900">{row.unitNumber}</span>
+                <EntityLink
+                  kind="unit"
+                  id={row.unitId}
+                  label={entityLabel(row.unitNumber, row.unitId, "Unit")}
+                  className="font-semibold text-gray-900"
+                  data-testid="fleet-oos-unit-link"
+                />
                 <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                   {row.statusLabel}
                 </span>
