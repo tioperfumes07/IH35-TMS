@@ -77,10 +77,10 @@ export function LegalMattersReverseSection({
       ) : null}
       {matters.length > 0 ? (
         <ul className="space-y-2">
-          {matters.map((m: Record<string, unknown>) => {
-            const id = String(m.id ?? "");
+          {matters.map((m: Record<string, unknown>, index) => {
+            const id = m.id == null ? null : String(m.id);
             return (
-              <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+              <li key={id ?? `legal-matter-${index}`} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                 <EntityLinkOrTombstone
                   kind="matter"
                   id={id}
