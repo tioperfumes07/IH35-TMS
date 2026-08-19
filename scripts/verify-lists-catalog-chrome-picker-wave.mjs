@@ -89,7 +89,14 @@ export function audit(opts = {}) {
   if (!generic.includes("CatalogEditModal")) failures.push("GenericCatalogPage missing CatalogEditModal");
   if (!generic.includes("CatalogTable")) failures.push("GenericCatalogPage missing CatalogTable");
   if (!catalogTable.includes("ParityTable")) failures.push("CatalogTable must use ParityTable");
-  if (!/\bsetSearch\b/.test(catalogTable)) failures.push("CatalogTable missing search state");
+  // LST-F3480: search moved off page-local state entirely — ParityTable's own toolbar owns it,
+  // and CatalogTable.tsx never passes suppressToolbarSearch, so the shared component's default
+  // (search enabled) applies. Accept either the older page-local setSearch state OR this
+  // delegated-to-ParityTable shape (own the primitive, don't opt out of its search).
+  const hasLocalSearchState = /\bsetSearch\b/.test(catalogTable);
+  const delegatesSearchToParityTable =
+    catalogTable.includes("ParityTable") && !/suppressToolbarSearch|hideSearch=\{?\s*true/.test(catalogTable);
+  if (!hasLocalSearchState && !delegatesSearchToParityTable) failures.push("CatalogTable missing search state");
   if (!/\bstatusFilter\b|\bsetStatus\b/.test(catalogTable)) failures.push("CatalogTable missing status filter");
 
   for (const rel of SHARED_SHELLS) {
