@@ -7,7 +7,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useRoadServiceTickets, type RoadServiceStatus, type RoadServiceTicket } from "../../hooks/useRoadServiceTickets";
 import { RoadServiceTicketModal } from "./RoadServiceTicketModal";
 import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 const STATUS_FILTERS: Array<{ id: RoadServiceStatus | "all"; label: string }> = [
   { id: "all", label: "All" },
@@ -57,10 +57,11 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) =>
         row.wo_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="work_order"
             id={row.wo_id}
-            label={row.ticket_number}
+            name={row.ticket_number}
+            noun="Work order"
             className={LINK}
             data-testid="road-service-wo-link"
           />
@@ -73,7 +74,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       label: "Unit",
       sortable: true,
       render: (row) => (
-        <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_display_id, row.unit_id, "Unit")} className={LINK} />
+        <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_display_id} noun="Unit" className={LINK} />
       ),
     },
     {
@@ -81,7 +82,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       label: "Driver",
       render: (row) =>
         row.driver_id ? (
-          <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} className={LINK} />
+          <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" className={LINK} />
         ) : (
           "—"
         ),
@@ -93,7 +94,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} className={LINK} />
+          <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" className={LINK} />
         ) : (
           entityLabel(row.vendor_name, row.vendor_id, "Vendor")
         ),
