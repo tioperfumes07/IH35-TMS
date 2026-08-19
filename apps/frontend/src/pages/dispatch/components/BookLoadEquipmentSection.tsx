@@ -12,8 +12,7 @@ import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTex
 import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
 import { loadTrailerEquipmentCatalogClient, type DispatchCatalogRow } from "../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -151,24 +150,24 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           {primaryDriverId ? (
             <span data-testid="book-load-equipment-driver-link">
               Driver:{" "}
-              <EntityLink kind="driver" id={primaryDriverId} label={entityLabel(null, primaryDriverId, "Driver")} />
+              <EntityLinkOrTombstone kind="driver" id={primaryDriverId} name={null} noun="Driver" />
             </span>
           ) : null}
           {secondaryDriverId ? (
             <span data-testid="book-load-equipment-team-driver-link">
               Team:{" "}
-              <EntityLink kind="driver" id={secondaryDriverId} label={entityLabel(null, secondaryDriverId, "Driver")} />
+              <EntityLinkOrTombstone kind="driver" id={secondaryDriverId} name={null} noun="Driver" />
             </span>
           ) : null}
           {assignedUnitId ? (
             <span data-testid="book-load-equipment-unit-link">
-              Unit: <EntityLink kind="unit" id={assignedUnitId} label={entityLabel(null, assignedUnitId, "Unit")} />
+              Unit: <EntityLinkOrTombstone kind="unit" id={assignedUnitId} name={null} noun="Unit" />
             </span>
           ) : null}
           {assignedTrailerUnitId ? (
             <span data-testid="book-load-equipment-trailer-link">
               Trailer:{" "}
-              <EntityLink kind="trailer" id={assignedTrailerUnitId} label={entityLabel(null, assignedTrailerUnitId, "Trailer")} />
+              <EntityLinkOrTombstone kind="trailer" id={assignedTrailerUnitId} name={null} noun="Trailer" />
             </span>
           ) : null}
         </div>
