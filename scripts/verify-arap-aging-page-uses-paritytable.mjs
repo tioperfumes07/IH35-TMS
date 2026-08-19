@@ -39,18 +39,29 @@ const REQUIRED_STORAGE_KEYS = [
   "ap-aging-bills-drill",
 ];
 
+/**
+ * Strip backtick template-literal CONTENT (keep the delimiters) so a raw `<table>`/`<thead>`/
+ * `<tfoot>` inside a print/export HTML string (this page's own printLetter-style bodyHtml
+ * template — a standalone printable document, never rendered as live React JSX) is not mistaken
+ * for a hand-rolled UI table. Same class fixed for AccountsPayableAgingPage.tsx (ACCT-F5522).
+ */
+function stripTemplateLiterals(src) {
+  return src.replace(/`(?:\\.|[^`\\])*`/g, "``");
+}
+
 function assertMigrated(src) {
   const errors = [];
+  const liveSrc = stripTemplateLiterals(src);
   if (!src.includes("ParityTable")) {
     errors.push(`${PAGE}: must import ParityTable from components/parity/ParityTable`);
   }
   if ((src.match(/<ParityTable\b/g) ?? []).length < 4) {
     errors.push(`${PAGE}: expected ≥4 <ParityTable> (AR main, AP main, AR drill, AP drill)`);
   }
-  if (/<table[\s>]/.test(src)) {
+  if (/<table[\s>]/.test(liveSrc)) {
     errors.push(`${PAGE}: must not contain hand-rolled <table>`);
   }
-  if (/<thead[\s>]/.test(src) || /<tfoot[\s>]/.test(src)) {
+  if (/<thead[\s>]/.test(liveSrc) || /<tfoot[\s>]/.test(liveSrc)) {
     errors.push(`${PAGE}: must not contain hand-rolled <thead>/<tfoot>`);
   }
   for (const label of REQUIRED_LABELS) {
@@ -82,7 +93,10 @@ function assertMigrated(src) {
   if (!src.includes("appliedAsOf")) {
     errors.push(`${PAGE}: must stage as-of date (appliedAsOf) before refetch`);
   }
-  if (!src.includes("setAppliedAsOf(asOfDate)")) {
+  // Tolerates a clamped/validated variable name (e.g. `clamped`) inside onApply's own body — the
+  // invariant is "Apply calls setAppliedAsOf", not the literal argument identifier. A defensive
+  // clamp (future dates -> today) legitimately renames the value passed through.
+  if (!/onApply:\s*\([^)]*\)\s*=>\s*\{[\s\S]{0,300}setAppliedAsOf\(/.test(src)) {
     errors.push(`${PAGE}: must Apply staged as-of via setAppliedAsOf(asOfDate)`);
   }
   if (!src.includes('queryKey: ["fin20-ar-aging", operatingCompanyId, appliedAsOf]')) {
@@ -114,6 +128,27 @@ function selftest() {
     const AP_COLUMNS = [{ key: "vendor_name", label: "Vendor" }];
     const AR_DRILL_COLUMNS = [{ key: "display_id", label: "Invoice" }, { key: "days_overdue", label: "Days past due" }];
     const AP_DRILL_COLUMNS = [{ key: "bill_number", label: "Bill #" }];
+    const today = todayIso();
+    const [appliedAsOf, setAppliedAsOf] = useState(today);
+    const staged = useStagedListFilters({
+      applied: { asOfDate: appliedAsOf },
+      empty: { asOfDate: today },
+      onApply: (next) => {
+        const clamped = next.asOfDate && next.asOfDate <= today ? next.asOfDate : today;
+        setAppliedAsOf(clamped);
+      },
+    });
+    const arQuery = useQuery({
+      queryKey: ["fin20-ar-aging", operatingCompanyId, appliedAsOf],
+      queryFn: () => getArAging(operatingCompanyId, appliedAsOf),
+    });
+    const apQuery = useQuery({
+      queryKey: ["fin20-ap-aging", operatingCompanyId, appliedAsOf],
+      queryFn: () => getApAging(operatingCompanyId, appliedAsOf),
+    });
+    function printLetter() {
+      const bodyHtml = \`<table><thead><tr><th>Customer</th></tr></thead></table>\`;
+    }
     <button>Export CSV</button>
     <ListErrorState title="Couldn't load aging" status={0} onRetry={() => {}} />
     <ParityTable storageKey="ar-aging-by-customer" renderExpanded={(r) => <div />} />
@@ -143,6 +178,26 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
+
+  // A real raw <table> in LIVE JSX (outside any template literal) must still be caught — the
+  // template-literal strip for the print-letter exemption must not become a blanket escape hatch.
+  const liveTableBad = good.replace(
+    '<ParityTable storageKey="ar-aging-by-customer"',
+    '<table />\n    <ParityTable storageKey="ar-aging-by-customer"',
+  );
+  if (!assertMigrated(liveTableBad).includes(`${PAGE}: must not contain hand-rolled <table>`)) {
+    console.error(`${LABEL} --selftest FAIL: a raw <table> in live JSX (outside any template literal) was NOT caught`);
+    process.exit(1);
+  }
+
+  // The clamped-variable Apply pattern must be recognized; a genuinely MISSING setAppliedAsOf call
+  // inside onApply must still be caught (the tolerance is for the argument name, not the call itself).
+  const missingApplyCall = good.replace("setAppliedAsOf(clamped);", "// dropped");
+  if (!assertMigrated(missingApplyCall).includes(`${PAGE}: must Apply staged as-of via setAppliedAsOf(asOfDate)`)) {
+    console.error(`${LABEL} --selftest FAIL: a dropped setAppliedAsOf() call inside onApply was NOT caught`);
+    process.exit(1);
+  }
+
   console.log(`${LABEL} --selftest PASS`);
 }
 
