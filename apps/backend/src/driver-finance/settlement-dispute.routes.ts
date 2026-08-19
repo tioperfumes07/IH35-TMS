@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   getDispute,
   listDisputes,
@@ -86,6 +87,10 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = createDisputeBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
+    // ACCT-F5563: every route in this file set the tenant GUC from a caller-supplied
+    // operating_company_id with no membership check; driver_finance.driver_settlement_disputes' own
+    // RLS policy has no org.user_accessible_company_ids() clause, so it was the only boundary.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const data = await openDispute(user.uuid, {
         ...body.data,
@@ -103,6 +108,8 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = listDisputeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    // ACCT-F5563: cross-tenant read otherwise — see comment on the create route above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const disputes = await listDisputes(user.uuid, query.data);
       return { disputes };
@@ -119,6 +126,8 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const query = operatingCompanyBodySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    // ACCT-F5563: cross-tenant read otherwise — see comment on the create route above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const dispute = await getDispute(user.uuid, {
         operating_company_id: query.data.operating_company_id,
@@ -150,6 +159,8 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const body = operatingCompanyBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
+    // ACCT-F5563: cross-tenant write otherwise — see comment on the create route above.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const data = await markUnderReview(user.uuid, user.role, {
         operating_company_id: body.data.operating_company_id,
@@ -175,6 +186,8 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const body = resolveBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
+    // ACCT-F5563: cross-tenant write otherwise — see comment on the create route above.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const data = await resolveDispute(user.uuid, user.role, {
         operating_company_id: body.data.operating_company_id,
@@ -203,6 +216,8 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
         message: "Only the driver can withdraw this dispute.",
       });
     }
+    // ACCT-F5563: cross-tenant write otherwise — see comment on the create route above.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const driverId = await resolveDriverIdForUser(user.uuid);
       if (!driverId) {
