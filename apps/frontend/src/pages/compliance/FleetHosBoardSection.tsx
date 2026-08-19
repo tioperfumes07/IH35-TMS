@@ -10,9 +10,14 @@ import {
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { formatClockTimeCT } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+
+const EMPTY_FILTERS = {
+  unitId: "",
+};
 
 function hmm(min: number | null): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -246,18 +251,38 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedUnitId = searchParams.get("unit_id");
   // LST-F5173 — visible EntityPicker (URL-only unit seed is not reverse chrome).
-  const [unitPickerId, setUnitPickerId] = useState("");
+  // LV-FLEET-HOS-BOARD-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
+  const unitIdFromUrl = requestedUnitId?.trim() ?? "";
+
+  function patchListSearchParam(next: { unitId: string }) {
+    const nextParams = new URLSearchParams(searchParams);
+    if (next.unitId) nextParams.set("unit_id", next.unitId);
+    else nextParams.delete("unit_id");
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    unitId: unitIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
   useEffect(() => {
-    if (requestedUnitId) setUnitPickerId(requestedUnitId);
-  }, [requestedUnitId]);
+    setApplied((prev) => ({ ...prev, unitId: unitIdFromUrl }));
+  }, [unitIdFromUrl]);
+
   const setUnitFilter = (unitId: string) => {
-    setUnitPickerId(unitId);
-    const next = new URLSearchParams(searchParams);
-    if (unitId) next.set("unit_id", unitId);
-    else next.delete("unit_id");
-    setSearchParams(next, { replace: true });
+    staged.setDraft((d) => ({ ...d, unitId }));
   };
-  const effectiveUnitId = unitPickerId.trim() || requestedUnitId || undefined;
+  const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const query = useQuery({
     queryKey: ["compliance", "fleet-location-hos", companyId],
@@ -312,18 +337,44 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           initialPageSize={50}
           tableTestId="compliance-fleet-hos-table"
           filterBar={
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2" data-testid="fleet-hos-filters">
               <div className="min-w-[220px]" data-testid="fleet-hos-unit-filter">
                 <EntityPicker
                   kind="unit"
                   operatingCompanyId={companyId}
-                  value={unitPickerId || null}
+                  value={filterDraft.unitId || null}
                   onChange={(next) => setUnitFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All units"
                   dataTestId="fleet-hos-filter-unit"
                 />
               </div>
+              <Button type="button" size="sm" data-testid="fleet-hos-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                Apply
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="fleet-hos-filter-cancel"
+                onClick={staged.cancel}
+                disabled={!staged.dirty}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="fleet-hos-filter-reset"
+                onClick={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchListSearchParam(EMPTY_FILTERS);
+                }}
+              >
+                Reset
+              </Button>
               <span className="text-xs text-slate-500">{liveRows.length} reporting</span>
               <span className="text-xs text-slate-500">
                 {query.data?.generated_at ? `as of ${formatClockTimeCT(query.data.generated_at)} CT` : ""}
