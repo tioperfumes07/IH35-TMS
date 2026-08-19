@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { ApiError } from "../../api/client";
 import { listHarshEventDashcamClips } from "../../api/safety";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   harshEventId: string;
@@ -18,7 +21,16 @@ export function HarshEventDetail({ harshEventId }: Props) {
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
       <h3 className="text-sm font-semibold text-slate-900">Dashcam Clips</h3>
-      {(clipsQuery.data?.rows ?? []).length === 0 ? (
+      {clipsQuery.isError ? (
+        <div data-testid="harsh-event-clips-query-error">
+          <ListErrorState
+            title="Couldn't load dashcam clips"
+            status={clipsQuery.error instanceof ApiError ? clipsQuery.error.status : 0}
+            message={userFacingApiError(clipsQuery.error, "Couldn't load dashcam clips.")}
+            onRetry={() => void clipsQuery.refetch()}
+          />
+        </div>
+      ) : (clipsQuery.data?.rows ?? []).length === 0 ? (
         <div className="text-xs text-slate-500">No linked clips for this harsh event.</div>
       ) : (
         (clipsQuery.data?.rows ?? []).map((clip) => (
