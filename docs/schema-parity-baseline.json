@@ -182,6 +182,7 @@
       "created_by_user_id",
       "from_bank_account_id",
       "id",
+      "is_sample_data",
       "last_qbo_synced_at",
       "memo",
       "operating_company_id",
@@ -228,6 +229,7 @@
       "due_date",
       "id",
       "insurance_claim_id",
+      "is_sample_data",
       "last_qbo_synced_at",
       "legal_matter_id",
       "linked_work_order_uuid",
@@ -466,6 +468,7 @@
       "id",
       "insurance_claim_id",
       "is_active",
+      "is_sample_data",
       "journal_entry_id",
       "linked_work_order_uuid",
       "load_id",
@@ -753,6 +756,7 @@
       "id",
       "internal_notes",
       "invoice_type",
+      "is_sample_data",
       "issue_date",
       "last_qbo_synced_at",
       "operating_company_id",
@@ -783,6 +787,7 @@
       "entry_date",
       "id",
       "idempotency_key",
+      "is_sample_data",
       "journal_entry_type_id",
       "last_qbo_synced_at",
       "memo",
@@ -1030,6 +1035,7 @@
       "deposited_to_account_id",
       "display_id",
       "id",
+      "is_sample_data",
       "last_qbo_synced_at",
       "notes",
       "operating_company_id",
@@ -1869,6 +1875,7 @@
       "id",
       "institution_name",
       "is_active",
+      "is_dip",
       "last_synced_at",
       "ledger_account_id",
       "operating_company_id",
@@ -1876,7 +1883,9 @@
       "plaid_account_id",
       "plaid_item_id",
       "sync_status",
-      "updated_at"
+      "tag",
+      "updated_at",
+      "visible"
     ],
     "banking.bank_transaction_splits": [
       "amount_cents",
@@ -1943,6 +1952,7 @@
       "is_billable",
       "is_credit",
       "linked_entity_id",
+      "matched_advance_id",
       "matched_bill_id",
       "matched_bill_payment_id",
       "matched_expense_id",
@@ -2068,7 +2078,10 @@
       "matched_at",
       "matched_by_user_uuid",
       "operating_company_id",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "banking.reconciliation_sessions": [
       "adjusted_bank_balance_cents",
@@ -4259,6 +4272,7 @@
       "driver_visible",
       "id",
       "is_active",
+      "is_sample_data",
       "line_type",
       "load_id",
       "operating_company_id",
@@ -4310,7 +4324,10 @@
       "operating_company_id",
       "scroll_completed",
       "signature_data_url",
-      "user_agent"
+      "user_agent",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.team_settlement_splits": [
       "applied_to_settlement_id",
@@ -4607,7 +4624,10 @@
       "effective_to",
       "factor_id",
       "id",
-      "tenant_id"
+      "tenant_id",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "factoring.factor": [
       "active",
@@ -4628,7 +4648,10 @@
       "reserve_rate",
       "reserve_schedule",
       "tenant_id",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "factoring.letter_of_release": [
       "created_at",
@@ -4638,7 +4661,10 @@
       "issued_date",
       "notes",
       "released_by_user_id",
-      "tenant_id"
+      "tenant_id",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "factoring.reserve_movement": [
       "amount_cents",

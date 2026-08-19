@@ -419,10 +419,13 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       }
 
       if (body.data.bank_txn_id) {
+        // ACCT-F5541 — banking.bank_transactions has no `advance_id` column; the real column,
+        // following this table's own matched_<entity>_id convention (202612801800), is
+        // matched_advance_id.
         await client.query(
           `
             UPDATE banking.bank_transactions
-            SET advance_id = $1,
+            SET matched_advance_id = $1,
                 updated_at = now()
             WHERE id = $2
               AND operating_company_id = $3::uuid

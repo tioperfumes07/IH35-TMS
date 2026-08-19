@@ -392,6 +392,55 @@ function analyzeSqlFragment(sql, schema) {
 
   const isTarget = (t) => TARGET_TABLES.has(t) && schema.has(t);
 
+  // UPDATE <schema.table> [AS] [alias] — the UPDATE target is NEVER captured by the FROM/JOIN scan
+  // above (tableRe only matches "from"/"join"), so a `SET col = …` clause on `UPDATE a.b x SET col =
+  // … FROM c.d y WHERE …` was previously attributed to c.d (the FROM table) instead of a.b (the real
+  // target) — a genuine misattribution, not a narrowing. Real repro: resync-proforma-from-load-rate.ts
+  // does `UPDATE accounting.invoice_lines l SET unit_amount_cents = …, line_total_cents = … FROM
+  // accounting.invoices i WHERE …` — both SET columns genuinely exist on invoice_lines and were
+  // reported as phantom accounting.invoices columns. Registering the target's alias here also fixes
+  // the QUALIFIED-ref check for it (previously silently skipped, since aliasToTable never had `l`).
+  const updateTargetRe = /\bupdate\s+([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)(?:\s+(?:as\s+)?([a-z_][a-z0-9_]*))?/;
+  const utm = updateTargetRe.exec(low);
+  let updateTargetTable = null;
+  if (utm) {
+    const table = utm[1];
+    const alias = utm[2] && utm[2] !== "set" ? utm[2] : null;
+    if (alias) aliasToTable.set(alias, table);
+    aliasToTable.set(table.split(".")[1], table);
+    if (isTarget(table)) updateTargetTable = table;
+  }
+  if (updateTargetTable) {
+    const cols = schema.get(updateTargetTable);
+    const setRe = /\bset\s+([a-z_][a-z0-9_]*)\s*=/gi;
+    let sm;
+    while ((sm = setRe.exec(low)) !== null) {
+      const col = sm[1];
+      if (SQL_NOISE.has(col) || aliasToTable.has(col)) continue;
+      if (!cols.has(col)) violations.push({ table: updateTargetTable, column: col, ctx: `unqualified ${col}` });
+    }
+  }
+
+  // The SET-clause assignment list is masked out before the single-table WHERE-oriented checks
+  // below run: `col = value` inside SET is syntactically identical to `col = value` inside WHERE, so
+  // without masking, every SET-clause column on an `UPDATE x SET … FROM y WHERE …` statement was
+  // swept into y's (the FROM table's) unqualified check even though SET always belongs to the UPDATE
+  // target x, already handled above. Real repro: unit_amount_cents/line_total_cents (SET-clause
+  // columns on accounting.invoice_lines) were reported as phantom accounting.invoices columns because
+  // the comparison-operator pattern below (`<col> = $n`) doesn't distinguish SET from WHERE. Masked
+  // with an equal-length run of "x" so no downstream index/length assumption breaks.
+  let lowForUnqualified = low;
+  if (utm) {
+    const setSpanRe = /\bset\b[\s\S]*?(?=\bfrom\b|\bwhere\b|\breturning\b|$)/i;
+    const sm2 = setSpanRe.exec(lowForUnqualified);
+    if (sm2) {
+      lowForUnqualified =
+        lowForUnqualified.slice(0, sm2.index) +
+        "x".repeat(sm2[0].length) +
+        lowForUnqualified.slice(sm2.index + sm2[0].length);
+    }
+  }
+
   // (1) QUALIFIED refs alias.column — safe even with joins.
   const qualRe = /\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b/gi;
   let qm;
@@ -409,7 +458,10 @@ function analyzeSqlFragment(sql, schema) {
   }
 
   // (2) UNQUALIFIED columns — ONLY single-target-table literals with no join/subquery/CTE/union.
-  const hasSubquery = /\(\s*select\b/i.test(low) || /\bwith\b[\s\S]*\bas\s*\(/i.test(low) || /\bunion\b/i.test(low);
+  const hasSubquery =
+    /\(\s*select\b/i.test(lowForUnqualified) ||
+    /\bwith\b[\s\S]*\bas\s*\(/i.test(lowForUnqualified) ||
+    /\bunion\b/i.test(lowForUnqualified);
   const distinctTargets = [...new Set(tableRefs.filter(isTarget))];
   const singleTable = tableRefs.length === 1 && distinctTargets.length === 1;
   if (singleTable && !hasSubquery) {
@@ -424,11 +476,12 @@ function analyzeSqlFragment(sql, schema) {
     // dispatch.detention_events.operating_company_id on the UPDATE target, whose alias the FROM/JOIN
     // alias map does not collect. This tightens attribution ONLY; every genuinely unqualified column
     // still matches, because a bare column has no preceding dot by definition.
+    // SET <col> = is handled separately above, attributed to the UPDATE target specifically (not to
+    // whichever table this single-FROM-table gate happens to be scoped to) — see updateTargetTable.
     const patterns = [
       /(?<!\.)\b([a-z_][a-z0-9_]*)\s+is\s+(?:not\s+)?null\b/gi,
       /(?<!\.)\b([a-z_][a-z0-9_]*)\s*(?:=|<>|!=|>=|<=|>|<)\s*(?:\$\d+|'|\d|true|false|now\(\))/gi,
       /(?<!\.)\b([a-z_][a-z0-9_]*)\s+in\s*\(/gi,
-      /\bset\s+([a-z_][a-z0-9_]*)\s*=/gi,
     ];
     // ORDER BY / GROUP BY were NOT inspected before 2026-07-25. That blind spot is what let
     // `ORDER BY posted_at` ship against driver_finance.escrow_ledger, whose timestamp is created_at —
@@ -441,11 +494,11 @@ function analyzeSqlFragment(sql, schema) {
       // exclude those, or this check would flag three correct queries (recognition_date,
       // service_location, age_days) and get itself allowlisted into uselessness.
       const outputAliases = new Set();
-      for (const am of low.matchAll(/\bas\s+([a-z_][a-z0-9_]*)/gi)) outputAliases.add(am[1]);
+      for (const am of lowForUnqualified.matchAll(/\bas\s+([a-z_][a-z0-9_]*)/gi)) outputAliases.add(am[1]);
       const seenSort = new Set();
     const sortClauseRe = /\b(?:order|group)\s+by\s+([^)]*?)(?:\s+limit\b|\s+offset\b|\s+fetch\b|$)/gi;
     let sc;
-    while ((sc = sortClauseRe.exec(low))) {
+    while ((sc = sortClauseRe.exec(lowForUnqualified))) {
       for (const raw of sc[1].split(",")) {
         const term = raw.trim().replace(/\s+(asc|desc)\b/g, "").replace(/\s+nulls\s+(first|last)\b/g, "").trim();
         // identifiers only — ordinals (ORDER BY 1), expressions and function calls cannot be resolved
@@ -459,7 +512,7 @@ function analyzeSqlFragment(sql, schema) {
     // SELECT-list unqualified columns — same conservative gate as every other unqualified pass
     // (exactly one target table in the FROM, no join, no subquery/CTE/UNION), so an unqualified name
     // here can only belong to that one table.
-    const selectList = extractSelectList(low);
+    const selectList = extractSelectList(lowForUnqualified);
     if (selectList) {
       const seenSel = new Set();
       for (const col of unqualifiedSelectListColumns(selectList)) {
@@ -472,7 +525,7 @@ function analyzeSqlFragment(sql, schema) {
     const seen = new Set();
     for (const re of patterns) {
       let m;
-      while ((m = re.exec(low))) {
+      while ((m = re.exec(lowForUnqualified))) {
         const col = m[1];
         if (SQL_NOISE.has(col) || aliasToTable.has(col) || seen.has(col)) continue;
         // skip if it's actually a function call `col(` — handled by not matching, but guard anyway
