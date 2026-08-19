@@ -350,8 +350,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx",
-    bad: /display_id\s*\?\?\s*payload\.wo\.id|card\.unit_number\}|card\.driver_name\s*\?\?\s*"Unassigned"|label=\{card\.load_display_id\}/,
-    good: /entityLabel\(\s*card\.load_display_id\s*,\s*card\.load_id\s*,\s*"Load"\s*\)/,
+    bad: /display_id\s*\?\?\s*payload\.wo\.id|label=\{card\.unit_number\}|card\.driver_name\s*\?\?\s*"Unassigned"|label=\{card\.load_display_id\}/,
+    good: /<EntityLinkOrTombstone\s+kind="load"\s+id=\{card\.load_id\}\s+name=\{card\.load_display_id\}\s+noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/banking/BankReconciliationPage.tsx",
@@ -466,7 +466,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx",
     bad: /label=\{card\.driver_name\s*\?\?\s*undefined\}|\{card\.unit_number\}\s*<\/Link>|\{card\.load_display_id\}\s*<\/Link>/,
-    good: /entityLabel\(\s*card\.unit_number\s*,\s*card\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{card\.unit_id\}\s+name=\{card\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx",
@@ -545,8 +545,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/ArrivingSoonCard.tsx",
-    bad: /\{card\.unit_number\}|driver_name\s*\?\?\s*"Unassigned"|label=\{card\.load_display_id\}/,
-    good: /entityLabel\(\s*card\.unit_number\s*,\s*card\.unit_id\s*,\s*"Unit"\s*\)/,
+    bad: /label=\{card\.unit_number\}|driver_name\s*\?\?\s*"Unassigned"|label=\{card\.load_display_id\}/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{card\.unit_id\}\s+name=\{card\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx",

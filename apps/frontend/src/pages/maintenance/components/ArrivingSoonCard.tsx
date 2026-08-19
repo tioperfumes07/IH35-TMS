@@ -1,6 +1,5 @@
 import type { ArrivingSoonCard as ArrivingSoonCardType } from "../../../api/maintenance";
-import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 type Props = {
   card: ArrivingSoonCardType;
@@ -19,9 +18,9 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
     <article className={`rounded-sm border border-gray-200 bg-white p-3 text-xs ${severityClass(card)}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="font-semibold">
-          <EntityLink kind="unit" id={card.unit_id} label={entityLabel(card.unit_number, card.unit_id, "Unit")} /> ·{" "}
-          <EntityLink kind="driver" id={card.driver_id} label={entityLabel(card.driver_name, card.driver_id, "Driver")} /> ·{" "}
-          <EntityLink kind="load" id={card.load_id} label={entityLabel(card.load_display_id, card.load_id, "Load")} />
+          <EntityLinkOrTombstone kind="unit" id={card.unit_id} name={card.unit_number} noun="Unit" /> ·{" "}
+          <EntityLinkOrTombstone kind="driver" id={card.driver_id} name={card.driver_name} noun="Driver" /> ·{" "}
+          <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" />
         </div>
         <span className={`rounded-full px-2 py-0.5 text-[10px] ${card.severe_count > 0 ? "bg-red-100 text-red-700" : card.warning_count > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700"}`}>
           {card.severe_count > 0 ? "SEVERE" : card.warning_count > 0 ? "WARNING" : "INFO"}
@@ -57,12 +56,8 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
         ) : (
           <span className="rounded-sm border border-gray-200 px-2 py-1 text-gray-500">Read-only</span>
         )}
-        <a className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" href={`/dispatch`}>
-          View Load
-        </a>
-        <button type="button" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700">
-          Call Driver
-        </button>
+        <EntityLinkOrTombstone kind="load" id={card.load_id} name="View Load" noun="Load" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" />
+        <EntityLinkOrTombstone kind="driver" id={card.driver_id} name="View Driver" noun="Driver" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" />
       </div>
     </article>
   );

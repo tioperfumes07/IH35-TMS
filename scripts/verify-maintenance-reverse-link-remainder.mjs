@@ -18,6 +18,8 @@ const CHECKS = [
   { name: "InTransitIssuesTable", file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx" },
   { name: "TriageModal", file: "apps/frontend/src/pages/maintenance/components/TriageModal.tsx" },
   { name: "ArrivingSoonPage", file: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx" },
+  { name: "ArrivingSoonCard", file: "apps/frontend/src/pages/maintenance/components/ArrivingSoonCard.tsx" },
+  { name: "ConvertIssueToWOModal", file: "apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx" },
   { name: "DriverReportsQueuePage", file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx" },
   { name: "SevereRepairOosTab", file: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx" },
   { name: "DefectsInboxPage", file: "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx" },
@@ -51,6 +53,16 @@ function run(root = ROOT) {
         /kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_display_id\} noun="Unit"/,
         /kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_full_name\} noun="Driver"/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact nullable FK/name tombstone coupling missing`);
+    }
+    if (["ArrivingSoonPage", "ArrivingSoonCard", "ConvertIssueToWOModal"].includes(c.name)) {
+      for (const pattern of [
+        /kind="unit" id=\{card\.unit_id\} name=\{card\.unit_number\} noun="Unit"/,
+        /kind="driver" id=\{card\.driver_id\} name=\{card\.driver_name\} noun="Driver"/,
+        /kind="load" id=\{card\.load_id\} name=\{card\.load_display_id\} noun="Load"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact nullable FK/name tombstone coupling missing`);
+    }
+    if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
+      fails.push(`${c.name}: dead generic load or driver action remains`);
     }
   }
   return fails;
