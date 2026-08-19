@@ -4236,5 +4236,10 @@
     "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
     "purpose": "verify-assignment-history-driver-picker-law"
+  },
+  "3914": {
+    "claimed_at": "2026-08-19",
+    "claimed_by": "cursor",
+    "purpose": "verify-settlement-detail-bookend-loads-in-cycle"
   }
 }
