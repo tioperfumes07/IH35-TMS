@@ -19,6 +19,8 @@ import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { suggestExpenseLoad } from "../../api/maintenance";
+import { Button } from "../../components/Button";
+import { useStagedListFilters } from "../../components/table";
 
 type Props = {
   operatingCompanyId: string;
@@ -45,6 +47,15 @@ type EventDraft = {
   description: string;
   /** S-06: user-set time of occurrence (ISO); backend defaults to now() when omitted. */
   occurred_at: string;
+};
+
+const EMPTY_FILTERS = {
+  status: "open" as "" | "open" | "acknowledged" | "closed",
+  severity: "" as "" | "low" | "medium" | "high" | "critical",
+  search: "",
+  type: "",
+  driverId: "",
+  unitId: "",
 };
 
 function defaultOccurredAtIso(): string {
@@ -90,14 +101,6 @@ function initialEventDraft(): EventDraft {
 
 export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<"" | "open" | "acknowledged" | "closed">("open");
-  const [severityFilter, setSeverityFilter] = useState<"" | "low" | "medium" | "high" | "critical">("");
-  const [search, setSearch] = useState("");
-  // S-08 / S-10: driver, unit, and type filters (client-side over the loaded page — the backend
-  // events-log endpoint does not accept these params; status/severity/search above are server-side).
-  const [driverFilter, setDriverFilter] = useState("");
-  const [unitFilter, setUnitFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   // C-13 / LST-F106: Safety Home drill links here as /safety/safety-events?event_id=<id>.
   // Detail panel loads via getSafetyEventDetail — no need for the id to be in the current list page.
@@ -106,6 +109,34 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
   const subjectUnitFromUrl = searchParams.get("subject_unit_id")?.trim() ?? "";
   const relatedLoadFromUrl = searchParams.get("related_load_id")?.trim() ?? "";
+  // S-08 / S-10: driver, unit, and type filters (client-side over the loaded page — the backend
+  // events-log endpoint does not accept these params; status/severity/search above are server-side).
+  // LV-SAFETY-EVENTS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  // filterDraft avoids clashing with create-modal `draft` (EventDraft).
+  function patchSearchParam(next: { driverId: string; unitId: string }) {
+    const p = new URLSearchParams(searchParams);
+    if (next.driverId) p.set("subject_driver_id", next.driverId);
+    else p.delete("subject_driver_id");
+    if (next.unitId) p.set("subject_unit_id", next.unitId);
+    else p.delete("subject_unit_id");
+    setSearchParams(p, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: subjectDriverFromUrl,
+    unitId: subjectUnitFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
   useEffect(() => {
     if (!eventIdParam) return;
     setSelectedEventId(eventIdParam);
@@ -114,11 +145,20 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
     setSearchParams(next, { replace: true });
   }, [eventIdParam, searchParams, setSearchParams]);
   useEffect(() => {
-    if (subjectDriverFromUrl) setDriverFilter(subjectDriverFromUrl);
-  }, [subjectDriverFromUrl]);
-  useEffect(() => {
-    if (subjectUnitFromUrl) setUnitFilter(subjectUnitFromUrl);
-  }, [subjectUnitFromUrl]);
+    setApplied((prev) => ({
+      ...prev,
+      ...(subjectDriverFromUrl ? { driverId: subjectDriverFromUrl } : {}),
+      ...(subjectUnitFromUrl ? { unitId: subjectUnitFromUrl } : {}),
+    }));
+  }, [subjectDriverFromUrl, subjectUnitFromUrl]);
+
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+  function setUnitFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, unitId: next }));
+  }
+
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [draft, setDraft] = useState<EventDraft>(initialEventDraft);
   const [logDraftBaseline, setLogDraftBaseline] = useState<EventDraft | null>(null);
@@ -162,14 +202,24 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   }, [draft.related_load_id, suggestionPinned, suggestionQuery.data]);
 
   const eventsQuery = useQuery({
-    queryKey: ["safety", "events-v2", operatingCompanyId, statusFilter, severityFilter, search, driverFilter, unitFilter, relatedLoadFromUrl],
+    queryKey: [
+      "safety",
+      "events-v2",
+      operatingCompanyId,
+      applied.status,
+      applied.severity,
+      applied.search,
+      applied.driverId,
+      applied.unitId,
+      relatedLoadFromUrl,
+    ],
     queryFn: () =>
       listSafetyEventLog(operatingCompanyId, {
-        status: statusFilter || undefined,
-        severity: severityFilter || undefined,
-        search: search.trim() || undefined,
-        subject_driver_id: driverFilter || undefined,
-        subject_unit_id: unitFilter || undefined,
+        status: applied.status || undefined,
+        severity: applied.severity || undefined,
+        search: applied.search.trim() || undefined,
+        subject_driver_id: applied.driverId || undefined,
+        subject_unit_id: applied.unitId || undefined,
         related_load_id: relatedLoadFromUrl || undefined,
       }).then((result) => result.events),
     enabled: Boolean(operatingCompanyId),
@@ -236,26 +286,26 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
 
   const rows = useMemo(() => {
     return allRows.filter((row) => {
-      if (typeFilter && row.event_type !== typeFilter) return false;
+      if (applied.type && row.event_type !== applied.type) return false;
       // SAF-F28: picker sets canonical id; keep name/number substring fallback for legacy typed text.
-      if (driverFilter) {
+      if (applied.driverId) {
         const id = String(row.subject_driver_id ?? "");
         const name = String(row.subject_driver_name ?? "").toLowerCase();
-        const needle = driverFilter.trim().toLowerCase();
-        if (id !== driverFilter && !name.includes(needle) && id.toLowerCase() !== needle) return false;
+        const needle = applied.driverId.trim().toLowerCase();
+        if (id !== applied.driverId && !name.includes(needle) && id.toLowerCase() !== needle) return false;
       }
-      if (unitFilter) {
+      if (applied.unitId) {
         const id = String(row.subject_unit_id ?? "");
         const num = String(row.subject_unit_number ?? "").toLowerCase();
-        const needle = unitFilter.trim().toLowerCase();
-        if (id !== unitFilter && !num.includes(needle) && id.toLowerCase() !== needle) return false;
+        const needle = applied.unitId.trim().toLowerCase();
+        if (id !== applied.unitId && !num.includes(needle) && id.toLowerCase() !== needle) return false;
       }
       const occurredDate = String(row.occurred_at ?? "").slice(0, 10);
       if (fromDate && occurredDate && occurredDate < fromDate) return false;
       if (toDate && occurredDate && occurredDate > toDate) return false;
       return true;
     });
-  }, [allRows, typeFilter, driverFilter, unitFilter, fromDate, toDate]);
+  }, [allRows, applied.type, applied.driverId, applied.unitId, fromDate, toDate]);
 
   // LV-SAFETY-EVENT-DETAIL-FALLBACK: the list already owns the complete event projection. Keep the
   // drawer meaningful while the exact detail request settles (or if that request fails transiently)
@@ -343,18 +393,18 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* B-A3: Total / Open → statusFilter. Severe = high|critical (no single severity); Commendations
+      {/* B-A3: Total / Open → applied.status (immediate KPI drill). Severe = high|critical (no single severity); Commendations
           need kpi_bucket on the list API — honest disabled (do not guess severity=high). */}
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Total events"
           value={kpiQuery.isError ? "—" : Number(kpiQuery.data?.total ?? 0)}
-          onClick={() => setStatusFilter("")}
+          onClick={() => setApplied((prev) => ({ ...prev, status: "" }))}
         />
         <KpiCard
           label="Open"
           value={kpiQuery.isError ? "—" : Number(kpiQuery.data?.open_count ?? 0)}
-          onClick={() => setStatusFilter("open")}
+          onClick={() => setApplied((prev) => ({ ...prev, status: "open" }))}
         />
         <KpiCard
           label="Severe"
@@ -371,11 +421,16 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex flex-wrap items-end gap-2" data-testid="safety-events-filters">
           <select
             aria-label="Filter by status"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as "" | "open" | "acknowledged" | "closed")}
+            value={filterDraft.status}
+            onChange={(event) =>
+              staged.setDraft((d) => ({
+                ...d,
+                status: event.target.value as "" | "open" | "acknowledged" | "closed",
+              }))
+            }
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="">All statuses</option>
@@ -385,8 +440,13 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           </select>
           <select
             aria-label="Filter by severity"
-            value={severityFilter}
-            onChange={(event) => setSeverityFilter(event.target.value as "" | "low" | "medium" | "high" | "critical")}
+            value={filterDraft.severity}
+            onChange={(event) =>
+              staged.setDraft((d) => ({
+                ...d,
+                severity: event.target.value as "" | "low" | "medium" | "high" | "critical",
+              }))
+            }
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           >
             <option value="">All severity</option>
@@ -397,16 +457,16 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           </select>
           <input
             aria-label="Search safety events by title or description"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            value={filterDraft.search}
+            onChange={(event) => staged.setDraft((d) => ({ ...d, search: event.target.value }))}
             placeholder="Search title or description"
             className="w-56 rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
           {/* S-10: Type filter — despite TYPE being a visible column, no filter previously existed. */}
           <select
             aria-label="Filter by event type"
-            value={typeFilter}
-            onChange={(event) => setTypeFilter(event.target.value)}
+            value={filterDraft.type}
+            onChange={(event) => staged.setDraft((d) => ({ ...d, type: event.target.value }))}
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             data-testid="safety-events-type-filter"
           >
@@ -423,7 +483,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <EntityPicker
               kind="driver"
               operatingCompanyId={operatingCompanyId}
-              value={driverFilter || null}
+              value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
               allowCreate={false}
               placeholder="All drivers"
@@ -437,7 +497,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <EntityPicker
               kind="unit"
               operatingCompanyId={operatingCompanyId}
-              value={unitFilter || null}
+              value={filterDraft.unitId || null}
               onChange={(next) => setUnitFilter(next ?? "")}
               allowCreate={false}
               placeholder="All units"
@@ -446,6 +506,32 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
               dataTestId="safety-events-unit-filter"
             />
           </label>
+          <Button type="button" size="sm" data-testid="safety-events-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+            Apply
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid="safety-events-filter-cancel"
+            onClick={staged.cancel}
+            disabled={!staged.dirty}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid="safety-events-filter-reset"
+            onClick={() => {
+              staged.cancel();
+              setApplied(EMPTY_FILTERS);
+              patchSearchParam(EMPTY_FILTERS);
+            }}
+          >
+            Reset
+          </Button>
         </div>
 
         <div className="flex items-center gap-2">
