@@ -15,11 +15,22 @@ export function collectProblems(root = ROOT) {
   const src = readRel(root, FILE);
   if (!src) return [`missing ${FILE}`];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/createKind=["']customer["']/.test(code)) problems.push(`${FILE}: must ReferenceSelect createKind=customer`);
-  if (!/customerSearch/.test(code) || !/search:\s*customerSearch/.test(code)) {
-    problems.push(`${FILE}: listCustomers must pass search: customerSearch`);
+  const referenceSelectContract =
+    /createKind=["']customer["']/.test(code) &&
+    /customerSearch/.test(code) &&
+    /search:\s*customerSearch/.test(code) &&
+    /onSearch=\{setCustomerSearch\}/.test(src);
+  // EntityPicker is the newer canonical entity abstraction. Its customer registry owns the
+  // company-scoped server search and real inline creator, so requiring each consumer to duplicate
+  // listCustomers/customerSearch would actively defeat the shared picker contract.
+  const entityPickerContract =
+    /<EntityPicker[\s\S]{0,500}kind=["']customer["'][\s\S]{0,500}allowCreate/.test(code) &&
+    /operatingCompanyId=\{operatingCompanyId\}/.test(code) &&
+    /value=\{signerEntityId \|\| null\}/.test(code) &&
+    /onChange=\{\(id, option\) =>/.test(code);
+  if (!referenceSelectContract && !entityPickerContract) {
+    problems.push(`${FILE}: customer signer must use a company-scoped searchable canonical picker with inline create`);
   }
-  if (!/onSearch=\{setCustomerSearch\}/.test(src)) problems.push(`${FILE}: must wire onSearch={setCustomerSearch}`);
   // Customer party must not be a bare SelectCombobox of options
   if (/signerType === "customer"[\s\S]{0,800}<SelectCombobox/.test(src)) {
     problems.push(`${FILE}: customer party must not use SelectCombobox`);
