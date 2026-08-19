@@ -535,3 +535,7 @@ verify:static: 36 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T02:35Z CC-1 | ACCT-F5460 closed (PR #9306, merged 1e72336). verify-customer-payment-history-scope-label.mjs pinned the exact literal entityLabel(p.display_id, p.id, "Payment") call on CustomerDetail.tsx's payment row, but the real row was migrated to <EntityLinkOrTombstone kind="payment" id={p.id} name={p.display_id} noun="Payment" /> — a strictly stronger component (also withholds the drill entirely when unresolved) that internally calls entityLabel(name, id, noun) for its tombstone branch, carrying the identical "never a raw uuid" guarantee. Guard was never updated to match the migration and FAILed against correct code. Widened to accept either shape; added 3 new selftest cases. Zero product-code change.
 
 verify:static: 37 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T02:38Z CC-1 | ACCT-F5461 closed (PR #9309, merged a38a280). verify-flow6-auto-invoice-sending.mjs checked loads.routes.ts for the POD convert+send call pair, but ACCT-F351 already moved that logic into a dedicated latch module (delivery-evidence-latch.ts) — loads.routes.ts now just calls latchOnDeliveryEvidence(...), which itself wires convertProformaToOfficial -> sendDraftInvoice at the correct order. Guard's LOADS constant was never repointed after that refactor and FAILed against correct code. Retargeted the constant; check() logic unchanged. Zero product-code change.
+
+verify:static: 38 of ~199 now closed this session. Continuing non-stop, fast-merge.
