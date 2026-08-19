@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDeadheadNextLoadSuggestions, type DeadheadNextLoadSuggestion } from "../../api/dispatch";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export type DeadheadOptimizerPanelProps = {
@@ -59,6 +61,12 @@ export function DeadheadOptimizerPanel({
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Next-load deadhead suggestions</p>
         <p className="text-[11px] text-slate-700/80">Top 5 pending loads ranked by (revenue − deadhead cost) / total miles</p>
+        {/* Exact Leaves dispatch.panel.deadhead_optimizer:unit — unitUuid was API-only */}
+        {unitUuid ? (
+          <p className="mt-1 text-xs text-slate-600" data-testid="deadhead-optimizer-unit-entitylink">
+            Unit: <EntityLink kind="unit" id={unitUuid} label={entityLabel(null, unitUuid, "Unit")} />
+          </p>
+        ) : null}
       </div>
 
       {q.isLoading && !suggestionsOverride ? <p className="text-xs text-slate-700/70">Loading suggestions…</p> : null}
