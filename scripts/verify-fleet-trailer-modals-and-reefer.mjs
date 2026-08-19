@@ -43,8 +43,15 @@ export function audit(src) {
   if (!/attached_trailer_id\?:\s*string \| null/.test(src.reefer)) {
     failures.push(`${FILES.reefer}: reefer section must carry the attached trailer's canonical id`);
   }
-  if (!/kind="trailer"/.test(src.reefer) || !/id=\{reefer\.attached_trailer_id\}/.test(src.reefer)) {
-    failures.push(`${FILES.reefer}: attached trailer heading must drill through with a canonical EntityLink`);
+  if (
+    !/EntityLinkOrTombstone/.test(src.reefer) ||
+    !/kind="trailer"/.test(src.reefer) ||
+    !/id=\{reefer\.attached_trailer_id\}/.test(src.reefer) ||
+    !/vp-reefer-trailer-link/.test(src.reefer)
+  ) {
+    failures.push(
+      `${FILES.reefer}: attached trailer heading must drill through with EntityLinkOrTombstone (unresolved-safe) + vp-reefer-trailer-link`,
+    );
   }
   return failures;
 }
@@ -72,6 +79,8 @@ if (process.argv.includes("--selftest")) {
     ["reefer-field", "reefer", /equipment_number\?:\s*string \| null/, "equipment_id?: string | null"],
     ["reefer-id", "reefer", /attached_trailer_id\?:\s*string \| null/, "attached_trailer_ref?: string | null"],
     ["reefer-link", "reefer", /kind="trailer"/, 'kind="unit"'],
+    ["reefer-tombstone", "reefer", /EntityLinkOrTombstone/g, "EntityLink"],
+    ["reefer-testid", "reefer", /vp-reefer-trailer-link/g, "vp-reefer-trailer-gone"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };

@@ -1,4 +1,4 @@
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type ReeferData = {
   attached_trailer_id?: string | null;
@@ -28,10 +28,11 @@ export function ReeferSection({ reefer }: { reefer: ReeferData }) {
       <h2 className="text-sm font-semibold text-gray-800">
         Reefer ·{" "}
         {reefer.attached_trailer_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="trailer"
             id={reefer.attached_trailer_id}
-            label={trailerLabel}
+            name={reefer.equipment_number}
+            noun="Trailer"
             className="font-semibold text-slate-700 hover:underline"
             data-testid="vp-reefer-trailer-link"
           />
