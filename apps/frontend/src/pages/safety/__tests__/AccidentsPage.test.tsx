@@ -26,14 +26,14 @@ const accidentFixture = {
   preventable: true,
 };
 
-function wrap(ui: ReactElement) {
+function wrap(ui: ReactElement, initialEntries: string[] = ["/"]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={qc}>
       <ToastProvider>
         {/* EntityLink renders a react-router <Link>, so the harness needs a Router.
             Without it every test in this file died on useLocation() before asserting anything. */}
-        <MemoryRouter>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
       </ToastProvider>
     </QueryClientProvider>
   );
@@ -42,7 +42,15 @@ function wrap(ui: ReactElement) {
 describe("AccidentsPage", () => {
   beforeEach(() => {
     vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [accidentFixture] });
+    vi.spyOn(safetyApi, "getSafetyAccidentDetail").mockResolvedValue(accidentFixture);
     vi.spyOn(safetyApi, "addAccidentPhoto").mockResolvedValue({ accident_id: "acc-1" } as never);
+  });
+
+  it("opens an exact accident reverse link even when the capped list omits it", async () => {
+    vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [] });
+    render(wrap(<AccidentsPage operatingCompanyId={companyId} />, ["/safety/accidents?accident_id=acc-1"]));
+    expect(await screen.findByTestId("accident-report-drawer")).toBeTruthy();
+    expect(safetyApi.getSafetyAccidentDetail).toHaveBeenCalledWith("acc-1", companyId);
   });
 
   it("renders live accident list from API", async () => {
