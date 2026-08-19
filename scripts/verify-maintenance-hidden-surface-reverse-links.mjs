@@ -15,6 +15,7 @@ const checks = [
   ["arriving", /kind="unit" id=\{card\.unit_id\}/, "arriving-soon unit label drills to the unit"],
   ["arriving", /kind="driver" id=\{card\.driver_id\}/, "arriving-soon driver label drills to the driver"],
   ["arriving", /kind="load" id=\{card\.load_id\}/, "arriving-soon load label drills to the load"],
+  ["arriving", /card\.total_open_issues > card\.issues\.slice\(0, 3\)\.length[\s\S]*Showing \{card\.issues\.slice\(0, 3\)\.length\} of \{card\.total_open_issues\} open issues/, "arriving-soon compact issue range is disclosed"],
   ["alerts", /compact[\s\S]*kind="unit" id=\{alert\.unit_id\}/, "compact PM-alert unit label drills to the unit"],
   ["createWo", /Suggested load:[\s\S]*kind="load" id=\{suggestedLoad\.load_id\}/, "suggested work-order load drills to the load"],
   ["severe", /title="Return Unit to Service"[\s\S]*kind="unit" id=\{returnEstimate\?\.unit_id\}/, "return-to-service unit label drills to the unit"],
@@ -35,7 +36,7 @@ if (found.length) {
 
 if (process.argv.includes("--self-test")) {
   for (const [key, pattern, label] of checks) {
-    const mutant = { ...sources, [key]: sources[key].replace(pattern, "/* planted defect */") };
+    const mutant = { ...sources, [key]: sources[key].replace(new RegExp(pattern.source, "g"), "/* planted defect */") };
     if (!failures(mutant).includes(label)) {
       console.error(`verify-maintenance-hidden-surface-reverse-links: SELF-TEST FAIL — ${label}`);
       process.exit(1);

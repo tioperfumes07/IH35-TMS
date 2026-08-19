@@ -46,6 +46,11 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
             </li>
           ))}
         </ul>
+        {card.total_open_issues > card.issues.slice(0, 3).length ? (
+          <p className="mt-1 text-[11px] text-slate-500" data-testid="arriving-soon-issues-range">
+            Showing {card.issues.slice(0, 3).length} of {card.total_open_issues} open issues.
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
