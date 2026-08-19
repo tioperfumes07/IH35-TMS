@@ -6,6 +6,7 @@ import { ApiError, apiRequest, resolveApiUrl } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { EldEditHistoryTimeline, type EldEditHistoryEntry } from "../../../components/safety/EldEditHistoryTimeline";
@@ -172,7 +173,17 @@ export function EldAuditTrailViewer() {
 
       <section className="p-4 print:border-0">
         {historyQuery.isLoading ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
-        {driverUuid && !historyQuery.isLoading ? (
+        {driverUuid && historyQuery.isError ? (
+          <div data-testid="eld-audit-trail-query-error">
+            <ListErrorState
+              title="Couldn't load ELD audit trail"
+              status={historyQuery.error instanceof ApiError ? historyQuery.error.status : 0}
+              message={userFacingApiError(historyQuery.error, "Couldn't load ELD audit trail.")}
+              onRetry={() => void historyQuery.refetch()}
+            />
+          </div>
+        ) : null}
+        {driverUuid && !historyQuery.isLoading && !historyQuery.isError ? (
           historyQuery.data?.edits?.length ? (
             <EldEditHistoryTimeline
               driverUuid={driverUuid}
