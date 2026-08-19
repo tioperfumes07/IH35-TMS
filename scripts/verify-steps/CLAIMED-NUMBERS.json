@@ -4266,5 +4266,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-equipment-transfer-modal-entitylinks"
+  },
+  "3926": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-save-load-template-modal-entitylinks"
   }
 }
