@@ -355,7 +355,10 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues.length ?? 0}
               onTriage={(issue) => setTriageIssue(issue)}
             />
-            <SevereAlertsBand alerts={severeAlertsQuery.data?.alerts ?? []} />
+            <SevereAlertsBand
+              alerts={severeAlertsQuery.data?.alerts ?? []}
+              totalCount={severeAlertsQuery.data?.total_count ?? severeAlertsQuery.data?.alerts.length ?? 0}
+            />
           </aside>
           </div>
         </div>

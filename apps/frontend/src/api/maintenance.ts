@@ -494,7 +494,7 @@ export function getMaintenanceRmStatus(companyId: string) {
 }
 
 export function getMaintenanceSevereAlerts(companyId: string) {
-  return apiRequest<{ alerts: Array<Record<string, unknown>> }>(
+  return apiRequest<{ alerts: Array<Record<string, unknown>>; total_count: number }>(
     `/api/v1/maintenance/dashboard/severe-alerts?${query(companyId)}`
   );
 }
