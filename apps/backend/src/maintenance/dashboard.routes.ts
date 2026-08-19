@@ -173,10 +173,10 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const payload = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.work_orders"))) return { recent: [], completed: [] };
+      if (!(await relationExists(client, "maintenance.work_orders"))) return { recent: [], completed: [], recent_total_count: 0, completed_total_count: 0 };
       const recent = await client.query(
         `
-          SELECT * FROM maintenance.work_orders
+          SELECT *, COUNT(*) OVER()::int AS total_count FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
             -- MAINT-VOID: voided work orders are not recent ACTIVITY, they are retracted records.
             -- Without this the voided demo rows DEMO-WO-001/002 sat in this panel on prod while the
@@ -189,7 +189,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       );
       const completed = await client.query(
         `
-          SELECT * FROM maintenance.work_orders
+          SELECT *, COUNT(*) OVER()::int AS total_count FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
             AND status = 'complete'
             AND voided_at IS NULL
@@ -198,7 +198,12 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      return { recent: recent.rows, completed: completed.rows };
+      return {
+        recent: recent.rows,
+        completed: completed.rows,
+        recent_total_count: Number(recent.rows[0]?.total_count ?? 0),
+        completed_total_count: Number(completed.rows[0]?.total_count ?? 0),
+      };
     });
     return payload;
   });

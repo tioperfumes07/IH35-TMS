@@ -562,7 +562,7 @@ export function getMaintenanceInTransitQueue(companyId: string) {
 }
 
 export function getMaintenanceRecentActivity(companyId: string) {
-  return apiRequest<{ recent: WorkOrder[]; completed: WorkOrder[] }>(
+  return apiRequest<{ recent: WorkOrder[]; completed: WorkOrder[]; recent_total_count: number; completed_total_count: number }>(
     `/api/v1/maintenance/dashboard/recent-activity?${query(companyId)}`
   );
 }

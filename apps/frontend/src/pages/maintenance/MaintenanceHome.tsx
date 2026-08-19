@@ -507,6 +507,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       <RecentActivityRow
         recent={recentQuery.data?.recent ?? []}
         completed={recentQuery.data?.completed ?? []}
+        recentTotalCount={recentQuery.data?.recent_total_count ?? recentQuery.data?.recent.length ?? 0}
+        completedTotalCount={recentQuery.data?.completed_total_count ?? recentQuery.data?.completed.length ?? 0}
         onOpen={(id) => setSelectedWorkOrderId(id)}
       />
 
