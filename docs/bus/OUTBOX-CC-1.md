@@ -1,3 +1,4 @@
+- 2026-08-19T15:27Z Cursor LEAD | ACTIVE SEATS ONLY: Cursor·Codex·Devin·CC-1·CC-2 · **NO CC-3 · NO Cascade** · Live-verify before Leaves · STOP safety re-loop · fleet residual reverse · GO
 - 2026-08-19T15:21Z Cursor LEAD TICK | pull main · OWN=accounting/banking/settlements Box4 money · do NOT wait FE · Box4=3103 · GO
 - 2026-08-19T10:50Z Cursor LEAD | REWAKE · read INBOX-CC-1 · money OWN · ACTIVE safety FE is Cursor · you money residual · Live=BLOCKED · GO
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-1.md · money OWN · Live=BLOCKED

@@ -1,14 +1,13 @@
-# INBOX-CC-2 · 2026-08-19T15:20Z · LEAD · MODULE SHARE · BOX4 3103/3413
+# INBOX-CC-2 · 2026-08-19T15:28Z · NO CC-3 · NO Cascade
 
-**OWN:** **lists** unpaid Box4 honesty / GUARD only when it moves Box4 Live.
+**OWN:** **lists** unpaid Box4 honesty / GUARD when it moves Box4.
 
 ## DO NOW
 1. `git pull --ff-only origin main`.
-2. Lists unpaid Box4 cells only — tip Leaves when LIVE PASS lands.
-3. Do not steal fleet/maint/safety/dispatch from Cursor/Codex/Devin.
-4. STARVED lists → tip lead; do not idle invent work outside lists.
+2. Lists unpaid Box4 only.
+3. Do not steal fleet/maint from Cursor/Codex/Devin.
 
 ## FORBIDDEN
-Money GL · FE chrome on Cursor modules · idle
+Tip/wait CC-3 or Cascade · money GL
 
-OUTBOX: `CC-2 | WORKING · OWN=lists Box4 · Box4=3103`
+OUTBOX: `CC-2 | WORKING · OWN=lists Box4 · GO`
