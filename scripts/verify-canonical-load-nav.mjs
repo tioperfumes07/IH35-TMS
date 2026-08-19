@@ -336,6 +336,9 @@ export function scanLoadColumns(files) {
   const found = [];
   for (const [file, raw] of Object.entries(files)) {
     if (!file.endsWith(".tsx")) continue; // see header: column DATA in .ts renders nothing
+    // Archived, unrouted source is retained only as historical context. Claiming its columns as
+    // product navigation would force dead-code wiring and manufacture Built credit.
+    if (/^\s*\/\/\s*@archived\b/m.test(raw)) continue;
     const src = blankComments(raw);
     LOAD_COLUMN_LABEL.lastIndex = 0;
     let m;
@@ -515,6 +518,9 @@ function goodFixture() {
         const cols = [{ key: "load_no", label: "Load #", render: () => "—" }];`,
       [`${SRC}/pages/EntityKindColumn.tsx`]: `
         const cols = [{ key: "load_id", label: "Load", entityKind: "load" }];`,
+      [`${SRC}/components/dispatch/ArchivedDispatchList.tsx`]: `
+        // @archived — zero live routes/imports; retained only as historical context
+        const cols = [{ key: "load_number", label: "Load #", render: (l) => l.load_number }];`,
       [`${SRC}/portal/PortalDashboardPage.tsx`]: `
         const cols = [{ key: "load_number", label: "Load #",
           render: (l) => <EntityLink kind="portal_load" id={l.id} label={l.load_number} /> }];`,
@@ -754,6 +760,9 @@ function selftest() {
   const cols = scanLoadColumns(good.files);
   for (const mustNot of [`${SRC}/pages/OptionList.tsx`, `${SRC}/reports/runner-config.ts`]) {
     if (cols.some((c) => c.file === mustNot)) failures.push(`channel D over-claimed a non-column: ${mustNot}`);
+  }
+  if (cols.some((c) => c.file === `${SRC}/components/dispatch/ArchivedDispatchList.tsx`)) {
+    failures.push("channel D claimed an explicitly archived, unrouted component as a live load column");
   }
   if (!cols.some((c) => c.file === `${SRC}/pages/HonestBlank.tsx` && c.honestBlank)) {
     failures.push("channel D failed to classify an em-dash-only render as an honest blank");
