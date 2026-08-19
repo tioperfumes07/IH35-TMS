@@ -101,6 +101,20 @@ export function assertAssetSafetyReverse(sources) {
   if (!/entityLabel\(dvir\.follow_up_wo_display_id, s\(dvir\.follow_up_wo_id\), "Work order"\)/.test(src[SECTION])) {
     problems.push(`${SECTION}: mounted DVIR reverse link does not consume the canonical work-order display identity.`);
   }
+  // Band A Built — unit.profile.safety_reverse owes driver drills when the API already returns driver_id.
+  // Plain-text driver_name on accidents/DVIRs was the remaining reverse gap after WO EntityLinks shipped.
+  if (!/EntityLinkOrTombstone[\s\S]{0,220}kind="driver"[\s\S]{0,220}accident\.driver_id|accident\.driver_id[\s\S]{0,280}EntityLinkOrTombstone[\s\S]{0,120}kind="driver"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: accident rows must EntityLinkOrTombstone the canonical driver (not plain-text driver_name).`);
+  }
+  if (!/data-testid="asset-safety-accident-driver-link"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: accident driver drill must expose data-testid=asset-safety-accident-driver-link for Live Leaves.`);
+  }
+  if (!/EntityLinkOrTombstone[\s\S]{0,220}kind="driver"[\s\S]{0,220}dvir\.driver_id|dvir\.driver_id[\s\S]{0,280}EntityLinkOrTombstone[\s\S]{0,120}kind="driver"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: DVIR rows must EntityLinkOrTombstone the canonical driver (not plain-text driver_name).`);
+  }
+  if (!/data-testid="asset-safety-dvir-driver-link"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: DVIR driver drill must expose data-testid=asset-safety-dvir-driver-link for Live Leaves.`);
+  }
   if (!/i\.trailer_id = \$/.test(src[INCIDENTS_ROUTE])) {
     problems.push(`${INCIDENTS_ROUTE}: GET incidents has no trailer_id filter — trailer interchanges stay unreachable from the trailer they concern.`);
   }
@@ -211,6 +225,28 @@ if (SELFTEST) {
     "dvir-wo-label-consumer-removed",
     { ...live, [SECTION]: live[SECTION].replace(/entityLabel\(dvir\.follow_up_wo_display_id, s\(dvir\.follow_up_wo_id\), "Work order"\)/g, 'entityLabel(null, s(dvir.follow_up_wo_id), "Work order")') },
     "does not consume the canonical work-order"
+  );
+  expectCaught(
+    "accident-driver-plain-text",
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /\{accident\.driver_id \|\| accident\.driver_name \? \([\s\S]*?\) : null\}/,
+        '{accident.driver_name ? ` · ${s(accident.driver_name)}` : ""}'
+      ),
+    },
+    "accident rows must EntityLinkOrTombstone"
+  );
+  expectCaught(
+    "dvir-driver-plain-text",
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /\{dvir\.driver_id \|\| dvir\.driver_name \? \([\s\S]*?\) : null\}/,
+        '<span className="ml-2 text-gray-600">{s(dvir.driver_name)}</span>'
+      ),
+    },
+    "DVIR rows must EntityLinkOrTombstone"
   );
   expectCaught(
     "incidents-trailer-filter-removed",
