@@ -66,8 +66,12 @@ const HANDLES_BOUNDARY = [
 ];
 
 export function auditFile(src, file = "<mem>") {
+  // Comments are not requests. Ignore them when finding caps so prose such as
+  // `listDrivers(limit:200)` cannot create a false finding. Boundary handling retains the historical
+  // source-wide baseline semantics; tightening that separately is a cross-lane debt sweep.
+  const executable = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
   const caps = [];
-  for (const m of src.matchAll(CAP_RE)) {
+  for (const m of executable.matchAll(CAP_RE)) {
     const n = Number(m[1]);
     if (Number.isFinite(n) && n >= MIN_CAP) caps.push(n);
   }
