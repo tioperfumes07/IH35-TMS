@@ -1,8 +1,7 @@
 import type { InTransitIssue } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
-import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 type Props = {
   open: boolean;
@@ -18,8 +17,8 @@ export function TriageModal({ open, issue, onClose, onConvertToWo, onConvertToDa
       {!issue ? null : (
         <div className="space-y-3 text-sm">
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
-            <div><span className="font-semibold">Unit:</span> <EntityLink kind="unit" id={issue.unit_id} label={entityLabel(issue.unit_display_id, issue.unit_id, "Unit")} /></div>
-            <div><span className="font-semibold">Driver:</span> <EntityLink kind="driver" id={issue.driver_id} label={entityLabel(issue.driver_full_name, issue.driver_id, "Driver")} /></div>
+            <div><span className="font-semibold">Unit:</span> <EntityLinkOrTombstone kind="unit" id={issue.unit_id} name={issue.unit_display_id} noun="Unit" /></div>
+            <div><span className="font-semibold">Driver:</span> <EntityLinkOrTombstone kind="driver" id={issue.driver_id} name={issue.driver_full_name} noun="Driver" /></div>
             <div><span className="font-semibold">Category:</span> {issue.issue_category}</div>
             <div><span className="font-semibold">Description:</span> {issue.issue_description}</div>
             <div><span className="font-semibold">GPS:</span> {issue.gps_lat ?? "-"}, {issue.gps_lng ?? "-"} {issue.gps_label ?? ""}</div>

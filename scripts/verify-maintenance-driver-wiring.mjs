@@ -21,7 +21,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx", /register\("driver_id", \{ required: requireDriverAndLoad \}\)/],
   ["apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx", /<DriverPickerWithCreate/],
   ["apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /<EntityPicker\s*\n\s*kind="driver"/],
-  ["apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx", /kind="driver" id=\{issue\.driver_id \|\| undefined\}/],
+  ["apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{issue\.driver_id\}\s+name=\{issue\.driver_full_name\}\s+noun="Driver"/],
   ["apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx", /kind="driver"[\s\S]{0,120}id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/RoadServiceList.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", /kind="driver" id=\{row\.driver_id \?\? undefined\}/],
