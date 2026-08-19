@@ -178,3 +178,8 @@ Devin-A | LIVE STARVED | module=fleet | leaf=fleet.inspections | URL=https://app
 Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.hub | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=Dispatch,Loads,Overview,Kanban,List,Round Trips,Planners | evidence=Dispatch hub renders with heading 'Dispatch', subtext 'Loads, stops, assignments, geofencing', and tab buttons Overview/Kanban/List/Round Trips/Planners | healthz=c8e38a5 | mutation=none | NEXT=commit + push + create + merge
 Devin-A | WORKING | NOW=Clicked Live urgent 14 | chrome=9227 | GO
 Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.load_board:list | URL=https://app.ih35dispatch.com/dispatch?view=list | USMCA | cells=Load board,Book load,Assignments,Settlements,Pre-settlements,Load #,Driver,Trailer,Showing 1-27 of 27 loads,Export CSV | evidence=Dispatch List (Load board) renders with 27 loads, Load #/Driver/Trailer columns, filter textbox, Export CSV; sample rows include L-20260811-0026, L-20260810-0006, L-20260808-0112 with unit links TEST-U01/T149/T175 and driver link Rafael Rogelio Rivero Reynoso | healthz=df57d47 | mutation=none | NEXT=commit + push + create + merge
+Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.overview | URL=https://app.ih35dispatch.com/dispatch?view=overview | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.kanban
