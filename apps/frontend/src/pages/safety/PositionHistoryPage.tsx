@@ -14,6 +14,12 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { Button } from "../../components/Button";
+import { useStagedListFilters } from "../../components/table";
+
+type ActionFilter = "" | "installed" | "removed" | "replaced";
+
+const EMPTY_FILTERS: { unitId: string; action: ActionFilter } = { unitId: "", action: "" };
 
 function formatDateTime(isoString: string): string {
   return new Date(isoString).toLocaleString();
@@ -37,42 +43,52 @@ export default function PositionHistoryPage() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const unitIdFromUrl = searchParams.get("unit_id") || "";
-  const actionFromUrl = (searchParams.get("action") as "" | "installed" | "removed" | "replaced") || "";
+  const actionFromUrl = (searchParams.get("action") as ActionFilter) || "";
 
-  // LST-F5197 — unit/action filters write URL.
-  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
-  const [actionFilter, setActionFilterState] = useState<"" | "installed" | "removed" | "replaced">(actionFromUrl);
-
-  useEffect(() => {
-    setUnitFilterState(unitIdFromUrl);
-  }, [unitIdFromUrl]);
-  useEffect(() => {
-    setActionFilterState(actionFromUrl);
-  }, [actionFromUrl]);
-
-  function patchSearchParam(key: "unit_id" | "action", next: string) {
+  // LST-F5197 — unit/action filters write URL on Apply (not silent draft).
+  // LV-SAFETY-POSITION-HISTORY-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  function patchSearchParam(next: { unitId: string; action: ActionFilter }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    if (next.unitId) p.set("unit_id", next.unitId);
+    else p.delete("unit_id");
+    if (next.action) p.set("action", next.action);
+    else p.delete("action");
     setSearchParams(p, { replace: true });
   }
-  function setUnitFilter(next: string) {
-    setUnitFilterState(next);
-    patchSearchParam("unit_id", next);
-  }
-  function setActionFilter(next: "" | "installed" | "removed" | "replaced") {
-    setActionFilterState(next);
-    patchSearchParam("action", next);
-  }
+
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
 
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    unitId: unitIdFromUrl,
+    action: actionFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+      setOffset(0);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      unitId: unitIdFromUrl,
+      action: actionFromUrl,
+    }));
+  }, [unitIdFromUrl, actionFromUrl]);
+
   const historyQuery = useQuery({
-    queryKey: ["position-history", companyId, unitFilter, actionFilter, limit, offset],
+    queryKey: ["position-history", companyId, applied.unitId, applied.action, limit, offset],
     queryFn: () =>
       listPositionHistory(companyId, {
-        unit_id: unitFilter || undefined,
-        action: actionFilter || undefined,
+        unit_id: applied.unitId || undefined,
+        action: applied.action || undefined,
         limit,
         offset,
       }),
@@ -192,7 +208,10 @@ export default function PositionHistoryPage() {
         <p className="text-sm text-gray-500">Track part installations, removals, and replacements</p>
       </div>
 
-      <div className="flex flex-wrap gap-4 rounded-lg border border-gray-200 bg-white p-4">
+      <div
+        className="flex flex-wrap items-end gap-4 rounded-lg border border-gray-200 bg-white p-4"
+        data-testid="position-history-filters"
+      >
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-gray-700" htmlFor="position-history-unit-filter">
             Unit:
@@ -201,11 +220,8 @@ export default function PositionHistoryPage() {
           <EntityPicker
             kind="unit"
             operatingCompanyId={companyId}
-            value={unitFilter || null}
-            onChange={(next) => {
-              setUnitFilter(next ?? "");
-              setOffset(0);
-            }}
+            value={draft.unitId || null}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
             allowCreate={false}
             placeholder="All units"
             className="w-56"
@@ -217,12 +233,15 @@ export default function PositionHistoryPage() {
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-gray-700">Action:</label>
           <select
-            value={actionFilter}
-            onChange={(e) => {
-              setActionFilter(e.target.value as "" | "installed" | "removed" | "replaced");
-              setOffset(0);
-            }}
+            value={draft.action}
+            onChange={(e) =>
+              staged.setDraft((d) => ({
+                ...d,
+                action: e.target.value as ActionFilter,
+              }))
+            }
             className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
+            data-testid="position-history-action-filter"
           >
             <option value="">All</option>
             <option value="installed">Installed</option>
@@ -231,17 +250,33 @@ export default function PositionHistoryPage() {
           </select>
         </div>
 
-        <button
+        <Button type="button" size="sm" data-testid="position-history-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
           type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="position-history-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="position-history-filter-reset"
           onClick={() => {
-            setUnitFilter("");
-            setActionFilter("");
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchSearchParam(EMPTY_FILTERS);
             setOffset(0);
           }}
-          className="rounded-sm bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
         >
-          Clear Filters
-        </button>
+          Reset
+        </Button>
 
         <div className="ml-auto text-sm text-gray-500">
           Showing {records.length} of {total} records
