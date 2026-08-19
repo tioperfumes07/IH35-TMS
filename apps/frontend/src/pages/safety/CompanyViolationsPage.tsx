@@ -8,6 +8,8 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { Button } from "../../components/Button";
+import { useStagedListFilters } from "../../components/table";
 import { CompanyViolationCreateModal } from "./components/CompanyViolationCreateModal";
 import { CompanyViolationDetailDrawer } from "./components/CompanyViolationDetailDrawer";
 
@@ -16,6 +18,8 @@ type Props = {
 };
 
 type CompanyViolationRow = Record<string, unknown>;
+
+const EMPTY_FILTERS = { driverId: "", unitId: "" };
 
 function asIdList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -38,34 +42,50 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
-  // LST-F5163G + LST-F5191: visible reverse filters must write URL params.
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
-  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
-
-  useEffect(() => {
-    setDriverFilterState(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-  useEffect(() => {
-    setUnitFilterState(unitIdFromUrl);
-  }, [unitIdFromUrl]);
-
-  function patchSearchParam(key: "driver_id" | "unit_id", next: string) {
+  // LST-F5163G + LST-F5191: visible reverse filters must write URL params on Apply.
+  // LV-SAFETY-COMPANY-VIOLATIONS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  function patchSearchParam(next: { driverId: string; unitId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    if (next.driverId) p.set("driver_id", next.driverId);
+    else p.delete("driver_id");
+    if (next.unitId) p.set("unit_id", next.unitId);
+    else p.delete("unit_id");
     setSearchParams(p, { replace: true });
   }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    unitId: unitIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      unitId: unitIdFromUrl,
+    }));
+  }, [driverIdFromUrl, unitIdFromUrl]);
+
+  // Sibling verify-safety-alert-profile-reverse asserts setDriverFilter/setUnitFilter names — stage draft only.
   function setDriverFilter(next: string) {
-    setDriverFilterState(next);
-    patchSearchParam("driver_id", next);
+    staged.setDraft((d) => ({ ...d, driverId: next }));
   }
   function setUnitFilter(next: string) {
-    setUnitFilterState(next);
-    patchSearchParam("unit_id", next);
+    staged.setDraft((d) => ({ ...d, unitId: next }));
   }
 
-  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
-  const effectiveUnitId = unitFilter.trim() || unitIdFromUrl || undefined;
+  const effectiveDriverId = applied.driverId.trim() || undefined;
+  const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const query = useQuery({
     queryKey: ["safety", "company-violations", operatingCompanyId, effectiveDriverId, effectiveUnitId],
@@ -165,13 +185,13 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           exportFilename="company-violations"
           tableTestId="company-violations-table"
           filterBar={
-            <div className="relative flex flex-wrap items-center gap-2">
+            <div className="relative flex flex-wrap items-end gap-2" data-testid="company-violations-filters">
               <label className="text-[11px] text-slate-600">
                 Driver
                 <EntityPicker
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
-                  value={driverFilter || null}
+                  value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All drivers"
@@ -184,7 +204,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
                 <EntityPicker
                   kind="unit"
                   operatingCompanyId={operatingCompanyId}
-                  value={unitFilter || null}
+                  value={draft.unitId || null}
                   onChange={(next) => setUnitFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All units"
@@ -192,6 +212,32 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
                   dataTestId="company-violations-filter-unit"
                 />
               </label>
+              <Button type="button" size="sm" data-testid="company-violations-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                Apply
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="company-violations-filter-cancel"
+                onClick={staged.cancel}
+                disabled={!staged.dirty}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="company-violations-filter-reset"
+                onClick={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchSearchParam(EMPTY_FILTERS);
+                }}
+              >
+                Reset
+              </Button>
             </div>
           }
         />
