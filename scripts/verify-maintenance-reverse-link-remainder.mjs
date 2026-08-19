@@ -61,6 +61,13 @@ function run(root = ROOT) {
         /kind="load" id=\{card\.load_id\} name=\{card\.load_display_id\} noun="Load"/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact nullable FK/name tombstone coupling missing`);
     }
+    if (c.name === "SevereRepairOosTab") {
+      for (const pattern of [
+        /kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/,
+        /kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/,
+        /kind="unit" id=\{returnEstimate\?\.unit_id\} name=\{returnEstimate\?\.unit_number\} noun="Unit"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact nullable FK/name tombstone coupling missing`);
+    }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
       fails.push(`${c.name}: dead generic load or driver action remains`);
     }

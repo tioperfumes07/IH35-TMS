@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -174,7 +174,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Unit",
       sortable: true,
       render: (row) => (
-        <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+        <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />
       ),
     },
     {
@@ -184,7 +184,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Driver",
       sortable: true,
       render: (row) =>
-        <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />,
+        <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
     },
     {
       key: "damage_severity",
@@ -345,7 +345,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         <div className="space-y-3">
           <div className="text-sm text-gray-700">
             Unit:{" "}
-            <EntityLink kind="unit" id={returnEstimate?.unit_id} label={entityLabel(returnEstimate?.unit_number, returnEstimate?.unit_id, "Unit")} className="font-semibold" />
+            <EntityLinkOrTombstone kind="unit" id={returnEstimate?.unit_id} name={returnEstimate?.unit_number} noun="Unit" className="font-semibold" />
           </div>
           <div className="text-xs text-gray-500">
             Disabled if open estimates exist. Open count: <span className="font-semibold">{returnEstimate ? openByUnit.get(returnEstimate.unit_id) ?? 0 : 0}</span>
