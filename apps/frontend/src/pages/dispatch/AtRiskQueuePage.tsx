@@ -5,8 +5,7 @@ import { listAtRiskDispatchLoads } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -34,7 +33,8 @@ export function AtRiskQueuePage() {
   // Migrated to the shared QBO-parity grid — columns, order, load deep-link, and the ETA signal badge
   // are preserved verbatim (§7 additive-only). Declared BEFORE the `!companyId` early return below so
   // the hook call is unconditional (Rules of Hooks — companyId can change between renders).
-  // Load cell uses EntityLink (Law of the Land reverse drill-through) instead of ad-hoc Link.
+  // Resolved identities drill through; unavailable historical identities remain honest,
+  // non-interactive tombstones instead of dead links.
   const columns = useMemo<ParityColumn<AtRiskRow>[]>(
     () => [
       {
@@ -42,25 +42,25 @@ export function AtRiskQueuePage() {
         label: "Load",
         sortable: true,
         className: "font-medium",
-        render: (load) => <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
+        render: (load) => <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
       },
       {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        render: (load) => <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} />,
+        render: (load) => <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />,
       },
       {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (load) => <EntityLink kind="driver" id={load.driver_id} label={entityLabel(load.driver_name, load.driver_id, "Driver")} />,
+        render: (load) => <EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" />,
       },
       {
         key: "unit_number",
         label: "Unit",
         sortable: true,
-        render: (load) => <EntityLink kind="unit" id={load.unit_id} label={entityLabel(load.unit_number, load.unit_id, "Unit")} />,
+        render: (load) => <EntityLinkOrTombstone kind="unit" id={load.unit_id} name={load.unit_number} noun="Unit" />,
       },
       {
         key: "delivery_city",

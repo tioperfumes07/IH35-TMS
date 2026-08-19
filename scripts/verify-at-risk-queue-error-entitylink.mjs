@@ -46,12 +46,12 @@ export function check(sources) {
     if (!/loadsQ\.refetch/.test(page)) {
       failures.push(`${FILES.page}: ListErrorState onRetry must call loadsQ.refetch`);
     }
-    if (!/EntityLink/.test(page) || !/kind\s*=\s*["']load["']/.test(page)) {
-      failures.push(`${FILES.page}: must render EntityLink kind="load"`);
+    if (!/EntityLinkOrTombstone/.test(page) || !/kind\s*=\s*["']load["'][\s\S]{0,80}name=\{load\.load_number\}[\s\S]{0,80}noun="Load"/.test(page)) {
+      failures.push(`${FILES.page}: must render resolved load link or unavailable tombstone`);
     }
-    for (const [kind, id] of [["customer", "customer_id"], ["driver", "driver_id"], ["unit", "unit_id"]]) {
-      const linkRe = new RegExp(`kind\\s*=\\s*["']${kind}["'][\\s\\S]{0,80}id=\\{load\\.${id}\\}`);
-      if (!linkRe.test(page)) failures.push(`${FILES.page}: must render EntityLink kind="${kind}" from load.${id}`);
+    for (const [kind, id, name, noun] of [["customer", "customer_id", "customer_name", "Customer"], ["driver", "driver_id", "driver_name", "Driver"], ["unit", "unit_id", "unit_number", "Unit"]]) {
+      const linkRe = new RegExp(`kind\\s*=\\s*["']${kind}["'][\\s\\S]{0,80}id=\\{load\\.${id}\\}[\\s\\S]{0,80}name=\\{load\\.${name}\\}[\\s\\S]{0,80}noun="${noun}"`);
+      if (!linkRe.test(page)) failures.push(`${FILES.page}: must render resolved ${kind} link or unavailable tombstone from load.${id}`);
     }
     if (/to=\{`\/dispatch\?load_id=/.test(page) || /to="\/dispatch\?load_id=/.test(page)) {
       failures.push(`${FILES.page}: must not use ad-hoc /dispatch?load_id= Link for load cells`);
@@ -106,15 +106,15 @@ if (process.argv.includes("--selftest")) {
   `;
   const goodPage = `
     import { ListErrorState } from "../../components/ListErrorState";
-    import { EntityLink } from "../../components/shared/EntityLink";
+    import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
     {loadsQ.isError ? (
       <ListErrorState title="Couldn't load at-risk queue" status={0} message={msg} onRetry={() => void loadsQ.refetch()} />
     ) : (
       <ParityTable emptyText="No at-risk loads right now." columns={[
-        { render: (load) => <EntityLink kind="load" id={load.id} label={load.load_number} /> },
-        { render: (load) => <EntityLink kind="customer" id={load.customer_id} label={load.customer_name} /> },
-        { render: (load) => <EntityLink kind="driver" id={load.driver_id} label={load.driver_name} /> },
-        { render: (load) => <EntityLink kind="unit" id={load.unit_id} label={load.unit_number} /> },
+        { render: (load) => <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" /> },
+        { render: (load) => <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /> },
+        { render: (load) => <EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" /> },
+        { render: (load) => <EntityLinkOrTombstone kind="unit" id={load.unit_id} name={load.unit_number} noun="Unit" /> },
       ]} />
     )}
   `;
