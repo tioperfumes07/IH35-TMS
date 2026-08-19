@@ -346,7 +346,7 @@
         }
       ],
       "completeness": "lucia-bypass Neon prod 2026-08-05: mdata.loads=6, accounting.invoices=11984. 5 loads have no invoice (expected pre-operational); 0 invoices have invalid load FK. verify-linkage-required-edges.mjs OK — 0 new gaps, historical baseline gaps wired. One-way linkage pattern holds.",
-      "guard": "scripts/verify-money-ops-fk-density.mjs",
+      "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
       "drain_proof": {
         "guard_green": true,
         "guard_sample": "Reclassified 2026-08-09 per Rule 32 + LV-TXN-010/011: QBO-origin denominators are imported history (not linkage defects); TMS-native going-forward load linkage only. No historical load/unit FK backfill. verify-disp-wire-06-load-expense-link scopes load_required=true natives.",
