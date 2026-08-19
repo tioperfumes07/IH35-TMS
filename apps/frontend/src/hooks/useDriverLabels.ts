@@ -22,6 +22,16 @@ export function useDriverLabels(operatingCompanyId: string, driverIds: Array<str
     },
     enabled: Boolean(operatingCompanyId && ids.length),
   });
-  const byId = useMemo(() => new Map((query.data?.labels ?? []).map((row) => [row.id, row.label])), [query.data?.labels]);
+  // SAF-DRIVER-LABELS-NULL-ROW — labels arrays can contain holes/undefined from mocks or partial API pages;
+  // mapping row.id without a guard throws and takes down Safety meetings/training render.
+  const byId = useMemo(
+    () =>
+      new Map(
+        (query.data?.labels ?? [])
+          .filter((row): row is { id: string; label: string } => Boolean(row?.id))
+          .map((row) => [row.id, row.label]),
+      ),
+    [query.data?.labels],
+  );
   return { ...query, byId };
 }
