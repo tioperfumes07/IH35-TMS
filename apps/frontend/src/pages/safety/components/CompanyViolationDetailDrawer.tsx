@@ -13,6 +13,7 @@ import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -163,6 +164,14 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             Escalate
           </button>
         </div>
+        {(patchMutation.isError || escalateMutation.isError) ? (
+          <p className="mt-2 text-xs text-red-700" data-testid="company-violation-action-error">
+            {userFacingApiError(
+              patchMutation.error ?? escalateMutation.error,
+              "Could not update the company violation.",
+            )}
+          </p>
+        ) : null}
 
         <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-3">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Resolve Violation</div>
@@ -212,6 +221,11 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             >
               Resolve & Apply Outcome
             </button>
+            {resolveMutation.isError ? (
+              <p className="mt-2 text-xs text-red-700" data-testid="company-violation-resolve-error">
+                {userFacingApiError(resolveMutation.error, "Could not resolve the company violation.")}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -220,6 +234,11 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
             loading={completeMutation.isPending}
             onComplete={(completedDate, notes) => completeMutation.mutate({ completedDate, notes })}
           />
+          {completeMutation.isError ? (
+            <p className="mt-2 text-xs text-red-700" data-testid="company-violation-complete-error">
+              {userFacingApiError(completeMutation.error, "Could not complete the corrective action.")}
+            </p>
+          ) : null}
         </div>
       </ParityDrawer>
     </>

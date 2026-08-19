@@ -4,6 +4,7 @@ import { ackAnomaly, dismissAnomaly, getAnomaly, resolveAnomaly, type SafetyAnom
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 
 type Props = {
@@ -217,6 +218,14 @@ export function AnomalyDetailDrawer({
                   Dismiss
                 </button>
               </div>
+              {(ackMutation.isError || resolveMutation.isError || dismissMutation.isError) ? (
+                <p className="text-xs text-red-700" data-testid="anomaly-action-error">
+                  {userFacingApiError(
+                    ackMutation.error ?? resolveMutation.error ?? dismissMutation.error,
+                    "Could not update the anomaly.",
+                  )}
+                </p>
+              ) : null}
             </div>
           </div>
         )}
