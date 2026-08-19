@@ -21,8 +21,8 @@ function audit(s) {
   if (!/assigned_unit_id = COALESCE\(\$3, assigned_unit_id\)/.test(s.service) || !/previous_unit_id, new_unit_id/.test(s.service)) failures.push("canonical unit FK sinks missing");
   if (!/code === "E_UNIT_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("unit rejection route mapping missing");
   if (!/l\.assigned_unit_id = \$1::uuid/.test(s.aggregate) || !/l\.operating_company_id = \$2::uuid/.test(s.aggregate)) failures.push("exact entity-scoped unit reverse query missing");
-  if (!/kind="load"/.test(s.reverse) || !/Available — no active load assigned to unit/.test(s.reverse)) failures.push("canonical load drill or honest empty state missing");
-  if (!/unitNumber:\s*string/.test(s.reverse) || !/entityLabel\(unitNumber, unitId, "Unit"\)/.test(s.reverse)) failures.push("empty-state unit reverse must consume canonical unit number");
+  if (!/EntityLinkOrTombstone[\s\S]{0,120}kind="load"/.test(s.reverse) || !/Available — no active load assigned to unit/.test(s.reverse)) failures.push("canonical unresolved-safe load drill or honest empty state missing");
+  if (!/unitNumber:\s*string/.test(s.reverse) || !/EntityLinkOrTombstone[\s\S]{0,120}kind="unit"[\s\S]{0,120}name=\{unitNumber\}/.test(s.reverse)) failures.push("empty-state unit reverse must consume canonical unit number through unresolved-safe drill");
   if (!/CurrentLoadSection currentLoad=\{profile\.current_load\} unitId=\{id\} unitNumber=\{unitNumber\}/.test(s.profile)) failures.push("unit profile reverse mount must forward canonical unit number");
   return failures;
 }
@@ -38,9 +38,9 @@ if (process.argv.includes("--selftest")) {
     ["sink", "service", /assigned_unit_id = COALESCE\(\$3, assigned_unit_id\)/g, "assigned_unit_id = assigned_unit_id"],
     ["route", "routes", /code === "E_UNIT_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /l\.assigned_unit_id = \$1::uuid/g, "TRUE"],
-    ["drill", "reverse", /kind="load"/, 'kind="unit"'],
+    ["drill", "reverse", /EntityLinkOrTombstone kind="load"/, 'EntityLinkOrTombstone kind="unit"'],
     ["label-contract", "reverse", /unitNumber:\s*string/, "unitNumber?: string"],
-    ["label-consumer", "reverse", /entityLabel\(unitNumber, unitId, "Unit"\)/, 'entityLabel(null, unitId, "Unit")'],
+    ["label-consumer", "reverse", /name=\{unitNumber\}/, "name={null}"],
     ["label-parent", "profile", / unitNumber=\{unitNumber\}/, ""],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
