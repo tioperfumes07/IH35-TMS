@@ -119,6 +119,16 @@ function run(root = ROOT) {
         fails.push(`${c.name}: road-service ticket number mislabeled as work-order identity`);
       }
     }
+    if (c.name === "WorkOrderDetailPage") {
+      for (const pattern of [
+        /kind="unit" id=\{wo\.unit_id as string \| null\} name=\{wo\.unit_number\} noun="Unit"/,
+        /kind="load" id=\{wo\.load_id as string \| null\} name=\{wo\.linked_load_number\} noun="Load"/,
+        /kind="load" id=\{wo\.roadside_breakdown_load_id as string \| null\} name=\{wo\.roadside_breakdown_load_number\} noun="Load"/,
+        /kind="driver" id=\{wo\.driver_id as string \| null\} name=\{wo\.driver_name\} noun="Driver"/,
+        /kind="vendor" id=\{wo\.resolved_vendor_id as string \| null\} name=\{wo\.resolved_vendor_name\} noun="Vendor"/,
+        /kind="claim" id=\{wo\.insurance_claim_id as string \| null\} name=\{wo\.insurance_claim_number\} noun="Claim"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact forward-link identity coupling missing`);
+    }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
       fails.push(`${c.name}: dead generic load or driver action remains`);
     }

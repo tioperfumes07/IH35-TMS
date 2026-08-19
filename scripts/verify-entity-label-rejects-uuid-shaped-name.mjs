@@ -1324,12 +1324,12 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
     bad: /label=\{typeof wo\.linked_load_number === "string" \? wo\.linked_load_number : undefined\}/,
-    good: /entityLabel\(\s*typeof wo\.linked_load_number === "string" \? wo\.linked_load_number : null\s*,\s*wo\.load_id\s*,\s*"Load"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="load"\s+id=\{wo\.load_id as string \| null\}\s+name=\{wo\.linked_load_number\}\s+noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
     bad: /label=\{typeof wo\.roadside_breakdown_load_number === "string" \? wo\.roadside_breakdown_load_number : undefined\}/,
-    good: /entityLabel\(\s*typeof wo\.roadside_breakdown_load_number === "string" \? wo\.roadside_breakdown_load_number : null\s*,\s*wo\.roadside_breakdown_load_id\s*,\s*"Load"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="load"\s+id=\{wo\.roadside_breakdown_load_id as string \| null\}\s+name=\{wo\.roadside_breakdown_load_number\}\s+noun="Load"/,
   },
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
@@ -1409,17 +1409,17 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
     bad: /label=\{typeof wo\.unit_number === "string" \? wo\.unit_number : undefined\}/,
-    good: /entityLabel\(\s*typeof wo\.unit_number === "string" \? wo\.unit_number : null\s*,\s*wo\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{wo\.unit_id as string \| null\}\s+name=\{wo\.unit_number\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
     bad: /label=\{typeof wo\.driver_name === "string" \? wo\.driver_name : undefined\}/,
-    good: /entityLabel\(\s*typeof wo\.driver_name === "string" \? wo\.driver_name : null\s*,\s*wo\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{wo\.driver_id as string \| null\}\s+name=\{wo\.driver_name\}\s+noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
     bad: /label=\{typeof wo\.resolved_vendor_name === "string" \? wo\.resolved_vendor_name : undefined\}/,
-    good: /entityLabel\(\s*typeof wo\.resolved_vendor_name === "string" \? wo\.resolved_vendor_name : null\s*,\s*wo\.resolved_vendor_id\s*,\s*"Vendor"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="vendor"\s+id=\{wo\.resolved_vendor_id as string \| null\}\s+name=\{wo\.resolved_vendor_name\}\s+noun="Vendor"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/Permits.tsx",
@@ -1449,7 +1449,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
     bad: /<EntityLink kind="claim" id=\{String\(wo\.insurance_claim_id\)\} \/>/,
-    good: /entityLabel\(wo\.insurance_claim_number, wo\.insurance_claim_id, "Claim"\)/,
+    good: /<EntityLinkOrTombstone\s+kind="claim"\s+id=\{wo\.insurance_claim_id as string \| null\}\s+name=\{wo\.insurance_claim_number\}\s+noun="Claim"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
@@ -1570,7 +1570,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
     bad: /(?<!name=)\{row\.vendor_name\}/,
-    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="vendor"\s+id=\{row\.vendor_id\}\s+name=\{row\.vendor_name\}\s+noun="Vendor"/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/PoliciesList.tsx",

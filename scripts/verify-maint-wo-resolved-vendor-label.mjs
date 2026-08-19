@@ -17,7 +17,7 @@ function audit(parts) {
   const tableLabelCount = (parts.table.match(/entityLabel\(row\.resolved_vendor_name, row\.resolved_vendor_id, "Vendor"\)/g) ?? []).length
     + (parts.table.includes("name={row.resolved_vendor_name}") ? 1 : 0);
   if (tableLabelCount < 2 || !/row\.resolved_vendor_id/.test(parts.table)) failures.push("WO list and export must carry the resolved vendor FK and label");
-  if (!/wo\.resolved_vendor_id[\s\S]*entityLabel\([\s\S]*wo\.resolved_vendor_name[\s\S]*wo\.resolved_vendor_id/.test(parts.detail)) failures.push("WO detail must link the resolved vendor FK and label");
+  if (!/<EntityLinkOrTombstone\s+kind="vendor"\s+id=\{wo\.resolved_vendor_id as string \| null\}\s+name=\{wo\.resolved_vendor_name\}\s+noun="Vendor"/.test(parts.detail)) failures.push("WO detail must link the resolved vendor FK and label");
   return failures;
 }
 
@@ -27,7 +27,7 @@ if (process.argv.includes("--selftest")) {
     ["routes", "COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id", "w.external_vendor_id::text AS resolved_vendor_id"],
     ["routes", "AND v.operating_company_id = w.operating_company_id", ""],
     ["table", "name={row.resolved_vendor_name}", "name={null}"],
-    ["detail", "typeof wo.resolved_vendor_name === \"string\" ? wo.resolved_vendor_name : null", "null"],
+    ["detail", "name={wo.resolved_vendor_name}", "name={null}"],
   ];
   for (const [key, from, to] of mutations) {
     const changed = { ...parts, [key]: parts[key].replace(from, to) };
