@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listEquipmentLoans } from "../../api/data-infra";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 
 // LINK-F5171/LINK-F5182 — factoring:home.equipment_loans reverse gap, vendor side. The unit side
@@ -38,7 +39,7 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
               <EntityLink
                 kind="equipment_loans_vendor"
                 id={vendorId}
-                label={`${loan.equipment_number ?? loan.equipment_id} · ${formatUsdCents(loan.outstanding_balance_cents ?? loan.principal_cents)} · ${loan.status}`}
+                label={`${entityLabel(loan.equipment_number, loan.equipment_id, "Equipment")} · ${formatUsdCents(loan.outstanding_balance_cents ?? loan.principal_cents)} · ${loan.status}`}
                 className="text-xs font-semibold text-slate-700 hover:underline"
               />
             </li>

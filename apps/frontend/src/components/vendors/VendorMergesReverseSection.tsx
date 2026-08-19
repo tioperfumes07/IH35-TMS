@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listDriverVendorMerges } from "../../api/data-infra";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 
 // LINK-F5171/LINK-F5183 — factoring:home.vendor_merges reverse gap, vendor side. Merge rows store
@@ -39,7 +40,7 @@ export function VendorMergesReverseSection({ operatingCompanyId, vendorId }: { o
               <EntityLink
                 kind="factoring_vendor_merges_vendor"
                 id={vendorId}
-                label={`${m.from_vendor_name ?? m.from_qbo_vendor_id} → ${m.to_vendor_name ?? m.to_qbo_vendor_id} · ${formatDateUS(m.merged_at)}`}
+                label={`${entityLabel(m.from_vendor_name, m.from_qbo_vendor_id, "Vendor")} → ${entityLabel(m.to_vendor_name, m.to_qbo_vendor_id, "Vendor")} · ${formatDateUS(m.merged_at)}`}
                 className="text-xs font-semibold text-slate-700 hover:underline"
               />
             </li>
