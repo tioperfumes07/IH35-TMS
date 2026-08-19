@@ -31,9 +31,10 @@ function checkSource(modal) {
     "must not import EntityLinkOrTombstone from EntityLink",
   );
   assert(/EntityLinkOrTombstone/.test(modal), "selected identities must use label-aware tombstones");
-  assert(/kind=["']driver["'] id=\{driverId\} name=\{null\} noun=["']Driver["']/.test(modal), "driver must not derive a label from its UUID");
-  assert(/kind=["']unit["'] id=\{unitId\} name=\{null\} noun=["']Unit["']/.test(modal), "unit must not derive a label from its UUID");
-  assert(/kind=["']trailer["'] id=\{trailerId\} name=\{null\} noun=["']Trailer["']/.test(modal), "trailer must not derive a label from its UUID");
+  assert(/kind=["']driver["'] id=\{driverId\} name=\{driverOption\?\.label\} noun=["']Driver["']/.test(modal), "driver must retain its canonical picker label");
+  assert(/kind=["']unit["'] id=\{unitId\} name=\{unitOption\?\.label\} noun=["']Unit["']/.test(modal), "unit must retain its canonical picker label");
+  assert(/kind=["']trailer["'] id=\{trailerId\} name=\{trailerOption\?\.label\} noun=["']Trailer["']/.test(modal), "trailer must retain its canonical picker label");
+  assert(/onChange=\{\(next, option\)/.test(modal), "picker callbacks must retain selected options alongside FKs");
   const board = fs.readFileSync(BOARD, "utf8");
   assert(/EntityLink/.test(modal), "modal must use EntityLink");
   assert(/data-testid=["']quick-assign-load-entitylink["']/.test(modal), "must link load");
@@ -56,9 +57,9 @@ function selftest() {
   const mutations = [
     [/import \{ EntityLinkOrTombstone \} from "\.\.\/\.\.\/\.\.\/components\/shared\/EntityLinkOrTombstone";/, 'import { EntityLinkOrTombstone } from "../../../components/shared/EntityLink";'],
     [/data-testid=["']quick-assign-modal-entitylinks["']/, 'data-testid="planted-missing"'],
-    [/kind="driver" id=\{driverId\} name=\{null\}/, 'kind="driver" id={driverId} name={driverId}'],
-    [/kind="unit" id=\{unitId\} name=\{null\}/, 'kind="unit" id={unitId} name={unitId}'],
-    [/kind="trailer" id=\{trailerId\} name=\{null\}/, 'kind="trailer" id={trailerId} name={trailerId}'],
+    [/kind="driver" id=\{driverId\} name=\{driverOption\?\.label\}/, 'kind="driver" id={driverId} name={driverId}'],
+    [/kind="unit" id=\{unitId\} name=\{unitOption\?\.label\}/, 'kind="unit" id={unitId} name={unitId}'],
+    [/kind="trailer" id=\{trailerId\} name=\{trailerOption\?\.label\}/, 'kind="trailer" id={trailerId} name={trailerId}'],
   ];
   for (const [pattern, replacement] of mutations) {
     const broken = original.replace(pattern, replacement);
