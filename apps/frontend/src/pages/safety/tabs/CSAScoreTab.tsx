@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { getCurrentCsaScore, listCsaScores, pullCsaFromSafer, recomputeCsa } from "../../../api/safetyV64";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type BasicRow = {
   label: string;
@@ -97,6 +98,11 @@ export function CSAScoreTab() {
         <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate()}>
           Check public SAFER availability
         </button>
+        {recomputeMutation.isError ? (
+          <span className="text-xs text-red-700" data-testid="csa-recompute-error">
+            {userFacingApiError(recomputeMutation.error, "Could not recompute CSA scores.")}
+          </span>
+        ) : null}
         {saferMutation.isError ? (
           <span className="text-xs text-slate-700">
             Public SAFER is not authoritative for Hazmat BASIC. Authenticated carrier SMS access is required.
