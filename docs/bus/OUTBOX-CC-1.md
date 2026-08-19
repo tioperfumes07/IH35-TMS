@@ -1,3 +1,5 @@
+- 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-1.md · money OWN · Live=BLOCKED
+- 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-1.md + STATUS-NOW · Built paid · Live=BLOCKED · continuous FAST-MERGE
 CC-1 | INBOX P0 items 2+3 shipped | PASS | bill payment letter HTML (#8902) + balance sheet gl_je drill (#8905) | Neon yourself | NEXT=re-poll after deploy; seat lane clean
 
 2026-08-18T07:35Z CC-1 | Read INBOX-CC-1.md fresh (8H LAUNCH NON-STOP header + P0 list). Two real gaps found and closed:
