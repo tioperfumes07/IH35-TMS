@@ -263,9 +263,17 @@ export function assertCompanyGucSql(sql) {
   } catch (error) {
     return [`GUC SQL parse failed: ${error instanceof Error ? error.message : String(error)}`];
   }
-  return tokens.join(" ") === "select set_config ( 'app.operating_company_id' , $1 , true )"
+  const joined = tokens.join(" ");
+  // ACCT-F5543 (2026-08-19): verify-systemic-42p18-set-config-text.mjs established `$1::text` as the
+  // codebase-wide required cast on every set_config('app.operating_company_id', ...) call site (guards
+  // against Postgres 42P18 — could not determine data type of parameter). Both the cast and uncast forms
+  // are accepted here so this narrower route-specific contract does not fight that systemic law.
+  const ok =
+    joined === "select set_config ( 'app.operating_company_id' , $1 , true )" ||
+    joined === "select set_config ( 'app.operating_company_id' , $1 :: text , true )";
+  return ok
     ? []
-    : ["GUC SQL must execute SELECT set_config('app.operating_company_id', $1, true)"];
+    : ["GUC SQL must execute SELECT set_config('app.operating_company_id', $1, true) (optionally $1::text per verify-systemic-42p18-set-config-text.mjs)"];
 }
 
 function splitTopLevel(tokens, separator) {
@@ -616,7 +624,7 @@ function canonicalFixture() {
       app.get("${ROUTE}", async () => {
         const snapshot = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
           const companyId = query.data.operating_company_id;
-          await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+          await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
           let samsaraLive = 0;
           if (await relationExists(client, "${RELATION}")) {
             const samsaraRes = await client.query(\`SELECT count(DISTINCT local_unit_id)::text AS samsara_live
@@ -648,12 +656,12 @@ function runSelftest() {
     ["overwritten-counter", good.replace("return { samsara_live", "samsaraLive = 999; return { samsara_live")],
     ["wrong-company-guc", good.replace("[companyId]", "[otherCompanyId]")],
     ["comment-decoy-guc", good.replace(
-      `"SELECT set_config('app.operating_company_id', $1, true)"`,
-      `"SELECT 1 /* set_config('app.operating_company_id', $1, true) */"`,
+      `"SELECT set_config('app.operating_company_id', $1::text, true)"`,
+      `"SELECT 1 /* set_config('app.operating_company_id', $1::text, true) */"`,
     )],
     ["dead-guc-helper", good.replace(
-      `await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);`,
-      `async function deadProof() { await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]); }`,
+      `await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);`,
+      `async function deadProof() { await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]); }`,
     )],
     ["dead-relation", good.replace(`if (await relationExists(client, "${RELATION}"))`, `if (false && await relationExists(client, "${RELATION}"))`)],
     ["wrong-relation", good.replace(RELATION, "integrations.other")],
