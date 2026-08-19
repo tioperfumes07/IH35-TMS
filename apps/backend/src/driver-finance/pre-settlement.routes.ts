@@ -25,6 +25,23 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+// ACCT-F5579: POST /:id/add-load and POST /:id/settle had no role gate -- authed() only requires a
+// session, and withCompany's assertCompanyMembership is role-agnostic. /settle transitions a real
+// settlement to 'approved' and emails/notifies the driver with a net-pay PDF, the same severity class
+// as ACCT-F5576's settlement finalize. Matches settlements.routes.ts's own SETTLEMENT_WRITE_ROLES for
+// the sibling (non-load-bookended) settlement flow.
+const PRE_SETTLEMENT_WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Payroll"]);
+function requirePreSettlementWriteRole(req: FastifyRequest, reply: FastifyReply) {
+  const user = authed(req, reply);
+  if (!user) return null;
+  const role = String((user as { role?: string }).role ?? "");
+  if (!PRE_SETTLEMENT_WRITE_ROLES.has(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "pre-settlement add-load/settle requires an office role" });
+    return null;
+  }
+  return user;
+}
+
 function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
 }
@@ -170,7 +187,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
    * INVARIANT: one open pre-settlement per driver (MUST 8a.0.5.12).
    */
   app.post("/api/v1/driver-finance/pre-settlements/:id/add-load", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requirePreSettlementWriteRole(req, reply);
     if (!user) return;
 
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -285,7 +302,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
    * when the SB return load is marked delivered_pending_docs).
    */
   app.post("/api/v1/driver-finance/pre-settlements/:id/settle", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requirePreSettlementWriteRole(req, reply);
     if (!user) return;
 
     const params = idParamsSchema.safeParse(req.params ?? {});
