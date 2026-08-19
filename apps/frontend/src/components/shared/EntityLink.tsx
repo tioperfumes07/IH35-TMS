@@ -409,7 +409,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "driver_reports_load":
       return `/maintenance/driver-reports?load_id=${id}`;
     case "training_record":
-      return `/safety/training-records?training_id=${id}`;
+      return `/safety/training/records?training_id=${id}`;
     case "legal_contract":
       return `/legal/contracts?contract_id=${id}`;
     case "company_violation":
@@ -575,7 +575,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "dot_inspections_trailer":
       return `/safety/dot-inspections?trailer_id=${id}`;
     case "training_records_driver":
-      return `/safety/training-records?driver_id=${id}`;
+      return `/safety/training/records?driver_id=${id}`;
     case "complaints_driver":
       return `/safety/complaints?driver_id=${id}`;
     case "drug_alcohol_driver":

@@ -20,6 +20,8 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("insurance_policy", "id1")).toBe("/safety/insurance/policies/id1");
     expect(resolveEntityRoute("dvir", "id1")).toBe("/safety/idvr/id1");
     expect(resolveEntityRoute("maintenance_inspection", "id1")).toBe("/maintenance/inspections?inspection_id=id1");
+    expect(resolveEntityRoute("training_record", "id1")).toBe("/safety/training/records?training_id=id1");
+    expect(resolveEntityRoute("training_records_driver", "id1")).toBe("/safety/training/records?driver_id=id1");
   });
 
   it("resolves settlement, claim, and lawsuit to query-param drill-through", () => {
