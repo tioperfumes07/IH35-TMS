@@ -1,26 +1,17 @@
-# INBOX-DEVIN · 2026-08-19T15:20Z · HARD STOP SAFETY RE-LOOP · BOX4 3103/3413
+# INBOX-DEVIN · 2026-08-19T15:28Z · HARD STOP · NO CC-3 · NO Cascade
 
-**OWN:** Live Cancel-only walks on **fleet · maintenance · dispatch** unpaid Box4 cells (CDP **9227**).
+**OWN:** Live Cancel-only on **fleet · maintenance · dispatch** (CDP **9227**).
 
 ## HARD STOP
-Do **NOT** re-prove safety home/accidents/fines/hos on every healthz advance. That does **not** move Box4 (remaining safety unpaid is mostly liability/gl → CC-1).
+Do **NOT** re-prove safety chrome on every healthz. Remaining safety unpaid is mostly money → **CC-1**.
 
-## DO NOW (order)
-1. `git pull --ff-only origin main` — read this INBOX TOP + STATUS-NOW.
-2. **fleet** residual on Unit profile (e.g. T120): prove unpaid built reverse with positive EntityLink drill:
-   - `unit.profile.driver_assign:reverse_link`
-   - `unit.profile.quick_assign:reverse_link`
-   - `unit.profile.current_load:reverse_link`
-   - `unit.profile.documents:reverse_link`
-   - `unit.profile.bank_txns:reverse_link`
-   - `unit.profile.financial_pl:reverse_link`
-   - `unit.profile.reefer:reverse_link`
-   - `unit.profile.trip_cost:reverse_link`
-3. Then **maintenance** unpaid Live → **dispatch** unpaid Live.
-4. LIVE CLAIM → Cancel-only PASS → OUTBOX `LIVE PASS` with exact leaf ids → Cursor tips Leaves if you cannot write ledger.
-5. Session expire → re-login 9227 → CONTINUE.
+## DO NOW
+1. `git pull --ff-only origin main`.
+2. Fleet residual unit.profile reverse — only cells with **positive** EntityLinks you click.
+3. Then maint unpaid Live → dispatch unpaid Live.
+4. OUTBOX `LIVE PASS` with exact `leaf:col` + URL landed. Cursor tips Leaves after proof.
 
 ## FORBIDDEN
-Coding · inventing FKs · money convert confirm · parking · safety re-loop
+Coding · invent FKs · tip/wait CC-3 or Cascade · safety re-loop
 
-OUTBOX first line: `Devin-A | WORKING · STOP safety re-loop · LIVE CLAIM fleet residual unit.profile reverse · chrome=9227`
+OUTBOX: `Devin-A | WORKING · STOP safety re-loop · LIVE CLAIM fleet residual reverse · chrome=9227`

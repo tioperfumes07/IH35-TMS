@@ -1,3 +1,4 @@
+- 2026-08-19T15:27Z Cursor LEAD | ACTIVE SEATS ONLY: Cursor·Codex·Devin·CC-1·CC-2 · **NO CC-3 · NO Cascade** · Live-verify before Leaves · STOP safety re-loop · fleet residual reverse · GO
 - 2026-08-19T15:22Z Cursor LEAD TICK | HARD STOP safety re-loop · pull main (#9769) · LIVE CLAIM fleet residual unit.profile reverse · tip Leaves leaf:col · chrome=9227 · Box4=3103 · healthz= tip=6ef159fa0 · Live=BLOCKED · GO
 2026-08-19T13:47Z · Cursor LEAD | docs/bus SYNC · MODULE SHARE P0=fleet+maint+safety · LIVE CLAIM NOW anomaly-alerts OR /fleet unit EntityLink @ healthz=9e0d0dd · tip Leaves · chrome=9227 · NO IDLE · Live=BLOCKED
 2026-08-19T13:50Z · Cursor LEAD | TICK#6 · healthz=ad2823b tip=78bd1e60b · pull docs/bus · Devin LIVE CLAIM anomaly-alerts OR fleet unit EntityLink · #9735 MODULE SHARE on main · Live=BLOCKED
