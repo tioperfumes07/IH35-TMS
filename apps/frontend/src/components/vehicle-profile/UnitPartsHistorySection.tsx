@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { listUnitPartsHistory, type PartsAssignmentRow } from "../../api/maintenance";
+import { getUnitPartsHistoryPage, type PartsAssignmentRow } from "../../api/maintenance";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
@@ -87,12 +87,13 @@ const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
 export function UnitPartsHistorySection({ unitId, companyId }: Props) {
   const partsQuery = useQuery({
     queryKey: ["unit-parts-history", unitId, companyId],
-    queryFn: () => listUnitPartsHistory(unitId, companyId),
+    queryFn: () => getUnitPartsHistoryPage(unitId, companyId),
     enabled: Boolean(unitId && companyId),
     staleTime: 30_000,
   });
 
-  const rows: PartsAssignmentRow[] = partsQuery.data ?? [];
+  const rows: PartsAssignmentRow[] = partsQuery.data?.rows ?? [];
+  const totalCount = partsQuery.data?.total_count ?? rows.length;
 
   return (
     <section
@@ -122,6 +123,11 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
         </div>
       ) : (
         <div className="mt-3">
+          {totalCount > rows.length ? (
+            <p className="mb-2 text-xs text-slate-500" data-testid="unit-parts-history-range">
+              Showing {rows.length} of {totalCount} parts assignments. Open Assignments to review the complete trail.
+            </p>
+          ) : null}
           <ParityTable
             storageKey="unit-parts-history"
             tableTestId="unit-parts-history-table"

@@ -842,10 +842,14 @@ export function createPartsAssignment(workOrderId: string, operatingCompanyId: s
 }
 
 /** Unit reverse drill-through — parts used on WOs for a unit via work_orders.unit_id. */
-export function listUnitPartsHistory(unitId: string, operatingCompanyId: string) {
-  return apiRequest<{ rows: PartsAssignmentRow[] }>(
+export function getUnitPartsHistoryPage(unitId: string, operatingCompanyId: string) {
+  return apiRequest<PartsAssignmentsResponse>(
     `/api/v1/maintenance/units/${encodeURIComponent(unitId)}/parts-history?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
-  ).then((result) => result.rows);
+  );
+}
+
+export function listUnitPartsHistory(unitId: string, operatingCompanyId: string) {
+  return getUnitPartsHistoryPage(unitId, operatingCompanyId).then((result) => result.rows);
 }
 
 export function adjustPartsInventory(

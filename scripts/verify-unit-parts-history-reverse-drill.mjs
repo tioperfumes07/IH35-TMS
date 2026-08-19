@@ -60,8 +60,8 @@ export function computeFailures(files) {
   if (!/Parts Used/.test(section)) {
     errors.push("UnitPartsHistorySection.tsx must render Parts Used heading");
   }
-  if (!/listUnitPartsHistory/.test(section)) {
-    errors.push("UnitPartsHistorySection.tsx must use listUnitPartsHistory");
+  if (!/getUnitPartsHistoryPage/.test(section)) {
+    errors.push("UnitPartsHistorySection.tsx must use getUnitPartsHistoryPage");
   }
 
   if (!/\/api\/v1\/maintenance\/units\/\$\{encodeURIComponent\(unitId\)\}\/parts-history/.test(api) &&
@@ -85,8 +85,8 @@ function selftest() {
       WHERE id = $1 AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
     `,
     page: `import { UnitPartsHistorySection } from "..."; <UnitPartsHistorySection /> /* parts-history */`,
-    section: `Parts Used\nlistUnitPartsHistory\n/api/v1/maintenance/units/\${id}/parts-history`,
-    api: `export function listUnitPartsHistory(unitId, oc) { return apiRequest(\`/api/v1/maintenance/units/\${encodeURIComponent(unitId)}/parts-history?...\`); }`,
+    section: `Parts Used\ngetUnitPartsHistoryPage\n/api/v1/maintenance/units/\${id}/parts-history`,
+    api: `export function getUnitPartsHistoryPage(unitId, oc) { return apiRequest(\`/api/v1/maintenance/units/\${encodeURIComponent(unitId)}/parts-history?...\`); } export function listUnitPartsHistory() {}`,
   };
   const bad = {
     routes: `app.get("/api/v1/maintenance/parts-invoice-links"`,

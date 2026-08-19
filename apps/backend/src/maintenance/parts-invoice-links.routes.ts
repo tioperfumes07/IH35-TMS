@@ -145,7 +145,8 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
               pil.vendor_invoice_number,
               pil.vendor_invoice_amount::float8 AS vendor_invoice_amount,
               pil.created_at,
-              pil.created_by_user_id::text AS created_by_user_id
+              pil.created_by_user_id::text AS created_by_user_id,
+              COUNT(*) OVER()::int AS total_count
             FROM maintenance.parts_invoice_links pil
             INNER JOIN maintenance.work_orders wo
               ON wo.id = pil.work_order_id
@@ -163,11 +164,11 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
           `,
           [query.data.operating_company_id, params.data.unitId]
         );
-        return { rows: res.rows };
+        return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
       });
 
       if ("notFound" in rows) return reply.code(404).send({ error: "unit_not_found" });
-      return { rows: rows.rows };
+      return { rows: rows.rows, total_count: rows.total_count };
     }
   );
 
