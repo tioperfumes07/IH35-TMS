@@ -162,7 +162,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             SELECT
               rr.*,
               inv.customer_id,
-              inv.load_id
+              inv.load_id,
+              COUNT(*) OVER()::int AS _total_count
             FROM views.factoring_recourse_at_risk rr
             LEFT JOIN LATERAL (
               SELECT i.customer_id, i.source_load_id AS load_id
@@ -185,7 +186,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       return res.rows;
     });
 
-    return { invoices };
+    return { invoices, total: Number(invoices[0]?._total_count ?? 0) };
   },
   );
 
@@ -212,7 +213,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `
             SELECT
               cf.*,
-              inv.customer_id
+              inv.customer_id,
+              COUNT(*) OVER()::int AS _total_count
             FROM views.factoring_chargebacks_fees cf
             LEFT JOIN LATERAL (
               SELECT i.customer_id
@@ -251,6 +253,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
 
       return {
         history: historyRes.rows,
+        history_total: Number(historyRes.rows[0]?._total_count ?? 0),
         monthly_summary: monthlyRes.rows,
       };
     });

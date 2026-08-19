@@ -33,6 +33,7 @@ import {
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
@@ -715,6 +716,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="overflow-x-auto">
             <RecoursePipelineTable rows={invoices} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
           </div>
+          <CappedListNotice shown={invoices.length} limit={200} total={recourseQuery.data?.total} hint="Narrow the filters to see the remaining invoices." />
         </div>
       ) : null}
 
@@ -762,6 +764,12 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <div className="overflow-x-auto">
               <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
             </div>
+            <CappedListNotice
+              shown={feesQuery.data?.history.length ?? 0}
+              limit={500}
+              total={feesQuery.data?.history_total}
+              hint="Narrow the customer filter to see the remaining chargebacks and fees."
+            />
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Monthly fee summaries</div>
