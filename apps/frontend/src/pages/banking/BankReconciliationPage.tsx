@@ -164,7 +164,11 @@ export function BankReconciliationPage() {
       .filter((c) => c.ledger_entry_kind === (manualLedgerKind as BankMatchCandidateKind))
       .map((c) => ({
         value: c.ledger_entry_id,
-        label: `${c.memo?.trim() ? c.memo : c.ledger_entry_id.slice(0, 8)} — ${money(c.amount_cents)}`,
+        // CLS-UUID-LABEL — BankMatchCandidate carries no display name beyond memo, so when memo is
+        // blank fall back to the ledger_entry_kind (e.g. "bill_payment"), never a truncated uuid;
+        // same honest-fallback convention this page already uses one section over ("Auto-match
+        // candidate: {row.ledger_entry_kind}").
+        label: `${c.memo?.trim() ? c.memo : c.ledger_entry_kind} — ${money(c.amount_cents)}`,
         sublabel: c.event_date,
       }));
   }, [manualCandidatesQuery.data, manualLedgerKind]);
