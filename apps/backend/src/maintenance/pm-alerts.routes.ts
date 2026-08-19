@@ -52,8 +52,8 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-      if (!(await relationExists(client, "maintenance.pm_alerts"))) return [];
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      if (!(await relationExists(client, "maintenance.pm_alerts"))) return { alerts: [], total_count: 0 };
 
       const values: unknown[] = [query.data.operating_company_id];
       const filters = [`a.operating_company_id = $1::uuid`];
@@ -76,7 +76,8 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
             a.triggered_at::text,
             a.state::text,
             a.scheduled_work_order_id::text,
-            wo.display_id AS scheduled_work_order_display_id
+            wo.display_id AS scheduled_work_order_display_id,
+            COUNT(*) OVER()::int AS total_count
           FROM maintenance.pm_alerts a
           LEFT JOIN mdata.units u ON u.id = a.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = a.operating_company_id
           LEFT JOIN maintenance.pm_schedules s ON s.id = a.pm_schedule_id
@@ -88,10 +89,10 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { alerts: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
     });
 
-    return { alerts: rows };
+    return result;
   });
 
   app.patch("/api/v1/maintenance/pm-alerts/:id/ack", async (req, reply) => {
