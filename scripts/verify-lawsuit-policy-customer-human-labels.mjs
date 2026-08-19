@@ -19,7 +19,8 @@ function assertAll(srcs) {
     if (/claim_id\.slice\(0,\s*8\)/.test(src) || /unitId\.slice\(0,\s*8\)/.test(src) || /source_load_id\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: still UUID-slices`);
     }
-    if (!/entityLabel\(/.test(src)) {
+    const usesGovernedLabel = /entityLabel\(/.test(src) || /<EntityLinkOrTombstone\b/.test(src);
+    if (!usesGovernedLabel) {
       problems.push(`${file}: missing entityLabel`);
     }
   }
@@ -30,7 +31,9 @@ function assertAll(srcs) {
   if (!/entityLabel\(lawsuit\.driver_name,\s*lawsuit\.driver_id,\s*"Driver"\)/.test(lawsuits)) problems.push(`${FILES[0]}: lawsuit driver link must consume driver_name`);
   if (!/entityLabel\(lawsuit\.unit_number,\s*lawsuit\.unit_id,\s*"Unit"\)/.test(lawsuits)) problems.push(`${FILES[0]}: lawsuit unit link must consume unit_number`);
   if (!/entityLabel\(unit\.unit_number,\s*unitId,\s*"Unit"\)/.test(policy)) problems.push(`${FILES[1]}: policy unit link must consume unit_number`);
-  if (!/entityLabel\(r\.source_load_number,\s*r\.source_load_id,\s*"Load"\)/.test(customers)) problems.push(`${FILES[2]}: customer transaction link must consume source_load_number`);
+  const directCustomerLoadLabel = /entityLabel\(r\.source_load_number,\s*r\.source_load_id,\s*"Load"\)/.test(customers);
+  const tombstoneCustomerLoadLabel = /<EntityLinkOrTombstone[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{r\.source_load_id\}[\s\S]{0,180}name=\{r\.source_load_number\}[\s\S]{0,180}noun="Load"/.test(customers);
+  if (!directCustomerLoadLabel && !tombstoneCustomerLoadLabel) problems.push(`${FILES[2]}: customer transaction link must consume source_load_number`);
   return problems;
 }
 
