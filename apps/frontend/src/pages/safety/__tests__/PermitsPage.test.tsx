@@ -85,4 +85,17 @@ describe("PermitsPage (A23-13)", () => {
       expect(safetyApi.createSafetyPermit).toHaveBeenCalled();
     });
   });
+
+  it("surfaces create errors instead of a silent no-op", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(safetyApi, "createSafetyPermit").mockRejectedValue(new Error("permit_create_failed"));
+    render(wrap(<PermitsPage operatingCompanyId={companyId} />));
+    await user.click(screen.getByTestId("permits-create-btn"));
+    await user.type(screen.getByLabelText(/Permit number/i), "TX-OA-FAIL");
+    await user.type(screen.getByLabelText(/Holder name/i), "IH35");
+    pickDate(screen.getByText(/Expiry date/i).closest("label") as HTMLElement);
+    await user.click(screen.getByRole("button", { name: "Create" }));
+    expect(await screen.findByTestId("permit-create-error")).toBeTruthy();
+    expect(screen.getByTestId("permits-create-modal")).toBeTruthy();
+  });
 });
