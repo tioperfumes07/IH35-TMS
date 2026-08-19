@@ -5,6 +5,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as safetyApi from "../../../api/safety";
+import { ToastProvider } from "../../../components/Toast";
 import { PermitsPage } from "../PermitsPage";
 import { pickDate } from "../../../test-utils/pickDate";
 
@@ -14,9 +15,12 @@ function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   // SAF-B30: PermitsPage now reads ?permit_id= for EntityLink drill-through, so it needs a Router —
   // the real app always mounts one. Harness gap, not a product change.
+  // Unit EntityPicker allowCreate mounts CreateUnitModal which requires ToastProvider (app chrome).
   return (
     <QueryClientProvider client={qc}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
