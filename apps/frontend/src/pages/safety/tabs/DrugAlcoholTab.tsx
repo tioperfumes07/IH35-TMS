@@ -29,6 +29,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DrugAlcoholProgramTab } from "../drug-alcohol/DrugAlcoholProgramTab";
 import { Button } from "../../../components/Button";
 import { useStagedListFilters } from "../../../components/table";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const EMPTY_HISTORY_FILTERS = { type: "", result: "", from: "", to: "" };
 
@@ -352,19 +353,31 @@ export function DrugAlcoholTab() {
           >
             Save test
           </button>
+          {createTestMutation.isError ? (
+            <p className="text-xs text-red-700" data-testid="drug-alcohol-create-test-error">
+              {userFacingApiError(createTestMutation.error, "Could not save the drug/alcohol test.")}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">Return-to-duty workflow</h2>
           {!rtdCase ? (
-            <button
-              type="button"
-              disabled={!effectiveDriverId || openRtdMutation.isPending}
-              className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
-              onClick={() => openRtdMutation.mutate()}
-            >
-              Open RTD case
-            </button>
+            <>
+              <button
+                type="button"
+                disabled={!effectiveDriverId || openRtdMutation.isPending}
+                className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
+                onClick={() => openRtdMutation.mutate()}
+              >
+                Open RTD case
+              </button>
+              {openRtdMutation.isError ? (
+                <p className="text-xs text-red-700" data-testid="drug-alcohol-open-rtd-error">
+                  {userFacingApiError(openRtdMutation.error, "Could not open the return-to-duty case.")}
+                </p>
+              ) : null}
+            </>
           ) : (
             <div className="space-y-2">
               <div className="flex flex-wrap gap-1">
@@ -395,6 +408,11 @@ export function DrugAlcoholTab() {
               ) : (
                 <div className="text-xs text-slate-700">RTD case complete.</div>
               )}
+              {advanceRtdMutation.isError ? (
+                <p className="text-xs text-red-700" data-testid="drug-alcohol-advance-rtd-error">
+                  {userFacingApiError(advanceRtdMutation.error, "Could not advance the return-to-duty case.")}
+                </p>
+              ) : null}
               <div className="text-[11px] text-slate-600">
                 Follow-up tests: {rtdCase.follow_up_tests_completed}/{rtdCase.follow_up_tests_required ?? "—"}
               </div>
