@@ -2664,6 +2664,11 @@
     "purpose": "verify-saf-integrity-reports-query-error-surface",
     "date": "2026-08-19"
   },
+  "4090": {
+    "claimed_by": "cursor",
+    "purpose": "verify-saf-permits-deadline-query-error-surface",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
