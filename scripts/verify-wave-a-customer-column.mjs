@@ -11,7 +11,9 @@ const checks = [
   ["apps/backend/src/reports/dispatch-margin.routes.ts", /l\.customer_id::text/],
   ["apps/frontend/src/pages/reports/DispatchMarginPage.tsx", /<EntityLink kind="customer" id=\{row\.customer_id\}/],
   ["apps/backend/src/factoring/submission-queue.service.ts", /i\.customer_id::text/],
-  ["apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx", /<EntityLink kind="customer" id=\{item\.customer_id\}/],
+  // Multi-line JSX (kind/id/label on separate lines) — same whitespace-tolerant pattern already
+  // used for DriverLoadsPage.tsx above.
+  ["apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx", /<EntityLink[\s\S]{0,80}kind="customer"[\s\S]{0,80}id=\{item\.customer_id\}/],
 ];
 const files = Object.fromEntries([...new Set(checks.map(([file]) => file))].map((file) => [file, fs.readFileSync(file, "utf8")]));
 const audit = (source) => checks.filter(([file, pattern]) => !pattern.test(source[file])).map(([file]) => `${file}: customer FK/link missing`);
