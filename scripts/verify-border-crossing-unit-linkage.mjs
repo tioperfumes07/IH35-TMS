@@ -1,13 +1,9 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch cols=unit,connectivity,reverse_link,picker_law leafRe=^(dispatch\.wizard\.border_crossing_wizard_page|queues\.border_history)$ task=BORDER-CROSSING-UNIT-LINKAGE */
-// LINK-THEATER-01 narrowing (2026-08-14): sibling of LINK-F5148 — unit side. Real, tracked leaves:
-// dispatch.wizard.border_crossing_wizard_page (unit picker on the create wizard) and
-// queues.border_history. "compliance" dropped — unjustified, zero compliance file read. "fleet"
-// ALSO dropped, not silently kept: UnitBorderCrossingsReverseSection is genuinely mounted on
-// VehicleProfilePage.tsx (fleet/units/:id), but that mount has NO tracked leaf id in
-// fleet.required.json — every unit.profile.*_reverse id is enumerated there except this one. Real,
-// open inventory gap (third one surfaced this pass, after LINK-F5145/F5146's DriverDetail.tsx gap) —
-// not invented a leaf id to close it artificially.
+/** @matrix-built modules=dispatch,fleet cols=unit,connectivity,reverse_link,picker_law leafRe=^(dispatch\.wizard\.border_crossing_wizard_page|queues\.border_history|unit\.profile\.border_crossings_reverse)$ task=BORDER-CROSSING-UNIT-LINKAGE */
+// LINK-THEATER-01 narrowing (2026-08-14) + inventory close (2026-08-19): real tracked leaves are
+// dispatch.wizard.border_crossing_wizard_page, queues.border_history, and
+// unit.profile.border_crossings_reverse (UnitBorderCrossingsReverseSection mounted on VehicleProfilePage).
+// "compliance" stays dropped — unjustified, zero compliance file read.
 import fs from "node:fs";
 const LABEL = "verify-border-crossing-unit-linkage";
 const files = {
@@ -20,6 +16,7 @@ const files = {
   history: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",
   reverse: "apps/frontend/src/components/dispatch/UnitBorderCrossingsReverseSection.tsx",
   profile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+  fleetRequired: "docs/specs/scoreboard/modules/fleet.required.json",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
@@ -32,6 +29,9 @@ function audit(s) {
   if (!/unit_id: unitId/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("profile reverse must request exact unit and show errors");
   if (!/kind=["']border_crossing["']/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/UnitBorderCrossingsReverseSection[\s\S]{0,160}unitId=\{id\}/.test(s.profile)) failures.push("unit profile border reverse mount missing");
+  if (!/"id"\s*:\s*"unit\.profile\.border_crossings_reverse"/.test(s.fleetRequired)) {
+    failures.push("fleet.required.json missing unit.profile.border_crossings_reverse leaf for the mounted reverse section");
+  }
   if (!/u\.id::text AS unit_id[\s\S]{0,80}u\.unit_number/.test(s.detectorHistory)
       || !/LEFT JOIN mdata\.units u/.test(s.detectorHistory)
       || !/owner_company_id = e\.operating_company_id/.test(s.detectorHistory)
@@ -51,6 +51,7 @@ if (process.argv.includes("--selftest")) {
     ["error", "reverse", /ListErrorBanner/g, "MissingErrorBanner"],
     ["drill", "reverse", /kind=["']border_crossing["']/, 'kind="unit"'],
     ["mount", "profile", /UnitBorderCrossingsReverseSection/g, "MissingBorderReverse"],
+    ["fleet-leaf", "fleetRequired", /"id"\s*:\s*"unit\.profile\.border_crossings_reverse"/, '"id": "unit.profile.safety_reverse_MISSING"'],
     ["history-label", "detectorHistory", /u\.unit_number/, "NULL::text AS unit_number"],
     ["overview-label", "overview", /entityLabel\(event\.unit_number, event\.unit_id, "Unit"\)/, 'entityLabel(null, event.vehicle_id, "Record")'],
   ];
