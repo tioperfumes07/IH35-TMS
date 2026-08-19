@@ -276,7 +276,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
     bad: /load_number\s*\?\?\s*issue\.load_id/,
-    good: /entityLabel\(\s*issue\.load_number\s*,\s*issue\.load_id\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*issue\.load_number\s*,\s*issue\.load_id\s*,\s*"Load"\s*\)|EntityLinkOrTombstone kind="load" id=\{issue\.load_id\} name=\{issue\.load_number\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
@@ -488,7 +488,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
     bad: /driver_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*issue\.driver_name\s*,\s*issue\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*issue\.driver_name\s*,\s*issue\.driver_id\s*,\s*"Driver"\s*\)|EntityLinkOrTombstone kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_name\} noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
@@ -639,7 +639,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
     bad: /load_number\s*\?\?\s*load\.id|driver_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)|EntityLinkOrTombstone kind="load" id=\{load\.id\} name=\{load\.load_number\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx",
@@ -654,7 +654,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx",
     bad: /unit_number\s*\?\?\s*"—"|driver_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*t\.unit_number\s*,\s*t\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /entityLabel\(\s*t\.unit_number\s*,\s*t\.unit_id\s*,\s*"Unit"\s*\)|EntityLinkOrTombstone kind="unit" id=\{t\.unit_id\} name=\{t\.unit_number\} noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx",
@@ -752,7 +752,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
     bad: /event\.driver_name\s*\?\?\s*"—"|label=\{event\.load_number\}/,
-    good: /entityLabel\(\s*event\.load_number\s*,\s*event\.load_id\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*event\.load_number\s*,\s*event\.load_id\s*,\s*"Load"\s*\)|EntityLinkOrTombstone kind="load" id=\{event\.load_id\} name=\{event\.load_number\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
@@ -828,7 +828,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
     bad: /issue\.load_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*issue\.load_number\s*,\s*null\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*issue\.load_number\s*,\s*null\s*,\s*"Load"\s*\)|EntityLinkOrTombstone kind="load" id=\{issue\.load_id\} name=\{issue\.load_number\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx",
@@ -878,17 +878,17 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
     bad: /load\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)|EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
     bad: /load\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)|EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
     bad: /event\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*event\.customer_name\s*,\s*event\.customer_id\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*event\.customer_name\s*,\s*event\.customer_id\s*,\s*"Customer"\s*\)|EntityLinkOrTombstone kind="customer" id=\{event\.customer_id\} name=\{event\.customer_name\} noun="Customer"/,
   },
   {
     rel: "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
@@ -1165,7 +1165,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx",
     bad: /\{driver\.unit_number \?\? "—"\}/,
-    good: /entityLabel\(\s*driver\.unit_number\s*,\s*driver\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /entityLabel\(\s*driver\.unit_number\s*,\s*driver\.unit_id\s*,\s*"Unit"\s*\)|EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/components/vehicle-profile/IdentityStatusHeader.tsx",
@@ -1196,7 +1196,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/OcrQueuePage.tsx",
     bad: /\{f\.customer_name_raw \?\? "—"\}/,
-    good: /entityLabel\(\s*f\.customer_name_raw\s*,\s*f\.customer_id\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*f\.customer_name_raw\s*,\s*f\.customer_id\s*,\s*"Customer"\s*\)|EntityLinkOrTombstone kind="customer" id=\{f\.customer_id\} name=\{f\.customer_name_raw\} noun="Customer"/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
@@ -1852,7 +1852,7 @@ export function auditDetentionBoardEntityLinks(src) {
     ["driver", "driver_id", "driver_name", "Driver"],
     ["unit", "unit_id", "unit_number", "Unit"],
   ]) {
-    const linkRe = new RegExp(`<EntityLink\\s+kind="${kind}"\\s+id=\\{event\\.${id}\\}\\s+label=\\{entityLabel\\(event\\.${name}, event\\.${id}, "${fallback}"\\)\\}`);
+    const linkRe = new RegExp(`<(?:EntityLink\\s+kind="${kind}"\\s+id=\\{event\\.${id}\\}\\s+label=\\{entityLabel\\(event\\.${name}, event\\.${id}, "${fallback}"\\)\\}|EntityLinkOrTombstone\\s+kind="${kind}"\\s+id=\\{event\\.${id}\\}\\s+name=\\{event\\.${name}\\}\\s+noun="${fallback}")`);
     if (!linkRe.test(src)) problems.push(`${DETENTION_BOARD}: detention rows must drill through the ${kind} FK`);
   }
   return problems;
