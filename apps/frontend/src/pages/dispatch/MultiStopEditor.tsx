@@ -7,6 +7,7 @@ import { pickupTimeTypesCatalogClient } from "../../api/catalogs-dispatch";
 import { getLoadStopsForDispatch, replaceLoadStopsDispatch, type RefinedLoadStop } from "../../api/dispatch";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { Button } from "../../components/Button";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { useToast } from "../../components/Toast";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -333,6 +334,12 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-2">
+      <CappedListNotice
+        shown={pickupTimeTypeOptions.length}
+        limit={200}
+        total={pickupTimeTypesQuery.data?.total ?? null}
+        hint="Type in the pickup-time field to narrow the catalog."
+      />
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={rows.map((r) => r.key)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
