@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^unit\\.profile\\.(identity|telemetry|driver_assign|quick_assign|current_load|trip_cost|maintenance|compliance|expenses_reverse|insurance_summary|reefer|financial_pl|documents|legal_reverse|insurance_claims_reverse|safety_reverse|bank_txns|audit_history|qbo_mapping|action_bar)$","task":"LINK-F5167-FLEET-UNIT-PROFILE"} */
+/** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^unit\\.profile\\.(identity|telemetry|driver_assign|quick_assign|current_load|trip_cost|maintenance|compliance|expenses_reverse|insurance_summary|reefer|financial_pl|documents|legal_reverse|insurance_claims_reverse|safety_reverse|border_crossings_reverse|bank_txns|audit_history|qbo_mapping|action_bar)$","task":"LINK-F5167-FLEET-UNIT-PROFILE"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^unit\\.edit\\.(identity|insurance|irp_plates|reefer|financial|lifecycle|quick_availability|documents)$","task":"LINK-F5167-FLEET-UNIT-EDIT"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^unit\\.detail\\.(permits|toll_tags|tasks|brakes|tires|finance_linkage)$","task":"LINK-F5167-FLEET-UNIT-DETAIL"} */
 /** @matrix-built {"modules":["fleet"],"cols":["unit"],"leafRe":"^trailer\\.profile\\.assignment$","task":"LINK-F5167-FLEET-TRAILER-ASSIGNMENT-UNIT"} */
