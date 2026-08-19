@@ -9,6 +9,8 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../components/dispatch/OptimalDriversPanel";
 import { AuthGatePanel } from "../../components/dispatch/AuthGatePanel";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -60,6 +62,11 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
           mut.mutate();
         }}
       >
+        {/* Exact Leaves dispatch.modal.load_reassign:load — title used loadNumber text only. */}
+        <div className="text-xs text-slate-600" data-testid="load-reassign-modal-load-entitylink">
+          Load:{" "}
+          <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber, loadId, "Load")} />
+        </div>
         <OptimalDriversPanel
           loadId={loadId}
           operatingCompanyId={operatingCompanyId}
