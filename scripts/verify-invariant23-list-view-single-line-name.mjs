@@ -33,6 +33,9 @@ function audit(sources) {
     if (!/kind="(vendor|customer)"/.test(src)) {
       failures.push(`${rel}: roster must EntityLink kind vendor/customer`);
     }
+    if (key === "customers" && !/EntityLinkOrTombstone/.test(src)) {
+      failures.push(`${rel}: customer roster must use EntityLinkOrTombstone`);
+    }
     if (key === "vendors" && !/data-testid="vendor-roster-record-link"/.test(src)) {
       failures.push(`${rel}: missing vendor-roster-record-link test id`);
     }
