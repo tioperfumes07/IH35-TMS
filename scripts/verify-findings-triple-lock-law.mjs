@@ -29,14 +29,15 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-export function collectTripleLockLawProblems() {
+/** @param {{law?: string}} overrides in-memory content override for the law file, for the selftest */
+export function collectTripleLockLawProblems(overrides = {}) {
   const problems = [];
   const lawPath = path.join(ROOT, LAW);
-  if (!fs.existsSync(lawPath)) {
+  if (!overrides.law && !fs.existsSync(lawPath)) {
     problems.push(`${LAW} missing — triple-lock law not on main`);
     return problems;
   }
-  const law = read(LAW);
+  const law = overrides.law ?? read(LAW);
   for (const section of REQUIRED_SECTIONS) {
     if (!law.includes(section)) {
       problems.push(`${LAW} missing required section: ${section}`);
@@ -67,15 +68,18 @@ export function collectTripleLockLawProblems() {
 }
 
 if (SELFTEST) {
+  // Pure, in-memory selftest — never writes to disk. The prior version wrote the planted mutation
+  // directly to the real FINDINGS-TRIPLE-LOCK-LAW.md with NO try/finally at all (worse than the
+  // process.exit()-bypasses-finally class fixed for ACCT-F5524/F5528/F5534 — here ANY exception
+  // between the two writeFileSync calls, not just process.exit(), would have left the real law file
+  // permanently corrupted). collectTripleLockLawProblems(overrides) now takes in-memory content.
   const failures = [];
   const liveProblems = collectTripleLockLawProblems();
   if (liveProblems.length) failures.push(`live: ${liveProblems.join(" | ")}`);
 
   const saved = read(LAW);
   const mutated = saved.replace("## TRIPLE-LOCK — file the finding", "## TRIPLE-LOCK-REMOVED");
-  fs.writeFileSync(path.join(ROOT, LAW), mutated);
-  const p = collectTripleLockLawProblems();
-  fs.writeFileSync(path.join(ROOT, LAW), saved);
+  const p = collectTripleLockLawProblems({ law: mutated });
   if (!p.some((x) => x.includes("TRIPLE-LOCK"))) {
     failures.push("mutation inert — guard would not fail if law section removed");
   }
