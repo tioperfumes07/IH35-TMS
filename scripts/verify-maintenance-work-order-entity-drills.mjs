@@ -29,6 +29,7 @@ const checks = [
   ["triage", /kind="unit" id=\{issue\.unit_id\}/, "triage unit drills"],
   ["triage", /kind="driver" id=\{issue\.driver_id\}/, "triage driver drills"],
   ["roadside", /kind="unit"[\s\S]*id=\{wo\.unit_id\}/, "roadside unit drills"],
+  ["roadside", /entityLabel\(wo\.unit_number, wo\.unit_id, "Unit"\)/, "roadside unit label cannot borrow work-order identity"],
   ["roadside", /onClick=\{\(\) => onOpen\(wo\.id\)\}/, "roadside work order opens"],
   ["driver", /DriverWorkOrdersReverseSection[\s\S]*driver-detail-work-orders-reverse/, "driver profile mounts WO reverse list"],
   ["detail", /kind="work_order"[\s\S]{0,100}id=\{(?:String\(workOrder\.id \?\? ""\)|asEntityId\(workOrder\.id\))\}/, "WO detail self-drills canonically"],

@@ -34,7 +34,7 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                     <EntityLink
                       kind="unit"
                       id={wo.unit_id}
-                      label={entityLabel(wo.unit_number ?? wo.display_id, wo.unit_id, "Unit")}
+                      label={entityLabel(wo.unit_number, wo.unit_id, "Unit")}
                       className="text-[11px] font-semibold"
                     />
                     {isOos ? (
