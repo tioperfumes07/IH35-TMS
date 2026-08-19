@@ -7,6 +7,8 @@ import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 
 /** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
 function extractCancelError(err: unknown): string {
@@ -16,6 +18,8 @@ function extractCancelError(err: unknown): string {
 type Props = {
   open: boolean;
   operatingCompanyId: string;
+  loadId?: string | null;
+  loadNumber?: string | null;
   onClose: () => void;
   onSubmit: (payload: {
     // Canonical backend cancel contract (cancel-load.routes preValidation hook requires BOTH):
@@ -28,7 +32,7 @@ type Props = {
   }) => Promise<void>;
 };
 
-export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }: Props) {
+export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, onClose, onSubmit }: Props) {
   const [reasonCode, setReasonCode] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [billable, setBillable] = useState(false);
@@ -63,6 +67,12 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
 
   return (
     <Modal open={open} onClose={onClose} title="Cancel Load">
+      {loadId ? (
+        <div className="mb-2 text-xs text-slate-600" data-testid="cancel-load-modal-entitylinks">
+          Load:{" "}
+          <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber ?? null, loadId, "Load")} />
+        </div>
+      ) : null}
       <form
         className="space-y-3"
         onSubmit={async (event) => {

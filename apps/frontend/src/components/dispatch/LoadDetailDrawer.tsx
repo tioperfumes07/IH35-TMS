@@ -1061,6 +1061,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         <CancelLoadModal
           open={cancelOpen}
           operatingCompanyId={load.operating_company_id}
+          loadId={load.id}
+          loadNumber={load.load_number}
           onClose={() => setCancelOpen(false)}
           onSubmit={async (payload) => {
             const result = await cancelDispatchLoad(load.id, {
