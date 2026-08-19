@@ -8,10 +8,22 @@ const live = {
   card: fs.readFileSync("apps/frontend/src/pages/maintenance/components/DtcAutoWorkOrdersCard.tsx", "utf8"),
 };
 
+function dtcRoute(source) {
+  const start = source.indexOf('app.get("/api/v1/maintenance/dashboard/dtc-auto-work-orders"');
+  const end = source.indexOf('app.get("/api/v1/maintenance/fleet-table/kpis"', start);
+  return start >= 0 && end > start ? source.slice(start, end) : "";
+}
+
+function mutateDtcRoute(source, from, to) {
+  const segment = dtcRoute(source);
+  return source.replace(segment, segment.replace(from, to));
+}
+
 function failures(source = live) {
+  const route = dtcRoute(source.route);
   return [
-    ["backend exact total", source.route.includes("COUNT(*) OVER()::int AS total_count") && source.route.includes("total_count: Number(res.rows[0]?.total_count ?? 0)")],
-    ["missing-relation response shape", source.route.includes('return { rows: [], total_count: 0 }')],
+    ["backend exact total", route.includes("COUNT(*) OVER()::int AS total_count") && route.includes("total_count: Number(res.rows[0]?.total_count ?? 0)")],
+    ["missing-relation response shape", route.includes('return { rows: [], total_count: 0 }')],
     ["typed API total", source.api.includes("rows: DtcAutoWorkOrderRow[]; total_count: number")],
     ["shared visible rows", source.card.includes("const visibleRows = rows.slice(0, 10)") && source.card.includes("const totalCount = query.data?.total_count ?? rows.length")],
     ["compact exact range", source.card.includes('data-testid="dtc-auto-work-orders-compact-range"') && source.card.includes("Showing {visibleRows.length} of {totalCount} open DTC work orders")],
@@ -21,9 +33,9 @@ function failures(source = live) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    { ...live, route: live.route.replace("COUNT(*) OVER()::int AS total_count", "50 AS hidden_count") },
-    { ...live, route: live.route.replace('return { rows: [], total_count: 0 }', "return []") },
-    { ...live, api: live.api.replace("; total_count: number", "") },
+    { ...live, route: mutateDtcRoute(live.route, "COUNT(*) OVER()::int AS total_count", "50 AS hidden_count") },
+    { ...live, route: mutateDtcRoute(live.route, 'return { rows: [], total_count: 0 }', "return []") },
+    { ...live, api: live.api.replace("rows: DtcAutoWorkOrderRow[]; total_count: number", "rows: DtcAutoWorkOrderRow[]") },
     { ...live, card: live.card.replace("const visibleRows = rows.slice(0, 10)", "const visibleRows = rows") },
     { ...live, card: live.card.replace('data-testid="dtc-auto-work-orders-compact-range"', 'data-testid="missing-range"') },
     { ...live, card: live.card.replace('data-testid="dtc-auto-work-orders-range"', 'data-testid="missing-range"') },
