@@ -17,7 +17,7 @@ function audit(s) {
   if (!/filters\.push\(`p\.unit_id = \$\$\{values\.length\}::uuid`\)/.test(s.route)) failures.push("permit list SQL must filter unit_id");
   if (!/params\.unit_id\) qs\.set\("unit_id", params\.unit_id\)/.test(permitsApi)) failures.push("FE API must forward unit_id");
   if (!/getSafetyPermits\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.section)) failures.push("reverse section must query by unit_id");
-  if (!/kind="permit"/.test(s.section)) failures.push("reverse rows must drill to permit");
+  if (!/<EntityLinkOrTombstone[\s\S]{0,100}kind="permit"[\s\S]{0,80}id=\{id\}[\s\S]{0,120}name=\{permit\.permit_number \?\? permit\.permit_type\}[\s\S]{0,80}noun="Permit"/.test(s.section)) failures.push("reverse rows must drill valid permit IDs and tombstone missing identities");
   if (!/query\.isError[\s\S]*ListErrorBanner/.test(s.section)) failures.push("reverse section must expose an error state");
   if (!/<UnitPermitsReverseSection[\s\S]*unitId=\{id\}/.test(s.profile)) failures.push("vehicle profile must mount permits reverse section");
   return failures;
@@ -28,6 +28,7 @@ if (process.argv.includes("--selftest")) {
     ["route filter", { ...source, route: source.route.replace("filters.push(`p.unit_id = $${values.length}::uuid`)", "void values") }],
     ["API filter", { ...source, api: source.api.replaceAll('qs.set("unit_id", params.unit_id)', 'qs.set("permit_type", params.unit_id)') }],
     ["profile mount", { ...source, profile: source.profile.replace("<UnitPermitsReverseSection", "<div") }],
+    ["permit drill", { ...source, section: source.section.replace('noun="Permit"', 'noun="Record"') }],
   ];
   for (const [name, changed] of mutations) {
     if (audit(changed).length === 0) {
