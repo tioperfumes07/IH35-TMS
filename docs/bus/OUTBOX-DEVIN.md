@@ -287,3 +287,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=a50c2d6 | mutation=none | NEXT=drivers.drivers.list
+Devin-A | LIVE PASS | module=drivers | leaf=drivers.list | URL=https://app.ih35dispatch.com/drivers | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/drivers ; marker 'Drivers' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=a50c2d6 | mutation=none | NEXT=vendors.vendors.list
