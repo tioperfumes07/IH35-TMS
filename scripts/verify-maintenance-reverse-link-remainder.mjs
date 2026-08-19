@@ -85,6 +85,14 @@ function run(root = ROOT) {
         fails.push(`${c.name}: legacy auto_wo_id controls canonical work-order drill`);
       }
     }
+    if (c.name === "PmAutoEnginePage") {
+      for (const pattern of [
+        /kind="pm_schedule"[\s\S]{0,80}id=\{entry\.pm_schedule_id\}[\s\S]{0,80}name=\{entry\.schedule_label\}[\s\S]{0,40}noun="Schedule"/,
+        /kind="unit" id=\{entry\.unit_id\} name=\{entry\.unit_number\} noun="Unit"/,
+        /kind="work_order" id=\{entry\.work_order_id\} name=\{entry\.work_order_display_id\} noun="Work order"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact action-log FK/name tombstone coupling missing`);
+      if (/entry\.unit_number \?/.test(src)) fails.push(`${c.name}: unit drill incorrectly gated on optional display label`);
+    }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
       fails.push(`${c.name}: dead generic load or driver action remains`);
     }
