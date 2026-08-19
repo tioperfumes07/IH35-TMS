@@ -21,39 +21,40 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const modal = fs.readFileSync(MODAL, "utf8");
+function checkSource(modal) {
   const drawer = fs.readFileSync(DRAWER, "utf8");
-  assert(/EntityLink/.test(modal), "modal must use EntityLink");
+  assert(/import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["'][^"']*\/EntityLinkOrTombstone["']/.test(modal), "modal must import canonical label-aware tombstones");
   assert(
     /data-testid=["']save-load-template-modal-entitylinks["']/.test(modal),
     "must expose save-load-template-modal-entitylinks"
   );
-  assert(/kind=["']load["']/.test(modal), "must EntityLink kind=load");
-  assert(/kind=["']customer["']/.test(modal), "must EntityLink kind=customer");
+  assert(/kind="load" id=\{loadId\} name=\{loadNumber\} noun="Load"/.test(modal), "load id must be coupled to its nullable human number");
+  assert(/kind="customer" id=\{customerId\} name=\{customerName\} noun="Customer"/.test(modal), "customer id must be coupled to its nullable human name");
   assert(/loadId=\{load\.id\}/.test(drawer), "LoadDetailDrawer must pass loadId");
   assert(/customerId=\{load\.customer_id\}/.test(drawer), "LoadDetailDrawer must pass customerId");
 }
 
+function check() {
+  checkSource(fs.readFileSync(MODAL, "utf8"));
+}
+
 function selftest() {
   const original = fs.readFileSync(MODAL, "utf8");
-  const broken = original.replace(
-    /data-testid=["']save-load-template-modal-entitylinks["']/,
-    'data-testid="planted-missing"'
-  );
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(MODAL, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(MODAL, original);
+  const mutations = [
+    [/data-testid=["']save-load-template-modal-entitylinks["']/, 'data-testid="planted-missing"'],
+    [/name=\{loadNumber\}/, "name={loadId}"],
+    [/name=\{customerName\}/, "name={customerId}"],
+    [/EntityLinkOrTombstone/, "EntityLink"],
+  ];
+  for (const [pattern, replacement] of mutations) {
+    const broken = original.replace(pattern, replacement);
+    assert(broken !== original, `--selftest plant must mutate ${pattern}`);
+    let failed = false;
+    try { checkSource(broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
-  assert(failed, "--selftest expected FAIL when entitylinks testid removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";

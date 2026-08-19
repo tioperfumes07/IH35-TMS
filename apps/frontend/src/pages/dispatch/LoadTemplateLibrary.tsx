@@ -5,8 +5,7 @@ import { listLoadTemplates, createLoadTemplate, type LoadTemplateRow } from "../
 import { Button } from "../../components/Button";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { Modal } from "../../components/Modal";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useStagedListFilters } from "../../components/table";
@@ -405,13 +404,13 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
             {loadId ? (
               <span>
                 Load:{" "}
-                <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber ?? null, loadId, "Load")} />
+                <EntityLinkOrTombstone kind="load" id={loadId} name={loadNumber} noun="Load" />
               </span>
             ) : null}
             {customerId ? (
               <span>
                 Customer:{" "}
-                <EntityLink kind="customer" id={customerId} label={entityLabel(customerName ?? null, customerId, "Customer")} />
+                <EntityLinkOrTombstone kind="customer" id={customerId} name={customerName} noun="Customer" />
               </span>
             ) : null}
           </div>
