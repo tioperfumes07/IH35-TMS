@@ -6,16 +6,26 @@ import { Modal } from "../../components/Modal";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { useToast } from "../../components/Toast";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   loadId: string;
+  loadNumber?: string | null;
   operatingCompanyId: string;
   defaultDriverId?: string | null;
   onClose: () => void;
   onRecorded?: () => void;
 };
 
-export function AbandonmentReportModal({ loadId, operatingCompanyId, defaultDriverId, onClose, onRecorded }: Props) {
+export function AbandonmentReportModal({
+  loadId,
+  loadNumber,
+  operatingCompanyId,
+  defaultDriverId,
+  onClose,
+  onRecorded,
+}: Props) {
   const { pushToast } = useToast();
   const [driverId, setDriverId] = useState(defaultDriverId ?? "");
   const [abandonmentEventAt, setAbandonmentEventAt] = useState(() => new Date().toISOString().slice(0, 16));
@@ -45,6 +55,21 @@ export function AbandonmentReportModal({ loadId, operatingCompanyId, defaultDriv
   return (
     <Modal open title="Report load abandonment" onClose={onClose}>
       <p className="mb-3 text-xs text-slate-500">Creates a chargeback line and marks the load abandoned.</p>
+      {/* Exact Leaves dispatch.modal.abandonment_report:load|driver —
+          loadId was API-only; driver was picker-only — expose EntityLinks. */}
+      <div
+        className="mb-3 flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+        data-testid="abandonment-report-modal-entitylinks"
+      >
+        <span>
+          Load: <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber ?? null, loadId, "Load")} />
+        </span>
+        {driverId ? (
+          <span>
+            Driver: <EntityLink kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />
+          </span>
+        ) : null}
+      </div>
       <div className="space-y-3 text-sm">
         <label className="block text-xs font-semibold text-slate-600">
           Driver

@@ -1050,6 +1050,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
       {abandonmentOpen && load && load.operating_company_id ? (
         <AbandonmentReportModal
           loadId={loadId}
+          loadNumber={load.load_number}
           operatingCompanyId={load.operating_company_id}
           defaultDriverId={load.assigned_primary_driver_id ?? load.assigned_secondary_driver_id}
           onClose={() => setAbandonmentOpen(false)}
