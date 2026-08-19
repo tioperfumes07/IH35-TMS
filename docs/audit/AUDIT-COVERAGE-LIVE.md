@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-19 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-19 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-19 |
-| Rows in this file | **1970** | 2026-08-19 |
+| Rows in this file | **1977** | 2026-08-19 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-19 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-19 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-19 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1235 | 2026-08-19 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1242 | 2026-08-19 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -2066,3 +2066,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 42880 | fleet · unit.profile reverse Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `unit.profile.expenses_reverse:reverse_link`. Selected-USMCA Unit T120 `/fleet/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc` — Expenses (5) EntityLinks L-20260808-0085-* + Open Expenses on unit profile. No mutation. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL · Cursor Live Chrome | CDP glass USMCA unit profile; LIVE 2026-08-19 | NO | 2026-08-19 | CURSOR |
 | 43040 | fleet · unit.profile reverse Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `unit.profile.maintenance:reverse_link`. Selected-USMCA Unit T120 `/fleet/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc` — Maintenance snapshot WO EntityLinks WO-T120-RS-08-08-2026-0001/0002-PEND0 + Open maintenance console. No mutation. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL · Cursor Live Chrome | CDP glass USMCA unit profile; LIVE 2026-08-19 | NO | 2026-08-19 | CURSOR |
 | 43200 | fleet · unit.profile reverse Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `unit.profile.insurance_summary:reverse_link`. Selected-USMCA Unit T120 `/fleet/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc` — Insurance summary policy EntityLink SAMPLE-REPROVE-5094-VENDOR-0809 on unit profile. No mutation. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL · Cursor Live Chrome | CDP glass USMCA unit profile; LIVE 2026-08-19 | NO | 2026-08-19 | CURSOR |
+| 43360 | fleet · roster trailers EntityLink reverse Exact Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 · VERIFY-4 | **Leaves/cells:** `roster.kind.trailers:reverse_link`. Selected-USMCA `/fleet` (Trailers:5) — clicked Unit EntityLink `USMCA-T01` → landed `/fleet/trailers/45510ad0-95db-46cd-b10c-0a7f992e5b93` Trailer profile (DryVan · Active · VIN 1XKTRLUSMCA000001). No mutation. healthz API `b258cda` ⊃ #9779. CDP 9227. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL · Cursor Live Chrome | CDP 9227 USMCA fleet → USMCA-T01 EntityLink → trailer profile; LIVE 2026-08-19 | NO | 2026-08-19 | CURSOR |
