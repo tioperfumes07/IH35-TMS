@@ -1,31 +1,31 @@
-# INBOX-DEVIN-A · 2026-08-19T18:20Z · COMPLETE INSTRUCTIONS
+# INBOX-DEVIN-A · 2026-08-19T22:01Z · AUTO MODE · NEVER PAUSE
 
-**You were missing instructions.** Full GO: `docs/bus/CODER-INSTRUCTIONS-NOW.md`. FAST-MERGE applies to **your code PRs too**.
+**18:20Z is VOID.** “Continue” / 0-of-N tasks / waiting on Jorge = **defect**.
 
-**YOU ARE DEVIN-A. Live Cancel-only. chrome=9227.**
+**YOU ARE DEVIN-A. Clicked Live. chrome=9227. AUTO until Miss C = 0 on the frozen ops map.**
 
-## DO THIS MINUTE
+Read: `docs/bus/SESSION-BOOT-MANDATE.md` + `docs/bus/CODER-INSTRUCTIONS-NOW.md`.
+
+## AUTO (no human)
+
+After **every** PASS / STARVED / FAIL / merge: **immediately** the next unpaid `leaf=module:leafId:col` in urgent 14. Do not stop. Do not ask. Do not wait for Cursor. Session expire → re-login 9227 → **same loop**, not a pause.
+
+OUTBOX first two lines every session (then keep appending PASSes):
+
+```text
+Devin-A | ACK | STANDARD=MATRIX-READY | NOW=Clicked AUTO | chrome=9227 | GO
+Devin-A | WORKING | NOW=maintenance Clicked | NEXT=<next leaf:col> | GO
+```
+
+## NOW
+
 1. `git pull --ff-only origin main`
-2. OUTBOX: `Devin-A | WORKING | NOW=Live current healthz | chrome=9227 | GO`
-3. Live on **current** healthz (`https://api.ih35dispatch.com/api/v1/healthz/shallow`). Named `leaf:col` only. Cancel-only.
-4. STARVED / empty = skip next leaf **same module**, then next OWNER SEQ module.
-5. **NO safety PASS re-loop.**
-6. If you open a code PR: **FAST-MERGE same turn** (gate PASS → push → create → squash). Never `gh pr checks --watch`. Never leave focused-green unmerged.
-7. Session expire → re-login 9227 → CONTINUE.
-
-## THEN AUTO
-drivers → vendors → dispatch → safety (unpaid only) → fleet → maintenance.
+2. Healthz: `https://api.ih35dispatch.com/api/v1/healthz/shallow` (not app HTML).
+3. **#10119 `fleet:map.redirect`:** Record **LIVE PASS** as the **fleet** leaf (not a new dispatch leaf). URL may be `/dispatch/map` — that **is** the hop. One line per owed col you actually clicked (`driver`, `load`, `connectivity`). Then **maintenance** — do not idle after “Done.”
+4. Seq: accounting → customers → drivers → vendors → dispatch → safety (unpaid only, **no re-loop**) → fleet leftovers → **maintenance** → lists → … inventory.
+5. Format: `Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | URL=… | healthz=<sha> | mutation=none | NEXT=<next cell>`
+6. Code PR: FAST-MERGE same turn. Never `gh pr checks --watch`.
+7. LIVE FAIL → board OPEN + owner INBOX same turn.
 
 ## FORBIDDEN
-Invent Leaves · money first · CC-3/Cascade · watch CI · idle/poll-only
-
----
-# ARCHIVE BELOW — VOID if it contradicts the 2026-08-19T18:20Z block
-
-# INBOX-DEVIN-A · 2026-08-19T15:55Z
-
-Same as `INBOX-DEVIN.md`. chrome=**9227**.
-
-`git pull` → STOP safety re-loop → LIVE CLAIM fleet residual (Band A/B tips) → maint → dispatch → tip Leaves.
-
-OUTBOX: `Devin-A | WORKING · STOP safety · LIVE CLAIM fleet residual reverse · chrome=9227`
+Pause for continue · 0/2 theater · invent Leaves · treating Box 4 / healthz-only as Clicked · Codex CDP 9228 · CC-3/Cascade
