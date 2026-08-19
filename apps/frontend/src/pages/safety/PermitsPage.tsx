@@ -201,6 +201,11 @@ export function PermitsPage({ operatingCompanyId }: Props) {
             </button>
           </div>
         </div>
+        {reminderMutation.isError ? (
+          <p className="mb-2 text-xs text-red-700" data-testid="permits-reminder-error">
+            {userFacingApiError(reminderMutation.error, "Could not save the permit renewal alert window.")}
+          </p>
+        ) : null}
         {renewalAlerts.length === 0 ? (
           <p className="text-xs text-slate-700">No permits due for renewal within the alert window.</p>
         ) : (
@@ -260,6 +265,15 @@ export function PermitsPage({ operatingCompanyId }: Props) {
           tableTestId="permits-table"
         />
       )}
+
+      {(archiveMutation.isError || restoreMutation.isError) ? (
+        <p className="text-xs text-red-700" data-testid="permits-archive-restore-error">
+          {userFacingApiError(
+            archiveMutation.error ?? restoreMutation.error,
+            "Could not archive or restore the permit.",
+          )}
+        </p>
+      ) : null}
 
       {createOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-testid="permits-create-modal">

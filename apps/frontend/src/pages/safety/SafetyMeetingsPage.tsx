@@ -186,6 +186,11 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                     <div className="text-xs text-slate-500">No required attendees on this meeting.</div>
                   ) : null}
                 </div>
+                {attendanceMutation.isError ? (
+                  <p className="text-xs text-red-700" data-testid="safety-meeting-attendance-error">
+                    {userFacingApiError(attendanceMutation.error, "Could not update meeting attendance.")}
+                  </p>
+                ) : null}
               </div>
             );
           })()}
