@@ -17,6 +17,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -262,6 +263,11 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
               </ul>
             ) : null}
           </div>
+          {createMutation.isError ? (
+            <p className="text-xs text-red-700" data-testid="safety-meeting-create-error">
+              {userFacingApiError(createMutation.error, "Could not create the safety meeting.")}
+            </p>
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setCreateOpen(false)}>
               Cancel

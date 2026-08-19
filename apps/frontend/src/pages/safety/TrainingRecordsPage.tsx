@@ -14,6 +14,7 @@ import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useStagedListFilters } from "../../components/table";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type TrainingRecordRow = Record<string, unknown>;
 
@@ -275,6 +276,11 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               data-testid="training-record-notes"
             />
           </label>
+          {createMutation.isError ? (
+            <p className="text-xs text-red-700" data-testid="training-record-create-error">
+              {userFacingApiError(createMutation.error, "Could not create the training record.")}
+            </p>
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setCreateOpen(false)}>
               Cancel

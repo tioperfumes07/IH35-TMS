@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -272,6 +273,11 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               data-testid="training-program-passing-grade"
             />
           </label>
+          {createMutation.isError ? (
+            <p className="text-xs text-red-700" data-testid="training-program-create-error">
+              {userFacingApiError(createMutation.error, "Could not create the training program.")}
+            </p>
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setCreateOpen(false)}>
               Cancel
@@ -334,6 +340,11 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
                 </li>
               ))}
             </ul>
+          ) : null}
+          {assignMutation.isError ? (
+            <p className="text-xs text-red-700" data-testid="training-program-assign-error">
+              {userFacingApiError(assignMutation.error, "Could not assign drivers to the program.")}
+            </p>
           ) : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setAssignOpen(false)}>

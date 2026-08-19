@@ -62,6 +62,9 @@ describe("SafetyMeetingsPage", () => {
     });
     vi.spyOn(safetyApi, "createSafetyMeeting").mockResolvedValue({ event: { id: "meeting-2" } } as never);
     vi.spyOn(safetyApi, "syncSafetyMeetingAttendance").mockResolvedValue({ event: { id: "att-1" } } as never);
+    vi.spyOn(mdataApi, "getDriverLabels").mockResolvedValue({
+      labels: [{ id: "driver-1", label: "Alex Driver" }],
+    });
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
       total: 0,
       drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver", status: "Active" } as never],
@@ -78,6 +81,17 @@ describe("SafetyMeetingsPage", () => {
     await waitFor(() => {
       expect(safetyApi.createSafetyMeeting).toHaveBeenCalledWith(companyId, expect.objectContaining({ topic: "Winter driving" }));
     });
+  });
+
+  it("surfaces create errors instead of a silent no-op", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(safetyApi, "createSafetyMeeting").mockRejectedValue(new Error("meeting_create_failed"));
+    render(wrap(<SafetyMeetingsPage operatingCompanyId={companyId} />));
+    await user.click(await screen.findByTestId("safety-meetings-create-btn"));
+    await user.type(screen.getByTestId("safety-meeting-topic"), "Failed topic");
+    await user.click(screen.getByTestId("safety-meeting-submit"));
+    expect(await screen.findByTestId("safety-meeting-create-error")).toBeTruthy();
+    expect(screen.getByTestId("safety-meeting-create-modal")).toBeTruthy();
   });
 
   it("syncs attendance to safety events", async () => {
