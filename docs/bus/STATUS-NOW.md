@@ -15,3 +15,12 @@ Updated: 2026-08-19T03:40Z · continuous FAST-MERGE · fix-never-defer
 
 ## LAW
 FAST-MERGE · no defer · Live=BLOCKED until item 12
+
+<!-- CURSOR_STATUS_BLOCK -->
+## Cursor lead · 2026-08-19T03:49Z
+
+**FAST-MERGE:** #9390 predispatch EntityLinks + customs Live (3918) · prior #9387/#9384/#9380/#9371/#9362
+**Glass:** L-20260809-0007 Customs tab live; predispatch unit/trailer/customer need deploy for Live credit
+**Unpaid FO:** settlement:driver · assignments:picker_law · pre_settlement:reverse · reassign:driver · predispatch unit/trailer/customer · customs:picker_law · deadhead · optimal_drivers · docs.ocr · settings.notify:qbo_chrome
+**Live=BLOCKED** · next: next dispatch FO root-cause
+
