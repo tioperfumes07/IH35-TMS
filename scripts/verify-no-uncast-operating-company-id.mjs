@@ -37,7 +37,16 @@ const DYNAMIC_PATTERN = /operating_company_id\s*=\s*\$\$\{[^}]+\}(?!::uuid)/;
 
 function isCommentLine(line) {
   const trimmed = line.trim();
-  return trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*");
+  // JS-style comments AND SQL line comments (`--`) — SQL prose embedded inside a template literal
+  // (e.g. explaining an already-cast join a few lines below) is not executable SQL either. Caught
+  // live: driver-finance/settlements.routes.ts had a `-- ... dsd.operating_company_id = $2, so the
+  // UI's Hold action ...` line quoting the shape in prose, false-flagged before this widening.
+  return (
+    trimmed.startsWith("//") ||
+    trimmed.startsWith("*") ||
+    trimmed.startsWith("/*") ||
+    trimmed.startsWith("--")
+  );
 }
 
 function walk(dir, out = []) {
@@ -125,6 +134,20 @@ function selftest() {
     process.exit(1);
   }
   console.log("  ok: comment-line prose not flagged");
+
+  // SQL-comment case: bare $N inside a `--` SQL line comment nested in a template literal (prose
+  // explaining a join a few lines below), must NOT be flagged — same class as the JS-comment case.
+  fs.writeFileSync(
+    tmpFile,
+    `const sql = \`\n  -- entity-pinned via dsd.operating_company_id = $2, so the UI can target it\n  SELECT 1\n\`;\n`
+  );
+  let sqlCommentSkipped = findViolations(tmpDir);
+  if (sqlCommentSkipped.length !== 0) {
+    console.error(`SELFTEST FAIL: a SQL "--" comment-line match was incorrectly flagged: ${JSON.stringify(sqlCommentSkipped)}`);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    process.exit(1);
+  }
+  console.log("  ok: SQL '--' comment-line prose not flagged");
 
   fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log(`PASS ${LABEL} --selftest (mutation probes proven non-inert: 2; false-positive traps proven closed: 2)`);
