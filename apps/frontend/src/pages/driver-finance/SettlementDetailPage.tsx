@@ -696,7 +696,10 @@ export function SettlementDetailPage() {
                       Marked paid manually — no further bank pipeline actions unless bounced back to unpaid.
                     </p>
                     {auth.user?.role === "Owner" || auth.user?.role === "Administrator" ? (
-                      <div className="space-y-1 rounded-sm border border-slate-200 bg-slate-100 p-2">
+                      // UI-01 PART 2 — flat inside the single "Payment Status" frame above, not a
+                      // nested card (QBO/NetSuite style); the top border alone separates the
+                      // correction sub-section without framing a second box.
+                      <div className="space-y-1 border-t border-slate-200 pt-2">
                         <p className="text-xs text-slate-700">
                           Marked paid in error? Reopen requires a written reason and is itself permanently
                           audited — the original mark-paid record is never erased.
