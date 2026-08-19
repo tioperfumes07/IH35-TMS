@@ -77,6 +77,8 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5566: cross-tenant read otherwise — see the list route above, which already asserts.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const detail = await getCollectionTask({
       userId: user.uuid,
@@ -94,6 +96,8 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const body = contactBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5566: cross-tenant write otherwise — see the list route above, which already asserts.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     const contact = await logCollectionContact({
       userId: user.uuid,
@@ -114,6 +118,8 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const body = resolveBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5566: cross-tenant write otherwise — see the list route above, which already asserts.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     const resolved = await resolveCollectionTask({
       userId: user.uuid,
@@ -130,6 +136,8 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = syncBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5566: cross-tenant write otherwise — see the list route above, which already asserts.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     const result = await syncCollectionTasks({
       operatingCompanyId: body.data.operating_company_id,

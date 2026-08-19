@@ -109,6 +109,8 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     if (!DECIDE_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    // ACCT-F5566: cross-tenant write otherwise — the sibling list routes above already assert.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     try {
       const result = await startSettlementDisputeReviewP6(user.uuid, {
@@ -130,6 +132,9 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     const body = decideBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     if (!DECIDE_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    // ACCT-F5566: cross-tenant write otherwise — this one carries adjustment_cents (a real settlement
+    // pay adjustment), the same class of write-side risk as ACCT-F5565's journal-entry void.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     try {
       const result = await decideSettlementDisputeP6(user.uuid, String(user.role ?? ""), {
