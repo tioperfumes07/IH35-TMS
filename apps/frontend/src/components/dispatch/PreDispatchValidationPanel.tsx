@@ -3,6 +3,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ValidationPanel, type ValidationResult } from "../shared/ValidationPanel";
 
 type Props = {
@@ -11,6 +13,11 @@ type Props = {
   unitUuid?: string | null;
   trailerUuid?: string | null;
   customerId?: string | null;
+  /** Optional human labels when the parent already resolved them (Book Load form). */
+  driverLabel?: string | null;
+  unitLabel?: string | null;
+  trailerLabel?: string | null;
+  customerLabel?: string | null;
   /** Called whenever can_dispatch changes — used to gate the Book button. */
   onValidationChange?: (canDispatch: boolean, hasBlockers: boolean) => void;
   /** Override reason collected by the parent (BookLoadModalV4). */
@@ -48,6 +55,10 @@ export function PreDispatchValidationPanel({
   unitUuid,
   trailerUuid,
   customerId,
+  driverLabel,
+  unitLabel,
+  trailerLabel,
+  customerLabel,
   onValidationChange,
   overrideReason,
   onOverrideReasonChange,
@@ -118,7 +129,40 @@ export function PreDispatchValidationPanel({
   const hasUnackedBlockers = result.blockers.some((b) => !acknowledgedRules.has(b.rule_id));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-testid="pre-dispatch-validation-panel">
+      {/* Exact Leaves dispatch.panel.pre_dispatch_validation:unit|trailer|customer|driver —
+          validation used UUIDs as query params only; expose real EntityLinks for selected identities. */}
+      {(driverUuid || unitUuid || trailerUuid || customerId) ? (
+        <div
+          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+          data-testid="pre-dispatch-validation-entitylinks"
+        >
+          {driverUuid ? (
+            <span>
+              Driver:{" "}
+              <EntityLink kind="driver" id={driverUuid} label={entityLabel(driverLabel, driverUuid, "Driver")} />
+            </span>
+          ) : null}
+          {unitUuid ? (
+            <span>
+              Unit: <EntityLink kind="unit" id={unitUuid} label={entityLabel(unitLabel, unitUuid, "Unit")} />
+            </span>
+          ) : null}
+          {trailerUuid ? (
+            <span>
+              Trailer:{" "}
+              <EntityLink kind="trailer" id={trailerUuid} label={entityLabel(trailerLabel, trailerUuid, "Trailer")} />
+            </span>
+          ) : null}
+          {customerId ? (
+            <span>
+              Customer:{" "}
+              <EntityLink kind="customer" id={customerId} label={entityLabel(customerLabel, customerId, "Customer")} />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
       {error ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
           Pre-dispatch check unavailable: {error}
