@@ -4216,7 +4216,7 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1180,
+  "total_claimed": 1181,
   "3906": {
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
@@ -4231,5 +4231,10 @@
     "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
     "purpose": "verify-load-settlement-summary-resolves-line-linked"
+  },
+  "3912": {
+    "claimed_at": "2026-08-19",
+    "claimed_by": "cursor",
+    "purpose": "verify-assignment-history-driver-picker-law"
   }
 }
