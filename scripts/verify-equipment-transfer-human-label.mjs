@@ -8,7 +8,7 @@ function audit(s, v) {
   const failures = [];
   const driverQuery = s.slice(s.indexOf('if (direction === "both")'), s.indexOf("const dir = direction"));
   if (!/e\.equipment_number/.test(driverQuery) || !/LEFT JOIN mdata\.equipment e ON e\.id = r\.equipment_uuid/.test(driverQuery) || !/e\.owner_company_id = r\.operating_company_id OR e\.currently_leased_to_company_id = r\.operating_company_id/.test(driverQuery)) failures.push("scoped equipment label join missing from either-role driver query");
-  if (!/entityLabel\(row\.equipment_number, row\.equipment_uuid, row\.equipment_kind\)/.test(v)) failures.push("human trailer label not used");
+  if (!/<EntityLinkOrTombstone[\s\S]{0,160}kind="trailer"[\s\S]{0,160}id=\{row\.equipment_uuid\}[\s\S]{0,160}name=\{row\.equipment_number\}[\s\S]{0,160}noun=\{row\.equipment_kind \|\| "Equipment"\}/.test(v)) failures.push("human trailer label and canonical drill not used");
   return failures;
 }
 if (process.argv.includes("--selftest")) {
