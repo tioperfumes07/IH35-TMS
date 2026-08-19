@@ -15,6 +15,7 @@ import { SafetyGroupNav } from "../../components/safety/SafetyGroupNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CSAScoreCard } from "./components/CSAScoreCard";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type SafetyUiContextValue = {
   filter: SafetyDriverFilter;
@@ -185,6 +186,12 @@ export function SafetyLayout() {
             <AnomalyAlertBadge operatingCompanyId={companyId} />
           </div>
         </div>
+
+        {prefsMutation.isError ? (
+          <p className="border-b border-red-200 bg-red-50 px-[22px] py-2 text-xs text-red-700" data-testid="safety-prefs-error">
+            {userFacingApiError(prefsMutation.error, "Could not save Safety filter preferences.")}
+          </p>
+        ) : null}
 
         <SafetyDashboardFilter
           value={filter}
