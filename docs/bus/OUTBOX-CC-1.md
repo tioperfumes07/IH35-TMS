@@ -619,3 +619,7 @@ verify:static: 57 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:41Z CC-1 | ACCT-F5481 closed (PR #9383, merged 2ead2c1). verify-vendor-bill-user-dispatch-uuid-human-labels.mjs (LST-F137) FAILed CustomsTab.tsx for "missing entityLabel" — its EntityLink used a bare label={row.port_of_entry} with no honest fallback, unlike the other 7 files in this guard's family. port_of_entry is non-nullable per the type, not an active bug, but genuinely the one file missing the same defensive pattern every sibling uses. Real code fix: wrapped the label in entityLabel(row.port_of_entry, row.id, "Border crossing"), matching siblings. No guard change. tsc -b clean.
 
 verify:static: 58 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:45Z CC-1 | ACCT-F5482 closed (PR #9388, merged bb47598). verify-coa-canonical.mjs FAILed on 2 files not in its accounting.coa_account allowlist. Neither treats it as canonical: the migration's reference is a COMMENT (prose docs, no code); the guard script's reference checks a migration does NOT INSERT INTO accounting.coa_account — the opposite of treating it as canonical. Added both to COA_ACCOUNT_REF_ALLOWLIST with explanatory comments, matching the guard's own documented review process. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 59 of ~199 now closed this session. Continuing non-stop, fast-merge.
