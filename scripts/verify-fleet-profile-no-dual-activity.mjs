@@ -58,19 +58,20 @@ const CURRENT_LOAD_SECTION = "apps/frontend/src/components/vehicle-profile/Curre
 export function run() {
   const failures = [];
 
-  // FE Render build unblock: EntityLink lives under components/shared, not components/parity.
+  // FE Render build unblock: unresolved-safe EntityLinkOrTombstone lives under
+  // components/shared, not the retired components/parity path.
   const currentLoadPath = path.join(repoRoot, CURRENT_LOAD_SECTION);
   if (!fs.existsSync(currentLoadPath)) {
     failures.push(`${CURRENT_LOAD_SECTION} — MISSING`);
   } else {
     const src = fs.readFileSync(currentLoadPath, "utf8");
-    if (/from\s+["']\.\.\/parity\/EntityLink["']/.test(src)) {
+    if (/from\s+["']\.\.\/parity\/EntityLink(?:OrTombstone)?["']/.test(src)) {
       failures.push(
-        `${CURRENT_LOAD_SECTION}: must import EntityLink from ../shared/EntityLink (parity/ path is gone — tsc exit 2 on Render)`
+        `${CURRENT_LOAD_SECTION}: must import EntityLinkOrTombstone from ../shared/EntityLinkOrTombstone (parity/ path is gone — tsc exit 2 on Render)`
       );
     }
-    if (!/from\s+["']\.\.\/shared\/EntityLink["']/.test(src)) {
-      failures.push(`${CURRENT_LOAD_SECTION}: must import EntityLink from ../shared/EntityLink`);
+    if (!/from\s+["']\.\.\/shared\/EntityLinkOrTombstone["']/.test(src)) {
+      failures.push(`${CURRENT_LOAD_SECTION}: must import EntityLinkOrTombstone from ../shared/EntityLinkOrTombstone`);
     }
   }
 
@@ -137,13 +138,13 @@ function selftest() {
     process.exit(1);
   }
 
-  // Plant parity EntityLink import on CurrentLoadSection — must FAIL.
+  // Plant parity EntityLinkOrTombstone import on CurrentLoadSection — must FAIL.
   const currentLoadFull = path.join(repoRoot, CURRENT_LOAD_SECTION);
   const currentLoadBackup = fs.readFileSync(currentLoadFull, "utf8");
   try {
     fs.writeFileSync(
       currentLoadFull,
-      currentLoadBackup.replace("../shared/EntityLink", "../parity/EntityLink"),
+      currentLoadBackup.replace("../shared/EntityLinkOrTombstone", "../parity/EntityLinkOrTombstone"),
       "utf8"
     );
     const planted = run();
@@ -157,7 +158,7 @@ function selftest() {
 
   console.log(
     "[verify-fleet-profile-no-dual-activity] SELFTEST PASS — detects archived import/JSX remount; " +
-      "ignores ServiceTimeline-only pages; catches CurrentLoadSection parity EntityLink import"
+      "ignores ServiceTimeline-only pages; catches CurrentLoadSection parity EntityLinkOrTombstone import"
   );
 }
 
