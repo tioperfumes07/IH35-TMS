@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "../../../api/client";
+import { apiRequest, ApiError } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { formatDateUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type CertSeverity = "critical" | "warn" | "info";
 type CertType = "cdl" | "medical_card" | "hazmat_endorsement" | "twic" | "passport" | "drug_test";
@@ -124,48 +126,59 @@ export function ExpiryDashboard() {
           <h3 className="text-sm font-semibold text-slate-900">Certificate Expiry Dashboard</h3>
           <p className="text-xs text-slate-600">Track CDL, medical card, hazmat, TWIC, passport, and drug test due dates.</p>
         </div>
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {filteredRows.length}</span>
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+          Open {alertsQuery.isError ? "—" : filteredRows.length}
+        </span>
       </div>
 
-      {alertsQuery.error ? <p className="text-xs text-red-600">Failed to load cert expiries.</p> : null}
-
-      <ParityTable<CertExpiryAlert>
-        columns={columns}
-        rows={filteredRows}
-        rowKey={(row) => `${row.driver_uuid}:${row.cert_type}:${row.expiry_date}`}
-        loading={alertsQuery.isLoading}
-        emptyText="No expiring certificates in the selected filters."
-        storageKey="safety-cert-expiry"
-        exportFilename="cert-expiry"
-        filterBar={
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <label className="flex items-center gap-1">
-              <span className="text-slate-500">Cert:</span>
-              <select className="rounded-sm border border-slate-300 px-2 py-1" value={certType} onChange={(e) => setCertType(e.target.value as "all" | CertType)}>
-                {CERT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex items-center gap-1">
-              <span className="text-slate-500">Severity:</span>
-              <select
-                className="rounded-sm border border-slate-300 px-2 py-1"
-                value={severity}
-                onChange={(e) => setSeverity(e.target.value as "all" | CertSeverity)}
-              >
-                {SEVERITY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        }
-      />
+      {alertsQuery.isError ? (
+        <div data-testid="cert-expiry-query-error">
+          <ListErrorState
+            title="Couldn't load certificate expiries"
+            status={alertsQuery.error instanceof ApiError ? alertsQuery.error.status : 0}
+            message={userFacingApiError(alertsQuery.error, "Couldn't load certificate expiries.")}
+            onRetry={() => void alertsQuery.refetch()}
+          />
+        </div>
+      ) : (
+        <ParityTable<CertExpiryAlert>
+          columns={columns}
+          rows={filteredRows}
+          rowKey={(row) => `${row.driver_uuid}:${row.cert_type}:${row.expiry_date}`}
+          loading={alertsQuery.isLoading}
+          emptyText="No expiring certificates in the selected filters."
+          storageKey="safety-cert-expiry"
+          exportFilename="cert-expiry"
+          filterBar={
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <label className="flex items-center gap-1">
+                <span className="text-slate-500">Cert:</span>
+                <select className="rounded-sm border border-slate-300 px-2 py-1" value={certType} onChange={(e) => setCertType(e.target.value as "all" | CertType)}>
+                  {CERT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-1">
+                <span className="text-slate-500">Severity:</span>
+                <select
+                  className="rounded-sm border border-slate-300 px-2 py-1"
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value as "all" | CertSeverity)}
+                >
+                  {SEVERITY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          }
+        />
+      )}
     </section>
   );
 }
