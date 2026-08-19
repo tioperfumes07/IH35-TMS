@@ -1,8 +1,8 @@
-import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { legalMattersApi } from "../../api/legal-matters";
 import { useAuth } from "../../auth/useAuth";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Filter =
   | { unit_id: string; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never }
@@ -79,10 +79,16 @@ export function LegalMattersReverseSection({
         <ul className="space-y-2">
           {matters.map((m: Record<string, unknown>) => {
             const id = String(m.id ?? "");
-            const number = String(entityLabel(m.matter_number, id, "Legal matter"));
             return (
               <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-                <EntityLink kind="matter" id={id} label={number} className="font-semibold text-slate-700" />
+                <EntityLinkOrTombstone
+                  kind="matter"
+                  id={id}
+                  name={m.matter_number}
+                  noun="Legal matter"
+                  className="font-semibold text-slate-700"
+                  data-testid="legal-matters-reverse-matter-link"
+                />
                 <span className="ml-2 text-gray-600">{String(m.status ?? "")}</span>
               </li>
             );
