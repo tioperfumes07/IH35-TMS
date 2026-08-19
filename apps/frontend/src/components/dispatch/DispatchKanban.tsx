@@ -466,7 +466,16 @@ function KanbanCompactCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(load.id)}
-      title={`${entityLabel(load.load_number, load.id, "Load")} · ${driverUnitLabel(load)} · ${lane}`}
+      title={[
+        load.assigned_primary_driver_id
+          ? entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
+          : null,
+        load.assigned_unit_id ? entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit") : null,
+        entityLabel(load.load_number, load.id, "Load"),
+        lane,
+      ]
+        .filter(Boolean)
+        .join(" · ")}
       className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
@@ -474,13 +483,36 @@ function KanbanCompactCard({
       data-kanban-card-compact="true"
     >
       <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
-      <span className="min-w-0 flex-1 truncate font-semibold text-gray-900">{driverUnitLabel(load)}</span>
+      {/* Exact Leaves home.kanban:driver|unit — compact primary was plain driverUnitLabel */}
+      <span className="flex min-w-0 flex-1 items-center gap-1 truncate font-semibold text-gray-900">
+        {load.assigned_primary_driver_id ? (
+          <EntityLink
+            kind="driver"
+            id={load.assigned_primary_driver_id}
+            label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+            data-testid="kanban-compact-driver-link"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ) : null}
+        {load.assigned_primary_driver_id && load.assigned_unit_id ? <span aria-hidden>·</span> : null}
+        {load.assigned_unit_id ? (
+          <EntityLink
+            kind="unit"
+            id={load.assigned_unit_id}
+            label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
+            data-testid="kanban-compact-unit-link"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ) : null}
+        {!load.assigned_primary_driver_id && !load.assigned_unit_id ? <span>Unassigned</span> : null}
+      </span>
       <EntityLinkOrTombstone
         kind="load"
         id={load.id}
         name={load.load_number}
         noun="Load"
         className="shrink-0 font-mono text-[10px]"
+        data-testid="kanban-compact-load-link"
         onClick={(event) => event.stopPropagation()}
       />
       {/* KANBAN-COMPACT-TRUNCATE (owner-live): the driver label was truncating because this SECONDARY lane
