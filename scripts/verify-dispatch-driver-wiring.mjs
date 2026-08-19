@@ -45,7 +45,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx", /kind="driver" id=\{driverId\}/],
   ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", /kind="driver" id=\{row\.driverId\}/],
   ["apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx", /kind="driver" id=\{driver\.id\}/],
-  ["apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx", /kind="driver" id=\{row\.driver_id\}/],
+  ["apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx", /EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/PodReviewPage.tsx", /kind="driver" id=\{doc\.driver_id\}/],
   ["apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/dispatch/TripProfitability.tsx", /kind="driver" id=\{row\.driver_id\}/],
