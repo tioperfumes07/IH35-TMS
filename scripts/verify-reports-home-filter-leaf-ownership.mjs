@@ -22,12 +22,28 @@ function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
-function analyze() {
+const RUNNER_SURFACE = "pages/reports/runners/RunnerFilters.tsx";
+
+function analyze(overrides = {}) {
   const failures = [];
-  const j = JSON.parse(read(REQ));
-  const ids = (j.leaves ?? []).map((l) => l.id);
-  if (ids.includes(LEAF)) {
-    failures.push(`reports.required.json must not claim ${LEAF} on home (RunnerFilters is runner-only)`);
+  const j = JSON.parse(overrides.req ?? read(REQ));
+  const leaves = j.leaves ?? [];
+  const ids = leaves.map((l) => l.id);
+  // The LEAF id itself is not banned outright — a sibling finding (ACCT-F5521,
+  // LV-REPORTS-HOME-FILTER-LEAF-MISOWNED's own follow-up, and the cross-module
+  // verify-program-system-cashflow-filter-panels.mjs wave check) requires every
+  // module's required.json to carry a chrome.toolbar_filter leaf pointing at its
+  // real governed CollapsedListFilters surface. Reports' real surface is
+  // RunnerFilters.tsx (route_hint "/reports/run/:reportKey"), NOT Reports home
+  // (route_hint "/reports") — so the invariant this guard actually protects is
+  // narrower: no leaf claiming chrome.toolbar_filter may be owned by HOME.
+  for (const leaf of leaves) {
+    if (leaf.id !== LEAF) continue;
+    const ownedByHome = leaf.route_hint === "/reports" || leaf.surface_path === FREQ.replace("apps/frontend/src/", "");
+    const ownedByRunner = leaf.surface_path === RUNNER_SURFACE;
+    if (ownedByHome && !ownedByRunner) {
+      failures.push(`reports.required.json must not claim ${LEAF} on home (RunnerFilters is runner-only)`);
+    }
   }
   for (const id of KEEP) {
     if (!ids.includes(id)) {
@@ -44,15 +60,15 @@ function analyze() {
     }
   }
 
-  const home = read(HOME);
+  const home = overrides.home ?? read(HOME);
   if (/RunnerFilters/.test(home)) {
     failures.push("ReportsHome must not mount RunnerFilters");
   }
-  const runner = read(RUNNER);
+  const runner = overrides.runner ?? read(RUNNER);
   if (!/RunnerFilters/.test(runner)) {
     failures.push("ReportsRunner must still mount RunnerFilters (real owner)");
   }
-  const freq = read(FREQ);
+  const freq = overrides.freq ?? read(FREQ);
   if (!/label:\s*"Filters"/.test(freq)) {
     failures.push("FrequentlyRunTable must keep Filters column label (sorter — not staged panel)");
   }
@@ -67,31 +83,45 @@ function fail(msg) {
   process.exit(1);
 }
 
+// Pure, in-memory selftest — never writes to disk. An earlier version mutated the REAL
+// reports.required.json directly (fs.writeFileSync then restored in a finally), which is unsafe:
+// Node's process.exit() does NOT run pending finally blocks, so a crash between the write and the
+// restore would have left the real registry permanently corrupted (the same class of bug fixed for
+// ACCT-F5524/ACCT-F5528). analyze(overrides) now takes in-memory content instead.
 function selftest() {
-  const reqPath = path.join(process.cwd(), REQ);
-  const original = fs.readFileSync(reqPath, "utf8");
-  try {
-    const j = JSON.parse(original);
-    j.leaves = [
-      ...(j.leaves ?? []),
-      {
-        id: LEAF,
-        tab: "Chrome controls",
-        route_hint: "/reports",
-        surface_path: "pages/reports/runners/RunnerFilters.tsx",
-        required: ["qbo_chrome"],
-      },
-    ];
-    fs.writeFileSync(reqPath, JSON.stringify(j, null, 2) + "\n");
-    const bad = analyze();
-    if (!bad.some((m) => /must not claim/.test(m))) {
-      fail("selftest expected reclaim of chrome.toolbar_filter to fail");
-    }
-  } finally {
-    fs.writeFileSync(reqPath, original);
+  const originalReq = read(REQ);
+  const j = JSON.parse(originalReq);
+
+  // Real, historical mis-owned shape (what LV-REPORTS-HOME-FILTER-LEAF-MISOWNED actually dropped
+  // on 2026-08-17): claimed by Reports HOME itself — route_hint "/reports", pointing at the home
+  // toolbar's own surface file, not RunnerFilters.
+  const misownedReq = JSON.stringify(
+    {
+      ...j,
+      leaves: [
+        ...(j.leaves ?? []),
+        {
+          id: LEAF,
+          tab: "Chrome controls",
+          route_hint: "/reports",
+          surface_path: "components/reports/FrequentlyRunTable.tsx",
+          required: ["qbo_chrome"],
+        },
+      ],
+    },
+    null,
+    2,
+  );
+  const bad = analyze({ req: misownedReq });
+  if (!bad.some((m) => /must not claim/.test(m))) {
+    fail("selftest expected home-owned reclaim of chrome.toolbar_filter to fail");
   }
+
+  // Correctly-owned shape (the real, current file): claimed by ReportsRunner, not home — must NOT
+  // be flagged. This is exactly the ACCT-F5521 leaf this guard must coexist with.
   const good = analyze();
-  if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);
+  if (good.length) fail(`selftest expected GOOD on real tree: ${good.join("; ")}`);
+
   console.log(`${LABEL} --selftest OK`);
 }
 
