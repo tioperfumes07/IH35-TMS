@@ -109,6 +109,14 @@ export function WorkOrdersTable({
       render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />,
     },
     {
+      key: "equipment_number",
+      label: "Trailer",
+      sortable: true,
+      render: (row) => (
+        <EntityLinkOrTombstone kind="trailer" id={row.equipment_id} name={row.equipment_number} noun="Trailer" />
+      ),
+    },
+    {
       key: "load_id",
       label: "Load",
       render: (row) =>

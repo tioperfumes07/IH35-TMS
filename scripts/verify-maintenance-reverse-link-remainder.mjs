@@ -13,6 +13,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-maintenance-reverse-link-remainder";
+const ROUTES = "apps/backend/src/maintenance/work-orders.routes.ts";
+const API = "apps/frontend/src/api/maintenance.ts";
+const TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx";
 
 const CHECKS = [
   { name: "InTransitIssuesTable", file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx" },
@@ -33,6 +36,14 @@ const CHECKS = [
 
 function run(root = ROOT) {
   const fails = [];
+  const routes = fs.readFileSync(path.join(root, ROUTES), "utf8");
+  const api = fs.readFileSync(path.join(root, API), "utf8");
+  const table = fs.readFileSync(path.join(root, TABLE), "utf8");
+  const equipmentJoins = routes.match(/LEFT JOIN mdata\.equipment e[\s\S]{0,180}COALESCE\(e\.currently_leased_to_company_id, e\.owner_company_id\) = w\.operating_company_id/g) ?? [];
+  if (equipmentJoins.length < 2) fails.push("work-order list/detail must resolve trailer labels through two entity-scoped equipment joins");
+  if ((routes.match(/e\.equipment_number/g) ?? []).length < 2) fails.push("work-order list/detail payloads must select equipment_number");
+  if (!/equipment_id\?: string \| null;[\s\S]{0,80}equipment_number\?: string \| null;/.test(api)) fails.push("WorkOrder API type must expose trailer FK and label");
+  if (!/kind="trailer" id=\{row\.equipment_id\} name=\{row\.equipment_number\} noun="Trailer"/.test(table)) fails.push("work-order list must drill to its trailer");
   for (const c of CHECKS) {
     const abs = path.join(root, c.file);
     if (!fs.existsSync(abs)) {
@@ -127,6 +138,7 @@ function run(root = ROOT) {
         /kind="driver" id=\{wo\.driver_id as string \| null\} name=\{wo\.driver_name\} noun="Driver"/,
         /kind="vendor" id=\{wo\.resolved_vendor_id as string \| null\} name=\{wo\.resolved_vendor_name\} noun="Vendor"/,
         /kind="claim" id=\{wo\.insurance_claim_id as string \| null\} name=\{wo\.insurance_claim_number\} noun="Claim"/,
+        /kind="trailer" id=\{wo\.equipment_id\} name=\{wo\.equipment_number\} noun="Trailer"/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact forward-link identity coupling missing`);
     }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
@@ -140,6 +152,11 @@ if (process.argv.includes("--selftest")) {
   const live = run();
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".maint-reverse-selftest-"));
   try {
+    for (const file of [ROUTES, API, TABLE]) {
+      const abs = path.join(tmp, file);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, "// poison\n");
+    }
     for (const c of CHECKS) {
       const abs = path.join(tmp, c.file);
       fs.mkdirSync(path.dirname(abs), { recursive: true });

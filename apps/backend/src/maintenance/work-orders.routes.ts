@@ -493,7 +493,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       // owner_company_id / currently_leased_to_company_id) so a unit name can NEVER leak across
       // operating companies (USMCA isolation); a foreign unit LEFT-JOINs to NULL → UUID fallback.
       const rowsRes = await client.query(
-        `SELECT w.*, u.unit_number,
+        `SELECT w.*, u.unit_number, e.equipment_number,
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                 COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id,
                 v.vendor_name AS resolved_vendor_name,
@@ -503,6 +503,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
              ON u.id = w.unit_id
             AND (u.owner_company_id = w.operating_company_id
                  OR u.currently_leased_to_company_id = w.operating_company_id)
+           LEFT JOIN mdata.equipment e
+             ON e.id = w.equipment_id
+            AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = w.operating_company_id
            LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
@@ -531,7 +534,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       // EntityLinks on WorkOrderDetailPage all fell back to the raw uuid despite the label prop
       // being wired — the backend simply never sent a name to put there.
       const wo = await client.query(
-        `SELECT w.*, u.unit_number,
+        `SELECT w.*, u.unit_number, e.equipment_number,
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                 COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id,
                 v.vendor_name AS resolved_vendor_name,
@@ -548,6 +551,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
              ON u.id = w.unit_id
             AND (u.owner_company_id = w.operating_company_id
                  OR u.currently_leased_to_company_id = w.operating_company_id)
+           LEFT JOIN mdata.equipment e
+             ON e.id = w.equipment_id
+            AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = w.operating_company_id
            LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
