@@ -4241,5 +4241,10 @@
     "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
     "purpose": "verify-settlement-detail-bookend-loads-in-cycle"
+  },
+  "3916": {
+    "claimed_at": "2026-08-19",
+    "claimed_by": "cursor",
+    "purpose": "verify-assign-driver-dropdown-selected-entitylink"
   }
 }
