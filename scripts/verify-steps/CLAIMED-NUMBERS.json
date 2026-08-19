@@ -2539,6 +2539,11 @@
     "owner": "cursor",
     "note": "LV-FLEET-HOS-BOARD-FILTER-SILENT-APPLY"
   },
+  "4040": {
+    "claimed_by": "cursor",
+    "purpose": "verify-use-driver-labels-null-safe",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
