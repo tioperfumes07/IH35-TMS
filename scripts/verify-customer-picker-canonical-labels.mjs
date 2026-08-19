@@ -9,6 +9,7 @@ import fs from "node:fs";
 const LABEL = "verify-customer-picker-canonical-labels";
 const FILES = {
   api: "apps/frontend/src/api/mdata.ts",
+  registry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
   legal: "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
   dispatch: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
   docs: "apps/frontend/src/components/documents/UploadModal.tsx",
@@ -21,13 +22,14 @@ const readSources = () => Object.fromEntries(
 
 const checks = [
   ["api", /export type Customer = \{[\s\S]{0,120}name: string;/, "canonical Customer contract exposes name"],
-  ["api", /apiRequest<\{ customers: Customer\[\]; total\?: number \}>/, "listCustomers returns the typed canonical contract"],
+  ["api", /apiRequest<\{ customers: Customer\[\]; total\?: number \} \| Customer\[\]>/, "listCustomers returns the typed canonical contract"],
+  ["registry", /customer:[\s\S]{0,900}label: customer\.name,[\s\S]{0,120}sublabel: customer\.customer_code \|\| undefined/, "shared customer EntityPicker uses canonical labels"],
   ["legal", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "Legal customer signer uses EntityPicker allowCreate"],
   ["legal", /entityLabel\(customer\.name, customer\.id, "Customer"\)/, "Legal customer hydrate uses canonical labels"],
   ["legal", /<EntityPicker[\s\S]*?kind=["']vendor["'][\s\S]*?allowCreate/, "Legal vendor signer uses EntityPicker allowCreate"],
   ["legal", /getVendor\(id, operatingCompanyId\)/, "Legal vendor hydrate via getVendor"],
   ["dispatch", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "Dispatch notification customer uses EntityPicker allowCreate"],
-  ["docs", /label: entityLabel\(customer\.name \?\? customer\.customer_code, customer\.id, "Customer"\)/, "Documents upload customer picker uses canonical labels"],
+  ["docs", /value: "customer", label: "Customer"[\s\S]{0,12000}<EntityPicker[\s\S]{0,200}kind=\{standaloneLinkToPickerKind\(linkEntityType\)\}/, "Documents upload customer picker uses canonical labels"],
   ["safety", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "Safety complaint customer uses EntityPicker allowCreate"],
   ["safety", /label: entityLabel\(u\.name \|\| u\.email, u\.id, "User"\)/, "Safety complaint user picker rejects raw UUID fallback"],
 ];
@@ -57,13 +59,14 @@ const sources = readSources();
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   const mutations = [
     ["api", "export type Customer = {\n  id: string;\n  name: string;", "export type Customer = {\n  id: string;\n  canonical_name_removed: string;"],
-    ["api", "customers: Customer[]", "customers: Array<Record<string, unknown>>"],
+    ["api", "customers: Customer[]; total?: number } | Customer[]", "customers: Array<Record<string, unknown>>; total?: number }"],
+    ["registry", "label: customer.name,", "label: customer.id,"],
     ["legal", 'kind="customer"', 'kind="unit"'],
     ["legal", 'entityLabel(customer.name, customer.id, "Customer")', "String(customer.id)"],
     ["legal", 'kind="vendor"', 'kind="unit"'],
     ["legal", "getVendor(id, operatingCompanyId)", "getVendorRemoved(id, operatingCompanyId)"],
     ["dispatch", '<EntityPicker\n              kind="customer"\n              operatingCompanyId={companyId}', '<EntityPicker\n              kind="unit"\n              operatingCompanyId={companyId}'],
-    ["docs", 'label: entityLabel(customer.name ?? customer.customer_code, customer.id, "Customer")', "label: customer.name ?? customer.customer_code ?? customer.id"],
+    ["docs", 'value: "customer", label: "Customer"', 'value: "unit", label: "Customer"'],
     ["safety", '<EntityPicker\n                kind="customer"\n                operatingCompanyId={companyId}', '<EntityPicker\n                kind="unit"\n                operatingCompanyId={companyId}'],
     ["safety", 'label: entityLabel(u.name || u.email, u.id, "User")', "label: String(u.name || u.email || u.id)"],
   ];
