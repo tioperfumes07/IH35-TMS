@@ -3,50 +3,53 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-const repoRoot = process.cwd();
-const targetFile = path.join(repoRoot, "apps/frontend/src/pages/maintenance/FleetTablePage.tsx");
+const targetFile = path.join(process.cwd(), "apps/frontend/src/pages/maintenance/FleetTablePage.tsx");
 const source = fs.readFileSync(targetFile, "utf8");
+const LABEL = "verify-fleet-counters-match-rows";
 
-if (source.includes("value={kpis.total_units}") || source.includes("value={kpis.active_units}") || source.includes("value={kpis.in_shop_units}") || source.includes("value={kpis.out_of_service_units}")) {
-  console.error("[verify-fleet-counters-match-rows] KPI cards are still bound to kpisQuery fields");
-  process.exit(1);
+export function audit(src) {
+  const failures = [];
+  if (/value=\{kpis\.(?:total_units|active_units|in_shop_units|out_of_service_units)\}/.test(src))
+    failures.push("KPI cards are still bound to kpisQuery fields");
+  if (!src.includes("const counters = useMemo(() =>")) failures.push("missing counters useMemo derivation");
+  if (!/\}, \[rowsQuery\.data\?\.rows, softDeleteFilter\]\);/.test(src))
+    failures.push("counters must depend on roster rows and the active/inactive slice");
+
+  const required = [
+    /const sourceRows = \(rowsQuery\.data\?\.rows \?\? \[\]\)\.filter\(/,
+    /softDeleteFilter === "active" && r\.deactivated_at != null/,
+    /softDeleteFilter === "inactive" && r\.deactivated_at == null/,
+    /total: sourceRows\.length/,
+    /active: sourceRows\.filter\(\(r\) => r\.status === "InService"\)\.length/,
+    /inShop: sourceRows\.filter\(\(r\) => r\.status === "InMaintenance"\)\.length/,
+    /outOfService: sourceRows\.filter\(\(r\) => rowMatchesFleetStatus\(r, "OutOfService"\)\)\.length/,
+    /value=\{counters\.total\}/,
+    /value=\{counters\.active\}/,
+    /value=\{counters\.inShop\}/,
+    /value=\{counters\.outOfService\}/,
+  ];
+  for (const pattern of required) if (!pattern.test(src)) failures.push(`missing counter contract: ${pattern.source}`);
+  return failures;
 }
 
-if (!source.includes("const counters = useMemo(() =>")) {
-  console.error("[verify-fleet-counters-match-rows] Missing counters useMemo derivation");
-  process.exit(1);
-}
-
-if (!source.includes("}, [rowsQuery.data?.rows]);")) {
-  console.error("[verify-fleet-counters-match-rows] counters useMemo must depend on rowsQuery.data?.rows");
-  process.exit(1);
-}
-
-const requiredDerivations = [
-  "total: sourceRows.length",
-  'active: sourceRows.filter((r) => r.status === "InService").length',
-  'inShop: sourceRows.filter((r) => r.status === "InMaintenance").length',
-  'outOfService: sourceRows.filter((r) => r.status === "OutOfService").length',
-  'const sourceRows = rowsQuery.data?.rows ?? [];',
-];
-for (const token of requiredDerivations) {
-  if (!source.includes(token)) {
-    console.error(`[verify-fleet-counters-match-rows] Missing counter derivation: ${token}`);
-    process.exit(1);
+if (process.argv.includes("--selftest")) {
+  if (audit(source).length) throw new Error(`repo source rejected: ${audit(source).join("; ")}`);
+  const mutations = [
+    source.replace('[rowsQuery.data?.rows, softDeleteFilter]', '[rowsQuery.data?.rows]'),
+    source.replaceAll('softDeleteFilter === "active" && r.deactivated_at != null', 'false'),
+    source.replace('rowMatchesFleetStatus(r, "OutOfService")', 'r.status === "OutOfService"'),
+    source.replace('value={counters.total}', 'value={kpis.total_units}'),
+  ];
+  for (const [index, mutated] of mutations.entries()) {
+    if (mutated === source || audit(mutated).length === 0) throw new Error(`planted defect ${index + 1} escaped`);
   }
+  console.log(`[${LABEL}] selftest PASS (${mutations.length}/${mutations.length})`);
+  process.exit(0);
 }
 
-const requiredBindings = [
-  "value={counters.total}",
-  "value={counters.active}",
-  "value={counters.inShop}",
-  "value={counters.outOfService}",
-];
-for (const binding of requiredBindings) {
-  if (!source.includes(binding)) {
-    console.error(`[verify-fleet-counters-match-rows] Missing KPI card counters binding: ${binding}`);
-    process.exit(1);
-  }
+const failures = audit(source);
+if (failures.length) {
+  console.error(`[${LABEL}] FAIL\n- ${failures.join("\n- ")}`);
+  process.exit(1);
 }
-
-console.log("[verify-fleet-counters-match-rows] OK");
+console.log(`[${LABEL}] PASS — fleet KPIs share the roster's soft-delete slice and status classifier`);
