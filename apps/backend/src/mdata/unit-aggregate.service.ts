@@ -299,6 +299,7 @@ export async function buildUnitAggregate(
         l.id::text AS load_id,
         l.load_number,
         l.status,
+        l.customer_id::text AS customer_id,
         c.customer_name AS customer,
         (
           SELECT NULLIF(TRIM(CONCAT_WS(', ', ls.city, ls.state)), '')

@@ -21,19 +21,22 @@ export function ReeferSection({ reefer }: { reefer: ReeferData }) {
     hours != null && until != null && reefer.hours_until_service != null
       ? Math.min(100, Math.round((hours / (hours + until)) * 100))
       : null;
+  const trailerLabel = reefer.equipment_number ?? "Trailer";
 
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-4">
+    <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="vp-reefer-section">
       <h2 className="text-sm font-semibold text-gray-800">
-        Reefer · {reefer.attached_trailer_id ? (
+        Reefer ·{" "}
+        {reefer.attached_trailer_id ? (
           <EntityLink
             kind="trailer"
             id={reefer.attached_trailer_id}
-            label={reefer.equipment_number ?? "Trailer"}
-            data-testid="unit-profile-reefer-trailer-link"
+            label={trailerLabel}
+            className="font-semibold text-slate-700 hover:underline"
+            data-testid="vp-reefer-trailer-link"
           />
         ) : (
-          reefer.equipment_number ?? "Trailer"
+          trailerLabel
         )}
       </h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -51,9 +54,7 @@ export function ReeferSection({ reefer }: { reefer: ReeferData }) {
           <div className="text-xs text-gray-500">{until} hrs remaining · last service {reefer.last_service_date ?? "—"}</div>
         </div>
       ) : null}
-      <p className="mt-2 text-xs text-gray-500">
-        Read-only — use the linked trailer above to edit reefer fields in the equipment module.
-      </p>
+      <p className="mt-2 text-xs text-gray-500">Read-only — edit trailer reefer fields in equipment module.</p>
     </section>
   );
 }

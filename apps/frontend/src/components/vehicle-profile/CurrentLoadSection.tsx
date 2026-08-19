@@ -17,18 +17,29 @@ export function CurrentLoadSection({
       </section>
     );
   }
+  const customerId = currentLoad.customer_id ? String(currentLoad.customer_id) : null;
+  const customerName = currentLoad.customer != null ? String(currentLoad.customer) : "—";
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-gray-800">Current load</h3>
       <p className="mt-1 text-sm">
-        Load {String(currentLoad.load_number)} · {String(currentLoad.pickup ?? "?")} → {String(currentLoad.delivery ?? "?")}
+        Load{" "}
+        {currentLoad.load_id ? (
+          <EntityLinkOrTombstone kind="load" id={String(currentLoad.load_id)} name={currentLoad.load_number} noun="Load" className="font-semibold text-slate-700 underline" data-testid="vp-current-load-link" />
+        ) : (
+          String(currentLoad.load_number)
+        )}{" "}
+        · {String(currentLoad.pickup ?? "?")} → {String(currentLoad.delivery ?? "?")}
       </p>
       <p className="text-xs text-gray-600">
-        Customer: {String(currentLoad.customer ?? "—")} · ETA {String(currentLoad.eta ?? "—")} · Status {String(currentLoad.status)}
+        Customer:{" "}
+        {customerId ? (
+          <EntityLinkOrTombstone kind="customer" id={customerId} name={customerName} noun="Customer" className="font-semibold text-slate-700 underline" data-testid="vp-current-load-customer-link" />
+        ) : (
+          customerName
+        )}{" "}
+        · ETA {String(currentLoad.eta ?? "—")} · Status {String(currentLoad.status)}
       </p>
-      {currentLoad.load_id ? (
-        <EntityLinkOrTombstone kind="load" id={String(currentLoad.load_id)} name={currentLoad.load_number} noun="Load" className="mt-2 inline-block text-xs font-semibold text-slate-700 underline" />
-      ) : null}
     </section>
   );
 }

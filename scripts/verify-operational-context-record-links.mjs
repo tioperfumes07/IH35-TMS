@@ -15,6 +15,9 @@ function verify(source) {
   const need = (key, text, message) => { if (!source[key].includes(text)) failures.push(message); };
   need("currentLoad", 'data-testid="available-unit-record-link"', "empty current-load context must drill back to its unit");
   need("currentLoad", 'kind="unit" id={unitId}', "available context must use the canonical unit id");
+  need("currentLoad", 'data-testid="vp-current-load-customer-link"', "active current-load must drill to its customer");
+  need("currentLoad", 'kind="customer"', "active current-load customer must use EntityLinkOrTombstone kind=customer");
+  need("currentLoad", 'data-testid="vp-current-load-link"', "active current-load must drill to its load");
   need("cashFlow", 'data-testid="cash-flow-predicted-load-link"', "daily prediction load identity must expose a canonical href");
   need("cashFlow", '<EntityLinkOrTombstone\n                      kind="load"\n                      id={item.load_id}\n                      name={item.load_number}', "daily prediction must use its persisted load id and human label through an unresolved-safe drill");
   need("liabilities", 'data-testid="liability-roster-record-link"', "liability roster primary identity must drill through");
@@ -33,6 +36,9 @@ if (process.argv.includes("--self-test")) {
   const mutations = [
     ["currentLoad", 'data-testid="available-unit-record-link"', 'data-testid="broken-unit-link"'],
     ["currentLoad", 'kind="unit" id={unitId}', 'kind="load" id={unitId}'],
+    ["currentLoad", 'data-testid="vp-current-load-customer-link"', 'data-testid="broken-customer-link"'],
+    ["currentLoad", 'kind="customer"', 'kind="vendor"'],
+    ["currentLoad", 'data-testid="vp-current-load-link"', 'data-testid="broken-load-link"'],
     ["cashFlow", 'data-testid="cash-flow-predicted-load-link"', 'data-testid="broken-load-link"'],
     ["cashFlow", '<EntityLinkOrTombstone\n                      kind="load"\n                      id={item.load_id}\n                      name={item.load_number}', '<EntityLinkOrTombstone\n                      kind="unit"\n                      id={item.load_id}\n                      name={null}'],
     ["liabilities", 'data-testid="liability-roster-record-link"', 'data-testid="broken-liability-link"'],
