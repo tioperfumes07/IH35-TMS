@@ -17,6 +17,13 @@ Updated: 2026-08-19T03:40Z · continuous FAST-MERGE · fix-never-defer
 FAST-MERGE · no defer · Live=BLOCKED until item 12
 
 <!-- CURSOR_STATUS_BLOCK -->
+## Cursor lead · 2026-08-19T03:55Z
+
+**FAST-MERGE:** #9403 AuthGate EntityLinks (3920) · #9399 claim · #9390 predispatch · prior #9387/#9380/#9371/#9362
+**Glass:** deploy lag — assign-driver/predispatch testids not on live yet; settlement EntityLink S-20260811-0032 visible on load drawer
+**Unpaid FO:** Live credit after deploy (auth_gate:driver strip · settlement:driver · assignments:picker_law · pre_settlement:reverse · reassign:driver · predispatch unit/trailer/customer) · planning.calendar unit/load/customer (need week with chips) · deadhead:load (needs suggestions) · customs:picker_law · docs.ocr residuals
+**Live=BLOCKED** · next: next unpaid dispatch FO root-cause
+
 ## Cursor lead · 2026-08-19T03:49Z
 
 **FAST-MERGE:** #9390 predispatch EntityLinks + customs Live (3918) · prior #9387/#9384/#9380/#9371/#9362
