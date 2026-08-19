@@ -22,7 +22,11 @@ const LABEL = "verify-maintenance-wo-create-bill";
 
 export function audit(src) {
   const failures = [];
-  if (!/createVendorBill\(operatingCompanyId, payload\)/.test(src)) {
+  // LINK-F5188 added an idempotency-key 3rd argument to the createVendorBill call
+  // (createVendorBill(operatingCompanyId, payload, { idempotencyKey: ... })) — the anchored
+  // "…payload)" form below never matches that real, correct call shape. Not end-anchored: a
+  // trailing 3rd argument is a legitimate call-site enhancement, not a different function.
+  if (!/createVendorBill\(operatingCompanyId, payload/.test(src)) {
     failures.push(`${FILE}: must call the canonical createVendorBill on submit`);
   }
   if (!/work_order_id: payload\.work_order_id \?\? pickedWoId \?\? linkedWoId/.test(src)) {
@@ -44,7 +48,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["submit-call", /createVendorBill\(operatingCompanyId, payload\)/, "createVendorExpense(operatingCompanyId, payload)"],
+    ["submit-call", /createVendorBill\(operatingCompanyId, payload/, "createVendorExpense(operatingCompanyId, payload"],
     ["wo-fk", /work_order_id: payload\.work_order_id \?\? pickedWoId \?\? linkedWoId/, "work_order_id: undefined"],
     ["require-wo-link", /requireWoLink && !\(linkedWoId \?\? pickedWoId\)/, "false"],
     ["vendor-bill-form", /<VendorBillForm/g, "<SomeOtherForm"],
