@@ -27,7 +27,7 @@ function audit(s) {
   if (!/kind="hos_violations_load"/.test(s.load)) failures.push("load drawer Open HOS must EntityLink the filtered queue");
   if (!/case "hos_violation":[\s\S]{0,100}hos-violations\?violation_id=/.test(s.link)) failures.push("HOS EntityLink must target the canonical highlighted list");
   if (!/case "hos_violations_load":[\s\S]{0,80}hos-violations\?load_id=/.test(s.link) || !/case "hos_violations_driver":[\s\S]{0,80}hos-violations\?driver_id=/.test(s.link)) failures.push("HOS Open-queue EntityLinks must resolve filtered list routes");
-  if (!/searchParams\.get\("load_id"\)/.test(s.tab) || !/searchParams\.get\("driver_id"\)/.test(s.tab) || !/listHosViolations\(companyId, \{[\s\S]{0,120}load_id: loadIdFromUrl/.test(s.tab)) failures.push("HOS list must honor load_id/driver_id Open-queue URL filters");
+  if (!/searchParams\.get\("load_id"\)/.test(s.tab) || !/searchParams\.get\("driver_id"\)/.test(s.tab) || !/listHosViolations\(companyId, \{[\s\S]{0,160}load_id: (?:applied\.loadId|loadIdFromUrl)/.test(s.tab)) failures.push("HOS list must honor load_id/driver_id Open-queue URL filters");
   if (!/rowClassName=\{\(row\)[\s\S]{0,180}highlightedViolationId/.test(s.tab)) failures.push("canonical list must highlight violation_id");
   // LST-F5190 — visible list reverse filters
   if (
@@ -60,7 +60,7 @@ if (process.argv.includes("--selftest")) {
     ["load open queue", "load", /kind="hos_violations_load"/, 'kind="hos_violation"'],
     ["link", "link", /case "hos_violation":/, 'case "hos_missing":'],
     ["open queue kinds", "link", /case "hos_violations_load":/, 'case "hos_violations_gone":'],
-    ["url filters", "tab", /loadIdFromUrl/g, "missingLoadFromUrl"],
+    ["url filters", "tab", /load_id: applied\.loadId/g, "load_id: missingLoadFromUrl"],
     ["highlight", "tab", /highlightedViolationId/g, "missingViolationId"],
     ["list filter chrome", "tab", /dataTestId="hos-violations-filter-driver"/g, 'dataTestId="gone"'],
   ];

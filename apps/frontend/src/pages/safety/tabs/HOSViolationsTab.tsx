@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
@@ -16,9 +16,13 @@ import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useSearchParams } from "react-router-dom";
+import { Button } from "../../../components/Button";
+import { useStagedListFilters } from "../../../components/table";
 
 type HosViolationRow = Record<string, unknown>;
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
+
+const EMPTY_FILTERS = { driverId: "", loadId: "" };
 
 function defaultOccurredAtIso(): string {
   return new Date().toISOString();
@@ -35,6 +39,7 @@ export function HOSViolationsTab() {
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightedViolationId = searchParams.get("violation_id")?.trim() ?? "";
   // LST-F5190 — visible reverse filters (URL-only ?driver_id=/?load_id= is not reverse chrome).
+  // LV-SAFETY-HOS-VIOLATIONS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
@@ -51,19 +56,51 @@ export function HOSViolationsTab() {
     notes: "",
   });
 
-  function patchSearchParam(key: "driver_id" | "load_id", next: string) {
+  function patchSearchParam(next: { driverId: string; loadId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    if (next.driverId) p.set("driver_id", next.driverId);
+    else p.delete("driver_id");
+    if (next.loadId) p.set("load_id", next.loadId);
+    else p.delete("load_id");
     setSearchParams(p, { replace: true });
   }
 
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    loadId: loadIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      loadId: loadIdFromUrl,
+    }));
+  }, [driverIdFromUrl, loadIdFromUrl]);
+
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+  function setLoadFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, loadId: next }));
+  }
+
   const query = useQuery({
-    queryKey: ["safety-v64", "hos-violations", companyId, loadIdFromUrl, driverIdFromUrl],
+    queryKey: ["safety-v64", "hos-violations", companyId, applied.loadId, applied.driverId],
     queryFn: () =>
       listHosViolations(companyId, {
-        load_id: loadIdFromUrl || undefined,
-        driver_id: driverIdFromUrl || undefined,
+        load_id: applied.loadId || undefined,
+        driver_id: applied.driverId || undefined,
       }),
     enabled: Boolean(companyId),
   });
@@ -197,15 +234,15 @@ export function HOSViolationsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="hos-violations-filters">
         <label className="block min-w-[200px] text-xs text-slate-600">
           Driver
           <div className="mt-1">
             <EntityPicker
               kind="driver"
               operatingCompanyId={companyId}
-              value={driverIdFromUrl || null}
-              onChange={(next) => patchSearchParam("driver_id", next ?? "")}
+              value={draft.driverId || null}
+              onChange={(next) => setDriverFilter(next ?? "")}
               allowCreate={false}
               placeholder="All drivers"
               className="w-full"
@@ -219,8 +256,8 @@ export function HOSViolationsTab() {
             <EntityPicker
               kind="load"
               operatingCompanyId={companyId}
-              value={loadIdFromUrl || null}
-              onChange={(next) => patchSearchParam("load_id", next ?? "")}
+              value={draft.loadId || null}
+              onChange={(next) => setLoadFilter(next ?? "")}
               allowCreate={false}
               placeholder="All loads"
               className="w-full"
@@ -228,6 +265,32 @@ export function HOSViolationsTab() {
             />
           </div>
         </label>
+        <Button type="button" size="sm" data-testid="hos-violations-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="hos-violations-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="hos-violations-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-8">
         {/* SAF-F14: raw uuid text box replaced with the canonical driver picker (inline create). */}
