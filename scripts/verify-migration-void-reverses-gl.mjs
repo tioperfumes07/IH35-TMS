@@ -70,7 +70,14 @@ export function voidsMoneyRow(sql) {
   let m;
   while ((m = re.exec(clean)) !== null) {
     const body = m[2];
-    if (/\bvoided_at\s*=\s*(now\(\)|CURRENT_TIMESTAMP|\$)/i.test(body) || /\bstatus\s*=\s*'void'/i.test(body)) {
+    // Only the SET clause can TRANSITION a row to void — a WHERE clause merely READS existing void
+    // state (e.g. `WHERE status = 'void' AND voided_at IS NULL`, a metadata-only backfill on rows
+    // that are already void, filling one marker set from the other without touching amounts or
+    // status). Scanning the whole body misreads that read-filter as a write. Split on the first
+    // top-level WHERE so only the SET clause is checked.
+    const whereMatch = /\bWHERE\b/i.exec(body);
+    const setClause = whereMatch ? body.slice(0, whereMatch.index) : body;
+    if (/\bvoided_at\s*=\s*(now\(\)|CURRENT_TIMESTAMP|\$)/i.test(setClause) || /\bstatus\s*=\s*'void'/i.test(setClause)) {
       return true;
     }
   }
@@ -152,14 +159,34 @@ if (process.argv.includes("--selftest")) {
     failures.push("a non-money table was flagged");
   }
 
+  // A WHERE-clause READ filter on status='void' (rows already void) is not a write — the real shape
+  // of 202612480900_bills_sync_void_markers.sql, which backfills one marker set from the other on
+  // rows that are already void without transitioning anything. Must NOT be flagged.
+  const backfillOnAlreadyVoid =
+    "UPDATE accounting.bills SET voided_at = COALESCE(voided_at, revoked_at), revoked_at = COALESCE(revoked_at, voided_at) WHERE status = 'void' AND (voided_at IS NULL OR revoked_at IS NULL);";
+  if (collectProblems(mk("209912310000_new.sql", backfillOnAlreadyVoid)).length !== 0) {
+    failures.push("a WHERE-clause read filter on status='void' (metadata backfill on already-void rows) was wrongly flagged as a new void");
+  }
+
+  // The same real shape, but the SET clause DOES actually transition status too — must still be
+  // caught; the WHERE-only exemption must not become a blanket escape hatch for a real void hiding
+  // behind an innocuous-looking WHERE clause.
+  const realVoidWithWhere =
+    "UPDATE accounting.bills SET status = 'void', voided_at = now() WHERE vendor_id = $1;";
+  if (collectProblems(mk("209912310000_new.sql", realVoidWithWhere)).length !== 1) {
+    failures.push("a real void (SET status='void' before WHERE) was NOT caught");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 7/7 (new offender caught, GL-reversing migration allowed, status='void' ` +
-      `counted, allowlist honoured, commented-out void ignored, comment cannot excuse, non-money ignored)`
+    `${LABEL} SELFTEST OK — 9/9 (new offender caught, GL-reversing migration allowed, status='void' ` +
+      `counted, allowlist honoured, commented-out void ignored, comment cannot excuse, non-money ` +
+      `ignored, WHERE-clause read filter on already-void rows not flagged, real void behind a WHERE ` +
+      `clause still caught)`
   );
   process.exit(0);
 }
