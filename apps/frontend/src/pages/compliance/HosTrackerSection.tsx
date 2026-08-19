@@ -3,10 +3,16 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from "../../api/hosTracker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { Button } from "../../components/Button";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+
+const EMPTY_FILTERS = {
+  driverId: "",
+};
 
 // SAFETY-1: the roster date defaults to the current duty day in the CARRIER timezone
 // (America/Chicago), never the UTC calendar date (which rolls to "tomorrow" after ~19:00 CT).
@@ -61,19 +67,39 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
   // breakdown from /hos/daily-roster). Never recomputes clocks (§3.15.9.2).
   const [selectedDriver, setSelectedDriver] = useState<HosRosterDriver | null>(null);
   // LST-F5171 — visible EntityPicker (URL-only selection seed is not reverse chrome).
-  const [driverPickerId, setDriverPickerId] = useState("");
+  // LV-HOS-TRACKER-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
+  const driverIdFromUrl = requestedDriverId?.trim() ?? "";
+
+  function patchListSearchParam(next: { driverId: string }) {
+    const nextParams = new URLSearchParams(searchParams);
+    if (next.driverId) nextParams.set("driver_id", next.driverId);
+    else nextParams.delete("driver_id");
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+      if (!next.driverId.trim()) setSelectedDriver(null);
+    },
+  });
+  const filterDraft = staged.draft;
+
   useEffect(() => {
-    if (requestedDriverId) setDriverPickerId(requestedDriverId);
-  }, [requestedDriverId]);
+    setApplied((prev) => ({ ...prev, driverId: driverIdFromUrl }));
+  }, [driverIdFromUrl]);
+
   const setDriverFilter = (driverId: string) => {
-    setDriverPickerId(driverId);
-    const next = new URLSearchParams(searchParams);
-    if (driverId) next.set("driver_id", driverId);
-    else next.delete("driver_id");
-    setSearchParams(next, { replace: true });
-    if (!driverId) setSelectedDriver(null);
+    staged.setDraft((d) => ({ ...d, driverId }));
   };
-  const effectiveDriverId = driverPickerId.trim() || requestedDriverId || undefined;
+  const effectiveDriverId = applied.driverId.trim() || undefined;
 
   const rosterQ = useQuery({
     queryKey: ["compliance", "hos-roster", operatingCompanyId, selectedDate],
@@ -225,13 +251,13 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           ))}
         </div>
 
-        <div className="max-w-sm" data-testid="hos-tracker-filters">
+        <div className="relative max-w-sm space-y-2" data-testid="hos-tracker-filters">
           <label className="text-[11px] text-slate-600">
             Driver
             <EntityPicker
               kind="driver"
               operatingCompanyId={operatingCompanyId}
-              value={driverPickerId || null}
+              value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
               allowCreate={false}
               placeholder="All drivers"
@@ -239,6 +265,35 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               dataTestId="hos-tracker-filter-driver"
             />
           </label>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" data-testid="hos-tracker-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="hos-tracker-filter-cancel"
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="hos-tracker-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchListSearchParam(EMPTY_FILTERS);
+                setSelectedDriver(null);
+              }}
+            >
+              Reset
+            </Button>
+          </div>
         </div>
 
         {rosterQ.isError ? (
