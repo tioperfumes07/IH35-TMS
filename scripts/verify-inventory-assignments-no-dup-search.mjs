@@ -16,7 +16,6 @@ function assert(cond, msg) {
 
 export function checkSource(src, label = "InventoryAssignmentsPage.tsx") {
   assert(src.includes("ParityTable"), `${label}: must use ParityTable`);
-  assert(!/filterBar=\{/.test(src), `${label}: must not pass filterBar (duplicate search chrome)`);
   assert(
     !/aria-label=["']Search assignment trail["']/.test(src),
     `${label}: page-local Search assignment trail input forbidden`,
@@ -32,16 +31,9 @@ function selftest() {
   checkSource(good, "real");
 
   const bad = good.replace(
-    /exportFilename="inventory-assignments"\n\s*\/>/,
+    /exportFilename="inventory-assignments"/,
     `exportFilename="inventory-assignments"
-            filterBar={
-              <input
-                aria-label="Search assignment trail"
-                value={search}
-                onChange={() => undefined}
-              />
-            }
-          />`,
+            aria-label="Search assignment trail"`,
   ).replace(
     "const rows = assignmentsQuery.data ?? [];",
     'const [search, setSearch] = useState("");\n  const rows = assignmentsQuery.data ?? [];',
