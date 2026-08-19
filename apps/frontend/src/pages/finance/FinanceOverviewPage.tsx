@@ -5,22 +5,25 @@ import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_SCENARIOS_FLAG, getActiveScenarioSummary } from "../../api/financeScenarios";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 
 const dollars = (cents: number) => (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 
-function Tile({ label, value, tone }: { label: string; value: string; tone?: "positive" | "negative" }) {
-  return (
-    <div className="rounded-sm border border-slate-200 bg-white p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-      <div
-        className={`mt-1 text-xl font-semibold ${
-          tone === "negative" ? "text-red-600" : "text-slate-800"
-        }`}
-      >
-        {value}
-      </div>
-    </div>
-  );
+// C8 — each tile is a real aggregate of this scenario's forecast_lines rows; the scenario detail
+// page (ScenarioLinesTable) is the honest drill target, not a fabricated route — it's the exact
+// same destination the "View scenario →" link above already goes to.
+function Tile({
+  label,
+  value,
+  tone,
+  to,
+}: {
+  label: string;
+  value: string;
+  tone?: "positive" | "negative";
+  to: string;
+}) {
+  return <DrillKpiCard size="md" label={label} value={value} to={to} valueTone={tone === "negative" ? "critical" : "default"} />;
 }
 
 export function FinanceOverviewPage() {
@@ -103,21 +106,23 @@ export function FinanceOverviewPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            <Tile label="Estimated revenue" value={dollars(summary.totals.estimate_revenue_cents)} />
-            <Tile label="Estimated expense" value={dollars(summary.totals.estimate_expense_cents)} />
+            <Tile label="Estimated revenue" value={dollars(summary.totals.estimate_revenue_cents)} to={`/finance/scenarios/${summary.scenario.id}`} />
+            <Tile label="Estimated expense" value={dollars(summary.totals.estimate_expense_cents)} to={`/finance/scenarios/${summary.scenario.id}`} />
             <Tile
               label="Estimated net"
               value={dollars(summary.totals.estimate_net_cents)}
               tone={summary.totals.estimate_net_cents >= 0 ? "positive" : "negative"}
+              to={`/finance/scenarios/${summary.scenario.id}`}
             />
             {summary.totals.has_any_actuals ? (
               <>
-                <Tile label="Actual revenue to date" value={dollars(summary.totals.actual_revenue_cents)} />
-                <Tile label="Actual expense to date" value={dollars(summary.totals.actual_expense_cents)} />
+                <Tile label="Actual revenue to date" value={dollars(summary.totals.actual_revenue_cents)} to={`/finance/scenarios/${summary.scenario.id}`} />
+                <Tile label="Actual expense to date" value={dollars(summary.totals.actual_expense_cents)} to={`/finance/scenarios/${summary.scenario.id}`} />
                 <Tile
                   label="Actual net to date"
                   value={dollars(summary.totals.actual_net_cents)}
                   tone={summary.totals.actual_net_cents >= 0 ? "positive" : "negative"}
+                  to={`/finance/scenarios/${summary.scenario.id}`}
                 />
               </>
             ) : (
