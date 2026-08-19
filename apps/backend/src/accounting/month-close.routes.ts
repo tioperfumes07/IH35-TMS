@@ -62,6 +62,10 @@ export async function registerMonthCloseRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = monthCloseBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5566: this is a WRITE (closes/locks a real accounting period) with no membership check —
+    // the sibling GET status and POST acknowledge routes in this same file already assert; this one
+    // did not, matching the same "N-1 of N" class found repeatedly this session.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     try {
       return await lockMonthClose({
