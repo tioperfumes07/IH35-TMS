@@ -298,3 +298,4 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=a50c2d6 | mutation=none | NEXT=vendors.vendors.list
+Devin-A | LIVE STARVED | module=vendors | leaf=vendors.list | URL=https://app.ih35dispatch.com/vendors | USMCA | cells=auto | evidence=No marker found at https://app.ih35dispatch.com/vendors ; body head  | healthz=a50c2d6 | mutation=none | NEXT=accounting.accounting.dashboard
