@@ -35,7 +35,10 @@ export function run() {
     failures.push(`${FILE}: must explicitly handle the zero-row case`);
   }
 
-  if (!/No active schedules|0 scheduled|0 active/.test(src)) {
+  // Real copy is "No custom schedules — add daily dispatch board or AR aging." (more specific/
+  // helpful than a bare "No active schedules") — still an honest, non-fabricated zero-row message.
+  // Accept any of the equivalent honest empty-state phrasings.
+  if (!/No active schedules|0 scheduled|0 active|No custom schedules/.test(src)) {
     failures.push(`${FILE}: must display an honest empty/zero message to the user`);
   }
 
@@ -57,7 +60,9 @@ function main() {
     const realPath = path.join(ROOT, FILE);
     const backup = fs.readFileSync(realPath, "utf8");
     try {
-      fs.writeFileSync(realPath, backup.replace(/No active schedules/g, "5 active schedules"), "utf8");
+      // Real copy is "No custom schedules ..." — plant the mutation against the actual phrase so
+      // it isn't a silent no-op.
+      fs.writeFileSync(realPath, backup.replace(/No custom schedules/g, "5 active schedules"), "utf8");
       const planted = run();
       if (planted.length === 0) {
         console.error("[verify-rpt-s06-scheduled-count-honest] SELFTEST FAIL: planted hardcoded count did not fail");
