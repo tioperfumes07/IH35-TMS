@@ -2696,7 +2696,7 @@
   },
   "4102": {
     "claimed_by": "cursor",
-    "purpose": "verify-customer-detail-edit-cancel",
+    "purpose": "verify-saf-safety-settings-query-error-surface",
     "date": "2026-08-19"
   },
   "4104": {
