@@ -10,7 +10,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-flow6-auto-invoice-sending";
 const SERVICE = "apps/backend/src/accounting/invoice-send.service.ts";
-const LOADS = "apps/backend/src/dispatch/loads.routes.ts";
+// ACCT-F351 moved the POD convert+send call out of loads.routes.ts inline and into a dedicated
+// latch module (loads.routes.ts:1455 now just calls latchOnDeliveryEvidence(...), which itself
+// wires convertProformaToOfficial -> sendDraftInvoice at delivery-evidence-latch.ts:112-146).
+// This guard originally checked loads.routes.ts directly and was never updated for that refactor.
+const LOADS = "apps/backend/src/dispatch/delivery-evidence-latch.ts";
 const INVOICES = "apps/backend/src/accounting/invoices.routes.ts";
 
 export function check({ service, loads, invoices }) {
