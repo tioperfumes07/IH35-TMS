@@ -1,6 +1,6 @@
 import type React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../../api/mdata";
 import * as safetyApi from "../../../api/safety";
@@ -43,6 +43,10 @@ describe("DrugAlcoholTab selected-driver label (SAF-B24-residual)", () => {
         json: () => Promise.resolve({ enrollments: [], tests: [], draws: [], pool: [], rtd: [] }),
       })
     );
+    // EntityPicker roster uses listDrivers; Selected: preview uses useDriverLabels → getDriverLabels.
+    vi.spyOn(mdataApi, "getDriverLabels").mockResolvedValue({
+      labels: [{ id: "driver-1", label: "Jordan Ruiz" }],
+    });
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
       total: 1,
       drivers: [{ id: "driver-1", first_name: "Jordan", last_name: "Ruiz", status: "Active" } as never],
@@ -64,8 +68,12 @@ describe("DrugAlcoholTab selected-driver label (SAF-B24-residual)", () => {
     fireEvent.click(driverPicker);
     await screen.findByRole("option", { name: /Jordan Ruiz/ });
     pickCombo(driverPicker, /Jordan Ruiz/);
+    // Labels resolve async via useDriverLabels → getDriverLabels; wait for map populate.
+    await waitFor(() => expect(mdataApi.getDriverLabels).toHaveBeenCalled());
     const preview = await screen.findByText(/^Selected:/);
-    expect(preview.parentElement?.textContent).toContain("Jordan Ruiz");
+    await waitFor(() => {
+      expect(preview.parentElement?.textContent).toContain("Jordan Ruiz");
+    });
     expect(preview.parentElement?.textContent).not.toContain("driver-1");
   });
 });
