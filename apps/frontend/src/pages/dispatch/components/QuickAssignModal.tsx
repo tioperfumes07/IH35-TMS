@@ -3,7 +3,8 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
-import { EntityLink, EntityLinkOrTombstone } from "../../../components/shared/EntityLink";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
