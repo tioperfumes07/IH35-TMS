@@ -46,7 +46,9 @@ export function run() {
   if (!/emptyMessage=/.test(subs) || !/No subscriptions found/.test(subs)) {
     failures.push(`${SUBS}: must show honest emptyMessage when zero subscriptions`);
   }
-  if (!/rows\.length === 0/.test(panel) || !/No active schedules/.test(panel)) {
+  // Real copy is "No custom schedules — add daily dispatch board or AR aging." — still an
+  // honest, non-fabricated zero-row message, just more specific than a bare "No active schedules".
+  if (!/rows\.length === 0/.test(panel) || (!/No active schedules/.test(panel) && !/No custom schedules/.test(panel))) {
     failures.push(`${PANEL}: must show honest empty copy when zero schedules`);
   }
   return failures;
