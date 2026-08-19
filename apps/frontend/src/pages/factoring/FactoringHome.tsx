@@ -16,6 +16,7 @@ import {
   type FactoringSettingsRow,
 } from "../../api/factoring";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { useStagedListFilters } from "../../components/table";
 import {
   createDriverVendorMerge,
   createEquipmentLoan,
@@ -226,16 +227,86 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   // link landed on the unfiltered company-wide table. Server-side scoping (both routes now accept
   // these) rather than client-side, since recourse defaults limit=200 and chargebacks history is
   // capped at LIMIT 500.
+  // LST-F5193 + LV-FACTORING-HOME-FILTER-SILENT-APPLY — stage until Apply; URL sync on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
-  // LST-F5193 — visible reverse filters write URL (not seed-only).
-  function patchSearchParam(key: "customer_id" | "load_id" | "vendor_id" | "driver_id", next: string) {
+  const customerIdFromUrl = searchParams.get("customer_id")?.trim() ?? "";
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+  const vendorIdFromUrl = searchParams.get("vendor_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+
+  const EMPTY_FILTERS = {
+    customerId: "",
+    loadId: "",
+    vendorId: "",
+    driverId: "",
+  };
+
+  function patchListSearchParam(next: {
+    customerId: string;
+    loadId: string;
+    vendorId: string;
+    driverId: string;
+  }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    const pairs: Array<["customer_id" | "load_id" | "vendor_id" | "driver_id", string]> = [
+      ["customer_id", next.customerId],
+      ["load_id", next.loadId],
+      ["vendor_id", next.vendorId],
+      ["driver_id", next.driverId],
+    ];
+    for (const [key, value] of pairs) {
+      if (value) p.set(key, value);
+      else p.delete(key);
+    }
     setSearchParams(p, { replace: true });
   }
-  const deepLinkCustomerId = searchParams.get("customer_id");
-  const deepLinkLoadId = searchParams.get("load_id");
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    customerId: customerIdFromUrl,
+    loadId: loadIdFromUrl,
+    vendorId: vendorIdFromUrl,
+    driverId: driverIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      customerId: customerIdFromUrl,
+      loadId: loadIdFromUrl,
+      vendorId: vendorIdFromUrl,
+      driverId: driverIdFromUrl,
+    }));
+  }, [customerIdFromUrl, loadIdFromUrl, vendorIdFromUrl, driverIdFromUrl]);
+
+  // Sibling guards (verify-factoring-recourse-chargebacks-reverse-section) pin deepLink* names.
+  const deepLinkCustomerId = applied.customerId || null;
+  const deepLinkLoadId = applied.loadId || null;
+  const deepLinkVendorId = applied.vendorId || null;
+  const deepLinkDriverId = applied.driverId || null;
+
+  function setCustomerFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, customerId: next }));
+  }
+  function setLoadFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, loadId: next }));
+  }
+  function setVendorFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, vendorId: next }));
+  }
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+
   const recourseQuery = useQuery({
     queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId],
     queryFn: () =>
@@ -263,7 +334,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   // LINK-F5171/LINK-F5182 — reverse_link: factoring:home.equipment_loans (vendor side). The unit
   // side already reverse-links via UnitFinanceLinkageTab; VendorDetail links here as
   // ?vendor_id=<id>, now honored server-side.
-  const deepLinkVendorId = searchParams.get("vendor_id");
   const equipmentLoansQuery = useQuery({
     queryKey: ["data-infra", "equipment-loans", companyId, deepLinkVendorId],
     queryFn: () => listEquipmentLoans(companyId, deepLinkVendorId ?? undefined),
@@ -271,7 +341,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   });
   // LINK-F5171/LINK-F5183 — reverse_link: factoring:home.vendor_merges. DriverProfilePage links
   // here as ?driver_id=<id>, VendorDetail as ?vendor_id=<id>, both now honored server-side.
-  const deepLinkDriverId = searchParams.get("driver_id");
   const vendorMergesQuery = useQuery({
     queryKey: ["data-infra", "vendor-merges", companyId, deepLinkDriverId, deepLinkVendorId],
     queryFn: () =>
@@ -588,14 +657,14 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "recourse_pipeline" ? (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-recourse-filters">
+          <div className="relative grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-recourse-filters">
             <label className="text-[11px] text-slate-600">
               Customer
               <EntityPicker
                 kind="customer"
                 operatingCompanyId={companyId}
-                value={deepLinkCustomerId || null}
-                onChange={(next) => patchSearchParam("customer_id", next ?? "")}
+                value={filterDraft.customerId || null}
+                onChange={(next) => setCustomerFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All customers"
                 className="mt-1"
@@ -607,14 +676,35 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               <EntityPicker
                 kind="load"
                 operatingCompanyId={companyId}
-                value={deepLinkLoadId || null}
-                onChange={(next) => patchSearchParam("load_id", next ?? "")}
+                value={filterDraft.loadId || null}
+                onChange={(next) => setLoadFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All loads"
                 className="mt-1"
                 dataTestId="factoring-home-filter-load"
               />
             </label>
+            <div className="flex flex-wrap items-end gap-2">
+              <Button type="button" size="sm" data-testid="factoring-home-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                Apply
+              </Button>
+              <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="factoring-home-filter-reset"
+                onClick={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchListSearchParam(EMPTY_FILTERS);
+                }}
+              >
+                Reset
+              </Button>
+            </div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium text-gray-900">Invoices inside recourse window (sorted by days until expiry)</span>
@@ -630,20 +720,41 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "chargebacks_fees" ? (
         <div className="space-y-3">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-chargebacks-filters">
+          <div className="relative grid gap-2 sm:grid-cols-2 lg:grid-cols-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-chargebacks-filters">
             <label className="text-[11px] text-slate-600">
               Customer
               <EntityPicker
                 kind="customer"
                 operatingCompanyId={companyId}
-                value={deepLinkCustomerId || null}
-                onChange={(next) => patchSearchParam("customer_id", next ?? "")}
+                value={filterDraft.customerId || null}
+                onChange={(next) => setCustomerFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All customers"
                 className="mt-1"
                 dataTestId="factoring-home-chargebacks-filter-customer"
               />
             </label>
+            <div className="flex flex-wrap items-end gap-2">
+              <Button type="button" size="sm" data-testid="factoring-home-chargebacks-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                Apply
+              </Button>
+              <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-chargebacks-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="factoring-home-chargebacks-filter-reset"
+                onClick={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchListSearchParam(EMPTY_FILTERS);
+                }}
+              >
+                Reset
+              </Button>
+            </div>
           </div>
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -920,20 +1031,41 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-equipment-loan-filters">
+            <div className="relative mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-equipment-loan-filters">
               <label className="text-[11px] text-slate-600">
                 Lender vendor
                 <EntityPicker
                   kind="vendor"
                   operatingCompanyId={companyId}
-                  value={deepLinkVendorId || null}
-                  onChange={(next) => patchSearchParam("vendor_id", next ?? "")}
+                  value={filterDraft.vendorId || null}
+                  onChange={(next) => setVendorFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All lenders"
                   className="mt-1"
                   dataTestId="factoring-home-filter-vendor"
                 />
               </label>
+              <div className="flex flex-wrap items-end gap-2">
+                <Button type="button" size="sm" data-testid="factoring-home-equipment-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                  Apply
+                </Button>
+                <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-equipment-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  data-testid="factoring-home-equipment-filter-reset"
+                  onClick={() => {
+                    staged.cancel();
+                    setApplied(EMPTY_FILTERS);
+                    patchListSearchParam(EMPTY_FILTERS);
+                  }}
+                >
+                  Reset
+                </Button>
+              </div>
             </div>
             <div className="mb-2 text-sm font-medium text-gray-900">Loans + ledger actions</div>
             <div className="space-y-2">
@@ -1077,14 +1209,14 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-vendor-merges-filters">
+            <div className="relative mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-vendor-merges-filters">
               <label className="text-[11px] text-slate-600">
                 Driver
                 <EntityPicker
                   kind="driver"
                   operatingCompanyId={companyId}
-                  value={deepLinkDriverId || null}
-                  onChange={(next) => patchSearchParam("driver_id", next ?? "")}
+                  value={filterDraft.driverId || null}
+                  onChange={(next) => setDriverFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All drivers"
                   className="mt-1"
@@ -1096,14 +1228,35 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 <EntityPicker
                   kind="vendor"
                   operatingCompanyId={companyId}
-                  value={deepLinkVendorId || null}
-                  onChange={(next) => patchSearchParam("vendor_id", next ?? "")}
+                  value={filterDraft.vendorId || null}
+                  onChange={(next) => setVendorFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All vendors"
                   className="mt-1"
                   dataTestId="factoring-home-merges-filter-vendor"
                 />
               </label>
+              <div className="flex flex-wrap items-end gap-2">
+                <Button type="button" size="sm" data-testid="factoring-home-merges-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                  Apply
+                </Button>
+                <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-merges-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  data-testid="factoring-home-merges-filter-reset"
+                  onClick={() => {
+                    staged.cancel();
+                    setApplied(EMPTY_FILTERS);
+                    patchListSearchParam(EMPTY_FILTERS);
+                  }}
+                >
+                  Reset
+                </Button>
+              </div>
             </div>
             <div className="mb-2 text-sm font-medium text-gray-900">Recent merge history</div>
             {vendorMergesQuery.isError ? (
