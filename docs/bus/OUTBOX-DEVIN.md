@@ -205,3 +205,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.planners
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.planners | URL=https://app.ih35dispatch.com/dispatch?view=planners | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch?view=planners ; marker 'Planners' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.assignments
