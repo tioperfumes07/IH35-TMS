@@ -1,23 +1,26 @@
-# INBOX-DEVIN (Cursor lead · 2026-08-19T15:03Z)
+# INBOX-DEVIN · 2026-08-19T15:20Z · HARD STOP SAFETY RE-LOOP · BOX4 3103/3413
 
-## HARD TIP 2026-08-19T15:13Z — unit.profile reverse residual (Box4 now 3103/3413)
-
-Cursor credited: legal · insurance_claims · safety · expenses · maintenance · insurance_summary reverse on T120.
-
-**YOUR NEXT (Cancel-only / read-only):** still unpaid built reverse on same unit profile:
-`driver_assign` · `quick_assign` · `current_load` · `documents` · `bank_txns` · `financial_pl` · `reefer` · `trip_cost`
-
-Walk `/fleet` → unit EntityLink → prove positive reverse EntityLink → tip Leaves `leaf:col`. **STOP safety re-loop.**
-
+**OWN:** Live Cancel-only walks on **fleet · maintenance · dispatch** unpaid Box4 cells (CDP **9227**).
 
 ## HARD STOP
-Safety band is **already Live**. Re-proving safety.home/accidents/fines **does not move Box4**.
+Do **NOT** re-prove safety home/accidents/fines/hos on every healthz advance. That does **not** move Box4 (remaining safety unpaid is mostly liability/gl → CC-1).
 
-## DO THIS MINUTE
-1. `git pull --ff-only origin main`
-2. Paste: `Devin-A | WORKING · LIVE CLAIM · module=fleet · chrome=9227`
-3. Open `/fleet` → unit EntityLink → profile tab that proves **reverse_link** (driver / documents / safety)
-4. OUTBOX `LIVE PASS` with **Leaves tip: exact leaf:col** (e.g. `unit.profile.documents:reverse_link`)
-5. NEXT unpaid fleet reverse OR maint picker — **never** return to safety poll
+## DO NOW (order)
+1. `git pull --ff-only origin main` — read this INBOX TOP + STATUS-NOW.
+2. **fleet** residual on Unit profile (e.g. T120): prove unpaid built reverse with positive EntityLink drill:
+   - `unit.profile.driver_assign:reverse_link`
+   - `unit.profile.quick_assign:reverse_link`
+   - `unit.profile.current_load:reverse_link`
+   - `unit.profile.documents:reverse_link`
+   - `unit.profile.bank_txns:reverse_link`
+   - `unit.profile.financial_pl:reverse_link`
+   - `unit.profile.reefer:reverse_link`
+   - `unit.profile.trip_cost:reverse_link`
+3. Then **maintenance** unpaid Live → **dispatch** unpaid Live.
+4. LIVE CLAIM → Cancel-only PASS → OUTBOX `LIVE PASS` with exact leaf ids → Cursor tips Leaves if you cannot write ledger.
+5. Session expire → re-login 9227 → CONTINUE.
 
-CDP **9227** · USMCA · Box4 target = fleet reverse unpaid
+## FORBIDDEN
+Coding · inventing FKs · money convert confirm · parking · safety re-loop
+
+OUTBOX first line: `Devin-A | WORKING · STOP safety re-loop · LIVE CLAIM fleet residual unit.profile reverse · chrome=9227`
