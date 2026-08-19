@@ -22,7 +22,6 @@ import { Combobox } from "../../Combobox";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { EntityLink } from "../../shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 
 // ─── constants ───────────────────────────────────────────────────────────────
@@ -352,10 +351,11 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       {load.customer_id ? (
         <div className="text-xs text-slate-600" data-testid="factoring-tab-customer-entitylink">
           Customer:{" "}
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="customer"
             id={load.customer_id}
-            label={entityLabel(load.customer_name ?? null, load.customer_id, "Customer")}
+            name={load.customer_name ?? null}
+            noun="Customer"
           />
         </div>
       ) : null}
