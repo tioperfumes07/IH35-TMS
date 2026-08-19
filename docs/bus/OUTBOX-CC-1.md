@@ -607,3 +607,7 @@ verify:static: 54 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:31Z CC-1 | ACCT-F5478 closed (PR #9368, merged 3324b8d). verify-factoring-customer-retention-human-labels.mjs FAILed CustomerDetail.tsx for "missing entityLabel" — file has 0 direct entityLabel(...) calls, every call site migrated onto EntityLinkOrTombstone (11 occurrences), same class already fixed for two other sections of this file this session (ACCT-F5460, ACCT-F5465). Widened check to also accept EntityLinkOrTombstone as evidence. UUID-slice negative check untouched. Existing --selftest re-verified PASS. Zero product-code change.
 
 verify:static: 55 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:34Z CC-1 | ACCT-F5479 closed (PR #9372, merged a7325e9). verify-inv2-no-hard-delete-accounting.mjs FAILed on hard DELETE FROM accounting.invoice_lines in 2 *.db.test.ts integration suites' afterAll() teardown — deleting rows scoped by a test-local id the same test created, standard test hygiene, not a production write path. Guard's own comment already said "scan only TypeScript runtime files" but never excluded *.test.ts. Filtered them out. No --selftest harness; load-bearing proof done by hand (planted genuine non-test offender, still caught). Zero product-code change.
+
+verify:static: 56 of ~199 now closed this session. Continuing non-stop, fast-merge.
