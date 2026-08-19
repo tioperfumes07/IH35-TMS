@@ -396,7 +396,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
                 driver={<EntityLinkOrTombstone kind="driver" id={event.driver_uuid} name={event.driver_name} noun="Driver" />}
                 loadCustomer={
                   event.load_uuid
-                    ? <EntityLink kind="load" id={event.load_uuid} label={entityLabel(event.load_number, event.load_uuid, "Load")} />
+                    ? <EntityLinkOrTombstone kind="load" id={event.load_uuid} name={event.load_number} noun="Load" />
                     : `${CROSSING_LABELS[event.crossing_point] ?? event.crossing_point} · ${event.direction}`
                 }
                 onClick={event.load_uuid && onLoadClick ? () => onLoadClick(event.load_uuid!) : undefined}

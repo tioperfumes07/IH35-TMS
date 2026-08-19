@@ -26,7 +26,7 @@ const CHECKS = [
   ["apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts", /l\.load_number/],
   ["apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts", /l\.id = e\.load_uuid AND l\.operating_company_id = e\.operating_company_id/],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="driver" id=\{event\.driver_uuid\} name=\{event\.driver_name\} noun="Driver"/],
-  ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /kind="load" id=\{event\.load_uuid\} label=\{entityLabel\(event\.load_number, event\.load_uuid, "Load"\)\}/],
+  ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="load" id=\{event\.load_uuid\} name=\{event\.load_number\} noun="Load"/],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="driver" id=\{unit\.driver_id\} name=\{unit\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /EntityLinkOrTombstone kind="driver" id=\{load\.assigned_primary_driver_id\} name=\{load\.assigned_primary_driver_name\} noun="Driver"/],
   ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind="driver" id=\{load\.assigned_primary_driver_id\}/],
