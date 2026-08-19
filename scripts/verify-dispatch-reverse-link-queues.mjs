@@ -17,7 +17,10 @@ const LABEL = "verify-dispatch-reverse-link-queues";
 const CHECKS = [
   { name: "BorderCrossingHistoryPage EntityLink", file: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx", pattern: /EntityLink/ },
   { name: "AtRiskQueuePage EntityLink", file: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx", pattern: /EntityLink/ },
-  { name: "TripPairingBoardPage EntityLink", file: "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", pattern: /EntityLink/ },
+  { name: "TripPairingBoardPage unbooked unit resolved-or-tombstone", file: "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", pattern: /EntityLinkOrTombstone kind="unit" id=\{u\.unit_id\} name=\{u\.unit_number\} noun="Unit"/ },
+  { name: "TripPairingBoardPage unbooked driver resolved-or-tombstone", file: "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", pattern: /EntityLinkOrTombstone kind="driver" id=\{u\.driver_id\} name=\{u\.driver_name\} noun="Driver"/ },
+  { name: "TripPairingBoardPage paired unit resolved-or-tombstone", file: "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", pattern: /EntityLinkOrTombstone kind="unit" id=\{t\.unit_id\} name=\{t\.unit_number\} noun="Unit"/ },
+  { name: "TripPairingBoardPage paired driver resolved-or-tombstone", file: "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", pattern: /EntityLinkOrTombstone kind="driver" id=\{t\.driver_id\} name=\{t\.driver_name\} noun="Driver"/ },
   { name: "FactoringQueuePage EntityLink", file: "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx", pattern: /EntityLink/ },
   { name: "FactoringListPage EntityLink (queues.factoring)", file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx", pattern: /EntityLink/ },
   { name: "OcrQueuePage EntityLink", file: "apps/frontend/src/pages/dispatch/OcrQueuePage.tsx", pattern: /EntityLink/ },

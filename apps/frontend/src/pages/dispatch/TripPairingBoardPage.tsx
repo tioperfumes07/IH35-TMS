@@ -8,7 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getTripPairingBoard, type TripLeg, type TripPairingUnitRow } from "../../api/dispatch";
 import { BookLoadModalV4 } from "./components/BookLoadModalV4";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
@@ -232,8 +232,8 @@ export function TripPairingBoardPage() {
               <div className="flex flex-wrap gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
                 {unbooked.map((u) => (
                   <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded-sm border border-slate-200 bg-white px-2.5 py-2 text-xs">
-                    <EntityLink kind="unit" id={u.unit_id} label={entityLabel(u.unit_number, u.unit_id, "Unit")} className="font-semibold text-slate-800" />
-                    <span className="text-slate-500"><EntityLink kind="driver" id={u.driver_id} label={entityLabel(u.driver_name, u.driver_id, "Driver")} /></span>
+                    <EntityLinkOrTombstone kind="unit" id={u.unit_id} name={u.unit_number} noun="Unit" className="font-semibold text-slate-800" />
+                    <span className="text-slate-500"><EntityLinkOrTombstone kind="driver" id={u.driver_id} name={u.driver_name} noun="Driver" /></span>
                     {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}
                     <span className="text-[10px] text-slate-400">now: —</span>
                     <button
@@ -277,10 +277,10 @@ export function TripPairingBoardPage() {
                     return (
                       <tr key={t.unit_id} className="border-t border-slate-100 align-top hover:bg-slate-50">
                         <td className="px-2 py-1.5 font-medium">
-                          <EntityLink kind="unit" id={t.unit_id} label={entityLabel(t.unit_number, t.unit_id, "Unit")} />
+                          <EntityLinkOrTombstone kind="unit" id={t.unit_id} name={t.unit_number} noun="Unit" />
                         </td>
                         <td className="px-2 py-1.5">
-                          <EntityLink kind="driver" id={t.driver_id} label={entityLabel(t.driver_name, t.driver_id, "Driver")} />
+                          <EntityLinkOrTombstone kind="driver" id={t.driver_id} name={t.driver_name} noun="Driver" />
                         </td>
                         <td className="px-2 py-1.5">
                           <div className="flex flex-col gap-1">
