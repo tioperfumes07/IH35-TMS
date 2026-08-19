@@ -10,6 +10,7 @@ import { useToast } from "./Toast";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
 import { EditTrailerModal } from "./fleet/EditTrailerModal";
+import { EntityLink } from "./shared/EntityLink";
 import { TableControls, Paginator, TableHeaderCell, useTableController, CollapsedListFilters, useStagedListFilters, type TableColumn } from "./table";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
@@ -47,7 +48,7 @@ type Props = {
   /**
    * Keystone opt-in (Maintenance fleet-table ONLY). When true, render the 3 maintenance columns
    * (Odometer · Next PM · Open WO), the Unit <Link>, and the CSV export. /fleet (FleetHomePage) does
-   * NOT pass this → it renders IDENTICALLY to before (8 registry cols + Edit, Unit plain text, row-click).
+   * NOT pass this → 8 registry cols + Edit, Unit EntityLink (unit|trailer), row-click still navigates.
    */
   showMaintenanceColumns?: boolean;
   /**
@@ -582,9 +583,19 @@ export function FleetTable({
                         </Link>
                       </td>
                     ) : (
-                      /* Base /fleet mode: Unit is plain text; whole-row onClick navigates (LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES). */
-                      <td className="px-2 py-1 font-semibold text-slate-700">
-                        {entityLabel(row.unit_number, row.id, "Unit")}
+                      /* Base /fleet: EntityLink (not plain text / not Link) so reverse_link is Live-clickable;
+                       * arms stay distinct from maintenance Link (LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES). */
+                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                        <EntityLink
+                          kind={row.kind === "trailer" ? "trailer" : "unit"}
+                          id={row.id}
+                          label={entityLabel(
+                            row.unit_number,
+                            row.id,
+                            row.kind === "trailer" ? "Trailer" : "Unit"
+                          )}
+                          className="font-semibold text-slate-700 hover:underline"
+                        />
                       </td>
                     )}
                     {isVisible("vin") ? <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td> : null}
