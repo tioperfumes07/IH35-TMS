@@ -408,6 +408,11 @@ export function CustomerDetailPage() {
     sortDirection: laneSortDirection,
     onSortChange: onLaneSortChange,
   } = useUrlSort({ key: "lane_sort", dir: "lane_dir" });
+  const {
+    sortKey: invoiceSortKey,
+    sortDirection: invoiceSortDirection,
+    onSortChange: onInvoiceSortChange,
+  } = useUrlSort({ key: "invoice_sort", dir: "invoice_dir" });
 
   // AUDIT 2730 / LV-CUSTOMERS-DETAIL-TAB-DEEPLINKS-IGNORED — every detail tab must be
   // addressable via ?tab=<slug> (not billing-only). Profile is the default (clean URL).
@@ -2364,27 +2369,33 @@ export function CustomerDetailPage() {
               exportFilename="customer-recent-invoices"
               tableTestId="customer-detail-recent-invoices-table"
               onRowClick={(invoice) => navigate(`/accounting/invoices/${invoice.id}`)}
+              sortKey={invoiceSortKey}
+              sortDirection={invoiceSortDirection}
+              onSortChange={onInvoiceSortChange}
               columns={[
                 {
                   key: "display_id",
                   label: "Invoice",
+                  sortable: true,
                   render: (invoice) => (
                     <span onClick={(e) => e.stopPropagation()}>
                       <EntityLinkOrTombstone kind="invoice" id={invoice.id} name={invoice.display_id} noun="Invoice" />
                     </span>
                   ),
                 },
-                { key: "issue_date", label: "Issue", render: (invoice) => formatDateUS(invoice.issue_date) },
-                { key: "status", label: "Status", render: (invoice) => invoice.status },
+                { key: "issue_date", label: "Issue", sortable: true, render: (invoice) => formatDateUS(invoice.issue_date) },
+                { key: "status", label: "Status", sortable: true, render: (invoice) => invoice.status },
                 {
                   key: "total_cents",
                   label: "Total",
+                  sortable: true,
                   cellClass: "tabular-nums",
                   render: (invoice) => (Number(invoice.total_cents ?? 0) / 100).toFixed(2),
                 },
                 {
                   key: "amount_open_cents",
                   label: "Open",
+                  sortable: true,
                   cellClass: "tabular-nums",
                   render: (invoice) => (Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2),
                 },
