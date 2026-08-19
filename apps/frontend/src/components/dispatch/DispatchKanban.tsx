@@ -206,8 +206,9 @@ function cardPrimaryLabel(load: DispatchLoadRow): string {
   return entityLabel(load.load_number, load.id, "Load");
 }
 function cardSecondaryLoadNumber(load: DispatchLoadRow): string | null {
-  // Only surface the load # as a secondary line when the unit already occupies the primary line.
-  return load.assigned_unit_number ? entityLabel(load.load_number, load.id, "Load") : null;
+  // The FK decides whether the unit occupies the primary line. A historical/missing unit label still
+  // renders an honest unit tombstone, so the load drill must remain available as the secondary line.
+  return load.assigned_unit_id ? entityLabel(load.load_number, load.id, "Load") : null;
 }
 function driverNameLabel(load: DispatchLoadRow): string {
   if (!load.assigned_primary_driver_name && !load.assigned_primary_driver_id) return "Unassigned";
