@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { getActiveLiabilities, getLiabilitiesByDriver, getLiabilitiesKpis, getLiabilityDetail } from "../../api/liabilities";
+import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LIABILITY_TABS, LiabilitiesKpiRow } from "./components/LiabilitiesKpiRow";
 import { LiabilitiesTable } from "./components/LiabilitiesTable";
@@ -12,6 +14,10 @@ import { SendAckRequestModal } from "./components/SendAckRequestModal";
 
 // C8: the tab list is owned by LiabilitiesKpiRow so a KPI drill and a tab click cannot drift apart.
 const SUBNAV = LIABILITY_TABS;
+
+const EMPTY_FILTERS = {
+  driverId: "",
+};
 
 export function LiabilitiesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -22,19 +28,38 @@ export function LiabilitiesHomePage() {
   // LAW OF THE LAND §9 (2026-07-22): driver-profile reverse-link — "View all liabilities" from
   // EarningsTab.tsx scopes this list to one driver (cash-advances ?driver_id= parity).
   // BANK-F5166 — visible EntityPicker (URL-only banner is not reverse chrome).
+  // LV-LIABILITIES-HOME-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const driverIdFilter = searchParams.get("driver_id");
-  const [driverPickerId, setDriverPickerId] = useState("");
-  useEffect(() => {
-    if (driverIdFilter) setDriverPickerId(driverIdFilter);
-  }, [driverIdFilter]);
-  const setDriverFilter = (driverId: string) => {
-    setDriverPickerId(driverId);
+
+  function patchListSearchParam(next: { driverId: string }) {
     const params = new URLSearchParams(searchParams);
-    if (driverId) params.set("driver_id", driverId);
+    if (next.driverId) params.set("driver_id", next.driverId);
     else params.delete("driver_id");
     setSearchParams(params, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFilter?.trim() ?? "",
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, driverId: driverIdFilter?.trim() ?? "" }));
+  }, [driverIdFilter]);
+
+  const setDriverFilter = (driverId: string) => {
+    staged.setDraft((d) => ({ ...d, driverId }));
   };
-  const effectiveDriverId = driverPickerId.trim() || driverIdFilter || undefined;
+  const effectiveDriverId = applied.driverId.trim() || undefined;
   const [tab, setTab] = useState<(typeof SUBNAV)[number]>("All Active");
   const [selectedLiabilityId, setSelectedLiabilityId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -75,13 +100,13 @@ export function LiabilitiesHomePage() {
     <div className="space-y-3">
       <PageHeader title="Liabilities" subtitle="Driver debt with acknowledgment + forfeiture status" />
 
-      <div className="flex flex-wrap items-end gap-3" data-testid="liabilities-filters">
+      <div className="relative flex flex-wrap items-end gap-3" data-testid="liabilities-filters">
         <label className="text-[11px] text-slate-600">
           Driver
           <EntityPicker
             kind="driver"
             operatingCompanyId={companyId}
-            value={driverPickerId || null}
+            value={filterDraft.driverId || null}
             onChange={(next) => setDriverFilter(next ?? "")}
             allowCreate={false}
             placeholder="All drivers"
@@ -89,6 +114,32 @@ export function LiabilitiesHomePage() {
             dataTestId="liabilities-filter-driver"
           />
         </label>
+        <Button type="button" size="sm" data-testid="liabilities-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="liabilities-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="liabilities-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchListSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
