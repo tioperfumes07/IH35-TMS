@@ -40,6 +40,7 @@ const guards = [
   "verify-fuel-expense-identity-honesty.mjs",
   "verify-gl-je-honest-built.mjs",
   "verify-obligation-reconcile-existence-checked.mjs",
+  "verify-payment-application-write-role-gated.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
   "verify-reconciliation-match-existence-checked.mjs",
   "verify-invoice-inline-surface-applicability.mjs",

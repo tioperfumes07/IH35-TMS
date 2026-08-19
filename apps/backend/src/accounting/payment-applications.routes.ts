@@ -1,9 +1,10 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { applyPayment as applyPaymentEngine, ApplyPaymentError } from "./payments/apply.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 const paramsSchema = z.object({
   paymentId: z.string().uuid(),
@@ -21,12 +22,27 @@ const createBodySchema = z.object({
   amount_cents: z.coerce.number().int().positive(),
 });
 
+// ACCT-F5583: POST /:paymentId/applications (allocates a real payment to an invoice/bill) and DELETE
+// /:paymentId/applications/:id (unapplies that allocation) had no role gate at all -- currentAuthUser
+// only requires a valid session, and withCompanyScope's company-membership check is role-agnostic.
+// Reuses the canonical void/cancel executor role predicate (Owner/Administrator/Accountant,
+// Jorge-locked 2026-06-29), matching the fix already applied to the sibling
+// customer-payments.routes.ts (ACCT-F5581) and vendor-bill-payments.routes.ts (ACCT-F5582).
+function requirePaymentWriteRole(reply: FastifyReply, role: string) {
+  if (!canVoidCancel(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "applying or unapplying a payment requires an accounting role" });
+    return false;
+  }
+  return true;
+}
+
 export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
   // Rate-limited (CodeQL js/missing-rate-limiting). A money-mutating POST with no limit at all, since
   // the plugin is global:false. 30/min for a write path rather than the 60/min used for reads.
   app.post("/api/v1/accounting/payments/:paymentId/applications", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!requirePaymentWriteRole(reply, String(user.role ?? ""))) return;
 
     const params = paramsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -137,6 +153,7 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
   app.delete("/api/v1/accounting/payments/:paymentId/applications/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!requirePaymentWriteRole(reply, String(user.role ?? ""))) return;
 
     const params = deleteParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
