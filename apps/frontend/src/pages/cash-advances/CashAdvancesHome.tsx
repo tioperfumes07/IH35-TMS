@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";
 import { CashAdvancesKpiRow } from "./components/CashAdvancesKpiRow";
@@ -13,6 +14,10 @@ import { CashAdvancesTable } from "./components/CashAdvancesTable";
 import { CreateAdvanceModal } from "./components/CreateAdvanceModal";
 import { MarkDisbursedModal } from "./components/MarkDisbursedModal";
 import { ListErrorState } from "../../components/ListErrorState";
+
+const EMPTY_FILTERS = {
+  driverId: "",
+};
 
 const SUBNAV = [
   ["All Advances", "all"],
@@ -37,20 +42,39 @@ export function CashAdvancesHomePage() {
   // LAW OF THE LAND §9 (2026-07-22): EntityLink kind="cash_advance" → /cash-advances?advance_id=
   // and the driver-profile reverse link → /cash-advances?driver_id= (settlement/liability parity).
   // BANK-F5164 — visible EntityPicker (URL-only banner is not reverse chrome).
+  // LV-CASH-ADVANCES-HOME-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const deepLinkAdvanceId = searchParams.get("advance_id");
-  const driverIdFilter = searchParams.get("driver_id");
-  const [driverPickerId, setDriverPickerId] = useState("");
-  useEffect(() => {
-    if (driverIdFilter) setDriverPickerId(driverIdFilter);
-  }, [driverIdFilter]);
-  const setDriverFilter = (driverId: string) => {
-    setDriverPickerId(driverId);
+  const driverIdFilter = searchParams.get("driver_id")?.trim() ?? "";
+
+  function patchListSearchParam(next: { driverId: string }) {
     const params = new URLSearchParams(searchParams);
-    if (driverId) params.set("driver_id", driverId);
+    if (next.driverId) params.set("driver_id", next.driverId);
     else params.delete("driver_id");
     setSearchParams(params, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFilter,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, driverId: driverIdFilter }));
+  }, [driverIdFilter]);
+
+  const setDriverFilter = (driverId: string) => {
+    staged.setDraft((d) => ({ ...d, driverId }));
   };
-  const effectiveDriverId = driverPickerId.trim() || driverIdFilter || undefined;
+  const effectiveDriverId = applied.driverId.trim() || undefined;
   const tab = parseCashAdvancesTab(searchParams.get("tab"));
   const setTab = (next: CashAdvancesTab) => {
     const params = new URLSearchParams(searchParams);
@@ -103,13 +127,13 @@ export function CashAdvancesHomePage() {
         }
       />
 
-      <div className="flex flex-wrap items-end gap-3" data-testid="cash-advances-filters">
+      <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advances-filters">
         <label className="text-[11px] text-slate-600">
           Driver
           <EntityPicker
             kind="driver"
             operatingCompanyId={companyId}
-            value={driverPickerId || null}
+            value={filterDraft.driverId || null}
             onChange={(next) => setDriverFilter(next ?? "")}
             allowCreate={false}
             placeholder="All drivers"
@@ -117,6 +141,32 @@ export function CashAdvancesHomePage() {
             dataTestId="cash-advances-filter-driver"
           />
         </label>
+        <Button type="button" size="sm" data-testid="cash-advances-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="cash-advances-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="cash-advances-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchListSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
