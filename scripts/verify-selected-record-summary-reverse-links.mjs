@@ -30,7 +30,8 @@ function verify(source) {
   requireText("resolver", 'return `/maintenance/pm-schedule?schedule_id=${id}`;', "pm_schedule must use the mounted schedule_id route");
   requireText("kanban", 'data-testid="kanban-card-primary-entity-link"', "detailed Kanban card primary identity must drill through");
   requireText("kanban", 'data-testid="kanban-standard-primary-entity-link"', "standard Kanban card primary identity must drill through");
-  requireText("kanban", 'id={load.assigned_unit_id ?? load.id}', "Kanban primary identity must select the canonical unit or load id");
+  requireText("kanban", 'id={load.assigned_unit_id}', "Kanban assigned-unit primary identity must use the canonical unit id");
+  requireText("kanban", '<EntityLink kind="load" id={load.id}', "Kanban unassigned primary identity must use the canonical load id");
   requireText("kanban", 'data-testid="kanban-standard-driver-link"', "standard Kanban driver identity must drill through");
   requireText("policies", '<EntityLink kind="insurance_policy" id={p.id}', "policy roster identity must drill through by canonical policy id");
   requireText("pmAuto", 'kind="pm_schedule"', "PM action log schedule identity must drill through");
@@ -57,13 +58,14 @@ if (failures.length) {
   process.exit(1);
 }
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
     ["resolver", '| "pm_schedule"', '| "pm_schedule_broken"'],
     ["resolver", 'case "pm_schedule":', 'case "pm_schedule_broken":'],
     ["kanban", 'data-testid="kanban-card-primary-entity-link"', 'data-testid="broken-card-primary"'],
     ["kanban", 'data-testid="kanban-standard-primary-entity-link"', 'data-testid="broken-standard-primary"'],
-    ["kanban", 'id={load.assigned_unit_id ?? load.id}', 'id={load.id}'],
+    ["kanban", 'id={load.assigned_unit_id}', 'id={undefined}'],
+    ["kanban", '<EntityLink kind="load" id={load.id}', '<EntityLink kind="load" id={undefined}'],
     ["kanban", 'data-testid="kanban-standard-driver-link"', 'data-testid="broken-driver"'],
     ["policies", '<EntityLink kind="insurance_policy" id={p.id}', '<EntityLink kind="customer" id={p.id}'],
     ["pmAuto", 'kind="pm_schedule"', 'kind="work_order"'],
