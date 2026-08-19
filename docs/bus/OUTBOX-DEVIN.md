@@ -1,3 +1,4 @@
+- 2026-08-19T15:22Z Cursor LEAD TICK | HARD STOP safety re-loop · pull main (#9769) · LIVE CLAIM fleet residual unit.profile reverse · tip Leaves leaf:col · chrome=9227 · Box4=3103 · healthz= tip=6ef159fa0 · Live=BLOCKED · GO
 - 2026-08-19T10:50Z Cursor LEAD | REWAKE · read INBOX-DEVIN · LIVE CLAIM safety (not fleet jump) · CDP 9227 · Live=BLOCKED · GO
 - 2026-08-19T10:40Z Cursor LEAD | DEVIN FULL INSTRUCTIONS · INBOX-DEVIN.md · CDP 9227 · fleet→maint Live · GO
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-DEVIN.md · fleet→maint · Live=BLOCKED
