@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { apiRequest } from "../../api/client";
+import { entityLabel } from "../../lib/entity-label";
 import { Modal } from "../Modal";
 import { EntityPicker } from "../parity/EntityPicker";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -43,6 +45,8 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
     }
   }
 
+  const hasSelected = Boolean(equipmentUuid || fromDriver || toDriver);
+
   return (
     <Modal open={open} onClose={onClose} title="Initiate equipment transfer">
       <div data-testid="equipment-transfer-modal" className="grid gap-2">
@@ -82,6 +86,32 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
           enabled={open}
           placeholder="To driver"
         />
+        {/* Exact Leaves dispatch.modal.equipment_transfer:driver|trailer —
+            pickers alone leave selected identities non-navigable; expose EntityLinks. */}
+        {hasSelected ? (
+          <div
+            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+            data-testid="equipment-transfer-modal-entitylinks"
+          >
+            {equipmentUuid ? (
+              <span>
+                {kind === "chassis" ? "Chassis" : "Trailer"}:{" "}
+                <EntityLink kind="trailer" id={equipmentUuid} label={entityLabel(null, equipmentUuid, kind === "chassis" ? "Chassis" : "Trailer")} />
+              </span>
+            ) : null}
+            {fromDriver ? (
+              <span>
+                From:{" "}
+                <EntityLink kind="driver" id={fromDriver} label={entityLabel(null, fromDriver, "Driver")} />
+              </span>
+            ) : null}
+            {toDriver ? (
+              <span>
+                To: <EntityLink kind="driver" id={toDriver} label={entityLabel(null, toDriver, "Driver")} />
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <input className="rounded-sm border px-2 py-1" placeholder="Transfer location" value={location} onChange={(e) => setLocation(e.target.value)} />
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         <div className="mt-1 flex gap-2">
