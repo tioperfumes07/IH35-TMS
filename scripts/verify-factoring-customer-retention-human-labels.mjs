@@ -19,7 +19,12 @@ function assertAll(srcs) {
     if (/driver_id\?\.slice\(0,\s*8\)/.test(src) || /factoring_company_vendor_id\?\.slice\(0,\s*8\)/.test(src) || /driver_uuid\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: still UUID-slices`);
     }
-    if (!/entityLabel\(/.test(src)) {
+    // CustomerDetail.tsx has since migrated EVERY entityLabel(...) call site onto
+    // <EntityLinkOrTombstone> — which calls entityLabel(name, id, noun) internally for its
+    // unresolved/tombstone branch (apps/frontend/src/components/shared/EntityLinkOrTombstone.tsx),
+    // carrying the same "no raw UUID chrome" guarantee this guard exists to protect, plus it
+    // additionally withholds the drill when unresolved. Accept either as evidence.
+    if (!/entityLabel\(/.test(src) && !/EntityLinkOrTombstone/.test(src)) {
       problems.push(`${file}: missing entityLabel`);
     }
   }
