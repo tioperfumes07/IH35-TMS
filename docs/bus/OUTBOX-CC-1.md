@@ -623,3 +623,7 @@ verify:static: 58 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:45Z CC-1 | ACCT-F5482 closed (PR #9388, merged bb47598). verify-coa-canonical.mjs FAILed on 2 files not in its accounting.coa_account allowlist. Neither treats it as canonical: the migration's reference is a COMMENT (prose docs, no code); the guard script's reference checks a migration does NOT INSERT INTO accounting.coa_account — the opposite of treating it as canonical. Added both to COA_ACCOUNT_REF_ALLOWLIST with explanatory comments, matching the guard's own documented review process. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 59 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:48Z CC-1 | ACCT-F5483 closed (PR #9394, merged 5ffd2dd). verify-acct-link-02-accounts-detail-type-fk.mjs required JSX <option value={dt.id}>, but AccountDrawer.tsx's Detail Type field migrated (LST-PICKER-01) from a raw <select> to the governed ReferenceSelect component — options prop is a plain object array { value: dt.id, label: dt.name }, same FK wire, object-property syntax. Widened check. Existing --selftest re-verified; load-bearing proof for new branch done by hand. Zero product-code change.
+
+verify:static: 60 of ~199 now closed this session. Continuing non-stop, fast-merge.
