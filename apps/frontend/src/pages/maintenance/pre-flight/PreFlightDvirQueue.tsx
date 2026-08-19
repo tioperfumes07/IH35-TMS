@@ -11,7 +11,7 @@ import {
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { useToast } from "../../../components/Toast";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { DvirSeverityBadge } from "../../../components/maintenance/DvirSeverityBadge";
@@ -91,8 +91,8 @@ export function PreFlightDvirQueue() {
         sortable: true,
         render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"),
       },
-      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> },
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={row.driver_name} noun="Driver" /> },
       { key: "item_key", label: "Item", sortable: true, render: (row) => <span title={row.notes ?? undefined}>{row.item_key}</span> },
       { key: "severity", label: "Severity", sortable: true, render: (row) => <DvirSeverityBadge severity={row.severity} /> },
       { key: "major_defect_code", label: "CFR Code", render: (row) => row.major_defect_code ?? "—" },
@@ -101,7 +101,7 @@ export function PreFlightDvirQueue() {
         label: "Work Order",
         render: (row) =>
           row.auto_wo_id ? (
-            <EntityLink kind="work_order" id={row.work_order_id ?? row.auto_wo_id} label={entityLabel(row.work_order_display_id, row.work_order_id ?? row.auto_wo_id, "Work order")} data-testid={`dvir-wo-link-${row.id}`} />
+            <EntityLinkOrTombstone kind="work_order" id={row.work_order_id ?? row.auto_wo_id} name={row.work_order_display_id} noun="Work order" data-testid={`dvir-wo-link-${row.id}`} />
           ) : (
             "—"
           ),
