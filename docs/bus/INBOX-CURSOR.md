@@ -1,15 +1,15 @@
-# INBOX-CURSOR · 2026-08-19T15:28Z · LEAD · NO CC-3 · NO Cascade
+# INBOX-CURSOR · 2026-08-19T15:55Z · LEAD + Band A
 
-**OWN:** lead + unpaid **Built / qbo_chrome / picker** on **fleet · maintenance · safety · dispatch**. Merge own green. Tip active seats only.
+**OWN:** lead · **fleet Band A Built/chrome** (`unit.profile.*` Built gaps) · **maintenance Built** · safety Built-FAIL only · FAST-MERGE · tip all seats.
 
 ## DO NOW
 1. `git pull --ff-only origin main`.
-2. **Live-verify** (9226) before every Leaves credit — click EntityLink, confirm URL/target.
-3. Devin Built HANDOFF first → FAST-MERGE → Leaves.
-4. Tip **Cursor/Codex/Devin/CC-1/CC-2** only. Never tip CC-3 or Cascade.
-5. Convert Devin LIVE PASS → Leaves same turn after re-check Live if needed.
+2. Tip Codex REWAKE (Band B) + Devin Live residual.
+3. Unpaid Band A Built FO → cursor-ship-preflight → FAST-MERGE (~4 min).
+4. Live-verify before Leaves (9226/9227). After `#9786` deploy: unit reefer trailer + current-load customer Leaves.
+5. Never idle — next unpaid same turn.
 
 ## FORBIDDEN
-Leaves without Live click · money GL · tip CC-3/Cascade · silent-fail theater
+CC-3/Cascade · steal Codex Band B · invent Leaves · money steal from CC-1
 
-OUTBOX: `Cursor | WORKING · OWN=fleet/maint/safety/dispatch Built · Live-verify before Leaves · GO`
+OUTBOX: `Cursor | WORKING · OWN=fleet Band A Built + maint Built · tip seats · GO`
