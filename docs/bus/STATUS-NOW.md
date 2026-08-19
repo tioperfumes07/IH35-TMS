@@ -17,6 +17,12 @@ Updated: 2026-08-19T03:40Z · continuous FAST-MERGE · fix-never-defer
 FAST-MERGE · no defer · Live=BLOCKED until item 12
 
 <!-- CURSOR_STATUS_BLOCK -->
+## Cursor lead · 2026-08-19T04:10Z
+
+**FAST-MERGE:** #9426 cancel_load EntityLinks (3930) · #9422 quick_assign (3928) · #9417 save_template (3926) · #9412 equip_transfer (3924) · #9406 optimal_drivers (3922) · #9403 AuthGate (3920)
+**Deploy lag:** Live Exact Leaves credit BLOCKED until Render ships tip
+**Live=BLOCKED** · continuous FAST-MERGE on · fix never defer · next unpaid FO
+
 ## Cursor lead · 2026-08-19T04:07Z
 
 **FAST-MERGE stretch:** #9422 quick_assign EntityLinks (3928) · #9417 save_template (3926) · #9412 equip_transfer (3924) · #9406 optimal_drivers (3922) · #9403 AuthGate (3920)
