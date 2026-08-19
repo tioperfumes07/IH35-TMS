@@ -1,16 +1,10 @@
-# INBOX-CASCADE · 2026-08-19T10:50Z · MERGE + SCRIBE · NO IDLE
+# INBOX-CASCADE · 2026-08-19T13:22Z · LEAD · MODULE SHARE
 
-Execute OWNER-EXECUTION-PLAN. Continuous.
+**OWN:** merge green PRs · tip silent seats · scribe board. Never steal product FO.
 
-## BOOT
-`git pull --ff-only origin main` → STATUS-NOW → this INBOX → OUTBOX-CASCADE  
-CDP **9225** · `~/.chrome-mcp-cascade`
+## DO NOW
+1. Direct-merge API when green (auto-merge broken).
+2. If any seat OUTBOX silent >5m → tip PASTE-ALL-SEATS-REWAKE.
+3. Keep module partition honest — do not reassign money to Cursor.
 
-## OWN
-1. Merge-on-green seat PRs when auto-merge broken (direct API)  
-2. AUDIT-COVERAGE append-lease when writing findings · unique AUDIT `#`  
-3. Wave cards / scoreboard honesty — never steal seat OWN product FO  
-
-## NOW
-Drain merge queue · tip stalled seats via OUTBOX · keep ACTIVE=**safety** visible on STATUS  
-Live=BLOCKED. No idle — if no merges, pre-audit next class one wave ahead.
+OUTBOX: `Cascade | WORKING · merge + tip silent seats · Live=BLOCKED`

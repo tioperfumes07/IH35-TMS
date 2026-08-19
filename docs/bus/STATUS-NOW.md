@@ -1,48 +1,30 @@
-# STATUS-NOW · Cursor lead · 2026-08-19T10:50Z
-**LAW:** `Execute docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md — do not invent a new sequence.`  
-**Method:** FAST-MERGE ~4m · fix never defer · continuous · no idle · Live=BLOCKED until item 12.
+# STATUS-NOW · 2026-08-19T13:22Z · Cursor lead · MODULE SHARE · BOX4 URGENT
 
-## LIVE
-API healthz: `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow`  
-App SPA `/api/...` returns HTML — **use API host**. Live=BLOCKED while version lags tip.
 
-## OWNER MODULE ORDER (finish in this order — no skipping)
+**CHANNEL FIX:** Canonical bus = `docs/bus/` (pull main). Desktop mirror was diverging — seats MUST `git pull` for INBOX.
+**healthz (API):** `9e0d0dd` · tip advancing · Live=BLOCKED until ancestry.
+**METER:** `program.matrix.all` Box4 Live ≈ **3087/3413**. Move the numerator. PR volume ≠ success.
 
-| Seq | Module | Scoreboard | Who owns NOW |
-|-----|--------|------------|--------------|
-| 1 | accounting | DONE | CC-1 money residual/Live |
-| 2 | bank | DONE | CC-1 residual/Live |
-| **3** | **safety** | **FIXING ← ACTIVE** | Cursor FE · Codex reverse · Devin Live · CC-2 GUARD sample |
-| 4 | lists | next | CC-2 honesty · Cursor overflow |
-| 5 | maintenance | next | Devin Live · Cursor FE · Codex residual |
-| 6 | insurance | after | Cursor FE · CC-1 money hops |
-| 7 | legal | after | Cursor FE |
-| 8 | dispatch | after | Cursor · Codex queues |
-| 9 | settlements | after | CC-1 |
-| 10 | factoring | after | CC-1 |
-| 11–12 | vendors · customers | after | Codex/Cursor FE · CC-1 money |
-| 13–14 | drivers · driver-hub | after | Cursor/Codex |
-| 15 | fleet | after | Devin Live · Cursor FE |
-| 16–17 | cash-flow · finance | after | CC-1 money · Cursor chrome |
-| 18+ | last wave | end | home→fuel→425→reports→tasks→inventory→docs→users→help→program→system→eld→**compliance LAST** |
+**Law:** Fix never defer · FAST-MERGE · continuous · Jorge is NOT the bus · Live=BLOCKED (deploy lag ≠ stop Leaves)
 
-Scoreboard: `docs/trackers/MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md`
+**healthz (API):** `7f5520b` · use `https://api.ih35dispatch.com/api/v1/healthz/shallow` (app host serves SPA HTML for /api)
 
-## SEAT PARTITION (nobody idle)
+---
 
-| Seat | INBOX | OUTBOX | CDP | NOW |
-|------|-------|--------|-----|-----|
-| **Cursor** | INBOX-CURSOR | OUTBOX-CURSOR | 9226 | Lead + **safety FE** residual · tip all seats · Leaves when tipped · FAST-MERGE |
-| **CC-1** | INBOX-CC-1 | OUTBOX-CC-1 | 9222 | **All money** · accounting/bank residual · prep settlements/factoring/cash-flow |
-| **CC-2** | INBOX-CC-2 | OUTBOX-CC-2 | 9223 | GUARD after money · **lists honesty** (seq 4) |
-| **CC-3** | INBOX-CC-3 | OUTBOX-CC-3 | 9224 | Mechanical/entity-scope OPEN board · not money |
-| **Codex** | INBOX-CODEX | OUTBOX-CODEX | 9228 | Safety reverse/connectivity residual · then queues when dispatch |
-| **Devin-A** | INBOX-DEVIN | OUTBOX-DEVIN | 9227 | **Live Cancel-only** on ACTIVE module (**safety** now) → lists → maint |
-| **Cascade** | INBOX-CASCADE | OUTBOX-CASCADE | 9225 | Merge-on-green · audit append · wave cards |
+## Seat OWN NOW (shared modules — no collision)
 
-## BUS LOCATION
-Repo: `docs/bus/` · Desktop mirror: `~/Desktop/IH35-CURSOR-AUDIT/USMCA-WEEKEND-LEAD-2026-08-07/`  
-Every seat: `git pull` → STATUS → **your INBOX TOP** → work → OUTBOX one-liner → next.
+| Seat | OWN MODULES | Do this minute | CDP |
+|------|-------------|----------------|-----|
+| **Cursor** | **fleet · maintenance · safety · dispatch** Built/chrome/picker unpaid | Fix Devin LIVE FAIL Built blockers → FAST-MERGE → tip Leaves | 9226 |
+| **Codex** | same modules **reverse/connectivity** unpaid | Exact reverse FO Devin can Cancel-walk | 9228 |
+| **Devin-A** | Live walk: finish **safety** unpaid → **maint** → **fleet** → **dispatch** | LIVE CLAIM → Cancel-only PASS → tip Leaves | **9227** |
+| **CC-1** | **accounting · banking · settlements** unpaid Box4 money | Do NOT wait for FE · tip Leaves | 9222 |
+| **CC-2** | **lists** honesty + GUARD if Box4 | only Box4-moving | 9223 |
+| **CC-3** | mechanical / entity-scope on fleet·maint·dispatch | unblock Live walks | 9224 |
+| **Cascade** | merge + tip silent >5m | never steal product FO | 9225 |
 
-## TIP
-All seats REWAKE with full INBOX · ACTIVE=**safety** · then lists → maintenance · continuous FAST-MERGE · no idle
+**FORBIDDEN:** silent `isError`/`useQuery` FO waves · money mid-FE · idle.
+
+**SUCCESS:** Box4 > 3087 with named Leaves line.
+
+Partition: `LIVE-CHROME-MODULE-PARTITION.md` · Rewake: `PASTE-ALL-SEATS-REWAKE.md`
