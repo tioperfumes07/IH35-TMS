@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import type { VendorOption } from "../../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
@@ -244,14 +244,16 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             sortable: true,
             cellClass: "font-medium",
             render: (row) => (
-              <EntityLink
-                data-testid="vendor-roster-record-link"
-                kind="vendor"
-                id={row.id}
-                label={row.name}
-                className="single-line-name text-slate-700 hover:underline"
-                title={row.name}
-              />
+              <span className="inline-flex min-w-0" title={row.name}>
+                <EntityLinkOrTombstone
+                  data-testid="vendor-roster-record-link"
+                  kind="vendor"
+                  id={row.id}
+                  name={row.name}
+                  noun="Vendor"
+                  className="single-line-name text-slate-700 hover:underline"
+                />
+              </span>
             ),
           },
           { key: "email", label: "Email", sortable: true, render: (row) => row.email ?? "—" },

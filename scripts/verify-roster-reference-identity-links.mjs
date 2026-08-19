@@ -35,6 +35,7 @@ export function verify(source) {
   need("customers", 'data-testid="customer-roster-record-link"', "customer roster primary identity must stay linked");
   need("customers", 'kind="customer"', "customer roster must drill through the canonical customer resolver");
   need("customers", 'id={row.id}', "customer roster must forward the canonical customer id");
+  need("vendors", "EntityLinkOrTombstone", "vendor roster must tombstone unresolved vendor identities");
   need("vendors", 'data-testid="vendor-roster-record-link"', "vendor roster primary identity must stay linked");
   need("vendors", 'kind="vendor"', "vendor roster must drill through the canonical vendor resolver");
   need("vendors", 'id={row.id}', "vendor roster must forward the canonical vendor id");
@@ -65,6 +66,7 @@ if (process.argv.includes("--self-test")) {
     ["customers", "EntityLinkOrTombstone", "EntityLink"],
     ["customers", 'data-testid="customer-roster-record-link"', 'data-testid="broken-customer-link"'],
     ["customers", 'kind="customer"', 'kind="vendor"'],
+    ["vendors", "EntityLinkOrTombstone", "EntityLink"],
     ["vendors", 'data-testid="vendor-roster-record-link"', 'data-testid="broken-vendor-link"'],
     ["vendors", 'kind="vendor"', 'kind="customer"'],
     ["names", 'data-testid="names-master-record-link"', 'data-testid="broken-name-link"'],

@@ -36,6 +36,9 @@ function audit(sources) {
     if (key === "customers" && !/EntityLinkOrTombstone/.test(src)) {
       failures.push(`${rel}: customer roster must use EntityLinkOrTombstone`);
     }
+    if (key === "vendors" && !/EntityLinkOrTombstone/.test(src)) {
+      failures.push(`${rel}: vendor roster must use EntityLinkOrTombstone`);
+    }
     if (key === "vendors" && !/data-testid="vendor-roster-record-link"/.test(src)) {
       failures.push(`${rel}: missing vendor-roster-record-link test id`);
     }
