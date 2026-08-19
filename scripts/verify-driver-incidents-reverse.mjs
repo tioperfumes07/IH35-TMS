@@ -21,7 +21,7 @@ function audit(s = files) {
   if (!/kind="driver"/.test(s.create) || !/driver_id: form\.driverId \|\| null/.test(s.create)) failures.push("driver picker payload");
   if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(s.routes) || !/i\.driver_id = \$\$\{params\.length\}/.test(s.routes)) failures.push("exact driver route filter");
   if (!incidentRows.every((pattern) => pattern.test(s.reverse)) || !/driver_id: driverId/.test(s.reverse)) failures.push("all incident reverse filters");
-  if (!/kind=\{openKind\}/.test(s.reverse) || !/kind=\{kind\}/.test(s.reverse) || !/kind="load"/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/are linked to this driver/.test(s.reverse)) failures.push("drills or honest states");
+  if (!/kind=\{openKind\}/.test(s.reverse) || !/EntityLinkOrTombstone kind=\{kind\}/.test(s.reverse) || !/EntityLinkOrTombstone kind="load"/.test(s.reverse) || !/row\.id == null \? null : String\(row\.id\)/.test(s.reverse) || !/name=\{row\.load_number\}/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/are linked to this driver/.test(s.reverse)) failures.push("drills, tombstones, or honest states");
   if (!/DriverIncidentsReverseSection operatingCompanyId=\{operatingCompanyId\} driverId=\{driverId\}/.test(s.profile)) failures.push("shared driver reverse mount");
   return failures;
 }
@@ -37,6 +37,8 @@ if (process.argv.includes("--selftest")) {
     ["claim", { ...files, reverse: files.reverse.replace('{ kind: "cargo_claim", label: "Cargo claims", openKind: "cargo_claims_driver" }', '{ kind: "other", label: "Cargo claims", openKind: "cargo_claims_driver" }') }],
     ["open drill", { ...files, reverse: files.reverse.replace("kind={openKind}", 'kind="load"') }],
     ["record drill", { ...files, reverse: files.reverse.replace("kind={kind}", 'kind="load"') }],
+    ["record tombstone", { ...files, reverse: files.reverse.replace("row.id == null ? null : String(row.id)", "String(row.id)") }],
+    ["load tombstone", { ...files, reverse: files.reverse.replace('EntityLinkOrTombstone kind="load"', 'EntityLink kind="load"') }],
     ["empty", { ...files, reverse: files.reverse.replace("are linked to this driver", "exist") }],
     ["mount", { ...files, profile: files.profile.replaceAll("DriverIncidentsReverseSection", "MissingIncidentReverse") }],
   ];
