@@ -4,7 +4,7 @@ export type DriverPickerWithCreateProps = {
   operatingCompanyId: string;
   value: string | null;
   selectedOption?: EntityPickerProps["selectedOption"];
-  onChange: (driverId: string | null) => void;
+  onChange: EntityPickerProps["onChange"];
   /** When false, skips the roster query (parent surface closed). Default true. */
   open?: boolean;
   enabled?: boolean;

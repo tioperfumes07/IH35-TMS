@@ -3,6 +3,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
@@ -24,8 +25,11 @@ type Props = {
 
 export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber, hardWarnings, onClose, onSubmit }: Props) {
   const [driverId, setDriverId] = useState("");
+  const [driverOption, setDriverOption] = useState<EntityPickerOption | null>(null);
   const [unitId, setUnitId] = useState("");
+  const [unitOption, setUnitOption] = useState<EntityPickerOption | null>(null);
   const [trailerId, setTrailerId] = useState("");
+  const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
   const [ackAll, setAckAll] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -63,7 +67,10 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               driverRoster="active_or_probation"
               operatingCompanyId={operatingCompanyId}
               value={driverId || null}
-              onChange={(next) => setDriverId(next ?? "")}
+              onChange={(next, option) => {
+                setDriverId(next ?? "");
+                setDriverOption(option ?? null);
+              }}
               open={open}
               placeholder="Select driver…"
               className="h-9 w-full text-sm"
@@ -79,7 +86,10 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               kind="unit"
               operatingCompanyId={operatingCompanyId}
               value={unitId || null}
-              onChange={(next) => setUnitId(next ?? "")}
+              onChange={(next, option) => {
+                setUnitId(next ?? "");
+                setUnitOption(option ?? null);
+              }}
               enabled={open}
               placeholder="Select unit (optional)…"
               className="h-9 w-full text-sm"
@@ -93,7 +103,10 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               kind="trailer"
               operatingCompanyId={operatingCompanyId}
               value={trailerId || null}
-              onChange={(next) => setTrailerId(next ?? "")}
+              onChange={(next, option) => {
+                setTrailerId(next ?? "");
+                setTrailerOption(option ?? null);
+              }}
               enabled={open}
               placeholder="Select trailer (optional)…"
               className="h-9 w-full text-sm"
@@ -110,18 +123,18 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
             {driverId ? (
               <span>
                 Driver:{" "}
-                <EntityLinkOrTombstone kind="driver" id={driverId} name={null} noun="Driver" />
+                <EntityLinkOrTombstone kind="driver" id={driverId} name={driverOption?.label} noun="Driver" />
               </span>
             ) : null}
             {unitId ? (
               <span>
-                Unit: <EntityLinkOrTombstone kind="unit" id={unitId} name={null} noun="Unit" />
+                Unit: <EntityLinkOrTombstone kind="unit" id={unitId} name={unitOption?.label} noun="Unit" />
               </span>
             ) : null}
             {trailerId ? (
               <span>
                 Trailer:{" "}
-                <EntityLinkOrTombstone kind="trailer" id={trailerId} name={null} noun="Trailer" />
+                <EntityLinkOrTombstone kind="trailer" id={trailerId} name={trailerOption?.label} noun="Trailer" />
               </span>
             ) : null}
           </div>
