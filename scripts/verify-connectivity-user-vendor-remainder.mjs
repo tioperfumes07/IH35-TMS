@@ -47,18 +47,23 @@ export function verify(source) {
   need("vendorPage", 'date_from: dateFrom || undefined', "vendor transaction filters must forward the start date");
   need("vendorPage", 'date_to: dateTo || undefined', "vendor transaction filters must forward the end date");
   need("vendorPage", 'status: statusFilter === "unpaid"', "vendor transaction filters must forward canonical status semantics");
-  // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Status/Date/Category must stage until Apply (CollapsedListFilters).
+  // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Type/Status/Date/Category must stage until Apply (CollapsedListFilters).
   need("vendorPage", "const txnFilters = useStagedListFilters({", "vendor txn filters must use staged draft state until Apply");
   need("vendorPage", 'testIdPrefix="vendor-txn"', "vendor txn filters must use CollapsedListFilters with vendor-txn prefix");
   need("vendorPage", "onApply={txnFilters.apply}", "vendor txn filters must commit only via Apply");
   need("vendorPage", "onCancel={txnFilters.cancel}", "vendor txn filters must support Cancel without mutating applied query");
   need("vendorPage", "onReset={txnFilters.reset}", "vendor txn filters must support Reset");
+  need("vendorPage", "value={txnFilters.draft.typeFilter}", "type control must bind draft, not applied typeFilter");
   need("vendorPage", "value={txnFilters.draft.statusFilter}", "status control must bind draft, not applied statusFilter");
   need("vendorPage", "value={txnFilters.draft.dateFrom}", "date-from control must bind draft");
   need("vendorPage", "value={txnFilters.draft.dateTo}", "date-to control must bind draft");
   need("vendorPage", "value={txnFilters.draft.txnCategoryFilter}", "category control must bind draft");
+  need("vendorPage", "setTypeFilter(next.typeFilter)", "type must commit only via txnFilters.onApply");
   if (source.vendorPage.includes("setShowFilterBox") || source.vendorPage.includes("showFilterBox")) {
     failures.push("vendor txn filters must not use immediate inline showFilterBox (Apply triad required)");
+  }
+  if (/onChange=\{\(event\) => setTypeFilter\(/.test(source.vendorPage)) {
+    failures.push("vendor txn Type must not apply immediately via setTypeFilter onChange");
   }
   return failures;
 }
@@ -78,9 +83,20 @@ if (process.argv.includes("--selftest")) {
     ["vendorPage", 'date_from: dateFrom || undefined'], ["vendorPage", 'date_to: dateTo || undefined'], ["vendorPage", 'status: statusFilter === "unpaid"'],
     ["vendorPage", "const txnFilters = useStagedListFilters({"], ["vendorPage", 'testIdPrefix="vendor-txn"'], ["vendorPage", "onApply={txnFilters.apply}"],
     ["vendorPage", "onCancel={txnFilters.cancel}"], ["vendorPage", "onReset={txnFilters.reset}"],
-    ["vendorPage", "value={txnFilters.draft.statusFilter}"], ["vendorPage", "value={txnFilters.draft.dateFrom}"],
+    ["vendorPage", "value={txnFilters.draft.typeFilter}"], ["vendorPage", "value={txnFilters.draft.statusFilter}"], ["vendorPage", "value={txnFilters.draft.dateFrom}"],
     ["vendorPage", "value={txnFilters.draft.dateTo}"], ["vendorPage", "value={txnFilters.draft.txnCategoryFilter}"],
+    ["vendorPage", "setTypeFilter(next.typeFilter)"],
   ];
+  const typeImmediateMutant = {
+    ...source,
+    vendorPage: source.vendorPage.replace(
+      "value={txnFilters.draft.typeFilter}",
+      'value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} BROKEN_TYPE',
+    ),
+  };
+  if (!verify(typeImmediateMutant).some((f) => f.includes("setTypeFilter onChange") || f.includes("type control must bind draft"))) {
+    throw new Error("selftest immediate typeFilter onChange survived");
+  }
   mutations.forEach(([key, token], index) => {
     if (!source[key].includes(token)) throw new Error(`selftest fixture missing: ${key} ${token}`);
     const mutant = { ...source, [key]: source[key].replaceAll(token, `BROKEN_${index}`) };
@@ -88,6 +104,6 @@ if (process.argv.includes("--selftest")) {
   });
   const filterBoxMutant = { ...source, vendorPage: source.vendorPage + "\nconst [showFilterBox, setShowFilterBox] = useState(false);\n" };
   if (!verify(filterBoxMutant).some((f) => f.includes("showFilterBox"))) throw new Error("selftest showFilterBox regression survived");
-  console.log(`verify-connectivity-user-vendor-remainder SELFTEST PASS — ${mutations.length + 1} planted defects rejected`);
+  console.log(`verify-connectivity-user-vendor-remainder SELFTEST PASS — ${mutations.length + 2} planted defects rejected`);
 }
 console.log("verify-connectivity-user-vendor-remainder PASS — final non-money user/vendor connectivity leaves are mounted, scoped, canonical, and drillable");

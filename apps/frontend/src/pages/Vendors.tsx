@@ -117,11 +117,12 @@ export function VendorsPage() {
   const [dateTo, setDateTo] = useState("");
   // transaction-list filter box (selected vendor bills) — not the roster By Category control
   const [txnCategoryFilter, setTxnCategoryFilter] = useState("");
-  // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Status/Date/Category stage until Apply (same CollapsedListFilters law as roster).
+  // LV-VENDOR-TXN-FILTER-INLINE-NO-APPLY — Type/Status/Date/Category stage until Apply (same CollapsedListFilters law as roster).
   const txnFilters = useStagedListFilters({
-    applied: { statusFilter, dateFrom, dateTo, txnCategoryFilter },
-    empty: { statusFilter: "", dateFrom: "", dateTo: "", txnCategoryFilter: "" },
+    applied: { typeFilter, statusFilter, dateFrom, dateTo, txnCategoryFilter },
+    empty: { typeFilter: "", statusFilter: "", dateFrom: "", dateTo: "", txnCategoryFilter: "" },
     onApply: (next) => {
+      setTypeFilter(next.typeFilter);
       setStatusFilter(next.statusFilter);
       setDateFrom(next.dateFrom);
       setDateTo(next.dateTo);
@@ -554,16 +555,18 @@ export function VendorsPage() {
                   exportFilename="vendor-transactions"
                   filterBar={
                     <div className="flex flex-wrap items-center gap-2" data-testid="vendor-txn-filter-bar">
-                      <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm">
-                        <option value="">Type: All</option>
-                        <option value="bill">bill</option>
-                      </SelectCombobox>
+                      <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
+                        {typeFilter ? `Type: ${typeFilter}` : "Type: All"}
+                      </span>
                       <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
                         {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
                       </span>
                       <CollapsedListFilters
                         activeFilterCount={
-                          (statusFilter ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (txnCategoryFilter ? 1 : 0)
+                          (typeFilter ? 1 : 0) +
+                          (statusFilter ? 1 : 0) +
+                          (dateFrom || dateTo ? 1 : 0) +
+                          (txnCategoryFilter ? 1 : 0)
                         }
                         onApply={txnFilters.apply}
                         onReset={txnFilters.reset}
@@ -572,6 +575,15 @@ export function VendorsPage() {
                         testIdPrefix="vendor-txn"
                         dataAttributes={{ "data-vendor-txn-filter-toolbar": "collapsed" }}
                       >
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Type</label>
+                        <SelectCombobox
+                          value={txnFilters.draft.typeFilter}
+                          onChange={(event) => txnFilters.setDraft({ ...txnFilters.draft, typeFilter: event.target.value })}
+                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                        >
+                          <option value="">All</option>
+                          <option value="bill">bill</option>
+                        </SelectCombobox>
                         <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
                         <SelectCombobox
                           value={txnFilters.draft.statusFilter}
