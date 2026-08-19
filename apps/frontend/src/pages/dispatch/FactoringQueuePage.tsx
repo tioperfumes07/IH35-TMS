@@ -19,7 +19,13 @@ import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
+
+const EMPTY_FILTERS = {
+  customerId: "",
+  loadId: "",
+};
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -105,43 +111,59 @@ export function FactoringQueuePage() {
   // LINK-F5171/LINK-F5179 — reverse_link: CustomerDetail/FactoringTab now link here as
   // ?customer_id=/?queue_record_id=; legacy ?load_id= bookmarks remain readable.
   // LST-F5163O — visible EntityPicker filters (URL-only is not reverse chrome).
+  // LV-DISPATCH-FACTORING-QUEUE-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
-  const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
-  const deepLinkLoadId =
+  const customerIdFromUrl = searchParams.get("customer_id")?.trim() ?? "";
+  const loadIdFromUrl =
     (searchParams.get("queue_record_id") ?? searchParams.get("load_id"))?.trim() ?? "";
-  // LST-F5196 — visible filters write URL (load_id; still reads queue_record_id).
-  const [customerFilter, setCustomerFilterState] = useState(deepLinkCustomerId);
-  const [loadFilter, setLoadFilterState] = useState(deepLinkLoadId);
 
-  useEffect(() => {
-    setCustomerFilterState(deepLinkCustomerId);
-  }, [deepLinkCustomerId]);
-  useEffect(() => {
-    setLoadFilterState(deepLinkLoadId);
-  }, [deepLinkLoadId]);
-
-  function patchSearchParam(key: "customer_id" | "load_id", next: string) {
+  function patchListSearchParam(next: { customerId: string; loadId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) {
-      p.set(key, next);
-      if (key === "load_id") p.delete("queue_record_id");
+    if (next.customerId) p.set("customer_id", next.customerId);
+    else p.delete("customer_id");
+    // LST-F5196 — write load_id; clear legacy queue_record_id alias.
+    if (next.loadId) {
+      p.set("load_id", next.loadId);
+      p.delete("queue_record_id");
     } else {
-      p.delete(key);
-      if (key === "load_id") p.delete("queue_record_id");
+      p.delete("load_id");
+      p.delete("queue_record_id");
     }
     setSearchParams(p, { replace: true });
   }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    customerId: customerIdFromUrl,
+    loadId: loadIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      customerId: customerIdFromUrl,
+      loadId: loadIdFromUrl,
+    }));
+  }, [customerIdFromUrl, loadIdFromUrl]);
+
   function setCustomerFilter(next: string) {
-    setCustomerFilterState(next);
-    patchSearchParam("customer_id", next);
+    staged.setDraft((d) => ({ ...d, customerId: next }));
   }
   function setLoadFilter(next: string) {
-    setLoadFilterState(next);
-    patchSearchParam("load_id", next);
+    staged.setDraft((d) => ({ ...d, loadId: next }));
   }
 
-  const effectiveCustomerId = customerFilter.trim() || deepLinkCustomerId || undefined;
-  const effectiveLoadId = loadFilter.trim() || deepLinkLoadId || undefined;
+  const effectiveCustomerId = applied.customerId.trim() || undefined;
+  const effectiveLoadId = applied.loadId.trim() || undefined;
 
   // queue data — server-side scoping (factoring-queue.routes.ts); queue capped at limit=200.
   const queueQ = useQuery({
@@ -337,13 +359,13 @@ export function FactoringQueuePage() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-end gap-3" data-testid="factoring-dispatch-queue-filters">
+      <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-dispatch-queue-filters">
         <label className="text-[11px] text-slate-600">
           Customer
           <EntityPicker
             kind="customer"
             operatingCompanyId={companyId}
-            value={customerFilter || null}
+            value={filterDraft.customerId || null}
             onChange={(next) => setCustomerFilter(next ?? "")}
             allowCreate={false}
             placeholder="All customers"
@@ -356,7 +378,7 @@ export function FactoringQueuePage() {
           <EntityPicker
             kind="load"
             operatingCompanyId={companyId}
-            value={loadFilter || null}
+            value={filterDraft.loadId || null}
             onChange={(next) => setLoadFilter(next ?? "")}
             allowCreate={false}
             placeholder="All loads"
@@ -364,6 +386,32 @@ export function FactoringQueuePage() {
             dataTestId="factoring-dispatch-filter-load"
           />
         </label>
+        <Button type="button" size="sm" data-testid="factoring-dispatch-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="factoring-dispatch-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="factoring-dispatch-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchListSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
 
       {/* Stage filter tabs */}
