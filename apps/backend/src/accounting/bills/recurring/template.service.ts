@@ -139,6 +139,24 @@ export async function updateTemplate(uuid: string, data: UpdateTemplateInput, us
   return result;
 }
 
+// ACCT-F5595: updateTemplate/deactivateTemplate/generateFromTemplate all took only a template uuid
+// with no operating_company_id anywhere in their call chain -- a caller who knew/guessed another
+// company's template uuid could update it, deactivate it, or (via generate-now) trigger creation of
+// a real bill in that company's books, with zero ownership check. This lookup lets the ROUTE resolve
+// the template's real owning company BEFORE calling any of the three mutators, so it can assert the
+// caller is actually a member of that company. Deliberately company-agnostic itself (bypasses RLS,
+// matching generateFromTemplate's own withLuciaBypass template fetch) since its only job is to name
+// the owner for an authorization check the caller performs next, not to scope a data read.
+export async function resolveTemplateOperatingCompanyId(uuid: string): Promise<string | null> {
+  return withLuciaBypass(async (client) => {
+    const res = await client.query<{ operating_company_id: string }>(
+      `SELECT operating_company_id::text FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid`,
+      [uuid]
+    );
+    return res.rows[0]?.operating_company_id ?? null;
+  });
+}
+
 export async function deactivateTemplate(uuid: string, userId: string): Promise<string> {
   const result = await withCurrentUser(userId, async (client) => {
     const res = await client.query<{ uuid: string }>(

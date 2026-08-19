@@ -9,6 +9,7 @@ import {
   deactivateTemplate,
   getTemplate,
   listTemplates,
+  resolveTemplateOperatingCompanyId,
   updateTemplate,
 } from "./template.service.js";
 import { generateFromTemplate } from "./generator.service.js";
@@ -140,6 +141,13 @@ async function recurringBillRoutes(app: FastifyInstance) {
     const body = updateTemplateBodySchema.safeParse(req.body);
     if (!body.success) return validationError(reply, body.error);
 
+    // ACCT-F5595: this route took no operating_company_id and had no ownership check at all --
+    // a caller who guessed another company's template uuid could update it. Resolve the template's
+    // real owner and assert membership before mutating.
+    const ownerCompanyId = await resolveTemplateOperatingCompanyId(params.data.uuid);
+    if (!ownerCompanyId) return reply.code(404).send({ error: "Template not found" });
+    await assertCompanyMembership(String(user.uuid), ownerCompanyId);
+
     const { vendor_uuid, template_name, day_of_month, day_of_week, next_generation_date, end_date, auto_post, line_items, ...rest } = body.data;
 
     try {
@@ -175,6 +183,11 @@ async function recurringBillRoutes(app: FastifyInstance) {
     const params = uuidParamsSchema.safeParse(req.params);
     if (!params.success) return validationError(reply, params.error);
 
+    // ACCT-F5595: no backstop -- see the comment on PATCH /:uuid above.
+    const ownerCompanyId = await resolveTemplateOperatingCompanyId(params.data.uuid);
+    if (!ownerCompanyId) return reply.code(404).send({ error: "Template not found" });
+    await assertCompanyMembership(String(user.uuid), ownerCompanyId);
+
     try {
       const uuid = await deactivateTemplate(params.data.uuid, String(user.uuid));
       return reply.send({ uuid, is_active: false });
@@ -199,6 +212,15 @@ async function recurringBillRoutes(app: FastifyInstance) {
     if (!idempotencyKey) {
       return reply.code(422).send({ error: "Idempotency-Key header required" });
     }
+
+    // ACCT-F5595: MOST SEVERE of the 3 -- this route had no operating_company_id, no ownership
+    // check, AND generateFromTemplate itself fetches the template via withLuciaBypass (a full RLS
+    // bypass, since it also serves the company-agnostic cron tick). A caller who guessed another
+    // company's template uuid could trigger creation of a REAL bill in that company's books. Resolve
+    // the template's real owner and assert membership before generating.
+    const ownerCompanyId = await resolveTemplateOperatingCompanyId(params.data.uuid);
+    if (!ownerCompanyId) return reply.code(404).send({ error: "Template not found" });
+    await assertCompanyMembership(String(user.uuid), ownerCompanyId);
 
     try {
       const targetDate = body.data.target_date ?? DateTime.utc().toISODate()!;
