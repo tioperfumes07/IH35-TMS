@@ -9,7 +9,12 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useStagedListFilters } from "../../components/table";
 import { useSearchParams } from "react-router-dom";
+
+const EMPTY_FILTERS = {
+  customerId: "",
+};
 
 type BookStop = {
   stop_type: "pickup" | "delivery";
@@ -241,18 +246,38 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
   const templateId = searchParams.get("template_id") ?? undefined;
   const deepLinkCustomerId = searchParams.get("customer_id") ?? undefined;
   // LST-F5174 — visible EntityPicker (URL-only customer seed is not reverse chrome).
-  const [customerPickerId, setCustomerPickerId] = useState("");
+  // LV-LOAD-TEMPLATE-LIBRARY-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
+  const customerIdFromUrl = deepLinkCustomerId?.trim() ?? "";
+
+  function patchListSearchParam(next: { customerId: string }) {
+    const nextParams = new URLSearchParams(searchParams);
+    if (next.customerId) nextParams.set("customer_id", next.customerId);
+    else nextParams.delete("customer_id");
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    customerId: customerIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
   useEffect(() => {
-    if (deepLinkCustomerId) setCustomerPickerId(deepLinkCustomerId);
-  }, [deepLinkCustomerId]);
+    setApplied((prev) => ({ ...prev, customerId: customerIdFromUrl }));
+  }, [customerIdFromUrl]);
+
   const setCustomerFilter = (customerId: string) => {
-    setCustomerPickerId(customerId);
-    const next = new URLSearchParams(searchParams);
-    if (customerId) next.set("customer_id", customerId);
-    else next.delete("customer_id");
-    setSearchParams(next, { replace: true });
+    staged.setDraft((d) => ({ ...d, customerId }));
   };
-  const effectiveCustomerId = customerPickerId.trim() || deepLinkCustomerId || undefined;
+  const effectiveCustomerId = applied.customerId.trim() || undefined;
   const q = useQuery({
     queryKey: ["load-templates", operatingCompanyId, templateId ?? null, effectiveCustomerId ?? null],
     queryFn: () => listLoadTemplates(operatingCompanyId, { template_id: templateId, customer_id: effectiveCustomerId }),
@@ -263,19 +288,49 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
   return (
     <Modal open={open} onClose={onClose} title="Load templates">
       <div className="max-h-[360px] space-y-2 overflow-y-auto text-sm">
-        <label className="block text-[11px] text-slate-600" data-testid="load-template-library-filters">
-          Customer
-          <EntityPicker
-            kind="customer"
-            operatingCompanyId={operatingCompanyId}
-            value={customerPickerId || null}
-            onChange={(next) => setCustomerFilter(next ?? "")}
-            allowCreate={false}
-            placeholder="All customers"
-            className="mt-1"
-            dataTestId="load-template-library-filter-customer"
-          />
-        </label>
+        <div className="relative space-y-2" data-testid="load-template-library-filters">
+          <label className="block text-[11px] text-slate-600">
+            Customer
+            <EntityPicker
+              kind="customer"
+              operatingCompanyId={operatingCompanyId}
+              value={filterDraft.customerId || null}
+              onChange={(next) => setCustomerFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All customers"
+              className="mt-1"
+              dataTestId="load-template-library-filter-customer"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" data-testid="load-template-library-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="load-template-library-filter-cancel"
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="load-template-library-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+                patchListSearchParam(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
+          </div>
+        </div>
         {q.isLoading ? <div className="text-gray-500">Loading…</div> : null}
         {!q.isLoading && rows.length === 0 ? <div className="text-gray-500">No saved templates. Use “Save as template” on a load.</div> : null}
         {rows.map((t) => (
