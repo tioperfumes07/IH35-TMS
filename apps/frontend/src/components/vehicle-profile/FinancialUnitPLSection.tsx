@@ -3,8 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { TotalOwnershipCostMeter } from "./TotalOwnershipCostMeter";
 import { ComparableUnitsWidget } from "./ComparableUnitsWidget";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Period = "YTD" | "quarter" | "month";
+
+// FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE-MISSING — real load identities the backend used to compute
+// revenue_cents/total_miles for the selected period (see unit-financial.service.ts's load_scope CTE).
+type ContributingLoad = {
+  id: string;
+  load_number: string | null;
+  rate_total_cents: number;
+  date: string;
+};
 
 type Financial = {
   revenue_cents: number;
@@ -15,6 +25,8 @@ type Financial = {
   utilization_pct: number | null;
   fleet_avg: { revenue_cents: number; cost_cents: number; profit_per_mile_cents: number | null };
   period: string;
+  contributing_loads?: ContributingLoad[];
+  contributing_loads_total_count?: number;
 };
 
 function usd(cents: number) {
@@ -101,7 +113,54 @@ export function FinancialUnitPLSection({
         unitNumber={unitNumber}
         comparable={comparable as Parameters<typeof ComparableUnitsWidget>[0]["comparable"]}
       />
+      <ContributingLoadsList loads={fin.contributing_loads} totalCount={fin.contributing_loads_total_count} />
     </section>
+  );
+}
+
+// FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE-MISSING — real load drill-through, not decorative: every row
+// here is one of the exact loads the backend summed into revenue_cents/total_miles above for the
+// selected period.
+function ContributingLoadsList({
+  loads,
+  totalCount,
+}: {
+  loads: ContributingLoad[] | undefined;
+  totalCount: number | undefined;
+}) {
+  if (loads === undefined) return null; // financial_ytd still loading — no honest count to render yet
+  return (
+    <div className="mt-4" data-testid="vp-financial-contributing-loads">
+      <h3 className="text-xs font-semibold text-gray-600">Contributing loads</h3>
+      {loads.length === 0 ? (
+        <p className="mt-1 text-xs text-gray-500">No loads contributed revenue in this period.</p>
+      ) : (
+        <ul className="mt-1 space-y-1 text-xs">
+          {loads.map((load) => (
+            <li key={load.id} className="flex items-center justify-between gap-2 border-b border-gray-100 pb-1">
+              <EntityLinkOrTombstone
+                kind="load"
+                id={load.id}
+                name={load.load_number}
+                noun="Load"
+                className="font-medium text-slate-700"
+                data-testid="vp-financial-contributing-load-link"
+              />
+              <span className="text-gray-600">
+                {load.date} · {usd(load.rate_total_cents)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {typeof totalCount === "number" && totalCount > loads.length ? (
+        <p className="mt-1 text-[11px] text-gray-500">
+          +{totalCount - loads.length} more load{totalCount - loads.length === 1 ? "" : "s"} this period (showing
+          {" "}
+          {loads.length} of {totalCount}).
+        </p>
+      ) : null}
+    </div>
   );
 }
 
