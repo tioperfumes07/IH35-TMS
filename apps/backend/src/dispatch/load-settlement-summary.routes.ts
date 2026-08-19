@@ -13,7 +13,11 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/loads/:loadId/settlement-summary", async (req, reply) => {
+  // Auth read — CodeQL js/missing-rate-limiting (touched route must declare rateLimit).
+  app.get(
+    "/api/v1/dispatch/loads/:loadId/settlement-summary",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -43,6 +47,11 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
       );
       if (!reg.rows[0]?.ok) return { settlement: null };
 
+      // Dual-path resolve (same load awareness as GET …/settlements/for-load/:loadId):
+      // 1) bookend first/last_load_id (incl. NULL settlement_model — live USMCA S-2026-0002)
+      // 2) settlement_lines / driver_bills.load_id (FinesDeductionsCard path)
+      // Do NOT require settlement_model='load_bookended' alone — that left LoadDetailSettlementTab empty
+      // while the fines card already showed the locked settlement EntityLink.
       const settlRes = await client.query<Record<string, unknown>>(
         `SELECT
            s.id,
@@ -63,8 +72,17 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
            s.settlement_model
          FROM driver_finance.driver_settlements s
          WHERE s.operating_company_id = $1::uuid
-           AND s.settlement_model = 'load_bookended'
-           AND (s.first_load_id = $2 OR s.last_load_id = $2)
+           AND (
+             s.first_load_id = $2::uuid
+             OR s.last_load_id = $2::uuid
+             OR EXISTS (
+               SELECT 1
+               FROM driver_finance.settlement_lines sl
+               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+               WHERE sl.settlement_id = s.id
+                 AND COALESCE(db.load_id, sl.load_id) = $2::uuid
+             )
+           )
          ORDER BY s.created_at DESC
          LIMIT 1`,
         [operating_company_id, loadId]
