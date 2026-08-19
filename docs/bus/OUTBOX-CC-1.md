@@ -675,3 +675,7 @@ verify:static: 71 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:25Z CC-1 | ACCT-F5495 closed (PR #9551, merged 639a75d). verify-lists-catalog-chrome-picker-wave.mjs required CatalogTable.tsx to carry page-local setSearch state, but the file's own comment documents a deliberate migration (LST-F3480): search moved entirely onto ParityTable's own toolbar. Confirmed the file never suppresses ParityTable's default search. Widened check to accept either shape. Existing --selftest re-verified; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 72 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:29Z CC-1 | ACCT-F5496 closed (PR #9554, merged cbef0b3). Two independent RPT-S06 guards required ScheduledReportsPanel.tsx's zero-row message to literally say "No active schedules", but the real, honest copy is "No custom schedules — add daily dispatch board or AR aging." — more specific, equally honest. Widened both checks. Also fixed one guard's own stale --selftest mutation (silent no-op). Both --selftest suites re-verified; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 73 of ~199 now closed this session. Continuing non-stop, fast-merge.
