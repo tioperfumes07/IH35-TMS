@@ -27,8 +27,12 @@ function failures(s = files) { return [
   ["profile row exact drill", s.history.includes('kind="audit_event"') && s.history.includes("id={row.id}")],
   ["system page honors exact record", s.page.includes('searchParams.get("audit_event_id")') && s.page.includes("listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 })") && s.page.includes('data-testid="audit-trail-exact-event"')],
   ["honest selected-record states", s.page.includes("Selected audit event unavailable.") && s.page.includes("Audit event not found for this operating company.")],
-  ["selected actor canonical drill", s.page.includes('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}')],
-  ["spine subject human labels", s.spine.includes("END                          AS subject_label") && s.api.includes("subject_label: string | null") && s.page.includes("entityLabel(row.subject_label, row.subject_id, \"Subject\")") && s.page.includes('row.subject_label ?? "Subject label unavailable"') && s.page.includes('"subject_label"') && s.page.includes('e.subject_label ?? ""')],
+  // ACCT-F5560: real code migrated the raw <EntityLink>/entityLabel(...) calls this guard originally
+  // pinned to the shared EntityLinkOrTombstone component (same honest tombstone-then-link guarantee,
+  // different literal call shape — same class fixed repeatedly this session, e.g. ACCT-F5552). Accept
+  // either shape rather than pin to the pre-refactor one.
+  ["selected actor canonical drill", s.page.includes('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}') || s.page.includes('kind="user" id={exactAuditEvent.actor_user_id}')],
+  ["spine subject human labels", s.spine.includes("END                          AS subject_label") && s.api.includes("subject_label: string | null") && (s.page.includes("entityLabel(row.subject_label, row.subject_id, \"Subject\")") || s.page.includes('name={row.subject_label} noun="Subject"')) && s.page.includes('row.subject_label ?? "Subject label unavailable"') && s.page.includes('"subject_label"') && s.page.includes('e.subject_label ?? ""')],
   ["historical task subjects derive canonical kind", s.spine.includes("el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'") && s.spine.includes("el.subject_type = 'task' AND el.source_table = 'accounting.invoices' THEN 'invoice'") && s.spine.includes("el.subject_type = 'task' AND el.source_table = 'accounting.bills' THEN 'bill'") && s.api.includes("subject_kind: string | null") && s.page.includes("row.subject_kind ?? row.subject_type")],
   ["work-order subject same-company label", s.spine.includes("wo.id = el.source_reference_id") && s.spine.includes("wo.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(wo.display_id), '')") && s.page.includes('work_order: "work_order"')],
   ["invoice subject same-company label", s.spine.includes("i.id = el.source_reference_id") && s.spine.includes("i.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(i.display_id), '')") && s.page.includes('invoice: "invoice"')],
@@ -57,8 +61,8 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, history: files.history.replace('kind="audit_event"', 'kind="user"') }).includes("profile row exact drill"),
     failures({ ...files, page: files.page.replace("auditEventId, limit: 1", "limit: 1") }).includes("system page honors exact record"),
     failures({ ...files, page: files.page.replace("Audit event not found for this operating company.", "No events") }).includes("honest selected-record states"),
-    failures({ ...files, page: files.page.replace('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}', '<span data-user={exactAuditEvent.actor_user_id}') }).includes("selected actor canonical drill"),
-    failures({ ...files, page: files.page.replaceAll("entityLabel(row.subject_label, row.subject_id, \"Subject\")", "entityLabel(null, row.subject_id, \"Subject\")") }).includes("spine subject human labels"),
+    failures({ ...files, page: files.page.replace('kind="user" id={exactAuditEvent.actor_user_id}', 'kind="unit" id={exactAuditEvent.actor_user_id}') }).includes("selected actor canonical drill"),
+    failures({ ...files, page: files.page.replace('name={row.subject_label} noun="Subject"', 'name={null} noun="Subject"') }).includes("spine subject human labels"),
     failures({ ...files, spine: files.spine.replace("el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'", "FALSE THEN 'work_order'") }).includes("historical task subjects derive canonical kind"),
     failures({ ...files, spine: files.spine.replace("wo.operating_company_id = el.operating_company_id", "TRUE") }).includes("work-order subject same-company label"),
     failures({ ...files, spine: files.spine.replace("i.operating_company_id = el.operating_company_id", "TRUE") }).includes("invoice subject same-company label"),
