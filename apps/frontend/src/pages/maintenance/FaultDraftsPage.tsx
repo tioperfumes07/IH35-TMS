@@ -11,6 +11,11 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
+
+const EMPTY_FILTERS = {
+  unitId: "",
+};
 
 type FaultDraft = {
   id: string;
@@ -39,19 +44,39 @@ export function FaultDraftsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   // Vehicle profile "View fault history" → ?unit_id= (MaintenanceSnapshotSection).
   // LST-F5169 — visible EntityPicker (URL-only banner is not reverse chrome).
+  // LV-FAULT-DRAFTS-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const deepLinkUnitId = searchParams.get("unit_id");
-  const [unitPickerId, setUnitPickerId] = useState("");
-  useEffect(() => {
-    if (deepLinkUnitId) setUnitPickerId(deepLinkUnitId);
-  }, [deepLinkUnitId]);
-  const setUnitFilter = (unitId: string) => {
-    setUnitPickerId(unitId);
+  const unitIdFromUrl = deepLinkUnitId?.trim() ?? "";
+
+  function patchListSearchParam(next: { unitId: string }) {
     const params = new URLSearchParams(searchParams);
-    if (unitId) params.set("unit_id", unitId);
+    if (next.unitId) params.set("unit_id", next.unitId);
     else params.delete("unit_id");
     setSearchParams(params, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    unitId: unitIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, unitId: unitIdFromUrl }));
+  }, [unitIdFromUrl]);
+
+  const setUnitFilter = (unitId: string) => {
+    staged.setDraft((d) => ({ ...d, unitId }));
   };
-  const effectiveUnitId = unitPickerId.trim() || deepLinkUnitId || undefined;
+  const effectiveUnitId = applied.unitId.trim() || undefined;
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const draftsQuery = useQuery({
@@ -128,13 +153,13 @@ export function FaultDraftsPage() {
 
       {draftsQuery.isError ? <p className="text-sm text-red-600">Failed to load fault-driven drafts.</p> : null}
 
-      <div className="flex flex-wrap items-end gap-3" data-testid="fault-drafts-filters">
+      <div className="relative flex flex-wrap items-end gap-3" data-testid="fault-drafts-filters">
         <label className="text-[11px] text-slate-600">
           Unit
           <EntityPicker
             kind="unit"
             operatingCompanyId={companyId}
-            value={unitPickerId || null}
+            value={filterDraft.unitId || null}
             onChange={(next) => setUnitFilter(next ?? "")}
             allowCreate={false}
             placeholder="All units"
@@ -142,6 +167,32 @@ export function FaultDraftsPage() {
             dataTestId="fault-drafts-filter-unit"
           />
         </label>
+        <Button type="button" size="sm" data-testid="fault-drafts-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="fault-drafts-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="fault-drafts-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchListSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
 
       <ParityTable
