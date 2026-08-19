@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { BookLoadModalV4 } from "../components/BookLoadModalV4";
@@ -208,7 +209,7 @@ export function UnifiedTimelinePlanner() {
                           className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
                           data-testid={`timeline-load-${load.id}`}
                         />
-                        <span className="block text-[9px]"><EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></span>
+                        <span className="block text-[9px]"><EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /></span>
                       </td>
                     );
                     dayIdx += span;
@@ -230,7 +231,7 @@ export function UnifiedTimelinePlanner() {
                   <tr key={driver.id} className="border-t border-gray-100">
                     <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                       <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />
-                      <span className="ml-1 text-[10px] text-gray-500"><EntityLink kind="unit" id={driver.unit_id} label={entityLabel(driver.unit_number, driver.unit_id, "Unit")} /></span>
+                      <span className="ml-1 text-[10px] text-gray-500"><EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" /></span>
                       {status === "Available" ? (
                         <button
                           type="button"

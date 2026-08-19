@@ -28,7 +28,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx", /kind="unit" id=\{load\.unit_id\}/],
   ["apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /kind="unit" id=\{u\.unit_id\}/],
   ["apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx", /EntityLinkOrTombstone kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_number\} noun="Unit"/],
-  ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", /kind="unit" id=\{driver\.unit_id\}/],
+  ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", /<EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"/],
   ["apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx", /kind="unit" id=\{unitId\}/],
   ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", /kind="unit" id=\{row\.unitId\}/],
   ["apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx", /kind="unit" id=\{driver\.unit_id \?\? null\}/],
