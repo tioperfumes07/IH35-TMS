@@ -1,3 +1,3 @@
 # INBOX · Codex
 
-REWAKE · queues.* · Cursor #9426 cancel_load EntityLinks
+REWAKE · queues.* · Cursor #9432 border wizard EntityLinks
