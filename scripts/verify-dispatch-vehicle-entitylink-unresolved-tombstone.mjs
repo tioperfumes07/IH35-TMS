@@ -46,6 +46,20 @@ function analyzeConsumer(rel, src) {
   if (!/EntityLinkOrTombstone/.test(src)) {
     failures.push(`${rel}: must use EntityLinkOrTombstone for unresolved-safe drills`);
   }
+  if (rel.endsWith("DispatchKanban.tsx")) {
+    if (/<EntityLink\s+kind=\{load\.assigned_unit_id \? "unit" : "load"\}/.test(src)) {
+      failures.push(`${rel}: dynamic primary unit link must not treat assigned_unit_id as proof that its nullable label resolved`);
+    }
+    if (/<EntityLink\s+kind="(?:unit|driver)"[\s\S]{0,100}id=\{load\.assigned_(?:unit|primary_driver)_id\}/.test(src)) {
+      failures.push(`${rel}: assigned unit/driver IDs with nullable labels must use EntityLinkOrTombstone`);
+    }
+    for (const coupling of [
+      /kind="unit"\s+id=\{load\.assigned_unit_id\}\s+name=\{load\.assigned_unit_number\}\s+noun="Unit"/,
+      /kind="driver"\s+id=\{load\.assigned_primary_driver_id\}\s+name=\{load\.assigned_primary_driver_name\}\s+noun="Driver"/,
+    ]) {
+      if (!coupling.test(src)) failures.push(`${rel}: must retain exact assigned id/name tombstone coupling`);
+    }
+  }
   return failures;
 }
 
@@ -65,10 +79,12 @@ function selftest() {
   if (analyzeHelper(goodHelper).length) fail("selftest helper GOOD");
   if (!analyzeHelper(badHelper).length) fail("selftest helper BAD");
 
-  const goodConsumer = `import { EntityLinkOrTombstone } from "..."; <EntityLinkOrTombstone kind="load" />`;
+  const goodConsumer = `import { EntityLinkOrTombstone } from "..."; <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" />; <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.assigned_primary_driver_name} noun="Driver" />`;
   const badConsumer = `<EntityLink label={entityLabel(row.load_number, row.load_id, "Load")} />`;
   if (analyzeConsumer("x.tsx", goodConsumer).length) fail("selftest consumer GOOD");
   if (!analyzeConsumer("x.tsx", badConsumer).length) fail("selftest consumer BAD");
+  const badKanban = `${goodConsumer}; <EntityLink kind="driver" id={load.assigned_primary_driver_id} label="Driver" />`;
+  if (!analyzeConsumer("apps/frontend/src/components/dispatch/DispatchKanban.tsx", badKanban).length) fail("selftest DispatchKanban planted direct-link BAD");
   console.log(`${LABEL} selftest PASS`);
 }
 
