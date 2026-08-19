@@ -523,3 +523,7 @@ verify:static: 33 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T02:16Z CC-1 | ACCT-F5457 closed (PR #9292, merged 672c716). verify-driver-finance-reverse-leaves.mjs's own selftest reported a mutation as inert — the replacement text "setSearchParamsNOPE" still contains the literal substring "setSearchParams" being checked for, so the mutation never actually changed what the guard's audit() clause detects. Pure selftest-authoring bug (a suffix-appending replacement that doesn't defeat its own substring check), not a stale-guard-vs-real-code mismatch — the real PendingSettlementDeductionsPanel.tsx already passes the baseline fine. Changed to "handleUrlSync" (verified to not match). Zero product-code change.
 
 verify:static: 34 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T02:26Z CC-1 | ACCT-F5458 closed (PR #9298, merged cf6d5a3). verify-fact-profile-canonical-factor.mjs required an inline from_vendor_id !== to_vendor_id expression, but real DuplicateVendorsBanner.tsx extracts a named isSelfPair(p) predicate checking BOTH id equality AND normalized-name equality, reused for both the visible pair list and the count — a superset of what the guard expected, just via an extracted helper. This clause also had zero mutation coverage before; added it. Zero product-code change.
+
+verify:static: 35 of ~199 now closed this session. Continuing non-stop, fast-merge.
