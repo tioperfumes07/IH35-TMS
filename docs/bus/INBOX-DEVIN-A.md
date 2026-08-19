@@ -1,4 +1,4 @@
-# INBOX-DEVIN-A (alias) · same as INBOX-DEVIN.md · 2026-08-18T23:28Z
+# INBOX-DEVIN-A (alias) · same as INBOX-DEVIN.md · 2026-08-19T10:25Z
 
 **REWAKE.** PRIMARY = **fleet → maintenance**. SHARED = inventory after thin. FORBIDDEN = lists create theater / safety / dispatch planning / money GL.
 

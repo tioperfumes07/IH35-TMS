@@ -1,3 +1,5 @@
+- 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-2.md · GUARD+lists honesty · Live=BLOCKED
+- 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-2.md + STATUS-NOW · Built paid · Live=BLOCKED · continuous FAST-MERGE
 # OUTBOX-CC-2 (GUARD — verify-live-never-build)
 
 2026-08-18T20:10Z CC-2 | GUARD PASS | #9040/#9045 customer Edit→Cancel independently re-verified on D-06 (`857f4bf3-...`): Edit shows Cancel+Save (was Save-only), Cancel restores read mode clean, no persist | Cancel-only, no mutation
