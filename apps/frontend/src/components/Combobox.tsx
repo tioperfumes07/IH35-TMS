@@ -220,12 +220,27 @@ export function Combobox({
       if (!containerRef.current) return;
       setListboxStyle(measureListboxStyle(containerRef.current));
     }
+    // A fixed-position portal does not follow an anchor moved by a drawer/modal CSS transform.
+    // Neither ResizeObserver nor scroll/resize fires for that motion. Re-measure through the opening
+    // animation, then once more on transitionend, so a picker opened while a drawer is sliding in
+    // cannot remain painted at its pre-transition coordinates.
+    let animationFrame = 0;
+    let remainingOpeningFrames = 30;
+    function followOpeningTransition() {
+      reposition();
+      remainingOpeningFrames -= 1;
+      if (remainingOpeningFrames > 0) animationFrame = window.requestAnimationFrame(followOpeningTransition);
+    }
+    animationFrame = window.requestAnimationFrame(followOpeningTransition);
     window.addEventListener("resize", reposition);
     // Capture: ParityTable and other overflow-x-auto ancestors scroll without bubbling.
     document.addEventListener("scroll", reposition, true);
+    document.addEventListener("transitionend", reposition, true);
     return () => {
+      window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", reposition);
       document.removeEventListener("scroll", reposition, true);
+      document.removeEventListener("transitionend", reposition, true);
     };
   }, [open]);
 
