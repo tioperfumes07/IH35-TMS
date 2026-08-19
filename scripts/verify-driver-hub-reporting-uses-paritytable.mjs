@@ -65,6 +65,12 @@ function assertMigrated(src) {
   if (!src.includes("Export CSV")) {
     errors.push(`${PAGE}: must keep Export CSV action`);
   }
+  if (!src.includes("CollapsedListFilters") || !src.includes("useStagedListFilters")) {
+    errors.push(`${PAGE}: date filters must use staged Filters chrome with Apply/Cancel/Reset`);
+  }
+  if (!/filterBar=\{[\s\S]*?<CollapsedListFilters[\s\S]*?onApply=\{stagedRange\.apply\}/.test(src)) {
+    errors.push(`${PAGE}: reporting ParityTable must mount staged range controls in its filterBar`);
+  }
   return errors;
 }
 
@@ -72,6 +78,8 @@ function selftest() {
   const good = `
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+    import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+    const stagedRange = useStagedListFilters({ applied: {}, empty: {}, onApply: () => {} });
     <ListErrorState title="Could not load reporting." status={0} onRetry={() => {}} />
     <ParityTable
       storageKey="driver-hub-reporting-by-driver"
@@ -87,6 +95,7 @@ function selftest() {
         { key: "avg_time_to_approve_seconds", label: "Time-to-approve" },
         { key: "approved_advance_cents", label: "Approved volume" },
       ]}
+      filterBar={<CollapsedListFilters onApply={stagedRange.apply} />}
     />
     <button>Export CSV</button>
   `;

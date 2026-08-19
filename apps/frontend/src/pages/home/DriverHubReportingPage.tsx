@@ -8,6 +8,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   getInboxReporting,
@@ -181,13 +182,18 @@ const LOAD_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingLoadRow>> = [
 export function DriverHubReportingPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [from, setFrom] = useState(isoDaysAgo(28));
-  const [to, setTo] = useState(todayIso());
+  const defaultRange = { from: isoDaysAgo(28), to: todayIso() };
+  const [range, setRange] = useState(defaultRange);
+  const stagedRange = useStagedListFilters({
+    applied: range,
+    empty: defaultRange,
+    onApply: setRange,
+  });
 
   const query = useQuery({
-    queryKey: ["driver-inbox-reporting", companyId, from, to],
-    queryFn: () => getInboxReporting({ operating_company_id: companyId, from, to }),
-    enabled: Boolean(companyId) && Boolean(from) && Boolean(to),
+    queryKey: ["driver-inbox-reporting", companyId, range.from, range.to],
+    queryFn: () => getInboxReporting({ operating_company_id: companyId, from: range.from, to: range.to }),
+    enabled: Boolean(companyId) && Boolean(range.from) && Boolean(range.to),
   });
   const data = query.data;
   const inputCls = "min-h-11 rounded-sm border border-gray-300 px-2 text-sm";
@@ -219,16 +225,8 @@ export function DriverHubReportingPage() {
         </div>
       ) : (
         <>
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <div className="space-y-1">
-          <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
-          <DatePicker className={inputCls} value={from} max={to} onChange={setFrom} />
-        </div>
-        <div className="space-y-1">
-          <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">To</label>
-          <DatePicker className={inputCls} value={to} min={from} max={todayIso()} onChange={setTo} />
-        </div>
-        <Link to="/driver-hub" className="ml-auto text-xs font-semibold text-slate-700 underline">
+      <div className="flex justify-end rounded-sm border border-gray-200 bg-white p-3">
+        <Link to="/driver-hub" className="text-xs font-semibold text-slate-700 underline">
           ← Back to Driver Inbox
         </Link>
       </div>
@@ -274,6 +272,38 @@ export function DriverHubReportingPage() {
               tableTestId="driver-hub-reporting-table"
               rowTestId={(r) => `driver-hub-reporting-row-${r.driver_id}`}
               initialPageSize={50}
+              filterBar={
+                <CollapsedListFilters
+                  activeFilterCount={range.from !== defaultRange.from || range.to !== defaultRange.to ? 1 : 0}
+                  onApply={stagedRange.apply}
+                  onReset={stagedRange.reset}
+                  onCancel={stagedRange.cancel}
+                  applyDisabled={!stagedRange.dirty}
+                  testIdPrefix="driver-hub-reporting"
+                >
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
+                      <DatePicker
+                        className={inputCls}
+                        value={stagedRange.draft.from}
+                        max={stagedRange.draft.to}
+                        onChange={(from) => stagedRange.setDraft((draft) => ({ ...draft, from }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">To</label>
+                      <DatePicker
+                        className={inputCls}
+                        value={stagedRange.draft.to}
+                        min={stagedRange.draft.from}
+                        max={todayIso()}
+                        onChange={(to) => stagedRange.setDraft((draft) => ({ ...draft, to }))}
+                      />
+                    </div>
+                  </div>
+                </CollapsedListFilters>
+              }
             />
           </div>
 
