@@ -191,6 +191,24 @@ describe("maintenance inspection routes (B30)", () => {
     expect(mockQuery.mock.calls.some((call) => String(call[0]).includes("INSERT INTO maintenance.inspections"))).toBe(false);
   });
 
+  it("validates inspection units against the canonical active-unit lifecycle column", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("AS unit_ok")) return { rows: [{ unit_ok: true, dvir_ok: true }] };
+      if (sql.includes("INSERT INTO maintenance.inspections")) return { rows: [sampleRow()] };
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/maintenance/inspections",
+      payload: { operating_company_id: COMPANY, unit_id: UNIT_ID, inspection_type: "pre_trip" },
+    });
+    expect(res.statusCode).toBe(201);
+    const validationSql = mockQuery.mock.calls.map((call) => String(call[0])).find((sql) => sql.includes("AS unit_ok"));
+    expect(validationSql).toContain("u.deactivated_at IS NULL");
+    expect(validationSql).not.toContain("u.archived_at");
+  });
+
   it("POST /api/v1/maintenance/inspections/:id/photos attaches docs file", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };

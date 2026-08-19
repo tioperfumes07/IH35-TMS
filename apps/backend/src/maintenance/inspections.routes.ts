@@ -132,7 +132,7 @@ async function validateInspectionLinks(
          SELECT 1 FROM mdata.units u
          WHERE u.id = $2::uuid
            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-           AND u.archived_at IS NULL
+           AND u.deactivated_at IS NULL
        ) AS unit_ok,
        ($3::uuid IS NULL OR EXISTS (
          SELECT 1 FROM safety.dvir_submissions ds
