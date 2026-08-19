@@ -32,6 +32,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx", /Select a real unit\./],
   ["apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx", /kind="unit" id=\{entry\.unit_id\}/],
   ["apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx", /unit_id: string/],
+  ["apps/backend/src/maintenance/inspections.routes.ts", /FROM mdata\.units u[\s\S]{0,180}u\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx", /kind="unit" id=\{row\.unit_id\}/],
   ["apps/frontend/src/api/mdata.ts", /getUnit\(id: string, operatingCompanyId: string\)/],
   ["apps/frontend/src/api/mdata.ts", /operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}/],
