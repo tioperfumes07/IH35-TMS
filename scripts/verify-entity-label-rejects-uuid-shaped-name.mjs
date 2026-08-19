@@ -898,7 +898,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/planners/LoadsPlanner.tsx",
     bad: /`\$\{load\.load_number\}|>\{load\.load_number\}</,
-    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)|EntityLinkOrTombstone kind="load" id=\{load\.id\} name=\{load\.load_number\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/GeofenceBreachesTab.tsx",

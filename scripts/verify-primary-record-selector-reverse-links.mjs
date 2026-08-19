@@ -22,7 +22,7 @@ const read = (file) => fs.readFileSync(file, "utf8");
 function check(sources) {
   const failures = [];
   const expects = [
-    ["loads", /<EntityLink[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{load\.id\}[\s\S]{0,400}data-testid=\{`loads-planner-bar-/, "loads planner"],
+    ["loads", /<EntityLink(?:OrTombstone)?[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{load\.id\}[\s\S]{0,400}data-testid=\{`loads-planner-bar-/, "loads planner"],
     ["timeline", /<EntityLink[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{load\.id\}[\s\S]{0,400}data-testid=\{`timeline-load-/, "timeline planner"],
     ["claims", /<EntityLink[\s\S]{0,120}kind="claim"[\s\S]{0,120}id=\{claim\.id\}[\s\S]{0,160}label=\{entityLabel\(claim\.claim_number/, "claim row"],
     ["lawsuits", /<EntityLink[\s\S]{0,120}kind="lawsuit"[\s\S]{0,120}id=\{lawsuit\.id\}[\s\S]{0,160}label=\{entityLabel\(lawsuit\.case_number/, "lawsuit row"],

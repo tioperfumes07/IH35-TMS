@@ -57,7 +57,7 @@ function assertLive() {
   if (!/ListErrorBanner/.test(loads)) problems.push("S29 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(loads)) problems.push("S29 not company-gated");
   if (!/<EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/.test(loads)) problems.push("S29 load rows missing canonical customer link or tombstone");
-  if (!/<EntityLink kind="load" id=\{load\.id\}/.test(loads)) problems.push("S29 load rows missing canonical load link");
+  if (!/<EntityLink(?:OrTombstone)? kind="load" id=\{load\.id\}/.test(loads)) problems.push("S29 load rows missing canonical load link");
 
   const timeline = read(FILES.timeline);
   if (!/data-testid="dispatch-timeline-need-company"/.test(timeline)) problems.push("S30 missing need-company");
