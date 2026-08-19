@@ -7,14 +7,14 @@ const TARGET = "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx";
 
 export function failures(source) {
   const required = [
-    ["load", /<EntityLink kind="load" id=\{event\.load_id\}/],
-    ["customer", /<EntityLink kind="customer" id=\{event\.customer_id\}/],
-    ["driver", /<EntityLink kind="driver" id=\{event\.driver_id\}/],
-    ["unit", /<EntityLink kind="unit" id=\{event\.unit_id\}/],
+    ["load", /<EntityLinkOrTombstone kind="load" id=\{event\.load_id\} name=\{event\.load_number\} noun="Load"/],
+    ["customer", /<EntityLinkOrTombstone kind="customer" id=\{event\.customer_id\} name=\{event\.customer_name\} noun="Customer"/],
+    ["driver", /<EntityLinkOrTombstone kind="driver" id=\{event\.driver_id\} name=\{event\.driver_name\} noun="Driver"/],
+    ["unit", /<EntityLinkOrTombstone kind="unit" id=\{event\.unit_id\} name=\{event\.unit_number\} noun="Unit"/],
   ];
   return required
     .filter(([, pattern]) => !pattern.test(source))
-    .map(([kind]) => `${TARGET}: detention rows must preserve the canonical ${kind} EntityLink`);
+    .map(([kind]) => `${TARGET}: detention rows must preserve the canonical ${kind} resolved-link/tombstone policy`);
 }
 
 const source = fs.readFileSync(TARGET, "utf8");
@@ -27,7 +27,7 @@ if (process.argv.includes("--selftest")) {
   }
   for (const kind of ["load", "customer", "driver", "unit"]) {
     const planted = source.replace(`kind="${kind}"`, 'kind="audit_event"');
-    if (planted === source || !failures(planted).some((failure) => failure.includes(`canonical ${kind} EntityLink`))) {
+    if (planted === source || !failures(planted).some((failure) => failure.includes(`canonical ${kind} resolved-link/tombstone policy`))) {
       console.error(`${LABEL} SELFTEST FAIL — planted ${kind} regression escaped`);
       process.exit(1);
     }
@@ -41,4 +41,4 @@ if (found.length) {
   console.error(`${LABEL} FAIL\n- ${found.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — detention rows drill to exact load/customer/driver/unit records`);
+console.log(`${LABEL} PASS — detention rows drill to exact resolved load/customer/driver/unit records and tombstone unavailable identities`);
