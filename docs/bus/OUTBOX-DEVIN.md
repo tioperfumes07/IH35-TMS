@@ -216,3 +216,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.assignments
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.assignments | URL=https://app.ih35dispatch.com/dispatch?view=assignments | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch?view=assignments ; marker 'Assignments' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.at_risk
