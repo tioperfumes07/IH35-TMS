@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accident-drawer-unit-entity-picker";
 const FILE = "apps/frontend/src/components/safety/AccidentReportDrawer.tsx";
+const ENTITY_PICKER = "apps/frontend/src/components/parity/EntityPicker.tsx";
 
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -60,6 +61,14 @@ export function collectProblems(root = ROOT) {
   if (/accident-unit-picker[\s\S]{0,400}<Combobox/.test(src)) {
     problems.push(`${FILE}: accident-unit-picker must not use Combobox`);
   }
+  if (!/selectedOption=\{[\s\S]{0,220}?initialDriverId[\s\S]{0,220}?initialDriverName/.test(code)) {
+    problems.push(`${FILE}: persisted driver picker must seed its reader-provided human label`);
+  }
+  const entityPicker = readRel(root, ENTITY_PICKER);
+  if (!entityPicker || !/selectedOption\?:\s*EntityPickerOption/.test(entityPicker)
+      || !/selectedOption\s*\?\s*\[selectedOption,\s*\.\.\.created\]/.test(entityPicker)) {
+    problems.push(`${ENTITY_PICKER}: must preserve a human selectedOption outside the active roster`);
+  }
   return problems;
 }
 
@@ -76,7 +85,9 @@ if (process.argv.includes("--selftest")) {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(
       path.join(dir, "AccidentReportDrawer.tsx"),
-      `listUnits({ limit: 200 })
+      `const initialDriverId = "driver-1";
+const initialDriverName = "Historical Driver";
+listUnits({ limit: 200 })
 <div data-testid="accident-unit-picker"><Combobox options={unitOptions} onSearch={setUnitSearch} /></div>
 listDispatchLoads({ limit: 200 })
 <EntityPicker kind="load" allowCreate={false} dataTestId="accident-load" />

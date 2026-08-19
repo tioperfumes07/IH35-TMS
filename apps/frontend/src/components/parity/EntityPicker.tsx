@@ -59,6 +59,8 @@ export type EntityPickerProps = {
   kind: EntityPickerKind;
   operatingCompanyId: string;
   value: string | null;
+  /** Human label for a persisted selection that may be archived or outside the current roster page. */
+  selectedOption?: EntityPickerOption | null;
   /** The selected canonical roster option accompanies its FK so inline consumers never rebuild a label from a UUID. */
   onChange: (value: string | null, option?: EntityPickerOption | null) => void;
   /**
@@ -100,6 +102,7 @@ export function EntityPicker({
   kind,
   operatingCompanyId,
   value,
+  selectedOption,
   onChange,
   allowCreate = true,
   nestedInDrawer = false,
@@ -167,7 +170,10 @@ export function EntityPicker({
   });
 
   const options = useMemo(() => {
-    const rows = mergePickerOptionsByValue(rosterQuery.data ?? [], created);
+    const rows = mergePickerOptionsByValue(
+      rosterQuery.data ?? [],
+      selectedOption ? [selectedOption, ...created] : created,
+    );
     // A value that is not in the roster (an archived driver still referenced by an old record, a
     // load outside the 200-row page) must stay VISIBLE and selected rather than silently blanking
     // the field — a picker that drops the value it was handed is worse than the text box it replaced.
@@ -175,7 +181,7 @@ export function EntityPicker({
       rows.unshift({ value: scopedValue, label: scopedValue, sublabel: "not in the current list" });
     }
     return rows;
-  }, [rosterQuery.data, created, scopedValue]);
+  }, [rosterQuery.data, created, scopedValue, selectedOption]);
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
   const createOffered = allowCreate && config.inlineCreate.available;

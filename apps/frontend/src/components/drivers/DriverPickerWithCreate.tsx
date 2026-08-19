@@ -1,8 +1,9 @@
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker, type EntityPickerProps } from "../parity/EntityPicker";
 
 export type DriverPickerWithCreateProps = {
   operatingCompanyId: string;
   value: string | null;
+  selectedOption?: EntityPickerProps["selectedOption"];
   onChange: (driverId: string | null) => void;
   /** When false, skips the roster query (parent surface closed). Default true. */
   open?: boolean;
@@ -37,6 +38,7 @@ export function driverPickerDisplayLabel(driver: {
 export function DriverPickerWithCreate({
   operatingCompanyId,
   value,
+  selectedOption,
   onChange,
   open = true,
   enabled,
@@ -55,6 +57,7 @@ export function DriverPickerWithCreate({
       kind="driver"
       operatingCompanyId={operatingCompanyId}
       value={value}
+      selectedOption={selectedOption}
       onChange={onChange}
       enabled={queryEnabled}
       nestedInDrawer={shell === "drawer"}

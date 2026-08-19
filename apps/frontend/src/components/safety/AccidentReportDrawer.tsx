@@ -64,6 +64,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
   // Derive initial state from accident prop to avoid useEffect setState warning
   const initialDriverId = accident ? String(accident.driver_id ?? "") : "";
+  const initialDriverName = accident ? String(accident.driver_name ?? "").trim() : "";
   const initialUnitId = accident ? String(accident.unit_id ?? "") : "";
   const initialTrailerId = accident ? String(accident.trailer_id ?? "") : "";
   const initialVendorId = accident ? String(accident.vendor_id ?? "") : "";
@@ -310,6 +311,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 <DriverPickerWithCreate
                   operatingCompanyId={operatingCompanyId}
                   value={driverId || null}
+                  selectedOption={
+                    initialDriverId && initialDriverName
+                      ? { value: initialDriverId, label: initialDriverName }
+                      : null
+                  }
                   onChange={(next) => setDriverId(next ?? "")}
                   open={open}
                   shell="drawer"
