@@ -5,6 +5,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 // A10 — GET list read-model for the frontend FuelTransactionsTable
 // (apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx), which takes a `rows: FuelTransactionRow[]`
@@ -97,6 +98,20 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
     await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client);
   });
+}
+
+// ACCT-F5586: POST /fuel/transactions (manual office create -- a real expense that can trigger a
+// real GL posting via flushFuelGlPostsAfterCommit when EXPENSE_GL_POSTING_ENABLED is on) and PATCH
+// /:id/load (reassigns which load a real fuel cost is attributed to) had no role gate at all --
+// currentAuthUser only requires a session. Reuses the canonical void/cancel executor role predicate
+// (Owner/Administrator/Accountant), matching accounting/expenses.routes.ts's own accountingRoles for
+// the same class of financial-write operation.
+function requireFuelWriteRole(reply: FastifyReply, role: string) {
+  if (!canVoidCancel(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "creating or re-attributing a fuel transaction requires an accounting role" });
+    return false;
+  }
+  return true;
 }
 
 export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
@@ -255,6 +270,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
   app.post("/api/v1/fuel/transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
     const body = createFuelTransactionBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
@@ -426,6 +442,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
     const params = idParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = assignLoadBodySchema.safeParse(req.body ?? {});
