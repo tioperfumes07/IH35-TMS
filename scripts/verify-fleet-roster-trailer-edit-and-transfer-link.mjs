@@ -32,7 +32,7 @@ export function audit(src) {
   if (!/<EditVehicleModal\b[\s\S]{0,200}open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/.test(src.fleetTable)) {
     failures.push(`${FILES.fleetTable}: roster row edit must NOT open the unit modal for trailer rows`);
   }
-  if (!/EntityLink kind="trailer" id=\{row\.equipment_id\}/.test(src.transfers)) {
+  if (!/EntityLink(?:OrTombstone)? kind="trailer" id=\{row\.equipment_id\}/.test(src.transfers)) {
     failures.push(`${FILES.transfers}: transfer rows must render EntityLink kind="trailer" for equipment_id (mdata.equipment is trailer/chassis, never units)`);
   }
   if (!/e\.equipment_number/.test(src.transferService) || !/e\.owner_company_id = r\.operating_company_id OR e\.currently_leased_to_company_id = r\.operating_company_id/.test(src.transferService)) {
@@ -42,9 +42,9 @@ export function audit(src) {
     failures.push(`${FILES.transferService}: transfer payload must resolve both driver names within the transfer company`);
   }
   for (const token of [
-    'entityLabel(row.equipment_number, row.equipment_id, "Trailer")',
-    'entityLabel(row.from_driver_name, row.from_driver_id, "Driver")',
-    'entityLabel(row.to_driver_name, row.to_driver_id, "Driver")',
+    'name={row.equipment_number} noun="Trailer"',
+    'name={row.from_driver_name} noun="Driver"',
+    'name={row.to_driver_name} noun="Driver"',
   ]) if (!src.transfers.includes(token)) failures.push(`${FILES.transfers}: missing human label consumer ${token}`);
   return failures;
 }
@@ -66,7 +66,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["edit-trailer-branch", "fleetTable", /open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/, 'open={false}'],
     ["edit-vehicle-branch", "fleetTable", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, 'open={editingUnitId !== null}'],
-    ["transfer-entitylink", "transfers", /EntityLink kind="trailer" id=\{row\.equipment_id\}/, 'EntityLink kind="unit" id={row.equipment_id}'],
+    ["transfer-entitylink", "transfers", /EntityLink(?:OrTombstone)? kind="trailer" id=\{row\.equipment_id\}/, 'EntityLink kind="unit" id={row.equipment_id}'],
     ["equipment-scope", "transferService", /e\.owner_company_id = r\.operating_company_id OR e\.currently_leased_to_company_id = r\.operating_company_id/, "TRUE"],
     ["driver-scope", "transferService", /from_driver\.operating_company_id = r\.operating_company_id/, "TRUE"],
     ["human-label", "transfers", /row\.to_driver_name/, "null"],
