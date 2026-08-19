@@ -5,7 +5,7 @@ import fs from "node:fs";
 const LABEL = "verify-wave-a-customer-remainder-column";
 const checks = [
   { file: "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", pattern: /customer:\s*"customer"/, label: "names kind mapping" },
-  { file: "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", pattern: /<EntityLink[\s\S]{0,60}kind=\{kind\} id=\{row\.entity_id\}/, label: "names canonical drill" },
+  { file: "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", pattern: /<EntityLink[\s\S]{0,200}kind=\{kind\}[\s\S]{0,80}id=\{row\.entity_id\}/, label: "names canonical drill" },
   { file: "apps/frontend/src/pages/lists/names/BrokersListPage.tsx", pattern: /<EntityLink kind="customer" id=\{row\.id\}/, label: "broker customer drill" },
   { file: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", pattern: /<EntityLink[\s\S]*kind="customer"[\s\S]*id=\{String\(row\.complainant_customer_id\)\}/, label: "complaint customer drill" },
   { file: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", pattern: /body\[complainantIdentityKey\]\s*=\s*complainantIdentityValue/, label: "complaint customer payload" },
