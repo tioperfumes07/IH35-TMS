@@ -96,16 +96,26 @@ export function OptimalDriversPanel({
         {drivers.map((d) => {
           const selected = selectedDriverId === d.driver_id;
           const blocked = !manualOverride && !d.eligible;
+          const rowDisabled = Boolean(disabled || blocked);
           return (
             <li key={d.driver_id}>
-              <button
-                type="button"
-                disabled={disabled || blocked}
+              <div
+                role="button"
+                tabIndex={rowDisabled ? -1 : 0}
+                aria-disabled={rowDisabled}
                 data-testid={`optimal-driver-row-${d.rank}`}
                 className={`flex w-full flex-col rounded border px-2 py-1.5 text-left text-xs transition ${
                   selected ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-white hover:border-slate-300"
                 } ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
-                onClick={() => onSelectDriver(d.driver_id)}
+                onClick={() => {
+                  if (!rowDisabled) onSelectDriver(d.driver_id);
+                }}
+                onKeyDown={(event) => {
+                  if (!rowDisabled && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    onSelectDriver(d.driver_id);
+                  }
+                }}
               >
                 <span className="flex items-center justify-between gap-2 font-semibold text-slate-800">
                   <span>
@@ -130,7 +140,7 @@ export function OptimalDriversPanel({
                 </span>
                 <span className="text-[10px] text-slate-500">{breakdownLabel(d)}</span>
                 {d.ineligible_reason ? <span className="text-[10px] text-slate-700">{d.ineligible_reason}</span> : null}
-              </button>
+              </div>
             </li>
           );
         })}

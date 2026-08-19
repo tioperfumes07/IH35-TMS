@@ -30,24 +30,31 @@ function check() {
     "must expose optimal-driver-entitylink-* testids"
   );
   assert(/stopPropagation/.test(src), "EntityLink click must stopPropagation so select still works");
+  assert(!/<button[\s\S]{0,500}data-testid=\{`optimal-driver-row-/.test(src), "must not nest driver links inside a button");
+  assert(/role="button"[\s\S]{0,80}tabIndex=\{rowDisabled \? -1 : 0\}/.test(src), "row shell must retain enabled keyboard activation");
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(/kind=["']driver["']/, 'kind="planted"');
-  assert(broken !== original, "--selftest plant must mutate kind");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const mutations = [
+    original.replace(/kind=["']driver["']/, 'kind="planted"'),
+    original.replace('<div\n                role="button"', '<button\n                role="button"'),
+  ];
+  for (const broken of mutations) {
+    assert(broken !== original, "--selftest plant must mutate source");
+    fs.writeFileSync(FILE, broken);
+    let failed = false;
+    try {
+      check();
+    } catch {
+      failed = true;
+    } finally {
+      fs.writeFileSync(FILE, original);
+    }
+    assert(failed, "--selftest expected planted defect to fail");
   }
-  assert(failed, "--selftest expected FAIL when driver kind removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (2/2 planted defects rejected)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";

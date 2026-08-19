@@ -55,7 +55,7 @@ const CHECKS = [
   ["apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", /import \{ getDispatchAvailableDrivers, type AvailableDriverRow \} from "\.\.\/\.\.\/api\/dispatch";/],
   ["apps/frontend/src/pages/dispatch/components/QuickAssignModal.tsx", /<DriverPickerWithCreate/],
-  ["apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx", /onClick=\{\(\) => onSelectDriver\(d\.driver_id\)\}/],
+  ["apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx", /if \(!rowDisabled\) onSelectDriver\(d\.driver_id\)/],
   ["apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx", /kind="driver"/],
 ];
 
