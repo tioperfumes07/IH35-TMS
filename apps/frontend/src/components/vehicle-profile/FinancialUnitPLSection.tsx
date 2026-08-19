@@ -96,7 +96,11 @@ export function FinancialUnitPLSection({
         <Bar label="Revenue" value={fin.revenue_cents} fleet={fleetAvg.revenue_cents} higherIsBetter />
         <Bar label="Cost" value={fin.total_operating_cost_cents} fleet={fleetAvg.cost_cents} higherIsBetter={false} />
       </div>
-      <ComparableUnitsWidget unitNumber={unitNumber} comparable={comparable as Parameters<typeof ComparableUnitsWidget>[0]["comparable"]} />
+      <ComparableUnitsWidget
+        unitId={unitId}
+        unitNumber={unitNumber}
+        comparable={comparable as Parameters<typeof ComparableUnitsWidget>[0]["comparable"]}
+      />
     </section>
   );
 }
