@@ -6,7 +6,6 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useRoadServiceTickets, type RoadServiceStatus, type RoadServiceTicket } from "../../hooks/useRoadServiceTickets";
 import { RoadServiceTicketModal } from "./RoadServiceTicketModal";
-import { entityLabel } from "../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 const STATUS_FILTERS: Array<{ id: RoadServiceStatus | "all"; label: string }> = [
@@ -60,7 +59,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
           <EntityLinkOrTombstone
             kind="work_order"
             id={row.wo_id}
-            name={row.ticket_number}
+            name={row.work_order_display_id}
             noun="Work order"
             className={LINK}
             data-testid="road-service-wo-link"
@@ -80,24 +79,14 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
     {
       key: "driver_name",
       label: "Driver",
-      render: (row) =>
-        row.driver_id ? (
-          <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" className={LINK} />
-        ) : (
-          "—"
-        ),
+      render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" className={LINK} />,
     },
     { key: "location_address", label: "Location", render: (row) => row.location_address ?? "—" },
     {
       key: "vendor_name",
       label: "Provider",
       sortable: true,
-      render: (row) =>
-        row.vendor_id ? (
-          <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" className={LINK} />
-        ) : (
-          entityLabel(row.vendor_name, row.vendor_id, "Vendor")
-        ),
+      render: (row) => <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" className={LINK} />,
     },
     { key: "service_type", label: "Service", sortable: true },
     { key: "created_at", label: "Callout", sortable: true, render: (row) => calloutAt(row.created_at) },
