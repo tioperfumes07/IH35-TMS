@@ -25,6 +25,23 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+// ACCT-F5580: the 4 PATCH hold/resume routes below had no role gate -- authed() only requires a
+// session, and withCompany's assertCompanyMembership is role-agnostic. Holding or resuming a driver
+// deduction directly controls whether a real dollar amount is withheld from a driver's pay -- the
+// same tier of financial-control operation as ACCT-F5576/F5579. Matches settlements.routes.ts's own
+// SETTLEMENT_WRITE_ROLES for the sibling settlement domain.
+const DEDUCTION_WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Payroll"]);
+function requireDeductionWriteRole(req: FastifyRequest, reply: FastifyReply) {
+  const user = authed(req, reply);
+  if (!user) return null;
+  const role = String((user as { role?: string }).role ?? "");
+  if (!DEDUCTION_WRITE_ROLES.has(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "deduction hold/resume requires an office role" });
+    return null;
+  }
+  return user;
+}
+
 function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
 }
@@ -110,7 +127,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
   );
 
   app.patch("/api/v1/driver-finance/deduction-schedules/:id/hold", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -157,7 +174,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
   });
 
   app.patch("/api/v1/driver-finance/deduction-schedules/:id/resume", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -208,7 +225,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
   // deduction_schedule) and have their own callers elsewhere; this is a distinct table with its
   // own hold semantics, not a repoint of those routes.
   app.patch("/api/v1/driver-finance/settlement-deductions/:id/hold", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -257,7 +274,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
   });
 
   app.patch("/api/v1/driver-finance/settlement-deductions/:id/resume", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);

@@ -16,6 +16,7 @@ const guards = [
   "verify-banking-reverse-link-list-surfaces.mjs",
   "verify-cash-forecast-profile-reverse.mjs",
   "verify-categorize-field-existence-checked.mjs",
+  "verify-deductions-write-role-gated.mjs",
   "verify-coa-asymmetry-account-entitylink.mjs",
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
   "verify-driver-finance-reverse-leaves.mjs",
