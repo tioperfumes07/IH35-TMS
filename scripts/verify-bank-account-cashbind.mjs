@@ -56,7 +56,11 @@ export function run(root = ROOT) {
   if (!cashGlSection.includes("deactivated_at IS NULL")) {
     failures.push("cash-gl-mapping route must filter deactivated_at IS NULL (active-only — never count deactivated in bind gap)");
   }
-  if (!/accounts\/:id\/cash-gl[\s\S]{0,1200}deactivated_at IS NULL/i.test(routes)) {
+  // Widened from 1200: legitimate auth/zod-validation lines added between the route registration and
+  // its scoped query pushed the real deactivated_at IS NULL filter to +1269 chars — a window this
+  // guard's own selftest never exercised at the boundary, so the drift went unnoticed until the real
+  // route grew past it.
+  if (!/accounts\/:id\/cash-gl[\s\S]{0,1600}deactivated_at IS NULL/i.test(routes)) {
     failures.push("PUT /accounts/:id/cash-gl bind route must scope to deactivated_at IS NULL active accounts");
   }
 
