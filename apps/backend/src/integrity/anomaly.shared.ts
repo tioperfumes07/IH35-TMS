@@ -22,6 +22,7 @@ export const AnomalySchema = z.object({
   severity: SeveritySchema,
   subject_type: SubjectTypeSchema,
   subject_id: z.string().uuid(),
+  subject_display_name: z.string().nullable(),
   detected_at: z.string(),
   detector_version: z.string().min(1),
   evidence: z.record(z.string(), z.unknown()),
