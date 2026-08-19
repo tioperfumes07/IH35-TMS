@@ -146,7 +146,8 @@ render: (row) => {
             operatingCompanyId={companyId}
             value={draft.driverId || null}
             onChange={(next) => setDraft((d) => ({ ...d, driverId: next ?? "" }))}
-            allowCreate={false}
+            // Universal picker law (V2): + Add new / Create Driver must be first row — do not disable create on this filter.
+            allowCreate
             placeholder="All drivers"
           />
         </div>
