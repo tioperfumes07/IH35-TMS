@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx";
+const SERVICE = "apps/backend/src/dispatch/driver-availability.service.ts";
 const LABEL = "verify-load-create-modal-asset-unit-link";
 
 export function audit(source) {
@@ -22,20 +23,34 @@ export function audit(source) {
     return problems;
   }
   const block = source.slice(idx, idx + 400);
-  if (!/<EntityLink\b/.test(block)) problems.push(`${FILE}: asset label no longer renders <EntityLink> — reverted to dead text`);
+  if (!/<EntityLinkOrTombstone\b/.test(block)) problems.push(`${FILE}: asset must use label-aware EntityLinkOrTombstone`);
   if (!/kind="unit"/.test(block)) problems.push(`${FILE}: asset EntityLink must use kind="unit" (confirmed against backend label, not a guess)`);
+  if (!/name=\{availabilityQuery\.data\?\.asset_label\}/.test(block)) problems.push(`${FILE}: asset link must be gated by its human label`);
+  return problems;
+}
+
+function auditService(source) {
+  const problems = [];
+  if (/activeWo\.display_id\s*\|\|\s*activeWo\.id/.test(source)) problems.push(`${SERVICE}: work-order label falls back to UUID`);
+  if (/activeWo\.unit_number\s*\|\|\s*activeWo\.asset_id/.test(source)) problems.push(`${SERVICE}: unit label falls back to UUID`);
   return problems;
 }
 
 if (process.argv.includes("--selftest")) {
-  const good = 'Asset:{" "}\n{availabilityQuery.data?.asset_id ? (\n  <EntityLink kind="unit" id={availabilityQuery.data.asset_id} label={entityLabel(availabilityQuery.data.asset_label, availabilityQuery.data.asset_id, "Asset")} />\n) : null}';
+  const good = 'Asset:{" "}\n<EntityLinkOrTombstone kind="unit" id={availabilityQuery.data?.asset_id} name={availabilityQuery.data?.asset_label} noun="Unit" />';
   if (audit(good).length) {
     console.error(`${LABEL} SELFTEST FAIL — real EntityLink block rejected`);
     process.exit(1);
   }
-  const mutated = 'Asset: {entityLabel(availabilityQuery.data?.asset_label, availabilityQuery.data?.asset_id, "Asset")}';
+  const mutated = 'Asset: {availabilityQuery.data?.asset_label}';
   if (!audit(mutated).length) {
     console.error(`${LABEL} SELFTEST FAIL — reverted-to-dead-text mutation escaped`);
+    process.exit(1);
+  }
+  const service = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
+  const badService = service.replace('activeWo.display_id || "work order unavailable"', "activeWo.display_id || activeWo.id");
+  if (badService === service || !auditService(badService).length) {
+    console.error(`${LABEL} SELFTEST FAIL — UUID fallback mutation escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS — dead-text reversion rejected`);
@@ -43,7 +58,7 @@ if (process.argv.includes("--selftest")) {
 }
 
 const source = fs.readFileSync(path.join(ROOT, FILE), "utf8");
-const failures = audit(source);
+const failures = [...audit(source), ...auditService(fs.readFileSync(path.join(ROOT, SERVICE), "utf8"))];
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
