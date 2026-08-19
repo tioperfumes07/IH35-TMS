@@ -30,8 +30,8 @@ export function assertAuditHistoryServerFilters(sources) {
 
   for (const [needle, what] of [
     ["actor: actorFilter.trim()", "actor"],
-    ["status: statusFilter.trim()", "status"],
-    ["source: sourceFilter.trim()", "source"],
+    ["status: statusFilter.length > 0 ? statusFilter : undefined", "status"],
+    ["source: sourceFilter.length > 0 ? sourceFilter : undefined", "source"],
     ["voidsOnly: voidsOnly", "voidsOnly"],
   ]) {
     if (!src[TAB].includes(needle)) {
@@ -51,10 +51,10 @@ export function assertAuditHistoryServerFilters(sources) {
   if (!src[API].includes(`search.set("actor", params.actor)`)) {
     problems.push(`${API}: listDriverAuditEvents does not send actor.`);
   }
-  if (!src[API].includes(`search.set("status", params.status)`)) {
+  if (!src[API].includes(`search.set("status", params.status.join(","))`)) {
     problems.push(`${API}: listDriverAuditEvents does not send status.`);
   }
-  if (!src[API].includes(`search.set("source", params.source)`)) {
+  if (!src[API].includes(`search.set("source", params.source.join(","))`)) {
     problems.push(`${API}: listDriverAuditEvents does not send source.`);
   }
   if (!src[API].includes(`search.set("voids_only", "true")`)) {
@@ -96,6 +96,16 @@ if (SELFTEST) {
     "tab-actor-dropped",
     { ...live, [TAB]: live[TAB].replace(/actor: actorFilter\.trim\(\) \|\| undefined,/g, "") },
     "does not pass actor"
+  );
+  expectCaught(
+    "tab-status-dropped",
+    { ...live, [TAB]: live[TAB].replace(/status: statusFilter\.length > 0 \? statusFilter : undefined,/g, "") },
+    "does not pass status"
+  );
+  expectCaught(
+    "api-source-dropped",
+    { ...live, [API]: live[API].replace(/search\.set\("source", params\.source\.join\(","\)\)/g, "void 0") },
+    "does not send source"
   );
   expectCaught(
     "api-actor-dropped",
