@@ -2431,6 +2431,10 @@
     "owner": "cursor",
     "note": "LV-SAFETY-POSITION-HISTORY-FILTER-SILENT-APPLY"
   },
+  "3986": {
+    "owner": "cursor",
+    "note": "LV-SAFETY-COMPLAINTS-FILTER-SILENT-APPLY"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
