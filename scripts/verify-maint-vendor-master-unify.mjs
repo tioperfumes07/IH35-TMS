@@ -63,8 +63,9 @@ function main() {
   if (!vendorDetailPage.includes("maint-vendor-detail-page")) failures.push("VendorDetailPage must expose test id");
   if (!vendorDetailPage.includes("Work Order History")) failures.push("VendorDetailPage must show WO history");
   if (!vendorDetailPage.includes("Invoice History")) failures.push("VendorDetailPage must show invoice history");
-  if ((vendorDetailPage.match(/<EntityLink kind="work_order"/g) ?? []).length < 2) {
-    failures.push("VendorDetailPage must link WO and invoice-history rows to canonical work-order detail");
+  if ((vendorDetailPage.match(/<EntityLinkOrTombstone kind="work_order"/g) ?? []).length < 2 ||
+      (vendorDetailPage.match(/noun="Work order"/g) ?? []).length < 2) {
+    failures.push("VendorDetailPage must link or tombstone WO and invoice-history rows against canonical work-order detail");
   }
   if ((vendorDetailTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("VendorDetailPage.test must include at least 3 vitest cases");
