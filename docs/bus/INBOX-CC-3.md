@@ -1,49 +1,18 @@
-# ★★★ HARD TIP 2026-08-18T13:27Z — CC-3 · CODEX OUT · MECHANICAL + ENTITY-SCOPE
+# INBOX-CC-3 · 2026-08-19T10:50Z · MECHANICAL · NO IDLE
 
-Codex parked. Pull top OPEN mechanical/entity-scope FO from `docs/audit/GUARD-WORKORDERS.md`.
+Execute OWNER-EXECUTION-PLAN. Fix never defer. FAST-MERGE. Continuous.
 
-If board empty in-lane: mine AUDIT FAIL+OPEN mechanical on customers/vendors/insurance/legal/fuel **guards only** (not Live Leaves theater) — Cursor owns Live Leaves for those modules.
+## BOOT
+`git pull --ff-only origin main` → STATUS-NOW → this INBOX → OUTBOX-CC-3  
+CDP **9224** · `~/.chrome-mcp-cc3`
 
-FORBIDDEN: money GL · idle · half EntityLink without `tsc -b` green.
+## OWN
+Top OPEN **mechanical / entity-scope** FO from `docs/audit/GUARD-WORKORDERS.md`.  
+Support ACTIVE module **safety** with mechanical guards only — not Live Leaves theater.
 
----
-# ★★★ HARD TIP 2026-08-18T12:11Z — CC-3 MECHANICAL · DRAIN OPEN FOs
+## FORBIDDEN
+Money GL · invent Cursor Live Leaves · idle · half EntityLink without green local gate
 
-**Do not idle.**
-
-## NOW
-1. Top OPEN mechanical/entity-scope FO from `docs/audit/GUARD-WORKORDERS.md` in your lane.
-2. Root fix + ratcheting guard + FAST-MERGE (mod-4 band · claim→merge→author).
-3. Export/print mechanical regressions get guards.
-4. **FORBIDDEN:** money GL · Cursor Live Leaves · half EntityLink migrations without `tsc -b` green.
-
-If board empty in-lane: mine AUDIT FAIL+OPEN mechanical · never invent money work.
-
----
-# INBOX-CC-3 · 8H LAUNCH NON-STOP · 2026-08-18T03:20Z
-
-**READ FIRST:** `docs/bus/LAUNCH-8H-ALL-SEATS-2026-08-17.md` — mechanical / entity-scope / export guards.
-
-## NOW
-1. Top OPEN mechanical FOs from `docs/audit/GUARD-WORKORDERS.md` → one atomic fix + guard + FAST-MERGE.
-2. Prefer entity-scope + CSV/export/print mechanical ratchets (do not collide Cursor print hotfiles while print PR open).
-3. No CLAIMED edit in feature PRs · no money cells.
-4. OUTBOX next FO id every ship.
-
----
-
-# INBOX-CC-3 · LEAD REWAKE · ALL-SEATS WORK · 2026-08-17T14:30Z
-
-**FORBIDDEN:** idle · collide Cursor FE Live claims · edit CLAIMED in feature PRs.
-
-**healthz:** `63713d6`.
-
-## NOW
-1. Pull top OPEN mechanical/entity-scope FOs from docs/audit/GUARD-WORKORDERS.md (your ~20 OPEN lane) — one atomic fix + guard + FAST-MERGE.
-2. Prefer: CLS-DISPLAYID-UNSCOPED · CLS-JOIN-ENTITY-UNSCOPED · CLS-BILLLINE-CATEGORY-NO-FK · units lease scope · vendors.driver_id — verify card still OPEN on main before build.
-3. Do not touch CC-1 money cells or Cursor Live K-wave leaves.
-4. OUTBOX next FO id every ship.
-
-
----
-
+## DO NOW
+Claim OPEN mechanical FO → root fix + EVEN/≡1/≡3 band correct for your lane → FAST-MERGE → OUTBOX → next.  
+Empty board → mine AUDIT FAIL+OPEN mechanical · never invent money.

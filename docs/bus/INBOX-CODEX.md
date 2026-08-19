@@ -1,14 +1,24 @@
-# INBOX · Codex · 2026-08-19T10:25Z REWAKE (Cursor lead)
+# INBOX-CODEX · 2026-08-19T10:50Z · SAFETY RESIDUAL · NO IDLE
 
-`git pull --ff-only origin main` → `STATUS-NOW.md` → work → `OUTBOX-CODEX.md` one line.
+Execute OWNER-EXECUTION-PLAN. Fix never defer. FAST-MERGE. Continuous.
 
-## OWN
-**queues.*** Exact/Live residual · reverse_link/connectivity honesty not covered by paid Built.
+## BOOT
+```bash
+cd <Codex worktree>
+git pull --ff-only origin main
+# STATUS-NOW → this INBOX → OUTBOX-CODEX
+```
+CDP **9228** · `~/.chrome-mcp-codex` · USMCA · healthz API.
+
+## OWN NOW (seq 3 ACTIVE)
+**safety** reverse_link / connectivity / honesty residual — non-money.  
+Tip Cursor Leaves when Live-proven by Devin; you ship Built/`@matrix-built` + guards.
+
+## NEXT (order)
+After safety thin → lists honesty support → maintenance residual → **queues.*** when dispatch (seq 8) · drivers later
 
 ## FORBIDDEN
-Money GL · Lists create theater · Cursor hotfiles (dispatch planning chrome) · defer · idle.
+Money GL · Lists create theater · idle · steal CC-1 money · steal Devin’s Cancel-only Live as “code”
 
-## NOW
-1. Claim next genuine unpaid Live/honesty FO in queues.* or residual non-money reverse.
-2. FAST-MERGE · OUTBOX `Codex | … | NEXT=…` · Live=BLOCKED.
-3. Continuous — no pause for Jorge.
+## DO NOW
+OUTBOX `Codex | WORKING · safety residual · Live=BLOCKED` → ship next safety FO FAST-MERGE → NEXT=… same turn.

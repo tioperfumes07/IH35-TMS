@@ -1,17 +1,21 @@
-# INBOX-CC-2 · 2026-08-19T10:25Z · PARTITION TIP (Cursor lead)
+# INBOX-CC-2 · 2026-08-19T10:50Z · GUARD + LISTS (seq 4)
 
-`git pull --ff-only origin main` → `STATUS-NOW.md` → work → `OUTBOX-CC-2.md` one line.  
-**Fix never defer. Live=BLOCKED.**
+Execute OWNER-EXECUTION-PLAN. Fix never defer. Continuous. No idle.
 
-## YOUR PRIMARY
-1. **GUARD** — live verify AFTER money merges (never certify alone if maker≠checker)
-2. **lists honesty** — false Required drops · picker_law honest · no fabricated creates
+## BOOT
+```bash
+git pull --ff-only origin main
+# STATUS-NOW → this INBOX → OUTBOX-CC-2
+```
+CDP **9223** · `~/.chrome-mcp-cc2` · USMCA · healthz API.
+
+## OWN
+1. **GUARD** — live verify AFTER CC-1 money merges (maker≠checker)
+2. **lists (seq 4)** — honesty only: false Required drops · picker_law honest · **no catalog create theater**
+3. While safety (seq 3) still FIXING: GUARD samples on safety/money as tipped · prep lists honesty queue
 
 ## FORBIDDEN
-`catalog.*.create` theater · money poster/GL · dispatch/fleet product Leaves
+`catalog.*.create` theater · money poster · dispatch/fleet product Leaves · idle
 
-## HARD
-AUDIT `#` unique · OUTBOX `CC-2 | … | NEXT=…`
-
-## NEXT FO
-Next lists honesty OR GUARD sample on latest CC-1 money merge — continuous.
+## DO NOW
+OUTBOX claim → next lists honesty OR GUARD sample → tip → next. Continuous. Live=BLOCKED.

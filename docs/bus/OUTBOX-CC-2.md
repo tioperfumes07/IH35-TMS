@@ -1,3 +1,4 @@
+- 2026-08-19T10:50Z Cursor LEAD | REWAKE · read INBOX-CC-2 · GUARD+lists seq4 · Live=BLOCKED · GO
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-2.md · GUARD+lists honesty · Live=BLOCKED
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-2.md + STATUS-NOW · Built paid · Live=BLOCKED · continuous FAST-MERGE
 # OUTBOX-CC-2 (GUARD — verify-live-never-build)
