@@ -24,7 +24,10 @@ const files = {
 };
 function failures(s = files) { return [
   ["company violation driver/unit reverse filters", s.companyRoutes.includes("companyViolationListQuerySchema.safeParse") && s.companyRoutes.includes("d.driver_id = $2::uuid") && s.companyRoutes.includes("u.unit_id = $3::uuid")],
-  ["integrity alert subject FK filters", s.integrityRoutes.includes('for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"]') && s.integrityRoutes.includes("filters.push(`${column} = $${values.length}::uuid`)")],
+  ["integrity alert subject FK filters", s.integrityRoutes.includes('for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"]') && s.integrityRoutes.includes("filters.push(`ia.${column} = $${values.length}::uuid`)")],
+  ["integrity alert human label projections", (s.integrityRoutes.match(/AS subject_driver_name/g) ?? []).length === 2 && (s.integrityRoutes.match(/AS subject_unit_number/g) ?? []).length === 2 && (s.integrityRoutes.match(/AS subject_vendor_name/g) ?? []).length === 2],
+  ["integrity alert driver/vendor tenant joins", (s.integrityRoutes.match(/d\.operating_company_id = ia\.operating_company_id/g) ?? []).length === 2 && (s.integrityRoutes.match(/v\.operating_company_id = ia\.operating_company_id/g) ?? []).length === 2],
+  ["integrity alert unit owner lease joins", (s.integrityRoutes.match(/u\.owner_company_id = ia\.operating_company_id/g) ?? []).length === 2 && (s.integrityRoutes.match(/u\.currently_leased_to_company_id = ia\.operating_company_id/g) ?? []).length === 2],
   // LST-F5163H: list chrome reverse for integrity alerts (API filters alone are not reverse).
   ["integrity alerts list EntityPicker subject filters", s.integrityPage.includes('dataTestId="integrity-alerts-filter-driver"') && s.integrityPage.includes('dataTestId="integrity-alerts-filter-unit"') && s.integrityPage.includes('dataTestId="integrity-alerts-filter-vendor"') && s.integrityPage.includes('allowCreate={false}')],
   ["integrity alerts list Linked-to EntityLink column", s.integrityPage.includes('label: "Linked to"') && s.integrityPage.includes('kind="driver"') && s.integrityPage.includes('kind="unit"') && s.integrityPage.includes('kind="vendor"')],
@@ -53,6 +56,9 @@ if (process.argv.includes("--selftest")) {
   const checks = [
     failures({...files, companyRoutes: files.companyRoutes.replace("d.driver_id = $2::uuid", "TRUE")}).includes("company violation driver/unit reverse filters"),
     failures({...files, integrityRoutes: files.integrityRoutes.replace('"subject_driver_id", "subject_unit_id", "subject_vendor_id"', '"subject_type"')}).includes("integrity alert subject FK filters"),
+    failures({...files, integrityRoutes: files.integrityRoutes.replaceAll("AS subject_driver_name", "AS hidden_driver_name")}).includes("integrity alert human label projections"),
+    failures({...files, integrityRoutes: files.integrityRoutes.replaceAll("d.operating_company_id = ia.operating_company_id", "TRUE")}).includes("integrity alert driver/vendor tenant joins"),
+    failures({...files, integrityRoutes: files.integrityRoutes.replaceAll("u.owner_company_id = ia.operating_company_id", "TRUE")}).includes("integrity alert unit owner lease joins"),
     failures({...files, integrityPage: files.integrityPage.replace('dataTestId="integrity-alerts-filter-driver"', 'dataTestId="x"')}).includes("integrity alerts list EntityPicker subject filters"),
     failures({...files, integrityPage: files.integrityPage.replace('label: "Linked to"', 'label: "X"')}).includes("integrity alerts list Linked-to EntityLink column"),
     failures({...files, integrityPage: files.integrityPage.replace("evaluateIntegrityAlerts(operatingCompanyId)", "Promise.resolve()")}).includes("integrity evaluator refreshes the canonical inbox"),
