@@ -14,6 +14,9 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function audit(s) {
   const failures = [];
   if (!/kind="load"[\s\S]{0,180}value=\{loadId \|\| null\}/.test(s.create) || !/load_id:\s*loadId\.trim\(\)/.test(s.create)) failures.push("load picker-to-payload create path missing");
+  if (!/EntityLinkOrTombstone kind="load" id=\{issue\.load_id\} name=\{issue\.load_number\} noun="Load"/.test(s.create)) failures.push("queue load must drill only when its identity resolves");
+  if (!/EntityLinkOrTombstone kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_name\} noun="Driver"/.test(s.create)) failures.push("queue driver must drill only when its identity resolves");
+  if (!/EntityLinkOrTombstone kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_number\} noun="Unit"/.test(s.create)) failures.push("queue unit must drill only when its identity resolves");
   if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/load_id:\s*query\.data\.load_id/.test(s.route)) failures.push("exact load filter route contract missing");
   if (!/filters:\s*\{[^}]*load_id\?: string[^}]*\}\s*=\s*\{\}/.test(s.service) || !/i\.load_id = \$\$\{values\.length\}::uuid/.test(s.service)) failures.push("exact server-side load filter missing");
   if (!/i\.operating_company_id = \$1::uuid/.test(s.service) || !/operating_company_id, load_id, driver_id, unit_id/.test(s.service)) failures.push("writer/list explicit company scope missing");
@@ -27,6 +30,9 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "create", /kind="load"([\s\S]{0,180}value=\{loadId \|\| null\})/, 'kind="driver"$1'],
     ["payload", "create", /load_id:\s*loadId\.trim\(\)/, "load_id: ''"],
+    ["queue-load", "create", /EntityLinkOrTombstone kind="load" id=\{issue\.load_id\} name=\{issue\.load_number\} noun="Load"/, 'EntityLink kind="load" id={issue.load_id}'],
+    ["queue-driver", "create", /EntityLinkOrTombstone kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_name\} noun="Driver"/, 'EntityLink kind="driver" id={issue.driver_id}'],
+    ["queue-unit", "create", /EntityLinkOrTombstone kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_number\} noun="Unit"/, 'EntityLink kind="unit" id={issue.unit_id}'],
     ["route", "route", /load_id:\s*query\.data\.load_id/, "load_id: undefined"],
     ["filter-contract", "service", /filters:\s*\{ status\?: string; issue_id\?: string; load_id\?: string; driver_id\?: string; unit_id\?: string \}/, "filters: { status?: string; issue_id?: string; driver_id?: string; unit_id?: string }"],
     ["filter", "service", /i\.load_id = \$\$\{values\.length\}::uuid/, "TRUE"],

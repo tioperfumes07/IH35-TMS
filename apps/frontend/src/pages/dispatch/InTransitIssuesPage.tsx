@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -153,15 +152,10 @@ export function InTransitIssuesPage() {
         key: "load_number",
         label: "Load",
         sortable: true,
-        render: (issue) =>
-          issue.load_id ? (
-            <EntityLink kind="load" id={issue.load_id} label={entityLabel(issue.load_number, issue.load_id, "Load")} />
-          ) : (
-            entityLabel(issue.load_number, null, "Load")
-          ),
+        render: (issue) => <EntityLinkOrTombstone kind="load" id={issue.load_id} name={issue.load_number} noun="Load" />,
       },
-      { key: "driver_name", label: "Driver", sortable: true, render: (issue) => <EntityLink kind="driver" id={issue.driver_id ?? undefined} label={entityLabel(issue.driver_name, issue.driver_id, "Driver")} /> },
-      { key: "unit_number", label: "Unit", sortable: true, render: (issue) => <EntityLink kind="unit" id={issue.unit_id ?? undefined} label={entityLabel(issue.unit_number, issue.unit_id, "Unit")} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (issue) => <EntityLinkOrTombstone kind="driver" id={issue.driver_id} name={issue.driver_name} noun="Driver" /> },
+      { key: "unit_number", label: "Unit", sortable: true, render: (issue) => <EntityLinkOrTombstone kind="unit" id={issue.unit_id} name={issue.unit_number} noun="Unit" /> },
       { key: "issue_category", label: "Category", sortable: true },
       { key: "severity", label: "Severity", render: (issue) => <StatusBadge status={issue.severity} /> },
       { key: "status", label: "Status", sortable: true },
