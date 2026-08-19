@@ -5,7 +5,7 @@ import { listDrivers } from "../../api/mdata";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
@@ -191,14 +191,11 @@ export function AssignDriverDropdown({
       {value ? (
         <div className="text-xs text-slate-600" data-testid="assign-driver-selected-entitylink">
           Selected:{" "}
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="driver"
             id={value}
-            label={entityLabel(
-              optionsRows.find((d) => d.driver_id === value)?.display_name ?? createdOption?.display_name ?? null,
-              value,
-              "Driver"
-            )}
+            name={optionsRows.find((d) => d.driver_id === value)?.display_name ?? createdOption?.display_name ?? null}
+            noun="Driver"
           />
         </div>
       ) : null}
