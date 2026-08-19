@@ -13,13 +13,15 @@ const paths = {
   vendor: "apps/frontend/src/pages/VendorDetail.tsx",
   service: "apps/backend/src/legal/contracts.service.ts",
   routes: "apps/backend/src/legal/contracts.routes.ts",
+  pickerRegistry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
 };
 
 const sources = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, fs.readFileSync(path, "utf8")]));
 
 const checks = [
-  ["creator", /listVendors\(\{[\s\S]*operating_company_id: operatingCompanyId[\s\S]*search: vendorSearch/, "vendor picker reads the scoped canonical roster"],
-  ["creator", /createKind="vendor"[\s\S]*onSearch=\{setVendorSearch\}/, "vendor picker keeps Add-new and server search"],
+  ["creator", /<EntityPicker[\s\S]{0,220}kind="vendor"[\s\S]{0,220}allowCreate[\s\S]{0,220}operatingCompanyId=\{operatingCompanyId\}/, "creator mounts the scoped canonical vendor picker with Add-new"],
+  ["pickerRegistry", /vendor:\s*\{[\s\S]{0,1200}inlineCreate:\s*\{ available: true \}[\s\S]{0,240}serverSearch:\s*true/, "shared vendor picker keeps Add-new and server search"],
+  ["pickerRegistry", /vendor:\s*\{[\s\S]{0,2200}listVendors\(\{[\s\S]{0,240}operating_company_id: operatingCompanyId[\s\S]{0,240}search: opts\?\.search/, "shared vendor picker reads the scoped canonical roster"],
   ["creator", /signer_entity_id: signerEntityId \|\| undefined/, "selected vendor FK reaches create payload"],
   ["creator", /onSaved\(created\.id\)/, "creator returns the persisted contract id"],
   ["service", /FROM mdata\.vendors[\s\S]*id = \$1::uuid[\s\S]*operating_company_id = \$2::uuid[\s\S]*deactivated_at IS NULL/, "writer validates active vendor ownership"],
