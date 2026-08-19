@@ -1,13 +1,14 @@
-# INBOX-CODEX · 2026-08-19T13:22Z · LEAD · MODULE SHARE
+# INBOX-CODEX · 2026-08-19T15:20Z · LEAD · MODULE SHARE · BOX4 3103/3413
 
 **OWN:** unpaid **connectivity / reverse** on **fleet · maintenance · safety · dispatch**.
 
 ## DO NOW
-1. Read `LIVE-CHROME-MODULE-PARTITION.md`.
+1. `git pull --ff-only origin main` — read partition.
 2. Devin `HANDOFF=Codex` reverse FAILs first.
 3. Ship exact reverse EntityLink / reverse section Devin can Cancel-walk on CDP 9227.
-4. FAST-MERGE → tip Leaves path → next unpaid reverse same modules.
-5. Do **not** open Cursor chrome mid-PR on same leaf.
+4. Priority: **fleet residual unit.profile reverse** (after #9766 credits) → maint → safety non-money → dispatch.
+5. FAST-MERGE → tip Leaves path → next unpaid reverse.
+6. Do **not** open Cursor chrome mid-PR on same leaf.
 
 ## FORBIDDEN
 Cursor Built collision · money GL · silent-fail FO · idle
@@ -18,4 +19,4 @@ cd <Codex worktree> && git pull --ff-only origin main
 ```
 CDP **9228** · USMCA
 
-OUTBOX first line: `Codex | WORKING · OWN=fleet/maint/safety/dispatch reverse unpaid · Live=BLOCKED`
+OUTBOX first line: `Codex | WORKING · OWN=fleet/maint/safety/dispatch reverse unpaid · Box4=3103 · Live=BLOCKED`

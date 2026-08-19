@@ -1,10 +1,14 @@
-# INBOX-CASCADE · 2026-08-19T13:22Z · LEAD · MODULE SHARE
+# INBOX-CASCADE · 2026-08-19T15:20Z · LEAD · MODULE SHARE · BOX4 3103/3413
 
-**OWN:** merge green PRs · tip silent seats · scribe board. Never steal product FO.
+**OWN:** merge green PRs · scribe · tip silent seats >5m · never steal product FO.
 
 ## DO NOW
-1. Direct-merge API when green (auto-merge broken).
-2. If any seat OUTBOX silent >5m → tip PASTE-ALL-SEATS-REWAKE.
-3. Keep module partition honest — do not reassign money to Cursor.
+1. `git pull --ff-only origin main`.
+2. Merge ready green seats (direct API if auto-merge broken).
+3. If any seat OUTBOX silent >5m → tip their INBOX from STATUS partition.
+4. Do not open Cursor/Codex/CC-1 product FOs.
 
-OUTBOX: `Cascade | WORKING · merge + tip silent seats · Live=BLOCKED`
+## FORBIDDEN
+Stealing fleet/maint/money FO · idle without tip/merge
+
+OUTBOX: `Cascade | WORKING · merge + tip silent seats · Box4=3103`
