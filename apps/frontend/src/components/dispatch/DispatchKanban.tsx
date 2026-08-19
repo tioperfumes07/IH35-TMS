@@ -477,20 +477,22 @@ function KanbanCompactCard({
       {/* Exact Leaves home.kanban:driver|unit — compact primary was plain driverUnitLabel */}
       <span className="flex min-w-0 flex-1 items-center gap-1 truncate font-semibold text-gray-900">
         {load.assigned_primary_driver_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="driver"
             id={load.assigned_primary_driver_id}
-            label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+            name={load.assigned_primary_driver_name}
+            noun="Driver"
             data-testid="kanban-compact-driver-link"
             onClick={(event) => event.stopPropagation()}
           />
         ) : null}
         {load.assigned_primary_driver_id && load.assigned_unit_id ? <span aria-hidden>·</span> : null}
         {load.assigned_unit_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="unit"
             id={load.assigned_unit_id}
-            label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
+            name={load.assigned_unit_number}
+            noun="Unit"
             data-testid="kanban-compact-unit-link"
             onClick={(event) => event.stopPropagation()}
           />
@@ -963,20 +965,22 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                   {/* Exact Leaves home.kanban:driver|unit — strip was plain text despite IDs */}
                   <span className="flex min-w-0 items-center gap-1 font-semibold text-gray-900">
                     {load.assigned_primary_driver_id ? (
-                      <EntityLink
+                      <EntityLinkOrTombstone
                         kind="driver"
                         id={load.assigned_primary_driver_id}
-                        label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+                        name={load.assigned_primary_driver_name}
+                        noun="Driver"
                         data-testid="kanban-oos-driver-link"
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : null}
                     {load.assigned_primary_driver_id && load.assigned_unit_id ? <span aria-hidden>·</span> : null}
                     {load.assigned_unit_id ? (
-                      <EntityLink
+                      <EntityLinkOrTombstone
                         kind="unit"
                         id={load.assigned_unit_id}
-                        label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
+                        name={load.assigned_unit_number}
+                        noun="Unit"
                         data-testid="kanban-oos-unit-link"
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -985,10 +989,11 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                       <span>Unassigned</span>
                     ) : null}
                   </span>
-                  <EntityLink
+                  <EntityLinkOrTombstone
                     kind="load"
                     id={load.id}
-                    label={entityLabel(load.load_number, load.id, "Load")}
+                    name={load.load_number}
+                    noun="Load"
                     className="font-mono text-[10px] text-gray-500"
                     data-testid="kanban-oos-load-link"
                     onClick={(e) => e.stopPropagation()}
