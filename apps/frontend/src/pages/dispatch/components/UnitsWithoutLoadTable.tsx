@@ -1,6 +1,7 @@
 import type { UnitsWithoutLoad, UnitLiveLocation } from "../../../api/dispatch";
 import { DataTable } from "../../../components/DataTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
@@ -58,7 +59,7 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
           label: "Driver",
           sortable: true,
           render: (row) => (
-            <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} onClick={(e) => e.stopPropagation()} />
+            <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" onClick={(e) => e.stopPropagation()} />
           ),
         },
         {
