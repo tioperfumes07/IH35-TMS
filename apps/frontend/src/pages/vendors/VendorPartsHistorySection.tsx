@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { listPartsAssignments } from "../../api/maintenance";
+import { getPartsAssignmentsPage } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -19,16 +19,17 @@ function formatMoney(value: number | null | undefined) {
 // Reverse drill-through (inventory module Wave B): parts invoiced to this vendor via
 // maintenance.parts_invoice_links.vendor_id, the same relationship inventory/InventoryAssignmentsPage.tsx
 // and vehicle-profile/UnitPartsHistorySection.tsx already read — this vendor's own profile just never
-// surfaced it. The GET route has no vendor_id filter yet, so this fetches the company's recent links
-// (server-side LIMIT 500) and filters client-side; a dedicated /vendors/:vendorId/parts-history
+// surfaced it. The shared GET route applies vendor_id server-side and returns the filtered total;
+// this compact profile section discloses its 500-row cap and drills to the complete assignment trail.
 export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Props) {
   const query = useQuery({
     queryKey: ["vendor-parts-history", operatingCompanyId, vendorId],
-    queryFn: () => listPartsAssignments(operatingCompanyId, { vendor_id: vendorId }),
+    queryFn: () => getPartsAssignmentsPage(operatingCompanyId, { vendor_id: vendorId }),
     enabled: Boolean(operatingCompanyId && vendorId),
   });
 
-  const rows = query.data ?? [];
+  const rows = query.data?.rows ?? [];
+  const totalCount = query.data?.total_count ?? rows.length;
 
   return (
     <DataPanel title="Parts Invoiced">
@@ -43,6 +44,11 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
         <p className="text-xs text-gray-500">No parts invoices are linked to this vendor.</p>
       ) : (
         <div className="space-y-1" data-testid="vendor-parts-history-reverse">
+          {totalCount > rows.length ? (
+            <p className="text-xs text-slate-500" data-testid="vendor-parts-history-range">
+              Showing {rows.length} of {totalCount} parts invoices. Open Inventory Assignments to review the complete trail.
+            </p>
+          ) : null}
           {rows.map((row) => (
             <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
               <span className="flex items-center gap-1 font-semibold text-slate-700">
