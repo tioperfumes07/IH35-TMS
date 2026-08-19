@@ -351,3 +351,4 @@ USMCA Freight
 Create
 Tasks
 P | healthz=67be15a | mutation=none | NEXT=safety.safety.unpaid.accidents
+Devin-A | LIVE STARVED | module=safety | leaf=safety.unpaid.accidents | URL=https://app.ih35dispatch.com/safety/accidents | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=unknown | mutation=none | NEXT=lists.lists.catalogs
