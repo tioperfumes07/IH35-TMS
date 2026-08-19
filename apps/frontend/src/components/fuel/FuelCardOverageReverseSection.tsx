@@ -14,6 +14,8 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
     enabled: Boolean(operatingCompanyId),
   });
   const events = query.data?.events ?? [];
+  const visibleEvents = events.slice(0, 5);
+  const totalCount = query.data?.total_count ?? events.length;
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-card-overage-reverse">
@@ -28,8 +30,13 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
       {query.isError ? <p className="mt-2 text-xs text-red-700">Fuel card overages unavailable.</p> : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && events.length === 0 ? <p className="mt-2 text-xs text-gray-500">No fuel card overages.</p> : null}
+      {totalCount > visibleEvents.length ? (
+        <p className="mt-2 text-xs text-slate-500" data-testid="fuel-card-overage-reverse-range">
+          Showing {visibleEvents.length} of {totalCount}. Open queue to view all.
+        </p>
+      ) : null}
       <ul className="mt-2 space-y-1">
-        {events.slice(0, 5).map((event) => (
+        {visibleEvents.map((event) => (
           <li key={event.id}>
             <EntityLink
               kind="fuel_card_overage_event"
