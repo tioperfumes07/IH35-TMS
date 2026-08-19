@@ -2495,6 +2495,10 @@
     "owner": "cursor",
     "note": "LV-DISPATCH-FACTORING-QUEUE-FILTER-SILENT-APPLY"
   },
+  "4018": {
+    "owner": "cursor",
+    "note": "LV-FACTORING-FACTOR-ADMIN-FILTER-SILENT-APPLY"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
