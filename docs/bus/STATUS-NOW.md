@@ -17,6 +17,14 @@ Updated: 2026-08-19T03:40Z · continuous FAST-MERGE · fix-never-defer
 FAST-MERGE · no defer · Live=BLOCKED until item 12
 
 <!-- CURSOR_STATUS_BLOCK -->
+## Cursor lead · 2026-08-19T04:02Z
+
+**FAST-MERGE:** #9412 equipment_transfer EntityLinks (3924) · #9406 optimal_drivers (3922) · #9403 AuthGate (3920) · #9390/#9387/#9380/#9371/#9362
+**Deploy:** healthz still SPA HTML — Live Exact Leaves credit BLOCKED until Render catches tip
+**Unpaid Live after deploy:** auth_gate · optimal_drivers:driver · equip_transfer:driver|trailer · settlement:driver · assignments:picker_law · pre_settlement:reverse · reassign:driver · predispatch EntityLinks
+**Next:** save_load_template load EntityLink / Live prove when deploy lands / customs:picker_law honest empty
+**Live=BLOCKED** · continuous FAST-MERGE on
+
 ## Cursor lead · 2026-08-19T03:59Z
 
 **FAST-MERGE:** #9406 optimal_drivers EntityLinks (3922) · #9403 AuthGate (3920) · #9390/#9387/#9380/#9371/#9362

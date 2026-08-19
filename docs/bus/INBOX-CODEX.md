@@ -1,3 +1,3 @@
 # INBOX · Codex
 
-REWAKE · queues.* · Cursor #9406 optimal_drivers EntityLinks
+REWAKE · queues.* · Cursor #9412 equipment_transfer EntityLinks
