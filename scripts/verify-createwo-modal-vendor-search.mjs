@@ -25,11 +25,12 @@ export function collectProblems(root = ROOT) {
     return problems;
   }
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/vendorSearch/.test(code) || !/onSearch=\{setVendorSearch\}/.test(code)) {
-    problems.push(`${FILE}: outside-vendor ReferenceSelect must wire vendorSearch`);
-  }
-  if (!/createKind=["']vendor["']/.test(code)) {
-    problems.push(`${FILE}: must keep createKind=vendor`);
+  const usesCanonicalEntityPicker = /<EntityPicker[\s\S]{0,180}kind=["']vendor["'][\s\S]{0,180}allowCreate/.test(code);
+  const usesLegacyReferenceSelect = /vendorSearch/.test(code)
+    && /onSearch=\{setVendorSearch\}/.test(code)
+    && /createKind=["']vendor["']/.test(code);
+  if (!usesCanonicalEntityPicker && !usesLegacyReferenceSelect) {
+    problems.push(`${FILE}: outside-vendor picker must use server-search EntityPicker kind=vendor with allowCreate`);
   }
   if (/listVendors\(\{[^}]*limit:\s*1000\s*\}\)/.test(code) && !/vendorSearch/.test(code)) {
     problems.push(`${FILE}: must not keep silent limit:1000 without search`);
@@ -50,13 +51,17 @@ if (process.argv.includes("--selftest")) {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(
       path.join(dir, "CreateWorkOrderModal.tsx"),
-      `listVendors({ operating_company_id: id, status: "active", limit: 1000 })
-<ReferenceSelect createKind="vendor" options={vendorOptions} />
+      `<EntityPicker kind="unit" operatingCompanyId={id} />
 `
     );
     const planted = collectProblems(stubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
+      process.exit(1);
+    }
+    fs.writeFileSync(path.join(dir, "CreateWorkOrderModal.tsx"), `<EntityPicker kind="vendor" operatingCompanyId={id} />\n`);
+    if (!collectProblems(stubRoot).length) {
+      console.error(`${LABEL} SELFTEST FAIL: missing allowCreate did not FAIL`);
       process.exit(1);
     }
   } finally {
