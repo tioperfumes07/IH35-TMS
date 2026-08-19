@@ -27,6 +27,7 @@ const guards = [
   "verify-expense-nonidentity-surfaces-honest.mjs",
   "verify-expense-p10-navigation-honesty.mjs",
   "verify-factor-entitylink-drill.mjs",
+  "verify-factor-reconciliation-membership-assert.mjs",
   "verify-factoring-customer-invoice-scoped.mjs",
   "verify-factoring-list-gl-je-built.mjs",
   "verify-factoring-required-liability-honest.mjs",

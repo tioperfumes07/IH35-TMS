@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { importStatement, listImportCandidates, listReconciliationItems, listReconciliationRuns } from "./recon.service.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 const listRunsQuery = companyQuerySchema.extend({
   factor_id: z.string().uuid().optional(),
@@ -35,6 +36,10 @@ export async function registerFactorReconciliationRoutes(app: FastifyInstance) {
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
     const query = importCandidatesQuery.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5597: no backstop -- recon.service.ts sets app.operating_company_id directly from this
+    // caller-supplied value with no membership check of its own, same non-backstop class as
+    // ACCT-F5592-F5596.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const rows = await listImportCandidates({
       operating_company_id: query.data.operating_company_id,
@@ -49,6 +54,8 @@ export async function registerFactorReconciliationRoutes(app: FastifyInstance) {
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
     const query = listRunsQuery.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5597: no backstop -- see the comment on GET /import-candidates above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const rows = await listReconciliationRuns({
       operating_company_id: query.data.operating_company_id,
@@ -66,6 +73,8 @@ export async function registerFactorReconciliationRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = listItemsQuery.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5597: no backstop -- see the comment on GET /import-candidates above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const rows = await listReconciliationItems({
       operating_company_id: query.data.operating_company_id,
@@ -80,6 +89,9 @@ export async function registerFactorReconciliationRoutes(app: FastifyInstance) {
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = importBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5597: no backstop -- see the comment on GET /import-candidates above. This is the only
+    // WRITE route of the 4 -- commits a real factoring statement import affecting reserve balances.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     const run = await importStatement({
       operating_company_id: body.data.operating_company_id,
