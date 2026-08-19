@@ -43,6 +43,13 @@ const COA_ACCOUNT_REF_ALLOWLIST = new Set([
   "apps/backend/src/banking/bulk-transactions.ts",
   "apps/backend/src/accounting/pse-mirror.service.ts",
   "apps/backend/src/accounting/pse-mirror.routes.ts",
+  // Reviewed additions — neither treats accounting.coa_account as canonical:
+  //   - the migration's line is a COMMENT stating "accounting.coa_account is the QBO mirror" (prose
+  //     documentation, no code touches the table);
+  //   - the guard checks that the migration does NOT `INSERT INTO accounting.coa_account`, i.e. it
+  //     references the forbidden table name only to ENFORCE this exact canonicalization law.
+  "db/migrations/202606151500_expense_uncategorized_account_and_role.sql",
+  "scripts/verify-uncategorized-expense-seed.mjs",
 ]);
 
 const SCAN_DIRS = ["apps", "scripts", "db/migrations"];
