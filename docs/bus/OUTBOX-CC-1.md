@@ -698,3 +698,7 @@ verify:static: 76 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:51Z CC-1 | ACCT-F5500 closed (PR #9579, merged 7362476). verify-driver-profile-scope.mjs FAILed getDriver's function-declaration + call-site checks, but the real signature is correct — a legitimate later fix added a trailing optional signal?: AbortSignal param and reformatted to multi-line. Guard's regex required no whitespace after the open paren and no trailing param/arg. Widened both checks (leading whitespace + trailing-param/arg tolerance). Existing --selftest re-verified; added 2 new dedicated cases proving the widening is precise. Zero product-code change.
 
 verify:static: 77 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:55Z CC-1 | ACCT-F5501 closed (PR #9583, merged 6088c5d). verify-es1-unscoped-tables-scope-proof.mjs correctly FAILed a stale registry entry: tasks.note and tasks.status_history carried fkStatus="deferred", but the FK has been present since the ORIGINAL creation migration — not a guard false positive. Promoted fkStatus to "enforced" for both; forceRlsStatus correctly left untouched (verified no FORCE ROW LEVEL SECURITY exists for either table). Data correction, no guard-logic change.
+
+verify:static: 78 of ~199 now closed this session. Continuing non-stop, fast-merge.
