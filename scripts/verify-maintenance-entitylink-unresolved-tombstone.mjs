@@ -42,6 +42,9 @@ function analyzeConsumer(rel, src) {
   if (!/EntityLinkOrTombstone/.test(src)) {
     failures.push(`${rel}: must use EntityLinkOrTombstone for unresolved-safe drills`);
   }
+  if (rel.endsWith("trailer-profile/MaintenanceSnapshotSection.tsx") && !/id=\{wo\.wo_id == null \? null : String\(wo\.wo_id\)\}/.test(src)) {
+    failures.push(`${rel}: missing work-order IDs must remain nullable (never String(undefined))`);
+  }
   return failures;
 }
 
@@ -65,6 +68,9 @@ function selftest() {
   const badConsumer = `<EntityLink label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />`;
   if (analyzeConsumer("x.tsx", goodConsumer).length) fail("selftest consumer GOOD");
   if (!analyzeConsumer("x.tsx", badConsumer).length) fail("selftest consumer BAD");
+  const trailerConsumer = `import { EntityLinkOrTombstone } from "..."; <EntityLinkOrTombstone kind="work_order" id={wo.wo_id == null ? null : String(wo.wo_id)} />`;
+  if (analyzeConsumer("apps/frontend/src/components/trailer-profile/MaintenanceSnapshotSection.tsx", trailerConsumer).length) fail("selftest nullable trailer work order GOOD");
+  if (!analyzeConsumer("apps/frontend/src/components/trailer-profile/MaintenanceSnapshotSection.tsx", trailerConsumer.replace("wo.wo_id == null ? null : String(wo.wo_id)", "String(wo.wo_id)")).length) fail("selftest nullable trailer work order BAD");
   console.log(`${LABEL} selftest PASS`);
 }
 
