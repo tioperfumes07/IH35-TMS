@@ -2544,6 +2544,11 @@
     "purpose": "verify-use-driver-labels-null-safe",
     "date": "2026-08-19"
   },
+  "4042": {
+    "claimed_by": "cursor",
+    "purpose": "verify-permits-page-test-toast-provider",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
