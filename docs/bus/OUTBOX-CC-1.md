@@ -659,3 +659,7 @@ verify:static: 67 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T04:28Z CC-1 | ACCT-F5491 closed (PR #9441, merged 6b17e49). verify-wave-b-reverse-link-column.mjs FAILed both ManagementReportPackagePage.tsx checks (customer + vendor) — same class as ACCT-F5486, a sibling guard on the same file: both EntityLinks extracted into ManagementCustomerCell/ManagementVendorCell components. Widened both checks (same lookahead pattern as ACCT-F5486). No --selftest harness; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 68 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T04:33Z CC-1 | ACCT-F5492 closed (PR #9445, merged bab5fda). Third independent guard (verify-entity-label-rejects-uuid-shaped-name.mjs) hitting the same ManagementCustomerCell/ManagementVendorCell extraction false-positive already fixed for 2 sibling guards this session (ACCT-F5486/F5491). "bad" pattern's unscoped substring match hit the safe prop-forwarding JSX; "good" pattern pinned pre-extraction call-site names. Fixed both entries. This guard's own --selftest asserts the ENTIRE tree (40+ files across dispatch/safety/maintenance/etc.) clean — a massive pre-existing cross-lane backlog, already failing before this fix and unchanged after (confirmed via verified stash roundtrip). Resolved exactly the 2 in-lane entries; rest out of scope, not a regression this fix caused. Load-bearing proof done by hand for both entries.
+
+verify:static: 69 of ~199 now closed this session. Continuing non-stop, fast-merge.
