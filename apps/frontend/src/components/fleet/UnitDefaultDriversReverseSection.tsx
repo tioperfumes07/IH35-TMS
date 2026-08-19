@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listUnitDefaultDrivers } from "../../api/mdata";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export function UnitDefaultDriversReverseSection({ operatingCompanyId, unitId }: { operatingCompanyId: string; unitId: string }) {
   const query = useQuery({
@@ -19,7 +18,7 @@ export function UnitDefaultDriversReverseSection({ operatingCompanyId, unitId }:
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No active default driver assigned to this unit.</p> : null}
       {rows.length ? <ul className="space-y-1">{rows.map((row) => (
         <li key={row.driver_id} className="text-sm text-slate-700">
-          <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+          <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
           <span className="text-xs text-gray-500"> · since {formatDateTimeUS(row.started_at)} · {row.source}</span>
         </li>
       ))}</ul> : null}
