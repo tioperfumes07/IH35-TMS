@@ -22,6 +22,7 @@ const guards = [
   "verify-coa-asymmetry-account-entitylink.mjs",
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
   "verify-driver-finance-reverse-leaves.mjs",
+  "verify-escrow-routes-membership-assert.mjs",
   "verify-expense-built-tags-strict.mjs",
   "verify-expense-nonidentity-surfaces-honest.mjs",
   "verify-expense-p10-navigation-honesty.mjs",
