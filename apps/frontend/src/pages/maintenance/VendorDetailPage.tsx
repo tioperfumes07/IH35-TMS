@@ -1,5 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -28,7 +29,7 @@ export function VendorDetailPage() {
 
   const woColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
     () => [
-      { key: "display_id", label: "WO", sortable: true, render: (row) => <EntityLink kind="work_order" id={String(row.id)} label={entityLabel(row.display_id, row.id, "Work order")} /> },
+      { key: "display_id", label: "WO", sortable: true, render: (row) => <EntityLinkOrTombstone kind="work_order" id={row.id == null ? null : String(row.id)} name={row.display_id} noun="Work order" /> },
       { key: "wo_type", label: "Type", sortable: true, render: (row) => String(row.wo_type ?? "—") },
       { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "—") },
       { key: "repair_location", label: "Location", render: (row) => String(row.repair_location ?? "—") },
@@ -40,7 +41,7 @@ export function VendorDetailPage() {
   const invoiceColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
     () => [
       { key: "invoice_number", label: "Invoice #", sortable: true, render: (row) => String(row.invoice_number ?? "—") },
-      { key: "display_id", label: "WO", render: (row) => <EntityLink kind="work_order" id={String(row.work_order_id)} label={entityLabel(row.display_id, row.work_order_id, "Work order")} /> },
+      { key: "display_id", label: "WO", render: (row) => <EntityLinkOrTombstone kind="work_order" id={row.work_order_id == null ? null : String(row.work_order_id)} name={row.display_id} noun="Work order" /> },
       {
         key: "invoice_amount",
         label: "Amount",
