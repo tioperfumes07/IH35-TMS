@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -9,6 +9,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { Button } from "../../components/Button";
+import { useStagedListFilters } from "../../components/table";
 import {
   addRenditionLine,
   createAppraisalDistrict,
@@ -26,6 +28,10 @@ import {
 
 const BREADCRUMB = ["Compliance", "Business Property Tax"];
 
+const EMPTY_FILTERS = {
+  unitId: "",
+};
+
 function centsToUSD(cents: number | null | undefined): string {
   if (cents == null) return "—";
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -42,11 +48,21 @@ const STATUS_LABEL: Record<RenditionStatus, string> = {
 function RenditionListView({
   companyId,
   unitId,
+  draftUnitId,
   onUnitFilterChange,
+  filtersDirty,
+  onApplyFilters,
+  onCancelFilters,
+  onResetFilters,
 }: {
   companyId: string;
   unitId?: string;
+  draftUnitId: string;
   onUnitFilterChange: (next: string) => void;
+  filtersDirty: boolean;
+  onApplyFilters: () => void;
+  onCancelFilters: () => void;
+  onResetFilters: () => void;
 }) {
   const queryClient = useQueryClient();
   const now = new Date();
@@ -147,13 +163,13 @@ function RenditionListView({
         subtitle={unitId ? "Renditions containing this unit" : "Texas business personal-property tax renditions (Form 50-144) per entity + appraisal district"}
       />
 
-      <div className="max-w-sm" data-testid="property-tax-filters">
+      <div className="relative flex flex-wrap items-end gap-3" data-testid="property-tax-filters">
         <label className="text-[11px] text-slate-600">
           Unit
           <EntityPicker
             kind="unit"
             operatingCompanyId={companyId}
-            value={unitId || null}
+            value={draftUnitId || null}
             onChange={(next) => onUnitFilterChange(next ?? "")}
             allowCreate={false}
             placeholder="All units"
@@ -161,6 +177,15 @@ function RenditionListView({
             dataTestId="property-tax-filter-unit"
           />
         </label>
+        <Button type="button" size="sm" data-testid="property-tax-filter-apply" onClick={onApplyFilters} disabled={!filtersDirty}>
+          Apply
+        </Button>
+        <Button type="button" size="sm" variant="secondary" data-testid="property-tax-filter-cancel" onClick={onCancelFilters} disabled={!filtersDirty}>
+          Cancel
+        </Button>
+        <Button type="button" size="sm" variant="secondary" data-testid="property-tax-filter-reset" onClick={onResetFilters}>
+          Reset
+        </Button>
       </div>
 
       {/* + Create rendition */}
@@ -483,31 +508,60 @@ export function PropertyTaxRenditionPage() {
   const { id } = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5180 — visible EntityPicker (URL-only unit_id is not reverse chrome).
-  const deepLinkUnitId = searchParams.get("unit_id")?.trim() ?? "";
-  const [unitFilter, setUnitFilterState] = useState(deepLinkUnitId);
-  useEffect(() => {
-    setUnitFilterState(deepLinkUnitId);
-  }, [deepLinkUnitId]);
-  const effectiveUnitId = unitFilter || deepLinkUnitId;
-  const setUnitFilter = useCallback(
-    (next: string) => {
-      setUnitFilterState(next);
-      const p = new URLSearchParams(searchParams);
-      if (next) p.set("unit_id", next);
-      else p.delete("unit_id");
-      setSearchParams(p, { replace: true });
+  // LV-COMPLIANCE-PROPERTY-TAX-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+
+  function patchListSearchParam(next: { unitId: string }) {
+    const p = new URLSearchParams(searchParams);
+    if (next.unitId) p.set("unit_id", next.unitId);
+    else p.delete("unit_id");
+    setSearchParams(p, { replace: true });
+  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    unitId: unitIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
     },
-    [searchParams, setSearchParams],
-  );
+  });
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, unitId: unitIdFromUrl }));
+  }, [unitIdFromUrl]);
+
+  function setUnitFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, unitId: next }));
+  }
+
+  const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const content = useMemo(() => {
     if (!companyId) return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
     return id ? (
       <RenditionDetailView companyId={companyId} renditionId={id} />
     ) : (
-      <RenditionListView companyId={companyId} unitId={effectiveUnitId || undefined} onUnitFilterChange={setUnitFilter} />
+      <RenditionListView
+        companyId={companyId}
+        unitId={effectiveUnitId}
+        draftUnitId={staged.draft.unitId}
+        onUnitFilterChange={setUnitFilter}
+        filtersDirty={staged.dirty}
+        onApplyFilters={staged.apply}
+        onCancelFilters={staged.cancel}
+        onResetFilters={() => {
+          staged.cancel();
+          setApplied(EMPTY_FILTERS);
+          patchListSearchParam(EMPTY_FILTERS);
+        }}
+      />
     );
-  }, [companyId, id, effectiveUnitId, setUnitFilter]);
+  }, [companyId, id, effectiveUnitId, staged.draft.unitId, staged.dirty, staged.apply, staged.cancel]);
 
   return <div className="space-y-4 p-4">{content}</div>;
 }
