@@ -1,11 +1,11 @@
-# INBOX-CODEX · 2026-08-19T02:52Z · PARTITION (Cursor lead)
+# INBOX-CODEX · 2026-08-19T03:28Z · REWAKE (Cursor lead)
 
-`git pull --ff-only origin main` → STATUS-NOW → work → OUTBOX-CODEX one line. **Live=BLOCKED. FAST-MERGE.**
+`git pull --ff-only origin main` → STATUS-NOW → OUTBOX-CODEX. **Live=BLOCKED. FAST-MERGE.**
 
-## YOUR PRIMARY
-1. safety residual unpaid Exact Leaves
-2. insurance/legal/compliance residual
-3. dispatch `queues.*` only after own thin
+## PRIMARY
+safety residual → insurance/legal/compliance → `dispatch:queues.*`.
 
-## HARD
-- AUDIT `#` unique (high EVEN after max). No money GL. No invent load FKs.
+## JUST SHIPPED
+Cursor #9352 · #9362.
+
+**REWAKE if idle.**
