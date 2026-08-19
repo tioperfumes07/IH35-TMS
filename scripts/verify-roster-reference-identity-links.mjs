@@ -31,6 +31,7 @@ function matrixLeaf(source, key, id, routeHint, reverseRequired) {
 export function verify(source) {
   const failures = [];
   const need = (key, text, message) => { if (!source[key].includes(text)) failures.push(message); };
+  need("customers", "EntityLinkOrTombstone", "customer roster must tombstone unresolved customer identities");
   need("customers", 'data-testid="customer-roster-record-link"', "customer roster primary identity must stay linked");
   need("customers", 'kind="customer"', "customer roster must drill through the canonical customer resolver");
   need("customers", 'id={row.id}', "customer roster must forward the canonical customer id");
@@ -61,6 +62,7 @@ if (failures.length) {
 
 if (process.argv.includes("--self-test")) {
   const mutations = [
+    ["customers", "EntityLinkOrTombstone", "EntityLink"],
     ["customers", 'data-testid="customer-roster-record-link"', 'data-testid="broken-customer-link"'],
     ["customers", 'kind="customer"', 'kind="vendor"'],
     ["vendors", 'data-testid="vendor-roster-record-link"', 'data-testid="broken-vendor-link"'],
@@ -79,7 +81,7 @@ if (process.argv.includes("--self-test")) {
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);
-    if (!verify({ ...source, [key]: source[key].replace(before, after) }).length) throw new Error(`self-test mutation survived: ${key}`);
+    if (!verify({ ...source, [key]: source[key].replaceAll(before, after) }).length) throw new Error(`self-test mutation survived: ${key}`);
   }
   console.log(`PASS: ${mutations.length} planted defects were rejected`);
 }

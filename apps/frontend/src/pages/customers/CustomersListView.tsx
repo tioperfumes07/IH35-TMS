@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { getCustomerBillingSummary, listAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
@@ -306,14 +306,14 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             cellClass: "font-medium",
             render: (row) => (
-              <span className="inline-flex items-center gap-1.5 min-w-0">
-                <EntityLink
+              <span className="inline-flex items-center gap-1.5 min-w-0" title={row.name}>
+                <EntityLinkOrTombstone
                   data-testid="customer-roster-record-link"
                   kind="customer"
                   id={row.id}
-                  label={row.name}
+                  name={row.name}
+                  noun="Customer"
                   className="single-line-name text-slate-700 hover:underline"
-                  title={row.name}
                 />
                 <button
                   type="button"
