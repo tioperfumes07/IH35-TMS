@@ -4,6 +4,8 @@ import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch }
 import { listCustomers } from "../../../api/mdata";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 export type BookLoadFormValues = {
   customer_id: string;
@@ -111,6 +113,22 @@ export function BookLoadCustomerSection({
             className="text-[11px] text-slate-600"
           />
           {customerIdError ? <p className="text-[11px] text-red-600">{customerIdError}</p> : null}
+          {/* Exact Leaves book_load:customer — ReferenceSelect alone left selected UUID non-navigable */}
+          {watch("customer_id") ? (
+            <div
+              className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"
+              data-testid="book-load-customer-selected-entitylinks"
+            >
+              <span data-testid="book-load-customer-link">
+                Customer:{" "}
+                <EntityLink
+                  kind="customer"
+                  id={watch("customer_id")}
+                  label={entityLabel(watch("customer_name") || null, watch("customer_id"), "Customer")}
+                />
+              </span>
+            </div>
+          ) : null}
         </div>
         <Field label="Customer WO# / PU#" input={<input {...register("customer_wo_number")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />} />
         <Field label="Customer PO#" input={<input {...register("customer_po_number")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />} />
