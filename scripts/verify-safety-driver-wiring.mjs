@@ -44,7 +44,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", /kind="driver" id=\{entry\.driver_id\}/],
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx", /kind="driver" id=\{a\.primary_driver_id\}/],
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx", /kind="driver" id=\{String\(r\.driver_id \?\? ""\)\}/],
-  ["apps/frontend/src/pages/safety/driver-scheduler/DriverLeaveBalancesPage.tsx", /kind="driver" id=\{row\.driver_id\}/],
+  ["apps/frontend/src/pages/safety/driver-scheduler/DriverLeaveBalancesPage.tsx", /<EntityLink\s+kind="driver"\s+id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/safety/components/FineCreateModal.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/safety/components/HosViolationCreateModal.tsx", /<DriverPickerWithCreate/],
   ["apps/frontend/src/pages/safety/components/CompanyViolationDetailDrawer.tsx", /kind="driver" id=\{driverId\}/],
