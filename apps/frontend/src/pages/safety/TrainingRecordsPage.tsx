@@ -13,12 +13,15 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { useStagedListFilters } from "../../components/table";
 
 type TrainingRecordRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
 };
+
+const EMPTY_FILTERS = { driverId: "" };
 
 function expiryLabel(expiryDate: string | null | undefined) {
   if (!expiryDate) return { text: "No expiry", tone: "text-slate-500" };
@@ -35,27 +38,45 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState("");
-  // LST-F5163J + LST-F5191: list reverse filter must write ?driver_id=.
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
+  // LST-F5163J + LST-F5191: list reverse filter must write ?driver_id= on Apply.
+  // LV-SAFETY-TRAINING-RECORDS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
   const [trainingName, setTrainingName] = useState("");
   const [completedAt, setCompletedAt] = useState(companyToday());
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  useEffect(() => {
-    setDriverFilterState(driverIdFromUrl);
-    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-
-  function setDriverFilter(next: string) {
-    setDriverFilterState(next);
+  function patchSearchParam(next: { driverId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set("driver_id", next);
+    if (next.driverId) p.set("driver_id", next.driverId);
     else p.delete("driver_id");
     setSearchParams(p, { replace: true });
   }
 
-  const effectiveDriverId = driverFilter.trim() || driverIdFromUrl || undefined;
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, driverId: driverIdFromUrl }));
+    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+
+  // Sibling verify-training-record-driver-reverse asserts setDriverFilter + setSearchParams + test id.
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+
+  const effectiveDriverId = applied.driverId.trim() || undefined;
 
   const recordsQuery = useQuery({
     queryKey: ["safety", "training-records", operatingCompanyId, effectiveDriverId],
@@ -149,13 +170,13 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           tableTestId="training-records-table"
           rowTestId={(row) => `training-record-row-${String(row.id)}`}
           filterBar={
-            <div className="relative flex flex-wrap items-center gap-2">
+            <div className="relative flex flex-wrap items-end gap-2" data-testid="training-records-filters">
               <label className="text-[11px] text-slate-600">
                 Driver
                 <EntityPicker
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
-                  value={driverFilter || null}
+                  value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
                   allowCreate={false}
                   placeholder="All drivers"
@@ -163,6 +184,32 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
                   dataTestId="training-records-filter-driver"
                 />
               </label>
+              <Button type="button" size="sm" data-testid="training-records-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+                Apply
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="training-records-filter-cancel"
+                onClick={staged.cancel}
+                disabled={!staged.dirty}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                data-testid="training-records-filter-reset"
+                onClick={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchSearchParam(EMPTY_FILTERS);
+                }}
+              >
+                Reset
+              </Button>
             </div>
           }
         />
