@@ -31,7 +31,7 @@ const checks = [
   ["roadside", /kind="unit"[\s\S]*id=\{wo\.unit_id\}/, "roadside unit drills"],
   ["roadside", /onClick=\{\(\) => onOpen\(wo\.id\)\}/, "roadside work order opens"],
   ["driver", /DriverWorkOrdersReverseSection[\s\S]*driver-detail-work-orders-reverse/, "driver profile mounts WO reverse list"],
-  ["detail", /kind="work_order"[\s\S]*id=\{String\(workOrder\.id \?\? ""\)\}/, "WO detail self-drills canonically"],
+  ["detail", /kind="work_order"[\s\S]{0,100}id=\{(?:String\(workOrder\.id \?\? ""\)|asEntityId\(workOrder\.id\))\}/, "WO detail self-drills canonically"],
   ["detail", /kind="unit"[\s\S]*workOrder\.unit_id/, "WO detail drills to unit"],
   ["detail", /kind="driver"[\s\S]*workOrder\.driver_id/, "WO detail drills to driver"],
   ["home", /source_type:\s*"IT"/, "triage creator preserves canonical IT source type"],

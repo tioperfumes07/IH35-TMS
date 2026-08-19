@@ -100,8 +100,8 @@ for (const [file, prefixes] of Object.entries(REQUIRED)) {
   try { src = readFileSync(file, "utf8"); } catch { failures.push(`${file} (missing)`); continue; }
 
   // Check file has at least one navigating element — either a react-router Link or an EntityLink.
-  if (!/<Link\b[^>]*\sto=/.test(src) && !/<EntityLink\b[^>]*\skind=/.test(src)) {
-    failures.push(`${file}: no <Link to=…> or <EntityLink kind=…> record cells at all`);
+  if (!/<Link\b[^>]*\sto=/.test(src) && !/<EntityLink(?:OrTombstone)?\b[^>]*\skind=/.test(src)) {
+    failures.push(`${file}: no <Link to=…> or governed EntityLink record cells at all`);
   }
 
   for (const p of prefixes) {
@@ -109,7 +109,7 @@ for (const [file, prefixes] of Object.entries(REQUIRED)) {
     const linkRe = new RegExp("to=\\{`" + p.replace(/\//g, "\\/"));
     // Accept <EntityLink kind="kind"> as an alternative (resolves to the same route internally).
     const entityKind = PREFIX_TO_ENTITY_KIND[p];
-    const entityRe = entityKind ? new RegExp(`<EntityLink[^>]+kind="${entityKind}"`) : null;
+    const entityRe = entityKind ? new RegExp(`<EntityLink(?:OrTombstone)?[^>]+kind="${entityKind}"`) : null;
 
     if (!linkRe.test(src) && !(entityRe && entityRe.test(src))) {
       const altHint = entityKind ? ` or <EntityLink kind="${entityKind}">` : "";
