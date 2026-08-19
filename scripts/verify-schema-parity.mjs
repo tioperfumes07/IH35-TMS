@@ -291,6 +291,64 @@ export function parseMigrations(migrationsDir) {
       }
     }
 
+    // ── DYNAMIC ALTER TABLE ADD COLUMN (EXECUTE format over a FOREACH array) ──
+    // ACCT-F187 (202612370000_sample_data_tag_money_tables.sql) — a real migration idiom the two
+    // regexes above cannot see: `FOREACH t IN ARRAY ARRAY['a.b', 'c.d', …] LOOP … EXECUTE
+    // format('ALTER TABLE %s ADD COLUMN IF NOT EXISTS col …', t) … END LOOP`. alterTableRe requires a
+    // literal schema.table right after ALTER TABLE, and `%s` is not one — so every column added this
+    // way was invisible to the baseline even though it genuinely exists on every table the loop names
+    // (verified on prod before that migration was written). This is the SAME defect class the ADD/DROP
+    // ordering fix above addresses: the parser missing a real DDL shape, not a real column that is
+    // actually absent. Also present in 202612300000_worm_evidence_and_master_tables.sql
+    // (voided_at/void_reason/voided_by_user_id over a 5-table FOREACH).
+    const relLiteralRe = () => /'([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)'/g;
+    const relationsFromArrayBody = (body) => {
+      const relations = [];
+      const re = relLiteralRe();
+      let rm;
+      while ((rm = re.exec(body)) !== null) relations.push(rm[1].toLowerCase());
+      return relations;
+    };
+    // A DECLAREd array variable (`targets text[] := ARRAY[ 'a.b', … ];`), resolved by name — the
+    // 202612370000_sample_data_tag_money_tables.sql shape: FOREACH references a named variable, not
+    // an inline ARRAY[…] literal, so the loop-source relations must be looked up separately.
+    const declaredArrayRe = /(\w+)\s+text\s*\[\s*\]\s*:=\s*ARRAY\s*\[([^\]]*)\]/gi;
+    const declaredArrays = new Map();
+    while ((m = declaredArrayRe.exec(sql)) !== null) {
+      declaredArrays.set(m[1], relationsFromArrayBody(m[2]));
+    }
+    // Two loop-source shapes: `FOREACH t IN ARRAY ARRAY[ 'a.b', … ]` (inline literal — array body
+    // captured directly) and `FOREACH t IN ARRAY targets` (named variable — resolved via declaredArrays).
+    const foreachArrayRe = /FOREACH\s+(\w+)\s+IN\s+ARRAY\s+(?:ARRAY\s*\[([^\]]*)\]|(\w+))/gi;
+    const foreachBlocks = [];
+    while ((m = foreachArrayRe.exec(sql)) !== null) {
+      const relations = m[2] !== undefined ? relationsFromArrayBody(m[2]) : (declaredArrays.get(m[3]) ?? []);
+      foreachBlocks.push({ idx: m.index, loopVar: m[1], relations });
+    }
+    // EXECUTE format('ALTER TABLE %s <column DDL>', <loopVar>) — the column DDL fragment between %s
+    // and the closing quote is scanned with the SAME addColFragRe used for static ALTERs above.
+    const dynamicAlterAddRe = /EXECUTE\s+format\(\s*'ALTER\s+TABLE\s+%s([^']*)'\s*,\s*(\w+)\s*\)/gi;
+    while ((m = dynamicAlterAddRe.exec(sql)) !== null) {
+      const fragment = m[1];
+      const loopVar = m[2];
+      // Nearest preceding FOREACH declaring this exact loop variable — Postgres scoping (a fresh
+      // FOREACH re-binds the variable for its own loop body) makes "nearest before" the correct match
+      // even when a file declares the same variable name (conventionally `t`) for multiple loops.
+      const block = [...foreachBlocks].reverse().find((b) => b.idx < m.index && b.loopVar === loopVar);
+      if (!block) continue;
+      addColFragRe.lastIndex = 0;
+      let cm;
+      while ((cm = addColFragRe.exec(fragment)) !== null) {
+        const col = cm[1].toLowerCase();
+        if (/^(primary|unique|check|constraint|foreign|set|drop|rename|enable|disable)$/i.test(col)) continue;
+        for (const relation of block.relations) {
+          const [schemaName] = relation.split(".");
+          if (EXCLUDED_SCHEMAS.has(schemaName)) continue;
+          columnEvents.push({ pos: m.index, kind: "add", relation, col });
+        }
+      }
+    }
+
     // Apply ADD/DROP in SOURCE ORDER — this is what makes drop-and-re-add behave like Postgres.
     columnEvents.sort((a, b) => a.pos - b.pos);
     for (const ev of columnEvents) {
