@@ -18,12 +18,34 @@ const files = {
   disputeRoute: "apps/backend/src/accounting/disputes.routes.ts",
 };
 
+/**
+ * Whether SOME EntityLink/EntityLinkOrTombstone render, dynamically kind/id-bound to
+ * e.party_ref_kind/e.party_ref_id, is gated by a driver-inclusive condition nearby.
+ *
+ * The naive single regex anchored on the FIRST `e.party_ref_kind === "driver"` in the whole file —
+ * which is the reload/restore logic (`party_ref_kind: e.party_ref_kind === "driver" ? ... : ""`), not
+ * the render condition next to the actual JSX, ~2000 chars later. Scanning every EntityLink(OrTombstone)
+ * tag and checking its own immediate neighborhood (both directions, multi-line tolerant) finds the real
+ * render regardless of what else in the file happens to mention the same driver-kind comparison first.
+ */
+function hasDriverForwardDrill(ui) {
+  const tagRe = /<EntityLink(?:OrTombstone)?\b/g;
+  let m;
+  while ((m = tagRe.exec(ui))) {
+    const before = ui.slice(Math.max(0, m.index - 400), m.index);
+    if (!/party_ref_kind === "driver"/.test(before)) continue;
+    const after = ui.slice(m.index, m.index + 400);
+    if (/kind=\{e\.party_ref_kind\}/.test(after) && /id=\{e\.party_ref_id\}/.test(after)) return true;
+  }
+  return false;
+}
+
 function failures(source) {
   const checks = [
     ["driver picker", source.ui.includes("<DriverPickerWithCreate")],
     ["driver id reaches payload", source.ui.includes("party_ref_id: form.party_ref_id || null")],
     ["reload restores driver id", source.ui.includes("party_ref_id: e.party_ref_id ?? \"\"")],
-    ["forward driver drill", /e\.party_ref_kind === "driver"[\s\S]{0,260}<EntityLink kind=\{e\.party_ref_kind\} id=\{e\.party_ref_id\}/.test(source.ui)],
+    ["forward driver drill", hasDriverForwardDrill(source.ui)],
     ["client contract carries id", source.api.includes("party_ref_id: string | null")],
     ["backend accepts UUID only", source.route.includes("party_ref_id: z.string().uuid().nullish()")],
     ["backend scopes driver owner", /FROM mdata\.drivers[\s\S]*operating_company_id = \$2::uuid/.test(source.route)],
