@@ -1,64 +1,59 @@
-# LIVE CHROME MODULE PARTITION · 2026-08-19T15:28Z · ACTIVE SEATS ONLY
+# LIVE CHROME MODULE PARTITION · 2026-08-19T15:55Z · SPLIT FOR SPEED
 
-**METER:** Box4 Live — success = numerator moves with **Live-proven** Leaves evidence.  
-**ACTIVE SEATS:** Cursor · Codex · Devin-A · CC-1 · CC-2.  
-**NO CC-3. NO Cascade.** Do not tip them. Cursor lead merges + rewakes.
-
-**FORBIDDEN:** silent `useQuery`/`isError` FO · Leaves without Live click · invent money · idle · safety re-loop (Devin)
+**METER:** Box4 Live — Live-proven Leaves only.  
+**ACTIVE:** Cursor · Codex · Devin-A · CC-1 · CC-2. **NO CC-3. NO Cascade.**  
+**RULE:** If a module has a large unpaid residual, **split by leaf family** (never both seats on the same `leaf:col`). Fix root cause — never defer. STARVED → next unpaid same turn.
 
 ---
 
-## Module ownership (no collisions)
+## Split ownership (collision-free)
 
-| Priority | Module | Built / chrome / picker (**Cursor**) | Reverse / connectivity (**Codex**) | Live Cancel-only (**Devin-A 9227**) | Money Box4 (**CC-1**) |
-|----------|--------|--------------------------------------|------------------------------------|-------------------------------------|----------------------|
-| **P0** | **fleet** | unpaid Built · create · chrome | residual unit/trailer reverse | residual `unit.profile.*` + trailer reverse Live | — |
-| **P0** | **maintenance** | unpaid Built · WO create · tire | WO↔unit/vendor/driver reverse | after fleet thin → maint Live | — |
-| **P0** | **safety** | Built FAIL only | non-money reverse only | **no re-prove green chrome**; liability → CC-1 | liability / gl_je |
-| **P1** | **dispatch** | unpaid Built · Book/Assign | load↔driver/unit/customer reverse | after fleet/maint thin | — |
-| **P2** | **lists** | — | — | starved only | — (**CC-2** owns) |
-| **money** | **accounting / banking / settlements** | Cursor does not steal | Codex does not steal | Devin does not walk money first | **CC-1 OWNS** |
+| Module | Cursor (Built / qbo_chrome / picker) | Codex (connectivity / reverse FO) | Devin Live (9227) | CC-1 money |
+|--------|--------------------------------------|-----------------------------------|-------------------|------------|
+| **fleet** | **BAND A:** unpaid Built on `unit.profile.*` create/chrome/picker; roster filters; create unit/trailer chrome | **BAND B:** unpaid reverse/connectivity on `trailer.profile.*` + residual `unit.profile.*` reverse EntityLinks Devin can click | Live BAND A+B tips only — positive EntityLink → URL | — |
+| **maintenance** | unpaid Built · WO create · tire · road_service chrome/picker | WO↔unit/vendor/driver reverse FO; road_service reverse | after fleet thin | — |
+| **dispatch** | unpaid Built · Book/Assign chrome/picker only | **PRIMARY** load↔driver/unit/customer/trailer reverse | after fleet/maint thin | — |
+| **safety** | Built FAIL / dead chrome only (no re-prove green) | non-money reverse only | **no safety re-loop**; liability → CC-1 | liability / gl_je |
+| **lists** | — | — | starved only | — (**CC-2**) |
+| **accounting / banking / settlements** | do not steal | do not steal | do not walk money first | **CC-1 OWNS** |
 
-**CC-2:** lists unpaid + GUARD only if Box4 moves.
+### Fleet residual — concrete split (finish ASAP)
 
----
-
-## Live proof bar (HARD — all seats)
-
-1. Open the **exact** surface on Selected-USMCA.
-2. Click the EntityLink / action that proves the cell.
-3. Confirm URL / mounted target (not “section heading exists”).
-4. Cancel-only / read-only — no invent FKs, no money convert.
-5. Same turn: OUTBOX `LIVE PASS` + Leaves `**Leaves/cells:** \`leaf:col\`` contiguous row.
-6. OUTBOX-only without Leaves = stall. Leaves without Live click = theater.
+| Band | Seat | Unpaid targets (examples — open matrix unpaid for truth) |
+|------|------|----------------------------------------------------------|
+| **A** | Cursor | `unit.profile.driver_assign` / `quick_assign` / `documents` / `trip_cost` / `financial_pl` / `bank_txns` **Built gaps**; reefer/customer EntityLink Live after `#9786` deploy |
+| **B** | Codex | `trailer.profile.*` reverse_link FO (assignment/maintenance/insurance/safety/documents/bank/legal/expenses); wire missing EntityLinks so Devin can Cancel-walk |
 
 ---
 
-## Devin walk order
+## Live proof bar (HARD)
 
-1. STOP safety re-loop.
-2. Fleet residual unit.profile reverse (positive EntityLinks only).
-3. Trailer reverse with positive rows.
-4. Maintenance unpaid Live → dispatch unpaid Live.
-5. Session expire → re-login 9227 → CONTINUE.
+1. Selected-USMCA · exact surface.  
+2. Click EntityLink / action.  
+3. URL / mounted target proven.  
+4. Cancel-only.  
+5. Same turn: OUTBOX `LIVE PASS` + Leaves `**Leaves/cells:** \`leaf:col\``.  
+6. OUTBOX without Leaves = stall.
 
----
+## Devin order
 
-## Cursor FO order
+1. STOP safety re-loop.  
+2. Fleet Band A/B tips from Cursor/Codex.  
+3. Maintenance → dispatch.  
+4. Session expire → re-login 9227 → CONTINUE.
 
-1. Devin `HANDOFF=Cursor` Built FAILs.
-2. Unpaid Built fleet → maint → safety Built-only → dispatch.
-3. **Live-verify yourself** on 9226 when converting tips to Leaves (do not credit empty sections).
-4. FAST-MERGE · tip seats · next unpaid.
+## Codex REWAKE (idle is a defect)
 
----
+1. `git pull --ff-only origin main`.  
+2. OUTBOX first line `WORKING`.  
+3. Ship **Band B trailer.profile reverse** FO immediately (or next unpaid reverse on maint/dispatch if Band B green).  
+4. Tip Devin exact URL + `leaf:col`. Never wait for Cursor.
 
-## Codex FO order
+## Cursor order
 
-1. Devin `HANDOFF=Codex` reverse FAILs.
-2. Fleet residual → maint → safety non-money → dispatch.
-3. Exact reverse Devin can Cancel-walk.
+1. Lead tips + merge.  
+2. Band A Built FO → FAST-MERGE.  
+3. Live-verify 9226/9227 before Leaves.  
+4. Tip Codex/Devin every ship.
 
----
-
-**STARVED → next unpaid same turn. Never idle. `git pull` then work.**
+**STARVED → next unpaid. Never idle.**

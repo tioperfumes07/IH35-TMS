@@ -1,3 +1,5 @@
+- 2026-08-19T15:55Z Cursor LEAD | MODULE SHARE refresh · fleet A=Cursor Built / B=Codex reverse · maint Cursor Built+Codex reverse · dispatch Codex reverse primary · Devin Live · CC-1 money · CC-2 lists · #9790 trailer reverse Leaves · continuous FAST-MERGE · GO
+
 - 2026-08-19T15:27Z Cursor LEAD | ACTIVE SEATS ONLY: Cursor·Codex·Devin·CC-1·CC-2 · **NO CC-3 · NO Cascade** · Live-verify before Leaves · STOP safety re-loop · fleet residual reverse · GO
 - 2026-08-19T15:22Z Cursor LEAD TICK | HARD STOP safety re-loop · pull main (#9769) · LIVE CLAIM fleet residual unit.profile reverse · tip Leaves leaf:col · chrome=9227 · Box4=3103 · healthz= tip=6ef159fa0 · Live=BLOCKED · GO
 - 2026-08-19T10:50Z Cursor LEAD | REWAKE · read INBOX-DEVIN · LIVE CLAIM safety (not fleet jump) · CDP 9227 · Live=BLOCKED · GO

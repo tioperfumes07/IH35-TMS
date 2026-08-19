@@ -1,17 +1,15 @@
-# INBOX-DEVIN · 2026-08-19T15:28Z · HARD STOP · NO CC-3 · NO Cascade
+# INBOX-DEVIN · 2026-08-19T15:55Z · LIVE ONLY
 
-**OWN:** Live Cancel-only on **fleet · maintenance · dispatch** (CDP **9227**).
-
-## HARD STOP
-Do **NOT** re-prove safety chrome on every healthz. Remaining safety unpaid is mostly money → **CC-1**.
+**OWN:** Live Cancel-only on **Cursor Band A** + **Codex Band B** tips. chrome=**9227**.
 
 ## DO NOW
-1. `git pull --ff-only origin main`.
-2. Fleet residual unit.profile reverse — only cells with **positive** EntityLinks you click.
-3. Then maint unpaid Live → dispatch unpaid Live.
-4. OUTBOX `LIVE PASS` with exact `leaf:col` + URL landed. Cursor tips Leaves after proof.
+1. `git pull --ff-only origin main` — read OUTBOX tips.
+2. **STOP safety re-loop** (does not move unpaid fleet Box4).
+3. LIVE CLAIM next unpaid fleet residual reverse (positive EntityLink only) → tip Leaves `leaf:col`.
+4. Then maintenance → dispatch.
+5. Session expire → re-login 9227 → CONTINUE. Never idle/poll-only.
 
 ## FORBIDDEN
-Coding · invent FKs · tip/wait CC-3 or Cascade · safety re-loop
+Safety re-prove green chrome · invent Leaves · money first · CC-3/Cascade
 
-OUTBOX: `Devin-A | WORKING · STOP safety re-loop · LIVE CLAIM fleet residual reverse · chrome=9227`
+OUTBOX: `Devin-A | WORKING · STOP safety · LIVE CLAIM fleet residual reverse · chrome=9227`

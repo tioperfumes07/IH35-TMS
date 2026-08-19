@@ -1,13 +1,13 @@
-# INBOX-CC-2 · 2026-08-19T15:28Z · NO CC-3 · NO Cascade
+# INBOX-CC-2 · 2026-08-19T15:55Z · LISTS
 
-**OWN:** **lists** unpaid Box4 honesty / GUARD when it moves Box4.
+**OWN:** **lists** unpaid Box4 honesty / GUARD when Box4 moves.
 
 ## DO NOW
 1. `git pull --ff-only origin main`.
-2. Lists unpaid Box4 only.
-3. Do not steal fleet/maint from Cursor/Codex/Devin.
+2. Lists unpaid only — tip Leaves after Live proof.
+3. Never idle while lists unpaid remains.
 
 ## FORBIDDEN
-Tip/wait CC-3 or Cascade · money GL
+Money (CC-1) · fleet Band A/B collision · CC-3/Cascade
 
 OUTBOX: `CC-2 | WORKING · OWN=lists Box4 · GO`
