@@ -25,6 +25,8 @@ function verify(source) {
   need("shared", 'data-testid="entity-document-record-link"', "shared entity document rosters must drill through");
   need("unit", 'data-testid="unit-document-record-link"', "unit document roster must drill through");
   need("trailer", 'data-testid="trailer-document-record-link"', "trailer document roster must drill through");
+  need("trailer", 'EntityLinkOrTombstone kind="document"', "trailer document roster must tombstone unavailable records");
+  need("trailer", 'id={d.file_id == null ? null : String(d.file_id)}', "trailer document roster must not manufacture an empty document id");
   if (!leaf(source, "drivers", "profiles.documents")?.required?.includes("reverse_link")) failures.push("drivers profiles.documents must require reverse_link");
   return failures;
 }
@@ -40,6 +42,7 @@ if (process.argv.includes("--self-test")) {
     ["shared", 'data-testid="entity-document-record-link"', 'data-testid="broken-entity-document-link"'],
     ["unit", 'data-testid="unit-document-record-link"', 'data-testid="broken-unit-document-link"'],
     ["trailer", 'data-testid="trailer-document-record-link"', 'data-testid="broken-trailer-document-link"'],
+    ["trailer", 'EntityLinkOrTombstone kind="document"', 'EntityLink kind="document"'],
     ["drivers", '"id": "profiles.documents"', '"id": "profiles.documents.broken"'],
   ];
   for (const [key, before, after] of mutations) {

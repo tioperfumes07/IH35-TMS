@@ -36,7 +36,7 @@ function failures(s = {}) {
     ["trailer maintenance WO drill", /kind="work_order"/.test(m) || m.includes('/maintenance/work-orders/${String(wo.wo_id)}')],
     ["trailer service event drill", tl.includes("navigate(event.detail_path)")],
     ["trailer insurance reverse filter", /InsuranceClaimsReverseSection[\s\S]{0,180}filter=\{\{ trailer_id: id \}\}/.test(tp)],
-    ["trailer document exact drill", td.includes('kind="document" id={String(d.file_id)}')],
+    ["trailer document exact drill", td.includes('EntityLinkOrTombstone kind="document"') && td.includes('id={d.file_id == null ? null : String(d.file_id)}') && td.includes('name={d.name}')],
     ["QBO mapping reverse N/A", !qboMappingRequiresReverse(fm)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -51,7 +51,7 @@ if (process.argv.includes("--selftest")) {
     failures({ trailerAssignment: trailerAssignment.replace('name={load.load_number}', 'name={load.load_id}') }).includes("trailer assignment load drill"),
     failures({ maintenance: maintenance.replaceAll('kind="work_order"', 'kind="unit"') }).includes("trailer maintenance WO drill"),
     failures({ trailerProfile: trailerProfile.replace('filter={{ trailer_id: id }}', 'filter={{ unit_id: id }}') }).includes("trailer insurance reverse filter"),
-    failures({ trailerDocs: trailerDocs.replace('kind="document" id={String(d.file_id)}', 'kind="trailer" id={String(d.file_id)}') }).includes("trailer document exact drill"),
+    failures({ trailerDocs: trailerDocs.replace('EntityLinkOrTombstone kind="document"', 'EntityLinkOrTombstone kind="trailer"') }).includes("trailer document exact drill"),
     failures({ fleetMap: JSON.stringify(parsed) }).includes("QBO mapping reverse N/A"),
   ];
   if (checks.some((ok) => !ok)) {
