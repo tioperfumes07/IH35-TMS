@@ -556,7 +556,7 @@ export function markUnitBackInService(
 }
 
 export function getMaintenanceInTransitQueue(companyId: string) {
-  return apiRequest<{ issues: InTransitIssue[] }>(
+  return apiRequest<{ issues: InTransitIssue[]; total_count: number }>(
     `/api/v1/maintenance/dashboard/intransit-triage-queue?${query(companyId)}`
   );
 }

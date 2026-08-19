@@ -4,6 +4,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 
 type Props = {
   issues: InTransitIssue[];
+  totalCount: number;
   /** MAINT-S14/S15 — ParityTable emptyText only when settled. */
   loading?: boolean;
   onTriage: (issue: InTransitIssue) => void;
@@ -31,7 +32,7 @@ function formatEta(iso?: string | null): string {
 
 // In-Transit faults are FLAT (one issue per row — no nesting), so this is a plain universal-list
 // ParityTable, not the parent+expand shape used by Arriving Soon.
-export function InTransitIssuesTable({ issues, loading = false, onTriage }: Props) {
+export function InTransitIssuesTable({ issues, totalCount, loading = false, onTriage }: Props) {
   const columns: Array<ParityColumn<InTransitIssue>> = [
     {
       key: "unit_display_id",
@@ -82,6 +83,12 @@ export function InTransitIssuesTable({ issues, loading = false, onTriage }: Prop
   );
 
   return (
+    <div className="space-y-2">
+    {totalCount > issues.length ? (
+      <p className="text-xs text-slate-500" data-testid="in-transit-issues-range">
+        Showing {issues.length} of {totalCount} in-transit issues.
+      </p>
+    ) : null}
     <ParityTable<InTransitIssue>
       columns={columns}
       rows={issues}
@@ -92,5 +99,6 @@ export function InTransitIssuesTable({ issues, loading = false, onTriage }: Prop
       exportFilename="in-transit-issues"
       rowActions={rowActions}
     />
+    </div>
   );
 }
