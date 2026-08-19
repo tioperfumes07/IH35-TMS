@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   createDispatchIntransitIssue,
@@ -17,18 +17,26 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useStagedListFilters } from "../../components/table";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+
+const EMPTY_FILTERS = {
+  driverId: "",
+  loadId: "",
+  unitId: "",
+};
 
 export function InTransitIssuesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  // LST-F5186 — visible reverse filters (URL-only ?driver_id=/load_id=/unit_id= is not reverse chrome).
-  const reverseLoadId = searchParams.get("load_id")?.trim() || "";
+  // LST-F5186 + LV-DISPATCH-INTRANSIT-ISSUES-FILTER-SILENT-APPLY — stage until Apply;
+  // URL driver_id/load_id/unit_id sync on Apply/Reset. issue_id remains deep-link only.
   const reverseIssueId = searchParams.get("issue_id")?.trim() || "";
-  const reverseDriverId = searchParams.get("driver_id")?.trim() || "";
-  const reverseUnitId = searchParams.get("unit_id")?.trim() || "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() || "";
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() || "";
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [loadId, setLoadId] = useState("");
   const [category, setCategory] = useState("mechanical");
@@ -36,21 +44,71 @@ export function InTransitIssuesPage() {
   const [severity, setSeverity] = useState<"info" | "warning" | "severe">("warning");
   const [error, setError] = useState("");
 
-  function patchSearchParam(key: "driver_id" | "load_id" | "unit_id", next: string) {
+  function patchListSearchParam(next: { driverId: string; loadId: string; unitId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    const pairs: Array<["driver_id" | "load_id" | "unit_id", string]> = [
+      ["driver_id", next.driverId],
+      ["load_id", next.loadId],
+      ["unit_id", next.unitId],
+    ];
+    for (const [key, value] of pairs) {
+      if (value) p.set(key, value);
+      else p.delete(key);
+    }
     setSearchParams(p, { replace: true });
   }
 
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    loadId: loadIdFromUrl,
+    unitId: unitIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      loadId: loadIdFromUrl,
+      unitId: unitIdFromUrl,
+    }));
+  }, [driverIdFromUrl, loadIdFromUrl, unitIdFromUrl]);
+
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+  function setLoadFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, loadId: next }));
+  }
+  function setUnitFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, unitId: next }));
+  }
+
   const issuesQ = useQuery({
-    queryKey: ["dispatch", "intransit-issues", companyId, reverseIssueId, reverseLoadId, reverseDriverId, reverseUnitId],
+    queryKey: [
+      "dispatch",
+      "intransit-issues",
+      companyId,
+      reverseIssueId,
+      applied.loadId,
+      applied.driverId,
+      applied.unitId,
+    ],
     queryFn: () =>
       listDispatchIntransitIssues(companyId, {
         issue_id: reverseIssueId || undefined,
-        load_id: reverseLoadId || undefined,
-        driver_id: reverseDriverId || undefined,
-        unit_id: reverseUnitId || undefined,
+        load_id: applied.loadId || undefined,
+        driver_id: applied.driverId || undefined,
+        unit_id: applied.unitId || undefined,
       }),
     enabled: Boolean(companyId),
   });
@@ -150,15 +208,15 @@ export function InTransitIssuesPage() {
         }
       />
 
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
+      <div className="relative flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="intransit-issues-filters">
         <label className="block min-w-[200px] text-xs text-slate-600">
           Driver
           <div className="mt-1">
             <EntityPicker
               kind="driver"
               operatingCompanyId={companyId}
-              value={reverseDriverId || null}
-              onChange={(next) => patchSearchParam("driver_id", next ?? "")}
+              value={filterDraft.driverId || null}
+              onChange={(next) => setDriverFilter(next ?? "")}
               allowCreate={false}
               placeholder="All drivers"
               className="w-full"
@@ -172,8 +230,8 @@ export function InTransitIssuesPage() {
             <EntityPicker
               kind="load"
               operatingCompanyId={companyId}
-              value={reverseLoadId || null}
-              onChange={(next) => patchSearchParam("load_id", next ?? "")}
+              value={filterDraft.loadId || null}
+              onChange={(next) => setLoadFilter(next ?? "")}
               allowCreate={false}
               placeholder="All loads"
               className="w-full"
@@ -187,8 +245,8 @@ export function InTransitIssuesPage() {
             <EntityPicker
               kind="unit"
               operatingCompanyId={companyId}
-              value={reverseUnitId || null}
-              onChange={(next) => patchSearchParam("unit_id", next ?? "")}
+              value={filterDraft.unitId || null}
+              onChange={(next) => setUnitFilter(next ?? "")}
               allowCreate={false}
               placeholder="All units"
               className="w-full"
@@ -196,6 +254,32 @@ export function InTransitIssuesPage() {
             />
           </div>
         </label>
+        <Button type="button" size="sm" data-testid="intransit-issues-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="intransit-issues-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="intransit-issues-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchListSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
 
       {issuesQ.isError ? (
