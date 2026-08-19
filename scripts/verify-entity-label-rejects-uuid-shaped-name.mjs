@@ -669,7 +669,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/reports/GeofenceDwellReport.tsx",
     bad: /label=\{row\.unit_number\}/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    // Migrated to EntityLinkOrTombstone — accept either shape.
+    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)|name=\{row\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx",
@@ -982,7 +983,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx",
     bad: />\{r\.unit_number\}</,
-    good: /entityLabel\(\s*r\.unit_number\s*,\s*r\.unit_id\s*,\s*"Unit"\s*\)/,
+    // Migrated to EntityLinkOrTombstone — accept either shape.
+    good: /entityLabel\(\s*r\.unit_number\s*,\s*r\.unit_id\s*,\s*"Unit"\s*\)|name=\{r\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/components/assets/AssetListTable.tsx",
@@ -1040,7 +1042,8 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/reports/MaintenanceCostPerUnitPage.tsx",
     bad: />\{r\.unit_number\}</,
-    good: /entityLabel\(\s*r\.unit_number\s*,\s*r\.unit_id\s*,\s*"Unit"\s*\)/,
+    // Migrated to EntityLinkOrTombstone — accept either shape.
+    good: /entityLabel\(\s*r\.unit_number\s*,\s*r\.unit_id\s*,\s*"Unit"\s*\)|name=\{r\.unit_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/driver/DriverLoadsPage.tsx",
