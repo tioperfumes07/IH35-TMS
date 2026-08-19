@@ -46,8 +46,11 @@ export function check(src) {
     if (!src.surface.includes('data-testid="safety-incidents-to-date"')) {
       f.push(`${SURFACE}: must expose safety-incidents-to-date (AccidentsPage parity)`);
     }
-    if (!/fromDate/.test(src.surface) || !/toDate/.test(src.surface)) {
-      f.push(`${SURFACE}: must hold fromDate/toDate state like AccidentsPage`);
+    if (
+      !(/fromDate/.test(src.surface) && /toDate/.test(src.surface)) &&
+      !(/date_from:\s*applied\.from/.test(src.surface) && /date_to:\s*applied\.to/.test(src.surface))
+    ) {
+      f.push(`${SURFACE}: must hold an applied From/To range (direct state or staged filters)`);
     }
     if (!src.surface.includes("date_from") || !src.surface.includes("date_to")) {
       f.push(`${SURFACE}: must wire fromDate/toDate into date_from/date_to list filters`);
@@ -100,9 +103,7 @@ if (process.argv.includes("--selftest")) {
       <DatePicker data-testid="accidents-to-date" />
     `,
     surface: `
-      const [fromDate, setFromDate] = useState("");
-      const [toDate, setToDate] = useState("");
-      const listFilters = useMemo(() => ({ date_from: fromDate, date_to: toDate }), [fromDate, toDate]);
+      const listFilters = useMemo(() => ({ date_from: applied.from, date_to: applied.to }), [applied]);
       queryFn: () => listSafetyIncidents(operatingCompanyId, config.incidentType, listFilters),
       data-testid="safety-incidents-from-date"
       data-testid="safety-incidents-to-date"
