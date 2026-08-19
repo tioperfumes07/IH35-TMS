@@ -16,7 +16,7 @@ function verify(source) {
   need("currentLoad", 'data-testid="available-unit-record-link"', "empty current-load context must drill back to its unit");
   need("currentLoad", 'kind="unit" id={unitId}', "available context must use the canonical unit id");
   need("cashFlow", 'data-testid="cash-flow-predicted-load-link"', "daily prediction load identity must expose a canonical href");
-  need("cashFlow", 'kind="load" id={item.load_id}', "daily prediction must use its persisted load id");
+  need("cashFlow", '<EntityLinkOrTombstone\n                      kind="load"\n                      id={item.load_id}\n                      name={item.load_number}', "daily prediction must use its persisted load id and human label through an unresolved-safe drill");
   need("liabilities", 'data-testid="liability-roster-record-link"', "liability roster primary identity must drill through");
   need("liabilities", 'kind="liability" id={String(row.id)}', "liability roster must normalize its canonical id");
   let matrix;
@@ -34,7 +34,7 @@ if (process.argv.includes("--self-test")) {
     ["currentLoad", 'data-testid="available-unit-record-link"', 'data-testid="broken-unit-link"'],
     ["currentLoad", 'kind="unit" id={unitId}', 'kind="load" id={unitId}'],
     ["cashFlow", 'data-testid="cash-flow-predicted-load-link"', 'data-testid="broken-load-link"'],
-    ["cashFlow", 'kind="load" id={item.load_id}', 'kind="unit" id={item.load_id}'],
+    ["cashFlow", '<EntityLinkOrTombstone\n                      kind="load"\n                      id={item.load_id}\n                      name={item.load_number}', '<EntityLinkOrTombstone\n                      kind="unit"\n                      id={item.load_id}\n                      name={null}'],
     ["liabilities", 'data-testid="liability-roster-record-link"', 'data-testid="broken-liability-link"'],
     ["liabilities", 'id={String(row.id)}', 'id={undefined}'],
     ["matrix", '"id": "liabilities.list"', '"id": "liabilities.list.broken"'],
