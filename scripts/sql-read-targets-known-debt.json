@@ -80,8 +80,6 @@
     "apps/backend/src/safety/dot-inspection-events.routes.ts: f.latest_user_uuid \u2014 column \"latest_user_uuid\" does not exist on compliance.dot_inspection_event_followups",
     "apps/backend/src/safety/eld-audit-trail/viewer.service.ts: FROM/JOIN samsara.hos_log_edits \u2014 TABLE not in migrated schema",
     "apps/backend/src/safety/events/safety-events.routes.ts: i.name \u2014 column \"name\" does not exist on identity.users",
-    "apps/backend/src/safety/position-history/position-history.routes.ts: p.part_name \u2014 column \"part_name\" does not exist on maint.part",
-    "apps/backend/src/safety/position-history/position-history.routes.ts: ps.name \u2014 column \"name\" does not exist on maint.position_set",
     "apps/backend/src/settlements/trip-link.engine.ts: l.delivery_appointment_end \u2014 column \"delivery_appointment_end\" does not exist on mdata.loads",
     "apps/backend/src/settlements/trip-link.engine.ts: l.delivery_appointment_start \u2014 column \"delivery_appointment_start\" does not exist on mdata.loads",
     "apps/backend/src/settlements/trip-link.engine.ts: l.pickup_appointment_start \u2014 column \"pickup_appointment_start\" does not exist on mdata.loads",

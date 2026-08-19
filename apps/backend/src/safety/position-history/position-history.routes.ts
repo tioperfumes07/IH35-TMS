@@ -141,13 +141,15 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           ph.*,
           u.unit_number as unit_number,
           u.license_plate as unit_license_plate,
-          ps.name as position_set_name,
-          p.part_name as part_name
+          ps.display_name as position_set_name,
+          p.name as part_name
         FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
           AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
+          AND ps.operating_company_id = $1::uuid
         LEFT JOIN maint.part p ON p.id = ph.part_id
+          AND p.tenant_id = $1::uuid
         WHERE ${where.join(" AND ")}
         ORDER BY ph.action_at DESC
         LIMIT $${++paramIdx} OFFSET $${++paramIdx}`,
@@ -186,13 +188,15 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           ph.*,
           u.unit_number as unit_number,
           u.license_plate as unit_license_plate,
-          ps.name as position_set_name,
-          p.part_name as part_name
+          ps.display_name as position_set_name,
+          p.name as part_name
         FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
           AND (u.owner_company_id = $2 OR u.currently_leased_to_company_id = $2)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
+          AND ps.operating_company_id = $2::uuid
         LEFT JOIN maint.part p ON p.id = ph.part_id
+          AND p.tenant_id = $2::uuid
         WHERE ph.id = $1 AND ph.operating_company_id = $2::uuid
         LIMIT 1`,
         [id, operating_company_id]
@@ -302,13 +306,15 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           ph.*,
           u.unit_number as unit_number,
           u.license_plate as unit_license_plate,
-          ps.name as position_set_name,
-          p.part_name as part_name
+          ps.display_name as position_set_name,
+          p.name as part_name
         FROM maintenance.position_history ph
         LEFT JOIN mdata.units u ON u.id = ph.unit_id
           AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
+          AND ps.operating_company_id = $1::uuid
         LEFT JOIN maint.part p ON p.id = ph.part_id
+          AND p.tenant_id = $1::uuid
         WHERE ph.operating_company_id = $1::uuid
           AND ph.unit_id = $2
           AND ph.position_code = $3
