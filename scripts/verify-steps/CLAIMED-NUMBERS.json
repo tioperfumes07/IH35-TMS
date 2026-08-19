@@ -4286,5 +4286,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-border-crossing-wizard-entitylinks"
+  },
+  "3934": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-abandonment-report-modal-entitylinks"
   }
 }
