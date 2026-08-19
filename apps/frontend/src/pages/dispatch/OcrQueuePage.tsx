@@ -16,8 +16,8 @@ import { BookLoadModal } from "./components/BookLoadModal";
 import { buildTemplateJsonFromOcrItem } from "./ocr-book-load-prefill";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -29,7 +29,11 @@ function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
     <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-700">
       <dt className="text-slate-500">Customer</dt>
       <dd>
-        <EntityLink kind="customer" id={f.customer_id} label={entityLabel(f.customer_name_raw, f.customer_id, "Customer")} />
+        {f.customer_id ? (
+          <EntityLinkOrTombstone kind="customer" id={f.customer_id} name={f.customer_name_raw} noun="Customer" />
+        ) : (
+          entityLabel(f.customer_name_raw, null, "Customer")
+        )}
       </dd>
       <dt className="text-slate-500">Lane</dt>
       <dd>

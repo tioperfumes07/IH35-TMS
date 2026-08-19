@@ -42,7 +42,7 @@ const ENTITY_LINK_CHECKS = [
   ["timeline", /kind="customer" id=\{load\.customer_id\}/],
   ["loadsPlanner", /kind="customer" id=\{load\.customer_id\}/],
   ["calendar", /kind="customer" id=\{load\.customer_id\}/],
-  ["ocr", /kind="customer" id=\{f\.customer_id\}/],
+  ["ocr", /EntityLinkOrTombstone kind="customer" id=\{f\.customer_id\} name=\{f\.customer_name_raw\} noun="Customer"/],
 ];
 
 export function audit(src) {

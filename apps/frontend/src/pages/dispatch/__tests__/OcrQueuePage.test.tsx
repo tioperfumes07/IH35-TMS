@@ -74,6 +74,23 @@ describe("OcrQueuePage (B21-D7)", () => {
     expect(await screen.findByText(/\$2,500\.00/)).toBeTruthy();
   });
 
+  it("renders an unresolved customer identity as a non-interactive tombstone", async () => {
+    vi.spyOn(dispatchApi, "getOcrIntakeQueue").mockResolvedValue({
+      items: [{
+        ...readyItem,
+        id: "q-orphan-customer",
+        extracted_fields: {
+          ...readyItem.extracted_fields,
+          customer_id: "customer-orphan",
+          customer_name_raw: null,
+        },
+      }],
+    });
+    wrap(<OcrQueuePage />);
+    expect(await screen.findByText("Customer — not visible")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Customer — not visible" })).toBeNull();
+  });
+
   it("convert opens Book Load with prefill", async () => {
     wrap(<OcrQueuePage />);
     await userEvent.click(await screen.findByTestId("ocr-convert-q1"));
