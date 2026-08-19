@@ -96,7 +96,8 @@ describe("EscrowRecordTab (A23-8 + ND-ESC-01)", () => {
     await waitFor(() => {
       expect(screen.getByTestId(`escrow-record-row-${driverId}`)).toBeTruthy();
     });
-    expect(screen.getByText("Alex Driver")).toBeTruthy();
+    // Row + forfeiture audit both render the same driver label — assert presence, not uniqueness.
+    expect(screen.getAllByText("Alex Driver").length).toBeGreaterThan(0);
     expect(screen.getByText("$500.00")).toBeTruthy();
     expect(driverFinanceApi.listEscrowRecords).toHaveBeenCalledWith(companyId);
   });

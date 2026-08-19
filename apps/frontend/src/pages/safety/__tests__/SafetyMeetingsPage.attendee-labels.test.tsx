@@ -71,6 +71,10 @@ describe("SafetyMeetingsPage attendee name resolution (SAF-B24-residual)", () =>
     });
     vi.spyOn(safetyApi, "createSafetyMeeting").mockResolvedValue({ event: { id: "meeting-2" } } as never);
     vi.spyOn(safetyApi, "syncSafetyMeetingAttendance").mockResolvedValue({ event: { id: "att-1" } } as never);
+    // Attendance panel resolves via useDriverLabels → getDriverLabels (not listDrivers).
+    vi.spyOn(mdataApi, "getDriverLabels").mockResolvedValue({
+      labels: [{ id: "driver-1", label: "Alex Driver" }],
+    });
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
       total: 0,
       drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver", status: "Active" } as never],

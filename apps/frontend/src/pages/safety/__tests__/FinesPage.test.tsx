@@ -73,7 +73,7 @@ describe("FinesPage (A23-9)", () => {
       expect(screen.getByTestId("company-violations-page")).toBeTruthy();
     });
     expect(screen.getByText("Missing log entry")).toBeTruthy();
-    expect(safetyApi.getCompanyViolations).toHaveBeenCalledWith(companyId);
+    expect(safetyApi.getCompanyViolations).toHaveBeenCalledWith(companyId, expect.any(Object));
     await user.click(screen.getByTestId("company-violation-create-btn"));
     expect(screen.getByTestId("company-violation-create-modal")).toBeTruthy();
   });
