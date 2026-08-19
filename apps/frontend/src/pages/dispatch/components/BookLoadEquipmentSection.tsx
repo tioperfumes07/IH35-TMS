@@ -12,6 +12,8 @@ import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTex
 import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
 import { loadTrailerEquipmentCatalogClient, type DispatchCatalogRow } from "../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -31,6 +33,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "") : "";
   const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "") : "";
   const assignedUnitId = watch ? String(watch("assigned_unit_id") ?? "") : "";
+  const assignedTrailerUnitId = watch ? String(watch("assigned_trailer_unit_id") ?? "") : "";
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   const temperatureType = watch ? String(watch("temperature_type") ?? "") : ""; // W-FIX-1 Frozen/Fresh segmented
@@ -128,7 +131,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             <EntityPicker
               kind="trailer"
               operatingCompanyId={operatingCompanyId ?? ""}
-              value={watch ? String(watch("assigned_trailer_unit_id") ?? "") || null : null}
+              value={assignedTrailerUnitId || null}
               onChange={(next) => setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true })}
               className="h-7 w-full text-xs"
               placeholder={operatingCompanyId ? "Select trailer unit" : "Select company first"}
@@ -138,6 +141,38 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
+      {/* Exact Leaves dispatch.parity.book_load_equipment_section:driver|unit|trailer —
+          pickers alone leave selected identities non-navigable; expose EntityLinks. */}
+      {assignedUnitId || assignedTrailerUnitId || primaryDriverId || secondaryDriverId ? (
+        <div
+          className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"
+          data-testid="book-load-equipment-selected-entitylinks"
+        >
+          {primaryDriverId ? (
+            <span data-testid="book-load-equipment-driver-link">
+              Driver:{" "}
+              <EntityLink kind="driver" id={primaryDriverId} label={entityLabel(null, primaryDriverId, "Driver")} />
+            </span>
+          ) : null}
+          {secondaryDriverId ? (
+            <span data-testid="book-load-equipment-team-driver-link">
+              Team:{" "}
+              <EntityLink kind="driver" id={secondaryDriverId} label={entityLabel(null, secondaryDriverId, "Driver")} />
+            </span>
+          ) : null}
+          {assignedUnitId ? (
+            <span data-testid="book-load-equipment-unit-link">
+              Unit: <EntityLink kind="unit" id={assignedUnitId} label={entityLabel(null, assignedUnitId, "Unit")} />
+            </span>
+          ) : null}
+          {assignedTrailerUnitId ? (
+            <span data-testid="book-load-equipment-trailer-link">
+              Trailer:{" "}
+              <EntityLink kind="trailer" id={assignedTrailerUnitId} label={entityLabel(null, assignedTrailerUnitId, "Trailer")} />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field
           label="Driver"
