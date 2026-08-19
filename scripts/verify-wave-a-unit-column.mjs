@@ -5,7 +5,8 @@ import fs from "node:fs";
 const checks = [
   // Both migrated onto <EntityLinkOrTombstone kind="unit" id={...} name={...} noun="Unit">
   // (withholds the drill when unresolved — strictly stronger than a bare EntityLink). Accept
-  // either primitive.
+  // either primitive. Independently converged fix (CC-2 had the same re-anchor via 01b9b2f5f;
+  // kept this already-integrated version).
   ["fuel reconciliation unit drill", "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx", /<EntityLink(?:OrTombstone)?[\s\S]{0,40}?kind="unit"[\s\S]{0,80}?id=\{r\.unit_id\}/],
   ["profit-per-truck unit drill", "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx", /<EntityLink kind="unit" id=\{r\.unit_id\}/],
   ["fleet HOS unit drill", "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", /<EntityLink kind="unit" id=\{row\.unit_id\}/],

@@ -1,4 +1,14 @@
 #!/usr/bin/env node
+// CC-2 GUARD 2026-08-19: both EntityLink checks below were re-anchored. NamesMasterHub.tsx and
+// BrokersListPage.tsx each legitimately added a dead-tombstone-link honesty guard
+// (LV-LISTS-NAMES-MASTER-DEAD-TOMBSTONE-LINK / LV-LISTS-BROKERS-DEAD-TOMBSTONE-LINK, both cited
+// in-code): the raw `row.display_name`/`row.name` literal is now routed through
+// `entityLabel(rawName, id, noun)` into a `label` variable first, so an unresolved/UUID-shaped
+// name renders as honest plain text instead of a dead EntityLink. The real EntityLink wiring
+// (kind + id) is unchanged; only the label source moved from a literal field access to the
+// honesty-wrapped variable. Re-anchored to require `label={label}` fed by a real `entityLabel(...)`
+// call over the same row field, instead of the old literal — this is a strictly more honest
+// requirement, not a weaker one.
 import fs from "node:fs";
 
 const checks = [

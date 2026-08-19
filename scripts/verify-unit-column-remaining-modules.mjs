@@ -48,7 +48,10 @@ const CHECKS = [
   ["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx", /kind="unit" id=\{row\.unit_id\}/],
   // system: audit.trail
   ["apps/frontend/src/pages/audit/AuditTrailPage.tsx", /unit: "unit",/],
-  ["apps/frontend/src/pages/audit/AuditTrailPage.tsx", /const kind = row\.subject_type \? SUBJECT_ENTITY_KINDS\[row\.subject_type\] : undefined;/],
+  // CC-2 GUARD 2026-08-19: re-anchored — the subject-kind resolver now prefers a real
+  // row.subject_kind column over row.subject_type (more robust source resolution), rendered via
+  // EntityLinkOrTombstone honesty wrapper instead of a bare EntityLink.
+  ["apps/frontend/src/pages/audit/AuditTrailPage.tsx", /const subjectKind = row\.subject_kind \?\? row\.subject_type;\s*\n\s*const kind = subjectKind \? SUBJECT_ENTITY_KINDS\[subjectKind\] : undefined;/],
 ];
 
 export function audit(files) {

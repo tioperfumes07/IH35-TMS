@@ -19,7 +19,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { formatDateUS } from "../../../lib/formatDate";
-import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-label";
+import { isUnresolvedEntityTombstone } from "../../../lib/entity-label";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
@@ -35,7 +35,9 @@ function DriverTeamMemberCell({ row, slot }: { row: MdataDriverTeam; slot: "prim
     slot === "primary"
       ? [row.primary_driver_first_name, row.primary_driver_last_name].filter(Boolean).join(" ").trim()
       : [row.secondary_driver_first_name, row.secondary_driver_last_name].filter(Boolean).join(" ").trim();
-  const label = entityLabel(rawName || null, driverId, "Driver");
+  // Reuse the shared helper (also used for sortValue above) instead of re-deriving the same
+  // entityLabel(name, id, "Driver") call inline — one source of truth for the human label.
+  const label = driverTeamMemberName(row, slot);
   // LV-LISTS-DRIVER-TEAMS-DEAD-TOMBSTONE-LINK: unresolved / UUID-shaped names must not drill.
   if (!driverId || isUnresolvedEntityTombstone(rawName || null, driverId, "Driver")) {
     return (

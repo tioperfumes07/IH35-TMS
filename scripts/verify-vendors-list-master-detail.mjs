@@ -28,8 +28,17 @@ export function audit(src) {
   if (!/vendor\.deactivated_at != null/.test(src.vendors) || !/vendor\.deactivated_at == null/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: active/inactive segments must filter real vendor.deactivated_at`);
   }
-  if (!/vendor\.vendor_type === categoryFilter/.test(src.vendors)) {
+  // CC-2 GUARD 2026-08-19: re-anchored — LV-VENDORS-BY-CATEGORY-NATIVE-SELECT-NO-CREATOR was fixed
+  // since this guard's original check: the by_category filter now does a case-insensitive match
+  // against both the selected category's code and its resolved catalog label (more robust than a
+  // strict === on vendor_type alone), and the filter control itself was upgraded from a native
+  // <select> to the canonical ReferenceSelect with createKind="vendor_type" (real catalog-backed
+  // + "+ Add new vendor type" inline creator).
+  if (!/accepted\.has\(String\(vendor\.vendor_type \?\? ""\)\.toLowerCase\(\)\)/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: by_category segment must filter real vendor_type`);
+  }
+  if (!/<ReferenceSelect[\s\S]{0,300}createKind="vendor_type"/.test(src.vendors)) {
+    failures.push(`${FILES.vendors}: by_category filter must use the canonical ReferenceSelect with an inline vendor_type creator`);
   }
   if (!/<VendorCreateModal/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: list.create must mount the real VendorCreateModal`);
@@ -68,7 +77,8 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["roster-query", "vendors", /listVendors\(\{ operating_company_id: companyId/, "listSomethingElse({ operating_company_id: companyId"],
     ["inactive-filter", "vendors", /vendor\.deactivated_at != null/g, "false"],
-    ["category-filter", "vendors", /vendor\.vendor_type === categoryFilter/g, "false"],
+    ["category-filter", "vendors", /accepted\.has\(String\(vendor\.vendor_type \?\? ""\)\.toLowerCase\(\)\)/g, "false"],
+    ["category-picker-law", "vendors", /createKind="vendor_type"/, 'createKind="__PLANTED_REMOVED__"'],
     ["create-modal", "vendors", /<VendorCreateModal/g, "<div"],
     ["sync-panel", "vendors", /<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>/, "null"],
     ["header-edit-nav", "vendors", /onClick=\{\(\) => navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)\}\s*data-testid="vendor-header-edit"/, 'onClick={() => navigate(`/vendors`)} data-testid="vendor-header-edit"'],

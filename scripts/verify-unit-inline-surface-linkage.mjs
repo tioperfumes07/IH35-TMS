@@ -7,7 +7,9 @@ const detail=fs.readFileSync("apps/frontend/src/pages/accounting/FixedAssetsPage
 const fail=(u,r,d)=>[
  ["picker",u.includes('<EntityPicker key={c.key} kind="unit"')],
  ["payload",u.includes("ref_external_id: form.ref_external_id || null")],
- ["reload drill",u.includes('<EntityLink kind="unit" id={e.ref_external_id}')],
+ // CC-2 GUARD 2026-08-19: re-anchored — swapped to the EntityLinkOrTombstone honesty wrapper
+ // (renders plain text for a null/unresolved unit instead of a dead link), same real id.
+ ["reload drill",u.includes('<EntityLinkOrTombstone kind="unit" id={e.ref_external_id}')],
  ["scope",/FROM mdata\.units WHERE id = \$1::uuid AND COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/.test(r)],
  ["fixed asset drill",d.includes('<EntityLink kind="unit" id={detail.unit_uuid}')],
 ].filter(([,ok])=>!ok).map(([n])=>n);

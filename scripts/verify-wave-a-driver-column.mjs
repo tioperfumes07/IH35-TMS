@@ -18,7 +18,10 @@ for (const root of roots) {
 
 const required = [
   ["photo comparison driver drill", "apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx", /<EntityLink kind="driver" id=\{session\.driver_uuid\}/],
-  ["scheduler request driver drill", "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage.tsx", /<EntityLink kind="driver" id=\{String\(req\.driver_id/],
+  // CC-2 GUARD 2026-08-19: re-anchored — this surface now uses the EntityLinkOrTombstone honesty
+  // wrapper (renders plain text for a null/unresolved driver instead of a dead EntityLink) around
+  // the same real kind="driver" id={String(req.driver_id...)} wiring, not a bare EntityLink anymore.
+  ["scheduler request driver drill", "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage.tsx", /<EntityLink(?:OrTombstone)? kind="driver" id=\{String\(req\.driver_id/],
   ["owner approval driver drill", "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx", /<EntityLink kind="driver" id=\{String\(req\?\.driver_id/],
   ["trip pairing driver drill", "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /<EntityLink kind="driver" id=\{u\.driver_id\}/],
   ["escrow record driver drill", "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", /<EntityLink kind="driver" id=\{entry\.driver_id\}/],

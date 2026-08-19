@@ -794,7 +794,10 @@ export function createLoadTemplate(body: { operating_company_id: string; name: s
 
 export type AtRiskLoadRow = {
   id: string;
-  load_number: string;
+  // Nullable to match the honest EntityLinkOrTombstone rendering this row feeds
+  // (AtRiskQueuePage.tsx) — a load record itself is never missing its number, but the
+  // component must gracefully tombstone an unresolved/never-populated value rather than crash.
+  load_number: string | null;
   status: string;
   customer_id: string;
   unit_id: string | null;
@@ -1022,7 +1025,9 @@ export function notifyDetentionCustomer(eventId: string, body: { operating_compa
 }
 
 export type OcrIntakeExtractedFields = {
-  customer_name_raw?: string;
+  // Nullable (not just optional) to match the honest EntityLinkOrTombstone rendering this field
+  // feeds (OcrQueuePage.tsx) — OCR extraction can legitimately produce a present-but-empty field.
+  customer_name_raw?: string | null;
   customer_id?: string | null;
   origin_city?: string;
   origin_state?: string;

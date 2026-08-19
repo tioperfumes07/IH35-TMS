@@ -84,6 +84,12 @@ export function audit(opts = {}) {
   const failures = [];
   const generic = opts.genericSource ?? read("apps/frontend/src/pages/lists/GenericCatalogPage.tsx");
   const catalogTable = opts.catalogTableSource ?? read("apps/frontend/src/components/catalogs/CatalogTable.tsx");
+  // LST-F3480 (cited in-code, CatalogTable.tsx): free-text search was consolidated onto the shared
+  // ParityTable toolbar (`toolbarSearch`/`setToolbarSearch` there, feeding a real
+  // applyUniversalListFilters call) — CatalogTable itself deliberately owns no page-local `setSearch`
+  // state anymore. Re-checked here 2026-08-19: verify CatalogTable renders ParityTable without
+  // suppressing its search (`suppressToolbarSearch`), and that ParityTable's own search state is real.
+  const parityTable = opts.parityTableSource ?? read("apps/frontend/src/components/parity/ParityTable.tsx");
 
   if (!generic.includes("+ Create")) failures.push("GenericCatalogPage missing + Create");
   if (!generic.includes("CatalogEditModal")) failures.push("GenericCatalogPage missing CatalogEditModal");
@@ -92,11 +98,17 @@ export function audit(opts = {}) {
   // LST-F3480: search moved off page-local state entirely — ParityTable's own toolbar owns it,
   // and CatalogTable.tsx never passes suppressToolbarSearch, so the shared component's default
   // (search enabled) applies. Accept either the older page-local setSearch state OR this
-  // delegated-to-ParityTable shape (own the primitive, don't opt out of its search).
+  // delegated-to-ParityTable shape (own the primitive, don't opt out of its search). This already
+  // landed independently on main (converged with CC-2's own fix in a616eed3c) by the time of this
+  // cherry-pick — kept HEAD's slightly more lenient, already-integrated version rather than
+  // reintroducing a second, narrower check for the same invariant.
   const hasLocalSearchState = /\bsetSearch\b/.test(catalogTable);
   const delegatesSearchToParityTable =
     catalogTable.includes("ParityTable") && !/suppressToolbarSearch|hideSearch=\{?\s*true/.test(catalogTable);
   if (!hasLocalSearchState && !delegatesSearchToParityTable) failures.push("CatalogTable missing search state");
+  if (!/\btoolbarSearch\b/.test(parityTable) || !/\bsetToolbarSearch\b/.test(parityTable)) {
+    failures.push("ParityTable missing search state");
+  }
   if (!/\bstatusFilter\b|\bsetStatus\b/.test(catalogTable)) failures.push("CatalogTable missing status filter");
 
   for (const rel of SHARED_SHELLS) {
@@ -215,6 +227,31 @@ if (process.argv.includes("--selftest")) {
   const mut2 = audit({ catalogTableSource: brokenTable });
   if (!mut2.failures.some((f) => /ParityTable/.test(f))) {
     console.error(`${LABEL} SELFTEST FAIL — ParityTable mutation not caught`);
+    process.exit(1);
+  }
+  const suppressedTable = read("apps/frontend/src/components/catalogs/CatalogTable.tsx").replace(
+    "<ParityTable<CatalogRow>",
+    "<ParityTable<CatalogRow>\n        suppressToolbarSearch",
+  );
+  if (suppressedTable === read("apps/frontend/src/components/catalogs/CatalogTable.tsx")) {
+    console.error(`${LABEL} SELFTEST FAIL — suppressToolbarSearch mutation anchor did not match, re-anchor`);
+    process.exit(1);
+  }
+  const mut3 = audit({ catalogTableSource: suppressedTable });
+  // Merged into the delegatesSearchToParityTable check (2026-08-19 consolidation) — a
+  // suppressToolbarSearch tamper now fails as "CatalogTable missing search state" since neither
+  // the local-state nor the delegated-search path is satisfied anymore.
+  if (!mut3.failures.some((f) => /CatalogTable missing search state/.test(f))) {
+    console.error(`${LABEL} SELFTEST FAIL — suppressToolbarSearch mutation not caught`);
+    process.exit(1);
+  }
+  const brokenParity = read("apps/frontend/src/components/parity/ParityTable.tsx").replaceAll(
+    "toolbarSearch",
+    "toolbarQuery",
+  );
+  const mut4 = audit({ parityTableSource: brokenParity });
+  if (!mut4.failures.some((f) => /ParityTable missing search state/.test(f))) {
+    console.error(`${LABEL} SELFTEST FAIL — ParityTable search-state mutation not caught`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest OK`);
