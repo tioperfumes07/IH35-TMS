@@ -50,7 +50,11 @@ if (process.argv.includes("--selftest")) {
     ["deduction-drill", "deductions", /kind="driver"/g, 'kind="vendor"'],
     ["deduction-state", "deductions", /No pending settlement deductions\./g, "Loading"],
     ["deduction-list-filter", "deductions", /dataTestId="settlement-deductions-filter-driver"/g, 'dataTestId="x"'],
-    ["deduction-url-write", "deductions", /setSearchParams/g, "setSearchParamsNOPE"],
+    // The replacement must NOT contain "setSearchParams" as a substring — "setSearchParamsNOPE"
+    // still matches /setSearchParams/, so the check's .test() stayed true and this mutation was a
+    // silent no-op against its own audit() clause. Found live: this mutation never actually
+    // changed what the guard detects.
+    ["deduction-url-write", "deductions", /setSearchParams/g, "handleUrlSync"],
     ["dispute-scope", "disputeHook", /operating_company_id: companyId/g, "operating_company_id: ''"],
     ["dispute-state", "disputes", /Could not load settlement disputes\./g, "Loading"],
     ["dispute-drill", "disputes", /kind="settlement"/g, 'kind="driver"'],
