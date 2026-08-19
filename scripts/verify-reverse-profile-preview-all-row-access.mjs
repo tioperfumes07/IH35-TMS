@@ -29,7 +29,11 @@ const checks = [
   ["templateApi", /apiRequest<\{ templates: LoadTemplateRow\[\]; total: number \}>/, "load-template client carries the server total"],
   ["templateReverse", /const total = query\.data\?\.total \?\? templates\.length[\s\S]{0,1200}Showing \{preview\.length\} of \{total\}[\s\S]{0,500}Open all \{total\}/, "customer template preview discloses total and all-row action"],
   ["templateReverse", /\/dispatch\/planner\?panel=templates&customer_id=\$\{encodeURIComponent\(customerId\)\}/, "customer template all-row link preserves customer scope on the mounted route"],
-  ["templateLibrary", /searchParams\.get\("customer_id"\)[\s\S]{0,350}listLoadTemplates\(operatingCompanyId, \{ template_id: templateId, customer_id: customerId \}\)/, "template library consumes the reverse customer filter"],
+  // Real code routes the deep-link customer_id through the governed useStagedListFilters pipeline
+  // (searchParams -> deepLinkCustomerId -> customerIdFromUrl -> applied.customerId -> effectiveCustomerId)
+  // rather than a direct inline variable — same architectural migration class fixed repeatedly this
+  // session. The scoping is still genuinely honored end-to-end; only the variable name and gap widened.
+  ["templateLibrary", /searchParams\.get\("customer_id"\)[\s\S]{0,1500}listLoadTemplates\(operatingCompanyId, \{ template_id: templateId, customer_id: effectiveCustomerId \}\)/, "template library consumes the reverse customer filter"],
   ["templateLibrary", /CappedListNotice shown=\{rows\.length\}[\s\S]{0,180}total=\{q\.data\?\.total \?\? null\}/, "template library discloses any unfiltered server cap"],
   ["templateLibrary", /CappedListNotice shown=\{templates\.length\} limit=\{500\}[\s\S]{0,100}total=\{q\.data\?\.total \?\? null\}/, "load-template picker discloses its catalog cap"],
   ["entityLink", /case "load_template":[\s\S]{0,100}return `\/dispatch\/planner\?panel=templates&template_id=\$\{id\}`/, "exact load-template EntityLink targets the mounted planner route"],
