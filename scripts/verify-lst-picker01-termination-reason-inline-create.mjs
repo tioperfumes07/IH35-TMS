@@ -49,7 +49,7 @@ export function collectProblems(root = ROOT, registryOverride = undefined) {
     }
     // FAIL-D4 / React #310 — terminationReasonOptions useMemo must run BEFORE loading/not-found early returns
     const memoIdx = code.search(/const terminationReasonOptions\s*=\s*useMemo\s*\(/);
-    const earlyIdx = code.search(/if\s*\(\s*driverQuery\.isLoading\s*\)/);
+    const earlyIdx = code.search(/if\s*\([^)]*driverQuery\.isLoading[^)]*\)/);
     if (memoIdx < 0) {
       problems.push(`${FILES.driverDetail}: missing terminationReasonOptions useMemo`);
     } else if (earlyIdx < 0) {
