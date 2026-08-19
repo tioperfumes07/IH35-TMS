@@ -96,6 +96,7 @@ export type UnitLiveLocation = {
 export type UnitsWithoutLoad = {
   id: string;
   unit_number: string;
+  trailer_id: string | null;
   trailer_number: string | null;
   driver_id: string | null;
   driver_name: string | null;

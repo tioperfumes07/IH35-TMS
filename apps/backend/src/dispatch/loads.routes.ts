@@ -1565,7 +1565,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           SELECT
             u.id,
             u.unit_number,
-            NULL::text AS trailer_number,
+            tr.id::text AS trailer_id,
+            tr.equipment_number AS trailer_number,
             ud.id::text AS driver_id,
             -- NULLIF is load-bearing: CONCAT_WS NEVER returns NULL. With every argument NULL it returns
             -- the EMPTY STRING (verified on prod: CONCAT_WS(' ',NULL,NULL) IS NULL -> false, = '' -> true).
@@ -1600,6 +1601,17 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- null for an unloaded truck.)
           LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
                                      AND ud.operating_company_id = $1::uuid
+          -- A truck can retain its assigned trailer while awaiting the next load. The previous
+          -- hardcoded NULL hid that real reverse relationship on every awaiting-truck row.
+          LEFT JOIN LATERAL (
+            SELECT e.id, e.equipment_number
+              FROM mdata.equipment e
+             WHERE e.current_unit_id = u.id
+               AND e.deactivated_at IS NULL
+               AND (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid)
+             ORDER BY e.updated_at DESC NULLS LAST, e.id
+             LIMIT 1
+          ) tr ON true
           LEFT JOIN mdata.load_stops ls ON ls.load_id = l.id
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
@@ -1614,7 +1626,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- OutOfService/InMaintenance (those belong to the In-shop / Fleet-OOS surfaces, not Awaiting).
             AND u.status = 'InService'::mdata.unit_status
             AND l.id IS NULL
-          GROUP BY u.id, u.unit_number, ud.id, ud.first_name, ud.last_name,
+          GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
             p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at
           ORDER BY COALESCE(MAX(ls.actual_departure_at), now() - interval '999 days') ASC
         `,
@@ -1630,6 +1642,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         return {
           id: row.id,
           unit_number: row.unit_number,
+          trailer_id: row.trailer_id,
           trailer_number: row.trailer_number,
           driver_id: row.driver_id,
           driver_name: row.driver_name,

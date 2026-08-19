@@ -53,7 +53,20 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
             <EntityLink kind="unit" id={row.id} label={entityLabel(row.unit_number, row.id, "Unit")} onClick={(e) => e.stopPropagation()} />
           ),
         },
-        { key: "trailer_number", label: "Trailer", sortable: true, render: (row) => row.trailer_number ?? "-" },
+        {
+          key: "trailer_number",
+          label: "Trailer",
+          sortable: true,
+          render: (row) => (
+            <EntityLinkOrTombstone
+              kind="trailer"
+              id={row.trailer_id}
+              name={row.trailer_number}
+              noun="Trailer"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ),
+        },
         {
           key: "driver_name",
           label: "Driver",
