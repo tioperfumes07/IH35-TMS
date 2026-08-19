@@ -91,6 +91,27 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     // operating_company_id with no membership check; driver_finance.driver_settlement_disputes' own
     // RLS policy has no org.user_accessible_company_ids() clause, so it was the only boundary.
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    // ACCT-F5590: a Driver-role caller could previously supply ANY driver_id in the body and have
+    // it accepted verbatim -- openDispute() never checked it against the caller's own driver profile.
+    // A Driver who knew/guessed another driver's uuid plus a valid settlement_id for that driver could
+    // open a fraudulent dispute misattributed to the other driver. Reuse the same self-resolution
+    // pattern the withdraw route below already uses (resolveDriverIdForUser), rather than trusting the
+    // caller-supplied value, for any caller who is actually a Driver.
+    if (user.role === "Driver") {
+      const ownDriverId = await resolveDriverIdForUser(user.uuid);
+      if (!ownDriverId) {
+        return reply.code(404).send({
+          error: "E_DRIVER_PROFILE_NOT_FOUND",
+          message: "No driver profile is linked to this user.",
+        });
+      }
+      if (ownDriverId !== body.data.driver_id) {
+        return reply.code(403).send({
+          error: "E_FORBIDDEN_NOT_DRIVER",
+          message: "A driver may only open a dispute for their own settlement.",
+        });
+      }
+    }
     try {
       const data = await openDispute(user.uuid, {
         ...body.data,
