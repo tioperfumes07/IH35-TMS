@@ -1751,7 +1751,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx",
     bad: /Trailer \$\{claim\.trailer_display_id\}/,
-    good: /entityLabel\(\s*claim\.trailer_display_id\s*,\s*claim\.trailer_id\s*,\s*"Trailer"\s*\)/,
+    good: /EntityLinkOrTombstone[\s\S]{0,220}?kind="trailer"[\s\S]{0,220}?name=\{claim\.trailer_display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",

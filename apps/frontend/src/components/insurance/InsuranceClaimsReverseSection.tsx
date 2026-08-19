@@ -1,9 +1,11 @@
+import { type ReactNode } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { insuranceClaimsApi, type InsuranceClaim } from "../../api/insurance";
 import { useAuth } from "../../auth/useAuth";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 const FAULT_LABELS: Record<string, string> = {
   undetermined: "Fault undetermined",
@@ -40,7 +42,7 @@ const REPAIR_BOOKS_LABELS: Record<string, string> = {
  * it would make an open question look like a settled one.
  */
 function ClaimEconomics({ claim }: { claim: InsuranceClaim }) {
-  const chips: { key: string; label: string; tone: "neutral" | "attention" }[] = [];
+  const chips: { key: string; label: ReactNode; tone: "neutral" | "attention" }[] = [];
 
   if (claim.fault) {
     chips.push({
@@ -71,10 +73,19 @@ function ClaimEconomics({ claim }: { claim: InsuranceClaim }) {
       tone: claim.repair_books_treatment === "ask" ? "attention" : "neutral",
     });
   }
-  if (claim.trailer_display_id) {
+  if (claim.trailer_id || claim.trailer_display_id) {
     chips.push({
       key: "trailer",
-      label: `Trailer ${entityLabel(claim.trailer_display_id, claim.trailer_id, "Trailer")}`,
+      label: (
+        <EntityLinkOrTombstone
+          kind="trailer"
+          id={claim.trailer_id}
+          name={claim.trailer_display_id}
+          noun="Trailer"
+          className="text-slate-700 hover:underline"
+          data-testid="claim-economics-trailer-link"
+        />
+      ),
       tone: "neutral",
     });
   }

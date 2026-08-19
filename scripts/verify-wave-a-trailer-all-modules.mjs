@@ -36,6 +36,8 @@ const contracts = [
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /trailer_id:\s*form\.trailer_id \|\| null/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /kind="trailer"/],
   ["apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx", /trailer_id:\s*string/],
+  ["apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx", /kind="trailer"/],
+  ["apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx", /claim-economics-trailer-link/],
   ["apps/frontend/src/pages/maintenance/FleetTablePage.tsx", /\{ key: "trailer", label: "Trailers" \}/],
 ];
 const composed = ["verify-wave-a-trailer-column.mjs", "verify-bookload-equipment-entitypicker-search.mjs", "verify-claim-load-reverse-and-driver-create.mjs", "verify-safety-incidents-reverse-link-wired.mjs"];
