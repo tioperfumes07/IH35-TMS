@@ -40,7 +40,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx", /kind="driver" id=\{selected\.driver_id\}/],
   ["apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx", /kind="driver" id=\{load\.driver_id\}/],
   ["apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /kind="driver" id=\{u\.driver_id\}/],
-  ["apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx", /kind="driver" id=\{issue\.driver_id \?\? undefined\}/],
+  ["apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx", /EntityLinkOrTombstone kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", /kind="driver" id=\{driver\.id\}/],
   ["apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx", /kind="driver" id=\{driverId\}/],
   ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", /kind="driver" id=\{row\.driverId\}/],
