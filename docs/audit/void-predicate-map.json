@@ -383,6 +383,14 @@
         "voided_at"
       ]
     },
+    "accounting.vendor_payment_methods": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
     "accounting.warranty_reimburse_postings": {
       "canonical_column": "voided_at",
       "predicate": "voided_at IS NULL",
