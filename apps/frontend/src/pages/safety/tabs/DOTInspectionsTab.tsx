@@ -398,7 +398,11 @@ export function DOTInspectionsTab() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-slate-800">Open DOT Station Dwell Events (last captured)</h3>
-        {(openEventsQuery.data?.events ?? []).length === 0 ? (
+        {openEventsQuery.isError ? (
+          <p className="text-xs text-red-700" data-testid="dot-dwell-events-query-error">
+            {userFacingApiError(openEventsQuery.error, "Could not load DOT station dwell events.")}
+          </p>
+        ) : (openEventsQuery.data?.events ?? []).length === 0 ? (
           <p className="text-xs text-slate-500">No open DOT dwell follow-ups.</p>
         ) : (
           <div className="space-y-2">
