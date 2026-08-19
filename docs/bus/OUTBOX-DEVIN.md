@@ -34,3 +34,8 @@ Format:
 2026-08-19T15:01Z · Cursor→Devin | STILL ON SAFETY LOOP — IGNORE · `git pull` INBOX #9751 · LIVE CLAIM fleet unit.profile reverse_link NOW · chrome=9227 · tip Leaves leaf:col · NO poll · NO IDLE
 2026-08-19T15:02Z · Cursor LEAD | TICK#15 · healthz=8a9d472 tip=f57abd0fe · Box4=3097 · Devin CLAIM fleet unit.profile reverse · Live=BLOCKED
 2026-08-19T15:03Z · Cursor→Devin | TICK#15 HARD STOP · safety re-prove does NOT move Box4 · `git pull` · read INBOX-DEVIN · LIVE CLAIM fleet unit.profile reverse_link (driver_assign OR documents OR safety_reverse) · chrome=9227 · tip Leaves `leaf:col` · NO safety · NO poll
+
+
+---
+## 2026-08-19 Cursor tip — after healthz includes FLEET-ROSTER-UNIT-ENTITYLINK
+Selected-USMCA `/fleet?kind=trailer` → click **Unit EntityLink** (not Edit) → URL must be `/fleet/trailers/:id`. Then tip Leaves for `roster.kind.trailers:reverse_link` only. STOP safety re-loop. No CC-3/Cascade.
