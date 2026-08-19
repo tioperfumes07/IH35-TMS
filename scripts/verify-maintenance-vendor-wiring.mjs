@@ -65,7 +65,9 @@ export function audit(src) {
   if (!/EntityPicker[\s\S]*?kind=["']vendor["']/.test(src.warranty) || !/allowCreate/.test(src.warranty)) {
     failures.push(`${FILES.warranty}: warranty claim create must have a real vendor EntityPicker`);
   }
-  if (!/external_vendor_id(?!_)/.test(src.woDetailModal) || !/kind="vendor"[\s\S]{0,100}id=\{link\.vendor_id\}/.test(src.woDetailModal)) {
+  const resolvedVendorLink = /kind="vendor"[\s\S]{0,100}id=\{asEntityId\(workOrder\.resolved_vendor_id\)\}[\s\S]{0,100}name=\{workOrder\.resolved_vendor_name\}/.test(src.woDetailModal);
+  const partsVendorLink = /kind="vendor"[\s\S]{0,100}id=\{link\.vendor_id\}[\s\S]{0,100}name=\{link\.vendor_name\}/.test(src.woDetailModal);
+  if (!resolvedVendorLink || !partsVendorLink) {
     failures.push(`${FILES.woDetailModal}: WO detail modal must render real vendor EntityLinks for the external vendor and linked parts`);
   }
   return failures;
@@ -93,7 +95,9 @@ if (process.argv.includes("--selftest")) {
     ["add-parts-required", "addPartsLink", /Boolean\(vendorId\)/, "true"],
     ["vendors-hub-field", "vendorsHub", /mdata_vendor_id: string \| null/, "mdata_vendor_id_unused: string | null"],
     ["warranty-picker", "warranty", /kind="vendor"/g, 'kind="unit"'],
-    ["wo-detail-external", "woDetailModal", /external_vendor_id/g, "external_vendor_id_unused"],
+    ["wo-detail-resolved-id", "woDetailModal", /asEntityId\(workOrder\.resolved_vendor_id\)/, "undefined"],
+    ["wo-detail-resolved-name", "woDetailModal", /name=\{workOrder\.resolved_vendor_name\}/, "name={null}"],
+    ["wo-detail-parts-name", "woDetailModal", /name=\{link\.vendor_name\}/, "name={null}"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
