@@ -35,6 +35,9 @@ export function audit(src) {
   if (!/\{ key: "trailer", header: "Trailer", cell: \(load\) => renderTrailerCell\(load\) \}/.test(src.board)) {
     failures.push(`${FILES.board}: dispatch board must wire the Trailer column into its real cell renderer`);
   }
+  if (!/<EntityLinkOrTombstone[\s\S]{0,80}kind="trailer"[\s\S]{0,180}name=\{load\.trailer_number\}[\s\S]{0,60}noun="Trailer"/.test(src.board)) {
+    failures.push(`${FILES.board}: nullable trailer fallback must use the unresolved-safe canonical drill`);
+  }
   if (!/assigned_trailer_unit_id:\s*string/.test(src.bookLoad)) {
     failures.push(`${FILES.bookLoad}: Book Load must carry a real assigned_trailer_unit_id field`);
   }
@@ -72,6 +75,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["board-picker", "board", /<InlineTrailerPicker/g, "<span"],
     ["board-column", "board", /\{ key: "trailer", header: "Trailer", cell: \(load\) => renderTrailerCell\(load\) \}/g, '{ key: "trailer", header: "Trailer", cell: () => null }'],
+    ["board-tombstone", "board", /name=\{load\.trailer_number\}/, "name={null}"],
     ["bookload-field-unit", "bookLoad", /assigned_trailer_unit_id:\s*string/, "assigned_trailer_unit_id_unused: string"],
     ["bookload-watch", "bookLoad", /const assignedTrailerUnitId = form\.watch\("assigned_trailer_unit_id"\)/, "const assignedTrailerUnitId = null"],
     ["authgate-prop", "authGate", /trailerUuid\?:\s*string/, "trailerUuid_unused?: string"],
