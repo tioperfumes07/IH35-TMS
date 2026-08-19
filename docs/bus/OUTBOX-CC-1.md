@@ -583,3 +583,7 @@ verify:static: 48 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:16Z CC-1 | ACCT-F5472 closed (PR #9347, merged 0a2aef7). verify-auto-deduction-applies-to-next-settlement.mjs required the single-line literal app.post("/api/v1/auto-deductions/policies" (and GET sibling), but policy.routes.ts formats both route registrations with the path string on its own line (routine Prettier multi-line call) — both routes present and correctly registered. Same multi-line-formatting false-positive class fixed several times earlier this session. Whitespace-tolerant regex instead of rigid substring check. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 49 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:19Z CC-1 | ACCT-F5473 closed (PR #9349, merged b401a16). verify-bill-detail-vendor-unit-links.mjs required a truncated-UUID fallback (bill.unit_display_id ?? bill.unit_id.slice(0, 8)), but real code uses entityLabel(bill.unit_display_id, bill.unit_id, "Unit") — a STRICTER, correct fix than the guard's own ask, per entity-label.ts's own documented law against exactly this truncated-slice anti-pattern. Widened to accept either shape. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 50 of ~199 now closed this session. Continuing non-stop, fast-merge.
