@@ -192,6 +192,11 @@ export function SafetyLayout() {
             {userFacingApiError(prefsMutation.error, "Could not save Safety filter preferences.")}
           </p>
         ) : null}
+        {prefsQuery.isError ? (
+          <p className="border-b border-red-200 bg-red-50 px-[22px] py-2 text-xs text-red-700" data-testid="safety-prefs-query-error">
+            {userFacingApiError(prefsQuery.error, "Could not load Safety filter preferences.")}
+          </p>
+        ) : null}
 
         <SafetyDashboardFilter
           value={filter}
@@ -206,9 +211,31 @@ export function SafetyLayout() {
           onFromDateChange={setFromDate}
           onToDateChange={setToDate}
         />
-        <div className="grid gap-2 px-[22px] py-2 lg:grid-cols-[1fr_260px]">
-          <SafetyKpiRow kpis={kpisQuery.data} />
-          <CSAScoreCard latest={csaQuery.data?.latest} />
+        <div className="space-y-2 px-[22px] py-2">
+          {kpisQuery.isError || csaQuery.isError ? (
+            <p className="text-xs text-red-700" data-testid="safety-layout-query-error">
+              {userFacingApiError(
+                kpisQuery.error ?? csaQuery.error,
+                "Could not load Safety KPI / CSA strip.",
+              )}
+            </p>
+          ) : null}
+          <div className="grid gap-2 lg:grid-cols-[1fr_260px]">
+            {kpisQuery.isError ? (
+              <p className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700" data-testid="safety-kpis-query-error">
+                {userFacingApiError(kpisQuery.error, "Could not load Safety KPIs.")}
+              </p>
+            ) : (
+              <SafetyKpiRow kpis={kpisQuery.data} />
+            )}
+            {csaQuery.isError ? (
+              <p className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700" data-testid="safety-csa-query-error">
+                {userFacingApiError(csaQuery.error, "Could not load latest CSA rollup.")}
+              </p>
+            ) : (
+              <CSAScoreCard latest={csaQuery.data?.latest} />
+            )}
+          </div>
         </div>
 
         <SafetyGroupNav
