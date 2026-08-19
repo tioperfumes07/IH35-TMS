@@ -1,4 +1,4 @@
-# INBOX-DEVIN-A · 2026-08-19T18:20Z · COMPLETE INSTRUCTIONS
+# INBOX-DEVIN · 2026-08-19T18:20Z · COMPLETE INSTRUCTIONS
 
 **You were missing instructions.** Full GO: `docs/bus/CODER-INSTRUCTIONS-NOW.md`. FAST-MERGE applies to **your code PRs too**.
 
@@ -19,13 +19,3 @@ drivers → vendors → dispatch → safety (unpaid only) → fleet → maintena
 ## FORBIDDEN
 Invent Leaves · money first · CC-3/Cascade · watch CI · idle/poll-only
 
----
-# ARCHIVE BELOW — VOID if it contradicts the 2026-08-19T18:20Z block
-
-# INBOX-DEVIN-A · 2026-08-19T15:55Z
-
-Same as `INBOX-DEVIN.md`. chrome=**9227**.
-
-`git pull` → STOP safety re-loop → LIVE CLAIM fleet residual (Band A/B tips) → maint → dispatch → tip Leaves.
-
-OUTBOX: `Devin-A | WORKING · STOP safety · LIVE CLAIM fleet residual reverse · chrome=9227`
