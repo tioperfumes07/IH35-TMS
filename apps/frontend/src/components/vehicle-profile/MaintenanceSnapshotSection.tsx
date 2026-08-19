@@ -81,8 +81,33 @@ export function MaintenanceSnapshotSection({
         )}
       </div>
       {lastService ? (
-        <p className="mt-2 text-xs text-gray-600">
-          Last service: {String(lastService.date)} · ${String(lastService.cost ?? "—")} · {String(lastService.vendor ?? "—")}
+        <p className="mt-2 text-xs text-gray-600" data-testid="vp-maint-snapshot-last-service">
+          Last service:{" "}
+          {lastService.wo_id ? (
+            <EntityLinkOrTombstone
+              kind="work_order"
+              id={String(lastService.wo_id)}
+              name={lastService.display_id}
+              noun="Work order"
+              className="text-slate-700 hover:underline"
+              data-testid="vp-maint-snapshot-last-service-wo-link"
+            />
+          ) : (
+            String(lastService.date ?? "—")
+          )}{" "}
+          · ${String(lastService.cost ?? "—")} ·{" "}
+          {lastService.vendor_id ? (
+            <EntityLinkOrTombstone
+              kind="vendor"
+              id={String(lastService.vendor_id)}
+              name={lastService.vendor}
+              noun="Vendor"
+              className="text-slate-700 hover:underline"
+              data-testid="vp-maint-snapshot-last-service-vendor-link"
+            />
+          ) : (
+            String(lastService.vendor ?? "—")
+          )}
         </p>
       ) : null}
       <Link to={`/maintenance?unit=${unitId}`}>

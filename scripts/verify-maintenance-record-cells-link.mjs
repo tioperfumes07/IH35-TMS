@@ -57,6 +57,7 @@ const REQUIRED = {
   ],
   "apps/frontend/src/components/vehicle-profile/MaintenanceSnapshotSection.tsx": [
     "/maintenance/work-orders/",
+    "/vendors/",
   ],
   // Trailer asset profile (/fleet/trailers/:id) record cells (Block 3 item 5).
   "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx": [

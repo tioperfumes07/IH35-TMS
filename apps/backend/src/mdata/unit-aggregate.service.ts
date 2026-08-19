@@ -408,7 +408,14 @@ export async function buildUnitAggregate(
 
   const lastServiceRes = await client.query(
     `
-      SELECT w.updated_at::text AS date, NULL::int AS odometer, w.total_actual_cost AS cost, v.vendor_name AS vendor
+      SELECT
+        w.id::text AS wo_id,
+        w.display_id,
+        w.updated_at::text AS date,
+        NULL::int AS odometer,
+        w.total_actual_cost AS cost,
+        w.external_vendor_id::text AS vendor_id,
+        v.vendor_name AS vendor
       FROM maintenance.work_orders w
       LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id
                                AND v.operating_company_id = w.operating_company_id
