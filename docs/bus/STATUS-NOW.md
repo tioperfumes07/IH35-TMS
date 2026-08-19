@@ -17,6 +17,13 @@ Updated: 2026-08-19T03:40Z · continuous FAST-MERGE · fix-never-defer
 FAST-MERGE · no defer · Live=BLOCKED until item 12
 
 <!-- CURSOR_STATUS_BLOCK -->
+## Cursor lead · 2026-08-19T03:59Z
+
+**FAST-MERGE:** #9406 optimal_drivers EntityLinks (3922) · #9403 AuthGate (3920) · #9390/#9387/#9380/#9371/#9362
+**Unpaid Live (deploy lag):** auth_gate:driver strip · optimal_drivers:driver · settlement:driver · assignments:picker_law · pre_settlement:reverse · reassign:driver · predispatch EntityLinks
+**Next FO candidates:** customs:picker_law · docs.ocr residuals · planning.calendar unit/load/customer (need chips) · deadhead:load (need suggestions)
+**Live=BLOCKED** · continuous FAST-MERGE on
+
 ## Cursor lead · 2026-08-19T03:55Z
 
 **FAST-MERGE:** #9403 AuthGate EntityLinks (3920) · #9399 claim · #9390 predispatch · prior #9387/#9380/#9371/#9362
