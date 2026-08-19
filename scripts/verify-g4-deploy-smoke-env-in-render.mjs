@@ -44,6 +44,9 @@ function assertConfigured() {
   if (!/preDeployCommand:.*ci:boot-aggregate-smoke/.test(render)) {
     errors.push("render.yaml: preDeployCommand must run ci:boot-aggregate-smoke");
   }
+  if (!/buildFilter:/.test(backendBlock) || !/ignoredPaths:/.test(backendBlock) || !/docs\/\*\*/.test(backendBlock)) {
+    errors.push("render.yaml ih35-tms-backend must ignore docs/** so OUTBOX-only merges do not 502 the API");
+  }
   for (const key of REQUIRED_KEYS) {
     const keyPattern = new RegExp(`-\\s*key:\\s*${key}\\b`);
     if (!keyPattern.test(backendBlock)) {
@@ -72,6 +75,9 @@ services:
   - type: web
     name: ih35-tms-backend
     preDeployCommand: npm run ci:boot-aggregate-smoke
+    buildFilter:
+      ignoredPaths:
+        - docs/**
     envVars:
       - key: NODE_VERSION
         value: 22

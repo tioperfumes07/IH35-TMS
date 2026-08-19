@@ -9,6 +9,14 @@ services:
     buildCommand: npm install && npm run build:backend
     preDeployCommand: npm run db:migrate && npm run db:verify:critical-runtime && npm run ci:boot-api-smoke && IH35_TEST_AUTH_BYPASS=1 npm run ci:boot-aggregate-smoke
     startCommand: npm run start
+    # Single-instance API: every main merge currently bounces healthz (Devin 502). Skip rebuild when
+    # only docs/bus OUTBOX or Cursor rules change. Dashboard service IH35-TMS must keep this filter.
+    buildFilter:
+      ignoredPaths:
+        - docs/**
+        - .cursor/**
+        - AGENTS.md
+        - CLAUDE.md
     envVars:
       - key: NODE_VERSION
         value: 22

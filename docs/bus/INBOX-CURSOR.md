@@ -1,3 +1,3 @@
 # INBOX-CURSOR · NOW · AUTO · NO ARCHIVE
 
-Read `docs/bus/SESSION-BOOT-MANDATE.md`. Lead. **NOW:** keep matrix parse green; `CLS-SILENT-LIST-CAP-SAFETY` + Position History; Form 425 is 21 Aug — do not idle. FAST-MERGE. No pause.
+Read `docs/bus/SESSION-BOOT-MANDATE.md`. Lead. **NOW:** `CLS-SILENT-LIST-CAP-SAFETY` + Position History guard. Form 425 is 21 Aug. FAST-MERGE. No pause. Do not babysit Devin 502.
