@@ -137,7 +137,7 @@ export function AnomalyDetailDrawer({
                   kind={anomaly.subject_type}
                   id={anomaly.subject_id}
                   label={entityLabel(
-                    null,
+                    anomaly.subject_display_name,
                     anomaly.subject_id,
                     anomaly.subject_type === "driver"
                       ? "Driver"

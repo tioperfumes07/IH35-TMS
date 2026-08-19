@@ -1015,6 +1015,7 @@ export type SafetyAnomaly = {
   severity: SafetyAnomalySeverity;
   subject_type: SafetyAnomalySubjectType;
   subject_id: string;
+  subject_display_name?: string | null;
   detected_at: string;
   detector_version: string;
   evidence: Record<string, unknown>;

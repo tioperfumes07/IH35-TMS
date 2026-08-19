@@ -86,7 +86,7 @@ export function AnomaliesTab() {
             <span className="inline-flex items-center gap-1">
               <span>{row.subject_type}</span>
               <span>·</span>
-              <EntityLink kind={kind} id={row.subject_id} label={subjectLabel(row.subject_type)} />
+              <EntityLink kind={kind} id={row.subject_id} label={row.subject_display_name ?? subjectLabel(row.subject_type)} />
             </span>
           );
         },

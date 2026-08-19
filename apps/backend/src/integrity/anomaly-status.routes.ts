@@ -72,6 +72,7 @@ function mapAnomalyRow(row: Record<string, unknown>) {
     severity: String(row.severity),
     subject_type: String(row.subject_type),
     subject_id: String(row.subject_id),
+    subject_display_name: row.subject_display_name ? String(row.subject_display_name) : null,
     detected_at: String(row.detected_at),
     detector_version: String(row.detector_version),
     evidence:
@@ -98,44 +99,67 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
 
     const anomalies = await withTenantScope(user.uuid, tenantId, async (client) => {
       const values: unknown[] = [tenantId];
-      const filters: string[] = ["tenant_id = $1::uuid"];
+      const filters: string[] = ["a.tenant_id = $1::uuid"];
 
       if (parsed.data.status) {
         values.push(parsed.data.status);
-        filters.push(`status = $${values.length}::text`);
+        filters.push(`a.status = $${values.length}::text`);
       }
       if (parsed.data.severity) {
         values.push(parsed.data.severity);
-        filters.push(`severity = $${values.length}::text`);
+        filters.push(`a.severity = $${values.length}::text`);
       }
       if (parsed.data.subject) {
         values.push(parsed.data.subject);
-        filters.push(`subject_type = $${values.length}::text`);
+        filters.push(`a.subject_type = $${values.length}::text`);
       }
       if (parsed.data.subject_id) {
         values.push(parsed.data.subject_id);
-        filters.push(`subject_id = $${values.length}::uuid`);
+        filters.push(`a.subject_id = $${values.length}::uuid`);
       }
 
       const result = await client.query(
         `
           SELECT
-            id::text,
-            tenant_id::text,
-            anomaly_type::text,
-            severity::text,
-            subject_type::text,
-            subject_id::text,
-            detected_at::text,
-            detector_version::text,
-            evidence,
-            status::text,
-            status_changed_at::text,
-            status_changed_by::text,
-            resolution_note
-          FROM integrity.anomalies
+            a.id::text,
+            a.tenant_id::text,
+            a.anomaly_type::text,
+            a.severity::text,
+            a.subject_type::text,
+            a.subject_id::text,
+            CASE a.subject_type
+              WHEN 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
+              WHEN 'unit' THEN u.unit_number
+              WHEN 'customer' THEN c.customer_name
+              WHEN 'invoice' THEN i.display_id
+              ELSE NULL
+            END AS subject_display_name,
+            a.detected_at::text,
+            a.detector_version::text,
+            a.evidence,
+            a.status::text,
+            a.status_changed_at::text,
+            a.status_changed_by::text,
+            a.resolution_note
+          FROM integrity.anomalies a
+          LEFT JOIN mdata.drivers d
+            ON a.subject_type = 'driver'
+           AND d.id = a.subject_id
+           AND d.operating_company_id = a.tenant_id
+          LEFT JOIN mdata.units u
+            ON a.subject_type = 'unit'
+           AND u.id = a.subject_id
+           AND (u.owner_company_id = a.tenant_id OR u.currently_leased_to_company_id = a.tenant_id)
+          LEFT JOIN mdata.customers c
+            ON a.subject_type = 'customer'
+           AND c.id = a.subject_id
+           AND c.operating_company_id = a.tenant_id
+          LEFT JOIN accounting.invoices i
+            ON a.subject_type = 'invoice'
+           AND i.id = a.subject_id
+           AND i.operating_company_id = a.tenant_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY detected_at DESC, id DESC
+          ORDER BY a.detected_at DESC, a.id DESC
         `,
         values
       );
@@ -159,22 +183,45 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
       const result = await client.query(
         `
           SELECT
-            id::text,
-            tenant_id::text,
-            anomaly_type::text,
-            severity::text,
-            subject_type::text,
-            subject_id::text,
-            detected_at::text,
-            detector_version::text,
-            evidence,
-            status::text,
-            status_changed_at::text,
-            status_changed_by::text,
-            resolution_note
-          FROM integrity.anomalies
-          WHERE id = $1::uuid
-            AND tenant_id = $2::uuid
+            a.id::text,
+            a.tenant_id::text,
+            a.anomaly_type::text,
+            a.severity::text,
+            a.subject_type::text,
+            a.subject_id::text,
+            CASE a.subject_type
+              WHEN 'driver' THEN NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
+              WHEN 'unit' THEN u.unit_number
+              WHEN 'customer' THEN c.customer_name
+              WHEN 'invoice' THEN i.display_id
+              ELSE NULL
+            END AS subject_display_name,
+            a.detected_at::text,
+            a.detector_version::text,
+            a.evidence,
+            a.status::text,
+            a.status_changed_at::text,
+            a.status_changed_by::text,
+            a.resolution_note
+          FROM integrity.anomalies a
+          LEFT JOIN mdata.drivers d
+            ON a.subject_type = 'driver'
+           AND d.id = a.subject_id
+           AND d.operating_company_id = a.tenant_id
+          LEFT JOIN mdata.units u
+            ON a.subject_type = 'unit'
+           AND u.id = a.subject_id
+           AND (u.owner_company_id = a.tenant_id OR u.currently_leased_to_company_id = a.tenant_id)
+          LEFT JOIN mdata.customers c
+            ON a.subject_type = 'customer'
+           AND c.id = a.subject_id
+           AND c.operating_company_id = a.tenant_id
+          LEFT JOIN accounting.invoices i
+            ON a.subject_type = 'invoice'
+           AND i.id = a.subject_id
+           AND i.operating_company_id = a.tenant_id
+          WHERE a.id = $1::uuid
+            AND a.tenant_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, tenantId]
