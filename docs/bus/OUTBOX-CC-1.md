@@ -539,3 +539,7 @@ verify:static: 37 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T02:38Z CC-1 | ACCT-F5461 closed (PR #9309, merged a38a280). verify-flow6-auto-invoice-sending.mjs checked loads.routes.ts for the POD convert+send call pair, but ACCT-F351 already moved that logic into a dedicated latch module (delivery-evidence-latch.ts) — loads.routes.ts now just calls latchOnDeliveryEvidence(...), which itself wires convertProformaToOfficial -> sendDraftInvoice at the correct order. Guard's LOADS constant was never repointed after that refactor and FAILed against correct code. Retargeted the constant; check() logic unchanged. Zero product-code change.
 
 verify:static: 38 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T02:40Z CC-1 | ACCT-F5462 closed (PR #9312, merged 86ac8b0). Same ACCT-F351 relocation class as ACCT-F5461 (PR #9309), a separate guard file (verify-invoice-pipeline-proforma-to-factoring.mjs) independently duplicating the stale assumption that convertProformaToOfficial + sendDraftInvoice live in loads.routes.ts. Guard now reads loads.routes.ts + delivery-evidence-latch.ts concatenated for the check; assertion logic unchanged. Zero product-code change.
+
+verify:static: 39 of ~199 now closed this session. Continuing non-stop, fast-merge.
