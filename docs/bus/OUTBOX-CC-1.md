@@ -627,3 +627,7 @@ verify:static: 59 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:48Z CC-1 | ACCT-F5483 closed (PR #9394, merged 5ffd2dd). verify-acct-link-02-accounts-detail-type-fk.mjs required JSX <option value={dt.id}>, but AccountDrawer.tsx's Detail Type field migrated (LST-PICKER-01) from a raw <select> to the governed ReferenceSelect component — options prop is a plain object array { value: dt.id, label: dt.name }, same FK wire, object-property syntax. Widened check. Existing --selftest re-verified; load-bearing proof for new branch done by hand. Zero product-code change.
 
 verify:static: 60 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:51Z CC-1 | ACCT-F5484 closed (PR #9396, merged d596618). verify-aging-report-reverse-leaves.mjs's company-scoping checks required the pre-ACCT-F5471 appliedAsOf variable; real call sites now use appliedFilters.asOfDate (staged-filter migration this session). A second, independent guard file pinned to the same pre-migration shape as verify-accounting-reports-ui-contract.mjs (fixed earlier as ACCT-F5471). Widened both checks. Existing --self-test re-verified PASS. Zero product-code change.
+
+verify:static: 61 of ~199 now closed this session. Continuing non-stop, fast-merge.
