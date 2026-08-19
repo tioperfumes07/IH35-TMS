@@ -6,8 +6,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 export function DefectDetailPage() {
   const { defectId = "" } = useParams();
@@ -78,15 +77,15 @@ export function DefectDetailPage() {
               {defect.item_key} · {defect.severity}
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              Unit <EntityLink kind="unit" id={defect.unit_id} label={entityLabel(defect.unit_number, defect.unit_id, "Unit")} /> · Driver{" "}
-              <EntityLink kind="driver" id={defect.driver_id} label={entityLabel(defect.driver_name, defect.driver_id, "Driver")} /> ·{" "}
+              Unit <EntityLinkOrTombstone kind="unit" id={defect.unit_id} name={defect.unit_number} noun="Unit" /> · Driver{" "}
+              <EntityLinkOrTombstone kind="driver" id={defect.driver_id} name={defect.driver_name} noun="Driver" /> ·{" "}
               {defect.submitted_at ? new Date(defect.submitted_at).toLocaleString() : "—"}
             </p>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-800">{defect.notes || "No driver notes."}</p>
             <p className="mt-2 text-xs text-gray-500">
               Photos: {defect.photo_keys?.length ?? 0} · Status: {defect.triage_status}
               {defect.follow_up_wo_id ? (
-                <> · WO <EntityLink kind="work_order" id={defect.follow_up_wo_id} label={entityLabel(defect.follow_up_wo_display_id, defect.follow_up_wo_id, "Work order")} /></>
+                <> · WO <EntityLinkOrTombstone kind="work_order" id={defect.follow_up_wo_id} name={defect.follow_up_wo_display_id} noun="Work order" /></>
               ) : null}
             </p>
           </header>
