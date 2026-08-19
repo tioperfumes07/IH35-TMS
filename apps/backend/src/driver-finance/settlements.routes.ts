@@ -347,7 +347,13 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_cleared_at,
             s.payment_bank_reference,
             s.payment_bounced_reason,
-            s.payment_method
+            s.payment_method,
+            -- Bookend reverse links (open pre-settlements often have 0 settlement_lines yet):
+            -- views.driver_settlement_with_debt does not expose first/last_load_*.
+            s.first_load_id,
+            s.first_load_number,
+            s.last_load_id,
+            s.last_load_number
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE v.id = $1 AND s.operating_company_id = $2::uuid

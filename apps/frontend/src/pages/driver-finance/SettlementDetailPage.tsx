@@ -164,8 +164,21 @@ export function SettlementDetailPage() {
       // First non-null number wins; a later line without one must not erase it.
       if (!byId.has(loadId) || (byId.get(loadId) === null && number !== null)) byId.set(loadId, number);
     }
+    // Open pre-settlements often have zero lines ("No lines yet") but still carry bookend FKs.
+    // Without these, SettlementHeader shows LOADS IN CYCLE "—" and reverse drill dies.
+    const bookends: Array<{ idKey: string; numKey: string }> = [
+      { idKey: "first_load_id", numKey: "first_load_number" },
+      { idKey: "last_load_id", numKey: "last_load_number" },
+    ];
+    for (const { idKey, numKey } of bookends) {
+      const loadId = settlement[idKey];
+      if (typeof loadId !== "string" || !loadId) continue;
+      const num = settlement[numKey];
+      const number = typeof num === "string" && num ? num : null;
+      if (!byId.has(loadId) || (byId.get(loadId) === null && number !== null)) byId.set(loadId, number);
+    }
     return Array.from(byId, ([id, number]) => ({ id, number }));
-  }, [lines]);
+  }, [lines, settlement]);
 
   const teamSplitQuery = useQuery({
     queryKey: ["driver-finance", "team-settlement-split", settlementLoadId, companyId],
