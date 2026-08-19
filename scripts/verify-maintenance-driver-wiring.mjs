@@ -26,6 +26,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/RoadServiceList.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
   ["apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.driver_id\}\s+name=\{row\.driver_name\}\s+noun="Driver"/],
+  ["apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx", /row\.driver_id[\s\S]{0,120}<EntityLink[\s\S]{0,80}kind="driver"[\s\S]{0,80}id=\{row\.driver_id\}[\s\S]{0,100}label=\{entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)\}/],
 ];
 
 export function audit(files) {
