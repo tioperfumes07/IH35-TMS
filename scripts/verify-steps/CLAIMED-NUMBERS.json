@@ -2564,6 +2564,11 @@
     "purpose": "verify-saf-create-drawers-error-surface-class",
     "date": "2026-08-19"
   },
+  "4050": {
+    "claimed_by": "cursor",
+    "purpose": "verify-company-violation-create-error-surface",
+    "date": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
