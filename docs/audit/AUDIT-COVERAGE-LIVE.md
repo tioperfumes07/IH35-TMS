@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-19 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-19 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-19 |
-| Rows in this file | **1889** | 2026-08-19 |
+| Rows in this file | **1890** | 2026-08-19 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-19 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-19 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-19 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1154 | 2026-08-19 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1155 | 2026-08-19 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1979,3 +1979,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 29200 | dispatch · dispatch.panel.load_bol Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-3 | **Leaves/cells:** `dispatch.panel.load_bol:connectivity` · `dispatch.panel.load_bol:load`. Selected-USMCA load drawer Documents tab — LoadBolPanel (`data-testid=load-pod-bol-panel`) Generate BOL / Download BOL PDF for LUSMCAFREIGHT-20260808-0004; load EntityLink present. No generate mutate. AUDIT id unique (max+160). | LIVE PASS · 2 EXACT CELLS | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 29360 | dispatch · dispatch.modal.quick_assign Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-3 | **Leaves/cells:** `dispatch.modal.quick_assign:connectivity` · `dispatch.modal.quick_assign:load`. Assignment board `+ Quick Assign` opens Quick Assign modal titled with load L-20260811-0026 (Driver/Unit/Trailer fields). Closed without Assign. driver/unit/trailer/picker unpaid this pass. AUDIT id unique (max+160). | LIVE PASS · 2 EXACT CELLS · residual unpaid | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 29520 | dispatch · dispatch.modal.abandonment_report Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-3 | **Leaves/cells:** `dispatch.modal.abandonment_report:connectivity`. Selected-USMCA load drawer Report abandonment opens modal 'Report load abandonment' (Driver · Abandonment time · Location · Towing · Deadhead · Notes). Dismissed Cancel — no Submit. `qbo_chrome` unpaid. AUDIT id unique (max+160). | LIVE PASS · 1 EXACT CELL · qbo unpaid | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 29680 | safety · cargo_claims.create Exact relationship pickers Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-2 · VERIFY-3 | **Leaves/cells:** `cargo_claims.create:customer` · `cargo_claims.create:load` · `cargo_claims.create:driver`. Selected-USMCA `/safety/cargo-claims` → `+ Create cargo claim`: Claimant, Load, and Driver canonical entity pickers each opened with `+ Add new customer/load/driver` as the first row and company-scoped human options beneath (`ZZ-SAMPLE Customer A…`, `L-20260811-0032`, `Jorge Pablo Guadalupe Muñoz Gonzalez`). The complete creator also exposed DatePicker fields, claim reason, MoneyInput/undetermined control, unit/trailer pickers, location, and description. Closed with Cancel; no claim or money mutation. | LIVE PASS · 3 EXACT CELLS | `/safety/cargo-claims` → `+ Create cargo claim`; selected USMCA; LIVE 2026-08-18 | NO | 2026-08-18 | CODEX |
