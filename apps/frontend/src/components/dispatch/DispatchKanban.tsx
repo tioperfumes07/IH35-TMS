@@ -347,15 +347,20 @@ function KanbanDispatchCard({
       <div className="absolute inset-y-0 right-0 w-1 rounded-r bg-gray-400" />
       {/* DISPATCH-UI-REFINE-2 ITEM 2 — unit primary, load # secondary (when a unit is assigned). */}
       <div className="flex items-center justify-between gap-2">
-        <EntityLink
-          kind={load.assigned_unit_id ? "unit" : "load"}
-          id={load.assigned_unit_id ?? load.id}
-          label={cardPrimaryLabel(load)}
-          className="font-semibold text-gray-900"
-          data-testid="kanban-card-primary-entity-link"
-          data-kanban-card-primary="unit"
-          onClick={(event) => event.stopPropagation()}
-        />
+        {load.assigned_unit_id ? (
+          <EntityLinkOrTombstone
+            kind="unit"
+            id={load.assigned_unit_id}
+            name={load.assigned_unit_number}
+            noun="Unit"
+            className="font-semibold text-gray-900"
+            data-testid="kanban-card-primary-entity-link"
+            data-kanban-card-primary="unit"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ) : (
+          <EntityLink kind="load" id={load.id} label={cardPrimaryLabel(load)} className="font-semibold text-gray-900" data-testid="kanban-card-primary-entity-link" onClick={(event) => event.stopPropagation()} />
+        )}
         {hasVisibleFlag(load.flag_code) ? (
           <span
             className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
@@ -380,7 +385,7 @@ function KanbanDispatchCard({
       <div className="mt-1 text-xs text-gray-600">{lane}</div>
       <div className="mt-1 text-xs font-medium text-gray-800">
         {load.assigned_primary_driver_id ? (
-          <EntityLink kind="driver" id={load.assigned_primary_driver_id} label={driverNameLabel(load)} onClick={(event) => event.stopPropagation()} />
+          <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.assigned_primary_driver_name} noun="Driver" onClick={(event) => event.stopPropagation()} />
         ) : (
           driverNameLabel(load)
         )}
@@ -559,15 +564,11 @@ function KanbanStandardCard({
       {/* line 1 — primary: unit-first */}
       <div className="flex items-center gap-2">
         <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
-        <EntityLink
-          kind={load.assigned_unit_id ? "unit" : "load"}
-          id={load.assigned_unit_id ?? load.id}
-          label={cardPrimaryLabel(load)}
-          className="min-w-0 flex-1 truncate font-semibold text-gray-900"
-          data-testid="kanban-standard-primary-entity-link"
-          data-kanban-card-primary="unit"
-          onClick={(event) => event.stopPropagation()}
-        />
+        {load.assigned_unit_id ? (
+          <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" className="min-w-0 flex-1 truncate font-semibold text-gray-900" data-testid="kanban-standard-primary-entity-link" data-kanban-card-primary="unit" onClick={(event) => event.stopPropagation()} />
+        ) : (
+          <EntityLink kind="load" id={load.id} label={cardPrimaryLabel(load)} className="min-w-0 flex-1 truncate font-semibold text-gray-900" data-testid="kanban-standard-primary-entity-link" onClick={(event) => event.stopPropagation()} />
+        )}
         {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
         {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
         {hasVisibleFlag(load.flag_code) ? (
@@ -600,10 +601,11 @@ function KanbanStandardCard({
             identifying part — yields first and only appears on wide boards. Field ORDER is unchanged
             (§7 additive-only): only widths and the lane's responsive visibility move. */}
         {load.assigned_primary_driver_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="driver"
             id={load.assigned_primary_driver_id}
-            label={driverNameLabel(load)}
+            name={load.assigned_primary_driver_name}
+            noun="Driver"
             className="min-w-0 flex-1 truncate"
             data-testid="kanban-standard-driver-link"
             onClick={(event) => event.stopPropagation()}
@@ -649,10 +651,11 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
     >
       <div className="flex items-center justify-between gap-2">
         {load.assigned_unit_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="unit"
             id={load.assigned_unit_id}
-            label={unitLabel}
+            name={load.assigned_unit_number}
+            noun="Unit"
             className="min-w-0 truncate text-xs font-semibold text-gray-900"
             data-testid="awaiting-truck-unit-link"
             onClick={(e) => e.stopPropagation()}
@@ -674,10 +677,11 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
       </div>
       <div className="mt-0.5 truncate text-[11px] text-gray-500">
         {load.assigned_primary_driver_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="driver"
             id={load.assigned_primary_driver_id}
-            label={driverLabel ?? entityLabel(null, load.assigned_primary_driver_id, "Driver")}
+            name={load.assigned_primary_driver_name}
+            noun="Driver"
             data-testid="awaiting-truck-driver-link"
             onClick={(e) => e.stopPropagation()}
           />

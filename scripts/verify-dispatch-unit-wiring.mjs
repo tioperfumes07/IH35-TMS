@@ -19,7 +19,7 @@ const LABEL = "verify-dispatch-unit-wiring";
 const CHECKS = [
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="unit" id=\{load\.assigned_unit_id\} name=\{load\.unit_number\} noun="Unit"/],
   ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /EntityLinkOrTombstone kind="unit" id=\{load\.assigned_unit_id\} name=\{load\.assigned_unit_number\} noun="Unit"/],
-  ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind=\{load\.assigned_unit_id \? "unit" : "load"\}/],
+  ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind="unit" id=\{load\.assigned_unit_id\} name=\{load\.assigned_unit_number\} noun="Unit"/],
   ["apps/frontend/src/components/dispatch/DispatchList.tsx", /<InlineUnitPicker/],
   ["apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx", /kind="unit" id=\{row\.previous_unit_id\}/],
   ["apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx", /kind="unit" id=\{load\.unit_id\}/],
@@ -35,7 +35,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx", /kind="unit" id=\{driver\.unit_id \?\? null\}/],
   ["apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx", /kind="unit" id=\{row\.id\}/],
   ["apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", /kind="unit"[\s\S]{0,40}id=\{load\.assigned_unit_id\}/],
-  ["apps/frontend/src/pages/dispatch/LoadCreateModal.tsx", /kind="unit" id=\{availabilityQuery\.data\.asset_id\}/],
+  ["apps/frontend/src/pages/dispatch/LoadCreateModal.tsx", /kind="unit"[\s\S]{0,80}id=\{availabilityQuery\.data\?\.asset_id\}[\s\S]{0,80}name=\{availabilityQuery\.data\?\.asset_label\}[\s\S]{0,40}noun="Unit"/],
   ["apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx", /const assignedUnitId = watch \? String\(watch\("assigned_unit_id"\)/],
   ["apps/frontend/src/pages/dispatch/components/QuickAssignModal.tsx", /unit_id: unitId \|\| undefined/],
   ["apps/frontend/src/components/dispatch/AuthGatePanel.tsx", /if \(props\.unitUuid\) params\.set\("unit_uuid", props\.unitUuid\)/],
