@@ -22,6 +22,22 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user as { uuid: string; role: string };
 }
 
+// ACCT-F5585: POST /weekly-close had no role gate -- authed() only requires a session. This route
+// BULK-creates a real draft settlement (driver_finance.driver_settlements, status='presettle') for
+// EVERY authorized active driver in the company in one call -- more consequential than a single
+// settlement create, the same tier of financial-control operation as ACCT-F5576. Matches
+// settlements.routes.ts's own SETTLEMENT_WRITE_ROLES for the sibling settlement domain.
+const WEEKLY_CLOSE_WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Payroll"]);
+function requireWeeklyCloseWriteRole(req: FastifyRequest, reply: FastifyReply) {
+  const user = authed(req, reply);
+  if (!user) return null;
+  if (!WEEKLY_CLOSE_WRITE_ROLES.has(String(user.role ?? ""))) {
+    reply.code(403).send({ error: "forbidden", detail: "weekly close requires an office role" });
+    return null;
+  }
+  return user;
+}
+
 function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
 }
@@ -236,7 +252,7 @@ export async function buildWeeklyCloseDraftForDriver(
 
 export async function registerWeeklyCloseRoutes(app: FastifyInstance) {
   app.post("/api/v1/settlements/weekly-close", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireWeeklyCloseWriteRole(req, reply);
     if (!user) return;
     const parsed = bodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);

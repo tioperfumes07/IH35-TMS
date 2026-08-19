@@ -68,6 +68,7 @@ const guards = [
   "verify-unit-finance-gl-je-reverse.mjs",
   "verify-unit-finance-linkage-ap-bill.mjs",
   "verify-vendor-bill-payment-write-role-gated.mjs",
+  "verify-weekly-close-role-gated.mjs",
   "verify-wave-c-ap-bill-fe-all-modules.mjs",
   "verify-wave-c-bank-cross-module.mjs",
   "verify-wave-c-gl-je-accounting-core-leaves.mjs",
