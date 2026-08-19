@@ -788,7 +788,7 @@ export function WorkOrderDetailPage() {
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <EntityLinkOrTombstone kind="unit" id={wo.unit_id as string | null} name={wo.unit_number ?? wo.unit_display_id} noun="Unit" />
                   {wo.equipment_id ? (
-                    <EntityLinkOrTombstone kind="trailer" id={wo.equipment_id} name={wo.equipment_number} noun="Trailer" />
+                    <EntityLinkOrTombstone kind="trailer" id={wo.equipment_id as string | null} name={wo.equipment_number} noun="Trailer" />
                   ) : null}
                   <Button type="button" size="sm" variant="secondary" disabled={!editTarget} onClick={() => setEditing(true)}>
                     Change in Edit
