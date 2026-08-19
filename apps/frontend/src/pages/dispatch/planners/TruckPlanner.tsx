@@ -4,8 +4,7 @@ import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { listUnitsWithoutLoad } from "../../../api/dispatch";
 import { listUnits } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
-import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { usePlannerRange } from "./PlannerRangeContext";
@@ -176,9 +175,9 @@ export function TruckPlanner() {
               truckRows.map((row) => (
                 <tr key={row.unitId} className="border-t border-gray-100">
                   <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
-                    <EntityLink kind="unit" id={row.unitId} label={entityLabel(row.unitNumber, row.unitId, "Unit")} />
+                    <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />
                   </td>
-                  <td className="border-r px-1 py-0.5 text-gray-600"><EntityLink kind="driver" id={row.driverId} label={entityLabel(row.driverName, row.driverId, "Driver")} /></td>
+                  <td className="border-r px-1 py-0.5 text-gray-600"><EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" /></td>
                   {days.map((d) => (
                     <td key={d} className={`border-l border-gray-50 px-0 py-0 text-center ${truckStatusClass(row.status)}`} title={row.status}>
                       <span className="text-[9px]">{truckStatusLabel(row.status)}</span>
