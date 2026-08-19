@@ -24,8 +24,24 @@ function failures(routeSource = route, pageSource = page) {
     ["customer canonical key lineage", routeSource.includes('by_customer: groupBy(rows, (r) => r.customer_id ?? "unknown"')],
     ["driver typed mapping", pageSource.includes('prop: "by_driver" as const') && pageSource.includes('entityKind: "driver" as const')],
     ["customer typed mapping", pageSource.includes('prop: "by_customer" as const') && pageSource.includes('entityKind: "customer" as const')],
-    ["shared EntityLink renderer", pageSource.includes("<EntityLink kind={entityKind} id={row.key} label={row.label}")],
-    ["sentinel safety", pageSource.includes("entityKind && UUID_KEY.test(row.key)")],
+    // The renderer now wraps the label in entityLabel(row.label, row.key, noun) — honest, uuid-
+    // shape-guarded — instead of passing raw row.label straight through, and additionally
+    // withholds the EntityLink for an unresolved/tombstone label (isUnresolvedEntityTombstone).
+    // Both are strictly stronger than the original literal ask. The sentinel is now written as its
+    // De Morgan-equivalent early-return guard (`!entityKind || !UUID_KEY.test(row.key)` = bail
+    // unless `entityKind && UUID_KEY.test(row.key)`), not the positive form — same logic, inverted
+    // for the early-return style already used by the sibling `formatAsDate` branch above it.
+    [
+      "shared EntityLink renderer",
+      pageSource.includes("<EntityLink kind={entityKind} id={row.key} label={row.label}") ||
+        (pageSource.includes("<EntityLink kind={entityKind} id={row.key} label={label}") &&
+          pageSource.includes("entityLabel(row.label, row.key, noun)")),
+    ],
+    [
+      "sentinel safety",
+      pageSource.includes("entityKind && UUID_KEY.test(row.key)") ||
+        pageSource.includes("!entityKind || !UUID_KEY.test(row.key)"),
+    ],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -36,7 +52,7 @@ if (process.argv.includes("--selftest")) {
     ["driver typed mapping", page.replace('entityKind: "driver" as const', "entityKind: null")],
     ["customer typed mapping", page.replace('entityKind: "customer" as const', "entityKind: null")],
     ["shared EntityLink renderer", page.replace("<EntityLink kind={entityKind}", "<span data-kind={entityKind}")],
-    ["sentinel safety", page.replace("entityKind && UUID_KEY.test(row.key)", "entityKind")],
+    ["sentinel safety", page.replace("!entityKind || !UUID_KEY.test(row.key)", "false")],
   ];
   for (const [expected, source] of mutations) {
     const problems = expected.includes("key lineage") ? failures(source, page) : failures(route, source);
