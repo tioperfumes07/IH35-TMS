@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listSubmissionQueue } from "../../api/factoring";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 
 // LINK-F5171/LINK-F5181 — factoring:submit.queue reverse gap. listSubmissionQueue already selects
@@ -37,7 +38,7 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
               <EntityLink
                 kind="factoring_submit_queue_customer"
                 id={customerId}
-                label={`${item.display_id ?? item.invoice_id} · ${formatUsdCents(item.total_cents)} · ${item.is_submittable ? "Docs OK" : "Missing docs"}`}
+                label={`${entityLabel(item.display_id, item.invoice_id, "Invoice")} · ${formatUsdCents(item.total_cents)} · ${item.is_submittable ? "Docs OK" : "Missing docs"}`}
                 className="text-xs font-semibold text-slate-700 hover:underline"
               />
             </li>

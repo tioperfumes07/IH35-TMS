@@ -90,6 +90,9 @@ export function assertFactoringSubmitQueueReverse(sources) {
   if (/from "react-router-dom"/.test(section)) {
     problems.push(`${SECTION}: must not import react-router Link`);
   }
+  if (!/entityLabel\(item\.display_id, item\.invoice_id, "Invoice"\)/.test(section)) {
+    problems.push(`${SECTION}: invoice label must reject raw invoice-id fallback`);
+  }
 
   if (!/setSearchParams/.test(queuePage)) {
     problems.push(`${QUEUE_PAGE}: submit queue filters must sync to URL (setSearchParams)`);
@@ -130,7 +133,8 @@ function selftest() {
         return \`/factoring/submit?load_id=\${id}\`;
     `,
     [SECTION]: `listSubmissionQueue(operatingCompanyId, { customer_id: customerId }).then((r) => r.items)
-      factoring_submit_queue_customer`,
+      factoring_submit_queue_customer
+      entityLabel(item.display_id, item.invoice_id, "Invoice")`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringSubmitQueueReverseSection } from "../components/customers/CustomerFactoringSubmitQueueReverseSection";
       <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
@@ -155,6 +159,7 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace("customer_id: customerId", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringSubmitQueueReverseSection }", "// removed") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("customerId={id}", "") },
+    { ...good, [SECTION]: good[SECTION].replace("entityLabel", "rawLabel") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertFactoringSubmitQueueReverse(mutated).length === 0) {
