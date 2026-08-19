@@ -690,3 +690,7 @@ verify:static: 74 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:40Z CC-1 | ACCT-F5498 closed (PR #9566, merged fb43e68). verify-all-modals-have-x-close.mjs FAILed AddPartsLinkModal.tsx, but the file already has a real close button with aria-label="Close" — the guard's regex required trailing whitespace after "Close" (for "Close dialog"-style labels), so a bare aria-label="Close" (7 files use it app-wide) never matched. Widened to accept "Close" followed by either whitespace or the closing quote. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 75 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:46Z CC-1 | ACCT-F5499 closed (PR #9573, merged 9345cbe). SELF-CORRECTION + guard fix: verify-join-entity-scoped.mjs FAILed 2 offenders — (1) my own earlier ACCT-F5435 query (SELECT is_sample_data FROM mdata.drivers WHERE id = $1::uuid) had no operating_company_id predicate despite it being in scope and used by every sibling query — a genuine cross-entity read gap, fixed now; (2) drug-alcohol/program.service.ts's joins ARE correctly scoped (d.operating_company_id::text = e.operating_company_id::text) but the guard's regex never tolerated a Postgres cast between column and operator — a real false positive, guard fixed. Added 2 new selftest cases proving the widening is precise. tsc -b clean.
+
+verify:static: 76 of ~199 now closed this session. Continuing non-stop, fast-merge.
