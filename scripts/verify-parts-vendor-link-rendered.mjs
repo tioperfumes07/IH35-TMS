@@ -31,8 +31,12 @@ export function check(source) {
   if (!/vendor_id/.test(source)) {
     f.push(`${TABLE}: must wire vendor_id on purchase form / row`);
   }
-  if (!/ReferenceSelect/.test(source) && !/vendor-select|VendorSelect|vendor picker/i.test(source)) {
-    f.push(`${TABLE}: must include a vendor picker (ReferenceSelect preferred)`);
+  const hasVendorEntityPicker = /<EntityPicker[\s\S]{0,180}kind=["']vendor["'][\s\S]{0,220}operatingCompanyId=\{companyId\}/.test(source);
+  if (!/ReferenceSelect/.test(source) && !hasVendorEntityPicker && !/vendor-select|VendorSelect|vendor picker/i.test(source)) {
+    f.push(`${TABLE}: must include a company-scoped canonical vendor picker`);
+  }
+  if (hasVendorEntityPicker && !/<EntityPicker[\s\S]{0,260}kind=["']vendor["'][\s\S]{0,300}allowCreate/.test(source)) {
+    f.push(`${TABLE}: EntityPicker vendor must allow canonical inline create`);
   }
   if (!/createKind\s*=\s*["']vendor["']/.test(source) && !/createKind=\{"vendor"\}/.test(source)) {
     // Soft: ReferenceSelect with createKind vendor is the locked "+ Add new vendor" pattern
@@ -72,9 +76,9 @@ function main() {
 function selftest() {
   const good = `
     import { EntityLink } from "...";
-    import { ReferenceSelect } from "...";
+    import { EntityPicker } from "...";
     recordPartsPurchase(companyId, { vendor_id: form.vendor_id });
-    <ReferenceSelect createKind="vendor" value={form.vendor_id} />
+    <EntityPicker kind="vendor" operatingCompanyId={companyId} value={form.vendor_id} allowCreate />
     <EntityLink kind="vendor" id={row.vendor_id} />
   `;
   const bad = `export function PartsInventoryTable() { return <div>no vendor</div>; }`;
