@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDeadheadNextLoadSuggestions, type DeadheadNextLoadSuggestion } from "../../api/dispatch";
 import { formatUsdCents } from "../../lib/money";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export type DeadheadOptimizerPanelProps = {
@@ -64,7 +62,7 @@ export function DeadheadOptimizerPanel({
         {/* Exact Leaves dispatch.panel.deadhead_optimizer:unit — unitUuid was API-only */}
         {unitUuid ? (
           <p className="mt-1 text-xs text-slate-600" data-testid="deadhead-optimizer-unit-entitylink">
-            Unit: <EntityLink kind="unit" id={unitUuid} label={entityLabel(null, unitUuid, "Unit")} />
+            Unit: <EntityLinkOrTombstone kind="unit" id={unitUuid} name={null} noun="Unit" />
           </p>
         ) : null}
       </div>
