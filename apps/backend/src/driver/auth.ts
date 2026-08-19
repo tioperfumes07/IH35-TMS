@@ -8,6 +8,7 @@ export type DriverSession = {
   full_name: string;
   status: string;
   preferred_language: "en" | "es";
+  operating_company_id: string;
 };
 
 declare module "fastify" {
@@ -34,13 +35,20 @@ export async function requireDriverSession(req: FastifyRequest, reply: FastifyRe
     return false;
   }
   const driver = await withCurrentUser(req.user.uuid, async (client) => {
-    const result = await client.query<{ id: string; full_name: string; status: string; preferred_language: "en" | "es" | null }>(
+    const result = await client.query<{
+      id: string;
+      full_name: string;
+      status: string;
+      preferred_language: "en" | "es" | null;
+      operating_company_id: string;
+    }>(
       `
         SELECT
           d.id,
           concat_ws(' ', d.first_name, d.last_name) AS full_name,
           d.status::text AS status,
-          COALESCE(iu.preferred_language, 'en')::text AS preferred_language
+          COALESCE(iu.preferred_language, 'en')::text AS preferred_language,
+          d.operating_company_id::text AS operating_company_id
         FROM mdata.drivers d
         LEFT JOIN identity.users iu ON iu.id = d.identity_user_id
         WHERE d.identity_user_id = $1

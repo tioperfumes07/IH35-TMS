@@ -35,7 +35,7 @@ function mapError(error: unknown) {
 }
 
 export async function registerDriverSettlementDisputesP6Routes(app: FastifyInstance) {
-  app.post("/api/v1/driver/settlements/:settlementId/dispute", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/driver/settlements/:settlementId/dispute", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -47,6 +47,16 @@ export async function registerDriverSettlementDisputesP6Routes(app: FastifyInsta
     if (!query.success) return sendValidationError(reply, query.error);
     const body = submitBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
+    // ACCT-F5572: operating_company_id came from the query string, unchecked, and was written
+    // straight onto the new dispute row + used as the RLS GUC. driver_settlement_disputes RLS has
+    // no membership clause (GUC-only), so a mismatched value here doesn't leak another company's
+    // rows (driver_id/settlement_id ownership is still enforced below) -- but it silently mislabels
+    // the driver's OWN dispute with the wrong operating_company_id, orphaning it from every
+    // office-side query that joins on d.operating_company_id = s.operating_company_id. Reject
+    // instead of trusting the caller; the driver's real company comes from their own session row.
+    if (query.data.operating_company_id !== driver.operating_company_id) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
 
     try {
       const created = await submitSettlementDisputeP6(user.uuid, {
@@ -66,7 +76,7 @@ export async function registerDriverSettlementDisputesP6Routes(app: FastifyInsta
     }
   });
 
-  app.get("/api/v1/driver/settlements/:settlementId/disputes", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/driver/settlements/:settlementId/disputes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -76,6 +86,10 @@ export async function registerDriverSettlementDisputesP6Routes(app: FastifyInsta
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    // ACCT-F5572: see the /dispute route above for why this must match the driver's own company.
+    if (query.data.operating_company_id !== driver.operating_company_id) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
 
     try {
       const disputes = await listSettlementDisputesForSettlementDriverP6(user.uuid, {
@@ -90,7 +104,7 @@ export async function registerDriverSettlementDisputesP6Routes(app: FastifyInsta
     }
   });
 
-  app.patch("/api/v1/driver/disputes/:disputeId", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch("/api/v1/driver/disputes/:disputeId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -100,6 +114,10 @@ export async function registerDriverSettlementDisputesP6Routes(app: FastifyInsta
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    // ACCT-F5572: see the /dispute route above for why this must match the driver's own company.
+    if (query.data.operating_company_id !== driver.operating_company_id) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
 
     const bodySchema = z.object({ action: z.literal("withdraw") });
     const body = bodySchema.safeParse(req.body ?? {});
