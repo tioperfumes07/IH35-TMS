@@ -10,11 +10,20 @@ function readRel(root, rel) {
   const p = path.join(root, rel);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
 }
+// CC-2 GUARD 2026-08-19: re-anchored. The original ReferenceSelect + locally-debounced
+// listCustomers(search: customerSearch) implementation this guard checked for was replaced —
+// per the in-code CLS-SILENT-CAP comment — with the canonical EntityPicker, which does its own
+// real server-search internally and has no capped local roster to silently truncate. The old
+// checks (createKind=customer, customerSearch/listCustomers wiring, onSearch={setCustomerSearch})
+// all check for source text that no longer exists anywhere in this file; re-anchored to the real,
+// strictly more honest current implementation instead of the retired one.
 export function collectProblems(root = ROOT) {
   const problems = [];
   const src = readRel(root, FILE);
   if (!src) return [`missing ${FILE}`];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  // Independently converged fix (CC-2 had a narrower 2-check re-anchor; kept this already-
+  // integrated version — accepts either contract and checks 4 real EntityPicker attributes).
   const referenceSelectContract =
     /createKind=["']customer["']/.test(code) &&
     /customerSearch/.test(code) &&
