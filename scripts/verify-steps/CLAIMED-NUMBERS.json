@@ -4216,7 +4216,7 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1179,
+  "total_claimed": 1180,
   "3906": {
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
@@ -4226,5 +4226,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-customers-transaction-filter-staged-apply"
+  },
+  "3910": {
+    "claimed_at": "2026-08-19",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-settlement-summary-resolves-line-linked"
   }
 }
