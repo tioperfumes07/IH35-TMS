@@ -367,9 +367,14 @@ function KanbanDispatchCard({
         ) : null}
       </div>
       {cardSecondaryLoadNumber(load) ? (
-        <div className="font-mono text-[11px] text-gray-500" data-kanban-card-secondary="load-number">
-          {cardSecondaryLoadNumber(load)}
-        </div>
+        <EntityLink
+          kind="load"
+          id={load.id}
+          label={cardSecondaryLoadNumber(load) ?? undefined}
+          className="font-mono text-[11px] text-gray-500"
+          data-kanban-card-secondary="load-number"
+          onClick={(event) => event.stopPropagation()}
+        />
       ) : null}
 
       <div className="mt-1 text-xs text-gray-600">{lane}</div>
