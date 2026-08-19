@@ -639,3 +639,7 @@ verify:static: 62 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T04:00Z CC-1 | ACCT-F5486 closed (PR #9408, merged 83f85dc). verify-wave-a-customer-column.mjs FAILed SubmissionWorkqueue.tsx (multi-line JSX false positive); verify-wave-a-customer-all-modules.mjs FAILed ManagementReportPackagePage.tsx (extracted ManagementCustomerCell component delegate, real FK preserved). Widened both checks. Boarded 2 genuinely out-of-lane findings from the same composed-guard run (legal/contracts real gap; lists/names false positive) rather than fixing directly. Existing --selftests re-verified; load-bearing proof for new branch done by hand. Zero product-code change.
 
 verify:static: 63 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T04:02Z CC-1 | ACCT-F5487 closed (PR #9413, merged ec4ff9e). verify-wave-a-vendor-all-modules.mjs FAILed InventoryPartsStockPage.tsx's vendor FK check — real EntityLink is multi-line JSX with an honest tombstone branch, same multi-line-JSX false-positive class fixed repeatedly this session. Whitespace-tolerant pattern. Existing --selftest re-verified PASS. Zero product-code change.
+
+verify:static: 64 of ~199 now closed this session. Continuing non-stop, fast-merge.
