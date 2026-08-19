@@ -75,6 +75,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportTrialBalanceStatement({
         userId: user.uuid,
@@ -96,6 +101,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = rangedQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportProfitLossStatement({
         userId: user.uuid,
@@ -119,6 +129,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = rangedQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportProfitLossStatement({
         userId: user.uuid,
@@ -142,6 +157,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportBalanceSheetStatement({
         userId: user.uuid,
@@ -163,6 +183,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportBalanceSheetStatement({
         userId: user.uuid,
@@ -184,6 +209,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = rangedQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportCashFlowStatement({
         userId: user.uuid,
@@ -207,6 +237,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = rangedQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportCashFlowStatement({
         userId: user.uuid,
@@ -230,6 +265,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportArAgingStatement({
         userId: user.uuid,
@@ -251,6 +291,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportArAgingStatement({
         userId: user.uuid,
@@ -272,6 +317,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportApAgingStatement({
         userId: user.uuid,
@@ -293,6 +343,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
+    // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
+    // service sets app.operating_company_id from this exact caller-supplied value with no independent
+    // membership verification.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportApAgingStatement({
         userId: user.uuid,
