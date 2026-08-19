@@ -4331,5 +4331,10 @@
     "guard": "verify-fleet-oos-strip-unit-entitylink",
     "claimer": "cursor",
     "claimed_at": "2026-08-19"
+  },
+  "3952": {
+    "guard": "verify-kanban-awaiting-truck-entitylinks",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-19"
   }
 }
