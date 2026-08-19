@@ -685,3 +685,7 @@ verify:static: 73 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:36Z CC-1 | ACCT-F5497 closed (PR #9561, merged a257a0b). REAL FIX: verify-no-dead-kpi-cards.mjs (C8) FAILed 6 dead KPI cards on FinanceOverviewPage.tsx — a genuine defect. Aggregates are computed from finance.forecast_lines; the scenario detail page (/finance/scenarios/:id, ScenarioLinesTable) already shows those exact line items, same destination the page's own "View scenario →" link goes to, just never wired onto the 6 tiles. Tile factory now wraps the shared DrillKpiCard with a real `to` target. Did not use the unavailable state (budget near/at cap elsewhere). tsc -b clean.
 
 verify:static: 74 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:40Z CC-1 | ACCT-F5498 closed (PR #9566, merged fb43e68). verify-all-modals-have-x-close.mjs FAILed AddPartsLinkModal.tsx, but the file already has a real close button with aria-label="Close" — the guard's regex required trailing whitespace after "Close" (for "Close dialog"-style labels), so a bare aria-label="Close" (7 files use it app-wide) never matched. Widened to accept "Close" followed by either whitespace or the closing quote. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 75 of ~199 now closed this session. Continuing non-stop, fast-merge.
