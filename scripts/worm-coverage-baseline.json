@@ -23,6 +23,7 @@
     "accounting.related_party_loan_entries",
     "accounting.related_party_loan_schedule",
     "accounting.vendor_credits",
+    "accounting.vendor_payment_methods",
     "banking.bank_accounts",
     "banking.bank_transaction_splits",
     "banking.bank_transactions",
