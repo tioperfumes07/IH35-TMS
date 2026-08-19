@@ -4256,5 +4256,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-auth-gate-panel-entitylinks"
+  },
+  "3922": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-optimal-drivers-panel-entitylinks"
   }
 }
