@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCancellationsReport, type CancellationBucket } from "../../api/reports";
 import { ReportsSubNav } from "./ReportsSubNav";
@@ -12,6 +11,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -124,13 +124,24 @@ function CancellationBucketTable({
 export function CancellationsReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [applied, setApplied] = useState<{ from?: string; to?: string }>({});
+  // LV-REPORTS-CANCELLATIONS-FILTER-SILENT-APPLY / CLS-REPORTS-FILTER-APPLY-CANCEL-RESET —
+  // From/To must stage until Apply; Cancel restores draft; Reset clears both draft + applied.
+  const emptyFilters = { from: "", to: "" };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: setApplied,
+  });
 
   const query = useQuery({
     queryKey: ["reports", "cancellations", companyId, applied.from, applied.to],
-    queryFn: () => getCancellationsReport({ operating_company_id: companyId, from: applied.from, to: applied.to }),
+    queryFn: () =>
+      getCancellationsReport({
+        operating_company_id: companyId,
+        from: applied.from || undefined,
+        to: applied.to || undefined,
+      }),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -138,6 +149,7 @@ export function CancellationsReportPage() {
   const data = query.data;
   const total = data?.total ?? { count: 0, total_charge_cents: 0, billable_count: 0 };
   const tableLoading = query.isPending || (query.isFetching && !data);
+  const activeFilterCount = (applied.from ? 1 : 0) + (applied.to ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -149,32 +161,32 @@ export function CancellationsReportPage() {
       />
       <ReportsSubNav />
 
-      <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-        <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
-          From
-          <DatePicker value={from} onChange={setFrom} />
-        </label>
-        <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
-          To
-          <DatePicker value={to} onChange={setTo} />
-        </label>
-        <Button type="button" onClick={() => setApplied({ from: from || undefined, to: to || undefined })}>
-          Apply
-        </Button>
-        {(applied.from || applied.to) && (
-          <button
-            type="button"
-            className="rounded-sm border border-gray-300 bg-white px-2 py-1 font-semibold text-gray-700 hover:bg-gray-50"
-            onClick={() => {
-              setFrom("");
-              setTo("");
-              setApplied({});
-            }}
-          >
-            Clear
-          </button>
-        )}
-      </div>
+      <CollapsedListFilters
+        activeFilterCount={activeFilterCount}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
+        testIdPrefix="reports-cancellations"
+        className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs"
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
+            From
+            <DatePicker
+              value={staged.draft.from}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, from: next }))}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
+            To
+            <DatePicker
+              value={staged.draft.to}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
 
       {query.isError ? (
         <ListErrorState
