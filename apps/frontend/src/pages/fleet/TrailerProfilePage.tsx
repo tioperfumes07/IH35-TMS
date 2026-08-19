@@ -24,9 +24,8 @@ import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistory
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
-import { entityLabel } from "../../lib/entity-label";
 import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
 
 export type TrailerProfileAggregate = {
@@ -127,10 +126,11 @@ export function TrailerProfilePage() {
         <div className="mt-2 space-y-1 text-xs">
           {(aggregate.loads ?? []).map((load) => (
             <div key={String(load.load_id)} className="flex items-center justify-between gap-3">
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="load"
-                id={String(load.load_id)}
-                label={entityLabel(load.load_number, load.load_id, "Load")}
+                id={load.load_id == null ? null : String(load.load_id)}
+                name={load.load_number}
+                noun="Load"
               />
               <span className="text-gray-500">{String(load.status ?? "—")}</span>
             </div>

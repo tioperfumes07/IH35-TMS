@@ -43,8 +43,8 @@ export function problems(
   if (!/lah\.operating_company_id = \$2::uuid/.test(service)) {
     failures.push("P31 reverse read must be operating-company scoped");
   }
-  if (!/data-testid="tp-section-3b-load-history"/.test(page) || !/<EntityLink[\s\S]{0,160}?kind="load"/.test(page)) {
-    failures.push("P31 trailer profile must render linked load history with EntityLink");
+  if (!/data-testid="tp-section-3b-load-history"/.test(page) || !/<EntityLinkOrTombstone[\s\S]{0,160}?kind="load"[\s\S]{0,180}?noun="Load"/.test(page)) {
+    failures.push("P31 trailer profile must render linked load history with a canonical link or tombstone");
   }
 
   // CREATE-PATH-TRIP #6343 — trailer profile must mount fuel + expense reverse (list filters #6340).
