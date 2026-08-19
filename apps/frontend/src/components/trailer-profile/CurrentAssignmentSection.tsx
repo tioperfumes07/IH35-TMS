@@ -1,5 +1,4 @@
-import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export function CurrentAssignmentSection({
   assignment,
@@ -16,10 +15,11 @@ export function CurrentAssignmentSection({
       <p className="mt-2 text-xs text-gray-700">
         Attached truck:{" "}
         {unit?.unit_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="unit"
             id={String(unit.unit_id)}
-            label={entityLabel(unit.unit_number, unit.unit_id, "Unit")}
+            name={unit.unit_number}
+            noun="Unit"
           />
         ) : (
           "None"
@@ -28,15 +28,17 @@ export function CurrentAssignmentSection({
       <p className="text-xs text-gray-700">
         Current load:{" "}
         {load?.load_id ? (
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="load"
             id={String(load.load_id)}
-            label={`${entityLabel(load.load_number, load.load_id, "Load")} (${String(load.status ?? "—")})`}
+            name={load.load_number}
+            noun="Load"
           />
         ) : (
           "None"
         )}
       </p>
+      {load?.load_id ? <p className="text-xs text-gray-500">Status: {String(load.status ?? "—")}</p> : null}
     </section>
   );
 }
