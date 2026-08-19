@@ -138,7 +138,19 @@ export function check(sources) {
   }
 
   const factoring = sources.factoring ?? "";
-  if (!/!invoicesQuery\.isLoading\s*&&\s*!invoicesQuery\.isError\s*&&/.test(factoring)) {
+  // Same equally-honest alternate shape as verify-accounting-query-error-states.mjs's
+  // InvoiceCreateModal check: ParityTable's own emptyText ternary (invoicesQuery.isLoading ?
+  // "Loading…" : invoicesQuery.isError ? "Could not load…" : "No results…") is structurally the
+  // same guarantee as a raw !isLoading && !isError boolean guard — ParityTable itself already
+  // gates on its own `loading` prop before ever reaching emptyText. The real file goes further:
+  // it ALSO renders a dedicated ListErrorBanner with a retry when invoicesQuery.isError, on top
+  // of the honest emptyText fallback.
+  const hasRawGuard = /!invoicesQuery\.isLoading\s*&&\s*!invoicesQuery\.isError\s*&&/.test(factoring);
+  const hasParityTableEmptyTextTernary =
+    /emptyText=\{\s*invoicesQuery\.isLoading\s*\?[\s\S]{0,80}?:\s*invoicesQuery\.isError\s*\?[\s\S]{0,200}?:[\s\S]{0,120}?\}/.test(
+      factoring
+    );
+  if (!hasRawGuard && !hasParityTableEmptyTextTernary) {
     failures.push("SubmitFactoringModal must not show a false empty-invoice state after query failure");
   }
 

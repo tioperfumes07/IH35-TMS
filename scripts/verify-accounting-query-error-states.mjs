@@ -83,7 +83,18 @@ export function check(sources) {
   }
 
   const invoiceModal = sources.invoiceModal ?? "";
-  if (!/!isLoading\s*&&\s*!isError\s*&&\s*loads\.length\s*===\s*0/.test(invoiceModal)) {
+  // Two equally-honest shapes: (a) a raw boolean guard `!isLoading && !isError && loads.length===0`
+  // around a hand-rolled empty element, or (b) ParityTable's own emptyText prop — ParityTable
+  // itself already gates on its `loading` prop BEFORE ever reaching emptyText (renders "Loading…"
+  // and returns, never falls through), so a ternary that only reaches its final "no results"
+  // branch after ruling out isLoading/isError is structurally the same guarantee, just expressed
+  // as a string-selection ternary consumed by the shared, governed table component instead of a
+  // raw JSX conditional. The real file uses (b): isLoading ? "Loading…" : isError ? "Could not
+  // load…" : "No loads match…".
+  const hasRawGuard = /!isLoading\s*&&\s*!isError\s*&&\s*loads\.length\s*===\s*0/.test(invoiceModal);
+  const hasParityTableEmptyTextTernary =
+    /emptyText=\{\s*isLoading\s*\?[\s\S]{0,80}?:\s*isError\s*\?[\s\S]{0,200}?:[\s\S]{0,120}?\}/.test(invoiceModal);
+  if (!hasRawGuard && !hasParityTableEmptyTextTernary) {
     failures.push("InvoiceCreateModal must not show an empty-load state after a failed query");
   }
 
