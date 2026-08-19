@@ -40,6 +40,12 @@ export function audit(src) {
   if (!/equipment_number\?:\s*string \| null/.test(src.reefer)) {
     failures.push(`${FILES.reefer}: reefer section must carry the attached trailer's real equipment_number`);
   }
+  if (!/attached_trailer_id\?:\s*string \| null/.test(src.reefer)) {
+    failures.push(`${FILES.reefer}: reefer section must carry the attached trailer's canonical id`);
+  }
+  if (!/kind="trailer"/.test(src.reefer) || !/id=\{reefer\.attached_trailer_id\}/.test(src.reefer)) {
+    failures.push(`${FILES.reefer}: attached trailer heading must drill through with a canonical EntityLink`);
+  }
   return failures;
 }
 
@@ -64,6 +70,8 @@ if (process.argv.includes("--selftest")) {
     ["edit-patch", "editTrailer", /mutationFn: \(\) => patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/, "mutationFn: () => Promise.resolve()"],
     ["quick-assign-branch", "quickAssign", /equipmentKind === "truck" \? "truck" : "trailer"/, '"trailer"'],
     ["reefer-field", "reefer", /equipment_number\?:\s*string \| null/, "equipment_id?: string | null"],
+    ["reefer-id", "reefer", /attached_trailer_id\?:\s*string \| null/, "attached_trailer_ref?: string | null"],
+    ["reefer-link", "reefer", /kind="trailer"/, 'kind="unit"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };

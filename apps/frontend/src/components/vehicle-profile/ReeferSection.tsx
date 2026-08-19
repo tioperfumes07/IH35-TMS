@@ -1,4 +1,7 @@
+import { EntityLink } from "../shared/EntityLink";
+
 type ReeferData = {
+  attached_trailer_id?: string | null;
   equipment_number?: string | null;
   brand?: string | null;
   model?: string | null;
@@ -21,7 +24,18 @@ export function ReeferSection({ reefer }: { reefer: ReeferData }) {
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-800">Reefer · {reefer.equipment_number ?? "Trailer"}</h2>
+      <h2 className="text-sm font-semibold text-gray-800">
+        Reefer · {reefer.attached_trailer_id ? (
+          <EntityLink
+            kind="trailer"
+            id={reefer.attached_trailer_id}
+            label={reefer.equipment_number ?? "Trailer"}
+            data-testid="unit-profile-reefer-trailer-link"
+          />
+        ) : (
+          reefer.equipment_number ?? "Trailer"
+        )}
+      </h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card label="Brand / model" value={[reefer.brand, reefer.model, reefer.year].filter(Boolean).join(" ") || "—"} />
         <Card label="Setpoint °F" value={reefer.setpoint_temp_f != null ? String(reefer.setpoint_temp_f) : "—"} />
@@ -37,7 +51,9 @@ export function ReeferSection({ reefer }: { reefer: ReeferData }) {
           <div className="text-xs text-gray-500">{until} hrs remaining · last service {reefer.last_service_date ?? "—"}</div>
         </div>
       ) : null}
-      <p className="mt-2 text-xs text-gray-500">Read-only — edit trailer reefer fields in equipment module.</p>
+      <p className="mt-2 text-xs text-gray-500">
+        Read-only — use the linked trailer above to edit reefer fields in the equipment module.
+      </p>
     </section>
   );
 }
