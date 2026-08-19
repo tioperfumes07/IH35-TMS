@@ -2447,6 +2447,10 @@
     "owner": "cursor",
     "note": "LV-SAFETY-INTERNAL-FINES-FILTER-SILENT-APPLY"
   },
+  "3994": {
+    "owner": "cursor",
+    "note": "LV-SAFETY-EXTERNAL-FINES-FILTER-SILENT-APPLY"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
