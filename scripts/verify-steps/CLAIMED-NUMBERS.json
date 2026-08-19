@@ -4291,5 +4291,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-abandonment-report-modal-entitylinks"
+  },
+  "3936": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-reassign-modal-load-entitylink"
   }
 }
