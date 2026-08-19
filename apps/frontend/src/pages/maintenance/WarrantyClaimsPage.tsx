@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMaintenanceWarrantyClaim,
@@ -15,7 +15,6 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useSearchParams } from "react-router-dom";
 
@@ -116,8 +115,8 @@ export function WarrantyClaimsPage() {
   const columns = useMemo<ParityColumn<MaintenanceWarrantyClaimRow>[]>(
     () => [
       { key: "part_description", label: "Part", sortable: true, render: (row) => row.part_description },
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id ?? undefined} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
-      { key: "work_order_id", label: "Work order", render: (row) => <EntityLink kind="work_order" id={row.work_order_id ?? undefined} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} /> },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" /> },
+      { key: "work_order_id", label: "Work order", render: (row) => <EntityLinkOrTombstone kind="work_order" id={row.work_order_id} name={row.work_order_display_id} noun="Work order" /> },
       { key: "claim_number", label: "Claim #", sortable: true, render: (row) => row.claim_number || "—" },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status_label ?? row.status },
       { key: "claim_amount_cents", label: "Amount", render: (row) => `$${((row.claim_amount_cents ?? 0) / 100).toFixed(2)}` },
