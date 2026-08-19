@@ -310,3 +310,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=430d389 | mutation=none | NEXT=banking.banking.dashboard
+Devin-A | LIVE PASS | module=banking | leaf=banking.dashboard | URL=https://app.ih35dispatch.com/banking | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/banking ; marker 'Bank' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=430d389 | mutation=none | NEXT=fuel.fuel.list
