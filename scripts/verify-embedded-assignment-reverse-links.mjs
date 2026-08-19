@@ -43,7 +43,7 @@ function check(sources) {
     ["safety", /kind="unit"[\s\S]{0,120}id=\{s\(row\.subject_unit_id\)\}/, "event unit"],
     [
       "workOrders",
-      /kind="unit"[\s\S]{0,120}id=\{String\(row\.unit_id\)\}/,
+      /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{row\.unit_id\}\s+name=\{row\.unit_number \?\? null\}\s+noun="Unit"\s*\/>/,
       "work-order unit",
     ],
     ["resolver", /case "unit":[\s\S]{0,100}\/fleet\/units\//, "unit resolver"],
@@ -73,7 +73,7 @@ const sources = Object.fromEntries(
   Object.entries(FILES).map(([key, file]) => [key, read(file)]),
 );
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
     ["driver", 'kind="unit"', 'kind="vendor"'],
     ["trailer", 'kind="load"', 'kind="customer"'],
