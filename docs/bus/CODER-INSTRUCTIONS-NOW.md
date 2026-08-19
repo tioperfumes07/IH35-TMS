@@ -1,4 +1,6 @@
-# CODER INSTRUCTIONS NOW · 2026-08-19T18:20Z · COMPLETE · DO NOT SKIP
+# CODER INSTRUCTIONS NOW · 2026-08-19T20:52Z · FROZEN USMCA OPS · DO NOT SKIP
+
+**20:52Z update:** canonical READY standard is `docs/lockdown/MATRIX-READY-FROZEN-USMCA-STANDARD-2026-08-19.md`. No new Required leaves until Jorge unfreezes. Watch READY Live ✓ and Miss C = 0.
 
 **Why this file exists:** seats were running on stale `docs/bus/INBOX-*` (15:55Z stubs). Desktop had newer bullets; **`git pull` did not include FAST-MERGE, current NOW, or the no-idle loop.** This file is the full instruction set. Copy lives on Desktop `USMCA-WEEKEND-LEAD-2026-08-07/` **and** `docs/bus/`. Repo wins after pull.
 
