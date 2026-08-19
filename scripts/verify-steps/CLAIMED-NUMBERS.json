@@ -4311,5 +4311,10 @@
     "guard": "verify-load-drawer-assignment-history-driver-entitylinks",
     "claimer": "cursor",
     "claimed_at": "2026-08-19"
+  },
+  "3944": {
+    "guard": "verify-book-load-equipment-selected-entitylinks",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-19"
   }
 }
