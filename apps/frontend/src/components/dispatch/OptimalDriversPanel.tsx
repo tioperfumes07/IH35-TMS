@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getDispatchOptimalDrivers, type OptimalDriverRow } from "../../api/dispatch";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 
 export type OptimalDriversPanelProps = {
   loadId: string;
@@ -107,7 +109,21 @@ export function OptimalDriversPanel({
               >
                 <span className="flex items-center justify-between gap-2 font-semibold text-slate-800">
                   <span>
-                    #{d.rank} · {d.display_name}
+                    #{d.rank} ·{" "}
+                    {/* Exact Leaves dispatch.panel.optimal_drivers:driver — ranked rows were
+                        plain display_name text; expose a real driver EntityLink (stopPropagation
+                        so profile hop does not force-select the row). */}
+                    <span
+                      data-testid={`optimal-driver-entitylink-${d.rank}`}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <EntityLink
+                        kind="driver"
+                        id={d.driver_id}
+                        label={entityLabel(d.display_name, d.driver_id, "Driver")}
+                      />
+                    </span>
                     {!d.hos_safe ? " · HOS risk" : ""}
                   </span>
                   <span className="font-mono text-[11px] text-slate-700">{fmtScore(d.total_score)} pts</span>
