@@ -34,7 +34,7 @@ export function verify(source) {
   need("hosService", "u.id::text AS unit_id", "HOS roster backend must project the company-scoped assigned unit FK");
   need("hosService", "unit_id: r.unit_id", "HOS roster response must retain the assigned unit FK");
   need("hosApi", "unit_id: string | null", "HOS frontend contract must type the unit FK");
-  need("hosTracker", '<EntityLink kind="unit" id={driver.unit_id}', "HOS Tracker Unit column must reverse-drill canonically");
+  need("hosTracker", '<EntityLinkOrTombstone kind="unit" id={driver.unit_id}', "HOS Tracker Unit column must reverse-drill canonically");
   need("hosTracker", 'kind="driver" id={driver.driver_id}', "HOS Tracker Driver column must reverse-drill canonically");
   need("fleetHos", '<EntityLink kind="unit" id={row.unit_id}', "Fleet HOS board must drill to units");
   need("fleetHos", 'kind="driver"', "Fleet HOS board must drill to drivers");
@@ -81,7 +81,7 @@ if (process.argv.includes("--self-test")) {
     ["hosService", "u.id::text AS unit_id", "NULL::text AS unit_id"],
     ["hosService", "unit_id: r.unit_id", "unit_id: null"],
     ["hosApi", "unit_id: string | null", "unit_id_broken: string | null"],
-    ["hosTracker", '<EntityLink kind="unit" id={driver.unit_id}', '<EntityLink kind="driver" id={driver.driver_id}'],
+    ["hosTracker", '<EntityLinkOrTombstone kind="unit" id={driver.unit_id}', '<EntityLinkOrTombstone kind="driver" id={driver.driver_id}'],
     ["fleetHos", '<EntityLink kind="unit" id={row.unit_id}', '<span data-unit={row.unit_id}'],
     ["propertyTax", 'kind="property_tax_rendition"', 'kind="unit"'],
     ["propertyTax", '<EntityLink kind="trailer" id={l.equipment_id}', '<EntityLink kind="unit" id={l.unit_id}'],
