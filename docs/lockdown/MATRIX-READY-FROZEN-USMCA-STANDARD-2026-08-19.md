@@ -28,9 +28,9 @@ When Miss C = 0 and READY ✓, **this frozen USMCA ops map is closed**. New leav
 
 ---
 
-## Seat work (non-stop, FAST-MERGE, urgent 14)
+## Seat work (non-stop, FAST-MERGE, urgent 16)
 
-Urgent 14: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → fuel → inventory.
+Urgent 16 (A–Z): accounting, banking, cash-flow, customers, dispatch, drivers, factoring, finance, fleet, insurance, legal, lists, maintenance, safety, settlements, vendors.
 
 | Seat | Does | Does not |
 |------|------|----------|

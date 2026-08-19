@@ -13,6 +13,7 @@ const SELFTEST = process.argv.includes("--selftest");
 const TALLY_TS = path.join(ROOT, "apps/backend/src/program/matrix-metrics-tally.ts");
 const MATRIX_SVC = path.join(ROOT, "apps/backend/src/program/module-matrix.service.ts");
 const SYSTEM_VIEW = path.join(ROOT, "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx");
+const CATALOG = path.join(ROOT, "apps/frontend/src/pages/program/moduleMatrixCatalog.ts");
 
 export function emptyTierBucket() {
   return {
@@ -156,6 +157,40 @@ function repoProblems() {
     problems.push(...exactSystemTrackerProblems(view));
     if (!/Clicked/.test(view) || !/Named/.test(view) || !/Modals/.test(view) || !/READY/.test(view) || !/Miss C/.test(view)) {
       problems.push("ModuleMatrixSystemView must keep atoms and add Named + Leaves + Modals + Clicked + Frozen + Miss C + READY");
+    }
+    if (!/Urgent 16/.test(view) || !/URGENT_16_MODULE_IDS/.test(view)) {
+      problems.push("system matrix must label Urgent 16 A–Z (legal + finance included)");
+    }
+  }
+  if (!fs.existsSync(CATALOG)) problems.push(`MISSING ${CATALOG}`);
+  else {
+    const cat = fs.readFileSync(CATALOG, "utf8");
+    const block = cat.match(/export const URGENT_16_MODULE_IDS[\s\S]*?\] as const/);
+    if (!block) {
+      problems.push("moduleMatrixCatalog must export URGENT_16_MODULE_IDS");
+    } else {
+      const ids = [...block[0].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+      const expected = [
+        "accounting",
+        "banking",
+        "cash-flow",
+        "customers",
+        "dispatch",
+        "drivers",
+        "factoring",
+        "finance",
+        "fleet",
+        "insurance",
+        "legal",
+        "lists",
+        "maintenance",
+        "safety",
+        "settlements",
+        "vendors",
+      ];
+      if (ids.length !== 16 || JSON.stringify(ids) !== JSON.stringify(expected)) {
+        problems.push("URGENT_16_MODULE_IDS must be exactly 16 modules in A–Z id order, including legal+finance");
+      }
     }
   }
   return problems;

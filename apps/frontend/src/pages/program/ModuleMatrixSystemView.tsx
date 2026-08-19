@@ -9,8 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import {
   MATRIX_MODULES_SIDEBAR_ORDER,
-  URGENT_14_MODULE_IDS,
-  isUrgent14Module,
+  URGENT_16_MODULE_IDS,
+  isUrgent16Module,
   matrixColumnHeaderLabel,
   matrixGroupHeaderLabel,
   sortModulesPriority10First,
@@ -182,8 +182,8 @@ export function ModuleMatrixSystemView() {
     return sortModulesPriority10First(source);
   }, [data?.modules]);
 
-  const priorityRows = orderedRows.filter((r) => isUrgent14Module(r.module));
-  const restRows = orderedRows.filter((r) => !isUrgent14Module(r.module));
+  const priorityRows = orderedRows.filter((r) => isUrgent16Module(r.module));
+  const restRows = orderedRows.filter((r) => !isUrgent16Module(r.module));
 
   // Feed the tracker with the API's exact integer tallies. Reconstructing counts from rounded
   // percentages can paint 3444/3446 as 3446/3446 and contradict the exact Software total row.
@@ -309,8 +309,8 @@ export function ModuleMatrixSystemView() {
         <div className="banner live" data-testid="module-matrix-system-live">
           <b>FROZEN MAP. READY is the 100.</b> Do not add leaves. Ignore Box 4 Live. MONEY parked.
           READY Live✓ only when Miss C = 0 on frozen ops (non-money) USMCA Clicked+Built. Miss C = true
-          unpaid. LINK/MONEY/CHROME/WIRE/PROC kept. Urgent 14 first ({URGENT_14_MODULE_IDS.length}), then
-          remainder ({restRows.length}).
+          unpaid. LINK/MONEY/CHROME/WIRE/PROC kept. Urgent 16 A–Z first ({URGENT_16_MODULE_IDS.length}), then
+          remainder A–Z ({restRows.length}). Clicked / 12 Clicked = Chrome USMCA, not Box 4.
           {tip ? (
             <>
               {" "}
@@ -380,7 +380,7 @@ export function ModuleMatrixSystemView() {
       <h2 data-testid="module-matrix-system-heading">
         All modules matrix{" "}
         <span className="sub">
-          priority 10 → rest · left = module · top = same columns · cell = R / A / B / L
+          urgent 16 A–Z → rest A–Z · left = module · top = same columns · cell = R / A / B / L
         </span>
       </h2>
 
@@ -449,7 +449,7 @@ export function ModuleMatrixSystemView() {
             </thead>
             <tbody>
               <tr className="section" data-testid="module-matrix-system-section-priority-10">
-                <td colSpan={colSpan}>Urgent 14 — owner seq</td>
+                <td colSpan={colSpan}>Urgent 16 — A–Z</td>
               </tr>
               {priorityRows.map((row) => (
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
