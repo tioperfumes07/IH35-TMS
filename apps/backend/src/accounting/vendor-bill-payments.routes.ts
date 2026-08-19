@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 const vendorIdParamsSchema = z.object({
   id: z.string().trim().min(1),
@@ -71,6 +72,20 @@ async function updateBankBalance(
   if ((res.rowCount ?? 0) === 0) {
     throw new Error("bank_account_not_found_for_payment");
   }
+}
+
+// ACCT-F5582: POST /:id/bill-payments directly debits banking.bank_accounts.current_balance_cents
+// (updateBankBalance below) and marks real vendor bills as paid -- yet had no role gate at all, any
+// authenticated company member could fabricate a bill-payment record that deducts money from the
+// tracked bank balance. Reuses the canonical void/cancel executor role set
+// (Owner/Administrator/Accountant, Jorge-locked 2026-06-29) since recording a disbursement is the
+// same tier of financial-executor operation, not because this is a void/cancel action.
+function requirePaymentWriteRole(reply: FastifyReply, role: string) {
+  if (!canVoidCancel(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "recording a vendor bill payment requires an accounting role" });
+    return false;
+  }
+  return true;
 }
 
 export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
@@ -153,6 +168,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
   app.post("/api/v1/vendors/:id/bill-payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!requirePaymentWriteRole(reply, String(user.role ?? ""))) return;
 
     const params = vendorIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
