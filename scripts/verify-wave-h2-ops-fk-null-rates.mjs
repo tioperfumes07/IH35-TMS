@@ -76,10 +76,20 @@ export function staticChecks(sources = {}) {
   }
   // Permanent: drawer title must EntityLink the load — naked `load?.load_number ?? loadId`
   // regenerates entity-link-adoption drift (build-typecheck step 930) every time H2/drawer edits land.
-  if (!/import\s*\{\s*EntityLink\s*\}\s*from\s*["']\.\.\/shared\/EntityLink["']/.test(drawer)) {
+  // The title has since migrated onto the stricter EntityLinkOrTombstone primitive (withholds the
+  // drill when the load is unresolved, same class already fixed repeatedly for accounting files
+  // this session) — accept either.
+  const usesEntityLink = /import\s*\{\s*EntityLink\s*\}\s*from\s*["']\.\.\/shared\/EntityLink["']/.test(drawer);
+  const usesEntityLinkOrTombstone = /import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["']\.\.\/shared\/EntityLinkOrTombstone["']/.test(
+    drawer,
+  );
+  if (!usesEntityLink && !usesEntityLinkOrTombstone) {
     problems.push("LoadDetailDrawer must import EntityLink from ../shared/EntityLink");
   }
-  if (!/<EntityLink\s+kind=["']load["'][\s\S]{0,160}id=\{load\?\.id\s*\?\?\s*loadId\}/.test(drawer)) {
+  if (
+    !/<EntityLink\s+kind=["']load["'][\s\S]{0,160}id=\{load\?\.id\s*\?\?\s*loadId\}/.test(drawer) &&
+    !/<EntityLinkOrTombstone\s+kind=["']load["'][\s\S]{0,60}id=\{load\?\.id\s*\?\?\s*loadId\}/.test(drawer)
+  ) {
     problems.push("LoadDetailDrawer title must use <EntityLink kind=\"load\" id={load?.id ?? loadId} …>");
   }
   if (/<h2[^>]*>\s*Load\s*\{load\?\.load_number\s*\?\?\s*loadId\}/.test(drawer)) {
@@ -105,10 +115,12 @@ function selftest() {
     process.exit(1);
   }
   const drawer = read("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx");
+  // Real markup now uses the self-closing <EntityLinkOrTombstone .../> primitive, not
+  // <EntityLink>...</EntityLink> with children — match the actual current shape.
   const nakedTitle = drawer
-    .replace(/import\s*\{\s*EntityLink\s*\}\s*from\s*["']\.\.\/shared\/EntityLink["'];?\n?/, "")
+    .replace(/import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["']\.\.\/shared\/EntityLinkOrTombstone["'];?\n?/, "")
     .replace(
-      /<h2 className="text-lg font-semibold text-gray-900">\s*Load\s*<EntityLink[\s\S]*?<\/EntityLink>\s*<\/h2>/,
+      /<h2 className="text-lg font-semibold text-gray-900">\s*Load\{" "\}\s*<EntityLinkOrTombstone[^>]*\/>\s*<\/h2>/,
       '<h2 className="text-lg font-semibold text-gray-900">Load {load?.load_number ?? loadId}</h2>',
     );
   const redDrawer = staticChecks({ drawer: nakedTitle });
