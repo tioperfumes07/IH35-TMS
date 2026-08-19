@@ -599,3 +599,7 @@ verify:static: 52 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:26Z CC-1 | ACCT-F5476 closed (PR #9359, merged d07a625). verify-dispute-recon-payments-je-human-labels.mjs FAILed DailyReconPage.tsx for "missing entityLabel" — the file imports the helper aliased (entityLabel as formatEntityLabel) and calls it consistently; the guard's case-sensitive substring check never matched "formatEntityLabel(" (capital E). Only this 1 of 7 checked files aliases the import. Widened to also accept formatEntityLabel(. Existing --selftest re-verified PASS. Zero product-code change.
 
 verify:static: 53 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:29Z CC-1 | ACCT-F5477 closed (PR #9364, merged b0ef302). verify-expense-load-field-for-fuel.mjs required the literal "Load / Trip is required for fuel" text, but the category predicate generalized from a hand-rolled fuel/diesel/roadside/ifta regex to a proper isOverTheRoadCategoryLabel() function (G18 taxonomy), and the copy widened to match with an added exemption-reason escape hatch. Load/Trip requirement itself unchanged/still enforced. Widened check to accept either text paired with confirming the predicate is actually used. No mutation harness; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 54 of ~199 now closed this session. Continuing non-stop, fast-merge.
