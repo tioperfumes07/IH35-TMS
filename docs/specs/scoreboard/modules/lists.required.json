@@ -255,7 +255,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/accident-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -266,7 +265,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/accident-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -277,7 +275,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -288,7 +285,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -453,7 +449,6 @@
       "sub": "Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -464,7 +459,6 @@
       "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -475,7 +469,6 @@
       "sub": "Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -486,7 +479,6 @@
       "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -497,7 +489,6 @@
       "sub": "Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -508,7 +499,6 @@
       "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -519,7 +509,6 @@
       "sub": "Load Trailer Equipment",
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -530,7 +519,6 @@
       "sub": "+ Create — Load Trailer Equipment",
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -541,7 +529,6 @@
       "sub": "Load Types",
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -552,7 +539,6 @@
       "sub": "+ Create — Load Types",
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -585,7 +571,6 @@
       "sub": "Load Cancellation Reasons",
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -596,7 +581,6 @@
       "sub": "+ Create — Load Cancellation Reasons",
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -607,7 +591,6 @@
       "sub": "Dispatcher Error Reasons",
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -618,7 +601,6 @@
       "sub": "+ Create — Dispatcher Error Reasons",
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -940,7 +922,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/labor-rates",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -951,7 +932,6 @@
       "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/labor-rates",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -984,7 +964,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -995,7 +974,6 @@
       "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1006,7 +984,6 @@
       "sub": "Labor Rates",
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1017,7 +994,6 @@
       "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1028,7 +1004,6 @@
       "sub": "Part Locations",
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1039,7 +1014,6 @@
       "sub": "+ Create — Part Locations",
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1050,7 +1024,6 @@
       "sub": "Air Bag Catalog",
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1061,7 +1034,6 @@
       "sub": "+ Create — Air Bag Catalog",
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1072,7 +1044,6 @@
       "sub": "Battery Catalog",
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1083,7 +1054,6 @@
       "sub": "+ Create — Battery Catalog",
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1094,7 +1064,6 @@
       "sub": "PM Intervals",
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1105,7 +1074,6 @@
       "sub": "+ Create — PM Intervals",
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1116,7 +1084,6 @@
       "sub": "Repair Locations",
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1127,7 +1094,6 @@
       "sub": "+ Create — Repair Locations",
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1138,7 +1104,6 @@
       "sub": "Tire Catalog",
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1149,7 +1114,6 @@
       "sub": "+ Create — Tire Catalog",
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1358,7 +1322,6 @@
       "sub": "Maintenance Service Tasks",
       "route_hint": "/lists/maintenance/vendors",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1369,7 +1332,6 @@
       "sub": "+ Create — Maintenance Service Tasks",
       "route_hint": "/lists/maintenance/vendors",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1380,7 +1342,6 @@
       "sub": "Maintenance Services Catalog",
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1391,7 +1352,6 @@
       "sub": "+ Create — Maintenance Services Catalog",
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1402,7 +1362,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/def-stations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1413,7 +1372,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/def-stations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1424,7 +1382,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1435,7 +1392,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1446,7 +1402,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1457,7 +1412,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1468,7 +1422,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1479,7 +1432,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1578,7 +1530,6 @@
       "sub": "Fuel Exception Types",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1589,7 +1540,6 @@
       "sub": "+ Create — Fuel Exception Types",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1600,7 +1550,6 @@
       "sub": "Fuel Station Brands",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1611,7 +1560,6 @@
       "sub": "+ Create — Fuel Station Brands",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1754,7 +1702,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/tractor-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1765,7 +1712,6 @@
       "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/tractor-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1776,7 +1722,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1787,7 +1732,6 @@
       "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1820,7 +1764,6 @@
       "sub": "Tractor Statuses",
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1831,7 +1774,6 @@
       "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1886,7 +1828,6 @@
       "sub": "Equipment Types",
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1897,7 +1838,6 @@
       "sub": "+ Create — Equipment Types",
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1908,7 +1848,6 @@
       "sub": "Tire Positions",
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1919,7 +1858,6 @@
       "sub": "+ Create — Tire Positions",
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1930,7 +1868,6 @@
       "sub": "Ownership Types",
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1941,7 +1878,6 @@
       "sub": "+ Create — Ownership Types",
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1952,7 +1888,6 @@
       "sub": "Trailer Types",
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -1963,7 +1898,6 @@
       "sub": "+ Create — Trailer Types",
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2427,7 +2361,6 @@
       "sub": "Customer Types",
       "route_hint": "/lists/customers/customer-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2438,7 +2371,6 @@
       "sub": "+ Create — Customer Types",
       "route_hint": "/lists/customers/customer-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2449,7 +2381,6 @@
       "sub": "Customer Types",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2460,7 +2391,6 @@
       "sub": "+ Create — Customer Types",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2471,7 +2401,6 @@
       "sub": "Vendor Types",
       "route_hint": "/lists/vendors/vendor-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2482,7 +2411,6 @@
       "sub": "+ Create — Vendor Types",
       "route_hint": "/lists/vendors/vendor-types",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -2920,7 +2848,6 @@
       "surface_kind": "drawer",
       "surface_path": "pages/EquipmentTypesPage.tsx",
       "required": [
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -7925,6 +7852,107 @@
     "picker_law_column_2026_08_18_accounting_final_confirmation": {
       "finding": "CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM",
       "note": "Closes the class with zero remaining ambiguity — no required[] change (both leaves already correctly stay Required, confirmed compliant not dropped). detail_types.create/detail_types_lookup.create's own Account Type field (DetailTypeModal in DetailTypesListPage.tsx) uses SelectCombobox — the governed picker component — with no allowAddNew, which is CORRECT: Account Type is an explicit fixed/read-only global taxonomy (confirmed by this page's own in-product copy), never user-creatable, so no '+ Add new' affordance should exist for it. payment_methods.create's real surface (owned_surface_paths: components/driver-finance/PaymentMethodPicker.tsx) is fully code-compliant: a real Combobox with '+ Add new payment method' as the permanent first row (QB-STD-1/2), an inline create panel that never navigates away (QB-STD-3/4), and createPaymentMethod() writes the SAME catalogs.payment_methods table listPaymentMethods() reads (QB-STD-5) — resolving the contradiction flagged in batch 2 as needing its own investigation. All 20 originally-flagged catalog.accounting.*.create leaves are now fully classified: 13 honesty-dropped (batches 1-3), 1 genuine gap FIXED (chart_of_accounts.create, ACCT-F5427, PR #9070), 6 confirmed already code-compliant pending only a live-proof pass (journal_entry_types, posting_templates, items, detail_types, detail_types_lookup, payment_methods). No leaf remains unclassified."
+    },
+    "picker_law_column_2026_08_19_equipment_types_create": {
+      "finding": "CATALOG-EQUIPMENT-TYPES-CREATE-PICKER-LAW-OVERCLAIM",
+      "note": "CC-2 live-verified catalogs.equipment_types.create (/catalogs/equipment-types → + Create Equipment Type) on selected-USMCA: the drawer has Code/Name/Description/Sort order plus a repeatable Line Items grid (Code/Name/Unit/Qty/Required). The ONLY dropdown anywhere in the form is the Line Item 'Unit' field — confirmed live (per loaded mile / per empty mile / per total mile / flat per occurrence / flat per load / percent of load revenue / flat per hour) and confirmed via source (pages/EquipmentTypesPage.tsx: all 3 <Combobox> usages in the file are bound to the same local lineItemUnitComboboxOptions array, a static enum, never a company-scoped canonical catalog). No '+ Add new' affordance exists anywhere in this form because there is no FK/entity reference to pick — picker_law governs canonical entity pickers with an inline creator, not a fixed local unit-of-measure enum. Same overclaim class as the accounting create-types batches above (SelectCombobox with no allowAddNew on a fixed taxonomy is correct, not a gap).",
+      "drops": [
+        {
+          "id": "catalogs.equipment_types.create",
+          "removed": ["picker_law"],
+          "reason": "the form's only dropdown (Line Item 'Unit') is a hardcoded local enum (lineItemUnitComboboxOptions), not a canonical FK picker — nothing exists for picker_law to govern"
+        }
+      ]
+    },
+    "picker_law_column_2026_08_19_generic_catalog_no_fk_sweep": {
+      "finding": "GENERIC-CATALOG-CREATE-PICKER-LAW-OVERCLAIM",
+      "note": "CC-2 systemic sweep, evidence from 3 independent methods: (1) live click-through on catalogs.equipment_types.create and catalog.dispatch.load_trailer_equipment.create (selected-USMCA) confirmed both create forms have zero FK fields, only Code/Name/Description/Sort(/Line Items with a hardcoded Unit enum); (2) source read of components/catalogs/CatalogEditModal.tsx (the shared generic-catalog create/edit form): field.type === 'foreign_key' would render a raw <input placeholder='Foreign key ID'> text box, not a governed EntityPicker/ReferenceSelect — but a full scan of every field config in hooks/useCatalogQuery.ts's GENERIC_CATALOG_REGISTRY (83 catalogs) found ZERO uses of type: 'foreign_key' anywhere — the code path exists but is dead; (3) source read of the domain-specific catalog modal shells (pages/lists/{fleet,fuel,maintenance,driver}/*CatalogModal.tsx, plus GenericCatalogPage.tsx itself) found zero EntityPicker/ReferenceSelect/Combobox-with-canonical-roster usage in any of them — only SelectCombobox bound to hardcoded local enums (status/unit-of-measure dropdowns), never a company-scoped FK catalog with an inline '+ Add new' creator. picker_law governs canonical entity pickers with an inline creator; a fixed local enum or a plain text/number/boolean field has nothing for it to govern. Explicitly EXCLUDED from this drop: the 6 catalog.accounting.*.create leaves already covered by the picker_law_column_2026_08_18_accounting_remainder_batch3 / _final_confirmation entries above (items, posting_templates, journal_entry_types, detail_types, detail_types_lookup, payment_methods) — those ARE code-compliant via dedicated pages with real ReferenceSelect/Combobox pickers, confirmed by that earlier audit; not re-litigated here. NOT scoped here: the ~102 catalog.*.list leaves that also carry picker_law — list-page filter comboboxes are a structurally different question (some list pages do have real filter pickers) and need their own separate investigation, not assumed to follow the same pattern as .create forms.",
+      "drops": [
+        { "id": "catalog.fleet.asset_locations.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FleetCatalogModal.tsx source read" },
+        { "id": "catalog.fleet.asset_statuses.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FleetCatalogModal.tsx source read" },
+        { "id": "catalog.fuel.expensive_states.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FuelCatalogModal.tsx source read" },
+        { "id": "catalog.fleet.lease_terms.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FleetCatalogModal.tsx source read" },
+        { "id": "catalog.fuel.mpg_bands.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FuelCatalogModal.tsx source read" },
+        { "id": "catalog.fleet.tractor_statuses.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FleetCatalogModal.tsx source read" },
+        { "id": "catalog.fleet.trailer_statuses.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FleetCatalogModal.tsx source read" },
+        { "id": "catalog.fleet.trailer_types.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FleetCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.work_order_statuses.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.labor_rates.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.customers.customer_types.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (GenericCatalogPage/CatalogEditModal path, zero foreign_key usage across the whole registry)" },
+        { "id": "catalog.vendors.vendor_types.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (GenericCatalogPage/CatalogEditModal path, zero foreign_key usage across the whole registry)" },
+        { "id": "catalog.safety.accident_types.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (GenericCatalogPage/CatalogEditModal path, zero foreign_key usage across the whole registry)" },
+        { "id": "catalog.safety.workplace_incident_types.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (GenericCatalogPage/CatalogEditModal path, zero foreign_key usage across the whole registry)" },
+        { "id": "catalog.maintenance.pm_intervals.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.repair_locations.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.work_order_templates.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.air_bag_catalog.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.battery_catalog.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.tire_catalog.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.trailer_parts.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.maintenance.truck_parts.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared MaintenanceCatalogModal.tsx source read" },
+        { "id": "catalog.fuel.def_stations.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FuelCatalogModal.tsx source read" },
+        { "id": "catalog.fuel.fuel_stations.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FuelCatalogModal.tsx source read" },
+        { "id": "catalog.fuel.relay_accounts.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FuelCatalogModal.tsx source read" },
+        { "id": "catalog.fuel.toll_providers.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config + shared FuelCatalogModal.tsx source read" },
+        { "id": "catalog.dispatch.load_trailer_equipment.create", "removed": ["picker_law"], "reason": "live-verified (selected-USMCA /lists/catalogs/dispatch/load-trailer-equipment → + Create): form is Code/Load Trailer Equipment/Description/Sort Order only, zero FK field" },
+        { "id": "catalog.dispatch.load_types.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (same shape as load_trailer_equipment, live-verified sibling)" },
+        { "id": "catalog.dispatch.detention_reasons.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (same shape as load_trailer_equipment, live-verified sibling)" },
+        { "id": "catalog.dispatch.pickup_time_types.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (same shape as load_trailer_equipment, live-verified sibling)" },
+        { "id": "catalog.dispatch.additional_charges.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (same shape as load_trailer_equipment, live-verified sibling)" },
+        { "id": "catalog.dispatch.lumper_providers.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (same shape as load_trailer_equipment, live-verified sibling)" },
+        { "id": "catalog.dispatch.dispatcher_error_reasons.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config: fields are code/label/event_type(enum)/severity(enum)/description, zero foreign_key" },
+        { "id": "catalog.customers.customer_quality_event_reasons.create", "removed": ["picker_law"], "reason": "generic catalog create form has no FK field — confirmed via useCatalogQuery.ts field config (GenericCatalogPage/CatalogEditModal path, zero foreign_key usage across the whole registry)" },
+        { "id": "catalog.fleet.equipment_types.create", "removed": ["picker_law"], "reason": "generic catalog create form (FleetCatalogListPage → FleetCatalogModal.tsx, the /lists/fleet/equipment-types surface — distinct from the already-dropped catalogs.equipment_types.create at /catalogs/equipment-types) has no FK field, same shared shell as the other fleet catalogs" }
+      ]
+    },
+    "picker_law_column_2026_08_19_maintenance_vendors_create": {
+      "finding": "CATALOG-MAINTENANCE-VENDORS-CREATE-PICKER-LAW-OVERCLAIM",
+      "note": "Live-verified (selected-USMCA /lists/maintenance/vendors → + Create): despite the 'vendors' name this is a curated preferred-vendor LABEL catalog (5 rows, e.g. 'GOODYEAR-COMMERCIAL — Preferred tire and service vendor'), not the real mdata.vendors master — the page's own honest banner discloses this explicitly ('Full vendor master with CSV import and WO history: Maintenance Vendors hub' links elsewhere). Create form: Code/Display Name/Description/Sort Order/Active only, zero FK field, same generic-catalog shape as the rest of the no-FK sweep above. Already had 'vendor' dropped from this same leaf's Required in an earlier honesty pass (see the vendor-column drop elsewhere in this file) — this closes the matching picker_law overclaim on the same leaf.",
+      "drops": [
+        { "id": "catalog.maintenance.vendors.create", "removed": ["picker_law"], "reason": "live-verified: Code/Display Name/Description/Sort Order/Active form, zero FK field — a curated label catalog, not the real vendor master (page's own banner discloses this)" }
+      ]
+    },
+    "picker_law_column_2026_08_19_generic_catalog_list_no_fk_sweep": {
+      "finding": "GENERIC-CATALOG-LIST-PICKER-LAW-OVERCLAIM",
+      "note": "Extends picker_law_column_2026_08_19_generic_catalog_no_fk_sweep (above) to the matching .list sibling of every leaf dropped there, plus catalog.maintenance.vendors.list (sibling of the separately live-verified .create). Same evidence: components/catalogs/GenericCatalogPage.tsx (the shared list surface, same component whether accessed via .list or .create routes) has zero Combobox/EntityPicker/ReferenceSelect usage of any kind — confirmed by direct source grep (zero matches for 'Combobox', 'filter', or 'Filter' in that file) — so there is no filter picker for picker_law to govern any more than there was a create-form picker. Live-verified twice this session (equipment-types, load-trailer-equipment): the only list-toolbar control is a plain 'Active/Inactive/All' status SelectCombobox bound to a hardcoded 3-value local enum, same class already established as out of picker_law's scope. Same EXCLUDE as the .create sweep: no catalog.accounting.* leaves touched (that domain's dedicated pages may have real list-filter pickers and were not re-investigated here — do not assume the same disposition without checking).",
+      "drops": [
+        { "id": "catalog.fleet.asset_locations.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fleet.asset_statuses.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fuel.expensive_states.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fleet.lease_terms.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fuel.mpg_bands.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fleet.tractor_statuses.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fleet.trailer_statuses.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fleet.trailer_types.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.work_order_statuses.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.labor_rates.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.customers.customer_types.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.vendors.vendor_types.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.safety.accident_types.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.safety.workplace_incident_types.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.pm_intervals.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.repair_locations.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.work_order_templates.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.air_bag_catalog.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.battery_catalog.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.tire_catalog.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.trailer_parts.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.maintenance.truck_parts.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fuel.def_stations.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fuel.fuel_stations.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fuel.relay_accounts.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fuel.toll_providers.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.dispatch.load_trailer_equipment.list", "removed": ["picker_law"], "reason": "live-verified sibling (selected-USMCA /lists/catalogs/dispatch/load-trailer-equipment): only list control is the Active/Inactive/All status filter, no FK picker" },
+        { "id": "catalog.dispatch.load_types.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.dispatch.detention_reasons.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.dispatch.pickup_time_types.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.dispatch.additional_charges.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.dispatch.lumper_providers.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.dispatch.dispatcher_error_reasons.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.customers.customer_quality_event_reasons.list", "removed": ["picker_law"], "reason": "sibling of the .create drop above — same GenericCatalogPage list surface, zero filter picker" },
+        { "id": "catalog.fleet.equipment_types.list", "removed": ["picker_law"], "reason": "live-verified sibling (selected-USMCA /lists/fleet/equipment-types and /catalogs/equipment-types both checked): only list control is the Active/Inactive/All status filter, no FK picker" },
+        { "id": "catalog.maintenance.vendors.list", "removed": ["picker_law"], "reason": "live-verified sibling (selected-USMCA /lists/maintenance/vendors): curated preferred-vendor label catalog, same as its .create sibling, no FK picker anywhere on the page" }
+      ]
     }
   }
 }

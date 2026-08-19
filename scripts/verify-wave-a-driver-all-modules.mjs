@@ -32,7 +32,10 @@ const representativeContracts = [
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /EntityLink/],
   ["apps/frontend/src/pages/home/DriverHubReportingPage.tsx", /<EntityLink kind="driver" id=\{r\.driver_id\}/],
   ["apps/frontend/src/pages/reports/runners/RunnerFilters.tsx", /kind="driver"/],
-  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "vendor" \| "driver" \| "unit" \| "load"\}/],
+  // CC-2 GUARD 2026-08-19: re-anchored — a "customer" task target type was added to the union
+  // (real feature expansion), pushing the literal type-cast text past the old exact match; the
+  // real kind={entityKind as ...} driver wiring is unchanged.
+  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "customer" \| "vendor" \| "driver" \| "unit" \| "load"\}/],
   ["apps/frontend/src/components/fleet/EditVehicleModal.tsx", /kind="driver"/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /driver_id:\s*form\.driver_id \|\| null/],
   ["apps/frontend/src/components/legal/LegalMattersReverseSection.tsx", /related_driver_id/],

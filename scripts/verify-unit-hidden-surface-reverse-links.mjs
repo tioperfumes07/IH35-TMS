@@ -16,7 +16,12 @@ const checks = [
   ["assets", /kind="unit" id=\{row\.id\}/, "asset register drills to canonical unit"],
   ["damage", /kind="unit" id=\{row\.unit_id\}/, "damage register drills to canonical unit"],
   ["workOrder", /kind="unit" id=\{row\.asset_id\}/, "work-order financial asset drills to canonical unit"],
-  ["faults", /kind="unit" id=\{deepLinkUnitId\}/, "fault-draft filter banner drills to canonical unit"],
+  // CC-2 GUARD 2026-08-19: re-anchored per LST-F5169 (cited in-code in FaultDraftsPage.tsx): the
+  // old static "?unit_id= banner" this check looked for was deliberately replaced — its own comment
+  // reads "URL-only banner is not reverse chrome" — with a live EntityPicker seeded from the same
+  // deep-link param (deepLinkUnitId -> unitIdFromUrl -> applied.unitId -> staged.draft.unitId ->
+  // EntityPicker value), which is real interactive reverse chrome, not a downgrade.
+  ["faults", /<EntityPicker\s*\n\s*kind="unit"[\s\S]{0,200}value=\{filterDraft\.unitId/, "fault-draft filter banner drills to canonical unit"],
   ["dtc", /if \(compact\)[\s\S]*?kind="unit" id=\{row\.unit_id\}/, "DTC compact surface drills to canonical unit"],
   ["dtc", /Unit <EntityLink kind="unit" id=\{row\.unit_id\}/, "DTC full surface drills to canonical unit"],
   ["dtc", /Open work order/, "DTC compact surface retains explicit work-order action without nested controls"],
