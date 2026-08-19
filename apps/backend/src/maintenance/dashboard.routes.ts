@@ -59,8 +59,8 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const companyId = parsed.data.operating_company_id;
 
-    const rows = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.work_orders"))) return [];
+    const result = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await relationExists(client, "maintenance.work_orders"))) return { rows: [], total_count: 0 };
       // XE-SCOPE: views.maintenance_severe_repair_alerts (0041) has NO company column and runs under
       // role-based RLS, so a plain `SELECT * FROM views.maintenance_severe_repair_alerts` BLENDS
       // TRANSP+TRK+USMCA repair alerts for a multi-entity Owner. We reproduce the view's exact
@@ -222,7 +222,8 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             w.status::text,
             w.description,
             w.opened_at::text,
-            w.updated_at::text
+            w.updated_at::text,
+            COUNT(*) OVER()::int AS total_count
           FROM maintenance.work_orders w
           JOIN mdata.units u ON u.id = w.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
@@ -234,9 +235,9 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
     });
-    return { rows };
+    return result;
   });
 
   app.get("/api/v1/maintenance/fleet-table/kpis", async (req, reply) => {

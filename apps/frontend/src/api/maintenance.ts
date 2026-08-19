@@ -568,7 +568,7 @@ export function getMaintenanceRecentActivity(companyId: string) {
 }
 
 export function getMaintenanceDtcAutoWorkOrders(companyId: string) {
-  return apiRequest<{ rows: DtcAutoWorkOrderRow[] }>(
+  return apiRequest<{ rows: DtcAutoWorkOrderRow[]; total_count: number }>(
     `/api/v1/maintenance/dashboard/dtc-auto-work-orders?${query(companyId)}`
   );
 }
