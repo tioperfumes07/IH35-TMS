@@ -246,6 +246,20 @@ async function loadObligationCandidates(
   return out;
 }
 
+// ACCT-F5573: table + extra predicate for each obligation_type, so POST /reconcile can verify the
+// caller-supplied obligation_id actually exists and belongs to this company BEFORE writing it onto
+// a real bank transaction. Mirrors loadObligationCandidates' own WHERE predicates exactly.
+const OBLIGATION_EXISTENCE_SQL: Record<z.infer<typeof reconcileBodySchema.shape.obligation_type>, string | null> = {
+  load: `SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
+  settlement: `SELECT 1 FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  fuel: `SELECT 1 FROM fuel.fuel_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  work_order: `SELECT 1 FROM maintenance.work_orders WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  ar_invoice: `SELECT 1 FROM accounting.invoices WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status NOT IN ('void', 'draft')`,
+  bill: `SELECT 1 FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL`,
+  // factoring_batch is validated by applyMatch() itself, not this table-existence check.
+  factoring_batch: null,
+};
+
 function isUnreconciledTxnRow(row: {
   matched_load_id: string | null;
   matched_bill_id: string | null;
@@ -351,7 +365,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     return payload;
   });
 
-  app.get("/api/v1/banking/reconcile/suggestions", async (req, reply) => {
+  app.get("/api/v1/banking/reconcile/suggestions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -427,7 +441,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     return payload;
   });
 
-  app.post("/api/v1/banking/reconcile", async (req, reply) => {
+  app.post("/api/v1/banking/reconcile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -439,7 +453,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     if (!companyHeader.success) return sendValidationError(reply, companyHeader.error);
     const companyId = companyHeader.data.operating_company_id;
 
-    let ok: boolean | "transaction_mismatch";
+    let ok: boolean | "transaction_mismatch" | "obligation_not_found";
     try {
       ok = await withCompanyScope(user.uuid, companyId, async (client) => {
         await client.query("BEGIN");
@@ -480,6 +494,23 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
             );
             await client.query("COMMIT");
             return true;
+          }
+
+          // ACCT-F5573: the obligation_id was previously written straight onto the bank transaction
+          // with no check that it exists or belongs to this company. Every downstream JOIN on
+          // matched_load_id/matched_bill_id/matched_settlement_id is itself company-scoped (verified:
+          // plaid/link.routes.ts, qbo-sync.service.ts), so a bogus/foreign id can't leak another
+          // tenant's data through those reads -- but it silently marks a REAL bank transaction as
+          // "matched" against nothing, permanently hiding a genuinely-unreconciled transaction from
+          // the /unmatched-transactions queue (which filters on matched_*/reconciled_obligation_id
+          // being NULL). Reject before writing instead of trusting the caller.
+          const existenceSql = OBLIGATION_EXISTENCE_SQL[body.data.obligation_type];
+          if (existenceSql) {
+            const existsRes = await client.query(existenceSql, [body.data.obligation_id, companyId]);
+            if (!existsRes.rows[0]) {
+              await client.query("ROLLBACK");
+              return "obligation_not_found" as const;
+            }
           }
 
           let loadId: string | null = null;
@@ -550,6 +581,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     }
 
     if (ok === "transaction_mismatch") return reply.code(409).send({ error: "suggestion_transaction_mismatch" });
+    if (ok === "obligation_not_found") return reply.code(404).send({ error: "obligation_not_found" });
     if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
   });

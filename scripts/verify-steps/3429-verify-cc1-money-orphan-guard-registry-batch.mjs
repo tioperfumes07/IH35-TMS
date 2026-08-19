@@ -34,6 +34,7 @@ const guards = [
   "verify-fuel-card-overage-profile-reverse.mjs",
   "verify-fuel-expense-identity-honesty.mjs",
   "verify-gl-je-honest-built.mjs",
+  "verify-obligation-reconcile-existence-checked.mjs",
   "verify-invoice-inline-surface-applicability.mjs",
   "verify-liability-built-tags-strict.mjs",
   "verify-liability-navigation-honesty.mjs",
