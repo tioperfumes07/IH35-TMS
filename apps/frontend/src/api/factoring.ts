@@ -131,13 +131,19 @@ export function getFactoringRecoursePipeline(
   const params = new URLSearchParams({ operating_company_id: companyId, limit: String(limit) });
   if (filters.customer_id) params.set("customer_id", filters.customer_id);
   if (filters.load_id) params.set("load_id", filters.load_id);
-  return apiRequest<{ invoices: FactoringRecourseInvoice[] }>(`/api/v1/factoring/recourse-pipeline?${params.toString()}`);
+  return apiRequest<{ invoices: FactoringRecourseInvoice[]; total: number }>(
+    `/api/v1/factoring/recourse-pipeline?${params.toString()}`
+  );
 }
 
 export function getFactoringChargebacksFees(companyId: string, customerId?: string) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (customerId) params.set("customer_id", customerId);
-  return apiRequest<{ history: FactoringChargebackFeeRow[]; monthly_summary: FactoringMonthlyFeeSummary[] }>(
+  return apiRequest<{
+    history: FactoringChargebackFeeRow[];
+    history_total: number;
+    monthly_summary: FactoringMonthlyFeeSummary[];
+  }>(
     `/api/v1/factoring/chargebacks-fees?${params.toString()}`
   );
 }
