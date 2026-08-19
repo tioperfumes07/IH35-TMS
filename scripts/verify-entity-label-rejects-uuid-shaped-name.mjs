@@ -239,7 +239,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/PositionHistoryPage.tsx",
     bad: /unit_number\s*\?\?\s*row\.unit_id|unit_number\?\.trim\(\)\s*\|\|\s*"Unit"/,
-    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{row\.unit_id\}\s+name=\{row\.unit_number\}\s+noun="Unit"/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{row\.unit_id\}\s+name=\{row\.unit_number\}\s+noun="Unit"|<EntityLink[\s\S]{0,100}kind="unit"[\s\S]{0,100}id=\{row\.unit_id\}[\s\S]{0,120}label=\{entityLabel\(row\.unit_number, row\.unit_id, "Unit"\)\}/,
   },
   {
     rel: "apps/frontend/src/pages/audit/AuditTrailPage.tsx",
@@ -1334,7 +1334,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
     bad: /const displayId = String\(workOrder\.display_id/,
-    good: /entityLabel\(workOrder\.display_id, workOrder\.id, "Work order"\)/,
+    good: /<EntityLinkOrTombstone kind="work_order" id=\{asEntityId\(workOrder\.id\)\} name=\{workOrder\.display_id\} noun="Work order" \/>/,
   },
   {
     rel: "apps/frontend/src/components/accounting/VendorBillForm.tsx",
@@ -1494,8 +1494,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
     bad: /<EntityLink kind="vendor" id=\{String\(workOrder\.external_vendor_id\)\} \/>/,
-    // EntityLinkOrTombstone with honest name= (entityLabel inside) OR raw entityLabel().
-    good: /entityLabel\(\s*typeof workOrder\.external_vendor_name === "string"|kind="vendor"[\s\S]*?name=\{typeof workOrder\.external_vendor_name === "string"/,
+    good: /kind="vendor"[\s\S]{0,100}id=\{asEntityId\(workOrder\.resolved_vendor_id\)\}[\s\S]{0,100}name=\{workOrder\.resolved_vendor_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx",
