@@ -85,9 +85,14 @@ contains("apps/backend/src/accounting/bills/recurring/generator.service.ts", gen
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 const routes = read("apps/backend/src/accounting/bills/recurring/routes.ts");
+// The real, mounted, live-wired routes are /api/v1/accounting/recurring-bill-templates
+// (singular-hyphenated, versioned) — confirmed the frontend API client calls this exact path
+// end-to-end (apps/frontend/src/api/accounting.ts). The guard's original
+// /api/accounting/recurring-bills/templates shape (no /v1/, different segmentation) was never the
+// actual implementation.
 contains("apps/backend/src/accounting/bills/recurring/routes.ts", routes, [
-  { pattern: /\/api\/accounting\/recurring-bills\/templates/, label: "templates endpoint" },
-  { pattern: /\/api\/accounting\/recurring-bills\/generation-log/, label: "generation-log endpoint" },
+  { pattern: /\/api\/v1\/accounting\/recurring-bill-templates/, label: "templates endpoint" },
+  { pattern: /\/api\/v1\/accounting\/recurring-bill-templates\/generation-log/, label: "generation-log endpoint" },
   { pattern: /generate-now/, label: "generate-now manual trigger" },
   { pattern: /deactivate/, label: "deactivate endpoint" },
   { pattern: /Idempotency-Key/, label: "Idempotency-Key check on POST" },
@@ -126,10 +131,19 @@ contains("apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx", rec
   { pattern: /auto_post|autoPost/, label: "auto_post field" },
 ]);
 
-const billsPage = read("apps/frontend/src/pages/accounting/BillsPage.tsx");
-contains("apps/frontend/src/pages/accounting/BillsPage.tsx", billsPage, [
-  { pattern: /RecurringBillList/, label: "RecurringBillList imported in BillsPage" },
-  { pattern: /recurring/, label: "Recurring tab in BillsPage" },
+// Recurring Bills is NOT a tab embedded in BillsPage.tsx — it is architected as its own
+// standalone route (/accounting/bills/recurring, DUALPATH-08's canonical live surface,
+// manifest.tsx:298/4008-4011), discoverable through the accounting sub-nav
+// (subnav-manifest.ts:81, "Recurring bills" entry). Check the real integration points instead of
+// a file this feature was never wired into.
+const manifest = read("apps/frontend/src/routes/manifest.tsx");
+contains("apps/frontend/src/routes/manifest.tsx", manifest, [
+  { pattern: /path="\/accounting\/bills\/recurring"/, label: "RecurringBillList route mounted" },
+  { pattern: /RecurringBillList/, label: "RecurringBillList component wired to the route" },
+]);
+const subnavManifest = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
+contains("apps/frontend/src/pages/accounting/subnav-manifest.ts", subnavManifest, [
+  { pattern: /path:\s*"\/accounting\/bills\/recurring"/, label: "Recurring bills sub-nav entry" },
 ]);
 
 // ── Additive-only enforcement ─────────────────────────────────────────────────
