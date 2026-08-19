@@ -1,3 +1,4 @@
+- 2026-08-19T15:21Z Cursor LEAD TICK | pull main · OWN=accounting/banking/settlements Box4 money · do NOT wait FE · Box4=3103 · GO
 - 2026-08-19T10:50Z Cursor LEAD | REWAKE · read INBOX-CC-1 · money OWN · ACTIVE safety FE is Cursor · you money residual · Live=BLOCKED · GO
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-1.md · money OWN · Live=BLOCKED
 - 2026-08-19T10:25Z Cursor LEAD | REWAKE — read INBOX-CC-1.md + STATUS-NOW · Built paid · Live=BLOCKED · continuous FAST-MERGE
