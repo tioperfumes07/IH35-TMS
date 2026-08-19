@@ -48,6 +48,7 @@ const guards = [
   "verify-payments-create-role-gated.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
   "verify-reconciliation-match-existence-checked.mjs",
+  "verify-recurring-bill-template-ownership-check.mjs",
   "verify-invoice-inline-surface-applicability.mjs",
   "verify-liability-built-tags-strict.mjs",
   "verify-liability-navigation-honesty.mjs",
