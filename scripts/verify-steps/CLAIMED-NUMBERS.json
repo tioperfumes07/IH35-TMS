@@ -2527,6 +2527,10 @@
     "owner": "cursor",
     "note": "LV-LOAD-TEMPLATE-LIBRARY-FILTER-SILENT-APPLY"
   },
+  "4034": {
+    "owner": "cursor",
+    "note": "LV-LIABILITIES-HOME-FILTER-SILENT-APPLY"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
