@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -6,7 +6,7 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { nextPaymentDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
-import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { requireVoidCancelExecutor, canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -185,6 +185,21 @@ async function fetchPaymentDetail(
   };
 }
 
+// ACCT-F5584: POST /payments (create) had no role gate at all -- currentAuthUser only requires a
+// session. This route is a duplicate write path to customer-payments.routes.ts's POST /:id/payments
+// (ACCT-F5581, already fixed) -- same INSERT into accounting.payments, same real GL posting via
+// postSourceTransactionInClientTx (the route's own CLS-SUBLEDGER-GL-DARK comment calls this
+// "instance 2" of the identical dark-GL defect). The sibling POST /:id/void route in THIS SAME FILE
+// already correctly gates with requireVoidCancelExecutor -- create was simply missed. Reuses the
+// same canVoidCancel predicate (Owner/Administrator/Accountant).
+function requirePaymentWriteRole(reply: FastifyReply, role: string) {
+  if (!canVoidCancel(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "recording a payment requires an accounting role" });
+    return false;
+  }
+  return true;
+}
+
 export async function registerPaymentsRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -294,6 +309,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/payments", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!requirePaymentWriteRole(reply, String(user.role ?? ""))) return;
 
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
