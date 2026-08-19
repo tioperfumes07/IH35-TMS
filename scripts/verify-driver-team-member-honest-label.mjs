@@ -18,8 +18,10 @@ function failures(candidate = files) {
   if (!candidate.api.includes('const driverId = slot === "primary" ? team.primary_driver_id : team.secondary_driver_id')) found.push("both canonical driver slots are not resolved");
   if (!candidate.api.includes('return entityLabel(name, driverId, "Driver")')) found.push("driver-team member identity does not use entityLabel");
   if (/return name \|\| \(slot === "primary" \? team\.primary_driver_id : team\.secondary_driver_id\)/.test(candidate.api)) found.push("raw driver UUID remains a visible fallback");
-  if (!candidate.list.includes('<EntityLink kind="driver" id={row.primary_driver_id} label={driverTeamMemberName(row, "primary")} />')) found.push("Lists primary-driver drill loses shared human label");
-  if (!candidate.list.includes('<EntityLink kind="driver" id={row.secondary_driver_id} label={driverTeamMemberName(row, "secondary")} />')) found.push("Lists secondary-driver drill loses shared human label");
+  if (!candidate.list.includes('<DriverTeamMemberCell row={row} slot="primary" />')) found.push("Lists primary-driver drill loses governed member cell");
+  if (!candidate.list.includes('<DriverTeamMemberCell row={row} slot="secondary" />')) found.push("Lists secondary-driver drill loses governed member cell");
+  if (!candidate.list.includes('isUnresolvedEntityTombstone(rawName || null, driverId, "Driver")')) found.push("Lists member cell loses unresolved-driver tombstone policy");
+  if (!candidate.list.includes('kind="driver"') || !candidate.list.includes("id={driverId}") || !candidate.list.includes("label={label}")) found.push("Lists member cell loses canonical resolved driver drill");
   if (!candidate.list.includes('listMdataDriverTeams({') || !candidate.list.includes("operating_company_id: companyId")) found.push("Lists roster is no longer company scoped");
   if (!candidate.modal.includes("new_driver_id: replacementDriverId") || !candidate.modal.includes("driver_slot: replaceSlot")) found.push("replacement no longer submits the canonical driver FK and slot");
   if (!candidate.reverse.includes('listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })')) found.push("Driver profile reverse roster is no longer company scoped");
@@ -33,8 +35,10 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   const mutations = [
     ["api", 'import { entityLabel } from "../lib/entity-label";', "", "honest-label import"],
     ["api", 'return entityLabel(name, driverId, "Driver")', "return name || driverId", "raw UUID fallback"],
-    ["list", 'id={row.primary_driver_id} label={driverTeamMemberName(row, "primary")}', 'id={row.primary_driver_id} label={row.primary_driver_id}', "primary list label"],
-    ["list", 'id={row.secondary_driver_id} label={driverTeamMemberName(row, "secondary")}', 'id={row.secondary_driver_id} label={row.secondary_driver_id}', "secondary list label"],
+    ["list", '<DriverTeamMemberCell row={row} slot="primary" />', '<span>{row.primary_driver_id}</span>', "primary list member cell"],
+    ["list", '<DriverTeamMemberCell row={row} slot="secondary" />', '<span>{row.secondary_driver_id}</span>', "secondary list member cell"],
+    ["list", 'isUnresolvedEntityTombstone(rawName || null, driverId, "Driver")', "false", "unresolved member tombstone"],
+    ["list", "id={driverId}", "id={undefined}", "resolved member driver FK"],
     ["modal", "new_driver_id: replacementDriverId", "new_driver_id: team.id", "replacement driver FK"],
     ["reverse", 'operating_company_id: operatingCompanyId', 'operating_company_id: ""', "reverse company scope"],
     ["reverse", 'kind="driver_team"', 'kind="driver"', "exact team drill"],
