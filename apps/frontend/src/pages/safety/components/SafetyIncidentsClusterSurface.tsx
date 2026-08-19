@@ -24,6 +24,7 @@ import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../../components/table";
 import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -126,70 +127,81 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedHint, setSavedHint] = useState(false);
-  // S-08 + s-04: list filters (driver/unit/from–to) — AccidentsPage-parity local state;
+  // S-08 + s-04 + LV-SAFETY-INCIDENTS-CLUSTER-FILTER-SILENT-APPLY — stage until Apply;
   // date range is sent as date_from/date_to query params (backend list route).
   const [searchParams, setSearchParams] = useSearchParams();
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
-  // LST-F5194 — list filters write driver_id/unit_id/load_id/trailer_id to URL.
-  const [driverFilter, setDriverFilterState] = useState(driverIdFromUrl);
-  const [unitFilter, setUnitFilterState] = useState(unitIdFromUrl);
-  const [loadFilter, setLoadFilterState] = useState(loadIdFromUrl);
-  const [trailerFilter, setTrailerFilterState] = useState(trailerIdFromUrl);
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
 
-  useEffect(() => {
-    setDriverFilterState(driverIdFromUrl);
-  }, [driverIdFromUrl]);
-  useEffect(() => {
-    setUnitFilterState(unitIdFromUrl);
-  }, [unitIdFromUrl]);
-  useEffect(() => {
-    setLoadFilterState(loadIdFromUrl);
-  }, [loadIdFromUrl]);
-  useEffect(() => {
-    setTrailerFilterState(trailerIdFromUrl);
-  }, [trailerIdFromUrl]);
+  const EMPTY_FILTERS = {
+    driverId: "",
+    unitId: "",
+    loadId: "",
+    trailerId: "",
+    from: "",
+    to: "",
+  };
 
-  function patchListSearchParam(key: "driver_id" | "unit_id" | "load_id" | "trailer_id", next: string) {
+  // LST-F5194 — list filters write driver_id/unit_id/load_id/trailer_id to URL on Apply (not silent draft).
+  function patchListSearchParam(
+    next: { driverId: string; unitId: string; loadId: string; trailerId: string },
+  ) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set(key, next);
-    else p.delete(key);
+    const pairs: Array<["driver_id" | "unit_id" | "load_id" | "trailer_id", string]> = [
+      ["driver_id", next.driverId],
+      ["unit_id", next.unitId],
+      ["load_id", next.loadId],
+      ["trailer_id", next.trailerId],
+    ];
+    for (const [key, value] of pairs) {
+      if (value) p.set(key, value);
+      else p.delete(key);
+    }
     setSearchParams(p, { replace: true });
   }
-  function setDriverFilter(next: string) {
-    setDriverFilterState(next);
-    patchListSearchParam("driver_id", next);
-  }
-  function setUnitFilter(next: string) {
-    setUnitFilterState(next);
-    patchListSearchParam("unit_id", next);
-  }
-  function setLoadFilter(next: string) {
-    setLoadFilterState(next);
-    patchListSearchParam("load_id", next);
-  }
-  function setTrailerFilter(next: string) {
-    setTrailerFilterState(next);
-    patchListSearchParam("trailer_id", next);
-  }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+    unitId: unitIdFromUrl,
+    loadId: loadIdFromUrl,
+    trailerId: trailerIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const draft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({
+      ...prev,
+      driverId: driverIdFromUrl,
+      unitId: unitIdFromUrl,
+      loadId: loadIdFromUrl,
+      trailerId: trailerIdFromUrl,
+    }));
+  }, [driverIdFromUrl, unitIdFromUrl, loadIdFromUrl, trailerIdFromUrl]);
 
   const typedFields = config.typedFields;
   const has = (key: IncidentFieldKey) => COMMON_FIELDS.includes(key) || typedFields.includes(key);
 
   const listFilters = useMemo(
     () => ({
-      driver_id: driverFilter.trim() || driverIdFromUrl || undefined,
-      unit_id: unitFilter.trim() || unitIdFromUrl || undefined,
-      load_id: loadFilter.trim() || loadIdFromUrl || undefined,
-      trailer_id: trailerFilter.trim() || trailerIdFromUrl || undefined,
-      date_from: fromDate || undefined,
-      date_to: toDate || undefined,
+      driver_id: applied.driverId.trim() || undefined,
+      unit_id: applied.unitId.trim() || undefined,
+      load_id: applied.loadId.trim() || undefined,
+      trailer_id: applied.trailerId.trim() || undefined,
+      date_from: applied.from || undefined,
+      date_to: applied.to || undefined,
     }),
-    [driverFilter, unitFilter, loadFilter, trailerFilter, driverIdFromUrl, unitIdFromUrl, loadIdFromUrl, trailerIdFromUrl, fromDate, toDate]
+    [applied]
   );
 
   const listQuery = useQuery({
@@ -529,8 +541,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <EntityPicker
             kind="driver"
             operatingCompanyId={operatingCompanyId}
-            value={driverFilter || null}
-            onChange={(next) => setDriverFilter(next ?? "")}
+            value={draft.driverId || null}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
             allowCreate={false}
             placeholder="All drivers"
             className="mt-1 block min-w-[10rem]"
@@ -542,8 +554,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <EntityPicker
             kind="unit"
             operatingCompanyId={operatingCompanyId}
-            value={unitFilter || null}
-            onChange={(next) => setUnitFilter(next ?? "")}
+            value={draft.unitId || null}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
             allowCreate={false}
             placeholder="All units"
             className="mt-1 block min-w-[8rem]"
@@ -555,8 +567,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <EntityPicker
             kind="load"
             operatingCompanyId={operatingCompanyId}
-            value={loadFilter || null}
-            onChange={(next) => setLoadFilter(next ?? "")}
+            value={draft.loadId || null}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, loadId: next ?? "" }))}
             allowCreate={false}
             placeholder="All loads"
             className="mt-1 block min-w-[8rem]"
@@ -568,8 +580,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <EntityPicker
             kind="trailer"
             operatingCompanyId={operatingCompanyId}
-            value={trailerFilter || null}
-            onChange={(next) => setTrailerFilter(next ?? "")}
+            value={draft.trailerId || null}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
             allowCreate={false}
             placeholder="All trailers"
             className="mt-1 block min-w-[8rem]"
@@ -579,40 +591,42 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         <label className="text-[11px] text-slate-600">
           From
           <DatePicker
-            value={fromDate}
-            onChange={setFromDate}
+            value={draft.from}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, from: next }))}
             className="mt-1 block min-h-12 w-full"
-            max={toDate || undefined}
+            max={draft.to || undefined}
             data-testid="safety-incidents-from-date"
           />
         </label>
         <label className="text-[11px] text-slate-600">
           To
           <DatePicker
-            value={toDate}
-            onChange={setToDate}
+            value={draft.to}
+            onChange={(next) => staged.setDraft((d) => ({ ...d, to: next }))}
             className="mt-1 block min-h-12 w-full"
-            min={fromDate || undefined}
+            min={draft.from || undefined}
             data-testid="safety-incidents-to-date"
           />
         </label>
-        {driverFilter || unitFilter || loadFilter || trailerFilter || fromDate || toDate ? (
-          <button
-            type="button"
-            className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] text-slate-500 hover:bg-gray-100"
-            data-testid={`${config.pageTestId}-filter-clear`}
-            onClick={() => {
-              setDriverFilter("");
-              setUnitFilter("");
-              setLoadFilter("");
-              setTrailerFilter("");
-              setFromDate("");
-              setToDate("");
-            }}
-          >
-            Clear
-          </button>
-        ) : null}
+        <Button type="button" size="sm" data-testid={`${config.pageTestId}-filter-apply`} onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button type="button" size="sm" variant="secondary" data-testid={`${config.pageTestId}-filter-cancel`} onClick={staged.cancel} disabled={!staged.dirty}>
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid={`${config.pageTestId}-filter-reset`}
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchListSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
 
       {listQuery.isError ? (
