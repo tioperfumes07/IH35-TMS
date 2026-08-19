@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 
 export type AuthGatePanelProps = {
   operatingCompanyId: string;
@@ -35,8 +37,41 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
   const info = q.data?.info ?? [];
   props.onBlockersChange?.(q.isError || blockers.length > 0);
   if (!q.data && !q.isLoading && !q.isError) return null;
+  const hasIdentity = Boolean(props.loadUuid || props.unitUuid || props.driverUuid || props.trailerUuid);
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 p-3" data-testid="auth-gate-panel">
+      {/* Exact Leaves dispatch.panel.auth_gate:driver|unit|trailer|load —
+          gates used UUIDs as query params only; expose real EntityLinks for bound identities. */}
+      {hasIdentity ? (
+        <div
+          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+          data-testid="auth-gate-panel-entitylinks"
+        >
+          {props.loadUuid ? (
+            <span>
+              Load:{" "}
+              <EntityLink kind="load" id={props.loadUuid} label={entityLabel(null, props.loadUuid, "Load")} />
+            </span>
+          ) : null}
+          {props.driverUuid ? (
+            <span>
+              Driver:{" "}
+              <EntityLink kind="driver" id={props.driverUuid} label={entityLabel(null, props.driverUuid, "Driver")} />
+            </span>
+          ) : null}
+          {props.unitUuid ? (
+            <span>
+              Unit: <EntityLink kind="unit" id={props.unitUuid} label={entityLabel(null, props.unitUuid, "Unit")} />
+            </span>
+          ) : null}
+          {props.trailerUuid ? (
+            <span>
+              Trailer:{" "}
+              <EntityLink kind="trailer" id={props.trailerUuid} label={entityLabel(null, props.trailerUuid, "Trailer")} />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {q.isError ? (
         <div className="bg-red-50 px-2 py-1.5 text-[13px] text-red-800" role="alert">
           <p>{userFacingApiError(q.error, "Could not verify dispatch authorization")}</p>
