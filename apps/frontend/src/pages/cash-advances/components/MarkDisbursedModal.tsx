@@ -61,7 +61,8 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
           <ModalCloseButton title="Mark Disbursed" onClose={onClose} />
         </div>
 
-        <div className="mb-2 rounded-sm border border-gray-200 bg-gray-50 p-2">
+        {/* UI-01 PART 2 — flat inside the single modal frame, not a nested card (QBO/NetSuite style). */}
+        <div className="mb-2 border-t border-gray-200 pt-2">
           <span className="font-semibold">Linked Load: </span>
           {advance?.load_id ? (
             <EntityLink
