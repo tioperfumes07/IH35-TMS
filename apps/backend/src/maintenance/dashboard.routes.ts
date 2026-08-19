@@ -220,7 +220,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const rows = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.work_orders"))) return [];
+      if (!(await relationExists(client, "maintenance.work_orders"))) return { rows: [], total_count: 0 };
       const res = await client.query(
         `
           SELECT
