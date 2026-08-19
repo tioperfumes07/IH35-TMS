@@ -5,7 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { listPartsAssignments, type PartsAssignmentRow } from "../../api/maintenance";
+import { getPartsAssignmentsPage, type PartsAssignmentRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
@@ -34,12 +34,13 @@ export function InventoryAssignmentsPage() {
 
   const assignmentsQuery = useQuery({
     queryKey: ["maintenance", "parts-assignments", companyId],
-    queryFn: () => listPartsAssignments(companyId),
+    queryFn: () => getPartsAssignmentsPage(companyId),
     enabled: Boolean(companyId),
   });
 
   // Search is ONLY the canonical ParityTable UniversalListToolbar (LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH).
-  const allRows = assignmentsQuery.data ?? [];
+  const allRows = assignmentsQuery.data?.rows ?? [];
+  const totalCount = assignmentsQuery.data?.total_count ?? allRows.length;
   const [vendorFilter, setVendorFilter] = useState("");
   const [unitLinkedOnly, setUnitLinkedOnly] = useState(false);
   const staged = useStagedListFilters({
@@ -173,6 +174,11 @@ export function InventoryAssignmentsPage() {
       ) : (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <h3 className="text-sm font-semibold">Assignment trail</h3>
+          {totalCount > allRows.length ? (
+            <p className="text-xs text-slate-500" data-testid="inventory-assignments-range">
+              Showing {allRows.length} of {totalCount} assignments. Narrow the filters to review the complete matching trail.
+            </p>
+          ) : null}
           <ParityTable<PartsAssignmentRow>
             columns={columns}
             rows={rows}
