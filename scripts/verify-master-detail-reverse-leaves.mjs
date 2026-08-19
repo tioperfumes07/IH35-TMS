@@ -14,7 +14,14 @@ const source = {
 function audit(s) {
   const failures = [];
   if (!/listInvoices\(companyId, \{[\s\S]{0,100}customer_id: selectedCustomer!\.id/.test(s.customers)) failures.push("customer transaction scope missing");
-  if (!/<EntityLink kind="invoice" id=\{r\.id\}/.test(s.customers) || !/<EntityLink kind="load" id=\{r\.source_load_id\}/.test(s.customers)) failures.push("customer transaction drills missing");
+  // Either bare EntityLink or the canonical EntityLinkOrTombstone (honest unresolved-record fallback,
+  // ACCT-F5511 precedent) satisfy the drill; tolerate kind=/id= landing on separate JSX lines.
+  if (
+    !/<EntityLink(?:OrTombstone)?\s+kind="invoice"\s+id=\{r\.id\}/.test(s.customers) ||
+    !/<EntityLink(?:OrTombstone)?[\s\S]{0,20}kind="load"[\s\S]{0,20}id=\{r\.source_load_id\}/.test(s.customers)
+  ) {
+    failures.push("customer transaction drills missing");
+  }
   if (!/navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)/.test(s.customers) || !/navigate\(`\/customers\/\$\{selectedCustomer\.id\}`\)/.test(s.customers)) failures.push("customer header routes missing");
   if (!/Couldn't load customer transactions/.test(s.customers) || !/No transactions for current filters\./.test(s.customers)) failures.push("customer transaction honest states missing");
   if (!/listBills\(companyId, \{[\s\S]{0,100}vendor_id: selectedVendor!\.id/.test(s.vendors)) failures.push("vendor transaction scope missing");
