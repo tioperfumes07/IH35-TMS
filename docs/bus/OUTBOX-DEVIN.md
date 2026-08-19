@@ -227,3 +227,8 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.at_risk
+Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.at_risk | URL=https://app.ih35dispatch.com/dispatch?view=at-risk | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.detention
