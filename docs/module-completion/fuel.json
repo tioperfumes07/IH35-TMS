@@ -1,7 +1,7 @@
 {
   "module": "fuel",
   "title": "Fuel — acceptance checklist",
-  "complete": true,
+  "complete": false,
   "as_of": "2026-08-10T06:26:05.357Z",
   "live_sha": null,
   "desktop_audit": null,
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | Item checklist is 9 of 9, but module complete remains false while shared wave classes CLS-ECON-EMPTY and CLS-DISP-WIRE-06 remain open; scoreboard counts cannot override open-class truth.",
   "items": [
     {
       "id": "FUEL-S01",
