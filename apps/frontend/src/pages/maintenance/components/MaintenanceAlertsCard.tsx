@@ -55,17 +55,20 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
 
   const alerts = alertsQuery.data?.alerts ?? [];
   const scheduledAlerts = scheduledAlertsQuery.data?.alerts ?? [];
+  const openTotalCount = alertsQuery.data?.total_count ?? alerts.length;
+  const scheduledTotalCount = scheduledAlertsQuery.data?.total_count ?? scheduledAlerts.length;
 
   if (compact) {
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">PM Alerts</span>
-          <span className="text-[10px] font-semibold" style={{ color: "#854F0B" }}>{alerts.length} open</span>
+          <span className="text-[10px] font-semibold" style={{ color: "#854F0B" }}>{openTotalCount} open</span>
         </div>
         {alerts.length === 0 ? (
           <div className="px-2 py-1.5 text-[11px] text-gray-400">No PM alerts</div>
         ) : (
+          <div>
           <ul className="flex flex-col">
             {alerts.map((alert: MaintenancePmAlert) => (
               <li key={alert.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
@@ -76,6 +79,12 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
               </li>
             ))}
           </ul>
+          {openTotalCount > alerts.length ? (
+            <p className="border-t border-gray-100 px-2 py-1 text-[10px] text-slate-500" data-testid="pm-alerts-compact-range">
+              Showing {alerts.length} of {openTotalCount} open alerts.
+            </p>
+          ) : null}
+          </div>
         )}
       </section>
     );
@@ -85,12 +94,17 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">PM Alerts</h3>
-        <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{alerts.length} open</span>
+        <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{openTotalCount} open</span>
       </div>
       {alerts.length === 0 ? (
         <p className="text-xs text-gray-500">No preventive maintenance alerts.</p>
       ) : (
         <ul className="space-y-2">
+          {openTotalCount > alerts.length ? (
+            <li className="text-xs text-slate-500" data-testid="pm-alerts-open-range">
+              Showing {alerts.length} of {openTotalCount} open alerts.
+            </li>
+          ) : null}
           {alerts.map((alert: MaintenancePmAlert) => (
             <li key={alert.id} className="p-2">
               <div className="flex items-center justify-between gap-2">
@@ -165,6 +179,11 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
       {!compact && scheduledAlerts.length > 0 ? (
         <div className="mt-3 border-t border-gray-200 pt-3" data-testid="pm-alerts-scheduled-reverse">
           <h4 className="text-xs font-semibold text-gray-700">Recently scheduled</h4>
+          {scheduledTotalCount > scheduledAlerts.length ? (
+            <p className="mt-1 text-xs text-slate-500" data-testid="pm-alerts-scheduled-range">
+              Showing {scheduledAlerts.length} of {scheduledTotalCount} scheduled alerts.
+            </p>
+          ) : null}
           <ul className="mt-2 space-y-1">
             {scheduledAlerts.map((alert) => (
               <li key={alert.id} className="text-xs text-gray-600">

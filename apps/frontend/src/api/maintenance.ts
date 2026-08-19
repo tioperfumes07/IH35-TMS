@@ -466,7 +466,7 @@ export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: st
 export function listMaintenancePmAlerts(companyId: string, state?: MaintenancePmAlert["state"]) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (state) params.set("state", state);
-  return apiRequest<{ alerts: MaintenancePmAlert[] }>(`/api/v1/maintenance/pm-alerts?${params.toString()}`);
+  return apiRequest<{ alerts: MaintenancePmAlert[]; total_count: number }>(`/api/v1/maintenance/pm-alerts?${params.toString()}`);
 }
 
 export function acknowledgeMaintenancePmAlert(alertId: string, companyId: string) {
