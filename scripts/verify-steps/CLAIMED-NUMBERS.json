@@ -4306,5 +4306,10 @@
     "guard": "verify-pre-settlement-panel-driver-entitylink",
     "claimer": "cursor",
     "claimed_at": "2026-08-19"
+  },
+  "3942": {
+    "guard": "verify-load-drawer-assignment-history-driver-entitylinks",
+    "claimer": "cursor",
+    "claimed_at": "2026-08-19"
   }
 }
