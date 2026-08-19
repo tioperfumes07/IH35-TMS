@@ -8,13 +8,12 @@ import { entityLabel } from "../../lib/entity-label";
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
 function renderCustomerCell(load: DispatchLoadRow): ReactNode {
-  const label = entityLabel(load.customer_name, load.customer_id, "Customer");
-  if (!load.customer_id) return label;
   return (
-    <EntityLink
+    <EntityLinkOrTombstone
       kind="customer"
       id={load.customer_id}
-      label={label}
+      name={load.customer_name}
+      noun="Customer"
       onClick={(e) => e.stopPropagation()}
       className="text-slate-700 hover:underline"
       data-testid="loads-customer-link"

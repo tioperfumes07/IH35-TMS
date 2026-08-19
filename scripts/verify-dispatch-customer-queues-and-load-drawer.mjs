@@ -66,8 +66,8 @@ export function audit(src) {
   if (!/customer_id: customerId/.test(src.preDispatch)) {
     failures.push(`${FILES.preDispatch}: pre-dispatch validation must submit a real customer_id`);
   }
-  if (!/renderCustomerCell/.test(src.board)) {
-    failures.push(`${FILES.board}: dispatch board must render a real customer cell`);
+  if (!/renderCustomerCell[\s\S]{0,420}<EntityLinkOrTombstone[\s\S]{0,100}kind="customer"[\s\S]{0,100}id=\{load\.customer_id\}[\s\S]{0,100}name=\{load\.customer_name\}[\s\S]{0,80}noun="Customer"/.test(src.board)) {
+    failures.push(`${FILES.board}: dispatch board must couple customer_id to its resolved customer_name and tombstone unresolved rows`);
   }
   return failures;
 }
@@ -91,7 +91,7 @@ if (process.argv.includes("--selftest")) {
     ["drawer-link", "drawer", /kind="customer"[\s\S]{0,50}id=\{load\.customer_id\}/, 'kind="unit" id={load.unit_id}'],
     ["factoring-tab-scope", "factoringTab", /customer_id: load!\.customer_id/, "customer_id: undefined"],
     ["predispatch-submit", "preDispatch", /customer_id: customerId/, "customer_id: undefined"],
-    ["board-cell", "board", /renderCustomerCell/g, "renderNothingCell"],
+    ["board-customer-identity", "board", /name=\{load\.customer_name\}/, "name={load.customer_id}"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };

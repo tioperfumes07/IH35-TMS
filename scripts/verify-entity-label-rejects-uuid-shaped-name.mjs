@@ -693,7 +693,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx",
     bad: /doc\.driver_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*doc\.driver_name\s*,\s*doc\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*doc\.driver_name\s*,\s*doc\.driver_id\s*,\s*"Driver"\s*\)|EntityLinkOrTombstone kind="driver" id=\{doc\.driver_id\} name=\{doc\.driver_name\} noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
@@ -791,7 +791,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
     bad: /entry\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*entry\.customer_name\s*,\s*entry\.customer_id\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*entry\.customer_name\s*,\s*entry\.customer_id\s*,\s*"Customer"\s*\)|kind="customer"\s+id=\{entry\.customer_id\}\s+name=\{entry\.customer_name\}\s+noun="Customer"/,
   },
   {
     rel: "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx",
@@ -851,7 +851,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/RoundTrips.tsx",
     bad: /load\.customer_name\s*\?\?\s*"—"|load\.assigned_primary_driver_name\s*\?\?\s*"Unassigned"|>\{load\.load_number\}<|\$\{pair\.driverName\}/,
-    good: /entityLabel\(\s*pair\.driverName\s*,\s*pair\.driverId\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*pair\.driverName\s*,\s*pair\.driverId\s*,\s*"Driver"\s*\)|kind="driver"\s+id=\{pair\.driverId \?\? undefined\}\s+name=\{pair\.driverName\}\s+noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx",
