@@ -102,8 +102,8 @@ function assertAll(srcs) {
   const exactConsumers = [
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /entityLabel\(null, id, "Load"\)/, "load breadcrumb"],
     ["apps/frontend/src/components/home/RevenueDiscrepancyDrill.tsx", /entityLabel\(inv\.display_id, inv\.invoice_id, "Invoice"\)/, "invoice display ID"],
-    ["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx", /entityLabel\(selectedPending\.driver_name, selectedPending\.driver_id, "Driver"\)/, "deduction driver name"],
-    ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", /entityLabel\(currentLoad\.load_number, currentLoad\.load_id, "Load"\)/, "current load number"],
+    ["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx", /EntityLinkOrTombstone kind="driver" id=\{selectedPending\.driver_id\} name=\{selectedPending\.driver_name\}/, "unresolved-safe deduction driver name"],
+    ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", /EntityLinkOrTombstone kind="load" id=\{String\(currentLoad\.load_id\)\} name=\{currentLoad\.load_number\}/, "unresolved-safe current load number"],
     ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", /entityLabel\(tx\.categorization_load_number, tx\.categorization_load_id \|\| tx\.matched_load_id, "Load"\)/, "bank load number"],
   ];
   for (const [file, pattern, label] of exactConsumers) {
@@ -127,6 +127,8 @@ if (SELFTEST) {
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'entityLabel([d.first_name, d.last_name].filter(Boolean).join(" ").trim(), d.id, "Driver")', '[d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id', "raw driver UUID fallback"],
     ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", 'kind="insurance_policy"', 'kind="load"', "claim policy picker"],
     ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", 'label: `Accident — ${when}`', 'label: value', "claim accident label"],
+    ["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx", 'name={selectedPending.driver_name}', 'name={null}', "deduction driver human label"],
+    ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", 'name={currentLoad.load_number}', 'name={null}', "current load human label"],
   ];
   for (const [file, needle, replacement, label] of mutations) {
     const planted = { ...srcs, [file]: srcs[file].replace(needle, replacement) };
