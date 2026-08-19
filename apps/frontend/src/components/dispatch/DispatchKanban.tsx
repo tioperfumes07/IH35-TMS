@@ -932,10 +932,44 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                   type="button"
                   onClick={() => onLoadClick(load.id)}
                   className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-[11px] hover:bg-slate-100"
+                  data-testid="kanban-oos-chip"
                 >
-                  <span className="text-red-600" aria-hidden>▲</span>
-                  <span className="font-semibold text-gray-900">{driverUnitLabel(load)}</span>
-                  <span className="font-mono text-[10px] text-gray-500">{entityLabel(load.load_number, load.id, "Load")}</span>
+                  <span className="text-red-600" aria-hidden>
+                    ▲
+                  </span>
+                  {/* Exact Leaves home.kanban:driver|unit — strip was plain text despite IDs */}
+                  <span className="flex min-w-0 items-center gap-1 font-semibold text-gray-900">
+                    {load.assigned_primary_driver_id ? (
+                      <EntityLink
+                        kind="driver"
+                        id={load.assigned_primary_driver_id}
+                        label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+                        data-testid="kanban-oos-driver-link"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : null}
+                    {load.assigned_primary_driver_id && load.assigned_unit_id ? <span aria-hidden>·</span> : null}
+                    {load.assigned_unit_id ? (
+                      <EntityLink
+                        kind="unit"
+                        id={load.assigned_unit_id}
+                        label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
+                        data-testid="kanban-oos-unit-link"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : null}
+                    {!load.assigned_primary_driver_id && !load.assigned_unit_id ? (
+                      <span>Unassigned</span>
+                    ) : null}
+                  </span>
+                  <EntityLink
+                    kind="load"
+                    id={load.id}
+                    label={entityLabel(load.load_number, load.id, "Load")}
+                    className="font-mono text-[10px] text-gray-500"
+                    data-testid="kanban-oos-load-link"
+                    onClick={(e) => e.stopPropagation()}
+                  />
                   <span className="rounded-sm bg-red-100 px-1.5 text-[10px] font-semibold text-red-800">Breakdown</span>
                 </button>
               ))}
