@@ -1,6 +1,8 @@
 # CODER PASTE INSTRUCTIONS — FOUR BOXES ONLY
 **HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
 
+**VERTICAL WIRING (2026-08-12):** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` — one column-wave (matrix COLUMN ID) or CLASS-SWEEP finishes P10 then all remaining modules before the next; never module-deep horizontal.
+
 **rev FINAL-WEEKEND-FULL-WIRING · 2026-08-12 20:16 CT**
 
 **★ THESE ARE THE ONLY FOUR PASTE BOXES.**

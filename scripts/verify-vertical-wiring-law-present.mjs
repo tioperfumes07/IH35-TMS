@@ -21,25 +21,50 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-export function findMissing() {
+/**
+ * @param {Record<string, string>} overrides in-memory content overrides keyed by the MUST_CITE
+ * relative path (or "docs/law/LAW.json") — lets the selftest exercise this against a planted-bad
+ * fixture without writing to any real file on disk.
+ */
+export function findMissing(overrides = {}) {
   const missing = [];
   if (!fs.existsSync(path.join(ROOT, LAW))) missing.push(`${LAW} (missing file)`);
   for (const rel of MUST_CITE) {
+    if (rel in overrides) {
+      if (!VERTICAL_MARK.test(overrides[rel])) missing.push(`${rel} (does not cite vertical wiring law)`);
+      continue;
+    }
     if (!fs.existsSync(path.join(ROOT, rel))) {
       missing.push(`${rel} (missing file)`);
       continue;
     }
     if (!VERTICAL_MARK.test(read(rel))) missing.push(`${rel} (does not cite vertical wiring law)`);
   }
-  if (!read("docs/law/LAW.json").includes("LAW-2026-08-12-VERTICAL-WIRING")) {
+  const lawJson = overrides["docs/law/LAW.json"] ?? read("docs/law/LAW.json");
+  if (!lawJson.includes("LAW-2026-08-12-VERTICAL-WIRING")) {
     missing.push("docs/law/LAW.json (LAW-2026-08-12-VERTICAL-WIRING not registered)");
   }
   return missing;
 }
 
+/**
+ * Exercises the real findMissing() assertion — against the live repo tree, and against an
+ * in-memory planted-bad fixture (one MUST_CITE file with its vertical-wiring citation stripped).
+ * The prior version tested VERTICAL_MARK against a bare filename STRING (not file content), which
+ * happened to pass only because the law's own name is embedded in that filename — it never called
+ * findMissing() at all, so a real regression in file-existence/content/LAW.json checking would have
+ * gone completely undetected.
+ */
 function selftest() {
-  if (!VERTICAL_MARK.test("docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md")) {
-    console.error(`${LABEL} SELFTEST FAIL`);
+  const real = findMissing();
+  if (real.length) {
+    console.error(`${LABEL} SELFTEST FAIL: real tree flagged: ${real.join("; ")}`);
+    process.exit(1);
+  }
+  const target = MUST_CITE[0];
+  const planted = findMissing({ [target]: "no mention of that law here" });
+  if (!planted.some((m) => m.startsWith(target))) {
+    console.error(`${LABEL} SELFTEST FAIL: missing-citation mutation on ${target} was NOT caught`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
