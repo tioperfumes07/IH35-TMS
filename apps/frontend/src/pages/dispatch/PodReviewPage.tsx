@@ -7,8 +7,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
@@ -87,14 +86,14 @@ export function PodReviewPage() {
         key: "load_number",
         label: "Load",
         sortable: true,
-        render: (doc) => <EntityLink kind="load" id={doc.load_id} label={entityLabel(doc.load_number, doc.load_id, "Load")} />,
+        render: (doc) => <EntityLinkOrTombstone kind="load" id={doc.load_id} name={doc.load_number} noun="Load" />,
       },
       {
         key: "driver_name",
         label: "Driver",
         sortable: true,
         render: (doc) => (
-          <EntityLink kind="driver" id={doc.driver_id} label={entityLabel(doc.driver_name, doc.driver_id, "Driver")} />
+          <EntityLinkOrTombstone kind="driver" id={doc.driver_id} name={doc.driver_name} noun="Driver" />
         ),
       },
       { key: "recipient_name", label: "Recipient", render: (doc) => doc.recipient_name ?? "—" },
