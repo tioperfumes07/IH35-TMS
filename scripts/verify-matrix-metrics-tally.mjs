@@ -137,9 +137,27 @@ function repoProblems() {
     if (!svc.includes("classifyMatrixCellTier")) {
       problems.push("module-matrix.service.ts must classify cells with classifyMatrixCellTier");
     }
+    if (!svc.includes("closedCells")) {
+      problems.push("module-matrix.service.ts must expose closedCells (explicit leaf:col, not Box 4 fan-out)");
+    }
+    if (!svc.includes("FULLY_WIRED_MATRIX_ITEMS")) {
+      problems.push("module-matrix.service.ts must roll up Fully-Wired 1–12 from Built/closed");
+    }
+    if (!/clickedCells/.test(svc)) {
+      problems.push("module-matrix.service.ts must expose clickedCells (Chrome click, not Box 4)");
+    }
+    if (!/frozenOps/.test(svc) || !/readyAbl/.test(svc) || !/isOpsReadyColumn/.test(svc)) {
+      problems.push("module-matrix.service.ts must expose frozen ops READY (non-money, USMCA Clicked)");
+    }
   }
   if (!fs.existsSync(SYSTEM_VIEW)) problems.push(`MISSING ${SYSTEM_VIEW}`);
-  else problems.push(...exactSystemTrackerProblems(fs.readFileSync(SYSTEM_VIEW, "utf8")));
+  else {
+    const view = fs.readFileSync(SYSTEM_VIEW, "utf8");
+    problems.push(...exactSystemTrackerProblems(view));
+    if (!/Clicked/.test(view) || !/Named/.test(view) || !/Modals/.test(view) || !/READY/.test(view) || !/Miss C/.test(view)) {
+      problems.push("ModuleMatrixSystemView must keep atoms and add Named + Leaves + Modals + Clicked + Frozen + Miss C + READY");
+    }
+  }
   return problems;
 }
 

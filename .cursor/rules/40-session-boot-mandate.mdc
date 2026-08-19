@@ -1,0 +1,22 @@
+---
+description: ALWAYS LOAD — USMCA session boot (READY/Miss C, FAST-MERGE, triple-lock, seats). Stops new-session amnesia.
+alwaysApply: true
+---
+
+# Session boot mandate (HARD — first action every conversation)
+
+Before any other work, treat as already loaded:
+
+- `docs/bus/SESSION-BOOT-MANDATE.md`
+- `docs/bus/CODER-INSTRUCTIONS-NOW.md` (TOP only)
+- `docs/bus/INBOX-CURSOR.md` (TOP only) if you are Cursor
+
+**GitHub stays. No GitLab.** Speed = FAST-MERGE after local gate PASS.
+
+**100 = READY + Miss C = 0.** Ignore Box 4. No new leaves.
+
+**Findings:** `docs/audit/GUARD-WORKORDERS.md` same turn. Never chat-only. Never defer a class sweep.
+
+**Codex:** reverse code only — no Chrome CDP. **Devin-A:** Clicked on 9227.
+
+First user-visible line of a **new** conversation still includes Rule 22 NEW SESSION, then execute INBOX top — do not reinvent the queue.

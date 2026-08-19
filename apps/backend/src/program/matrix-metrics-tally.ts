@@ -150,3 +150,65 @@ export function sortGroupRollups(rollups: MatrixGroupRollup[]): MatrixGroupRollu
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 }
+
+/** Fully-Wired 1–12 as extra All-modules columns (same 4-box). 1–11 = Built on mapped Required cells; 12 = closed `leaf:col` only. */
+export type FullyWiredItemSpec = {
+  id: string;
+  label: string;
+  /** Match Required-map column ids (OR groups). Empty + allRequired = every owed cell. */
+  cols?: readonly string[];
+  groups?: readonly string[];
+  allRequired?: boolean;
+  /** Item 12 — Clicked Live; never credit Box 4 keyword fan-out. */
+  closedAllowlist?: boolean;
+  /** process group excluding scenario.* probes */
+  processNonScenario?: boolean;
+};
+
+export const FULLY_WIRED_MATRIX_ITEMS: readonly FullyWiredItemSpec[] = [
+  { id: "fw1_place", label: "1 Place", cols: ["connectivity"] },
+  { id: "fw2_canonical", label: "2 Canonical", cols: ["connectivity", "picker_law"] },
+  { id: "fw3_money", label: "3 Money", groups: ["money"] },
+  {
+    id: "fw4_fwd",
+    label: "4 Fwd",
+    cols: [
+      "driver",
+      "customer",
+      "vendor",
+      "unit",
+      "trailer",
+      "load",
+      "claim",
+      "work_order",
+      "accident",
+      "policy",
+      "settlement",
+      "legal_matter",
+      "invoice",
+      "bank",
+    ],
+  },
+  { id: "fw5_rev", label: "5 Rev", cols: ["reverse_link"] },
+  { id: "fw6_matrix", label: "6 Matrix", allRequired: true },
+  { id: "fw7_surface", label: "7 Surface", cols: ["qbo_chrome", "picker_law"] },
+  { id: "fw8_chrome", label: "8 Chrome", cols: ["qbo_chrome"] },
+  { id: "fw9_pickers", label: "9 Pickers", cols: ["picker_law"] },
+  { id: "fw10_rls", label: "10 RLS", processNonScenario: true },
+  { id: "fw11_guard", label: "11 Guard", allRequired: true },
+  { id: "fw12_live", label: "12 Clicked", closedAllowlist: true, allRequired: true },
+];
+
+export function fullyWiredColumnMatches(
+  spec: FullyWiredItemSpec,
+  colId: string,
+  group: string,
+): boolean {
+  if (spec.closedAllowlist || spec.allRequired) return true;
+  if (spec.processNonScenario) {
+    return group === "process" && !colId.startsWith("scenario.");
+  }
+  if (spec.groups?.includes(group)) return true;
+  if (spec.cols?.includes(colId)) return true;
+  return false;
+}
