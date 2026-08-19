@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { apiRequest } from "../../api/client";
-import { entityLabel } from "../../lib/entity-label";
 import { Modal } from "../Modal";
 import { EntityPicker } from "../parity/EntityPicker";
-import { EntityLink } from "../shared/EntityLink";
+import type { EntityPickerOption } from "../parity/entityPickerRegistry";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type Props = {
   open: boolean;
@@ -14,8 +14,11 @@ type Props = {
 
 export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, onClose }: Props) {
   const [equipmentUuid, setEquipmentUuid] = useState("");
+  const [equipmentOption, setEquipmentOption] = useState<EntityPickerOption | null>(null);
   const [fromDriver, setFromDriver] = useState("");
+  const [fromDriverOption, setFromDriverOption] = useState<EntityPickerOption | null>(null);
   const [toDriver, setToDriver] = useState("");
+  const [toDriverOption, setToDriverOption] = useState<EntityPickerOption | null>(null);
   const [location, setLocation] = useState("");
   const [kind, setKind] = useState<"trailer" | "chassis">("trailer");
   const [busy, setBusy] = useState(false);
@@ -56,6 +59,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
           onChange={(e) => {
             setKind(e.target.value as typeof kind);
             setEquipmentUuid("");
+            setEquipmentOption(null);
           }}
         >
           <option value="trailer">Trailer</option>
@@ -66,7 +70,10 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
           equipmentKind={kind}
           operatingCompanyId={operatingCompanyId}
           value={equipmentUuid || null}
-          onChange={(next) => setEquipmentUuid(next ?? "")}
+          onChange={(next, option) => {
+            setEquipmentUuid(next ?? "");
+            setEquipmentOption(option ?? null);
+          }}
           enabled={open}
           placeholder={kind === "chassis" ? "Select chassis" : "Select trailer"}
         />
@@ -74,7 +81,10 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
           kind="driver"
           operatingCompanyId={operatingCompanyId}
           value={fromDriver || null}
-          onChange={(next) => setFromDriver(next ?? "")}
+          onChange={(next, option) => {
+            setFromDriver(next ?? "");
+            setFromDriverOption(option ?? null);
+          }}
           enabled={open}
           placeholder="From driver"
         />
@@ -82,7 +92,10 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
           kind="driver"
           operatingCompanyId={operatingCompanyId}
           value={toDriver || null}
-          onChange={(next) => setToDriver(next ?? "")}
+          onChange={(next, option) => {
+            setToDriver(next ?? "");
+            setToDriverOption(option ?? null);
+          }}
           enabled={open}
           placeholder="To driver"
         />
@@ -96,18 +109,18 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
             {equipmentUuid ? (
               <span>
                 {kind === "chassis" ? "Chassis" : "Trailer"}:{" "}
-                <EntityLink kind="trailer" id={equipmentUuid} label={entityLabel(null, equipmentUuid, kind === "chassis" ? "Chassis" : "Trailer")} />
+                <EntityLinkOrTombstone kind="trailer" id={equipmentUuid} name={equipmentOption?.label} noun={kind === "chassis" ? "Chassis" : "Trailer"} />
               </span>
             ) : null}
             {fromDriver ? (
               <span>
                 From:{" "}
-                <EntityLink kind="driver" id={fromDriver} label={entityLabel(null, fromDriver, "Driver")} />
+                <EntityLinkOrTombstone kind="driver" id={fromDriver} name={fromDriverOption?.label} noun="Driver" />
               </span>
             ) : null}
             {toDriver ? (
               <span>
-                To: <EntityLink kind="driver" id={toDriver} label={entityLabel(null, toDriver, "Driver")} />
+                To: <EntityLinkOrTombstone kind="driver" id={toDriver} name={toDriverOption?.label} noun="Driver" />
               </span>
             ) : null}
           </div>
