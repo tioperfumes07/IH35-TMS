@@ -60,8 +60,8 @@ export function verifyInvLink01PartVendor(root = ROOT, overrides = {}) {
   if (!/vendor_id::text AS vendor_id/.test(routes)) {
     errs.push("parts.routes GET must SELECT vendor_id (not hardcoded null vendor_default)");
   }
-  if (!/v\.vendor_name AS vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors v/.test(routes)) {
-    errs.push("parts.routes GET must LEFT JOIN mdata.vendors.vendor_name (same-opco) AS vendor_name");
+  if (!/COALESCE\(v\.vendor_name, mdata\.resolve_vendor_label_same_company\(pi\.vendor_id, pi\.operating_company_id\)\) AS vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors v/.test(routes)) {
+    errs.push("parts.routes GET must resolve active or historical same-opco vendor_name");
   }
   if (!/v\.operating_company_id = pi\.operating_company_id/.test(routes)) {
     errs.push("parts.routes vendor join must be entity-scoped (pi.operating_company_id)");
@@ -78,10 +78,10 @@ export function verifyInvLink01PartVendor(root = ROOT, overrides = {}) {
   if (/vendor_default:\s*null/.test(routes)) {
     errs.push("parts.routes must not hardcode vendor_default: null on update response");
   }
-  if (!/v\.vendor_name AS vendor_name/.test(inventoryRoutes)) {
-    errs.push("parts-inventory.routes GET must select the real mdata.vendors.vendor_name column");
+  if (!/COALESCE\(v\.vendor_name, mdata\.resolve_vendor_label_same_company\(pi\.vendor_id, pi\.operating_company_id\)\) AS vendor_name/.test(inventoryRoutes)) {
+    errs.push("parts-inventory.routes GET must resolve active or historical same-opco vendor_name");
   }
-  if (/\bv\.name\s+AS\s+vendor_name\b/.test(`${routes}\n${inventoryRoutes}`)) {
+  if (/COALESCE\(v\.name,/.test(`${routes}\n${inventoryRoutes}`)) {
     errs.push("inventory routes must not query phantom mdata.vendors.name");
   }
 
@@ -97,8 +97,8 @@ if (SELFTEST) {
   const goodRoutes = read("apps/backend/src/maintenance/parts.routes.ts");
   const goodInventoryRoutes = read("apps/backend/src/maintenance/parts-inventory.routes.ts");
   const planted = verifyInvLink01PartVendor(ROOT, {
-    routes: goodRoutes.replace(/v\.vendor_name AS vendor_name/, "v.name AS vendor_name"),
-    inventoryRoutes: goodInventoryRoutes.replace(/v\.vendor_name AS vendor_name/, "v.name AS vendor_name"),
+    routes: goodRoutes.replace(/COALESCE\(v\.vendor_name, mdata\.resolve_vendor_label_same_company\(pi\.vendor_id, pi\.operating_company_id\)\) AS vendor_name/, "COALESCE(v.name, mdata.resolve_vendor_label_same_company(pi.vendor_id, pi.operating_company_id)) AS vendor_name"),
+    inventoryRoutes: goodInventoryRoutes.replace(/COALESCE\(v\.vendor_name, mdata\.resolve_vendor_label_same_company\(pi\.vendor_id, pi\.operating_company_id\)\) AS vendor_name/, "COALESCE(v.name, mdata.resolve_vendor_label_same_company(pi.vendor_id, pi.operating_company_id)) AS vendor_name"),
   });
   if (!planted.some((error) => error.includes("phantom mdata.vendors.name"))) {
     console.error(`${LABEL} --selftest FAIL: planted phantom vendor column escaped`, planted);
