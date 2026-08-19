@@ -234,10 +234,13 @@ function selftest() {
     },
     {
       label: "twin check not scoped by operating_company_id",
+      // Tolerates an optional `::uuid` cast between `$1` and the newline — the real source picked
+      // one up (SYS-F5503, the repo-wide uncast-operating_company_id sweep) and this fixture's exact
+      // match went stale, throwing "mutation did not apply" and leaving the negative case untested.
       mutated: () =>
         mutate(
           real,
-          /WHERE other\.operating_company_id = \$1\s*\n\s*AND other\.qbo_item_id/,
+          /WHERE other\.operating_company_id = \$1(?:::uuid)?\s*\n\s*AND other\.qbo_item_id/,
           "WHERE other.qbo_item_id",
           "drop opco scoping"
         ),
