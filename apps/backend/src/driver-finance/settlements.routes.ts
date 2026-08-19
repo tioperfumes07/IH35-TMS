@@ -71,6 +71,27 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+// ACCT-F5576: this file had ZERO role-based access control on any route -- authed() only requires a
+// valid session, and assertCompanyMembership (via withCompany) checks org.user_accessible_company_ids(),
+// which is role-agnostic (any company member, including a Driver, satisfies it). POST /settlements
+// creates a real driver_finance.driver_settlements row with an attacker-chosen gross_pay/net_pay for
+// any driver_id; PATCH /:id/finalize locks it AND calls queuePaymentOnFinalize -- an automatic REAL
+// PAYMENT queue. Both were reachable by any authenticated company member. CLAUDE.md's own
+// "DRIVER DEDUCTION AUTHORIZATION" note already documents the intent that acknowledge is "the COMPANY
+// USER's sign-off" (i.e. NOT the driver) -- the code just never enforced it. Matches the role set
+// settlements/approval.routes.ts already uses for the same domain's approve/reject/finalize operations.
+const SETTLEMENT_WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Payroll"]);
+function requireSettlementWriteRole(req: FastifyRequest, reply: FastifyReply) {
+  const user = authed(req, reply);
+  if (!user) return null;
+  const role = String((user as { role?: string }).role ?? "");
+  if (!SETTLEMENT_WRITE_ROLES.has(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "settlement create/acknowledge/finalize requires an office role" });
+    return null;
+  }
+  return user;
+}
+
 function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
 }
@@ -515,7 +536,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
   });
 
   app.post("/api/v1/driver-finance/settlements", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireSettlementWriteRole(req, reply);
     if (!user) return;
     const parsed = createBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
@@ -523,6 +544,15 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
 
     const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
+
+      // ACCT-F5576: driver_id was previously trusted outright and INSERTed with zero check it exists
+      // or belongs to this company -- a real driver_finance.driver_settlements row (real
+      // gross_pay/net_pay dollar amounts) could be fabricated against a foreign or nonexistent driver.
+      const driverRes = await client.query(
+        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [body.driver_id, body.operating_company_id]
+      );
+      if (!driverRes.rows[0]) return { driverNotFound: true as const };
 
       const displayRes = await client.query(
         `SELECT driver_finance.next_settlement_display_id($1::uuid, $2::date) AS next_id`,
@@ -567,6 +597,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     });
 
     if ("unavailable" in created) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
+    if ("driverNotFound" in created) return reply.code(404).send({ error: "driver_not_found" });
 
     void notifySettlementAvailable({
       operatingCompanyId: body.operating_company_id,
@@ -579,7 +610,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
   });
 
   app.patch("/api/v1/driver-finance/settlements/:id/acknowledge", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireSettlementWriteRole(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -632,7 +663,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
   });
 
   app.patch("/api/v1/driver-finance/settlements/:id/finalize", async (req, reply) => {
-    const user = authed(req, reply);
+    const user = requireSettlementWriteRole(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
