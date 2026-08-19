@@ -161,6 +161,11 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                 </div>
               </div>
             ))}
+            {followUpMutation.isError ? (
+              <p className="text-xs text-red-700" data-testid="dot-inspection-page-followup-error">
+                {userFacingApiError(followUpMutation.error, "Could not update the DOT follow-up.")}
+              </p>
+            ) : null}
           </div>
         )}
       </div>

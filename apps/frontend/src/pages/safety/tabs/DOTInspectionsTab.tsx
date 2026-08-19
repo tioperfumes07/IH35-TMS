@@ -19,6 +19,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../../components/table";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "" };
 
@@ -440,9 +441,19 @@ export function DOTInspectionsTab() {
                 </div>
               </div>
             ))}
+            {followUpMutation.isError ? (
+              <p className="text-xs text-red-700" data-testid="dot-inspection-followup-error">
+                {userFacingApiError(followUpMutation.error, "Could not update the DOT follow-up.")}
+              </p>
+            ) : null}
           </div>
         )}
       </div>
+      {uploadMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="dot-inspection-upload-error">
+          {userFacingApiError(uploadMutation.error, "Could not upload the DOT inspection PDF.")}
+        </p>
+      ) : null}
       <VoidReasonModal
         open={voidTargetId !== null}
         title="Void DOT Inspection"
