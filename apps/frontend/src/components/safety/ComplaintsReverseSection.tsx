@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getComplaints } from "../../api/safety";
 import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 type Props = {
@@ -43,10 +42,11 @@ export function ComplaintsReverseSection({
       ) : null}
       {rows.map((row) => (
         <div key={String(row.id)} className="flex items-center justify-between gap-3 px-2 py-1.5 text-xs">
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="complaint"
-            id={String(row.id)}
-            label={entityLabel(row.summary ? String(row.summary) : null, String(row.id), "Complaint")}
+            id={row.id == null ? null : String(row.id)}
+            name={row.summary}
+            noun="Complaint"
           />
           <span className="shrink-0 text-gray-500">
             {formatDateUS(row.filed_at ? String(row.filed_at) : null)} · {String(row.status ?? "open")}

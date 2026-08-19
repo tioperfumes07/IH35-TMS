@@ -26,6 +26,7 @@ function audit(s) {
   if (!/complainant_user_id = \$\$\{values\.length\} OR c\.respondent_user_id = \$\$\{values\.length\}/.test(s.route)) failures.push("employee reverse filter must cover both roles in SQL");
   if (!/params\.customer_id\) qs\.set\("customer_id"/.test(s.safetyApi) || !/params\.user_id\) qs\.set\("user_id"/.test(s.safetyApi)) failures.push("client must forward customer and employee reverse filters");
   if (!/getComplaints\(operatingCompanyId, filter\)/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("reverse section must use exact server filters and expose errors");
+  if (!/<EntityLinkOrTombstone[\s\S]{0,100}kind="complaint"[\s\S]{0,140}id=\{row\.id == null \? null : String\(row\.id\)\}[\s\S]{0,100}name=\{row\.summary\}[\s\S]{0,80}noun="Complaint"/.test(s.reverse)) failures.push("reverse section must drill valid complaint IDs and tombstone missing identities");
   if (!/<ComplaintsReverseSection[\s\S]{0,240}filter=\{\{ customer_id: id \}\}/.test(s.customer)) failures.push("customer profile must mount complaint reverse links");
   if (!/<ComplaintsReverseSection[\s\S]{0,240}filter=\{\{ user_id: userId \}\}/.test(s.user)) failures.push("user profile must mount complaint reverse links");
   if (!/case "complaint":[\s\S]{0,90}complaints\?complaint_id=/.test(s.entityLink)) failures.push("complaint drill must target canonical highlighted list");
@@ -46,6 +47,7 @@ if (process.argv.includes("--selftest")) {
     ["user filter", "route", /c\.complainant_user_id = \$\$\{values\.length\}/, "FALSE"],
     ["api customer", "safetyApi", /qs\.set\("customer_id", params\.customer_id\)/, 'qs.set("driver_id", params.customer_id)'],
     ["reverse read", "reverse", /getComplaints\(operatingCompanyId, filter\)/, "getComplaints(operatingCompanyId)"],
+    ["reverse drill", "reverse", /noun="Complaint"/, 'noun="Record"'],
     ["customer mount", "customer", /ComplaintsReverseSection/g, "MissingComplaintSection"],
     ["user mount", "user", /ComplaintsReverseSection/g, "MissingComplaintSection"],
     ["drill", "entityLink", /case "complaint":/, 'case "complaint_missing":'],
