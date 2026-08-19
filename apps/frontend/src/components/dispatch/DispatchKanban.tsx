@@ -957,10 +957,17 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
           ) : (
             <div className="mt-1 flex flex-wrap gap-2">
               {outOfServiceLoads.map((load) => (
-                <button
+                <div
                   key={load.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onLoadClick(load.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onLoadClick(load.id);
+                    }
+                  }}
                   className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-[11px] hover:bg-slate-100"
                   data-testid="kanban-oos-chip"
                 >
@@ -1004,7 +1011,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                     onClick={(e) => e.stopPropagation()}
                   />
                   <span className="rounded-sm bg-red-100 px-1.5 text-[10px] font-semibold text-red-800">Breakdown</span>
-                </button>
+                </div>
               ))}
             </div>
           )}
