@@ -43,7 +43,11 @@ function hasXCloseContract(source) {
   if (/aria-label=\{[^}]*modalCloseAriaLabel/.test(source)) {
     return true;
   }
-  if (/aria-label=["'`]Close\s/.test(source)) {
+  // Both "Close" on its own (bare — the common case, e.g. AddPartsLinkModal.tsx) and "Close <rest>"
+  // (e.g. "Close dialog") are honest close-button labels. The original regex's trailing `\s`
+  // required a word AFTER "Close", so a bare aria-label="Close" (no trailing space before the
+  // closing quote) never matched.
+  if (/aria-label=["'`]Close(\s|["'`])/.test(source)) {
     return true;
   }
   if (/aria-label=\{`Close\s\$\{/.test(source) || /aria-label=\{modalCloseAriaLabel/.test(source)) {
