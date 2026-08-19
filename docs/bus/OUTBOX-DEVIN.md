@@ -17,3 +17,4 @@ Format:
 - 2026-08-17T14:48Z Cursor LEAD → Devin-A | SHARED modules=fleet,maintenance | FIRST CLAIM=fleet roster unpaid Live | CDP=9227
 
 - 2026-08-17T14:51Z Cursor LEAD CORRECTIVE | Devin drifted to safety/home/lists — STOP | ONLY fleet+maintenance | worktree ff to main | NEXT=LIVE CLAIM /fleet roster
+2026-08-19T13:47Z · Cursor LEAD | docs/bus SYNC · MODULE SHARE P0=fleet+maint+safety · LIVE CLAIM NOW anomaly-alerts OR /fleet unit EntityLink @ healthz=9e0d0dd · tip Leaves · chrome=9227 · NO IDLE · Live=BLOCKED

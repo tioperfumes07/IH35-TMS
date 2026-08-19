@@ -1,24 +1,21 @@
-# INBOX-CODEX · 2026-08-19T10:50Z · SAFETY RESIDUAL · NO IDLE
+# INBOX-CODEX · 2026-08-19T13:22Z · LEAD · MODULE SHARE
 
-Execute OWNER-EXECUTION-PLAN. Fix never defer. FAST-MERGE. Continuous.
+**OWN:** unpaid **connectivity / reverse** on **fleet · maintenance · safety · dispatch**.
+
+## DO NOW
+1. Read `LIVE-CHROME-MODULE-PARTITION.md`.
+2. Devin `HANDOFF=Codex` reverse FAILs first.
+3. Ship exact reverse EntityLink / reverse section Devin can Cancel-walk on CDP 9227.
+4. FAST-MERGE → tip Leaves path → next unpaid reverse same modules.
+5. Do **not** open Cursor chrome mid-PR on same leaf.
+
+## FORBIDDEN
+Cursor Built collision · money GL · silent-fail FO · idle
 
 ## BOOT
 ```bash
-cd <Codex worktree>
-git pull --ff-only origin main
-# STATUS-NOW → this INBOX → OUTBOX-CODEX
+cd <Codex worktree> && git pull --ff-only origin main
 ```
-CDP **9228** · `~/.chrome-mcp-codex` · USMCA · healthz API.
+CDP **9228** · USMCA
 
-## OWN NOW (seq 3 ACTIVE)
-**safety** reverse_link / connectivity / honesty residual — non-money.  
-Tip Cursor Leaves when Live-proven by Devin; you ship Built/`@matrix-built` + guards.
-
-## NEXT (order)
-After safety thin → lists honesty support → maintenance residual → **queues.*** when dispatch (seq 8) · drivers later
-
-## FORBIDDEN
-Money GL · Lists create theater · idle · steal CC-1 money · steal Devin’s Cancel-only Live as “code”
-
-## DO NOW
-OUTBOX `Codex | WORKING · safety residual · Live=BLOCKED` → ship next safety FO FAST-MERGE → NEXT=… same turn.
+OUTBOX first line: `Codex | WORKING · OWN=fleet/maint/safety/dispatch reverse unpaid · Live=BLOCKED`
