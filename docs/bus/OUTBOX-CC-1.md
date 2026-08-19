@@ -671,3 +671,7 @@ verify:static: 70 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T10:21Z CC-1 | ACCT-F5494 closed (PR #9549, merged 3f67c2d). verify-fail-dd2-pending-deduction-surfaces.mjs's unconditional selftest aborted at "SELFTEST INERT" before ever running its real check() assertions — mutation's replace target no longer matched deductions.routes.ts, which now casts the bound param ($1::uuid, a legitimate hardening). Fixed the mutation string. Zero product-code change.
 
 verify:static: 71 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T10:25Z CC-1 | ACCT-F5495 closed (PR #9551, merged 639a75d). verify-lists-catalog-chrome-picker-wave.mjs required CatalogTable.tsx to carry page-local setSearch state, but the file's own comment documents a deliberate migration (LST-F3480): search moved entirely onto ParityTable's own toolbar. Confirmed the file never suppresses ParityTable's default search. Widened check to accept either shape. Existing --selftest re-verified; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 72 of ~199 now closed this session. Continuing non-stop, fast-merge.
