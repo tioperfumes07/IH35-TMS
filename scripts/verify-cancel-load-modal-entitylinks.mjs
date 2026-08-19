@@ -24,12 +24,14 @@ function assert(cond, msg) {
 function check() {
   const modal = fs.readFileSync(MODAL, "utf8");
   const drawer = fs.readFileSync(DRAWER, "utf8");
-  assert(/EntityLink/.test(modal), "modal must use EntityLink");
+  assert(/EntityLinkOrTombstone/.test(modal), "modal must use EntityLinkOrTombstone");
   assert(
     /data-testid=["']cancel-load-modal-entitylinks["']/.test(modal),
     "must expose cancel-load-modal-entitylinks"
   );
   assert(/kind=["']load["']/.test(modal), "must EntityLink kind=load");
+  assert(/kind="load"\s+id=\{loadId\}\s+name=\{loadNumber\}\s+noun="Load"/.test(modal), "load FK must be coupled to its nullable human label");
+  assert(!/label=\{entityLabel\(loadNumber/.test(modal), "must not make an unresolved load identity clickable");
   assert(/loadId=\{load\.id\}/.test(drawer), "LoadDetailDrawer must pass loadId to CancelLoadModal");
 }
 
@@ -50,6 +52,18 @@ function selftest() {
     fs.writeFileSync(MODAL, original);
   }
   assert(failed, "--selftest expected FAIL when entitylinks testid removed");
+  const mislabeled = original.replace(/name=\{loadNumber\}/, "name={loadId}");
+  assert(mislabeled !== original, "--selftest identity plant must match");
+  fs.writeFileSync(MODAL, mislabeled);
+  let identityFailed = false;
+  try {
+    check();
+  } catch {
+    identityFailed = true;
+  } finally {
+    fs.writeFileSync(MODAL, original);
+  }
+  assert(identityFailed, "--selftest expected FAIL when load UUID replaces human label");
   check();
   console.log(`${LABEL}: OK — selftest PASS`);
 }

@@ -7,8 +7,7 @@ import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 /** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
 function extractCancelError(err: unknown): string {
@@ -70,7 +69,7 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
       {loadId ? (
         <div className="mb-2 text-xs text-slate-600" data-testid="cancel-load-modal-entitylinks">
           Load:{" "}
-          <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber ?? null, loadId, "Load")} />
+          <EntityLinkOrTombstone kind="load" id={loadId} name={loadNumber} noun="Load" />
         </div>
       ) : null}
       <form
