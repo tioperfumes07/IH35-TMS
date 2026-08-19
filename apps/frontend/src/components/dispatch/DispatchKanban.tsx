@@ -196,20 +196,6 @@ function formatWeight(weightLbs?: number | null): string {
   return `${weightLbs.toLocaleString("en-US")} lbs`;
 }
 
-function driverUnitLabel(load: DispatchLoadRow): string {
-  const driverLabel =
-    load.assigned_primary_driver_name || load.assigned_primary_driver_id
-      ? entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
-      : null;
-  const unitLabel =
-    load.assigned_unit_number || load.assigned_unit_id
-      ? entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")
-      : null;
-  if (!driverLabel && !unitLabel) return "Unassigned";
-  if (driverLabel && unitLabel) return `${driverLabel} · ${unitLabel}`;
-  return driverLabel ?? unitLabel ?? "Unassigned";
-}
-
 // DISPATCH-UI-REFINE-2 ITEM 2 — UNIT-FIRST cards. Any load that has a unit shows the UNIT NUMBER as
 // the primary (bold) line; the LOAD # drops to a muted secondary line. Loads with no unit (e.g. Booked
 // unassigned) keep the load # primary. Awaiting-assignment cards are already unit-first (synthetic).
