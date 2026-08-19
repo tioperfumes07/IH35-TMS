@@ -706,3 +706,7 @@ verify:static: 78 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T11:06Z CC-1 | ACCT-F5502 closed (PR #9590, merged 7d49297). REAL FIX: verify-prepaid-fixedassets-url-sort.mjs FAILed — the 6 depreciation-schedule columns on FixedAssetsPage.tsx (period_number, period_date, depreciation_amount_cents, accumulated_to_date_cents, book_value_end_cents, posted_journal_entry_id) lacked sortable: true, while the page's main asset-list table already carries that contract on every column. Genuine UX gap, not a guard defect — added sortable: true to all 6 columns. --selftest re-verified (3 planted regressions caught). tsc -b clean.
 
 verify:static: 79 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T11:17Z CC-1 | SYS-F5503 closed (PR #9597, merged e5e6708). REAL FIX + guard fix: verify-no-uncast-operating-company-id.mjs (hard-zero repo-wide SQLSTATE 42883 guard) FAILed 11 offenders. 10 were genuine regrowth of the uncast-opco class in triage.routes.ts (4) and dispatcher-safety-events.routes.ts (6), shipped after the 2026-08-12 sweep — cast to ::uuid. 1 was a guard false positive: settlements.routes.ts:390 is inside a `--` SQL comment block quoting the shape in prose, never executed — guard's isCommentLine() widened to recognize SQL `--` comments too, with a dedicated selftest case proving it. tsc -b clean.
+
+verify:static: 80 of ~199 now closed this session. Continuing non-stop, fast-merge.
