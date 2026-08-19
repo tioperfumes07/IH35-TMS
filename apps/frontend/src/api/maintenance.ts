@@ -53,6 +53,8 @@ export type WorkOrder = {
   status: WorkOrderStatus;
   unit_id: string;
   unit_number?: string | null;
+  equipment_id?: string | null;
+  equipment_number?: string | null;
   driver_id?: string | null;
   driver_name?: string | null;
   load_id?: string | null;
