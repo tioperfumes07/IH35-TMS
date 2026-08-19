@@ -123,7 +123,7 @@ export function QboSyncQueuePage() {
           ) : null}
         </div>
         <CappedListNotice
-          shown={queueQuery.data?.items.length ?? 0}
+          shown={(queueQuery.data?.items ?? []).length}
           limit={100}
           hint="Only the newest sync jobs are shown; use filters or admin tools for the full queue."
           className="mt-3 text-xs text-slate-700"

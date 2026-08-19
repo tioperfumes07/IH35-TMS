@@ -93,7 +93,7 @@ export function EmailQueuePage() {
           ) : null}
         </div>
         <CappedListNotice
-          shown={queueQuery.data?.items.length ?? 0}
+          shown={(queueQuery.data?.items ?? []).length}
           limit={100}
           hint="Only the newest jobs are shown; older queue entries are not included in this view."
           className="mt-3 text-xs text-slate-700"
