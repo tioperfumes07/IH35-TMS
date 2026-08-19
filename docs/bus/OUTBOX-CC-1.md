@@ -1026,3 +1026,11 @@ GraphQL rate limit recovered mid-pass (was 0/5000, now normal) -- back to standa
 Remaining flagged from the full 91-file scan, not yet individually traced: collections.routes.ts, month-close.routes.ts, payment-applications.routes.ts, payments.routes.ts, bill-payment-gl.routes.ts, weekly-close.routes.ts, posting-engine.routes.ts, bill-gl-draft.routes.ts, escrow-deduction-pending.routes.ts.
 
 verify:static: continuing non-stop, fast-merge. Continuing the systemic role-coverage sweep on the remaining flagged files.
+
+CC-1 | ACK | STANDARD=MATRIX-READY | NOW=CLS-MONEY-ROLE-COVERAGE-SWEEP | GO
+
+2026-08-19T22:09Z CC-1 | Acknowledged the newly-formalized directive (docs/bus/INBOX-CC-1.md, SESSION-BOOT-MANDATE.md, 18:20Z void) naming CLS-MONEY-ROLE-COVERAGE-SWEEP as my official NOW task -- this is exactly the systemic role-coverage sweep already in progress (ACCT-F5576 onward), so no change in direction, just formal confirmation. collections.routes.ts and month-close.routes.ts both traced and confirmed already SAFE (shared collectionsReader/monthCloser role-gate helpers already apply Owner/Administrator/Manager/Accountant or Owner/Administrator/Accountant to every route including writes, and both already carry the ACCT-F5566 membership fix). ACCT-F5583 closed (PR #10134, merged aa6f85a1) -- accounting/payment-applications.routes.ts's POST /:paymentId/applications and DELETE /:paymentId/applications/:id (apply/unapply a real payment) had the identical gap as F5581/F5582, fixed the same way (requirePaymentWriteRole reusing canVoidCancel). This closes all 3 files in the accounting payments surface (record/apply/unapply). New guard: verify-payment-application-write-role-gated.mjs.
+
+Per SESSION-BOOT-MANDATE item 4 ("same turn GUARD-WORKORDERS.md + checklist"), backfilling docs/audit/GUARD-WORKORDERS.md + docs/audit/CC-3-FINDINGS-CHECKLIST.md entries for this session's full F5572-F5583 batch in a following commit -- these were tracked via OUTBOX + PR evidence throughout but not yet mirrored into the board/checklist per the now-explicit requirement.
+
+verify:static: continuing non-stop, fast-merge. Continuing the sweep -- payments.routes.ts, bill-payment-gl.routes.ts, weekly-close.routes.ts, posting-engine.routes.ts, bill-gl-draft.routes.ts, escrow-deduction-pending.routes.ts remain untraced.
