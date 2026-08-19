@@ -278,15 +278,17 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
             exportFilename="fixed-asset-depreciation-schedule"
             tableTestId="fixed-asset-depreciation-schedule-table"
             columns={[
-              { key: "period_number", label: "#", render: (row) => <span className="text-gray-500">{row.period_number}</span> },
+              { key: "period_number", label: "#", sortable: true, render: (row) => <span className="text-gray-500">{row.period_number}</span> },
               {
                 key: "period_date",
                 label: "Period",
+                sortable: true,
                 render: (row) => <span className="whitespace-nowrap">{fmtDate(row.period_date)}</span>,
               },
               {
                 key: "depreciation_amount_cents",
                 label: "Depreciation",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right tabular-nums",
                 render: (row) => fmtCents(row.depreciation_amount_cents),
@@ -294,6 +296,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
               {
                 key: "accumulated_to_date_cents",
                 label: "Accumulated",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right tabular-nums text-gray-500",
                 render: (row) => fmtCents(row.accumulated_to_date_cents),
@@ -301,6 +304,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
               {
                 key: "book_value_end_cents",
                 label: "Book Value",
+                sortable: true,
                 className: "text-right",
                 cellClass: "text-right tabular-nums",
                 render: (row) => fmtCents(row.book_value_end_cents),
@@ -308,6 +312,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
               {
                 key: "posted_journal_entry_id",
                 label: "JE",
+                sortable: true,
                 render: (row) => (
                   <span className="whitespace-nowrap" data-testid={`fixed-asset-schedule-je-${row.period_number}`}>
                     {row.posted && row.posted_journal_entry_id ? (
