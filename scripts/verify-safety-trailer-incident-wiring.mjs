@@ -141,7 +141,7 @@ if (process.argv.includes("--selftest")) {
     ["dot-create-picker", "dotInspections", /data-testid="dot-inspection-trailer-picker"/, 'data-testid="dot-inspection-unit-picker"'],
     ["dot-create-submit", "dotInspections", /trailer_id:\s*form\.trailer_id \|\| undefined/, "unit_id: form.unit_id || undefined"],
     ["dot-list-filter", "dotInspections", /dataTestId="dot-inspections-trailer-filter"/, 'dataTestId="dot-inspections-filter-unit"'],
-    ["dot-list-seed", "dotInspections", /setTrailerFilterState\(trailerIdFromUrl\)/, "setUnitFilterState(trailerIdFromUrl)"],
+    ["dot-list-seed", "dotInspections", /trailerId:\s*trailerIdFromUrl/g, "trailerId: unitIdFromUrl"],
     ["dot-api-schema", "dotInspectionsApi", /trailer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\),\n\s*inspector_name:/, "inspector_name:"],
     ["dot-api-insert", "dotInspectionsApi", /unit_id, trailer_id, inspection_date/, "unit_id, inspection_date"],
     ["dot-api-bind", "dotInspectionsApi", /body\.data\.trailer_id \?\? null/g, "body.data.unit_id ?? null"],
