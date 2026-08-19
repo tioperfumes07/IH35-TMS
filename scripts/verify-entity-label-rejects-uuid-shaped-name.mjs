@@ -4,6 +4,9 @@
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.detention$","task":"CLS-DISPATCH-DETENTION-FK-LINKS"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^secondary\\.assignments$","task":"CLS-DISPATCH-ASSIGNMENT-HISTORY-UNIT-LINKS"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^home\\.overview$","task":"CLS-DISPATCH-OVERVIEW-ENTITY-LINKS"} */
+/** @matrix-built {"modules":["maintenance"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^fault_drafts\\.review$","task":"MAINT-FAULT-DRAFTS-TOMBSTONE"} */
+/** @matrix-built {"modules":["maintenance"],"cols":["driver","connectivity","reverse_link"],"leafRe":"^driver_reports\\.queue$","task":"MAINT-DRIVER-REPORTS-QUEUE-TOMBSTONE"} */
+/** @matrix-built {"modules":["maintenance"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^pm\\.schedule\\.list$","task":"MAINT-PM-SCHEDULE-TOMBSTONE"} */
 /**
  * CLS-UUID-LABEL / LV-BILLS-VENDOR-UUID — entityLabel must not treat a UUID string as a display name.
  *
@@ -468,7 +471,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx",
     bad: /vendor_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)|name=\{row\.vendor_name\}\s+noun="Vendor"/,
   },
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
@@ -675,7 +678,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx",
     bad: /label=\{row\.unit_display_id\}/,
-    good: /entityLabel\(\s*row\.unit_display_id\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_display_id\} noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx",
@@ -1316,7 +1319,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx",
     bad: /work_order_display_id \?\? availabilityQuery\.data\?\.work_order_id/,
-    good: /entityLabel\(\s*availabilityQuery\.data\?\.work_order_display_id/,
+    good: /entityLabel\(\s*availabilityQuery\.data\?\.work_order_display_id|name=\{availabilityQuery\.data\?\.work_order_display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
