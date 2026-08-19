@@ -31,7 +31,9 @@ function auditBillsService(body) {
   if (!/else if \(!input\.coaAccountId\) \{\s*\n\s*throw new Error\("bill_lines_required"\);/.test(body)) {
     failures.push("createBill must throw bill_lines_required when both lines and coaAccountId are absent");
   }
-  if (!/\} else if \(input\.coaAccountId\) \{[\s\S]{0,1200}INSERT INTO accounting\.bill_lines/.test(body)) {
+  // ACCT-F5452 (this session) added a load_id honesty comment (~6 lines) between the branch open
+  // and the INSERT, pushing the gap past the original 1200-char window — widened with margin.
+  if (!/\} else if \(input\.coaAccountId\) \{[\s\S]{0,2000}INSERT INTO accounting\.bill_lines/.test(body)) {
     failures.push("createBill must synthesize a bill_lines row when coaAccountId is given without lines");
   }
   return failures;
