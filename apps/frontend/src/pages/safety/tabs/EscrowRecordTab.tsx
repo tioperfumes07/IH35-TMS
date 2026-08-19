@@ -10,6 +10,10 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { Button } from "../../../components/Button";
+import { useStagedListFilters } from "../../../components/table";
+
+const EMPTY_FILTERS = { driverId: "" };
 
 export function EscrowRecordTab() {
   const auth = useAuth();
@@ -22,11 +26,31 @@ export function EscrowRecordTab() {
   const [searchParams, setSearchParams] = useSearchParams();
   const escrowDriverIdParam = searchParams.get("driver_id")?.trim() ?? "";
   // LST-F5163K: visible reverse filter (allowCreate=false); URL seeds picker + opens matching row.
-  const [driverFilter, setDriverFilter] = useState("");
+  // LV-SAFETY-ESCROW-RECORD-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
+  // Do not write driver_id on Apply: SAF-B30 deep-link consumes ?driver_id= to open the forfeit
+  // modal then clears it — rewriting the same param on filter Apply would re-open the modal.
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: escrowDriverIdParam,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+    },
+  });
+  const draft = staged.draft;
 
   useEffect(() => {
-    if (escrowDriverIdParam) setDriverFilter(escrowDriverIdParam);
+    if (escrowDriverIdParam) {
+      setApplied((prev) => ({ ...prev, driverId: escrowDriverIdParam }));
+    }
   }, [escrowDriverIdParam]);
+
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
 
   const escrowQuery = useQuery({
     queryKey: ["safety", "escrow-records", operatingCompanyId],
@@ -63,7 +87,7 @@ export function EscrowRecordTab() {
   });
 
   const rowsAll = escrowQuery.data?.records ?? [];
-  const effectiveDriverId = driverFilter.trim() || escrowDriverIdParam || "";
+  const effectiveDriverId = applied.driverId.trim() || escrowDriverIdParam || "";
   const rows = useMemo(() => {
     if (!effectiveDriverId) return rowsAll;
     return rowsAll.filter(
@@ -192,13 +216,13 @@ export function EscrowRecordTab() {
         tableTestId="escrow-record-table"
         rowTestId={(row) => `escrow-record-row-${row.id}`}
         filterBar={
-          <div className="relative flex flex-wrap items-center gap-2">
+          <div className="relative flex flex-wrap items-end gap-2" data-testid="escrow-records-filters">
             <label className="text-[11px] text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
-                value={driverFilter || null}
+                value={draft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
                 allowCreate={false}
                 placeholder="All drivers"
@@ -206,6 +230,31 @@ export function EscrowRecordTab() {
                 dataTestId="escrow-records-filter-driver"
               />
             </label>
+            <Button type="button" size="sm" data-testid="escrow-records-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+              Apply
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="escrow-records-filter-cancel"
+              onClick={staged.cancel}
+              disabled={!staged.dirty}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid="escrow-records-filter-reset"
+              onClick={() => {
+                staged.cancel();
+                setApplied(EMPTY_FILTERS);
+              }}
+            >
+              Reset
+            </Button>
           </div>
         }
       />
