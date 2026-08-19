@@ -1,5 +1,7 @@
 import type { CustomsBroker, WizardFormState } from "./borderCrossingApi";
 import { Combobox } from "../Combobox";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   form: WizardFormState;
@@ -9,6 +11,7 @@ type Props = {
 
 export function WizardStep4({ form, brokers, onChange }: Props) {
   const brokerOptions = brokers.map((broker) => ({ value: broker.id, label: broker.name }));
+  const selectedBroker = brokers.find((b) => b.id === form.customsBrokerId);
 
   return (
     <section data-testid="border-wizard-step-4" className="space-y-3">
@@ -25,6 +28,23 @@ export function WizardStep4({ form, brokers, onChange }: Props) {
           allowClear
         />
       </div>
+      {/* Exact Leaves border_crossing_wizard:vendor — Combobox alone left broker UUID non-navigable */}
+      {form.customsBrokerId ? (
+        <div
+          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+          data-testid="border-wizard-step-4-entitylinks"
+        >
+          <span>
+            Broker:{" "}
+            <EntityLink
+              kind="vendor"
+              id={form.customsBrokerId}
+              label={entityLabel(selectedBroker?.name ?? null, form.customsBrokerId, "Vendor")}
+              data-testid="border-wizard-broker-link"
+            />
+          </span>
+        </div>
+      ) : null}
       <label className="block text-sm">
         Bond number
         <input
