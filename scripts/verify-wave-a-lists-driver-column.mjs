@@ -3,8 +3,9 @@
 import fs from "node:fs";
 
 const checks = [
-  ["primary driver drill", "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink kind="driver" id=\{row\.primary_driver_id\} label=\{driverTeamMemberName\(row, "primary"\)\}/],
-  ["secondary driver drill", "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /<EntityLink kind="driver" id=\{row\.secondary_driver_id\} label=\{driverTeamMemberName\(row, "secondary"\)\}/],
+  ["primary driver drill", "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /render: \(row\) => <DriverTeamMemberCell row=\{row\} slot="primary" \/>/],
+  ["secondary driver drill", "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /render: \(row\) => <DriverTeamMemberCell row=\{row\} slot="secondary" \/>/],
+  ["shared driver drill", "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx", /slot === "primary" \? row\.primary_driver_id : row\.secondary_driver_id[\s\S]*?<EntityLink\s+kind="driver"\s+id=\{driverId\}/],
   ["primary driver submit FK", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /primary_driver_id:\s*form\.primary_driver_id!/],
   ["secondary driver submit FK", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /secondary_driver_id:\s*form\.secondary_driver_id!/],
   ["replacement driver submit FK", "apps/frontend/src/pages/lists/driver/DriverTeamModal.tsx", /new_driver_id:\s*replacementDriverId/],
