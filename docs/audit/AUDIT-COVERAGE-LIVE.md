@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **17 / 30** | 2026-08-19 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-19 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **71 / 150** | 2026-08-19 |
-| Rows in this file | **1864** | 2026-08-19 |
+| Rows in this file | **1865** | 2026-08-19 |
 | Rows `FAIL` + `OPEN` | **1** | 2026-08-19 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-19 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-19 |
-| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1129 | 2026-08-19 |
+| Verdict tally (all rows) | FAIL=221 · PASS=222 · N/A=258 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1130 | 2026-08-19 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -1954,3 +1954,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 25200 | dispatch · load.drawer.documents Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `load.drawer.documents:connectivity` · `load.drawer.documents:qbo_chrome` · `load.drawer.documents:load`. Selected-USMCA load drawer Documents tab for LUSMCAFREIGHT-20260808-0004 with load EntityLink, Download BOL PDF, Documents table chrome (Range/+ Upload/filename search) and honest empty `Documents (0)`. `load.drawer.documents:picker_law` intentionally unpaid — upload affordance is not an EntityPicker `+ Add new` catalog create. No upload/generate mutation. AUDIT id unique (max+160). | LIVE PASS · 3 EXACT CELLS · picker unpaid | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 25360 | dispatch · load.drawer.stops Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `load.drawer.stops:connectivity` · `load.drawer.stops:load`. Selected-USMCA load drawer Stops tab for LUSMCAFREIGHT-20260808-0004 with load EntityLink and stop rows #1/#2 (pickup appointment windows 08/09/2026). `load.drawer.stops:picker_law` intentionally unpaid — `+ Create stop` is stop CRUD, not EntityPicker catalog `+ Add new`. No Save stops mutation. AUDIT id unique (max+160). | LIVE PASS · 2 EXACT CELLS · picker unpaid | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
 | 25520 | dispatch · load.drawer.assignment_history Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `load.drawer.assignment_history:connectivity` · `load.drawer.assignment_history:load`. Selected-USMCA load drawer Assignment History tab for LUSMCAFREIGHT-20260808-0004 — load EntityLink present; empty trail copy 'No assignment events yet.' `load.drawer.assignment_history:reverse_link` intentionally unpaid — 0 assignment events so no driver/unit reverse hop to click. AUDIT id unique (max+160). | LIVE PASS · 2 EXACT CELLS · reverse unpaid | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
+| 25680 | dispatch · load.drawer.cargo Exact Leaves Live | D | USMCA | PROD-VERIFIED NON-MONEY · VERIFY-1 · VERIFY-3 | **Leaves/cells:** `load.drawer.cargo:connectivity` · `load.drawer.cargo:load`. Selected-USMCA load drawer Cargo Sensors tab for LUSMCAFREIGHT-20260808-0004 — load EntityLink present; honest empty 'No cargo sensor readings for this load yet.' AUDIT id unique (max+160). | LIVE PASS · 2 EXACT CELLS | CDP glass USMCA 2026-08-18 | NO | 2026-08-18 | CURSOR |
