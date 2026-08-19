@@ -651,3 +651,7 @@ verify:static: 65 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T04:09Z CC-1 | ACCT-F5489 closed (PR #9424, merged ac22797). verify-wave-card-format.mjs blanket-required every money-lane wave to set money_critical=true. CLS-LINKAGE-ONEWAY carries lane="money" but money_critical=false because it was honestly reclassified as disposition="N/A-PRE-OPERATIONAL" (imported history, not a linkage defect — this repo's own standing law). Forcing money_critical=true on a correctly-dispositioned non-defect would itself be a false claim of active risk. Allowed money_critical=false ONLY when disposition is an explicit N/A-prefixed string — narrow, named exception. Added 2 selftest cases (positive + negative). Zero data change to wave-queue.json — guard fix only.
 
 verify:static: 66 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T04:13Z CC-1 | ACCT-F5490 closed (PR #9430, merged b7887f0). verify-wave-queue-guards-exist.mjs correctly HARD-FAILed: drained CLS-LINKAGE-ONEWAY named a guard (verify-money-ops-fk-density.mjs) that never existed — a genuine false drain claim, not a guard false positive. Corrected the guard field to verify-disp-wire-06-load-expense-link.mjs, the real guard the wave's own drain_proof reasoning already names as current protection. Data fix, no guard-logic change.
+
+verify:static: 67 of ~199 now closed this session. Continuing non-stop, fast-merge.
