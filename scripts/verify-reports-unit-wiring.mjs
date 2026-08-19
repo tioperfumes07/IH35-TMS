@@ -18,7 +18,10 @@ const LABEL = "verify-reports-unit-wiring";
 const CHECKS = [
   ["apps/frontend/src/pages/reports/PerTruckCpmReport.tsx", /kind="unit" id=\{row\.unit_uuid\}/],
   ["apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx", /kind="unit" id=\{r\.unit_id\}/],
-  ["apps/frontend/src/pages/reports/FuelReconciliationPage.tsx", /kind="unit" id=\{r\.unit_id\}/],
+  // Widened to tolerate multi-line JSX (EntityLinkOrTombstone's props formatted one-per-line) — same
+  // tolerance already used on MaintenanceCostPerUnitPage.tsx below. Not a defect: the real code
+  // upgraded from a bare EntityLink to the honest-tombstone-safe EntityLinkOrTombstone wrapper.
+  ["apps/frontend/src/pages/reports/FuelReconciliationPage.tsx", /kind="unit"[\s\S]{0,60}id=\{r\.unit_id\}/],
   ["apps/frontend/src/pages/reports/MaintenanceCostPerUnitPage.tsx", /kind="unit"[\s\S]{0,40}id=\{r\.unit_id\}/],
   ["apps/frontend/src/pages/reports/GeofenceDwellReport.tsx", /kind="unit" id=\{row\.unit_id\}/],
   ["apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx", /kind="unit" id=\{f\.unit_id \?\? undefined\}/],
