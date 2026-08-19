@@ -174,11 +174,11 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <ModalSection title="External Vendor Invoice">
             <div>
               Vendor:{" "}
-              {workOrder.external_vendor_id ? (
+              {workOrder.resolved_vendor_id ? (
                 <EntityLinkOrTombstone
                   kind="vendor"
-                  id={asEntityId(workOrder.external_vendor_id)}
-                  name={typeof workOrder.external_vendor_name === "string" ? workOrder.external_vendor_name : null}
+                  id={asEntityId(workOrder.resolved_vendor_id)}
+                  name={workOrder.resolved_vendor_name}
                   noun="Vendor"
                 />
               ) : (

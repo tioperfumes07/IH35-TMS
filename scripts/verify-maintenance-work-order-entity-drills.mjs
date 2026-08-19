@@ -35,6 +35,7 @@ const checks = [
   ["detail", /kind="work_order"[\s\S]{0,100}id=\{(?:String\(workOrder\.id \?\? ""\)|asEntityId\(workOrder\.id\))\}/, "WO detail self-drills canonically"],
   ["detail", /kind="unit"[\s\S]*workOrder\.unit_id/, "WO detail drills to unit"],
   ["detail", /kind="driver"[\s\S]*workOrder\.driver_id/, "WO detail drills to driver"],
+  ["detail", /kind="vendor"[\s\S]{0,120}id=\{asEntityId\(workOrder\.resolved_vendor_id\)\}[\s\S]{0,80}name=\{workOrder\.resolved_vendor_name\}/, "WO modal drills through canonical resolved vendor"],
   ["home", /source_type:\s*"IT"/, "triage creator preserves canonical IT source type"],
   ["home", /source_intransit_issue_id:\s*prefillFromIssue\.id/, "triage creator carries source issue id"],
   ["home", /load_id:\s*prefillFromIssue\.load_id\s*\?\?\s*""/, "triage creator carries source load"],
