@@ -655,3 +655,7 @@ verify:static: 66 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T04:13Z CC-1 | ACCT-F5490 closed (PR #9430, merged b7887f0). verify-wave-queue-guards-exist.mjs correctly HARD-FAILed: drained CLS-LINKAGE-ONEWAY named a guard (verify-money-ops-fk-density.mjs) that never existed — a genuine false drain claim, not a guard false positive. Corrected the guard field to verify-disp-wire-06-load-expense-link.mjs, the real guard the wave's own drain_proof reasoning already names as current protection. Data fix, no guard-logic change.
 
 verify:static: 67 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T04:28Z CC-1 | ACCT-F5491 closed (PR #9441, merged 6b17e49). verify-wave-b-reverse-link-column.mjs FAILed both ManagementReportPackagePage.tsx checks (customer + vendor) — same class as ACCT-F5486, a sibling guard on the same file: both EntityLinks extracted into ManagementCustomerCell/ManagementVendorCell components. Widened both checks (same lookahead pattern as ACCT-F5486). No --selftest harness; load-bearing proof done by hand. Zero product-code change.
+
+verify:static: 68 of ~199 now closed this session. Continuing non-stop, fast-merge.
