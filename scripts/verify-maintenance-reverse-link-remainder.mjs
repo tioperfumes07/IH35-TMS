@@ -100,6 +100,14 @@ function run(root = ROOT) {
         /kind="work_order"[\s\S]{0,80}id=\{selected\.id\}/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact list/modal reverse identity coupling missing`);
     }
+    if (c.name === "WarrantyClaimsPage") {
+      for (const pattern of [
+        /kind="vendor" id=\{row\.vendor_id\} name=\{row\.vendor_name\} noun="Vendor"/,
+        /kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/,
+        /kind="vendor" id=\{fileTarget\?\.vendor_id\} name=\{fileTarget\?\.vendor_name\} noun="Vendor"/,
+        /kind="work_order" id=\{fileTarget\?\.work_order_id\} name=\{fileTarget\?\.work_order_display_id\} noun="Work order"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact list/file-modal reverse identity coupling missing`);
+    }
     if (c.name === "ArrivingSoonCard" && (/href=\{`\/dispatch`\}/.test(src) || /Call Driver/.test(src))) {
       fails.push(`${c.name}: dead generic load or driver action remains`);
     }
