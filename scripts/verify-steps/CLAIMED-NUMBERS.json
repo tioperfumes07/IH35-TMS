@@ -2392,6 +2392,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-assignment-history-staged-filters"
   },
+  "3970": {
+    "claimed_at": "2026-08-19",
+    "claimed_by": "cursor",
+    "purpose": "verify-audit-trail-staged-filters"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
