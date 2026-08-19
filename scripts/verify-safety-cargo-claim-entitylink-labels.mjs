@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-safety-cargo-claim-entitylink-labels";
 const FE = "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx";
+const BE = "apps/backend/src/safety/incidents.routes.ts";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -17,6 +18,7 @@ function read(rel) {
 function assert(sources) {
   const problems = [];
   const src = sources?.[FE] ?? read(FE);
+  const backend = sources?.[BE] ?? read(BE);
   if (!/EntityLink/.test(src) || !/kind=["']customer["']/.test(src) || !/kind=["']load["']/.test(src) || !/kind=["']driver["']/.test(src)) {
     problems.push(`${FE}: missing customer/load/driver EntityLinks`);
   }
@@ -25,6 +27,11 @@ function assert(sources) {
   }
   if (!/row\.claimant_customer_name\s*\?\?/.test(src) || !/row\.load_number\s*\?\?/.test(src)) {
     problems.push(`${FE}: list labels must prefer names returned by the incident reader before picker-map fallback`);
+  }
+  const customerNameSelects = backend.match(/c\.customer_name AS claimant_customer_name/g) ?? [];
+  const companyScopedCustomerJoins = backend.match(/LEFT JOIN mdata\.customers c[\s\S]{0,180}?c\.id = i\.claimant_customer_id[\s\S]{0,180}?c\.operating_company_id = i\.operating_company_id/g) ?? [];
+  if (customerNameSelects.length < 2 || companyScopedCustomerJoins.length < 2) {
+    problems.push(`${BE}: list and detail readers must resolve claimant customer labels with same-company joins`);
   }
   if (!/key:\s*["']driver_id["'][\s\S]{0,500}?kind=["']driver["']/.test(src)) {
     problems.push(`${FE}: cargo claim list must render the persisted driver FK as an EntityLink`);
@@ -44,7 +51,7 @@ function assert(sources) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const live = { [FE]: read(FE) };
+  const live = { [FE]: read(FE), [BE]: read(BE) };
   const liveProblems = assert(live);
   if (liveProblems.length) {
     console.error(`${LABEL} SELFTEST FAIL live:`, liveProblems);
@@ -63,10 +70,19 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const deadCustomer = assert({
+    ...live,
     [FE]: live[FE].replaceAll("onClick={() => navigate(`/customers/${String(row.claimant_customer_id)}`)}", ""),
   });
   if (!deadCustomer.some((p) => p.includes("explicitly navigate"))) {
     console.error(`${LABEL} SELFTEST FAIL: planted dead customer link not caught`, deadCustomer);
+    process.exit(1);
+  }
+  const missingReaderLabel = assert({
+    ...live,
+    [BE]: live[BE].replaceAll("c.customer_name AS claimant_customer_name", "NULL::text AS claimant_customer_name"),
+  });
+  if (!missingReaderLabel.some((p) => p.includes("same-company joins"))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted missing customer label reader not caught`, missingReaderLabel);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);

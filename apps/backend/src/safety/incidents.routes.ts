@@ -214,6 +214,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         `
           SELECT i.*,
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 c.customer_name AS claimant_customer_name,
                  u.unit_number AS unit_number,
                  eq.equipment_number AS trailer_number,
                  l.load_number AS load_number,
@@ -222,6 +223,9 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers d
             ON d.id = i.driver_id
            AND d.operating_company_id = i.operating_company_id
+          LEFT JOIN mdata.customers c
+            ON c.id = i.claimant_customer_id
+           AND c.operating_company_id = i.operating_company_id
           LEFT JOIN mdata.units u
             ON u.id = i.unit_id
            AND (u.owner_company_id = i.operating_company_id
@@ -261,6 +265,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         `
           SELECT i.*,
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 c.customer_name AS claimant_customer_name,
                  u.unit_number AS unit_number,
                  eq.equipment_number AS trailer_number,
                  l.load_number AS load_number,
@@ -269,6 +274,9 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers d
             ON d.id = i.driver_id
            AND d.operating_company_id = i.operating_company_id
+          LEFT JOIN mdata.customers c
+            ON c.id = i.claimant_customer_id
+           AND c.operating_company_id = i.operating_company_id
           LEFT JOIN mdata.units u
             ON u.id = i.unit_id
            AND (u.owner_company_id = i.operating_company_id
