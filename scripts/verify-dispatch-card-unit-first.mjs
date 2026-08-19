@@ -14,11 +14,11 @@ if (
 )
   fail("cardPrimaryLabel must return unit number first (entityLabel), load # fallback");
 if (
-  !/function cardSecondaryLoadNumber\([^)]*\)[^{]*{[\s\S]*?return load\.assigned_unit_number \? entityLabel\(load\.load_number/.test(
+  !/function cardSecondaryLoadNumber\([^)]*\)[^{]*{[\s\S]*?return load\.assigned_unit_id \? entityLabel\(load\.load_number/.test(
     src,
   )
 )
-  fail("cardSecondaryLoadNumber must surface load # only when a unit occupies the primary line");
+  fail("cardSecondaryLoadNumber must preserve the load drill whenever the canonical unit FK occupies the primary line");
 if ((src.match(/data-kanban-card-primary="unit"/g) || []).length < 2)
   fail('both Standard and Detailed cards must mark the primary line data-kanban-card-primary="unit"');
 if ((src.match(/data-kanban-card-secondary="load-number"/g) || []).length < 2)
