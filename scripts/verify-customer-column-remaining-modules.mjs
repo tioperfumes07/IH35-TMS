@@ -57,13 +57,13 @@ export function audit(src) {
   need(/InvoiceTypeModalBase/.test(src.customerAdjustment), `${FILES.customerAdjustment}: must delegate to the real invoice/customer picker surface`);
   need(/case "customer":/.test(src.docsHome), `${FILES.docsHome}: docs entity-kind map must handle "customer"`);
   need(/id: "customer", label: "Customers"/.test(src.docsHome), `${FILES.docsHome}: docs must have a real Customers filter tab`);
-  need(/listCustomers/.test(src.uploadModal), `${FILES.uploadModal}: upload modal must have a real customer picker`);
-  need(/kind="customer" id=\{row\.customer_id\}/.test(src.management), `${FILES.management}: management report AR section must render a real EntityLink kind="customer"`);
+  need(/value: "customer", label: "Customer"/.test(src.uploadModal) && /<EntityPicker/.test(src.uploadModal), `${FILES.uploadModal}: upload modal must have a real customer picker`);
+  need(/function ManagementCustomerCell/.test(src.management) && /<EntityLink kind="customer" id=\{customerId\}/.test(src.management) && /<ManagementCustomerCell/.test(src.management), `${FILES.management}: management report AR section must render a real EntityLink kind="customer"`);
   need(/kind="customer" id=\{r\.customer_id\}/.test(src.arAging), `${FILES.arAging}: AR aging must render a real EntityLink kind="customer"`);
   need(/kind="customer" id=\{r\.customer_id\}/.test(src.customerProfitability), `${FILES.customerProfitability}: customer profitability must render a real EntityLink kind="customer"`);
   need(/kind="customer" id=\{row\.customer_id\}/.test(src.dispatchMargin), `${FILES.dispatchMargin}: dispatch margin must render a real EntityLink kind="customer"`);
   need(/listCustomers/.test(src.cargoClaim) && /kind="customer"/.test(src.cargoClaim), `${FILES.cargoClaim}: cargo claim must have a real customer picker and render EntityLink kind="customer"`);
-  need(/listCustomers/.test(src.complaints) && /kind="customer"/.test(src.complaints), `${FILES.complaints}: complaints must have a real customer picker and render EntityLink kind="customer"`);
+  need(/<EntityPicker\s+kind="customer"/.test(src.complaints) && /<EntityLink\s+kind="customer"/.test(src.complaints), `${FILES.complaints}: complaints must have a real customer picker and render EntityLink kind="customer"`);
   need(/kind="customer"/.test(src.banking) && /customerId:\s*""/.test(src.banking), `${FILES.banking}: banking transactions must have a real customerId field and render EntityLink kind="customer"`);
   need(/type === "driver" \|\| type === "customer" \|\| type === "vendor"/.test(src.contractsList), `${FILES.contractsList}: contracts list must resolve a real customer signer via signerKind`);
   need(/kind=["']customer["']/.test(src.contractsCreate) && /allowCreate/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real customer EntityPicker`);
@@ -91,15 +91,15 @@ if (process.argv.includes("--selftest")) {
     ["payments-link", "payments", /kind="customer" id=\{row\.customer_id\}/, 'kind="unit" id={row.unit_id}'],
     ["collections-link", "collections", /kind="customer"/g, 'kind="unit"'],
     ["customer-adjustment-delegate", "customerAdjustment", /InvoiceTypeModalBase/g, "SomeOtherModal"],
-    ["docs-kind-map", "docsHome", /case "customer":/, 'case "customer_unused":'],
+    ["docs-kind-map", "docsHome", /case "customer":/g, 'case "customer_unused":'],
     ["docs-tab", "docsHome", /id: "customer", label: "Customers"/, 'id: "customer_unused", label: "Customers"'],
-    ["upload-picker", "uploadModal", /listCustomers/g, "listSomethingElse"],
-    ["management-link", "management", /kind="customer" id=\{row\.customer_id\}/g, 'kind="unit" id={row.unit_id}'],
+    ["upload-picker", "uploadModal", /value: "customer", label: "Customer"/g, 'value: "unit", label: "Customer"'],
+    ["management-link", "management", /<EntityLink kind="customer" id=\{customerId\}/g, '<EntityLink kind="unit" id={customerId}'],
     ["ar-aging-link", "arAging", /kind="customer" id=\{r\.customer_id\}/, 'kind="unit" id={r.unit_id}'],
     ["profitability-link", "customerProfitability", /kind="customer" id=\{r\.customer_id\}/, 'kind="unit" id={r.unit_id}'],
     ["margin-link", "dispatchMargin", /kind="customer" id=\{row\.customer_id\}/, 'kind="unit" id={row.unit_id}'],
     ["cargo-claim-picker", "cargoClaim", /listCustomers/g, "listSomethingElse"],
-    ["complaints-picker", "complaints", /listCustomers/g, "listSomethingElse"],
+    ["complaints-picker", "complaints", /<EntityPicker\s+kind="customer"/g, '<EntityPicker kind="unit"'],
     ["banking-field", "banking", /customerId:\s*""/, 'customerId_unused: ""'],
     ["contracts-list-signer", "contractsList", /type === "driver" \|\| type === "customer" \|\| type === "vendor"/, 'type === "driver" || type === "vendor"'],
     ["contracts-create-picker", "contractsCreate", /kind=["']customer["']/g, 'kind="unit"'],
