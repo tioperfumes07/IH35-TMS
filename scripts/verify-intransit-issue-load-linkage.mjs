@@ -15,7 +15,7 @@ function audit(s) {
   const failures = [];
   if (!/kind="load"[\s\S]{0,180}value=\{loadId \|\| null\}/.test(s.create) || !/load_id:\s*loadId\.trim\(\)/.test(s.create)) failures.push("load picker-to-payload create path missing");
   if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/load_id:\s*query\.data\.load_id/.test(s.route)) failures.push("exact load filter route contract missing");
-  if (!/filters:\s*\{ status\?: string; load_id\?: string; driver_id\?: string; unit_id\?: string \}/.test(s.service) || !/i\.load_id = \$\$\{values\.length\}::uuid/.test(s.service)) failures.push("exact server-side load filter missing");
+  if (!/filters:\s*\{[^}]*load_id\?: string[^}]*\}\s*=\s*\{\}/.test(s.service) || !/i\.load_id = \$\$\{values\.length\}::uuid/.test(s.service)) failures.push("exact server-side load filter missing");
   if (!/i\.operating_company_id = \$1::uuid/.test(s.service) || !/operating_company_id, load_id, driver_id, unit_id/.test(s.service)) failures.push("writer/list explicit company scope missing");
   if (!/WHERE id = \$1 AND operating_company_id = \$2::uuid AND soft_deleted_at IS NULL/.test(s.service)) failures.push("writer must validate active tenant load FK");
   if (!/filters\.load_id[\s\S]{0,100}q\.set\("load_id", filters\.load_id\)/.test(s.api)) failures.push("frontend exact load query parameter missing");
@@ -28,6 +28,7 @@ if (process.argv.includes("--selftest")) {
     ["picker", "create", /kind="load"([\s\S]{0,180}value=\{loadId \|\| null\})/, 'kind="driver"$1'],
     ["payload", "create", /load_id:\s*loadId\.trim\(\)/, "load_id: ''"],
     ["route", "route", /load_id:\s*query\.data\.load_id/, "load_id: undefined"],
+    ["filter-contract", "service", /filters:\s*\{ status\?: string; issue_id\?: string; load_id\?: string; driver_id\?: string; unit_id\?: string \}/, "filters: { status?: string; issue_id?: string; driver_id?: string; unit_id?: string }"],
     ["filter", "service", /i\.load_id = \$\$\{values\.length\}::uuid/, "TRUE"],
     ["scope", "service", /i\.operating_company_id = \$1::uuid/, "TRUE"],
     ["writer", "service", /operating_company_id, load_id, driver_id, unit_id/, "load_id, driver_id, unit_id"],
