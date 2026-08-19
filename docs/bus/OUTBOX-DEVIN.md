@@ -194,3 +194,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.round_trips
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.round_trips | URL=https://app.ih35dispatch.com/dispatch?view=round-trips | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch?view=round-trips ; marker 'Round Trips' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=aa71fca | mutation=none | NEXT=dispatch.dispatch.planners
