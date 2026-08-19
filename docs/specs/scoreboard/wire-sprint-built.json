@@ -1291,9 +1291,7 @@
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-unit-linkage.mjs",
       "modules": [
-        "dispatch",
-        "fleet",
-        "compliance"
+        "dispatch"
       ],
       "cols": [
         "unit",
@@ -1301,7 +1299,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(border|crossing|wizard|history|unit|profile|create)"
+      "leafRe": "^(dispatch\\.wizard\\.border_crossing_wizard_page|queues\\.border_history)$"
     },
     {
       "task": "BORDER-CROSSING-DRIVER-CREATE-REVERSE",
@@ -1309,8 +1307,7 @@
       "guard": "scripts/verify-border-crossing-driver-linkage.mjs",
       "modules": [
         "dispatch",
-        "drivers",
-        "compliance"
+        "drivers"
       ],
       "cols": [
         "driver",
@@ -1318,15 +1315,14 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(border|crossing|wizard|history|driver|profile|create)"
+      "leafRe": "^(dispatch\\.wizard\\.border_crossing_wizard_page|queues\\.border_history|profiles\\.detail)$"
     },
     {
       "task": "BORDER-CROSSING-LOAD-CREATE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-border-crossing-load-linkage.mjs",
       "modules": [
-        "dispatch",
-        "compliance"
+        "dispatch"
       ],
       "cols": [
         "load",
@@ -1334,7 +1330,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(border|crossing|wizard|history|load|drawer|customs|create)"
+      "leafRe": "^(dispatch\\.wizard\\.border_crossing_wizard_page|queues\\.border_history|dispatch\\.drawer\\.load_detail)$"
     },
     {
       "task": "BORDER-CROSSING-BROKER-VENDOR-REVERSE",
@@ -1342,8 +1338,7 @@
       "guard": "scripts/verify-border-crossing-broker-linkage.mjs",
       "modules": [
         "dispatch",
-        "vendors",
-        "compliance"
+        "vendors"
       ],
       "cols": [
         "vendor",
@@ -1351,7 +1346,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(border|crossing|wizard|history|vendor|profile|broker|create)"
+      "leafRe": "^(dispatch\\.wizard\\.border_crossing_wizard_page|queues\\.border_history|detail\\.profile)$"
     },
     {
       "task": "INTRANSIT-ISSUE-LOAD-CREATE-REVERSE",
@@ -1375,15 +1370,14 @@
       "guard": "scripts/verify-intransit-issue-driver-linkage.mjs",
       "modules": [
         "dispatch",
-        "drivers",
-        "maintenance"
+        "drivers"
       ],
       "cols": [
         "driver",
         "connectivity",
         "reverse_link"
       ],
-      "leafRe": "^(in.?transit|issue|driver|profile|triage|create)"
+      "leafRe": "^queues\\.in_transit$|^profiles\\.detail$"
     },
     {
       "task": "INTRANSIT-ISSUE-UNIT-DERIVE-REVERSE",
@@ -1391,15 +1385,14 @@
       "guard": "scripts/verify-intransit-issue-unit-linkage.mjs",
       "modules": [
         "dispatch",
-        "fleet",
-        "maintenance"
+        "fleet"
       ],
       "cols": [
         "unit",
         "connectivity",
         "reverse_link"
       ],
-      "leafRe": "^(in.?transit|issue|unit|profile|detail|triage|create)"
+      "leafRe": "^queues\\.in_transit$|^unit\\.profile\\.driver_assign$"
     },
     {
       "task": "DA-TEST-ACTIVE-DRIVER-WRITER-INTEGRITY",
@@ -1407,8 +1400,7 @@
       "guard": "scripts/verify-da-test-driver-linkage.mjs",
       "modules": [
         "safety",
-        "drivers",
-        "compliance"
+        "drivers"
       ],
       "cols": [
         "driver",
@@ -1416,7 +1408,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(drug|alcohol|test|schedule|driver|profile|create)"
+      "leafRe": "^safety\\.panel\\.test_scheduling$|^drug_alcohol\\.list$|^profiles\\.detail$"
     },
     {
       "task": "DEFAULT-TRUCK-UNIT-DRIVER-REVERSE",
@@ -1424,8 +1416,7 @@
       "guard": "scripts/verify-default-truck-unit-reverse.mjs",
       "modules": [
         "drivers",
-        "fleet",
-        "dispatch"
+        "fleet"
       ],
       "cols": [
         "driver",
@@ -1434,7 +1425,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(default|truck|assignment|driver|unit|profile|detail)"
+      "leafRe": "^drivers\\.modal\\.assign_truck$|^unit\\.profile\\.driver_assign$|^profiles\\.detail$"
     },
     {
       "task": "TIRE-PROGRAM-UNIT-REVERSE",
@@ -1459,8 +1450,7 @@
       "guard": "scripts/verify-severe-repair-unit-reverse.mjs",
       "modules": [
         "maintenance",
-        "fleet",
-        "safety"
+        "fleet"
       ],
       "cols": [
         "unit",
@@ -1468,7 +1458,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(severe|repair|oos|unit|profile|detail|create)"
+      "leafRe": "^severe_repairs\\.convert_to_wo$|^unit\\.profile\\.maintenance$"
     },
     {
       "task": "INSURANCE-POLICY-VENDOR-REVERSE",
@@ -1493,8 +1483,7 @@
       "guard": "scripts/verify-customer-notify-linkage.mjs",
       "modules": [
         "dispatch",
-        "customers",
-        "notifications"
+        "customers"
       ],
       "cols": [
         "customer",
@@ -1502,7 +1491,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(customer|notify|eta|preference|log|profile|create)"
+      "leafRe": "^settings\\.notify$|^detail\\.profile$"
     },
     {
       "task": "TEMP-COVER-DRIVER-LINKAGE",
@@ -1510,8 +1499,7 @@
       "guard": "scripts/verify-temp-cover-driver-linkage.mjs",
       "modules": [
         "safety",
-        "drivers",
-        "dispatch"
+        "drivers"
       ],
       "cols": [
         "driver",
@@ -1519,7 +1507,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(temporary|cover|assignment|driver|scheduler|profile|create)"
+      "leafRe": "^driver_scheduler\\.list$|^profiles\\.detail$"
     },
     {
       "task": "TEMP-COVER-UNIT-LINKAGE",
@@ -1527,8 +1515,7 @@
       "guard": "scripts/verify-temp-cover-unit-linkage.mjs",
       "modules": [
         "safety",
-        "fleet",
-        "dispatch"
+        "fleet"
       ],
       "cols": [
         "unit",
@@ -1536,7 +1523,7 @@
         "reverse_link",
         "picker_law"
       ],
-      "leafRe": "^(temporary|cover|assignment|unit|scheduler|profile|detail|create)"
+      "leafRe": "^driver_scheduler\\.list$|^unit\\.profile\\.safety_reverse$"
     },
     {
       "task": "QUICK-ASSIGN-TRAILER-LINKAGE",
@@ -1596,8 +1583,7 @@
       "guard": "scripts/verify-equipment-transfer-driver-reverse.mjs",
       "modules": [
         "drivers",
-        "dispatch",
-        "fleet"
+        "dispatch"
       ],
       "cols": [
         "driver",
@@ -1649,15 +1635,14 @@
       "guard": "scripts/verify-equipment-transfer-human-label.mjs",
       "modules": [
         "drivers",
-        "dispatch",
-        "fleet"
+        "dispatch"
       ],
       "cols": [
         "trailer",
         "connectivity",
         "reverse_link"
       ],
-      "leafRe": "^(equipment|transfer|trailer|driver|profile|detail)"
+      "leafRe": "^dispatch\\.modal\\.equipment_transfer$|^docs\\.equipment_transfers$|^profiles\\.detail$"
     },
     {
       "task": "DRIVER-INCIDENTS-REVERSE",
