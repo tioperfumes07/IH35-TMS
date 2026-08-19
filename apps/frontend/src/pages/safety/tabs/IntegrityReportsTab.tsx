@@ -114,6 +114,15 @@ export function IntegrityReportsTab() {
           ? dwellQuery.isLoading
           : hosQuery.isLoading;
 
+  const activeListQuery =
+    subTab === "wo-cost"
+      ? woQuery
+      : subTab === "fuel-mpg"
+        ? fuelQuery
+        : subTab === "driver-dwell"
+          ? dwellQuery
+          : hosQuery;
+
   const columns = useMemo<ParityColumn<IntegrityRow>[]>(
     () => [
       {
@@ -255,14 +264,16 @@ export function IntegrityReportsTab() {
       </div>
 
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No observations available for this integrity report."
-          — an outage presenting as an integrity report with nothing to observe. */}
-      {woQuery.isError ? (
-        <ListErrorState
-          title="Couldn't load integrity observations"
-          status={0}
-          message={(woQuery.error as Error)?.message}
-          onRetry={() => void woQuery.refetch()}
-        />
+          — an outage presenting as an integrity report with nothing to observe. Active sub-tab query only (wo/fuel/dwell/hos). */}
+      {activeListQuery.isError ? (
+        <div data-testid="integrity-reports-query-error">
+          <ListErrorState
+            title="Couldn't load integrity observations"
+            status={0}
+            message={(activeListQuery.error as Error)?.message}
+            onRetry={() => void activeListQuery.refetch()}
+          />
+        </div>
       ) : (
       <ParityTable<IntegrityRow>
         columns={columns}
@@ -274,6 +285,11 @@ export function IntegrityReportsTab() {
         exportFilename="integrity-reports"
       />
       )}
+      {observationsQuery.isError ? (
+        <p className="text-xs text-red-700" data-testid="integrity-observations-query-error">
+          {userFacingApiError(observationsQuery.error, "Could not load integrity observation review state.")}
+        </p>
+      ) : null}
       {reviewMutation.isError ? (
         <p className="text-xs text-red-700" data-testid="integrity-review-error">
           {userFacingApiError(reviewMutation.error, "Could not mark the integrity observation as reviewed.")}
