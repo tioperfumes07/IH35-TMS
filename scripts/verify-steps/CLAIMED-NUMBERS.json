@@ -4459,5 +4459,9 @@
   "4006": {
     "owner": "cursor",
     "note": "LV-SAFETY-CARGO-CLAIMS-FILTER-SILENT-APPLY"
+  },
+  "4008": {
+    "owner": "cursor",
+    "note": "LV-DRIVERS-PENDING-DEDUCTIONS-FILTER-SILENT-APPLY"
   }
 }
