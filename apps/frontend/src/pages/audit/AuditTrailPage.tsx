@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { type EntityKind } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Link, useSearchParams } from "react-router-dom";
+import { useStagedListFilters } from "../../components/table";
 
 const PAGE_SIZE = 100;
 
@@ -185,51 +186,61 @@ export function AuditTrailPage() {
   });
   const exactAuditEvent = exactAuditQuery.data?.events[0] as AuditEventListItem | undefined;
 
-  const [module, setModule] = useState("");
-  const [action, setAction] = useState("");
-  const [entityType, setEntityType] = useState("");
-  const [entityId, setEntityId] = useState("");
-  const [actorUserId, setActorUserId] = useState("");
-  const [correlationId, setCorrelationId] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-
-  const [applied, setApplied] = useState({ module: "", action: "", entityType: "", entityId: "", actorUserId: "", correlationId: "", from: "", to: "", offset: 0 });
+  const [appliedFilters, setAppliedFilters] = useState({
+    module: "",
+    action: "",
+    entityType: "",
+    entityId: "",
+    actorUserId: "",
+    correlationId: "",
+    from: "",
+    to: "",
+  });
+  const [offset, setOffset] = useState(0);
+  // LV-AUDIT-TRAIL-FILTER-NO-CANCEL — draft/applied via useStagedListFilters; Cancel restores draft.
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: {
+      module: "",
+      action: "",
+      entityType: "",
+      entityId: "",
+      actorUserId: "",
+      correlationId: "",
+      from: "",
+      to: "",
+    },
+    onApply: (next) => {
+      setAppliedFilters(next);
+      setOffset(0);
+    },
+  });
+  const draft = staged.draft;
 
   const query = useQuery({
-    queryKey: ["audit-trail", companyId, ...Object.values(applied)],
+    queryKey: ["audit-trail", companyId, ...Object.values(appliedFilters), offset],
     queryFn: () =>
       listSpineEvents({
         operatingCompanyId: companyId,
-        module: applied.module || undefined,
-        action: applied.action || undefined,
-        entityType: applied.entityType || undefined,
-        entityId: applied.entityId || undefined,
-        actorUserId: applied.actorUserId || undefined,
-        correlationId: applied.correlationId || undefined,
-        from: applied.from || undefined,
-        to: applied.to || undefined,
+        module: appliedFilters.module || undefined,
+        action: appliedFilters.action || undefined,
+        entityType: appliedFilters.entityType || undefined,
+        entityId: appliedFilters.entityId || undefined,
+        actorUserId: appliedFilters.actorUserId || undefined,
+        correlationId: appliedFilters.correlationId || undefined,
+        from: appliedFilters.from || undefined,
+        to: appliedFilters.to || undefined,
         limit: PAGE_SIZE,
-        offset: applied.offset,
+        offset,
       }),
     enabled: Boolean(companyId),
   });
 
   const rows = useMemo(() => query.data?.events ?? [], [query.data?.events]);
 
-  function applyFilters() {
-    setApplied({ module, action, entityType, entityId, actorUserId, correlationId, from: fromDate, to: toDate, offset: 0 });
-  }
-
-  function resetFilters() {
-    setModule(""); setAction(""); setEntityType(""); setEntityId("");
-    setActorUserId(""); setCorrelationId(""); setFromDate(""); setToDate("");
-    setApplied({ module: "", action: "", entityType: "", entityId: "", actorUserId: "", correlationId: "", from: "", to: "", offset: 0 });
-  }
-
   const totalCount = query.data?.total_count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-  const currentPage = Math.floor(applied.offset / PAGE_SIZE) + 1;
+  const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   return (
     <div className="space-y-4 p-4">
@@ -264,45 +275,121 @@ export function AuditTrailPage() {
         className="overflow-hidden rounded-sm border border-gray-200 bg-white"
         data-testid="audit-trail-list-frame"
       >
-        <div className="grid grid-cols-2 gap-3 border-b border-gray-200 bg-gray-50 p-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 border-b border-gray-200 bg-gray-50 p-4 md:grid-cols-4" data-testid="audit-trail-filters">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Module
-            <select className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={module} onChange={(e) => setModule(e.target.value)}>
+            <select
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              value={draft.module}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, module: e.target.value }))}
+            >
               {MODULE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action / event type
-            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. invoice.created" />
+            <input
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              value={draft.action}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, action: e.target.value }))}
+              placeholder="e.g. invoice.created"
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity type
-            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={entityType} onChange={(e) => setEntityType(e.target.value)} placeholder="e.g. invoice" />
+            <input
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              value={draft.entityType}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, entityType: e.target.value }))}
+              placeholder="e.g. invoice"
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity ID (UUID)
-            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={entityId} onChange={(e) => setEntityId(e.target.value)} placeholder="uuid" />
+            <input
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              value={draft.entityId}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, entityId: e.target.value }))}
+              placeholder="uuid"
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Actor user ID
-            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} placeholder="uuid" />
+            <input
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              value={draft.actorUserId}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, actorUserId: e.target.value }))}
+              placeholder="uuid"
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Correlation ID
-            <input className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono" value={correlationId} onChange={(e) => setCorrelationId(e.target.value)} placeholder="uuid" />
+            <input
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              value={draft.correlationId}
+              onChange={(e) => staged.setDraft((d) => ({ ...d, correlationId: e.target.value }))}
+              placeholder="uuid"
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             From
-            <DateTimePicker className="normal-case font-normal" aria-label="From date" value={isoToDateTimeLocalValue(fromDate)} onChange={(v) => setFromDate(v ? new Date(v).toISOString() : "")} />
+            <DateTimePicker
+              className="normal-case font-normal"
+              aria-label="From date"
+              value={isoToDateTimeLocalValue(draft.from)}
+              onChange={(v) => staged.setDraft((d) => ({ ...d, from: v ? new Date(v).toISOString() : "" }))}
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             To
-            <DateTimePicker className="normal-case font-normal" aria-label="To date" value={isoToDateTimeLocalValue(toDate)} onChange={(v) => setToDate(v ? new Date(v).toISOString() : "")} />
+            <DateTimePicker
+              className="normal-case font-normal"
+              aria-label="To date"
+              value={isoToDateTimeLocalValue(draft.to)}
+              onChange={(v) => staged.setDraft((d) => ({ ...d, to: v ? new Date(v).toISOString() : "" }))}
+            />
           </label>
         </div>
-        <div className="mt-3 flex items-center gap-2">
-          <button type="button" onClick={applyFilters} className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]">Apply</button>
-          <button type="button" onClick={resetFilters} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Reset</button>
+        <div className="mt-3 flex items-center gap-2 px-4 pb-3">
+          <button
+            type="button"
+            data-testid="audit-trail-filter-apply"
+            onClick={staged.apply}
+            disabled={!staged.dirty}
+            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
+          >
+            Apply
+          </button>
+          <button
+            type="button"
+            data-testid="audit-trail-filter-cancel"
+            onClick={staged.cancel}
+            disabled={!staged.dirty}
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            data-testid="audit-trail-filter-reset"
+            onClick={() => {
+              staged.cancel();
+              setAppliedFilters({
+                module: "",
+                action: "",
+                entityType: "",
+                entityId: "",
+                actorUserId: "",
+                correlationId: "",
+                from: "",
+                to: "",
+              });
+              setOffset(0);
+            }}
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+          >
+            Reset
+          </button>
           {rows.length > 0 && (
             <button type="button" onClick={() => downloadCSV(rows)} className="ml-2 rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Export CSV</button>
           )}
@@ -333,9 +420,9 @@ export function AuditTrailPage() {
 
       {totalPages > 1 && (
         <div className="flex items-center gap-3 text-sm">
-          <button type="button" disabled={currentPage <= 1} onClick={() => setApplied((p) => ({ ...p, offset: Math.max(0, p.offset - PAGE_SIZE) }))} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">← Previous</button>
+          <button type="button" disabled={currentPage <= 1} onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">← Previous</button>
           <span className="text-xs text-gray-600">Page {currentPage} of {totalPages}</span>
-          <button type="button" disabled={currentPage >= totalPages} onClick={() => setApplied((p) => ({ ...p, offset: p.offset + PAGE_SIZE }))} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">Next →</button>
+          <button type="button" disabled={currentPage >= totalPages} onClick={() => setOffset((o) => o + PAGE_SIZE)} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">Next →</button>
         </div>
       )}
     </div>
