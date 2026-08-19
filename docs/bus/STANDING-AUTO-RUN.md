@@ -6,7 +6,7 @@
 
 **FAST-MERGE is mandatory for every PR** (Cursor · Codex · CC-1 · CC-2 · **Devin if you ship code**). Gate PASS → push → create → squash-merge **same turn**. Never `gh pr checks --watch`. Unmerged focused-green = defect.
 
-**OWNER SEQ:** accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → rest.
+**OWNER SEQ:** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch. Then rest.
 
 **Share the module:** Cursor Built · Codex reverse · CC-1 money · CC-2 lists · Devin Live. Different files. No waiting.
 

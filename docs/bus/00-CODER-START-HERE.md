@@ -13,7 +13,9 @@ Desktop `USMCA-WEEKEND-LEAD-2026-08-07/` must match. Chat is not the command cha
 
 Then write OUTBOX `WORKING` and start the NOW FO. Continuous. Never idle.
 
-**Codex RIGHT NOW:** `git pull --ff-only origin main` → ACK `INBOX-CODEX.md` 23:10Z (`NOW=lists reverse FE | NEXT=dispatch reverse PRIMARY`). Do not re-run factoring silent-cap.
+**OWNER SEQ (urgency):** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch. Then rest.
+
+**Codex RIGHT NOW:** `git pull --ff-only origin main` → ACK `INBOX-CODEX.md` 23:45Z (`NOW=drivers reverse FE | NEXT=customers reverse`). Do not re-run factoring silent-cap.
 
 ## Active seats
 
