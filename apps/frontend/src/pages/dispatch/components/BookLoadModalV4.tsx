@@ -18,6 +18,7 @@ import { loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCa
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
@@ -1014,7 +1015,18 @@ export function BookLoadModalV4({
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
             {isEditMode ? (
-              <div className="text-base font-bold">Edit load{editLoad?.load_number ? ` ${entityLabel(editLoad.load_number, editLoad.id, "Load")}` : ""}</div>
+              <div className="flex items-center gap-1.5 text-base font-bold">
+                <span>Edit load</span>
+                {editLoad?.id ? (
+                  <EntityLink
+                    kind="load"
+                    id={editLoad.id}
+                    label={entityLabel(editLoad.load_number, editLoad.id, "Load")}
+                    className="text-white underline decoration-white/40 hover:decoration-white"
+                    data-testid="book-load-edit-header-load-link"
+                  />
+                ) : null}
+              </div>
             ) : (
               <div className="text-base font-bold">Book load</div>
             )}
