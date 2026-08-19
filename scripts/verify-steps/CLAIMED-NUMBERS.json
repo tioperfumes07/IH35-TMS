@@ -2422,6 +2422,11 @@
     "finding": "CLAIM-RESERVE-3980",
     "reserved_at": "2026-08-19"
   },
+  "3982": {
+    "lane": "cursor",
+    "finding": "CLAIM-RESERVE-3982",
+    "reserved_at": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
