@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveApiUrl } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type AnnualRateStatus = {
   year: number;
@@ -101,6 +102,11 @@ export function DrugAlcoholDashboard() {
           Run Q{currentQuarter()} random draw
         </button>
       </div>
+      {drawMutation.isError ? (
+        <p className="text-xs text-red-700" data-testid="drug-alcohol-dashboard-draw-error">
+          {userFacingApiError(drawMutation.error, "Could not run the random drug/alcohol draw.")}
+        </p>
+      ) : null}
 
       {/* Flat KPI grid — each tile is its own single frame; no outer bordered card (CLS-BOX-IN-BOX). */}
       <div className="grid gap-3 md:grid-cols-4">
