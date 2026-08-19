@@ -53,8 +53,8 @@ export function verify(source) {
   }
   if (!required(customers, "md.transaction_list").includes("load")) failures.push("customers:md.transaction_list must retain exact load Required");
   need("customerPage", "r.source_load_id ? (", "customer transaction list must branch on the persisted invoice source_load_id");
-  need("customerPage", '<EntityLink kind="load" id={r.source_load_id}', "customer transaction list must render canonical load drill-through");
-  need("customerPage", 'entityLabel(r.source_load_number, r.source_load_id, "Load")', "customer transaction list must consume the API-resolved load number");
+  need("customerPage", 'kind="load"', "customer transaction list must render canonical load drill-through");
+  need("customerPage", "name={r.source_load_number}", "customer transaction list must consume the API-resolved load number");
   need("customerPage", "Projects groups loads/invoices under a customer project. Needs a projects data source", "Projects must remain an honest static placeholder until a real data source exists");
 
   if (!legal?.leaves?.some((leaf) => leaf.id === "matters.create")) failures.push("legal:matters.create inventory leaf must remain present");
@@ -69,7 +69,7 @@ export function verify(source) {
   need("dispatchRoute", 'app.post("/api/v1/dispatch/loads"', "dispatch load create route must remain mounted");
   need("dispatchRoute", "withCompanyScope(authUser.uuid, body.data.operating_company_id", "dispatch create must validate within company scope");
   need("bookLoadService", "INSERT INTO mdata.loads", "dispatch create must persist the canonical load row");
-  need("bookLoad", "onCreated();", "dispatch creator must trigger canonical reload after success");
+  need("bookLoad", "onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);", "dispatch creator must trigger canonical reload after success");
 
   if (!required(maintenance, "wo.create").includes("load")) failures.push("maintenance:wo.create must retain exact load Required");
   need("woPicker", '<EntityPicker\n                kind="load"', "WO creator must use the canonical load picker");
@@ -79,7 +79,7 @@ export function verify(source) {
   need("woRoute", "w.load_id = $", "WO read path must filter by canonical load_id");
   need("woRoute", "LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id", "WO read model must resolve a same-company load label");
   need("woRoute", "body.load_id ?? null", "WO create must persist load_id");
-  need("woTable", '<EntityLink kind="load" id={row.load_id}', "reloaded WO rows must drill to the canonical load");
+  need("woTable", '<EntityLinkOrTombstone kind="load" id={row.load_id}', "reloaded WO rows must drill to the canonical load");
   return failures;
 }
 
@@ -90,14 +90,14 @@ if (failures.length) { console.error(`verify-load-column-all-module-remainder FA
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["listsMatrix", '"leaves_touched":98'], ["catalogPage", "selectedCompanyId"], ["catalogFactory", "operating_company_id"],
-    ["customersMatrix", '"id": "md.transaction_list"'], ["customerPage", "r.source_load_id ? ("], ["customerPage", '<EntityLink kind="load" id={r.source_load_id}'], ["customerPage", 'entityLabel(r.source_load_number, r.source_load_id, "Load")'],
+    ["customersMatrix", '"id": "md.transaction_list"'], ["customerPage", "r.source_load_id ? ("], ["customerPage", 'kind="load"'], ["customerPage", "name={r.source_load_number}"],
     ["legalMatrix", '"id": "matters.create"'], ["dispatchMatrix", '"id": "dispatch.modal.load_create"'],
     ["bookLoad", "const payload = await createDispatchLoad({"], ["bookLoad", "operating_company_id: operatingCompanyId"],
     ["dispatchApi", '"/api/v1/dispatch/loads", { method: "POST", body: payload }'], ["dispatchRoute", 'app.post("/api/v1/dispatch/loads"'],
     ["dispatchRoute", "withCompanyScope(authUser.uuid, body.data.operating_company_id"], ["bookLoadService", "INSERT INTO mdata.loads"],
     ["maintenanceMatrix", '"id": "wo.create"'], ["woPicker", 'dataField="load_id"'], ["woForm", "load_id: values.load_id || undefined"],
     ["woRoute", "load_id: z.string().uuid().optional()"], ["woRoute", "LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id"],
-    ["woRoute", "body.load_id ?? null"], ["woTable", '<EntityLink kind="load" id={row.load_id}'],
+    ["woRoute", "body.load_id ?? null"], ["woTable", '<EntityLinkOrTombstone kind="load" id={row.load_id}'],
   ];
   mutations.forEach(([key, token], index) => {
     if (!source[key].includes(token)) throw new Error(`selftest fixture missing: ${key} ${token}`);

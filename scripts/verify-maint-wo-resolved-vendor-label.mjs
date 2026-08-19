@@ -14,7 +14,8 @@ function audit(parts) {
   if (selectCount < 2) failures.push("list and detail payloads must expose the resolved vendor FK");
   if (joinCount < 2) failures.push("list and detail vendor joins must resolve both FK columns with entity scope");
   if (!/resolved_vendor_name\?: string \| null/.test(parts.api)) failures.push("WorkOrder API type must expose resolved vendor label");
-  const tableLabelCount = (parts.table.match(/entityLabel\(row\.resolved_vendor_name, row\.resolved_vendor_id, "Vendor"\)/g) ?? []).length;
+  const tableLabelCount = (parts.table.match(/entityLabel\(row\.resolved_vendor_name, row\.resolved_vendor_id, "Vendor"\)/g) ?? []).length
+    + (parts.table.includes("name={row.resolved_vendor_name}") ? 1 : 0);
   if (tableLabelCount < 2 || !/row\.resolved_vendor_id/.test(parts.table)) failures.push("WO list and export must carry the resolved vendor FK and label");
   if (!/wo\.resolved_vendor_id[\s\S]*entityLabel\([\s\S]*wo\.resolved_vendor_name[\s\S]*wo\.resolved_vendor_id/.test(parts.detail)) failures.push("WO detail must link the resolved vendor FK and label");
   return failures;
@@ -25,7 +26,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["routes", "COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id", "w.external_vendor_id::text AS resolved_vendor_id"],
     ["routes", "AND v.operating_company_id = w.operating_company_id", ""],
-    ["table", "entityLabel(row.resolved_vendor_name, row.resolved_vendor_id, \"Vendor\")", "entityLabel(null, row.resolved_vendor_id, \"Vendor\")"],
+    ["table", "name={row.resolved_vendor_name}", "name={null}"],
     ["detail", "typeof wo.resolved_vendor_name === \"string\" ? wo.resolved_vendor_name : null", "null"],
   ];
   for (const [key, from, to] of mutations) {
