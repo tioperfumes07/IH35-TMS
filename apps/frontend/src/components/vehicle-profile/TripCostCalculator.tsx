@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type TripCostResult = {
   estimated_fuel_cost_cents: number;
@@ -16,7 +17,15 @@ function usd(cents: number) {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-export function TripCostCalculator({ unitId, companyId }: { unitId: string; companyId: string }) {
+export function TripCostCalculator({
+  unitId,
+  companyId,
+  unitNumber,
+}: {
+  unitId: string;
+  companyId: string;
+  unitNumber?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [destination, setDestination] = useState("");
 
@@ -35,6 +44,18 @@ export function TripCostCalculator({ unitId, companyId }: { unitId: string; comp
       <button type="button" className="text-sm font-semibold text-gray-800" onClick={() => setOpen(!open)}>
         Trip cost calculator {open ? "▾" : "▸"}
       </button>
+      <p className="mt-1 text-xs text-gray-600">
+        Estimate for unit{" "}
+        <EntityLinkOrTombstone
+          kind="unit"
+          id={unitId}
+          name={unitNumber}
+          noun="Unit"
+          className="font-semibold text-slate-700 underline"
+          data-testid="vp-trip-cost-unit-link"
+        />
+        . ZIP-only estimator — not a load quote writer.
+      </p>
       {open ? (
         <div className="mt-2 space-y-2">
           <input
@@ -48,13 +69,15 @@ export function TripCostCalculator({ unitId, companyId }: { unitId: string; comp
           </Button>
           {r ? (
             <div className="text-xs text-gray-700">
-              <div>Fuel {usd(r.estimated_fuel_cost_cents)} · Driver {usd(r.estimated_driver_pay_cents)} · Maint{" "}
-                {usd(r.estimated_maintenance_accrual_cents)}</div>
+              <div>
+                Fuel {usd(r.estimated_fuel_cost_cents)} · Driver {usd(r.estimated_driver_pay_cents)} · Maint{" "}
+                {usd(r.estimated_maintenance_accrual_cents)}
+              </div>
               <div className="font-semibold">Suggested quote floor: {usd(r.suggested_quote_floor_cents)}</div>
               <div className="text-gray-500">{r.estimated_miles} mi estimated</div>
-              <Button size="sm" className="mt-1" disabled title="V1 no-op">
-                Add to quote
-              </Button>
+              <p className="mt-1 text-gray-500" data-testid="vp-trip-cost-no-quote-writer">
+                Add to quote is not available — this surface does not create or link loads.
+              </p>
             </div>
           ) : null}
         </div>

@@ -308,7 +308,7 @@ export function VehicleProfilePage() {
                 <BackhaulSuggestionsWidget unitId={id} companyId={companyId} unitNumber={unitNumber} />
               </div>
             ) : null}
-            <TripCostCalculator unitId={id} companyId={companyId} />
+            <TripCostCalculator unitId={id} companyId={companyId} unitNumber={unit?.unit_number != null ? String(unit.unit_number) : null} />
           </div>
           <div data-testid="vp-section-5-maintenance">
             <MaintenanceSnapshotSection
