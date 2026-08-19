@@ -6,7 +6,9 @@
 
 **Jorge is not the messenger.** Chat is not your GO. Idle is a defect. Deferral is a defect. “Waiting for instructions” is a defect — they are here.
 
-Read next: `docs/bus/00-CODER-START-HERE.md` → `INBOX-<SEAT>.md` (top block) → `FAST-MERGE-4MIN-LAW.md` → `STATUS-NOW.md`.
+Read next: `docs/bus/00-CODER-START-HERE.md` → `INBOX-<SEAT>.md` (top block) → **`docs/bus/SEAT-COMMS-LAW.md`** → `FAST-MERGE-4MIN-LAW.md` → `STATUS-NOW.md`.
+
+If YOUR or another seat’s INBOX names a FO already on `origin/main`, OUTBOX `STALE INBOX` to Cursor same turn. Keep working the §4 ladder. Do not idle waiting for a rewrite.
 
 ---
 

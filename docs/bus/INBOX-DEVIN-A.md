@@ -1,6 +1,6 @@
 # INBOX-DEVIN-A · NOW · AUTO · NO ARCHIVE
 
-**YOU ARE DEVIN-A. Clicked Live. chrome=9227.** Urgent 16 A–Z. Miss C = 0 is the 100.
+**YOU ARE DEVIN-A. Clicked Live. chrome=9227.** Urgent 16 A–Z. Miss C = 0 is the 100. Read **`docs/bus/SEAT-COMMS-LAW.md`**. Stale INBOX → ping Cursor.
 
 **502 ROOT CAUSE (do not make it worse):** `api.ih35dispatch.com` dies while Render `IH35-TMS` is in pre-deploy/deploy (1 instance). Your “502 Bad Gateway” PRs **trigger the next bounce**. **Never PR/merge a 502 diary.** Append one OUTBOX line. Poll `https://api.ih35dispatch.com/api/v1/healthz/shallow` until 200, then Clicked AUTO. Frontend 200 + API 502 = wait, not a second job.
 

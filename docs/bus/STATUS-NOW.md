@@ -1,3 +1,22 @@
+# STATUS-NOW · 2026-08-19T23:22Z
+
+**Lead:** Cursor · FAST-MERGE ON · **`SEAT-COMMS-LAW.md`** · Live=BLOCKED (API 502 bounce)
+
+| Seat | NOW |
+|------|-----|
+| Codex | **PULL** `INBOX-CODEX` 23:10Z · ACK lists reverse FE · VOID factoring #10144 · no CDP |
+| Cursor | lead + fleet/maint Built leftovers · Form 425 21 Aug |
+| Devin-A | Clicked AUTO 9227 when healthz JSON 200 · no 502 PRs |
+| CC-1 | money/GL next OPEN board row · FAST-MERGE |
+| CC-2 | lists drivers `+ Add new` |
+| CC-3 / Cascade | OFF |
+
+Last-10 merged + CT time lives on **Program → Legacy certification board** (`Recent activity — last 10 PRs`), not All-modules matrix. Matrix = cells.
+
+---
+
+# ARCHIVE · older STATUS (VOID if it contradicts 23:22Z)
+
 # STATUS-NOW · 2026-08-19T18:20Z
 
 **Lead:** Cursor · **INSTRUCTIONS COMPLETE** in `CODER-INSTRUCTIONS-NOW.md` · FAST-MERGE ON · continuous · Live=BLOCKED  
