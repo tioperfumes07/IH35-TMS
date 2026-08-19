@@ -195,6 +195,13 @@ export function FaultDraftsPage() {
         </Button>
       </div>
 
+      {deepLinkUnitId ? (
+        <p className="text-xs text-slate-600" data-testid="fault-drafts-unit-reverse-banner">
+          Showing fault-driven drafts for the selected unit ·{" "}
+          <EntityLink kind="unit" id={deepLinkUnitId} label="Open unit profile" />
+        </p>
+      ) : null}
+
       <ParityTable
         rows={drafts}
         columns={columns}
