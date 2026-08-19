@@ -3,10 +3,13 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
+  loadId: string;
   loadNumber: string;
   hardWarnings: string[];
   onClose: () => void;
@@ -18,12 +21,14 @@ type Props = {
   }) => Promise<void>;
 };
 
-export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWarnings, onClose, onSubmit }: Props) {
+export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber, hardWarnings, onClose, onSubmit }: Props) {
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState("");
   const [trailerId, setTrailerId] = useState("");
   const [ackAll, setAckAll] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const hasSelected = Boolean(driverId || unitId || trailerId);
 
   return (
     <Modal open={open} onClose={onClose} title={`Quick Assign · ${loadNumber}`}>
@@ -46,6 +51,10 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
           }
         }}
       >
+        <div className="text-xs text-slate-600" data-testid="quick-assign-load-entitylink">
+          Load:{" "}
+          <EntityLink kind="load" id={loadId} label={entityLabel(loadNumber, loadId, "Load")} />
+        </div>
         <label className="block text-xs font-semibold text-gray-600">
           Driver <span className="text-red-500">*</span>
           <div className="mt-0.5">
@@ -90,6 +99,32 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
             />
           </div>
         </label>
+        {/* Exact Leaves dispatch.modal.quick_assign:driver|unit|trailer —
+            pickers alone leave selected identities non-navigable; expose EntityLinks. */}
+        {hasSelected ? (
+          <div
+            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+            data-testid="quick-assign-modal-entitylinks"
+          >
+            {driverId ? (
+              <span>
+                Driver:{" "}
+                <EntityLink kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />
+              </span>
+            ) : null}
+            {unitId ? (
+              <span>
+                Unit: <EntityLink kind="unit" id={unitId} label={entityLabel(null, unitId, "Unit")} />
+              </span>
+            ) : null}
+            {trailerId ? (
+              <span>
+                Trailer:{" "}
+                <EntityLink kind="trailer" id={trailerId} label={entityLabel(null, trailerId, "Trailer")} />
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         {hardWarnings.length > 0 ? (
           <label className="flex items-center gap-2 text-xs text-red-700">
             <input type="checkbox" checked={ackAll} onChange={(event) => setAckAll(event.target.checked)} />
