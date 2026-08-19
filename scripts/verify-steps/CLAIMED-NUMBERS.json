@@ -2377,6 +2377,11 @@
     "purpose": "verify-border-wizard-step6-entitylinks",
     "claimed_at": "2026-08-19"
   },
+  "3964": {
+    "claimed_by": "cursor",
+    "purpose": "verify-book-load-edit-header-entitylink",
+    "claimed_at": "2026-08-19"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
