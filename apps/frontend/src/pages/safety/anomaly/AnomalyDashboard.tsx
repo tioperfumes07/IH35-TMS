@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
 import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = { operatingCompanyId: string };
 
@@ -77,6 +78,11 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           },
         ]}
       />
+      {(ack.isError || resolve.isError) ? (
+        <p className="text-xs text-red-700" data-testid="anomaly-dashboard-action-error">
+          {userFacingApiError(ack.error ?? resolve.error, "Could not update the anomaly alert.")}
+        </p>
+      ) : null}
     </div>
   );
 }

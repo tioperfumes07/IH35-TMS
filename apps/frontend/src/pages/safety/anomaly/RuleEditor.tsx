@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = { operatingCompanyId: string; isOwner: boolean };
 
@@ -22,8 +23,15 @@ export function RuleEditor({ operatingCompanyId, isOwner }: Props) {
     <div className="space-y-3 p-3" data-testid="anomaly-rule-editor">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Detection Rules</h2>
-        <Button type="button" onClick={() => seed.mutate()}>Seed defaults</Button>
+        <Button type="button" onClick={() => seed.mutate()} disabled={seed.isPending}>
+          Seed defaults
+        </Button>
       </div>
+      {seed.isError ? (
+        <p className="text-xs text-red-700" data-testid="anomaly-seed-defaults-error">
+          {userFacingApiError(seed.error, "Could not seed anomaly detection defaults.")}
+        </p>
+      ) : null}
       <ul className="divide-y rounded-sm border">
         {(q.data?.rules ?? []).map((rule) => (
           <li key={String(rule.uuid)} className="p-2 text-sm">
