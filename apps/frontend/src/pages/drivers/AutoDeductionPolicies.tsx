@@ -17,7 +17,12 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
+import { useStagedListFilters } from "../../components/table";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
+
+const EMPTY_FILTERS = {
+  driverId: "",
+};
 
 const RAIL_LABELS: Record<string, string> = {
   escrow: "Escrow first",
@@ -43,26 +48,53 @@ export function AutoDeductionPoliciesPanel() {
   const { selectedCompanyId } = useCompanyContext();
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5184 — visible EntityPicker reverse filter (URL-only ?driver_id= is not reverse chrome).
-  const deepLinkDriverId = searchParams.get("driver_id")?.trim() ?? "";
-  function setDriverFilter(next: string) {
+  // LV-DRIVERS-AUTO-DEDUCTION-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+
+  function patchListSearchParam(next: { driverId: string }) {
     const p = new URLSearchParams(searchParams);
-    if (next) p.set("driver_id", next);
+    if (next.driverId) p.set("driver_id", next.driverId);
     else p.delete("driver_id");
     setSearchParams(p, { replace: true });
   }
+
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    driverId: driverIdFromUrl,
+  }));
+  const staged = useStagedListFilters({
+    applied,
+    empty: EMPTY_FILTERS,
+    onApply: (next) => {
+      setApplied(next);
+      patchListSearchParam(next);
+    },
+  });
+  const filterDraft = staged.draft;
+
+  useEffect(() => {
+    setApplied((prev) => ({ ...prev, driverId: driverIdFromUrl }));
+  }, [driverIdFromUrl]);
+
+  function setDriverFilter(next: string) {
+    staged.setDraft((d) => ({ ...d, driverId: next }));
+  }
+
+  const effectiveDriverId = applied.driverId.trim() || undefined;
+
   if (!selectedCompanyId) {
     return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to manage auto-deduction policies.</p>;
   }
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
+      <div className="relative flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="auto-deduction-policies-filters">
         <label className="block min-w-[240px] text-xs text-slate-600">
           Driver
           <div className="mt-1">
             <EntityPicker
               kind="driver"
               operatingCompanyId={selectedCompanyId}
-              value={deepLinkDriverId || null}
+              value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
               allowCreate={false}
               placeholder="All drivers"
@@ -71,8 +103,34 @@ export function AutoDeductionPoliciesPanel() {
             />
           </div>
         </label>
+        <Button type="button" size="sm" data-testid="auto-deduction-policies-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="auto-deduction-policies-filter-cancel"
+          onClick={staged.cancel}
+          disabled={!staged.dirty}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="auto-deduction-policies-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchListSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
       </div>
-      <AutoDeductionPolicies operatingCompanyId={selectedCompanyId} driverId={deepLinkDriverId || undefined} />
+      <AutoDeductionPolicies operatingCompanyId={selectedCompanyId} driverId={effectiveDriverId} />
     </div>
   );
 }
