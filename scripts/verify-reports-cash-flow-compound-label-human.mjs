@@ -15,9 +15,10 @@ function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
-function analyze() {
+/** @param {{lib?: string, page?: string}} overrides in-memory content overrides */
+function analyze(overrides = {}) {
   const failures = [];
-  const lib = read(LIB);
+  const lib = overrides.lib ?? read(LIB);
   if (!/formatAccountTypeLabel/.test(lib) || !/humanizeEnumLabel/.test(lib)) {
     failures.push("lib must reuse formatAccountTypeLabel + humanizeEnumLabel");
   }
@@ -25,7 +26,7 @@ function analyze() {
     failures.push("lib must split compound AccountType:suffix labels");
   }
 
-  const page = read(PAGE);
+  const page = overrides.page ?? read(PAGE);
   if (!/formatCashFlowCompoundLabel\(line\.label\)/.test(page)) {
     failures.push("CashFlowStatementPage Label cell must call formatCashFlowCompoundLabel(line.label)");
   }
@@ -40,23 +41,24 @@ function fail(msg) {
   process.exit(1);
 }
 
+/**
+ * Pure, in-memory selftest — never writes to disk. An earlier version mutated the REAL
+ * CashFlowStatementPage.tsx file directly (fs.writeFileSync then restored in a finally), which is
+ * unsafe two ways: Node's process.exit() does not run pending finally blocks (the class fixed for
+ * ACCT-F5524/ACCT-F5528), and in this shared multi-agent worktree a concurrent session's own
+ * in-flight edit to the same file can land between the plant and the read-back, producing a flaky,
+ * non-deterministic false FAIL unrelated to any real defect (observed directly this session).
+ * analyze(overrides) now takes in-memory content, so selftest never touches disk at all.
+ */
 function selftest() {
-  const pagePath = path.join(process.cwd(), PAGE);
-  const original = fs.readFileSync(pagePath, "utf8");
-  try {
-    const bad = original.replace(
-      /formatCashFlowCompoundLabel\(line\.label\)/,
-      'line.label || "—"',
-    );
-    if (bad === original) fail("selftest could not plant raw line.label");
-    fs.writeFileSync(pagePath, bad);
-    const planted = analyze();
-    if (!planted.some((m) => /formatCashFlowCompoundLabel|raw line\.label/.test(m))) {
-      fail(`selftest expected page fail; got: ${planted.join("; ")}`);
-    }
-  } finally {
-    fs.writeFileSync(pagePath, original);
+  const originalPage = read(PAGE);
+  const bad = originalPage.replace(/formatCashFlowCompoundLabel\(line\.label\)/, 'line.label || "—"');
+  if (bad === originalPage) fail("selftest could not plant raw line.label");
+  const planted = analyze({ page: bad });
+  if (!planted.some((m) => /formatCashFlowCompoundLabel|raw line\.label/.test(m))) {
+    fail(`selftest expected page fail; got: ${planted.join("; ")}`);
   }
+
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);
   console.log(`${LABEL} selftest PASS`);
