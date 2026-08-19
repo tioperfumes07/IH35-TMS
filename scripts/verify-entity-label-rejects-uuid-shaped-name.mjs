@@ -418,7 +418,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
     bad: /work_order_display_id\s*\?\?\s*"Work order|unit_number\s*\?\?\s*"Unit|vendor_name\s*\?\?\s*"Vendor"/,
-    good: /entityLabel\(\s*row\.work_order_display_id\s*,\s*row\.work_order_id\s*,\s*"Work order"\s*\)/,
+    good: /entityLabel\(\s*row\.work_order_display_id\s*,\s*row\.work_order_id\s*,\s*"Work order"\s*\)|name=\{row\.work_order_display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/safety/components/FineDetailDrawer.tsx",
@@ -498,12 +498,12 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
     bad: /previous_unit_number\s*\?\?\s*undefined/,
-    good: /<EntityLink kind="unit" id=\{row\.previous_unit_id\} label=\{entityLabel\(row\.previous_unit_number, row\.previous_unit_id, "Unit"\)\} \/>/,
+    good: /entityLabel\(row\.previous_unit_number, row\.previous_unit_id, "Unit"\)|id=\{row\.previous_unit_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
     bad: /new_unit_number\s*\?\?\s*undefined/,
-    good: /<EntityLink kind="unit" id=\{row\.new_unit_id\} label=\{entityLabel\(row\.new_unit_number, row\.new_unit_id, "Unit"\)\} \/>/,
+    good: /entityLabel\(row\.new_unit_number, row\.new_unit_id, "Unit"\)|id=\{row\.new_unit_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx",
@@ -608,7 +608,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/CustomerDetail.tsx",
     bad: /load_number\s*\?\?\s*undefined|label=\{load\.load_number\}/,
-    good: /entityLabel\(\s*l\.load_number\s*,\s*l\.id\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*l\.load_number\s*,\s*l\.id\s*,\s*"Load"\s*\)|name=\{l\.load_number\}|name=\{load\.load_number\}/,
   },
   {
     rel: "apps/frontend/src/components/dispatch/DispatchList.tsx",
@@ -818,12 +818,12 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
     bad: /load\?\.load_number\s*\?\?\s*loadId|load\.customer_name\s*\?\?\s*"—"|assigned_primary_driver_name\s*\?\?\s*"Unassigned"|assigned_secondary_driver_name\s*\?\?/,
-    good: /entityLabel\(\s*load\?\.load_number\s*,\s*load\?\.id\s*\?\?\s*loadId\s*,\s*"Load"\s*\)/,
+    good: /entityLabel\(\s*load\?\.load_number\s*,\s*load\?\.id\s*\?\?\s*loadId\s*,\s*"Load"\s*\)|name=\{load\?\.load_number\}/,
   },
   {
     rel: "apps/frontend/src/pages/CustomerDetail.tsx",
     bad: /assigned_primary_driver_name\s*\?\?\s*"—"|assigned_unit_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*load\.assigned_primary_driver_name\s*,\s*load\.assigned_primary_driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*load\.assigned_primary_driver_name\s*,\s*load\.assigned_primary_driver_id\s*,\s*"Driver"\s*\)|name=\{load\.assigned_primary_driver_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
@@ -1100,7 +1100,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/dispatch/LoadWorkOrdersReverseSection.tsx",
     bad: /`\s*·\s*\$\{row\.unit_number\}`/,
-    good: /entityLabel\(String\(row\.unit_number\),\s*String\(row\.unit_id \?\? ""\),\s*"Unit"\)/,
+    good: /entityLabel\(String\(row\.unit_number\),\s*String\(row\.unit_id \?\? ""\),\s*"Unit"\)|name=\{String\(row\.unit_number\)\}/,
   },
   {
     rel: "apps/frontend/src/components/safety/LoadSafetyReverseSection.tsx",
@@ -1266,17 +1266,17 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/Customers.tsx",
     bad: /label=\{r\.display_id\}/,
-    good: /entityLabel\(\s*r\.display_id\s*,\s*r\.id\s*,\s*"Invoice"\s*\)/,
+    good: /entityLabel\(\s*r\.display_id\s*,\s*r\.id\s*,\s*"Invoice"\s*\)|name=\{r\.display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/CustomerDetail.tsx",
     bad: /label=\{inv\.display_id\}/,
-    good: /entityLabel\(\s*inv\.display_id\s*,\s*inv\.id\s*,\s*"Invoice"\s*\)/,
+    good: /entityLabel\(\s*inv\.display_id\s*,\s*inv\.id\s*,\s*"Invoice"\s*\)|name=\{inv\.display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/CustomerDetail.tsx",
     bad: /label=\{invoice\.display_id\}/,
-    good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
+    good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)|name=\{invoice\.display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/TriageModal.tsx",
@@ -1821,10 +1821,17 @@ export function auditMaintenanceWorkOrderLabels(routesSrc, tableSrc) {
 
 export function auditCustomerLoadEntityLinks(src) {
   const problems = [];
-  if (!/<EntityLink\s+kind="driver"\s+id=\{load\.assigned_primary_driver_id\}\s+label=\{entityLabel\(load\.assigned_primary_driver_name, load\.assigned_primary_driver_id, "Driver"\)\}/.test(src)) {
+  // Accept classic EntityLink+entityLabel OR EntityLinkOrTombstone name= wiring.
+  const driverOk =
+    /<EntityLink\s+kind="driver"\s+id=\{load\.assigned_primary_driver_id\}\s+label=\{entityLabel\(load\.assigned_primary_driver_name, load\.assigned_primary_driver_id, "Driver"\)\}/.test(src) ||
+    /kind="driver"\s+id=\{load\.assigned_primary_driver_id\}\s+name=\{load\.assigned_primary_driver_name\}/.test(src);
+  const unitOk =
+    /<EntityLink\s+kind="unit"\s+id=\{load\.assigned_unit_id\}\s+label=\{entityLabel\(load\.assigned_unit_number, load\.assigned_unit_id, "Unit"\)\}/.test(src) ||
+    /kind="unit"\s+id=\{load\.assigned_unit_id\}\s+name=\{load\.assigned_unit_number\}/.test(src);
+  if (!driverOk) {
     problems.push(`${CUSTOMER_DETAIL}: customer load rows must drill through the driver FK`);
   }
-  if (!/<EntityLink\s+kind="unit"\s+id=\{load\.assigned_unit_id\}\s+label=\{entityLabel\(load\.assigned_unit_number, load\.assigned_unit_id, "Unit"\)\}/.test(src)) {
+  if (!unitOk) {
     problems.push(`${CUSTOMER_DETAIL}: customer load rows must drill through the unit FK`);
   }
   return problems;
