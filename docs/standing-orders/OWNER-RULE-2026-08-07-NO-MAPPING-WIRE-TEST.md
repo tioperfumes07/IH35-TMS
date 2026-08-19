@@ -33,6 +33,9 @@ USMCA data.
 > it, owner edits later. Wire and test every scenario green on real USMCA data.
 
 
+## METHOD (LAW-2026-08-07-VERTICAL-METHOD) — owner-locked, permanent
+METHOD = VERTICAL SWEEP BY CLASS (vertical coding), NOT module-by-module: pick one defect class, sweep it globally across every module and prod, classify origin, fix the root cause once, ship one mutation-proven guard. Never the old block/module-by-module way.
+
 ## NEVER PAUSE (continuous loop) — owner-locked 2026-08-07
 Every coder works non-stop: finish a task -> immediately pull the next create-surface / class / board item -> keep going. No idling, no waiting for approval, no stopping to ask. The only stop is a genuine owner business decision. Fix your own red PRs first, then continue. The orchestrator (Claude desktop) keeps everyone working and MERGES green PRs + FIXES or ROUTES conflicting PRs so the pipeline never stalls.
 
