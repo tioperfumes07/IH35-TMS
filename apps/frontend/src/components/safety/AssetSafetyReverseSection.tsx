@@ -9,6 +9,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { CivilFinesReverseBlock } from "./CivilFinesReverseBlock";
 import { SafetyEventsReverseBlock } from "./SafetyEventsReverseBlock";
@@ -266,7 +267,19 @@ export function AssetSafetyReverseSection({
             />
             <div className="mt-1 text-xs text-gray-600">
               {formatDateUS(s(accident.accident_at))}
-              {accident.driver_name ? ` · ${s(accident.driver_name)}` : ""}
+              {accident.driver_id || accident.driver_name ? (
+                <>
+                  {" · "}
+                  <EntityLinkOrTombstone
+                    kind="driver"
+                    id={s(accident.driver_id) || null}
+                    name={s(accident.driver_name) || null}
+                    noun="Driver"
+                    className="font-semibold text-slate-700 underline"
+                    data-testid="asset-safety-accident-driver-link"
+                  />
+                </>
+              ) : null}
             </div>
           </li>
         ))}
@@ -321,7 +334,18 @@ export function AssetSafetyReverseSection({
               label={`${s(dvir.type) || "DVIR"} · ${s(dvir.defect_severity) || "none"}`}
               className="font-semibold text-slate-700"
             />
-            <span className="ml-2 text-gray-600">{s(dvir.driver_name)}</span>
+            {dvir.driver_id || dvir.driver_name ? (
+              <span className="ml-2 text-gray-600">
+                <EntityLinkOrTombstone
+                  kind="driver"
+                  id={s(dvir.driver_id) || null}
+                  name={s(dvir.driver_name) || null}
+                  noun="Driver"
+                  className="font-semibold text-slate-700 underline"
+                  data-testid="asset-safety-dvir-driver-link"
+                />
+              </span>
+            ) : null}
             <div className="mt-1 text-xs text-gray-600">
               {formatDateUS(s(dvir.submitted_at))} · {s(dvir.defect_count) || "0"} defect(s)
             </div>
