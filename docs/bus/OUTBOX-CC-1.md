@@ -647,3 +647,7 @@ verify:static: 64 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T04:06Z CC-1 | ACCT-F5488 closed (PR #9418, merged ce99c80). verify-wave-h2-ops-fk-null-rates.mjs (primary subject: CC-1's accounting expenses/invoices load_id write-path + reverse drill, with a downstream connectivity check into LoadDetailDrawer.tsx) FAILed 2 checks — drawer title migrated from EntityLink onto stricter EntityLinkOrTombstone, same class fixed repeatedly this session. Widened both checks. Also found and fixed: --selftest's naked-title mutation still targeted the old with-children markup (silent no-op) — retargeted to real self-closing markup. Zero product-code change.
 
 verify:static: 65 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T04:09Z CC-1 | ACCT-F5489 closed (PR #9424, merged ac22797). verify-wave-card-format.mjs blanket-required every money-lane wave to set money_critical=true. CLS-LINKAGE-ONEWAY carries lane="money" but money_critical=false because it was honestly reclassified as disposition="N/A-PRE-OPERATIONAL" (imported history, not a linkage defect — this repo's own standing law). Forcing money_critical=true on a correctly-dispositioned non-defect would itself be a false claim of active risk. Allowed money_critical=false ONLY when disposition is an explicit N/A-prefixed string — narrow, named exception. Added 2 selftest cases (positive + negative). Zero data change to wave-queue.json — guard fix only.
+
+verify:static: 66 of ~199 now closed this session. Continuing non-stop, fast-merge.
