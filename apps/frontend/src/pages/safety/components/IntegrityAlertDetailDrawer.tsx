@@ -5,6 +5,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -169,6 +170,14 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
             </div>
           ) : null}
         </div>
+        {(ackMutation.isError || resolveMutation.isError || snoozeMutation.isError) ? (
+          <p className="mt-3 text-xs text-red-700" data-testid="integrity-alert-action-error">
+            {userFacingApiError(
+              ackMutation.error ?? resolveMutation.error ?? snoozeMutation.error,
+              "Could not update the integrity alert.",
+            )}
+          </p>
+        ) : null}
         <div className="mt-4 flex gap-2">
           <button
             type="button"
