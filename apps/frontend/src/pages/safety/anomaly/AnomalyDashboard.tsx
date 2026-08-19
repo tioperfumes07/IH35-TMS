@@ -58,26 +58,32 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           <option value="warn">Warn</option>
         </select>
       </div>
-      <MobileOptimizedTable
-        rows={rows}
-        rowKey={(row) => String(row.uuid)}
-        emptyMessage="No open anomaly alerts"
-        columns={[
-          { key: "detected_at", header: "Detected", render: (row) => String(row.detected_at ?? "") },
-          { key: "severity", header: "Severity", render: (row) => <span className="font-semibold">{String(row.severity ?? "")}</span> },
-          { key: "evidence", header: "Evidence", render: (row) => <span className="font-mono text-xs">{JSON.stringify(row.evidence ?? {})}</span> },
-          {
-            key: "actions",
-            header: "Actions",
-            render: (row) => (
-              <div className="flex flex-wrap gap-1">
-                <Button type="button" variant="secondary" onClick={() => ack.mutate(String(row.uuid))}>Ack</Button>
-                <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), notes: "Resolved from dashboard" })}>Resolve</Button>
-              </div>
-            ),
-          },
-        ]}
-      />
+      {q.isError ? (
+        <p className="text-xs text-red-700" data-testid="anomaly-dashboard-query-error">
+          {userFacingApiError(q.error, "Could not load anomaly alerts.")}
+        </p>
+      ) : (
+        <MobileOptimizedTable
+          rows={rows}
+          rowKey={(row) => String(row.uuid)}
+          emptyMessage="No open anomaly alerts"
+          columns={[
+            { key: "detected_at", header: "Detected", render: (row) => String(row.detected_at ?? "") },
+            { key: "severity", header: "Severity", render: (row) => <span className="font-semibold">{String(row.severity ?? "")}</span> },
+            { key: "evidence", header: "Evidence", render: (row) => <span className="font-mono text-xs">{JSON.stringify(row.evidence ?? {})}</span> },
+            {
+              key: "actions",
+              header: "Actions",
+              render: (row) => (
+                <div className="flex flex-wrap gap-1">
+                  <Button type="button" variant="secondary" onClick={() => ack.mutate(String(row.uuid))}>Ack</Button>
+                  <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), notes: "Resolved from dashboard" })}>Resolve</Button>
+                </div>
+              ),
+            },
+          ]}
+        />
+      )}
       {(ack.isError || resolve.isError) ? (
         <p className="text-xs text-red-700" data-testid="anomaly-dashboard-action-error">
           {userFacingApiError(ack.error ?? resolve.error, "Could not update the anomaly alert.")}
