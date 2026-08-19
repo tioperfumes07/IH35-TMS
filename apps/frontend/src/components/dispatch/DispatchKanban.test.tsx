@@ -2,6 +2,7 @@
 import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import { DispatchKanban } from "./DispatchKanban";
@@ -31,14 +32,16 @@ describe("DispatchKanban — Awaiting-assignment truck card opens Book", () => {
     const user = userEvent.setup();
 
     render(
-      <DispatchKanban
-        loads={[]}
-        awaitingTrucks={[truck]}
-        loading={false}
-        onLoadClick={onLoadClick}
-        onBookForUnit={onBookForUnit}
-        onStatusDrop={vi.fn()}
-      />
+      <MemoryRouter>
+        <DispatchKanban
+          loads={[]}
+          awaitingTrucks={[truck]}
+          loading={false}
+          onLoadClick={onLoadClick}
+          onBookForUnit={onBookForUnit}
+          onStatusDrop={vi.fn()}
+        />
+      </MemoryRouter>
     );
 
     // The card surfaces the unit and an explicit "+ Book load" <button> (no longer a bare draggable card).
@@ -60,14 +63,16 @@ describe("DispatchKanban — Awaiting-assignment truck card opens Book", () => {
     const user = userEvent.setup();
 
     render(
-      <DispatchKanban
-        loads={[]}
-        awaitingTrucks={[truck]}
-        loading={false}
-        onLoadClick={onLoadClick}
-        onBookForUnit={onBookForUnit}
-        onStatusDrop={vi.fn()}
-      />
+      <MemoryRouter>
+        <DispatchKanban
+          loads={[]}
+          awaitingTrucks={[truck]}
+          loading={false}
+          onLoadClick={onLoadClick}
+          onBookForUnit={onBookForUnit}
+          onStatusDrop={vi.fn()}
+        />
+      </MemoryRouter>
     );
 
     await user.click(screen.getByTestId("awaiting-truck-card-unit:u-171"));
