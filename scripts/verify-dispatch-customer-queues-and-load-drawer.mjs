@@ -50,8 +50,9 @@ export function audit(src) {
   for (const [key, pattern] of ENTITY_LINK_CHECKS) {
     if (!pattern.test(src[key])) failures.push(`${FILES[key]}: must render a real EntityLink kind="customer"`);
   }
-  if (!/kind="customer"/.test(src.notify) || !/listCustomers/.test(src.notify)) {
-    failures.push(`${FILES.notify}: must have a real customer picker (listCustomers) and render EntityLink kind="customer"`);
+  if (!/<EntityPicker[\s\S]{0,100}kind="customer"[\s\S]{0,120}operatingCompanyId=\{companyId\}/.test(src.notify) ||
+      !/<EntityLink[\s\S]{0,100}kind="customer"[\s\S]{0,80}id=\{entry\.customer_id\}/.test(src.notify)) {
+    failures.push(`${FILES.notify}: must use the shared company-scoped customer picker and render EntityLink kind="customer"`);
   }
   if (!/form\.register\("customer_id", \{ required:/.test(src.bookLoad)) {
     failures.push(`${FILES.bookLoad}: Book Load must require a real customer_id field`);
@@ -83,7 +84,9 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ...ENTITY_LINK_CHECKS.map(([key, pattern]) => [`${key}-link`, key, new RegExp(pattern.source, "g"), 'kind="unit"']),
-    ["notify-picker", "notify", /listCustomers/g, "listSomethingElse"],
+    ["notify-picker-kind", "notify", /<EntityPicker[\s\S]{0,100}kind="customer"[\s\S]{0,120}operatingCompanyId=\{companyId\}/, '<EntityPicker kind="unit" operatingCompanyId={companyId}'],
+    ["notify-picker-scope", "notify", /operatingCompanyId=\{companyId\}/g, "operatingCompanyId={undefined}"],
+    ["notify-customer-link", "notify", /<EntityLink[\s\S]{0,100}kind="customer"[\s\S]{0,80}id=\{entry\.customer_id\}/, '<EntityLink kind="unit" id={entry.customer_id}'],
     ["bookload-required", "bookLoad", /form\.register\("customer_id", \{ required:/, 'form.register("customer_id_unused", { required:'],
     ["drawer-link", "drawer", /kind="customer"[\s\S]{0,50}id=\{load\.customer_id\}/, 'kind="unit" id={load.unit_id}'],
     ["factoring-tab-scope", "factoringTab", /customer_id: load!\.customer_id/, "customer_id: undefined"],
