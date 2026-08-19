@@ -37,7 +37,10 @@ export function collectCustomerLeaves(read = fs.readFileSync, readDir = fs.readd
 const contracts = [
   ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", /<EntityLink kind="customer" id=\{r\.customer_id\}/],
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /case "customer":/],
-  ["apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx", /createKind="customer"/],
+  [
+    "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
+    /createKind="customer"|<EntityPicker[\s\S]{0,500}kind="customer"[\s\S]{0,500}allowCreate/,
+  ],
   ["apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx", /customer_id:\s*values\.customer_id \|\| undefined/],
   // Direct inline EntityLink OR the extracted ManagementCustomerCell component (honest-label +
   // tombstone handling, internally wires kind="customer" id={customerId} — see its own
