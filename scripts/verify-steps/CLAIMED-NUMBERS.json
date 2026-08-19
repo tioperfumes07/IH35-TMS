@@ -4276,5 +4276,10 @@
     "claimed_at": "2026-08-18",
     "claimed_by": "cursor",
     "purpose": "verify-quick-assign-modal-entitylinks"
+  },
+  "3930": {
+    "claimed_at": "2026-08-18",
+    "claimed_by": "cursor",
+    "purpose": "verify-cancel-load-modal-entitylinks"
   }
 }
