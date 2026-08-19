@@ -65,50 +65,62 @@ export function ReturnToDuty() {
     <div className="space-y-4">
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-900">Open return-to-duty processes</h3>
-        <ul className="mt-2 space-y-2">
-          {processes.map((proc) => (
-            <li key={String(proc.id)} className="rounded-sm border border-gray-100 p-2">
-              <div className="font-medium">
-                Driver{" "}
-                <EntityLink
-                  kind="driver"
-                  id={proc.driver_id ? String(proc.driver_id) : undefined}
-                  label={entityLabel(proc.driver_name, proc.driver_id ? String(proc.driver_id) : undefined, "Driver")}
-                />
-              </div>
-              <div className="text-slate-600">Status: {String(proc.status)} · Started {formatDateUS(proc.started_at)}</div>
-            </li>
-          ))}
-          {processes.length === 0 ? <li className="text-slate-500">No open RTD processes.</li> : null}
-        </ul>
+        {rtdQ.isError ? (
+          <p className="mt-2 text-xs text-red-700" data-testid="rtd-processes-query-error">
+            {userFacingApiError(rtdQ.error, "Could not load return-to-duty processes.")}
+          </p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {processes.map((proc) => (
+              <li key={String(proc.id)} className="rounded-sm border border-gray-100 p-2">
+                <div className="font-medium">
+                  Driver{" "}
+                  <EntityLink
+                    kind="driver"
+                    id={proc.driver_id ? String(proc.driver_id) : undefined}
+                    label={entityLabel(proc.driver_name, proc.driver_id ? String(proc.driver_id) : undefined, "Driver")}
+                  />
+                </div>
+                <div className="text-slate-600">Status: {String(proc.status)} · Started {formatDateUS(proc.started_at)}</div>
+              </li>
+            ))}
+            {processes.length === 0 ? <li className="text-slate-500">No open RTD processes.</li> : null}
+          </ul>
+        )}
       </div>
 
       <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs">
         <h3 className="text-sm font-semibold text-slate-700">FMCSA Clearinghouse — pending positive reports</h3>
-        <ul className="mt-2 space-y-2">
-          {positivePending.map((row) => (
-            <li key={String(row.id)} className="flex items-center justify-between rounded-sm border border-slate-100 bg-white p-2">
-              <span>
-                Driver{" "}
-                <EntityLink
-                  kind="driver"
-                  id={row.driver_id ? String(row.driver_id) : undefined}
-                  label={entityLabel(row.driver_name, row.driver_id ? String(row.driver_id) : undefined, "Driver")}
-                />{" "}
-                · {String(row.test_date)}
-              </span>
-              <button
-                type="button"
-                className="rounded-sm bg-slate-700 px-2 py-1 text-[10px] font-medium text-white disabled:opacity-50"
-                disabled={reportMutation.isPending}
-                onClick={() => reportMutation.mutate(String(row.id))}
-              >
-                Mark reported
-              </button>
-            </li>
-          ))}
-          {positivePending.length === 0 ? <li className="text-slate-700">All positives reported or none on file.</li> : null}
-        </ul>
+        {resultsQ.isError ? (
+          <p className="mt-2 text-xs text-red-700" data-testid="rtd-results-query-error">
+            {userFacingApiError(resultsQ.error, "Could not load drug/alcohol results.")}
+          </p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {positivePending.map((row) => (
+              <li key={String(row.id)} className="flex items-center justify-between rounded-sm border border-slate-100 bg-white p-2">
+                <span>
+                  Driver{" "}
+                  <EntityLink
+                    kind="driver"
+                    id={row.driver_id ? String(row.driver_id) : undefined}
+                    label={entityLabel(row.driver_name, row.driver_id ? String(row.driver_id) : undefined, "Driver")}
+                  />{" "}
+                  · {String(row.test_date)}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-sm bg-slate-700 px-2 py-1 text-[10px] font-medium text-white disabled:opacity-50"
+                  disabled={reportMutation.isPending}
+                  onClick={() => reportMutation.mutate(String(row.id))}
+                >
+                  Mark reported
+                </button>
+              </li>
+            ))}
+            {positivePending.length === 0 ? <li className="text-slate-700">All positives reported or none on file.</li> : null}
+          </ul>
+        )}
         {reportMutation.isError ? (
           <p className="mt-2 text-xs text-red-700" data-testid="rtd-clearinghouse-report-error">
             {userFacingApiError(reportMutation.error, "Could not mark the Clearinghouse report as submitted.")}
