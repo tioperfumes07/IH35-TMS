@@ -4451,5 +4451,9 @@
   "4002": {
     "owner": "cursor",
     "note": "LV-SAFETY-DRUG-ALCOHOL-FILTER-SILENT-APPLY"
+  },
+  "4004": {
+    "owner": "cursor",
+    "note": "LV-SAFETY-EVENTS-FILTER-SILENT-APPLY"
   }
 }
