@@ -4455,5 +4455,9 @@
   "4004": {
     "owner": "cursor",
     "note": "LV-SAFETY-EVENTS-FILTER-SILENT-APPLY"
+  },
+  "4006": {
+    "owner": "cursor",
+    "note": "LV-SAFETY-CARGO-CLAIMS-FILTER-SILENT-APPLY"
   }
 }
