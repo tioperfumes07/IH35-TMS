@@ -643,3 +643,7 @@ verify:static: 63 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T04:02Z CC-1 | ACCT-F5487 closed (PR #9413, merged ec4ff9e). verify-wave-a-vendor-all-modules.mjs FAILed InventoryPartsStockPage.tsx's vendor FK check — real EntityLink is multi-line JSX with an honest tombstone branch, same multi-line-JSX false-positive class fixed repeatedly this session. Whitespace-tolerant pattern. Existing --selftest re-verified PASS. Zero product-code change.
 
 verify:static: 64 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T04:06Z CC-1 | ACCT-F5488 closed (PR #9418, merged ce99c80). verify-wave-h2-ops-fk-null-rates.mjs (primary subject: CC-1's accounting expenses/invoices load_id write-path + reverse drill, with a downstream connectivity check into LoadDetailDrawer.tsx) FAILed 2 checks — drawer title migrated from EntityLink onto stricter EntityLinkOrTombstone, same class fixed repeatedly this session. Widened both checks. Also found and fixed: --selftest's naked-title mutation still targeted the old with-children markup (silent no-op) — retargeted to real self-closing markup. Zero product-code change.
+
+verify:static: 65 of ~199 now closed this session. Continuing non-stop, fast-merge.
