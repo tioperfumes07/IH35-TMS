@@ -8,7 +8,7 @@
     "weak": "identifier appears in the codebase but in NO file that touches this table — the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
   },
   "_recapture": "2026-07-21 — coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too — the prior revision discarded dollar-quoted bodies entirely.",
-  "count": 498,
+  "count": 506,
   "entries": [
     {
       "object": "_system.background_jobs.last_error_message",
@@ -663,6 +663,48 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0222_block_34_payment_application_engine.sql"
+    },
+    {
+      "object": "accounting.vendor_payment_methods.account_holder_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612640000_vendor_payment_methods_master_data.sql",
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+    },
+    {
+      "object": "accounting.vendor_payment_methods.account_last4",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612640000_vendor_payment_methods_master_data.sql",
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+    },
+    {
+      "object": "accounting.vendor_payment_methods.account_token",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612640000_vendor_payment_methods_master_data.sql",
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+    },
+    {
+      "object": "accounting.vendor_payment_methods.is_default",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612640000_vendor_payment_methods_master_data.sql",
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+    },
+    {
+      "object": "accounting.vendor_payment_methods.routing_last4",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612640000_vendor_payment_methods_master_data.sql",
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+    },
+    {
+      "object": "accounting.vendor_payment_methods.vendor_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612640000_vendor_payment_methods_master_data.sql",
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
     },
     {
       "object": "alerts.broker_queue.proposed_message",
@@ -1521,6 +1563,20 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0224_block_26_factor_reconciliation.sql"
+    },
+    {
+      "object": "finance.forecast_lines.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612600000_finance_forecast_scenarios_data_model.sql",
+      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read — a template-copy leftover, harmless nullable column, not a missing feature."
+    },
+    {
+      "object": "finance.forecast_scenarios.deleted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202612600000_finance_forecast_scenarios_data_model.sql",
+      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read — a template-copy leftover, harmless nullable column, not a missing feature."
     },
     {
       "object": "finance.loan_amortization_rows.deleted_at",
