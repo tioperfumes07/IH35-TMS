@@ -83,9 +83,9 @@ export async function canAssignLoadToDriver(
       return { ok: true };
     }
 
-    // FAIL-U1: prefer the human label; fall back to the uuid only when the row genuinely has none.
-    const woLabel = activeWo.display_id || activeWo.id;
-    const assetLabel = activeWo.unit_number || activeWo.asset_id;
+    // A UUID is not an operator label. Keep canonical ids in their dedicated fields, and make
+    // missing catalog/display data explicit instead of disguising it as a readable blocker.
+    const woLabel = activeWo.display_id || "work order unavailable";
 
     return {
       ok: false,
@@ -94,7 +94,7 @@ export async function canAssignLoadToDriver(
       work_order_id: activeWo.id,
       asset_id: activeWo.asset_id ?? null,
       work_order_display_id: activeWo.display_id ?? null,
-      asset_label: assetLabel ?? null,
+      asset_label: activeWo.unit_number ?? null,
     };
   };
 

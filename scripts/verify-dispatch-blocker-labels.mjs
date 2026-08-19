@@ -24,6 +24,9 @@ if (!/work_order_display_id:/.test(svc)) fail.push(`${SVC}: response omits work_
 if (!/asset_label:/.test(svc)) fail.push(`${SVC}: response omits asset_label`);
 if (/blocker:\s*`Driver's truck is in repair \(WO \$\{activeWo\.id\}\)`/.test(svc))
   fail.push(`${SVC}: blocker text still interpolates the raw uuid instead of the display id`);
+if (/activeWo\.display_id\s*\|\|\s*activeWo\.id/.test(svc) || /activeWo\.unit_number\s*\|\|\s*activeWo\.asset_id/.test(svc)) {
+  fail.push(`${SVC}: operator labels must never fall back to canonical UUIDs`);
+}
 // Quick-assign HOS parity with Book — canAssignLoadToDriver must refuse HOS violators, not only repair WO.
 if (!/is_in_violation/.test(svc) || !/E_DRIVER_HOS_VIOLATION/.test(svc)) {
   fail.push(`${SVC}: must check drivers_with_hos_status.is_in_violation and return E_DRIVER_HOS_VIOLATION`);
@@ -34,11 +37,11 @@ if (!/E_DRIVER_HOS_VIOLATION/.test(route)) {
 }
 
 const ui = readFileSync(UI, "utf8");
-if (!/entityLabel\(availabilityQuery\.data\?\.work_order_display_id, availabilityQuery\.data\?\.work_order_id, "Work order"\)/.test(ui)) {
-  fail.push(`${UI}: panel must suppress raw work-order ids with entityLabel`);
+if (!/kind="work_order"[\s\S]*?name=\{availabilityQuery\.data\?\.work_order_display_id\}[\s\S]*?noun="Work order"/.test(ui)) {
+  fail.push(`${UI}: work order must use a label-aware tombstone`);
 }
-if (!/entityLabel\(availabilityQuery\.data\?\.asset_label, availabilityQuery\.data\?\.asset_id, "Asset"\)/.test(ui)) {
-  fail.push(`${UI}: panel must suppress raw asset ids with entityLabel`);
+if (!/kind="unit"[\s\S]*?name=\{availabilityQuery\.data\?\.asset_label\}[\s\S]*?noun="Unit"/.test(ui)) {
+  fail.push(`${UI}: unit must use a label-aware tombstone`);
 }
 if (!/submitBlocked\s*=\s*availabilityQuery\.isError\s*\|\|/.test(ui)) {
   fail.push(`${UI}: availability query failure must block submit`);

@@ -2,8 +2,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDriverLoadAvailability } from "../../api/dispatch";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -52,20 +51,22 @@ export function LoadCreateModal({
       <div className="mt-1">
         {/* FAIL-U1: show the WO display_id and unit number. A dispatcher cannot act on a uuid. */}
         WO:{" "}
-        <EntityLink
+        <EntityLinkOrTombstone
           kind="work_order"
           id={availabilityQuery.data?.work_order_id}
-          label={entityLabel(availabilityQuery.data?.work_order_display_id, availabilityQuery.data?.work_order_id, "Work order")}
+          name={availabilityQuery.data?.work_order_display_id}
+          noun="Work order"
         />{" "}
         {/* LINK reverse_link: asset_id is always a unit here — backend's own dispatcher-facing string
             confirms it (load-assign.routes.ts: `Unit ${availability.asset_label}`), so kind="unit"
             is not a guess. */}
         · Asset:{" "}
-        {availabilityQuery.data?.asset_id ? (
-          <EntityLink kind="unit" id={availabilityQuery.data.asset_id} label={entityLabel(availabilityQuery.data.asset_label, availabilityQuery.data.asset_id, "Asset")} />
-        ) : (
-          entityLabel(availabilityQuery.data?.asset_label, availabilityQuery.data?.asset_id, "Asset")
-        )}
+        <EntityLinkOrTombstone
+          kind="unit"
+          id={availabilityQuery.data?.asset_id}
+          name={availabilityQuery.data?.asset_label}
+          noun="Unit"
+        />
       </div>
       <label className="mt-2 flex items-center gap-2">
         <input
