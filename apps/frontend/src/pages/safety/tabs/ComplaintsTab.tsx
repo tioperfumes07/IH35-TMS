@@ -17,6 +17,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useListState } from "../../../components/list-state";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Button } from "../../../components/Button";
@@ -512,6 +513,18 @@ export function ComplaintsTab() {
         </div>
       ) : null}
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: failed complaintsQuery must not fall through to emptyText
+          "No complaints found." — outage presenting as a clean complaint history. */}
+      {listState.isError ? (
+        <div data-testid="complaints-query-error">
+          <ListErrorState
+            title="Couldn't load complaints"
+            status={0}
+            message={(complaintsQuery.error as Error)?.message}
+            onRetry={() => void complaintsQuery.refetch()}
+          />
+        </div>
+      ) : (
       <ParityTable<Record<string, unknown>>
         columns={columns}
         rows={complaintsQuery.data?.complaints ?? []}
@@ -569,6 +582,7 @@ export function ComplaintsTab() {
             : ""
         }
       />
+      )}
       {patchMutation.isError ? (
         <p className="text-xs text-red-700" data-testid="complaint-resolve-error">
           {userFacingApiError(patchMutation.error, "Could not resolve the complaint.")}
