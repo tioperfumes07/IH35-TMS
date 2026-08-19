@@ -82,6 +82,12 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = createJournalEntryBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5565: this is a WRITE — manual journal entry postings into the real GL — with NO
+    // membership check at all before this fix. accounting.journal_entry_postings' RLS policy has no
+    // org.user_accessible_company_ids() clause (live-verified, same as ACCT-F5557/F5562), so an
+    // Owner/Administrator/Accountant of ANY company could post fraudulent, balanced JE lines directly
+    // into ANOTHER company's books.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const memoParts: string[] = [];
       if (body.data.reference_number) memoParts.push(`Ref: ${body.data.reference_number}`);
@@ -151,6 +157,8 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ACCT-F5565: cross-tenant read otherwise — see comment on the create route above.
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const item = await getJournalEntryDetail(user.uuid, query.data.operating_company_id, params.data.id);
       return item;
@@ -189,6 +197,10 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // ACCT-F5565: another WRITE with no membership check — voidJournalEntry REVERSES a real posted JE.
+    // The role gate (Owner/Accountant) lives inside voidJournalEntry itself, but nothing there or here
+    // verified the actor belongs to the target company before this fix.
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const result = await voidJournalEntry(body.data.operating_company_id, params.data.id, body.data.reason, {
         userId: user.uuid,
