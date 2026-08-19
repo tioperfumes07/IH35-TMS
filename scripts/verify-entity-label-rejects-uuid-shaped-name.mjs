@@ -121,7 +121,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
     bad: /row\.driver_name\s*\?\?\s*row\.driver_id/,
-    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)|EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/SalesTaxPage.tsx",
@@ -176,7 +176,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
     bad: /row\.unit_display_id\s*\?\?\s*row\.unit_id/,
-    good: /entityLabel\(\s*row\.unit_display_id\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /entityLabel\(\s*row\.unit_display_id\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)|EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_display_id\} noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
@@ -1566,7 +1566,7 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
-    bad: /\{row\.vendor_name\}/,
+    bad: /(?<!name=)\{row\.vendor_name\}/,
     good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
   },
   {

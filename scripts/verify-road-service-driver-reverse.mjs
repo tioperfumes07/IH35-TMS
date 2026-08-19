@@ -34,7 +34,7 @@ function audit(s) {
   if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/ListErrorBanner/.test(s.section)) failures.push("reverse section must expose query errors");
   if (!/highlightedTicketId === row\.id/.test(s.list)) failures.push("ticket list must honor deep-link highlight");
   for (const kind of ["unit", "driver", "vendor"]) {
-    if (!new RegExp(`<EntityLink[^>]+kind=["']${kind}["']`).test(s.list)) failures.push(`ticket list must use canonical EntityLink kind=${kind}`);
+    if (!new RegExp(`<EntityLink(?:OrTombstone)?[^>]+kind=["']${kind}["']`).test(s.list)) failures.push(`ticket list must use canonical EntityLink kind=${kind}`);
   }
   if (!/AS vendor_ok/.test(s.route) || !/AS unit_ok/.test(s.route) || !/AS driver_ok/.test(s.route) ||
       !/linked_entity_not_in_operating_company/.test(s.route)) {
