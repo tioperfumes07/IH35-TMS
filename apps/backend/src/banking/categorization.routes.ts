@@ -87,6 +87,31 @@ const categorizeBodySchema = z.object({
   suggested_match_bill_id: z.string().uuid().optional(),
 });
 
+// ACCT-F5575: POST /transactions/:id/categorize wrote every one of these caller-supplied ids
+// straight onto banking.bank_transactions.categorization_* with zero check they exist or belong to
+// this company -- the same class of bug fixed twice already this session (F5573 obligation-reconcile,
+// F5574 reconciliation match). The two consumers that actually MOVE money already independently
+// re-validate (bank-feed-gl-posting.service.ts's "Fail-closed account validation: same entity" for
+// gl_account_id; cash-advance-create.ts's driver_id/load_id/from_bank_account_id/linked_bill_id
+// checks reached via bank-driver-advance.service.ts), so this is not a money-safety gap -- but every
+// other read of these columns (this file's own GET :id detail query, bank-feed-gl-posting.service.ts's
+// own JOINs) is honest ONLY because it re-applies a company predicate at read time; the WRITE never
+// verified what the reads assume. project_id has no backing catalog table in this schema (a QBO-parity
+// placeholder) and is intentionally excluded -- there is nothing to validate it against.
+const CATEGORIZE_FIELD_EXISTENCE_SQL: Partial<Record<keyof z.infer<typeof categorizeBodySchema>, string>> = {
+  customer_id: `SELECT 1 FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  vendor_id: `SELECT 1 FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  driver_id: `SELECT 1 FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  unit_id: `SELECT 1 FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid`,
+  trailer_id: `SELECT 1 FROM mdata.equipment WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid`,
+  load_id: `SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
+  item_id: `SELECT 1 FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  class_id: `SELECT 1 FROM catalogs.classes WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  gl_account_id: `SELECT 1 FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  suggested_match_invoice_id: `SELECT 1 FROM accounting.invoices WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status NOT IN ('void', 'draft')`,
+  suggested_match_bill_id: `SELECT 1 FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL`,
+};
+
 const bulkCategorizeBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   transaction_ids: z.array(z.string().uuid()).min(1).max(500),
@@ -336,6 +361,18 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       }
 
       const linked = body.data.customer_id ?? body.data.vendor_id ?? body.data.project_id ?? null;
+
+      // ACCT-F5575: reject before writing instead of trusting the caller -- see the
+      // CATEGORIZE_FIELD_EXISTENCE_SQL comment for why this is a data-integrity fix, not a
+      // money-safety one (the two real money-moving consumers already re-validate independently).
+      for (const [field, sql] of Object.entries(CATEGORIZE_FIELD_EXISTENCE_SQL)) {
+        const value = body.data[field as keyof typeof body.data];
+        if (!value) continue;
+        const existsRes = await client.query(sql, [value, companyId]);
+        if (!existsRes.rows[0]) {
+          return { code: 404 as const, error: `${field}_not_found` };
+        }
+      }
 
       await client.query(
         `
