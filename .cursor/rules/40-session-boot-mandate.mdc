@@ -9,6 +9,7 @@ Before any other work, treat as already loaded:
 
 - `docs/bus/SESSION-BOOT-MANDATE.md`
 - `docs/bus/CODER-INSTRUCTIONS-NOW.md` (TOP only)
+- `docs/bus/SEAT-COMMS-LAW.md` (stale INBOX → ping Cursor)
 - `docs/bus/INBOX-CURSOR.md` (TOP only) if you are Cursor
 
 **GitHub stays. No GitLab.** Speed = FAST-MERGE after local gate PASS.

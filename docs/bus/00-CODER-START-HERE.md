@@ -8,9 +8,12 @@ Desktop `USMCA-WEEKEND-LEAD-2026-08-07/` must match. Chat is not the command cha
 1. **`docs/bus/CODER-INSTRUCTIONS-NOW.md`** — full loop, FAST-MERGE, NOW/THEN per seat
 2. **`docs/bus/FAST-MERGE-4MIN-LAW.md`** — gate → push → create → squash same turn
 3. **`docs/bus/INBOX-<YOUR-SEAT>.md`** — TOP block only (archive below is VOID if it contradicts)
-4. **`docs/bus/STATUS-NOW.md`**
+4. **`docs/bus/SEAT-COMMS-LAW.md`** — stale INBOX → ping Cursor + other seats on OUTBOX; never wait on Jorge
+5. **`docs/bus/STATUS-NOW.md`**
 
 Then write OUTBOX `WORKING` and start the NOW FO. Continuous. Never idle.
+
+**Codex RIGHT NOW:** `git pull --ff-only origin main` → ACK `INBOX-CODEX.md` 23:10Z (`NOW=lists reverse FE | NEXT=dispatch reverse PRIMARY`). Do not re-run factoring silent-cap.
 
 ## Active seats
 
