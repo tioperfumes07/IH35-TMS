@@ -8,6 +8,9 @@ import { useSafetyUiContext } from "../SafetyLayout";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { getTrainingCompletions } from "../../../api/safety";
 import { TrainingTable } from "../components/TrainingTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ApiError } from "../../../api/client";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 export function DriverFilesTab() {
   const [driverId, setDriverId] = useState<string | null>(null);
@@ -45,7 +48,7 @@ export function DriverFilesTab() {
             onOpenProfile={(nextDriverId) => setDriverId(nextDriverId)}
           />
           <DriversListPage onOpenProfile={(nextDriverId) => setDriverId(nextDriverId)} />
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-2" data-testid="driver-files-training-section">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-slate-900">Training Completions</h3>
               <span className="flex flex-wrap gap-3 text-xs">
@@ -57,7 +60,18 @@ export function DriverFilesTab() {
                 </Link>
               </span>
             </div>
-            <TrainingTable rows={trainingQuery.data?.training_completions ?? []} />
+            {trainingQuery.isError ? (
+              <div data-testid="driver-files-training-query-error">
+                <ListErrorState
+                  title="Couldn't load training completions"
+                  status={trainingQuery.error instanceof ApiError ? trainingQuery.error.status : 0}
+                  message={userFacingApiError(trainingQuery.error, "Couldn't load training completions.")}
+                  onRetry={() => void trainingQuery.refetch()}
+                />
+              </div>
+            ) : (
+              <TrainingTable rows={trainingQuery.data?.training_completions ?? []} />
+            )}
           </div>
         </>
       )}
