@@ -90,8 +90,10 @@ export function collectProblems(bookSrc, modalSrc, apiSrc = "", routesSrc = "") 
     if (!new RegExp(`\\b${nestedField}\\s*:`).test(routesSrc)) problems.push(`${ROUTES}: nested create schema missing ${nestedField}`);
     if (!new RegExp(`\\b${nestedField}\\s*:`).test(modalSrc)) problems.push(`${MODAL}: nested submit mapping missing ${nestedField}`);
   }
-  if (!/load_trailer_equipment_id:\s*string/.test(apiSrc)) {
-    problems.push(`${API}: load_trailer_equipment_id must be required because backend Zod requires it`);
+  if (!/load_trailer_equipment_id\?:\s*string/.test(apiSrc) ||
+      !/load_trailer_equipment_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\),\s*\n\s*\/\/ Trip Pairing/.test(routesSrc) ||
+      !/resolveLoadTrailerEquipmentIdForInsert[\s\S]{0,240}input\.load_trailer_equipment_id/.test(bookSrc)) {
+    problems.push("Book Load trailer equipment must be optional at the request boundary and resolved to a canonical FK before persistence");
   }
   if (!/city:\s*string/.test(apiSrc) || !/city:\s*z\.string\(\)\.trim\(\)\.min\(1/.test(routesSrc)) {
     problems.push("Book Load stop city must be required in both FE payload type and backend create schema");
@@ -120,6 +122,16 @@ if (SELFTEST) {
   const badModal = modal.replace("customer_id: values.customer_id", "customer_id: undefined");
   if (!collectProblems(book, badModal, api, routes).length) {
     console.error(`${LABEL} selftest: stripping modal customer_id did not fail`);
+    process.exit(1);
+  }
+  const requiredApi = api.replace("load_trailer_equipment_id?: string", "load_trailer_equipment_id: string");
+  if (!collectProblems(book, modal, requiredApi, routes).length) {
+    console.error(`${LABEL} selftest: making blank trailer equipment invalid at the API boundary did not fail`);
+    process.exit(1);
+  }
+  const requiredRoute = routes.replace("load_trailer_equipment_id: z.string().uuid().optional()", "load_trailer_equipment_id: z.string().uuid()");
+  if (!collectProblems(book, modal, api, requiredRoute).length) {
+    console.error(`${LABEL} selftest: making blank trailer equipment invalid at the route boundary did not fail`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
