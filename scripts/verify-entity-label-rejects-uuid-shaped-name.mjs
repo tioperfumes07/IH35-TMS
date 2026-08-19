@@ -461,7 +461,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx",
     bad: /label=\{issue\.load_display_id\s*\?\?\s*undefined\}|label=\{issue\.driver_full_name\s*\|\|\s*undefined\}/,
-    good: /entityLabel\(\s*issue\.unit_display_id\s*,\s*issue\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{issue\.unit_id\}\s+name=\{issue\.unit_display_id\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx",
@@ -1284,7 +1284,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/components/TriageModal.tsx",
     bad: /label=\{issue\.unit_display_id\}/,
-    good: /entityLabel\(\s*issue\.unit_display_id\s*,\s*issue\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{issue\.unit_id\}\s+name=\{issue\.unit_display_id\}\s+noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/InTransitTriageBand.tsx",

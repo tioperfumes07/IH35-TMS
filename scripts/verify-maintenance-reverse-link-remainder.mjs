@@ -16,6 +16,7 @@ const LABEL = "verify-maintenance-reverse-link-remainder";
 
 const CHECKS = [
   { name: "InTransitIssuesTable", file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx" },
+  { name: "TriageModal", file: "apps/frontend/src/pages/maintenance/components/TriageModal.tsx" },
   { name: "ArrivingSoonPage", file: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx" },
   { name: "DriverReportsQueuePage", file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx" },
   { name: "SevereRepairOosTab", file: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx" },
@@ -36,7 +37,21 @@ function run(root = ROOT) {
       fails.push(`${c.name}: missing`);
       continue;
     }
-    if (!/EntityLink/.test(fs.readFileSync(abs, "utf8"))) fails.push(`${c.name}: no EntityLink`);
+    const src = fs.readFileSync(abs, "utf8");
+    if (!/EntityLink/.test(src)) fails.push(`${c.name}: no EntityLink`);
+    if (c.name === "InTransitIssuesTable") {
+      for (const pattern of [
+        /kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_display_id\} noun="Unit"/,
+        /kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_full_name\} noun="Driver"/,
+        /kind="load" id=\{issue\.load_id\} name=\{issue\.load_display_id\} noun="Load"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact nullable FK/name tombstone coupling missing`);
+    }
+    if (c.name === "TriageModal") {
+      for (const pattern of [
+        /kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_display_id\} noun="Unit"/,
+        /kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_full_name\} noun="Driver"/,
+      ]) if (!pattern.test(src)) fails.push(`${c.name}: exact nullable FK/name tombstone coupling missing`);
+    }
   }
   return fails;
 }

@@ -1,7 +1,6 @@
 import type { InTransitIssue } from "../../../api/maintenance";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   issues: InTransitIssue[];
@@ -39,21 +38,21 @@ export function InTransitIssuesTable({ issues, loading = false, onTriage }: Prop
       label: "Unit",
       sortable: true,
       render: (issue) => (
-        <EntityLink kind="unit" id={issue.unit_id} label={entityLabel(issue.unit_display_id, issue.unit_id, "Unit")} className="font-semibold" />
+        <EntityLinkOrTombstone kind="unit" id={issue.unit_id} name={issue.unit_display_id} noun="Unit" className="font-semibold" />
       ),
     },
     {
       key: "driver_full_name",
       label: "Driver",
       sortable: true,
-      render: (issue) => <EntityLink kind="driver" id={issue.driver_id || undefined} label={entityLabel(issue.driver_full_name, issue.driver_id, "Driver")} />,
+      render: (issue) => <EntityLinkOrTombstone kind="driver" id={issue.driver_id} name={issue.driver_full_name} noun="Driver" />,
     },
     {
       // Design parity (in-transit-issues.html): Load # after Driver. Backed by dispatch.intransit_issues.load_id.
       key: "load_display_id",
       label: "Load #",
       sortable: true,
-      render: (issue) => <EntityLink kind="load" id={issue.load_id ?? undefined} label={entityLabel(issue.load_display_id, issue.load_id, "Load")} />,
+      render: (issue) => <EntityLinkOrTombstone kind="load" id={issue.load_id} name={issue.load_display_id} noun="Load" />,
     },
     // Preview's "Fault" column = the issue category. Description kept as a useful extra (additive).
     { key: "issue_category", label: "Fault", sortable: true },
