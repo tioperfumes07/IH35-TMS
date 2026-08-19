@@ -587,3 +587,7 @@ verify:static: 49 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:19Z CC-1 | ACCT-F5473 closed (PR #9349, merged b401a16). verify-bill-detail-vendor-unit-links.mjs required a truncated-UUID fallback (bill.unit_display_id ?? bill.unit_id.slice(0, 8)), but real code uses entityLabel(bill.unit_display_id, bill.unit_id, "Unit") — a STRICTER, correct fix than the guard's own ask, per entity-label.ts's own documented law against exactly this truncated-slice anti-pattern. Widened to accept either shape. No --selftest harness; load-bearing proof done by hand. Zero product-code change.
 
 verify:static: 50 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:21Z CC-1 | ACCT-F5474 closed (PR #9353, merged b109632). verify-bill-header-only-refused.mjs's synthesis check FAILed because this session's own earlier fix (ACCT-F5452, PR #9190) added a ~6-line load_id honesty comment to bills.service.ts, pushing the real gap between the branch open and the INSERT past the guard's fixed 1200-char window — self-inflicted, caught by a fresh guard re-run. Widened window to 2000 chars (measured exact real gap via isolated probe first). Existing --selftest re-verified PASS. Zero product-code change.
+
+verify:static: 51 of ~199 now closed this session. Continuing non-stop, fast-merge.
