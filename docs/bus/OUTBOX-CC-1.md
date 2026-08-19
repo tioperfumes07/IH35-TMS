@@ -615,3 +615,7 @@ verify:static: 56 of ~199 now closed this session. Continuing non-stop, fast-mer
 2026-08-19T03:38Z CC-1 | ACCT-F5480 closed (PR #9376, merged fbee94f). verify-recurring-bills.mjs FAILed 4 checks against real code shaped differently than the guard's original assumption: real routes are /api/v1/accounting/recurring-bill-templates (versioned, singular-hyphenated) — confirmed the frontend API client calls this exact path end-to-end; Recurring Bills is architected as its own standalone route (DUALPATH-08's canonical live surface) with its own sub-nav entry, not a tab embedded in BillsPage.tsx. Retargeted checks to the real, live, working shapes. No --selftest harness; load-bearing proof done by hand for both retargeted groups. Zero product-code change.
 
 verify:static: 57 of ~199 now closed this session. Continuing non-stop, fast-merge.
+
+2026-08-19T03:41Z CC-1 | ACCT-F5481 closed (PR #9383, merged 2ead2c1). verify-vendor-bill-user-dispatch-uuid-human-labels.mjs (LST-F137) FAILed CustomsTab.tsx for "missing entityLabel" — its EntityLink used a bare label={row.port_of_entry} with no honest fallback, unlike the other 7 files in this guard's family. port_of_entry is non-nullable per the type, not an active bug, but genuinely the one file missing the same defensive pattern every sibling uses. Real code fix: wrapped the label in entityLabel(row.port_of_entry, row.id, "Border crossing"), matching siblings. No guard change. tsc -b clean.
+
+verify:static: 58 of ~199 now closed this session. Continuing non-stop, fast-merge.
