@@ -7514,3 +7514,21 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=fleet:trailer.status_change:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.status_change:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=fleet:unit.detail.brakes:unit
+Devin-A | LIVE STARVED | leaf=fleet:trailer.status_change:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=fleet:unit.detail.brakes:unit
