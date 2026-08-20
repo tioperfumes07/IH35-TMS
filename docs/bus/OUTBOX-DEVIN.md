@@ -11958,3 +11958,7 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=dispatch:dispatch.modal.load_reassign:connectivity
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.modal.load_reassign:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=e87bd2e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.modal.save_load_template:customer
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.modal.load_reassign:picker_law | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=e87bd2e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.modal.save_load_template:customer
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.modal.load_reassign:load | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=e87bd2e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.modal.save_load_template:customer
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.modal.load_reassign:driver | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=e87bd2e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.modal.save_load_template:customer
