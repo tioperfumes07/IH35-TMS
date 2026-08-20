@@ -6181,3 +6181,19 @@ Devin-A | LIVE PASS | leaf=accounting:invoices.list:picker_law | USMCA | URL=htt
 Devin-A | LIVE STARVED | leaf=accounting:je.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=2d473a5 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/journal-entries healthz=2d473a5 head Checking session... | NEXT=leaf=accounting:je.list:connectivity
 Devin-A | LIVE STARVED | leaf=accounting:je.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=2d473a5 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/journal-entries healthz=2d473a5 head Checking session... | NEXT=leaf=accounting:je.list:connectivity
 Devin-A | LIVE STARVED | leaf=accounting:je.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=2d473a5 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/journal-entries healthz=2d473a5 head Checking session... | NEXT=leaf=accounting:je.list:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:je.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/journal-entries healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:month_close:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:je.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/journal-entries healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:month_close:connectivity
