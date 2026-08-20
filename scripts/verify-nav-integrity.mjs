@@ -187,6 +187,7 @@ const allowAll = [
   ...allowlist.ADMIN_ONLY,
   ...allowlist.BLOCK_43_TODO,
   ...allowlist.URL_SYNC_DEFERRED,
+  ...allowlist.REDIRECT_ROUTES,
 ];
 
 const routeSource = ROUTE_SOURCE_PATHS.map(read).join("\n");
