@@ -144,9 +144,13 @@ describe("CreateBillModal — persists via the canonical createVendorBill endpoi
     expect(body.work_order_id).toBe(WO_ID);
     expect(body.unit_id).toBe(UNIT_ID);
     expect(typeof body.attachment_draft_id).toBe("string");
-
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["accounting", "bills"] });
+
+    // LINK-F5189: the modal holds a confirmation step (real EntityLink to the just-created bill)
+    // instead of closing straight past it — onClose only fires once the operator dismisses it.
+    await screen.findByTestId("create-bill-modal-view-bill");
+    await user.click(screen.getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
   it("does not submit without a vendor (guarded)", async () => {

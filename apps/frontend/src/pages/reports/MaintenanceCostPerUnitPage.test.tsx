@@ -74,7 +74,9 @@ describe("MaintenanceCostPerUnitPage", () => {
   it("renders KPI totals and flag chips", async () => {
     render(wrap(<MaintenanceCostPerUnitPage />));
     await screen.findByText("Grand total");
-    expect(screen.getByTitle("high_cost")).toBeInTheDocument();
+    // LV-REPORTS-MAINT-COST-RAW-FLAG-TOKENS: the flag chip's title is the human display label now,
+    // never the raw API token — "high_cost" stays on the wire/CSV export only (formatMaintCostFlagLabel).
+    expect(screen.getByTitle("High cost")).toBeInTheDocument();
     await screen.findByText("By category");
   });
 

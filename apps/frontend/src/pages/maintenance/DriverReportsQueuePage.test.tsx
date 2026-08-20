@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { DriverReportsQueuePage } from "./DriverReportsQueuePage";
 
 vi.mock("../../contexts/CompanyContext", () => ({
@@ -21,7 +22,10 @@ describe("DriverReportsQueuePage", () => {
     const qc = new QueryClient();
     render(
       <QueryClientProvider client={qc}>
-        <DriverReportsQueuePage />
+        {/* BANK-F5168 — visible EntityPicker filter added useSearchParams(), which needs a Router. */}
+        <MemoryRouter>
+          <DriverReportsQueuePage />
+        </MemoryRouter>
       </QueryClientProvider>
     );
     expect(await screen.findByText("Driver Reports Queue")).toBeTruthy();

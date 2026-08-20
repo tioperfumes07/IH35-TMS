@@ -87,6 +87,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           JOIN mdata.units u ON u.id = w.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
           WHERE w.operating_company_id = $1::uuid
+            AND w.voided_at IS NULL
             AND w.status NOT IN ('complete', 'cancelled')
             AND (
               w.severity = 'severe'
@@ -237,6 +238,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           JOIN mdata.units u ON u.id = w.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
           WHERE w.operating_company_id = $1::uuid
+            AND w.voided_at IS NULL
             AND w.status::text IN ('open', 'in_progress', 'waiting_parts')
             AND w.description ILIKE '[samsara_dtc_auto]%'
           ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
