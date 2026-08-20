@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as bankingApi from "../../../api/banking";
+import * as loadsApi from "../../../api/loads";
 import { LoadBankingLinkagePage } from "../LoadBankingLinkagePage";
 
 /**
@@ -30,22 +31,35 @@ function wrap() {
   );
 }
 
+function mockLoad() {
+  return vi.spyOn(loadsApi, "getLoad").mockResolvedValue({
+    id: loadId,
+    operating_company_id: companyId,
+    load_number: "L-20260820-0042",
+  } as loadsApi.LoadDetail);
+}
+
 describe("LoadBankingLinkagePage (DISP-S22)", () => {
   it("renders without a blank frame and scopes the linkage fetch to company + load id", async () => {
     const spy = vi.spyOn(bankingApi, "getBankTransactionsByLinkage").mockResolvedValue({ rows: [], total_count: 0 });
+    const loadSpy = mockLoad();
     wrap();
     expect(await screen.findByTestId("load-banking-linkage-page")).toBeTruthy();
     expect(spy).toHaveBeenCalledWith(companyId, expect.objectContaining({ load_id: loadId }));
+    expect(loadSpy).toHaveBeenCalledWith(loadId, companyId);
+    expect(await screen.findAllByText("L-20260820-0042")).toHaveLength(2);
   });
 
   it("shows a named honest-empty state (not a silent blank) when nothing is tagged to this load", async () => {
     vi.spyOn(bankingApi, "getBankTransactionsByLinkage").mockResolvedValue({ rows: [], total_count: 0 });
+    mockLoad();
     wrap();
     expect(await screen.findByTestId("linked-bank-transactions-empty")).toBeTruthy();
   });
 
   it("surfaces a fetch failure honestly instead of a silent blank", async () => {
     vi.spyOn(bankingApi, "getBankTransactionsByLinkage").mockRejectedValue(new Error("boom"));
+    mockLoad();
     wrap();
     expect(await screen.findByTestId("load-banking-linkage-page")).toBeTruthy();
     expect(await screen.findByRole("button", { name: /Refresh/i })).toBeTruthy();
