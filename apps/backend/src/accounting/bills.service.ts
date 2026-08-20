@@ -149,6 +149,8 @@ type BillRow = {
    * qbo_vendor_id resolution on ZERO rows.
    */
   mdata_vendor_id: string | null;
+  /** Entity-scoped canonical label resolved by BILL_VENDOR_RESOLVE_JOIN_SQL on mounted list/detail reads. */
+  vendor_name?: string | null;
   bill_number: string | null;
   bill_date: string;
   due_date: string | null;
@@ -767,11 +769,12 @@ export async function listBillsByVendor(
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
-        SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
+        SELECT b.*, v.vendor_name, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
                ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo
         FROM accounting.bills b
+        ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
         LIMIT $${values.length - 1}
@@ -855,11 +858,12 @@ export async function listAllBillsForCompany(
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
-        SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
+        SELECT b.*, v.vendor_name, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
                ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo
         FROM accounting.bills b
+        ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
         LIMIT $${values.length - 1}
@@ -867,14 +871,14 @@ export async function listAllBillsForCompany(
       `,
       values
     );
-    return res.rows.map(normalizeBill);
+    return res.rows.map((row) => ({ ...normalizeBill(row), vendor_name: row.vendor_name ?? null }));
   });
 
   const vendorIds = [...new Set(rows.map((r) => r.vendor_id).filter((v): v is string => Boolean(v)))];
   const vendorNames = await resolveVendorDisplayMap(operatingCompanyId, vendorIds);
   return rows.map((r) => ({
     ...r,
-    vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
+    vendor_name: r.vendor_name ?? (r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null),
     balance_cents: computeBillBalanceCents(r),
   }));
 }
