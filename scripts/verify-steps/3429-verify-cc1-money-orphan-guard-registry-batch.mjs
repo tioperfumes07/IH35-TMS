@@ -34,6 +34,7 @@ const guards = [
   "verify-driver-finance-reverse-leaves.mjs",
   "verify-escrow-routes-membership-assert.mjs",
   "verify-expense-built-tags-strict.mjs",
+  "verify-expense-void-reversal-atomic.mjs",
   "verify-expense-nonidentity-surfaces-honest.mjs",
   "verify-expense-p10-navigation-honesty.mjs",
   "verify-factor-entitylink-drill.mjs",
