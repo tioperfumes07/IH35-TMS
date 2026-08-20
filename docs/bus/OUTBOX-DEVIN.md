@@ -14657,3 +14657,4 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=accounting:invoices.list:invoice
+Devin-A | LIVE PASS | leaf=accounting:invoices.list:invoice | USMCA | URL=https://app.ih35dispatch.com/accounting/invoices | healthz=dc53eda | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/invoices marker 'Invoices' | NEXT=leaf=accounting:je.create:gl_je
