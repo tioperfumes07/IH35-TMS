@@ -1009,3 +1009,4 @@ Codex | WORKING | FINDING=CUSTOMER-COI-REQUESTER-POLICY-DEAD-TOMBSTONE-DRILLS | 
 Codex | WORKING | FINDING=VENDOR-REVERSE-PANELS-DEAD-TOMBSTONE-DRILL-CLASS | leaf=vendors:detail.profile:reverse_link | guards=3 normal+selftest | typecheck=exit0 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=DISPATCH-EQUIPMENT-TRANSFER-ADHOC-REVERSE-DRILL | leaf=dispatch:equipment_transfers:reverse_link | guard=8/8-selftest | typecheck=exit0 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=SETTLEMENTS-DRIVER-RECORD-DEAD-TOMBSTONE-DRILLS | leaf=settlements:{list,panel.pre_settlements}:reverse_link | guards=green+selftest | typecheck=exit0 | NEXT=fast-merge | GO
+Codex | WORKING | FINDING=CUSTOMER-FACTOR-READ-JOIN-TENANT-UNSCOPED | leaf=customers:detail.factoring:{connectivity,reverse_link} | guard=normal+16-selftest | typecheck=root | NEXT=fast-merge then drivers | GO
