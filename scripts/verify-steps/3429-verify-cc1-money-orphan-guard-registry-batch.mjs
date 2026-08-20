@@ -52,6 +52,7 @@ const guards = [
   "verify-obligation-reconcile-settlement-net-pay-column.mjs",
   "verify-payment-application-write-role-gated.mjs",
   "verify-payments-create-role-gated.mjs",
+  "verify-payrun-close-reimbursements-and-active-lines.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
   "verify-qbo-outbound-expense-total-amount-cents-column.mjs",
   "verify-reconciliation-match-existence-checked.mjs",

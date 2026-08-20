@@ -4,7 +4,9 @@
 //
 // This EXTENDS the driver-settlement close with the pay-run-specific movements (owner GO 2026-07-13),
 // reusing the EXISTING accounting spine — NO new GL math, NO parallel poster:
-//   NET = gross − deductions − escrow_contribution − advance_recoveries − chargebacks
+//   NET = gross + reimbursements − deductions − escrow_contribution − advance_recoveries − chargebacks
+//   (ACCT-F5613: reimbursements were computed into the settlement HEADER's net_pay by
+//   aggregateSettlementTotals but never read here, so the actual disbursed cash silently excluded them.)
 // After that NET is computed, re-assert the owner-locked net-pay floor (default 5%, resolved
 // per-driver → company → env via resolveSettlementMinNet). Escrow/advance/chargeback can push
 // net below the floor even when deductions alone respected it at apply-time (SET-05). BLOCK —
@@ -13,6 +15,7 @@
 // and posts them as additional BALANCED legs through the EXISTING balanced-JE poster
 // (accounting/journal-entries.service.ts createJournalEntry — debits==credits or it aborts):
 //   Dr driver-pay expense (gross)
+//   Dr reimbursement_expense role account                 (reimbursements, if any)
 //   Cr per-bucket {type}_recovery role account            (deductions)
 //   Cr abandonment_chargeback_recovery role account       (chargebacks)
 //   Cr cash-advance clearing (advance_recovery role)      (advance_recoveries)
@@ -74,6 +77,7 @@ export type PayRunCloseErrorCode =
   | "PAYMENT_METHOD_INVALID"
   | "PAYMENT_METHOD_NO_GL_ACCOUNT"
   | "DRIVER_PAY_ACCOUNT_MISSING"
+  | "REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING"
   | "DEDUCTION_RECOVERY_ACCOUNT_MISSING"
   | "ADVANCE_CLEARING_ACCOUNT_MISSING"
   | "CHARGEBACK_RECOVERY_ACCOUNT_MISSING"
@@ -104,6 +108,7 @@ type SettlementRow = {
 
 export type PayRunNetBreakdown = {
   gross_cents: number;
+  reimbursements_cents: number;
   deductions_cents: number;
   chargebacks_cents: number;
   advance_recoveries_cents: number;
@@ -213,6 +218,36 @@ async function loadChargebacksCents(client: DbClient, operatingCompanyId: string
       WHERE sl.settlement_id = $2::uuid
         AND ds.operating_company_id = $1::uuid
         AND sl.line_type = 'abandonment_chargeback'
+        -- ACCT-F156: settlement_lines soft-deletes via is_active. aggregateSettlementTotals
+        -- (settlements-load-bookended.service.ts) already filters is_active=true on this same table;
+        -- this query was the residual instance that ACCT-F156's fix missed -- a voided/reversed
+        -- chargeback line still reduced the driver's actual disbursed pay without this filter.
+        AND sl.is_active = true
+    `,
+    [operatingCompanyId, settlementId]
+  );
+  return dollarsToCents(res.rows[0]?.total ?? 0);
+}
+
+/**
+ * ACCT-F5613 — SUM of active reimbursement settlement lines (cents, positive magnitude).
+ * aggregateSettlementTotals (settlements-load-bookended.service.ts) already adds reimbursements INTO
+ * driver_settlements.net_pay (`net = gross - deductions + reimbursements`), and
+ * settlement-contract-terms.service.ts's own header comment says "the EXISTING poster ... lifts net
+ * pay" -- but THIS function (the one that computes the cash actually disbursed and the balanced JE)
+ * never read settlement_lines('reimbursement') at all. A driver's settlement header/PDF showed a net
+ * that included reimbursements while the check that went out silently excluded them.
+ */
+async function loadReimbursementsCents(client: DbClient, operatingCompanyId: string, settlementId: string): Promise<number> {
+  const res = await client.query<{ total: string | null }>(
+    `
+      SELECT COALESCE(SUM(ABS(sl.amount)), 0)::text AS total
+      FROM driver_finance.settlement_lines sl
+      JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+      WHERE sl.settlement_id = $2::uuid
+        AND ds.operating_company_id = $1::uuid
+        AND sl.line_type = 'reimbursement'
+        AND sl.is_active = true
     `,
     [operatingCompanyId, settlementId]
   );
@@ -330,6 +365,7 @@ export async function closeSettlementPayRun(
 
     // ── Compute each net term from a single authoritative source (no double counting). ────────────────
     const grossCents = dollarsToCents(settlement.gross_pay);
+    const reimbursementsCents = await loadReimbursementsCents(client, opco, settlementId);
     const deductionsByRole = await loadOtherDeductionsByRole(client, opco, settlementId);
     const deductionsCents = Array.from(deductionsByRole.values()).reduce((s, v) => s + v, 0);
     const chargebacksCents = await loadChargebacksCents(client, opco, settlementId);
@@ -348,10 +384,16 @@ export async function closeSettlementPayRun(
     });
 
     const netCents =
-      grossCents - deductionsCents - escrowContributionCents - advanceRecoveriesCents - chargebacksCents;
+      grossCents +
+      reimbursementsCents -
+      deductionsCents -
+      escrowContributionCents -
+      advanceRecoveriesCents -
+      chargebacksCents;
 
     const breakdown: PayRunNetBreakdown = {
       gross_cents: grossCents,
+      reimbursements_cents: reimbursementsCents,
       deductions_cents: deductionsCents,
       chargebacks_cents: chargebacksCents,
       advance_recoveries_cents: advanceRecoveriesCents,
@@ -443,6 +485,20 @@ export async function closeSettlementPayRun(
     const legs: PayRunJeLegPreview[] = [
       { account_id: driverPayAccount, debit_or_credit: "debit", amount_cents: grossCents, description: `${label} — driver pay (gross)` },
     ];
+
+    if (reimbursementsCents > 0) {
+      // Dr reimbursement_expense — mirrors settlement-posting.service.ts's own reimbursement leg and
+      // lifts net pay by the same amount, matching the header net (gross - deductions + reimbursements)
+      // this JE must reconcile to.
+      const reimbAcct = await resolvePayRunRoleAccount(client, opco, "reimbursement_expense");
+      if (!reimbAcct) {
+        throw new SettlementPayRunError(
+          "REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING",
+          "No active 'reimbursement_expense' CoA role designation for settlement reimbursements"
+        );
+      }
+      legs.push({ account_id: reimbAcct, debit_or_credit: "debit", amount_cents: reimbursementsCents, description: `${label} — driver reimbursement` });
+    }
 
     for (const [roleKey, cents] of deductionsByRole) {
       const acct = await resolvePayRunRoleAccount(client, opco, roleKey);
