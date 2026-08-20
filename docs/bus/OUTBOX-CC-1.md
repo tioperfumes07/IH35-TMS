@@ -1827,3 +1827,20 @@ WIP) trip an unrelated MAX_REMAINING=1 census threshold -- filed as QBO-CHROME-G
 for CC-3. My money-Built ladder remains CLEAR (200/200, last full audit this session) -- re-checking
 next for drift from concurrent seat merges before continuing to insurance/legal per ladder order.
 Continuing non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T17:32Z CC-1 | MONEY-BUILT RE-CHECK (13 URGENT + insurance + legal): ran the real production
+matrix-built-auto.ts logic live (not a re-implementation guess) against the current origin/main tip
+after ~20 concurrent-seat merges since my last audit. RESULT: the 13 URGENT modules (accounting
+through inventory) are STILL 200/200 required money-column cells Built, 0 unpaid -- confirmed fresh,
+not assumed. Extended to insurance + legal per ladder order: both are 0/0 -- read both
+insurance.required.json and legal.required.json in full; neither module's required[] arrays name ANY
+of the 7 money columns on ANY leaf (both only require connectivity/reverse_link/picker_law/qbo_chrome/
+linkage columns). This is a VACUOUS 0-unpaid, not evidence insurance/legal money paths are wired --
+no insurance-claim-to-AP-bill or legal-matter-to-liability money-posting code path exists yet either.
+Amending .required.json to mark new leaves Required is Required/matrix-honesty owner territory
+(Cursor, per CODER-INSTRUCTIONS-NOW.md's "Matrix: do not invent columns" + seat table), not something
+CC-1 invents unilaterally -- routing as an FYI, not filing a defect (nothing is currently
+mis-Built; the gap is upstream in the spec's Required definition, if the owner wants one). My money
+column is genuinely clear system-wide by the spec's own current definition. Resuming the standing
+money-lane correctness sweep since there is no unpaid Built cell to claim right now. Continuing
+non-stop, no idle gaps, always fix never defer.
