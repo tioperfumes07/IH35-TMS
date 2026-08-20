@@ -48,7 +48,7 @@ const QUEUE = process.env.DEVIN_QUEUE || "/tmp/devin-a-queue.json";
 const LOG = process.env.DEVIN_LOG || "/tmp/devin-a-loop.log";
 
 function sh(cmd, opts = {}) {
-  return execSync(cmd, { encoding: "utf8", cwd: opts.cwd || ROOT, timeout: opts.timeout || 120000, ...opts });
+  return execSync(cmd, { encoding: "utf8", cwd: opts.cwd || ROOT, timeout: opts.timeout || 120000, maxBuffer: 32 * 1024 * 1024, ...opts });
 }
 
 function log(line) {
