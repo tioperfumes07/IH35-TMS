@@ -61,6 +61,10 @@ export type ApAgingBillRow = {
   paid_cents: number;
   open_cents: number;
   days_overdue: number;
+  // VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK — the bill's posted JE (nullable: an open/unpaid bill may
+  // not be posted yet). Memo carries the human label (same pattern as ACCT-F5397's bills-list fix).
+  journal_entry_id: string | null;
+  journal_entry_memo: string | null;
 };
 
 function withCompany(path: string, operatingCompanyId: string): string {

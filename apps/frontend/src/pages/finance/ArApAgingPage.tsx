@@ -161,6 +161,23 @@ const AP_DRILL_COLUMNS: ParityColumn<ApAgingBillRow>[] = [
     cellClass: "whitespace-nowrap",
     render: (b) => <EntityLink kind="bill" id={b.bill_id} label={entityLabel(b.bill_number, b.bill_id, "Bill")} />,
   },
+  {
+    // VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK — drill to the bill's posted JE (nullable: an
+    // open/unpaid bill may not be posted yet). Same response field the vendor-profile section renders.
+    key: "journal_entry_id",
+    label: "GL JE",
+    cellClass: "whitespace-nowrap",
+    render: (b) =>
+      b.journal_entry_id ? (
+        <EntityLink
+          kind="journal_entry"
+          id={b.journal_entry_id}
+          label={entityLabel(b.journal_entry_memo, b.journal_entry_id, "Journal entry")}
+        />
+      ) : (
+        "—"
+      ),
+  },
   { key: "status", label: "Status", sortable: true, cellClass: "capitalize" },
   { key: "bill_date", label: "Bill date", sortable: true, cellClass: "whitespace-nowrap", render: (b) => fmtDate(b.bill_date) },
   { key: "due_date", label: "Due", sortable: true, cellClass: "whitespace-nowrap", render: (b) => fmtDate(b.due_date) },
