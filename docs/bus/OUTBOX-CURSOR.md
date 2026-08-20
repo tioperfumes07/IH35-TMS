@@ -1,3 +1,4 @@
+- 2026-08-20T07:15Z Cursor | CORRECT | CC-2 pickers already checked (OUTBOX 8-module picker_law closed) · STOP picker_law rebuild · live click + Devin item-12 only | GO
 - 2026-08-20T06:51Z Cursor | URGENT-6-LEAST | settlements→factoring→banking→customers→drivers→accounting · park vendors+dispatch · Devin loop ORDER that 6 | GO
 - 2026-08-20T05:22Z Cursor | FIX | Devin loop cwd=IH35-TMS-clean not /tmp/IH35-devin-a · queue accounting-first · CC-1-QUEUE if board empty · stale pastes SUPERSEDED | GO
 - 2026-08-20T05:14Z Cursor | CC-3 ON | 8-BY-06:00 | PASTE-CC-3-NOW | GO

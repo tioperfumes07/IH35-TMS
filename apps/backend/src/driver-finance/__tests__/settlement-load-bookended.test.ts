@@ -28,4 +28,25 @@ describe("load-bookended settlements", () => {
     expect(totals.reimbursements_total).toBe(5);
     expect(totals.net_pay).toBe(95);
   });
+
+  it("ACCT-F5619 — folds dispute_adjustment into the same bucket as reimbursement (no longer falls through ELSE 0)", async () => {
+    let capturedSql = "";
+    const client = {
+      query: vi.fn().mockImplementation(async (sql: string) => {
+        if (sql.includes("COALESCE(SUM(CASE WHEN line_type")) {
+          capturedSql = sql;
+          return { rows: [{ earnings: "100.00", deductions: "10.00", reimbursements: "5.00" }] };
+        }
+        if (sql.includes("UPDATE driver_finance.driver_settlements") || sql.includes("WITH covered AS")) {
+          return { rows: [] };
+        }
+        throw new Error(`unexpected sql in test: ${sql}`);
+      }),
+    };
+
+    await aggregateSettlementTotals(client as never, "00000000-0000-4000-8000-0000000000bb");
+    expect(capturedSql).toMatch(
+      /CASE WHEN line_type IN \('reimbursement', 'dispute_adjustment'\) THEN amount ELSE 0 END/
+    );
+  });
 });

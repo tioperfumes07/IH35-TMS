@@ -247,7 +247,16 @@ export async function aggregateSettlementTotals(
       SELECT
         COALESCE(SUM(CASE WHEN line_type IN ('earnings', 'extra_pay', 'team_split_primary', 'team_split_secondary') THEN amount ELSE 0 END), 0) AS earnings,
         COALESCE(SUM(CASE WHEN line_type IN ('deduction', 'abandonment_chargeback') THEN amount ELSE 0 END), 0) AS deductions,
-        COALESCE(SUM(CASE WHEN line_type = 'reimbursement' THEN amount ELSE 0 END), 0) AS reimbursements
+        -- ACCT-F5619: dispute_adjustment folded into the same bucket as reimbursement (both are
+        -- positive-direction corrections owed back to the driver, unrelated to base pay) -- the
+        -- CHECK constraint has permitted this line_type since 202607380000, but this aggregation
+        -- previously fell through its own ELSE 0, so an approved dispute never reached the
+        -- settlement header/PDF/driver statement's net_pay at all. Mirrors the 'deduction' bucket's
+        -- own precedent of grouping compatible line_types under one column. REPORTING ONLY -- this
+        -- does NOT claim the amount was disbursed; see the OPEN board finding
+        -- SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH for the still-unresolved cash
+        -- question, deliberately left untouched here pending an owner accounting-treatment decision.
+        COALESCE(SUM(CASE WHEN line_type IN ('reimbursement', 'dispute_adjustment') THEN amount ELSE 0 END), 0) AS reimbursements
       FROM driver_finance.settlement_lines
       WHERE settlement_id = $1
         -- ACCT-F156: settlement_lines soft-deletes via is_active, so an inactive line stays here with

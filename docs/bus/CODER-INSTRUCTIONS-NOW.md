@@ -18,7 +18,7 @@ USMCA only. No TRK. No TRANSP. No QBO. Never idle.
 |------|-----|
 | **Cursor** | Lead · scoreboard API · customers Built leftover |
 | **CC-1** | TMS money: **settlements → factoring → banking** then accounting. `CC-1-QUEUE-UNTIL-06.md` |
-| **CC-2** | picker_law on the 6. No poll |
+| **CC-2** | **LIVE VERIFY + click only.** Pickers already checked — do not rebuild `picker_law`. File a FINDING only if a live click FAILs. |
 | **CC-3** | **drivers Built** (least FE). Not dispatch. |
 | **Codex** | reverse_link on the 6 in that order |
 | **Devin-A** | Clicked the 6 in that order. chrome=9227 |
