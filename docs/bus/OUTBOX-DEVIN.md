@@ -1244,3 +1244,4 @@ Ingles
 Espanol (preview)
 tioperfumes07@gmail.com
 Select an operating company. | healthz=92f2779 | mutation=none | NEXT=dispatch.queues.border
+Devin-A | LIVE STARVED | module=dispatch | leaf=queues.border | URL=https://app.ih35dispatch.com/dispatch/border-crossing | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/border-crossing ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.queues.border_history
