@@ -795,6 +795,36 @@ async function reverseSchedule(
   return withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
+    // ACCT-F5641 — FLT-04: postDepreciation books the depreciation JE on the TITLE-HOLDER
+    // (owner_operating_company_id), not the asset's own home/operating company, whenever the two
+    // differ (a leased/cross-entity fixed asset). This reversal used to look up and void the JE under
+    // input.operatingCompanyId unconditionally — for a cross-entity asset that query matches zero
+    // rows (the JE lives under a DIFFERENT operating_company_id), so `!je` was silently treated
+    // identically to "already reversed" and the loop skipped it. With every period cross-entity, this
+    // reversal returns { result: "nothing_to_reverse" } — a false all-clear — while the real, posted
+    // depreciation JE stands forever with no code path in the repo able to reverse it. Resolve the
+    // SAME booksCompanyId postDepreciation resolves (owner_operating_company_id for 'depreciation';
+    // prepaid assets have no owner-company concept, so booksCompanyId = input.operatingCompanyId for
+    // 'prepaid', matching prepaid's own single-company JE placement).
+    let booksCompanyId = input.operatingCompanyId;
+    if (kind === "depreciation") {
+      const assetRes = await client.query<{ owner_operating_company_id: string | null }>(
+        `SELECT owner_operating_company_id::text
+           FROM accounting.fixed_assets
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid AND is_active = true
+          LIMIT 1`,
+        [input.operatingCompanyId, input.assetId]
+      );
+      const owner = assetRes.rows[0]?.owner_operating_company_id;
+      if (!owner) {
+        throw new AmortizationPostingError(
+          "OWNER_BOOKS_MISSING",
+          `Fixed asset ${input.assetId} is missing owner_operating_company_id; depreciation reversal cannot resolve the title-holder's books`,
+        );
+      }
+      booksCompanyId = owner;
+    }
+
     const conds = ["operating_company_id = $1::uuid", "asset_id = $2::uuid", "is_active = true", "posted = true", "posted_journal_entry_id IS NOT NULL"];
     const params: unknown[] = [input.operatingCompanyId, input.assetId];
     if (input.periodNumber != null) {
@@ -813,17 +843,24 @@ async function reverseSchedule(
     const reversed: AmortizationReversalResult["reversed_periods"] = [];
     for (const row of rows.rows) {
       const jeId = row.posted_journal_entry_id;
+      // Switch RLS GUC to the title-holder's books for the JE lookup/reversal/void (mirrors
+      // postDepreciation's own forward-switch), then restore the asset-home GUC before touching the
+      // asset-home-scoped schedule-row table below.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [booksCompanyId]);
       const header = await client.query<{ entry_date: string; status: string }>(
         `SELECT entry_date::text, status FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
-        [jeId, input.operatingCompanyId]
+        [jeId, booksCompanyId]
       );
       const je = header.rows[0];
-      if (!je || je.status === "voided") continue; // already reversed — skip (no double-reverse)
+      if (!je || je.status === "voided") {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
+        continue; // already reversed — skip (no double-reverse)
+      }
 
       const reversal = await postVoidReversal(
         client as never,
         {
-          operatingCompanyId: input.operatingCompanyId,
+          operatingCompanyId: booksCompanyId,
           entityType: "journal_entry",
           entityId: jeId,
           originalDate: je.entry_date,
@@ -836,8 +873,10 @@ async function reverseSchedule(
         `UPDATE accounting.journal_entries
             SET status = 'voided', voided_at = now(), voided_by_user_id = $3::uuid, void_reason = $4, qbo_sync_pending = true, updated_at = now()
           WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [jeId, input.operatingCompanyId, actor.userId, input.reason]
+        [jeId, booksCompanyId, actor.userId, input.reason]
       );
+
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
       await client.query(
         `UPDATE ${cfg.table}
