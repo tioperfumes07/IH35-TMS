@@ -8003,3 +8003,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=maintenance:maintenance.modal.triage:connectivity
+Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.triage:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=1505d91 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.work_order_create:connectivity
+Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.triage:unit | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=1505d91 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.work_order_create:connectivity
