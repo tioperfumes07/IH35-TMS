@@ -306,7 +306,8 @@ async function applyInvoiceAndReserveUpdates(
       `,
       [companyId, line.invoice_number]
     );
-    if (invoiceRes.rows[0]) invoices_updated += 1;
+    const wasNewlyAdvanced = Boolean(invoiceRes.rows[0]);
+    if (wasNewlyAdvanced) invoices_updated += 1;
 
     // ACCT-F5614 — honest flag-OFF = ZERO financial rows written (the same "TIER-1 FINANCIAL,
     // BUILD-AND-HOLD" law this codebase enforces everywhere else, e.g.
@@ -315,12 +316,34 @@ async function applyInvoiceAndReserveUpdates(
     // factoring.v_factor_reserve_balance (served live via GET /factoring/reserve-balance) could show
     // a real, non-zero reserve figure with ZERO corresponding GL entry the moment an entity's flag
     // was OFF -- indistinguishable from a genuine posted reserve to anyone reading that screen.
-    if (line.reserve_amount_cents > 0 && postingEnabled) {
-      await postReserveMovement(null, companyId, "credit", line.reserve_amount_cents, `faro_csv:${line.invoice_number}`, {
-        client,
-        factorId,
-      });
-      reserve_movements += 1;
+    //
+    // ACCT-F5650 — `wasNewlyAdvanced` gate + the reserve_movement existence check below. This write
+    // previously ran unconditionally regardless of whether the invoice UPDATE above actually matched
+    // a row, and postReserveMovement() is a pure append-only INSERT with NO idempotency check of its
+    // own (no unique constraint on factoring.reserve_movement either). Re-uploading the same Faro CSV
+    // file -- the natural retry after ANY downstream failure in this same import (the funding/
+    // chargeback posting loop below runs on separate, later connections with no enclosing
+    // transaction), or simply an honest duplicate upload -- silently re-credited the reserve for
+    // every already-advanced line a second time: a real double-credit to TRK's factoring reserve
+    // (secured-borrowing collateral) invisible on the GET /factoring/reserve-balance screen. Gating
+    // on `wasNewlyAdvanced` reuses this function's own `WHERE ... IN ('not_factored', 'submitted')`
+    // transition as the durable "already handled" signal; the existence check on `reason` is
+    // defense-in-depth using the same per-invoice key this file already builds, matching the
+    // "memo-keyed idempotent" convention this file's own comment (above, on the funding posters)
+    // establishes for JE posting.
+    if (wasNewlyAdvanced && line.reserve_amount_cents > 0 && postingEnabled) {
+      const reasonKey = `faro_csv:${line.invoice_number}`;
+      const dup = await client.query<{ exists: boolean }>(
+        `SELECT 1 FROM factoring.reserve_movement WHERE operating_company_id = $1::uuid AND reason = $2::text LIMIT 1`,
+        [companyId, reasonKey]
+      );
+      if (!dup.rows[0]) {
+        await postReserveMovement(null, companyId, "credit", line.reserve_amount_cents, reasonKey, {
+          client,
+          factorId,
+        });
+        reserve_movements += 1;
+      }
     }
   }
 

@@ -7,6 +7,11 @@
  * movement on EVERY CSV line with reserve_amount_cents > 0 regardless of the flag, so the reserve
  * balance screen (GET /factoring/reserve-balance) could show a non-zero figure with zero GL backing
  * while the flag was OFF.
+ *
+ * ACCT-F5650 (2026-08-20) added a THIRD required condition (`wasNewlyAdvanced`, gating the write on
+ * whether THIS run actually advanced the invoice, closing a same-CSV-retry double-credit) — the
+ * marker below was widened to match, but `postingEnabled` remains a required conjunct either way, so
+ * this guard's flag-off guarantee is unchanged.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,7 +22,7 @@ const LABEL = "verify-faro-csv-reserve-movement-honest-flag-off";
 const SELFTEST = process.argv.includes("--selftest");
 const FILE = "apps/backend/src/factoring/faro-csv-import.ts";
 
-const GATED_CALL = "if (line.reserve_amount_cents > 0 && postingEnabled) {";
+const GATED_CALL = "if (wasNewlyAdvanced && line.reserve_amount_cents > 0 && postingEnabled) {";
 const PARAM_MARKER = "factorId: string | null,\n  postingEnabled: boolean";
 const CALLER_ORDER_MARKER = "const enabled = await isEnabled(client, FACTORING_GL_POSTING_FLAG, {\n        operating_company_id: input.operatingCompanyId,\n      });\n      const effects = await applyInvoiceAndReserveUpdates(";
 
