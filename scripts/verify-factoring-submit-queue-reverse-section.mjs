@@ -17,7 +17,7 @@
  *   4. FactoringTab.tsx (load-side) renders EntityLink kind="factoring_submit_queue_load".
  *   5. EntityLink.tsx defines "factoring_submit_queue_load" -> /factoring/submit?load_id=.
  *   6. CustomerFactoringSubmitQueueReverseSection.tsx (new) queries the customer-scoped endpoint;
- *      CustomerDetail.tsx mounts it.
+ *      CustomerDetail.tsx mounts it, and every returned invoice drills to its canonical invoice detail.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -90,8 +90,8 @@ export function assertFactoringSubmitQueueReverse(sources) {
   if (/from "react-router-dom"/.test(section)) {
     problems.push(`${SECTION}: must not import react-router Link`);
   }
-  if (!/entityLabel\(item\.display_id, item\.invoice_id, "Invoice"\)/.test(section)) {
-    problems.push(`${SECTION}: invoice label must reject raw invoice-id fallback`);
+  if (!/items\.slice\(0, 5\)\.map\(\(item\)[\s\S]*?<EntityLinkOrTombstone[\s\S]*?kind="invoice"[\s\S]*?id=\{item\.invoice_id\}[\s\S]*?name=\{item\.display_id\}[\s\S]*?noun="Invoice"/.test(section)) {
+    problems.push(`${SECTION}: each queue row must drill to its canonical invoice with an honest tombstone fallback`);
   }
 
   if (!/setSearchParams/.test(queuePage)) {
@@ -134,7 +134,9 @@ function selftest() {
     `,
     [SECTION]: `listSubmissionQueue(operatingCompanyId, { customer_id: customerId }).then((r) => r.items)
       factoring_submit_queue_customer
-      entityLabel(item.display_id, item.invoice_id, "Invoice")`,
+      items.slice(0, 5).map((item) => (
+        <EntityLinkOrTombstone kind="invoice" id={item.invoice_id} name={item.display_id} noun="Invoice" />
+      ))`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringSubmitQueueReverseSection } from "../components/customers/CustomerFactoringSubmitQueueReverseSection";
       <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
@@ -159,7 +161,9 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace("customer_id: customerId", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringSubmitQueueReverseSection }", "// removed") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("customerId={id}", "") },
-    { ...good, [SECTION]: good[SECTION].replace("entityLabel", "rawLabel") },
+    { ...good, [SECTION]: good[SECTION].replace('kind="invoice"', 'kind="factoring_submit_queue_customer"') },
+    { ...good, [SECTION]: good[SECTION].replace("id={item.invoice_id}", "id={customerId}") },
+    { ...good, [SECTION]: good[SECTION].replace("name={item.display_id}", "name={item.invoice_id}") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertFactoringSubmitQueueReverse(mutated).length === 0) {
