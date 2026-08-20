@@ -1632,3 +1632,27 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.identity
+Devin-A | LIVE PASS | module=fleet | leaf=unit.profile.identity | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+FLEET
+
+Trucks, trailers, a | healthz=a3b4b1e | mutation=none | NEXT=fleet.unit.profile.telemetry
+Devin-A | LIVE PASS | module=fleet | leaf=roster.filter.type | URL=https://app.ih35dispatch.com/fleet?type= | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet?type= ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+FLEET
+
+Trucks, trailers, a | healthz=unknown | mutation=none | NEXT=fleet.roster.filter.status_active
