@@ -4,26 +4,27 @@ USMCA only. Fuel never. eld never. No QBO write-back. **No owner gate.** ALL QUE
 
 **Do not deviate.** This file + your `INBOX-<SEAT>.md` TOP are the only NOW. Chat summaries do not override.
 
-## GOAL (owner 2026-08-20) — every scoreboard cell 4/4
+## GOAL — 4 boxes on the **existing** matrix columns (do not invent a second set)
 
-Program → Module matrix. **Each Required cell has four boxes.** Complete means **all four ✓** on **every owed column**, every module except **fuel** and **eld**.
+Program → Module matrix (`/program/matrix`). **Each Required cell has four boxes** (Required · Audited · Built · Live). That is the checkmark bar.
 
-| Box | Name | Moves when |
-|-----|------|------------|
-| **1** | Required | Frozen `*.required.json` — do **not** add leaves |
-| **2** | Audited | Mapping/GUARD/board exists (yellow until Built) |
-| **3** | Built | Leaf-specific `@matrix-built` guard (no `leafRe:.*`) |
-| **4** | Live | Devin Clicked `leaf=module:leafId:col \| USMCA` + healthz SHA |
+**Do not add columns.** Law: Honest Built — *Do not add scoreboard columns.* Canonical ids are **only** `docs/specs/scoreboard/columns.shared.json` (**25** ids). Modules subset them in `*.required.json`.
 
-**Columns (all of them, when Required on that leaf):**  
-linkage = `driver` `customer` `vendor` `unit` `trailer` `load`  
-money = `ap_bill` `expense` `gl_je` `liability` `invoice` `payment` `settlement` `bank` `factor` `escrow` (only if Required)  
-chrome = `picker_law` `qbo_chrome`  
-wiring = `connectivity` `reverse_link`
+| What | What it is | What it is NOT |
+|------|------------|----------------|
+| **25 matrix columns** | Shared vocabulary: **12 linkage** (`driver` `customer` `vendor` `unit` `trailer` `load` `claim` `work_order` `accident` `policy` `settlement` `legal_matter`) + **7 money** (`ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability`) + **2 chrome** (`picker_law` `qbo_chrome`) + **2 wiring** (`connectivity` `reverse_link`) + **2 process** (`scenario.maintenance` `scenario.insurance`) | Not a new queue |
+| **12 linkage columns** | Owner 2026-08-12: §B9 hub types **as columns** (claim/WO/accident/policy/settlement/legal_matter **plus** the 6 hubs). This **is** the consolidation of the old class wall | Do **not** also sweep the archived 31 CLS columns as if they were extra matrix cols |
+| **~31 CLS columns** | Archived class board `/program/legacy-scoreboard` — `CLASS_SCOREBOARD.summary.total = 31` from `wave-queue.json` (CLS-BANK-MATCH-DENSITY, CLS-REVERSE-LINKAGE-MISSING, CLS-DISP-WIRE-01…10, …) | **Not** the live matrix. Do not rebuild that board |
+| **Fully-Wired 1–12** | Depth bar (create → canonical → money → F+R → surface → **Live Chrome last**) | **Not** 12 extra scoreboard columns |
 
-A cell that is ✓✓✓✕ is **not** done. Box 4 is Devin. Theater Built is forbidden. `Live=BLOCKED` on a module until that module’s Required cells are 4/4.
+**Forbidden extra ids (not in `columns.shared.json`):** `payment` `factor` `escrow` as their own columns. Escrow/factoring liability = **`liability` (LIAB/ESCR)**. Customer payment / match = **`invoice` / `bank` / `ap_bill`**. `settlement` is a **linkage** column, not a second money column.
 
-Law: `docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md` · Fully-Wired 1–12 · Honest Built.
+`liability` already means LIAB/ESCR. Wiring `reverse_link` already covers CLS-REVERSE-LINKAGE-MISSING / CLS-LINKAGE-ONEWAY. `connectivity` covers nav→API. `picker_law` / `qbo_chrome` cover calendar/orphan-surface chrome classes. **Same work — do not run it twice.**
+
+A cell that is ✓✓✓✕ is **not** done. Box 4 = Devin `leaf=module:leafId:col`. No `leafRe:.*` Built. Never fuel/eld.
+
+Law: `columns.shared.json` · `VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md` · `MODULE-MATRIX-SCOREBOARD-LOCKED.md` · Fully-Wired 1–12 · Honest Built.
+
 
 ## Continuous auto mode
 

@@ -2,7 +2,7 @@
 
 **HOURLY:** pull + CODER 4-box GOAL + this file. No 9227.
 
-**GOAL:** Box **3 Built ✓** on `reverse_link` and `connectivity` for every Required leaf in wave order.
+**GOAL:** Box **3 Built ✓** on `reverse_link` and `connectivity` (the wiring pair that replaced CLS-REVERSE-LINKAGE-MISSING / CLS-LINKAGE-ONEWAY). Do not also drain the 31 CLS board.
 
 **PING:** picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`.
 

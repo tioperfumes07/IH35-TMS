@@ -2,7 +2,7 @@
 
 Every session and **every hour:** `CODER-INSTRUCTIONS-NOW.md` (4-box GOAL) → `INBOX-<SEAT>.md` → `FAST-MERGE-4MIN-LAW.md` → `HOURLY-REREAD.md`
 
-**Done = Required ✓ Audited ✓ Built ✓ Live ✓ on every owed column.** USMCA. No fuel/eld.
+**Done = 4/4 on `columns.shared.json` Required cells only** (25 columns; 12 linkage already consolidated the ~31 CLS board). USMCA. No fuel/eld.
 
 ACK `STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD`
 

@@ -2,7 +2,7 @@
 
 **HOURLY:** pull + CODER 4-box GOAL + `OUTBOX-CC-1.md` first 20.
 
-**GOAL:** Box **3 Built ✓** on every **money** Required column (`ap_bill` `expense` `gl_je` `liability` `invoice` `payment` `settlement` `bank` `factor` `escrow` as owed). Reuse poster. Keep hop.bank. FAST-MERGE.
+**GOAL:** Box **3 Built ✓** on shared **money** columns only: `ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability`. Reuse poster. Keep hop.bank. FAST-MERGE. (`settlement` is linkage — Codex/CC-3 as Required; not a duplicate money col.)
 
 **PING CC-2:** picker FAIL → `OUTBOX-CC-2.md`.
 

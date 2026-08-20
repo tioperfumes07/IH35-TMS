@@ -2,7 +2,7 @@
 
 `git pull --ff-only origin main`
 
-**GOAL:** every Required matrix cell = **Required ✓ · Audited ✓ · Built ✓ · Live ✓** (four checkmarks) on **every owed column**. USMCA. Never fuel/eld.
+**GOAL:** 4/4 boxes on **`columns.shared.json` ids only** (25 columns). The **12 linkage** columns already consolidate the old ~**31 CLS** class-board columns (`/program/legacy-scoreboard`). Fully-Wired 1–12 is depth, **not** extra columns. Do **not** invent `payment`/`factor`/`escrow` columns (`liability` = LIAB/ESCR). USMCA. Never fuel/eld.
 
 Read `CODER-INSTRUCTIONS-NOW.md` TOP (the 4-box table) + your INBOX.
 
