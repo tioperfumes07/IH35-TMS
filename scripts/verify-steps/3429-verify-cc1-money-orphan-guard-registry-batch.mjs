@@ -60,6 +60,7 @@ const guards = [
   "verify-fleet-unit-financial-pl-load-reverse.mjs",
   "verify-fleet-gl-je-required-honest.mjs",
   "verify-fuel-card-overage-profile-reverse.mjs",
+  "verify-fuel-card-overage-row-locked.mjs",
   "verify-fuel-expense-identity-honesty.mjs",
   "verify-fuel-transaction-import-role-gated.mjs",
   "verify-insurance-late-fee-cron-wired.mjs",

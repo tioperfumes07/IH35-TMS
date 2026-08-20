@@ -29,10 +29,6 @@ export type PostFuelOverageReceivableResult =
   | { status: "posted"; journal_entry_id: string }
   | { status: "already_posted"; journal_entry_id: string };
 
-function buildIdempotencyKey(operatingCompanyId: string, fuelTransactionId: string): string {
-  return ["ih35:fuel-overage-receivable:v1", operatingCompanyId.toLowerCase(), fuelTransactionId].join(":");
-}
-
 export async function postFuelOverageReceivable(
   client: PoolClient,
   input: PostFuelOverageReceivableInput
@@ -42,6 +38,14 @@ export async function postFuelOverageReceivable(
     throw new Error("fuel_overage_receivable_amount_must_be_positive");
   }
 
+  // ACCT-F5646 — FOR UPDATE, matching the row lock approveAndPostFuelCardOverage now takes on this
+  // same event before calling this function (belt-and-suspenders for any direct/future caller that
+  // doesn't already hold that lock). The `batchHit` check that used to sit here queried
+  // accounting.posting_batches for a matching idempotency_key, but createJournalEntryOnClient (the
+  // only JE writer this function calls, below) never inserts into posting_batches and the
+  // idempotencyKey this function built was never passed to it either — a structurally vacuous check
+  // that could never fire, the same dead-guard shape as the already-fixed LV-TXN-009 finding. Removed
+  // rather than left as misleading dead code; the row lock is the real protection now.
   const existing = await client.query<{ journal_entry_id: string }>(
     `
       SELECT journal_entry_id::text
@@ -50,27 +54,12 @@ export async function postFuelOverageReceivable(
          AND operating_company_id = $2::uuid
          AND journal_entry_id IS NOT NULL
        LIMIT 1
+       FOR UPDATE
     `,
     [input.overage_event_id, input.operating_company_id]
   );
   if (existing.rows[0]?.journal_entry_id) {
     return { status: "already_posted", journal_entry_id: existing.rows[0].journal_entry_id };
-  }
-
-  const idempotencyKey = buildIdempotencyKey(input.operating_company_id, input.fuel_transaction_id);
-  const batchHit = await client.query<{ journal_entry_uuid: string }>(
-    `
-      SELECT jep.journal_entry_uuid::text
-        FROM accounting.posting_batches pb
-        JOIN accounting.journal_entry_postings jep ON jep.posting_batch_id = pb.id
-       WHERE pb.operating_company_id = $1::uuid
-         AND pb.idempotency_key = $2
-       LIMIT 1
-    `,
-    [input.operating_company_id, idempotencyKey]
-  );
-  if (batchHit.rows[0]?.journal_entry_uuid) {
-    return { status: "already_posted", journal_entry_id: batchHit.rows[0].journal_entry_uuid };
   }
 
   const receivableAccountId = await resolveRoleAccount(

@@ -334,6 +334,18 @@ export async function approveAndPostFuelCardOverage(
         input.operating_company_id,
       ]);
 
+      // ACCT-F5646 — FOR UPDATE, locking this overage event for the ENTIRE approve+post flow below
+      // (postFuelOverageReceivable runs on this same client/transaction, not a second connection).
+      // Neither the pre-existing journal_entry_id IS NULL checks here nor postFuelOverageReceivable's
+      // own re-check were real duplicate-post protection under READ COMMITTED: two concurrent approve
+      // calls for the same overage_event_id (double-click, or a client retry after a slow/timed-out
+      // response) could both read journal_entry_id IS NULL before either committed, both post a fully
+      // balanced JE (Dr fuel_overage_receivable / Cr fuel expense), then both UPDATE journal_entry_id
+      // — last write wins, permanently orphaning the other JE with no traceable link from the event
+      // row and no unique constraint on journal_entry_id to catch it. The row lock makes the second
+      // concurrent call block until the first commits, at which point its own re-read of
+      // journal_entry_id (below and in postFuelOverageReceivable) correctly sees the already-posted
+      // state and short-circuits.
       const event = await client.query<{
         id: string;
         fuel_transaction_id: string;
@@ -356,6 +368,7 @@ export async function approveAndPostFuelCardOverage(
              AND operating_company_id = $2::uuid
              AND voided_at IS NULL
            LIMIT 1
+           FOR UPDATE
         `,
         [input.overage_event_id, input.operating_company_id]
       );
