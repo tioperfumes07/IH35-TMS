@@ -4215,3 +4215,24 @@ Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.ownership_types.list:connectiv
 Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome
