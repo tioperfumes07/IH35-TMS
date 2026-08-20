@@ -116,7 +116,8 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
             t.*,
             u.unit_number AS unit_display_id,
             d.first_name || ' ' || d.last_name AS driver_name,
-            w.display_id AS work_order_display_id
+            w.display_id AS work_order_display_id,
+            b.bill_number AS bill_number
           FROM maintenance.road_service_tickets t
           -- Entity-scope BOTH joins. mdata.units carries owner_company_id +
           -- currently_leased_to_company_id (NOT operating_company_id) — the documented §4 landmine.
@@ -129,6 +130,9 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
           LEFT JOIN maintenance.work_orders w
             ON w.id = t.wo_id
            AND w.operating_company_id = $1::uuid
+          LEFT JOIN accounting.bills b
+            ON b.id = t.bill_id
+           AND b.operating_company_id = $1::uuid
           WHERE ${filters.join(" AND ")}
           ORDER BY t.created_at DESC
           LIMIT $${values.length - 1}

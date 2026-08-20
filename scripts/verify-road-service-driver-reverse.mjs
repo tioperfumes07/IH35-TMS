@@ -31,6 +31,19 @@ function audit(s) {
   if (!/filters\?\.wo_id\) params\.set\("wo_id", filters\.wo_id\)/.test(s.hook)) failures.push("hook must forward wo_id");
   if (!/useRoadServiceTickets\(filter\)/.test(s.section)) failures.push("shared reverse section must query its canonical filter");
   if (!/kind=["']road_service_ticket["']/.test(s.section) || !/id=\{ticket\.id\}/.test(s.section)) failures.push("reverse row must drill to ticket list target");
+  for (const [kind, id, name] of [
+    ["unit", "unit_id", "unit_display_id"],
+    ["vendor", "vendor_id", "vendor_name"],
+    ["work_order", "wo_id", "work_order_display_id"],
+    ["bill", "bill_id", "bill_number"],
+  ]) {
+    const drill = new RegExp(`kind=["']${kind}["'][^>]+id=\\{ticket\\.${id}\\}[^>]+name=\\{ticket\\.${name}\\}`);
+    if (!drill.test(s.section)) failures.push(`reverse row must drill to related ${kind} with canonical id and label`);
+  }
+  if (!/b\.bill_number AS bill_number/.test(s.route) || !/b\.operating_company_id = \$1::uuid/.test(s.route)) {
+    failures.push("bill label join must be entity-scoped");
+  }
+  if (!/bill_number\?: string \| null/.test(s.hook)) failures.push("ticket response type must expose bill label");
   if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/ListErrorBanner/.test(s.section)) failures.push("reverse section must expose query errors");
   if (!/highlightedTicketId === row\.id/.test(s.list)) failures.push("ticket list must honor deep-link highlight");
   for (const kind of ["unit", "driver", "vendor"]) {
@@ -57,6 +70,13 @@ if (process.argv.includes("--selftest")) {
     ["work-order mount", { ...source, workOrderDetail: source.workOrderDetail.replace("<RoadServiceReverseSection", "<div") }],
     ["canonical unit drill", { ...source, list: source.list.replace(/kind="unit"/, 'kind="load"') }],
     ["writer unit membership", { ...source, route: source.route.replace(/AS unit_ok/, "AS asset_ok") }],
+    ["reverse unit", { ...source, section: source.section.replace('kind="unit"', 'kind="load"') }],
+    ["reverse vendor", { ...source, section: source.section.replace('kind="vendor"', 'kind="customer"') }],
+    ["reverse work order", { ...source, section: source.section.replace('kind="work_order"', 'kind="unit"') }],
+    ["reverse bill", { ...source, section: source.section.replace('kind="bill"', 'kind="invoice"') }],
+    ["bill label producer", { ...source, route: source.route.replace("b.bill_number AS bill_number", "NULL::text AS bill_number") }],
+    ["bill join scope", { ...source, route: source.route.replace("b.operating_company_id = $1::uuid", "TRUE") }],
+    ["bill response label", { ...source, hook: source.hook.replace("bill_number?: string | null", "bill_label_missing?: string | null") }],
   ];
   for (const [name, changed] of mutations) {
     if (audit(changed).length === 0) {
