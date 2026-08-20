@@ -193,6 +193,10 @@
     "202612840000": {
       "claimed_by": "cc-1",
       "purpose": "acct_f5677_factoring_audit_trigger_coverage"
+    },
+    "202612850000": {
+      "claimed_by": "cc-1",
+      "purpose": "acct_f5678_usmca_payment_method_gl_binding"
     }
   }
 }
