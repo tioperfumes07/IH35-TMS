@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -92,14 +92,8 @@ describe("CustomerProfitabilityPage", () => {
     const user = userEvent.setup();
     vi.spyOn(reportsApi, "getCustomerProfitability").mockResolvedValue(samplePayload);
     render(wrap(<CustomerProfitabilityPage />));
-    const name = await screen.findByText("Acme Freight");
-    // The customer name is now a real EntityLink (canonical drill-through, LAW OF THE LAND
-    // total-connectivity) that stops propagation on click so its own navigation doesn't
-    // double-fire the row handler — clicking it no longer reaches onRowClick. Click elsewhere
-    // in the same <tr> to exercise the still-real row-click -> billing-tab deep link.
-    const row = name.closest("tr");
-    expect(row).toBeTruthy();
-    await user.click(within(row!).getByText("12"));
+    await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
+    await user.click(screen.getByText("Acme Freight"));
     expect(mockNavigate).toHaveBeenCalledWith("/customers/c1?tab=billing");
   });
 
