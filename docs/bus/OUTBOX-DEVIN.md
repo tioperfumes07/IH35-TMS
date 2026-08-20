@@ -14486,3 +14486,23 @@ Idioma
 Ingles
 Espanol (preview)
 t | NEXT=leaf=accounting:accounting.parity.invoice_create:invoice
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.invoice_create:invoice | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/InvoiceCreateModal.tsx | healthz=c087960 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Home
+Workspace snapshot for  | NEXT=leaf=accounting:accounting.parity.invoice_type_modal_base:invoice
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.invoice_create:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/InvoiceCreateModal.tsx | healthz=c087960 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Home
+Workspace snapshot for  | NEXT=leaf=accounting:accounting.parity.invoice_type_modal_base:invoice
