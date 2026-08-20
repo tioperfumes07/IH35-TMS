@@ -1437,3 +1437,13 @@ Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.factoring | URL=http
 Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.customs | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Customs | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id?tab=Customs ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.cargo
 Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.cargo | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Cargo%20Sensors | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id?tab=Cargo%20Sensors ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.settlement
 Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.settlement | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Settlement | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id?tab=Settlement ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.geofence
+Devin-A | LIVE PASS | module=dispatch | leaf=load.drawer.geofence | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Geofence%20Timeline | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/loads/:id?tab=Geofence+Timeline&view=list ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Dispatch
+Loads, stops, assig | healthz=3bd02c9 | mutation=none | NEXT=dispatch.load.drawer.assignment_history
