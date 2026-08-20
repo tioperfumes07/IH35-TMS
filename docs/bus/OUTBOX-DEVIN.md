@@ -10480,3 +10480,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=cash-flow:create.manual_projection:picker_law
+Devin-A | LIVE PASS | leaf=cash-flow:create.manual_projection:picker_law | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections | healthz=80b3b12 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections marker 'Manual Daily Projections' | NEXT=leaf=cash-flow:home:connectivity
+Devin-A | LIVE PASS | leaf=cash-flow:create.manual_projection:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections | healthz=80b3b12 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections marker 'Manual Daily Projections' | NEXT=leaf=cash-flow:home:connectivity
+Devin-A | LIVE PASS | leaf=cash-flow:create.manual_projection:connectivity | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections | healthz=80b3b12 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections marker 'Manual Daily Projections' | NEXT=leaf=cash-flow:home:connectivity
