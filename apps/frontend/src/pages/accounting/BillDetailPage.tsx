@@ -329,7 +329,7 @@ export function BillDetailPage() {
         {bill.linked_work_order_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Work order</span>
-            <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={entityLabel(null, bill.linked_work_order_uuid, "Work order")} />
+            <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={entityLabel(bill.linked_work_order_display_id, bill.linked_work_order_uuid, "Work order")} />
           </DataPanelRow>
         ) : null}
         {/* AP_BILL column-wave: reverse of AdvanceDetailDrawer.tsx's linked_bill_id forward link —
@@ -337,13 +337,13 @@ export function BillDetailPage() {
         {bill.linked_cash_advance_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Cash advance</span>
-            <EntityLink kind="cash_advance" id={bill.linked_cash_advance_id} label={entityLabel(null, bill.linked_cash_advance_id, "Cash advance")} />
+            <EntityLink kind="cash_advance" id={bill.linked_cash_advance_id} label={entityLabel(bill.linked_cash_advance_display_id, bill.linked_cash_advance_id, "Cash advance")} />
           </DataPanelRow>
         ) : null}
         {bill.insurance_claim_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Insurance claim</span>
-            <EntityLink kind="claim" id={bill.insurance_claim_id} label={entityLabel(null, bill.insurance_claim_id, "Claim")} />
+            <EntityLink kind="claim" id={bill.insurance_claim_id} label={entityLabel(bill.insurance_claim_number, bill.insurance_claim_id, "Claim")} />
           </DataPanelRow>
         ) : null}
         {/*

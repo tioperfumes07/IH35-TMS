@@ -1360,12 +1360,14 @@ export async function listBillPayments(
 export async function getBillDetail(userId: string, operatingCompanyId: string, billId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const billRes = await client.query<BillRow & { vendor_name?: string | null; unit_id?: string | null; unit_display_id?: string | null; linked_work_order_uuid?: string | null }>(
+    const billRes = await client.query<BillRow & { vendor_name?: string | null; unit_id?: string | null; unit_display_id?: string | null; linked_work_order_uuid?: string | null; linked_work_order_display_id?: string | null; insurance_claim_number?: string | null }>(
       `
         SELECT
           b.*,
           v.vendor_name,
           u.unit_number AS unit_display_id,
+          wo.display_id AS linked_work_order_display_id,
+          claim.claim_number AS insurance_claim_number,
           (
             SELECT jep.journal_entry_uuid::text
             FROM accounting.journal_entry_postings jep
@@ -1404,6 +1406,12 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         LEFT JOIN mdata.units u
           ON u.id = b.unit_id
          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = b.operating_company_id
+        LEFT JOIN maintenance.work_orders wo
+          ON wo.id = b.linked_work_order_uuid
+         AND wo.operating_company_id = b.operating_company_id
+        LEFT JOIN insurance.claim claim
+          ON claim.id = b.insurance_claim_id
+         AND claim.tenant_id = b.operating_company_id
         WHERE b.id = $1
           AND b.operating_company_id = $2::uuid
         LIMIT 1
@@ -1454,15 +1462,16 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
     // driver_finance.driver_advances.linked_bill_id (forward: advance → bill, confirmed WIRED —
     // AdvanceDetailDrawer.tsx renders it). The reverse never existed: a bill funded by a cash advance
     // had no way to show which advance it was for.
-    const linkedCashAdvanceRes = await client.query<{ id: string }>(
+    const linkedCashAdvanceRes = await client.query<{ id: string; display_id: string }>(
       `
-        SELECT id::text FROM driver_finance.driver_advances
+        SELECT id::text, display_id FROM driver_finance.driver_advances
         WHERE linked_bill_id = $1::uuid AND operating_company_id = $2::uuid
         ORDER BY created_at DESC LIMIT 1
       `,
       [billId, operatingCompanyId]
     );
     const linkedCashAdvanceId = linkedCashAdvanceRes.rows[0]?.id ? String(linkedCashAdvanceRes.rows[0].id) : null;
+    const linkedCashAdvanceDisplayId = linkedCashAdvanceRes.rows[0]?.display_id ?? null;
     const linesRes = await client.query<{
       id: string;
       line_sequence: number;
@@ -1524,7 +1533,10 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         unit_id: bill.unit_id ?? null,
         unit_display_id: bill.unit_display_id ?? null,
         linked_work_order_uuid: bill.linked_work_order_uuid ?? null,
+        linked_work_order_display_id: bill.linked_work_order_display_id ?? null,
         linked_cash_advance_id: linkedCashAdvanceId,
+        linked_cash_advance_display_id: linkedCashAdvanceDisplayId,
+        insurance_claim_number: bill.insurance_claim_number ?? null,
       },
       lines: linesRes.rows.map((row) => ({
         id: row.id,
