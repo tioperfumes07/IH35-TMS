@@ -3880,3 +3880,24 @@ Devin-A | LIVE PASS | leaf=lists:catalog.accounting.detail_types.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.accounting.detail_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/detail-types | healthz=107acd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/detail-types marker 'lists' | NEXT=leaf=lists:catalog.accounting.expense_categories.create:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.accounting.expense_categories.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/expense-categories | healthz=107acd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/expense-categories marker 'Create' | NEXT=leaf=lists:catalog.accounting.expense_categories.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.accounting.expense_categories.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/expense-categories | healthz=107acd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/expense-categories marker 'Create' | NEXT=leaf=lists:catalog.accounting.expense_categories.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.expense_categories.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/expense-categories | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/expense-categories healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.accounting.items.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.expense_categories.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/expense-categories | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/expense-categories healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.accounting.items.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.expense_categories.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/expense-categories | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/expense-categories healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.accounting.items.create:picker_law
