@@ -1033,3 +1033,4 @@ Codex | HANDOFF | FINDING=BANKING-TRANSACTION-ATTACHMENTS-NOTES-MODAL-REQUIRED-L
 Codex | WORKING | FO=CODEX-DRIVER-DETAIL-SCOPE-SELFTEST-ANCHOR-DRIFT | guard normal PASS+selftest 6/6 | NEXT=safety trailer incident mutation anchor | GO
 Codex | WORKING | FO=CODEX-SAFETY-CARGO-TRAILER-SEED-SELFTEST-ANCHOR-DRIFT | guard normal PASS+selftest 21/21 | NEXT=mutation sweep rerun | GO
 Codex | WORKING | FO=CODEX-DOCS-ENTITY-LABEL-GUARD-STALE-RESOLVED-BRANCH | guard normal PASS+selftest 9/9 | NEXT=primary navigation mutation defect | GO
+Codex | WORKING | FO=CODEX-SYSTEM-NAV-VISIBLE-TABS-GUARD-DRIFT | guard normal PASS+selftest 26/26 | NEXT=all-module mutation rescan | GO
