@@ -2795,3 +2795,6 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=accounting:accounting.modal.create:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/prepaid-expenses | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/prepaid-expenses marker 'accounting' | NEXT=leaf=accounting:accounting.modal.customer_adjustment:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting/prepaid-expenses | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/prepaid-expenses marker 'accounting' | NEXT=leaf=accounting:accounting.modal.customer_adjustment:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/prepaid-expenses | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/prepaid-expenses marker 'accounting' | NEXT=leaf=accounting:accounting.modal.customer_adjustment:connectivity
