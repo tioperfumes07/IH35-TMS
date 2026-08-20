@@ -6599,3 +6599,38 @@ Devin-A | LIVE PASS | leaf=drivers:pre_settlements:settlement | USMCA | URL=http
 Devin-A | LIVE PASS | leaf=drivers:profiles.create:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/profiles | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/profiles marker 'drivers' | NEXT=leaf=drivers:profiles.detail:driver
 Devin-A | LIVE PASS | leaf=drivers:profiles.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers/profiles | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/profiles marker 'drivers' | NEXT=leaf=drivers:profiles.detail:driver
 Devin-A | LIVE PASS | leaf=drivers:profiles.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/profiles | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/profiles marker 'drivers' | NEXT=leaf=drivers:profiles.detail:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.detail:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id/profile healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.detail:unit | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id/profile healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.detail:load | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id/profile healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id/profile healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id/profile healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.documents:driver
