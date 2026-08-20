@@ -15,11 +15,11 @@ accounting · banking · customers · vendors · factoring · settlements · dis
 | Seat | NOW through 06:00 |
 |------|-------------------|
 | **Cursor** | Lead · bus truth · customers/vendors Built leftovers · Clicked API if board stuck |
-| **CC-1** | TMS money/GL on accounting, banking, factoring, settlements (**not** QBO sync, **not** 11k bank-rules HOLD) |
+| **CC-1** | TMS money/GL on accounting, banking, factoring, settlements. Empty board ≠ idle: `docs/bus/CC-1-QUEUE-UNTIL-06.md` |
 | **CC-2** | picker_law / `+ Add new` on the 8 (lists + in-module pickers). No poll |
 | **CC-3** | **ON.** dispatch Built then drivers Built (mechanical FE). `PASTE-CC-3-NOW.md` |
 | **Codex** | reverse_link on the 8. No 9227 war |
-| **Devin-A** | Clicked the 8 in that order. chrome=9227. `leaf=module:leafId:col` |
+| **Devin-A** | Clicked the 8 in that order. chrome=9227. Loop cwd = this clone (not `/tmp/IH35-devin-a`). `leaf=module:leafId:col` |
 
 Findings same turn: `GUARD-WORKORDERS.md` + ☐ + Desktop + OUTBOX FINDING.
 

@@ -1,3 +1,3 @@
-# INBOX-DEVIN · 2026-08-20T04:30Z
+# INBOX-DEVIN · RETIRED NAME
 
-Same as `INBOX-DEVIN-A.md`.
+You are Devin-A. Use `docs/bus/INBOX-DEVIN-A.md` only.
