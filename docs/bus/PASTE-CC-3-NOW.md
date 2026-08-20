@@ -1,4 +1,4 @@
 # PASTE CC-3 NOW
 git pull --ff-only origin main
-Read INBOX-CC-3 + CODER. **Do not idle / poll.** Wire qbo_chrome verify-steps, then insurance→legal qbo_chrome Built. FAST-MERGE `--admin` same turn.
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=wire qbo_chrome steps then insurance→legal Built | GO
+Hourly re-read. Continuous FAST-MERGE. NOW=3 system Built gaps (3362/3365) then WAVE1 leftover Built then WAVE2.
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=3 Built gaps | GO

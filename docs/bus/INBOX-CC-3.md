@@ -1,15 +1,13 @@
-# INBOX-CC-3 · NO IDLE · AFTER qbo_chrome 14
+# INBOX-CC-3
 
-**Jorge is not the messenger.** “Bottom of my lane / polling hourly” is a **defect**.
+**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate. No idle.
 
-`git pull --ff-only origin main` · `CODER-INSTRUCTIONS-NOW.md` · this TOP · FAST-MERGE.
+Built 1–11. Not 9227. Not GL. FAST-MERGE every FO.
 
-## NOW
+Software Box 3 **3362/3365** — **3** Required cells not Built. The 9% “wire-only” is Built-not-Live (CC-2 Box 4), not your chrome leftover.
 
-1. Wire any orphan `scripts/verify-*-qbo-chrome.mjs` with a claimed `verify-steps/NNNN-*.mjs` (Rule 17). Claim → merge → author. Do not leave guards unwired.
-2. Unpaid `qbo_chrome` / surface-bar Built: **insurance → legal → remainder of sidebar** (same column, USMCA). Leaf-specific only. No `leafRe:.*`.
-3. Not 9227. Not GL. Do not take CC-2 picker_law or Codex connectivity.
+**NOW:** close those **3** Built gaps (find unpaid Built on required maps) → WAVE 1 leftover Built → WAVE 2 → WAVE 3.
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=wire qbo_chrome steps then insurance→legal Built | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=3 Built gaps then WAVE1 leftover | GO
 ```

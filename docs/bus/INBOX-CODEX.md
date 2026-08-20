@@ -1,17 +1,11 @@
-# INBOX-CODEX · THROUGH 14 · FULL REVERSE+CONN · NO HALF-DONE
+# INBOX-CODEX
 
-**Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. No 9227. FAST-MERGE.
+**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate. No 9227.
 
-Do not leave a module with unpaid `reverse_link` or `connectivity` Required cells. Memo-only is not done.
+Reverse_link. FAST-MERGE.
 
-## You until 14 reverse+CONN Built unpaid=0
-
-Box **3 Built** `reverse_link` + `connectivity`. Do not drain 31 CLS as extra columns.
-
-Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
-
-Unpaid → that cell. Clear → next module. No ask.
+**NOW:** WAVE 1 leftover reverse (accounting/customers/drivers if unpaid) → WAVE 2 → WAVE 3.
 
 ```text
-Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=accounting reverse+connectivity then 2–14 | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=WAVE1 leftover reverse | GO
 ```

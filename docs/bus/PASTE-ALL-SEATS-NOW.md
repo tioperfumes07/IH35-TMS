@@ -1,13 +1,15 @@
-# PASTE ALL SEATS · URGENT-14 · 4th BOX = CLICKED · NO IDLE
+# PASTE ALL SEATS · WAVE1 BAR 100 · THEN WAVE 2 · THEN WAVE 3
 
 `git pull --ff-only origin main`
-Read `CODER-INSTRUCTIONS-NOW.md` then your `INBOX-<SEAT>.md` TOP.
 
-**Idle is forbidden.** Hourly pull ≠ poll/wait.
+**Every hour:** re-read `CODER-INSTRUCTIONS-NOW.md` + your INBOX + `FAST-MERGE-4MIN-LAW.md`. Re-ACK. Keep working.
 
-**14:** accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory. Fuel never. After your column is unpaid=0: insurance → legal → remainder.
+**Owner 13:01:** 100% = Box 1–4 **3365/3365** · Miss C **0** · Built wire-only **0** · FW 1–12. Six urgent = WAVE 1 first.
 
-**100%** = Fully-Wired **1–12**, every Required cell **4/4**. The last ✓ on those 12 columns is **Chrome Clicked** (Devin + CC-2 live pickers), not keyword Live. FAST-MERGE `--admin` same turn.
+**WAVE 1 (the 6):** banking → factoring → accounting → settlements → customers → drivers  
+**WAVE 2:** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
+**WAVE 3:** inventory → … → **driver-hub → system → fuel** (Miss C)
 
-ACK: `STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NO-IDLE | NOW=<module> <col> | GO`
+Box 4 Live = CC-2 **PROD-VERIFIED** explicit leaf×col. Clicked = Devin. Built = CC-3. Money = CC-1. Reverse = Codex.
 
+ACK: `STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=<module> <col> | GO`

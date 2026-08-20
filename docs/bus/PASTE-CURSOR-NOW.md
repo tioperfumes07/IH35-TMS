@@ -1,4 +1,3 @@
 # PASTE CURSOR NOW
-git pull --ff-only origin main
-Read INBOX-CURSOR + CODER. Lead bus. One Devin loop. FAST-MERGE. No Jorge messenger.
-Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=lead | GO
+Hourly re-read CODER + INBOX-CURSOR. Lead. FAST-MERGE. Re-instruct WAVE1-BAR-100.
+Cursor | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=lead | GO

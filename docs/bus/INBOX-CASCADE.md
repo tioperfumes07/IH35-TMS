@@ -1,3 +1,3 @@
-# INBOX-CASCADE
+# INBOX-CASCADE · NOW
 
-OFF build. Do not rewrite coder INBOXes. Do not invent WAVE1. Current law: `CODER-INSTRUCTIONS-NOW.md`.
+**OFF build.** CC-2 holds `AUDIT-COVERAGE-LIVE.md` append-lease for Box 4 PROD-VERIFIED. Merge only if asked. Do not compete with CC-2 Live rows.

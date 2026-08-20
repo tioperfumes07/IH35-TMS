@@ -1,4 +1,5 @@
 # PASTE DEVIN-A NOW
 git pull --ff-only origin main
-Read INBOX-DEVIN-A + CODER. One loop only. LIVE PASS only. Through all 14 Clicked. FAST-MERGE --admin.
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | chrome=9227 | NOW=accounting Clicked then 2–14 | GO
+Hourly re-read INBOX-DEVIN-A + CODER + FAST-MERGE. chrome=9227.
+WAVE1 Miss C already 0. NOW=driver-hub Clicked → system → fuel until software Miss C=0.
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | chrome=9227 | NOW=driver-hub then system then fuel Clicked | GO

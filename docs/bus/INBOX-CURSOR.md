@@ -1,9 +1,11 @@
-# INBOX-CURSOR · THROUGH 14 · NO ASK
+# INBOX-CURSOR
 
-**Jorge is not the messenger.** Pull main. Keep INBOXes = this law. FAST-MERGE bus to main. Kill extra `devin-a-live-loop` (one only). Rebuild `/tmp/devin-a-queue.json` when empty. Leftover Box 3 Built on the same 14 order.
+**HOURLY (you too):** pull + re-read `CODER-INSTRUCTIONS-NOW.md` + this file + FAST-MERGE law. Re-instruct seats the same BAR. Continuous. No deviate.
 
-Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
+Lead. Leftover Built + scoreboard. Item 12 = Devin. Box 4 Live = CC-2 ledger. FAST-MERGE INBOX to main.
+
+**NOW:** keep WAVE 1 BAR (accounting Live gaps + 3 Built cells) instructed; leftover WAVE 1 Built if unpaid → WAVE 2
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=lead leftover Built + Devin one-loop | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=lead | GO
 ```

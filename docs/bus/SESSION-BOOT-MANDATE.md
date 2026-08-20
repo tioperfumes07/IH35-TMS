@@ -1,7 +1,7 @@
 # SESSION BOOT
 
-Every session and every hour: `CODER-INSTRUCTIONS-NOW.md` → `INBOX-<SEAT>.md` → `FAST-MERGE-4MIN-LAW.md` → `HOURLY-REREAD.md`
+Every session and **every hour:** `CODER-INSTRUCTIONS-NOW.md` → `INBOX-<SEAT>.md` → `FAST-MERGE-4MIN-LAW.md` → `HOURLY-REREAD.md`
 
-URGENT-14. Fully-Wired 1–12. Continuous. Jorge is not the messenger.
+WAVE1-BAR-100 then WAVE 2 then WAVE 3. Continuous. No deviate.
 
-ACK `STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | HOURLY-REREAD`
+ACK `STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD`
