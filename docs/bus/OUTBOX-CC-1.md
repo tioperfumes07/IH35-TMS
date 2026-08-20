@@ -1297,3 +1297,13 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 Zero P0/P1 defects. Moving to Item 3 (factoring TMS money: advance/reserve/recourse surfaces that already exist -- FKs + reverse, no new GL math).
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T08:55Z CC-1 | ITEM 3 (factoring) found and fixed a real P1: live-exercised the Faro CSV import path and found applyInvoiceAndReserveUpdates() wrote factoring.reserve_movement UNCONDITIONALLY on every qualifying CSV line, regardless of FACTORING_GL_POSTING_FLAG -- the reserve-balance screen could show a non-zero figure with zero GL backing on a flag-OFF entity, the same "honest flag-off = zero financial rows" law violation ACCT-F5613 closed minutes earlier in a different file. SHIPPED as ACCT-F5614 (PR #10666, merged a24c6d6d): reordered the flag read before the write, gated it, new test proving flag-OFF -> 0 reserve movements while invoices still update. USMCA has 0 Faro imports so far (pre-launch) so zero current blast radius, fixed anyway since the path is genuinely broken and reachable the moment a real import runs on a flag-OFF entity.
+
+Also shipped the board closeout for ACCT-F5613 (settlement pay-run close reimbursements, PR #10647 merged 0bacd266) in this same PR -- both fixes landed back-to-back during Items 1-3 live-exercise work and neither had reached the board yet; catching up now rather than leaving either un-recorded.
+
+Advance/reserve/recourse surfaces for USMCA itself remain honestly unexercised (0 rows -- pre-launch), correctly reported as such rather than invented. Two smaller, larger-scope follow-ons from the same recon (submission-queue.service.ts's chargeback_cents CHECK-constraint mismatch; views.factoring_reserve_balances silently excluding movement_type='adjusted') stay tracked as separate items per ACCT-F5614's own REMAINING, not folded in.
+
+Moving to Item 4 (settlements TMS money: pay-run close / advances / liabilities -- actor stamps, display ids, reverse to driver/load) -- note pay-run close itself was already deeply exercised via ACCT-F5613 this same session.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
