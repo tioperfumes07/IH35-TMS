@@ -1739,3 +1739,19 @@ F5189 bank column-honesty fixes, P28/P29 verify-steps). My column is CLEAR -- no
 right now. Resuming the standing money-lane sibling-writer-diff/atomicity sweep (ACCT-F5634..F5650
 this session) while holding the ladder position; will re-check Built after any other seat lands new
 required leaves. GO.
+
+2026-08-20T16:38Z CC-1 | ACCT-F5651 SHIPPED (PR #12818, merged 9163bfae) -- dedicated sweep of the
+remaining money-path atomicity surface not yet covered by ACCT-F5634..F5650. factoring-advances.routes.ts's
+/advance, /reserve-held, /release routes each took and held their own factoring_advances row lock
+(via their status UPDATE) BEFORE awaiting a poster call that opens a SECOND connection and needs a
+FOR UPDATE lock on that exact same row -- an application-level deadlock cycle Postgres cannot detect
+(same class already fixed once for the bill-payment void executor, ACCT-F5637). Prod has
+statement_timeout=0/lock_timeout=0, so the blocked query hangs indefinitely, permanently pinning 2-3
+pool connections per stuck call -- fires on essentially every live advance/reserve-held/release call
+given ALL flags ON. Confirmed none of the three posters read/gate on factoring_advances.status
+internally, so reordering is behavior-neutral. Fixed by moving each route's status UPDATE to run
+AFTER its poster call -- zero risk to the posters' own tested internals, 33/33 non-DB factoring-posting
+tests unchanged. Ruled out lower-priority in the same sweep: fundBatch (dead code) and
+faro-csv-import.ts's post-commit loop (not nested in an open txn, doesn't hit this deadlock -- already
+flagged as F5650's own REMAINING). Board closeout shipped in this same PR cycle. REMAINING: none for
+this finding. Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
