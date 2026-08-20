@@ -14076,3 +14076,33 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Failed to load vendor deta | NEXT=leaf=vendors:detail.profile.driver_link:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Failed to load vendor deta | NEXT=leaf=vendors:detail.profile.driver_link:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Failed to load vendor deta | NEXT=leaf=vendors:detail.profile.driver_link:vendor
