@@ -3139,3 +3139,25 @@ Devin-A | LIVE PASS | leaf=customers:detail.loads:unit | USMCA | URL=https://app
 Devin-A | LIVE PASS | leaf=customers:detail.loads:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=loads | healthz=ecd75c8 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=loads marker 'Customer' | NEXT=leaf=customers:detail.pnl:customer
 Devin-A | LIVE PASS | leaf=customers:detail.loads:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=loads | healthz=ecd75c8 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=loads marker 'Customer' | NEXT=leaf=customers:detail.pnl:customer
 Devin-A | LIVE PASS | leaf=customers:detail.loads:scenario.dispatch | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=loads | healthz=ecd75c8 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=loads marker 'Customer' | NEXT=leaf=customers:detail.pnl:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.pnl:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=pnl | healthz=0dc7fa0 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=pnl head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.portal_users:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.pnl:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=pnl | healthz=0dc7fa0 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=pnl head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.portal_users:customer
