@@ -76,7 +76,20 @@ export function voidsMoneyRow(sql) {
     // status). Scanning the whole body misreads that read-filter as a write. Split on the first
     // top-level WHERE so only the SET clause is checked.
     const whereMatch = /\bWHERE\b/i.exec(body);
-    const setClause = whereMatch ? body.slice(0, whereMatch.index) : body;
+    let setClause = whereMatch ? body.slice(0, whereMatch.index) : body;
+
+    // ACCT-F5622-GUARD-FALSE-POSITIVE — a CASE branch of the exact form
+    // `WHEN <alias>.status = 'void' THEN 'void'` PRESERVES an already-void row's status (it only
+    // re-derives 'void' when the row's CURRENT status already equals 'void'); by construction it can
+    // never transition a non-void row TO void, so it is not a write any more than the WHERE-clause
+    // read-filter carved out above. This is the exact shape of
+    // 202612821200_acct_f5622_payment_void_recompute_unapplied_filter.sql's trigger-function
+    // rewrite (`status = CASE WHEN i.status = 'void' THEN 'void' WHEN ... END`), which the guard was
+    // misreading as a voiding write. Strip only this self-referential preserve branch before testing
+    // — a real void hiding in a CASE (any branch not gated on the column already being 'void') keeps
+    // its literal `status = 'void'` text and is still caught.
+    setClause = setClause.replace(/WHEN\s+[\w.]+\.status\s*=\s*'void'\s+THEN\s+'void'/gi, "");
+
     if (/\bvoided_at\s*=\s*(now\(\)|CURRENT_TIMESTAMP|\$)/i.test(setClause) || /\bstatus\s*=\s*'void'/i.test(setClause)) {
       return true;
     }
@@ -177,16 +190,35 @@ if (process.argv.includes("--selftest")) {
     failures.push("a real void (SET status='void' before WHERE) was NOT caught");
   }
 
+  // ACCT-F5622-GUARD-FALSE-POSITIVE — the real shape of
+  // 202612821200_acct_f5622_payment_void_recompute_unapplied_filter.sql: a trigger-function
+  // recompute that PRESERVES an already-void invoice's status via `WHEN i.status = 'void' THEN
+  // 'void'`, never a transition. Must NOT be flagged.
+  const preserveExistingVoidInCase =
+    "UPDATE accounting.invoices i SET amount_paid_cents = v_paid, status = CASE WHEN i.status = 'void' THEN 'void' WHEN i.status = 'factored' THEN 'factored' WHEN v_paid >= i.total_cents THEN 'paid' ELSE i.status END, updated_at = now() WHERE i.id = v_invoice_id;";
+  if (collectProblems(mk("209912310000_new.sql", preserveExistingVoidInCase)).length !== 0) {
+    failures.push("a CASE branch that only PRESERVES an already-void row's status (WHEN status='void' THEN 'void') was wrongly flagged as a new void");
+  }
+
+  // The strip must be surgical: a genuine transition sitting in the SAME SET clause, alongside a
+  // harmless preserve-existing-void branch, must still be caught.
+  const preserveVoidPlusRealTransitionElsewhere =
+    "UPDATE accounting.invoices i SET status = CASE WHEN i.status = 'void' THEN 'void' ELSE i.status END, void_reason = 'dup' WHERE i.id = $1; UPDATE accounting.invoices SET status = 'void' WHERE vendor_id = $2;";
+  if (collectProblems(mk("209912310000_new.sql", preserveVoidPlusRealTransitionElsewhere)).length !== 1) {
+    failures.push("a real void transition alongside an unrelated preserve-existing-void branch was NOT caught — the strip must not become a blanket escape hatch");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 9/9 (new offender caught, GL-reversing migration allowed, status='void' ` +
+    `${LABEL} SELFTEST OK — 11/11 (new offender caught, GL-reversing migration allowed, status='void' ` +
       `counted, allowlist honoured, commented-out void ignored, comment cannot excuse, non-money ` +
       `ignored, WHERE-clause read filter on already-void rows not flagged, real void behind a WHERE ` +
-      `clause still caught)`
+      `clause still caught, CASE preserve-existing-void branch not flagged, real transition alongside ` +
+      `a preserve branch still caught)`
   );
   process.exit(0);
 }
