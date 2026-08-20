@@ -52,6 +52,7 @@ export type BankFeedGlSkipReason =
   | "not_categorized"
   | "already_posted"
   | "already_matched_to_bill"
+  | "bill_backed"
   | "is_transfer"
   | "no_account"
   | "driver_advance_branch"
@@ -113,6 +114,9 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           bt.amount_cents::bigint                      AS amount_cents,
           bt.categorization_gl_account_id::text        AS categorization_gl_account_id,
           bt.categorization_driver_id::text            AS categorization_driver_id,
+          bt.category::text                            AS category,
+          lb.id::text                                  AS linked_bill_id,
+          lb.status::text                              AS linked_bill_status,
           bt.matched_bill_id::text                     AS matched_bill_id,
           bt.matched_journal_entry_id::text            AS matched_journal_entry_id,
           bt.transfer_kind::text                       AS transfer_kind,
@@ -142,6 +146,11 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
         LEFT JOIN catalogs.accounts led
           ON led.id = ba.ledger_account_id
           AND led.operating_company_id = bt.operating_company_id
+        -- ACCT-F5672 — resolve a BILL-backed categorization (bulk-post-as-bills / insurance
+        -- dispersal stamp linked_entity_id = accounting.bills.id). Entity-scoped like every join here.
+        LEFT JOIN accounting.bills lb
+          ON lb.id = bt.linked_entity_id
+          AND lb.operating_company_id = bt.operating_company_id
         WHERE bt.id = $1::uuid
           AND bt.operating_company_id = $2::uuid
         LIMIT 1
@@ -156,6 +165,9 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           amount_cents: string | number | null;
           categorization_gl_account_id: string | null;
           categorization_driver_id: string | null;
+          category: string | null;
+          linked_bill_id: string | null;
+          linked_bill_status: string | null;
           matched_bill_id: string | null;
           matched_journal_entry_id: string | null;
           transfer_kind: string | null;
@@ -183,6 +195,26 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
 
     // Interlock 2 — matched to a bill (CHAIN-03/04 sourced it; Match, not Categorize).
     if (txn.matched_bill_id) return { ok: false, reason: "already_matched_to_bill" };
+
+    // Interlock 2b — BILL-BACKED categorization (ACCT-F5672). bulkPostTransactionsAsBills and the
+    // insurance dispersal/policy paths stamp category='bill' + linked_entity_id=<accounting.bills.id>
+    // (they never set matched_bill_id, so Interlock 2 misses them). The GL story for such a line
+    // belongs to CHAIN-03 (the bill's own JE) + CHAIN-04 (the bill payment) — this categorize poster
+    // posting it too would DOUBLE-BOOK the expense beside the bill JE. Measured live before this
+    // interlock existed: 24 USMCA insurance-dispersal placeholder txns, every linked bill VOID, fell
+    // through to the misleading "no_account" — which invites exactly the wrong fix (stamping an
+    // account and minting expense JEs for voided bills). Skip with an honest reason instead.
+    if (txn.category === "bill" || txn.linked_bill_id) {
+      const voidNote =
+        txn.linked_bill_status === "void" || txn.linked_bill_status === "voided"
+          ? " The linked bill is VOID — there is no legitimate JE to mint for this line at all."
+          : "";
+      return {
+        ok: false,
+        reason: "bill_backed",
+        message: `This transaction is backed by bill ${txn.linked_bill_id ?? "(unresolved)"}; its GL lives on the bill (CHAIN-03) and its payment (CHAIN-04), never the categorize poster.${voidNote}`,
+      };
+    }
 
     // Interlock 3 — own-bank transfer (no P&L). matched_transfer_id is the TRANSFER DEDUPE KEY shared
     // with transfers.service.ts / bank-recon match.service.ts (BANKING-GL-COMPLETION): a feed line
