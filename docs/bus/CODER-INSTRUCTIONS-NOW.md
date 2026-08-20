@@ -43,7 +43,7 @@ Until item **12 Live Chrome**: `Built` / `Live=BLOCKED`. Devin does 12 (`chrome=
 
 | Seat | Column | NOW → then |
 |------|--------|------------|
-| **Devin-A** | 12 Live Chrome | WAVE 1 banking Clicked → rest WAVE 1 → WAVE 2 → WAVE 3 |
+| **Devin-A** | 12 Live Chrome | WAVE 1 banking Clicked → rest WAVE 1 → WAVE 2 → WAVE 3. **Clicked = OUTBOX-only onto current origin/main** (`shipClickedOntoMain`). Never stale-branch squash that deletes CC-1/CC-3 code. |
 | **CC-3** | Built 1–11 FE | customers (drivers Built done) → rest WAVE 1 unpaid Built → WAVE 2 → WAVE 3 |
 | **CC-1** | money, reuse poster, Bill+BillPayment | WAVE 1 banking money → factoring → accounting → settlements → WAVE 2 money modules. F5602–F5619 stand. No manufacture. |
 | **CC-2** | picker live-verify | WAVE 1 banking → … → WAVE 2. Rebuild only on live FAIL |

@@ -570,6 +570,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           -- joins below.
           bill.bill_number AS matched_bill_number,
           bt.matched_settlement_id,
+          settlement.display_id AS matched_settlement_display_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
           bt.notes,
           bt.created_at,
@@ -652,6 +653,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN accounting.bills bill
           ON bill.id = bt.matched_bill_id
          AND bill.operating_company_id = bt.operating_company_id
+        LEFT JOIN driver_finance.settlements settlement
+          ON settlement.id = bt.matched_settlement_id
+         AND settlement.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

@@ -1,3 +1,4 @@
+- 2026-08-20T08:28Z Cursor | SHIP loop-law AGAIN (Devin Clicked ate #10871) · STOP old loop · OUTBOX-only onto origin/main · CC-1 restore ACCT-F5620 hop.bank · WAVE1 leftover Built | GO
 - 2026-08-20T07:21Z Cursor | VERIFY | Devin LIVE PASS banking2 factoring5 acct17 settle24 cust30 driv31 vend73 disp157 · loop had vendors+dispatch — fixed · CC-1 queue complete · CC-2 pickers complete · Clicked order banking-first | GO
 - 2026-08-20T07:15Z Cursor | CORRECT | CC-2 pickers already checked (OUTBOX 8-module picker_law closed) · STOP picker_law rebuild · live click + Devin item-12 only | GO
 - 2026-08-20T06:51Z Cursor | URGENT-6-LEAST | settlements→factoring→banking→customers→drivers→accounting · park vendors+dispatch · Devin loop ORDER that 6 | GO
