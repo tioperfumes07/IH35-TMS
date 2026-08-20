@@ -183,11 +183,18 @@ export function Modal({
     <>
       <div
         className={
-          // z-[70] above ParityDrawer (z-[60]) and page wizards (z-50) so nested +Create unit/driver
-          // from Book Load / money drawers receive clicks — never the parent backdrop.
+          // z-[215]: above every other z-[N] tier in the frontend, including the highest drawer
+          // (LoadDetailDrawer, z-[210]) — CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER. This Modal renders
+          // through its own createPortal to document.body (so parent overflow/transform never clips it —
+          // this was never a positioning bug), but the OLD z-[70] sat a full tier below LoadDetailDrawer's
+          // z-[210]: both are portaled siblings under <body>, so the drawer's opaque panel painted on top
+          // of and obscured any Modal opened from inside it (e.g. CancelLoadModal's "Cancel Load" button)
+          // — the modal's form controls existed in the DOM and were focusable/functional, just invisible.
+          // Stays BELOW Combobox.tsx's LISTBOX_Z_INDEX=220 so a ReferenceSelect/Combobox dropdown opened
+          // inside this Modal (e.g. the cancellation-reason picker) still paints above the Modal itself.
           isDrawer
-            ? "fixed inset-0 z-[70] flex justify-end bg-black/50"
-            : "fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+            ? "fixed inset-0 z-[215] flex justify-end bg-black/50"
+            : "fixed inset-0 z-[215] flex items-center justify-center bg-black/50 p-4"
         }
         onMouseDown={attemptClose}
       >
