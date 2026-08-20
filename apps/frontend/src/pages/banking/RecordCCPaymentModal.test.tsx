@@ -1,25 +1,28 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as bankingApi from "../../api/banking";
+import * as mdataApi from "../../api/mdata";
+import * as catalogAccountsApi from "../../api/catalog-accounts";
 import { ToastProvider } from "../../components/Toast";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 
-vi.mock("../../components/forms/QboCombobox", () => ({
-  QboCombobox: ({
-    entityType,
-    onChange,
-  }: {
-    entityType: string;
-    onChange: (id: string | null, name: string) => void;
-  }) => (
-    <button type="button" data-testid={`qbo-combo-${entityType}`} onClick={() => onChange("qbo-pick-1", "Picked")}>
-      Choose {entityType}
-    </button>
-  ),
-}));
+// 2026-08-20 (CC-3): the vendor/liability-account pickers migrated off the old QboCombobox mock
+// pattern (`qbo-combo-vendor` / `qbo-combo-account` testids) onto the real, shared ReferenceSelect
+// (LST-PICKER-01 — real listVendors/listCatalogAccounts-backed pickers with server search + inline
+// "+ Add new"). RecordCCPaymentModal.tsx no longer imports QboCombobox at all — this test now drives
+// the real ReferenceSelect comboboxes instead of mocking a component that's gone.
+vi.mock("../../api/mdata", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/mdata")>();
+  return { ...actual, listVendors: vi.fn() };
+});
+
+vi.mock("../../api/catalog-accounts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/catalog-accounts")>();
+  return { ...actual, listCatalogAccounts: vi.fn() };
+});
 
 vi.mock("../../api/banking", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/banking")>();
@@ -39,9 +42,16 @@ function wrap(ui: ReactElement) {
   );
 }
 
+function openDropdown(input: HTMLElement) {
+  fireEvent.focus(input);
+  fireEvent.click(input);
+}
+
 describe("RecordCCPaymentModal", () => {
   const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
   const bankId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const vendorId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const liabilityAccountId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
   beforeEach(() => {
     vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({
@@ -62,6 +72,22 @@ describe("RecordCCPaymentModal", () => {
         },
       ],
     });
+    vi.mocked(mdataApi.listVendors).mockResolvedValue({
+      vendors: [{ id: vendorId, name: "Amex Corporate Card", vendor_type: "credit_card" }],
+      total: 1,
+    } as never);
+    vi.mocked(catalogAccountsApi.listCatalogAccounts).mockResolvedValue({
+      accounts: [
+        {
+          id: liabilityAccountId,
+          account_name: "Amex Credit Card Liability",
+          account_type: "Liability",
+          account_subtype: "credit_card",
+          is_postable: true,
+          deactivated_at: null,
+        },
+      ],
+    } as never);
     vi.mocked(bankingApi.recordCcPayment).mockResolvedValue({
       transfer: {
         id: "cc-1",
@@ -93,11 +119,19 @@ describe("RecordCCPaymentModal", () => {
       )
     );
 
-    await waitFor(() => expect(screen.getByTestId("qbo-combo-vendor")).toBeInTheDocument());
-    await user.click(screen.getByTestId("qbo-combo-vendor"));
-    await user.click(screen.getByTestId("qbo-combo-account"));
-    await waitFor(() => expect(screen.getByLabelText(/Pay from bank account/i)).toBeInTheDocument());
-    await user.selectOptions(screen.getByLabelText(/Pay from bank account/i), bankId);
+    const vendorInput = await screen.findByPlaceholderText("Search vendor…");
+    openDropdown(vendorInput);
+    fireEvent.click(await screen.findByRole("option", { name: /Amex Corporate Card/i }));
+
+    const accountInput = await screen.findByPlaceholderText("Select liability account…");
+    openDropdown(accountInput);
+    fireEvent.click(await screen.findByRole("option", { name: /Amex Credit Card Liability/i }));
+
+    // "Pay from bank account" is also a Combobox now (SelectCombobox is a Combobox adapter, not a
+    // native <select> — CLS-BOX-IN-BOX), so it opens/selects the same way as the other pickers.
+    const bankInput = await screen.findByLabelText(/Pay from bank account/i);
+    openDropdown(bankInput);
+    fireEvent.click(await screen.findByRole("option", { name: /Operating Bank - Ops/i }));
     await user.type(screen.getByLabelText(/^Amount \(USD\)/i), "25");
 
     await user.click(screen.getByRole("button", { name: /Record payment/i }));
@@ -106,7 +140,8 @@ describe("RecordCCPaymentModal", () => {
     expect(bankingApi.recordCcPayment).toHaveBeenCalledWith(
       companyId,
       expect.objectContaining({
-        cc_liability_coa_account_id: "qbo-pick-1",
+        cc_vendor_id: vendorId,
+        cc_liability_coa_account_id: liabilityAccountId,
         from_bank_account_id: bankId,
         amount_cents: 2500,
       })
