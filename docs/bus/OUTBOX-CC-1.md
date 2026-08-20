@@ -1720,3 +1720,22 @@ self-referential preserve idiom from the SET clause before testing. Added 2 new 
 CLEARED: 982 migrations scanned, 0 problems (was 1). Board closeout shipped in this same PR cycle.
 REMAINING: none for this finding. Continuing the money-lane sweep non-stop, no idle gaps, always fix
 never defer.
+
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=accounting money then 2-14 | GO
+
+2026-08-20T16:30Z CC-1 | MONEY-BUILT STATUS: pulled main + CODER-INSTRUCTIONS-NOW.md +
+INBOX-CC-1.md TOP. Ran a full re-audit of Box 3 Built on all 7 money columns
+(ap_bill/expense/invoice/bank/gl_je/inventory/liability) across all 13 URGENT modules in ladder order
+(accounting/customers/drivers/vendors/dispatch/safety/fleet/maintenance/lists/settlements/factoring/
+banking/inventory), using a line-for-line replica of matrix-built-auto.ts's real
+parseMatrixBuiltTags/discoverMatrixBuiltEntries logic (both wire-sprint-built.json entries AND
+@matrix-built tags scanned from all verify-*.mjs headers, cross-referenced against each module's
+required.json leaf list) -- not a shortcut script. RESULT: 200/200 required money-column cells are
+Built, 0 unpaid, across all 13 modules. This reconciles with WAVE1/WAVE2/WAVE-C work already shipped
+this session (vendors ap_bill/expense #11970, fleet/trailer expenses-reverse #11985, maintenance
+WO-bill+parts-inventory #12016, driver cash-advances liability + customer billing invoice #12050,
+factoring liability/invoice-GL #12069) plus additional coverage landed since (LINK-F5190/F5186/F5191/
+F5189 bank column-honesty fixes, P28/P29 verify-steps). My column is CLEAR -- no unpaid cell to claim
+right now. Resuming the standing money-lane sibling-writer-diff/atomicity sweep (ACCT-F5634..F5650
+this session) while holding the ladder position; will re-check Built after any other seat lands new
+required leaves. GO.
