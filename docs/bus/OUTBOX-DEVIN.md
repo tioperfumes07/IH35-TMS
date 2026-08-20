@@ -1742,3 +1742,5 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Vendors
 Vendor list and tran | healthz=157b632 | mutation=none | NEXT=fleet.unit.profile.bank_txns
+Devin-A | LIVE STARVED | module=vendors | leaf=list.segment.active | URL=https://app.ih35dispatch.com/vendors | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet/units/:id ; body head Checking session... | healthz=157b632 | mutation=none | NEXT=vendors.list.segment.inactive
+Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.bank_txns | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet/units/:id ; body head Checking session... | healthz=157b632 | mutation=none | NEXT=fleet.unit.profile.audit_history
