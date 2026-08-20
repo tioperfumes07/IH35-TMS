@@ -4,10 +4,16 @@
 
 chrome=9227. Item 12. `leaf=<module>:<leafId>:<col> | USMCA`
 
-WAVE 1 six already **Miss C 0** on live matrix. **Do not re-click WAVE 1.**
+**YOU ARE NOT DRAINED.** Waiting for new `required.json` leaves is **forbidden**. Miss C parked money; #13050 unparked it. Rebuild the queue **including money columns** and click.
 
-**NOW:** software Miss C **33** = driver-hub **2** + system **7** + fuel **24**. Click those until Miss C **0**, then WAVE 2 unpaid Clicked, then WAVE 3. Unique branches. Never merge STARVED. Fuel is in scope for Miss C=0 (owner 13:01).
+```bash
+git pull --ff-only origin/main
+node scripts/ops/devin-a-live-loop.cjs --rebuild-only   # writes /tmp/devin-a-queue.json
+# then run the loop (never DEVIN_KEEP_QUEUE=1 unless debugging)
+```
+
+**If `--rebuild-only` prints 0 leaves:** Clicked *keys* are full. You still **do not idle**. Swarm **accounting**: re-walk money routes (bills, expenses, invoices, bank) logged in as USMCA and append `LIVE PASS` lines with `leaf=accounting:<leafId>:<moneyCol>` so CC-2 can stamp Box 4. Then fuel/system/driver-hub if Miss C > 0. Waiting for new required.json is forbidden.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | chrome=9227 | NOW=driver-hub Clicked then system then fuel | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | chrome=9227 | NOW=accounting money Clicked | GO
 ```

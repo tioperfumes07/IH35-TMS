@@ -1,5 +1,5 @@
 # PASTE DEVIN-A NOW
 git pull --ff-only origin main
-Hourly re-read INBOX-DEVIN-A + CODER + FAST-MERGE. chrome=9227.
-WAVE1 Miss C already 0. NOW=driver-hub Clicked → system → fuel until software Miss C=0.
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | chrome=9227 | NOW=driver-hub then system then fuel Clicked | GO
+NOT DRAINED. Do not wait for new required.json. Rebuild queue (includes money). NOW=accounting money Clicked then WAVE1.
+node scripts/ops/devin-a-live-loop.cjs --rebuild-only && node scripts/ops/devin-a-live-loop.cjs
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | chrome=9227 | NOW=accounting money Clicked | GO

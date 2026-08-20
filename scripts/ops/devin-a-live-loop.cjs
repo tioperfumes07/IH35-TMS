@@ -184,6 +184,66 @@ function shipClickedOntoMain(extraLines, commitMsg, item) {
   }
 }
 
+const CLICKED_OUTBOX = [
+  "docs/bus/OUTBOX-DEVIN.md",
+  "docs/bus/OUTBOX-DEVIN-A.md",
+  "docs/bus/OUTBOX-CODEX.md",
+  "docs/bus/OUTBOX-CURSOR.md",
+];
+
+/** Clicked keys from LIVE PASS lines. Money columns are included — never skip money. */
+function parseClickedKeys(text) {
+  const keys = new Set();
+  for (const line of String(text || "").split("\n")) {
+    if (!/LIVE PASS/i.test(line)) continue;
+    if (!/\bUSMCA\b/i.test(line) && !/selected-usmca/i.test(line)) continue;
+    for (const m of line.matchAll(/leaf=([a-z0-9_-]+):([a-z0-9_.-]+):([a-z0-9_.-]+)/gi)) {
+      keys.add(`${m[1]}:${m[2]}:${m[3]}`.toLowerCase());
+    }
+  }
+  return keys;
+}
+
+function loadClickedKeys() {
+  const keys = new Set();
+  for (const rel of CLICKED_OUTBOX) {
+    const full = path.join(ROOT, rel);
+    if (!fs.existsSync(full)) continue;
+    for (const k of parseClickedKeys(fs.readFileSync(full, "utf8"))) keys.add(k);
+  }
+  return keys;
+}
+
+/** Rebuild unpaid leaf×col from required.json vs OUTBOX. Includes money group. Idle-on-empty while money unpaid is forbidden. */
+function rebuildQueueFromRequired() {
+  const clicked = loadClickedKeys();
+  const items = [];
+  for (const mod of ORDER) {
+    if (FORBIDDEN.has(mod)) continue; // URGENT14.has(mod) still used for rank; never skip money columns
+    const fp = path.join(ROOT, `docs/specs/scoreboard/modules/${mod}.required.json`);
+    if (!fs.existsSync(fp)) continue;
+    const doc = JSON.parse(fs.readFileSync(fp, "utf8"));
+    for (const leaf of doc.leaves || []) {
+      const unpaid = (leaf.required || []).filter(
+        (col) => !clicked.has(`${mod}:${leaf.id}:${col}`.toLowerCase()),
+      );
+      if (!unpaid.length) continue;
+      const hint = String(leaf.route_hint || "/").replace(/\/:[^/]+/g, "");
+      const pathHint = hint.startsWith("/") ? hint : `/${hint}`;
+      items.push({
+        module: mod,
+        leaf: leaf.id,
+        columns: unpaid,
+        url: `https://app.ih35dispatch.com${pathHint || "/"}`,
+        markers: [leaf.tab, leaf.sub, leaf.id].filter(Boolean),
+      });
+    }
+  }
+  fs.writeFileSync(QUEUE, JSON.stringify(items, null, 2));
+  log(`rebuild queue ${items.length} leaves unpaid — never skip money`);
+  return items;
+}
+
 function filterQueue(raw) {
   const rank = Object.fromEntries(ORDER.map((m, i) => [m, i]));
   const rows = Array.isArray(raw) ? raw : [];
@@ -202,13 +262,12 @@ function filterQueue(raw) {
 }
 
 function ensureQueue() {
-  if (fs.existsSync(QUEUE)) {
+  if (process.env.DEVIN_KEEP_QUEUE === "1" && fs.existsSync(QUEUE)) {
     const q = filterQueue(JSON.parse(fs.readFileSync(QUEUE, "utf8")));
     fs.writeFileSync(QUEUE, JSON.stringify(q, null, 2));
     return q;
   }
-  log("FATAL: no queue at " + QUEUE);
-  return [];
+  return filterQueue(rebuildQueueFromRequired());
 }
 
 function saveQueue(q) { fs.writeFileSync(QUEUE, JSON.stringify(q, null, 2)); }
@@ -335,7 +394,16 @@ if (process.argv.includes("--selftest")) {
     console.error("SELFTEST FAIL: healthz unknown must not STARVE column 12 Clicked");
     process.exit(1);
   }
+  if (!/never skip money/.test(src) || !/function rebuildQueueFromRequired/.test(src)) {
+    console.error("SELFTEST FAIL: queue rebuild must include money cells (never skip money)");
+    process.exit(1);
+  }
   console.log("devin-a-live-loop --selftest PASS");
+  process.exit(0);
+}
+
+if (process.argv.includes("--rebuild-only")) {
+  rebuildQueueFromRequired();
   process.exit(0);
 }
 

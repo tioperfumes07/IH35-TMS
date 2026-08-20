@@ -4,8 +4,8 @@
 
 Reverse_link. FAST-MERGE.
 
-**NOW:** WAVE 1 leftover reverse (accounting/customers/drivers if unpaid) → WAVE 2 → WAVE 3.
+**NOW:** **accounting** reverse_link unpaid (swarm) → rest WAVE 1 → WAVE 2.
 
 ```text
-Codex | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=WAVE1 leftover reverse | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=accounting reverse | GO
 ```

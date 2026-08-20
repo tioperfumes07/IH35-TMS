@@ -7,5 +7,5 @@ Lead. Leftover Built + scoreboard. Item 12 = Devin. Box 4 Live = CC-2 ledger. FA
 **NOW:** keep WAVE 1 BAR (accounting Live gaps + 3 Built cells) instructed; leftover WAVE 1 Built if unpaid → WAVE 2
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=lead | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=lead accounting | GO
 ```
