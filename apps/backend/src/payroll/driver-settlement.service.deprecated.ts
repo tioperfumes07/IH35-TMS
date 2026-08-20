@@ -22,7 +22,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { createBill, payBill } from "../accounting/bills.service.js";
 import { resolveDriverVendorLink } from "../accounting/driver-vendor-link.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
-import { depositEscrow, openEscrow } from "../accounting/escrow/service.js";
+import { depositEscrowOnClient, openEscrow } from "../accounting/escrow/service.js";
 import { resolveSettlementMinNet } from "../driver-finance/settlement-deduction-cap.service.js";
 import { resolveAccountForCategory } from "../accounting/expense-category-map/resolver.service.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
@@ -534,7 +534,15 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
         },
         { userId, role: "Accountant" }
       );
-      await depositEscrow(
+      // ACCT-F5645 — depositEscrowOnClient posts on THIS client (`client`, the same connection driving
+      // the Bill + BillPayment above), atomic with the rest of this settlement-posting transaction.
+      // The prior depositEscrow() call opened its own, second connection and committed the escrow GL
+      // deposit independently — a failure anywhere later in this same function (the capped-recovery JE
+      // below, or the outer transaction's own commit) would leave the bond escrow genuinely deposited
+      // while the settlement/bill/payment rolled back, an orphan escrow posting with no settlement
+      // behind it.
+      await depositEscrowOnClient(
+        client,
         {
           operating_company_id: input.operatingCompanyId,
           escrow_account_id: escrow.escrow_account.id,

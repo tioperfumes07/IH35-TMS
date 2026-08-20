@@ -28,6 +28,7 @@ const guards = [
   "verify-customer-payment-apply-nets-credit-memos.mjs",
   "verify-customer-payment-write-role-gated.mjs",
   "verify-deductions-write-role-gated.mjs",
+  "verify-deprecated-settlement-escrow-deposit-atomic.mjs",
   "verify-coa-asymmetry-account-entitylink.mjs",
   "verify-credit-memo-vendor-credit-row-locked.mjs",
   "verify-credit-vendor-apply-idempotent-replay.mjs",
