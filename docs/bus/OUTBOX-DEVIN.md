@@ -1324,3 +1324,14 @@ Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.planning.timeline
 Devin-A | LIVE STARVED | module=dispatch | leaf=planning.timeline | URL=https://app.ih35dispatch.com/dispatch/planners/timeline | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.planning.driver
 Devin-A | LIVE STARVED | module=dispatch | leaf=planning.driver | URL=https://app.ih35dispatch.com/dispatch/planners/driver | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/planners/driver ; body head Checking session... | healthz=21732e8 | mutation=none | NEXT=dispatch.planning.truck
 Devin-A | LIVE STARVED | module=dispatch | leaf=planning.truck | URL=https://app.ih35dispatch.com/dispatch/planners/truck | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/planners/truck ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.planning.loads
+Devin-A | LIVE PASS | module=dispatch | leaf=planning.loads | URL=https://app.ih35dispatch.com/dispatch/planners/loads | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/planners/loads ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=7411f81 | mutation=none | NEXT=dispatch.planning.calendar
