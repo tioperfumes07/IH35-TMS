@@ -47,7 +47,7 @@ const ORDER = [
   "system",
 ];
 const ALLOWED = new Set(ORDER);
-const FORBIDDEN = new Set(["fuel", "eld"]);
+const FORBIDDEN = new Set(["eld"]);
 const URGENT6 = new Set(["accounting", "customers", "drivers", "vendors", "dispatch", "safety"]);
 const URGENT14 = new Set([
   "accounting", "customers", "drivers", "vendors", "dispatch", "safety",
