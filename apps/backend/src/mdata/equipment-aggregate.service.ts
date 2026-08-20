@@ -143,19 +143,24 @@ export async function buildEquipmentAggregate(
     }
   }
 
-  const maintUnitId = unitId;
   let maintenance = { open_wo_count: 0, next_pm_due: null as unknown, last_service: null as unknown, work_orders: [] as unknown[] };
-  if (maintUnitId) {
-    const woRes = await client.query<{ total: number }>(
-      `
-        SELECT COUNT(*)::int AS total
-        FROM maintenance.work_orders w
-        WHERE w.unit_id = $1::uuid
-          AND w.operating_company_id = $2::uuid
-          AND w.status NOT IN ('complete', 'completed', 'cancelled')
-      `,
-      [maintUnitId, operatingCompanyId]
-    );
+  // A trailer is the maintenance subject through maintenance.work_orders.equipment_id. Filtering
+  // through its currently attached power unit leaks that unit's work orders into this profile and
+  // makes an unattached trailer look falsely empty. Keep unit-only PM alerts contextual, but source
+  // work-order counts/history/links from the trailer FK itself.
+  const woRes = await client.query<{ total: number }>(
+    `
+      SELECT COUNT(*)::int AS total
+      FROM maintenance.work_orders w
+      WHERE w.equipment_id = $1::uuid
+        AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
+        AND w.status NOT IN ('complete', 'completed', 'cancelled')
+    `,
+    [equipmentId, operatingCompanyId]
+  );
+  let nextPmDue: Record<string, unknown> | null = null;
+  if (unitId) {
     const pmRes = await client.query(
       `
         SELECT ps.label, ps.next_due_odometer::int
@@ -167,40 +172,43 @@ export async function buildEquipmentAggregate(
         ORDER BY ps.next_due_odometer ASC NULLS LAST
         LIMIT 1
       `,
-      [maintUnitId, operatingCompanyId]
+      [unitId, operatingCompanyId]
     );
-    const lastRes = await client.query(
-      `
-        SELECT w.updated_at::text AS date, w.total_actual_cost AS cost
-        FROM maintenance.work_orders w
-        WHERE w.unit_id = $1::uuid
-          AND w.operating_company_id = $2::uuid
-          AND w.status IN ('complete', 'completed')
-        ORDER BY w.updated_at DESC NULLS LAST
-        LIMIT 1
-      `,
-      [maintUnitId, operatingCompanyId]
-    );
-    // Open WO list (id · display_id · status) so the profile can link each WO to its detail page.
-    const woListRes = await client.query(
-      `
-        SELECT w.id::text AS wo_id, w.display_id, w.status
-        FROM maintenance.work_orders w
-        WHERE w.unit_id = $1::uuid
-          AND w.operating_company_id = $2::uuid
-          AND w.status NOT IN ('complete', 'completed', 'cancelled')
-        ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
-        LIMIT 20
-      `,
-      [maintUnitId, operatingCompanyId]
-    );
-    maintenance = {
-      open_wo_count: Number(woRes.rows[0]?.total ?? 0),
-      next_pm_due: pmRes.rows[0] ?? null,
-      last_service: lastRes.rows[0] ?? null,
-      work_orders: woListRes.rows,
-    };
+    nextPmDue = pmRes.rows[0] ?? null;
   }
+  const lastRes = await client.query(
+    `
+      SELECT w.updated_at::text AS date, w.total_actual_cost AS cost
+      FROM maintenance.work_orders w
+      WHERE w.equipment_id = $1::uuid
+        AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
+        AND w.status IN ('complete', 'completed')
+      ORDER BY w.updated_at DESC NULLS LAST
+      LIMIT 1
+    `,
+    [equipmentId, operatingCompanyId]
+  );
+  // Open WO list (id · display_id · status) so the profile can link each WO to its detail page.
+  const woListRes = await client.query(
+    `
+      SELECT w.id::text AS wo_id, w.display_id, w.status
+      FROM maintenance.work_orders w
+      WHERE w.equipment_id = $1::uuid
+        AND w.operating_company_id = $2::uuid
+        AND w.voided_at IS NULL
+        AND w.status NOT IN ('complete', 'completed', 'cancelled')
+      ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
+      LIMIT 20
+    `,
+    [equipmentId, operatingCompanyId]
+  );
+  maintenance = {
+    open_wo_count: Number(woRes.rows[0]?.total ?? 0),
+    next_pm_due: nextPmDue,
+    last_service: lastRes.rows[0] ?? null,
+    work_orders: woListRes.rows,
+  };
 
   const platesRes = await client.query(
     `
