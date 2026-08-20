@@ -928,10 +928,11 @@ export function DriverDetailPage() {
             <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-800">
               <span className="rounded-sm bg-slate-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
               {driver.prior_driver_id ? (
-                <EntityLink
+                <EntityLinkOrTombstone
                   kind="driver"
                   id={driver.prior_driver_id}
-                  label="← View prior driver record"
+                  name={driver.prior_driver_name}
+                  noun="Driver"
                   className="text-xs font-semibold text-slate-700 hover:underline"
                   data-testid="driver-detail-prior-driver-link"
                 />
@@ -1266,7 +1267,13 @@ export function DriverDetailPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
                 <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-sm py-2">
-                  <EntityLink kind="driver" id={driver.prior_driver_id} label={entityLabel(driver.prior_driver_name, driver.prior_driver_id, "Driver")} />
+                  <EntityLinkOrTombstone
+                    kind="driver"
+                    id={driver.prior_driver_id}
+                    name={driver.prior_driver_name}
+                    noun="Driver"
+                    data-testid="driver-detail-prior-driver-field-link"
+                  />
                 </div>
               </div>
             ) : null}

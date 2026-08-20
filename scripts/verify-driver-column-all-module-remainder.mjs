@@ -55,7 +55,11 @@ export function verify(source) {
   need("driverRoutes", "prior.operating_company_id = mdata.drivers.operating_company_id", "flat detail prior-driver label lookup must remain company scoped");
   need("driverRoutes", "AS prior_driver_name", "flat detail response must resolve the prior driver name");
   need("apiTypes", "prior_driver_name: string | null", "Driver contract must type the prior driver name");
-  need("driverDetail", 'entityLabel(driver.prior_driver_name, driver.prior_driver_id, "Driver")', "mounted rehire self-link must consume the prior driver name");
+  need("driverDetail", 'data-testid="driver-detail-prior-driver-link"', "rehire banner prior-driver drill must remain mounted");
+  need("driverDetail", 'data-testid="driver-detail-prior-driver-field-link"', "rehire field prior-driver drill must remain mounted");
+  if ((source.driverDetail.match(/<EntityLinkOrTombstone[\s\S]{0,180}kind="driver"[\s\S]{0,180}id=\{driver\.prior_driver_id\}[\s\S]{0,180}name=\{driver\.prior_driver_name\}[\s\S]{0,120}noun="Driver"/g) ?? []).length < 2) {
+    failures.push("both mounted prior-driver consumers must bind the canonical nullable id+human label through EntityLinkOrTombstone");
+  }
 
   need("maintenancePage", "createMaintenanceDriver(companyId, {", "maintenance creator must forward company scope to the canonical client");
   need("maintenancePage", 'queryKey: ["maintenance", "master-data", "drivers", companyId]', "maintenance creator must reload the same scoped driver roster");
@@ -93,7 +97,9 @@ if (process.argv.includes("--selftest")) {
     ["driverRoutes", "prior.operating_company_id = mdata.drivers.operating_company_id"],
     ["driverRoutes", "AS prior_driver_name"],
     ["apiTypes", "prior_driver_name: string | null"],
-    ["driverDetail", 'entityLabel(driver.prior_driver_name, driver.prior_driver_id, "Driver")'],
+    ["driverDetail", 'data-testid="driver-detail-prior-driver-link"'],
+    ["driverDetail", 'data-testid="driver-detail-prior-driver-field-link"'],
+    ["driverDetail", "name={driver.prior_driver_name}"],
     ["maintenancePage", "createMaintenanceDriver(companyId, {"],
     ["maintenancePage", 'kind="driver"'],
     ["maintenanceApi", "/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
