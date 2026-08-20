@@ -1860,3 +1860,22 @@ FAILs, honestly surfacing the still-unresolved gap without unilaterally making t
 call (per-run vs per-employee) it's blocked on. Board closeout shipped in this same PR cycle.
 REMAINING: none for this finding -- the payroll data-model decision stays with the owner by design.
 Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T18:02Z CC-1 | ACCT-F5655 SHIPPED (PR #12998, merged da37caeb) -- dedicated double-entry
+balance/GL invariant audit, a fresh lens on money correctness. Two GL posters read a soft-delete-able
+money-line table without the exclusion filter ACCT-F156 already established as canonical. (1)
+buildInvoiceLines (posting-engine.service.ts) sums accounting.invoice_lines.line_total_cents in
+JavaScript -- no SQL SUM(), invisible to the SUM-pattern guard -- while recomputeInvoiceTotals already
+excludes soft-deleted lines from the invoice's own total_cents; a line removed from a draft invoice
+before send/post would still be booked to revenue and A/R, permanently overstating both (JE stays
+internally balanced, so nothing else catches it) -- A/R aging would show the invoice closed at $0 open
+after full payment while GL A/R keeps an uncollectable residual. (2) loadDriverBills
+(settlement-bill-payment-posting.service.ts) pulls driver bills through a settlement_lines subquery
+missing the is_active filter that 3 sibling ACCT-F156 fixes already applied elsewhere -- the one file
+that actually creates the driver's A/P bill and its GL was the residual miss. Both confirmed currently
+latent (0 soft-deleted invoice lines, no is_active=false writer exists yet) -- forward-looking fixes,
+no historical data-repair needed. Fixed both with a one-line addition of the already-canonical filter,
+no new GL math. Guard: tried generalizing the existing SUM-pattern matcher first, got 52 false
+positives, reverted, shipped a narrow dedicated guard instead. 134 tests across 21 files confirm no
+posting regression. Board closeout shipped in this same PR cycle. REMAINING: none for this finding.
+Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
