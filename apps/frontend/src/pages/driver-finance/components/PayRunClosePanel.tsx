@@ -324,6 +324,7 @@ export function PayRunClosePanel({
 
           <div className="grid grid-cols-2 gap-1 text-xs sm:grid-cols-3" data-testid="payrun-breakdown">
             <div>Gross {formatCents(result.breakdown.gross_cents)}</div>
+            <div>Reimbursements {formatCents(result.breakdown.reimbursements_cents)}</div>
             <div>Deductions {formatCents(result.breakdown.deductions_cents)}</div>
             <div>Advances {formatCents(result.breakdown.advance_recoveries_cents)}</div>
             <div>Chargebacks {formatCents(result.breakdown.chargebacks_cents)}</div>

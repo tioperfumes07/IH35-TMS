@@ -66,6 +66,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     insuranceRecovery: randomUUID(),
     advanceClearing: randomUUID(),
     chargebackRecovery: randomUUID(),
+    reimbursementExpense: randomUUID(),
     cash: randomUUID(),
   };
   // GLOBAL catalogs.account_role_bindings UNIQUE(role_key) — share lock with settlement-bill-payment +
@@ -75,6 +76,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     "insurance_recovery",
     "advance_recovery",
     "abandonment_chargeback_recovery",
+    "reimbursement_expense",
   ] as const;
   let priorGlobalBindings: SavedAccountRoleBinding[] = [];
   let priorCoaDesignations: SavedCoaRoleDesignation[] = [];
@@ -245,6 +247,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(acct.insuranceRecovery, `Insurance Recovery ${suffix}`, "Liability", null, null);
       await mkAcct(acct.advanceClearing, `Advance Clearing ${suffix}`, "Asset", null, null);
       await mkAcct(acct.chargebackRecovery, `Chargeback Recovery ${suffix}`, "Income", null, null);
+      await mkAcct(acct.reimbursementExpense, `Reimbursement Expense ${suffix}`, "Expense", null, null);
       await mkAcct(acct.cash, `Operating Cash ${suffix}`, "Asset", null, null);
       await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
       await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
@@ -257,11 +260,13 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await bind("insurance_recovery", acct.insuranceRecovery);
       await bind("advance_recovery", acct.advanceClearing);
       await bind("abandonment_chargeback_recovery", acct.chargebackRecovery);
+      await bind("reimbursement_expense", acct.reimbursementExpense);
       // PRIMARY designations — the tier closeSettlementPayRun resolves first after the CoA-resolver repoint.
       await designate("driver_pay_expense", acct.driverPay);
       await designate("insurance_recovery", acct.insuranceRecovery);
       await designate("advance_recovery", acct.advanceClearing);
       await designate("abandonment_chargeback_recovery", acct.chargebackRecovery);
+      await designate("reimbursement_expense", acct.reimbursementExpense);
       // owner-editable payment method pinned to the cash account
       await db.query(
         // canonical 0152 table is code-keyed (code + display_name), not `name`.
@@ -279,6 +284,14 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await seedDriverAndSettlement(below, 50_000); // below cap -> contributes 25000
       await seedDriverAndSettlement(atcap, CAP);    // at cap    -> contributes 0
       await seedDriverAndSettlement(off, 50_000);   // flag-off preview
+      // ACCT-F5613 — an active reimbursement line (50.00) plus an INACTIVE one (999.00, must be
+      // excluded by loadReimbursementsCents' is_active filter, same as the existing chargeback filter).
+      await db.query(
+        `INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, is_active)
+         VALUES ($1::uuid,'reimbursement','tolls/scales reimbursement',50.00,true),
+                ($1::uuid,'reimbursement','voided duplicate reimbursement',999.00,false)`,
+        [off.settlementId]
+      );
     });
   });
 
@@ -336,7 +349,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     try {
       await bypass(async () => {
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
-          [below.escrowSub, atcap.escrowSub, off.escrowSub, escrowParent, escrowGrandparent, acct.driverPay, acct.insuranceRecovery, acct.advanceClearing, acct.chargebackRecovery, acct.cash],
+          [below.escrowSub, atcap.escrowSub, off.escrowSub, escrowParent, escrowGrandparent, acct.driverPay, acct.insuranceRecovery, acct.advanceClearing, acct.chargebackRecovery, acct.reimbursementExpense, acct.cash],
         ]);
       });
     } catch (postRestoreCleanupErr) {
@@ -468,11 +481,18 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     expect(res.result).toBe("previewed");
     expect(res.posting_enabled).toBe(false);
     expect(res.journal_entry_id).toBeNull();
+    // ACCT-F5613 — the active $50.00 reimbursement is included; the INACTIVE $999.00 one is not
+    // (mirrors the is_active filter already proven on chargebacks).
+    expect(res.breakdown.reimbursements_cents).toBe(5000);
+    expect(res.breakdown.net_cents).toBe(210000); // 300000 + 5000 - 40000 - 25000 - 20000 - 10000
+    const reimbLeg = res.je_preview.find((l) => l.account_id === acct.reimbursementExpense);
+    expect(reimbLeg?.debit_or_credit).toBe("debit");
+    expect(reimbLeg?.amount_cents).toBe(5000);
     // preview legs balance
     const dr = res.je_preview.filter((l) => l.debit_or_credit === "debit").reduce((s, l) => s + l.amount_cents, 0);
     const cr = res.je_preview.filter((l) => l.debit_or_credit === "credit").reduce((s, l) => s + l.amount_cents, 0);
     expect(dr).toBe(cr);
-    expect(dr).toBe(300000);
+    expect(dr).toBe(305000); // gross 300000 + reimbursements 5000
     // NOTHING written
     const jes = await read<{ c: string }>(
       `SELECT count(*)::text AS c FROM accounting.journal_entries WHERE operating_company_id=$1::uuid AND memo LIKE $2`,
