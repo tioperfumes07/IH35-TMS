@@ -9824,3 +9824,6 @@ Idioma
 Ingles
 Espanol (preview)
 t | NEXT=leaf=maintenance:fault_rules.create:picker_law
+Devin-A | LIVE PASS | leaf=maintenance:fault_rules.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/fault-rules | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/fault-rules marker 'maintenance' | NEXT=leaf=maintenance:home.recent_activity:work_order
+Devin-A | LIVE PASS | leaf=maintenance:fault_rules.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/fault-rules | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/fault-rules marker 'maintenance' | NEXT=leaf=maintenance:home.recent_activity:work_order
+Devin-A | LIVE PASS | leaf=maintenance:fault_rules.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/fault-rules | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/fault-rules marker 'maintenance' | NEXT=leaf=maintenance:home.recent_activity:work_order
