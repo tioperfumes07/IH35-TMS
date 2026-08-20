@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
-import { EntityLink, type EntityKind } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import type { EntityKind } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export type OperationsColumn = {
   key: string;
@@ -77,9 +77,15 @@ function renderCell(row: OperationsRow, column: OperationsColumn) {
     const idValue = row[column.idKey ?? column.key];
     const id = idValue == null ? null : String(idValue);
     const labelValue = row[column.key];
-    const raw = labelValue === null || labelValue === undefined || labelValue === "" ? null : formatCell(labelValue);
-    const label = entityLabel(raw, id, linkNoun(column.entityKind)) ?? undefined;
-    return <EntityLink kind={column.entityKind} id={id} label={label} />;
+    const name = labelValue === null || labelValue === undefined || labelValue === "" ? null : formatCell(labelValue);
+    return (
+      <EntityLinkOrTombstone
+        kind={column.entityKind}
+        id={id}
+        name={name}
+        noun={linkNoun(column.entityKind)}
+      />
+    );
   }
   return formatCell(row[column.key]);
 }

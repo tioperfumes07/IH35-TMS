@@ -22,6 +22,7 @@ const SUB_VIEWS = [
 
 const BACKEND_DIR = "apps/backend/src/master-data/drivers/operations-depth";
 const PAGE_DIR = "apps/frontend/src/pages/drivers/operations";
+const TABLE = "apps/frontend/src/components/drivers/OperationsHistoryTable.tsx";
 
 function fail(message) {
   failures.push(message);
@@ -131,6 +132,15 @@ contains(`${PAGE_DIR}/FuelHistoryView.tsx`, fuelPage, [
   { pattern: /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/, label: "fuel unit renders human label over canonical id" },
   { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "fuel load renders human label over canonical id" },
 ]);
+const operationsTable = read(TABLE);
+contains(TABLE, operationsTable, [
+  { pattern: /import \{ EntityLinkOrTombstone \} from "\.\.\/shared\/EntityLinkOrTombstone"/, label: "shared operations cells import canonical tombstone-aware drill" },
+  { pattern: /<EntityLinkOrTombstone[\s\S]{0,160}kind=\{column\.entityKind\}[\s\S]{0,120}id=\{id\}[\s\S]{0,120}name=\{name\}[\s\S]{0,120}noun=\{linkNoun\(column\.entityKind\)\}/, label: "related FK cells suppress dead drills when scoped labels are unresolved" },
+]);
+const maintenanceSvc = read(`${BACKEND_DIR}/maintenance-assignments.service.ts`);
+contains(`${BACKEND_DIR}/maintenance-assignments.service.ts`, maintenanceSvc, [
+  { pattern: /NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/, label: "maintenance assignments project a human unit label without UUID fallback" },
+]);
 const documentsPage = read(`${PAGE_DIR}/DocumentsVaultView.tsx`);
 const documentsSvc = read(`${BACKEND_DIR}/documents-vault.service.ts`);
 contains(`${PAGE_DIR}/DocumentsVaultView.tsx`, documentsPage, [
@@ -155,6 +165,8 @@ if (process.argv.includes("--selftest")) {
     ["documents consumer drill", documentsPage.replace(', entityKind: "document", idKey: "file_id"', ""), /key:\s*"file_name"[\s\S]*entityKind:\s*"document"[\s\S]*idKey:\s*"file_id"/],
     ["documents producer label", documentsSvc.replace("f.original_filename AS file_name", "fl.file_id::text AS file_name"), /f\.original_filename AS file_name/],
     ["documents producer scope", documentsSvc.replaceAll("AND f.operating_company_id = $2::uuid", "AND f.id IS NOT NULL"), (source) => (source.match(documentsScopePredicate) ?? []).length >= 2],
+    ["shared unresolved related drill", operationsTable.replace("<EntityLinkOrTombstone", "<EntityLink"), /<EntityLinkOrTombstone[\s\S]{0,160}kind=\{column\.entityKind\}/],
+    ["maintenance raw UUID label", maintenanceSvc.replace("NULLIF(TRIM(u.unit_number), '') AS unit_number", "COALESCE(NULLIF(TRIM(u.unit_number), ''), a.unit_id::text) AS unit_number"), /NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/],
   ];
   const escaped = planted.filter(([, mutated, expected]) => typeof expected === "function" ? expected(mutated) : expected.test(mutated));
   if (escaped.length) {
