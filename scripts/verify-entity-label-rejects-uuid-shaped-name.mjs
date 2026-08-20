@@ -411,7 +411,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
     bad: /unit_display_id\s*\?\?\s*undefined|driver_display_name\s*\?\?\s*undefined|load_display_id\s*\?\?\s*undefined/,
-    good: /entityLabel\(\s*claim\.unit_display_id\s*,\s*claim\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLinkOrTombstone kind="unit" id=\{claim\.unit_id\} name=\{claim\.unit_display_id\} noun="Unit"/,
   },
   {
     // Code has migrated off a direct entityLabel() call to the governed EntityLinkOrTombstone
@@ -1415,7 +1415,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
     bad: /label=\{graph\.claim\.driver_id \? "Driver" : undefined\}/,
-    good: /entityLabel\(\s*graph\.claim\.driver_display_name\s*,\s*graph\.claim\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /<EntityLinkOrTombstone kind="driver" id=\{graph\.claim\.driver_id\} name=\{graph\.claim\.driver_display_name\} noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
@@ -1698,7 +1698,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
     bad: /label=\{graph\.claim\.load_id \? "Load"|label=\{graph\.claim\.unit_id \? "Unit"/,
-    good: /entityLabel\(\s*graph\.claim\.load_display_id\s*,\s*graph\.claim\.load_id\s*,\s*"Load"\s*\)/,
+    good: /<EntityLinkOrTombstone kind="load" id=\{graph\.claim\.load_id\} name=\{graph\.claim\.load_display_id\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/PaymentApplyModal.tsx",
