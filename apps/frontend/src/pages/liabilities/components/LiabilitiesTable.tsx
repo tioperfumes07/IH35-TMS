@@ -38,7 +38,15 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
     {
       key: "id",
       label: "Display ID",
-      render: (row) => <EntityLink kind="liability" id={String(row.id)} label={entityLabel(null, row.id, "Liability")} data-testid="liability-roster-record-link" />,
+      // ACCT-F5615 — driver_finance.driver_liabilities has no display_id column (confirmed against
+      // its own DDL, 0138_p8b_j_pr3_driver_finance_stack.sql), so passing null here fed entityLabel's
+      // id-no-name branch a row.id that ALWAYS resolves (it's the row's own PK, never a failed join) --
+      // every liability on this roster rendered the literal fallback text "Liability — not visible",
+      // the exact false-tombstone symptom entityLabel's own header warns against, misapplied to a
+      // record that unambiguously exists. Fixed by passing row.type as the name, mirroring the
+      // identical, already-correct pattern DriverSettlementFinanceReverseSection.tsx already uses for
+      // this same table (entityLabel(l.type, id, "Liability")).
+      render: (row) => <EntityLink kind="liability" id={String(row.id)} label={entityLabel(row.type as string | null, row.id, "Liability")} data-testid="liability-roster-record-link" />,
     },
     {
       key: "driver_full_name",
