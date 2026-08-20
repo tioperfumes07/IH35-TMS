@@ -10637,3 +10637,25 @@ Devin-A | LIVE PASS | leaf=users:create:connectivity | USMCA | URL=https://app.i
 Devin-A | LIVE PASS | leaf=users:create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/users | healthz=a6a23cc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/users marker 'users' | NEXT=leaf=users:deactivate:connectivity
 Devin-A | LIVE PASS | leaf=users:deactivate:connectivity | USMCA | URL=https://app.ih35dispatch.com/users | healthz=a6a23cc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/users marker 'users' | NEXT=leaf=users:detail:connectivity
 Devin-A | LIVE PASS | leaf=users:detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/users/:id | healthz=a6a23cc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/users/:id marker 'User' | NEXT=leaf=users:detail.drawer.dispatcher_safety_event:connectivity
+Devin-A | LIVE STARVED | leaf=users:detail.drawer.dispatcher_safety_event:connectivity | USMCA | URL=https://app.ih35dispatch.com/users/:id | healthz=a6a23cc | mutation=none | evidence=No marker at https://app.ih35dispatch.com/users/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=users:kpi:connectivity
+Devin-A | LIVE STARVED | leaf=users:detail.drawer.dispatcher_safety_event:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/users/:id | healthz=a6a23cc | mutation=none | evidence=No marker at https://app.ih35dispatch.com/users/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=users:kpi:connectivity
