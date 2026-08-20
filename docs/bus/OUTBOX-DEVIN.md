@@ -9869,3 +9869,6 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=maintenance:pm.auto_engine.run:unit
+Devin-A | LIVE PASS | leaf=maintenance:pm.auto_engine.run:unit | USMCA | URL=https://app.ih35dispatch.com/maintenance/pm-auto-engine | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/pm-auto-engine marker 'PM Auto Engine' | NEXT=leaf=maintenance:severe_repairs.convert_to_wo:unit
+Devin-A | LIVE PASS | leaf=maintenance:pm.auto_engine.run:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/pm-auto-engine | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/pm-auto-engine marker 'PM Auto Engine' | NEXT=leaf=maintenance:severe_repairs.convert_to_wo:unit
+Devin-A | LIVE PASS | leaf=maintenance:pm.auto_engine.run:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/pm-auto-engine | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/pm-auto-engine marker 'PM Auto Engine' | NEXT=leaf=maintenance:severe_repairs.convert_to_wo:unit
