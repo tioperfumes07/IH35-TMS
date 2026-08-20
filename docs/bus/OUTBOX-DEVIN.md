@@ -10901,3 +10901,36 @@ FAQ | NEXT=leaf=customers:detail.coi:customer
 Devin-A | LIVE STARVED | leaf=customers:detail.coi:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=7e9d976 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=coi healthz=7e9d976 head Checking session... | NEXT=leaf=customers:detail.fmcsa_verify:customer
 Devin-A | LIVE STARVED | leaf=customers:detail.coi:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=7e9d976 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=coi healthz=7e9d976 head Checking session... | NEXT=leaf=customers:detail.fmcsa_verify:customer
 Devin-A | LIVE STARVED | leaf=customers:detail.coi:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=7e9d976 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=coi healthz=7e9d976 head Checking session... | NEXT=leaf=customers:detail.fmcsa_verify:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=7e9d976 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=7e9d976 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=7e9d976 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:customer
