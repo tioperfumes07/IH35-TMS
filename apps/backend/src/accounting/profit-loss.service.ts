@@ -79,6 +79,20 @@ export async function getProfitLossReport(input: {
         WHERE p.operating_company_id = $1::uuid
           AND je.status <> 'voided'
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))${dateSql}
+          -- ACCT-F5656 — a period-close's own closing entry zeroes every revenue/expense account by
+          -- posting the mirror-image of that period's activity (Dr revenue / Cr expense, net to
+          -- Retained Earnings), dated on the closed period's own last day. Without this exclusion
+          -- (matching balance-sheet.service.ts's already-established pattern for the same JE), a P&L
+          -- run for a date range spanning a closed period's close date nets the original activity
+          -- against the closing entry's own zeroing postings — collapsing that period's revenue and
+          -- expense to roughly zero instead of showing what was actually earned/spent. Currently
+          -- latent (no period has been closed on any entity yet), armed for the first close.
+          AND je.id NOT IN (
+            SELECT ap.retained_earnings_entry_id
+            FROM accounting.periods ap
+            WHERE ap.operating_company_id = $1::uuid
+              AND ap.retained_earnings_entry_id IS NOT NULL
+          )
         GROUP BY a.id, a.account_number, a.account_name, a.account_type
         ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
       `,

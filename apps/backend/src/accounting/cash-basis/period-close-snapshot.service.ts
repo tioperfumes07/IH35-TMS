@@ -119,6 +119,16 @@ async function buildAccrualBalanceSheet(client: DbClient, input: { operatingComp
         AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
         AND je.entry_date <= $2::date
         AND a.account_type IN ('Asset', 'Liability', 'Equity')
+        -- ACCT-F5656 — must exclude the retained-earnings closing entry the SAME way the earnings
+        -- query below already does; see balance-sheet.service.ts's identical fix for the full
+        -- explanation of the double-count this prevents. Currently latent (no period has been closed
+        -- on any entity yet), armed for the first close.
+        AND je.id NOT IN (
+          SELECT ap.retained_earnings_entry_id
+          FROM accounting.periods ap
+          WHERE ap.operating_company_id = $1::uuid
+            AND ap.retained_earnings_entry_id IS NOT NULL
+        )
       GROUP BY p.account_id, a.account_number, a.account_name, a.account_type
       ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
     `,

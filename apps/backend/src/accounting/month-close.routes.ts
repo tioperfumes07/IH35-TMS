@@ -80,6 +80,8 @@ export async function registerMonthCloseRoutes(app: FastifyInstance) {
       if (message === "period_not_found") return reply.code(404).send({ error: "period_not_found" });
       if (message === "period_not_open") return reply.code(409).send({ error: "period_not_open" });
       if (message === "checklist_incomplete") return reply.code(409).send({ error: "checklist_incomplete" });
+      // ACCT-F5656 — mirrors the sibling /periods/:id/close route's own mapping for the same error.
+      if (message === "period_close_disabled") return reply.code(409).send({ error: "period_close_disabled" });
       if (message.includes("IH35_CLOSED_PERIOD")) return reply.code(423).send({ error: "period_locked", message });
       throw error;
     }
