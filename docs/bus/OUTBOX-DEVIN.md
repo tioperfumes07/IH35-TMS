@@ -7064,3 +7064,17 @@ Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.tire_catalog.list:qbo_chrom
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.tire_catalog.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/tire-catalog | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/maintenance/tire-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.trailer_parts.create:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.trailer_parts.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/trailer-parts | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/maintenance/trailer-parts marker 'lists' | NEXT=leaf=lists:catalog.maintenance.work_order_statuses.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.trailer_parts.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/trailer-parts | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/maintenance/trailer-parts marker 'lists' | NEXT=leaf=lists:catalog.maintenance.work_order_statuses.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.work_order_statuses.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/work-order-statuses | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/work-order-statuses healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.names_master.brokers.create:connectivity
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.work_order_statuses.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/work-order-statuses | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/work-order-statuses healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.names_master.brokers.create:connectivity
