@@ -5063,3 +5063,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=fleet:fleet.modal.status_change:connectivity
+Devin-A | LIVE PASS | leaf=fleet:fleet.modal.status_change:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet | healthz=6f50d5d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet marker 'fleet' | NEXT=leaf=fleet:home.create_trailer:trailer
+Devin-A | LIVE PASS | leaf=fleet:fleet.modal.status_change:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet | healthz=6f50d5d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet marker 'fleet' | NEXT=leaf=fleet:home.create_trailer:trailer
