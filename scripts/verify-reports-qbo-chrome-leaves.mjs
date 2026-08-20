@@ -15,8 +15,12 @@
  *     mount, a real CustomReportBuilder toggle, and an honest "never fabricate counts" KPI pattern
  *     (shows "—" while loading, not a fake 0).
  *   - filter.all / filter.operations / filter.financial / filter.drivers / filter.fleet /
- *     filter.fuel / filter.safety / filter.compliance / filter.automation: CategoryHoverNav.tsx's
- *     real CATEGORIES config array, all 9 ids present with real labels.
+ *     filter.fuel / filter.safety / filter.compliance / filter.automation / filter.saved:
+ *     CategoryHoverNav.tsx's real CATEGORIES config array, all 10 ids present with real labels.
+ *     2026-08-21 (CC-3, WAVE 3 straggler-check): filter.saved was omitted from this guard's own
+ *     id-check list even though CategoryHoverNav.tsx already had a real `{ id: "saved", label:
+ *     "Saved" }` entry in the identical array as the other 9 — a guard-tag omission, not a missing
+ *     feature.
  *   - home.hub: ReportsHub.tsx — real "9 categories with hover-dropdown navigation" PageHeader +
  *     real category iteration.
  *   - subnav.reports / subnav.category_hub / subnav.run_report / subnav.cancellations /
@@ -37,7 +41,7 @@
  *     PageHeader.
  *
  * @matrix-built {"modules":["reports"],"cols":["qbo_chrome"],"leafRe":"^home\\.(reports|custom_builder|kpi_strip|hub)$","task":"VERTICAL-QBO-CHROME-reports-home","vertical":"column-wave"}
- * @matrix-built {"modules":["reports"],"cols":["qbo_chrome"],"leafRe":"^filter\\.(all|operations|financial|drivers|fleet|fuel|safety|compliance|automation)$","task":"VERTICAL-QBO-CHROME-reports-filter","vertical":"column-wave"}
+ * @matrix-built {"modules":["reports"],"cols":["qbo_chrome"],"leafRe":"^filter\\.(all|operations|financial|drivers|fleet|fuel|safety|compliance|automation|saved)$","task":"VERTICAL-QBO-CHROME-reports-filter","vertical":"column-wave"}
  * @matrix-built {"modules":["reports"],"cols":["qbo_chrome"],"leafRe":"^subnav\\.(reports|category_hub|run_report|cancellations|scheduled_custom)$","task":"VERTICAL-QBO-CHROME-reports-subnav","vertical":"column-wave"}
  * @matrix-built {"modules":["reports"],"cols":["qbo_chrome"],"leafRe":"^cat\\.(ops_dispatch|driver_perf|equipment|safety|customers|vendors|accounting|tax_reg|multi_company)$","task":"VERTICAL-QBO-CHROME-reports-categories","vertical":"column-wave"}
  * @matrix-built {"modules":["reports"],"cols":["qbo_chrome"],"leafRe":"^runner\\.","task":"VERTICAL-QBO-CHROME-reports-runners","vertical":"column-wave"}
@@ -99,7 +103,7 @@ export function audit(opts = {}) {
   if (!/never fabricate counts/.test(reportsHome)) failures.push("ReportsHome missing the honest KPI no-fabrication guarantee");
 
   const categoryHoverNav = opts.categoryHoverNav ?? read("apps/frontend/src/components/reports/CategoryHoverNav.tsx");
-  for (const id of ["all", "operations", "financial", "drivers", "fleet", "fuel", "safety", "compliance", "automation"]) {
+  for (const id of ["all", "operations", "financial", "drivers", "fleet", "fuel", "safety", "compliance", "automation", "saved"]) {
     if (!new RegExp(`id:\\s*"${id}"`).test(categoryHoverNav)) failures.push(`CategoryHoverNav missing real "${id}" category entry`);
   }
 
@@ -200,4 +204,4 @@ if (result.failures.length) {
   for (const f of result.failures) console.error(" -", f);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — shared shells + ${REPORT_PAGE_FILES.length} report pages chrome-ok · 72 reports qbo_chrome leaf asserts`);
+console.log(`${LABEL} PASS — shared shells + ${REPORT_PAGE_FILES.length} report pages chrome-ok · 73 reports qbo_chrome leaf asserts`);
