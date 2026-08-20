@@ -12266,3 +12266,7 @@ Espanol (preview)
 6
 tioperfume | NEXT=leaf=home:role.default:connectivity
 Devin-A | LIVE STARVED | leaf=home:role.default:connectivity | USMCA | URL=https://app.ih35dispatch.com/home | healthz=5e4cae0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/home healthz=5e4cae0 head Checking session... | NEXT=leaf=home:role.dispatcher:unit
+Devin-A | LIVE PASS | leaf=home:role.dispatcher:unit | USMCA | URL=https://app.ih35dispatch.com/home | healthz=5e4cae0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/home marker 'home' | NEXT=leaf=home:surface.quick_actions:connectivity
+Devin-A | LIVE PASS | leaf=home:role.dispatcher:load | USMCA | URL=https://app.ih35dispatch.com/home | healthz=5e4cae0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/home marker 'home' | NEXT=leaf=home:surface.quick_actions:connectivity
+Devin-A | LIVE PASS | leaf=home:role.dispatcher:connectivity | USMCA | URL=https://app.ih35dispatch.com/home | healthz=5e4cae0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/home marker 'home' | NEXT=leaf=home:surface.quick_actions:connectivity
+Devin-A | LIVE PASS | leaf=home:role.dispatcher:customer | USMCA | URL=https://app.ih35dispatch.com/home | healthz=5e4cae0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/home marker 'home' | NEXT=leaf=home:surface.quick_actions:connectivity
