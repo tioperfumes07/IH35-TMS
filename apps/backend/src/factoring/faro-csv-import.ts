@@ -287,7 +287,8 @@ async function applyInvoiceAndReserveUpdates(
   client: Queryable,
   companyId: string,
   lines: FaroCsvLine[],
-  factorId: string | null
+  factorId: string | null,
+  postingEnabled: boolean
 ) {
   let invoices_updated = 0;
   let reserve_movements = 0;
@@ -307,7 +308,14 @@ async function applyInvoiceAndReserveUpdates(
     );
     if (invoiceRes.rows[0]) invoices_updated += 1;
 
-    if (line.reserve_amount_cents > 0) {
+    // ACCT-F5614 — honest flag-OFF = ZERO financial rows written (the same "TIER-1 FINANCIAL,
+    // BUILD-AND-HOLD" law this codebase enforces everywhere else, e.g.
+    // settlement-payrun-close.service.ts's own header). This write previously ran unconditionally
+    // on EVERY CSV line regardless of FACTORING_GL_POSTING_FLAG, so factoring.reserve_movement /
+    // factoring.v_factor_reserve_balance (served live via GET /factoring/reserve-balance) could show
+    // a real, non-zero reserve figure with ZERO corresponding GL entry the moment an entity's flag
+    // was OFF -- indistinguishable from a genuine posted reserve to anyone reading that screen.
+    if (line.reserve_amount_cents > 0 && postingEnabled) {
       await postReserveMovement(null, companyId, "credit", line.reserve_amount_cents, `faro_csv:${line.invoice_number}`, {
         client,
         factorId,
@@ -495,16 +503,19 @@ export async function commitFaroCsvImport(input: {
         notes: "Imported via Faro CSV upload (P5-T22)",
         lines: parsed.lines,
       });
+      // Read the posting flag BEFORE the invoice/reserve side effects so the reserve-movement write
+      // can honor it -- see ACCT-F5614 comment on applyInvoiceAndReserveUpdates.
+      const enabled = await isEnabled(client, FACTORING_GL_POSTING_FLAG, {
+        operating_company_id: input.operatingCompanyId,
+      });
       const effects = await applyInvoiceAndReserveUpdates(
         client,
         input.operatingCompanyId,
         parsed.lines,
-        factorId
+        factorId,
+        enabled
       );
       const actuals = await aggregateFaroActualsByAdvance(client, input.operatingCompanyId, parsed.lines);
-      const enabled = await isEnabled(client, FACTORING_GL_POSTING_FLAG, {
-        operating_company_id: input.operatingCompanyId,
-      });
       return {
         importResult,
         sideEffects: effects,

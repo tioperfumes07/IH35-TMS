@@ -6,6 +6,7 @@ import {
   parseMoneyToCents,
   resolveFaroCsvStatementDate,
 } from "./faro-csv-import.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 const SAMPLE_CSV = `Invoice Number,Customer Name,Gross,Advance,Reserve,Fee,Chargeback,Net,Due Date
 INV-2026-00001,Acme Freight,1000.00,950.00,50.00,25.00,0.00,925.00,2026-06-15
@@ -211,6 +212,22 @@ describe("commitFaroCsvImport", () => {
     expect(result.invoices_updated).toBeGreaterThan(0);
     expect(result.reserve_movements).toBeGreaterThan(0);
     expect(upsertOnClientMock).toHaveBeenCalled();
+  });
+
+  // ACCT-F5614 — flag OFF must write ZERO financial rows, including factoring.reserve_movement
+  // (previously written unconditionally regardless of FACTORING_GL_POSTING_FLAG, so the reserve
+  // balance screen could show a real, non-zero figure with no corresponding GL entry).
+  it("flag OFF: invoices still update, but ZERO reserve movements are written (honest flag-off)", async () => {
+    vi.mocked(isEnabled).mockResolvedValueOnce(false);
+    const result = await commitFaroCsvImport({
+      userId: "user-1",
+      operatingCompanyId: "11111111-1111-4111-8111-111111111111",
+      csvText: SAMPLE_CSV,
+      statementDate: "2026-06-04",
+    });
+    expect(result.invoices_updated).toBeGreaterThan(0);
+    expect(result.reserve_movements).toBe(0);
+    expect(result.factoring_gl_posting_enabled).toBe(false);
   });
 
   it("rejected Faro agreement leaves zero durable CSV rows (no upsert)", async () => {
