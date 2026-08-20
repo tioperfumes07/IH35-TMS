@@ -1511,6 +1511,19 @@ raw-uuid surface of exactly the kind the click-prove sweep targets.
 family as SETTLEMENT-LOAD-COUNT-IGNORES-DIRECT-LINK (`768b4b8e0`): **the direct `settlement_lines.load_id`
 linkage is not being read by the surfaces that need it.**
 
+**CLOSED (CC-1 2026-08-20, board-hygiene re-verify, no new PR needed) — both defects on this row are FIXED
+on current `origin/main`.** Live-read `apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx`
+directly rather than trusting an unreferenced "OPEN" header: (1) the load-bookend resolver (`:156-171`)
+now threads `first_load_number`/`last_load_number` alongside their ids, so `LOADS IN CYCLE` no longer
+prints a raw uuid fragment — the exact DoD this row asked for. (2) the earnings line mapper (`:194`)
+now carries `load_number` on every line, so the EARNINGS `LOAD` cell resolves a real load number instead
+of the "Load — not visible" tombstone; confirmed the literal string no longer appears anywhere in this
+file. This appears to have landed as part of `SETTLEMENT-DETAIL-LOAD-COALESCE-DRIFT`'s own closeout
+(`FIXED PR #5877, ACCT-F356`, a few rows below) — same screen, same underlying COALESCE-the-load-through-
+driver_bills fix, filed under a different id before this row was ever re-checked. No separate PR needed;
+recording the closure here so this "OPEN" header stops reading as live work. | `scripts/verify-*` coverage
+already exercised by ACCT-F356's own guard | **CLOSED — superseded by ACCT-F356 (PR #5877)** |
+
 **ASK:** render `first_load_number` / `last_load_number` (falling back to a resolved lookup only if NULL), and
 resolve the earnings `LOAD` cell from `settlement_lines.load_id`. **Do not display a bare UUID to a user.**
 | **FIXED (Cursor · this PR)** `LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES` — **`showMaintenanceColumns` no longer controls the Unit cell: both branches of the ternary are byte-identical, so the documented base-mode behaviour is gone** | — | C | **FE / product owner — CC-2 did NOT silently restore it** | **FOUND WHILE FIXING A TEST, verified in source.** `apps/frontend/src/components/FleetTable.tsx:550-561` renders `{showMaintenanceColumns ? (<td …><Link …>{unit}</Link></td>) : (<td …><Link …>{unit}</Link></td>)}` — **the two branches are identical**, so the flag is dead for this cell. The component's OWN comment at `:44-48` documents the intended split: *"When true, render the 3 maintenance columns …, the Unit `<Link>`, and the CSV export. /fleet (FleetHomePage) does NOT pass this → it renders IDENTICALLY to before (8 registry cols + Edit, **Unit plain text, row-click**)."* Base mode is no longer plain text. Nobody writes an if/else with identical branches on purpose — this reads as a copy-paste that silently erased the distinction. **★ WHY I DID NOT 'FIX' IT:** restoring plain text would DELETE a working drill-through (cmd-click / open-in-new-tab) that users may already rely on — a removal, which §7 additive-only forbids without an owner say-so. Making the Unit a link everywhere may well be the BETTER product (it matches §10 total connectivity); if so the stale comment should be corrected instead. **Either way the identical ternary should not survive** — it is either a lost feature flag or dead code pretending to be a conditional. **WHAT I DID:** updated `FleetTable.test.tsx` to assert what the component actually guarantees — the Unit cell IS a link, and it navigates BY KIND (`/fleet/units/:id` vs `/fleet/trailers/:id`) — asserted on the link's `href`, since the cell stops propagation so the old `navigate()` spy no longer fires. The real invariants (no maintenance columns in base mode; kind-correct destination) are still enforced. **NOT CLAIMED:** which behaviour is intended. That is the ruling I am asking for. | — | **FIXED (Cursor · step 3652)** — base Unit plain text; maintenance Link; arms diverge|
