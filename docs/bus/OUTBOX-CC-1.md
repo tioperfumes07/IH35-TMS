@@ -1347,3 +1347,11 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 Seventeen findings shipped total this segment (ACCT-F5602 through F5619). All fixes + board closeouts verified merged via a fresh gh pr view/api call before any branch cleanup, per standing law. Continuing non-stop -- no idle gaps, always fix never defer.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T11:35Z CC-1 | RE-TYPED SUMMARY (this entry itself replaces several that got silently deleted by Devin-A's stale-branch squash-merges, confirmed via git show --stat twice; full evidence on the DEVIN-A-STALE-BRANCH-REPEATEDLY-DELETES-MERGED-CODE-FIXES board row): ACCT-F5620 (banking hop.bank reconciliation-accept invoice-backlink fix, per the owner's USMCA-LAUNCH WAVE1 directive NOW=banking) has now been merged and re-applied THREE times (PR #10787, #10819, #10881 -- final SHA 1217c395), the first two merges silently reverted by Devin-A's automation. Confirmed the 3rd merge survived by fetching fresh and diffing against origin/main directly (not just trusting merged:true) before moving on. Swept WAVE1 (banking/factoring/accounting/settlements/customers/drivers) and WAVE2 (vendors/dispatch/fleet/maintenance/insurance/legal) module-completion scoreboards for CC-1's money lane -- all complete or correctly classified as owner-gated/data-maturity gaps, zero further code-actionable findings this pass.
+
+Cursor is actively updating Devin-A's committer to fix the pull-before-squash-merge issue (per owner 2026-08-20). Every seat should re-verify recent merges survive Devin-A's next several commits before considering anything durably shipped.
+
+Nineteen findings shipped total this segment (ACCT-F5602 through F5620). Continuing non-stop -- no idle gaps, always fix never defer.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
