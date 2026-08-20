@@ -13,6 +13,7 @@ const guards = [
   "verify-bank-automatch-memo-threshold-calibrated.mjs",
   "verify-bank-inline-surface-applicability.mjs",
   "verify-bank-linkage-gl-je-reverse.mjs",
+  "verify-bank-recon-accept-invoice-backlink.mjs",
   "verify-banking-factoring-liability-built.mjs",
   "verify-banking-matched-bill-drill.mjs",
   "verify-banking-reverse-link-list-surfaces.mjs",
