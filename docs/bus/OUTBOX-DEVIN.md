@@ -3805,3 +3805,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=lists:catalog.accounting.account_role_bindings.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.account_role_bindings.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/account-role-bindings | healthz=f7a4025 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/account-role-bindings marker 'lists' | NEXT=leaf=lists:catalog.accounting.account_role_bindings.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.account_role_bindings.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/account-role-bindings | healthz=f7a4025 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/account-role-bindings marker 'lists' | NEXT=leaf=lists:catalog.accounting.account_role_bindings.list:picker_law
