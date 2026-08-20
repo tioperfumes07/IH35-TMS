@@ -35,7 +35,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { createJournalEntry } from "../accounting/journal-entries.service.js";
+import { createJournalEntry, enqueueJournalEntrySideEffects, type CreateJournalEntryInput } from "../accounting/journal-entries.service.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import {
   DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS,
@@ -354,7 +354,13 @@ export async function closeSettlementPayRun(
           isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, { operating_company_id: opco, user_uuid: actor.userId })
         );
 
-  return scoped(actor, opco, async (client) => {
+  // ACCT-F5652 — deferred JE side-effects (QBO sync-job enqueue + immediate best-effort push) travel
+  // out via an extra field on the scoped callback's own return value (stripped before the public
+  // return below), rather than a `let` reassigned inside the closure — TypeScript's narrowing does not
+  // reliably widen a `let` back to its declared union type across an intervening callback boundary, so
+  // routing it through the return value avoids that pitfall entirely. See the createJournalEntry call
+  // further down for why the side effects must be deferred at all.
+  const scopedResult = await scoped(actor, opco, async (client) => {
     const settlement = await loadSettlement(client, opco, settlementId);
     if (settlement.locked_at == null && !POSTABLE_STATUSES.has(settlement.status)) {
       throw new SettlementPayRunError(
@@ -655,15 +661,30 @@ export async function closeSettlementPayRun(
       });
     }
 
+    // ACCT-F5652 — closeSettlementPayRun runs its ENTIRE body inside one caller-owned transaction on
+    // `client` (this connection), already holding `FOR UPDATE` locks (loadSettlement,
+    // loadRecoverableAdvances) and an uncommitted `payrun_gl_runs` idempotency claim + driver_advances
+    // recovery stamps. Calling `createJournalEntry` without a client previously opened a SECOND,
+    // independent connection that BEGINs, inserts, and COMMITs the JE on its own — a permanently-posted
+    // JE that survives even if THIS connection later rolls back (any failure in the escrow posting,
+    // disbursement recording, or audit insert below undoes the payrun_gl_runs claim, but not the
+    // already-committed JE). Because the idempotency claim rolls back with this connection, a natural
+    // retry after such a failure would find no existing run and post a SECOND balanced JE for the same
+    // settlement — an unguarded double-post. Fixed the same way ACCT-F5643/F5644/F5645/F5651 fixed this
+    // exact non-atomic-second-connection class elsewhere in this codebase: post on THIS connection via
+    // `client` + `suppressSideEffects`, then explicitly run the JE's QBO sync-job/push side effects AFTER
+    // this transaction commits (mirroring factoring-posting/poster.service.ts's own funding-path pattern).
+    const jeInput: CreateJournalEntryInput = {
+      operating_company_id: opco,
+      entry_date: settlement.period_end,
+      memo: `${label} — pay-run close (net ${netCents}c)`,
+      source: "auto",
+      postings: legs.map((l) => ({ account_id: l.account_id, debit_or_credit: l.debit_or_credit, amount_cents: l.amount_cents, description: l.description })),
+    };
     const je = await createJournalEntry(
-      {
-        operating_company_id: opco,
-        entry_date: settlement.period_end,
-        memo: `${label} — pay-run close (net ${netCents}c)`,
-        source: "auto",
-        postings: legs.map((l) => ({ account_id: l.account_id, debit_or_credit: l.debit_or_credit, amount_cents: l.amount_cents, description: l.description })),
-      },
-      { userId: actor.userId, role: "system" }
+      jeInput,
+      { userId: actor.userId, role: "system" },
+      { client, suppressSideEffects: true }
     );
 
     // Stamp the posted JE id onto the pay-run GL-run anchor (the anchor was claimed above; this records the
@@ -734,8 +755,26 @@ export async function closeSettlementPayRun(
       recovered_advance_ids: recoveredIds,
       je_preview: legs,
       disbursement: { recorded: disbursementRecorded, payment_method_id: paymentMethod?.id ?? null, payment_method_name: paymentMethod?.name ?? null },
+      __freshJeInput: jeInput,
+      __freshJeId: je.id,
     };
   });
+
+  // ACCT-F5652 — run the freshly-posted JE's QBO sync-job/push side effects only now, AFTER the
+  // transaction above has committed, so a rolled-back JE (this branch never ran) never leaves a sync
+  // job or QBO push artifact behind, and a JE that WAS committed always gets its side effects queued
+  // exactly once. `__freshJeInput`/`__freshJeId` are only present on the fresh-post branch — every
+  // early-return path (flag-off, preview, already-posted read-back) omits them, so a retry that hits
+  // the idempotency claim never re-enqueues.
+  const { __freshJeInput, __freshJeId, ...result } = scopedResult as SettlementPayRunResult & {
+    __freshJeInput?: CreateJournalEntryInput;
+    __freshJeId?: string;
+  };
+  if (__freshJeInput && __freshJeId) {
+    await enqueueJournalEntrySideEffects(__freshJeInput, __freshJeId, actor.userId);
+  }
+
+  return result;
 }
 
 /** Record the escrow contribution to the per-driver ledger ('hold') + refresh the running-balance summary. */

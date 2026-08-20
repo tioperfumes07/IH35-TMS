@@ -110,6 +110,7 @@ const guards = [
   "verify-safety-required-money-honest.mjs",
   "verify-scenario-ap-insurance-honest.mjs",
   "verify-settlement-dispute-adjustment-lines-and-aggregation.mjs",
+  "verify-settlement-payrun-close-je-atomic.mjs",
   "verify-settlement-dispute-corrective-je-atomic.mjs",
   "verify-settlement-dispute-corrective-je-coa-role.mjs",
   "verify-settlement-dispute-driver-self-ownership.mjs",
