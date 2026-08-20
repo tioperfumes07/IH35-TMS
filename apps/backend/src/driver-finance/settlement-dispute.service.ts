@@ -1,6 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
-import { createJournalEntry } from "../accounting/journal-entries.service.js";
+import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { SETTLEMENT_GL_POSTING_FLAG_KEY } from "../accounting/settlement-posting/settlement-posting.math.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -59,53 +59,67 @@ async function pickCorrectionAccounts(client: any, operatingCompanyId: string) {
   return { debitAccountId, creditAccountId };
 }
 
-export async function createCorrectiveJournalEntry(params: {
-  actorUserId: string;
-  actorRole: string;
-  operatingCompanyId: string;
-  disputeId: string;
-  settlementId: string;
-  amountCents: number;
-  resolutionNotes: string;
-}) {
-  return withCurrentUser(params.actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [params.operatingCompanyId]);
-    // FLAG GATE — OFF => post NOTHING (checked BEFORE any account read / JE insert), mirroring
-    // settlement-posting.service.ts. This corrective JE previously posted UNGATED, so with
-    // SETTLEMENT_GL_POSTING_ENABLED ON in prod it went live regardless of intent. Honor per-entity
-    // overrides via isEnabled(); when OFF the dispute still resolves, resolution_journal_entry_id stays null.
-    const flagOn = await isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, {
-      operating_company_id: params.operatingCompanyId,
-      user_uuid: params.actorUserId,
-    });
-    if (!flagOn) return null;
-    const accounts = await pickCorrectionAccounts(client, params.operatingCompanyId);
-    const today = new Date().toISOString().slice(0, 10);
-    const je = await createJournalEntry(
-      {
-        operating_company_id: params.operatingCompanyId,
-        entry_date: today,
-        memo: `Settlement dispute correction ${params.disputeId}: ${params.resolutionNotes.slice(0, 120)}`,
-        source: "auto",
-        postings: [
-          {
-            account_id: accounts.debitAccountId,
-            debit_or_credit: "debit",
-            amount_cents: params.amountCents,
-            description: `Settlement dispute ${params.disputeId} correction debit`,
-          },
-          {
-            account_id: accounts.creditAccountId,
-            debit_or_credit: "credit",
-            amount_cents: params.amountCents,
-            description: `Settlement dispute ${params.disputeId} correction credit`,
-          },
-        ],
-      },
-      { userId: params.actorUserId, role: params.actorRole }
-    );
-    return je.id;
+/**
+ * ACCT-F5643 — takes the CALLER'S client (not its own withCurrentUser connection). Every call site
+ * (resolveDispute below, disputes.routes.ts's reviewSettlementDispute, settlement-disputes-p6
+ * .service.ts's decideDispute) already opens its own transaction and locks the dispute row FOR
+ * UPDATE before calling this — the corrective JE previously posted+committed on a SECOND, independent
+ * connection via createJournalEntry(), so a failure anywhere after that inner commit (the
+ * settlement_lines insert, the status-flip UPDATE, appendCrudAudit, even the outer COMMIT itself) left
+ * a permanently-posted corrective JE with the dispute rolled back to still-open — a retry (an Owner
+ * naturally re-clicking Approve after seeing an error) would post a SECOND corrective JE for the same
+ * dispute, an unguarded double-payment. Posting on the caller's own client, atomic with the row lock
+ * and the status flip, mirrors escrow-forfeit.service.ts's own established pattern
+ * (createJournalEntryOnClient(client, …) inside the caller's transaction) — no new GL math.
+ */
+export async function createCorrectiveJournalEntry(
+  client: Parameters<typeof createJournalEntryOnClient>[0],
+  params: {
+    actorUserId: string;
+    actorRole: string;
+    operatingCompanyId: string;
+    disputeId: string;
+    settlementId: string;
+    amountCents: number;
+    resolutionNotes: string;
+  }
+) {
+  // FLAG GATE — OFF => post NOTHING (checked BEFORE any account read / JE insert), mirroring
+  // settlement-posting.service.ts. This corrective JE previously posted UNGATED, so with
+  // SETTLEMENT_GL_POSTING_ENABLED ON in prod it went live regardless of intent. Honor per-entity
+  // overrides via isEnabled(); when OFF the dispute still resolves, resolution_journal_entry_id stays null.
+  const flagOn = await isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, {
+    operating_company_id: params.operatingCompanyId,
+    user_uuid: params.actorUserId,
   });
+  if (!flagOn) return null;
+  const accounts = await pickCorrectionAccounts(client, params.operatingCompanyId);
+  const today = new Date().toISOString().slice(0, 10);
+  const je = await createJournalEntryOnClient(
+    client,
+    {
+      operating_company_id: params.operatingCompanyId,
+      entry_date: today,
+      memo: `Settlement dispute correction ${params.disputeId}: ${params.resolutionNotes.slice(0, 120)}`,
+      source: "auto",
+      postings: [
+        {
+          account_id: accounts.debitAccountId,
+          debit_or_credit: "debit",
+          amount_cents: params.amountCents,
+          description: `Settlement dispute ${params.disputeId} correction debit`,
+        },
+        {
+          account_id: accounts.creditAccountId,
+          debit_or_credit: "credit",
+          amount_cents: params.amountCents,
+          description: `Settlement dispute ${params.disputeId} correction credit`,
+        },
+      ],
+    },
+    { userId: params.actorUserId, role: params.actorRole }
+  );
+  return je.id;
 }
 
 export async function listDisputes(
@@ -342,7 +356,7 @@ export async function resolveDispute(
 
     let journalEntryId: string | null = null;
     if (input.resolution === "in_favor" || input.resolution === "partial") {
-      journalEntryId = await createCorrectiveJournalEntry({
+      journalEntryId = await createCorrectiveJournalEntry(client, {
         actorUserId: userId,
         actorRole: userRole,
         operatingCompanyId: input.operating_company_id,

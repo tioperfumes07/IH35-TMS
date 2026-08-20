@@ -460,7 +460,7 @@ export async function decideSettlementDisputeP6(
 
     let journalId: string | null = null;
     if (input.decision === "approved") {
-      journalId = await createCorrectiveJournalEntry({
+      journalId = await createCorrectiveJournalEntry(client, {
         actorUserId: userId,
         actorRole: userRole,
         operatingCompanyId: input.operating_company_id,

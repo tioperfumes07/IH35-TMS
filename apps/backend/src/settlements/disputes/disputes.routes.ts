@@ -331,7 +331,7 @@ export async function reviewSettlementDispute(
 
     let journalEntryId: string | null = null;
     if (nextStatus === "approved" || nextStatus === "partial") {
-      journalEntryId = await createCorrectiveJournalEntry({
+      journalEntryId = await createCorrectiveJournalEntry(client, {
         actorUserId: userId,
         actorRole: userRole,
         operatingCompanyId: input.operating_company_id,
