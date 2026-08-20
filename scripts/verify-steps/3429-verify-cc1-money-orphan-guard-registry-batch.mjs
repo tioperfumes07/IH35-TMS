@@ -59,6 +59,7 @@ const guards = [
   "verify-gl-je-honest-built.mjs",
   "verify-obligation-reconcile-existence-checked.mjs",
   "verify-obligation-reconcile-settlement-net-pay-column.mjs",
+  "verify-owner-token-cash-advance-creates-deduction.mjs",
   "verify-payment-application-write-role-gated.mjs",
   "verify-payment-void-recompute-unapplied-filter.mjs",
   "verify-payments-create-role-gated.mjs",

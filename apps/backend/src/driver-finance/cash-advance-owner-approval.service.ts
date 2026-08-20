@@ -5,6 +5,7 @@ import { luciaPool, withLuciaBypass } from "../auth/db.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars } from "../cash-advances/cash-advance-create.js";
 import { repaymentScheduleFromRequest } from "./cash-advance-requests.service.js";
+import { createSettlementDeduction, type Queryable as DeductionsQueryable } from "./deductions.service.js";
 import { insertDriverPwaNotification } from "../pwa/driver-notifications.js";
 
 type QueryableClient = {
@@ -491,6 +492,26 @@ export async function ownerTokenApproveCashAdvanceRequest(
         [row.load_id, core.advanceId, operatingCompanyId]
       );
     }
+
+    // ACCT-F5632 — keep the settlement-deduction recovery in the Owner-token approval branch too
+    // (mirrors approveCashAdvanceRequest's own B5 step exactly, cash-advance-requests.service.ts).
+    // This is the ONLY approval path for an above-policy request (the normal in-app checker refuses
+    // them outright: "above_policy_requires_owner") -- without this call, the request most likely to
+    // need automatic recovery (large enough to require Owner sign-off) got none: cash disbursed
+    // (driver_advances), a receivable booked (driver_liabilities), but nothing ever created the
+    // driver_finance.driver_settlement_deductions row applyPendingDeductionsToSettlementWithNetFloor
+    // reads to withhold it from the driver's next settlement. deduction_schedule (written by
+    // createDriverCashAdvanceCore above) is a separate, cosmetic amortization display -- never wired
+    // into the settlement engine (see the prior HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID finding).
+    await createSettlementDeduction(client as unknown as DeductionsQueryable, {
+      operatingCompanyId,
+      driverId,
+      amountCents: Number(row.requested_amount_cents),
+      sourceType: "cash_advance_repayment",
+      reason: `Cash advance ${core.displayId} (owner-approved request ${String(row.display_id ?? requestId)})`,
+      loadId: (row.load_id as string | null | undefined) ?? null,
+      createdByUserId: ownerUuid,
+    });
 
     const notes = parsed.data.owner_notes.trim();
     const upd = await client.query(
