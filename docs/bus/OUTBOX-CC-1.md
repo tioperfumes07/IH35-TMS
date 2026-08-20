@@ -1811,3 +1811,19 @@ cause (the live-checker's queue-builder mis-resolves surface:// route_hints for 
 leaves, which will keep generating false Money-FAIL noise across every module) as a fresh OPEN row
 owned by whoever owns the live-Chrome click-check queue-builder (Devin-A), not fixed by CC-1 -- outside
 the money lane. Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
+
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NO-IDLE | NOW=STARVED classify then next unpaid money | GO
+2026-08-20T17:26Z CC-1 | STARVED CLASSIFICATION ALREADY DONE this same turn (see the
+"TRIAGED the 4 unattributed" entry immediately above + board CORRECTED row): 0/4 were real defects
+(3 checker-URL artifacts, 1 already-honest empty state), 0 fixes were needed, systemic root cause
+routed to Devin-A. BANK-F5627-GUARD-STALE-PHANTOM-TABLE SHIPPED (PR #12920, merged 9a2656f4) --
+regression-audit finding: verify-banking-matched-bill-drill.mjs demanded a JOIN against the phantom
+driver_finance.settlements table (never existed) instead of the real driver_finance.driver_settlements
+(BANK-F5627 already fixed the route code; the guard's own regex was never updated to match, leaving it
+red since that merge and pointed at the broken answer -- anyone "fixing" the red guard by matching code
+to it would revert the real prod-outage fix). Corrected the guard's regex only; route code untouched.
+Also found in the same audit, routed not fixed (out of lane): 19 unwired qbo_chrome guards (CC-3's
+WIP) trip an unrelated MAX_REMAINING=1 census threshold -- filed as QBO-CHROME-GUARDS-UNWIRED-CENSUS-DRIFT
+for CC-3. My money-Built ladder remains CLEAR (200/200, last full audit this session) -- re-checking
+next for drift from concurrent seat merges before continuing to insurance/legal per ladder order.
+Continuing non-stop, no idle gaps, always fix never defer.
