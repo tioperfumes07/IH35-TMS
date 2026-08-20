@@ -23,7 +23,10 @@ function failures(s = files) { return [
   ["exact lawsuit drill", s.lawsuitReverse.includes('<EntityLink kind="lawsuit" id={row.id}') && s.lawsuitReverse.includes("listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter })")],
   ["lawsuit human labels projected with entity scope", s.lawsuitRoutes.includes("claim.claim_number") && s.lawsuitRoutes.includes("AS driver_name") && s.lawsuitRoutes.includes("unit.unit_number") && s.lawsuitRoutes.includes("driver.operating_company_id = lawsuit.tenant_id") && s.lawsuitRoutes.includes("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.tenant_id")],
   ["lawsuit label payload typed", ["claim_number: string | null", "driver_name: string | null", "unit_number: string | null"].every((token) => s.insuranceApi.includes(token))],
-  ["lawsuit links consume human labels", s.lawsuitPage.includes('entityLabel(lawsuit.claim_number, lawsuit.claim_id, "Claim")') && s.lawsuitPage.includes('entityLabel(lawsuit.driver_name, lawsuit.driver_id, "Driver")') && s.lawsuitPage.includes('entityLabel(lawsuit.unit_number, lawsuit.unit_id, "Unit")')],
+  // LawsuitsTab migrated its EntityLink columns to EntityLinkOrTombstone, which computes
+  // entityLabel(name, id, noun) INTERNALLY (and renders the honest tombstone when id is missing) —
+  // callers just pass the raw name/id/noun now, they no longer call entityLabel(...) inline.
+  ["lawsuit links consume human labels", s.lawsuitPage.includes('kind="claim" id={lawsuit.claim_id} name={lawsuit.claim_number} noun="Claim"') && s.lawsuitPage.includes('kind="driver" id={lawsuit.driver_id} name={lawsuit.driver_name} noun="Driver"') && s.lawsuitPage.includes('kind="unit" id={lawsuit.unit_id} name={lawsuit.unit_number} noun="Unit"')],
 ].filter(([,ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   const checks = [

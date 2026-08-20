@@ -17,7 +17,9 @@ const insuranceApiMocks = {
         status: "active",
         claim_id: "clm-9999",
         driver_id: "driver-9999",
+        driver_name: "Jane Driver",
         unit_id: "unit-9999",
+        unit_number: "T-9999",
         court_name: "State Court",
         filed_date: "2026-01-01",
         demand_cents: 100000,
@@ -124,8 +126,10 @@ describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
     render(wrap(<LawsuitsTab />, "/safety/insurance/lawsuits"));
 
     await screen.findByText("CASE-1001");
-    expect(screen.getByRole("link", { name: /Driver/ })).toHaveAttribute("href", expect.stringContaining("driver-9999"));
-    expect(screen.getByRole("link", { name: /Unit/ })).toHaveAttribute("href", expect.stringContaining("unit-9999"));
+    // EntityLinkOrTombstone's accessible name is the resolved entity name ("Jane Driver"), never the
+    // generic noun ("Driver — not visible" only renders when the name genuinely fails to resolve).
+    expect(screen.getByRole("link", { name: "Jane Driver" })).toHaveAttribute("href", expect.stringContaining("driver-9999"));
+    expect(screen.getByRole("link", { name: "T-9999" })).toHaveAttribute("href", expect.stringContaining("unit-9999"));
   });
 
   it("renders with no selection when lawsuit_id is absent (unchanged default behavior)", async () => {

@@ -20,7 +20,9 @@ const LABEL = "verify-insurance-driver-wiring";
 const CHECKS = [
   ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="driver"[\s\S]{0,20}id=\{claim\.driver_id \?\? undefined\}/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /<DriverPickerWithCreate[\s\S]{0,80}value=\{form\.driver_id \|\| null\}/],
-  ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", /kind="driver" id=\{lawsuit\.driver_id \?\? undefined\}/],
+  // EntityLinkOrTombstone's `id` prop already accepts string | null | undefined directly, so the
+  // `?? undefined` coercion this line needed under the old raw EntityLink is no longer required.
+  ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", /kind="driver" id=\{lawsuit\.driver_id(?: \?\? undefined)?\}/],
 ];
 
 export function audit(files) {
