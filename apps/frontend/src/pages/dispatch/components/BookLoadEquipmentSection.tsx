@@ -244,6 +244,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <DeadheadOptimizerPanel
           operatingCompanyId={operatingCompanyId}
           unitUuid={assignedUnitId}
+          unitName={unitOption?.label ?? null}
           afterDeliveryAt={deadheadAfterAt ?? ""}
           dropCity={deadheadDropCity ?? ""}
           dropState={deadheadDropState ?? ""}

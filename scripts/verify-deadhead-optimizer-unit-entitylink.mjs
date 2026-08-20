@@ -20,35 +20,37 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+function checkSource(src) {
   assert(/EntityLink/.test(src), "must use EntityLink");
   assert(
     /data-testid=["']deadhead-optimizer-unit-entitylink["']/.test(src),
     "must expose deadhead-optimizer-unit-entitylink"
   );
   assert(/kind=["']unit["']/.test(src), "must EntityLink kind=unit");
+  assert(/unitName\?: string \| null/.test(src), "must accept resolved canonical unit name");
+  assert(/id=\{unitUuid\} name=\{unitName\} noun="Unit"/.test(src), "must bind unit id to resolved name");
+}
+
+function check() {
+  checkSource(fs.readFileSync(FILE, "utf8"));
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(
-    /data-testid=["']deadhead-optimizer-unit-entitylink["']/,
-    'data-testid="planted-missing"'
-  );
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const mutations = [
+    [/data-testid=["']deadhead-optimizer-unit-entitylink["']/, 'data-testid="planted-missing"'],
+    [/name=\{unitName\}/, "name={null}"],
+    [/unitName\?: string \| null/, "unitName?: never"],
+  ];
+  for (const [pattern, replacement] of mutations) {
+    const broken = original.replace(pattern, replacement);
+    assert(broken !== original, `--selftest plant must mutate ${pattern}`);
+    let failed = false;
+    try { checkSource(broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
-  assert(failed, "--selftest expected FAIL when unit entitylink testid removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
