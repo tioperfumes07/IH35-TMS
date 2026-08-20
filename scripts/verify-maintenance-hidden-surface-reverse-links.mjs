@@ -15,6 +15,8 @@ const checks = [
   ["arriving", /kind="unit" id=\{card\.unit_id\}/, "arriving-soon unit label drills to the unit"],
   ["arriving", /kind="driver" id=\{card\.driver_id\}/, "arriving-soon driver label drills to the driver"],
   ["arriving", /kind="load" id=\{card\.load_id\}/, "arriving-soon load label drills to the load"],
+  ["arriving", /kind="load" id=\{card\.load_id\} name=\{card\.load_display_id\} noun="Load"[\s\S]{0,180}data-testid="arriving-soon-load-action"/, "arriving-soon load action preserves the canonical human load label"],
+  ["arriving", /kind="driver" id=\{card\.driver_id\} name=\{card\.driver_name\} noun="Driver"[\s\S]{0,180}data-testid="arriving-soon-driver-action"/, "arriving-soon driver action preserves the canonical human driver label"],
   ["arriving", /card\.total_open_issues > card\.issues\.slice\(0, 3\)\.length[\s\S]*Showing \{card\.issues\.slice\(0, 3\)\.length\} of \{card\.total_open_issues\} open issues/, "arriving-soon compact issue range is disclosed"],
   ["alerts", /compact[\s\S]*kind="unit" id=\{alert\.unit_id\}/, "compact PM-alert unit label drills to the unit"],
   ["createWo", /Suggested load:[\s\S]*kind="load" id=\{suggestedLoad\.load_id\}/, "suggested work-order load drills to the load"],
