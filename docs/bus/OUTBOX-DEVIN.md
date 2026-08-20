@@ -12885,3 +12885,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.ap.bills:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.bills:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id?tab=ap head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=vendors:detail.ap.record_bill_payment:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.bills:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id?tab=ap head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=vendors:detail.ap.record_bill_payment:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.bills:reverse_link | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id?tab=ap head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=vendors:detail.ap.record_bill_payment:vendor
