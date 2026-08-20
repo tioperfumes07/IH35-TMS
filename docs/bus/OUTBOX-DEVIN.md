@@ -11316,3 +11316,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=lists:lists.panel.validation:connectivity
+Devin-A | LIVE PASS | leaf=lists:lists.panel.validation:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=22de17b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=safety:eld_audit.list:driver
+Devin-A | LIVE PASS | leaf=lists:lists.panel.validation:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=22de17b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=safety:eld_audit.list:driver
