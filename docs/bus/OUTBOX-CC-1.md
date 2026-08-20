@@ -1605,3 +1605,26 @@ depositEscrow. This closes the deposit-side sibling of ACCT-F5644 in the last re
 connection-opening escrow functions outside escrow/routes.tys own standalone HTTP handlers (which
 correctly have no outer transaction to be atomic with). Found by following up on ACCT-F5644s own
 explicitly-flagged remaining item, continuing the ACCT-F5634..F5644 sibling-writer-diff method.
+
+2026-08-20T15:30Z CC-1 | ACCT-F5646 SHIPPED (PR #12574, merged 8f0ff36d) -- fuel-card overage /
+factoring-reserve writer sweep, continuing the ACCT-F5634..F5645 method. approveAndPostFuelCardOverage
+-> postFuelOverageReceivable had exactly two duplicate-post guards, and neither was real. Both were
+plain SELECTs with no FOR UPDATE -- under READ COMMITTED, two concurrent approve calls for the same
+overage_event_id (double-click, or a client retry after a slow/timed-out response) could both read
+journal_entry_id IS NULL, both pass, both post a fully-balanced JE (Dr fuel_overage_receivable / Cr
+fuel expense) via createJournalEntryOnClient, then both UPDATE journal_entry_id -- last write wins,
+permanently orphaning the other JE with no traceable link and no unique constraint to catch it. The
+second guard (a batchHit lookup against accounting.posting_batches) was structurally vacuous:
+createJournalEntryOnClient never inserts into posting_batches, and the idempotencyKey this function
+built was never even passed to it -- the same dead-guard shape as the already-fixed LV-TXN-009
+finding. Confirmed live on Neon prod: no unique constraint on journal_entry_id either, no DB-level
+backstop. Real-world consequence: a drivers fuel-overage receivable posts to the GL twice for one
+real event -- the receivable asset is overstated, the fuel-expense reclass is doubled, one JE becomes
+untraceable. Currently latent (live prod: 3 events total, only 1 posted, no evidence of the race
+firing -- honestly reported as such) but 100% reachable via the mounted approve route the moment two
+requests race. Factoring reserve checked clean in the same sweep -- postReserveMovement is a pure
+append-only INSERT with balance derived via a SUM view, no check-then-act sequence, so the row-lock
+defect class doesnt apply there. Fixed by adding FOR UPDATE to both SELECTs (locking the event row for
+the entire approve+post flow, same connection throughout -- not a second-connection bug, purely a
+missing lock) and removing the vacuous posting_batches check + its dead buildIdempotencyKey helper
+entirely rather than leaving it as misleading dead code.
