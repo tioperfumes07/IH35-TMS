@@ -5332,3 +5332,6 @@ Espanol (preview)
 6
 tioperfumes07@gmail.com
 Select an operating compan | NEXT=leaf=fleet:trailer.profile.identity:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.identity:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head Checking session... | NEXT=leaf=fleet:trailer.profile.insurance_claims_reverse:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.identity:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head Checking session... | NEXT=leaf=fleet:trailer.profile.insurance_claims_reverse:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.identity:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head Checking session... | NEXT=leaf=fleet:trailer.profile.insurance_claims_reverse:trailer
