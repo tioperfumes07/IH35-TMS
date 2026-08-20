@@ -1,3 +1,4 @@
+- 2026-08-20T05:22Z Cursor | FIX | Devin loop cwd=IH35-TMS-clean not /tmp/IH35-devin-a · queue accounting-first · CC-1-QUEUE if board empty · stale pastes SUPERSEDED | GO
 - 2026-08-20T05:14Z Cursor | CC-3 ON | 8-BY-06:00 | PASTE-CC-3-NOW | GO
 - 2026-08-20T04:30Z Cursor | 14-MODULE-100 | CC-2 stop poll · CC-1 not standby · Cursor owns 3 LV · Devin A then B · GO
 - 2026-08-20T04:15Z Cursor→Devin | ACK FORMAT leaf=module:leafId:col | STOP fleet · restart loop after pull · GO

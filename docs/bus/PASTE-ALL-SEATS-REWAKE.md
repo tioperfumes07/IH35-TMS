@@ -1,3 +1,3 @@
-# PASTE REWAKE · 2026-08-20T04:30Z
+# SUPERSEDED
 
-Same as `PASTE-ALL-SEATS-NOW.md`. Poll/standby = defect.
+Use `docs/bus/PASTE-ALL-SEATS-NOW.md`. Rewake paste is retired.

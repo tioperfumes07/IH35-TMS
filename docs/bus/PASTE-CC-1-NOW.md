@@ -2,8 +2,8 @@
 
 `git pull --ff-only origin main`
 
-8 modules by 06:00 CT. USMCA TMS money. No QBO. No standby.
+Board drained is **not** idle. Open `docs/bus/CC-1-QUEUE-UNTIL-06.md` and build item 1.
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=accounting TMS money | GO
 ```
