@@ -80,10 +80,13 @@ export function assertCargoParityAndPickerSearch(sources) {
     );
   }
 
-  // F31 — unit/load: EntityPicker (registry server search) OR legacy Combobox+*Search state.
-  // EntityPicker supersedes local unitSearch/loadSearch; vendor remains Combobox+vendorSearch.
+  // F31 — unit/load/vendor: EntityPicker (registry server search) OR legacy Combobox+*Search state.
+  // EntityPicker supersedes local unitSearch/loadSearch/vendorSearch — the registry's own vendor
+  // entry (components/parity/entityPickerRegistry.ts) already carries real server search
+  // (serverSearch: true, search-scoped limit), so the F31 guarantee still holds under the new picker.
   const unitViaEntityPicker = /EntityPicker[\s\S]*?kind=["']unit["']/.test(src[DRAWER]);
   const loadViaEntityPicker = /EntityPicker[\s\S]*?kind=["']load["']/.test(src[DRAWER]);
+  const vendorViaEntityPicker = /EntityPicker[\s\S]*?kind=["']vendor["']/.test(src[DRAWER]);
   if (!unitViaEntityPicker) {
     if (!src[DRAWER].includes("unitSearch")) {
       problems.push(`${DRAWER}: no unitSearch state — the units picker cannot search server-side and stays capped at 200.`);
@@ -102,12 +105,14 @@ export function assertCargoParityAndPickerSearch(sources) {
       problems.push(`${DRAWER}: loads queryKey omits loadSearch — react-query would serve the first page from cache and never refetch on a new term.`);
     }
   }
-  if (!src[DRAWER].includes("vendorSearch")) {
-    problems.push(`${DRAWER}: no vendorSearch state — the vendors picker cannot search server-side and stays capped at 200.`);
-  } else if (!/search: vendorSearch \|\| undefined/.test(src[DRAWER])) {
-    problems.push(`${DRAWER}: vendors query does not send \`search\` — the state exists but never reaches the server.`);
-  } else if (!/queryKey: \[[^\]]*vendorSearch\]/.test(src[DRAWER])) {
-    problems.push(`${DRAWER}: vendors queryKey omits vendorSearch — react-query would serve the first page from cache and never refetch on a new term.`);
+  if (!vendorViaEntityPicker) {
+    if (!src[DRAWER].includes("vendorSearch")) {
+      problems.push(`${DRAWER}: no vendorSearch state — the vendors picker cannot search server-side and stays capped at 200.`);
+    } else if (!/search: vendorSearch \|\| undefined/.test(src[DRAWER])) {
+      problems.push(`${DRAWER}: vendors query does not send \`search\` — the state exists but never reaches the server.`);
+    } else if (!/queryKey: \[[^\]]*vendorSearch\]/.test(src[DRAWER])) {
+      problems.push(`${DRAWER}: vendors queryKey omits vendorSearch — react-query would serve the first page from cache and never refetch on a new term.`);
+    }
   }
 
   return problems;
@@ -163,11 +168,19 @@ if (SELFTEST) {
       { ...live, [DRAWER]: live[DRAWER].replace('queryKey: ["accident", "loads", operatingCompanyId, loadSearch]', 'queryKey: ["accident", "loads", operatingCompanyId]') },
       "loads queryKey omits loadSearch");
   }
-  expectCaught(
-    "vendor-search-never-sent",
-    { ...live, [DRAWER]: live[DRAWER].replace("search: vendorSearch || undefined", "limit: 200") },
-    "vendors query does not send `search`"
-  );
+  if (/EntityPicker[\s\S]*?kind=["']vendor["']/.test(live[DRAWER])) {
+    expectCaught(
+      "entity-picker-vendor-dropped",
+      { ...live, [DRAWER]: live[DRAWER].replace(/kind=["']vendor["']/g, 'kind="driver"') },
+      "no vendorSearch state"
+    );
+  } else {
+    expectCaught(
+      "vendor-search-never-sent",
+      { ...live, [DRAWER]: live[DRAWER].replace("search: vendorSearch || undefined", "limit: 200") },
+      "vendors query does not send `search`"
+    );
+  }
 
   const liveProblems = assertCargoParityAndPickerSearch(live);
   if (liveProblems.length) failures.push(`live sources FAIL (false positive): ${liveProblems.join(" | ")}`);

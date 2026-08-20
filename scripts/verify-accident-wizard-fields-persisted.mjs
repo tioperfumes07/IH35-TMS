@@ -99,6 +99,32 @@ export function assertAccidentFieldsPersisted(sources) {
   // (safety.accident_cost_lines), so they have no column in the accident INSERT list at all.
 
   for (const e of ENUM_FIELDS) {
+    // P44 (2026-08-20, CC-3): record_type is no longer its own directly-bound combobox — the visible
+    // control is now the real accident_type_id catalog picker (ReferenceSelect), and recordType is a
+    // DERIVED legacy field kept in sync from the picked row's code. Check the derived shape instead
+    // of a direct value={recordType} binding, and — this IS the substance the original guard existed
+    // to protect — require the derivation to be UNCONDITIONAL (an inline ternary with an "accident"
+    // fallback), not an `if (knownCodes.includes(code)) setRecordType(...)` gate that silently leaves
+    // recordType STALE whenever an operator picks/creates a non-canonical accident type.
+    if (e.col === "record_type" && /value=\{accidentTypeId \|\| null\}/.test(drawer)) {
+      if (!/setAccidentTypeId\(next \?\? ""\)/.test(drawer)) {
+        problems.push(`${DRAWER}: accident_type_id picker is not controlled — a rendered-but-uncontrolled field is discarded on save.`);
+      }
+      if (!/setRecordType\(code === "damage" \|\| code === "vandalism" \? code : "accident"\)/.test(drawer)) {
+        problems.push(`${DRAWER}: recordType derivation from the accident_type_id picker is not unconditional — a non-canonical accident type would leave record_type stale instead of resolving it.`);
+      }
+      if (!new RegExp(`${e.col}:\\s*${e.state}`).test(drawer)) {
+        problems.push(`${DRAWER}: ${e.col} is not in the save payload.`);
+      }
+      if (!new RegExp(`${e.col}:\\s*z\\.enum`).test(route)) {
+        problems.push(`${ROUTE}: the accident zod schema does not accept ${e.col} as an enum.`);
+      }
+      if (!new RegExp(`${e.col}\\s*=\\s*\\$`).test(route)) {
+        problems.push(`${ROUTE}: ${e.col} is never written (no "SET ${e.col} = $n") — accepted but discarded.`);
+      }
+      continue;
+    }
+
     if (!new RegExp(`value=\\{${e.state}\\}`).test(drawer)) {
       problems.push(`${DRAWER}: ${e.col} combobox is not controlled (expected value={${e.state}}).`);
     }
@@ -170,12 +196,26 @@ if (SELFTEST) {
   expectCaught("payload-drops-field", { ...live, [DRAWER]: live[DRAWER].replace(/police_report_number: policeReportNumber\.trim\(\) \|\| null,/, "") }, "police_report_number is not in the save payload");
 
   // ── SAF-B04 arms: the enum controls and the cost lines ────────────────────────────────────────
-  // 5. THE ORIGINAL DEFECT — a combobox whose onChange throws the choice away. This is the exact shape
-  //    verified on 2026-07-25: value fixed, onChange empty, CI green.
+  // 5a. service_type: THE ORIGINAL DEFECT — a combobox whose onChange throws the choice away. This is
+  //     the exact shape verified on 2026-07-25: value fixed, onChange empty, CI green.
   expectCaught(
     "enum-onchange-noop",
-    { ...live, [DRAWER]: live[DRAWER].replace(/onChange=\{\(next\) => setRecordType\([^}]*\}/, "onChange={() => {}}") },
-    "record_type"
+    { ...live, [DRAWER]: live[DRAWER].replace(/onChange=\{\(([^)]*)\) => setServiceType\([^}]*\}/, "onChange={() => {}}") },
+    "service_type"
+  );
+  // 5b. record_type (P44 derived shape): the REGRESSED version of the fix itself — gating the
+  //     derivation behind an `if (knownCodes.includes(code))` so a non-canonical accident type leaves
+  //     recordType stale instead of resolving it. This is the exact defect this session's fix closed.
+  expectCaught(
+    "record-type-derivation-gated",
+    {
+      ...live,
+      [DRAWER]: live[DRAWER].replace(
+        'setRecordType(code === "damage" || code === "vandalism" ? code : "accident");',
+        'if (code === "damage" || code === "vandalism") setRecordType(code);'
+      ),
+    },
+    "not unconditional"
   );
   // 6. the enum stops being sent.
   expectCaught(
