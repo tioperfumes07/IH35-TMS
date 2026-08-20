@@ -1027,3 +1027,14 @@ Ingles
 Espanol (preview)
 6 | healthz=69d7810 | mutation=none | NEXT=system.audit.trail
 Devin-A | LIVE STARVED | module=system | leaf=audit.trail | URL=https://app.ih35dispatch.com/audit/trail | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/audit/trail ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.claude_coder
+Devin-A | LIVE PASS | module=system | leaf=tab.claude_coder | URL=https://app.ih35dispatch.com/system?tab=claude-coder | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/system?tab=claude-coder ; marker 'system' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=69d7810 | mutation=none | NEXT=system.hop.program_matrix
