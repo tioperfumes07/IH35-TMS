@@ -1066,6 +1066,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           loadNumber={load.load_number}
           operatingCompanyId={load.operating_company_id}
           defaultDriverId={load.assigned_primary_driver_id ?? load.assigned_secondary_driver_id}
+          defaultDriverLabel={load.assigned_primary_driver_name ?? load.assigned_secondary_driver_name}
           onClose={() => setAbandonmentOpen(false)}
           onRecorded={() => refetchLoad()}
         />
