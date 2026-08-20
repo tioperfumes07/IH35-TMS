@@ -351,6 +351,22 @@ export async function resolveDispute(
         amountCents: resolutionAmountCents,
         resolutionNotes: input.resolution_notes.trim(),
       });
+
+      // ACCT-F5619 — write the settlement_lines('dispute_adjustment') memo row REGARDLESS of
+      // journalEntryId (GL posting can be flag-OFF while the settlement still needs to record what
+      // was approved), mirroring disputes.routes.ts's own resolveDispute-adjacent write exactly.
+      // Without this, an approved correction on THIS route (settlement-dispute.routes.ts's own
+      // reviewDispute path) never appears on the settlement header/PDF/driver statement at all —
+      // the only mounted sibling that DOES write this row is the OTHER dispute-resolution route
+      // (disputes.routes.ts), so which endpoint an operator happens to hit silently changed whether
+      // the correction was ever recorded against the settlement.
+      await client.query(
+        `
+          INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
+          VALUES ($1::uuid, 'dispute_adjustment', $2, $3::numeric)
+        `,
+        [dispute.settlement_id, `Dispute adjustment (${normalizedStatus})`, resolutionAmountCents / 100]
+      );
     }
 
     await client.query(
