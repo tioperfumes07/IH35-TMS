@@ -2806,6 +2806,30 @@
       "leafRe": "^parts_inventory\\.record_purchase$",
       "guard": "scripts/verify-parts-inventory-record-purchase-gl-wired.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "WAVE1-DRIVERS-CASH-ADVANCES-LIABILITY-BUILT",
+      "modules": [
+        "drivers"
+      ],
+      "cols": [
+        "liability"
+      ],
+      "leafRe": "^cash_advances$",
+      "guard": "scripts/verify-driver-cash-advances-liability-wired.mjs",
+      "live": "BLOCKED"
+    },
+    {
+      "task": "WAVE1-CUSTOMERS-BILLING-INVOICE-BUILT",
+      "modules": [
+        "customers"
+      ],
+      "cols": [
+        "invoice"
+      ],
+      "leafRe": "^(md\\.new_transaction|detail\\.billing(\\.record_payment)?)$",
+      "guard": "scripts/verify-customer-billing-invoice-wired.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
