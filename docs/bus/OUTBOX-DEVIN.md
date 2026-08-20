@@ -1002,3 +1002,14 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=69d7810 | mutation=none | NEXT=system.tab.qbo_sync
+Devin-A | LIVE PASS | module=system | leaf=tab.qbo_recon | URL=https://app.ih35dispatch.com/system?tab=qbo-recon | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/system ; marker 'system' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=69d7810 | mutation=none | NEXT=system.tab.qbo_sync
