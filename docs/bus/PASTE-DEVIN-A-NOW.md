@@ -1,10 +1,5 @@
-# PASTE DEVIN-A · 2026-08-20T03:55Z
+# PASTE DEVIN-A · 2026-08-20T04:18Z
 
-**STOP.** No more dispatch. No fleet. **No fuel.**
+Pull main. Kill old loop. Delete `/tmp/devin-a-queue.json` if it still has fleet. Rebuild URGENT-6 queue. Restart `scripts/ops/devin-a-live-loop.cjs`.
 
-```text
-git pull --ff-only origin main
-Devin-A | ACK | STANDARD=URGENT-6 | NOW=Clicked URGENT 6 | chrome=9227 | GO
-```
-
-Clicked only: accounting, banking, customers, vendors, factoring, settlements.
+ACK: `Devin-A | ACK | STANDARD=URGENT-6-TONIGHT | NOW=Clicked accounting|banking|customers|vendors|factoring|settlements | chrome=9227 | GO`
