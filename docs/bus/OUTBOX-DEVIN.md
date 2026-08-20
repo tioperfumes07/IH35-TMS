@@ -1787,3 +1787,4 @@ Devin-A | LIVE STARVED | module=fleet | leaf=unit.edit.irp_plates | URL=https://
 Use your Google account or email and password.
 
 Sign in with | healthz=unknown | mutation=none | NEXT=fleet.unit.edit.reefer
+Devin-A | ACK | STANDARD=URGENT-6 | NOW=Clicked customers|vendors|accounting|banking|factoring|settlements | chrome=9227 | GO
