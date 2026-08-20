@@ -29,7 +29,14 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
       ) : null}
       {factor ? (
         <p className="mt-2 text-xs text-gray-700">
-          Factor: <span className="font-semibold">{factor.name}</span> · advance {(factor.advance_rate * 100).toFixed(1)}% · fee{" "}
+          Factor:{" "}
+          <EntityLink
+            kind="factor"
+            id={factor.id}
+            label={factor.name}
+            className="font-semibold text-slate-700 hover:underline"
+          />{" "}
+          · advance {(factor.advance_rate * 100).toFixed(1)}% · fee{" "}
           {(factor.fee_rate * 100).toFixed(1)}%
         </p>
       ) : null}

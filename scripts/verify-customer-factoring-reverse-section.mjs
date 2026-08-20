@@ -21,6 +21,8 @@
  *   4. FactorAdmin.tsx's batch rows use EntityLink kind="factoring_batch" (not "factoring_advance").
  *   5. EntityLink.tsx defines "factoring_batch" -> /factoring/batches/<id>, distinct from
  *      "factoring_advance" -> /accounting/factoring/<id>.
+ *   6. The customer profile's resolved factor identity drills to the canonical factor detail;
+ *      a human factor name beside factor.id must never remain plain text.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -86,6 +88,12 @@ export function assertCustomerFactoringReverse(sources) {
   if (!/factoring_factors_customer/.test(entityLink)) {
     problems.push(`${ENTITY_LINK}: must define factoring_factors_customer`);
   }
+  if (!/<EntityLink\s+[\s\S]*?kind="factor"[\s\S]*?id=\{factor\.id\}[\s\S]*?label=\{factor\.name\}/.test(section)) {
+    problems.push(`${SECTION}: resolved factor id/name must render as canonical EntityLink kind="factor"`);
+  }
+  if (!/case "factor":/.test(entityLink) || !/\/factoring\/factors\?factor_id=\$\{id\}/.test(entityLink)) {
+    problems.push(`${ENTITY_LINK}: must define factor -> /factoring/factors?factor_id=<id>`);
+  }
 
   return problems;
 }
@@ -93,7 +101,8 @@ export function assertCustomerFactoringReverse(sources) {
 function selftest() {
   const good = {
     [SECTION]: `getCustomerFactor(customerId, operatingCompanyId)
-      <EntityLink kind="factoring_factors_customer" id={customerId} />`,
+      <EntityLink kind="factoring_factors_customer" id={customerId} />
+      <EntityLink kind="factor" id={factor.id} label={factor.name} />`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringReverseSection } from "../components/customers/CustomerFactoringReverseSection";
       <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
@@ -111,6 +120,8 @@ function selftest() {
         return \`/factoring/batches/\${id}\`;
       case "factoring_factors_customer":
         return \`/factoring/factors?customer_id=\${id}\`;
+      case "factor":
+        return \`/factoring/factors?factor_id=\${id}\`;
     `,
   };
   const goodProblems = assertCustomerFactoringReverse(good);
@@ -128,6 +139,8 @@ function selftest() {
     { ...good, [FACTOR_ADMIN]: good[FACTOR_ADMIN].replace("setDetailCustomerId(deepLinkCustomerId)", "") },
     { ...good, [FACTOR_ADMIN]: good[FACTOR_ADMIN].replace('kind="factoring_batch"', 'kind="factoring_advance"') },
     { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace('case "factoring_batch":', "// removed") },
+    { ...good, [SECTION]: good[SECTION].replace('<EntityLink kind="factor" id={factor.id} label={factor.name} />', '<span>{factor.name}</span>') },
+    { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace('case "factor":', "// removed") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertCustomerFactoringReverse(mutated).length === 0) {
