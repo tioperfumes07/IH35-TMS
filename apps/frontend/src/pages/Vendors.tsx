@@ -25,6 +25,7 @@ import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
 import { EntityLink } from "../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ReferenceSelect, type ReferenceOption } from "../components/parity/ReferenceSelect";
 import { useCatalogQuery } from "../hooks/useCatalogQuery";
 
@@ -628,7 +629,14 @@ export function VendorsPage() {
                       <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Canonical vendor profile</div>
                       <EntityLink kind="vendor" id={selectedVendor.id} label={selectedVendor.name} />
                     </div>
-                    <Button type="button" onClick={() => navigate(`/vendors/${selectedVendor.id}`)}>Open full vendor profile</Button>
+                    <EntityLinkOrTombstone
+                      kind="vendor"
+                      id={selectedVendor.id}
+                      name="Open full vendor profile"
+                      noun="Vendor"
+                      className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50"
+                      data-testid="vendor-details-full-profile-record-link"
+                    />
                   </div>
                   <dl className="grid gap-2 border-t border-gray-100 pt-3 md:grid-cols-2">
                     <div><dt className="text-xs font-semibold text-gray-500">Vendor code</dt><dd>{selectedVendor.vendor_code || "—"}</dd></div>
