@@ -973,3 +973,4 @@ Codex | LIVE CLAIM system:remaining-tabs-and-health | entity=USMCA | mutation=no
 Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
 Codex | SHIPPED DISPATCH-PRIMARY-INLINE-ASSIGNMENT-DEAD-DRILLS | PR#10260 @ 2dbb0a911 | gate=exit0 | merge=admin-squash | main=verified | NEXT=fleet Band B trailer.profile reverse
 Codex | WORKING | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | SHIPPED DRIVERS-LOAD-HISTORY-NULLABLE-RELATED-DEAD-DRILLS | PR#10268 @ 1792e6ac2 | gate=exit0 | merge=admin-squash | main=verified | NEXT=customers reverse
