@@ -9,7 +9,6 @@ import { SettlementBillPaymentError } from "./settlement-bill-payment.math.js";
 import {
   postSettlementBillPayment,
 } from "./settlement-bill-payment-posting.service.js";
-import { reverseSettlementGlPosting } from "./settlement-posting.service.js";
 import { chargeRecoverFromDriverExpense } from "./recover-from-driver.service.js";
 import { getDriverBucketBalances } from "./bucket-ledger.service.js";
 import { EscrowResolverError } from "../../driver-finance/escrow-resolver.service.js";
@@ -37,6 +36,28 @@ function retiredSettlementPost(reply: FastifyReply, settlementId?: string) {
     message:
       "FIN-18 POST /api/v1/accounting/settlement-posting/post is retired. Use the canonical payrun-close path (per-driver escrow liability + cash-advance asset).",
     canonical_endpoint: canonical,
+  });
+}
+
+// ACCT-F5648 — the FIN-18 forward-posting route above was retired via SET-01 (2026-07-26), but this
+// reverse route was left live and genuinely callable, reversing a poster whose forward counterpart no
+// settlement in prod ever actually used (confirmed via Neon: 0 rows match the
+// ih35:settlement-gl:v1:%:initial_post idempotency-key pattern). Worse, reverseSettlementGlPosting
+// never flips driver_settlements.status the way the canonical void/cancel executor
+// (governance/void-cancel-executors.ts's executeDriverSettlement) does — so even in the unreachable
+// case where a stale settlement_id somehow hit this route, it would leave the settlement in an
+// inconsistent state (GL reversed, status untouched). Retired the same way the /post route was, per
+// SET-01's own directive ("Service retained for tests / void helpers only") — pointing callers at the
+// canonical, already-hardened governance void/cancel request flow instead.
+const CANONICAL_VOID_CANCEL_REQUESTS = "/api/v1/governance/void-cancel-requests";
+
+function retiredSettlementReverse(reply: FastifyReply) {
+  reply.header("location", CANONICAL_VOID_CANCEL_REQUESTS);
+  return reply.code(308).send({
+    error: "gone",
+    message:
+      "FIN-18 POST /api/v1/accounting/settlement-posting/reverse is retired (its forward counterpart was retired in SET-01 and no settlement in prod was ever posted through it). Use the canonical governance void/cancel request flow to reverse a posted driver settlement.",
+    canonical_endpoint: CANONICAL_VOID_CANCEL_REQUESTS,
   });
 }
 
@@ -98,7 +119,6 @@ const postBody = z.object({
   floor_override: z.object({ authorized_by_user_id: z.string().uuid(), reason: z.string().trim().min(1) }).optional().nullable(),
 });
 const billPaymentPostBody = z.object({ settlement_id: z.string().uuid() });
-const reverseBody = z.object({ settlement_id: z.string().uuid(), reason: z.string().trim().min(1) });
 const recoverBody = z.object({ expense_id: z.string().uuid() });
 const driverBucketsQuery = companyQuerySchema.extend({ driver_id: z.string().uuid() });
 
@@ -135,20 +155,11 @@ export async function registerSettlementPostingRoutes(app: FastifyInstance) {
     }
   });
 
-  // Reverse a posted settlement (reversing JE + bucket restore; never delete).
+  // ACCT-F5648 — retired (SET-01 companion retirement). See retiredSettlementReverse above.
   app.post("/api/v1/accounting/settlement-posting/reverse", async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
-    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
-    const body = reverseBody.safeParse(req.body ?? {});
-    if (!body.success) return validationError(reply, body.error);
-    const result = await reverseSettlementGlPosting(
-      { operatingCompanyId: query.data.operating_company_id, settlementId: body.data.settlement_id, reason: body.data.reason },
-      { userId: user.uuid }
-    );
-    return reply.code(200).send(result);
+    return retiredSettlementReverse(reply);
   });
 
   // Recover-from-driver: charge a flagged expense into the driver's deduction bucket (consent-gated).

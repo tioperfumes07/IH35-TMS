@@ -67,6 +67,7 @@ const guards = [
   "verify-insurance-late-fee-cron-wired.mjs",
   "verify-fuel-transactions-write-role-gated.mjs",
   "verify-gl-je-honest-built.mjs",
+  "verify-no-deprecated-settlement-reverse-mounted.mjs",
   "verify-obligation-reconcile-existence-checked.mjs",
   "verify-owned-asset-disposal-cross-entity-books.mjs",
   "verify-obligation-reconcile-settlement-net-pay-column.mjs",
