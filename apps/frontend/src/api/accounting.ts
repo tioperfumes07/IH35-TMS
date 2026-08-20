@@ -164,6 +164,7 @@ export type FactorReconciliationItem = {
   run_id: string;
   operating_company_id: string;
   invoice_id: string | null;
+  invoice_display_id: string | null;
   statement_invoice_number: string | null;
   ledger_match_state: "matched" | "missing_in_ledger" | "missing_on_statement" | "amount_mismatch";
   factor_amount_cents: number;

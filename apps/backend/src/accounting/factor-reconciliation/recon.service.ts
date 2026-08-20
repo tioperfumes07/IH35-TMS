@@ -28,6 +28,7 @@ export type FactorReconciliationItem = {
   run_id: string;
   operating_company_id: string;
   invoice_id: string | null;
+  invoice_display_id: string | null;
   statement_invoice_number: string | null;
   ledger_match_state: MatchState;
   factor_amount_cents: number;
@@ -352,22 +353,26 @@ export async function listReconciliationItems(input: { operating_company_id: str
     const rows = await client.query<FactorReconciliationItem>(
       `
         SELECT
-          id::text,
-          run_id::text,
-          operating_company_id::text,
-          invoice_id::text,
-          statement_invoice_number,
-          ledger_match_state::text,
-          factor_amount_cents::bigint AS factor_amount_cents,
-          ledger_amount_cents::bigint AS ledger_amount_cents,
-          variance_cents::bigint AS variance_cents,
-          tolerance_cents::bigint AS tolerance_cents,
-          details,
-          created_at::text
-        FROM factor.reconciliation_items
-        WHERE run_id = $1::uuid
-          AND operating_company_id = $2::uuid
-        ORDER BY created_at ASC
+          ri.id::text,
+          ri.run_id::text,
+          ri.operating_company_id::text,
+          ri.invoice_id::text,
+          i.display_id AS invoice_display_id,
+          ri.statement_invoice_number,
+          ri.ledger_match_state::text,
+          ri.factor_amount_cents::bigint AS factor_amount_cents,
+          ri.ledger_amount_cents::bigint AS ledger_amount_cents,
+          ri.variance_cents::bigint AS variance_cents,
+          ri.tolerance_cents::bigint AS tolerance_cents,
+          ri.details,
+          ri.created_at::text
+        FROM factor.reconciliation_items ri
+        LEFT JOIN accounting.invoices i
+          ON i.id = ri.invoice_id
+         AND i.operating_company_id = ri.operating_company_id
+        WHERE ri.run_id = $1::uuid
+          AND ri.operating_company_id = $2::uuid
+        ORDER BY ri.created_at ASC
       `,
       [input.run_id, input.operating_company_id]
     );

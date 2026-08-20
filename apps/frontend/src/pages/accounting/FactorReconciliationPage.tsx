@@ -90,7 +90,7 @@ export function FactorReconciliationPage() {
           <EntityLink
             kind="invoice"
             id={item.invoice_id ?? undefined}
-            label={item.invoice_id ? entityLabel(null, item.invoice_id, "Invoice") : "-"}
+            label={item.invoice_id ? entityLabel(item.invoice_display_id, item.invoice_id, "Invoice") : "-"}
           />
         ),
       },
