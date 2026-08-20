@@ -9,6 +9,7 @@ import {
   type InsuranceClaimStatus,
 } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../components/Button";
 import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -183,55 +184,35 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         key: "policy_id",
         label: "Policy",
         render: (claim) => (
-          <EntityLink
-            kind="insurance_policy"
-            id={claim.policy_id}
-            label={entityLabel(claim.policy_display_id, claim.policy_id, "Policy")}
-          />
+          <EntityLinkOrTombstone kind="insurance_policy" id={claim.policy_id} name={claim.policy_display_id} noun="Policy" />
         ),
       },
       {
         key: "unit_id",
         label: "Unit",
         render: (claim) => (
-          <EntityLink
-            kind="unit"
-            id={claim.unit_id ?? undefined}
-            label={entityLabel(claim.unit_display_id, claim.unit_id, "Unit")}
-          />
+          <EntityLinkOrTombstone kind="unit" id={claim.unit_id} name={claim.unit_display_id} noun="Unit" />
         ),
       },
       {
         key: "trailer_id",
         label: "Trailer",
         render: (claim) => (
-          <EntityLink
-            kind="trailer"
-            id={claim.trailer_id ?? undefined}
-            label={entityLabel(claim.trailer_display_id, claim.trailer_id, "Trailer")}
-          />
+          <EntityLinkOrTombstone kind="trailer" id={claim.trailer_id} name={claim.trailer_display_id} noun="Trailer" />
         ),
       },
       {
         key: "driver_id",
         label: "Driver",
         render: (claim) => (
-          <EntityLink
-            kind="driver"
-            id={claim.driver_id ?? undefined}
-            label={entityLabel(claim.driver_display_name, claim.driver_id, "Driver")}
-          />
+          <EntityLinkOrTombstone kind="driver" id={claim.driver_id} name={claim.driver_display_name} noun="Driver" />
         ),
       },
       {
         key: "load_id",
         label: "Load",
         render: (claim) => (
-          <EntityLink
-            kind="load"
-            id={claim.load_id ?? undefined}
-            label={entityLabel(claim.load_display_id, claim.load_id, "Load")}
-          />
+          <EntityLinkOrTombstone kind="load" id={claim.load_id} name={claim.load_display_id} noun="Load" />
         ),
       },
       {
@@ -331,17 +312,13 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             <div className="grid gap-1 md:grid-cols-2">
               <div>
                 <strong>Forward:</strong>{" "}
-                <EntityLink kind="driver" id={graph.claim.driver_id} label={entityLabel(graph.claim.driver_display_name, graph.claim.driver_id, "Driver")} />
+                <EntityLinkOrTombstone kind="driver" id={graph.claim.driver_id} name={graph.claim.driver_display_name} noun="Driver" />
                 {" · "}
-                <EntityLink kind="load" id={graph.claim.load_id} label={entityLabel(graph.claim.load_display_id, graph.claim.load_id, "Load")} />
+                <EntityLinkOrTombstone kind="load" id={graph.claim.load_id} name={graph.claim.load_display_id} noun="Load" />
                 {" · "}
-                <EntityLink kind="unit" id={graph.claim.unit_id} label={entityLabel(graph.claim.unit_display_id, graph.claim.unit_id, "Unit")} />
+                <EntityLinkOrTombstone kind="unit" id={graph.claim.unit_id} name={graph.claim.unit_display_id} noun="Unit" />
                 {" · "}
-                <EntityLink
-                  kind="trailer"
-                  id={graph.claim.trailer_id}
-                  label={entityLabel(graph.claim.trailer_display_id, graph.claim.trailer_id, "Trailer")}
-                />
+                <EntityLinkOrTombstone kind="trailer" id={graph.claim.trailer_id} name={graph.claim.trailer_display_id} noun="Trailer" />
                 {graph.claim.accident_report_id ? (
                   <>
                     {" · "}
