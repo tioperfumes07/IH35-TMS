@@ -108,17 +108,19 @@ export async function countUncategorizedTransactions(
 // pushed to QBO" (any entity type), not "how many bank transactions exist" — a company with hundreds
 // of categorized-but-not-yet-pushed transactions previously showed "Transactions: 0". Entity-scoped,
 // same hidden-account convention as countUncategorizedTransactions so all three counts agree.
-// UNFILTERED by the BANK_ACCOUNT_HIDE flag on purpose: the register (/plaid/company-transactions,
-// /plaid/accounts) does not filter hidden accounts, so this tile must count the same to match it.
+// LV-BANKING-STATUS-STRIP-MIXES-ACCOUNT-SCOPES: same BANK_ACCOUNT_HIDE population as Uncategorized
+// (For-review). Do not count hidden-account rows on Transactions while Uncategorized excludes them.
 export async function countTotalBankTransactions(
   client: Queryable,
   operatingCompanyId: string
 ): Promise<number> {
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
   const res = await client.query<{ count: number }>(
     `
       SELECT count(*)::int AS count
       FROM banking.bank_transactions bt
       WHERE bt.operating_company_id = $1::uuid
+        ${bankTransactionHiddenFilterSql(hideOn, "bt")}
     `,
     [operatingCompanyId]
   );
