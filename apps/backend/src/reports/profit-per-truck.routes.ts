@@ -174,16 +174,26 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
         const fuelRes = await client
           .query(
             `
-              SELECT l.assigned_unit_id::text AS unit_id, COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
+              -- ACCT-F5625 — see unit-financial.service.ts's identical fix for the full rationale:
+              -- fuel.fuel_transactions.load_id is legitimately NULL on most rows, but those same rows
+              -- overwhelmingly DO carry a real unit_id (indexed, populated at ingest). Attributing
+              -- fuel ONLY via the load join silently computed $0.00 fuel cost for every truck whose
+              -- fuel spend has no load_id — confirmed live: 1,416 of 1,556 TRANSP fuel rows, $571,802.14.
+              SELECT COALESCE(l.assigned_unit_id, ft.unit_id)::text AS unit_id,
+                     COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
               FROM fuel.fuel_transactions ft
-              JOIN mdata.loads l ON l.id = ft.load_id
+              LEFT JOIN mdata.loads l ON l.id = ft.load_id
                                     AND l.operating_company_id = ft.operating_company_id
+                                    AND l.soft_deleted_at IS NULL
               WHERE ft.operating_company_id = $1::uuid
-                AND l.soft_deleted_at IS NULL
-                AND l.status IS DISTINCT FROM 'cancelled'
-                AND l.created_at::date BETWEEN $2::date AND $3::date
-                AND l.assigned_unit_id IS NOT NULL
-              GROUP BY l.assigned_unit_id
+                AND ft.archived_at IS NULL
+                -- Preserve the prior behavior exactly for load-attributed fuel: a row tied to a
+                -- cancelled load is still excluded. A row with NO load (l.id IS NULL, the fallback
+                -- case this fix adds) was never subject to that filter and is not newly excluded by it.
+                AND (l.id IS NULL OR l.status IS DISTINCT FROM 'cancelled')
+                AND COALESCE(l.created_at::date, ft.transaction_at::date) BETWEEN $2::date AND $3::date
+                AND COALESCE(l.assigned_unit_id, ft.unit_id) IS NOT NULL
+              GROUP BY COALESCE(l.assigned_unit_id, ft.unit_id)
             `,
             [companyId, pStart, pEnd]
           )
