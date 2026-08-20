@@ -4525,3 +4525,10 @@ Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.work_order_templates.list:c
 Devin-A | LIVE STARVED | leaf=lists:catalog.names_master.brokers.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/names/brokers | healthz=33a48fc | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/names/brokers healthz=33a48fc head Checking session... | NEXT=leaf=lists:catalog.names_master.brokers.list:connectivity
 Devin-A | LIVE PASS | leaf=lists:catalog.names_master.brokers.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/names/brokers | healthz=33a48fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/names/brokers marker 'lists' | NEXT=leaf=lists:catalog.reference.mexico_states.list:connectivity
 Devin-A | LIVE PASS | leaf=lists:catalog.reference.mexico_states.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/reference/mexico-states | healthz=33a48fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/reference/mexico-states marker 'lists' | NEXT=leaf=lists:catalog.reference.us_states.list:connectivity
+Devin-A | LIVE STARVED | leaf=lists:catalog.reference.us_states.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/reference/us-states | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/reference/us-states healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.safety.accident_types.create:qbo_chrome
