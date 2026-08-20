@@ -1235,3 +1235,12 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=unknown | mutation=none | NEXT=dispatch.queues.detention
+Devin-A | LIVE PASS | module=dispatch | leaf=queues.detention | URL=https://app.ih35dispatch.com/dispatch/detention | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/detention ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Select an operating company. | healthz=92f2779 | mutation=none | NEXT=dispatch.queues.border
