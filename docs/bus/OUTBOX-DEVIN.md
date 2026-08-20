@@ -1335,3 +1335,12 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=7411f81 | mutation=none | NEXT=dispatch.planning.calendar
+Devin-A | LIVE PASS | module=dispatch | leaf=planning.calendar | URL=https://app.ih35dispatch.com/dispatch/planner | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/planner ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Select an operating company  | healthz=7411f81 | mutation=none | NEXT=dispatch.planning.templates
