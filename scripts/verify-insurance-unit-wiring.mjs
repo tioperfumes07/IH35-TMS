@@ -3,7 +3,8 @@
 /**
  * OWNER-EXECUTION-PLAN vertical unit-column sweep (2026-08-14): 10 genuine insurance leaves —
  * PolicyDetail's real "Units Assigned" table, CoverageGapDashboard's real mismatch/gap rows,
- * ClaimsTab's real unit column, and the real unit multi-select checkbox/EntityPicker present in
+ * ClaimsTab's tombstone-safe canonical unit column, and the real unit multi-select
+ * checkbox/EntityPicker present in
  * both create surfaces (modal + wizard, for both policies and claims). policies.list was corrected
  * OUT of this column — see insurance.required.json honesty_audit["unit_column_2026_08_14_overclaim"].
  *
@@ -23,7 +24,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx", /<CollapsedListFilters[\s\S]{0,500}onApply=\{stagedFilters\.apply\}[\s\S]{0,500}onReset=\{stagedFilters\.reset\}[\s\S]{0,500}onCancel=\{stagedFilters\.cancel\}/],
   ["apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx", /value=\{stagedFilters\.draft\.unitId \|\| null\}/],
   ["apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx", /onApply:\s*\(next\)\s*=>\s*setUnitFilter\(next\.unitId\)/],
-  ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="unit"[\s\S]{0,40}id=\{claim\.unit_id \?\? undefined\}/],
+  ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /<EntityLinkOrTombstone kind="unit" id=\{claim\.unit_id\} name=\{claim\.unit_display_id\} noun="Unit" \/>/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /kind="unit"/],
   ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /const toggleUnit = \(unitId: string\) => \{/],
   ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /entityLabel\(unit\.unit_number, unit\.id, "Unit"\)/],
