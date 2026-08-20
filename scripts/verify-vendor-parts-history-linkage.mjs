@@ -5,7 +5,7 @@ const LABEL = "verify-vendor-parts-history-linkage";
 const files = {
   route: "apps/backend/src/maintenance/parts-invoice-links.routes.ts",
   api: "apps/frontend/src/api/maintenance.ts",
-  creator: "apps/frontend/src/components/maintenance/AddPartsLinkModal.tsx",
+  creator: "apps/frontend/src/components/maintenance/AddPartsLinkDrawer.tsx",
   reverse: "apps/frontend/src/pages/vendors/VendorPartsHistorySection.tsx",
   link: "apps/frontend/src/components/shared/EntityLink.tsx",
 };

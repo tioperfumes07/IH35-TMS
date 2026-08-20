@@ -597,9 +597,9 @@
       "id": "maintenance.modal.add_parts_link",
       "tab": "Modals",
       "sub": "Modal: Add Parts Link",
-      "route_hint": "surface://components/maintenance/AddPartsLinkModal.tsx",
+      "route_hint": "surface://components/maintenance/AddPartsLinkDrawer.tsx",
       "surface_kind": "modal",
-      "surface_path": "components/maintenance/AddPartsLinkModal.tsx",
+      "surface_path": "components/maintenance/AddPartsLinkDrawer.tsx",
       "required": [
         "connectivity",
         "vendor"
@@ -621,7 +621,6 @@
       "route_hint": "surface://components/maintenance/WorkOrderDetailModal.tsx",
       "surface_kind": "modal",
       "surface_path": "components/maintenance/WorkOrderDetailModal.tsx",
-      "owned_surface_paths": ["components/maintenance/AddPartsLinkDrawer.tsx"],
       "required": [
         "connectivity",
         "reverse_link",

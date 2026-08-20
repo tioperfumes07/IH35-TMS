@@ -56,10 +56,6 @@ const FILE_OWNED_BY_LEAF = {
   "pages/reports/FuelReconciliationPage.tsx": "report.fuel_reconciliation",
   "pages/safety/SafetyEventsPage.tsx": "safety_events.list",
   "pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx": "driver_scheduler.list",
-  // AddPartsLinkDrawer is a nested "+ Add parts link" create drawer stacked on top of
-  // WorkOrderDetailModal.tsx (stackAboveModal — see verify-parity-drawer-z-index-above-modal.mjs) —
-  // owned by that modal's own leaf, same as its sibling in verify-surface-bar-create-drawer-inventory.mjs.
-  "components/maintenance/AddPartsLinkDrawer.tsx": "maintenance.modal.work_order_detail",
 };
 
 function normalizePath(p) {
