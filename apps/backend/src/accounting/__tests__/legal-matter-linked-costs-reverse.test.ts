@@ -89,3 +89,39 @@ describe("accounting/bills ACCT-F5043-LEGAL-MATTER-PICKER-ON-CREATE", () => {
     expect(modal).toContain("linkedLegalMatterId");
   });
 });
+
+// ACCT-F5629 — listLegalMatterLinkedCosts previously summed accounting.bills ONLY, silently omitting
+// any legal cost paid as a plain company expense rather than a vendor bill. Its own sibling function
+// for the analogous insurance-claim feature, listClaimLinkedFinancials, sums bills + expenses +
+// work_orders — this closes the bills-vs-expenses asymmetry (work_orders intentionally out of scope:
+// legal matters, unlike insurance claims, have no maintenance-work-order relationship).
+describe("accounting/bills ACCT-F5629-LEGAL-MATTER-EXPENSE-LINKAGE", () => {
+  const service = fs.readFileSync(path.join(here, "../bills.service.ts"), "utf8");
+  const expensesRoutes = fs.readFileSync(path.join(here, "../expenses.routes.ts"), "utf8");
+
+  it("listLegalMatterLinkedCosts sums accounting.expenses via legal_matter_id, mirroring the bills arm", () => {
+    expect(service).toContain('await colExists("accounting", "expenses", "legal_matter_id")');
+    expect(service).toMatch(/FROM accounting\.expenses e[\s\S]*?e\.legal_matter_id = \$2/);
+  });
+
+  it("total_cost_cents sums both bills AND expenses, not bills alone", () => {
+    expect(service).toMatch(
+      /bills\.reduce\(\(sum, b\) => sum \+ b\.amount_cents, 0\)\s*\+\s*expenses\.reduce\(\(sum, e\) => sum \+ e\.total_amount_cents, 0\)/
+    );
+  });
+
+  it("columns_present reports both bills and expenses column presence independently", () => {
+    expect(service).toContain("columns_present: { bills: hasBillCol, expenses: hasExpenseCol }");
+  });
+
+  it("expenses.routes.ts create body accepts legal_matter_id and stamps it column-gated", () => {
+    expect(expensesRoutes).toContain("legal_matter_id: z.string().uuid().optional().nullable()");
+    expect(expensesRoutes).toContain('await columnExists(client, "accounting", "expenses", "legal_matter_id")');
+  });
+
+  it("LegalMatterCostsReverseSection renders expense rows alongside bill rows", () => {
+    expect(section).toContain("costsQ.data?.expenses");
+    expect(section).toContain('kind="expense"');
+    expect(section).toContain("legal-matter-expense-");
+  });
+});

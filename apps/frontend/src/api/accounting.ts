@@ -972,8 +972,18 @@ export type LegalMatterLinkedCosts = {
     status: string | null;
     memo: string | null;
   }>;
+  // ACCT-F5629 — accounting.expenses.legal_matter_id (migration 202612821300); a plain company
+  // expense (filing fee, court reporter, expert-witness invoice via company card) is now counted
+  // toward the matter's cost total the same way accounting.bills already was.
+  expenses: Array<{
+    id: string;
+    transaction_date: string | null;
+    total_amount_cents: number;
+    status: string | null;
+    memo: string | null;
+  }>;
   total_cost_cents: number;
-  columns_present: { bills: boolean };
+  columns_present: { bills: boolean; expenses: boolean };
 };
 
 /** ACCT-F5041 — Legal Matter → cost reverse (accounting.bills.legal_matter_id). */
@@ -1008,6 +1018,9 @@ export function createExpense(
     /** LV-G18-INERT-ON-EXPENSE-LINES — escape hatch (>=20 chars) for a legitimate no-load
      * over-the-road expense line; the backend trigger enforces the same floor. */
     load_exemption_reason?: string;
+    /** ACCT-F5629 — optional legal-matter FK (accounting.expenses.legal_matter_id, migration
+     * 202612821300), so an expense counts toward listLegalMatterLinkedCosts the same way a bill does. */
+    legal_matter_id?: string;
     /**
      * FAIL-F2 class-B — accounting.expenses.is_sample_data. The backend has accepted this since
      * expenses.routes.ts:114 and NOTHING in the FE supplied it, so every expense created through the app
