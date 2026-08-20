@@ -4,6 +4,8 @@ export type SafetyEventRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
+  unit_id: string;
+  unit_number: string | null;
   event_type: string | null;
   severity: string | null;
   occurred_at: string | null;
@@ -41,18 +43,23 @@ export async function getDriverSafetyEvents(
   const res = await client.query<SafetyEventRow>(
     `
       SELECT
-        id::text AS uuid,
-        driver_id::text,
-        operating_company_id::text,
-        event_kind AS event_type,
-        severity,
-        event_at::text AS occurred_at,
+        he.id::text AS uuid,
+        he.driver_id::text,
+        he.operating_company_id::text,
+        he.unit_id::text,
+        NULLIF(TRIM(u.unit_number), '') AS unit_number,
+        he.event_kind AS event_type,
+        he.severity,
+        he.event_at::text AS occurred_at,
         'samsara'::text AS source,
-        created_at::text
-      FROM safety.harsh_events
-      WHERE driver_id = $1::uuid
-        AND operating_company_id = $2::uuid
-      ORDER BY event_at DESC NULLS LAST, created_at DESC
+        he.created_at::text
+      FROM safety.harsh_events he
+      JOIN mdata.units u
+        ON u.id = he.unit_id
+       AND (u.owner_company_id = $2::uuid OR u.currently_leased_to_company_id = $2::uuid)
+      WHERE he.driver_id = $1::uuid
+        AND he.operating_company_id = $2::uuid
+      ORDER BY he.event_at DESC NULLS LAST, he.created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]
