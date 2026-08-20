@@ -13583,3 +13583,7 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=dea2ff1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=quality healthz=dea2ff1 head Checking session... | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:load | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=dea2ff1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=quality healthz=dea2ff1 head Checking session... | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=dea2ff1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=quality healthz=dea2ff1 head Checking session... | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=dea2ff1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=quality healthz=dea2ff1 head Checking session... | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
