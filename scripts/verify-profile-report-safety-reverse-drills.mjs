@@ -17,7 +17,7 @@ const sources = {
 };
 
 const checks = [
-  ["assignment", /kind="driver"[\s\S]{0,120}id=\{driverId\}/, "driver assignment helper drills to the driver profile"],
+  ["assignment", /<EntityLinkOrTombstone[\s\S]{0,80}kind="driver"[\s\S]{0,80}id=\{driverId\}[\s\S]{0,80}name=\{driverName\}[\s\S]{0,40}noun="Driver"/, "driver assignment helper drills with the canonical driver label"],
   ["deadhead", /kind="unit"[\s\S]{0,120}id=\{row\.unit_id\}/, "deadhead table drills to unit profiles"],
   ["deadhead", /kind="unit"[\s\S]{0,120}id=\{best\.unit_id\}/, "best-performer tile drills to its unit"],
   ["deadhead", /kind="unit"[\s\S]{0,120}id=\{worst\.unit_id\}/, "attention tile drills to its unit"],

@@ -1,17 +1,18 @@
-import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
-import { entityLabel } from "../../lib/entity-label";
 
 export function CurrentAssignmentSection({
   assignment,
   companyId: _companyId,
   driverId,
+  driverName,
   onSetDefault,
 }: {
   assignment: Record<string, unknown>;
   /** Kept for caller API stability; unit/load links no longer need opco query params. */
   companyId: string;
   driverId: string;
+  /** Canonical name already resolved by the company-scoped profile aggregate. */
+  driverName: string | null;
   onSetDefault?: (unitId: string) => void;
 }) {
   void _companyId;
@@ -82,10 +83,11 @@ export function CurrentAssignmentSection({
         <p className="mt-2 text-xs text-slate-500">
           Set default truck from fleet unit profile or POST default-truck for
           driver{" "}
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="driver"
             id={driverId}
-            label={entityLabel(null, driverId, "Driver")}
+            name={driverName}
+            noun="Driver"
           />
         </p>
       ) : null}
