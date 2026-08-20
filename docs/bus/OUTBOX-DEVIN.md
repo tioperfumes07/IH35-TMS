@@ -7532,3 +7532,5 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=fleet:unit.detail.brakes:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.detail.brakes:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id/detail?tab=brakes | healthz=4508449 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id/detail?tab=brakes healthz=4508449 head Checking session... | NEXT=leaf=fleet:unit.detail.finance_linkage:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.detail.brakes:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id/detail?tab=brakes | healthz=4508449 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id/detail?tab=brakes healthz=4508449 head Checking session... | NEXT=leaf=fleet:unit.detail.finance_linkage:unit
