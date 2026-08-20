@@ -2381,7 +2381,11 @@ export function CustomerDetailPage() {
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Recent Invoices</h3>
-              <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => navigate("/accounting/invoices")}>
+              <button
+                type="button"
+                className="text-xs font-semibold text-slate-700 underline"
+                onClick={() => navigate(`/accounting/invoices?customer_id=${encodeURIComponent(id)}`)}
+              >
                 View all
               </button>
             </div>
