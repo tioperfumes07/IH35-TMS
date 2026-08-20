@@ -5443,3 +5443,7 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:transfers.in_progress:driver
+Devin-A | LIVE PASS | leaf=fleet:transfers.in_progress:driver | USMCA | URL=https://app.ih35dispatch.com/fleet/transfers-in-progress | healthz=b235cea | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/transfers-in-progress marker 'fleet' | NEXT=leaf=fleet:unit.detail.brakes:unit
+Devin-A | LIVE PASS | leaf=fleet:transfers.in_progress:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/transfers-in-progress | healthz=b235cea | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/transfers-in-progress marker 'fleet' | NEXT=leaf=fleet:unit.detail.brakes:unit
+Devin-A | LIVE PASS | leaf=fleet:transfers.in_progress:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/transfers-in-progress | healthz=b235cea | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/transfers-in-progress marker 'fleet' | NEXT=leaf=fleet:unit.detail.brakes:unit
+Devin-A | LIVE PASS | leaf=fleet:transfers.in_progress:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/transfers-in-progress | healthz=b235cea | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/transfers-in-progress marker 'fleet' | NEXT=leaf=fleet:unit.detail.brakes:unit
