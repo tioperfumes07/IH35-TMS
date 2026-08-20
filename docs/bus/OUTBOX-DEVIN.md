@@ -1914,3 +1914,5 @@ Espanol (preview)
 6 | NEXT=leaf=vendors:detail.tasks:vendor
 Devin-A | LIVE PASS | leaf=vendors:detail.ap.vendor_credits:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=3316668
 Devin-A | LIVE PASS | leaf=vendors:detail.ap.vendor_credits:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=3316668
+Devin-A | LIVE STARVED | leaf=vendors:list.segment.inactive:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=inactive | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=unknown head Checking session... | NEXT=leaf=vendors:list.segment.by_category:vendor
+Devin-A | LIVE STARVED | leaf=vendors:list.segment.inactive:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=inactive | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=unknown head Checking session... | NEXT=leaf=vendors:list.segment.by_category:vendor
