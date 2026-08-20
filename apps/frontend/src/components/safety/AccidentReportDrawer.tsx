@@ -268,8 +268,17 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 value={accidentTypeId || null}
                 onChange={(next) => {
                   setAccidentTypeId(next ?? "");
+                  // P44/catalogs.accident_types is a free-text-code catalog (createKind="accident_type"
+                  // lets an operator "+ Add new" any code, e.g. "ROLLOVER") — but safety.accidents.
+                  // record_type stays the narrow legacy z.enum(["accident","damage","vandalism"])
+                  // still read live by SafetyHomeTab/FinesPage. Only updating recordType for the 3
+                  // canonical codes left it STALE (silently reused the previous — possibly wrong —
+                  // value) whenever a custom accident type was picked. Always resolve it on every
+                  // change, falling back to "accident" for a non-canonical code — the same default
+                  // this field's own initial state already applies to an unrecognized value.
                   const row = accidentTypesQuery.data?.rows?.find((item) => item.id === next);
-                  if (row && ["ACCIDENT", "DAMAGE", "VANDALISM"].includes(row.code)) setRecordType(row.code.toLowerCase() as typeof recordType);
+                  const code = row?.code?.toLowerCase();
+                  setRecordType(code === "damage" || code === "vandalism" ? code : "accident");
                 }}
                 options={(accidentTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code }))}
                 createKind="accident_type"

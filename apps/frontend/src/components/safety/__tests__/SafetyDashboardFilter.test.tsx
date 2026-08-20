@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SafetyDashboardFilter } from "../SafetyDashboardFilter";
 
@@ -49,6 +49,10 @@ describe("SafetyDashboardFilter", () => {
     );
     fireEvent.click(screen.getByTestId("safety-filters-toggle"));
     fireEvent.click(screen.getByTestId("safety-window-30d"));
+    // Filters are staged (useStagedListFilters, same CollapsedListFilters Apply/Cancel/Reset chrome
+    // as every other migrated list-filter panel) — a pill click only updates the draft; the parent
+    // callback fires on Apply.
+    fireEvent.click(within(screen.getByTestId("safety-filters-panel")).getByRole("button", { name: "Apply" }));
     expect(onWindow).toHaveBeenCalledWith("30d");
   });
 });

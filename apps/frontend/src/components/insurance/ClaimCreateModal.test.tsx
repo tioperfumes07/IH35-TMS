@@ -97,12 +97,14 @@ describe("ClaimCreateModal — claim economics slice 2", () => {
     expect(screen.getByText(/No dollar threshold applies/i)).toBeInTheDocument();
   });
 
-  it("keeps the nested '+ Create trailer' add-new entry point on the trailer picker", async () => {
+  it("keeps the nested '+ Add new trailer' add-new entry point on the trailer picker", async () => {
+    // V2 universal picker law: dropdown inline-create rows read "+ Add new <entity>" — "+ Create"
+    // is reserved for page primary buttons (entityAddNewLabel, components/parity/entityPickerRegistry.ts).
     render(wrap(<ClaimCreateModal {...defaultProps} />));
     const user = userEvent.setup();
     const trailerField = screen.getByTestId("claim-create-trailer-field");
     await user.click(within(trailerField).getByRole("combobox"));
-    expect(await screen.findByText(/\+ Create trailer/i)).toBeInTheDocument();
+    expect(await screen.findByText(/\+ Add new trailer/i)).toBeInTheDocument();
   });
 
   it("driver field still uses DriverPickerWithCreate (nested driver create preserved)", () => {

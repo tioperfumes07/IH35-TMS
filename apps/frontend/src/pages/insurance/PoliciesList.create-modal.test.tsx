@@ -92,20 +92,23 @@ describe("PoliciesList create policy access and cancel behavior", () => {
     insuranceApiMocks.createPolicy.mockReset();
   });
 
+  // A second "+ Create policy form" button (the legacy modal fallback) sits alongside the wizard
+  // button — both share the "+ Create policy" prefix, so an unanchored regex now matches both.
+  // Anchor exactly to the wizard button's own accessible name.
   it("shows + Create policy only for allowed roles (Guard B vocabulary)", async () => {
     authState.role = "Driver";
     const { rerender } = render(wrap(<PoliciesList />));
-    expect(screen.queryByRole("button", { name: /\+ Create policy/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^\+ Create policy$/i })).toBeNull();
 
     authState.role = "Accountant";
     rerender(wrap(<PoliciesList />));
-    expect(await screen.findByRole("button", { name: /\+ Create policy/i })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /^\+ Create policy$/i })).toBeInTheDocument();
   });
 
   it("opens wizard (not modal) when + Create policy clicked", async () => {
     const user = userEvent.setup();
     render(wrap(<PoliciesList />));
-    await user.click(await screen.findByRole("button", { name: /\+ Create policy/i }));
+    await user.click(await screen.findByRole("button", { name: /^\+ Create policy$/i }));
     expect(screen.getByTestId("policy-wizard")).toBeInTheDocument();
   });
 });
