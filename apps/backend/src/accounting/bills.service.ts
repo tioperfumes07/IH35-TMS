@@ -2428,6 +2428,78 @@ export async function payBill(input: PayBillInput, userId: string) {
   return payment;
 }
 
+// BANK-TXN-LINKED-BILL-VOID-NO-CASCADE (ACCT-F5673) — a bill created FROM a bank transaction
+// (bulk-post-as-bills and the insurance wizard/dispersal stamp category='bill' +
+// linked_entity_id=<bill> on the source txn) must not strand that txn as categorized-forever when
+// the bill voids. Measured live before this cascade existed: 24 USMCA insurance-wizard placeholder
+// txns (two policies × 12 installments, $2,100.00) linked to void bills, permanently polluting the
+// linked-bank panel and every "categorized but unposted" view. Two sub-cases, split on origin:
+//   - SEEDED placeholder (plaid_transaction_id IS NULL): the txn was INSERTED by the wizard to
+//     represent a planned installment; with its bill void it represents nothing real → VOID it
+//     (voided_at/voided_reason — WORM, never delete).
+//   - REAL feed line (plaid id present): the money movement is real; revert to
+//     pending_categorization and clear the bill linkage so it can be re-categorized honestly.
+// Rows already carrying matched_journal_entry_id are never touched — their GL story exists and
+// voids through its own reversal path, not this cascade. Exported so the one-time backfill of the
+// 24 pre-existing stuck rows runs through this SAME code path.
+export async function cascadeBillVoidToSourceBankTransactions(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rowCount?: number | null; rows: Array<Record<string, unknown>> }> },
+  input: { operatingCompanyId: string; billId: string; userId: string; reason: string }
+): Promise<{ voided_placeholder_count: number; reverted_feed_line_count: number }> {
+  const voided = await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET voided_at = now(),
+          voided_reason = $4,
+          updated_at = now()
+      WHERE operating_company_id = $1::uuid
+        AND linked_entity_id = $2::uuid
+        AND voided_at IS NULL
+        AND matched_journal_entry_id IS NULL
+        AND plaid_transaction_id IS NULL
+    `,
+    [input.operatingCompanyId, input.billId, input.userId, `linked_bill_voided: ${input.reason}`]
+  );
+  const reverted = await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET status = 'pending_categorization',
+          category = NULL,
+          category_kind = NULL,
+          linked_entity_id = NULL,
+          categorized_at = NULL,
+          updated_at = now()
+      WHERE operating_company_id = $1::uuid
+        AND linked_entity_id = $2::uuid
+        AND voided_at IS NULL
+        AND matched_journal_entry_id IS NULL
+        AND plaid_transaction_id IS NOT NULL
+    `,
+    [input.operatingCompanyId, input.billId]
+  );
+  const counts = {
+    voided_placeholder_count: voided.rowCount ?? 0,
+    reverted_feed_line_count: reverted.rowCount ?? 0,
+  };
+  if (counts.voided_placeholder_count > 0 || counts.reverted_feed_line_count > 0) {
+    await appendCrudAudit(
+      client as never,
+      input.userId,
+      "banking.bank_transaction.bill_void_cascade",
+      {
+        resource_type: "accounting.bills",
+        resource_id: input.billId,
+        operating_company_id: input.operatingCompanyId,
+        reason: input.reason,
+        ...counts,
+      },
+      "warning",
+      "ACCT-F5673"
+    );
+  }
+  return counts;
+}
+
 // VOID-EVERYWHERE PR-2 — wire the shared void engine into bills (same mechanic as invoices/JEs).
 // When the flag is ON: VOID = Owner + Accountant, a reason is required, and an equal-and-opposite
 // reversing JE is posted on the SAME transaction (atomic with the status flip). When OFF (default):
@@ -2537,6 +2609,9 @@ export async function voidBill(
       `,
       [billId, operatingCompanyId, userId, reason]
     );
+
+    // ACCT-F5673 — never strand the source bank transaction (same client, atomic with the flip).
+    await cascadeBillVoidToSourceBankTransactions(client, { operatingCompanyId, billId, userId, reason });
 
     if (flagOn) {
       await auditVoid(client, userId, "bill", {
@@ -2779,6 +2854,14 @@ export async function voidBillInClientTx(
     [input.billId, input.operatingCompanyId, input.userId, input.reason]
   );
   if (!updated.rows[0]?.id) throw new Error("bill_void_state_transition_failed");
+
+  // ACCT-F5673 — never strand the source bank transaction (same client, atomic with the flip).
+  await cascadeBillVoidToSourceBankTransactions(client, {
+    operatingCompanyId: input.operatingCompanyId,
+    billId: input.billId,
+    userId: input.userId,
+    reason: input.reason,
+  });
 
   await appendCrudAudit(
     client,

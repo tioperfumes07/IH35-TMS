@@ -40,6 +40,9 @@ export function analyze(src) {
   if (!/status = 'categorized'/.test(block) || !/matched_journal_entry_id IS NULL/.test(block)) {
     failures.push(`${FILE}: the backlog SELECT must target status='categorized' AND matched_journal_entry_id IS NULL — anything broader reposts already-posted rows; anything narrower strands part of the backlog.`);
   }
+  if (!/bt\.voided_at IS NULL/.test(block)) {
+    failures.push(`${FILE}: the backlog SELECT must exclude voided transactions (ACCT-F5673 bill-void cascade voids placeholder txns; feeding them to the poster re-litigates rows whose bills are void).`);
+  }
   if (!/maybePostBankCategorizationToGl\(/.test(block)) {
     failures.push(`${FILE}: the backlog route must reuse maybePostBankCategorizationToGl — no new GL math.`);
   }
@@ -59,7 +62,7 @@ if (process.argv.includes("--selftest")) {
   app.post("/api/v1/banking/transactions/post-categorized-backlog", async (req, reply) => {
     const backlogIds = await withCompanyScope(user.uuid, opco, async (client) => {
       const res = await client.query(
-        \`SELECT bt.id FROM banking.bank_transactions bt WHERE bt.status = 'categorized' AND bt.matched_journal_entry_id IS NULL\`
+        \`SELECT bt.id FROM banking.bank_transactions bt WHERE bt.status = 'categorized' AND bt.matched_journal_entry_id IS NULL AND bt.voided_at IS NULL\`
       );
       return res.rows.map((r) => r.id);
     });
@@ -79,7 +82,7 @@ if (process.argv.includes("--selftest")) {
   app.post("/api/v1/banking/transactions/post-categorized-backlog", async (req, reply) => {
     await withCompanyScope(user.uuid, opco, async (client) => {
       const res = await client.query(
-        \`SELECT bt.id FROM banking.bank_transactions bt WHERE bt.status = 'categorized' AND bt.matched_journal_entry_id IS NULL\`
+        \`SELECT bt.id FROM banking.bank_transactions bt WHERE bt.status = 'categorized' AND bt.matched_journal_entry_id IS NULL AND bt.voided_at IS NULL\`
       );
       for (const r of res.rows) {
         await maybePostBankCategorizationToGl({ companyId: opco, actorUserUuid: user.uuid, bankTransactionId: r.id });

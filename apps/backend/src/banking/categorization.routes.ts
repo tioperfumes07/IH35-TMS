@@ -705,6 +705,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             ON je.id = bt.matched_journal_entry_id
            AND je.operating_company_id = bt.operating_company_id
           WHERE bt.operating_company_id = $1::uuid
+            -- ACCT-F5673 — a txn voided by the bill-void cascade must not keep rendering on the
+            -- linked-bank panels as a permanently JE-dark row.
+            AND bt.voided_at IS NULL
             AND (
               ($2::uuid IS NOT NULL AND bt.categorization_driver_id = $2::uuid)
               OR ($3::uuid IS NOT NULL AND bt.categorization_unit_id = $3::uuid)
@@ -1176,6 +1179,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           WHERE bt.operating_company_id = $1::uuid
             AND bt.status = 'categorized'
             AND bt.matched_journal_entry_id IS NULL
+            AND bt.voided_at IS NULL
           ORDER BY bt.transaction_date ASC, bt.created_at ASC
           LIMIT $2
         `,
