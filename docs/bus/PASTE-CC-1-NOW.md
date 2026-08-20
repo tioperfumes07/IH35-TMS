@@ -2,8 +2,8 @@
 
 `git pull --ff-only origin main`
 
-Board drained is **not** idle. Open `docs/bus/CC-1-QUEUE-UNTIL-06.md` and build item 1.
+Urgent 6 least progress. Item 1 = **settlements** TMS money.
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=accounting TMS money | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=settlements TMS money | GO
 ```

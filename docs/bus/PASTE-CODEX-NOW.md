@@ -2,8 +2,8 @@
 
 `git pull --ff-only origin main`
 
-8 modules by 06:00 CT. Reverse only. USMCA.
+Reverse on the 6 least-Clicked. Start **settlements**.
 
 ```text
-Codex | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=customers reverse | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=settlements reverse_link | GO
 ```

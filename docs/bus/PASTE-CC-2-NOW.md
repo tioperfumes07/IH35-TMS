@@ -2,8 +2,8 @@
 
 `git pull --ff-only origin main`
 
-8 modules by 06:00 CT. Pickers. No poll.
+Pickers on the 6 least-Clicked. No poll.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=settlements picker_law | GO
 ```
