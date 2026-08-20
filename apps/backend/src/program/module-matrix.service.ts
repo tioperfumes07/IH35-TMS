@@ -48,6 +48,7 @@ const REPO_ROOT = (() => {
 const SCOREBOARD_SCRIPT = path.join(REPO_ROOT, "scripts/audit-coverage-scoreboard.mjs");
 const PROGRAM_SCOREBOARD_JSON = path.join(REPO_ROOT, "docs/audit/program-scoreboard.json");
 const LEDGER_MD = path.join(REPO_ROOT, "docs/audit/AUDIT-COVERAGE-LIVE.md");
+const LEDGER_REL = "docs/audit/AUDIT-COVERAGE-LIVE.md";
 const OUTBOX_CLICKED_FILES = [
   "docs/bus/OUTBOX-DEVIN.md",
   "docs/bus/OUTBOX-DEVIN-A.md",
@@ -523,10 +524,25 @@ async function loadLedgerRows(): Promise<LedgerRow[]> {
   // Empty ledger made Box 4 show "0 of N LIVE" while Box 3 stayed 100% Built from disk
   // @matrix-built tags (looked like Live vanished). Fail closed so /program/matrix errors
   // loudly until AUDIT-COVERAGE-LIVE.md parseFindings succeeds (no duplicate # / bad pipes).
+  // LV-MATRIX-LEDGER-RENDER-DOCS-IGNORE — render.yaml ignoredPaths docs/** so the API
+  // image often has a stale/missing AUDIT-COVERAGE-LIVE.md; parseFindings then 503s
+  // GET /api/v1/program/module-matrix?scope=system (SYSTEM ROLLUP UNAVAILABLE). Same
+  // class as Clicked OUTBOX: prefer origin/main via loadOutboxTextFromGithub.
   const mod = (await import(pathToFileURL(SCOREBOARD_SCRIPT).href)) as {
     parseFindings: (md: string) => LedgerRow[];
   };
-  const md = readFileSync(LEDGER_MD, "utf8");
+  const remote = await loadOutboxTextFromGithub(LEDGER_REL);
+  const md =
+    remote && remote.includes("| # | Module |")
+      ? remote
+      : existsSync(LEDGER_MD)
+        ? readFileSync(LEDGER_MD, "utf8")
+        : "";
+  if (!md) {
+    throw new Error(
+      "AUDIT-COVERAGE-LIVE.md missing on disk and GitHub origin/main fetch failed",
+    );
+  }
   const rows = mod.parseFindings(md);
   ledgerCache = { atMs: now, rows };
   return rows;
