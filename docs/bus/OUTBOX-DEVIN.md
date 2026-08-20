@@ -4209,3 +4209,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.fleet.ownership_types.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.ownership_types.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/ownership-types | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/ownership-types healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.ownership_types.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/ownership-types | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/ownership-types healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.ownership_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/ownership-types | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/ownership-types healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.create:picker_law
