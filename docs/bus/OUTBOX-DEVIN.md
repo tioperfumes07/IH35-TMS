@@ -1449,3 +1449,10 @@ Dispatch
 Loads, stops, assig | healthz=3bd02c9 | mutation=none | NEXT=dispatch.load.drawer.assignment_history
 Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.assignment_history | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Assignment%20History | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id?tab=Assignment%20History ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.audit
 Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.audit | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Audit | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id?tab=Audit ; body head Checking session... | healthz=3bd02c9 | mutation=none | NEXT=dispatch.load.drawer.pre_settlement
+Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.pre_settlement | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Pre-Settlement | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/home ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.modal.cancel_load
