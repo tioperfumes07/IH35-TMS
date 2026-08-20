@@ -55,7 +55,7 @@ const COLUMNS: CatalogColumnConfig[] = [
 const FIELDS: CatalogFieldConfig[] = [
   { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true, placeholder: "RED" },
   { key: "display_name", label: "Flag", type: "text", required: true },
-  { key: "hex_color", label: "Color (#RRGGBB)", type: "text", required: true, placeholder: "#ef4444" },
+  { key: "hex_color", label: "Color (#RRGGBB)", type: "color", required: true, placeholder: "#ef4444" },
   { key: "icon_emoji", label: "Icon", type: "text", required: false },
   { key: "severity_order", label: "Severity Order", type: "number", required: false },
   { key: "description", label: "Description", type: "text", required: false },

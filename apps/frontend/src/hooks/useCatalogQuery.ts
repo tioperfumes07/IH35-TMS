@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, apiRequestFormData } from "../api/client";
 
-export type CatalogFieldType = "text" | "number" | "boolean" | "date" | "enum" | "foreign_key";
+export type CatalogFieldType = "text" | "number" | "boolean" | "date" | "enum" | "foreign_key" | "color";
 
 export type CatalogFieldConfig = {
   key: string;
