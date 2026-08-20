@@ -1399,3 +1399,4 @@ Espanol (preview)
 tioperfumes07@gmail.com
 DRIVERS›LAYOVERS
 Driver Layo | healthz=f12a9e2 | mutation=none | NEXT=dispatch.load.detail
+Devin-A | LIVE STARVED | module=dispatch | leaf=load.detail | URL=https://app.ih35dispatch.com/dispatch/loads/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.load.banking
