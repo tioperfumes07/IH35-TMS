@@ -6058,3 +6058,17 @@ Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.add_parts_link:connecti
 Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.add_parts_link:vendor | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=8f8b195 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.convert_issue_to_wo:connectivity
 Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.convert_issue_to_wo:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=8f8b195 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.create_bill:connectivity
 Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.convert_issue_to_wo:unit | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=8f8b195 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.create_bill:connectivity
+Devin-A | LIVE STARVED | leaf=banking:accounts:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/banking healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=banking:banking.drawer.match:connectivity
+Devin-A | LIVE STARVED | leaf=banking:accounts:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/banking healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=banking:banking.drawer.match:connectivity
