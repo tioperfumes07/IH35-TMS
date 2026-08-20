@@ -49,6 +49,15 @@ function installMock(
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
     if (sql.includes("set_config")) return { rows: [] };
+    // ACCT-F5653 — verifyCreditAccountBelongsToCompany's existence check: only the fixture's own
+    // CREDIT, scoped to OPCO, resolves — anything else is a real, expected refusal, exercised by the
+    // dedicated test below.
+    if (sql.includes("FROM catalogs.accounts")) {
+      if (String(params[0]) === CREDIT && String(params[1]) === OPCO) {
+        return { rows: [{ id: CREDIT }] };
+      }
+      return { rows: [] };
+    }
     if (sql.includes("driver_finance.driver_advances")) {
       return {
         rows: [
@@ -230,5 +239,26 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
     expect(result.result).toBe("posted");
     expect(cap.lines.find((l) => l.dc === "credit")?.account_id).toBe(CREDIT);
+  });
+
+  it("ACCT-F5653: refuses to post when credit_account_id does not resolve for this operating_company_id", async () => {
+    mockWithCurrentUser.mockClear();
+    mockResolveAccountForCategory.mockReset();
+    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveRoleAccountOptional.mockReset();
+    installMock();
+    const FOREIGN_ACCOUNT = "99999999-9999-4999-8999-999999999999"; // belongs to no entity in this mock
+
+    await expect(
+      postSourceTransaction(
+        {
+          operating_company_id: OPCO,
+          source_transaction_type: "driver_advance",
+          source_transaction_id: ADV,
+          credit_account_id: FOREIGN_ACCOUNT,
+        },
+        { userId: ACTOR }
+      )
+    ).rejects.toMatchObject({ code: "CREDIT_ACCOUNT_CROSS_ENTITY" });
   });
 });

@@ -32,6 +32,7 @@ const guards = [
   "verify-deprecated-settlement-escrow-deposit-atomic.mjs",
   "verify-coa-asymmetry-account-entitylink.mjs",
   "verify-credit-memo-vendor-credit-row-locked.mjs",
+  "verify-credit-account-id-entity-scoped.mjs",
   "verify-credit-vendor-apply-idempotent-replay.mjs",
   "verify-depreciation-reversal-cross-entity-books.mjs",
   "verify-detention-billing-bridge-resyncs-invoice.mjs",

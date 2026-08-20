@@ -146,6 +146,7 @@ export type PostingErrorCode =
   | "PERIOD_LOCKED"
   | "UNBALANCED_ENTRY"
   | "ACCOUNT_MAPPING_MISSING"
+  | "CREDIT_ACCOUNT_CROSS_ENTITY"
   | "ADVANCE_NOT_POSTING_ELIGIBLE"
   | "BILL_LINE_ACCOUNT_UNRESOLVED"
   | "INVOICE_LINE_REVENUE_UNRESOLVED"
@@ -505,6 +506,39 @@ async function resolveBankLedgerAccountId(
     [bankAccountId, operatingCompanyId]
   );
   return res.rows[0]?.ledger_account_id ?? null;
+}
+
+// ACCT-F5653 — a caller-supplied credit_account_id (the operator's chosen source/bank account at
+// approve/disburse time — cash-advance approve, driver-advance disburse, driver-reimbursement
+// immediate pay) previously went straight into a journal_entry_postings.account_id write with NO
+// check that it belongs to THIS company's chart of accounts. accounting.journal_entry_postings'
+// account_id FK to catalogs.accounts is a single-column FK (migration 0092), not a composite
+// (operating_company_id, account_id) constraint, so nothing at the schema level stops a UUID
+// belonging to a DIFFERENT entity's chart of accounts from being posted under this entity's
+// operating_company_id — catalogs.accounts' own FORCE RLS only guards direct reads/writes of that
+// table, never FK references made from a foreign INSERT. A cross-entity (or simply mistyped/stale)
+// UUID here would silently attribute a dollar amount to another entity's GL account, or render a
+// foreign account's name/number on this entity's own JE preview/GL screens. Mirrors
+// resolveBankLedgerAccountId's own operating_company_id-scoped lookup immediately above — fail
+// closed on no match, never silently substitute or accept.
+async function verifyCreditAccountBelongsToCompany(
+  client: DbClient,
+  operatingCompanyId: string,
+  creditAccountId: string
+): Promise<string> {
+  const res = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [creditAccountId, operatingCompanyId]
+  );
+  if (!res.rows[0]?.id) {
+    throw new PostingEngineError(
+      "CREDIT_ACCOUNT_CROSS_ENTITY",
+      `credit_account_id ${creditAccountId} does not resolve to a catalogs.accounts row owned by ` +
+        `operating_company_id=${operatingCompanyId} — refusing to post a caller-supplied account that ` +
+        `does not exist or belongs to a different entity.`
+    );
+  }
+  return res.rows[0].id;
 }
 
 /**
@@ -1637,7 +1671,11 @@ async function buildCashAdvanceLines(
   const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
   const debitAccountId = mapped.account_id;
 
-  const creditAccount = creditAccountId ?? (await resolveDisbursementCashAccountForCompany(client, operatingCompanyId));
+  // ACCT-F5653 — validate a caller-supplied credit_account_id belongs to THIS company's chart of
+  // accounts before it is ever written into journal_entry_postings; see verifyCreditAccountBelongsToCompany.
+  const creditAccount = creditAccountId
+    ? await verifyCreditAccountBelongsToCompany(client, operatingCompanyId, creditAccountId)
+    : await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
   if (!creditAccount) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for cash advance is missing");
   }
@@ -1736,7 +1774,9 @@ async function buildDriverAdvanceLines(
   // names no bank at all does the existing ACCT-F345 fail-closed company fallback apply.
   let creditAccount: string | null;
   if (creditAccountId) {
-    creditAccount = creditAccountId;
+    // ACCT-F5653 — validate the caller-supplied credit_account_id belongs to THIS company's chart of
+    // accounts before it is written into journal_entry_postings; see verifyCreditAccountBelongsToCompany.
+    creditAccount = await verifyCreditAccountBelongsToCompany(client, operatingCompanyId, creditAccountId);
   } else if (advance.from_bank_account_id) {
     creditAccount = await resolveBankLedgerAccountId(client, operatingCompanyId, advance.from_bank_account_id);
     if (!creditAccount) {
@@ -1831,7 +1871,11 @@ async function buildDriverReimbursementLines(
   if (!debitAccountId) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role designation for driver reimbursement");
   }
-  const creditAccount = creditAccountId ?? (await resolveDisbursementCashAccountForCompany(client, operatingCompanyId));
+  // ACCT-F5653 — validate a caller-supplied credit_account_id belongs to THIS company's chart of
+  // accounts before it is ever written into journal_entry_postings; see verifyCreditAccountBelongsToCompany.
+  const creditAccount = creditAccountId
+    ? await verifyCreditAccountBelongsToCompany(client, operatingCompanyId, creditAccountId)
+    : await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
   if (!creditAccount) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver reimbursement is missing");
   }
