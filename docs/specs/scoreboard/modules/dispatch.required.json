@@ -687,6 +687,9 @@
       "tab": "Load detail",
       "sub": "Drawer \u00b7 Customs",
       "route_hint": "/dispatch/loads/:id?tab=Customs",
+      "owned_surface_paths": [
+        "components/dispatch/drawer-tabs/CustomsTab.tsx"
+      ],
       "required": [
         "load",
         "connectivity",
