@@ -35,95 +35,118 @@ export async function generateFromTemplate(
   targetDate: string,
   actorUserId: string
 ): Promise<{ billUuid: string; nextGenerationDate: string }> {
-  const template = await withLuciaBypass(async (client) => {
+  // ACCT-F5649 — the template row is locked FOR UPDATE for the ENTIRE check-generate-advance
+  // sequence (read -> validate -> createBill -> compare-and-swap next_generation_date -> log), all
+  // inside this ONE withLuciaBypass transaction. createBill() itself still opens its own separate
+  // connection (a genuinely different pool/transaction) — that's fine, because the lock's job here
+  // is pure mutual exclusion: a second concurrent/retried call to generate-now (or a cron tick racing
+  // a manual click) blocks on the SAME `SELECT ... FOR UPDATE` until this one commits or rolls back,
+  // so it can never read the stale next_generation_date and duplicate the bill. Previously the read,
+  // the createBill() call, and the next_generation_date advance each ran on independent unlocked
+  // connections, so two near-simultaneous calls could both pass the is_active check, both create a
+  // real duplicate AP bill (and duplicate GL JE if BILL_GL_POSTING_ENABLED), and then race a blind,
+  // non-CAS UPDATE where the last write wins.
+  const { billUuid, nextGenerationDate, template } = await withLuciaBypass(async (client) => {
     const res = await client.query<RecurringBillTemplate>(
-      `SELECT * FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid`,
+      `SELECT * FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid FOR UPDATE`,
       [templateUuid]
     );
-    if (!res.rows[0]) throw new Error(`recurring_bill_template_not_found:${templateUuid}`);
-    return res.rows[0];
-  });
+    const tmpl = res.rows[0];
+    if (!tmpl) throw new Error(`recurring_bill_template_not_found:${templateUuid}`);
 
-  if (!template.is_active) throw new Error("recurring_bill_template_inactive");
+    if (!tmpl.is_active) throw new Error("recurring_bill_template_inactive");
 
-  const amountCents = Math.round(Number(template.amount) * 100);
-  if (amountCents <= 0) throw new Error("recurring_bill_template_invalid_amount");
+    // A concurrent call that was blocked on the lock above and only now proceeds: the freshly-locked
+    // row may already show generation advanced past this cycle (the first caller won the race and
+    // committed while we waited). Reject rather than silently duplicate.
+    if (tmpl.next_generation_date && String(tmpl.next_generation_date) > targetDate) {
+      throw new Error("recurring_bill_already_generated_for_period");
+    }
 
-  const memo = template.memo ?? template.template_name;
+    const amountCents = Math.round(Number(tmpl.amount) * 100);
+    if (amountCents <= 0) throw new Error("recurring_bill_template_invalid_amount");
 
-  // When the template stores line items with CoA, create real bill_lines (LAW §9).
-  const rawLines = Array.isArray(template.line_items) ? template.line_items : [];
-  const billLines =
-    rawLines.length > 0
-      ? rawLines.map((line) => {
-          const lineCents = Math.round(Number(line.amount) * 100);
-          if (!Number.isFinite(lineCents) || lineCents <= 0) {
-            throw new Error("recurring_bill_line_amount_invalid");
-          }
-          if (!line.coa_account_id) {
-            throw new Error("recurring_bill_line_coa_required");
-          }
-          return {
-            accountId: line.coa_account_id,
-            amountCents: lineCents,
-            description: line.description || template.template_name,
-            section: "A" as const,
-          };
-        })
-      : undefined;
-  if (billLines) {
-    const linesSum = billLines.reduce((sum, line) => sum + line.amountCents, 0);
-    if (linesSum !== amountCents) throw new Error("recurring_bill_lines_amount_mismatch");
-  }
+    const memo = tmpl.memo ?? tmpl.template_name;
 
-  // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — this file's own removed comment
-  // documented "Header-only remains for legacy templates with an empty line_items array": exactly
-  // the defect createBill() now refuses (a bill with zero accounting.bill_lines rows the GL poster
-  // can never resolve). `accounting.recurring_bill_templates` has no CoA column of its own — the
-  // `coa_account_id` field on the `RecurringBillTemplate` TS type is a phantom, never backed by a
-  // real DB column (verified live: 0 rows on prod, `information_schema.columns` confirms the column
-  // does not exist) — so there is no template-level fallback to synthesize a line from. Fail loud
-  // instead: a template with empty line_items cannot generate a postable bill and must not silently
-  // produce one that sits unresolved forever.
-  if (!billLines) {
-    throw new Error("recurring_bill_template_missing_line_items");
-  }
+    // When the template stores line items with CoA, create real bill_lines (LAW §9).
+    const rawLines = Array.isArray(tmpl.line_items) ? tmpl.line_items : [];
+    const billLines =
+      rawLines.length > 0
+        ? rawLines.map((line) => {
+            const lineCents = Math.round(Number(line.amount) * 100);
+            if (!Number.isFinite(lineCents) || lineCents <= 0) {
+              throw new Error("recurring_bill_line_amount_invalid");
+            }
+            if (!line.coa_account_id) {
+              throw new Error("recurring_bill_line_coa_required");
+            }
+            return {
+              accountId: line.coa_account_id,
+              amountCents: lineCents,
+              description: line.description || tmpl.template_name,
+              section: "A" as const,
+            };
+          })
+        : undefined;
+    if (billLines) {
+      const linesSum = billLines.reduce((sum, line) => sum + line.amountCents, 0);
+      if (linesSum !== amountCents) throw new Error("recurring_bill_lines_amount_mismatch");
+    }
 
-  const bill = await createBill(
-    {
-      operatingCompanyId: template.operating_company_id,
-      vendorId: template.vendor_uuid,
-      billDate: targetDate,
-      amountCents,
-      memo,
-      lines: billLines,
-    },
-    actorUserId
-  );
+    // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — this file's own removed comment
+    // documented "Header-only remains for legacy templates with an empty line_items array": exactly
+    // the defect createBill() now refuses (a bill with zero accounting.bill_lines rows the GL poster
+    // can never resolve). `accounting.recurring_bill_templates` has no CoA column of its own — the
+    // `coa_account_id` field on the `RecurringBillTemplate` TS type is a phantom, never backed by a
+    // real DB column (verified live: 0 rows on prod, `information_schema.columns` confirms the column
+    // does not exist) — so there is no template-level fallback to synthesize a line from. Fail loud
+    // instead: a template with empty line_items cannot generate a postable bill and must not silently
+    // produce one that sits unresolved forever.
+    if (!billLines) {
+      throw new Error("recurring_bill_template_missing_line_items");
+    }
 
-  const billUuid: string = (bill as Record<string, unknown>).id as string
-    ?? (bill as Record<string, unknown>).uuid as string;
-  if (!billUuid) throw new Error("recurring_bill_create_returned_no_id");
+    const bill = await createBill(
+      {
+        operatingCompanyId: tmpl.operating_company_id,
+        vendorId: tmpl.vendor_uuid,
+        billDate: targetDate,
+        amountCents,
+        memo,
+        lines: billLines,
+      },
+      actorUserId
+    );
 
-  const nextDate = computeNextGenerationDate(targetDate, template.frequency);
+    const billId: string = (bill as Record<string, unknown>).id as string
+      ?? (bill as Record<string, unknown>).uuid as string;
+    if (!billId) throw new Error("recurring_bill_create_returned_no_id");
 
-  await withLuciaBypass(async (client) => {
-    await client.query(
+    const nextDate = computeNextGenerationDate(targetDate, tmpl.frequency);
+
+    // Compare-and-swap against the value read under the SAME lock — under normal operation this can
+    // never miss (nothing else can touch this row while we hold FOR UPDATE), but it's cheap
+    // defense-in-depth matching this codebase's established CAS convention (e.g. ACCT-F5636/F5646/F5647).
+    const upd = await client.query(
       `
         UPDATE accounting.recurring_bill_templates
         SET next_generation_date = $2::date, updated_at = now()
-        WHERE uuid = $1::uuid
+        WHERE uuid = $1::uuid AND next_generation_date IS NOT DISTINCT FROM $3::date
       `,
-      [templateUuid, nextDate]
+      [templateUuid, nextDate, tmpl.next_generation_date]
     );
+    if (upd.rowCount === 0) throw new Error("recurring_bill_template_generation_race");
+
     await client.query(
       `
         INSERT INTO accounting.recurring_bill_generation_log
           (template_uuid, generated_bill_uuid, generated_at, status)
         VALUES ($1::uuid, $2::uuid, now(), 'success')
       `,
-      [templateUuid, billUuid]
+      [templateUuid, billId]
     );
+
+    return { billUuid: billId, nextGenerationDate: nextDate, template: tmpl };
   });
 
   // GL-posting gate: the bill (AP record) is always created above, but auto-posting it to the GL is
@@ -154,7 +177,7 @@ export async function generateFromTemplate(
     }
   }
 
-  return { billUuid, nextGenerationDate: nextDate };
+  return { billUuid, nextGenerationDate };
 }
 
 export type GeneratorRunSummary = {

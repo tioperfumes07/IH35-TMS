@@ -84,6 +84,7 @@ const guards = [
   "verify-reconciliation-match-existence-checked.mjs",
   "verify-relay-wallet-balance-fuel-total-cost-column.mjs",
   "verify-recon-engine-sign-convention-abs-is-credit.mjs",
+  "verify-recurring-bill-template-generate-row-locked.mjs",
   "verify-recurring-bill-template-ownership-check.mjs",
   "verify-recurring-bill-template-role-gated.mjs",
   "verify-invoice-inline-surface-applicability.mjs",
