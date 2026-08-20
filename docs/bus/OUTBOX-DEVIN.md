@@ -1593,3 +1593,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | healthz=unknown | mutation=none | NEXT=fleet.roster.filter.status_oos
+Devin-A | LIVE STARVED | module=fleet | leaf=home.create_trailer | URL=https://app.ih35dispatch.com/fleet | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet ; body head Checking session... | healthz=79be3b0 | mutation=none | NEXT=fleet.roster.kind.all
+Devin-A | LIVE STARVED | module=fleet | leaf=roster.filter.status_oos | URL=https://app.ih35dispatch.com/fleet?status=OutOfService | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet ; body head Checking session... | healthz=a3b4b1e | mutation=none | NEXT=fleet.roster.bulk.status
