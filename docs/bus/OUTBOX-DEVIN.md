@@ -2147,3 +2147,7 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=vendors:md.header.edit:vendor
+Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:vendor | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
+Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
+Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
+Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:scenario.ap | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
