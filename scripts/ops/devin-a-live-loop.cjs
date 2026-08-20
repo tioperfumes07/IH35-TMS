@@ -187,7 +187,6 @@ function filterQueue(raw) {
     .filter((item) => {
       const mod = String(item.module || "").toLowerCase();
       if (FORBIDDEN.has(mod)) return false;
-      if (!URGENT14.has(mod)) return false;
       return ALLOWED.has(mod);
     })
     .sort((a, b) => {
