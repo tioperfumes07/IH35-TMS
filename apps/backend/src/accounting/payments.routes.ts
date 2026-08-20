@@ -571,6 +571,14 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       // ACCT-F5026 — payment_date::text alias (same LV-BILLVOID class as bill void). SELECT *
       // hands node-postgres a JS Date; String(date).slice(0,10) → "Thu Aug 06" → ::date 500.
+      // ACCT-F5636 — FOR UPDATE, matching the sibling row-lock pattern this codebase already uses on
+      // every OTHER void writer (bills.service.ts's voidBillInClientTx, this same payment's own
+      // governance/void-cancel-executors.ts executor). Without it, two concurrent void requests on the
+      // same payment (double-click, two tabs) can both read voided_at IS NULL before either commits,
+      // then both run postVoidReversal -- the second call's journal_entries header INSERT has no
+      // idempotency protection (only the posting-line INSERT does, via the void:<type>:<id> key), so a
+      // race produces an orphan, zero-line, status='posted' JE header in the ledger, plus a silently
+      // overwritten voided_by_user_id/void_reason from the redundant second call.
       const paymentRes = await client.query(
         `
           SELECT *,
@@ -579,6 +587,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           WHERE id = $1
             AND operating_company_id = $2::uuid
           LIMIT 1
+          FOR UPDATE
         `,
         [params.data.id, query.data.operating_company_id]
       );
@@ -586,16 +595,22 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       if (!payment) return { code: 404 as const, error: "payment_not_found" };
       if (payment.voided_at) return { code: 409 as const, error: "payment_already_voided" };
 
-      await client.query(
+      // Belt-and-suspenders alongside the row lock: WHERE voided_at IS NULL, matching invoices.routes.ts's
+      // governance executor's own flip UPDATE (void-cancel-executors.ts) — if a race somehow still
+      // reached here, this UPDATE affects zero rows and the response below stays honestly a no-op
+      // rather than silently overwriting a payment another call already voided.
+      const flipped = await client.query(
         `
           UPDATE accounting.payments
           SET voided_at = now(),
               voided_by_user_id = $2,
               void_reason = $3
           WHERE id = $1
+            AND voided_at IS NULL
         `,
         [params.data.id, user.uuid, body.data.void_reason]
       );
+      if ((flipped.rowCount ?? 0) === 0) return { code: 409 as const, error: "payment_already_voided" };
 
       // INV-2: void-never-delete — archive all applications when voiding; never hard-delete.
       await client.query(

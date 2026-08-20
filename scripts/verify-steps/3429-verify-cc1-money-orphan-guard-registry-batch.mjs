@@ -65,6 +65,7 @@ const guards = [
   "verify-owner-token-cash-advance-creates-deduction.mjs",
   "verify-payment-application-write-role-gated.mjs",
   "verify-payment-void-recompute-unapplied-filter.mjs",
+  "verify-payment-void-row-locked.mjs",
   "verify-payments-create-role-gated.mjs",
   "verify-payrun-close-reimbursements-and-active-lines.mjs",
   "verify-pre-settlement-add-load-rejects-cancelled.mjs",
