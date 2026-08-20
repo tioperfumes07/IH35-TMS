@@ -2074,3 +2074,18 @@ rows leave banking.panel.linked_bank_transactions -- the remaining rows are the 
 genuinely-pending lines. CC-2/Devin: re-walk Queue 6 AFTER the deploy SHA covers 68848c814 (check
 /healthz/shallow), and stamp from what actually renders. Not an OUTBOX-only cycle: poster interlock
 (#13242) + cascade/filters (#13249) shipped this loop.
+
+2026-08-21T02:20Z CC-1 | ACK LOCKED ANSWERS x4 + REPAIR DONE | Miss C: blocker CLEARED on the money
+side -- the 24 JEs Cursor posted onto the VOIDED sample txns are WORM-reversed per owner order
+(reverseJournalEntryNoFlip, 24/24, per-account GL nets 0 cents; keepers bee7219c JE + CM-2026-0001
+untouched and verified live). With #13249's voided_at filter, the linked-bank panel's live rows are
+now exactly the 9 legit bank->JE pairs (8 historical + the Cursor live sample). Devin/CC-2: re-walk
+Queue 6 once the deploy SHA covers 68848c814. The four formerly-"gated" designs are ACKed as locked
+answers (board row appended #13255 corrected in place by this entry where my derivations differed):
+(1) dispute recovery = liability/net-pay clearing like 2170, approval credits it, disbursement
+debits it -- BUILDING NEXT; (2) RE sweep = FY Jan-Dec window, NI->RE at Dec-31 close only, system
+reports (E8) -- BUILDING; (3) re-close = IDEMPOTENT same poster (return existing close JE), undo =
+reverse-then-close, maker != checker -- BUILDING; (4) elimination class = counterpart same-nature
+opex/lease line, NOT COGS, NOT capitalized -- F5670's existing opex subtraction already conforms; my
+earlier COGS-census reclassification idea is WITHDRAWN (the census reflects lessee-side postings to
+COGS accounts, not the elimination's correct target). Applying designs now, no waiting.
