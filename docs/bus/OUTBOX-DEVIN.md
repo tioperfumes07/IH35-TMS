@@ -4236,3 +4236,23 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tractor-statuses healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tractor_statuses.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tractor-statuses healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.list:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.fleet.tractor_statuses.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=06868d2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/tractor-statuses marker 'lists' | NEXT=leaf=lists:catalog.fleet.trailer_statuses.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.fleet.tractor_statuses.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=06868d2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/tractor-statuses marker 'lists' | NEXT=leaf=lists:catalog.fleet.trailer_statuses.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.trailer_statuses.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/trailer-statuses | healthz=06868d2 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/trailer-statuses healthz=06868d2 head Checking session... | NEXT=leaf=lists:catalog.fleet.trailer_statuses.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.trailer_statuses.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/trailer-statuses | healthz=06868d2 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/trailer-statuses healthz=06868d2 head Checking session... | NEXT=leaf=lists:catalog.fleet.trailer_statuses.list:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.fleet.trailer_statuses.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/trailer-statuses | healthz=06868d2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/trailer-statuses marker 'lists' | NEXT=leaf=lists:catalog.fleet.trailer_types.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.fleet.trailer_statuses.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/trailer-statuses | healthz=06868d2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/trailer-statuses marker 'lists' | NEXT=leaf=lists:catalog.fleet.trailer_types.create:qbo_chrome
