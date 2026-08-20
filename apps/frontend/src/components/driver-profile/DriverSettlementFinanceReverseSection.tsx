@@ -90,6 +90,16 @@ export function DriverSettlementFinanceReverseSection({
                     ? ` — $${(d.disputed_amount_cents / 100).toFixed(2)}`
                     : ""}
                 </span>
+                {d.resolution_journal_entry_id ? (
+                  <span className="ml-2">
+                    <EntityLink
+                      kind="journal_entry"
+                      id={d.resolution_journal_entry_id}
+                      label="Corrective JE"
+                      className="text-xs font-semibold text-slate-700 underline"
+                    />
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>
