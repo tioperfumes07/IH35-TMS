@@ -45,6 +45,7 @@ const ORDER = [
   "driver-hub",
   "help",
   "system",
+  "fuel",
 ];
 const ALLOWED = new Set(ORDER);
 const FORBIDDEN = new Set(["eld"]);
