@@ -85,6 +85,7 @@ if (!/driver_id\?:\s*string/.test(client) || !/qs\.set\(\s*["']driver_id["']/.te
 
 const driverWoSection = "apps/frontend/src/components/maintenance/DriverWorkOrdersReverseSection.tsx";
 const driverDetail = "apps/frontend/src/pages/DriverDetail.tsx";
+const driverProfile = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const drvSection = read(driverWoSection);
 if (!/listWorkOrdersFiltered\s*\(/.test(drvSection) || !/driver_id:\s*driverId/.test(drvSection)) {
   failures.push(`${driverWoSection}: must call listWorkOrdersFiltered with \`driver_id: driverId\`.`);
@@ -99,6 +100,11 @@ if (!driverLoadLabelPattern.test(drvSection)) {
 const drvDetail = read(driverDetail);
 if (!/<DriverWorkOrdersReverseSection(?![A-Za-z0-9_])/.test(drvDetail)) {
   failures.push(`${driverDetail}: must mount <DriverWorkOrdersReverseSection …/>.`);
+}
+const drvProfile = read(driverProfile);
+const driverProfileMountPattern = /<DriverWorkOrdersReverseSection[\s\S]{0,220}operatingCompanyId=\{companyId\}[\s\S]{0,160}driverId=\{id\}[\s\S]{0,160}data-testid="driver-profile-work-orders-reverse"/;
+if (!driverProfileMountPattern.test(drvProfile)) {
+  failures.push(`${driverProfile}: mounted /drivers/:id/profile route must render the driver-scoped work-order reverse section.`);
 }
 
 const section = read(SECTION);
@@ -152,6 +158,11 @@ if (failures.length > 0) {
 }
 
 if (selftest) {
+  const plantedProfileMount = drvProfile.replace("driver-profile-work-orders-reverse", "driver-profile-work-orders-dead");
+  if (plantedProfileMount === drvProfile || driverProfileMountPattern.test(plantedProfileMount)) {
+    console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted DriverProfilePage reverse-mount defect escaped");
+    process.exit(1);
+  }
   const planted = drvSection.replace("wo.linked_load_number", "null");
   if (planted === drvSection || driverLoadLabelPattern.test(planted)) {
     console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted driver WO load-label defect escaped");
@@ -178,8 +189,8 @@ if (selftest) {
     console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted claim-label defect escaped");
     process.exit(1);
   }
-  console.log("PASS verify-load-reverse-work-orders SELFTEST — driver load label + 3/3 claim-label mutations caught");
+  console.log("PASS verify-load-reverse-work-orders SELFTEST — profile mount + driver load label + 3/3 claim-label mutations caught");
   process.exit(0);
 }
 
-console.log("PASS verify-load-reverse-work-orders — load↔WO both ways: drawer lists WOs; WO detail/table/modal EntityLink load/unit/vendor/claim");
+console.log("PASS verify-load-reverse-work-orders — load↔WO and both driver profiles: reverse lists plus WO detail/table/modal EntityLink load/unit/vendor/claim");

@@ -41,6 +41,7 @@ import { BackgroundChecksSection } from "../../components/safety/BackgroundCheck
 import { MedicalCardsHistorySection } from "../../components/safety/MedicalCardsHistorySection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { DriverReportsReverseSection } from "../../components/maintenance/DriverReportsReverseSection";
+import { DriverWorkOrdersReverseSection } from "../../components/maintenance/DriverWorkOrdersReverseSection";
 import { DriverBorderCrossingsReverseSection } from "../../components/dispatch/DriverBorderCrossingsReverseSection";
 import { DriverInTransitIssuesReverseSection } from "../../components/dispatch/DriverInTransitIssuesReverseSection";
 import { DriverTempCoverReverseSection } from "../../components/safety/DriverTempCoverReverseSection";
@@ -355,6 +356,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <LoadsSection driverId={id} operatingCompanyId={companyId} />
         </div>
       ) : null}
+
+      <DriverWorkOrdersReverseSection
+        operatingCompanyId={companyId}
+        driverId={id}
+        data-testid="driver-profile-work-orders-reverse"
+      />
 
       <DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId} />
       <DriverTeamSplitConfigReverseSection driverId={id} operatingCompanyId={companyId} />
