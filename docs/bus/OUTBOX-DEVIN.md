@@ -14878,3 +14878,25 @@ Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.pnl:connectivity
 Devin-A | LIVE STARVED | leaf=customers:detail.pnl:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers healthz=unknown head Checking session... | NEXT=leaf=customers:detail.portal_users:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:customer | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.profile:bank
+Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.profile:bank
