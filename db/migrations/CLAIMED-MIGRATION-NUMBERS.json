@@ -169,6 +169,10 @@
     "202612820000": {
       "claimed_by": "claude",
       "purpose": "customer_types_fk_lst_wire_07_customer_types_catalog_no_consumer"
+    },
+    "202612820100": {
+      "claimed_by": "claude",
+      "purpose": "customer_types_seed_backfill_prod_had_zero_rows"
     }
   }
 }
