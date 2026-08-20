@@ -1035,3 +1035,4 @@ Codex | WORKING | FO=CODEX-SAFETY-CARGO-TRAILER-SEED-SELFTEST-ANCHOR-DRIFT | gua
 Codex | WORKING | FO=CODEX-DOCS-ENTITY-LABEL-GUARD-STALE-RESOLVED-BRANCH | guard normal PASS+selftest 9/9 | NEXT=primary navigation mutation defect | GO
 Codex | WORKING | FO=CODEX-SYSTEM-NAV-VISIBLE-TABS-GUARD-DRIFT | guard normal PASS+selftest 26/26 | NEXT=all-module mutation rescan | GO
 Codex | WORKING | FO=CODEX-ACCOUNTING-CREDIT-MEMOS-CONNECTIVITY-REVERSE | leaf=accounting.parity.credit_memos_page:{connectivity,reverse_link} | guard normal PASS+selftest 15/15 | NEXT=exact unpaid recount | GO
+Codex | WORKING | FO=CREDIT-MEMOS-PAGE-CUSTOMER-COLUMN-UNOWNED | leaf=accounting.parity.credit_memos_page:customer | guard=18/18+selftest | zero-remainder=PASS | NEXT=fast-merge then fresh board | GO

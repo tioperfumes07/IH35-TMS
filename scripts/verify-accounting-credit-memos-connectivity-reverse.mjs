@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting"],"cols":["connectivity","reverse_link"],"leafRe":"^accounting\\.parity\\.credit_memos_page$","task":"CODEX-ACCOUNTING-CREDIT-MEMOS-CONNECTIVITY-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["accounting"],"cols":["customer","connectivity","reverse_link"],"leafRe":"^accounting\\.parity\\.credit_memos_page$","task":"CODEX-ACCOUNTING-CREDIT-MEMOS-CUSTOMER-CONNECTIVITY-REVERSE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-accounting-credit-memos-connectivity-reverse";
@@ -21,6 +21,9 @@ function verify(candidate) {
   need("page", 'searchParams.get("credit_memo_id")', "credit_memo_id deep link must open the requested detail");
   need("page", "listCreditMemos(companyId", "list read must carry selected company scope");
   need("page", "getCreditMemo(companyId, selectedCreditMemoId!)", "detail read must carry company scope and selected id");
+  need("page", 'dataTestId="credit-memos-filter-customer"', "list must expose the canonical customer filter picker");
+  need("page", 'createKind="customer"', "creator must use the canonical customer create/select path");
+  need("page", "customer_id: createCustomerId as string", "creator must submit the selected customer FK");
   need("page", '<EntityLink kind="customer" id={row.customer_id}', "list rows must drill to their customer");
   need("page", 'kind="customer"\n                    id={creditMemo.customer_id}', "detail must drill to its customer");
   need("page", '<EntityLink kind="invoice" id={application.invoice_id}', "applications must reverse-drill to credited invoices");
@@ -55,6 +58,9 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["page", 'searchParams.get("credit_memo_id")'],
     ["page", "listCreditMemos(companyId"],
     ["page", "getCreditMemo(companyId, selectedCreditMemoId!)"],
+    ["page", 'dataTestId="credit-memos-filter-customer"'],
+    ["page", 'createKind="customer"'],
+    ["page", "customer_id: createCustomerId as string"],
     ["page", '<EntityLink kind="customer" id={row.customer_id}'],
     ["page", 'kind="customer"\n                    id={creditMemo.customer_id}'],
     ["page", '<EntityLink kind="invoice" id={application.invoice_id}'],
