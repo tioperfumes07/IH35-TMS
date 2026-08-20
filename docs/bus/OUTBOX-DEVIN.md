@@ -4593,3 +4593,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=lists:catalog.safety.workplace_incident_types.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.safety.workplace_incident_types.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/safety/workplace-incident-types | healthz=702ffe5 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/safety/workplace-incident-types marker 'lists' | NEXT=leaf=lists:catalog.safety.workplace_incident_types.list:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.safety.workplace_incident_types.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/safety/workplace-incident-types | healthz=702ffe5 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/safety/workplace-incident-types marker 'lists' | NEXT=leaf=lists:catalog.safety.workplace_incident_types.list:qbo_chrome
