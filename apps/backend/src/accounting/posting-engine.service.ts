@@ -957,6 +957,16 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         -- line — a refusal a human can act on, rather than a silent misclassification.
         AND itm.account_type IN ('Income', 'Revenue', 'OtherIncome')
       WHERE il.invoice_id = $1::uuid
+        -- ACCT-F5655 — void-not-delete means a soft-deleted line STAYS in accounting.invoice_lines
+        -- carrying its original amount. recomputeInvoiceTotals (shared.ts, ACCT-F156) already excludes
+        -- soft-deleted lines from invoices.total_cents, but this poster read the same table without
+        -- that predicate — so a line removed from a draft invoice before it was sent/posted would still
+        -- be booked to revenue and A/R here, permanently overstating both by the removed line's amount
+        -- (the JE is internally balanced, so assertBalanced and the DB trigger both pass; nothing else
+        -- catches the divergence from the invoice's own total). Zero soft-deleted invoice lines exist
+        -- today (matching shared.ts's own "armed but not yet fired" note), so this has never produced a
+        -- wrong number — applying the SAME already-decided exclusion this poster simply missed.
+        AND il.soft_deleted_at IS NULL
       ORDER BY il.display_order ASC, il.id ASC
     `,
     [sourceId, operatingCompanyId]
