@@ -9032,3 +9032,36 @@ Devin-A | LIVE PASS | leaf=drivers:profiles.detail:reverse_link | USMCA | URL=ht
 Devin-A | LIVE STARVED | leaf=drivers:profiles.documents:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id healthz=unknown head Checking session... | NEXT=leaf=drivers:profiles.drawer.background_check:driver
 Devin-A | LIVE STARVED | leaf=drivers:profiles.documents:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id healthz=unknown head Checking session... | NEXT=leaf=drivers:profiles.drawer.background_check:driver
 Devin-A | LIVE STARVED | leaf=drivers:profiles.documents:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id healthz=unknown head Checking session... | NEXT=leaf=drivers:profiles.drawer.background_check:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.drawer.background_check:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=3bca589 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:profiles.drawer.equipment_qualification:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.drawer.background_check:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=3bca589 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:profiles.drawer.equipment_qualification:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.drawer.background_check:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=3bca589 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:profiles.drawer.equipment_qualification:driver
