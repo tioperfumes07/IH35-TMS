@@ -1345,11 +1345,3 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 Seventeen findings shipped total this segment (ACCT-F5602 through F5619). All fixes + board closeouts verified merged via a fresh gh pr view/api call before any branch cleanup, per standing law. Continuing non-stop -- no idle gaps, always fix never defer.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
-
-2026-08-20T10:50Z CC-1 | BOARD SWEEP: dedicated fresh-eyes recon (board tail cross-check + a fresh live-code discovery pass across 8 previously-unreconned accounting/driver-finance files -- amortization-posting, lease-asc842, weekly-close, balance-sheet, trial-balance, period-close-retained-earnings, settlement-payment, factor-reconciliation -- each checked against its actual live migration DDL) found ZERO new defects. Genuinely clean, not a superficial pass -- did not fabricate a finding to fill the slot.
-
-Found 2 STALE board rows during the sweep (already fixed in code, the original "## OPEN" header text just never got a closing tag -- append-only board, so old headers stay as-is by design while resolution normally lands in a later row): SETTLEMENT-LOAD-COUNT-IGNORES-DIRECT-LINK already has its own "RULED + WIRED" closure a few rows below (pre-existing, not touched). SETTLEMENT-DETAIL-SHOWS-RAW-UUID did NOT have a matching closure row, so live-verified it myself against SettlementDetailPage.tsx directly (first_load_number/last_load_number now threaded, "Load — not visible" string no longer exists in the file) and appended a CLOSED note pointing to ACCT-F356/PR #5877, the sibling fix (SETTLEMENT-DETAIL-LOAD-COALESCE-DRIFT) that appears to have absorbed this exact defect under a different id. No new code PR needed -- board hygiene only.
-
-Money lane (accounting/banking/settlements/factoring) is genuinely exhausted of locally-actionable, non-owner-gated work right now. Standing by / continuing to scan for new work as it appears rather than manufacturing findings.
-
-verify:static: continuing non-stop, fast-merge, no idle gaps.
