@@ -7,6 +7,7 @@ import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
+import { getAppliedVendorCreditsCents } from "./bills.service.js";
 
 const vendorIdParamsSchema = z.object({
   id: z.string().trim().min(1),
@@ -239,7 +240,11 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
           const paid = billPaidCents(
             billRaw as { paid_cents: unknown; paid_amount: unknown; status: unknown; amount_cents: unknown; total_amount: unknown }
           );
-          const remaining = amount - paid;
+          // ACCT-F5623 — net out non-voided vendor credits, same as BILL_OPEN_BALANCE_SQL already does
+          // on the read side. Without this, a bill already partly/fully settled by a vendor credit
+          // could still be paid in cash up to its full face amount minus prior payments only.
+          const appliedCreditsCents = await getAppliedVendorCreditsCents(client, applyRow.bill_id, query.data.operating_company_id);
+          const remaining = amount - paid - appliedCreditsCents;
           if (remaining <= 0) return { code: 409 as const, error: "bill_already_paid" as const };
           if (applyRow.amount_cents > remaining) return { code: 400 as const, error: "payment_exceeds_remaining_balance" as const };
 
