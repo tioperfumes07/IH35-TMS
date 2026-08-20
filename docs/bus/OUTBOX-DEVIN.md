@@ -14339,3 +14339,19 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=accounting:accounting.modal.invoice_create:invoice
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.invoice_create:invoice | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/InvoiceCreateModal.tsx | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/home healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:accounting.modal.manual_invoice:invoice
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.invoice_create:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/InvoiceCreateModal.tsx | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/home healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:accounting.modal.manual_invoice:invoice
