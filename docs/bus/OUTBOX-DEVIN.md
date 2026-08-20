@@ -3161,3 +3161,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.portal_users:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=portal | healthz=ecd75c8 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=portal healthz=ecd75c8 head Checking session... | NEXT=leaf=customers:detail.profile:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=portal | healthz=ecd75c8 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=portal healthz=ecd75c8 head Checking session... | NEXT=leaf=customers:detail.profile:customer
