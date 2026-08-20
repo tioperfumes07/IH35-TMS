@@ -1104,3 +1104,9 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 Route-layer sweep is now CLOSED with confidence. Remaining open item in this space: the original 73-file *.service.ts list (files with no company-membership-guard import) still has files not yet individually traced to a caller -- but given every caller route across the whole lane is now confirmed safe, any remaining untraced service file is either (a) called from an already-confirmed-safe route, (b) internal/cron-only, or (c) genuinely dead/unwired code (2 such cases already found this session: driver-reimbursement.service.ts, packet-assemble.service.ts, pushJournalEntryToQuickBooksFromQueue). Judged low remaining expected value; moving to other money-lane work.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T02:15Z CC-1 | ACCT-F5598 SHIPPED (PR #10248, merged 6928e004) -- closed the RECURRING-BILL-TEMPLATE-NO-ROLE-GATE companion finding filed alongside ACCT-F5595 earlier this session. Added canAccessAccounting() (Owner/Administrator/Accountant) to all 7 routes in accounting/bills/recurring/routes.ts, matching the sibling AP surface's own convention. Zero test breakage re-confirmed. This closes out both halves of the recurring-bill-templates surface -- ownership (F5595) and role (F5598) are both now correctly gated.
+
+With this and the earlier route-layer sweep closeout, MEMBERSHIP-ASSERT-PASS3-MONEY-LANE-SCOPE is now substantively complete: 7 real findings fixed this session (ACCT-F5592-F5598), the full *.routes.ts/routes.ts surface across accounting/banking/driver-finance/factoring independently verified with zero remaining gaps. Moving to the next item.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
