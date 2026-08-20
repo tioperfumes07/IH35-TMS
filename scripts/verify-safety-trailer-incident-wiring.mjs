@@ -148,7 +148,7 @@ if (process.argv.includes("--selftest")) {
     ["dot-api-join", "dotInspectionsApi", /LEFT JOIN mdata\.equipment tr/, "LEFT JOIN mdata.units tr"],
     ["cargo-filter", "cargoClaims", /dataTestId=\{`\$\{pageTestId\}-trailer-filter`\}/, 'dataTestId={`${pageTestId}-filter-unit`}'],
     ["cargo-column", "cargoClaims", /key:\s*"trailer_id"/, 'key: "load_id"'],
-    ["cargo-seed", "cargoClaims", /setTrailerFilter\(trailerIdFromUrl\)/, "setUnitFilter(trailerIdFromUrl)"],
+    ["cargo-seed", "cargoClaims", /trailerId:\s*trailerIdFromUrl/g, "trailerId: unitIdFromUrl"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
