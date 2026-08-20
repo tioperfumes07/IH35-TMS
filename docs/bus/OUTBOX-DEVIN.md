@@ -13412,3 +13412,14 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=form_425:chrome.toolbar_gear:connectivity
+Devin-A | LIVE STARVED | leaf=form_425:chrome.toolbar_gear:connectivity | USMCA | URL=https://app.ih35dispatch.com/425c?tab=history | healthz=dea2ff1 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/425c?tab=history head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=form_425:chrome.toolbar_range:connectivity
