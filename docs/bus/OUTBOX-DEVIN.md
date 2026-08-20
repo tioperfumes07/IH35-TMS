@@ -9410,3 +9410,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.profile.compliance:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.compliance:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=716569a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.documents:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.compliance:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=716569a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.documents:trailer
