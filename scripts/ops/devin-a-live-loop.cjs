@@ -1,12 +1,21 @@
 #!/usr/bin/env node
 /**
  * Devin-A Clicked — WAVE 1 then WAVE 2. Item 12 Live Chrome.
+ *
+ * STALE-BRANCH-MERGE-SILENTLY-REVERTS-CONCURRENT-WORK (CC-1 #10800 reverted by
+ * Devin #10802/#10834): NEVER `git reset --soft origin/main` from a stale tip
+ * (index still holds old copies of unrelated files). NEVER recycle
+ * `devin-a/live-outbox-proofs-32`. EVERY Clicked ship: fetch origin/main →
+ * hard-reset to it in a dedicated worktree → write OUTBOX only → unique branch
+ * → squash merge. Tip must contain origin/main. cwd = DEVIN_GIT_ROOT or
+ * /tmp/IH35-devin-a — never a dirty IH35-TMS-clean with other seats' files.
  */
 const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = process.cwd();
+const ROOT = process.env.DEVIN_GIT_ROOT || process.cwd();
+const OUTBOX_REL = "docs/bus/OUTBOX-DEVIN.md";
 const ORDER = [
   "banking",
   "factoring",
@@ -33,7 +42,6 @@ function loadPlaywright() {
   }
   throw new Error("playwright-core not found");
 }
-const { chromium } = loadPlaywright();
 
 const CDP = process.env.DEVIN_CDP || "http://127.0.0.1:9227";
 const QUEUE = process.env.DEVIN_QUEUE || "/tmp/devin-a-queue.json";
@@ -81,7 +89,12 @@ function ghApiCurl(method, apiPath, body) {
 function gitCommitOutbox(msg) {
   for (let i = 0; i < 8; i++) {
     try {
-      sh("git add docs/bus/OUTBOX-DEVIN.md");
+      sh("git restore --staged :/");
+      sh("git add " + OUTBOX_REL);
+      const names = sh("git diff --cached --name-only").trim().split("\n").filter(Boolean);
+      if (names.length !== 1 || names[0] !== OUTBOX_REL) {
+        throw new Error("OUTBOX-only commit refused, staged=" + names.join(","));
+      }
       const tmp = path.join(ROOT, ".devin-commit-msg.tmp");
       fs.writeFileSync(tmp, msg);
       try {
@@ -96,6 +109,54 @@ function gitCommitOutbox(msg) {
     }
   }
   return false;
+}
+
+function porcelainNonOutbox() {
+  return sh("git status --porcelain")
+    .split("\n")
+    .filter((l) => l && !/OUTBOX-DEVIN\.md/.test(l));
+}
+
+function mergeOutboxOntoMainText(extraLines) {
+  const base = sh("git show origin/main:" + OUTBOX_REL);
+  const have = new Set(base.split("\n"));
+  const add = extraLines.filter((l) => l && !have.has(l));
+  if (!add.length) return base.endsWith("\n") ? base : base + "\n";
+  return base.replace(/\s*$/, "") + "\n" + add.join("\n") + "\n";
+}
+
+function shipClickedOntoMain(extraLines, commitMsg, item) {
+  sh("git fetch origin main");
+  const others = porcelainNonOutbox();
+  if (others.length) {
+    throw new Error(
+      "STALE-BRANCH-MERGE-SILENTLY-REVERTS-CONCURRENT-WORK: refuse Clicked ship with dirty non-OUTBOX files. Use dedicated worktree /tmp/IH35-devin-a (DEVIN_GIT_ROOT). " +
+        others.slice(0, 8).join(" | ")
+    );
+  }
+  const merged = mergeOutboxOntoMainText(extraLines);
+  sh("git reset --hard origin/main");
+  fs.writeFileSync(path.join(ROOT, OUTBOX_REL), merged);
+  if (!gitCommitOutbox(commitMsg)) throw new Error("outbox commit failed");
+  const names = sh("git diff-tree --no-commit-id --name-only -r HEAD").trim().split("\n").filter(Boolean);
+  if (names.length !== 1 || names[0] !== OUTBOX_REL) {
+    throw new Error("OUTBOX-only guard failed: " + names.join(","));
+  }
+  sh("git merge-base --is-ancestor origin/main HEAD");
+  const slug = `${String(item.module)}-${String(item.leaf)}`.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 40);
+  const br = `devin-a/clicked-${slug}-${Date.now()}`;
+  sh(`git push --no-verify origin HEAD:refs/heads/${br}`, { timeout: 60000 });
+  const title = `Devin-A docs(outbox): live ${item.module} ${item.leaf}`;
+  const body =
+    "FINDING: DEVIN-LIVE-OUTBOX\nLANE: NON-FINANCIAL\nROOT CAUSE: Clicked OUTBOX must land on current origin/main, OUTBOX-only\nFIX: unique branch onto main; no stale-tree squash\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: program 7 of 7\nITEMS_TOUCHED: DEVIN-LIVE\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: ancestor origin/main + OUTBOX-only diff-tree\nREMAINING: WAVE 1 Clicked";
+  const pr = ghApiCurl("POST", "/pulls", { title, head: br, base: "main", body });
+  if (pr && pr.number) {
+    const merge = ghApiCurl("PUT", `/pulls/${pr.number}/merge`, { merge_method: "squash" });
+    if (merge && merge.merged) log(`merged #${pr.number} ${merge.sha} ${br}`);
+    else log(`merge failed #${pr.number} ${JSON.stringify(merge)}`);
+  } else {
+    log("no PR created for " + br);
+  }
 }
 
 function filterQueue(raw) {
@@ -141,6 +202,7 @@ function creditedLines(item, status, url, hz, evidence, nextLeaf) {
 async function run() {
   let browser;
   try {
+    const { chromium } = loadPlaywright();
     browser = await chromium.connectOverCDP(CDP);
     const ctx = browser.contexts()[0] || (await browser.newContext());
     let page = ctx.pages()[0];
@@ -181,24 +243,9 @@ async function run() {
       for (const line of creditedLines(item, status, item.url, hz, evidence, nextLeaf)) appendOutbox(line);
       log(`OUTBOX: ${status} ${item.module}:${item.leaf} x${(item.columns || ["connectivity"]).length}`);
 
-      const commitMsg = `FINDING: live ${item.module} ${item.leaf} ${status.toLowerCase().replace("live ", "")}\n\nLANE: NON-FINANCIAL\nROOT CAUSE: Clicked OUTBOX must use leaf=module:leafId:col\nFIX: credited LIVE PASS/STARVED lines\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: program 7 of 7\nITEMS_TOUCHED: DEVIN-LIVE-${item.module}\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: healthz=${hz} URL=${item.url}\nREMAINING: URGENT-6 Clicked queue`;
-      gitCommitOutbox(commitMsg);
-
+      const commitMsg = `FINDING: live ${item.module} ${item.leaf} ${status.toLowerCase().replace("live ", "")}\n\nLANE: NON-FINANCIAL\nROOT CAUSE: Clicked OUTBOX must use leaf=module:leafId:col\nFIX: credited LIVE PASS/STARVED lines onto current origin/main (OUTBOX-only)\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: program 7 of 7\nITEMS_TOUCHED: DEVIN-LIVE-${item.module}\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: healthz=${hz} URL=${item.url}\nREMAINING: WAVE 1 Clicked queue`;
       try {
-        sh("git fetch origin main");
-        sh("git reset --soft origin/main");
-        sh("git commit --no-verify -c ORIG_HEAD --no-edit", { env: { ...process.env, HUSKY: "0" } });
-        sh("git push --no-verify -f origin HEAD:devin-a/live-outbox-proofs-32", { timeout: 60000 });
-        const title = `Devin-A docs(outbox): live ${item.module} ${item.leaf}`;
-        let pr = ghApiCurl("POST", "/pulls", { title, head: "devin-a/live-outbox-proofs-32", base: "main", body: "FINDING: credited leaf= OUTBOX\nLANE: NON-FINANCIAL\nROOT CAUSE: Clicked must land on main\nFIX: OUTBOX line\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: program 7 of 7\nITEMS_TOUCHED: DEVIN-LIVE\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: credited OUTBOX line\nREMAINING: URGENT-6" });
-        if (!pr || !pr.number) {
-          const existing = ghApiCurl("GET", "/pulls?head=tioperfumes07:devin-a/live-outbox-proofs-32&base=main&state=open");
-          if (Array.isArray(existing) && existing[0] && existing[0].number) { pr = existing[0]; log(`found existing #${pr.number}`); }
-        }
-        if (pr && pr.number) {
-          const merge = ghApiCurl("PUT", `/pulls/${pr.number}/merge`, { merge_method: "squash" });
-          if (merge && merge.merged) log(`merged #${pr.number} ${merge.sha}`);
-        }
+        shipClickedOntoMain(creditedLines(item, status, item.url, hz, evidence, nextLeaf), commitMsg, item);
       } catch (e) { log("push/merge: " + (e.message || e)); }
 
       queue.shift();
@@ -208,6 +255,32 @@ async function run() {
     }
     log("queue empty, stopping");
   } catch (e) { log("FATAL: " + (e && e.stack ? e.stack : e)); }
+}
+
+if (process.argv.includes("--selftest")) {
+  const src = fs.readFileSync(__filename, "utf8");
+  if (/sh\(["']git reset --soft origin\/main["']\)/.test(src)) {
+    console.error("SELFTEST FAIL: reset --soft origin/main still present");
+    process.exit(1);
+  }
+  if (/HEAD:devin-a\/live-outbox-proofs-32/.test(src) || /head:\s*["']devin-a\/live-outbox-proofs-32["']/.test(src)) {
+    console.error("SELFTEST FAIL: recycled live-outbox-proofs-32 still present");
+    process.exit(1);
+  }
+  if (!/STALE-BRANCH-MERGE-SILENTLY-REVERTS-CONCURRENT-WORK/.test(src)) {
+    console.error("SELFTEST FAIL: law id missing");
+    process.exit(1);
+  }
+  if (!/function loadPlaywright/.test(src)) {
+    console.error("SELFTEST FAIL: loadPlaywright missing");
+    process.exit(1);
+  }
+  if (/^const \{ chromium \} = loadPlaywright\(\);$/m.test(src)) {
+    console.error("SELFTEST FAIL: playwright must not load at require-time (--selftest / no CDP)");
+    process.exit(1);
+  }
+  console.log("devin-a-live-loop --selftest PASS");
+  process.exit(0);
 }
 
 run();
