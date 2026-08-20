@@ -7360,3 +7360,25 @@ Devin-A | LIVE PASS | leaf=fleet:trailer.profile.assignment:reverse_link | USMCA
 Devin-A | LIVE PASS | leaf=fleet:trailer.profile.bank_txns:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.compliance:trailer
 Devin-A | LIVE PASS | leaf=fleet:trailer.profile.bank_txns:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.compliance:trailer
 Devin-A | LIVE PASS | leaf=fleet:trailer.profile.bank_txns:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.compliance:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.compliance:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.documents:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.compliance:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.documents:trailer
