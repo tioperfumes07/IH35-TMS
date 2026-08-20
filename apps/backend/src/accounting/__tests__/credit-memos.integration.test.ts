@@ -263,6 +263,50 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
     expect((overInvoice.json() as { error: string }).error).toBe("applied_cents_exceeds_invoice_balance");
   });
 
+  it("ACCT-F5618 — a retried apply with the same idempotency_key replays the original application instead of double-applying or 500ing", async () => {
+    const credit = await createCreditMemo(3000);
+    const idempotencyKey = `acct-f5618-${randomUUID()}`;
+
+    const first = await app.inject({
+      method: "POST",
+      url: `/api/v1/accounting/credit-memos/${credit.id}/apply?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
+      payload: { applications: [{ invoice_id: invoiceId, applied_cents: 1000, idempotency_key: idempotencyKey }] },
+    });
+    expect(first.statusCode).toBe(200);
+    const firstIds = (first.json() as { applicationIds: string[] }).applicationIds;
+    expect(firstIds).toHaveLength(1);
+
+    // Retry: same key, same request. Must return the SAME application id, not a fresh insert or a 500.
+    const retry = await app.inject({
+      method: "POST",
+      url: `/api/v1/accounting/credit-memos/${credit.id}/apply?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
+      payload: { applications: [{ invoice_id: invoiceId, applied_cents: 1000, idempotency_key: idempotencyKey }] },
+    });
+    expect(retry.statusCode).toBe(200);
+    const retryIds = (retry.json() as { applicationIds: string[] }).applicationIds;
+    expect(retryIds).toEqual(firstIds);
+
+    // The credit memo's unapplied balance decreased ONCE (1000), never twice (2000) -- proof the
+    // retry did not re-insert or double-count the application.
+    const detail = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/credit-memos/${credit.id}?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+    });
+    const detailBody = detail.json() as { credit_memo: { amount_unapplied_cents: string } };
+    expect(Number(detailBody.credit_memo.amount_unapplied_cents)).toBe(2000);
+
+    const countRes = await bypass(() =>
+      db.query(
+        `SELECT count(*)::text AS c FROM accounting.credit_memo_applications WHERE credit_memo_id = $1::uuid AND idempotency_key = $2`,
+        [credit.id, idempotencyKey]
+      )
+    );
+    expect(Number(countRes.rows[0].c)).toBe(1);
+  });
+
   it("voids a credit memo and reverses its applications without deleting anything", async () => {
     const credit = await createCreditMemo(8000);
     const applied = await app.inject({

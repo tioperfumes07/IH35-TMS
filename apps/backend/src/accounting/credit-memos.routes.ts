@@ -249,7 +249,32 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       if (!credit) return { code: 404 as const, error: "credit_memo_not_found" };
       if (credit.status === "voided") return { code: 409 as const, error: "credit_memo_voided" };
 
-      const totalApplying = body.data.applications.reduce((s, a) => s + a.applied_cents, 0);
+      // ACCT-F5618 — resolve idempotent replays FIRST, before the over-apply check. A retried
+      // request (double-click, client timeout+retry) with the same idempotency_key must return the
+      // SAME success result, never a fresh INSERT and never a stale over-apply rejection computed
+      // against a balance that ALREADY reflects the first successful call. Mirrors
+      // settlement-posting.service.ts's own findExistingPostedJe pre-check pattern (look up by the
+      // uq_credit_memo_app_idempotency unique index before inserting) rather than catching 23505 —
+      // catching after the fact would still 500/409 on the retry instead of transparently replaying.
+      const applicationIds: string[] = [];
+      const newApplications: typeof body.data.applications = [];
+      for (const appReq of body.data.applications) {
+        if (appReq.idempotency_key) {
+          const existing = await client.query(
+            `SELECT id FROM accounting.credit_memo_applications
+              WHERE operating_company_id = $1::uuid AND idempotency_key = $2 AND voided_at IS NULL
+              LIMIT 1`,
+            [query.data.operating_company_id, appReq.idempotency_key]
+          );
+          if (existing.rows[0]) {
+            applicationIds.push(String(existing.rows[0].id));
+            continue;
+          }
+        }
+        newApplications.push(appReq);
+      }
+
+      const totalApplying = newApplications.reduce((s, a) => s + a.applied_cents, 0);
       const unapplied = Number(credit.amount_unapplied_cents);
       if (totalApplying > unapplied) {
         return {
@@ -260,8 +285,7 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
         };
       }
 
-      const applicationIds: string[] = [];
-      for (const appReq of body.data.applications) {
+      for (const appReq of newApplications) {
         // customer_id on both sides is a direct mdata.customers.id uuid (unlike the AP side's
         // vendor_id, which bridges a canonical/QBO-mirror text space) — a plain equality check is
         // the correct, sufficient cross-customer guard here, no identity-set resolution needed.
@@ -353,7 +377,7 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
           resource_type: "accounting.credit_memos",
           resource_id: params.data.id,
           total_applied_cents: totalApplying,
-          invoice_count: body.data.applications.length,
+          invoice_count: newApplications.length,
         },
         "info",
         "ACCT-F5606"
