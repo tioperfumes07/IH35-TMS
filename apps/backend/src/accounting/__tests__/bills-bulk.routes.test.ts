@@ -29,4 +29,30 @@ describe("bills-bulk.routes", () => {
     expect(routes).toContain("appendBulkCrudAudit");
     expect(routes).toContain("E_CHECK_REQUIRED");
   });
+
+  // ACCT-F5634 — set_status(voided) used to be a bare status-flip UPDATE with no GL reversal at all,
+  // the third independent bill-void writer in the backend and the only one that skipped reversing the
+  // posted JE. Confirmed live: 18 status='void', paid_cents=0 bills on prod join to posted, unreversed
+  // journal_entry_postings rows. Fixed by reusing voidBillInClientTx (the same function
+  // governance/void-cancel-executors.ts's executeBill already calls) instead of reimplementing a
+  // partial duplicate.
+  it("set_status(voided) reuses voidBillInClientTx for GL reversal, not a bare status-flip UPDATE", () => {
+    expect(routes).toContain('import { getAppliedVendorCreditsCents, voidBillInClientTx, type BillMutationClient } from "./bills.service.js"');
+    expect(routes).toContain("await voidBillInClientTx(client as unknown as BillMutationClient");
+    expect(routes).toContain("currentBusinessDate: companyBusinessDate()");
+  });
+
+  it("set_status(voided) still refuses a bill with payments, same as before", () => {
+    expect(routes).toContain('if (statusPayload.status === "voided" && Number(oldRow.paid_cents ?? 0) > 0)');
+    expect(routes).toContain("Bill has payments and cannot be voided via bulk");
+  });
+
+  it("non-void set_status transitions (open/paid/partial) are NOT routed through voidBillInClientTx", () => {
+    // The void branch must be gated so only status==='voided' calls voidBillInClientTx -- every other
+    // set_status transition keeps its own plain UPDATE, unaffected by this fix.
+    const voidBranch = routes.match(/if \(statusPayload\.status === "voided"\) \{[\s\S]*?\n    \} else \{[\s\S]*?\n    \}/);
+    expect(voidBranch).toBeTruthy();
+    expect(voidBranch?.[0]).toContain("voidBillInClientTx");
+    expect(voidBranch?.[0]).toContain("UPDATE accounting.bills");
+  });
 });
