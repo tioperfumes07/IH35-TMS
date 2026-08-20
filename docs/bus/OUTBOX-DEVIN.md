@@ -3329,3 +3329,10 @@ Devin-A | LIVE STARVED | leaf=drivers:cash_advances:driver | USMCA | URL=https:/
 Devin-A | LIVE STARVED | leaf=drivers:cash_advances:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers/cash-advances | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/cash-advances healthz=unknown head Checking session... | NEXT=leaf=drivers:chrome.toolbar_filter:qbo_chrome
 Devin-A | LIVE STARVED | leaf=drivers:cash_advances:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/cash-advances | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/cash-advances healthz=unknown head Checking session... | NEXT=leaf=drivers:chrome.toolbar_filter:qbo_chrome
 Devin-A | LIVE STARVED | leaf=drivers:cash_advances:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/cash-advances | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/cash-advances healthz=unknown head Checking session... | NEXT=leaf=drivers:chrome.toolbar_filter:qbo_chrome
+Devin-A | LIVE STARVED | leaf=drivers:chrome.toolbar_filter:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:chrome.toolbar_gear:qbo_chrome
