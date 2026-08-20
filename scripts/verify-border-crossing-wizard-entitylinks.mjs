@@ -30,15 +30,26 @@ function check() {
   assert(/kind=["']load["']/.test(src), "must EntityLink kind=load");
   assert(/kind=["']unit["']/.test(src), "must EntityLink kind=unit");
   assert(/kind=["']driver["']/.test(src), "must EntityLink kind=driver");
+  for (const entity of ["load", "unit", "driver"]) {
+    assert(
+      new RegExp(`onChange=\\{\\(next, option\\) => onChange\\(\\{ ${entity}Id: next \\?\\? "", ${entity}Label: option\\?\\.label \\?\\? "" \\}\\)\\}`).test(src),
+      `${entity} picker must retain its canonical option label`,
+    );
+    assert(
+      new RegExp(`entityLabel\\(form\\.${entity}Label, form\\.${entity}Id, "`).test(src),
+      `${entity} drill must render the retained human label`,
+    );
+  }
+  assert(!/entityLabel\(null, form\.(loadId|unitId|driverId)/.test(src), "must not rebuild labels from UUIDs");
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
   const broken = original.replace(
-    /data-testid=["']border-wizard-step-1-entitylinks["']/,
-    'data-testid="planted-missing"'
+    /loadLabel: option\?\.label \?\? ""/,
+    'loadLabel: ""'
   );
-  assert(broken !== original, "--selftest plant must mutate testid");
+  assert(broken !== original, "--selftest plant must remove retained load label");
   fs.writeFileSync(FILE, broken);
   let failed = false;
   try {

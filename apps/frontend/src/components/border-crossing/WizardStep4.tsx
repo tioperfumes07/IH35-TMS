@@ -23,7 +23,10 @@ export function WizardStep4({ form, brokers, onChange }: Props) {
           className="mt-1"
           options={brokerOptions}
           value={form.customsBrokerId || null}
-          onChange={(next) => onChange({ customsBrokerId: next ?? "" })}
+          onChange={(next) => {
+            const broker = brokers.find((candidate) => candidate.id === next);
+            onChange({ customsBrokerId: next ?? "", customsBrokerLabel: broker?.name ?? "" });
+          }}
           placeholder="Select broker (vendor category customs_broker)…"
           allowClear
         />
@@ -39,7 +42,7 @@ export function WizardStep4({ form, brokers, onChange }: Props) {
             <EntityLink
               kind="vendor"
               id={form.customsBrokerId}
-              label={entityLabel(selectedBroker?.name ?? null, form.customsBrokerId, "Vendor")}
+              label={entityLabel(selectedBroker?.name ?? form.customsBrokerLabel, form.customsBrokerId, "Vendor")}
               data-testid="border-wizard-broker-link"
             />
           </span>

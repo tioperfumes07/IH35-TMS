@@ -27,15 +27,20 @@ function check() {
   assert(/data-testid=["']border-wizard-step6-driver-link["']/.test(src), "must expose driver link");
   assert(/data-testid=["']border-wizard-step6-broker-link["']/.test(src), "must expose broker link");
   assert(/kind=["']load["']/.test(src) && /kind=["']vendor["']/.test(src), "must EntityLink load + vendor");
+  for (const entity of ["load", "unit", "driver"]) {
+    assert(new RegExp(`entityLabel\\(form\\.${entity}Label, form\\.${entity}Id, "`).test(src), `${entity} review link must use its retained human label`);
+  }
+  assert(/entityLabel\(form\.customsBrokerLabel, form\.customsBrokerId, "Vendor"\)/.test(src), "broker review link must use its retained human label");
+  assert(!/entityLabel\(null, form\.(loadId|unitId|driverId|customsBrokerId)/.test(src), "review must not rebuild labels from UUIDs");
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
   const broken = original.replace(
-    /data-testid=["']border-wizard-step-6-entitylinks["']/,
-    'data-testid="planted-missing"'
+    /entityLabel\(form\.loadLabel, form\.loadId, "Load"\)/,
+    'entityLabel(null, form.loadId, "Load")'
   );
-  assert(broken !== original, "--selftest plant must mutate testid");
+  assert(broken !== original, "--selftest plant must restore UUID-only load label");
   fs.writeFileSync(FILE, broken);
   let failed = false;
   try {
