@@ -1503,3 +1503,4 @@ Ingles
 Espanol (preview)
 6 | healthz=52efe82 | mutation=none | NEXT=dispatch.dispatch.panel.auth_gate
 Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.panel.auth_gate | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=52efe82 | mutation=none | NEXT=dispatch.dispatch.panel.deadhead_optimizer
+Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.panel.deadhead_optimizer | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.panel.load_bol
