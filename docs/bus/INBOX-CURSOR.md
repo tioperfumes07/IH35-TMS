@@ -4,6 +4,8 @@
 
 Lead. #10882 `shipClickedOntoMain` on main (`7c12b1fa`). Devin Clicked must not delete it. Leftover WAVE 1 Built + scoreboard. Item 12 = Devin. FAST-MERGE.
 
+**Keep CC-2 fed:** other seats must write picker FAILs to `OUTBOX-CC-2.md`. If a seat only pinged Cursor, copy that line onto OUTBOX-CC-2 same turn.
+
 **NOW:** banking Built leftover if unpaid → rest WAVE 1 → WAVE 2
 
 ```text

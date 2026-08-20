@@ -3,7 +3,7 @@
 ## Canonical
 Repo **`docs/bus/`** · Desktop USMCA hotfiles = **symlinks** (`scripts/ops/bus-symlink-desktop.sh`).
 
-**Seat-to-seat + stale INBOX:** `docs/bus/SEAT-COMMS-LAW.md` — any seat that sees a stale TOP pings Cursor OUTBOX same turn. Do not wait for Jorge.
+**Seat-to-seat + stale INBOX:** `docs/bus/SEAT-COMMS-LAW.md` — ping Cursor OUTBOX **and the target seat OUTBOX** (picker FAIL → `OUTBOX-CC-2.md`; money FAIL → `OUTBOX-CC-1.md`). Chat-only starves CC-2. Do not wait for Jorge.
 
 ## Cursor lead duty (HARD — owner 2026-08-16)
 **After every merge** (and whenever a seat OUTBOX says `awaiting next FO` / idle):

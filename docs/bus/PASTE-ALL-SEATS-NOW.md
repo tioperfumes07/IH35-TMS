@@ -4,6 +4,8 @@
 
 **Every hour:** re-read `CODER-INSTRUCTIONS-NOW.md` + your INBOX + `FAST-MERGE-4MIN-LAW.md`. Re-ACK. Keep working.
 
+**CC-2 gets other-coder mail on `OUTBOX-CC-2.md`.** Picker FAIL → prepend that file same turn. Money FAIL → `OUTBOX-CC-1.md`. Also Cursor OUTBOX. Chat-only is a defect.
+
 **WAVE 1:** banking → factoring → accounting → settlements → customers → drivers  
 **WAVE 2:** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
 **WAVE 3:** inventory → compliance → reports → cash-flow → finance → form_425 → users → docs → home → tasks → program  
