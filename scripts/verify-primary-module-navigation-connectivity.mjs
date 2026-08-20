@@ -68,7 +68,8 @@ export function verify(source) {
   need("tasks", "onClick={() => navigate(tab.to)}", "tasks navigation must open its mounted routes");
   for (const id of EXPECTED.program) need("program", `program-nav-${id}`, `program nav ${id} must remain visible`);
   for (const id of EXPECTED.system) need("system", `id: "${id}"`, `system tab ${id} must remain visible`);
-  need("system", "<SecondaryNavTabs tabs={SYSTEM_TABS.map", "system tabs must render through shared navigation");
+  need("system", "const visibleTabs = SYSTEM_TABS.filter", "system tabs must retain the feature-aware visible-tab projection");
+  need("system", "<SecondaryNavTabs tabs={visibleTabs.map", "system tabs must render through shared navigation");
 
   for (const route of ROUTES) need("routes", `path="${route}"`, `route ${route} must remain mounted`);
   for (const [key, ids] of Object.entries(REQUIRED_LEAVES)) {
@@ -90,7 +91,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
     ["compliance", 'id: "filings"', 'id: "filings-broken"'],
     ["compliance", "onClick={() => setTab(t.id)}", "onClick={() => undefined}"],
@@ -106,7 +107,8 @@ if (process.argv.includes("--self-test")) {
     ["program", "program-nav-matrix", "broken-program-matrix"],
     ["program", "program-nav-final", "broken-program-final"],
     ["system", 'id: "program"', 'id: "program-broken"'],
-    ["system", "<SecondaryNavTabs tabs={SYSTEM_TABS.map", "<SecondaryNavTabs tabs={[].map"],
+    ["system", "const visibleTabs = SYSTEM_TABS.filter", "const visibleTabs = [].filter"],
+    ["system", "<SecondaryNavTabs tabs={visibleTabs.map", "<SecondaryNavTabs tabs={[].map"],
     ["routes", 'path="/tasks/calendar"', 'path="/tasks/calendar-broken"'],
     ["routes", 'path="/program/matrix"', 'path="/program/matrix-broken"'],
     ["routes", 'path="/system"', 'path="/system-broken"'],
