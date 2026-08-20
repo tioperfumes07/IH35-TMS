@@ -77,14 +77,24 @@ describe("DriversListPage create-driver entry (SM1)", () => {
     await user.type(document.querySelector('[data-field="last_name"]')!, "Doe");
     await user.type(document.querySelector('[data-field="phone_input"]')!, "9565550001");
 
+    // The creator is now a 4-step wizard (Identity -> Licenses -> Border & emergency ->
+    // DQ docs & drug screen) — Save only renders on step 4, gated behind the drug-screen
+    // acknowledgment checkbox. Advance through the intervening steps before looking for Save.
+    for (let i = 0; i < 3; i++) {
+      await user.click(await screen.findByTestId("driver-create-wizard-next"));
+    }
+    await user.click(await screen.findByTestId("driver-create-drug-screen-ack"));
+
     const saveButtons = screen.getAllByRole("button", { name: /^Save$/i });
     await user.click(saveButtons[saveButtons.length - 1]!);
 
     await waitFor(() => {
       expect(createDriverMock).toHaveBeenCalledTimes(1);
     });
+    // onCreated now also passes the new driver's display name (CreateDriverModal.tsx) — a
+    // legitimate addition, not just the id.
     await waitFor(() => {
-      expect(onOpenProfile).toHaveBeenCalledWith("new-driver-123");
+      expect(onOpenProfile).toHaveBeenCalledWith("new-driver-123", "Jane Doe");
     });
   });
 });
