@@ -83,9 +83,9 @@ const CLICKED_COL_IDS = new Set([
 const CLICKED_EXACT_N = /LIVE PASS\s*[·|-]\s*([1-3])\s+EXACT CELLS?/i;
 const MODALISH_LEAF_RE = /create|modal|drawer|wizard|popup|dialog|\bpicker\b/i;
 
-/** Frozen READY excludes money-group cells (QBO books parked). USMCA-only Clicked. */
-function isOpsReadyColumn(group: string): boolean {
-  return (group || "other") !== "money";
+/** Frozen / Miss C / READY = every Required cell, including money. Owner 2026-08-20: never park money. USMCA-only Clicked. */
+function isOpsReadyColumn(_group: string): boolean {
+  return true;
 }
 
 function isUsmcaClickedHay(hay: string): boolean {

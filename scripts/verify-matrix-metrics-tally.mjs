@@ -121,6 +121,20 @@ export function matrixPreviewRecentProblems(preview) {
   return problems;
 }
 
+export function moneyParkProblems(svc, view) {
+  const problems = [];
+  if (/\(\s*group\s*\|\|\s*"other"\s*\)\s*!==\s*"money"/.test(svc) || /excludes money-group/.test(svc)) {
+    problems.push("READY/Miss C must include money — isOpsReadyColumn must not exclude group money (owner 2026-08-20)");
+  }
+  if (svc.includes("function isOpsReadyColumn") && !/never park money/i.test(svc)) {
+    problems.push("isOpsReadyColumn comment must say never park money");
+  }
+  if (/MONEY parked/.test(view) || /Miss C ignore MONEY/.test(view)) {
+    problems.push("system matrix must not park money out of Frozen/Miss C/READY");
+  }
+  return problems;
+}
+
 export function exactSystemTrackerProblems(source) {
   const problems = [];
   if (!/const live = sys\.liveCells;/.test(source)) {
@@ -175,7 +189,13 @@ function repoProblems() {
       problems.push("fw12 Clicked rollup must set Built=Clicked (never bu:0 which paints Built always red)");
     }
     if (!/frozenOps/.test(svc) || !/readyAbl/.test(svc) || !/isOpsReadyColumn/.test(svc)) {
-      problems.push("module-matrix.service.ts must expose frozen ops READY (non-money, USMCA Clicked)");
+      problems.push("module-matrix.service.ts must expose frozen READY (all Required cells including money, USMCA Clicked)");
+    }
+    if (/\(\s*group\s*\|\|\s*"other"\s*\)\s*!==\s*"money"/.test(svc) || /excludes money-group/.test(svc)) {
+      problems.push("READY/Miss C must include money — isOpsReadyColumn must not exclude group money (owner 2026-08-20)");
+    }
+    if (!/never park money/i.test(svc)) {
+      problems.push("isOpsReadyColumn comment must say never park money");
     }
     if (!svc.includes("parseOutboxClickedKeys") || !svc.includes("GITHUB_OUTBOX_CONTENTS")) {
       problems.push("module-matrix.service.ts must parse OUTBOX Clicked and fetch origin/main via GitHub (docs/** deploy ignore)");
@@ -199,6 +219,9 @@ function repoProblems() {
     }
     if (!/ops Clicked of frozen cells/.test(view) || !/unpaid Clicked of frozen/.test(view)) {
       problems.push("Frozen/Miss C KPI labels must be X of frozen (not Box 4)");
+    }
+    if (/MONEY parked/.test(view) || /Miss C ignore MONEY/.test(view)) {
+      problems.push("system matrix must not park money out of Frozen/Miss C/READY");
     }
   }
   if (!fs.existsSync(PREVIEW)) problems.push(`MISSING ${PREVIEW}`);
@@ -271,6 +294,21 @@ if (SELFTEST) {
   );
   if (!exactSystemTrackerProblems(plantedRoundedReconstruction).some((p) => p.includes("exact sys.liveCells"))) {
     console.error(`${LABEL} selftest: rounded-percent tracker mutation escaped`);
+    process.exit(1);
+  }
+  const plantedMoneyPark = fs
+    .readFileSync(MATRIX_SVC, "utf8")
+    .replace("never park money", "QBO books parked")
+    .replace("return true;", 'return (group || "other") !== "money";');
+  const parkedView = fs.readFileSync(SYSTEM_VIEW, "utf8").replace(
+    "Frozen / Miss C include money.",
+    "Frozen / Miss C ignore MONEY.",
+  );
+  if (
+    !moneyParkProblems(plantedMoneyPark, parkedView).some((p) => p.includes("must include money")) ||
+    !moneyParkProblems(plantedMoneyPark, parkedView).some((p) => p.includes("must not park money"))
+  ) {
+    console.error(`${LABEL} selftest: money-park mutation escaped`, moneyParkProblems(plantedMoneyPark, parkedView));
     process.exit(1);
   }
   const repo = repoProblems();
