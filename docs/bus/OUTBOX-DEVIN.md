@@ -1621,3 +1621,14 @@ Devin-A | LIVE STARVED | module=fleet | leaf=roster.row.edit_unit | URL=https://
 Use your Google account or email and password.
 
 Sign in with | healthz=a3b4b1e | mutation=none | NEXT=fleet.roster.row.edit_trailer
+Devin-A | LIVE PASS | module=fleet | leaf=roster.row.edit_trailer | URL=https://app.ih35dispatch.com/fleet | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet ; marker 'fleet' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.identity
