@@ -8,7 +8,6 @@ const LABEL = "verify-cc1-money-orphan-guard-registry-batch";
  * (docs/audit/ORPHAN-GUARD-OWNER-HANDOFF-2026-08-15.md). The 1 file left after this batch is
  * verify-wave-c-gl-je-system-qbo-recon.mjs — explicitly excluded from USMCA sprint scope by
  * owner ruling (N/A section of the handoff doc), never wired here. */
-const MAX_REMAINING = 1;
 const REQUIRED = [
   "verify-accounting-existing-query-reverse-drills.mjs",
   "verify-accounting-required-linkage-honest.mjs",
@@ -91,8 +90,8 @@ const REQUIRED = [
 function failures(classification) {
   const wired = new Set(classification.fullyWired);
   const out = REQUIRED.filter((guard) => !wired.has(guard)).map((guard) => `${guard} is not executed by CI`);
-  if (classification.unaccounted.length > MAX_REMAINING) {
-    out.push(`unaccounted guard census ${classification.unaccounted.length} exceeds ${MAX_REMAINING}`);
+  if (classification.unaccounted.length) {
+    out.push(`unaccounted guards remain: ${classification.unaccounted.join(", ")}`);
   }
   return out;
 }
@@ -100,7 +99,7 @@ function failures(classification) {
 if (process.argv.includes("--selftest")) {
   const baseline = {
     fullyWired: [...REQUIRED],
-    unaccounted: Array.from({ length: MAX_REMAINING }, (_, i) => `other-${i}.mjs`),
+    unaccounted: [],
   };
   const mutations = [
     { name: "required guard removed", value: { ...baseline, fullyWired: REQUIRED.slice(1) } },
@@ -119,5 +118,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} PASS — ${REQUIRED.length} CC-1 money/accounting/banking/factoring/settlements guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`,
+  `${LABEL} PASS — ${REQUIRED.length} CC-1 guards execute in CI; orphan census is zero`,
 );
