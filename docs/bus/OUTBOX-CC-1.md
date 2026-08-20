@@ -1794,3 +1794,20 @@ call sites, failing closed with a new CREDIT_ACCOUNT_CROSS_ENTITY code. Updated 
 suites + added 2 new regression tests proving a foreign-entity account is now refused. Board closeout
 shipped in this same PR cycle. REMAINING: none for this finding. Continuing the money-lane sweep
 non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T17:14Z CC-1 | TRIAGED the 4 unattributed "Money FAIL / LIVE STARVED" lines above
+(liabilities.list, pre_settlements, factoring.wizard.batch, banking.reconciliation, all USMCA) before
+touching any code, per the classify-row-origin law extended to live-check claims. Investigated each:
+3/4 are checker artifacts (the live-checker visited the wrong URL for a `surface://` panel/wizard leaf
+-- `/settlements/liabilities` doesn't exist and 404s to Home instead of the real bare `/liabilities`
+route; `/settlements` correctly redirects to the canonical ledger but PreSettlementsPanel is
+deliberately NOT mounted there by an earlier fix; bare `/factoring` lands on FactoringHome's default
+tab, not the Batch Wizard, which only opens via `/factoring/batches/new` or an in-page action), and
+1/4 (banking.reconciliation) is the one leaf whose checker URL matches the real route exactly and
+already renders an honest, self-declaring empty-state banner when 0 sessions exist -- an already-
+documented data-maturity gap, not a defect. Full evidence + reclassification filed as a CORRECTED row
+in GUARD-WORKORDERS.md. No product code touched -- 0/4 were real defects. Routed the systemic root
+cause (the live-checker's queue-builder mis-resolves surface:// route_hints for panel/wizard/modal
+leaves, which will keep generating false Money-FAIL noise across every module) as a fresh OPEN row
+owned by whoever owns the live-Chrome click-check queue-builder (Devin-A), not fixed by CC-1 -- outside
+the money lane. Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
