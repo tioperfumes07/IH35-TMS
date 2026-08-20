@@ -932,6 +932,8 @@ export type VendorOption = {
   account_number?: string | null;
   /** Canonical TMS A/P bridge — mdata.vendors.driver_id (NOT qbo_vendor_id). FAIL-AP1 reverse. */
   driver_id?: string | null;
+  /** Same-company nullable human label for the canonical driver reverse drill. */
+  driver_name?: string | null;
 };
 
 export type DriverApVendorLink = {

@@ -555,6 +555,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT ${VENDOR_SELECT_COLUMNS}
+               , (
+                   SELECT NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '')
+                     FROM mdata.drivers d
+                    WHERE d.id = mdata.vendors.driver_id
+                      AND d.operating_company_id = mdata.vendors.operating_company_id
+                    LIMIT 1
+                 ) AS driver_name
           FROM mdata.vendors
           WHERE id = $1
             AND operating_company_id = $2::uuid

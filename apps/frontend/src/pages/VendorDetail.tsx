@@ -15,6 +15,7 @@ import { getVendorIntegrityHistory } from "../api/maintenance";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
 import { EntityLink } from "../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
@@ -574,7 +575,12 @@ export function VendorDetailPage() {
             >
               <div className="text-[11px] uppercase text-slate-600">Linked driver (A/P payee)</div>
               <div className="mt-1 text-sm font-semibold text-gray-900">
-                <EntityLink kind="driver" id={vendor.driver_id} label="Open driver profile →" />
+                <EntityLinkOrTombstone
+                  kind="driver"
+                  id={vendor.driver_id}
+                  name={vendor.driver_name}
+                  noun="Driver"
+                />
               </div>
             </div>
           ) : null}
