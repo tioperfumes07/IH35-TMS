@@ -7831,3 +7831,27 @@ Idioma
 Ingles
 Espanol (preview)
 t | NEXT=leaf=vendors:detail.profile.payment_terms:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
