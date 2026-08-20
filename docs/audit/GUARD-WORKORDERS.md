@@ -3027,3 +3027,45 @@ finally gives GAP-10 real regression protection.
 | **FIXED (Codex 2026-08-20):** `CODEX-DOCS-ENTITY-LABEL-GUARD-STALE-RESOLVED-BRANCH` — DocsHome correctly upgraded unresolved/UUID identities to tombstones and sends only trimmed resolved labels to EntityLink, but its connectivity guard still required retired `label={label}` code. | `scripts/verify-docs-entity-labels.mjs`; `apps/frontend/src/pages/docs/DocsHomePage.tsx:113-134` | C | **Codex — reverse/connectivity** | Ratchet the exact tombstone predicate plus resolved-only trimmed binding; accept both selftest spellings and hard-fail fixture drift. | normal PASS; selftest 9/9 | **FIXED · OWNER-GATED=no** |
 | **FIXED (Codex 2026-08-20):** `CODEX-SYSTEM-NAV-VISIBLE-TABS-GUARD-DRIFT` — System navigation gained a feature-aware visible-tab projection so QBO-disabled USMCA does not expose forbidden tabs, while the connectivity guard still required direct `SYSTEM_TABS.map`. | `scripts/verify-primary-module-navigation-connectivity.mjs`; `apps/frontend/src/pages/system/SystemModulePage.tsx:707-713` | C | **Codex — connectivity** | Ratchet both the feature-aware projection and its shared SecondaryNavTabs consumer; support both selftest spellings. | normal PASS; selftest 26/26 | **FIXED · OWNER-GATED=no** |
 | **FIXED (Codex 2026-08-20):** `CODEX-ACCOUNTING-CREDIT-MEMOS-CONNECTIVITY-REVERSE` — the newly inventoried Credit Memos parity leaf owed connectivity and reverse_link but had no exact Box-3 guard claim. | `apps/frontend/src/pages/accounting/CreditMemosPage.tsx`; `apps/frontend/src/api/credit-memos.ts`; `apps/backend/src/accounting/credit-memos.routes.ts`; `scripts/verify-accounting-credit-memos-connectivity-reverse.mjs` | B | **Codex — reverse/connectivity** | Prove mounted route, selected-company list/detail reads, deep-link detail, same-company customer hydration, customer drills, and credited-invoice reverse drills under one exact leaf claim. | normal PASS; selftest 15/15 | **FIXED · OWNER-GATED=no** |
+
+**OPEN (P2 · picker_law policy conflict, CC-3 found while sweeping the full verify:static suite —
+routing to CC-2, not self-resolving)** `PICKER-LAW-FILTER-ALLOWCREATE-CONFLICT` —
+`scripts/verify-entitypicker-filter-allowcreate-ratchet.mjs` requires filter-context EntityPickers on
+4 pages to set `allowCreate={false}` (CLS-EP-FILTER-ALLOWCREATE — do not let an operator create a new
+driver/entity from inside a filter dropdown). `apps/frontend/src/pages/dispatch/
+AssignmentHistoryPage.tsx:158` fails it — but the code carries an explicit, deliberate comment right
+above the (bare, `true`-valued) `allowCreate` prop: `// Universal picker law (V2): + Add new / Create
+Driver must be first row — do not disable create on this filter.` This is a genuine conflict between
+two documented picker-law rules, not a simple regression — either the guard's CLS-EP-FILTER-
+ALLOWCREATE rule is stale and superseded by "Universal picker law (V2)", or the V2 comment is wrong
+and this filter should be locked down like the other 3 (AccidentsPage/SafetyEventsPage/IdvrPage, all
+of which DO pass with `allowCreate={false}`). Not resolving this myself — `picker_law` is CC-2's
+column and this needs someone who knows which rule is current-authoritative, not a guess. |
+`scripts/verify-entitypicker-filter-allowcreate-ratchet.mjs`;
+`apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx:152-159` | C (non-financial UX/data-
+integrity) | **CC-2 — picker_law** | Determine which rule is current (check whether "Universal
+picker law (V2)" is a real, still-binding doc or a stale in-code comment referencing a superseded
+decision), then either add `allowCreate={false}` to match the other 3 filter pages, or update the
+guard's `FILTER_PAGES` exemption + its own comment to explain why this one filter is intentionally
+different. | `node scripts/verify-entitypicker-filter-allowcreate-ratchet.mjs` currently FAILs (1
+offender) | OPEN
+
+**OPEN (P3 · unowned canonical-column gap, CC-3 found while sweeping the full verify:static suite —
+routing to Codex, not self-resolving)** `CREDIT-MEMOS-PAGE-CUSTOMER-COLUMN-UNOWNED` —
+`scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs` FAILs: `customer	accounting:
+accounting.parity.credit_memos_page`. This is the new leaf CC-3 added earlier this session
+(`accounting.parity.credit_memos_page`, mirroring the existing `accounting.parity.vendor_credits_page`
+pattern, to close a surface-bar-inventory gap on the real, live `CreditMemosPage.tsx`) — it correctly
+requires `customer` (the page has a real customer EntityPicker + `customer_id` filter, already
+confirmed live), but no guard yet claims Box-3 for the `customer` column on this specific leaf. Codex
+already shipped `CODEX-ACCOUNTING-CREDIT-MEMOS-CONNECTIVITY-REVERSE`
+(`scripts/verify-accounting-credit-memos-connectivity-reverse.mjs`) for this same leaf's
+connectivity/reverse_link columns — the `customer` entity-linkage column is the one still
+unclaimed. Not self-building — `verify-codex-vertical-nonmoney-zero-remainder.mjs` is explicitly
+Codex's own zero-remainder sweep guard, and entity-linkage columns aren't in CC-3's `qbo_chrome`
+lane. | `docs/specs/scoreboard/modules/accounting.required.json` (`accounting.parity.
+credit_memos_page` leaf); `apps/frontend/src/pages/accounting/CreditMemosPage.tsx` (real EntityPicker
+customer field, already confirmed) | B (non-financial entity-linkage) | **Codex —
+reverse_link/connectivity (or whoever owns entity-column zero-remainder)** | Add a leaf-specific
+`customer` column claim for `accounting.parity.credit_memos_page`, same pattern as the existing
+connectivity/reverse_link guard on this leaf. | `node scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs` currently FAILs on this one line | OPEN
