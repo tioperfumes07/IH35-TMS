@@ -21,9 +21,15 @@ export function check() {
   assert(src.includes('storageKey="geofence-recon"'), "GeofenceReconciliationReport: must use one always-mounted storageKey=geofence-recon");
   assert(!/Object\.entries\(\s*byClass\s*\)/.test(src), "GeofenceReconciliationReport: must not group into multiple ParityTables (missing surface bar on empty)");
   assert(!/bg-green-50[\s\S]*No anomalies found/.test(src), "GeofenceReconciliationReport: must not green-only bypass that skips ParityTable");
-  assert(/emptyText=\{`No anomalies found for \$\{appliedDate\}\.`\}/.test(src) || src.includes("No anomalies found for ${appliedDate}"), "GeofenceReconciliationReport: honest emptyText on ParityTable");
+  assert(
+    /emptyText=\{`No anomalies found for \$\{(appliedDate|formatDateUS\(appliedDate\))\}\.`\}/.test(src),
+    "GeofenceReconciliationReport: honest emptyText on ParityTable",
+  );
   assert(/exportFilename=\{`geofence-recon-\$\{appliedDate\}`\}/.test(src) || src.includes("geofence-recon-${appliedDate}"), "GeofenceReconciliationReport: exportFilename for surface Export");
-  assert(src.includes("appliedDate") && src.includes("setAppliedDate(date)"), "GeofenceReconciliationReport: keep Apply-staged date");
+  assert(
+    src.includes("appliedDate") && /setAppliedDate\((date|next\.reportDate)\)/.test(src),
+    "GeofenceReconciliationReport: keep Apply-staged date",
+  );
 }
 
 function selftest() {

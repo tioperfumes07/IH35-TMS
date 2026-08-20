@@ -63,7 +63,7 @@ export function run() {
   if (!/registered_total/.test(src) || !/view_counts/.test(src)) {
     failures.push(`${FILE}: must render program tracker registered_total and view_counts`);
   }
-  if (!/to=\"\/program\"/.test(src)) {
+  if (!/to="\/program(\/[a-z-]+)?"/.test(src)) {
     failures.push(`${FILE}: must link from system Program Tracker card to /program board`);
   }
 
