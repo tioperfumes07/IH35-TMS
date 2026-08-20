@@ -6466,3 +6466,47 @@ Devin-A | LIVE PASS | leaf=customers:detail.profile:connectivity | USMCA | URL=h
 Devin-A | LIVE PASS | leaf=customers:detail.profile:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
 Devin-A | LIVE PASS | leaf=customers:detail.profile:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
 Devin-A | LIVE PASS | leaf=customers:detail.profile:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=a9866fc | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=quality head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=customers:home.roster:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:load | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=a9866fc | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=quality head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=customers:home.roster:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=a9866fc | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=quality head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=customers:home.roster:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.quality:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=quality | healthz=a9866fc | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=quality head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=customers:home.roster:customer
