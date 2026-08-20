@@ -2704,3 +2704,39 @@ Devin-A | LIVE PASS | leaf=factoring:home.chargebacks_fees:connectivity | USMCA 
 Devin-A | LIVE PASS | leaf=factoring:home.chargebacks_fees:reverse_link | USMCA | URL=https://app.ih35dispatch.com/factoring/chargebacks-fees | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/chargebacks-fees marker 'factoring' | NEXT=leaf=factoring:home.equipment_loans:vendor
 Devin-A | LIVE PASS | leaf=factoring:home.faro_imports:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/faro-imports | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/faro-imports marker 'factoring' | NEXT=leaf=factoring:home.recourse_pipeline:customer
 Devin-A | LIVE PASS | leaf=factoring:home.faro_imports:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/factoring/faro-imports | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/faro-imports marker 'factoring' | NEXT=leaf=factoring:home.recourse_pipeline:customer
+Devin-A | LIVE STARVED | leaf=factoring:home.recourse_pipeline:customer | USMCA | URL=https://app.ih35dispatch.com/factoring/recourse-pipeline | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/recourse-pipeline healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE STARVED | leaf=factoring:home.recourse_pipeline:load | USMCA | URL=https://app.ih35dispatch.com/factoring/recourse-pipeline | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/recourse-pipeline healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE STARVED | leaf=factoring:home.recourse_pipeline:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/recourse-pipeline | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/recourse-pipeline healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE STARVED | leaf=factoring:home.recourse_pipeline:reverse_link | USMCA | URL=https://app.ih35dispatch.com/factoring/recourse-pipeline | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/recourse-pipeline healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=factoring:home.reserve_tracker:load
