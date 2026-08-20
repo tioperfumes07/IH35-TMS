@@ -3901,3 +3901,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.accounting.items.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.items.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/items | healthz=107acd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/items marker 'lists' | NEXT=leaf=lists:catalog.accounting.items.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.items.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/items | healthz=107acd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/items marker 'lists' | NEXT=leaf=lists:catalog.accounting.items.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.items.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/items | healthz=107acd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/items marker 'lists' | NEXT=leaf=lists:catalog.accounting.items.list:picker_law
