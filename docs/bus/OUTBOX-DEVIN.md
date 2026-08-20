@@ -12802,3 +12802,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.profile.insurance_claims_reverse:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.insurance_claims_reverse:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.status_change:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.insurance_claims_reverse:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.status_change:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.insurance_claims_reverse:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.status_change:trailer
