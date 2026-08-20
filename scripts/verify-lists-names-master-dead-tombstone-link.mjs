@@ -22,6 +22,15 @@ function analyze(src) {
   if (!/names-master-record-tombstone/.test(src)) {
     failures.push("must render names-master-record-tombstone for unresolved rows");
   }
+  if (!/canonicalEntityRoute\(row, kind\)/.test(src) || !/expected === row\.link_to_module_page/.test(src)) {
+    failures.push("Name EntityLink must require the backend route to match the canonical entity id route");
+  }
+  if (!/names-master-noncanonical-record/.test(src)) {
+    failures.push("unlinked QBO mirror rows must render a noninteractive name");
+  }
+  if (!/names-master-open-tombstone/.test(src)) {
+    failures.push("unresolved identities must not retain an active Open drill");
+  }
   if (/EntityLink data-testid="names-master-record-link" kind=\{kind\} id=\{row\.entity_id\} label=\{row\.display_name\}/.test(src)) {
     failures.push("must not EntityLink raw display_name without tombstone gate");
   }
@@ -37,15 +46,19 @@ function selftest() {
   const pagePath = path.join(process.cwd(), PAGE);
   const original = fs.readFileSync(pagePath, "utf8");
   try {
-    const bad = original
-      .replace(/isUnresolvedEntityTombstone/g, "NO_TOMBSTONE")
-      .replace(
-        /data-testid="names-master-record-tombstone"/,
-        'data-testid="names-master-record-link"',
-      );
-    fs.writeFileSync(pagePath, bad);
-    const planted = analyze(read());
-    if (!planted.length) fail("selftest expected fail");
+    const mutations = [
+      ["tombstone predicate", /isUnresolvedEntityTombstone/g, "NO_TOMBSTONE"],
+      ["canonical route comparison", /expected === row\.link_to_module_page/, "true"],
+      ["noncanonical marker", /names-master-noncanonical-record/g, "names-master-record-link"],
+      ["Open tombstone", /names-master-open-tombstone/g, "names-master-open-link"],
+    ];
+    for (const [name, pattern, replacement] of mutations) {
+      const bad = original.replace(pattern, replacement);
+      if (bad === original) fail(`selftest mutation did not apply: ${name}`);
+      fs.writeFileSync(pagePath, bad);
+      const planted = analyze(read());
+      if (!planted.length) fail(`selftest expected fail: ${name}`);
+    }
   } finally {
     fs.writeFileSync(pagePath, original);
   }

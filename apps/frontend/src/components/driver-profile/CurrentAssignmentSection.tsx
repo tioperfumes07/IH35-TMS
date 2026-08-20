@@ -1,5 +1,6 @@
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { entityLabel } from "../../lib/entity-label";
 
 export function CurrentAssignmentSection({
   assignment,

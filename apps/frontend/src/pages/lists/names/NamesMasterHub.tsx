@@ -31,6 +31,19 @@ const LINKABLE_NAME_KINDS: Partial<Record<NamesEntityType, EntityKind>> = {
   driver: "driver",
 };
 
+function canonicalEntityRoute(row: NamesMasterRow, kind: EntityKind | undefined) {
+  if (!kind) return null;
+  const expected =
+    kind === "customer"
+      ? `/customers/${row.entity_id}`
+      : kind === "vendor"
+        ? `/vendors/${row.entity_id}`
+        : kind === "driver"
+          ? `/drivers/${row.entity_id}`
+          : null;
+  return expected === row.link_to_module_page ? expected : null;
+}
+
 export function NamesMasterHub() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -89,10 +102,14 @@ export function NamesMasterHub() {
                   ? "Driver"
                   : "Record";
           const label = entityLabel(row.display_name, row.entity_id, noun);
+          const canonicalRoute = canonicalEntityRoute(row, kind);
           // LV-LISTS-NAMES-MASTER-DEAD-TOMBSTONE-LINK: unresolved / UUID-shaped names must not drill.
-          if (!kind || isUnresolvedEntityTombstone(row.display_name, row.entity_id, noun)) {
+          if (!kind || !canonicalRoute || isUnresolvedEntityTombstone(row.display_name, row.entity_id, noun)) {
             return (
-              <span className="font-medium text-slate-600" data-testid="names-master-record-tombstone">
+              <span
+                className="font-medium text-slate-600"
+                data-testid={canonicalRoute ? "names-master-record-tombstone" : "names-master-noncanonical-record"}
+              >
                 {label}
               </span>
             );
@@ -131,13 +148,17 @@ export function NamesMasterHub() {
         label: "",
         alwaysVisible: true,
         render: (row) => (
-          <button
-            type="button"
-            className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"
-            onClick={() => navigate(row.link_to_module_page)}
-          >
-            Open
-          </button>
+          isUnresolvedEntityTombstone(row.display_name, row.entity_id, "Record") ? (
+            <span className="text-xs text-slate-500" data-testid="names-master-open-tombstone">Unavailable</span>
+          ) : (
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold hover:bg-slate-50"
+              onClick={() => navigate(row.link_to_module_page)}
+            >
+              Open
+            </button>
+          )
         ),
       },
     ],
