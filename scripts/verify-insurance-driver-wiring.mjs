@@ -2,7 +2,8 @@
 /** @matrix-built {"modules":["insurance"],"cols":["driver"],"leafRe":"^(claims\\.(list|create)|insurance\\.modal\\.claim_create|insurance\\.parity\\.claim_create|lawsuits\\.list)$","task":"LINK-F5168-INSURANCE-DRIVER-WIRING"} */
 /**
  * OWNER-EXECUTION-PLAN vertical driver-column sweep (2026-08-14): 5 genuine insurance leaves.
- * ClaimsTab.tsx's claim rows have a real EntityLink kind="driver" id={claim.driver_id}.
+ * ClaimsTab.tsx's claim rows use the governed EntityLinkOrTombstone with the canonical driver ID
+ * and nullable human display name.
  * ClaimCreateModal.tsx (shared by modal + parity surfaces) has a real DriverPickerWithCreate bound
  * to form.driver_id. LawsuitsTab.tsx's lawsuit rows have a real EntityLink kind="driver"
  * id={lawsuit.driver_id}. Policy/coverage-gap surfaces were confirmed FALSE for driver during this
@@ -18,7 +19,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-insurance-driver-wiring";
 
 const CHECKS = [
-  ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="driver"[\s\S]{0,20}id=\{claim\.driver_id \?\? undefined\}/],
+  ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /<EntityLinkOrTombstone kind="driver" id=\{claim\.driver_id\} name=\{claim\.driver_display_name\} noun="Driver" \/>/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /<DriverPickerWithCreate[\s\S]{0,80}value=\{form\.driver_id \|\| null\}/],
   // EntityLinkOrTombstone's `id` prop already accepts string | null | undefined directly, so the
   // `?? undefined` coercion this line needed under the old raw EntityLink is no longer required.
