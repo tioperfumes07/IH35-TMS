@@ -17,6 +17,8 @@ const DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const LOADS_ROUTE = "apps/backend/src/mdata/loads.routes.ts";
 const INVOICES_PAGE = "apps/frontend/src/pages/accounting/InvoicesListPage.tsx";
 const INVOICES_ROUTE = "apps/backend/src/accounting/invoices.routes.ts";
+const BILLING_ROUTE = "apps/backend/src/mdata/customer-billing.routes.ts";
+const MDATA_API = "apps/frontend/src/api/mdata.ts";
 const ROUTE_MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
 const CHECKS = [
@@ -40,6 +42,31 @@ const CHECKS = [
   },
   { name: "invoice EntityLink", file: DETAIL, pattern: /kind="invoice"/ },
   { name: "vendor EntityLink (factoring)", file: DETAIL, pattern: /kind="vendor"/ },
+  {
+    name: "billing factor vendor drill consumes canonical producer label",
+    file: DETAIL,
+    pattern: /id=\{billingSummary\.factoring_company_vendor_id\}[\s\S]{0,180}name=\{billingSummary\.factoring_company_vendor_name\}[\s\S]{0,120}noun="Vendor"/,
+  },
+  {
+    name: "billing producer returns factor vendor human label",
+    file: BILLING_ROUTE,
+    pattern: /fv\.vendor_name AS factoring_company_vendor_name/,
+  },
+  {
+    name: "billing producer scopes factor vendor join to customer company",
+    file: BILLING_ROUTE,
+    pattern: /LEFT JOIN mdata\.vendors fv\s+ON fv\.id = c\.factoring_company_vendor_id\s+AND fv\.operating_company_id = c\.operating_company_id/,
+  },
+  {
+    name: "billing response exposes nullable factor vendor label",
+    file: BILLING_ROUTE,
+    pattern: /factoring_company_vendor_name: customer\.factoring_company_vendor_name \?\? null/,
+  },
+  {
+    name: "billing API contract types factor vendor label",
+    file: MDATA_API,
+    pattern: /export type CustomerBillingSummary = \{[\s\S]{0,260}factoring_company_vendor_name: string \| null;/,
+  },
   { name: "parent customer EntityLinkOrTombstone", file: DETAIL, pattern: /data-testid="customer-parent-record-link"/ },
   { name: "sub-customer EntityLinkOrTombstone", file: DETAIL, pattern: /customer-sub-record-link-/ },
   {
@@ -86,7 +113,7 @@ const CHECKS = [
 
 function readSources() {
   return Object.fromEntries(
-    [DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, ROUTE_MANIFEST].map((file) => [
+    [DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, MDATA_API, ROUTE_MANIFEST].map((file) => [
       file,
       fs.readFileSync(path.join(ROOT, file), "utf8"),
     ]),

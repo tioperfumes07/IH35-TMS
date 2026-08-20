@@ -65,6 +65,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
             c.default_detention_rate,
             c.factoring_eligible,
             c.factoring_company_vendor_id,
+            fv.vendor_name AS factoring_company_vendor_name,
             c.factoring_recourse_type,
             c.factoring_advance_rate_override,
             c.factoring_reserve_pct_override,
@@ -80,6 +81,9 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
             pt.days_until_due AS credit_terms_days
           FROM mdata.customers c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+          LEFT JOIN mdata.vendors fv
+            ON fv.id = c.factoring_company_vendor_id
+           AND fv.operating_company_id = c.operating_company_id
           WHERE c.id = $1
             AND c.operating_company_id = $2::uuid
           LIMIT 1
@@ -144,6 +148,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
         credit_terms_days: customer.credit_terms_days ?? null,
         factoring_eligible: Boolean(customer.factoring_eligible),
         factoring_company_vendor_id: customer.factoring_company_vendor_id ?? null,
+        factoring_company_vendor_name: customer.factoring_company_vendor_name ?? null,
         factoring_recourse_type: customer.factoring_recourse_type ?? null,
         factoring_advance_rate_override: customer.factoring_advance_rate_override ?? null,
         factoring_reserve_pct_override: customer.factoring_reserve_pct_override ?? null,

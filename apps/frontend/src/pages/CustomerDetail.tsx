@@ -2105,7 +2105,7 @@ export function CustomerDetailPage() {
                   <EntityLinkOrTombstone
                     kind="vendor"
                     id={billingSummary.factoring_company_vendor_id}
-                    name={null}
+                    name={billingSummary.factoring_company_vendor_name}
                     noun="Vendor"
                   />
                 ) : (
