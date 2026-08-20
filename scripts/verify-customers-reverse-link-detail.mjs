@@ -23,6 +23,14 @@ const CHECKS = [
   { name: "vendor EntityLink (factoring)", pattern: /kind="vendor"/ },
   { name: "parent customer EntityLinkOrTombstone", pattern: /data-testid="customer-parent-record-link"/ },
   { name: "sub-customer EntityLinkOrTombstone", pattern: /customer-sub-record-link-/ },
+  {
+    name: "payment application invoice EntityLinkOrTombstone",
+    pattern: /applications\.map\(\(application\)[\s\S]{0,500}kind="invoice"[\s\S]{0,180}id=\{application\.invoice_id\}[\s\S]{0,180}name=\{application\.invoice_display_id\}/,
+  },
+  {
+    name: "payment application amount remains visible beside invoice drill",
+    pattern: /formatCurrencyCents\(application\.amount_cents\)/,
+  },
 ];
 
 function run(src) {
@@ -35,11 +43,15 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL live`);
     process.exit(1);
   }
-  if (run("// poison").length < CHECKS.length) {
-    console.error(`${LABEL} SELFTEST FAIL poison`);
-    process.exit(1);
+  for (const check of CHECKS) {
+    const globalPattern = new RegExp(check.pattern.source, check.pattern.flags.includes("g") ? check.pattern.flags : `${check.pattern.flags}g`);
+    const planted = live.replace(globalPattern, "/* planted reverse-link defect */");
+    if (planted === live || !run(planted).includes(check.name)) {
+      console.error(`${LABEL} SELFTEST FAIL — planted defect stayed green: ${check.name}`);
+      process.exit(1);
+    }
   }
-  console.log(`${LABEL} SELFTEST PASS (poison trips ${CHECKS.length})`);
+  console.log(`${LABEL} SELFTEST PASS — ${CHECKS.length}/${CHECKS.length} planted defects rejected`);
   process.exit(0);
 }
 
