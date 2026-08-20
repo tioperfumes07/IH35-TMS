@@ -22,6 +22,14 @@ vi.mock("../../../components/layout/SubNavCounts", () => ({
   SubNavCounts: () => <span data-testid="subnav-count-badge" />,
 }));
 
+// DomainCatalogSection reads useCompanyContext() directly (USMCA/TRK vs TRANSP: QBO bulk-link is
+// TRANSP-only, sync-health twin #8751) — same reason it needs a stub as the two hooks above, so it
+// renders without a real CompanyProvider tree. TRANSP so qbo-bulk-link catalog entries stay visible,
+// matching the current sortDomainsForDisplay(DOMAIN_CONFIG) fixture these tests already assert on.
+vi.mock("../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompany: { code: "TRANSP" }, selectedCompanyId: "co-1" }),
+}));
+
 describe("Lists reorg — ordering (data-driven, single source)", () => {
   const sorted = sortDomainsForDisplay(DOMAIN_CONFIG);
 
