@@ -1545,7 +1545,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/banking/BankAccountDetail.tsx",
     bad: /label="Load"/,
-    good: /entityLabel\(null, row\.matched_load_id, "Load"\)/,
+    good: /entityLabel\(row\.matched_load_number \?\? null, row\.matched_load_id, "Load"\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx",
@@ -1555,12 +1555,12 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
     bad: /label="Settlement"/,
-    good: /entityLabel\(null, tx\.matched_settlement_id, "Settlement"\)/,
+    good: /entityLabel\(tx\.matched_settlement_display_id \?\? null, tx\.matched_settlement_id, "Settlement"\)/,
   },
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
     bad: /label="Journal Entry"/,
-    good: /entityLabel\(null, tx\.matched_journal_entry_id, "Journal entry"\)/,
+    good: /entityLabel\(tx\.matched_journal_entry_memo \?\? null, tx\.matched_journal_entry_id, "Journal entry"\)/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
