@@ -13642,3 +13642,24 @@ Idioma
 Ingles
 Espanol (preview)
 t | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.documents:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.drawer.background_check:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.documents:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.drawer.background_check:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.documents:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:profiles.drawer.background_check:driver
