@@ -2089,3 +2089,20 @@ reverse-then-close, maker != checker -- BUILDING; (4) elimination class = counte
 opex/lease line, NOT COGS, NOT capitalized -- F5670's existing opex subtraction already conforms; my
 earlier COGS-census reclassification idea is WITHDRAWN (the census reflects lessee-side postings to
 COGS accounts, not the elimination's correct target). Applying designs now, no waiting.
+
+2026-08-21T03:30Z CC-1 | LOCKED-ANSWER SEQUENCE CLOSED. All four rows this seat had wrongly parked
+as OWNER-GATED are now applied per the owner's correction that nothing was gated -- ANSWERED = CLOSED
+(00_LOCKED_DECISIONS #3) applies retroactively: waiting was the process defect, not a missing
+decision. (1) dispute disbursement -- ACCT-F5676 (#13264, merged e63d4df24): standalone flow, Dr
+settlement_dispute_correction_recovery clearing / Cr payment-method cash, idempotent, never a second
+driver_pay_expense debit. (2)+(3) fiscal-year RE sweep window + idempotent re-close --
+ACCT-F5675 (#13263, merged): aggregation now runs FY-Jan-1 -> period_end; re-close returns the live
+JE, undo-then-close uses a reversal-scoped idempotency key. (4) elimination classification -- no
+code needed; F5670's existing opex-nature subtraction already matches "same-nature counterpart, not
+COGS, not capitalized" (my earlier COGS-account-type reclassification idea, floated before the
+correction landed, is WITHDRAWN). This seat's OPEN-row count in GUARD-WORKORDERS with
+"OWNER-GATED=yes" is now ZERO. Miss C money-side status: F5674's WORM reversal (24/24, nets 0 cents)
++ F5673's voided_at filters mean the linked-bank panel should show 9 legit rows once the deploy SHA
+covers 68848c814/e63d4df24 -- re-walking Queue 6 is the Live lane's next step, not mine. Next loop:
+board re-walk for any remaining OPEN money rows, mining .block-ready/AUDIT-COVERAGE if the board is
+thin, per continuous-mode law.
