@@ -11,7 +11,7 @@ export function DocumentsVaultView({ driverId, operatingCompanyId }: Props) {
       title="Documents Vault"
       description="All documents uploaded for this driver."
       columns={[
-        { key: "file_name", label: "File" },
+        { key: "file_name", label: "File", entityKind: "document", idKey: "file_id" },
         { key: "doc_type", label: "Type" },
         { key: "created_at", label: "Uploaded" },
       ]}

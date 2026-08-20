@@ -131,6 +131,19 @@ contains(`${PAGE_DIR}/FuelHistoryView.tsx`, fuelPage, [
   { pattern: /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/, label: "fuel unit renders human label over canonical id" },
   { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "fuel load renders human label over canonical id" },
 ]);
+const documentsPage = read(`${PAGE_DIR}/DocumentsVaultView.tsx`);
+const documentsSvc = read(`${BACKEND_DIR}/documents-vault.service.ts`);
+contains(`${PAGE_DIR}/DocumentsVaultView.tsx`, documentsPage, [
+  { pattern: /key:\s*"file_name"[\s\S]*entityKind:\s*"document"[\s\S]*idKey:\s*"file_id"/, label: "documents vault renders human filename over canonical document id" },
+]);
+contains(`${BACKEND_DIR}/documents-vault.service.ts`, documentsSvc, [
+  { pattern: /fl\.file_id::text/, label: "documents vault SELECT projects canonical file_id" },
+  { pattern: /f\.original_filename AS file_name/, label: "documents vault SELECT projects human filename" },
+]);
+const documentsScopePredicate = /f\.operating_company_id = \$2::uuid/g;
+if ((documentsSvc.match(documentsScopePredicate) ?? []).length < 2) {
+  fail(`${BACKEND_DIR}/documents-vault.service.ts: count and row-producing queries must both scope files by company`);
+}
 
 if (process.argv.includes("--selftest")) {
   const planted = [
@@ -139,8 +152,11 @@ if (process.argv.includes("--selftest")) {
     ["accident vendor producer label", accidentSvc.replace("NULLIF(TRIM(v.vendor_name), '') AS vendor_name", "ar.vendor_id::text AS vendor_name"), /NULLIF\(TRIM\(v\.vendor_name\), ''\) AS vendor_name/],
     ["accident unit consumer label", accidentPage.replace('key: "unit_number"', 'key: "unit_id"'), /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/],
     ["fuel load consumer label", fuelPage.replace('key: "load_number"', 'key: "load_id"'), /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/],
+    ["documents consumer drill", documentsPage.replace(', entityKind: "document", idKey: "file_id"', ""), /key:\s*"file_name"[\s\S]*entityKind:\s*"document"[\s\S]*idKey:\s*"file_id"/],
+    ["documents producer label", documentsSvc.replace("f.original_filename AS file_name", "fl.file_id::text AS file_name"), /f\.original_filename AS file_name/],
+    ["documents producer scope", documentsSvc.replaceAll("AND f.operating_company_id = $2::uuid", "AND f.id IS NOT NULL"), (source) => (source.match(documentsScopePredicate) ?? []).length >= 2],
   ];
-  const escaped = planted.filter(([, mutated, expected]) => expected.test(mutated));
+  const escaped = planted.filter(([, mutated, expected]) => typeof expected === "function" ? expected(mutated) : expected.test(mutated));
   if (escaped.length) {
     console.error(`verify:driver-operations-depth — SELFTEST FAILED: ${escaped.map(([name]) => name).join(", ")}`);
     process.exit(1);
