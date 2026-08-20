@@ -6763,3 +6763,5 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Loading driver...
 FAQ | NEXT=leaf=drivers:profiles.list:driver
+Devin-A | LIVE PASS | leaf=drivers:profiles.list:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/profiles | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/profiles marker 'drivers' | NEXT=leaf=drivers:teams.create:driver
+Devin-A | LIVE PASS | leaf=drivers:profiles.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/profiles | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/profiles marker 'drivers' | NEXT=leaf=drivers:teams.create:driver
