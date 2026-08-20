@@ -12630,3 +12630,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=lists:catalog.maintenance.work_order_statuses.list:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.work_order_statuses.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/work-order-statuses | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/work-order-statuses marker 'lists' | NEXT=leaf=lists:catalog.safety.accident_types.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.work_order_statuses.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/work-order-statuses | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/work-order-statuses marker 'lists' | NEXT=leaf=lists:catalog.safety.accident_types.create:qbo_chrome
