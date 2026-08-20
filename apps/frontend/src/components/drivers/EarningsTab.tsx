@@ -9,6 +9,7 @@ import { listExpenses, listVendorBills } from "../../api/accounting";
 import { getDriverApVendor } from "../../api/mdata";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
@@ -351,10 +352,11 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div className="mb-1 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-gray-900">A/P vendor (driver payee)</h3>
           {apVendorId ? (
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="vendor"
               id={apVendorId}
-              label="Open vendor →"
+              name={apVendorQuery.data?.vendor?.name}
+              noun="Vendor"
               className="text-xs text-slate-700 underline"
               data-testid="driver-earnings-ap-vendor-open"
             />

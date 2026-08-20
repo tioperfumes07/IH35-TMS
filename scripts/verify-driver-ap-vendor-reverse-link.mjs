@@ -61,7 +61,10 @@ function assertEarnings(src) {
   const problems = [];
   if (!/getDriverApVendor/.test(src)) problems.push("EarningsTab missing getDriverApVendor");
   if (!/driver-earnings-ap-vendor/.test(src)) problems.push("EarningsTab missing ap-vendor test id");
-  if (!/kind=\"vendor\"/.test(src)) problems.push("EarningsTab must EntityLink kind=vendor");
+  if (!/EntityLinkOrTombstone/.test(src) || !/kind=\"vendor\"/.test(src) || !/id=\{apVendorId\}/.test(src) || !/name=\{apVendorQuery\.data\?\.vendor\?\.name\}/.test(src)) {
+    problems.push("EarningsTab must bind the canonical nullable A/P vendor id+human label through EntityLinkOrTombstone");
+  }
+  if (/label=\"Open vendor/.test(src)) problems.push("EarningsTab must not invent a generic A/P vendor label");
   if (!/listVendorBills/.test(src)) problems.push("EarningsTab must load open bills for linked vendor");
   return problems;
 }
@@ -132,6 +135,7 @@ function selftest() {
   const goodTypes = read(PATHS.apiTypes);
   const badD = goodD.replace(/\/ap-vendor/g, "/x-vendor").replace(/resolveDriverVendorLink/g, "x");
   const badE = goodE.replace(/getDriverApVendor/g, "x").replace(/kind=\"vendor\"/g, 'kind="bill"');
+  const badEarningsLabel = goodE.replace("name={apVendorQuery.data?.vendor?.name}", 'label="Open vendor →"');
   const badProfile = goodProfile
     .replace(/id=\{driver\.qbo_vendor_local_id\}/g, "id={driver.qbo_vendor_id}")
     .replace(/name=\{driver\.qbo_vendor_name\}/g, "name={null}");
@@ -159,6 +163,10 @@ function selftest() {
   }
   if (assertEarnings(badE).length < 1) {
     console.error("bad EarningsTab should fail");
+    failed++;
+  }
+  if (assertEarnings(badEarningsLabel).length < 1) {
+    console.error("planted generic EarningsTab vendor label should fail");
     failed++;
   }
   if (assertVendorsSelect(goodVendors).length) {
