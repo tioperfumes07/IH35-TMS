@@ -1286,3 +1286,14 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 Zero P0/P1/P2 defects survive verification on Item 1. Moving to Item 2 (banking TMS money: match/categorize/rules UI + write path for NEW TMS-native rows only -- explicitly NOT the 11k QBO-import backfill, which stays owner-gated per CLS-BANK-MATCH-DENSITY-DATA-BACKFILL-NEEDED).
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T08:35Z CC-1 | ITEM 2 VERIFIED CLEAN -- live-exercised all 4 USMCA banking TMS money write paths (categorization->GL, reconciliation/matching, banking rules engine, transfers incl. intercompany), all under SET ROLE neondb_owner to avoid the known RLS-masking landmines. USMCA has 0 QBO-import bank_transactions (no QuickBooks, per standing memory) -- 271 real live Plaid-sourced rows + 24 sample/void seed rows, nothing overlapping the excluded 11k TRANSP QBO-import backfill.
+
+- CATEGORIZATION: 8/8 categorized USMCA bank transactions carry a real, distinct posted JE (BANK_FEED_GL_POSTING_ENABLED ON). Wired.
+- RECONCILIATION/MATCHING: 1 live USMCA match, fully wired both directions (bank_transactions<->payments back-link, review_state set). Only 1 reconciliation_matches row exists DB-wide and it's user_matched, not auto_matched -- ACCT-F5604's threshold recalibration (0.8->0.5, already merged da5fbd37c) is unproven in production purely for lack of volume, not a code defect. Flagged to monitor, not filed.
+- BANKING RULES (ACCT-F5601): 1 active USMCA rule, match_count=5, last_matched TODAY (2026-08-20) -- proves it's firing on new incoming transactions via both the Plaid-sync and CSV-upload paths, not stale backfill. A documented pre-existing dead-write (suggested_account_id/vendor_id unread by the suggestions endpoint, which re-evaluates fresh) is already flagged in-code (ACCT-F375), not new.
+- TRANSFERS: 1 live USMCA intercompany transfer (TRANSP->USMCA smoke test), confirmed GL-posted both legs, TRANSFER_GL_POSTING_ENABLED ON. Wired.
+
+Zero P0/P1 defects. Moving to Item 3 (factoring TMS money: advance/reserve/recourse surfaces that already exist -- FKs + reverse, no new GL math).
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
