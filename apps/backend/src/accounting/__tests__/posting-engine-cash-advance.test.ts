@@ -56,6 +56,15 @@ function installQueryMock(opts: { status?: string } = {}) {
   mockQuery.mockReset();
   mockQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
     if (sql.includes("set_config")) return { rows: [] };
+    // ACCT-F5653 — verifyCreditAccountBelongsToCompany's existence check: only the fixture's own
+    // CHOSEN_CREDIT, scoped to OPCO, resolves — anything else (a different entity's account) is a
+    // real, expected refusal, exercised by the dedicated test below.
+    if (sql.includes("FROM catalogs.accounts")) {
+      if (String(params[0]) === CHOSEN_CREDIT && String(params[1]) === OPCO) {
+        return { rows: [{ id: CHOSEN_CREDIT }] };
+      }
+      return { rows: [] };
+    }
     if (sql.includes("driver_finance.cash_advance_requests")) {
       return { rows: [{ id: SOURCE_ID, requested_amount_cents: "50000", status, posting_date: "2026-06-13" }] };
     }
@@ -151,6 +160,27 @@ describe("posting-engine cash_advance source type (B2)", () => {
     const credit = postingLines.find((l) => l.debit_or_credit === "credit");
     expect(credit?.account_id).toBe(DEFAULT_CASH);
     expect(mockResolveRoleAccountOptional).toHaveBeenCalled();
+  });
+
+  it("ACCT-F5653: refuses to post when credit_account_id does not resolve for this operating_company_id", async () => {
+    mockWithCurrentUser.mockClear();
+    mockResolveAccountForCategory.mockReset();
+    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT_ACCOUNT, posting_side: "debit" });
+    mockResolveRoleAccountOptional.mockReset();
+    installQueryMock();
+    const FOREIGN_ACCOUNT = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"; // belongs to no entity in this mock
+
+    await expect(
+      postSourceTransaction(
+        {
+          operating_company_id: OPCO,
+          source_transaction_type: "cash_advance",
+          source_transaction_id: SOURCE_ID,
+          credit_account_id: FOREIGN_ACCOUNT,
+        },
+        { userId: ACTOR }
+      )
+    ).rejects.toMatchObject({ code: "CREDIT_ACCOUNT_CROSS_ENTITY" });
   });
 
   it("refuses to post when the request is not approved", async () => {
