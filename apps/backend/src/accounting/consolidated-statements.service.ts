@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { getProfitLossReport, type ProfitLossReport } from "./profit-loss.service.js";
 import { getBalanceSheetReport, type BalanceSheetReport } from "./balance-sheet.service.js";
 import { getCashFlowReport, type CashFlowReport } from "./cash-flow.service.js";
@@ -155,14 +156,24 @@ async function loadCompanyNames(
 }
 
 type BillRow = { counterparty_name: string | null; outstanding_cents: number; gross_cents: number };
-type InvoiceRow = { counterparty_name: string | null; open_cents: number; total_cents: number };
+type InvoiceRow = { counterparty_name: string | null; open_cents: number; revenue_cents: number };
+
+// ACCT-F5670 — the reconstruction date for the dated open-balance subqueries below. An as-of report
+// reconstructs at its as-of; a period (P&L) report reconstructs at its period end; neither exists →
+// today. A future date clamps to today (same rule as ar-aging/ap-aging: never invent future openness).
+function reconstructionDate(bounds: { asOf?: string; from?: string; to?: string }): string {
+  const today = companyBusinessDate();
+  const raw = bounds.asOf ?? bounds.to ?? today;
+  return raw > today ? today : raw;
+}
 
 async function readBills(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
   companyId: string,
   bounds: { asOf?: string; from?: string; to?: string }
 ): Promise<BillRow[]> {
-  const values: unknown[] = [companyId];
+  // $1 = company, $2 = reconstruction date; existence filters start at $3.
+  const values: unknown[] = [companyId, reconstructionDate(bounds)];
   const dateFilters: string[] = [];
   if (bounds.asOf) {
     values.push(bounds.asOf);
@@ -181,7 +192,30 @@ async function readBills(
     `
       SELECT
         v.vendor_name AS counterparty_name,
-        GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::bigint AS outstanding_cents,
+        -- ACCT-F5670 — dated reconstruction (ported from AP_AGING_OPEN_BILLS_SQL), replacing the LIVE
+        -- generated paid_cents column: an as-of consolidated balance sheet must eliminate the
+        -- intercompany payable that existed ON that date, not today's residue. A bill fully paid
+        -- after the as-of previously eliminated $0, overstating consolidated assets AND liabilities
+        -- equally — with balanced:true still reporting.
+        GREATEST(
+          COALESCE(b.amount_cents, 0)
+            - COALESCE((
+                SELECT SUM(COALESCE(bp.amount_cents, 0))
+                FROM accounting.bill_payments bp
+                WHERE bp.bill_id = b.id
+                  AND bp.operating_company_id = b.operating_company_id
+                  AND bp.payment_date <= $2::date
+                  AND (bp.revoked_at IS NULL OR bp.revoked_at::date > $2::date)
+              ), 0)
+            - COALESCE((
+                SELECT SUM(vca.applied_cents)
+                FROM accounting.vendor_credit_applications vca
+                WHERE vca.bill_id = b.id
+                  AND vca.operating_company_id = $1::uuid
+                  AND vca.voided_at IS NULL
+                  AND (vca.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+              ), 0)
+        , 0)::bigint AS outstanding_cents,
         COALESCE(b.amount_cents, 0)::bigint AS gross_cents
       FROM accounting.bills b
       LEFT JOIN mdata.vendors v
@@ -192,10 +226,11 @@ async function readBills(
         AND v.operating_company_id = b.operating_company_id
       WHERE b.operating_company_id = $1::uuid
         AND b.amount_cents IS NOT NULL
-        AND b.revoked_at IS NULL
+        AND (b.revoked_at IS NULL OR b.revoked_at::date > $2::date)
         -- LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS — same fix as ap-aging.service.ts: bills.status
-        -- carries 'void', never 'voided'. b.revoked_at IS NULL above already excludes voided bills
-        -- today, coincidentally; 'void' is added so this clause is no longer purely decorative.
+        -- carries 'void', never 'voided'. The revoked_at check above excludes voided bills as-of-aware
+        -- (ACCT-F5670: a bill revoked AFTER the as-of still owed on that date); 'void' is kept so the
+        -- status clause is not purely decorative.
         AND b.status NOT IN ('void', 'voided', 'draft')${dateSql}
     `,
     values
@@ -212,7 +247,8 @@ async function readInvoices(
   companyId: string,
   bounds: { asOf?: string; from?: string; to?: string }
 ): Promise<InvoiceRow[]> {
-  const values: unknown[] = [companyId];
+  // $1 = company, $2 = reconstruction date; existence filters start at $3.
+  const values: unknown[] = [companyId, reconstructionDate(bounds)];
   const dateFilters: string[] = [];
   if (bounds.asOf) {
     values.push(bounds.asOf);
@@ -231,24 +267,60 @@ async function readInvoices(
     `
       SELECT
         c.customer_name AS counterparty_name,
-        GREATEST(COALESCE(i.amount_open_cents, 0), 0)::bigint AS open_cents,
-        COALESCE(i.total_cents, 0)::bigint AS total_cents
+        -- ACCT-F5670 — dated reconstruction (ported from ar-aging.service.ts), replacing the LIVE
+        -- generated amount_open_cents column: the receivable leg must be the open balance ON the
+        -- reconstruction date. A 'factored' invoice's A/R has already moved off trade A/R at the GL
+        -- (Dr factoring_recoursed_ar / Cr ar_control), so its receivable leg is 0 — same reason the
+        -- whole aging family excludes it — while its REVENUE leg below stays (factored revenue is
+        -- still revenue: revenue-gl-linkage status set is sent/partial/paid/factored).
+        CASE WHEN i.status = 'factored' THEN 0 ELSE GREATEST(
+          COALESCE(i.total_cents, 0)
+            - COALESCE((
+                SELECT SUM(COALESCE(pa.amount_cents, 0))
+                FROM accounting.payment_applications pa
+                JOIN accounting.payments p
+                  ON p.id = pa.payment_id
+                 AND p.operating_company_id = i.operating_company_id
+                WHERE pa.invoice_id = i.id
+                  AND pa.operating_company_id = i.operating_company_id
+                  AND p.payment_date <= $2::date
+                  AND (p.voided_at IS NULL OR p.voided_at::date > $2::date)
+                  AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $2::date)
+              ), 0)
+            - COALESCE((
+                SELECT SUM(cma.applied_cents)
+                FROM accounting.credit_memo_applications cma
+                WHERE cma.invoice_id = i.id
+                  AND cma.operating_company_id = $1::uuid
+                  AND cma.voided_at IS NULL
+                  AND (cma.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+              ), 0)
+        , 0) END::bigint AS open_cents,
+        -- ACCT-F5670 — P&L elimination leg aligned to the documented PRE-TAX revenue basis
+        -- (revenue-gl-linkage.service.ts: GREATEST(0, total_cents - COALESCE(tax_cents,0)); the
+        -- posting engine posts tax_cents to sales_tax_payable, never to revenue). The old
+        -- tax-inclusive total_cents systematically over-stated the revenue leg vs the revenue it
+        -- offsets.
+        GREATEST(COALESCE(i.total_cents, 0) - COALESCE(i.tax_cents, 0), 0)::bigint AS revenue_cents
       FROM accounting.invoices i
       LEFT JOIN mdata.customers c
         ON c.id = i.customer_id
         AND c.operating_company_id = i.operating_company_id
       WHERE i.operating_company_id = $1::uuid
-        AND i.voided_at IS NULL
+        AND i.total_cents IS NOT NULL
+        AND (i.voided_at IS NULL OR i.voided_at::date > $2::date)
         -- ACCT-F223 — same exclusion as A/R aging: a proforma posts no GL, so showing it on a
-        -- customer statement bills them for money the ledger says they do not owe.
-        AND i.status NOT IN ('void', 'draft', 'proforma')${dateSql}
+        -- customer statement bills them for money the ledger says they do not owe. ACCT-F5670 adds
+        -- 'voided' (sibling parity) and makes voided_at as-of-aware; 'factored' is handled per-leg
+        -- above, NOT excluded here.
+        AND i.status NOT IN ('void', 'voided', 'draft', 'proforma')${dateSql}
     `,
     values
   );
   return res.rows.map((r) => ({
     counterparty_name: r.counterparty_name == null ? null : String(r.counterparty_name),
     open_cents: Number(r.open_cents ?? 0),
-    total_cents: Number(r.total_cents ?? 0),
+    revenue_cents: Number(r.revenue_cents ?? 0),
   }));
 }
 
@@ -305,7 +377,7 @@ async function buildEliminationSchedule(
       if (!debtor) continue;
       const acc = ensure(reader.operating_company_id, debtor.operating_company_id);
       acc.receivable += inv.open_cents;
-      acc.revenue += inv.total_cents;
+      acc.revenue += inv.revenue_cents;
     }
   }
   return pairs;
