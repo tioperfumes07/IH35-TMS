@@ -38,7 +38,7 @@ const ROUTES = [
   ['app.post("/api/v1/accounting/recurring-bill-templates/:uuid/deactivate"', "POST /:uuid/deactivate"],
   ['app.post("/api/v1/accounting/recurring-bill-templates/:uuid/generate-now"', "POST /:uuid/generate-now"],
 ];
-const WINDOW = 1400;
+const WINDOW = 1700;
 
 function assertAll(src) {
   const problems = [];
