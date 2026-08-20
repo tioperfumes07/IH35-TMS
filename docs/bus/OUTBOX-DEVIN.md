@@ -2508,3 +2508,42 @@ Devin-A | LIVE PASS | leaf=accounting:bills.detail:reverse_link | USMCA | URL=ht
 Devin-A | LIVE STARVED | leaf=accounting:bills.list:vendor | USMCA | URL=https://app.ih35dispatch.com/accounting/bills | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills healthz=unknown head Checking session... | NEXT=leaf=accounting:bills.multiple:vendor
 Devin-A | LIVE STARVED | leaf=accounting:bills.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bills | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills healthz=unknown head Checking session... | NEXT=leaf=accounting:bills.multiple:vendor
 Devin-A | LIVE STARVED | leaf=accounting:bills.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/bills | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills healthz=unknown head Checking session... | NEXT=leaf=accounting:bills.multiple:vendor
+Devin-A | LIVE STARVED | leaf=accounting:bills.multiple:vendor | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills/multiple healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:bills.recurring:vendor
+Devin-A | LIVE STARVED | leaf=accounting:bills.multiple:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills/multiple healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:bills.recurring:vendor
+Devin-A | LIVE STARVED | leaf=accounting:bills.multiple:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills/multiple healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:bills.recurring:vendor
+Devin-A | LIVE STARVED | leaf=accounting:bills.multiple:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills/multiple healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:bills.recurring:vendor
+Devin-A | LIVE STARVED | leaf=accounting:bills.multiple:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills/multiple healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:bills.recurring:vendor
+Devin-A | LIVE PASS | leaf=accounting:bills.recurring:vendor | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/recurring | healthz=ee2c149 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/recurring marker 'accounting' | NEXT=leaf=accounting:chrome.toolbar_filter:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:bills.recurring:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/recurring | healthz=ee2c149 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/recurring marker 'accounting' | NEXT=leaf=accounting:chrome.toolbar_filter:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:bills.recurring:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/recurring | healthz=ee2c149 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/recurring marker 'accounting' | NEXT=leaf=accounting:chrome.toolbar_filter:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:chrome.toolbar_filter:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=ee2c149 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:chrome.toolbar_gear:qbo_chrome

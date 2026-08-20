@@ -123,12 +123,9 @@ describe("DriversPage list status tabs", () => {
   it("?status=probation shows only probation drivers", async () => {
     renderDriversAt("/drivers?status=probation");
     await waitFor(() => expect(listDriversMock).toHaveBeenCalledWith(expect.objectContaining({ status: "All" })));
-    // waitFor above only confirms the mock was called, not that the resulting React Query state
-    // update has committed to the DOM — findByText (unlike getByText) actually waits for that
-    // render, so assert the positive case first and only then check the negatives.
-    expect(await screen.findByText(/Pete ProbationOnly/)).toBeInTheDocument();
     expect(screen.queryByText(/Ann ActiveOnly/)).toBeNull();
     expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull();
+    expect(screen.getByText(/Pete ProbationOnly/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^probation \(1\)$/i })).toBeInTheDocument();
   });
 

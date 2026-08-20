@@ -53,10 +53,7 @@ describe("DriverLayoverHistoryPage (DISP-S19)", () => {
 
   it("renders the driver's name header and scopes the layovers fetch to company + driver", async () => {
     wrap(driverId);
-    // The page now renders the driver's name twice: the header subtitle AND a real
-    // "back to driver profile" EntityLinkOrTombstone action link. Both are legitimate — assert
-    // at least one rendered, not an exact single match.
-    expect((await screen.findAllByText("Jordan Ruiz")).length).toBeGreaterThan(0);
+    expect(await screen.findByText("Jordan Ruiz")).toBeTruthy();
     expect(fetch).toHaveBeenCalled();
   });
 
