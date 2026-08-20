@@ -254,7 +254,10 @@ function selftest() {
     failures.push(`case9 FAIL — ${rel} is missing; the live mutation proof cannot run`);
   } else {
     const real = readFileSync(abs, "utf8");
-    const mutated = real.replace("'paid', 'void', 'voided', 'draft'", "'paid', 'voided', 'draft'");
+    // ACCT-F5658 — the corrected predicate no longer contains 'paid' (the as-of reconstruction
+    // decides paid-ness now), so the mutation needle tracks the CURRENT tuple: strip 'void' from it
+    // to reproduce the exact ACCT-F171 shape (an exclusion naming only the unreachable spelling).
+    const mutated = real.replace("'void', 'voided', 'draft'", "'voided', 'draft'");
     if (mutated === real) {
       failures.push(`case9 FAIL — ${rel} no longer carries the corrected predicate; ACCT-F171 is back`);
     } else if (auditSources([{ rel, src: mutated }]).problems.length === 0) {

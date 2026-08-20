@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type ArAgingInvoiceRowDb = {
   customer_id: string;
@@ -44,73 +45,104 @@ export async function getArAgingReport(input: {
   return withCurrentUser(input.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
+    // ACCT-F5658 — mirror ap-aging.service.ts's own clamp: a FUTURE as_of is treated as today for
+    // the open reconstruction (never invent future openness).
+    const today = companyBusinessDate();
+    const effectiveAsOf = input.as_of_date > today ? today : input.as_of_date;
+
+    // ACCT-F5658 — this query previously read the LIVE open balance (the invoices table's
+    // GENERATED open-balance column, reflecting TODAY's payments) and merely re-labeled it with the caller's
+    // as_of_date, while the sibling ap-aging.service.ts (AP_AGING_OPEN_BILLS_SQL) fully
+    // reconstructs what was open ON that date. Two consequences, both live on the exported
+    // statement (statement-export.service.ts drives the ARAgingPage's Export PDF/XLSX from THIS
+    // service while the on-screen table uses the separate /reports/ar-aging path): (1) an invoice issued
+    // AFTER the as_of date was still included ("Current" bucket via a negative daysOverdue) —
+    // inventing receivables on a backdated statement; (2) an invoice genuinely open ON the as_of
+    // date but paid since then was dropped entirely (live amount_open_cents = 0, and the old
+    // status filter excluded 'paid' outright). This rewrite ports the A/P sibling's own
+    // already-decided reconstruction pattern column-for-column: existence gated on
+    // issue_date <= as_of; outstanding = total_cents minus payment applications whose PAYMENT
+    // dates on-or-before as_of (voided/unapplied only if that happened on-or-before as_of too)
+    // minus credit-memo applications applied on-or-before as_of (ACCT-F5612's netting, now
+    // as-of-dated); GREATEST(0) clamp; the 'paid' status exclusion is deliberately REMOVED —
+    // paid-ness is now decided by the reconstruction itself, so a since-paid invoice correctly
+    // appears on a historical statement and correctly disappears from today's.
+    //
+    // ACCT-F171 / CLS-VOID-LITERAL-DEAD — 'void' exclusion retained: accounting.invoices.status
+    // spells a void as 'void' ('voided' is unreachable per the CHECK constraint but kept to avoid
+    // churn; guarded by verify-void-status-literal-matches-column.mjs). The voided_at half is now
+    // as-of-aware (an invoice voided AFTER the as_of date was still a receivable ON it), mirroring
+    // the A/P sibling's own revoked_at treatment.
+    // ACCT-F223 — 'proforma' exclusion retained: a proforma posts NO journal entry; counting it made
+    // A/R aging disagree with the GL by $22,720.00 on USMCA alone. 'draft' likewise. 'factored'
+    // treatment unchanged from this service's prior behavior (included).
     const res = await client.query<ArAgingInvoiceRowDb>(
       `
         SELECT
           i.customer_id::text AS customer_id,
           COALESCE(c.customer_name, '') AS customer_name,
           i.due_date::text AS due_date,
-          -- ACCT-F5612 — amount_open_cents is a GENERATED column (total_cents - amount_paid_cents,
-          -- migration 0123) with NO knowledge of accounting.credit_memo_applications (added by
-          -- ACCT-F5606). credit-memos.routes.ts already nets applied, non-voided credit-memo cents
-          -- off an invoice's TRUE remaining balance for its own over-apply guard; AR aging — a real
-          -- collections/DSO report — did not do the same subtraction, so any invoice with an applied
-          -- AR credit memo overstated its reported open balance here. Mirrors that route's own
-          -- already-applied-ceiling query exactly (SUM applied_cents WHERE voided_at IS NULL).
-          (i.amount_open_cents - COALESCE(cma.applied_cents, 0))::bigint AS amount_open_cents
+          GREATEST(
+            COALESCE(i.total_cents, 0)
+              - COALESCE((
+                  SELECT SUM(COALESCE(pa.amount_cents, 0))
+                  FROM accounting.payment_applications pa
+                  JOIN accounting.payments p
+                    ON p.id = pa.payment_id
+                   AND p.operating_company_id = i.operating_company_id
+                  WHERE pa.invoice_id = i.id
+                    AND pa.operating_company_id = i.operating_company_id
+                    AND p.payment_date <= $2::date
+                    AND (p.voided_at IS NULL OR p.voided_at::date > $2::date)
+                    AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $2::date)
+                ), 0)
+              - COALESCE((
+                  SELECT SUM(cma.applied_cents)
+                  FROM accounting.credit_memo_applications cma
+                  WHERE cma.invoice_id = i.id
+                    AND cma.operating_company_id = $1::uuid
+                    AND cma.voided_at IS NULL
+                    AND (cma.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+                ), 0)
+          , 0)::bigint AS amount_open_cents
         FROM accounting.invoices i
         LEFT JOIN mdata.customers c
           ON c.id = i.customer_id
           AND c.operating_company_id = i.operating_company_id
-        LEFT JOIN (
-          SELECT invoice_id, SUM(applied_cents) AS applied_cents
-          FROM accounting.credit_memo_applications
-          WHERE operating_company_id = $1::uuid
-            AND voided_at IS NULL
-          GROUP BY invoice_id
-        ) cma ON cma.invoice_id = i.id
         WHERE i.operating_company_id = $1::uuid
-          AND i.amount_open_cents IS NOT NULL
-          AND i.amount_open_cents > 0
-          AND i.voided_at IS NULL
-          -- ACCT-F171 / CLS-VOID-LITERAL-DEAD — 'void' was MISSING and its absence was live money.
-          --
-          -- accounting.invoices.status spells a void as 'void'. On prod br-fancy-credit-akjnd07a the
-          -- constraint invoices_status_check pins the domain to
-          -- (draft, proforma, sent, partial, paid, void, factored) — 'voided' is not in it, so the
-          -- database would REJECT that value. The literal this predicate excluded could never match,
-          -- so the status half of the filter was dead and the whole exclusion rested on voided_at.
-          -- One invoice breaks that pairing (status='void', voided_at NULL — the live half of
-          -- LV-VOID-INVARIANT-BOTH-WAYS), and A/R aging counted it: USMCA reported $4,325.50
-          -- outstanding where $1,875.50 was real. A voided $2,450.00 invoice was 56.6% of the
-          -- entity's reported receivables, and it read as a perfectly ordinary number.
-          --
-          -- The rest of the file's own neighbours already had it right — invoices.routes.ts:227
-          -- excludes ('draft','void','voided','paid'). This one query missed the dominant spelling.
-          --
-          -- 'voided' is KEPT only because removing it is churn with no behavioural change — the
-          -- constraint already makes it unreachable. It is NOT future-proofing: nothing can ever
-          -- write that value. Guarded by scripts/verify-void-status-literal-matches-column.mjs,
-          -- which fails when a predicate names a literal the column's CHECK constraint forbids, and
-          -- fails again when an exclusion names ONLY the unreachable spelling.
-          -- ACCT-F223 — 'proforma' EXCLUDED. A proforma invoice posts NO journal entry: it is a
-          -- projection created at Book time, not a receivable the customer owes. Verified on prod:
-          -- every proforma has ZERO rows in accounting.journal_entry_postings.
-          --
-          -- Counting them here made A/R aging disagree with the general ledger by $22,720.00 on USMCA
-          -- alone (8 proformas), including $4,910 sitting on a load that had been CANCELLED. Aging
-          -- drives collections, DSO and the balance-sheet A/R figure, so a projection in this report
-          -- is not a harmless extra row -- it is an invented receivable.
-          --
-          -- 'draft' was already excluded for exactly this reason; 'proforma' is the same class and was
-          -- simply missed. If a proforma is genuinely owed, it becomes 'sent' and appears here then.
-          AND i.status NOT IN ('paid', 'void', 'voided', 'draft', 'proforma')
+          AND i.issue_date <= $2::date
+          AND i.total_cents IS NOT NULL
+          AND (i.voided_at IS NULL OR i.voided_at::date > $2::date)
+          AND i.status NOT IN ('void', 'voided', 'draft', 'proforma')
+          AND GREATEST(
+            COALESCE(i.total_cents, 0)
+              - COALESCE((
+                  SELECT SUM(COALESCE(pa.amount_cents, 0))
+                  FROM accounting.payment_applications pa
+                  JOIN accounting.payments p
+                    ON p.id = pa.payment_id
+                   AND p.operating_company_id = i.operating_company_id
+                  WHERE pa.invoice_id = i.id
+                    AND pa.operating_company_id = i.operating_company_id
+                    AND p.payment_date <= $2::date
+                    AND (p.voided_at IS NULL OR p.voided_at::date > $2::date)
+                    AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $2::date)
+                ), 0)
+              - COALESCE((
+                  SELECT SUM(cma.applied_cents)
+                  FROM accounting.credit_memo_applications cma
+                  WHERE cma.invoice_id = i.id
+                    AND cma.operating_company_id = $1::uuid
+                    AND cma.voided_at IS NULL
+                    AND (cma.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+                ), 0)
+          , 0) > 0
         ORDER BY c.customer_name ASC, i.due_date ASC
       `,
-      [input.operating_company_id]
+      [input.operating_company_id, effectiveAsOf]
     );
 
-    const asOfTime = parseIsoDateOnly(input.as_of_date);
+    const asOfTime = parseIsoDateOnly(effectiveAsOf);
     const byCustomer = new Map<string, ArAgingCustomerRow>();
 
     for (const row of res.rows) {
