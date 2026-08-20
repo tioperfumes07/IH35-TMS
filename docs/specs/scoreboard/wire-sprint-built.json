@@ -2781,6 +2781,31 @@
       "leafRe": "^(unit|trailer)\\.profile\\.expenses_reverse$",
       "guard": "scripts/verify-fleet-unit-trailer-expenses-reverse-wired.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "WAVE2-MAINT-WO-BILL-EXPENSE-GL-BUILT",
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "expense",
+        "gl_je"
+      ],
+      "leafRe": "^(wo\\.create|wo\\.source\\.(is|es|ac|et|rt|it|rs)|wo\\.create_bill|wo\\.create_expense|maintenance\\.modal\\.create_expense)$",
+      "guard": "scripts/verify-maintenance-wo-source-bill-expense-gl-wired.mjs",
+      "live": "BLOCKED"
+    },
+    {
+      "task": "WAVE2-MAINT-PARTS-PURCHASE-GL-BUILT",
+      "modules": [
+        "maintenance"
+      ],
+      "cols": [
+        "gl_je"
+      ],
+      "leafRe": "^parts_inventory\\.record_purchase$",
+      "guard": "scripts/verify-parts-inventory-record-purchase-gl-wired.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
