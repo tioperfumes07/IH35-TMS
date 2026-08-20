@@ -10201,3 +10201,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=reports:chrome.toolbar_gear:qbo_chrome
+Devin-A | LIVE STARVED | leaf=reports:chrome.toolbar_gear:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports healthz=unknown head Checking session... | NEXT=leaf=reports:chrome.toolbar_range:qbo_chrome
+Devin-A | LIVE STARVED | leaf=reports:chrome.toolbar_gear:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports healthz=unknown head Checking session... | NEXT=leaf=reports:chrome.toolbar_range:qbo_chrome
