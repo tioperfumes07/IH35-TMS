@@ -3125,3 +3125,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.lanes:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.lanes:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=lanes | healthz=0dc7fa0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=lanes healthz=0dc7fa0 head Checking session... | NEXT=leaf=customers:detail.lanes.create:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.lanes:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=lanes | healthz=0dc7fa0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=lanes healthz=0dc7fa0 head Checking session... | NEXT=leaf=customers:detail.lanes.create:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.lanes:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=lanes | healthz=0dc7fa0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=lanes healthz=0dc7fa0 head Checking session... | NEXT=leaf=customers:detail.lanes.create:customer
