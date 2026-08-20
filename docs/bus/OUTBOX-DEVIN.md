@@ -4654,3 +4654,4 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:lists.dialog.part_location_map:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:lists.dialog.part_location_map:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=10a21a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.drawer.account:connectivity
