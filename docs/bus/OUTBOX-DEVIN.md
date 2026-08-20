@@ -13447,3 +13447,4 @@ Espanol (preview)
 6 | NEXT=leaf=users:detail.drawer.dispatcher_safety_event:connectivity
 Devin-A | LIVE STARVED | leaf=users:detail.drawer.dispatcher_safety_event:connectivity | USMCA | URL=https://app.ih35dispatch.com/users/:id | healthz=dea2ff1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/users/:id healthz=dea2ff1 head Checking session... | NEXT=leaf=docs:kpi:connectivity
 Devin-A | LIVE STARVED | leaf=users:detail.drawer.dispatcher_safety_event:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/users/:id | healthz=dea2ff1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/users/:id healthz=dea2ff1 head Checking session... | NEXT=leaf=docs:kpi:connectivity
+Devin-A | LIVE PASS | leaf=docs:kpi:connectivity | USMCA | URL=https://app.ih35dispatch.com/docs | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/docs marker 'docs' | NEXT=leaf=docs:tab.all:driver
