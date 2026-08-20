@@ -2653,3 +2653,31 @@ Devin-A | LIVE PASS | leaf=factoring:factoring.modal.reserve_dashboard_add_facto
 Devin-A | LIVE PASS | leaf=factoring:factoring.panel.factoring_profile:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring marker 'factoring' | NEXT=leaf=factoring:factoring.parity.driver_autocomplete:connectivity
 Devin-A | LIVE PASS | leaf=factoring:factoring.parity.driver_autocomplete:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring marker 'factoring' | NEXT=leaf=factoring:factoring.wizard.batch:connectivity
 Devin-A | LIVE PASS | leaf=factoring:factoring.parity.driver_autocomplete:driver | USMCA | URL=https://app.ih35dispatch.com/factoring | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring marker 'factoring' | NEXT=leaf=factoring:factoring.wizard.batch:connectivity
+Devin-A | LIVE STARVED | leaf=factoring:factoring.wizard.batch:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:factors.admin:customer
+Devin-A | LIVE STARVED | leaf=factoring:factoring.wizard.batch:picker_law | USMCA | URL=https://app.ih35dispatch.com/factoring | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:factors.admin:customer
+Devin-A | LIVE STARVED | leaf=factoring:factoring.wizard.batch:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/factoring | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:factors.admin:customer
+Devin-A | LIVE STARVED | leaf=factoring:factoring.wizard.batch:customer | USMCA | URL=https://app.ih35dispatch.com/factoring | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:factors.admin:customer
