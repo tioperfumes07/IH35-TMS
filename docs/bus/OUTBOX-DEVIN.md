@@ -1014,6 +1014,7 @@ Ingles
 Espanol (preview)
 t | healthz=69d7810 | mutation=none | NEXT=system.tab.qbo_sync
 Devin-A | LIVE STARVED | module=system | leaf=tab.qbo_sync | URL=https://app.ih35dispatch.com/system?tab=qbo-sync | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/system?tab=qbo-sync ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.program
+<<<<<<< HEAD
 Devin-A | LIVE STARVED | module=system | leaf=tab.qbo_sync | URL=https://app.ih35dispatch.com/system?tab=qbo-sync | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/system?tab=qbo-sync ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.program
 Devin-A | LIVE PASS | module=system | leaf=tab.software | URL=https://app.ih35dispatch.com/system?tab=software | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/system?tab=software ; marker 'system' present ; body head IH 35 DISPATCH
 USMCA Freight Solutions Inc
@@ -1096,3 +1097,10 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=337ab0c | mutation=none | NEXT=finance.nav.break_even
+=======
+>>>>>>> 311c2650b (FINDING: live system tab.qbo_sync starved)
+Devin-A | LIVE STARVED | module=finance | leaf=nav.break_even | URL=https://app.ih35dispatch.com/finance/break-even | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=337ab0c | mutation=none | NEXT=finance.nav.calculator
