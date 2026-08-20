@@ -109,13 +109,22 @@ async function loadObligationCandidates(
     });
   }
 
+  // ACCT-F5607 — this SELECT read a phantom `net_settlement_cents` column (never existed on
+  // driver_finance.driver_settlements). withSavepoint's catch-all swallowed the resulting 42703 and
+  // returned its `{ rows: [] }` fallback, so this screen has silently shown ZERO settlement
+  // obligations since it shipped, indistinguishable from "nothing to reconcile." The real column is
+  // `net_pay`, numeric DOLLARS (confirmed live: e.g. "1705.55"), not cents — the same units trap
+  // transaction-register.routes.ts's own header comment already documents for this exact column
+  // ("fuel.total_cost and settlement.net_pay are numeric DOLLARS -> *100 (no 10x bug)"). Converted
+  // the same way the fuel block two paragraphs below this one already does it correctly in this same
+  // file (Math.round(dollars * 100)), for consistency within the file.
   const st = await withSavepoint(
     client,
     "obligation_reconcile_settlements",
     () =>
-      client.query<{ id: string; net_settlement_cents: number | null; created_at: string }>(
+      client.query<{ id: string; net_pay: unknown; created_at: string }>(
         `
-        SELECT id, net_settlement_cents, created_at::text
+        SELECT id, net_pay, created_at::text
         FROM driver_finance.driver_settlements
         WHERE operating_company_id = $1::uuid
         ORDER BY created_at DESC
@@ -130,7 +139,7 @@ async function loadObligationCandidates(
       obligation_type: "settlement",
       obligation_id: r.id,
       label: `Settlement ${r.id.slice(0, 8)}`,
-      amount_cents: Math.abs(Math.round(Number(r.net_settlement_cents ?? 0))),
+      amount_cents: Math.abs(Math.round(Number(r.net_pay ?? 0) * 100)),
       event_date: String(r.created_at).slice(0, 10),
     });
   }

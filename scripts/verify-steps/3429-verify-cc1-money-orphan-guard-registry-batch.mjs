@@ -48,6 +48,7 @@ const guards = [
   "verify-fuel-transactions-write-role-gated.mjs",
   "verify-gl-je-honest-built.mjs",
   "verify-obligation-reconcile-existence-checked.mjs",
+  "verify-obligation-reconcile-settlement-net-pay-column.mjs",
   "verify-payment-application-write-role-gated.mjs",
   "verify-payments-create-role-gated.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
