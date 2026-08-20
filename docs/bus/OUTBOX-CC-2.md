@@ -127,3 +127,4 @@ NEXT=poll INBOX-CC-2 for next Leaves merge; push+land all 5 READY-PUSH branches 
 CC-2 | ACK | STANDARD=MATRIX-READY | NOW=lists customers +Add new | NEXT=vendors catalogs | GO
 CC-2 | WORKING | NOW=lists customers +Add new | file=<scanning surface-bar inventory guards> | GO
 CC-2 | ACK | STANDARD=URGENT-6 | NOW=lists customers +Add new | NEXT=vendors catalogs | scope=accounting/banking/customers/vendors/factoring/settlements only, no fuel/fleet/dispatch | GO
+CC-2 | ACK | STANDARD=14-MODULE-100 | NOW=lists drivers catalogs +Add new | NEXT=lists remaining 14 | GO
