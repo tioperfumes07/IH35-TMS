@@ -2,7 +2,7 @@
 
 **HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate.
 
-**STOP the old loop** (`reset --soft origin/main`). Kill it. #10871 (`shipClickedOntoMain`) was eaten by later Clicked squash-merges. Pull until `scripts/ops/devin-a-live-loop.cjs` on origin/main **contains `shipClickedOntoMain`**. Restart only then.
+**#10882 landed** (`7c12b1fa`) — `shipClickedOntoMain` is on `origin/main`. Pull. Kill any loop still using `git reset --soft origin/main`. Restart only from this main, cwd=`/tmp/IH35-devin-a`.
 
 cwd=`/tmp/IH35-devin-a` or `DEVIN_GIT_ROOT`. NEVER dirty `IH35-TMS-clean`.
 

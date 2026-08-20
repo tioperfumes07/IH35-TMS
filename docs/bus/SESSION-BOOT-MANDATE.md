@@ -6,5 +6,5 @@ WAVE1-THEN-2. Continuous. No deviate.
 
 ACK `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD`
 
-Devin-A: kill `reset --soft` loop; restart only when main has `shipClickedOntoMain`. cwd `/tmp/IH35-devin-a`.
+Devin-A: #10882 put `shipClickedOntoMain` on main. Kill leftover `reset --soft` loops. cwd `/tmp/IH35-devin-a`.
 
