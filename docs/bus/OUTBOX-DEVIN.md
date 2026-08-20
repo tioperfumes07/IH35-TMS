@@ -1490,3 +1490,4 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.modal.quick_assign
+Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.modal.quick_assign | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=8b1eaf9 | mutation=none | NEXT=dispatch.dispatch.drawer.load_detail
