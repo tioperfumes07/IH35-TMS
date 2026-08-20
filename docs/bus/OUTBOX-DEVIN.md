@@ -3967,3 +3967,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.dispatch.additional_charges.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.dispatch.additional_charges.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/additional-charges | healthz=b68a216 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/dispatch/additional-charges marker 'lists' | NEXT=leaf=lists:catalog.dispatch.additional_charges.list:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.dispatch.additional_charges.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/additional-charges | healthz=b68a216 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/dispatch/additional-charges marker 'lists' | NEXT=leaf=lists:catalog.dispatch.additional_charges.list:qbo_chrome
