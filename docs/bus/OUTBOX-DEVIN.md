@@ -14643,3 +14643,17 @@ Devin-A | LIVE PASS | leaf=accounting:expenses.list:expense | USMCA | URL=https:
 Devin-A | LIVE PASS | leaf=accounting:expenses.list:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/expenses/list | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/expenses/list marker 'Expenses' | NEXT=leaf=accounting:factoring.list:gl_je
 Devin-A | LIVE PASS | leaf=accounting:factoring.list:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/factoring | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/factoring marker 'Factoring' | NEXT=leaf=accounting:invoices.create:gl_je
 Devin-A | LIVE PASS | leaf=accounting:factoring.list:liability | USMCA | URL=https://app.ih35dispatch.com/accounting/factoring | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/factoring marker 'Factoring' | NEXT=leaf=accounting:invoices.create:gl_je
+Devin-A | LIVE STARVED | leaf=accounting:invoices.create:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/invoices | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/invoices healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:invoices.list:invoice
+Devin-A | LIVE STARVED | leaf=accounting:invoices.create:invoice | USMCA | URL=https://app.ih35dispatch.com/accounting/invoices | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/invoices healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:invoices.list:invoice
