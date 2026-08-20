@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["fleet"],"cols":["unit","ap_bill","expense","gl_je","connectivity","reverse_link"],"leafRe":"^unit\\.detail\\.finance_linkage$","task":"UNIT-FINANCE-LINKAGE-GL-JE-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet","accounting"],"cols":["unit","ap_bill","expense","gl_je","connectivity","reverse_link"],"leafRe":"^unit\\.detail\\.finance_linkage$","task":"UNIT-FINANCE-LINKAGE-GL-JE-REVERSE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-unit-finance-gl-je-reverse";
 const files = {
