@@ -2118,3 +2118,20 @@ request. Continuing WAVE 1: accounting sweep is exhausted of genuinely-live OPEN
 ACCOUNTING-PERIOD-FIXTURE-MISSING-CLOSING-JE, LV-PAY-SETTLE-NOPOST all already closed by prior
 work; only LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER had a live residue, now closed). Moving to
 WAVE 1's next module per the seat order: customers money.
+
+2026-08-21T05:40Z CC-1 | Miss C was N now M -- ACCT-F5678 SHIPPED (PR #13289, merged b55f7062e):
+root-cause fix for LV-ESCROW-CONFIGURED-NEVER-ACCRUED, drivers-money WAVE 1. Found the TRUE
+universal root cause (investigated per the row's own instruction): 100% of active payment methods
+on every entity had gl_account_id NULL, so closeSettlementPayRun's own deliberate fail-closed gate
+refused EVERY settlement close everywhere -- explains why escrow ($2,500 policy) has never accrued
+for any driver, on any entity, ever. Fixed for USMCA (TRANSP/TRK parked per standing directive):
+bound all 9 payment methods to the single unambiguous operating account. Neon-rehearsed, applied
+live (hit + resolved the documented ih35_app pooled-connection landmine -- memory updated with a
+sharper correction: plain DML can silently no-op under this downgrade too, not just DDL). LIVE
+EXERCISE proves it end-to-end: ran the real closeSettlementPayRun (preview) against S-2026-0002 --
+the payment-method error is GONE, the function now correctly reaches the net-pay-floor control and
+blocks on THIS settlement's specific numbers (net $47.60 vs $148.80 floor) -- a genuine per-driver
+pay decision, filed as its own narrow OPEN row, not pushed through by me. Structural fix unblocks
+every FUTURE USMCA settlement close. Continuing WAVE 1: drivers-money sweep otherwise clean (no
+other genuinely-live driver-money OPEN rows found in this pass beyond the escrow chain now
+closed). Moving to WAVE 1's next module: vendors money.
