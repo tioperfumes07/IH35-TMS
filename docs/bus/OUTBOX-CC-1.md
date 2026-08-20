@@ -1244,3 +1244,11 @@ Two narrower follow-on gaps explicitly filed as REMAINING rather than silently d
 Eleven findings shipped total this segment (ACCT-F5602 through F5611), 22 PRs, all verified merged via a fresh gh pr view/api call before any branch cleanup.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T07:05Z CC-1 | ACCT-F5612 SHIPPED (PR #10536, merged 4f472435) -- ran a read-only recon subagent to find the next genuinely-open CC-1 money-lane item after ACCT-F5611 closed; the board itself had zero un-owner-gated OPEN rows left in-lane, but the recon surfaced an un-boarded follow-on gap ACCT-F5606 itself had flagged in a migration comment ("KNOWN FOLLOW-ON, NOT this migration's scope... tracked on the board") and never actually filed as its own row: accounting.invoices.amount_open_cents is a GENERATED column (total_cents - amount_paid_cents, migration 0123) with zero knowledge of accounting.credit_memo_applications -- ar-aging.service.ts selected that raw generated column directly, so any invoice with an applied, non-voided AR credit memo would overstate its reported open balance in A/R aging, a real collections/DSO report. Confirmed live before shipping: credit_memo_applications currently has 0 rows (the apply path just shipped this session, unused so far) -- zero blast radius today, fixed anyway since the query was genuinely broken and would misstate AR the instant anyone applies a credit memo.
+
+Fix mirrors credit-memos.routes.ts's own already-applied-ceiling math exactly rather than inventing a new formula: LEFT JOIN a per-invoice SUM(applied_cents) subquery (WHERE voided_at IS NULL) and subtract it from amount_open_cents. New guard verify-ar-aging-credit-memo-netting.mjs (--selftest mutation-proven both directions) plus a new unit test mirroring the existing ar-aging-proforma-exclusion.test.ts pattern. Full accounting suite re-run clean: 912 passed / 213 skipped across 148 files, zero regressions. tsc -b clean.
+
+Twelve findings shipped total this segment (ACCT-F5602 through F5612), 24 PRs, all verified merged via a fresh gh pr view/api call before any branch cleanup.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
