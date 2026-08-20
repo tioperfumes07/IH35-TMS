@@ -243,7 +243,7 @@ export function DriverSafetyReverseSection({
         {accidents.map((accident) => (
           <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
             <EntityLink kind="accident" id={s(accident.id)} label={entityLabel(accident.description, accident.id, "Accident")} className="font-semibold" />
-            {accident.load_id ? <span className="ml-2"><EntityLink kind="load" id={s(accident.load_id)} label={entityLabel(accident.load_number, accident.load_id, "Load")} /></span> : null}
+            {accident.load_id ? <span className="ml-2"><EntityLinkOrTombstone kind="load" id={s(accident.load_id)} name={accident.load_number} noun="Load" /></span> : null}
             {accident.unit_id ? <span className="ml-2"><EntityLinkOrTombstone kind="unit" id={s(accident.unit_id)} name={accident.unit_number} noun="Unit" /></span> : null}
             {accident.trailer_id ? <span className="ml-2"><EntityLinkOrTombstone kind="trailer" id={s(accident.trailer_id)} name={accident.trailer_number} noun="Trailer" /></span> : null}
             {accident.vendor_id ? <span className="ml-2"><EntityLinkOrTombstone kind="vendor" id={s(accident.vendor_id)} name={accident.vendor_name} noun="Vendor" /></span> : null}
