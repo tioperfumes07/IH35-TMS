@@ -22,7 +22,11 @@ const requiredRoutes = [
   "/api/v1/samsara/vendor-mapping/confirm-mismatch",
 ];
 for (const route of requiredRoutes) {
-  if (!text.includes(`app.post("${route}"`)) fail(`missing POST route: ${route}`);
+  // app.post( and the route string can land on the same line or wrap onto their own call-argument
+  // lines (2026-08-20, CC-3: this file reformatted all 3 routes multi-line) — tolerate whitespace
+  // between them instead of requiring a single-line `app.post("...")` match.
+  const routeRe = new RegExp(`app\\.post\\(\\s*"${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`);
+  if (!routeRe.test(text)) fail(`missing POST route: ${route}`);
 }
 
 if (!text.includes("withCompanyScope(user.uuid, parsed.data.operating_company_id")) {
