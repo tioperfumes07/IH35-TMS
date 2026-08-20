@@ -157,6 +157,11 @@ function assertServiceWiring(src) {
     if (!/parseFindings\(md\)/.test(loadLedger[0])) {
       errs.push("loadLedgerRows must call parseFindings(md)");
     }
+    if (!/loadOutboxTextFromGithub/.test(loadLedger[0]) || !/LEDGER_REL/.test(loadLedger[0])) {
+      errs.push(
+        "loadLedgerRows must GitHub-fetch AUDIT-COVERAGE-LIVE.md (Render docs/** ignore)",
+      );
+    }
   }
   return errs;
 }
