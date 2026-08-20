@@ -9416,3 +9416,24 @@ Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.documents:trailer | USMCA | 
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.documents:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=716569a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=716569a head Checking session... | NEXT=leaf=fleet:trailer.profile.identity:trailer
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.documents:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=716569a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=716569a head Checking session... | NEXT=leaf=fleet:trailer.profile.identity:trailer
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.documents:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=716569a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=716569a head Checking session... | NEXT=leaf=fleet:trailer.profile.identity:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.identity:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:trailer.profile.insurance_claims_reverse:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.identity:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:trailer.profile.insurance_claims_reverse:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.identity:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:trailer.profile.insurance_claims_reverse:trailer
