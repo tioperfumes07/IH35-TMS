@@ -112,12 +112,28 @@ contains("apps/backend/src/index.ts", indexTs, [
   { pattern: /initializeActiveDriverSetRecomputeWorker/, label: "worker import+call in index.ts" },
 ]);
 
-// 7. SafetyHome.tsx uses cached query path
-const safetyHome = read("apps/frontend/src/pages/safety/SafetyHome.tsx");
-contains("apps/frontend/src/pages/safety/SafetyHome.tsx", safetyHome, [
-  { pattern: /\/api\/integrations\/samsara\/active-drivers/, label: "SafetyHome uses cached active-drivers API" },
-  { pattern: /activityWindow/, label: "activityWindow state" },
+// 7. Safety Home uses cached query path
+// LIVE-FILE CORRECTION (2026-08-20, CC-3): this check was reading
+// `pages/safety/SafetyHome.tsx`, an explicitly `@archived` v5 shell that carries "no active
+// manifest imports" in its own file header — the same dead-file-inventory class PR #10009
+// already fixed for verify-canonical-load-nav. The real live Safety home is `SafetyHomeTab.tsx`
+// at /safety/home (SafetyLayout + SAFETY_TABS_CONFIG). Retargeted; the wiring itself was
+// genuinely missing on the live file too (grep-confirmed zero repo-wide references before this
+// fix), so this was a real gap, not just a stale guard target.
+// The URL lives in the shared apps/frontend/src/api/safety.ts client (same pattern as every
+// other query in this file — pages call a named api/*.ts function, never inline a raw fetch
+// URL); the page's own file is checked for actually consuming it (state + selector + freshness).
+const safetyApiClient = read("apps/frontend/src/api/safety.ts");
+contains("apps/frontend/src/api/safety.ts", safetyApiClient, [
+  { pattern: /\/api\/integrations\/samsara\/active-drivers/, label: "getActiveDriverSet calls the cached active-drivers API" },
   { pattern: /ACTIVITY_WINDOW_OPTIONS/, label: "ACTIVITY_WINDOW_OPTIONS defined" },
+  { pattern: /cache_hit/, label: "ActiveDriverSetResult carries cache_hit" },
+]);
+const safetyHomeTab = read("apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx");
+contains("apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx", safetyHomeTab, [
+  { pattern: /getActiveDriverSet\(/, label: "SafetyHomeTab calls getActiveDriverSet" },
+  { pattern: /activeDriverWindow/, label: "active-driver-set window state" },
+  { pattern: /ACTIVITY_WINDOW_OPTIONS/, label: "SafetyHomeTab renders the ACTIVITY_WINDOW_OPTIONS selector" },
   { pattern: /cache_hit/, label: "freshness indicator renders cache_hit" },
 ]);
 
