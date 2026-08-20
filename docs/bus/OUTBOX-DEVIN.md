@@ -4955,3 +4955,10 @@ Devin-A | LIVE PASS | leaf=safety:safety.parity.anomaly_detail:driver | USMCA | 
 Devin-A | LIVE PASS | leaf=safety:safety.parity.company_violation_detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=0157843 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.escrow_forfeit:connectivity
 Devin-A | LIVE PASS | leaf=safety:safety.parity.company_violation_detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=0157843 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.escrow_forfeit:connectivity
 Devin-A | LIVE PASS | leaf=safety:safety.parity.company_violation_detail:driver | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=0157843 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.escrow_forfeit:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.escrow_forfeit:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/home healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=safety:safety.parity.fine_create:connectivity
