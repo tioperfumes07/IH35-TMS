@@ -104,8 +104,8 @@ export function OptimalDriversPanel({
                 tabIndex={rowDisabled ? -1 : 0}
                 aria-disabled={rowDisabled}
                 data-testid={`optimal-driver-row-${d.rank}`}
-                className={`flex w-full flex-col rounded border px-2 py-1.5 text-left text-xs transition ${
-                  selected ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-white hover:border-slate-300"
+                className={`flex w-full flex-col px-2 py-1.5 text-left text-xs transition ${
+                  selected ? "bg-slate-100" : "bg-white hover:bg-slate-50"
                 } ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
                 onClick={() => {
                   if (!rowDisabled) onSelectDriver(d.driver_id);
