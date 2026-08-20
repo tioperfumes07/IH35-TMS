@@ -10406,3 +10406,5 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Loading…
 FAQ | NEXT=leaf=reports:runner.ifta_quarterly:connectivity
+Devin-A | LIVE PASS | leaf=reports:runner.ifta_quarterly:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/run/ifta-quarterly | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/ifta-preparer marker 'reports' | NEXT=leaf=reports:runner.maint_cost_unit:connectivity
+Devin-A | LIVE PASS | leaf=reports:runner.ifta_quarterly:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/ifta-quarterly | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/ifta-preparer marker 'reports' | NEXT=leaf=reports:runner.maint_cost_unit:connectivity
