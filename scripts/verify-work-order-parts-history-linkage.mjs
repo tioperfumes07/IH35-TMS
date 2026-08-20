@@ -6,7 +6,7 @@ const files = {
   route: "apps/backend/src/maintenance/parts-invoice-links.routes.ts",
   api: "apps/frontend/src/api/maintenance.ts",
   modal: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
-  creator: "apps/frontend/src/components/maintenance/AddPartsLinkModal.tsx",
+  creator: "apps/frontend/src/components/maintenance/AddPartsLinkDrawer.tsx",
   link: "apps/frontend/src/components/shared/EntityLink.tsx",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));

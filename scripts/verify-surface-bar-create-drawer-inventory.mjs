@@ -47,10 +47,6 @@ const FILE_OWNED_BY_LEAF = {
   "components/border-crossing/WizardStep4.tsx": "dispatch.wizard.border_crossing_wizard_page",
   "components/border-crossing/WizardStep5.tsx": "dispatch.wizard.border_crossing_wizard_page",
   "components/border-crossing/WizardStep6.tsx": "dispatch.wizard.border_crossing_wizard_page",
-  // AddPartsLinkDrawer is a nested "+ Add parts link" create drawer stacked on top of
-  // WorkOrderDetailModal.tsx (stackAboveModal — see verify-parity-drawer-z-index-above-modal.mjs) —
-  // owned by that modal's own leaf, same pattern as the border-crossing wizard steps above.
-  "components/maintenance/AddPartsLinkDrawer.tsx": "maintenance.modal.work_order_detail",
 };
 
 function walk(dir, out = []) {
