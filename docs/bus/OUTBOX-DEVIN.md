@@ -9024,3 +9024,8 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=drivers:profiles.detail:driver
+Devin-A | LIVE PASS | leaf=drivers:profiles.detail:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=3bca589 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/:id/profile marker 'Profiles' | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE PASS | leaf=drivers:profiles.detail:unit | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=3bca589 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/:id/profile marker 'Profiles' | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE PASS | leaf=drivers:profiles.detail:load | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=3bca589 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/:id/profile marker 'Profiles' | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE PASS | leaf=drivers:profiles.detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=3bca589 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/:id/profile marker 'Profiles' | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE PASS | leaf=drivers:profiles.detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/:id/profile | healthz=3bca589 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/:id/profile marker 'Profiles' | NEXT=leaf=drivers:profiles.documents:driver
