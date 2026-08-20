@@ -4853,3 +4853,7 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=safety:escrow_record.list:driver
+Devin-A | LIVE PASS | leaf=safety:escrow_record.list:driver | USMCA | URL=https://app.ih35dispatch.com/safety/escrow-record | healthz=8c90f4c | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/escrow-record marker 'safety' | NEXT=leaf=safety:external_fines.create:driver
+Devin-A | LIVE PASS | leaf=safety:escrow_record.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety/escrow-record | healthz=8c90f4c | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/escrow-record marker 'safety' | NEXT=leaf=safety:external_fines.create:driver
+Devin-A | LIVE PASS | leaf=safety:escrow_record.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/safety/escrow-record | healthz=8c90f4c | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/escrow-record marker 'safety' | NEXT=leaf=safety:external_fines.create:driver
+Devin-A | LIVE PASS | leaf=safety:escrow_record.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/safety/escrow-record | healthz=8c90f4c | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/escrow-record marker 'safety' | NEXT=leaf=safety:external_fines.create:driver
