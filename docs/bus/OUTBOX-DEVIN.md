@@ -1859,3 +1859,8 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=vendors:detail.ap.expenses:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:scenario.ap | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
