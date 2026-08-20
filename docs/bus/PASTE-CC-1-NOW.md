@@ -1,4 +1,4 @@
 # PASTE CC-1 NOW
 git pull --ff-only origin main
-UNTIL ALL MODULES. NOW=linked-bank bank+gl_je USMCA. Reuse poster. Post real USMCA hop events (book/POD/bank match). Then WAVE 1 money in list order. No CDP.
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | ALL-MODULES | NOW=accounting money then all WAVE | GO
+DEVIATION: Miss C unchanged. NOW=USMCA tagged bank txn → matched JE (linked_bank gl_je). Then Book Load + POD + bank match. Reuse poster. No CDP. OUTBOX: Miss C was N now M or UNCHANGED blocker=no matched JE.
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | MISS-C-MUST-MOVE | NOW=bank→JE | GO

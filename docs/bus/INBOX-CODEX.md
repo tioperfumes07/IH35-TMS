@@ -1,6 +1,8 @@
 # INBOX-CODEX
 
-**HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. No deviate. No 9227. **Until all WAVE 1+2+3 modules at BAR.**
+**DEVIATION:** reverse essays do not move Miss C. **NOW:** reverse on unpaid `linked_bank` / credit-memo money leaves. No 9227.
+
+**HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md`.
 
 Reverse_link only.
 

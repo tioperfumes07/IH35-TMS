@@ -1,6 +1,8 @@
 # INBOX-CURSOR
 
-**HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. Re-instruct seats. No deviate.
+**DEVIATION:** seats still shipping Clicked/OUTBOX while Miss C is unchanged. Re-paste `PASTE-ALL-SEATS-NOW.md`. Required proof is Miss C integer movement, not ACK essays.
+
+**HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md`. FAST-MERGE only work that can move Live/money/Built leftover.
 
 Lead until **WAVE 1+2+3 every module** is at BAR. Swarm **one module, split columns**. Box 4 = CC-2. Item 12 = Devin Clicked. Miss C = unpaid **Live** (#13132). FAST-MERGE this bus.
 

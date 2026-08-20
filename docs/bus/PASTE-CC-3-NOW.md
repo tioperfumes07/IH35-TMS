@@ -1,4 +1,4 @@
 # PASTE CC-3 NOW
 git pull --ff-only origin main
-UNTIL ALL MODULES. Accounting Built full → WAVE 1 leftover else WAVE 2 Built. Same NOW module as swarm. Not 9227. Not GL. FAST-MERGE.
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | ALL-MODULES | NOW=Built leftover every WAVE | GO
+DEVIATION: sitting on accounting Built 346/346 while Miss C stuck. WAVE 1 Built leftover else WAVE 2 Built. FAST-MERGE real Built. OUTBOX Miss C line if you touched Live-adjacent chrome.
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | MISS-C-MUST-MOVE | NOW=Built leftover | GO

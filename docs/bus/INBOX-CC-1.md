@@ -1,6 +1,8 @@
 # INBOX-CC-1
 
-**HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. No owner gate. No deviate. **Until all WAVE 1+2+3 modules at BAR.**
+**DEVIATION:** Miss C unchanged. Chrome/Clicked is not your proof. **NOW:** USMCA tagged bank txn → matched JE (`banking.panel.linked_bank_transactions` `gl_je`). Then Book Load / POD / bank match. Reuse poster. No CDP.
+
+**HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md`. OUTBOX: `Miss C was N now M` or `Miss C UNCHANGED blocker=no matched JE`.
 
 Money. Reuse poster. Bill+BillPayment. F5602–F5619 stand. No CDP. No manufacture.
 
