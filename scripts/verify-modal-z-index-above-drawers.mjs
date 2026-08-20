@@ -20,7 +20,11 @@
  * ParityDrawer.tsx excluded — its `stackAboveModal` tier is DELIBERATELY the second-highest tier, one
  * above Modal, so a nested "+ Create" drawer opened from inside a Modal still wins over that Modal's
  * backdrop — locked separately by verify-parity-drawer-z-index-above-modal.mjs, which asserts the
- * OTHER direction: ParityDrawer's stackAboveModal z-index > Modal's z-index).
+ * OTHER direction: ParityDrawer's stackAboveModal z-index > Modal's z-index; ConfirmDiscardDialog.tsx
+ * excluded — it is Modal's OWN unsaved-changes guard, rendered BY Modal.tsx, and must DELIBERATELY
+ * stack above Modal so the "Discard unsaved changes?" prompt is not occluded by Modal's own backdrop
+ * — locked separately by verify-confirm-discard-dialog-z-index-above-modal.mjs, same OTHER-direction
+ * assertion).
  * PASS: Modal.tsx's z-index >= that max, so it can never be occluded by a known drawer, and Combobox's
  * listbox z-index remains >= Modal's, so a picker inside a Modal still paints on top of the Modal.
  *
@@ -35,6 +39,7 @@ const LABEL = "verify-modal-z-index-above-drawers";
 const MODAL = path.join(ROOT, "apps/frontend/src/components/Modal.tsx");
 const COMBOBOX = path.join(ROOT, "apps/frontend/src/components/Combobox.tsx");
 const PARITY_DRAWER = path.join(ROOT, "apps/frontend/src/components/parity/ParityDrawer.tsx");
+const CONFIRM_DISCARD_DIALOG = path.join(ROOT, "apps/frontend/src/components/dialogs/ConfirmDiscardDialog.tsx");
 const FRONTEND_SRC = path.join(ROOT, "apps/frontend/src");
 
 function assert(cond, msg) {
@@ -96,7 +101,7 @@ function comboboxListboxZIndex() {
 
 function check() {
   const modalZ = modalZIndex();
-  const maxOther = maxArbitraryZIndex([MODAL, COMBOBOX, PARITY_DRAWER]);
+  const maxOther = maxArbitraryZIndex([MODAL, COMBOBOX, PARITY_DRAWER, CONFIRM_DISCARD_DIALOG]);
   assert(
     modalZ >= maxOther,
     `Modal.tsx z-index (${modalZ}) is below the highest z-[N] used elsewhere in the frontend (${maxOther}). ` +
