@@ -9351,3 +9351,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=lists:lists.panel.validation:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.panel.validation:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=716569a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=716569a head Checking session... | NEXT=leaf=safety:chrome.toolbar_range:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:lists.panel.validation:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=716569a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=716569a head Checking session... | NEXT=leaf=safety:chrome.toolbar_range:qbo_chrome
