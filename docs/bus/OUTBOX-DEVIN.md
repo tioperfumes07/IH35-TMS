@@ -4412,3 +4412,19 @@ Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.labor_codes.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.labor_codes.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/labor-codes | healthz=dece9e7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/labor-codes marker 'lists' | NEXT=leaf=lists:catalog.maintenance.labor_rates.create:qbo_chrome
 Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.labor_rates.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/labor-rates | healthz=dece9e7 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/labor-rates healthz=dece9e7 head Checking session... | NEXT=leaf=lists:catalog.maintenance.labor_rates.list:qbo_chrome
 Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.labor_rates.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/labor-rates | healthz=dece9e7 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/labor-rates healthz=dece9e7 head Checking session... | NEXT=leaf=lists:catalog.maintenance.labor_rates.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.labor_rates.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/labor-rates | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/maintenance/labor-rates healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.maintenance.oem_parts_reference.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.labor_rates.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/labor-rates | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/maintenance/labor-rates healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.maintenance.oem_parts_reference.create:picker_law
