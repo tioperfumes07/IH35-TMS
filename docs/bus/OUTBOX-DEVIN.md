@@ -14475,3 +14475,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=accounting:accounting.parity.factoring_detail_page:gl_je
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.factoring_detail_page:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/FactoringDetailPage.tsx | healthz=c087960 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=accounting:accounting.parity.invoice_create:invoice
