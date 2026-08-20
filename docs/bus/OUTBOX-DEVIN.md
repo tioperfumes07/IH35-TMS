@@ -7353,3 +7353,7 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=fleet:trailer.profile.assignment:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.assignment:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Current' | NEXT=leaf=fleet:trailer.profile.bank_txns:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.assignment:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Current' | NEXT=leaf=fleet:trailer.profile.bank_txns:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.assignment:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Current' | NEXT=leaf=fleet:trailer.profile.bank_txns:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.assignment:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Current' | NEXT=leaf=fleet:trailer.profile.bank_txns:trailer
