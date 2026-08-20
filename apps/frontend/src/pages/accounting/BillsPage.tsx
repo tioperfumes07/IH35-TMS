@@ -147,7 +147,7 @@ const BILL_PAYMENT_COLUMNS: ParityColumn<BillPayment>[] = [
       <EntityLink
         kind="bank_account"
         id={p.from_bank_account_id ?? undefined}
-        label={p.from_bank_account_id ? entityLabel(null, p.from_bank_account_id, "Bank account") : undefined}
+        label={p.from_bank_account_id ? entityLabel(p.from_bank_account_name, p.from_bank_account_id, "Bank account") : undefined}
       />
     ),
   },

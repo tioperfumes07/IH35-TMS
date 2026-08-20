@@ -332,6 +332,8 @@ export type BillPayment = {
   amount_cents: number;
   payment_method: BillPaymentMethod;
   from_bank_account_id: string | null;
+  /** Canonical same-company bank account label resolved by the accounting read. */
+  from_bank_account_name?: string | null;
   check_number: string | null;
   reference_number: string | null;
   memo: string | null;
