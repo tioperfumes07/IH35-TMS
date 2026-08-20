@@ -1384,3 +1384,27 @@ export function linkSafetyFinePayment(
     { method: "POST", body }
   );
 }
+
+/** GAP-25 — the cached Samsara active-driver-set thresholds Safety Home's freshness selector offers. */
+export const ACTIVITY_WINDOW_OPTIONS = [7, 14, 30] as const;
+export type ActiveDriverSetThresholdDays = (typeof ACTIVITY_WINDOW_OPTIONS)[number];
+
+export type ActiveDriverSetResult = {
+  active_driver_uuids: string[];
+  total_driver_count: number;
+  snapshot_at: string;
+  threshold_days: number;
+  cache_hit: boolean;
+};
+
+/**
+ * GAP-25 — GET /api/integrations/samsara/active-drivers (backend built, never consumed by any
+ * frontend surface until this call site — see verify-active-driver-set.mjs step 7). Returns the
+ * cached snapshot when fresh (cache_hit: true); the backend recomputes synchronously and returns
+ * cache_hit: false when stale/absent — either way the response shape is identical.
+ */
+export function getActiveDriverSet(companyId: string, thresholdDays: ActiveDriverSetThresholdDays = 7) {
+  return apiRequest<ActiveDriverSetResult>(
+    `/api/integrations/samsara/active-drivers?${q(companyId)}&threshold_days=${thresholdDays}`
+  );
+}

@@ -56,7 +56,10 @@ const CHECKS = [
   ["apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx", /billToEntityType === "driver" \|\| billToEntityType === "vendor"/],
   // vendors: detail.profile, detail.profile.driver_link
-  ["apps/frontend/src/pages/VendorDetail.tsx", /kind="driver" id=\{vendor\.driver_id\}/],
+  // Multi-line JSX attrs (kind="driver" / id={vendor.driver_id} on separate lines, Prettier
+  // default): [\s\S]{0,20} tolerates the line break without loosening which two props must
+  // co-occur.
+  ["apps/frontend/src/pages/VendorDetail.tsx", /kind="driver"[\s\S]{0,20}id=\{vendor\.driver_id\}/],
   // banking: driver_escrow
   ["apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx", /to=\{`\/drivers\/\$\{selectedDriver\.driver_id\}`\}/],
   // factoring: home.vendor_merges, factoring.parity.driver_autocomplete

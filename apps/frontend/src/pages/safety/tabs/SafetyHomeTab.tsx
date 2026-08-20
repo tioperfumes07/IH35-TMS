@@ -1,13 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import {
+  ACTIVITY_WINDOW_OPTIONS,
+  getActiveDriverSet,
   getLatestCsa,
   getSafetyAccidents,
   getSafetyEventKpis,
   getSafetyKpis,
   listSafetyEventLog,
+  type ActiveDriverSetThresholdDays,
   type SafetyEventLogRow,
 } from "../../../api/safety";
 import { SAFETY_ALIAS_TABS, SAFETY_GROUPS } from "../../../components/safety/SAFETY_TABS_CONFIG";
@@ -133,6 +136,13 @@ function DrillRow({ record }: { record: DrillRecord }) {
 export function SafetyHomeTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [activeDriverWindow, setActiveDriverWindow] = useState<ActiveDriverSetThresholdDays>(7);
+
+  const activeDriversQuery = useQuery({
+    queryKey: ["safety", "active-driver-set", companyId, activeDriverWindow],
+    queryFn: () => getActiveDriverSet(companyId, activeDriverWindow),
+    enabled: Boolean(companyId),
+  });
 
   const kpisQuery = useQuery({
     queryKey: ["safety", "kpis", companyId],
@@ -223,6 +233,64 @@ export function SafetyHomeTab() {
           Company-wide aggregate across events, accidents, CSA, fines, and open liabilities. Tap a tile
           to open its list, or drill straight to a driver/unit below.
         </p>
+      </div>
+
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-gray-200 bg-white p-3"
+        data-testid="safety-home-active-drivers"
+      >
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+            Active Drivers (Samsara GPS activity)
+          </div>
+          {activeDriversQuery.isError ? (
+            <div className="text-sm font-semibold text-red-600" data-testid="safety-home-active-drivers-error">
+              Unavailable
+            </div>
+          ) : activeDriversQuery.isPending ? (
+            <div className="text-sm text-slate-400">Loading…</div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-slate-900">
+                {activeDriversQuery.data?.active_driver_uuids.length ?? 0}
+              </span>
+              <span className="text-xs text-slate-500">
+                of {activeDriversQuery.data?.total_driver_count ?? 0} drivers
+              </span>
+              {/* §7 LOCKED palette — no amber/yellow status bands; both states stay in the slate
+                  family, distinguished by text only ("Cached" vs "Recomputed live"). */}
+              <span
+                className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600"
+                data-testid="safety-home-active-drivers-freshness"
+                title={
+                  activeDriversQuery.data?.snapshot_at
+                    ? `Snapshot at ${formatDateUS(activeDriversQuery.data.snapshot_at)}`
+                    : undefined
+                }
+              >
+                {activeDriversQuery.data?.cache_hit ? "Cached" : "Recomputed live"}
+              </span>
+            </div>
+          )}
+        </div>
+        <label className="flex items-center gap-1.5 text-xs text-slate-600">
+          Window
+          <select
+            aria-label="Active driver window (days)"
+            value={activeDriverWindow}
+            onChange={(event) =>
+              setActiveDriverWindow(Number(event.target.value) as ActiveDriverSetThresholdDays)
+            }
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            data-testid="safety-home-active-drivers-window"
+          >
+            {ACTIVITY_WINDOW_OPTIONS.map((days) => (
+              <option key={days} value={days}>
+                {days} days
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">

@@ -23,7 +23,10 @@ const required = [
   // the same real kind="driver" id={String(req.driver_id...)} wiring, not a bare EntityLink anymore.
   ["scheduler request driver drill", "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage.tsx", /<EntityLink(?:OrTombstone)? kind="driver" id=\{String\(req\.driver_id/],
   ["owner approval driver drill", "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx", /<EntityLink kind="driver" id=\{String\(req\?\.driver_id/],
-  ["trip pairing driver drill", "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /<EntityLink kind="driver" id=\{u\.driver_id\}/],
+  // Same re-anchor as scheduler request above: TripPairingBoardPage now wraps this in
+  // EntityLinkOrTombstone (honest null/unresolved-driver fallback) around the same real
+  // kind="driver" id={u.driver_id} wiring, not a bare EntityLink.
+  ["trip pairing driver drill", "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /<EntityLink(?:OrTombstone)? kind="driver" id=\{u\.driver_id\}/],
   ["escrow record driver drill", "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", /<EntityLink kind="driver" id=\{entry\.driver_id\}/],
 ];
 const forbidden = [
