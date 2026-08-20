@@ -1003,3 +1003,4 @@ Codex | WORKING | FINDING=DRIVER-ONBOARDING-PROFILE-FALSE-HUMAN-LABEL | leaf=dri
 Codex | WORKING | FINDING=MAINT-FAULT-DRAFT-DEEPLINK-UNIT-FALSE-HUMAN-LABEL | leaf=maintenance:fault_drafts.review:unit/reverse_link | guard=normal+64-selftest | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=DISPATCH-BOOK-LOAD-SELECTED-ENTITIES-NAMELESS | leaf=dispatch:parity.book_load_equipment_section:{driver,unit,trailer,reverse_link} | guard=normal+5-selftest | tests=3/3 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=DISPATCH-DEADHEAD-OPTIMIZER-UNIT-NAMELESS | leaf=dispatch:panel.deadhead_optimizer:unit/reverse_link | guard=normal+3-selftest | tests=3/3 | NEXT=fast-merge | GO
+Codex | WORKING | FINDING=DRIVER-SATELLITE-PROFILE-FALSE-HUMAN-LABELS | leaves=drivers:{hos.detail,layover.history}:driver/reverse_link | guard=normal+24-selftest | NEXT=fast-merge | GO
