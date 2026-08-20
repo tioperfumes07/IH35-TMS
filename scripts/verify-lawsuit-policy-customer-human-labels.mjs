@@ -27,9 +27,10 @@ function assertAll(srcs) {
   const lawsuits = srcs[FILES[0]];
   const policy = srcs[FILES[1]];
   const customers = srcs[FILES[2]];
-  if (!/entityLabel\(lawsuit\.claim_number,\s*lawsuit\.claim_id,\s*"Claim"\)/.test(lawsuits)) problems.push(`${FILES[0]}: lawsuit claim link must consume claim_number`);
-  if (!/entityLabel\(lawsuit\.driver_name,\s*lawsuit\.driver_id,\s*"Driver"\)/.test(lawsuits)) problems.push(`${FILES[0]}: lawsuit driver link must consume driver_name`);
-  if (!/entityLabel\(lawsuit\.unit_number,\s*lawsuit\.unit_id,\s*"Unit"\)/.test(lawsuits)) problems.push(`${FILES[0]}: lawsuit unit link must consume unit_number`);
+  const lawsuitTombstoneLink = (kind, id, name, noun) => new RegExp(`<EntityLinkOrTombstone\\s+kind="${kind}"\\s+id=\\{lawsuit\\.${id}\\}\\s+name=\\{lawsuit\\.${name}\\}\\s+noun="${noun}"`);
+  if (!lawsuitTombstoneLink("claim", "claim_id", "claim_number", "Claim").test(lawsuits)) problems.push(`${FILES[0]}: lawsuit claim drill must consume claim_number through tombstone-safe binding`);
+  if (!lawsuitTombstoneLink("driver", "driver_id", "driver_name", "Driver").test(lawsuits)) problems.push(`${FILES[0]}: lawsuit driver drill must consume driver_name through tombstone-safe binding`);
+  if (!lawsuitTombstoneLink("unit", "unit_id", "unit_number", "Unit").test(lawsuits)) problems.push(`${FILES[0]}: lawsuit unit drill must consume unit_number through tombstone-safe binding`);
   if (!/entityLabel\(unit\.unit_number,\s*unitId,\s*"Unit"\)/.test(policy)) problems.push(`${FILES[1]}: policy unit link must consume unit_number`);
   const directCustomerLoadLabel = /entityLabel\(r\.source_load_number,\s*r\.source_load_id,\s*"Load"\)/.test(customers);
   const tombstoneCustomerLoadLabel = /<EntityLinkOrTombstone[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{r\.source_load_id\}[\s\S]{0,180}name=\{r\.source_load_number\}[\s\S]{0,180}noun="Load"/.test(customers);
@@ -42,9 +43,9 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 if (SELFTEST) {
   const srcs = read();
   const mutations = [
-    [FILES[0], "lawsuit.claim_number", "null"],
-    [FILES[0], "lawsuit.driver_name", "null"],
-    [FILES[0], "lawsuit.unit_number", "null"],
+    [FILES[0], "name={lawsuit.claim_number}", "name={null}"],
+    [FILES[0], "name={lawsuit.driver_name}", "name={null}"],
+    [FILES[0], "name={lawsuit.unit_number}", "name={null}"],
     [FILES[1], "unit.unit_number", "null"],
     [FILES[2], "r.source_load_number", "null"],
   ];

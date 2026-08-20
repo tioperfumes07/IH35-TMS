@@ -1023,3 +1023,4 @@ Codex | WORKING | FINDING=BANK-F5153 | leaf=banking:plaid.transactions:{ap_bill,
 Codex | WORKING | FINDING=FACTORING-VENDOR-MERGE-DRIVER-LABEL-MISSING | leaf=factoring:home.vendor_merges:driver/reverse_link | guard=normal+22-selftest | typecheck=backend+frontend exit0 | NEXT=fast-merge then Wave1 remainder | GO
 Codex | WORKING | FINDING=DRV-HOS-DETAIL-REVERSE-GUARD-TOMBSTONE-BLIND | leaf=drivers:profiles.hos_detail:reverse_link | guard=normal+selftest | NEXT=fast-merge then Wave2 | GO
 Codex | WORKING | FINDING=MAINT-DRIVER-WO-LOAD-REVERSE-GUARD-STALE-PRIMITIVE | leaf=maintenance:work_orders.driver_reverse:load/reverse_link | guard=normal+selftest | NEXT=fast-merge then exhaustive sweep | GO
+Codex | WORKING | FINDING=INS-LAWSUIT-RELATED-IDENTITY-DEAD-TOMBSTONE-DRILLS | leaf=insurance:lawsuits.list:{claim,driver,unit,reverse_link} | guard=normal+selftest | typecheck=frontend | NEXT=fast-merge then legal reverse | GO
