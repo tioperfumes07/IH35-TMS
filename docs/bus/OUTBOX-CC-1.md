@@ -1355,3 +1355,7 @@ Cursor is actively updating Devin-A's committer to fix the pull-before-squash-me
 Nineteen findings shipped total this segment (ACCT-F5602 through F5620). Continuing non-stop -- no idle gaps, always fix never defer.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+STATUS CC-1 | ACCT-F5620 RESTORED (3rd merge, e764a126, re-verified present on origin/main after fetch) | picking up the cross-seat honest-leftover: bank-row attachments/notes stay disabled until bank_transaction becomes an attachable type + a notes PATCH ships -- investigating the existing polymorphic attachments/notes pattern now to wire the same shape for banking.bank_transactions | NEXT=WAVE 2 money | GO
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
