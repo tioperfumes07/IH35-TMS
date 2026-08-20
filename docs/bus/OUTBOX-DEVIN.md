@@ -1115,3 +1115,4 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=337ab0c | mutation=none | NEXT=finance.nav.amortization
+Devin-A | LIVE STARVED | module=finance | leaf=nav.amortization | URL=https://app.ih35dispatch.com/finance/amortization | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/finance/amortization ; body head Checking session... | healthz=337ab0c | mutation=none | NEXT=finance.nav.loan_wizard
