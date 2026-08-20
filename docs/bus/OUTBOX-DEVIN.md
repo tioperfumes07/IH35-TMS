@@ -7010,3 +7010,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.maintenance.battery_catalog.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.battery_catalog.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/battery-catalog | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/maintenance/battery-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.labor_rates.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.battery_catalog.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/battery-catalog | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/maintenance/battery-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.labor_rates.create:qbo_chrome
