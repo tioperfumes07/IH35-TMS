@@ -114,6 +114,7 @@ const guards = [
   "verify-reports-gl-je-required-honest.mjs",
   "verify-reverse-link-inline-surface-linkage.mjs",
   "verify-safety-required-money-honest.mjs",
+  "verify-scheduled-pnl-pdf-formats-cents.mjs",
   "verify-scenario-ap-insurance-honest.mjs",
   "verify-settlement-dispute-adjustment-lines-and-aggregation.mjs",
   "verify-settlement-payrun-close-je-atomic.mjs",
