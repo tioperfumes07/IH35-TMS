@@ -12,6 +12,8 @@ cwd=`/tmp/IH35-devin-a` or `DEVIN_GIT_ROOT`. NEVER dirty `IH35-TMS-clean`.
 
 chrome=9227. `leaf=<module>:<leafId>:<col> | USMCA`
 
+**PING CC-2:** if Clicked finds a picker FAIL, prepend `OUTBOX-CC-2.md` same turn (plus your OUTBOX + Cursor). Do not leave it in chat.
+
 **NOW:** WAVE 1 banking Clicked → factoring → accounting → settlements → customers → drivers  
 **THEN:** WAVE 2 insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
 **THEN:** WAVE 3. Never fuel. Never idle.

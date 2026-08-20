@@ -3,4 +3,5 @@
 Kill any loop with `git reset --soft`. cwd=/tmp/IH35-devin-a. Restart from THIS main only.
 HARD: fetch+reset --hard origin/main before every Clicked merge. OUTBOX-only. Unique branch. Never live-outbox-proofs-32.
 NOW=banking Clicked then WAVE1→2→3. chrome=9227.
+If Clicked finds picker FAIL → prepend OUTBOX-CC-2 same turn.
 Devin-A | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | chrome=9227 | NOW=banking Clicked | ONTO-MAIN-OUTBOX-ONLY | GO

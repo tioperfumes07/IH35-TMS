@@ -10,7 +10,9 @@ Coders talk to **Cursor (lead)** and **to each other** on the repo bus. Chat-onl
 |-------|------|-----|
 | Orders | `docs/bus/INBOX-<SEAT>.md` TOP | **Cursor lead only** |
 | Status / pings / findings | `docs/bus/OUTBOX-<SEAT>.md` first line | **that seat** |
-| Cross-seat ping | your OUTBOX **and** `OUTBOX-CURSOR.md` (append) | any seat |
+| Cross-seat ping | your OUTBOX **and** `OUTBOX-CURSOR.md` **and the TARGET seat’s OUTBOX first line** | any seat |
+| Picker FAIL (any seat) | **prepend `OUTBOX-CC-2.md`** same turn (+ Cursor OUTBOX) | CC-1 · CC-3 · Codex · Devin · Cursor |
+| Money FAIL (any seat) | **prepend `OUTBOX-CC-1.md`** same turn (+ Cursor OUTBOX) | CC-2 · CC-3 · Codex · Devin · Cursor |
 | Never | rewrite another seat’s INBOX | everyone except Cursor |
 
 `git pull --ff-only origin main` before you treat an INBOX as current.
@@ -31,6 +33,15 @@ An INBOX is **stale** when any of these is true:
 2. Same turn, append the **same line** to `docs/bus/OUTBOX-CURSOR.md` so the lead cannot miss it.
 3. Keep working from `CODER-INSTRUCTIONS-NOW.md` §4 ladder for **your** seat until Cursor rewrites the INBOX. Do **not** idle. Do **not** ask Jorge.
 4. Cursor rewrites that INBOX TOP **same turn** after seeing the ping, then OUTBOX: `Cursor | INBOX FIXED | seat=… | NOW=… | GO`
+
+## CC-2 / CC-1 must receive other-coder messages (HARD)
+
+Chat-only and “only ping Cursor” **starve CC-2**. If you found a picker/live-verify FAIL, CC-2 never sees it unless it is the **first line of `OUTBOX-CC-2.md`**. Same for money → `OUTBOX-CC-1.md`.
+
+Line shape:
+` <YOUR-SEAT>→CC-2 | PICKER FAIL | leaf=<module>:<leafId>:picker_law | url=… | GO `
+
+CC-2 hourly: `git pull` then read **INBOX-CC-2 TOP + OUTBOX-CC-2 first 20 lines** (that is the other-coder inbox).
 
 ## Between seats
 

@@ -1,4 +1,23 @@
-# STATUS-NOW · 2026-08-20T00:35Z
+# STATUS-NOW · 2026-08-20T08:38Z
+
+**Lead:** Cursor · FAST-MERGE ON · WAVE1-THEN-2 · **CC-2 mail = `OUTBOX-CC-2.md`** (other seats prepend picker FAILs)
+
+| Seat | NOW |
+|------|-----|
+| CC-1 | restore **ACCT-F5620** hop.bank · then WAVE 2 money · read OUTBOX-CC-1 |
+| CC-2 | WAVE 2 **insurance pickers** · read OUTBOX-CC-2 first 20 · rebuild only live FAIL |
+| CC-3 | customers Built 1–11 · then WAVE 1 leftover → WAVE 2 |
+| Codex | customers reverse · then WAVE 1 leftover → WAVE 2 · no 9227 |
+| Devin-A | WAVE 1 banking Clicked · `shipClickedOntoMain` · 9227 · picker FAIL → OUTBOX-CC-2 |
+| Cursor | leftover WAVE 1 Built + keep CC-2/CC-1 fed · FAST-MERGE INBOX |
+| Cascade | OFF |
+
+Live=BLOCKED until Devin item 12.
+
+---
+
+# ARCHIVE · older STATUS (VOID if it contradicts 08:38Z)
+
 
 **Lead:** Cursor · FAST-MERGE ON · **OWNER SEQ:** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch
 

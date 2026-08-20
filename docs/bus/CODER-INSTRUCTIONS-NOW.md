@@ -22,6 +22,8 @@ Never idle. Never wait for Jorge. Never stop because one module’s Built is exh
 1. `git pull --ff-only origin main`
 2. Re-read this file TOP to BOTTOM
 3. Re-read your `INBOX-<SEAT>.md` TOP
+3b. **CC-2:** also read `OUTBOX-CC-2.md` first 20 lines (other seats write picker FAILs there). **CC-1:** also read `OUTBOX-CC-1.md` first 20 lines.
+3c. If you found a picker FAIL: prepend `OUTBOX-CC-2.md` same turn. Money FAIL: prepend `OUTBOX-CC-1.md`. Also `OUTBOX-CURSOR.md`. Never chat-only.
 4. Re-read `docs/bus/FAST-MERGE-4MIN-LAW.md`
 5. Re-ACK: `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=<module> <col> | GO`
 6. Keep working the same chain — do not invent a new queue
@@ -46,7 +48,7 @@ Until item **12 Live Chrome**: `Built` / `Live=BLOCKED`. Devin does 12 (`chrome=
 | **Devin-A** | 12 Live Chrome | WAVE 1 banking Clicked → rest WAVE 1 → WAVE 2 → WAVE 3. **Clicked = OUTBOX-only onto current origin/main** (`shipClickedOntoMain`). Never stale-branch squash that deletes CC-1/CC-3 code. |
 | **CC-3** | Built 1–11 FE | customers (drivers Built done) → rest WAVE 1 unpaid Built → WAVE 2 → WAVE 3 |
 | **CC-1** | money, reuse poster, Bill+BillPayment | WAVE 1 banking money → factoring → accounting → settlements → WAVE 2 money modules. F5602–F5619 stand. No manufacture. |
-| **CC-2** | picker live-verify | WAVE 1 banking → … → WAVE 2. Rebuild only on live FAIL |
+| **CC-2** | picker live-verify | WAVE 2 insurance pickers (WAVE 1 URGENT-6 live-verify closed 2026-08-20). Rebuild only on live FAIL. **Read OUTBOX-CC-2 — other seats ping you there.** |
 | **Codex** | reverse_link | customers → rest WAVE 1 → WAVE 2. No 9227 |
 | **Cursor** | lead + leftover WAVE 1 Built + scoreboard | banking Built leftover if unpaid; re-instruct hourly; FAST-MERGE INBOX to main |
 
