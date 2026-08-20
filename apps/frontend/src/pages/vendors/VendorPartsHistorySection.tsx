@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getPartsAssignmentsPage } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
@@ -63,7 +61,7 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
                 {row.part_number ? <span className="font-normal text-gray-500">({row.part_number})</span> : null}
               </span>
               <span className="flex items-center gap-1 text-gray-600">
-                <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} />
+                <EntityLinkOrTombstone kind="work_order" id={row.work_order_id} name={row.work_order_display_id} noun="Work order" />
                 <span>·</span>
                 <EntityLinkOrTombstone
                   kind="unit"

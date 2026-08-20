@@ -32,6 +32,13 @@ function assertUi(src) {
   if (!/\+ Create COI/.test(src)) {
     problems.push(`${FILE}: empty state surface must still offer + Create COI`);
   }
+  for (const [kind, id, name, noun] of [
+    ["user", "request.requested_by", "request.requested_by_name", "User"],
+    ["insurance_policy", "request.policy_id", "request.policy_number", "Policy"],
+  ]) {
+    const pattern = new RegExp(`<EntityLinkOrTombstone[\\s\\S]{0,140}?kind="${kind}"[\\s\\S]{0,140}?id=\\{${id.replaceAll(".", "\\.")}\\}[\\s\\S]{0,140}?name=\\{${name.replaceAll(".", "\\.")}\\}[\\s\\S]{0,100}?noun="${noun}"`);
+    if (!pattern.test(src)) problems.push(`${FILE}: ${noun} reverse drill must preserve its nullable human label/tombstone contract`);
+  }
   return problems;
 }
 
@@ -63,6 +70,16 @@ if (SELFTEST) {
   if (!caughtUi.length) {
     console.error(`${LABEL} SELFTEST FAIL — planted blank empty not caught`);
     process.exit(1);
+  }
+  for (const [needle, label] of [
+    ["name={request.requested_by_name}", "requester name"],
+    ["name={request.policy_number}", "policy number"],
+  ]) {
+    const planted = uiSrc.replace(needle, "name={null}");
+    if (planted === uiSrc || !assertUi(planted).length) {
+      console.error(`${LABEL} SELFTEST FAIL — planted ${label} defect not caught`);
+      process.exit(1);
+    }
   }
   const plantedSvc = svcSrc.replace(/\boperating_company_id\b/g, "opco_missing");
   const caughtSvc = assertWriter(plantedSvc);

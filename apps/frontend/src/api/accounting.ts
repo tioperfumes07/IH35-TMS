@@ -1614,6 +1614,8 @@ export const COA_ROLE_VALUES = [
   "fuel_advance_recovery",
   "other_recovery",
   "abandonment_chargeback_recovery",
+  // ACCT-F5616 — settlement dispute corrective JE credit. Owner designates; no shape-fallback.
+  "settlement_dispute_correction_recovery",
   // DIP operating cash
   "cash_dip",
   // SAFETY FINE-GL HOP — company-paid civil fine expense. Owner designates the account on this page;

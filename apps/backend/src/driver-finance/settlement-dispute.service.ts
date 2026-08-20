@@ -3,6 +3,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { SETTLEMENT_GL_POSTING_FLAG_KEY } from "../accounting/settlement-posting/settlement-posting.math.js";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 
 const CLOSED_STATUSES = new Set(["resolved_in_favor", "resolved_rejected", "partially_resolved", "withdrawn"]);
 
@@ -37,62 +38,25 @@ async function loadDisputeForUpdate(client: any, disputeId: string, companyId: s
   return res.rows[0] ?? null;
 }
 
+/**
+ * ACCT-F5616 — resolve the corrective JE's Dr/Cr accounts via the standard fail-closed CoA-role
+ * chain, exactly like every other poster in this codebase. This REPLACES an ORDER BY created_at ASC
+ * LIMIT 2 pick of "whichever two accounts happen to sort first" — the anti-pattern
+ * resolver.service.ts's own comments elsewhere in this file's neighbourhood explicitly warn against
+ * ("never ORDER BY created_at LIMIT 2"). Dr driver_pay_expense (the correction increases what's owed
+ * to the driver, same debit role every other pay-increasing leg in this codebase uses) / Cr
+ * settlement_dispute_correction_recovery (owner-designated, no shape-fallback — an accounting-
+ * treatment decision, never a guess). Undesignated => throws, so the dispute resolution itself still
+ * fails loud (matching the pre-existing E_CORRECTIVE_JE_ACCOUNTS_MISSING contract) rather than posting
+ * to an arbitrary account.
+ */
 async function pickCorrectionAccounts(client: any, operatingCompanyId: string) {
-  const hasOperatingCompanyColumn = await client.query(
-    `
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'catalogs'
-          AND table_name = 'accounts'
-          AND column_name = 'operating_company_id'
-      ) AS ok
-    `
-  );
-  const hasIsActiveColumn = await client.query(
-    `
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'catalogs'
-          AND table_name = 'accounts'
-          AND column_name = 'is_active'
-      ) AS ok
-    `
-  );
-  const hasDeactivatedColumn = await client.query(
-    `
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'catalogs'
-          AND table_name = 'accounts'
-          AND column_name = 'deactivated_at'
-      ) AS ok
-    `
-  );
-
-  const where: string[] = [];
-  const values: unknown[] = [];
-  if (hasOperatingCompanyColumn.rows[0]?.ok) {
-    values.push(operatingCompanyId);
-    where.push(`(operating_company_id = $${values.length}::uuid OR operating_company_id IS NULL)`);
-  }
-  if (hasIsActiveColumn.rows[0]?.ok) where.push(`COALESCE(is_active, true) = true`);
-  if (hasDeactivatedColumn.rows[0]?.ok) where.push(`deactivated_at IS NULL`);
-
-  const res = await client.query(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
-      ORDER BY created_at ASC NULLS LAST, id ASC
-      LIMIT 2
-    `,
-    values
-  );
-  if (res.rows.length < 2) throw new Error("E_CORRECTIVE_JE_ACCOUNTS_MISSING");
-  return { debitAccountId: res.rows[0].id, creditAccountId: res.rows[1].id };
+  const [debitAccountId, creditAccountId] = await Promise.all([
+    resolveRoleAccountOptional(client, operatingCompanyId, "driver_pay_expense"),
+    resolveRoleAccountOptional(client, operatingCompanyId, "settlement_dispute_correction_recovery"),
+  ]);
+  if (!debitAccountId || !creditAccountId) throw new Error("E_CORRECTIVE_JE_ACCOUNTS_MISSING");
+  return { debitAccountId, creditAccountId };
 }
 
 export async function createCorrectiveJournalEntry(params: {

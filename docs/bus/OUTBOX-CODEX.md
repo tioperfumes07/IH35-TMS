@@ -1004,3 +1004,6 @@ Codex | WORKING | FINDING=MAINT-FAULT-DRAFT-DEEPLINK-UNIT-FALSE-HUMAN-LABEL | le
 Codex | WORKING | FINDING=DISPATCH-BOOK-LOAD-SELECTED-ENTITIES-NAMELESS | leaf=dispatch:parity.book_load_equipment_section:{driver,unit,trailer,reverse_link} | guard=normal+5-selftest | tests=3/3 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=DISPATCH-DEADHEAD-OPTIMIZER-UNIT-NAMELESS | leaf=dispatch:panel.deadhead_optimizer:unit/reverse_link | guard=normal+3-selftest | tests=3/3 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=DRIVER-SATELLITE-PROFILE-FALSE-HUMAN-LABELS | leaves=drivers:{hos.detail,layover.history}:driver/reverse_link | guard=normal+24-selftest | NEXT=fast-merge | GO
+Codex | WORKING | FINDING=DISPATCH-LOAD-BANKING-UNSCOPED-FALSE-HUMAN-LABEL | leaf=dispatch:load.banking:{load,connectivity,reverse_link} | guard=normal+selftest | tests=3/3 | NEXT=fast-merge | GO
+Codex | WORKING | FINDING=CUSTOMER-COI-REQUESTER-POLICY-DEAD-TOMBSTONE-DRILLS | leaf=customers:detail.coi:{connectivity,reverse_link} | guard=normal+selftest | typecheck=exit0 | NEXT=fast-merge | GO
+Codex | WORKING | FINDING=VENDOR-REVERSE-PANELS-DEAD-TOMBSTONE-DRILL-CLASS | leaf=vendors:detail.profile:reverse_link | guards=3 normal+selftest | typecheck=exit0 | NEXT=fast-merge | GO
