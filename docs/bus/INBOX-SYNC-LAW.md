@@ -4,4 +4,4 @@
 
 Seats do not write their own INBOX (Cursor lead only). Status in OUTBOX first line. Picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Plus `OUTBOX-CURSOR.md`.
 
-Until the 14 are done, INBOX TOPs already contain the full ladder — Cursor does not need a new NOW after every merge. Hourly pull is enough.
+Until WAVE 1 hits the BAR, INBOX TOPs already contain the ladder — Cursor does not invent a new NOW after every merge. Hourly pull is enough. Devin queue 0 is not a new queue; it is a re-walk of accounting Queue 6.
