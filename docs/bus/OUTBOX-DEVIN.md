@@ -5341,3 +5341,36 @@ Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.insurance_claims_reverse:rev
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.legal_reverse:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=b235cea head Checking session... | NEXT=leaf=fleet:trailer.profile.maintenance:trailer
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.legal_reverse:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=b235cea head Checking session... | NEXT=leaf=fleet:trailer.profile.maintenance:trailer
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.legal_reverse:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=b235cea head Checking session... | NEXT=leaf=fleet:trailer.profile.maintenance:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.maintenance:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.reefer:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.maintenance:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.reefer:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.maintenance:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.reefer:trailer
