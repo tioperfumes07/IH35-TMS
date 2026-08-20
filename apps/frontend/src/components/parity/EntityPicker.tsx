@@ -63,6 +63,8 @@ export type EntityPickerProps = {
   selectedOption?: EntityPickerOption | null;
   /** The selected canonical roster option accompanies its FK so inline consumers never rebuild a label from a UUID. */
   onChange: (value: string | null, option?: EntityPickerOption | null) => void;
+  /** Reports the canonical roster option after async resolution, including persisted initial values. */
+  onSelectedOptionResolved?: (option: EntityPickerOption | null) => void;
   /**
    * Offer the inline "+ Create ___" first row. Default true for kinds whose registry entry allows
    * it. FILTER call sites pass false — a filter narrows existing rows and must not create one.
@@ -104,6 +106,7 @@ export function EntityPicker({
   value,
   selectedOption,
   onChange,
+  onSelectedOptionResolved,
   allowCreate = true,
   nestedInDrawer = false,
   enabled = true,
@@ -185,6 +188,12 @@ export function EntityPicker({
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
   const createOffered = allowCreate && config.inlineCreate.available;
+  const resolvedSelectedOption = scopedValue
+    ? options.find((option) => option.value === scopedValue && option.label !== scopedValue) ?? null
+    : null;
+  useEffect(() => {
+    onSelectedOptionResolved?.(resolvedSelectedOption);
+  }, [onSelectedOptionResolved, resolvedSelectedOption]);
   const rosterShown = options.length;
   const rosterLimit = entityPickerListLimit(kind, {
     search: rosterSearch,
