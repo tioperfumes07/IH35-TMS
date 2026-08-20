@@ -2958,3 +2958,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=customers:customers.modal.customer_edit:connectivity
+Devin-A | LIVE PASS | leaf=customers:customers.modal.customer_edit:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=69d479b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'customers' | NEXT=leaf=customers:customers.modal.fmcsaverification:connectivity
+Devin-A | LIVE PASS | leaf=customers:customers.modal.customer_edit:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=69d479b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'customers' | NEXT=leaf=customers:customers.modal.fmcsaverification:connectivity
+Devin-A | LIVE PASS | leaf=customers:customers.modal.customer_edit:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=69d479b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'customers' | NEXT=leaf=customers:customers.modal.fmcsaverification:connectivity
