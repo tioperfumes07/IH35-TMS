@@ -14600,3 +14600,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=accounting:bill_payments.create:ap_bill
+Devin-A | LIVE PASS | leaf=accounting:bill_payments.create:ap_bill | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'Bill Payment' | NEXT=leaf=accounting:bill_payments.list:ap_bill
+Devin-A | LIVE PASS | leaf=accounting:bill_payments.create:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'Bill Payment' | NEXT=leaf=accounting:bill_payments.list:ap_bill
