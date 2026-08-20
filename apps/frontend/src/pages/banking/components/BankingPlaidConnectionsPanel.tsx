@@ -55,9 +55,11 @@ function matchedLabel(t: PlaidBankTransaction) {
     return <EntityLink kind="load" id={t.matched_load_id} label={entityLabel(null, t.matched_load_id, "Load")} />;
   }
   if (t.matched_kind === "settlement" && t.matched_settlement_id) {
-    return entityLabel(null, t.matched_settlement_id, "Settlement");
+    return <EntityLink kind="settlement" id={t.matched_settlement_id} label={entityLabel(t.matched_settlement_display_id, t.matched_settlement_id, "Settlement")} />;
   }
-  if (t.matched_kind === "bill" && t.matched_bill_id) return entityLabel(null, t.matched_bill_id, "Bill");
+  if (t.matched_kind === "bill" && t.matched_bill_id) {
+    return <EntityLink kind="bill" id={t.matched_bill_id} label={entityLabel(t.matched_bill_number, t.matched_bill_id, "Bill")} />;
+  }
   return "Unmatched";
 }
 

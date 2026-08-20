@@ -76,6 +76,8 @@ export type PlaidBankTransaction = {
    * EntityLink label instead of a raw UUID or dropping the reference. */
   matched_bill_number?: string | null;
   matched_settlement_id: string | null;
+  /** Entity-scoped driver_finance.settlements.display_id for mounted reverse drills. */
+  matched_settlement_display_id?: string | null;
   /** EXPENSE column-wave: reconciliation.routes.ts now selects this back; previously omitted, so a
    * transaction matched only to an expense showed as unmatched in the Reconciliation Workspace. */
   matched_expense_id?: string | null;
