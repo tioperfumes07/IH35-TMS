@@ -574,7 +574,6 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             bt.id::text AS bank_transaction_id,
             bt.transaction_date::text AS transaction_date,
             bt.description,
-            COALESCE(NULLIF(TRIM(bt.description), ''), NULLIF(TRIM(bt.merchant_name), '')) AS bank_transaction_name,
             bt.amount_cents::bigint AS amount_cents,
             bt.is_credit,
             bt.category_kind,
