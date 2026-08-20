@@ -216,6 +216,11 @@ export function BillsPage() {
   // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  // CLS-BILLS-CHROME-TOOLBAR-SEARCH: chrome.toolbar_search (Required qbo_chrome) had no search
+  // input on this page's own surface — every sibling accounting list (Receipts/Payments/Bill
+  // Payments/Invoices/etc.) has one. Client-side over the already-loaded rows (server list caps at
+  // 200, same rows already in memory) — bill number, vendor name, memo.
+  const [search, setSearch] = useState("");
   // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
   // Keep vendor_id URL-synced for aging drill same-route / back-forward.
   const vendorId = searchParams.get("vendor_id") ?? "";
@@ -299,6 +304,15 @@ export function BillsPage() {
     let next = category
       ? all.filter((bill) => bill.id === deepLinkBillId || billMatchesCategory(bill, category))
       : [...all];
+    const trimmedSearch = search.trim().toLowerCase();
+    if (trimmedSearch) {
+      next = next.filter((bill) => {
+        if (bill.id === deepLinkBillId) return true;
+        return [bill.bill_number, bill.vendor_name, bill.memo]
+          .filter(Boolean)
+          .some((field) => String(field).toLowerCase().includes(trimmedSearch));
+      });
+    }
     if (deepLinkBillId) {
       const idx = next.findIndex((bill) => bill.id === deepLinkBillId);
       if (idx > 0) {
@@ -307,7 +321,7 @@ export function BillsPage() {
       }
     }
     return next;
-  }, [billsQuery.data?.rows, category, deepLinkBillId]);
+  }, [billsQuery.data?.rows, category, deepLinkBillId, search]);
 
   const billKpis = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
@@ -547,6 +561,16 @@ export function BillsPage() {
         onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="bills"
         dataAttributes={{ "data-bills-filter-toolbar": "collapsed" }}
+        searchSlot={
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Bill # or vendor"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+            aria-label="Search bills"
+            data-testid="bills-search-input"
+          />
+        }
       >
         <div className="flex flex-wrap items-end gap-3" data-testid="bills-entity-filters">
           <label className="text-[11px] text-slate-600">
