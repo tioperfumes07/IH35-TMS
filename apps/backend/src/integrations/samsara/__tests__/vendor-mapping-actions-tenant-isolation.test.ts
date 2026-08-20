@@ -42,7 +42,7 @@ describe("vendor-mapping-actions.routes tenant isolation", () => {
       payload: {
         operating_company_id: "22222222-2222-4222-8222-222222222222",
         samsara_driver_id: "samsara-driver-2",
-        qbo_vendor_id: "vendor-2",
+        vendor_id: "33333333-3333-4333-8333-333333333333",
       },
     });
 
@@ -50,9 +50,14 @@ describe("vendor-mapping-actions.routes tenant isolation", () => {
     expect(res.json()).toMatchObject({ error: "forbidden" });
   });
 
+  // P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: link now resolves the canonical mdata.vendors row FIRST
+  // (this test's 2nd mocked query) before touching the mdata.qbo_vendors mirror (3rd query) -- one
+  // extra query in the sequence vs. the pre-fix version, same downstream write/audit shape.
   it("accepts matching tenant payload and writes audit row", async () => {
+    const vendorUuid = "44444444-4444-4444-8444-444444444444";
     mockQuery
       .mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ id: vendorUuid, qbo_vendor_id: "QBO-V-1" }], rowCount: 1 })
       .mockResolvedValueOnce({ rows: [{ id: "vendor-1", qbo_id: "QBO-V-1" }], rowCount: 1 })
       .mockResolvedValueOnce({ rows: [{ driver_id: "driver-1", qbo_vendor_id: null }], rowCount: 1 })
       .mockResolvedValueOnce({ rows: [], rowCount: 1 })
@@ -65,7 +70,7 @@ describe("vendor-mapping-actions.routes tenant isolation", () => {
       payload: {
         operating_company_id: "11111111-1111-4111-8111-111111111111",
         samsara_driver_id: "samsara-driver-1",
-        qbo_vendor_id: "QBO-V-1",
+        vendor_id: vendorUuid,
       },
     });
 

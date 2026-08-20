@@ -64,10 +64,14 @@ export async function fetchVendorMappingIntegrity(companyId: string): Promise<Ve
   };
 }
 
+// P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: link/dedupe address the canonical mdata.vendors row
+// (vendor_id / canonical_vendor_id) instead of a hand-typed QBO-mirror id -- the backend resolves
+// the linked qbo_vendor_id server-side. confirm-mismatch is unchanged; its value is a system-detected
+// candidate the page renders read-only, never a hand-typed field.
 export async function linkVendorMapping(payload: {
   operating_company_id: string;
   samsara_driver_id: string;
-  qbo_vendor_id: string;
+  vendor_id: string;
 }) {
   return apiRequest("/api/v1/samsara/vendor-mapping/link", { method: "POST", body: payload });
 }
@@ -75,7 +79,7 @@ export async function linkVendorMapping(payload: {
 export async function dedupeVendorMapping(payload: {
   operating_company_id: string;
   samsara_driver_id: string;
-  canonical_qbo_vendor_id: string;
+  canonical_vendor_id: string;
   deprecated_qbo_vendor_ids: string[];
 }) {
   return apiRequest("/api/v1/samsara/vendor-mapping/dedupe", { method: "POST", body: payload });
