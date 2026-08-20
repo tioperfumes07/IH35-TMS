@@ -1516,3 +1516,26 @@ complete. Seven PRs shipped this pass: #11970 (vendors), #11985 (fleet), #12016 
 changed in any of them; every cell wiring was already real, only the Box-3 credit was missing.
 Continuing to watch for new unpaid cells as leaves/columns evolve; standing by for the next NOW
 directive or resuming the money-lane sibling-writer-diff sweep. No idle gaps.
+
+2026-08-20T13:25Z CC-1 | ACCT-F5642 SHIPPED (PR #12122, merged 1a21d178) -- the forward-posting
+sibling of ACCT-F5641, explicitly flagged in that findings own REMAINING note. postDepreciation books
+every depreciation JE on the TITLE-HOLDER (owner_operating_company_id), not the assets own operating
+company, whenever the two differ (FLT-04) -- and the asset rows own asset_account_id/
+accum_depr_account_id were set up to resolve in THAT owner companys chart of accounts, the same way
+depreciation already posts against them there. postOwnedAssetDisposal posted its own disposal JE
+under input.operatingCompanyId unconditionally -- for a cross-entity asset this creates
+journal_entry_postings rows scoped to the WRONG company referencing account_ids that live in a
+DIFFERENT companys catalogs.accounts, a cross-entity data-integrity violation (or an outright failed
+insert, depending on FK enforcement), not merely a missing-reversal gap like F5641s. Real-world
+consequence: disposing a leased/cross-entity asset would either fail outright or silently post a
+disposal JE under the operators books referencing the title-holders account_ids, corrupting the
+operators trial balance and leaving the title-holders actual asset/accumulated-depreciation balances
+never zeroed by the disposal. Live-checked: still exactly 1 active fixed_assets row today, owner ==
+operating (TRK/TRK) -- same as F5641s check, hasnt fired live yet but sits directly under the same
+ACCT-F163 USMCA-as-lessee landmine. This closes the last of the three FLT-04 sibling writers
+(postDepreciation already correct, reverseSchedule fixed in F5641, postOwnedAssetDisposal fixed here)
+-- the full fixed-asset cross-entity money-posting family is now consistent. Fixed by resolving the
+same booksCompanyId postDepreciation/reverseSchedule resolve, switching the RLS GUC + account-role
+resolution (gain/loss, cash-like proceeds) + open-period lock + JE header + postings + source links to
+it, restoring input.operatingCompanyId before the fixed_asset_disposals INSERT and fixed_assets status
+UPDATE (both stay scoped to the assets own home company).
