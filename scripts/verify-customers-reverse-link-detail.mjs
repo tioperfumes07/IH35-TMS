@@ -21,6 +21,8 @@ const CHECKS = [
   { name: "unit EntityLink", pattern: /kind="unit"/ },
   { name: "invoice EntityLink", pattern: /kind="invoice"/ },
   { name: "vendor EntityLink (factoring)", pattern: /kind="vendor"/ },
+  { name: "parent customer EntityLinkOrTombstone", pattern: /data-testid="customer-parent-record-link"/ },
+  { name: "sub-customer EntityLinkOrTombstone", pattern: /customer-sub-record-link-/ },
 ];
 
 function run(src) {
