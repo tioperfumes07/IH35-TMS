@@ -1085,3 +1085,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=337ab0c | mutation=none | NEXT=finance.nav.projections
+Devin-A | LIVE PASS | module=finance | leaf=nav.scenarios | URL=https://app.ih35dispatch.com/finance/scenarios | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/finance/scenarios ; marker 'Scenarios' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=337ab0c | mutation=none | NEXT=finance.nav.break_even
