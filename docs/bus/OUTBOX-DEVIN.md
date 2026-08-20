@@ -3694,3 +3694,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=insurance:insurance.wizard.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.wizard.policy_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:landing:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.wizard.policy_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:landing:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.wizard.policy_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:landing:connectivity
