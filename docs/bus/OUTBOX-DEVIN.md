@@ -9276,3 +9276,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.fuel.expensive_states.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.fuel.expensive_states.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/expensive-states | healthz=27db04d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/expensive-states marker 'lists' | NEXT=leaf=lists:catalog.maintenance.air_bag_catalog.list:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.fuel.expensive_states.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/expensive-states | healthz=27db04d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/expensive-states marker 'lists' | NEXT=leaf=lists:catalog.maintenance.air_bag_catalog.list:qbo_chrome
