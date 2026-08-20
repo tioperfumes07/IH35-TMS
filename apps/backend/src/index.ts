@@ -457,6 +457,7 @@ import { registerHealthDeepRoutes } from "./admin/health-deep.routes.js";
 import { registerSmokeProbeRoutes } from "./admin/smoke-probe.routes.js";
 import { registerAdminJobsRoutes } from "./admin/admin-jobs.routes.js";
 import { registerVendorCreditsRoutes } from "./accounting/vendor-credits.routes.js";
+import { registerCreditMemosRoutes } from "./accounting/credit-memos.routes.js";
 import { registerDataImportAdminRoutes } from "./admin/data-import.routes.js";
 import { resolveMonorepoRoot } from "./lib/monorepo-root.js";
 import { attachSentryRequestScope, initBackendSentry, registerSentryFastifyErrorHandler } from "./lib/sentry.js";
@@ -785,6 +786,7 @@ async function main() {
   await registerSmokeProbeRoutes(app);
   await registerAdminJobsRoutes(app);
   await registerVendorCreditsRoutes(app);
+  await registerCreditMemosRoutes(app);
   await registerMigrationStatusRoutes(app);
   await registerAdminObservabilityRoutes(app);
   await registerDataImportAdminRoutes(app);

@@ -102,6 +102,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
 
   // Invoices ▾ — AR / receivables (ACCT-F5050 — promoted from More ▾)
   { label: "Invoices", path: "/accounting/invoices", section: "invoices" },
+  { label: "Credit memos", path: "/accounting/credit-memos", section: "invoices" },
   { label: "Receive Payment", path: "/accounting/payments", section: "invoices" },
   { label: "Undeposited Funds", path: "/accounting/undeposited-funds", section: "invoices" },
   { label: "AR Aging", path: "/reports/ar-aging", section: "invoices" },
