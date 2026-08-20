@@ -1903,3 +1903,25 @@ on correction -- needs a re-close semantics design decision (reverse-first vs. c
 Board closeout shipped in this same PR cycle. REMAINING: the 2 owner-decision items above stay OPEN
 pending an owner ruling. Continuing the money-lane sweep non-stop, no idle gaps, always fix never
 defer.
+
+2026-08-20T18:46Z CC-1 | ACCT-F5657 SHIPPED (PR #13053, merged e9834148) -- dedicated driver-finance
+escrow/deduction-cap correctness audit, a fresh angle. 3 unrelated bugs fixed. (1) HIGHEST severity,
+real double-drain risk: releaseDriverEscrowSeparation paid accounting.escrow_accounts on a separation
+release but never decremented the driver-facing driver_finance.escrow_balances/escrow_ledger -- the
+exact one-way-sync mistake ESC-FORFEIT-SPLIT already fixed once for the sibling forfeit path. A driver
+released at separation kept reading a stale (unreduced) driver-facing balance; a LATER forfeit's
+over-draw guard reads that same stale store, so a driver already paid $2,500 could still forfeit
+against a "balance" that reads $2,500, driving accounting.escrow_accounts.balance_cents negative and
+double-draining the same escrow dollars. Live today under the standing "all flags ON" posture. Fixed
+by mirroring ESC-FORFEIT-SPLIT exactly, same transaction, same atomicity guarantee. (2)
+recordSettlementDisbursement had its bind array in the wrong order vs its own SQL text's $1/$2 --
+matched zero rows on every pay-run close ever (pre-dates this session, shipped 2026-07-13), silently
+leaving every settlement's disbursement/bank-linkage unrecorded. Swapped the bind order. (3)
+checkDriverDebt selected a column that has never existed on recompute_driver_debt (wrong name AND
+wrong units -- dollars vs cents), swallowed by a bare catch{} -- the GAP-14-DRIVER-DEBT pre-dispatch
+warning has never fired for any driver, ever. Fixed the column name + cents conversion, upgraded the
+swallowed catch to a warning. New guard + 2 new tests. Board closeout shipped in this same PR cycle.
+REMAINING: a 4th, lower-severity finding from the same audit (stale $2,000 frontend escrow-cap
+display + an owner-facing proof script, owner ruling C2b already raised the real cap to $2,500 -- the
+backend is correct, only 2 display/attestation surfaces are stale) is NOT fixed here; picking it up as
+a follow-up. Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
