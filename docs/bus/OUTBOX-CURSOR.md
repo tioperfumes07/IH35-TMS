@@ -554,3 +554,4 @@ shipped #9611 SAF-INTEGRITY-CSA-MUTATION-SILENT-FAIL (+claim 4054) · #9609 wave
 
 - 2026-08-19T15:51Z Cursor LEAVES · `roster.kind.trailers:reverse_link` LIVE PASS (USMCA-T01 EntityLink) · AUDIT 43360 · Box4 pending matrix recompute · Live=BLOCKED until tally
 2026-08-19T16:28Z Cursor FO WIRING-LEAFRE-HONEST shipping
+Codex HANDOFF | OPEN BANKING-CREDIT-MEMO-DRAWER-MATRIX-INVENTORY-MISSING | owner=Cursor | files=CreditMemosPage.tsx:302 + verify-surface-bar-create-drawer-inventory.mjs:102 | dependency=#10387 | BLOCKS=URGENT14-ACCOUNTING-SURFACE-INVENTORY | GO
