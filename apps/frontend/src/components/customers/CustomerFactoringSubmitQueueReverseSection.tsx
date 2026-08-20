@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { listSubmissionQueue } from "../../api/factoring";
 import { formatUsdCents } from "../../lib/money";
-import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 // LINK-F5171/LINK-F5181 — factoring:submit.queue reverse gap. listSubmissionQueue already selects
 // real customer_id/load_id FKs off accounting.invoices; LINK-F5181 added a customer_id filter,
@@ -35,12 +35,16 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
         <ul className="mt-2 space-y-1">
           {items.slice(0, 5).map((item) => (
             <li key={item.invoice_id}>
-              <EntityLink
-                kind="factoring_submit_queue_customer"
-                id={customerId}
-                label={`${entityLabel(item.display_id, item.invoice_id, "Invoice")} · ${formatUsdCents(item.total_cents)} · ${item.is_submittable ? "Docs OK" : "Missing docs"}`}
-                className="text-xs font-semibold text-slate-700 hover:underline"
-              />
+              <span className="text-xs font-semibold text-slate-700">
+                <EntityLinkOrTombstone
+                  kind="invoice"
+                  id={item.invoice_id}
+                  name={item.display_id}
+                  noun="Invoice"
+                  className="hover:underline"
+                />
+                {` · ${formatUsdCents(item.total_cents)} · ${item.is_submittable ? "Docs OK" : "Missing docs"}`}
+              </span>
             </li>
           ))}
         </ul>
