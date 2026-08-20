@@ -1,6 +1,8 @@
-# INBOX-CC-2 · THROUGH 14 · NO ASK
+# INBOX-CC-2 · THROUGH 14 · EVERY PICKER LIVE · NO HALF-DONE
 
 **Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. Hourly also `OUTBOX-CC-2.md` first 20.
+
+Live-check **every** unpaid `picker_law` cell on the current module in the app. A sample is not done. Rebuild on FAIL.
 
 ## You until 14 picker_law live-checked
 

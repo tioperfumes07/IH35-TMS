@@ -1,6 +1,8 @@
-# INBOX-DEVIN-A · THROUGH 14 · NO ASK
+# INBOX-DEVIN-A · THROUGH 14 · FULL 4/4 · NO HALF-DONE
 
 **Jorge is not the messenger.** Pull main. This TOP + `CODER-INSTRUCTIONS-NOW.md`. chrome=9227.
+
+A module is **not** Live-complete until **every** Required `leaf:col` has `LIVE PASS` (money columns included). Partial Clicked is not done. Do not stop a module early.
 
 ## You until 14 are Clicked=Required
 

@@ -1,6 +1,8 @@
-# INBOX-CODEX · THROUGH 14 · NO ASK
+# INBOX-CODEX · THROUGH 14 · FULL REVERSE+CONN · NO HALF-DONE
 
 **Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. No 9227. FAST-MERGE.
+
+Do not leave a module with unpaid `reverse_link` or `connectivity` Required cells. Memo-only is not done.
 
 ## You until 14 reverse+CONN Built unpaid=0
 

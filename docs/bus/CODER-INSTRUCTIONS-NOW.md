@@ -6,11 +6,15 @@ USMCA only. **Fuel never. eld never.** No TMS→QBO write-back. No owner gate. A
 
 **Forbidden stale queues (do not run):** WAVE1-THEN-2 · WAVE 1 banking-first · 8-by-06:00 · 25/25 picker re-loop · poll INBOX idle · Ignore Box 4 · `devin-a/live-outbox-proofs-32` · `git reset --soft origin/main` · extra `devin-a-live-loop` processes.
 
-## 100% (do not lie)
+## 100% (do not lie) — HALF-DONE IS FORBIDDEN
 
-Fully-Wired **1–12** on that module (`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`). Item 12 = Live Chrome. Column **12 Clicked** is green only when **Clicked = every Required cell**. The big Clicked KPI is not 100%. Honest Built: no `leafRe:.*` / `|.*` / word blankets. Do not add scoreboard columns.
+Fully-Wired **1–12** on that module (`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`), **every Required cell 4/4**.
 
-A cell ✓✓✓✕ is not done.
+**Not done:** Clicked KPI moved · some LIVE PASS · `@matrix-built` · picker sample · CI green · “almost” · one column paid while others ✕.
+
+**Done for a module (only then advance that module in your seat):** every Required `leaf:col` has honest Built (1–11 in your columns) **and** Devin Clicked (item 12) on **all** Required cells including money. ✓✓✓✕ is not done. Item 12 is last. Say `Live=BLOCKED` until Clicked = Required.
+
+Do not skip money, pickers, reverse, chrome, or Live Chrome to “finish faster.” Honest Built: no `leafRe:.*` / `|.*` / word blankets. Do not add scoreboard columns.
 
 ## Sequence (locked until finished — do not reorder)
 

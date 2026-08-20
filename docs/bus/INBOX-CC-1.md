@@ -1,6 +1,8 @@
-# INBOX-CC-1 · THROUGH 14 · NO ASK
+# INBOX-CC-1 · THROUGH 14 · FULL MONEY BUILT · NO HALF-DONE
 
 **Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. FAST-MERGE every PR.
+
+Do not leave a module while unpaid money Required cells remain. Header-only / chrome-only / EntityLink-only is not done.
 
 ## You until 14 money Built is unpaid=0
 
