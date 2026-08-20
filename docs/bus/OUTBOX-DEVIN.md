@@ -10193,3 +10193,11 @@ Devin-A | LIVE PASS | leaf=reports:cat.multi_company:qbo_chrome | USMCA | URL=ht
 Devin-A | LIVE PASS | leaf=reports:cat.ops_dispatch:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/categories/ops-dispatch | healthz=cd306d3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/categories/ops-dispatch marker 'reports' | NEXT=leaf=reports:cat.safety:qbo_chrome
 Devin-A | LIVE STARVED | leaf=reports:cat.safety:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/categories/safety | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/categories/safety healthz=unknown head Checking session... | NEXT=leaf=reports:cat.tax_reg:qbo_chrome
 Devin-A | LIVE PASS | leaf=reports:cat.tax_reg:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/categories/tax-reg | healthz=2b859a1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/categories/tax-reg marker 'reports' | NEXT=leaf=reports:cat.vendors:qbo_chrome
+Devin-A | LIVE STARVED | leaf=reports:cat.vendors:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/categories/vendors | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/categories/vendors healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=reports:chrome.toolbar_gear:qbo_chrome
