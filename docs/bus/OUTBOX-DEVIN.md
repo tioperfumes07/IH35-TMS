@@ -12205,3 +12205,25 @@ Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=form_425:tab.history:connectivity
 Devin-A | LIVE PASS | leaf=form_425:tab.history:connectivity | USMCA | URL=https://app.ih35dispatch.com/425c?tab=history | healthz=9ced896 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/425c?tab=history marker 'History' | NEXT=leaf=users:detail.drawer.dispatcher_safety_event:connectivity
+Devin-A | LIVE STARVED | leaf=users:detail.drawer.dispatcher_safety_event:connectivity | USMCA | URL=https://app.ih35dispatch.com/users/:id | healthz=9ced896 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/users/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=users:role_change:connectivity
+Devin-A | LIVE STARVED | leaf=users:detail.drawer.dispatcher_safety_event:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/users/:id | healthz=9ced896 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/users/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=users:role_change:connectivity
