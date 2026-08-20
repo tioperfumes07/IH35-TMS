@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { listDriverVendorMerges } from "../../api/data-infra";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 // LINK-F5171/LINK-F5183 — factoring:home.vendor_merges reverse gap, driver side. driver_id is a
 // real FK on mdata.driver_vendor_merges with a pre-built index
@@ -45,13 +45,21 @@ export function DriverVendorMergesReverseSection({
       {merges.length > 0 ? (
         <ul className="mt-2 space-y-1">
           {merges.slice(0, 5).map((m) => (
-            <li key={m.id}>
-              <EntityLink
-                kind="factoring_vendor_merges_driver"
-                id={driverId}
-                label={`${entityLabel(m.from_vendor_name, m.from_qbo_vendor_id, "Vendor")} → ${entityLabel(m.to_vendor_name, m.to_qbo_vendor_id, "Vendor")} · ${formatDateUS(m.merged_at)}`}
-                className="text-xs font-semibold text-slate-700 hover:underline"
+            <li key={m.id} className="flex flex-wrap items-center gap-1 text-xs text-slate-700">
+              <EntityLinkOrTombstone
+                kind="vendor"
+                id={m.from_vendor_id}
+                name={m.from_vendor_name}
+                noun="Vendor"
               />
+              <span aria-hidden="true">→</span>
+              <EntityLinkOrTombstone
+                kind="vendor"
+                id={m.to_vendor_id}
+                name={m.to_vendor_name}
+                noun="Vendor"
+              />
+              <span>· {formatDateUS(m.merged_at)}</span>
             </li>
           ))}
         </ul>
