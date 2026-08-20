@@ -10386,3 +10386,23 @@ Devin-A | LIVE STARVED | leaf=reports:runner.fuel_price_variance:connectivity | 
 Devin-A | LIVE STARVED | leaf=reports:runner.fuel_price_variance:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/fuel-price-variance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/run/fuel-price-variance healthz=unknown head Checking session... | NEXT=leaf=reports:runner.fuel_savings:connectivity
 Devin-A | LIVE STARVED | leaf=reports:runner.fuel_savings:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/run/fuel-savings | healthz=1495260 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/run/fuel-savings healthz=1495260 head Checking session... | NEXT=leaf=reports:runner.hos_violations:connectivity
 Devin-A | LIVE STARVED | leaf=reports:runner.fuel_savings:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/fuel-savings | healthz=1495260 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/run/fuel-savings healthz=1495260 head Checking session... | NEXT=leaf=reports:runner.hos_violations:connectivity
+Devin-A | LIVE STARVED | leaf=reports:runner.hos_violations:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/run/hos-violations | healthz=1495260 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/reports/run/hos-violations head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading…
+FAQ | NEXT=leaf=reports:runner.ifta_quarterly:connectivity
+Devin-A | LIVE STARVED | leaf=reports:runner.hos_violations:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/hos-violations | healthz=1495260 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/reports/run/hos-violations head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading…
+FAQ | NEXT=leaf=reports:runner.ifta_quarterly:connectivity
