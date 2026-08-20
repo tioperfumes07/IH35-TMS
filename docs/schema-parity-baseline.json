@@ -322,6 +322,19 @@
       "type",
       "updated_at"
     ],
+    "accounting.credit_memo_applications": [
+      "applied_at",
+      "applied_by_user_id",
+      "applied_cents",
+      "credit_memo_id",
+      "id",
+      "idempotency_key",
+      "invoice_id",
+      "operating_company_id",
+      "voided_at",
+      "voided_by_user_id",
+      "voided_reason"
+    ],
     "accounting.credit_memos": [
       "amount_applied_cents",
       "amount_cents",
@@ -470,6 +483,7 @@
       "is_active",
       "is_sample_data",
       "journal_entry_id",
+      "legal_matter_id",
       "linked_work_order_uuid",
       "load_id",
       "memo",
@@ -6935,6 +6949,7 @@
       "customer_code",
       "customer_name",
       "customer_type",
+      "customer_type_id",
       "deactivated_at",
       "default_billing_miles_basis",
       "default_detention_rate",
