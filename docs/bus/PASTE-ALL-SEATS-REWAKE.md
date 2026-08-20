@@ -1,3 +1,0 @@
-# SUPERSEDED
-
-Do **not** run. Current: `PASTE-ALL-SEATS-NOW.md` + `CODER-INSTRUCTIONS-NOW.md`.

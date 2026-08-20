@@ -1,3 +1,0 @@
-# SUPERSEDED 8H launch pack
-
-Current: `CODER-INSTRUCTIONS-NOW.md`. URGENT-14.
