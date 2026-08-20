@@ -1881,6 +1881,14 @@ export function CustomerDetailPage() {
                 ),
               },
               {
+                key: "trailer_number",
+                label: "Trailer",
+                sortable: true,
+                render: (load) => (
+                  <EntityLinkOrTombstone kind="trailer" id={load.trailer_id} name={load.trailer_number} noun="Trailer" />
+                ),
+              },
+              {
                 key: "rate_total_cents",
                 label: "Rate",
                 sortable: true,

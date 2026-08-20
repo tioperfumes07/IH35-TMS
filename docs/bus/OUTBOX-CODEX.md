@@ -1,3 +1,5 @@
+Codex | WORKING | NOW=customers reverse FE | NEXT=vendors reverse | GO
+Codex | ACK | STANDARD=URGENT-6 | NOW=customers reverse FE | NEXT=vendors reverse | GO
 Codex | 2026-08-12 20:17 CT | CANON=FINAL-WEEKEND-FULL-WIRING | NEXT=non-hotfile create-surface FE
 Codex | surface=safety/external-fines/create | SHIPPED #6307 @ dfb3491 | NEXT=non-hotfile create-surface FE
 Codex | surface=safety/internal-fines/create | SHIPPED #6309 @ 94a05b3 | NEXT=non-hotfile create-surface FE
@@ -971,6 +973,10 @@ Codex | LIVE FAIL program:tracker-historical-gated-copy | evidence=Tracker rows 
 Codex | SHIPPED LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY | PR#8015 @ af072c11d | gate=exit0 | merge=admin-squash | main=verified | NEXT=system:remaining-live-leaves
 Codex | LIVE CLAIM system:remaining-tabs-and-health | entity=USMCA | mutation=none
 Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | FAST-MERGE | FINDING=CUSTOMER-RECOURSE-INVOICE-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+15/15-selftest | merged #10509 @ 240757e6c | main=verified | neon=N/A | NEXT=resident supervisor inbox/code cycle
+Codex | WORKING | NOW=DRV-PROFILE-OPS-REVERSE | file=apps/frontend/src/pages/drivers/operations/*HistoryView.tsx | GO
+Codex | FAST-MERGE | FINDING=DRV-ACCIDENT-LOAD-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+16/16-selftest | merged #10519 @ 9d0cafcd4 | main=verified | neon=N/A | NEXT=resident supervisor inbox/code cycle
+Codex | FAST-MERGE | FINDING=DRV-PROFILE-WO-TOMBSTONE-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+40/40-selftest | merged #10533 @ c7a2b269b | main=verified | neon=N/A | NEXT=resident supervisor inbox/code cycle
 Codex | WORKING | NOW=CUSTOMER-RECOURSE-INVOICE-DEAD-DRILL | file=apps/frontend/src/components/customers/CustomerFactoringRecourseReverseSection.tsx | GO
 Codex | SHIPPED DISPATCH-PRIMARY-INLINE-ASSIGNMENT-DEAD-DRILLS | PR#10260 @ 2dbb0a911 | gate=exit0 | merge=admin-squash | main=verified | NEXT=fleet Band B trailer.profile reverse
 Codex | WORKING | NOW=drivers reverse FE | NEXT=customers reverse | GO
