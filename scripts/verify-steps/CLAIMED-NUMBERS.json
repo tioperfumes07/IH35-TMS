@@ -2854,6 +2854,101 @@
     "claimed_by": "cc-3",
     "purpose": "verify-load-cancellations-report"
   },
+  "4156": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-accounting-qbo-chrome-modals-batch1"
+  },
+  "4157": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-accounting-qbo-chrome-modals-batch2"
+  },
+  "4158": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-customers-qbo-chrome-leaves"
+  },
+  "4159": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-dispatch-qbo-chrome-leaves"
+  },
+  "4160": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-drivers-qbo-chrome-leaves"
+  },
+  "4161": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-factoring-batch-wizard-qbo-chrome"
+  },
+  "4162": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-factoring-qbo-chrome-surfaces"
+  },
+  "4163": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-finance-qbo-chrome-leaves"
+  },
+  "4164": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-fleet-qbo-chrome-leaves"
+  },
+  "4165": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-insurance-qbo-chrome-create-leaves"
+  },
+  "4166": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-insurance-qbo-chrome-toolbar-filter"
+  },
+  "4167": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-inventory-parts-create-qbo-chrome"
+  },
+  "4168": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-legal-qbo-chrome-leaves"
+  },
+  "4169": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-qbo-chrome-leaves"
+  },
+  "4170": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-reports-qbo-chrome-leaves"
+  },
+  "4171": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-safety-dispatch-qbo-chrome-toolbar-filter"
+  },
+  "4172": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-safety-qbo-chrome-leaves"
+  },
+  "4173": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-tasks-program-cashflow-users-qbo-chrome"
+  },
+  "4174": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-vendors-qbo-chrome-leaves"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -4842,5 +4937,5 @@
       "4127-verify-wo-cancellation-reason-picker-law.mjs"
     ]
   },
-  "total_claimed": 1182
+  "total_claimed": 1201
 }
