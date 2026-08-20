@@ -26,6 +26,7 @@ const guards = [
   "verify-bills-bulk-void-reverses-gl.mjs",
   "verify-bills-membership-assert-full-coverage.mjs",
   "verify-cash-forecast-profile-reverse.mjs",
+  "verify-consolidated-eliminations-as-of-reconstruction.mjs",
   "verify-categorization-rule-apply-historical-not-dry-run.mjs",
   "verify-categorize-field-existence-checked.mjs",
   "verify-customer-payment-apply-nets-credit-memos.mjs",
