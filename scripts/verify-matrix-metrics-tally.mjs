@@ -168,6 +168,12 @@ function repoProblems() {
     if (!/frozenOps/.test(svc) || !/readyAbl/.test(svc) || !/isOpsReadyColumn/.test(svc)) {
       problems.push("module-matrix.service.ts must expose frozen ops READY (non-money, USMCA Clicked)");
     }
+    if (!svc.includes("parseOutboxClickedKeys") || !svc.includes("GITHUB_OUTBOX_CONTENTS")) {
+      problems.push("module-matrix.service.ts must parse OUTBOX Clicked and fetch origin/main via GitHub (docs/** deploy ignore)");
+    }
+    if (!/module=\(\[a-z0-9_-\]\+\)/.test(svc) && !svc.includes("module=([a-z0-9_-]+)")) {
+      problems.push("module-matrix.service.ts must salvage Devin module= + leaf= LIVE PASS lines");
+    }
   }
   if (!fs.existsSync(SYSTEM_VIEW)) problems.push(`MISSING ${SYSTEM_VIEW}`);
   else {

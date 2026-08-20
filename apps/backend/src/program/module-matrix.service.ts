@@ -52,7 +52,33 @@ const OUTBOX_CLICKED_FILES = [
   "docs/bus/OUTBOX-DEVIN.md",
   "docs/bus/OUTBOX-DEVIN-A.md",
   "docs/bus/OUTBOX-CODEX.md",
+  "docs/bus/OUTBOX-CURSOR.md",
 ];
+/** Render buildFilter ignores docs/** — Clicked must read origin/main OUTBOX at request time. */
+const GITHUB_OUTBOX_CONTENTS =
+  "https://api.github.com/repos/tioperfumes07/IH35-TMS/contents/";
+const CLICKED_COL_IDS = new Set([
+  "connectivity",
+  "reverse_link",
+  "picker_law",
+  "qbo_chrome",
+  "driver",
+  "unit",
+  "trailer",
+  "load",
+  "vendor",
+  "customer",
+  "gl_je",
+  "expense",
+  "ap_bill",
+  "invoice",
+  "payment",
+  "settlement",
+  "bank",
+  "factor",
+  "escrow",
+  "liability",
+]);
 const CLICKED_EXACT_N = /LIVE PASS\s*[·|-]\s*([1-3])\s+EXACT CELLS?/i;
 const MODALISH_LEAF_RE = /create|modal|drawer|wizard|popup|dialog|\bpicker\b/i;
 
@@ -1013,7 +1039,77 @@ function isModalishLeaf(leaf: RequiredLeaf): boolean {
 
 let clickedOutboxCache: { atMs: number; keys: Set<string> } | null = null;
 
-function loadOutboxClickedKeys(): Set<string> {
+function githubAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "ih35-tms-matrix-clicked",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  for (const raw of [process.env.TRACKER_BOT_TOKEN, process.env.GITHUB_TOKEN, process.env.GH_TOKEN]) {
+    const t = typeof raw === "string" ? raw.trim() : "";
+    if (t) {
+      headers.Authorization = `Bearer ${t}`;
+      break;
+    }
+  }
+  return headers;
+}
+
+/** Parse credited Clicked keys from one OUTBOX file. Exported for lockstep guards. */
+export function parseOutboxClickedKeys(text: string): Set<string> {
+  const keys = new Set<string>();
+  for (const line of text.split("\n")) {
+    if (!/LIVE PASS/i.test(line)) continue;
+    if (!isUsmcaClickedHay(line)) continue;
+    for (const m of line.matchAll(/leaf=([a-z0-9_-]+):([a-z0-9_.-]+):([a-z0-9_.-]+)/gi)) {
+      keys.add(`${m[1]}:${m[2]}:${m[3]}`.toLowerCase());
+    }
+    const mod = line.match(/\bmodule=([a-z0-9_-]+)/i);
+    const leaf = line.match(/\bleaf=([a-z0-9_.-]+)/i);
+    if (!mod || !leaf || leaf[1].includes(":")) continue;
+    const token = leaf[1];
+    const parts = token.split(".");
+    const last = parts[parts.length - 1]?.toLowerCase() ?? "";
+    const cells = (line.match(/\bcells=([^|]+)/i)?.[1] ?? "").toLowerCase();
+    const cols = new Set<string>();
+    let leafId = token;
+    if (CLICKED_COL_IDS.has(last) && parts.length >= 2) {
+      leafId = parts.slice(0, -1).join(".");
+      cols.add(last);
+    } else {
+      if (/reverse/.test(cells) || /reverse/.test(token)) cols.add("reverse_link");
+      if (/picker/.test(cells) || /picker/.test(token)) cols.add("picker_law");
+      if (/qbo_chrome/.test(cells) || /qbo_chrome/.test(token)) cols.add("qbo_chrome");
+      if (/entitylink|connectivity/.test(cells)) cols.add("connectivity");
+      if (cols.size === 0) cols.add("connectivity");
+    }
+    for (const col of cols) {
+      keys.add(`${mod[1]}:${leafId}:${col}`.toLowerCase());
+    }
+  }
+  return keys;
+}
+
+async function loadOutboxTextFromGithub(rel: string): Promise<string | null> {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 8000);
+  try {
+    const url = `${GITHUB_OUTBOX_CONTENTS}${rel}?ref=main`;
+    const res = await fetch(url, { headers: githubAuthHeaders(), signal: ac.signal });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { encoding?: string; content?: string };
+    if (body.encoding === "base64" && typeof body.content === "string") {
+      return Buffer.from(body.content.replace(/\n/g, ""), "base64").toString("utf8");
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function loadOutboxClickedKeys(): Promise<Set<string>> {
   const now = Date.now();
   if (clickedOutboxCache && now - clickedOutboxCache.atMs < MATRIX_CACHE_MS) {
     return clickedOutboxCache.keys;
@@ -1021,15 +1117,14 @@ function loadOutboxClickedKeys(): Set<string> {
   const keys = new Set<string>();
   for (const rel of OUTBOX_CLICKED_FILES) {
     const full = path.join(REPO_ROOT, rel);
-    if (!existsSync(full)) continue;
-    const text = readFileSync(full, "utf8");
-    for (const line of text.split("\n")) {
-      if (!/LIVE PASS/i.test(line)) continue;
-      if (!isUsmcaClickedHay(line)) continue;
-      for (const m of line.matchAll(/leaf=([a-z0-9_-]+):([a-z0-9_.-]+):([a-z0-9_.-]+)/gi)) {
-        keys.add(`${m[1]}:${m[2]}:${m[3]}`.toLowerCase());
-      }
+    if (existsSync(full)) {
+      for (const k of parseOutboxClickedKeys(readFileSync(full, "utf8"))) keys.add(k);
     }
+  }
+  const remote = await Promise.all(OUTBOX_CLICKED_FILES.map((rel) => loadOutboxTextFromGithub(rel)));
+  for (const text of remote) {
+    if (!text) continue;
+    for (const k of parseOutboxClickedKeys(text)) keys.add(k);
   }
   clickedOutboxCache = { atMs: now, keys };
   return keys;
@@ -1091,7 +1186,7 @@ export async function buildModuleMatrix(
     Promise.resolve(loadModuleProbes(moduleId)),
     Promise.resolve(loadGuardHits(moduleId)),
     Promise.resolve(loadWaveHits(moduleId)),
-    Promise.resolve(loadOutboxClickedKeys()),
+    loadOutboxClickedKeys(),
   ]);
 
   const moduleBucket = emptyTierBucket();
@@ -1711,7 +1806,7 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
       tipSha: tipSha(),
       orderSource: "docs/specs/scoreboard/matrix-module-order.json",
       honesty:
-        "FROZEN Required maps (no new leaves). READY Live✓ = USMCA Clicked+Built on every non-money Required cell. Miss C = unpaid Clicked. Box 4 Live is NOT ready. MONEY group parked (QBO books later). TRANSP clicks do not count.",
+        "Clicked reads origin/main OUTBOX (GitHub) because Render ignores docs/**. USMCA LIVE PASS. Prefer leaf=module:leafId:col; also credits module= + leaf= + cells=. Box 4 is not launch. TRANSP clicks do not count.",
       probeSource,
     },
   };

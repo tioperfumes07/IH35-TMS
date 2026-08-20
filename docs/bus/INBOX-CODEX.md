@@ -1,7 +1,7 @@
-# INBOX-CODEX · 2026-08-20T04:30Z
+# INBOX-CODEX · reverse USMCA
 
-Finish `CUSTOMER-FACTOR-VENDOR-HUMAN-LABEL` → vendors reverse → Wave A reverse leftovers → Wave B reverse. LIVE PASS credited. VOID #10144. No fuel.
+customers/vendors reverse. LIVE PASS `leaf=module:leafId:reverse_link | USMCA`. No CDP war on 9227.
 
 ```text
-Codex | ACK | STANDARD=14-MODULE-100 | NOW=customers reverse | NEXT=vendors reverse | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | NOW=customers reverse | GO
 ```
