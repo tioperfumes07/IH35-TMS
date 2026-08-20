@@ -1628,3 +1628,31 @@ defect class doesnt apply there. Fixed by adding FOR UPDATE to both SELECTs (loc
 the entire approve+post flow, same connection throughout -- not a second-connection bug, purely a
 missing lock) and removing the vacuous posting_batches check + its dead buildIdempotencyKey helper
 entirely rather than leaving it as misleading dead code.
+
+2026-08-20T15:42Z CC-1 | ACCT-F5647 SHIPPED (PR #12600, merged 1f660cef) -- driver-settlement void
+(canonical schema) / bank-recon accept-match writer sweep, continuing the ACCT-F5634..F5646 method.
+driver-settlement void came up clean: executeDriverSettlement (governance/void-cancel-executors.ts)
+already row-locks the settlement FOR UPDATE, reverses EVERY GL leg atomically on the same client (bill
++ bill_payment + deduction JE + advance/escrow legs), restores deductions/bucket balances, and runs
+TWO independent SQL reconciliation proofs that throw if anything does not tie to the cent before
+flipping status -- essentially airtight, honestly reported clean rather than manufacturing a finding.
+acceptMatchWithResolveDifference (accounting/bank-recon/match.service.ts, reached from three live
+routes) had no real duplicate-match protection: loadTransactions SELECT lacked FOR UPDATE, and the
+only guard (review_state==="matched" throw) read from that unlocked row; the final UPDATE clearing the
+line to matched was an unconditional blind write with no compare-and-swap either. Two near-simultaneous
+accept-match calls against the SAME bank_transaction_id but DIFFERENT ledger entries could both pass
+the unlocked check and both commit: two rows in reconciliation_matches for one bank line (the tables
+own uniqueness constraint includes ledger_entry_id, so different ledger entries pass cleanly), two
+different bill_payments/payments rows stamped with the same source_bank_transaction_id, and (if either
+had a variance) two independent difference JEs posted against the same bank cash account -- a silent
+GL overstatement invisible to reconciliation forever since bank_transactions only ever shows one of
+the two matches (last UPDATE wins). Confirmed live on Neon: zero bank_transaction_ids currently have
+more than one distinct ledger_entry_id in reconciliation_matches -- hasnt fired yet but fully
+reachable. Fixed by adding an opt-in forUpdate parameter to loadTransaction (locking only the write
+path, keeping the read-only candidate-search/preview callers lock-free) and a WHERE
+review_state <> matched compare-and-swap guard on the clearing UPDATE, with the zero-row race case
+surfaced as the existing bank_transaction_already_matched error. Also flagged (not fixed, zero current
+blast radius): POST /settlement-posting/reverse is a live-mounted reversal endpoint for a poster
+explicitly retired from HTTP in SET-01 -- confirmed via Neon that no settlement was ever posted
+through that path, so dead-code-adjacent today but would misbehave if reactivated -- worth a follow-up
+cleanup pass.
