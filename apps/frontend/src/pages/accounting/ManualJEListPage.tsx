@@ -23,9 +23,36 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-function humanMemo(memo: string | null | undefined): string {
+
+// ACCT-F5608 — the generic UUID-in-memo replacement below always passed noun="Record", so it read
+// literally as "Fuel txn Record — not visible" (the original type word AND the generic fallback noun
+// both survive the substitution) for the DOMINANT JE memo shape on prod (live 2026-08-20,
+// tiny-field-89581227: 1,557 of 1,930 posted JEs are "Fuel txn <uuid>" -- 82.6%; another 328 match
+// one of the patterns below). Every one of these type words is a KNOWN, single-table id (the poster
+// that wrote it always names one canonical table), so the noun can be made specific and the redundant
+// prefix word dropped by matching the WHOLE "<type word(s)> <uuid>" span, not just the uuid. Anything
+// that doesn't match one of these known shapes still falls through to the original generic
+// per-uuid substitution unchanged.
+const KNOWN_MEMO_ID_PATTERNS: Array<{ re: RegExp; noun: string }> = [
+  { re: /Fuel txn [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, noun: "Fuel transaction" },
+  { re: /Expense [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?= posting)/gi, noun: "Expense" },
+  { re: /Bill payment [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?= posting)/gi, noun: "Bill payment" },
+  { re: /Driver advance [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?= posting)/gi, noun: "Driver advance" },
+  { re: /Bank categorization:? ?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?= posting)/gi, noun: "Bank transaction" },
+  { re: /Void reversal of bill [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Bill" },
+  { re: /Void reversal of invoice [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=:)/gi, noun: "Invoice" },
+  { re: /Reversal of [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, noun: "Journal entry" },
+];
+export function humanMemo(memo: string | null | undefined): string {
   if (!memo) return "—";
-  return memo.replace(UUID_RE, (uuid) => entityLabel(null, uuid, "Record"));
+  let result = memo;
+  for (const { re, noun } of KNOWN_MEMO_ID_PATTERNS) {
+    result = result.replace(re, (whole) => {
+      const uuid = whole.match(UUID_RE)?.[0] ?? "";
+      return entityLabel(null, uuid, noun);
+    });
+  }
+  return result.replace(UUID_RE, (uuid) => entityLabel(null, uuid, "Record"));
 }
 
 /** LST-F107: JE column must not lead with a bare UUID fragment (date column already exists). */
