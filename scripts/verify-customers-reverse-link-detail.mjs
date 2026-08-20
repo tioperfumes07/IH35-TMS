@@ -13,40 +13,63 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customers-reverse-link-detail";
-const FILE = "apps/frontend/src/pages/CustomerDetail.tsx";
+const DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
+const LOADS_ROUTE = "apps/backend/src/mdata/loads.routes.ts";
 
 const CHECKS = [
-  { name: "load EntityLink", pattern: /kind="load"/ },
-  { name: "driver EntityLink", pattern: /kind="driver"/ },
-  { name: "unit EntityLink", pattern: /kind="unit"/ },
-  { name: "invoice EntityLink", pattern: /kind="invoice"/ },
-  { name: "vendor EntityLink (factoring)", pattern: /kind="vendor"/ },
-  { name: "parent customer EntityLinkOrTombstone", pattern: /data-testid="customer-parent-record-link"/ },
-  { name: "sub-customer EntityLinkOrTombstone", pattern: /customer-sub-record-link-/ },
+  { name: "load EntityLink", file: DETAIL, pattern: /kind="load"/ },
+  { name: "driver EntityLink", file: DETAIL, pattern: /kind="driver"/ },
+  { name: "unit EntityLink", file: DETAIL, pattern: /kind="unit"/ },
+  {
+    name: "customer loads trailer EntityLinkOrTombstone",
+    file: DETAIL,
+    pattern: /key: "trailer_number"[\s\S]{0,300}<EntityLinkOrTombstone kind="trailer" id=\{load\.trailer_id\} name=\{load\.trailer_number\} noun="Trailer"/,
+  },
+  {
+    name: "loads producer returns canonical trailer id and label",
+    file: LOADS_ROUTE,
+    pattern: /tr\.id AS trailer_id,\s*tr\.equipment_number AS trailer_number/,
+  },
+  {
+    name: "loads producer scopes trailer assignment to load entity",
+    file: LOADS_ROUTE,
+    pattern: /WHERE lah\.load_id = l\.id\s*AND lah\.operating_company_id = l\.operating_company_id\s*AND lah\.new_trailer_id IS NOT NULL/,
+  },
+  { name: "invoice EntityLink", file: DETAIL, pattern: /kind="invoice"/ },
+  { name: "vendor EntityLink (factoring)", file: DETAIL, pattern: /kind="vendor"/ },
+  { name: "parent customer EntityLinkOrTombstone", file: DETAIL, pattern: /data-testid="customer-parent-record-link"/ },
+  { name: "sub-customer EntityLinkOrTombstone", file: DETAIL, pattern: /customer-sub-record-link-/ },
   {
     name: "payment application invoice EntityLinkOrTombstone",
+    file: DETAIL,
     pattern: /applications\.map\(\(application\)[\s\S]{0,500}kind="invoice"[\s\S]{0,180}id=\{application\.invoice_id\}[\s\S]{0,180}name=\{application\.invoice_display_id\}/,
   },
   {
     name: "payment application amount remains visible beside invoice drill",
+    file: DETAIL,
     pattern: /formatCurrencyCents\(application\.amount_cents\)/,
   },
 ];
 
-function run(src) {
-  return CHECKS.filter((c) => !c.pattern.test(src)).map((c) => c.name);
+function readSources() {
+  return Object.fromEntries([DETAIL, LOADS_ROUTE].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
+}
+
+function run(sources) {
+  return CHECKS.filter((c) => !c.pattern.test(sources[c.file])).map((c) => c.name);
 }
 
 if (process.argv.includes("--selftest")) {
-  const live = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+  const live = readSources();
   if (run(live).length) {
     console.error(`${LABEL} SELFTEST FAIL live`);
     process.exit(1);
   }
   for (const check of CHECKS) {
     const globalPattern = new RegExp(check.pattern.source, check.pattern.flags.includes("g") ? check.pattern.flags : `${check.pattern.flags}g`);
-    const planted = live.replace(globalPattern, "/* planted reverse-link defect */");
-    if (planted === live || !run(planted).includes(check.name)) {
+    const plantedSource = live[check.file].replace(globalPattern, "/* planted reverse-link defect */");
+    const planted = { ...live, [check.file]: plantedSource };
+    if (plantedSource === live[check.file] || !run(planted).includes(check.name)) {
       console.error(`${LABEL} SELFTEST FAIL — planted defect stayed green: ${check.name}`);
       process.exit(1);
     }
@@ -55,7 +78,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const fails = run(fs.readFileSync(path.join(ROOT, FILE), "utf8"));
+const fails = run(readSources());
 if (fails.length) {
   console.error(`${LABEL} FAIL:\n- ${fails.join("\n- ")}`);
   process.exit(1);
