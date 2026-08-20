@@ -1410,3 +1410,14 @@ Espanol (preview)
 tioperfumes07@gmail.com
 DISPATCH›LOADS›LOAD — NOT VI | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.overview
 Devin-A | LIVE STARVED | module=dispatch | leaf=load.drawer.overview | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Overview | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id?tab=Overview ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.stops
+Devin-A | LIVE PASS | module=dispatch | leaf=load.drawer.stops | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Stops | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/loads/:id?tab=Stops&view=list ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.driver_pay
