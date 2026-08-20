@@ -7054,3 +7054,6 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=lists:catalog.maintenance.shop_locations.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.shop_locations.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/shop-locations | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/shop-locations marker 'lists' | NEXT=leaf=lists:catalog.maintenance.shop_locations.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.shop_locations.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/shop-locations | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/shop-locations marker 'lists' | NEXT=leaf=lists:catalog.maintenance.shop_locations.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.shop_locations.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/shop-locations | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/shop-locations marker 'lists' | NEXT=leaf=lists:catalog.maintenance.shop_locations.list:picker_law
