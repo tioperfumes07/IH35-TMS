@@ -8058,3 +8058,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=maintenance:parts.create:picker_law
+Devin-A | LIVE PASS | leaf=maintenance:parts.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts | healthz=0542f4e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/parts marker 'maintenance' | NEXT=leaf=maintenance:pm.auto_engine.run:unit
+Devin-A | LIVE PASS | leaf=maintenance:parts.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts | healthz=0542f4e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/parts marker 'maintenance' | NEXT=leaf=maintenance:pm.auto_engine.run:unit
+Devin-A | LIVE PASS | leaf=maintenance:parts.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts | healthz=0542f4e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/parts marker 'maintenance' | NEXT=leaf=maintenance:pm.auto_engine.run:unit
