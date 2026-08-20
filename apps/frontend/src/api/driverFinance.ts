@@ -673,6 +673,7 @@ export function settleAndPay(settlementId: string, operatingCompanyId: string) {
 
 export type PayRunNetBreakdown = {
   gross_cents: number;
+  reimbursements_cents: number;
   deductions_cents: number;
   chargebacks_cents: number;
   advance_recoveries_cents: number;

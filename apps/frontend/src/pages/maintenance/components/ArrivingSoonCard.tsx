@@ -61,8 +61,8 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
         ) : (
           <span className="rounded-sm border border-gray-200 px-2 py-1 text-gray-500">Read-only</span>
         )}
-        <EntityLinkOrTombstone kind="load" id={card.load_id} name="View Load" noun="Load" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" />
-        <EntityLinkOrTombstone kind="driver" id={card.driver_id} name="View Driver" noun="Driver" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" />
+        <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" data-testid="arriving-soon-load-action" />
+        <EntityLinkOrTombstone kind="driver" id={card.driver_id} name={card.driver_name} noun="Driver" className="rounded-sm border border-gray-300 px-2 py-1 text-gray-700" data-testid="arriving-soon-driver-action" />
       </div>
     </article>
   );
