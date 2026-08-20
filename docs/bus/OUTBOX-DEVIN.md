@@ -5762,3 +5762,25 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.profile.category_save:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.category_save:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.category_save:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
