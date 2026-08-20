@@ -226,7 +226,7 @@ type BillPaymentRow = {
   matched_bank_transaction_id?: string | null;
 };
 
-type BillMutationClient = {
+export type BillMutationClient = {
   query: <T = Record<string, unknown>>(
     sql: string,
     values?: unknown[]
