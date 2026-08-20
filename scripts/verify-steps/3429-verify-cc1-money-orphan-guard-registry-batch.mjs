@@ -49,6 +49,7 @@ const guards = [
   "verify-factoring-customer-invoice-scoped.mjs",
   "verify-factoring-list-gl-je-built.mjs",
   "verify-factoring-required-liability-honest.mjs",
+  "verify-factoring-advances-no-lock-order-deadlock.mjs",
   "verify-factoring-advances-write-role-gated.mjs",
   "verify-factoring-reserve-balances-membership-assert.mjs",
   "verify-factoring-reverse-link-remainder.mjs",

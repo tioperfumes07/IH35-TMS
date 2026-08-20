@@ -485,16 +485,6 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       const at = body.data.advanced_at ?? new Date().toISOString();
       await client.query(
         `
-          UPDATE accounting.factoring_advances
-          SET status = 'advanced',
-              advanced_at = $2::timestamptz,
-              notes = COALESCE($3, notes)
-          WHERE id = $1
-        `,
-        [params.data.id, at, body.data.notes ?? null]
-      );
-      await client.query(
-        `
           UPDATE accounting.invoices
           SET factoring_status = 'advanced',
               updated_at = now(),
@@ -503,12 +493,35 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         `,
         [params.data.id, user.uuid]
       );
+      // ACCT-F5651 — postFactoringAdvanceEvent opens its OWN connection and, on its write path,
+      // takes `SELECT ... FOR UPDATE` on this exact `factoring_advances` row. Previously this
+      // route's own `UPDATE accounting.factoring_advances SET status = ...` ran BEFORE this call,
+      // taking and holding that row's lock on THIS connection for the poster's entire duration —
+      // an application-level deadlock cycle Postgres's own detector cannot see (this connection is
+      // synchronously awaiting the poster's promise; the poster's connection is blocked on this
+      // connection's uncommitted row lock). Prod has statement_timeout=0/lock_timeout=0, so the
+      // blocked query hangs indefinitely rather than erroring — the same class ACCT-F5637 already
+      // fixed for the bill-payment void executor. The poster never reads/gates on
+      // `factoring_advances.status` (only its own idempotency posting-keys), so moving THIS
+      // route's status UPDATE to run AFTER the poster call is behavior-neutral and removes the
+      // lock-order conflict entirely — by the time this connection ever touches the row, the
+      // poster's connection has already committed and released its lock.
       await postFactoringAdvanceEvent({
         operating_company_id: query.data.operating_company_id,
         factoring_advance_id: params.data.id,
         actor_user_id: user.uuid,
         advanced_at_iso: at,
       });
+      await client.query(
+        `
+          UPDATE accounting.factoring_advances
+          SET status = 'advanced',
+              advanced_at = $2::timestamptz,
+              notes = COALESCE($3, notes)
+          WHERE id = $1
+        `,
+        [params.data.id, at, body.data.notes ?? null]
+      );
 
       await appendCrudAudit(
         client,
@@ -552,16 +565,6 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       const collectedAt = body.data.collected_at ?? new Date().toISOString();
       await client.query(
         `
-          UPDATE accounting.factoring_advances
-          SET status = 'reserve_held',
-              collected_at = $2::timestamptz,
-              notes = COALESCE($3, notes)
-          WHERE id = $1
-        `,
-        [params.data.id, collectedAt, body.data.notes ?? null]
-      );
-      await client.query(
-        `
           UPDATE accounting.invoices
           SET factoring_status = 'reserve_held',
               updated_at = now(),
@@ -578,6 +581,13 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       // a flag-OFF entity no-ops. Any default interest that compounded into the liability (late payment) is
       // intentionally left outstanding — the customer only ever pays the invoice face; the residual accrued
       // interest is the Seller's to settle with Faro (see PR body / open item).
+      // ACCT-F5651 — postFactoringCustomerPaymentEvent opens its OWN connection and takes
+      // `SELECT ... FOR UPDATE` on this exact `factoring_advances` row on its write path.
+      // Previously this route's own status UPDATE ran BEFORE this call, holding that row's lock on
+      // THIS connection for the poster's entire duration — an application-level deadlock cycle
+      // Postgres cannot see (same class ACCT-F5637 already fixed elsewhere). The poster never
+      // reads/gates on `factoring_advances.status`, so moving the status UPDATE to run AFTER the
+      // poster call is behavior-neutral and removes the lock-order conflict.
       await postFactoringCustomerPaymentEvent({
         operating_company_id: query.data.operating_company_id,
         factoring_advance_id: params.data.id,
@@ -585,6 +595,16 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         amount_cents: Number(advance.invoice_total_cents ?? 0),
         paid_at_iso: collectedAt,
       });
+      await client.query(
+        `
+          UPDATE accounting.factoring_advances
+          SET status = 'reserve_held',
+              collected_at = $2::timestamptz,
+              notes = COALESCE($3, notes)
+          WHERE id = $1
+        `,
+        [params.data.id, collectedAt, body.data.notes ?? null]
+      );
       await appendCrudAudit(
         client,
         user.uuid,
@@ -644,18 +664,6 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       const releasedAt = body.data.released_at ?? new Date().toISOString();
       await client.query(
         `
-          UPDATE accounting.factoring_advances
-          SET status = 'released',
-              released_at = $2::timestamptz,
-              factor_fee_cents = $3,
-              release_amount_cents = $4,
-              notes = COALESCE($5, notes)
-          WHERE id = $1
-        `,
-        [params.data.id, releasedAt, body.data.factor_fee_cents, body.data.release_amount_cents, body.data.notes ?? null]
-      );
-      await client.query(
-        `
           UPDATE accounting.invoices
           SET factoring_status = 'released',
               updated_at = now(),
@@ -664,6 +672,15 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         `,
         [params.data.id, user.uuid]
       );
+      // ACCT-F5651 — postFactoringReleaseEvent opens its OWN connection and takes
+      // `SELECT ... FOR UPDATE` on this exact `factoring_advances` row on its write path.
+      // Previously this route's own status UPDATE ran BEFORE this call, holding that row's lock on
+      // THIS connection for the poster's entire duration — an application-level deadlock cycle
+      // Postgres cannot see (same class ACCT-F5637 already fixed elsewhere). The poster never
+      // reads/gates on `factoring_advances.status`, so moving the status UPDATE to run AFTER the
+      // poster call is behavior-neutral and removes the lock-order conflict.
+      // (postFactoringFeeExpenseEvent below is a documented pure no-op — no DB connection at all —
+      // so it carries no lock risk either way.)
       await postFactoringReleaseEvent({
         operating_company_id: query.data.operating_company_id,
         factoring_advance_id: params.data.id,
@@ -682,6 +699,18 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           role: user.role,
         },
       });
+      await client.query(
+        `
+          UPDATE accounting.factoring_advances
+          SET status = 'released',
+              released_at = $2::timestamptz,
+              factor_fee_cents = $3,
+              release_amount_cents = $4,
+              notes = COALESCE($5, notes)
+          WHERE id = $1
+        `,
+        [params.data.id, releasedAt, body.data.factor_fee_cents, body.data.release_amount_cents, body.data.notes ?? null]
+      );
 
       const invoiceTotal = Number(advance.invoice_total_cents ?? 0);
       const advanceTotal = Number(advance.advance_amount_cents ?? 0);
