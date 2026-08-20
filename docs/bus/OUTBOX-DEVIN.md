@@ -12181,3 +12181,5 @@ Ingles
 Espanol (preview)
 6 | NEXT=leaf=finance:hop.cash_flow:qbo_chrome
 Devin-A | LIVE PASS | leaf=finance:hop.cash_flow:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/cash-flow | healthz=9ced896 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow marker 'Cash' | NEXT=leaf=finance:hub:connectivity
+Devin-A | LIVE STARVED | leaf=finance:hub:connectivity | USMCA | URL=https://app.ih35dispatch.com/finance | healthz=9ced896 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/finance healthz=9ced896 head Checking session... | NEXT=leaf=finance:nav.overview:qbo_chrome
+Devin-A | LIVE STARVED | leaf=finance:hub:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance | healthz=9ced896 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/finance healthz=9ced896 head Checking session... | NEXT=leaf=finance:nav.overview:qbo_chrome
