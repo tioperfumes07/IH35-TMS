@@ -7563,3 +7563,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=fleet:unit.profile.border_crossings_reverse:unit
+Devin-A | LIVE PASS | leaf=fleet:unit.profile.border_crossings_reverse:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=4508449 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id marker 'fleet' | NEXT=leaf=fleet:unit.profile.expenses_reverse:unit
+Devin-A | LIVE PASS | leaf=fleet:unit.profile.border_crossings_reverse:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=4508449 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id marker 'fleet' | NEXT=leaf=fleet:unit.profile.expenses_reverse:unit
+Devin-A | LIVE PASS | leaf=fleet:unit.profile.border_crossings_reverse:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=4508449 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id marker 'fleet' | NEXT=leaf=fleet:unit.profile.expenses_reverse:unit
