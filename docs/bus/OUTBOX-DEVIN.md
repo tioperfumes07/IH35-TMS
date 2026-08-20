@@ -5930,3 +5930,24 @@ Devin-A | LIVE PASS | leaf=vendors:detail.tasks:vendor | USMCA | URL=https://app
 Devin-A | LIVE PASS | leaf=vendors:detail.tasks:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors/:id marker 'Tasks' | NEXT=leaf=vendors:list.sync:vendor
 Devin-A | LIVE STARVED | leaf=vendors:list.sync:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=1593ca3 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors healthz=1593ca3 head Checking session... | NEXT=leaf=vendors:md.header.edit:vendor
 Devin-A | LIVE STARVED | leaf=vendors:list.sync:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=1593ca3 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors healthz=1593ca3 head Checking session... | NEXT=leaf=vendors:md.header.edit:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.header.edit:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:md.notes:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.header.edit:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:md.notes:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.header.edit:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:md.notes:vendor
