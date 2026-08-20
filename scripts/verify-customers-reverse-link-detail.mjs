@@ -15,6 +15,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customers-reverse-link-detail";
 const DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const LOADS_ROUTE = "apps/backend/src/mdata/loads.routes.ts";
+const INVOICES_PAGE = "apps/frontend/src/pages/accounting/InvoicesListPage.tsx";
+const INVOICES_ROUTE = "apps/backend/src/accounting/invoices.routes.ts";
+const ROUTE_MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
 const CHECKS = [
   { name: "load EntityLink", file: DETAIL, pattern: /kind="load"/ },
@@ -49,10 +52,45 @@ const CHECKS = [
     file: DETAIL,
     pattern: /formatCurrencyCents\(application\.amount_cents\)/,
   },
+  {
+    name: "customer recent invoices View all preserves canonical customer id",
+    file: DETAIL,
+    pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{encodeURIComponent\(id\)\}`\)/,
+  },
+  {
+    name: "invoice list destination reads customer_id deep link",
+    file: INVOICES_PAGE,
+    pattern: /const customerId = searchParams\.get\("customer_id"\) \?\? "";/,
+  },
+  {
+    name: "invoice list destination sends customer_id to producer",
+    file: INVOICES_PAGE,
+    pattern: /customer_id: customerId \|\| undefined/,
+  },
+  {
+    name: "invoice producer applies canonical customer filter",
+    file: INVOICES_ROUTE,
+    pattern: /if \(q\.customer_id\) \{[\s\S]{0,180}extraWhere\.push\(`i\.customer_id = \$\$\{values\.length\}`\)/,
+  },
+  {
+    name: "customer detail source is mounted",
+    file: ROUTE_MANIFEST,
+    pattern: /path="\/customers\/:id"[\s\S]{0,180}<CustomerDetailPage \/>/,
+  },
+  {
+    name: "invoice list destination is mounted",
+    file: ROUTE_MANIFEST,
+    pattern: /path="\/accounting\/invoices"[\s\S]{0,180}<InvoicesListPage \/>/,
+  },
 ];
 
 function readSources() {
-  return Object.fromEntries([DETAIL, LOADS_ROUTE].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
+  return Object.fromEntries(
+    [DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, ROUTE_MANIFEST].map((file) => [
+      file,
+      fs.readFileSync(path.join(ROOT, file), "utf8"),
+    ]),
+  );
 }
 
 function run(sources) {
