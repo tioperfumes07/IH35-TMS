@@ -54,12 +54,8 @@ export function scanBareCustomerSelects(root = ROOT) {
   for (const rel of files) {
     if (EXEMPT_FILES.has(rel)) continue;
     const src = fs.readFileSync(path.join(root, rel), "utf8");
+    if (!/listCustomers\b/.test(src)) continue;
     const clean = stripComments(src);
-    // Gate on the comment-stripped source too (2026-08-20, CC-3): a file whose ONLY mention of
-    // listCustomers is inside a comment explaining a past migration off it (e.g.
-    // GeofencesPage.tsx's "no capped listCustomers roster" note documenting its EntityPicker
-    // migration) isn't a real offender — checking raw `src` here re-triggers on that prose.
-    if (!/listCustomers\b/.test(clean)) continue;
     if (!/<select\b/.test(clean)) continue;
     // File uses listCustomers + plain select — fail unless ReferenceSelect customer is present
     // AND no select bound to customer id remains.
