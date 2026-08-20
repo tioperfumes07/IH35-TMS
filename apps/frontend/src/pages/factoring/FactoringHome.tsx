@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Link, NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -142,7 +143,7 @@ const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
     key: "driver_id",
     label: "Driver",
     sortable: true,
-    render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(null, row.driver_id, "Driver")} />,
+    render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
   },
   { key: "from_qbo_vendor_id", label: "From", sortable: true },
   { key: "to_qbo_vendor_id", label: "To", sortable: true },
