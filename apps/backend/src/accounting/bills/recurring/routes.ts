@@ -59,11 +59,21 @@ const generateNowBodySchema = z.object({
   target_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
+// RECURRING-BILL-TEMPLATE-NO-ROLE-GATE: this file's 7 routes had NO role check at all (only a
+// session check via currentAuthUser) -- any authenticated user of any role, including a Driver,
+// could create/edit/deactivate/manually-trigger recurring bill templates, which, when auto_post is
+// enabled, create real GL-posted bills. Matches the role tier used by the sibling AP surface
+// (accounting/bills.routes.ts, accounting/ap-aging.routes.ts).
+function canAccessAccounting(role: string) {
+  return role === "Owner" || role === "Administrator" || role === "Accountant";
+}
+
 async function recurringBillRoutes(app: FastifyInstance) {
   // POST /api/v1/accounting/recurring-bill-templates
   app.post("/api/v1/accounting/recurring-bill-templates", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const body = templateBodySchema.safeParse(req.body);
     if (!body.success) return validationError(reply, body.error);
 
@@ -98,6 +108,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/recurring-bill-templates", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = listQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
 
@@ -114,6 +125,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/recurring-bill-templates/:uuid", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const params = uuidParamsSchema.safeParse(req.params);
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query);
@@ -136,6 +148,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
   app.patch("/api/v1/accounting/recurring-bill-templates/:uuid", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const params = uuidParamsSchema.safeParse(req.params);
     if (!params.success) return validationError(reply, params.error);
     const body = updateTemplateBodySchema.safeParse(req.body);
@@ -180,6 +193,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/recurring-bill-templates/:uuid/deactivate", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const params = uuidParamsSchema.safeParse(req.params);
     if (!params.success) return validationError(reply, params.error);
 
@@ -203,6 +217,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/recurring-bill-templates/:uuid/generate-now", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const params = uuidParamsSchema.safeParse(req.params);
     if (!params.success) return validationError(reply, params.error);
     const body = generateNowBodySchema.safeParse(req.body ?? {});
@@ -241,6 +256,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/recurring-bill-templates/generation-log", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = generationLogQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
 
