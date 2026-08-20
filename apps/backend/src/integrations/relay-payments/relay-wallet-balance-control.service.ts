@@ -105,9 +105,18 @@ export async function computeRelayWalletBalanceControl(
     [operatingCompanyId]
   );
 
+  // ACCT-F5609 — this read a phantom `total_amount_cents` column that never existed on
+  // fuel.fuel_transactions (confirmed live: absent). The real column is `total_cost`, numeric
+  // DOLLARS, not cents (same units trap fixed in obligation-reconcile.routes.ts's settlement
+  // query, ACCT-F5607, and already documented in transaction-register.routes.ts's own header
+  // comment). No try/catch anywhere in this function or its one caller (relay-health.routes.ts),
+  // so the 42703 has been a genuine unhandled 500 on every call to
+  // GET /api/integrations/relay/wallet-balance-control -- not a silent swallow, but the endpoint
+  // has zero current callers (no frontend reference, no cron), so `expected = funded - drawn`
+  // has never actually been computed for anyone to see either way.
   const drawRes = await client.query<{ drawn_cents: string }>(
     `
-      SELECT COALESCE(SUM(ABS(total_amount_cents)), 0)::text AS drawn_cents
+      SELECT COALESCE(SUM(ABS(ROUND(total_cost * 100))), 0)::text AS drawn_cents
       FROM fuel.fuel_transactions
       WHERE operating_company_id = $1::uuid
     `,
