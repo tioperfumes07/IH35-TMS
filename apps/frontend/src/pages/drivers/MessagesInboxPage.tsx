@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import {
   getDriverMessageThread,
   getDriverMessagesInbox,
@@ -49,7 +50,12 @@ function ConversationList({
             onClick={() => onSelect(row.driver_id)}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-gray-900">{entityLabel(String(row.driver_name ?? ""), String(row.driver_id ?? ""), "Driver")}</span>
+              <span
+                className="font-semibold text-gray-900"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" data-testid={`inbox-conversation-driver-${row.driver_id}`} />
+              </span>
               {row.unread_count > 0 ? (
                 <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">{row.unread_count}</span>
               ) : null}
@@ -87,11 +93,13 @@ function ThreadPane({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">{driverName}</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            <EntityLinkOrTombstone kind="driver" id={driverId} name={driverName} noun="Driver" data-testid="messages-inbox-thread-driver" />
+          </h2>
           <EntityLink
             kind="driver"
             id={driverId}
-            label="Open profile"
+            label={entityLabel(driverName, driverId, "Driver")}
             className="text-xs text-slate-700 hover:underline"
             data-testid="messages-inbox-driver-profile-link"
           />

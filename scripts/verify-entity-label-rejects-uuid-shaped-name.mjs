@@ -1032,7 +1032,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/drivers/MessagesInboxPage.tsx",
     bad: />\{row\.driver_name\}</,
-    good: /entityLabel\(\s*String\(row\.driver_name \?\? ""\)\s*,\s*String\(row\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*String\(row\.driver_name \?\? ""\)\s*,\s*String\(row\.driver_id \?\? ""\)\s*,\s*"Driver"\s*\)|name=\{row\.driver_name\}/,
   },
   {
     // Both raw paints migrated to governed EntityLinkOrTombstone `name=` props
