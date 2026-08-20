@@ -2049,3 +2049,6 @@ Devin-A | LIVE STARVED | leaf=settlements:settlements.list:load | USMCA | URL=ht
 Devin-A | LIVE STARVED | leaf=settlements:settlements.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
 Devin-A | LIVE STARVED | leaf=settlements:settlements.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
 Devin-A | LIVE STARVED | leaf=settlements:settlements.list:settlement | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
+Devin-A | LIVE PASS | leaf=vendors:home.roster:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=13eb106 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:list.view_list:vendor
+Devin-A | LIVE PASS | leaf=vendors:home.roster:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=13eb106 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:list.view_list:vendor
+Devin-A | LIVE PASS | leaf=vendors:home.roster:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=13eb106 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:list.view_list:vendor
