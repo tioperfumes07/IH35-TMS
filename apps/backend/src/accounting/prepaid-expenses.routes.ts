@@ -16,7 +16,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { postVoidReversal } from "./void.service.js";
+import { postVoidReversal, type VoidReversalResult } from "./void.service.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { AmortizationPostingError } from "./amortization-posting/amortization-posting.math.js";
@@ -595,6 +595,48 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
           });
         }
 
+        // ACCT-F5640 — reversing ONLY the original 'prepaid_purchase' capitalization entry left any
+        // already-posted amortization periods standing: postPrepaidAmortization posts each period as
+        // its OWN source-linked JE tagged 'prepaid_amortization' (a different source type than the
+        // purchase), so the reversal above never touched it. Voiding without also reversing
+        // amortization-to-date leaves the Prepaid Asset control account at a permanent negative
+        // balance equal to whatever was already amortized — void is defined everywhere else in this
+        // codebase as "undo the whole financial event", so a voided prepaid asset must net its
+        // control account to zero, not to a stranded remainder.
+        const hadPostedAmortization = await client.query(
+          `SELECT EXISTS(
+             SELECT 1 FROM accounting.prepaid_amortization_rows
+              WHERE asset_id = $1::uuid AND operating_company_id = $2::uuid AND posted = true
+           ) AS exists`,
+          [assetId, oci]
+        );
+        let amortizationReversal: VoidReversalResult = {
+          reversal_journal_entry_id: null,
+          reversal_date: null,
+          closed_period_reversal: false,
+          reversed_line_count: 0,
+        };
+        if ((hadPostedAmortization.rows[0] as { exists: boolean } | undefined)?.exists) {
+          amortizationReversal = await postVoidReversal(
+            client,
+            {
+              operatingCompanyId: oci,
+              entityType: "prepaid_amortization",
+              entityId: assetId,
+              originalDate: String(asset.purchase_date).slice(0, 10),
+              memo: `Void reversal of amortization-to-date for prepaid asset ${asset.asset_number}: ${body.data.reason}`,
+            },
+            { userId: String(user.uuid) }
+          );
+          if (!amortizationReversal.reversal_journal_entry_id) {
+            return reply.code(409).send({
+              error: "prepaid_void_amortization_reversal_failed",
+              message:
+                "This prepaid asset has already-posted amortization periods but their GL lines could not be reversed, so voiding it would leave the control account at a stranded negative balance. Nothing was changed.",
+            });
+          }
+        }
+
         await client.query(
           `UPDATE accounting.prepaid_assets
               SET status = 'voided', voided_at = now(), voided_by_user_id = $3::uuid,
@@ -602,8 +644,9 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
             WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
           [assetId, oci, user.uuid, body.data.reason]
         );
-        // Void-not-delete: future unposted schedule rows are deactivated, never removed, and POSTED
-        // rows are left untouched — their own GL stands until separately reversed.
+        // Void-not-delete: future unposted schedule rows are deactivated, never removed. POSTED rows
+        // are left untouched (they are historical fact — that period WAS posted) — their GL is now
+        // reversed via the cumulative 'prepaid_amortization' reversal above, not by rewriting the row.
         await client.query(
           `UPDATE accounting.prepaid_amortization_rows
               SET is_active = false, deleted_at = now(), updated_at = now()
@@ -623,6 +666,8 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
             reason: body.data.reason,
             reversal_journal_entry_id: reversal.reversal_journal_entry_id,
             reversed_line_count: reversal.reversed_line_count,
+            amortization_reversal_journal_entry_id: amortizationReversal.reversal_journal_entry_id,
+            amortization_reversed_line_count: amortizationReversal.reversed_line_count,
           },
           "warning",
           "ACCT-F331"
@@ -633,6 +678,8 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
           status: "voided",
           reversal_journal_entry_id: reversal.reversal_journal_entry_id,
           reversed_line_count: reversal.reversed_line_count,
+          amortization_reversal_journal_entry_id: amortizationReversal.reversal_journal_entry_id,
+          amortization_reversed_line_count: amortizationReversal.reversed_line_count,
         };
       });
     }
