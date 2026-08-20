@@ -8,6 +8,7 @@ import { ApiError } from "../api/client";
 import * as customersApi from "../api/customers";
 import * as accountingApi from "../api/accounting";
 import * as mdataApi from "../api/mdata";
+import * as forecastApi from "../api/forecast";
 import { ToastProvider } from "../components/Toast";
 import { CustomerDetailPage } from "./CustomerDetail";
 
@@ -44,6 +45,18 @@ vi.mock("../api/accounting", async (importOriginal) => {
   return {
     ...actual,
     listInvoices: vi.fn(),
+  };
+});
+
+// CashForecastReverseSection (rendered on the billing tab) calls this directly — without a mock
+// the global fetch stub in test-setup.ts resolves `[]`, and `[].entries` resolves to the Array
+// prototype's own `.entries` METHOD (not undefined), so `?? []` never kicks in and the component
+// crashes calling `.slice` on a function.
+vi.mock("../api/forecast", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../api/forecast")>();
+  return {
+    ...actual,
+    listForecastEntries: vi.fn(),
   };
 });
 
@@ -129,6 +142,7 @@ describe("CustomerDetail cash application", () => {
     });
     vi.mocked(customersApi.listCustomerPayments).mockResolvedValue({ rows: [], total: 0 });
     vi.mocked(customersApi.recordCustomerPayment).mockResolvedValue({ ok: true });
+    vi.mocked(forecastApi.listForecastEntries).mockResolvedValue({ entries: [] });
     vi.mocked(mdataApi.listPaymentTermOptions).mockResolvedValue({
       payment_terms: [{ id: "84532954-6f73-4445-bb09-7f53a1b43c75", terms_name: "Net 30", days_until_due: 30 }],
     } as never);
