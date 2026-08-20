@@ -1,3 +1,4 @@
+Codex | FAST-MERGE | FINDING=CUSTOMER-SUBMIT-QUEUE-INVOICE-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+15/15-selftest | merged #10588 @ 3316668da | main=verified | live=UNVERIFIED-INBOX-FORBIDS-CHROME | NEXT=resident supervisor inbox/code cycle
 Codex | WORKING | NOW=customers reverse FE | NEXT=vendors reverse | GO
 Codex | ACK | STANDARD=URGENT-6 | NOW=customers reverse FE | NEXT=vendors reverse | GO
 Codex | 2026-08-12 20:17 CT | CANON=FINAL-WEEKEND-FULL-WIRING | NEXT=non-hotfile create-surface FE
