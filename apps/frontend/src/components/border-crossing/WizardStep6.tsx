@@ -32,7 +32,7 @@ export function WizardStep6({ form, ports, result }: Props) {
               <EntityLink
                 kind="load"
                 id={form.loadId}
-                label={entityLabel(null, form.loadId, "Load")}
+                label={entityLabel(form.loadLabel, form.loadId, "Load")}
                 data-testid="border-wizard-step6-load-link"
               />
             </span>
@@ -43,7 +43,7 @@ export function WizardStep6({ form, ports, result }: Props) {
               <EntityLink
                 kind="unit"
                 id={form.unitId}
-                label={entityLabel(null, form.unitId, "Unit")}
+                label={entityLabel(form.unitLabel, form.unitId, "Unit")}
                 data-testid="border-wizard-step6-unit-link"
               />
             </span>
@@ -54,7 +54,7 @@ export function WizardStep6({ form, ports, result }: Props) {
               <EntityLink
                 kind="driver"
                 id={form.driverId}
-                label={entityLabel(null, form.driverId, "Driver")}
+                label={entityLabel(form.driverLabel, form.driverId, "Driver")}
                 data-testid="border-wizard-step6-driver-link"
               />
             </span>
@@ -65,7 +65,7 @@ export function WizardStep6({ form, ports, result }: Props) {
               <EntityLink
                 kind="vendor"
                 id={form.customsBrokerId}
-                label={entityLabel(null, form.customsBrokerId, "Vendor")}
+                label={entityLabel(form.customsBrokerLabel, form.customsBrokerId, "Vendor")}
                 data-testid="border-wizard-step6-broker-link"
               />
             </span>

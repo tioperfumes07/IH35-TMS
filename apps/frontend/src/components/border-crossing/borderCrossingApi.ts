@@ -24,8 +24,11 @@ export type CustomsBroker = {
 
 export type WizardFormState = {
   loadId: string;
+  loadLabel: string;
   unitId: string;
+  unitLabel: string;
   driverId: string;
+  driverLabel: string;
   direction: "northbound" | "southbound" | "";
   portOfEntryId: string;
   plannedDate: string;
@@ -34,13 +37,17 @@ export type WizardFormState = {
   weight: string;
   hazmat: boolean;
   customsBrokerId: string;
+  customsBrokerLabel: string;
   bondNumber: string;
 };
 
 export const initialWizardForm: WizardFormState = {
   loadId: "",
+  loadLabel: "",
   unitId: "",
+  unitLabel: "",
   driverId: "",
+  driverLabel: "",
   direction: "",
   portOfEntryId: "",
   plannedDate: "",
@@ -49,6 +56,7 @@ export const initialWizardForm: WizardFormState = {
   weight: "",
   hazmat: false,
   customsBrokerId: "",
+  customsBrokerLabel: "",
   bondNumber: "",
 };
 

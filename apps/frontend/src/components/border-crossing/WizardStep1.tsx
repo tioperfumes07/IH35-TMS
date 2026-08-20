@@ -21,7 +21,8 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           kind="load"
           operatingCompanyId={operatingCompanyId}
           value={form.loadId || null}
-          onChange={(next) => onChange({ loadId: next ?? "" })}
+          onChange={(next, option) => onChange({ loadId: next ?? "", loadLabel: option?.label ?? "" })}
+          onSelectedOptionResolved={(option) => onChange({ loadLabel: option?.label ?? "" })}
           // Load create belongs on Book Load — not inline from the border wizard.
           allowCreate={false}
           placeholder="Select load"
@@ -34,7 +35,8 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           kind="unit"
           operatingCompanyId={operatingCompanyId}
           value={form.unitId || null}
-          onChange={(next) => onChange({ unitId: next ?? "" })}
+          onChange={(next, option) => onChange({ unitId: next ?? "", unitLabel: option?.label ?? "" })}
+          onSelectedOptionResolved={(option) => onChange({ unitLabel: option?.label ?? "" })}
           placeholder="Select unit"
           className="mt-1"
         />
@@ -45,7 +47,8 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           kind="driver"
           operatingCompanyId={operatingCompanyId}
           value={form.driverId || null}
-          onChange={(next) => onChange({ driverId: next ?? "" })}
+          onChange={(next, option) => onChange({ driverId: next ?? "", driverLabel: option?.label ?? "" })}
+          onSelectedOptionResolved={(option) => onChange({ driverLabel: option?.label ?? "" })}
           placeholder="Select driver (FAST card check)"
           className="mt-1"
         />
@@ -60,18 +63,18 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           {form.loadId ? (
             <span>
               Load:{" "}
-              <EntityLink kind="load" id={form.loadId} label={entityLabel(null, form.loadId, "Load")} />
+              <EntityLink kind="load" id={form.loadId} label={entityLabel(form.loadLabel, form.loadId, "Load")} />
             </span>
           ) : null}
           {form.unitId ? (
             <span>
-              Unit: <EntityLink kind="unit" id={form.unitId} label={entityLabel(null, form.unitId, "Unit")} />
+              Unit: <EntityLink kind="unit" id={form.unitId} label={entityLabel(form.unitLabel, form.unitId, "Unit")} />
             </span>
           ) : null}
           {form.driverId ? (
             <span>
               Driver:{" "}
-              <EntityLink kind="driver" id={form.driverId} label={entityLabel(null, form.driverId, "Driver")} />
+              <EntityLink kind="driver" id={form.driverId} label={entityLabel(form.driverLabel, form.driverId, "Driver")} />
             </span>
           ) : null}
         </div>
