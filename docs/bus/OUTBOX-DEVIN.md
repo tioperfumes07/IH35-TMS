@@ -9255,3 +9255,24 @@ Devin-A | LIVE PASS | leaf=lists:catalog.fleet.tire_positions.list:qbo_chrome | 
 Devin-A | LIVE PASS | leaf=lists:catalog.fleet.tire_positions.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=27db04d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/tire-positions marker 'lists' | NEXT=leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=27db04d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/tractor-statuses marker 'lists' | NEXT=leaf=lists:catalog.fuel.exception_types.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.fleet.tractor_statuses.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=27db04d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/tractor-statuses marker 'lists' | NEXT=leaf=lists:catalog.fuel.exception_types.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.exception_types.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/exception-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/exception-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fuel.expensive_states.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.exception_types.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/exception-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/exception-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fuel.expensive_states.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.exception_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/exception-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/exception-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fuel.expensive_states.create:qbo_chrome
