@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { getDriverHosDetail } from "../../api/hos";
 import { getDriver } from "../../api/mdata";
@@ -41,6 +40,9 @@ export function DriverHosDetailPage() {
     enabled: Boolean(id && operatingCompanyId),
     refetchInterval: 60_000,
   });
+  const driverName = driverQuery.data
+    ? [driverQuery.data.first_name, driverQuery.data.last_name].filter(Boolean).join(" ").trim() || null
+    : null;
 
   return (
     <div className="space-y-3">
@@ -49,10 +51,11 @@ export function DriverHosDetailPage() {
         subtitle={driverQuery.data ? `${driverQuery.data.first_name} ${driverQuery.data.last_name}` : "Driver timeline and FMCSA clocks"}
         actions={
           id ? (
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="driver"
               id={id}
-              label="Back to driver"
+              name={driverName}
+              noun="Driver"
               className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700"
               data-testid="driver-hos-detail-back-driver-link"
             />

@@ -4,7 +4,7 @@ import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DriverLayoverHistory } from "./DriverLayoverHistory";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 // Route target for the "View history" button on the driver profile Layovers card
 // (/dispatch/layovers/driver/:driverId). Wraps the DriverLayoverHistory panel with the
@@ -20,6 +20,9 @@ export function DriverLayoverHistoryPage() {
     queryFn: () => getDriver(driverId, operatingCompanyId),
     enabled: Boolean(driverId && operatingCompanyId),
   });
+  const driverName = driverQuery.data
+    ? [driverQuery.data.first_name, driverQuery.data.last_name].filter(Boolean).join(" ").trim() || null
+    : null;
 
   return (
     <div className="space-y-3">
@@ -33,10 +36,11 @@ export function DriverLayoverHistoryPage() {
         }
         actions={
           driverId ? (
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="driver"
               id={driverId}
-              label="Back to driver"
+              name={driverName}
+              noun="Driver"
               className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700"
             />
           ) : null
