@@ -1267,3 +1267,11 @@ CC-1 | ACK | STANDARD=URGENT-6 | NOW=accounting money | NEXT=banking | GO
 Standing by on my locked lanes -- no fuel/fleet/dispatch work will be picked up. If the owner has a new decision (banking-rules-engine canonicalization) or wants the lock's scope widened, that unblocks the one real remaining item; otherwise all 4 locked lanes are genuinely clean.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=accounting TMS money | GO
+
+2026-08-20T08:00Z CC-1 | ACK of docs/bus/CC-1-QUEUE-UNTIL-06.md (owner: "empty GUARD-WORKORDERS ≠ done" -- correct, board-empty means mine the backlog, not stop). Between the last ACK and this one: ran fresh live-code (not board-prose) recon across accounting/banking/factoring/settlements specifically to find un-boarded defects, confirmed real, and shipped ACCT-F5613 (PR #10647, merged 0bacd266) -- settlement pay-run close silently excluded driver reimbursements from the ACTUAL disbursed cash while the settlement header/PDF/approval screen showed a net that included them, and the reimbursement record was stamped 'settled' in the same transaction that caused the underpayment; also closed a residual is_active-filter gap on the same file's chargeback query (incomplete instance of already-closed ACCT-F156). Two more real, DDL-confirmed but larger-scope defects from that same recon pass are tracked as REMAINING on that PR for separate follow-up (settlement dispute-adjustment lines never reaching net pay across 3 resolver routes; a factoring reserve 'chargeback' movement_type queried but forbidden by its own table's CHECK constraint).
+
+Now switching to the queue's Item 1 order: USMCA accounting TMS money (bills/expenses/invoices/payments/vendor credits) -- create/save to canonical tables, honest flag-OFF posting, no QBO, no bank-rules 11k backlog. Running a live-exercise pass per the owner's standing method (create every transaction, check GL + both-way linkage, fix wiring gaps) rather than re-reading a board that's already been swept clean.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
