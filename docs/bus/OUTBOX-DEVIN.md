@@ -3983,3 +3983,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.dispatch.detention_reasons.create:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.dispatch.detention_reasons.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/detention-reasons | healthz=5b6b5ae | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/dispatch/detention-reasons marker 'lists' | NEXT=leaf=lists:catalog.dispatch.detention_reasons.list:qbo_chrome
+Devin-A | LIVE PASS | leaf=lists:catalog.dispatch.detention_reasons.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/detention-reasons | healthz=5b6b5ae | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/dispatch/detention-reasons marker 'lists' | NEXT=leaf=lists:catalog.dispatch.detention_reasons.list:qbo_chrome
