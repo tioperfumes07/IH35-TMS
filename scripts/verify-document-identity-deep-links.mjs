@@ -9,6 +9,7 @@ const FILES = {
   shared: "apps/frontend/src/components/documents/DocumentsTab.tsx",
   unit: "apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
   trailer: "apps/frontend/src/components/trailer-profile/DocumentsSection.tsx",
+  customer: "apps/frontend/src/pages/CustomerDetail.tsx",
   drivers: "docs/specs/scoreboard/modules/drivers.required.json",
 };
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
@@ -27,13 +28,17 @@ function verify(source) {
   need("trailer", 'data-testid="trailer-document-record-link"', "trailer document roster must drill through");
   need("trailer", 'EntityLinkOrTombstone kind="document"', "trailer document roster must tombstone unavailable records");
   need("trailer", 'id={d.file_id == null ? null : String(d.file_id)}', "trailer document roster must not manufacture an empty document id");
+  need("customer", 'data-testid="customer-financial-document-record-link"', "customer financial-summary documents must drill through");
+  need("customer", 'kind="document"', "customer financial-summary documents must use the canonical document route");
+  need("customer", 'id={d.id}', "customer financial-summary documents must use the producer's canonical attachment id");
+  need("customer", 'name={d.filename}', "customer financial-summary documents must retain the producer's human filename");
   if (!leaf(source, "drivers", "profiles.documents")?.required?.includes("reverse_link")) failures.push("drivers profiles.documents must require reverse_link");
   return failures;
 }
 const source = read();
 const failures = verify(source);
 if (failures.length) { console.error("document identity deep-link guard failed:"); failures.forEach((failure) => console.error(`- ${failure}`)); process.exit(1); }
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
     ["resolver", '| "document"', '| "document_broken"'],
     ["resolver", 'file_id=${id}', 'document_id=${id}'],
@@ -43,6 +48,9 @@ if (process.argv.includes("--self-test")) {
     ["unit", 'data-testid="unit-document-record-link"', 'data-testid="broken-unit-document-link"'],
     ["trailer", 'data-testid="trailer-document-record-link"', 'data-testid="broken-trailer-document-link"'],
     ["trailer", 'EntityLinkOrTombstone kind="document"', 'EntityLink kind="document"'],
+    ["customer", 'data-testid="customer-financial-document-record-link"', 'data-testid="broken-customer-document-link"'],
+    ["customer", 'id={d.id}', 'id={undefined}'],
+    ["customer", 'name={d.filename}', 'name={undefined}'],
     ["drivers", '"id": "profiles.documents"', '"id": "profiles.documents.broken"'],
   ];
   for (const [key, before, after] of mutations) {

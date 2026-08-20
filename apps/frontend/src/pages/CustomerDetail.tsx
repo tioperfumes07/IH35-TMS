@@ -322,7 +322,14 @@ function CustomerFinancialOverviewSection(props: {
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
           {(props.summary.documents as Array<{ id?: string; filename?: string; category?: string }>).map((d, i) => (
             <div key={d.id ?? String(i)} className="flex justify-between gap-2 border-b border-gray-100 py-1">
-              <span className="truncate">{d.filename ?? d.id ?? "File"}</span>
+              <EntityLinkOrTombstone
+                kind="document"
+                id={d.id}
+                name={d.filename}
+                noun="Document"
+                className="truncate text-slate-700 hover:underline"
+                data-testid="customer-financial-document-record-link"
+              />
               <span className="text-gray-500">{d.category ?? ""}</span>
             </div>
           ))}
