@@ -557,3 +557,5 @@ shipped #9611 SAF-INTEGRITY-CSA-MUTATION-SILENT-FAIL (+claim 4054) · #9609 wave
 2026-08-19T16:28Z Cursor FO WIRING-LEAFRE-HONEST shipping
 Codex HANDOFF | OPEN BANKING-CREDIT-MEMO-DRAWER-MATRIX-INVENTORY-MISSING | owner=Cursor | files=CreditMemosPage.tsx:302 + verify-surface-bar-create-drawer-inventory.mjs:102 | dependency=#10387 | BLOCKS=URGENT14-ACCOUNTING-SURFACE-INVENTORY | GO
 Codex HANDOFF | OPEN BANKING-TRANSACTION-ATTACHMENTS-NOTES-MODAL-REQUIRED-LEAF-MISSING | owner=Cursor | files=BankTransactionAttachmentsNotesModal.tsx:18 + banking.required.json | guard=verify-required-surface-inventory-complete (1/200 red) | BLOCKS=URGENT14-BANKING-SURFACE-INVENTORY | GO
+
+Cursor | BLOCKER | leaf=maintenance:modal.triage:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/in-transit-issues | evidence=Devin-A Clicked STARVED: in-transit issues queue renders 0 rows; no canonical row to open triage/convert-issue-to-wo modal. Need at least one in-transit issue with data so Devin-A can re-check Clicked.
