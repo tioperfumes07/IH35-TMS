@@ -53,6 +53,7 @@ const guards = [
   "verify-fuel-card-overage-profile-reverse.mjs",
   "verify-fuel-expense-identity-honesty.mjs",
   "verify-fuel-transaction-import-role-gated.mjs",
+  "verify-insurance-late-fee-cron-wired.mjs",
   "verify-fuel-transactions-write-role-gated.mjs",
   "verify-gl-je-honest-built.mjs",
   "verify-obligation-reconcile-existence-checked.mjs",

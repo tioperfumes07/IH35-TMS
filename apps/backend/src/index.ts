@@ -314,6 +314,7 @@ import { registerInsuranceDispersalRoutes } from "./insurance/dispersal.routes.j
 import { registerInsuranceLawsuitRoutes } from "./insurance/lawsuit.routes.js";
 import { registerInsurancePolicyCreateAtomicRoutes } from "./insurance/policy-create-atomic.routes.js";
 import { initializeInsurancePaymentReminderCron } from "./insurance/payment-reminder.service.js";
+import { initializeInsuranceLateFeeCron } from "./insurance/late-fee.service.js";
 import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-schedule.routes.js";
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceSummaryRoutes } from "./insurance/summary.routes.js";
@@ -1490,6 +1491,13 @@ async function main() {
     app.log.info("[STARTUP] insurance-payment-reminder-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] insurance-payment-reminder-cron failed");
+  }
+
+  try {
+    initializeInsuranceLateFeeCron(app);
+    app.log.info("[STARTUP] insurance-late-fee-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] insurance-late-fee-cron failed");
   }
 
   try {
