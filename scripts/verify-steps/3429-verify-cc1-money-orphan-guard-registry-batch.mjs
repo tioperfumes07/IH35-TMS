@@ -71,6 +71,7 @@ const guards = [
   "verify-payrun-close-reimbursements-and-active-lines.mjs",
   "verify-pre-settlement-add-load-rejects-cancelled.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
+  "verify-prepaid-void-reverses-amortization.mjs",
   "verify-qbo-outbound-expense-total-amount-cents-column.mjs",
   "verify-reconciliation-match-existence-checked.mjs",
   "verify-relay-wallet-balance-fuel-total-cost-column.mjs",

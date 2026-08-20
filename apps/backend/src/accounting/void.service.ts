@@ -42,7 +42,18 @@ export type VoidableEntityType =
   | "expense"
   | "bill_payment"
   | "customer_payment"
-  | "prepaid_purchase";
+  | "prepaid_purchase"
+  // ACCT-F5640 — 'prepaid_amortization' added. amortization-posting.service.ts posts each amortization
+  // period's own JE with source_transaction_type='prepaid_amortization' (a DIFFERENT source type than
+  // the original purchase's 'prepaid_purchase'), so voiding a prepaid asset that already had ≥1
+  // amortization period posted only ever reversed the original capitalization entry and silently left
+  // the already-posted amortization JEs standing — the Prepaid Asset control account landed at a
+  // permanent negative balance equal to the amortized-to-date amount, with no repair path (once
+  // status='voided', postPrepaidAmortization itself refuses to run). This member lets
+  // prepaid-expenses.routes.ts's void route call postVoidReversal a second time to reverse the
+  // cumulative amortization-to-date, with NO new GL math — readOriginalGlPostings' generic
+  // source_transaction_type/id predicate already handles it.
+  | "prepaid_amortization";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -482,6 +493,8 @@ export async function auditVoid(
     customer_payment: "accounting.payments",
     // ACCT-F331 — the audit row must name the table an auditor would open, not the posting source type.
     prepaid_purchase: "accounting.prepaid_assets",
+    // ACCT-F5640 — same table; the amortization-to-date reversal still targets the prepaid asset record.
+    prepaid_amortization: "accounting.prepaid_assets",
   };
   const resourceType = resourceTypeByEntity[entityType];
   await appendCrudAudit(
