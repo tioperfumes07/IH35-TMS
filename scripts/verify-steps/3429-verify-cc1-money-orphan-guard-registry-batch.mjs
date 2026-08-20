@@ -16,6 +16,7 @@ const guards = [
   "verify-banking-reverse-link-list-surfaces.mjs",
   "verify-bills-membership-assert-full-coverage.mjs",
   "verify-cash-forecast-profile-reverse.mjs",
+  "verify-categorization-rule-apply-historical-not-dry-run.mjs",
   "verify-categorize-field-existence-checked.mjs",
   "verify-customer-payment-write-role-gated.mjs",
   "verify-deductions-write-role-gated.mjs",
