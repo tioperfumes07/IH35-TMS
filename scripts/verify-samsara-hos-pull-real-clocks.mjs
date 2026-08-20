@@ -50,7 +50,11 @@ if (!/return "on_duty_not_driving"; \/\/ unknown/.test(svc))
 if (!/firstError = `driver_insert:/.test(svc))
   fail("syncSamsaraHosLogs must capture the per-driver insert error (no success=false + null error_message)");
 // Per-driver inserts savepoint-isolated (manual SAVEPOINT + ROLLBACK TO) so one bad log can't abort the others/log.
-if (!/SAVEPOINT \$\{sp\}[\s\S]{0,400}INSERT INTO hos\.duty_status_events/.test(svc))
+// Window widened 400 -> 700 (2026-08-20, CC-3): real distance is 632 chars (the per-log
+// toCanonicalDutyStatus + off_duty/sleeper/personal_conveyance unit_id nulling comment between
+// SAVEPOINT and the INSERT pushed it past 400) — verified the savepoint correctly wraps the
+// INSERT, with RELEASE SAVEPOINT on success and ROLLBACK TO + captured error on catch.
+if (!/SAVEPOINT \$\{sp\}[\s\S]{0,700}INSERT INTO hos\.duty_status_events/.test(svc))
   fail("each driver's HOS insert batch must be savepoint-isolated (SAVEPOINT/ROLLBACK TO)");
 // The service must NEVER throw on fetch failure (a throw rolls back the observability row) — record + return.
 if (!/return \{ inserted: 0[\s\S]{0,120}error: `fetch:/.test(svc))

@@ -38,9 +38,15 @@ if (!/flattenDutySegments\(eightDayEvents/.test(svc))
 // made roster_cyc != board_cyc (GUARD: ~300min across CAZARES/CORONADO/NOGUEZ). Both paths now use the SAME window.
 if (!/const eightStart = new Date\(asOf\.getTime\(\) - 8 \* 24/.test(svc))
   fail("getHosDaily must anchor eightStart to asOf−8d (the board+cycle window), not dayEnd−8d — else roster_cyc != board_cyc");
-// HARD SANITY: no day may exceed 1440 min; an impossible day -> cycle "unavailable", never a false violation.
-if (!/on_duty_min > 1440[\s\S]{0,160}available: false/.test(svc))
-  fail("a breakdown day > 1440 min must force available:false (cycle unavailable, not a false cyc:0 violation)");
+// HARD SANITY: no day may exceed its length; an impossible day -> cycle "unavailable", never a false violation.
+// Re-anchored (2026-08-20, CC-3): the naive hardcoded 1440 cap was replaced by a genuinely more
+// correct DST-aware cap (`onDuty > dayLenMin`, dayLenMin = 1380/1440/1500 by DST transition,
+// computed from the real home-terminal calendar-day length via Luxon) — a fixed 1440 threshold
+// would false-positive "impossible" on a legitimate 1500-min fall-back day and under-catch a
+// corrupt >1380-min reading on a spring-forward day. Still requires the same impossibleDay ->
+// available:false outcome, just not the literal old threshold.
+if (!/onDuty > dayLenMin[\s\S]{0,50}impossibleDay = true[\s\S]{0,600}available: false/.test(svc))
+  fail("a breakdown day exceeding its real (DST-aware) length must force available:false (cycle unavailable, not a false cyc:0 violation)");
 // driven-in-cycle = 70h - cycle_remaining (Jorge's explicit ask), only when available.
 if (!/CYCLE_70_MIN - clocks\.cycle_remaining_min/.test(svc))
   fail("driven_cycle_min must = 70h*60 - cycle_remaining_min (hours driven in the cycle)");

@@ -44,7 +44,13 @@ function assertMigrated(src) {
   if (!src.includes('storageKey="compliance-hos-tracker"')) {
     errors.push(`${PAGE}: must set stable ParityTable storageKey`);
   }
-  if (!src.includes('emptyText="No active drivers."')) {
+  // Re-anchored (2026-08-20, CC-3): emptyText is now a ternary — a distinct, more honest message
+  // when a single driver's filter yields no roster row for the day ("No HOS roster row for this
+  // driver...") vs. the general empty-roster case, which still preserves the original copy as its
+  // fallback branch. The old check required the exact plain-string assignment shape
+  // (emptyText="No active drivers.") that a ternary genuinely can't match; check for the string
+  // inside the prop's expression container instead.
+  if (!/emptyText=\{[\s\S]{0,200}"No active drivers\."/.test(src)) {
     errors.push(`${PAGE}: must preserve the empty roster copy`);
   }
   if (!src.includes("Couldn't load HOS roster")) {
