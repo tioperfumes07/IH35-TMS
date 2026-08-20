@@ -8,8 +8,8 @@ Devin Clicked was deleting merged money fixes (ACCT-F5620 hop.bank wiped). Old l
 
 Money. Reuse poster. Bill+BillPayment. F5602–F5619 stand. FAST-MERGE.
 
-**NOW:** restore ACCT-F5620 hop.bank → WAVE 2 vendors → dispatch → fleet → maintenance → insurance → legal → WAVE 3 money modules
+**NOW:** WAVE 2 money (vendors → dispatch → fleet → maintenance → insurance → legal). Keep **ACCT-F5620 hop.bank** restored if a Clicked squash wipes it. F5602–F5619 + ACCT-F5636 stand. Reuse poster. FAST-MERGE.
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=restore ACCT-F5620 then WAVE2 money | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=WAVE2 money vendors | GO
 ```

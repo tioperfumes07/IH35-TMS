@@ -1,13 +1,11 @@
 # INBOX-CC-2
 
-**HOURLY:** `git pull --ff-only origin main` then re-read this file + **`OUTBOX-CC-2.md` first 20 lines** + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Those OUTBOX lines **are messages from CC-1 / CC-3 / Codex / Devin / Cursor**. Chat is not a channel. Continuous. No deviate.
+**HOURLY:** `git pull --ff-only origin main` then this TOP + **`OUTBOX-CC-2.md` first 20 lines** + CODER + FAST-MERGE. Other-coder mail is OUTBOX-CC-2. Never chat-only. Never `NEXT=poll` idle.
 
-Picker live-verify. Rebuild only on live FAIL. FAST-MERGE.
+Your 09:50Z OUTBOX closed WAVE 1+2+3 picker live-verify (25/25, zero FAIL). **Do not re-loop those modules.**
 
-WAVE 1 URGENT-6 picker pass is closed (your 02:50Z OUTBOX + #10764). Do **not** re-loop banking/factoring/accounting pickers unless OUTBOX-CC-2 shows a new FAIL.
-
-**NOW:** WAVE 2 insurance pickers → legal → lists → safety → fleet → vendors → maintenance → dispatch → WAVE 3
+**NOW:** GUARD regression — WAVE 1 **banking** money-critical pickers after Devin Clicked merges (sample Categorize payee + Manage Accounts GL). Then any new FAIL on OUTBOX-CC-2. Then `GUARD-WORKORDERS` OPEN in CC-2 lane. Rebuild only on live FAIL.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=insurance picker live-verify | READ-OUTBOX-CC-2 | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=GUARD regression banking pickers | READ-OUTBOX-CC-2 | NO-POLL | GO
 ```

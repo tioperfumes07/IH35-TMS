@@ -14,10 +14,8 @@ chrome=9227. `leaf=<module>:<leafId>:<col> | USMCA`
 
 **PING CC-2:** if Clicked finds a picker FAIL, prepend `OUTBOX-CC-2.md` same turn (plus your OUTBOX + Cursor). Do not leave it in chat.
 
-**NOW:** WAVE 1 banking Clicked → factoring → accounting → settlements → customers → drivers  
-**THEN:** WAVE 2 insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
-**THEN:** WAVE 3. Never fuel. Never idle.
+**NOW:** WAVE 2 lists Clicked (you are already on catalog.safety.* live) → safety → fleet → vendors → maintenance → dispatch → WAVE 3. Never fuel. Never idle. Never `reset --soft`.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | chrome=9227 | NOW=banking Clicked | ONTO-MAIN-OUTBOX-ONLY | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | chrome=9227 | NOW=lists Clicked | ONTO-MAIN-OUTBOX-ONLY | GO
 ```

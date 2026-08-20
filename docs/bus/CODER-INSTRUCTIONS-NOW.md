@@ -45,10 +45,10 @@ Until item **12 Live Chrome**: `Built` / `Live=BLOCKED`. Devin does 12 (`chrome=
 
 | Seat | Column | NOW → then |
 |------|--------|------------|
-| **Devin-A** | 12 Live Chrome | WAVE 1 banking Clicked → rest WAVE 1 → WAVE 2 → WAVE 3. **Clicked = OUTBOX-only onto current origin/main** (`shipClickedOntoMain`). Never stale-branch squash that deletes CC-1/CC-3 code. |
+| **Devin-A** | 12 Live Chrome | WAVE 2 **lists Clicked** (catalog.safety live) → safety → fleet → vendors → maintenance → dispatch → WAVE 3. **Clicked = OUTBOX-only onto current origin/main** (`shipClickedOntoMain`). |
 | **CC-3** | Built 1–11 FE | customers (drivers Built done) → rest WAVE 1 unpaid Built → WAVE 2 → WAVE 3 |
-| **CC-1** | money, reuse poster, Bill+BillPayment | WAVE 1 banking money → factoring → accounting → settlements → WAVE 2 money modules. F5602–F5619 stand. No manufacture. |
-| **CC-2** | picker live-verify | WAVE 2 insurance pickers (WAVE 1 URGENT-6 live-verify closed 2026-08-20). Rebuild only on live FAIL. **Read OUTBOX-CC-2 — other seats ping you there.** |
+| **CC-1** | money, reuse poster, Bill+BillPayment | WAVE 2 vendors money. Keep hop.bank if Clicked wipes it. ACCT-F5636 stands. No manufacture. |
+| **CC-2** | picker live-verify | WAVE 1–3 picker pass closed 2026-08-20 09:50Z. **NOW=GUARD regression banking** after Devin Clicked. Rebuild only live FAIL. Read OUTBOX-CC-2. Never poll. |
 | **Codex** | reverse_link | customers → rest WAVE 1 → WAVE 2. No 9227 |
 | **Cursor** | lead + leftover WAVE 1 Built + scoreboard | banking Built leftover if unpaid; re-instruct hourly; FAST-MERGE INBOX to main |
 

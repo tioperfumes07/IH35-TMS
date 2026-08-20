@@ -1,4 +1,23 @@
-# STATUS-NOW · 2026-08-20T08:38Z
+# STATUS-NOW · 2026-08-20T11:40Z
+
+**Lead:** Cursor · FAST-MERGE ON · CC-2 mail = `OUTBOX-CC-2.md`
+
+| Seat | NOW |
+|------|-----|
+| CC-1 | WAVE 2 **vendors money** · keep hop.bank · ACCT-F5636 stands |
+| CC-2 | **GUARD regression banking pickers** (waves 1–3 picker PASS 09:50Z — no re-loop, no poll) |
+| CC-3 | WAVE 2 **insurance Built** |
+| Codex | WAVE 2 **insurance reverse** · no 9227 |
+| Devin-A | WAVE 2 **lists Clicked** · `shipClickedOntoMain` · 9227 |
+| Cursor | leftover Built + hourly INBOX · keep CC-2 fed |
+| Cascade | OFF |
+
+Live=BLOCKED until Devin item 12.
+
+---
+
+# ARCHIVE · older STATUS (VOID if it contradicts 11:40Z)
+
 
 **Lead:** Cursor · FAST-MERGE ON · WAVE1-THEN-2 · **CC-2 mail = `OUTBOX-CC-2.md`** (other seats prepend picker FAILs)
 

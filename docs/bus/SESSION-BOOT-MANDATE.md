@@ -6,8 +6,8 @@ WAVE1-THEN-2. Continuous. No deviate.
 
 ACK `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD`
 
-Devin-A: #10882 put `shipClickedOntoMain` on main. Kill leftover `reset --soft` loops. cwd `/tmp/IH35-devin-a`.
+Devin-A: lists Clicked WAVE 2. `shipClickedOntoMain`. cwd `/tmp/IH35-devin-a`. Never `reset --soft`.
 
-CC-2: read `OUTBOX-CC-2.md` first 20 lines every hour (other-coder pings). WAVE 2 insurance pickers. Picker FAIL from any seat must land there, not only Cursor OUTBOX.
-CC-1: restore ACCT-F5620; read `OUTBOX-CC-1.md` first 20.
+CC-2: picker 25/25 done 09:50Z. **NOW=GUARD regression banking.** Read OUTBOX-CC-2. Never poll.
+CC-1: WAVE 2 vendors money. Read OUTBOX-CC-1. Keep hop.bank.
 
