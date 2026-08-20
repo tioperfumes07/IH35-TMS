@@ -1844,3 +1844,19 @@ mis-Built; the gap is upstream in the spec's Required definition, if the owner w
 column is genuinely clear system-wide by the spec's own current definition. Resuming the standing
 money-lane correctness sweep since there is no unpaid Built cell to claim right now. Continuing
 non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T17:44Z CC-1 | ACCT-F5654 SHIPPED (PR #12963, merged ae8f4af4) -- extended the "stale
+guard asserts broken/superseded code" sweep from BANK-F5627-GUARD-STALE-PHANTOM-TABLE. Found 2 more:
+(1) verify-route-manifest-parity.mjs (verify-step 1560, CI-WIRED, genuinely RED) -- its refusal-list
+still refused scheduled-reports.routes.ts on a hard-DELETE violation LV-REPORTS-CUSTOM-SCHEDULER-
+CANONICAL-SOR-UNMOUNTED already fixed (voided_at soft-delete + mounted at index.ts:961); the guard's
+own drift-detection had been correctly firing red since that fix merged, training reviewers to ignore
+red on a load-bearing 633-route-module parity guard. Removed the stale entry -- now 618/633 reachable,
+15 refused (was 16). (2) verify-payroll-aggregate-matches-qbo.mjs (not CI-wired, dormant/HELD feature)
+-- a schema-unqualified check PASSed whether the code queried the real integrations.qbo_payroll_links
+or the phantom accounting.qbo_payroll_links (never existed), printing "verified" over code that would
+throw on first real query. Tightened to require the real table + reject the phantom -- now correctly
+FAILs, honestly surfacing the still-unresolved gap without unilaterally making the owner data-model
+call (per-run vs per-employee) it's blocked on. Board closeout shipped in this same PR cycle.
+REMAINING: none for this finding -- the payroll data-model decision stays with the owner by design.
+Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
