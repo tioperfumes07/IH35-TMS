@@ -3449,3 +3449,21 @@ Devin-A | LIVE STARVED | leaf=drivers:home:connectivity | USMCA | URL=https://ap
 Devin-A | LIVE PASS | leaf=drivers:leave:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/leave | healthz=3a0176e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/leave marker 'drivers' | NEXT=leaf=drivers:pay_rate_templates:connectivity
 Devin-A | LIVE PASS | leaf=drivers:pay_rate_templates:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/pay-rate-templates | healthz=5261a46 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/pay-rate-templates marker 'drivers' | NEXT=leaf=drivers:permits:driver
 Devin-A | LIVE PASS | leaf=drivers:pay_rate_templates:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers/pay-rate-templates | healthz=5261a46 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/pay-rate-templates marker 'drivers' | NEXT=leaf=drivers:permits:driver
+Devin-A | LIVE STARVED | leaf=drivers:permits:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/permits | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/permits healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=drivers:pre_settlements:driver
+Devin-A | LIVE STARVED | leaf=drivers:permits:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/permits | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/permits healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=drivers:pre_settlements:driver
