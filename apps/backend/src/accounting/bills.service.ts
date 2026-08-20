@@ -192,6 +192,8 @@ type BillPaymentRow = {
   amount: number | null;
   payment_method: string;
   from_bank_account_id: string | null;
+  /** Canonical same-company banking label for reverse-drill surfaces. */
+  from_bank_account_name?: string | null;
   check_number: string | null;
   reference_number: string | null;
   memo: string | null;
@@ -953,11 +955,15 @@ export async function listBillPaymentsForBill(userId: string, operatingCompanyId
     const res = await client.query<BillPaymentRow>(
       `
         SELECT bp.*,
+               ba.account_name AS from_bank_account_name,
                ${BILL_PAYMENT_MDATA_VENDOR_ID_SQL} AS mdata_vendor_id,
                ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
+        LEFT JOIN banking.bank_accounts ba
+          ON ba.id = bp.from_bank_account_id
+         AND ba.operating_company_id = bp.operating_company_id
         WHERE bp.bill_id = $1
           AND bp.operating_company_id = $2::uuid
           AND bp.revoked_at IS NULL
