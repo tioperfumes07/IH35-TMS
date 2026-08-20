@@ -6885,3 +6885,36 @@ Devin-A | LIVE PASS | leaf=lists:catalog.dispatch.pickup_time_types.create:conne
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.driver_load_statuses.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/driver-load-statuses | healthz=2686ca6 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/driver-load-statuses healthz=2686ca6 head Checking session... | NEXT=leaf=lists:catalog.drivers.driver_load_statuses.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.driver_load_statuses.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/driver-load-statuses | healthz=2686ca6 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/driver-load-statuses healthz=2686ca6 head Checking session... | NEXT=leaf=lists:catalog.drivers.driver_load_statuses.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.driver_load_statuses.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/driver-load-statuses | healthz=2686ca6 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/driver-load-statuses healthz=2686ca6 head Checking session... | NEXT=leaf=lists:catalog.drivers.driver_load_statuses.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.driver_load_statuses.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/driver-load-statuses | healthz=2686ca6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/drivers/driver-load-statuses head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=lists:catalog.drivers.employment_status.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.driver_load_statuses.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/driver-load-statuses | healthz=2686ca6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/drivers/driver-load-statuses head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=lists:catalog.drivers.employment_status.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.driver_load_statuses.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/driver-load-statuses | healthz=2686ca6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/drivers/driver-load-statuses head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=lists:catalog.drivers.employment_status.create:picker_law
