@@ -83,6 +83,8 @@ export type PlaidBankTransaction = {
   matched_expense_id?: string | null;
   /** Stamped when categorize→GL posts via bank_categorization (Law §9 reverse → JE). */
   matched_journal_entry_id?: string | null;
+  /** Human label for the matched JE (memo) — same ACCT-F5153 convention as matched_bill_number. */
+  matched_journal_entry_memo?: string | null;
   institution_name?: string | null;
   account_name?: string | null;
   account_mask?: string | null;

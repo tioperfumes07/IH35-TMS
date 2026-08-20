@@ -585,6 +585,11 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.matched_settlement_id,
           settlement.display_id AS matched_settlement_display_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
+          -- Same ACCT-F5153 human-label convention as bill/settlement above: the JE id was selected
+          -- but never joined to a label, so the FE's entityLabel(null, …) rendered every matched JE
+          -- as "Journal entry — not visible" even when fully resolvable. The by-linkage sibling
+          -- endpoint already returns matched_journal_entry_memo; mirror it here.
+          je.memo AS matched_journal_entry_memo,
           bt.notes,
           bt.created_at,
           bt.source,
@@ -669,6 +674,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN driver_finance.driver_settlements settlement
           ON settlement.id = bt.matched_settlement_id
          AND settlement.operating_company_id = bt.operating_company_id
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = bt.matched_journal_entry_id
+         AND je.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}
