@@ -87,8 +87,16 @@ class SystemMatrixHttpError extends Error {
 }
 
 async function fetchSystemMatrix(): Promise<SystemPayload> {
+  // MATRIX-INFINITE-PENDING-FEED: a hung /api fetch (no client-side timeout) left this query's
+  // promise permanently unsettled — React Query's retry/error handling only runs on a REJECTED
+  // promise, so a stalled connection never surfaced the "unavailable" state; the rollup just sat
+  // on "PENDING FEED" forever with zero indication anything was wrong. Same class as
+  // LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING (apps/frontend/src/api/mdata.ts
+  // getDriver) — bound the read with AbortSignal.timeout so a stall always resolves to a real
+  // rejection instead of hanging.
   const r = await fetch(resolveApiUrl("/api/v1/program/module-matrix?scope=system"), {
     credentials: "include",
+    signal: AbortSignal.timeout(20_000),
   });
   const json = (await r.json().catch(() => null)) as
     | (SystemPayload & { error?: string; message?: string; tipSha?: string; meta?: { tipSha?: string } })
