@@ -8962,3 +8962,7 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=customers:md.customer_details:customer
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:customer | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=3a15037 head Checking session... | NEXT=leaf=drivers:drivers.modal.assign_truck:connectivity
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=3a15037 head Checking session... | NEXT=leaf=drivers:drivers.modal.assign_truck:connectivity
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=3a15037 head Checking session... | NEXT=leaf=drivers:drivers.modal.assign_truck:connectivity
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=3a15037 head Checking session... | NEXT=leaf=drivers:drivers.modal.assign_truck:connectivity
