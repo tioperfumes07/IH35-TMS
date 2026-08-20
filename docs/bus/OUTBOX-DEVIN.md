@@ -3673,3 +3673,24 @@ Devin-A | LIVE PASS | leaf=insurance:insurance.parity.claim_create:driver | USMC
 Devin-A | LIVE PASS | leaf=insurance:insurance.parity.claim_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.lawsuit_create:connectivity
 Devin-A | LIVE PASS | leaf=insurance:insurance.parity.lawsuit_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.policy_create:connectivity
 Devin-A | LIVE PASS | leaf=insurance:insurance.parity.lawsuit_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.parity.policy_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=insurance:insurance.wizard.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.parity.policy_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=insurance:insurance.wizard.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.parity.policy_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=insurance:insurance.wizard.policy_create:connectivity
