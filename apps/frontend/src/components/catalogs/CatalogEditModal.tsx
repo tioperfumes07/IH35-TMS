@@ -103,6 +103,34 @@ function FieldInput({
     );
   }
 
+  if (field.type === "color") {
+    // Native color picker is a real "pick" surface (not free text) while still allowing the exact
+    // #RRGGBB entry these catalogs store — the <input type="color"> requires a full 6-digit hex, which
+    // matches every live row's format; an invalid/partial hex in the paired text field just leaves the
+    // swatch showing the last valid color until a full value is typed, never silently corrupting it.
+    const hex = /^#[0-9a-fA-F]{6}$/.test(String(value ?? "")) ? String(value) : "#000000";
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          aria-label={`${field.label} swatch`}
+          value={hex}
+          disabled={disabled}
+          className="h-9 w-11 shrink-0 rounded-sm border border-gray-300 p-0.5"
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <input
+          type="text"
+          value={String(value ?? "")}
+          disabled={disabled}
+          placeholder={field.placeholder}
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </div>
+    );
+  }
+
   const inputType = field.type === "number" ? "number" : "text";
 
   return (
@@ -186,7 +214,7 @@ export function CatalogEditModal({
         const value = form[field.key];
         if (field.type === "number" && value !== "") {
           body[field.key] = Number(value);
-        } else if (field.type === "text" && typeof value === "string") {
+        } else if ((field.type === "text" || field.type === "color") && typeof value === "string") {
           body[field.key] = value.trim();
         } else {
           body[field.key] = value;
