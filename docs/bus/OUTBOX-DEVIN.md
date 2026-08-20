@@ -4115,3 +4115,24 @@ Devin-A | LIVE PASS | leaf=lists:catalog.drivers.leave_types.list:connectivity |
 Devin-A | LIVE PASS | leaf=lists:catalog.drivers.license_classes.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/license-classes | healthz=043d9e4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/license-classes marker 'lists' | NEXT=leaf=lists:catalog.drivers.license_classes.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.drivers.license_classes.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/license-classes | healthz=043d9e4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/license-classes marker 'lists' | NEXT=leaf=lists:catalog.drivers.license_classes.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.drivers.license_classes.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/license-classes | healthz=043d9e4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/license-classes marker 'lists' | NEXT=leaf=lists:catalog.drivers.license_classes.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.license_classes.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/license-classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/license-classes healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.drivers.medical_card_status.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.license_classes.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/license-classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/license-classes healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.drivers.medical_card_status.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.license_classes.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/license-classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/license-classes healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.drivers.medical_card_status.create:picker_law
