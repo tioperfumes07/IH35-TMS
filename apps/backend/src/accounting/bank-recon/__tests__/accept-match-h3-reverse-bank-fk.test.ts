@@ -90,6 +90,49 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     expect(forward).toBeDefined();
   });
 
+  it("ACCT-F5620 — payment match also backlinks matched_invoice_id when the payment is already applied to one invoice", async () => {
+    mockQuery.mockReset();
+    mockWithLuciaBypass.mockClear();
+    const INVOICE = "99999999-9999-4999-8999-999999999999";
+    mockQuery.mockImplementation(async (sql: string) => {
+      const s = String(sql);
+      if (s.includes("FROM banking.bank_transactions") && s.includes("SELECT")) return { rows: [bankTxnRow()] };
+      if (s.includes("FROM accounting.payments") && s.includes("amount_cents") && !s.includes("source_bank_transaction_id")) {
+        return { rows: [{ amount_cents: 50000 }] };
+      }
+      // backlinkBankTransactionToInvoice's own read of the payment it was just handed.
+      if (s.includes("FROM accounting.payments") && s.includes("source_bank_transaction_id")) {
+        return { rows: [{ source_bank_transaction_id: BANK_TX }] };
+      }
+      if (s.includes("FROM accounting.payment_applications")) {
+        return { rows: [{ invoice_id: INVOICE }] };
+      }
+      if (s.includes("UPDATE banking.bank_transactions") && s.includes("matched_invoice_id")) {
+        return { rows: [{ id: BANK_TX }], rowCount: 1 };
+      }
+      return { rows: [] };
+    });
+
+    await acceptMatchWithResolveDifference({
+      operating_company_id: OPCO,
+      bank_transaction_id: BANK_TX,
+      actor_user_uuid: ACTOR,
+      ledger_entry_kind: "payment",
+      ledger_entry_id: PAYMENT,
+      difference_account_id: "00000000-0000-4000-8000-000000000000",
+    });
+
+    const invoiceLookup = mockQuery.mock.calls.find(([sql]) => String(sql).includes("FROM accounting.payment_applications"));
+    expect(invoiceLookup).toBeDefined();
+    expect(invoiceLookup?.[1]).toEqual([PAYMENT, OPCO]);
+
+    const backlink = mockQuery.mock.calls.find(
+      ([sql]) => String(sql).includes("UPDATE banking.bank_transactions") && String(sql).includes("matched_invoice_id")
+    );
+    expect(backlink).toBeDefined();
+    expect(backlink?.[1]).toEqual([INVOICE, PAYMENT, BANK_TX, OPCO]);
+  });
+
   it("bill_payment match stamps source_bank_transaction_id + from_bank_account_id", async () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
