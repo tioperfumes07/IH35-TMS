@@ -23,6 +23,7 @@ const PATHS = {
   mdataApi: "apps/frontend/src/api/mdata.ts",
   driverDetail: "apps/frontend/src/pages/DriverDetail.tsx",
   apiTypes: "apps/frontend/src/types/api.ts",
+  routeManifest: "apps/frontend/src/routes/manifest.tsx",
 };
 
 function read(rel) {
@@ -48,6 +49,11 @@ function assertVendorsSelect(src) {
   if (!/VENDOR_SELECT_COLUMNS[\s\S]*driver_id/.test(src)) {
     problems.push("vendors VENDOR_SELECT_COLUMNS must expose driver_id for VendorDetail reverse");
   }
+  if (!/d\.id = mdata\.vendors\.driver_id/.test(src) ||
+      !/d\.operating_company_id = mdata\.vendors\.operating_company_id/.test(src) ||
+      !/AS driver_name/.test(src)) {
+    problems.push("vendor detail producer must project the driver human label inside the vendor company scope");
+  }
   return problems;
 }
 
@@ -63,8 +69,13 @@ function assertEarnings(src) {
 function assertVendorDetail(src) {
   const problems = [];
   if (!/vendor-linked-driver/.test(src)) problems.push("VendorDetail missing linked-driver surface");
-  if (!/kind=\"driver\"/.test(src)) problems.push("VendorDetail must EntityLink kind=driver");
-  if (!/driver_id/.test(src)) problems.push("VendorDetail must read vendor.driver_id");
+  if (!/EntityLinkOrTombstone/.test(src) ||
+      !/kind=\"driver\"/.test(src) ||
+      !/id=\{vendor\.driver_id\}/.test(src) ||
+      !/name=\{vendor\.driver_name\}/.test(src)) {
+    problems.push("VendorDetail must render the canonical driver id+human label with tombstone fallback");
+  }
+  if (/label=\"Open driver profile/.test(src)) problems.push("VendorDetail must not invent a generic driver label");
   return problems;
 }
 
@@ -74,7 +85,14 @@ function assertApi(src) {
   if (!/\/ap-vendor\?/.test(src) && !/\/ap-vendor`/.test(src)) {
     problems.push("getDriverApVendor must hit /ap-vendor");
   }
+  if (!/driver_name\?: string \| null/.test(src)) problems.push("VendorOption must expose nullable driver_name");
   return problems;
+}
+
+function assertVendorRoute(src) {
+  return /path="\/vendors\/:id"[\s\S]{0,240}<VendorDetailPage/.test(src)
+    ? []
+    : ["route manifest must mount VendorDetailPage at /vendors/:id"];
 }
 
 function assertQboVendorProfile(driversRoute, driverDetail, apiTypes) {
@@ -108,6 +126,9 @@ function selftest() {
   const goodD = read(PATHS.driversRoutes);
   const goodE = read(PATHS.earnings);
   const goodProfile = read(PATHS.driverDetail);
+  const goodVendorDetail = read(PATHS.vendorDetail);
+  const goodVendors = read(PATHS.vendorsRoutes);
+  const goodManifest = read(PATHS.routeManifest);
   const goodTypes = read(PATHS.apiTypes);
   const badD = goodD.replace(/\/ap-vendor/g, "/x-vendor").replace(/resolveDriverVendorLink/g, "x");
   const badE = goodE.replace(/getDriverApVendor/g, "x").replace(/kind=\"vendor\"/g, 'kind="bill"');
@@ -115,6 +136,14 @@ function selftest() {
     .replace(/id=\{driver\.qbo_vendor_local_id\}/g, "id={driver.qbo_vendor_id}")
     .replace(/name=\{driver\.qbo_vendor_name\}/g, "name={null}");
   const badRoute = goodD.replace(/AS qbo_vendor_local_id/g, "AS missing_local_id");
+  const badVendorScope = goodVendors.replace(
+    "d.operating_company_id = mdata.vendors.operating_company_id",
+    "d.operating_company_id = d.operating_company_id"
+  );
+  const badVendorDetail = goodVendorDetail
+    .replace("EntityLinkOrTombstone", "EntityLink")
+    .replace("name={vendor.driver_name}", 'name={"Open driver profile"}');
+  const badManifest = goodManifest.replace('path="/vendors/:id"', 'path="/vendors/:id-disabled"');
   let failed = 0;
   if (assertDriversRoute(goodD).length) {
     console.error("good drivers route should pass", assertDriversRoute(goodD));
@@ -130,6 +159,26 @@ function selftest() {
   }
   if (assertEarnings(badE).length < 1) {
     console.error("bad EarningsTab should fail");
+    failed++;
+  }
+  if (assertVendorsSelect(goodVendors).length) {
+    console.error("good vendor producer should pass", assertVendorsSelect(goodVendors));
+    failed++;
+  }
+  if (assertVendorsSelect(badVendorScope).length < 1) {
+    console.error("planted cross-company driver label join should fail");
+    failed++;
+  }
+  if (assertVendorDetail(goodVendorDetail).length) {
+    console.error("good vendor detail should pass", assertVendorDetail(goodVendorDetail));
+    failed++;
+  }
+  if (assertVendorDetail(badVendorDetail).length < 1) {
+    console.error("planted generic driver label should fail");
+    failed++;
+  }
+  if (assertVendorRoute(goodManifest).length || assertVendorRoute(badManifest).length < 1) {
+    console.error("mounted vendor detail route mutation was not detected");
     failed++;
   }
   if (assertQboVendorProfile(goodD, goodProfile, goodTypes).length) {
@@ -158,6 +207,7 @@ const problems = [
   ...assertEarnings(read(PATHS.earnings)),
   ...assertVendorDetail(read(PATHS.vendorDetail)),
   ...assertApi(read(PATHS.mdataApi)),
+  ...assertVendorRoute(read(PATHS.routeManifest)),
   ...assertQboVendorProfile(read(PATHS.driversRoutes), read(PATHS.driverDetail), read(PATHS.apiTypes)),
 ];
 if (problems.length) {
