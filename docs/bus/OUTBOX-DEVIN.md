@@ -1245,3 +1245,13 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Select an operating company. | healthz=92f2779 | mutation=none | NEXT=dispatch.queues.border
 Devin-A | LIVE STARVED | module=dispatch | leaf=queues.border | URL=https://app.ih35dispatch.com/dispatch/border-crossing | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/border-crossing ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.queues.border_history
+Devin-A | LIVE PASS | module=dispatch | leaf=queues.border_history | URL=https://app.ih35dispatch.com/dispatch/border-crossing/history | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/border-crossing/history ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Border Crossing History
+Past | healthz=92f2779 | mutation=none | NEXT=dispatch.queues.late
