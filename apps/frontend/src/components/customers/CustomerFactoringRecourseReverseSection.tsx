@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getFactoringRecoursePipeline, getFactoringChargebacksFees } from "../../api/factoring";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 // LINK-F5171/LINK-F5180 — factoring:home.recourse_pipeline + factoring:home.chargebacks_fees
 // reverse gaps. Both endpoints now accept an optional customer_id filter (LINK-F5180), resolved
@@ -54,12 +55,16 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
           <ul className="mt-1 space-y-1">
             {recourseInvoices.slice(0, 5).map((row) => (
               <li key={row.factoring_advance_id}>
-                <EntityLink
-                  kind="factoring_recourse_customer"
-                  id={customerId}
-                  label={`${row.invoice_reference} · ${fmtDollars(row.advance_amount)} · ${row.days_until_recourse_expiry}d to expiry`}
-                  className="text-xs font-semibold text-slate-700 hover:underline"
-                />
+                <span className="text-xs font-semibold text-slate-700">
+                  <EntityLinkOrTombstone
+                    kind="invoice"
+                    id={row.invoice_id}
+                    name={row.invoice_reference}
+                    noun="Invoice"
+                    className="hover:underline"
+                  />
+                  {` · ${fmtDollars(row.advance_amount)} · ${row.days_until_recourse_expiry}d to expiry`}
+                </span>
               </li>
             ))}
           </ul>

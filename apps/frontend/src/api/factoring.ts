@@ -32,6 +32,8 @@ export type FactoringSummary = {
 
 export type FactoringRecourseInvoice = {
   factoring_advance_id: string;
+  /** Canonical accounting.invoices.id resolved by the recourse producer for direct drill-through. */
+  invoice_id: string | null;
   operating_company_id: string;
   active_factor_name: string | null;
   invoice_reference: string;
