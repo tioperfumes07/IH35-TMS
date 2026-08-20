@@ -8934,3 +8934,31 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:home.roster:customer
+Devin-A | LIVE STARVED | leaf=customers:home.roster:customer | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=customers:md.customer_details:customer
+Devin-A | LIVE STARVED | leaf=customers:home.roster:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=customers:md.customer_details:customer
+Devin-A | LIVE STARVED | leaf=customers:home.roster:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=customers:md.customer_details:customer
+Devin-A | LIVE STARVED | leaf=customers:home.roster:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=customers:md.customer_details:customer
