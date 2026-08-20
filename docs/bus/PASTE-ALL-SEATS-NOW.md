@@ -1,20 +1,22 @@
-# PASTE TO EVERY SEAT · 2026-08-20T03:55Z · URGENT 6 · STOP FUEL/FLEET/DISPATCH
+# PASTE TO EVERY SEAT · 2026-08-20T04:30Z · 14-MODULE 100% · NO IDLE
 
 `git pull --ff-only origin main`
 
-**Jorge: you deviated.** NOW is **only:** accounting, banking, customers, vendors, factoring, settlements.
-
-**DO NOT TOUCH: fuel** (last module). **STOP fleet. STOP dispatch Clicked.**
-
 READ: `docs/bus/CODER-INSTRUCTIONS-NOW.md` then `INBOX-<SEAT>.md`.
 
-| Seat | NOW |
-|------|-----|
-| CC-1 | accounting money → banking → factoring → settlements |
-| Cursor | customers Built → vendors Built |
-| Codex | customers reverse → vendors reverse |
-| Devin-A | Clicked URGENT 6 only · 9227 · no fleet no fuel no dispatch |
-| CC-2 | lists customers +Add new → vendors |
-| CC-3 / Cascade | OFF |
+**14 modules to 100% (McLeod + QBO).** Fuel last. Box 4 ignore. Miss C = Clicked remaining.
 
-ACK: `STANDARD=URGENT-6`
+Wave A: accounting banking customers vendors factoring settlements  
+Wave B: dispatch drivers lists fleet maintenance safety insurance legal  
+
+Findings: GUARD-WORKORDERS + checklist ☐ + Desktop routing + OUTBOX FINDING same turn.
+
+| Seat | ACK NOW |
+|------|---------|
+| Cursor | customers/vendors leftover LVs + Built |
+| Codex | customers reverse + LIVE PASS |
+| Devin-A | Clicked Wave A `leaf=module:id:col` 9227 |
+| CC-1 | next money unpaid on 14 — NOT standby |
+| CC-2 | lists remaining on 14 — NOT 4-min poll |
+
+`STANDARD=14-MODULE-100`

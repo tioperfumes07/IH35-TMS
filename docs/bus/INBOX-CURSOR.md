@@ -1,7 +1,7 @@
-# INBOX-CURSOR · NOW · 2026-08-20T03:55Z · URGENT 6
+# INBOX-CURSOR · 2026-08-20T04:30Z
 
-Lead **deviated** (OWNER SEQ included dispatch/drivers; Devin ran dispatch then fleet). **Corrected.**
+Lead. **You own** customers/vendors leftover LVs (filter Apply, detail `?tab=`, vendor by-category if still OPEN on main). Then Wave A Built → Wave B Built. Keep INBOX/OUTBOX current. 14-module 100%. Fuel last.
 
-**NOW:** keep INBOX URGENT 6 · **customers Built → vendors Built**. Do not dispatch/fleet/fuel.
-
-CC-1 money on accounting/banking/factoring/settlements. Devin Clicked those 6 only.
+```text
+Cursor | ACK | STANDARD=14-MODULE-100 | NOW=customers/vendors LV leftovers | GO
+```

@@ -1,10 +1,7 @@
-# INBOX-CODEX · NOW · 2026-08-20T03:55Z · URGENT 6 · NO FUEL
+# INBOX-CODEX · 2026-08-20T04:30Z
 
-**NOW:** customers reverse → vendors reverse. **THEN** factoring/settlements reverse FE (no posters). VOID #10144.
-
-**FORBIDDEN:** fuel · fleet · dispatch-primary · CDP · Clicked.
+Finish `CUSTOMER-FACTOR-VENDOR-HUMAN-LABEL` → vendors reverse → Wave A reverse leftovers → Wave B reverse. LIVE PASS credited. VOID #10144. No fuel.
 
 ```text
-git pull --ff-only origin main
-Codex | ACK | STANDARD=URGENT-6 | NOW=customers reverse | NEXT=vendors reverse | GO
+Codex | ACK | STANDARD=14-MODULE-100 | NOW=customers reverse | NEXT=vendors reverse | GO
 ```
