@@ -1,5 +1,12 @@
 #!/usr/bin/env node
-/** Banking Full Audit FAIL 27 — bank row attachments/notes honest or wired. */
+/**
+ * ACCT-F5621 — bank row attachments/notes must be REALLY wired, not a disabled stub with an
+ * honest banner. This guard previously asserted the OPPOSITE (a disabled control + a banner
+ * explaining why) back when documents.attachments.entity_type had no 'bank_transaction' member
+ * and there was no notes PATCH route. Both now exist — this guard flips to asserting the built
+ * state and fails closed if any of the three allowlists (DB CHECK / backend Zod enum / frontend
+ * TS union) or the notes route regress.
+ */
 import fs from "node:fs";
 
 export function run(root = process.cwd()) {
@@ -8,40 +15,70 @@ export function run(root = process.cwd()) {
     `${root}/apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx`,
     "utf8"
   );
+  const modal = fs.readFileSync(
+    `${root}/apps/frontend/src/pages/banking/components/BankTransactionAttachmentsNotesModal.tsx`,
+    "utf8"
+  );
   const attachRoutes = fs.readFileSync(`${root}/apps/backend/src/documents/attachments.routes.ts`, "utf8");
+  const attachApi = fs.readFileSync(`${root}/apps/frontend/src/api/attachments.ts`, "utf8");
+  const bankingApi = fs.readFileSync(`${root}/apps/frontend/src/api/banking.ts`, "utf8");
+  const linkRoutes = fs.readFileSync(`${root}/apps/backend/src/integrations/plaid/link.routes.ts`, "utf8");
 
-  if (!view.includes("banking-bank-row-attachments-notes-honesty-banner")) {
-    failures.push("BankingTransactionsDesignView must show attachments/notes honesty banner");
+  // The disabled stub + honesty banner must be GONE — a half-regression that re-disables the
+  // controls but forgets to restore the banner would silently look "wired" while being dead.
+  if (view.includes("banking-bank-row-attachments-notes-honesty-banner")) {
+    failures.push("stale disabled-state honesty banner must be removed now that the feature is wired");
   }
-  if (!view.includes("transactionsQuery.isSuccess")) {
-    failures.push("attachments/notes honesty banner must gate on transactionsQuery.isSuccess");
-  }
-  if (!view.includes("border-l-4 border-slate-400 bg-slate-100")) {
-    failures.push("attachments/notes honesty banner must use slate palette");
-  }
-  if (!view.includes("bank_transaction")) {
-    failures.push("honesty banner must name missing bank_transaction attachments entity_type");
-  }
-  if (!view.includes("documents.attachments")) {
-    failures.push("honesty banner must name documents.attachments table");
-  }
-  if (!view.includes("PATCH /api/v1/banking/transactions/:id")) {
-    failures.push("honesty banner must name missing notes PATCH route");
-  }
-  if (!view.includes('data-testid="bank-txn-attach-disabled"') || !view.includes("<Paperclip")) {
-    failures.push("paperclip control must be disabled with bank-txn-attach-disabled testid and Paperclip icon");
-  }
-  if (!view.includes('data-testid="bank-txn-note-disabled"') || !view.includes("<MessageSquare")) {
-    failures.push("note control must be disabled with bank-txn-note-disabled testid and MessageSquare icon");
+  if (view.includes("bank-txn-attach-disabled") || view.includes("bank-txn-note-disabled")) {
+    failures.push("paperclip/note controls must no longer be the disabled stub");
   }
 
-  // Wiring would add bank_transaction to upload enum — honesty guard fails if someone half-wires without banner removal.
-  if (attachRoutes.includes('"bank_transaction"') || attachRoutes.includes("'bank_transaction'")) {
-    if (!view.includes("bank-txn-attach-enabled") && !view.includes("UploadZone")) {
-      failures.push(
-        "attachments.routes.ts includes bank_transaction but grid is not wired — wire UI or remove enum until ready"
-      );
-    }
+  // The controls must be real, enabled buttons that open the attachments/notes modal.
+  if (!view.includes('data-testid="bank-txn-attach"') || !view.includes("<Paperclip")) {
+    failures.push("paperclip control must exist (bank-txn-attach testid) and render the Paperclip icon");
+  }
+  if (!view.includes('data-testid="bank-txn-note"') || !view.includes("<MessageSquare")) {
+    failures.push("note control must exist (bank-txn-note testid) and render the MessageSquare icon");
+  }
+  if (!view.includes("setAttachNotesTx(tx)")) {
+    failures.push("attach/note controls must open the attachments/notes modal (setAttachNotesTx)");
+  }
+  if (!view.includes("BankTransactionAttachmentsNotesModal")) {
+    failures.push("BankingTransactionsDesignView must render BankTransactionAttachmentsNotesModal");
+  }
+
+  // The modal must use the real UploadZone (same component every other module uses) with
+  // entityType="bank_transaction", and call the real notes-save API.
+  if (!modal.includes("UploadZone") || !modal.includes('entityType="bank_transaction"')) {
+    failures.push('BankTransactionAttachmentsNotesModal must render <UploadZone entityType="bank_transaction" ...>');
+  }
+  if (!modal.includes("addBankTransactionNote")) {
+    failures.push("BankTransactionAttachmentsNotesModal must call addBankTransactionNote to save notes");
+  }
+
+  // Three allowlists that must move together (documented in the migration's own comment): DB CHECK
+  // (verified separately by the migration itself), backend Zod enum, frontend TS union.
+  if (!attachRoutes.includes('"bank_transaction"') && !attachRoutes.includes("'bank_transaction'")) {
+    failures.push("attachments.routes.ts entity_type enum must include bank_transaction");
+  }
+  if (!attachApi.includes('"bank_transaction"')) {
+    failures.push("api/attachments.ts AttachmentEntityType union must include bank_transaction");
+  }
+
+  // The notes PATCH route + its frontend caller must both exist.
+  if (!bankingApi.includes("addBankTransactionNote")) {
+    failures.push("api/banking.ts must export addBankTransactionNote");
+  }
+  if (!linkRoutes.includes('"/api/v1/banking/transactions/:id/notes"')) {
+    failures.push("link.routes.ts must register PATCH /api/v1/banking/transactions/:id/notes");
+  }
+  // Append-only, not overwrite: the UPDATE must concat onto any existing notes, never replace them.
+  if (!linkRoutes.includes("ELSE concat(notes, E'\\\\n', $3::text)")) {
+    failures.push("notes PATCH must append via concat(notes, ...), never overwrite the existing notes column");
+  }
+  // Role-gated like every other owner/admin banking mutation route — not open to every role.
+  if (!/\/notes"[\s\S]{0,400}?ensureRole\(reply, user\.role, ownerAdminRoles\)/.test(linkRoutes)) {
+    failures.push("notes PATCH route must be gated by ensureRole(..., ownerAdminRoles)");
   }
 
   return failures;
@@ -53,24 +90,39 @@ if (process.argv.includes("--selftest")) {
     fs.mkdirSync(`${tmp}/${rel.split("/").slice(0, -1).join("/")}`, { recursive: true });
     fs.writeFileSync(`${tmp}/${rel}`, body);
   };
+  const goodView = `
+    <button type="button" data-testid="bank-txn-attach" onClick={() => setAttachNotesTx(tx)}><Paperclip className="h-4 w-4" /></button>
+    <button type="button" data-testid="bank-txn-note" onClick={() => setAttachNotesTx(tx)}><MessageSquare className="h-4 w-4" /></button>
+    <BankTransactionAttachmentsNotesModal open={Boolean(attachNotesTx)} />
+  `;
+  const goodModal = `
+    <UploadZone entityType="bank_transaction" entityId={tx.id} />
+    addBankTransactionNote(tx.id, operatingCompanyId, draftNote)
+  `;
+  const goodLinkRoutes = `
+    app.patch(
+      "/api/v1/banking/transactions/:id/notes",
+      async (req, reply) => {
+        if (!ensureRole(reply, user.role, ownerAdminRoles)) return;
+        \`UPDATE banking.bank_transactions SET notes = CASE WHEN notes IS NULL OR notes = '' THEN $3::text ELSE concat(notes, E'\\\\n', $3::text) END\`
+      }
+    );
+  `;
+  mk("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", goodView);
+  mk("apps/frontend/src/pages/banking/components/BankTransactionAttachmentsNotesModal.tsx", goodModal);
+  mk("apps/backend/src/documents/attachments.routes.ts", 'entity_type: z.enum(["bank_transaction"])\n');
+  mk("apps/frontend/src/api/attachments.ts", '"bank_transaction"\n');
+  mk("apps/frontend/src/api/banking.ts", "export function addBankTransactionNote() {}\n");
+  mk("apps/backend/src/integrations/plaid/link.routes.ts", goodLinkRoutes);
+  if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
+
+  // Regression: re-disabling the controls without restoring the banner must fail.
   mk(
     "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-    `transactionsQuery.isSuccess
-border-l-4 border-slate-400 bg-slate-100
-banking-bank-row-attachments-notes-honesty-banner
-bank_transaction
-documents.attachments
-PATCH /api/v1/banking/transactions/:id
-data-testid="bank-txn-attach-disabled"
-<button type="button" disabled data-testid="bank-txn-attach-disabled"><Paperclip className="h-4 w-4" /></button>
-data-testid="bank-txn-note-disabled"
-<button type="button" disabled data-testid="bank-txn-note-disabled"><MessageSquare className="h-4 w-4" /></button>
-`
+    goodView.replace('data-testid="bank-txn-attach"', 'data-testid="bank-txn-attach-disabled"')
   );
-  mk("apps/backend/src/documents/attachments.routes.ts", "entity_type: z.enum([\n");
-  if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
-  mk("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", "x\n");
-  if (!run(tmp).length) throw new Error("FAIL fail");
+  if (!run(tmp).length) throw new Error("FAIL fail: regressed disabled control should be caught");
+
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-banking-attachments-notes-honesty --selftest OK");
 } else {
