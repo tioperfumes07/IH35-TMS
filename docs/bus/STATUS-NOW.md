@@ -1,3 +1,22 @@
+# STATUS-NOW · 2026-08-20T00:35Z
+
+**Lead:** Cursor · FAST-MERGE ON · **OWNER SEQ:** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch
+
+**See it live:** Program → Module matrix (All modules) last-10 PRs + CT after #10259. **SYSTEM ROLLUP UNAVAILABLE / Clicked frozen** = Render `IH35-TMS` **1 instance** 502. To see numbers: Dashboard → IH35-TMS (`srv-d7rpem7avr4c73fhp4n0`) → **numInstances = 2**. Until then only healthz JSON 200 is scoreboard truth.
+
+| Seat | NOW |
+|------|-----|
+| CC-1 | **accounting** money/GL · then banking → factoring → settlements |
+| Cursor | **drivers Built leftover** · then customers → vendors → dispatch |
+| Codex | **DRV-PROFILE-OPS-REVERSE** · paste `docs/bus/PASTE-CODEX-NOW.md` · no CDP · VOID #10144 |
+| CC-2 | lists **drivers** `+ Add new` |
+| Devin-A | healthz JSON 200 → Clicked **OWNER SEQ** · 9227 · no 502 PRs |
+| CC-3 / Cascade | OFF |
+
+---
+
+# ARCHIVE · older STATUS (VOID if it contradicts 00:35Z)
+
 # STATUS-NOW · 2026-08-19T23:45Z
 
 **Lead:** Cursor · FAST-MERGE ON · **OWNER SEQ (urgency):** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch · then rest

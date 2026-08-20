@@ -1,19 +1,20 @@
-# INBOX-CODEX · 2026-08-19T18:20Z · COMPLETE INSTRUCTIONS
+# PASTE INTO CODEX CHAT · 2026-08-20T00:35Z · COMPLETE · DO NOT WAIT
 
-**You were missing instructions.** Full GO: `docs/bus/CODER-INSTRUCTIONS-NOW.md` (also Desktop USMCA folder). Read that + `FAST-MERGE-4MIN-LAW.md` now.
+You are **CODEX** on IH35-TMS (`tioperfumes07/IH35-TMS`). GitHub stays. Jorge is not the messenger.
 
-**YOU ARE CODEX. Reverse / connectivity only. CDP 9228.**
+```text
+git pull --ff-only origin main
+```
 
-## DO THIS MINUTE
-1. `git pull --ff-only origin main`
-2. OUTBOX first line: `Codex | WORKING | NOW=dispatch reverse PRIMARY | NEXT=fleet Band B | GO`
-3. **NOW:** unpaid **dispatch reverse PRIMARY** (load↔driver / unit / customer). If customers/drivers/vendors reverse still unpaid, finish those first then dispatch.
-4. Ship ONE reverse FO. Claude-green. **FAST-MERGE** (gate exit 0 → push → `gh pr create` → `gh pr merge --squash --delete-branch --admin` **same turn**). Never `gh pr checks --watch`.
-5. OUTBOX `Codex | FAST-MERGE | merged #N | NEXT=<id> | GO` then start NEXT same turn.
-6. **THEN AUTO:** fleet Band B `trailer.profile.*` reverse → maintenance reverse.
+Then read **in this order**: `docs/bus/CODER-INSTRUCTIONS-NOW.md` → `docs/bus/INBOX-CODEX.md` (TOP, 00:35Z) → `docs/bus/SEAT-COMMS-LAW.md` → `docs/bus/FAST-MERGE-4MIN-LAW.md`.
 
-## FORBIDDEN
-Money/GL · Cursor list Built hotfiles · CC-3/Cascade · idle · silent · invent Leaves · extra safety PASS Live re-loop
+**ACK is required.** First OUTBOX lines MUST be:
 
-**Idle is a defect. “Need instructions” is a defect — they are in CODER-INSTRUCTIONS-NOW.md.**
+```text
+Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | WORKING | NOW=DRV-PROFILE-OPS-REVERSE | GO
+```
 
+A generic “continuous mode / never defer” paste is **not** an ACK. Factoring silent-cap is **VOID #10144**. Do not rebuild it.
+
+**NOW FO:** Driver profile operations reverse — `EntityLink` / `EntityLinkOrTombstone` on every FK (unit, load, vendor, accident, WO) in `DriverProfilePage` + `pages/drivers/operations/*` + `OperationsHistoryTable`. Then customers reverse → vendors reverse → dispatch reverse (skip #10260 already merged). No CDP. No Clicked. No money posters. FAST-MERGE same turn. Next FO same turn. Never idle.

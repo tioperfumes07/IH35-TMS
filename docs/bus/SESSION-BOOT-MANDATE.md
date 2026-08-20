@@ -2,7 +2,7 @@
 
 **If you skip this file, you will deviate.** Read `docs/bus/CODER-INSTRUCTIONS-NOW.md` (TOP) + `INBOX-<SEAT>.md` (TOP) + **`docs/bus/SEAT-COMMS-LAW.md`** before any other work.
 
-**Stale INBOX:** ping Cursor via your OUTBOX **and** `OUTBOX-CURSOR.md` same turn (`SEAT | STALE INBOX | target=… | why=… | GO`). Seats do not rewrite another seat’s INBOX. Codex: `git pull` — factoring cap VOID (#10144). **OWNER SEQ NOW = drivers reverse FE** (then customers → vendors → dispatch). Generic “continuous mode” paste is not an ACK.
+**Stale INBOX:** ping Cursor via your OUTBOX **and** `OUTBOX-CURSOR.md` same turn (`SEAT | STALE INBOX | target=… | why=… | GO`). Seats do not rewrite another seat’s INBOX. Codex: `git pull` — factoring cap VOID (#10144). **OWNER SEQ NOW = DRV-PROFILE-OPS-REVERSE** (`PASTE-CODEX-NOW.md`). Generic “continuous mode” paste is not an ACK.
 
 1. **GitHub stays.** No GitLab. Speed = FAST-MERGE (gate 0 → one push → squash `--admin`). Never `gh pr checks --watch`.
 2. **100 = READY Live ✓ and Miss C = 0** (`docs/lockdown/MATRIX-READY-FROZEN-USMCA-STANDARD-2026-08-19.md`). Box 4 is never ready. No new Required leaves until Jorge unfreezes.

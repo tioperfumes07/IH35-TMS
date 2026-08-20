@@ -15,7 +15,7 @@ Then write OUTBOX `WORKING` and start the NOW FO. Continuous. Never idle.
 
 **OWNER SEQ (urgency):** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch. Then rest.
 
-**Codex RIGHT NOW:** `git pull --ff-only origin main` → ACK `INBOX-CODEX.md` 23:45Z (`NOW=drivers reverse FE | NEXT=customers reverse`). Do not re-run factoring silent-cap.
+**Codex RIGHT NOW:** `git pull --ff-only origin main` → paste/ACK `docs/bus/PASTE-CODEX-NOW.md` + `INBOX-CODEX.md` **00:35Z**. First FO = `DRV-PROFILE-OPS-REVERSE`. Do not re-run factoring silent-cap (#10144). Generic continuous-mode paste is not an ACK.
 
 ## Active seats
 
