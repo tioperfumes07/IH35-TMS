@@ -2,10 +2,10 @@
 
 **HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. Re-instruct seats. No deviate.
 
-Lead. Swarm **accounting** columns — not one module per seat. Box 4 = CC-2. Item 12 = Devin Clicked. Miss C = unpaid **Live** (#13132), not Devin PASS count. FAST-MERGE this bus.
+Lead until **WAVE 1+2+3 every module** is at BAR. Swarm **one module, split columns**. Box 4 = CC-2. Item 12 = Devin Clicked. Miss C = unpaid **Live** (#13132). FAST-MERGE this bus.
 
-**NOW:** keep every INBOX/PASTE on accounting Queue 6. If Devin says queue 0 / Miss C=0, rewrite PASTE-DEVIN-A: re-walk Queue 6, never wait on `required.json`.
+**NOW:** accounting Queue 6 until BAR, then banking (WAVE 1), then the rest. If Devin reports “2 leaves / keys full / no new required.json / no FAST-MERGE this cycle” — that is **idle**. Rewrite PASTE-DEVIN-A same turn: CDP the 2 Queue 6 leaves; never wait on `required.json`.
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=lead accounting | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | ALL-MODULES | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=lead accounting→all | GO
 ```
