@@ -1224,3 +1224,14 @@ tioperfumes07@gmail.com
 Pre-settlements
 
 Driver pr | healthz=ca726a2 | mutation=none | NEXT=dispatch.queues.at_risk
+Devin-A | LIVE PASS | module=dispatch | leaf=queues.at_risk | URL=https://app.ih35dispatch.com/dispatch/at-risk | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/at-risk ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=unknown | mutation=none | NEXT=dispatch.queues.detention
