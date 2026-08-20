@@ -364,7 +364,9 @@ async function run() {
       const nextLeaf = nextItem ? `${nextItem.module}:${nextItem.leaf}:${(nextItem.columns && nextItem.columns[0]) || "connectivity"}` : "";
       log(`OUTBOX: ${status} ${item.module}:${item.leaf} x${(item.columns || ["connectivity"]).length}`);
 
-      if (status !== "LIVE PASS") {
+      if (item.rewalk) {
+        log(`Queue 6 rewalk CDP ${item.module}:${item.leaf} ${status} — no OUTBOX ship (CC-2 Box 4)`);
+      } else if (status !== "LIVE PASS") {
         log(`skip ship STARVED — Clicked only moves on LIVE PASS`);
       } else {
         const lines = creditedLines(item, status, item.url, hz, evidence, nextLeaf);
