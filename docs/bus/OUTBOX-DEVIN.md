@@ -13342,3 +13342,14 @@ Devin-A | LIVE PASS | leaf=reports:report.geofence_dwell:qbo_chrome | USMCA | UR
 Devin-A | LIVE PASS | leaf=reports:runner.fleet_utilization:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/run/fleet-utilization | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/run/fleet-utilization marker 'reports' | NEXT=leaf=cash-flow:chrome.toolbar_filter:connectivity
 Devin-A | LIVE PASS | leaf=reports:runner.fleet_utilization:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/fleet-utilization | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/run/fleet-utilization marker 'reports' | NEXT=leaf=cash-flow:chrome.toolbar_filter:connectivity
 Devin-A | LIVE STARVED | leaf=cash-flow:chrome.toolbar_filter:connectivity | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected | healthz=1cbe5e2 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected healthz=1cbe5e2 head Checking session... | NEXT=leaf=cash-flow:chrome.toolbar_gear:connectivity
+Devin-A | LIVE STARVED | leaf=cash-flow:chrome.toolbar_filter:connectivity | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected | healthz=f6d200e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=cash-flow:chrome.toolbar_gear:connectivity
