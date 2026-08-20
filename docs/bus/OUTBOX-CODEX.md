@@ -979,6 +979,7 @@ Codex | LIVE FAIL program:tracker-historical-gated-copy | evidence=Tracker rows 
 Codex | SHIPPED LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY | PR#8015 @ af072c11d | gate=exit0 | merge=admin-squash | main=verified | NEXT=system:remaining-live-leaves
 Codex | LIVE CLAIM system:remaining-tabs-and-health | entity=USMCA | mutation=none
 Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | WORKING | FINDING=VENDOR-LIST-DETAILS-FALSE-HUMAN-LABEL | leaf=vendors:md.vendor_details:reverse_link | guard=normal+12/12-selftest | typecheck=running | NEXT=fast-merge | GO
 Codex | FAST-MERGE | FINDING=CUSTOMER-RECOURSE-INVOICE-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+15/15-selftest | merged #10509 @ 240757e6c | main=verified | neon=N/A | NEXT=resident supervisor inbox/code cycle
 Codex | WORKING | NOW=DRV-PROFILE-OPS-REVERSE | file=apps/frontend/src/pages/drivers/operations/*HistoryView.tsx | GO
 Codex | FAST-MERGE | FINDING=DRV-ACCIDENT-LOAD-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+16/16-selftest | merged #10519 @ 9d0cafcd4 | main=verified | neon=N/A | NEXT=resident supervisor inbox/code cycle

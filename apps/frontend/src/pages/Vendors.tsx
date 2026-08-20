@@ -632,7 +632,7 @@ export function VendorsPage() {
                     <EntityLinkOrTombstone
                       kind="vendor"
                       id={selectedVendor.id}
-                      name="Open full vendor profile"
+                      name={selectedVendor.name}
                       noun="Vendor"
                       className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50"
                       data-testid="vendor-details-full-profile-record-link"
