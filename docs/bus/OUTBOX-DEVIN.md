@@ -14179,3 +14179,47 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Loading vendor...
 FAQ | NEXT=leaf=vendors:detail.profile.payment_terms:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.reactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.reactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.reactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.reactivate:vendor
