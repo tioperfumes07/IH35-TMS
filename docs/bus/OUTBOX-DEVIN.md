@@ -12325,3 +12325,36 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.fmcsa_verify:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.fmcsa_verify:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.fmcsa_verify:customer
