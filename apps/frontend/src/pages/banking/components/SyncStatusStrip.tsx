@@ -23,9 +23,9 @@ export function SyncStatusStrip({
       <span className="mx-2 text-gray-400">|</span>
       Last sync: {syncedAt ? new Date(syncedAt).toLocaleString() : "n/a"}
       <span className="mx-2 text-gray-400">|</span>
-      All accounts — Transactions: {transactionCount}
+      Transactions: {transactionCount}
       <span className="mx-2 text-gray-400">|</span>
-      All accounts — Uncategorized: {uncategorizedCount}
+      Uncategorized: {uncategorizedCount}
       {isConnected ? (
         <>
           <span className="mx-2 text-gray-400">|</span>

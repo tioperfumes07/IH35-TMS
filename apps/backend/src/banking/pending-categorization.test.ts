@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   PENDING_CATEGORIZATION_STATUSES,
-  countTotalBankTransactions,
   countUncategorizedTransactions,
   pendingCategorizationPredicate,
   supersededDuplicatePredicate,
@@ -57,24 +56,6 @@ describe("pending-categorization (BANKING-1 shared source)", () => {
     expect(capturedSql).not.toContain("bt.bank_account_id = $");
     expect(capturedSql).toContain("twin_acct.is_active = true");
     expect(capturedValues).toEqual(["11111111-1111-1111-1111-111111111111"]);
-  });
-
-  it("countTotalBankTransactions uses the same entity + hide population as Uncategorized (not a selected-account subset)", async () => {
-    let lastSql = "";
-    const fakeClient = {
-      query: async <R = Record<string, unknown>>(sql: string, values?: unknown[]) => {
-        lastSql = sql;
-        if (/count\(\*\)/i.test(sql)) {
-          return { rows: [{ count: 189 }] as unknown as R[] };
-        }
-        return { rows: [] as unknown as R[] };
-      },
-    };
-    const n = await countTotalBankTransactions(fakeClient, "11111111-1111-1111-1111-111111111111");
-    expect(n).toBe(189);
-    expect(lastSql).toContain("FROM banking.bank_transactions");
-    expect(lastSql).toContain("bt.operating_company_id = $1::uuid");
-    expect(lastSql).not.toContain("bt.bank_account_id = $");
   });
 });
 
