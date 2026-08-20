@@ -1147,7 +1147,8 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     }
   });
 
-  // ACCT-F5660 — CHAIN-05 backlog poster. Every existing invocation of maybePostBankCategorizationToGl
+  // ACCT-F5669 (shipped as ACCT-F5660 in PR #13216 before the Codex collision surfaced; later user
+  // re-suffixes) — CHAIN-05 backlog poster. Every existing invocation of maybePostBankCategorizationToGl
   // fires only AT categorize time (single/bulk categorize + the Plaid path), so a transaction
   // categorized while BANK_FEED_GL_POSTING_ENABLED was OFF — or whose best-effort post failed — is
   // stuck forever: status='categorized', linkage tags persisted, matched_journal_entry_id NULL.
