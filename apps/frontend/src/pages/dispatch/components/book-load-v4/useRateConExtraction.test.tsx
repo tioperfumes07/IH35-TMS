@@ -6,8 +6,10 @@ import { OcrDropZone } from "./OcrDropZone";
 import { RateConUploadPanel } from "./RateConUploadPanel";
 
 // The docs pipeline is mocked — the hook's contract is upload→confirm→extract→prefill, not the network.
+// LV-DOCS-FILES-NOT-HASHED: the hook now calls requestUploadUrlFromFile (hashes the file's bytes
+// before minting the upload URL), not the lower-level requestUploadUrl it used to call directly.
 vi.mock("../../../../api/docs", () => ({
-  requestUploadUrl: vi.fn(async () => ({ file_id: "file-1", presigned_url: "https://r2.example/put" })),
+  requestUploadUrlFromFile: vi.fn(async () => ({ file_id: "file-1", presigned_url: "https://r2.example/put" })),
   confirmUpload: vi.fn(async () => ({ ok: true, file_id: "file-1", already_completed: false })),
 }));
 

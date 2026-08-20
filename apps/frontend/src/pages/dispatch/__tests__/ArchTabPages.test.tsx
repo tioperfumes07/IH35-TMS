@@ -7,6 +7,7 @@ import * as dispatchApi from "../../../api/dispatch";
 import { AtRiskQueuePage } from "../AtRiskQueuePage";
 import { InTransitIssuesPage } from "../InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../AssignmentHistoryPage";
+import { ToastProvider } from "../../../components/Toast";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -16,7 +17,11 @@ function wrap(ui: ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter>
+        {/* AssignmentHistoryPage's nested CreateDriverModal (+ Create on the driver picker) calls
+            useToast — the app always renders inside ToastProvider, this harness now must too. */}
+        <ToastProvider>{ui}</ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }

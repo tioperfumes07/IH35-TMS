@@ -2,7 +2,7 @@
 
 **HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md` (4-box GOAL) + this file + FAST-MERGE.
 
-**GOAL:** Box **4 Live ✓** on every Required `leaf:col` (all owed columns). USMCA. `leaf=<module>:<leafId>:<col> | USMCA`. chrome=9227.
+**GOAL:** Box **4 Live ✓** on every Required `leaf:col` from `columns.shared.json` (not the 31 CLS board). USMCA. `leaf=<module>:<leafId>:<col> | USMCA`. chrome=9227.
 
 `shipClickedOntoMain`. cwd=`/tmp/IH35-devin-a`. Never `reset --soft`. OUTBOX-only unique branch.
 

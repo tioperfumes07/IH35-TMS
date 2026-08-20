@@ -31,6 +31,7 @@ const guards = [
   "verify-coa-asymmetry-account-entitylink.mjs",
   "verify-credit-memo-vendor-credit-row-locked.mjs",
   "verify-credit-vendor-apply-idempotent-replay.mjs",
+  "verify-depreciation-reversal-cross-entity-books.mjs",
   "verify-detention-billing-bridge-resyncs-invoice.mjs",
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
   "verify-driver-finance-reverse-leaves.mjs",

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Devin-A Clicked — WAVE 1 then WAVE 2. Item 12 Live Chrome.
+ * Devin-A Clicked — WAVE 1 then WAVE 2 then WAVE 3. Item 12 Live Chrome.
  *
  * STALE-BRANCH-MERGE-SILENTLY-REVERTS-CONCURRENT-WORK (CC-1 #10800 reverted by
  * Devin #10802/#10834): NEVER `git reset --soft origin/main` from a stale tip
@@ -31,6 +31,17 @@ const ORDER = [
   "vendors",
   "maintenance",
   "dispatch",
+  "inventory",
+  "compliance",
+  "reports",
+  "cash-flow",
+  "finance",
+  "form_425",
+  "users",
+  "docs",
+  "home",
+  "tasks",
+  "program",
 ];
 const ALLOWED = new Set(ORDER);
 const FORBIDDEN = new Set(["fuel", "eld"]);

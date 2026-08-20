@@ -62,7 +62,9 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
     wrap(<UnifiedTimelinePlanner />);
     expect(await screen.findByText("Jane Driver")).toBeTruthy();
     // The load bar comes from getDispatchPlannerWeek loads[] — the fix for the empty grid.
-    expect(await screen.findByTestId("timeline-load-L-500")).toBeTruthy();
+    // The load bar's testid is keyed on the load's stable id (load-500), not its display number
+    // (L-500) — matches the `data-testid={`timeline-load-${load.id}`}` convention.
+    expect(await screen.findByTestId("timeline-load-load-500")).toBeTruthy();
   });
 
   it("shows a Status column (On-load / On-leave / Available) and a + Book on idle drivers", async () => {

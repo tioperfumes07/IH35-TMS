@@ -12,7 +12,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
@@ -299,10 +299,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Related driver:</strong>{" "}
                   {matter?.related_driver_id ? (
-                    <EntityLink
+                    <EntityLinkOrTombstone
                       kind="driver"
                       id={String(matter.related_driver_id)}
-                      label={entityLabel(matter.related_driver_name, matter.related_driver_id, "Driver")}
+                      name={matter.related_driver_name}
+                      noun="Driver"
                     />
                   ) : (
                     "—"
@@ -311,10 +312,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Insurance claim:</strong>{" "}
                   {matter?.insurance_claim_id ? (
-                    <EntityLink
+                    <EntityLinkOrTombstone
                       kind="claim"
                       id={String(matter.insurance_claim_id)}
-                      label={entityLabel(matter.insurance_claim_number, matter.insurance_claim_id, "Claim")}
+                      name={matter.insurance_claim_number}
+                      noun="Claim"
                     />
                   ) : (
                     "—"
@@ -323,10 +325,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Insurance lawsuit:</strong>{" "}
                   {matter?.insurance_lawsuit_id ? (
-                    <EntityLink
+                    <EntityLinkOrTombstone
                       kind="lawsuit"
                       id={String(matter.insurance_lawsuit_id)}
-                      label={entityLabel(matter.insurance_lawsuit_case_number, matter.insurance_lawsuit_id, "Lawsuit")}
+                      name={matter.insurance_lawsuit_case_number}
+                      noun="Lawsuit"
                       data-testid="matter-insurance-lawsuit-link"
                     />
                   ) : (
@@ -336,10 +339,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Unit:</strong>{" "}
                   {matter?.unit_id ? (
-                    <EntityLink
+                    <EntityLinkOrTombstone
                       kind="unit"
                       id={String(matter.unit_id)}
-                      label={entityLabel(matter.unit_number, matter.unit_id, "Unit")}
+                      name={matter.unit_number}
+                      noun="Unit"
                     />
                   ) : (
                     "—"
@@ -348,10 +352,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Trailer:</strong>{" "}
                   {matter?.equipment_id ? (
-                    <EntityLink
+                    <EntityLinkOrTombstone
                       kind="trailer"
                       id={String(matter.equipment_id)}
-                      label={entityLabel(matter.equipment_number, matter.equipment_id, "Trailer")}
+                      name={matter.equipment_number}
+                      noun="Trailer"
                     />
                   ) : (
                     "—"

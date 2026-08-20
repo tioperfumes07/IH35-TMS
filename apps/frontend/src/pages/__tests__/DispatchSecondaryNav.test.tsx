@@ -26,6 +26,11 @@ vi.mock("../../api/loads", () => ({
 vi.mock("../../api/mdata", () => ({
   listCustomers: vi.fn(async () => ({ customers: [] })),
   listDrivers: vi.fn(async () => ({ drivers: [] })),
+  // CreateDriverModal (nested "+ Create" on the assignment-history driver picker) references these
+  // as useMutation's mutationFn at render time — must be defined even though this test never submits.
+  createDriver: vi.fn(),
+  checkReturningDriver: vi.fn(),
+  createUnit: vi.fn(),
 }));
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
@@ -47,9 +52,15 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
           notes: null,
           assigned_at: "2026-06-02T10:00:00Z",
           load_number: "LD-442",
+          // AssignmentHistoryPage's EntityLink columns render the honest "—" dash the moment `id` is
+          // missing, regardless of `name` — previous/new driver_id and unit_id were missing here.
+          previous_driver_id: "driver-old",
           previous_driver_name: "Bob Old",
+          new_driver_id: "driver-new",
           new_driver_name: "Jane Driver",
+          previous_unit_id: "unit-100",
           previous_unit_number: "100",
+          new_unit_id: "unit-101",
           new_unit_number: "101",
         },
       ],

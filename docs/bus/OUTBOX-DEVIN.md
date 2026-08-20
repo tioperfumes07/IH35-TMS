@@ -8665,3 +8665,184 @@ Devin-A | LIVE PASS | leaf=dispatch:secondary.pre_settlements:driver | USMCA | U
 Devin-A | LIVE PASS | leaf=dispatch:secondary.pre_settlements:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/pre-settlements | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/pre-settlements marker 'dispatch' | NEXT=leaf=dispatch:secondary.settlements:connectivity
 Devin-A | LIVE PASS | leaf=dispatch:secondary.pre_settlements:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/pre-settlements | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/pre-settlements marker 'dispatch' | NEXT=leaf=dispatch:secondary.settlements:connectivity
 Devin-A | LIVE PASS | leaf=dispatch:secondary.pre_settlements:settlement | USMCA | URL=https://app.ih35dispatch.com/accounting/pre-settlements | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/pre-settlements marker 'dispatch' | NEXT=leaf=dispatch:secondary.settlements:connectivity
+Devin-A | LIVE PASS | leaf=dispatch:secondary.settlements:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'dispatch' | NEXT=leaf=dispatch:settings.dispatch:connectivity
+Devin-A | LIVE PASS | leaf=dispatch:settings.dispatch:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch/settings | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/settings marker 'dispatch' | NEXT=leaf=dispatch:settings.notify:customer
+Devin-A | LIVE PASS | leaf=dispatch:settings.dispatch:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/dispatch/settings | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/settings marker 'dispatch' | NEXT=leaf=dispatch:settings.notify:customer
+Devin-A | LIVE PASS | leaf=dispatch:settings.notify:customer | USMCA | URL=https://app.ih35dispatch.com/dispatch/notify-preferences | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/notify-preferences marker 'dispatch' | NEXT=DONE
+Devin-A | LIVE PASS | leaf=dispatch:settings.notify:load | USMCA | URL=https://app.ih35dispatch.com/dispatch/notify-preferences | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/notify-preferences marker 'dispatch' | NEXT=DONE
+Devin-A | LIVE PASS | leaf=dispatch:settings.notify:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch/notify-preferences | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/notify-preferences marker 'dispatch' | NEXT=DONE
+Devin-A | LIVE PASS | leaf=dispatch:settings.notify:picker_law | USMCA | URL=https://app.ih35dispatch.com/dispatch/notify-preferences | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/notify-preferences marker 'dispatch' | NEXT=DONE
+Devin-A | LIVE PASS | leaf=dispatch:settings.notify:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/dispatch/notify-preferences | healthz=a04f741 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/notify-preferences marker 'dispatch' | NEXT=DONE
+Devin-A | LIVE PASS | leaf=banking:accounts:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.bank_transaction_split:connectivity
+Devin-A | LIVE PASS | leaf=banking:accounts:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.bank_transaction_split:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.modal.bank_transaction_split:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.manage_accounts:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.modal.bank_transaction_split:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.manage_accounts:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.modal.manage_accounts:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.manual_je:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.modal.manage_accounts:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.manual_je:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.parity.manual_je:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.parity.record_ccpayment:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.parity.manual_je:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.parity.record_ccpayment:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.parity.record_ccpayment:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:statement_import:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.parity.record_ccpayment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:statement_import:connectivity
+Devin-A | LIVE STARVED | leaf=banking:statement_import:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking/statement-import | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/banking/statement-import healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=factoring:batches.create:customer
+Devin-A | LIVE STARVED | leaf=banking:statement_import:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking/statement-import | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/banking/statement-import healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=factoring:batches.create:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:customer | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:load | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:customer | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:load | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE STARVED | leaf=factoring:home.reserve_tracker:load | USMCA | URL=https://app.ih35dispatch.com/factoring/reserve-tracker | healthz=b41fe6f | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/reserve-tracker healthz=b41fe6f head Checking session... | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
+Devin-A | LIVE STARVED | leaf=factoring:home.reserve_tracker:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/reserve-tracker | healthz=b41fe6f | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/reserve-tracker healthz=b41fe6f head Checking session... | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=b41fe6f | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=b41fe6f head Checking session... | NEXT=leaf=accounting:bill_payments.list:vendor
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=b41fe6f | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=b41fe6f head Checking session... | NEXT=leaf=accounting:bill_payments.list:vendor
+Devin-A | LIVE PASS | leaf=accounting:bill_payments.list:vendor | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'accounting' | NEXT=leaf=accounting:bills.multiple:vendor
+Devin-A | LIVE PASS | leaf=accounting:bill_payments.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'accounting' | NEXT=leaf=accounting:bills.multiple:vendor
+Devin-A | LIVE PASS | leaf=accounting:bill_payments.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'accounting' | NEXT=leaf=accounting:bills.multiple:vendor
+Devin-A | LIVE PASS | leaf=accounting:bills.multiple:vendor | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/multiple marker 'Bills' | NEXT=leaf=accounting:chrome.toolbar_gear:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:bills.multiple:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/multiple marker 'Bills' | NEXT=leaf=accounting:chrome.toolbar_gear:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:bills.multiple:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/multiple marker 'Bills' | NEXT=leaf=accounting:chrome.toolbar_gear:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:bills.multiple:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/multiple marker 'Bills' | NEXT=leaf=accounting:chrome.toolbar_gear:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:bills.multiple:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/multiple | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills/multiple marker 'Bills' | NEXT=leaf=accounting:chrome.toolbar_gear:qbo_chrome
+Devin-A | LIVE PASS | leaf=accounting:chrome.toolbar_gear:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:je.create:picker_law
+Devin-A | LIVE PASS | leaf=accounting:chrome.toolbar_gear:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:je.create:picker_law
+Devin-A | LIVE PASS | leaf=accounting:je.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/journal-entries marker 'accounting' | NEXT=leaf=accounting:je.list:connectivity
+Devin-A | LIVE PASS | leaf=accounting:je.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/journal-entries marker 'accounting' | NEXT=leaf=accounting:je.list:connectivity
+Devin-A | LIVE PASS | leaf=accounting:je.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/journal-entries marker 'accounting' | NEXT=leaf=accounting:je.list:connectivity
+Devin-A | LIVE PASS | leaf=accounting:je.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/journal-entries marker 'accounting' | NEXT=leaf=accounting:month_close:connectivity
+Devin-A | LIVE PASS | leaf=accounting:je.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/journal-entries marker 'accounting' | NEXT=leaf=accounting:month_close:connectivity
+Devin-A | LIVE PASS | leaf=accounting:month_close:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/month-close | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/month-close marker 'accounting' | NEXT=leaf=settlements:settlements.disputes:driver
+Devin-A | LIVE STARVED | leaf=settlements:settlements.disputes:driver | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes healthz=unknown head Checking session... | NEXT=leaf=settlements:settlements.modal.create_advance:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.disputes:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes healthz=unknown head Checking session... | NEXT=leaf=settlements:settlements.modal.create_advance:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.disputes:reverse_link | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes healthz=unknown head Checking session... | NEXT=leaf=settlements:settlements.modal.create_advance:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.disputes:settlement | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes healthz=unknown head Checking session... | NEXT=leaf=settlements:settlements.modal.create_advance:connectivity
+Devin-A | LIVE PASS | leaf=settlements:settlements.modal.create_advance:connectivity | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=customers:chrome.toolbar_range:qbo_chrome
+Devin-A | LIVE PASS | leaf=settlements:settlements.modal.create_advance:picker_law | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=customers:chrome.toolbar_range:qbo_chrome
+Devin-A | LIVE PASS | leaf=settlements:settlements.modal.create_advance:driver | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=customers:chrome.toolbar_range:qbo_chrome
+Devin-A | LIVE PASS | leaf=settlements:settlements.modal.create_advance:load | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=customers:chrome.toolbar_range:qbo_chrome
+Devin-A | LIVE PASS | leaf=customers:chrome.toolbar_range:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'customers' | NEXT=leaf=customers:customers.panel.customers_sync:connectivity
+Devin-A | LIVE PASS | leaf=customers:chrome.toolbar_range:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=b41fe6f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'customers' | NEXT=leaf=customers:customers.panel.customers_sync:connectivity
+Devin-A | LIVE PASS | leaf=customers:customers.panel.customers_sync:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=3a15037 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'customers' | NEXT=leaf=customers:detail.audit:customer
+Devin-A | LIVE PASS | leaf=customers:customers.panel.customers_sync:customer | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=3a15037 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'customers' | NEXT=leaf=customers:detail.audit:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.audit:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=audit | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=audit healthz=unknown head Checking session... | NEXT=leaf=customers:detail.billing:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.audit:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=audit | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=audit healthz=unknown head Checking session... | NEXT=leaf=customers:detail.billing:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=billing | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=billing healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.billing.record_payment:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=billing | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=billing healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.billing.record_payment:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=billing | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=billing healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.billing.record_payment:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=billing | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=billing healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.billing.record_payment:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=3a15037 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=3a15037 head Checking session... | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=3a15037 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.fmcsa_verify:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=3a15037 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.fmcsa_verify:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=3a15037 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.fmcsa_verify:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=3a15037 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=3a15037 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=3a15037 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:customer

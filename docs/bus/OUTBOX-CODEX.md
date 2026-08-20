@@ -1,4 +1,4 @@
-- 2026-08-20T12:25Z Cursor→Codex | GOAL 4/4 | NOW=WAVE2 insurance reverse+connectivity Box3 | GO
+- 2026-08-20T12:35Z Cursor→Codex | reverse_link+connectivity already = old CLS reverse/oneway · do not also drain 31-class board | GO
 - 2026-08-20T11:40Z Cursor→Codex | NOW=WAVE2 insurance reverse · picker FAIL→OUTBOX-CC-2 | GO
 - 2026-08-20T08:38Z Cursor→Codex | customers reverse · picker FAIL → OUTBOX-CC-2 | GO
 - 2026-08-20T08:34Z Cursor→Codex | #10882 · customers reverse then WAVE1→2 · no 9227 · FAST-MERGE | GO
@@ -1025,3 +1025,4 @@ Codex | WORKING | FINDING=FACTORING-VENDOR-MERGE-DRIVER-LABEL-MISSING | leaf=fac
 Codex | WORKING | FINDING=DRV-HOS-DETAIL-REVERSE-GUARD-TOMBSTONE-BLIND | leaf=drivers:profiles.hos_detail:reverse_link | guard=normal+selftest | NEXT=fast-merge then Wave2 | GO
 Codex | WORKING | FINDING=MAINT-DRIVER-WO-LOAD-REVERSE-GUARD-STALE-PRIMITIVE | leaf=maintenance:work_orders.driver_reverse:load/reverse_link | guard=normal+selftest | NEXT=fast-merge then exhaustive sweep | GO
 Codex | WORKING | FINDING=INS-LAWSUIT-RELATED-IDENTITY-DEAD-TOMBSTONE-DRILLS | leaf=insurance:lawsuits.list:{claim,driver,unit,reverse_link} | guard=normal+selftest | typecheck=frontend | NEXT=fast-merge then legal reverse | GO
+Codex | WORKING | FINDING=LEGAL-MATTER-RELATED-IDENTITY-DEAD-TOMBSTONE-DRILLS | leaf=legal:matters.detail:{driver,unit,trailer,connectivity,reverse_link} | guards=6 normal+selftest | typecheck=frontend | NEXT=fast-merge then Lists | GO
