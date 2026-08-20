@@ -1049,3 +1049,4 @@ Codex | WORKING | FO=ACCT-F5663 | leaf=banking.panel.linked_bank_transactions:{b
 Codex | WORKING | FO=ACCT-F5664 | leaf=insurance:claims.list:{driver,unit,trailer,load,connectivity,reverse_link} | guard=10/10+selftest | global-uuid=PASS | NEXT=fast-merge then legal reverse | GO
 Codex | WORKING | FO=ACCT-F5665 | leaf=legal:templates.detail:{connectivity,reverse_link} | guard=3/3+selftest | NEXT=fast-merge then lists reverse | GO
 Codex | WORKING | FO=ACCT-F5666 | leaf=safety.(drawer|parity).integrity_alert_detail:{driver,unit,vendor,connectivity,reverse_link} | guard=3/3+selftest | NEXT=fast-merge then fleet reverse | GO
+Codex | WORKING | FO=ACCT-F5667 | leaf=maintenance:damage_reports.intake:{unit,connectivity,reverse_link} | guard=4/4+selftest | NEXT=fast-merge then dispatch reverse | GO
