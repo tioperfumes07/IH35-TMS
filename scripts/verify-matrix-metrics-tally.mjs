@@ -162,6 +162,12 @@ function repoProblems() {
     if (!svc.includes("FULLY_WIRED_MATRIX_ITEMS")) {
       problems.push("module-matrix.service.ts must roll up Fully-Wired 1–12 from Built/closed");
     }
+    if (/fwAbl\[spec\.id\] = ablFromCounts\(req, aud, bu, 0\)/.test(svc) || /fwCounts\[spec\.id\] = \{ req, aud, bu, li: 0 \}/.test(svc)) {
+      problems.push("FW 1–11 4th box must use Clicked on mapped cols — hardcoded livePct 0 is forbidden");
+    }
+    if (!svc.includes("ck += c.ck")) {
+      problems.push("FW 1–11 must sum per-column Clicked (ck) into livePct");
+    }
     if (!/clickedCells/.test(svc)) {
       problems.push("module-matrix.service.ts must expose clickedCells (Chrome click, not Box 4)");
     }

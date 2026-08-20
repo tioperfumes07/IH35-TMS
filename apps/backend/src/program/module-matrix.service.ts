@@ -1499,7 +1499,7 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
   fwAbl: Record<string, MatrixAblPct>;
   fwCounts: Record<string, { req: number; aud: number; bu: number; li: number }>;
 } {
-  type C = { req: number; aud: number; bu: number; li: number; cl: number };
+  type C = { req: number; aud: number; bu: number; li: number; cl: number; ck: number };
   const byCol = new Map<string, C>();
   let mReq = 0;
   let mAud = 0;
@@ -1516,7 +1516,7 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
     group: c.group || "other",
   }));
   for (const col of board.columns) {
-    byCol.set(col.id, { req: 0, aud: 0, bu: 0, li: 0, cl: 0 });
+    byCol.set(col.id, { req: 0, aud: 0, bu: 0, li: 0, cl: 0, ck: 0 });
   }
   for (const leaf of board.leaves) {
     for (const col of board.columns) {
@@ -1529,7 +1529,10 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
         bucket.cl += 1;
         mClosed += 1;
       }
-      if (cell.clicked) mClicked += 1;
+      if (cell.clicked) {
+        bucket.ck += 1;
+        mClicked += 1;
+      }
       const live = Boolean(cell.live);
       const built = Boolean(cell.built) || live;
       const audited = Boolean(cell.audited) || built || cell.tier === "probe";
@@ -1576,6 +1579,7 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
     let req = 0;
     let aud = 0;
     let bu = 0;
+    let ck = 0;
     for (const col of board.columns) {
       const group = col.group || "other";
       if (!fullyWiredColumnMatches(spec, col.id, group)) continue;
@@ -1584,9 +1588,11 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
       req += c.req;
       aud += c.aud;
       bu += c.bu;
+      ck += c.ck;
     }
-    fwCounts[spec.id] = { req, aud, bu, li: 0 };
-    fwAbl[spec.id] = ablFromCounts(req, aud, bu, 0);
+    // 4th box = Chrome Clicked on mapped Required cells (not keyword Live; not hardcoded 0).
+    fwCounts[spec.id] = { req, aud, bu, li: ck };
+    fwAbl[spec.id] = ablFromCounts(req, aud, bu, ck);
   }
 
   return {

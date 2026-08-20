@@ -151,7 +151,7 @@ export function sortGroupRollups(rollups: MatrixGroupRollup[]): MatrixGroupRollu
   });
 }
 
-/** Fully-Wired 1–12 as extra All-modules columns (same 4-box). 1–11 = Built on mapped Required cells; 12 = closed `leaf:col` only. */
+/** Fully-Wired 1–12 as extra All-modules columns (same 4-box). 1–11 Built on mapped cols; 4th box = Clicked on those cols; 12 = Clicked on every Required cell. */
 export type FullyWiredItemSpec = {
   id: string;
   label: string;

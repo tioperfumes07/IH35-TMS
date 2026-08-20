@@ -316,8 +316,9 @@ export function ModuleMatrixSystemView() {
       ) : ok ? (
         <div className="banner live" data-testid="module-matrix-system-live">
           <b>Clicked count ≠ 12 Clicked green.</b> The big Clicked number is credited cells.
-          Column <b>12 Clicked</b> is ✓ on Built+Live only when Clicked = every Required cell on that
-          module (same 4-box, all four follow Clicked/Required). Partial Clicked = yellow/red until 100%.
+          Columns <b>1–11</b> 4th ✓ = Chrome Clicked on that item's mapped Required cells (not keyword
+          Live). Column <b>12 Clicked</b> is 4/4 only when Clicked = every Required cell. Partial =
+          yellow/red until 100%.
           Urgent-6 100% = Fully-Wired 1–12 on accounting→customers→drivers→vendors→dispatch→safety.
           Do not add leaves. Ignore Box 4 keyword fan-out. MONEY parked. READY Live✓ when Miss C = 0.
           Urgent 16 A–Z first ({URGENT_16_MODULE_IDS.length}), then remainder A–Z ({restRows.length}).

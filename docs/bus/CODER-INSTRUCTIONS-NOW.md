@@ -26,6 +26,12 @@ Do not skip money, pickers, reverse, chrome, or Live Chrome to “finish faster.
 
 When **your column** has no unpaid Required cells left on module N, **immediately** start module N+1. Do not ask. Do not idle. After 14, insurance → legal → remainder of sidebar (still USMCA, still FAST-MERGE).
 
+## IDLE IS A DEFECT
+
+Forbidden end states: “holding for next directive” · “bottom of my lane” · “polling hourly” · waiting on a background agent · waiting on Jorge. Hourly pull = re-read then **keep working the next unpaid cell**.
+
+The All-modules Fully-Wired 1–12 **4th ✓** is Chrome Clicked on that item’s mapped Required cells (items 1–11) or every Required cell (item 12). It is **not** keyword Box 4 Live. Devin + CC-2 live-check in parallel.
+
 ## FAST-MERGE (every PR)
 
 `docs/bus/FAST-MERGE-4MIN-LAW.md`

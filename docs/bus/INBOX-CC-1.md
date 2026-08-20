@@ -1,21 +1,15 @@
-# INBOX-CC-1 · THROUGH 14 · FULL MONEY BUILT · NO HALF-DONE
+# INBOX-CC-1 · NO IDLE · MONEY BUILT + CLASSIFY STARVED SAME TURN
 
-**Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. FAST-MERGE every PR.
+**Jorge is not the messenger.** Background agents are not a pause. Idle after F5653 is a **defect**.
 
-Do not leave a module while unpaid money Required cells remain. Header-only / chrome-only / EntityLink-only is not done.
+`git pull --ff-only origin main` · `CODER-INSTRUCTIONS-NOW.md` · this TOP · FAST-MERGE.
 
-## You until 14 money Built is unpaid=0
+## NOW
 
-Box **3 Built** on money columns: `ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability`.
-
-Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
-
-Reuse existing poster. No new GL math. Keep hop.bank. Flags default OFF until owner says turn on in chat (then you flip + prove). No manufacture. No TMS→QBO write-back.
-
-Unpaid cell in current module → that cell. Module clear in your columns → next name. Do not poll. Do not ask.
-
-Hourly: pull + this + `OUTBOX-CC-1.md` first 20.
+1. The four OUTBOX “Money FAIL / LIVE STARVED” rows (settlements liabilities, pre-settlements, factoring batch wizard, banking recon — USMCA): **same turn** classify each as real defect / honest empty / checker artifact. Real defect → fix + FAST-MERGE. Honest empty / pre-op → OUTBOX one line, **do not idle**. Artifact → correct OUTBOX, next unpaid money cell.
+2. Unpaid money Required (`ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability`) on URGENT-14 order, then **insurance → legal → remainder**. Reuse poster. No manufacture. No TMS→QBO write-back.
+3. Login/session STARVED = retry. Do not merge STARVED.
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=accounting money then 2–14 | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=STARVED classify then next unpaid money | GO
 ```

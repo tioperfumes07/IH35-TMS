@@ -1,17 +1,15 @@
-# INBOX-CC-3 · THROUGH 14 · FULL qbo_chrome · NO HALF-DONE
+# INBOX-CC-3 · NO IDLE · AFTER qbo_chrome 14
 
-**Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. FAST-MERGE.
+**Jorge is not the messenger.** “Bottom of my lane / polling hourly” is a **defect**.
 
-Do not leave a module with unpaid `qbo_chrome` / surface-bar Required cells.
+`git pull --ff-only origin main` · `CODER-INSTRUCTIONS-NOW.md` · this TOP · FAST-MERGE.
 
-## You until 14 qbo_chrome / surface Built unpaid=0
+## NOW
 
-Box **3 Built** `qbo_chrome` + surface-bar. Not 9227. Not GL.
-
-Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
-
-Unpaid Built cell → that cell. Clear → next module. No ask.
+1. Wire any orphan `scripts/verify-*-qbo-chrome.mjs` with a claimed `verify-steps/NNNN-*.mjs` (Rule 17). Claim → merge → author. Do not leave guards unwired.
+2. Unpaid `qbo_chrome` / surface-bar Built: **insurance → legal → remainder of sidebar** (same column, USMCA). Leaf-specific only. No `leafRe:.*`.
+3. Not 9227. Not GL. Do not take CC-2 picker_law or Codex connectivity.
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=accounting qbo_chrome then 2–14 | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=wire qbo_chrome steps then insurance→legal Built | GO
 ```

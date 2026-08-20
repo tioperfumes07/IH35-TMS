@@ -12,6 +12,8 @@ accounting → customers → drivers → vendors → dispatch → safety → fle
 
 Never fuel. Never eld.
 
+The tracker’s Fully-Wired 1–12 **4th checkmark** is your Clicked. Keep one loop. Queue unpaid Required (money included). Do not idle when queue empty — rebuild and continue.
+
 Credit **only** `Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | USMCA | …`  
 STARVED does **not** fill column 12. Do not ship STARVED. Login/session only = retry, do not merge.
 

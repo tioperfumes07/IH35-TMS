@@ -1,17 +1,19 @@
-# INBOX-CC-2 · THROUGH 14 · EVERY PICKER LIVE · NO HALF-DONE
+# INBOX-CC-2 · NO IDLE · LIVE-CHECK PICKERS NOW
 
-**Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. Hourly also `OUTBOX-CC-2.md` first 20.
+**Jorge is not the messenger.** Chat is not a queue. Idle / “holding for next directive” / “polling hourly” is a **defect**.
 
-Live-check **every** unpaid `picker_law` cell on the current module in the app. A sample is not done. Rebuild on FAIL.
+`git pull --ff-only origin main` · `CODER-INSTRUCTIONS-NOW.md` · this TOP · FAST-MERGE.
 
-## You until 14 picker_law live-checked
+## Why the tracker’s last ✓ is empty on Fully-Wired 1–12
 
-**LIVE-CHECK** `picker_law` in the real app (USMCA). Rebuild only on live FAIL. Do not skip live-check. Do not 25/25 re-loop PASS modules.
+Boxes 1–3 on those 12 columns are Required / Audited / Built. **Box 4 is Chrome Clicked** (USMCA, Devin `LIVE PASS` + your live picker checks). It was hardcoded `livePct=0` on items 1–11 — that is a scoreboard bug Cursor is shipping. **You still live-check every unpaid `picker_law` cell.** A sample is not done. Do not invent 50 fake pickers on Code/Name catalogs (honesty_audit = Cursor). Rebuild only on live FAIL.
 
-Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
+## NOW (no ask)
 
-FAST-MERGE every fix PR. Next module when unpaid picker_law in current is 0 or live PASS.
+1. **LIVE-CHECK** unpaid `picker_law` in the real app, USMCA, order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
+2. Column clear → next module **same turn**. After 14: **insurance → legal → remainder of sidebar**.
+3. Picker FAIL → fix + FAST-MERGE. PASS → next cell. Do not wait for Jorge.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | LIVE-CHECK | NOW=accounting picker_law then 2–14 | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | LIVE-CHECK | NOW=unpaid picker_law then insurance→legal | GO
 ```
