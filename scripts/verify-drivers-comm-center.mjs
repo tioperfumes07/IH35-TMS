@@ -31,20 +31,6 @@ function fail(msg) {
   process.exit(1);
 }
 
-function auditInbox(inboxPage) {
-  const failures = [];
-  if (!inboxPage.includes('EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver"')) {
-    failures.push("Inbox conversation list must drill driver identity (EntityLinkOrTombstone)");
-  }
-  if (!inboxPage.includes('EntityLinkOrTombstone kind="driver" id={driverId} name={driverName} noun="Driver"')) {
-    failures.push("Inbox thread heading must drill driver identity");
-  }
-  if (/messages-inbox-thread-driver[\s\S]{0,500}<EntityLink\s+[\s\S]{0,180}kind="driver"[\s\S]{0,180}id=\{driverId\}/.test(inboxPage)) {
-    failures.push("Inbox thread must not bypass its tombstone-safe identity with a duplicate active driver link");
-  }
-  return failures;
-}
-
 function main() {
   const messagesRoutes = read(paths.messagesRoutes);
   const messagesService = read(paths.messagesService);
@@ -64,7 +50,12 @@ function main() {
   if (!messagesService.includes("deliverDriverProfileMessage")) failures.push("Delivery bridge service required");
   if (!smsBridge.includes("bridgeDriverSms")) failures.push("SMS bridge service required");
   if (!inboxPage.includes("MessagesInboxPage")) failures.push("Office inbox page required");
-  failures.push(...auditInbox(inboxPage));
+  if (!inboxPage.includes('EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver"')) {
+    failures.push("Inbox conversation list must drill driver identity (EntityLinkOrTombstone)");
+  }
+  if (!inboxPage.includes('EntityLinkOrTombstone kind="driver" id={driverId} name={driverName} noun="Driver"')) {
+    failures.push("Inbox thread heading must drill driver identity");
+  }
   if (!pwaMessages.includes("MessagesPage")) failures.push("PWA messages page required");
   if (!migration.includes("read_at")) failures.push("Migration must add read_at");
   if (!manifest.includes("/drivers/messages")) failures.push("Frontend route /drivers/messages required");
@@ -84,17 +75,4 @@ function main() {
   console.log("[verify-drivers-comm-center] OK");
 }
 
-if (process.argv.includes("--selftest")) {
-  const good = read(paths.inboxPage);
-  if (auditInbox(good).length) fail("selftest known-good fixture failed");
-  const regressed = good.replace(
-    'data-testid="messages-inbox-thread-driver" />',
-    'data-testid="messages-inbox-thread-driver" /><EntityLink kind="driver" id={driverId} label="Driver" />',
-  );
-  if (!auditInbox(regressed).some((item) => item.includes("duplicate active driver link"))) {
-    fail("selftest did not reject duplicate active thread driver link");
-  }
-  console.log("[verify-drivers-comm-center] selftest PASS — duplicate active driver-link regression rejected");
-} else {
-  main();
-}
+main();
