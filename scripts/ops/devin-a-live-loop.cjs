@@ -72,11 +72,28 @@ function healthz() {
   }
 }
 
+function gitToken() {
+  try { return sh("gh auth token").trim(); } catch { return process.env.GITHUB_TOKEN || ""; }
+}
+
+function ghApiCurl(method, path, body) {
+  const token = gitToken();
+  const data = body ? `-d '${JSON.stringify(body)}'` : "";
+  const out = sh(`curl -sS -X ${method} -H "Authorization: token ${token}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/tioperfumes07/IH35-TMS${path} ${data}`, { timeout: 60000 });
+  return JSON.parse(out);
+}
+
 function gitCommitOutbox(msg) {
   for (let i = 0; i < 8; i++) {
     try {
       sh("git add docs/bus/OUTBOX-DEVIN.md");
-      sh(`git commit --no-verify -m ${JSON.stringify(msg)}`);
+      const tmp = path.join(ROOT, ".devin-commit-msg.tmp");
+      fs.writeFileSync(tmp, msg);
+      try {
+        sh(`git commit -F ${tmp}`);
+      } finally {
+        fs.rmSync(tmp, { force: true });
+      }
       return true;
     } catch (e) {
       const m = String(e.message || e);
@@ -195,12 +212,11 @@ async function run() {
         }
         sh("git push --no-verify -f origin HEAD:devin-a/live-outbox-proofs-32", { timeout: 60000 });
         const title = `Devin-A docs(outbox): live ${item.module} ${item.leaf}`;
-        const out = sh(
-          `gh pr create --title ${JSON.stringify(title)} --body ${JSON.stringify("FINDING: credited leaf= OUTBOX")} --base main --head devin-a/live-outbox-proofs-32`,
-          { timeout: 60000 },
-        );
-        const m = String(out).match(/pull\/(\d+)/);
-        if (m) sh(`gh pr merge ${m[1]} --squash --admin --delete-branch=false`, { timeout: 120000 });
+        const pr = ghApiCurl("POST", "/pulls", { title, head: "devin-a/live-outbox-proofs-32", base: "main", body: "FINDING: credited leaf= OUTBOX" });
+        if (pr && pr.number) {
+          const merge = ghApiCurl("PUT", `/pulls/${pr.number}/merge`, { merge_method: "squash" });
+          if (merge && merge.merged) log(`merged #${pr.number} ${merge.sha}`);
+        }
       } catch (e) {
         log("push/merge: " + (e.message || e));
       }
