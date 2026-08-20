@@ -14825,3 +14825,33 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Customers
 Customer list and  | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:customer | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Customers
+Customer list and  | NEXT=leaf=customers:detail.fmcsa_verify:connectivity
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Customers
+Customer list and  | NEXT=leaf=customers:detail.fmcsa_verify:connectivity
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Customers
+Customer list and  | NEXT=leaf=customers:detail.fmcsa_verify:connectivity
