@@ -414,9 +414,15 @@ const SIBLINGS = [
     good: /entityLabel\(\s*claim\.unit_display_id\s*,\s*claim\.unit_id\s*,\s*"Unit"\s*\)/,
   },
   {
+    // Code has migrated off a direct entityLabel() call to the governed EntityLinkOrTombstone
+    // component: `name={wo.display_id ?? wo.description}` is a legitimate prop value — the
+    // component itself calls entityLabel/isUnresolvedEntityTombstone internally to reject a
+    // UUID-shaped name, so the protection still holds even though this call site no longer
+    // spells "entityLabel" literally (CLS-UUID-LABEL false-positive class, same as the 9
+    // money-lane siblings already fixed).
     rel: "apps/frontend/src/components/maintenance/DriverWorkOrdersReverseSection.tsx",
     bad: /display_id\s*\?\?\s*wo\.description\s*\?\?\s*id/,
-    good: /entityLabel\(\s*wo\.display_id\s*\?\?\s*wo\.description\s*,\s*id\s*,\s*"Work order"\s*\)/,
+    good: /<EntityLinkOrTombstone[\s\S]*?name=\{wo\.display_id \?\? wo\.description\}/,
   },
   {
     rel: "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
@@ -1372,9 +1378,14 @@ const SIBLINGS = [
     good: /entityLabel\(driverName, driverId, "Driver"\)/,
   },
   {
+    // Same false-positive class as the 9 money-lane siblings: renderCell no longer calls
+    // entityLabel() directly — it delegates to the governed EntityLinkOrTombstone component,
+    // passing the raw formatted value as `name`. EntityLinkOrTombstone's own
+    // isUnresolvedEntityTombstone()/entityLabel() calls still reject a UUID-shaped name before
+    // paint, so the protection holds; only the literal call site moved.
     rel: "apps/frontend/src/components/drivers/OperationsHistoryTable.tsx",
     bad: /const label = labelValue === null \|\| labelValue === undefined \|\| labelValue === "" \? undefined : formatCell\(labelValue\)/,
-    good: /entityLabel\(raw, id, linkNoun\(column\.entityKind\)\)/,
+    good: /<EntityLinkOrTombstone[\s\S]*?kind=\{column\.entityKind\}[\s\S]*?name=\{name\}/,
   },
   {
     rel: "apps/frontend/src/components/safety/DriverFinesReverseSection.tsx",
