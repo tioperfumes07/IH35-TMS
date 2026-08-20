@@ -2069,3 +2069,5 @@ Devin-A | LIVE STARVED | leaf=vendors:list.segment.all:connectivity | USMCA | UR
 Use your Google account or email and password.
 
 Sign in with | NEXT=leaf=vendors:list.segment.active:vendor
+Devin-A | LIVE PASS | leaf=vendors:list.segment.active:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=13eb106 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:list.segment.inactive:vendor
+Devin-A | LIVE PASS | leaf=vendors:list.segment.active:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=13eb106 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:list.segment.inactive:vendor
