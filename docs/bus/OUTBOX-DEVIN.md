@@ -4320,3 +4320,5 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=lists:catalog.fuel.mpg_bands.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.mpg_bands.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/mpg-bands | healthz=de2c126 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/mpg-bands healthz=de2c126 head Checking session... | NEXT=leaf=lists:catalog.fuel.pump_types.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.mpg_bands.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/mpg-bands | healthz=de2c126 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/mpg-bands healthz=de2c126 head Checking session... | NEXT=leaf=lists:catalog.fuel.pump_types.create:picker_law
