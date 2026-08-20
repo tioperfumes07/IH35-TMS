@@ -10447,3 +10447,13 @@ Devin-A | LIVE PASS | leaf=cash-flow:cash-flow.panel.projection:connectivity | U
 Devin-A | LIVE PASS | leaf=cash-flow:cash-flow.panel.projection:reverse_link | USMCA | URL=https://app.ih35dispatch.com/cash-flow | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow marker 'cash-flow' | NEXT=leaf=cash-flow:chrome.toolbar_filter:connectivity
 Devin-A | LIVE PASS | leaf=cash-flow:cash-flow.panel.projection:picker_law | USMCA | URL=https://app.ih35dispatch.com/cash-flow | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow marker 'cash-flow' | NEXT=leaf=cash-flow:chrome.toolbar_filter:connectivity
 Devin-A | LIVE PASS | leaf=cash-flow:cash-flow.panel.projection:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/cash-flow | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow marker 'cash-flow' | NEXT=leaf=cash-flow:chrome.toolbar_filter:connectivity
+Devin-A | LIVE STARVED | leaf=cash-flow:chrome.toolbar_filter:connectivity | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected | healthz=1495260 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Cash Flow
+Daily cash positio | NEXT=leaf=cash-flow:chrome.toolbar_gear:connectivity
