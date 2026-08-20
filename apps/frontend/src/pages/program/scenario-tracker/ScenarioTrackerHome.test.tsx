@@ -86,4 +86,21 @@ describe("ScenarioTrackerHome — P0 payload resilience", () => {
       ).toBeTruthy(),
     );
   });
+
+  it("wires Book the load to the Book Load screen", async () => {
+    vi.spyOn(api, "fetchScenarioTracker").mockResolvedValue({
+      generated_at_utc: new Date().toISOString(),
+      generated_at_ct: "01/01/2026 12:00 AM CT",
+      max_age_seconds: 20,
+      entity_scope: "USMCA",
+      hops: [],
+      scenarios: [],
+      source_health: [],
+    } as never);
+
+    renderTracker();
+
+    const link = await waitFor(() => screen.getByTestId("scenario-hop-link-hop.book"));
+    expect(link.getAttribute("href")).toBe("/dispatch/book-load");
+  });
 });

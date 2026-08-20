@@ -50,7 +50,7 @@ function hopDotClass(stale: boolean, state: string, stageIdx: number): string {
 }
 
 export function ScenarioTrackerHome() {
-  const [entity, setEntity] = useState<EntityScope>("ALL");
+  const [entity, setEntity] = useState<EntityScope>("USMCA");
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const trackerQuery = useQuery({
@@ -191,7 +191,13 @@ export function ScenarioTrackerHome() {
               <div className={`st-dot ${hopDotClass(stale, hop.state, stageIdx)}`}>{idx + 1}</div>
               <div className={`st-card${hop.blocked ? " blocked" : ""}`}>
                 <div className="st-top">
-                  <span className="st-nm">{hop.title}</span>
+                  {hop.href ? (
+                    <Link className="st-nm" to={hop.href} data-testid={`scenario-hop-link-${hop.key}`}>
+                      {hop.title}
+                    </Link>
+                  ) : (
+                    <span className="st-nm">{hop.title}</span>
+                  )}
                   <span className={`st-lane ${laneClass(hop.lane)}`}>{hop.lane === "money" ? "Money" : "Screens"}</span>
                 </div>
                 {hop.doing ? (
@@ -219,7 +225,13 @@ export function ScenarioTrackerHome() {
       <div className="st-grid" data-testid="scenario-tracker-scenarios">
         {scenarios.map(({ kind, links, item }) => (
           <div key={item.key} className={`st-sc ${kind}`} data-testid={`scenario-card-${item.key}`}>
-            <div className="t">{item.title}</div>
+            {item.href ? (
+              <Link className="t" to={item.href} data-testid={`scenario-card-link-${item.key}`}>
+                {item.title}
+              </Link>
+            ) : (
+              <div className="t">{item.title}</div>
+            )}
             {item.trigger ? (
               <div className="trig">
                 <b>Trigger:</b> {item.trigger}

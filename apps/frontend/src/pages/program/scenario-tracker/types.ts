@@ -15,6 +15,8 @@ export type ScenarioTrackerItem = {
   trigger?: string;
   links?: string;
   blocked?: string;
+  /** Canonical in-app surface that performs this hop (V3 wiring — click the title). */
+  href?: string;
 };
 
 export type ScenarioTrackerResponse = {

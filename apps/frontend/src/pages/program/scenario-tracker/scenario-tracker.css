@@ -242,6 +242,12 @@
 .st-nm {
   font-weight: 700;
   font-size: 14px;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+a.st-nm:hover {
+  color: var(--st-navy);
 }
 .st-lane {
   font-size: 9.5px;
@@ -384,6 +390,9 @@
 .st-sc .t {
   font-weight: 700;
   font-size: 13.5px;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .st-sc .trig {
   font-size: 11px;
