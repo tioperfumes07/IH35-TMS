@@ -38,10 +38,10 @@ function checkSource(src) {
     /data-testid=["']book-load-equipment-driver-link["']/.test(src),
     "must expose driver link testid"
   );
-  assert(src.includes('<EntityLinkOrTombstone kind="unit" id={assignedUnitId} name={null} noun="Unit"'), "must use unresolved-safe unit identity");
-  assert(src.includes('<EntityLinkOrTombstone kind="trailer" id={assignedTrailerUnitId} name={null} noun="Trailer"'), "must use unresolved-safe trailer identity");
-  assert(src.includes('<EntityLinkOrTombstone kind="driver" id={primaryDriverId} name={null} noun="Driver"'), "must use unresolved-safe primary driver identity");
-  assert(src.includes('<EntityLinkOrTombstone kind="driver" id={secondaryDriverId} name={null} noun="Driver"'), "must use unresolved-safe team driver identity");
+  assert(src.includes('id={assignedUnitId} name={unitOption?.label ?? null} noun="Unit"'), "must bind resolved unit identity");
+  assert(src.includes('id={assignedTrailerUnitId} name={trailerOption?.label ?? null} noun="Trailer"'), "must bind resolved trailer identity");
+  assert(src.includes('id={primaryDriverId} name={primaryDriverOption?.label ?? null} noun="Driver"'), "must bind resolved primary driver identity");
+  assert(src.includes('id={secondaryDriverId} name={secondaryDriverOption?.label ?? null} noun="Driver"'), "must bind resolved team driver identity");
 }
 
 function check() {
@@ -52,10 +52,10 @@ function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
   const mutations = [
     [/data-testid=["']book-load-equipment-selected-entitylinks["']/, 'data-testid="planted-missing"'],
-    [/id=\{assignedUnitId\} name=\{null\}/, "id={assignedUnitId} name={assignedUnitId}"],
-    [/id=\{assignedTrailerUnitId\} name=\{null\}/, "id={assignedTrailerUnitId} name={assignedTrailerUnitId}"],
-    [/id=\{primaryDriverId\} name=\{null\}/, "id={primaryDriverId} name={primaryDriverId}"],
-    [/id=\{secondaryDriverId\} name=\{null\}/, "id={secondaryDriverId} name={secondaryDriverId}"],
+    [/name=\{unitOption\?\.label \?\? null\}/, "name={null}"],
+    [/name=\{trailerOption\?\.label \?\? null\}/, "name={null}"],
+    [/name=\{primaryDriverOption\?\.label \?\? null\}/, "name={null}"],
+    [/name=\{secondaryDriverOption\?\.label \?\? null\}/, "name={null}"],
   ];
   for (const [pattern, replacement] of mutations) {
     const broken = original.replace(pattern, replacement);

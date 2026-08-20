@@ -5,6 +5,7 @@ export type DriverPickerWithCreateProps = {
   value: string | null;
   selectedOption?: EntityPickerProps["selectedOption"];
   onChange: EntityPickerProps["onChange"];
+  onSelectedOptionResolved?: EntityPickerProps["onSelectedOptionResolved"];
   /** When false, skips the roster query (parent surface closed). Default true. */
   open?: boolean;
   enabled?: boolean;
@@ -40,6 +41,7 @@ export function DriverPickerWithCreate({
   value,
   selectedOption,
   onChange,
+  onSelectedOptionResolved,
   open = true,
   enabled,
   shell = "modal",
@@ -59,6 +61,7 @@ export function DriverPickerWithCreate({
       value={value}
       selectedOption={selectedOption}
       onChange={onChange}
+      onSelectedOptionResolved={onSelectedOptionResolved}
       enabled={queryEnabled}
       nestedInDrawer={shell === "drawer"}
       placeholder={placeholder}
