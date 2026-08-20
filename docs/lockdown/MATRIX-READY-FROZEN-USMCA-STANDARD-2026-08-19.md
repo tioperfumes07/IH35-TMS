@@ -1,8 +1,8 @@
 # MATRIX READY STANDARD — FROZEN USMCA OPS (owner 2026-08-19)
 
-**Answered = closed. Do not re-ask. Do not add Required leaves until READY is ✓.**
+**Launch 100% is NOT this file’s READY column.** Owner 2026-08-19 night: launched = Fully-Wired **1–12** on USMCA. See `docs/lockdown/USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md`. This file keeps **Frozen / Miss C / READY** as Clicked KPIs only. Do not add Required leaves while maps are frozen.
 
-**Operating company for this close-out:** USMCA only. TRANSP QBO parallel books / TMS→QBO linkage are **parked**. They do not block READY.
+**Operating company:** USMCA only. TRK and TRANSP are not operating. QBO sync is parked.
 
 **Denominator:** current `docs/specs/scoreboard/modules/*.required.json` — **frozen**. No new leaves, modals, or Required cells until Jorge unfreezes.
 

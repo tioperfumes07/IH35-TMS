@@ -740,5 +740,12 @@
     "source_file": "apps/backend/src/routes/safety/hos-violations.ts",
     "guard": "scripts/verify-load-column-all-modules.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-19-USMCA-ONLY-UNTIL-LAUNCH",
+    "title": "Until USMCA is fully launched, only USMCA is operating — no seat work on IH 35 Trucking or IH 35 Transportation; QBO sync is parked/irrelevant; launch 100% is Fully-Wired items 1–12 on USMCA (not Box 1–4, not Miss C alone)",
+    "source_file": "docs/lockdown/USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md",
+    "guard": "scripts/verify-standing-directive-present.mjs",
+    "type": "enforced"
   }
 ]

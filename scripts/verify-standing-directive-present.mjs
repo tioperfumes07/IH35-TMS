@@ -18,27 +18,32 @@ const SELFTEST = process.argv.includes("--selftest");
 
 const DIRECTIVE = "docs/specs/STANDING-SESSION-DIRECTIVE.md";
 const DELIVERY = "docs/specs/DELIVERY-METHOD-LOCKED.md";
+const USMCA_ONLY = "docs/lockdown/USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md";
 
 const POINTERS = [
   {
     rel: ".cursor/rules/33-standing-session-directive.mdc",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "alwaysApply", "SEARCH BEFORE YOU ASK"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "alwaysApply", "SEARCH BEFORE YOU ASK", "USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md"],
   },
   {
     rel: ".windsurf/rules/standing-session-directive.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "SEARCH BEFORE YOU ASK"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "SEARCH BEFORE YOU ASK", "USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md"],
   },
   {
     rel: ".claude/skills/ih35-tms-standards/SKILL.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md"],
   },
   {
     rel: ".cursor/rules/00-always-read-first.mdc",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md"],
+  },
+  {
+    rel: ".cursor/rules/41-usmca-only-until-launch.mdc",
+    mustInclude: ["USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md"],
   },
   {
     rel: "AGENTS.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK", "USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md"],
   },
 ];
 
@@ -54,6 +59,7 @@ export function assertStandingDirectivePresent(root = ROOT) {
   const deliveryAbs = path.join(root, DELIVERY);
   if (!fs.existsSync(directiveAbs)) problems.push(`MISSING ${DIRECTIVE}`);
   if (!fs.existsSync(deliveryAbs)) problems.push(`MISSING ${DELIVERY}`);
+  if (!fs.existsSync(path.join(root, USMCA_ONLY))) problems.push(`MISSING ${USMCA_ONLY}`);
 
   if (fs.existsSync(directiveAbs)) {
     const body = fs.readFileSync(directiveAbs, "utf8");
@@ -72,6 +78,9 @@ export function assertStandingDirectivePresent(root = ROOT) {
     }
     if (!/PLACEHOLDER/i.test(body) || !/TEST DATA|test data/i.test(body)) {
       problems.push(`${DIRECTIVE}: must include §7 TEST WITH PLACEHOLDER NUMBERS (labeled test data)`);
+    }
+    if (!/USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19/.test(body)) {
+      problems.push(`${DIRECTIVE}: must include §11 USMCA-ONLY-UNTIL-LAUNCH-LAW`);
     }
   }
 

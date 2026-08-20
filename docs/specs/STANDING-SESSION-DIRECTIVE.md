@@ -102,5 +102,11 @@ To exercise a skeleton hop before real operational values exist, use a **clearly
 
 Forbidden: saying yes to “includes all” when only chrome or only money was built. Wire sprint may report `Built` / `Live=BLOCKED` — never “fully wired” before item 12.
 
+## 11. USMCA ONLY UNTIL LAUNCH (owner-locked 2026-08-19 night — answered=closed)
+
+**Canonical:** `docs/lockdown/USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md`
+
+Only **USMCA** is operating. Nobody works **Trucking (TRK)** or **Transportation (TRANSP)** until USMCA is fully launched. **QBO sync is irrelevant** (parked). Launch 100% = this file’s **§10 list (items 1–12)** on USMCA — not Box 1–4, not Miss C alone.
+
 ---
-*Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*
+*Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, `USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

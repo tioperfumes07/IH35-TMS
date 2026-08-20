@@ -11,6 +11,7 @@ alwaysApply: true
 2. `docs/specs/OWNER-QUALITY-COMPACT.md` — **ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED** (Claude.docx permanized)
 3. `docs/specs/DELIVERY-METHOD-LOCKED.md`
 4. `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — 12-item fully-wired list (Live Chrome last)
+5. `docs/lockdown/USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md` — USMCA only until launch; no TRK/TRANSP; QBO sync parked
 
 Cascade = auditor on active slice only. Claude Coder = money/Neon. Cursor = screens/janitor.  
 NO holds · NO `JORGE-APPROVED` · merge on green with proof.

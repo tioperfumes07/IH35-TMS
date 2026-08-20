@@ -1,8 +1,9 @@
-# PASTE DEVIN-A · 2026-08-20T04:30Z
+# PASTE DEVIN-A · USMCA LAUNCH
 
-Keep credited `leaf=`. After Wave A, Wave B of the 14. Not fuel.
+USMCA only. chrome=9227. Credited `leaf=<module>:<leafId>:<col>` + USMCA.  
+Do **not** Clicked Trucking or Transportation. No QBO. 100% = Fully-Wired 1–12 including item 12 Live.
 
 ```text
 git pull --ff-only origin main
-Devin-A | ACK | STANDARD=14-MODULE-100 | NOW=Clicked Wave A then B | chrome=9227 | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | ENTITY=USMCA | chrome=9227 | GO
 ```

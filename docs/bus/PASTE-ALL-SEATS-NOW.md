@@ -1,22 +1,10 @@
-# PASTE TO EVERY SEAT · 2026-08-20T04:30Z · 14-MODULE 100% · NO IDLE
+# PASTE TO EVERY SEAT · USMCA LAUNCH
 
 `git pull --ff-only origin main`
 
-READ: `docs/bus/CODER-INSTRUCTIONS-NOW.md` then `INBOX-<SEAT>.md`.
+**Only USMCA is operating.** Do not work IH 35 Trucking or IH 35 Transportation.  
+**QBO sync is irrelevant.** Do not sync QuickBooks.
 
-**14 modules to 100% (McLeod + QBO).** Fuel last. Box 4 ignore. Miss C = Clicked remaining.
+**100% = all 12 Fully-Wired scoreboard items** on USMCA (create→canonical, money when owed in TMS, F+R, Built, surface bar, chrome, pickers, RLS, guard, Live Chrome last). Not Box 1–4. Not Miss C alone.
 
-Wave A: accounting banking customers vendors factoring settlements  
-Wave B: dispatch drivers lists fleet maintenance safety insurance legal  
-
-Findings: GUARD-WORKORDERS + checklist ☐ + Desktop routing + OUTBOX FINDING same turn.
-
-| Seat | ACK NOW |
-|------|---------|
-| Cursor | customers/vendors leftover LVs + Built |
-| Codex | customers reverse + LIVE PASS |
-| Devin-A | Clicked Wave A `leaf=module:id:col` 9227 |
-| CC-1 | next money unpaid on 14 — NOT standby |
-| CC-2 | lists remaining on 14 — NOT 4-min poll |
-
-`STANDARD=14-MODULE-100`
+`STANDARD=USMCA-LAUNCH`

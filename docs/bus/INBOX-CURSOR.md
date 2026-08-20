@@ -1,7 +1,9 @@
-# INBOX-CURSOR · 2026-08-20T04:30Z
+# INBOX-CURSOR · USMCA LAUNCH 1–12
 
-Lead. **You own** customers/vendors leftover LVs (filter Apply, detail `?tab=`, vendor by-category if still OPEN on main). Then Wave A Built → Wave B Built. Keep INBOX/OUTBOX current. 14-module 100%. Fuel last.
+Lead. Entity = **USMCA only**. No TRK/TRANSP. No QBO sync.
+
+100% = Fully-Wired 1–12 on USMCA. Keep seats on that. Extra matrix columns stay.
 
 ```text
-Cursor | ACK | STANDARD=14-MODULE-100 | NOW=customers/vendors LV leftovers | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | ENTITY=USMCA | 100=Fully-Wired 1-12 | GO
 ```
