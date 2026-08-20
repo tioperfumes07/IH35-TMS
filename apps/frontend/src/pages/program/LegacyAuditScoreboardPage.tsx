@@ -260,6 +260,17 @@ export function LegacyAuditScoreboardPage() {
       {/* Shared Program top-bar — Module matrix is a first-class tab, not URL-only */}
       <ProgramModuleNav active="legacy" />
 
+      <div
+        className="px-4 py-3 text-[13px] leading-snug"
+        style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#334155" }}
+        data-testid="legacy-board-honest-purpose"
+      >
+        <b>Not the launch board.</b> This is the archived 13-gate (A–E + V1–V8) certification strip from
+        the 2026-08-03 full-system audit. It still lists TRANSP × USMCA because that audit was
+        two-entity. Launch truth is <code>/program/matrix</code> on USMCA (Box 1–4 + Miss C + money).
+        Do not wait for this board to move. Scenario tracker is next after matrix 100%.
+      </div>
+
       <header className="hd" data-testid="program-scoreboard-header">
         <div className="t">Deep-Linkage Certification Scoreboard</div>
         <div className="s">

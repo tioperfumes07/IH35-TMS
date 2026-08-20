@@ -12,7 +12,12 @@ node scripts/ops/devin-a-live-loop.cjs --rebuild-only   # writes /tmp/devin-a-qu
 # then run the loop (never DEVIN_KEEP_QUEUE=1 unless debugging)
 ```
 
-**If `--rebuild-only` prints 0 leaves:** Clicked *keys* are full. You still **do not idle**. Swarm **accounting**: re-walk money routes (bills, expenses, invoices, bank) logged in as USMCA and append `LIVE PASS` lines with `leaf=accounting:<leafId>:<moneyCol>` so CC-2 can stamp Box 4. Then fuel/system/driver-hub if Miss C > 0. Waiting for new required.json is forbidden.
+**If `--rebuild-only` prints 0 leaves:** Clicked *keys* are full. You still **do not idle**. Swarm **accounting Queue 6**:
+
+- `leaf=accounting:accounting.parity.credit_memos_page:<col>` for each still-✕ col (`connectivity`/`reverse_link`/`customer`/`qbo_chrome`)
+- `leaf=accounting:banking.panel.linked_bank_transactions:<col>` for `bank` `gl_je` `connectivity` `reverse_link`
+
+USMCA chrome=9227. Then customers/drivers if those boards still have Live ✕. Waiting for new required.json is forbidden.
 
 ```text
 Devin-A | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | chrome=9227 | NOW=accounting money Clicked | GO

@@ -8,10 +8,11 @@ import type { MyCompany } from "../../api/org";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { selectedCompanySwitcherLabel } from "../../lib/selected-company-label";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { filterLaunchOperatingCompanies } from "../../lib/launch-operating-company";
 
-/** Only launched (is_active) carriers appear in the office company switcher. */
+/** Launched (`is_active`) + USMCA-only until launch. TRANSP/TRK stay in org.companies (never-delete). */
 function visibleCompanies(companies: MyCompany[]): MyCompany[] {
-  return companies.filter((company) => company.is_active !== false);
+  return filterLaunchOperatingCompanies(companies);
 }
 
 export function CarrierSwitcher() {

@@ -14,9 +14,9 @@ Industry: swarm the current slice (Pierrain squads+swarm; feature-swarm cycle ti
 
 Devin idle because the Clicked queue skipped money is a **defect**. Rebuild includes money. Waiting for new `required.json` is **forbidden**.
 
-## Owner 2026-08-20 13:01 · BAR (eyeballed on live `/program/matrix` USMCA)
+## Owner 2026-08-20 13:51 · BAR (eyeballed on live `/program/matrix` USMCA)
 
-Logged-in system rollup (Cursor eyeball, not OUTBOX): Box 1 **3365/3365** · Box 2 **3364/3365** · Box 3 **3362/3365** (9% wire-only = Built-not-Live) · Box 4 Live **3070/3365 (91%)** · Frozen Clicked **3112/3145** · **Miss C 33/3145**.
+Logged-in system rollup (Cursor eyeball, not OUTBOX): Box 1 **3365/3365** · Box 2 **3365/3365** · Box 3 **3365/3365** (wire-only fill still shown; Built count is 100%) · Box 4 Live **3078/3365 (91%)** · Frozen Clicked **3145/3145** · **Miss C 0/3145** on this deploy (copy still says MONEY parked — SHA lag vs #13050; do not treat parked as law).
 
 **100% on a module means ALL of these on that module, then the software totals:**
 
@@ -37,7 +37,7 @@ Finish WAVE 1 to the BAR above **before** treating WAVE 2 as NOW.
 **WAVE 2 (rest of urgent):** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
 **WAVE 3:** inventory → compliance → reports → cash-flow → finance → form_425 → users → docs → home → tasks → program → **driver-hub → system → fuel** (Miss C remainder)
 
-Live 4th-box ✕ still on WAVE 1 (same eyeball): **accounting 10 · customers 1 · drivers 2**. banking / factoring / settlements had **0** 4th ✕ — still re-prove Box 4 **100%** on those three, then move. Do not idle on a green Miss C while Box 4 Live < 100%.
+Accounting board **346 Required · 346 Built · 340 Live · Queue 6**. Exact Live ✕ leaves: `accounting.parity.credit_memos_page` (2 cols) · `banking.panel.linked_bank_transactions` (4 cols). CC-2 stamps those six. banking / factoring / settlements still re-prove Box 4 100% then WAVE 2. Do not idle on Miss C 0 while Box 4 Live < 100%.
 
 ## Continuous auto mode
 
@@ -65,11 +65,11 @@ Never idle. Never wait for Jorge. FAST-MERGE every FO (`docs/bus/FAST-MERGE-4MIN
 
 | Seat | Column | NOW |
 |------|--------|-----|
-| **CC-2** | **Box 4 Live** | WAVE 1 accounting first (10 Live gaps) → customers → drivers → re-prove banking/factoring/settlements → WAVE 2 → WAVE 3. Append **PROD-VERIFIED** rows with explicit `` `leaf` `` + `Exact cells:` / `Leaves:`. Picker rebuild **only** on live FAIL. |
-| **Devin-A** | 12 Clicked / Miss C | **NOT DRAINED.** Rebuild queue (`--rebuild-only`) **including money**. NOW=**accounting money Clicked** → rest WAVE 1 unpaid → WAVE 2 → WAVE 3. Never wait for new required.json. chrome=9227. Never STARVED merge. |
-| **CC-3** | Built 1–11 FE | Remaining **3** system Built gaps (Box 3 **3362/3365**) then WAVE 1 leftover Built → WAVE 2 → WAVE 3. Not 9227. Not GL. Wire-only closes when CC-2 Live-credits the cell. |
-| **CC-1** | money, reuse poster | WAVE 1 accounting money Live gaps (UNIT etc Live 0% with Built 100%) → banking → factoring → settlements → WAVE 2 money. F5602–F5619 stand. No manufacture. |
-| **Codex** | reverse_link | WAVE 1 leftover reverse → WAVE 2 → WAVE 3. No 9227. |
-| **Cursor** | lead + leftover Built + scoreboard | Re-instruct this BAR hourly. FAST-MERGE INBOX to main. Item 12 = Devin. Box 4 = CC-2 ledger. |
+| **CC-2** | **Box 4 Live** | Accounting Queue 6: `accounting.parity.credit_memos_page` (2 cols) + `banking.panel.linked_bank_transactions` (4 cols). Then customers → drivers → WAVE 2. |
+| **Devin-A** | 12 Clicked / Miss C | Those six `leaf=accounting:<leafId>:<col>` USMCA. Rebuild includes money. chrome=9227. |
+| **CC-3** | Built 1–11 FE | Box 3 **3365/3365** on live rollup. WAVE 2 Built leftover. Not 9227. Not GL. |
+| **CC-1** | money, reuse poster | `banking.panel.linked_bank_transactions` bank+gl_je on USMCA. Money not parked. F5602–F5619 stand. |
+| **Codex** | reverse_link | Credit-memos + linked-bank reverse on accounting, then WAVE 2. No 9227. |
+| **Cursor** | lead + leftover Built + scoreboard | USMCA-only switcher. FAST-MERGE. Box 4 = CC-2. |
 
 ACK: `STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=<FO> | GO`

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { listMyCompanies, setDefaultCompany, type MyCompany } from "../api/org";
 import { ApiError } from "../api/client";
+import { isLaunchOperatingCompanyCode } from "../lib/launch-operating-company";
 
 const STORAGE_KEY = "ih35:selectedCompanyId";
 
@@ -45,20 +46,23 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const launchCompanies = companies.filter((company) => isLaunchOperatingCompanyCode(company.code));
+    const pickable = launchCompanies.length ? launchCompanies : companies;
+
     const fromStorage = window.localStorage.getItem(STORAGE_KEY);
-    if (fromStorage && companies.some((company) => company.id === fromStorage)) {
+    if (fromStorage && pickable.some((company) => company.id === fromStorage)) {
       setSelectedCompanyId(fromStorage);
       return;
     }
 
-    const fromDefault = companies.find((company) => company.is_default);
+    const fromDefault = pickable.find((company) => company.is_default);
     if (fromDefault) {
       setSelectedCompanyId(fromDefault.id);
       window.localStorage.setItem(STORAGE_KEY, fromDefault.id);
       return;
     }
 
-    const firstAlphabetical = [...companies].sort((a, b) => a.legal_name.localeCompare(b.legal_name))[0];
+    const firstAlphabetical = [...pickable].sort((a, b) => a.legal_name.localeCompare(b.legal_name))[0];
     if (firstAlphabetical) {
       setSelectedCompanyId(firstAlphabetical.id);
       window.localStorage.setItem(STORAGE_KEY, firstAlphabetical.id);
@@ -74,10 +78,12 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CompanyContextValue>(() => {
     const companies = companiesQuery.data ?? [];
+    const launchCompanies = companies.filter((company) => isLaunchOperatingCompanyCode(company.code));
+    const pickable = launchCompanies.length ? launchCompanies : companies;
     const selectedCompany =
-      companies.find((company) => company.id === selectedCompanyId) ??
-      companies.find((company) => company.is_default) ??
-      companies[0] ??
+      pickable.find((company) => company.id === selectedCompanyId) ??
+      pickable.find((company) => company.is_default) ??
+      pickable[0] ??
       null;
 
     return {
@@ -86,6 +92,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       selectedCompany,
       isLoading: companiesQuery.isLoading,
       setSelectedCompany: (companyId: string) => {
+        const allowed = pickable.some((c) => c.id === companyId);
+        if (!allowed) return;
         setSelectedCompanyId(companyId);
         window.localStorage.setItem(STORAGE_KEY, companyId);
       },
