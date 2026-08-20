@@ -1278,3 +1278,14 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Geofences
 Polygon geofence | healthz=21732e8 | mutation=none | NEXT=dispatch.queues.map
+Devin-A | LIVE PASS | module=dispatch | leaf=queues.map | URL=https://app.ih35dispatch.com/dispatch/map | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/map ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=21732e8 | mutation=none | NEXT=dispatch.queues.trip_pairing
