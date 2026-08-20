@@ -36,7 +36,11 @@ const CHECKS = [
   ["apps/frontend/src/components/documents/UploadModal.tsx", /\{ value: "load", label: "Load" \}/, "Documents load choice"],
   ["apps/frontend/src/components/documents/UploadModal.tsx", /function standaloneLinkToPickerKind\(type: StandaloneLinkType\): EntityPickerKind \{\n  return type;\n\}/, "Documents canonical load picker"],
   ["apps/frontend/src/components/documents/UploadModal.tsx", /entity_links: \[\{ entity_type: resolvedEntityType, entity_id: resolvedEntityId \}\]/, "Documents persists file-to-load link"],
-  ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /case "load":/, "Documents load EntityLink map"],
+  [
+    "apps/frontend/src/pages/docs/DocsHomePage.tsx",
+    /function docsLinkToEntityKind\(entityType: FileEntityType\): EntityKind \| null \{[\s\S]{0,260}case "unit":\n\s*case "load":\n\s*case "settlement":[\s\S]{0,100}return entityType;/,
+    "Documents load EntityLink map",
+  ],
 
   // Tasks: creator writes task_link target_type=load; every record-bearing view resolves it.
   ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /\{ value: "unit", label: "Unit" \},\n\s*\{ value: "load", label: "Load" \}/, "Task load target choice"],
