@@ -838,6 +838,14 @@ async function recordSettlementDisbursement(
     bankTxnId: string | null;
   }
 ): Promise<boolean> {
+  // ACCT-F5657 — the bind array previously passed [operatingCompanyId, settlementId, ...] against a
+  // SQL text expecting $1=id (the settlement's own uuid) and $2=operating_company_id — the exact
+  // reverse order. A settlement id is never a valid operating_company_id (or vice versa), so `WHERE
+  // id = $1 AND operating_company_id = $2` could never match any row: this was a PERMANENT, SILENT
+  // no-op. payment_method/payment_bank_reference/paid_via_bank_txn_id were never written on any
+  // pay-run close (posting flag ON or not), so the settlement's disbursement never linked to a bank
+  // transaction and `disbursement.recorded` always reported false to the caller. Not a GL/debits-vs-
+  // credits defect (the JE itself posts correctly on a separate table) — a linkage/audit-trail loss.
   const upd = await client.query(
     `
       UPDATE driver_finance.driver_settlements
@@ -847,7 +855,7 @@ async function recordSettlementDisbursement(
              updated_at = now()
        WHERE id = $1::uuid AND operating_company_id = $2::uuid
     `,
-    [args.operatingCompanyId, args.settlementId, args.paymentMethodName, args.paymentReference, args.bankTxnId]
+    [args.settlementId, args.operatingCompanyId, args.paymentMethodName, args.paymentReference, args.bankTxnId]
   );
   return (upd.rowCount ?? 0) > 0;
 }

@@ -231,12 +231,20 @@ async function checkDriverDebt(
   operatingCompanyId: string
 ): Promise<ValidationItem[]> {
   try {
+    // ACCT-F5657 — driver_finance.recompute_driver_debt(uuid) returns a column named
+    // total_active_debt (numeric, DOLLARS — db/migrations/202612471500_create_recompute_driver_debt.sql),
+    // never total_debt_cents. Selecting a column that doesn't exist throws Postgres 42703 on every
+    // call, which the catch{} below silently swallows as "best-effort" — so this GAP-14-DRIVER-DEBT
+    // warning has never fired for any driver, at any debt level, since it shipped. Fixed the column
+    // name AND the units mismatch this bug was masking: total_active_debt is dollars, not cents, so
+    // it must be multiplied by 100 before comparing against DEBT_WARN_THRESHOLD_CENTS — a $1,500 debt
+    // would otherwise have compared as 1500 cents ($15.00) even once the column name was corrected.
     const res = await client.query<{
       debt_cents: number | null;
     }>(
       `
         SELECT COALESCE(
-          (SELECT total_debt_cents::bigint
+          (SELECT ROUND(total_active_debt * 100)::bigint
            FROM driver_finance.recompute_driver_debt($1::uuid)
            LIMIT 1),
           0
@@ -259,8 +267,11 @@ async function checkDriverDebt(
         },
       ];
     }
-  } catch {
-    // Debt check is best-effort; do not block dispatch on DB function failure.
+  } catch (err) {
+    // Debt check is best-effort; do not block dispatch on DB function failure. But a swallowed error
+    // is indistinguishable from a passing control (this exact class of bug — a wrong column name —
+    // hid silently behind this catch for as long as the check has existed), so at minimum surface it.
+    console.warn("[GAP-14-DRIVER-DEBT] checkDriverDebt failed (best-effort, not blocking dispatch):", err);
   }
 
   return [];
