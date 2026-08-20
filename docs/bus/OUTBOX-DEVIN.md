@@ -8030,3 +8030,31 @@ Devin-A | LIVE STARVED | leaf=maintenance:master.vehicles.create:unit | USMCA | 
 Devin-A | LIVE STARVED | leaf=maintenance:master.vehicles.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/vehicles | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/vehicles healthz=unknown head Checking session... | NEXT=leaf=maintenance:parts_inventory.record_purchase:vendor
 Devin-A | LIVE STARVED | leaf=maintenance:master.vehicles.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/vehicles | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/vehicles healthz=unknown head Checking session... | NEXT=leaf=maintenance:parts_inventory.record_purchase:vendor
 Devin-A | LIVE STARVED | leaf=maintenance:master.vehicles.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/vehicles | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/vehicles healthz=unknown head Checking session... | NEXT=leaf=maintenance:parts_inventory.record_purchase:vendor
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:vendor | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=maintenance:parts.create:picker_law
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=maintenance:parts.create:picker_law
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=maintenance:parts.create:picker_law
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=maintenance:parts.create:picker_law
