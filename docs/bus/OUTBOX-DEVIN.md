@@ -2234,3 +2234,7 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=accounting:accounting.panel.bill_detail:connectivity
+Devin-A | LIVE STARVED | leaf=customers:list.segment.factored:customer | USMCA | URL=https://app.ih35dispatch.com/customers?listTab=factored | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?listTab=factored healthz=unknown head Checking session... | NEXT=leaf=customers:list.segment.inactive:customer
+Devin-A | LIVE STARVED | leaf=customers:list.segment.factored:vendor | USMCA | URL=https://app.ih35dispatch.com/customers?listTab=factored | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?listTab=factored healthz=unknown head Checking session... | NEXT=leaf=customers:list.segment.inactive:customer
+Devin-A | LIVE STARVED | leaf=customers:list.segment.factored:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers?listTab=factored | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?listTab=factored healthz=unknown head Checking session... | NEXT=leaf=customers:list.segment.inactive:customer
+Devin-A | LIVE STARVED | leaf=customers:list.segment.factored:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers?listTab=factored | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?listTab=factored healthz=unknown head Checking session... | NEXT=leaf=customers:list.segment.inactive:customer
