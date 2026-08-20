@@ -1,4 +1,4 @@
-# START HERE · 2026-08-20T03:55Z · URGENT 6 LOCK
+# START HERE · 2026-08-20T04:30Z · 14-MODULE 100%
 
 **Canonical bus = `docs/bus/` in the repo after `git pull --ff-only origin main`.**  
 Desktop `USMCA-WEEKEND-LEAD-2026-08-07/` must match. Chat is not the command channel. Jorge is not the messenger.
@@ -13,9 +13,9 @@ Desktop `USMCA-WEEKEND-LEAD-2026-08-07/` must match. Chat is not the command cha
 
 Then write OUTBOX `WORKING` and start the NOW FO. Continuous. Never idle.
 
-**URGENT 6 ONLY:** accounting · banking · customers · vendors · factoring · settlements. **Fuel is last — do not touch.** STOP fleet/dispatch.
+**14 MODULES TO 100%:** Wave A accounting banking customers vendors factoring settlements. Wave B dispatch drivers lists fleet maintenance safety insurance legal. **Fuel last.** No poll. No standby.
 
-**Codex RIGHT NOW:** paste/ACK `docs/bus/PASTE-CODEX-NOW.md` (03:40Z). Remaining drivers reverse → customers. Generic continuous-mode paste is not an ACK. **CC-2:** `PASTE-CC-2-NOW.md` — not idle. **Devin:** `PASTE-DEVIN-A-NOW.md` — Miss C is remaining work.
+**Codex RIGHT NOW:** `PASTE-CODEX-NOW.md`. **CC-2:** stop poll — `PASTE-CC-2-NOW.md`. **CC-1:** not standby — `PASTE-CC-1-NOW.md`. **Devin:** `PASTE-DEVIN-A-NOW.md`.
 
 ## Active seats
 

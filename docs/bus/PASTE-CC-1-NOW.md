@@ -1,10 +1,8 @@
-# PASTE CC-1 · 2026-08-20T03:55Z
+# PASTE CC-1 · 2026-08-20T04:30Z
 
-Money only. URGENT 6. **No fuel.**
+Not drained. HOLD the 11k banking-rules backfill. Next money FO on the 14. FAST-MERGE.
 
 ```text
 git pull --ff-only origin main
-CC-1 | ACK | STANDARD=URGENT-6 | NOW=accounting money | NEXT=banking | GO
+CC-1 | ACK | STANDARD=14-MODULE-100 | NOW=next money unpaid on 14 | GO
 ```
-
-THEN: banking → factoring → settlements. Board OPEN rows in `GUARD-WORKORDERS.md`. Triple-lock findings same turn.

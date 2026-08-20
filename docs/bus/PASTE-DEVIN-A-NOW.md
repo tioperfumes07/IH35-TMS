@@ -1,5 +1,8 @@
-# PASTE DEVIN-A · 2026-08-20T04:18Z
+# PASTE DEVIN-A · 2026-08-20T04:30Z
 
-Pull main. Kill old loop. Delete `/tmp/devin-a-queue.json` if it still has fleet. Rebuild URGENT-6 queue. Restart `scripts/ops/devin-a-live-loop.cjs`.
+Keep credited `leaf=`. After Wave A, Wave B of the 14. Not fuel.
 
-ACK: `Devin-A | ACK | STANDARD=URGENT-6-TONIGHT | NOW=Clicked accounting|banking|customers|vendors|factoring|settlements | chrome=9227 | GO`
+```text
+git pull --ff-only origin main
+Devin-A | ACK | STANDARD=14-MODULE-100 | NOW=Clicked Wave A then B | chrome=9227 | GO
+```

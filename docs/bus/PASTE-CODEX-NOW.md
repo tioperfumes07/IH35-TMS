@@ -1,8 +1,8 @@
-# PASTE CODEX · 2026-08-20T03:55Z
+# PASTE CODEX · 2026-08-20T04:30Z
 
-**No fuel.** Customers reverse → vendors reverse.
+Keep the current customer factor vendor label FO. Then vendors reverse. LIVE PASS `leaf=customers:…:… | USMCA`.
 
 ```text
 git pull --ff-only origin main
-Codex | ACK | STANDARD=URGENT-6 | NOW=customers reverse FE | NEXT=vendors reverse | GO
+Codex | ACK | STANDARD=14-MODULE-100 | NOW=CUSTOMER-FACTOR-VENDOR-HUMAN-LABEL | GO
 ```
