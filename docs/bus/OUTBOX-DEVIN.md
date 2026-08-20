@@ -12408,3 +12408,53 @@ Devin-A | LIVE STARVED | leaf=customers:detail.quality:reverse_link | USMCA | UR
 Devin-A | LIVE PASS | leaf=drivers:drivers.modal.assign_truck:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
 Devin-A | LIVE PASS | leaf=drivers:drivers.modal.assign_truck:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
 Devin-A | LIVE PASS | leaf=drivers:drivers.modal.assign_truck:picker_law | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading driver...
+FAQ | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading driver...
+FAQ | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading driver...
+FAQ | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:picker_law | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading driver...
+FAQ | NEXT=leaf=drivers:profiles.documents:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading driver...
+FAQ | NEXT=leaf=drivers:profiles.documents:driver
