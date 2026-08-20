@@ -12185,3 +12185,14 @@ Devin-A | LIVE STARVED | leaf=finance:hub:connectivity | USMCA | URL=https://app
 Devin-A | LIVE STARVED | leaf=finance:hub:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance | healthz=9ced896 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/finance healthz=9ced896 head Checking session... | NEXT=leaf=finance:nav.overview:qbo_chrome
 Devin-A | LIVE PASS | leaf=finance:nav.overview:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance/overview | healthz=9ced896 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance/overview marker 'finance' | NEXT=leaf=finance:nav.scenarios:qbo_chrome
 Devin-A | LIVE STARVED | leaf=finance:nav.scenarios:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance/scenarios | healthz=9ced896 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/finance/scenarios healthz=9ced896 head Checking session... | NEXT=leaf=form_425:chrome.toolbar_range:connectivity
+Devin-A | LIVE STARVED | leaf=form_425:chrome.toolbar_range:connectivity | USMCA | URL=https://app.ih35dispatch.com/425c?tab=history | healthz=9ced896 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/425c?tab=history head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=form_425:chrome.toolbar_search:connectivity
