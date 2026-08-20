@@ -1347,3 +1347,8 @@ Select an operating company  | healthz=7411f81 | mutation=none | NEXT=dispatch.p
 Devin-A | LIVE STARVED | module=dispatch | leaf=planning.templates | URL=https://app.ih35dispatch.com/dispatch/planner?panel=templates | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/planner?panel=templates ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.planning.unassigned
 Devin-A | LIVE STARVED | module=dispatch | leaf=planning.unassigned | URL=https://app.ih35dispatch.com/dispatch?view=overview&panel=unassigned | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch?view=overview&panel=unassigned ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.planning.reserve
 Devin-A | LIVE STARVED | module=dispatch | leaf=planning.reserve | URL=https://app.ih35dispatch.com/dispatch/book-load?book_load=1 | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/book-load?book_load=1 ; body head Checking session... | healthz=7411f81 | mutation=none | NEXT=dispatch.docs.pod
+Devin-A | LIVE STARVED | module=dispatch | leaf=docs.pod | URL=https://app.ih35dispatch.com/dispatch/pod-review | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.docs.ocr
