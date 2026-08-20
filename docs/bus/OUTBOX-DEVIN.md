@@ -2342,3 +2342,7 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
+Devin-A | LIVE PASS | leaf=settlements:settlements.parity.create_advance:connectivity | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=10483ac | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=factoring:submit.queue:customer
+Devin-A | LIVE PASS | leaf=settlements:settlements.parity.create_advance:picker_law | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=10483ac | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=factoring:submit.queue:customer
+Devin-A | LIVE PASS | leaf=settlements:settlements.parity.create_advance:driver | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=10483ac | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=factoring:submit.queue:customer
+Devin-A | LIVE PASS | leaf=settlements:settlements.parity.create_advance:load | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=10483ac | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'settlements' | NEXT=leaf=factoring:submit.queue:customer
