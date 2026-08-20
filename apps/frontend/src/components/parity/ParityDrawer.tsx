@@ -25,8 +25,10 @@ export type ParityDrawerProps = {
   /** "regular" ≈576px, "wide" ≈700px. */
   size?: "regular" | "wide";
   /**
-   * Nested inline "+ Create" opened from a wide wizard / shared Modal (z-[70]). Stacks at z-[80]
-   * so Save clicks are not intercepted by the parent overlay; Escape is scoped to this drawer.
+   * Nested inline "+ Create" opened from a wide wizard / shared Modal (z-[215]). Stacks at
+   * z-[218] so Save clicks are not intercepted by the parent overlay; Escape is scoped to this
+   * drawer. Stays below Combobox.tsx's LISTBOX_Z_INDEX=220 so a picker opened inside this drawer
+   * still paints on top of it.
    */
   stackAboveModal?: boolean;
 };
@@ -81,7 +83,15 @@ export function ParityDrawer({
   // stack ABOVE them (z-[60]) or Save clicks hit the wizard backdrop (onMouseDown → close) and the
   // create never POSTs — same symptom as the nested-form GET (wizard closes, nothing persisted).
   // WO-CREATE-UX: shared Modal upgraded to z-[70]; nested QuickCreate uses stackAboveModal → z-[80].
-  const stackClass = stackAboveModal ? "z-[80]" : "z-[60]";
+  // Z-INDEX-DRIFT (2026-08-21, CC-3): CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER's fix bumped the
+  // shared Modal.tsx from z-[70] to z-[215] (to clear LoadDetailDrawer's z-[210]) but never touched
+  // this drawer's stackAboveModal tier, which stayed at z-[80] — silently reopening
+  // LV-WO-PARTPANEL-BEHIND-MODAL-DESTROYS-FORM: any nested "+ Create" (QuickCreateEntityModal,
+  // CatalogQuickCreateDrawer, InlineCreateDrawer, CreateTrailerModal, CreateUnitModal) opened from
+  // inside a Modal (Create Work Order, Book Load, etc.) painted BEHIND that Modal's backdrop again.
+  // Bumped to z-[218] — above Modal's 215, below Combobox's LISTBOX_Z_INDEX=220 so a picker opened
+  // inside this drawer still paints on top of it. Locked by verify-parity-drawer-z-index-above-modal.mjs.
+  const stackClass = stackAboveModal ? "z-[218]" : "z-[60]";
   return createPortal(
     <div
       className={`fixed inset-0 ${stackClass}`}

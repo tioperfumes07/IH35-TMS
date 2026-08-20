@@ -16,7 +16,11 @@
  * same missing-z-index-tier root cause — so Modal.tsx needs its own equivalent lock.
  *
  * FAIL: Modal.tsx's z-index < the highest z-[N] used by any OTHER file in the frontend (Combobox.tsx
- * excluded — its listbox is deliberately the highest tier so pickers opened inside a Modal still win).
+ * excluded — its listbox is deliberately the highest tier so pickers opened inside a Modal still win;
+ * ParityDrawer.tsx excluded — its `stackAboveModal` tier is DELIBERATELY the second-highest tier, one
+ * above Modal, so a nested "+ Create" drawer opened from inside a Modal still wins over that Modal's
+ * backdrop — locked separately by verify-parity-drawer-z-index-above-modal.mjs, which asserts the
+ * OTHER direction: ParityDrawer's stackAboveModal z-index > Modal's z-index).
  * PASS: Modal.tsx's z-index >= that max, so it can never be occluded by a known drawer, and Combobox's
  * listbox z-index remains >= Modal's, so a picker inside a Modal still paints on top of the Modal.
  *
@@ -30,6 +34,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-modal-z-index-above-drawers";
 const MODAL = path.join(ROOT, "apps/frontend/src/components/Modal.tsx");
 const COMBOBOX = path.join(ROOT, "apps/frontend/src/components/Combobox.tsx");
+const PARITY_DRAWER = path.join(ROOT, "apps/frontend/src/components/parity/ParityDrawer.tsx");
 const FRONTEND_SRC = path.join(ROOT, "apps/frontend/src");
 
 function assert(cond, msg) {
@@ -91,7 +96,7 @@ function comboboxListboxZIndex() {
 
 function check() {
   const modalZ = modalZIndex();
-  const maxOther = maxArbitraryZIndex([MODAL, COMBOBOX]);
+  const maxOther = maxArbitraryZIndex([MODAL, COMBOBOX, PARITY_DRAWER]);
   assert(
     modalZ >= maxOther,
     `Modal.tsx z-index (${modalZ}) is below the highest z-[N] used elsewhere in the frontend (${maxOther}). ` +
