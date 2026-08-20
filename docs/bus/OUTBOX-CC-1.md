@@ -1938,3 +1938,21 @@ resuming the standing correctness sweep (non-atomic-connection/lock-order/cross-
 double-entry/period-close/escrow classes all already swept this segment) while holding position on
 accounting specifically per the swarm directive. Continuing non-stop, no idle gaps, always fix never
 defer.
+
+2026-08-20T19:14Z CC-1 | ACCT-F5658 SHIPPED (PR #13127, merged b482411e) -- accounting-module aging/
+sales-tax audit per the swarm directive (sales-tax posting came back CLEAN). The A/R Aging Export
+PDF/XLSX -- the outbound statement (factoring packets, lender requests, month-close tie-out) --
+IGNORED the as-of date entirely: it read today's live open balances and re-labeled them, so a
+backdated statement invented invoices issued after the date and dropped invoices paid since it,
+while the on-screen table (a different engine) showed different numbers for the same date. Ported
+ap-aging.service.ts's own already-decided as-of reconstruction into ar-aging.service.ts
+column-for-column; at as_of=today the arithmetic is identical, so today-based consumers are
+unchanged. Also un-pinned 3 guards + 2 tests that asserted the OLD query text verbatim (the exact
+guard-pins-the-callsite mistake the contract guard's own ACCT-F171 note warns about) -- they now
+assert the corrected requirement, including a new FORBID on reading the live open-balance column and
+on a current-state 'paid' exclusion. Board closeout in this same PR cycle. NEXT (self-assigned, in
+flight, filed as an OPEN row): Findings 2+3 from the same audit -- the ar/ap_aging_as_of SQL
+functions (the on-screen historical path + every Month-Close review link) still carry the
+proforma/void classes the TS fixes already exclude ($22,720 + $2,450 live on USMCA) and net no
+credits; fix is a CREATE OR REPLACE migration, rehearsing on a disposable Neon branch first per the
+CI-down rule. Continuing non-stop, no idle gaps, always fix never defer.
