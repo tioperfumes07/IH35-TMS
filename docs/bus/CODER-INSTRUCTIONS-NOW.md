@@ -1,4 +1,4 @@
-# CODER INSTRUCTIONS NOW · 2026-08-19T20:52Z · FROZEN USMCA OPS · DO NOT SKIP
+# CODER INSTRUCTIONS NOW · 2026-08-20T00:35Z · FROZEN USMCA OPS · DO NOT SKIP
 
 **20:52Z update:** canonical READY standard is `docs/lockdown/MATRIX-READY-FROZEN-USMCA-STANDARD-2026-08-19.md`. No new Required leaves until Jorge unfreezes. Watch READY Live ✓ and Miss C = 0.
 
@@ -64,12 +64,12 @@ Then rest (safety / fleet / maintenance / lists / other). Money/GL = CC-1 only. 
 
 ---
 
-## 4. Seat NOW / THEN (authoritative — 18:20Z)
+## 4. Seat NOW / THEN (authoritative — 00:35Z)
 
 | Seat | CDP | NOW | THEN (same turn) | OUTBOX WORKING line |
 |------|-----|-----|------------------|---------------------|
 | **Cursor** | 9226 | **drivers Built** identity/EntityLink leftover | customers → vendors → dispatch Built (never accounting EntityLink-only) | `Cursor \| WORKING \| NOW=drivers Built \| GO` |
-| **Codex** | 9228 | **drivers reverse FE** unpaid | customers reverse → vendors reverse → dispatch reverse PRIMARY | `Codex \| WORKING \| NOW=drivers reverse FE \| NEXT=customers reverse \| GO` |
+| **Codex** | 9228 | **DRV-PROFILE-OPS-REVERSE** (see `INBOX-CODEX.md` 00:35Z + `PASTE-CODEX-NOW.md`). Generic continuous-mode paste ≠ ACK. VOID #10144. | customers reverse → vendors reverse → dispatch reverse PRIMARY (skip #10260) | `Codex \| ACK \| NOW=drivers reverse FE \| NEXT=customers reverse \| GO` |
 | **Devin-A** | **9227** | Clicked on **OWNER SEQ** modules (accounting first if unpaid cells). Named `leaf:col`. STARVED skip. **No safety PASS re-loop.** **FAST-MERGE your own PRs.** | next unpaid leaf same module → next OWNER SEQ module | `Devin-A \| WORKING \| NOW=Clicked OWNER SEQ \| chrome=9227 \| GO` |
 | **CC-1** | 9222 | **accounting** money/GL unpaid | banking → factoring → settlements | `CC-1 \| WORKING \| NOW=accounting money \| GO` |
 | **CC-2** | 9223 | lists/catalogs unblocking **drivers** | customers catalogs → vendors catalogs | `CC-2 \| WORKING \| NOW=lists drivers +Add new \| GO` |
