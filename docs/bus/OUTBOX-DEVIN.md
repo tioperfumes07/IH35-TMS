@@ -1300,3 +1300,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=21732e8 | mutation=none | NEXT=dispatch.queues.in_transit
+Devin-A | LIVE PASS | module=dispatch | leaf=queues.in_transit | URL=https://app.ih35dispatch.com/dispatch/in-transit-issues | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/in-transit-issues ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=21732e8 | mutation=none | NEXT=dispatch.queues.factoring
