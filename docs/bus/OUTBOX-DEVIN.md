@@ -6398,3 +6398,7 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.contacts.create:customer
+Devin-A | LIVE PASS | leaf=customers:detail.contacts.create:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=4fd8fd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Create' | NEXT=leaf=customers:detail.documents:customer
+Devin-A | LIVE PASS | leaf=customers:detail.contacts.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=4fd8fd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Create' | NEXT=leaf=customers:detail.documents:customer
+Devin-A | LIVE PASS | leaf=customers:detail.contacts.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=4fd8fd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Create' | NEXT=leaf=customers:detail.documents:customer
+Devin-A | LIVE PASS | leaf=customers:detail.contacts.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=4fd8fd6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Create' | NEXT=leaf=customers:detail.documents:customer
