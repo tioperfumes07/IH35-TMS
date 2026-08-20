@@ -4647,3 +4647,10 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=lists:lists.dialog.confirm_discard:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:lists.dialog.confirm_discard:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:lists.dialog.part_location_map:qbo_chrome
