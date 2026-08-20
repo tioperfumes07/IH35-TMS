@@ -1107,7 +1107,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink
                     kind="journal_entry"
                     id={tx.matched_journal_entry_id}
-                    label={entityLabel(null, tx.matched_journal_entry_id, "Journal entry")}
+                    label={entityLabel(tx.matched_journal_entry_memo ?? null, tx.matched_journal_entry_id, "Journal entry")}
                     data-testid="bank-txn-je-link"
                   />
                 </div>
