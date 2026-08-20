@@ -1,19 +1,11 @@
-# INBOX-CC-2 · NO IDLE · LIVE-CHECK PICKERS NOW
+# INBOX-CC-2
 
-**Jorge is not the messenger.** Chat is not a queue. Idle / “holding for next directive” / “polling hourly” is a **defect**.
+**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate.
 
-`git pull --ff-only origin main` · `CODER-INSTRUCTIONS-NOW.md` · this TOP · FAST-MERGE.
+**YOU OWN BOX 4 LIVE.** Software Box 4 is **3070/3365**. That is **not** Devin Clicked. Credit = `docs/audit/AUDIT-COVERAGE-LIVE.md` append **PROD-VERIFIED** with explicit leaf id + `Exact cells:` / `Leaves:` `` `leaf:col` ``. You hold the append-lease. Do not keyword-flood. Do not idle on picker_law polls.
 
-## Why the tracker’s last ✓ is empty on Fully-Wired 1–12
-
-Boxes 1–3 on those 12 columns are Required / Audited / Built. **Box 4 is Chrome Clicked** (USMCA, Devin `LIVE PASS` + your live picker checks). It was hardcoded `livePct=0` on items 1–11 — that is a scoreboard bug Cursor is shipping. **You still live-check every unpaid `picker_law` cell.** A sample is not done. Do not invent 50 fake pickers on Code/Name catalogs (honesty_audit = Cursor). Rebuild only on live FAIL.
-
-## NOW (no ask)
-
-1. **LIVE-CHECK** unpaid `picker_law` in the real app, USMCA, order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
-2. Column clear → next module **same turn**. After 14: **insurance → legal → remainder of sidebar**.
-3. Picker FAIL → fix + FAST-MERGE. PASS → next cell. Do not wait for Jorge.
+**NOW:** WAVE 1 **accounting** (10 Live 4th-✕ on live matrix, e.g. UNIT Live 0% Built 100%) → **customers** (1) → **drivers** (2) → re-prove banking/factoring/settlements Box 4 100% → WAVE 2 → WAVE 3. Picker rebuild **only** on live FAIL.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | LIVE-CHECK | NOW=unpaid picker_law then insurance→legal | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=accounting Box4 Live | GO
 ```

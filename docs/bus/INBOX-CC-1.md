@@ -1,15 +1,11 @@
-# INBOX-CC-1 · NO IDLE · MONEY BUILT + CLASSIFY STARVED SAME TURN
+# INBOX-CC-1
 
-**Jorge is not the messenger.** Background agents are not a pause. Idle after F5653 is a **defect**.
+**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No owner gate. No deviate.
 
-`git pull --ff-only origin main` · `CODER-INSTRUCTIONS-NOW.md` · this TOP · FAST-MERGE.
+Money. Reuse poster. Bill+BillPayment. F5602–F5619 stand. FAST-MERGE. No manufacture.
 
-## NOW
-
-1. The four OUTBOX “Money FAIL / LIVE STARVED” rows (settlements liabilities, pre-settlements, factoring batch wizard, banking recon — USMCA): **same turn** classify each as real defect / honest empty / checker artifact. Real defect → fix + FAST-MERGE. Honest empty / pre-op → OUTBOX one line, **do not idle**. Artifact → correct OUTBOX, next unpaid money cell.
-2. Unpaid money Required (`ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability`) on URGENT-14 order, then **insurance → legal → remainder**. Reuse poster. No manufacture. No TMS→QBO write-back.
-3. Login/session STARVED = retry. Do not merge STARVED.
+**NOW:** WAVE 1 **accounting** money cells that are Built 100% **Live 0%** (live matrix UNIT and siblings) — real write path + evidence CC-2 can PROD-VERIFY. Then banking → factoring → settlements → WAVE 2 money.
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=STARVED classify then next unpaid money | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=accounting money Live gaps | GO
 ```

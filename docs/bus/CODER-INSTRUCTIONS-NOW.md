@@ -1,68 +1,65 @@
-# CODER INSTRUCTIONS NOW · THROUGH ALL 14 URGENT MODULES · NO ASK · NO WAIT
+# CODER INSTRUCTIONS NOW · NO DEVIATE · CONTINUOUS · HOURLY RE-READ · FAST-MERGE
 
-**Jorge is not the messenger.** Chat is not a queue. This file + your `INBOX-<SEAT>.md` TOP are the only NOW until the **14** are done. Do not wait for Cursor. Do not wait for Jorge. Hourly `git pull --ff-only origin main` and keep going.
+USMCA only. No QBO write-back. **No owner gate.** ALL QUESTIONS ASKED AND ANSWERED.
 
-USMCA only. **Fuel never. eld never.** No TMS→QBO write-back. No owner gate. ALL QUESTIONS ASKED AND ANSWERED.
+**Do not deviate.** This file + your `INBOX-<SEAT>.md` TOP are the only NOW. Chat summaries do not override.
 
-**Forbidden stale queues (do not run):** WAVE1-THEN-2 · WAVE 1 banking-first · 8-by-06:00 · 25/25 picker re-loop · poll INBOX idle · Ignore Box 4 · `devin-a/live-outbox-proofs-32` · `git reset --soft origin/main` · extra `devin-a-live-loop` processes.
+## Owner 2026-08-20 13:01 · BAR (eyeballed on live `/program/matrix` USMCA)
 
-## 100% (do not lie) — HALF-DONE IS FORBIDDEN
+Logged-in system rollup (Cursor eyeball, not OUTBOX): Box 1 **3365/3365** · Box 2 **3364/3365** · Box 3 **3362/3365** (9% wire-only = Built-not-Live) · Box 4 Live **3070/3365 (91%)** · Frozen Clicked **3112/3145** · **Miss C 33/3145**.
 
-Fully-Wired **1–12** on that module (`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`), **every Required cell 4/4**.
+**100% on a module means ALL of these on that module, then the software totals:**
 
-**Not done:** Clicked KPI moved · some LIVE PASS · `@matrix-built` · picker sample · CI green · “almost” · one column paid while others ✕.
+1. **Original 4 boxes** — Required · Audited · Built · **Live** all **100%** (denominator = that module’s Required cells; software target **3365 of 3365** on every box).
+2. **Miss C = 0** on Frozen ops Clicked (and software Miss C **0 of 3145**).
+3. **Built wire complete** — **0** Built-only cells (the 9% wire-only must become **Live**, not more chrome).
+4. **Fully-Wired 1–12** — item 12 last (Devin Clicked). Until 12: say `Built` / `Live=BLOCKED` on the module.
 
-**Done for a module (only then advance that module in your seat):** every Required `leaf:col` has honest Built (1–11 in your columns) **and** Devin Clicked (item 12) on **all** Required cells including money. ✓✓✓✕ is not done. Item 12 is last. Say `Live=BLOCKED` until Clicked = Required.
+**Box 4 Live ≠ Clicked.** `cell.live` = `AUDIT-COVERAGE-LIVE` **PROD-VERIFIED** with **explicit leaf id** + **Exact cells:** / `Leaves:` `` `leaf:col` `` (see `leafColumnLiveReason`). Keyword fan-out is illegal. Devin OUTBOX LIVE PASS credits **Clicked / Miss C / FW-12**, not Box 4.
 
-Do not skip money, pickers, reverse, chrome, or Live Chrome to “finish faster.” Honest Built: no `leafRe:.*` / `|.*` / word blankets. Do not add scoreboard columns.
+**Miss C 33** measured on that page: **Fuel 24 + System 7 + Driver hub 2**. WAVE 1 six already Miss C **0**. Owner ordered **Miss C → 0** on the **whole software** — Clicked on fuel + system + driver-hub is **in scope** (overrides older “Fuel never” for this KPI only). eld still never. No QBO write-back.
 
-## Sequence (locked until finished — do not reorder)
+## Six most urgent = WAVE 1 first (then rest of urgent = WAVE 2, then WAVE 3)
 
-**URGENT-6 first (all seats, split columns, same hour):**  
-1 accounting → 2 customers → 3 drivers → 4 vendors → 5 dispatch → 6 safety
+Finish WAVE 1 to the BAR above **before** treating WAVE 2 as NOW.
 
-**Then 7–14 (skip fuel):**  
-7 fleet → 8 maintenance → 9 lists → 10 settlements → 11 factoring → 12 banking → 14 inventory
+**WAVE 1 (the 6):** banking → factoring → accounting → settlements → customers → drivers  
+**WAVE 2 (rest of urgent):** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
+**WAVE 3:** inventory → compliance → reports → cash-flow → finance → form_425 → users → docs → home → tasks → program → **driver-hub → system → fuel** (Miss C remainder)
 
-When **your column** has no unpaid Required cells left on module N, **immediately** start module N+1. Do not ask. Do not idle. After 14, insurance → legal → remainder of sidebar (still USMCA, still FAST-MERGE).
+Live 4th-box ✕ still on WAVE 1 (same eyeball): **accounting 10 · customers 1 · drivers 2**. banking / factoring / settlements had **0** 4th ✕ — still re-prove Box 4 **100%** on those three, then move. Do not idle on a green Miss C while Box 4 Live < 100%.
 
-## IDLE IS A DEFECT
+## Continuous auto mode
 
-Forbidden end states: “holding for next directive” · “bottom of my lane” · “polling hourly” · waiting on a background agent · waiting on Jorge. Hourly pull = re-read then **keep working the next unpaid cell**.
+Never idle. Never wait for Jorge. FAST-MERGE every FO (`docs/bus/FAST-MERGE-4MIN-LAW.md`):
 
-The All-modules Fully-Wired 1–12 **4th ✓** is Chrome Clicked on that item’s mapped Required cells (items 1–11) or every Required cell (item 12). It is **not** keyword Box 4 Live. Devin + CC-2 live-check in parallel.
-
-## FAST-MERGE (every PR)
-
-`docs/bus/FAST-MERGE-4MIN-LAW.md`
-
-1. Gate `money-pr-local-gate` / `cursor-ship-preflight --body-file` **exit 0**
-2. `git push` — `--no-verify` only after step 1 PASS and only ENV `verify-static-fallback`
+1. `cursor-ship-preflight --body-file` / `money-pr-local-gate` **exit 0** (merge proof)
+2. `git push` — if blocked **only** by ENV `verify-static-fallback`, `git push --no-verify` **after** step 1 PASS
 3. `gh pr create` — **never** `gh pr checks --watch`
-4. `gh pr merge N --squash --delete-branch --admin` **same turn**
+4. `gh pr merge N --squash --delete-branch --admin` **immediately**
 5. Neon yourself if money/migrations
-6. OUTBOX one line → next unpaid cell **same turn**
+6. OUTBOX one line → next FO same turn
 
-## Matrix (do not invent columns)
+## Hourly re-read (no exceptions · redundant on purpose)
 
-Canonical ids: `docs/specs/scoreboard/columns.shared.json` (**25**). Not 31 CLS. Not extra `payment`/`factor`/`escrow` columns. `liability` = LIAB/ESCR.
+**Every hour, every seat including Cursor:**
 
-## Seats until the 14 are done
+1. `git pull --ff-only origin main`
+2. Re-read this file TOP to BOTTOM
+3. Re-read your `INBOX-<SEAT>.md` TOP
+4. Re-read `docs/bus/FAST-MERGE-4MIN-LAW.md`
+5. Re-ACK: `STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=<module> <col> | GO`
+6. Keep the same chain — do not invent a new queue
 
-| Seat | You own | Ladder (no ask) |
-|------|---------|-----------------|
-| **Devin-A** | Box 4 Live Chrome | Clicked every Required `leaf:col` on URGENT-6 then 7–14. `leaf=module:leafId:col \| USMCA`. chrome=9227. See INBOX-DEVIN-A. |
-| **CC-1** | money Built: `ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability` | Same module order. Reuse poster. Keep hop.bank. No manufacture. |
-| **CC-2** | picker_law **live-check in the app** | Same order. Rebuild only on live FAIL. No 25/25 PASS re-loop. |
-| **CC-3** | `qbo_chrome` + surface-bar Built | Same order. Not 9227. Not GL math. |
-| **Codex** | `reverse_link` + `connectivity` Built | Same order. No 9227. |
-| **Cursor** | Lead: keep these files current on main; leftover Built | FAST-MERGE bus; kill extra Devin loops; never Jorge-as-messenger. |
-| **Cascade** | OFF build. Merge if that is your seat. Do not rewrite INBOXes. | |
+## Seats (same waves, different columns — no crossing)
 
-Picker FAIL → prepend `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Always `OUTBOX-CURSOR.md`. Never chat-only.
+| Seat | Column | NOW |
+|------|--------|-----|
+| **CC-2** | **Box 4 Live** | WAVE 1 accounting first (10 Live gaps) → customers → drivers → re-prove banking/factoring/settlements → WAVE 2 → WAVE 3. Append **PROD-VERIFIED** rows with explicit `` `leaf` `` + `Exact cells:` / `Leaves:`. Picker rebuild **only** on live FAIL. |
+| **Devin-A** | 12 Clicked / Miss C | WAVE 1 Clicked already 0 Miss C — **do not re-loop WAVE 1**. NOW=**driver-hub → system → fuel** until software Miss C **0**, then WAVE 2 unpaid Clicked, then WAVE 3. chrome=9227. `leaf=module:leafId:col \| USMCA`. Unique branches. Never STARVED merge. |
+| **CC-3** | Built 1–11 FE | Remaining **3** system Built gaps (Box 3 **3362/3365**) then WAVE 1 leftover Built → WAVE 2 → WAVE 3. Not 9227. Not GL. Wire-only closes when CC-2 Live-credits the cell. |
+| **CC-1** | money, reuse poster | WAVE 1 accounting money Live gaps (UNIT etc Live 0% with Built 100%) → banking → factoring → settlements → WAVE 2 money. F5602–F5619 stand. No manufacture. |
+| **Codex** | reverse_link | WAVE 1 leftover reverse → WAVE 2 → WAVE 3. No 9227. |
+| **Cursor** | lead + leftover Built + scoreboard | Re-instruct this BAR hourly. FAST-MERGE INBOX to main. Item 12 = Devin. Box 4 = CC-2 ledger. |
 
-## Hourly
-
-`git pull --ff-only origin main` · this file · INBOX TOP · FAST-MERGE law · ACK below · keep working.
-
-ACK: `STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | HOURLY-REREAD | NOW=<module> <col> | GO`
+ACK: `STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=<FO> | GO`

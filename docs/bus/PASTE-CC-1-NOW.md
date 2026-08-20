@@ -1,4 +1,4 @@
 # PASTE CC-1 NOW
 git pull --ff-only origin main
-Read INBOX-CC-1 + CODER-INSTRUCTIONS-NOW. **Do not idle.** Classify STARVED same turn, then next unpaid money cell, then insurance→legal. FAST-MERGE `--admin` same turn.
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=STARVED classify then next unpaid money | GO
+Hourly re-read. FAST-MERGE. NOW=accounting money Live gaps (Built 100 Live 0) then rest WAVE1 money then WAVE2.
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=accounting money Live gaps | GO
