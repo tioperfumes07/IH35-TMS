@@ -765,7 +765,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
             </div>
             <CappedListNotice
-              shown={feesQuery.data?.history.length ?? 0}
+              shown={feesQuery.data?.history?.length ?? 0}
               limit={500}
               total={feesQuery.data?.history_total}
               hint="Narrow the customer filter to see the remaining chargebacks and fees."
