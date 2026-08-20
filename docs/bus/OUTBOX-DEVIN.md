@@ -1788,3 +1788,13 @@ Use your Google account or email and password.
 
 Sign in with | healthz=unknown | mutation=none | NEXT=fleet.unit.edit.reefer
 Devin-A | ACK | STANDARD=URGENT-6 | NOW=Clicked customers|vendors|accounting|banking|factoring|settlements | chrome=9227 | GO
+Devin-A | LIVE PASS | module=fleet | leaf=unit.edit.financial | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+FLEET›UNIT LOADING…
+Unit Loa | healthz=unknown | mutation=none | NEXT=fleet.unit.edit.lifecycle
