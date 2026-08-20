@@ -6520,3 +6520,31 @@ Devin-A | LIVE PASS | leaf=customers:list.segment.factored:customer | USMCA | UR
 Devin-A | LIVE PASS | leaf=customers:list.segment.factored:vendor | USMCA | URL=https://app.ih35dispatch.com/customers?listTab=factored | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers?listTab=factored marker 'customers' | NEXT=leaf=customers:md.customer_details:customer
 Devin-A | LIVE PASS | leaf=customers:list.segment.factored:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers?listTab=factored | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers?listTab=factored marker 'customers' | NEXT=leaf=customers:md.customer_details:customer
 Devin-A | LIVE PASS | leaf=customers:list.segment.factored:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers?listTab=factored | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers?listTab=factored marker 'customers' | NEXT=leaf=customers:md.customer_details:customer
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:customer | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:cash_advances:driver
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:cash_advances:driver
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:cash_advances:driver
+Devin-A | LIVE STARVED | leaf=customers:md.customer_details:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers?tab=customer_details | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers?tab=customer_details healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:cash_advances:driver
