@@ -1494,3 +1494,25 @@ Customers.tsx new-transaction hop + CustomerDetail.tsx billing tab listInvoices/
 was already real, only the Box-3 credit was never claimed. WAVE1 remaining: banking (18 missing
 cells), factoring (5), accounting (55) -- continuing one well-scoped batch at a time, factoring next
 (smallest remaining). No idle gaps.
+
+2026-08-20T13:20Z CC-1 | CORRECTION + WAVE1/WAVE2 MONEY-COLUMN BOX-3-BUILT: SYSTEM-WIDE ZERO
+UNPAID CELLS. My earlier banking(18)/accounting(55) "remaining" counts (previous entry) were WRONG --
+my cross-reference script only read wire-sprint-built.json entries and never scanned @matrix-built
+JSON tags embedded directly in scripts/verify-*.mjs headers (the SAME source
+apps/backend/src/program/matrix-built-auto.ts reads for the live scoreboard, per its own file header:
+"1. wire-sprint-built.json (legacy manual feed) 2. @matrix-built tags in scripts/verify-*.mjs headers
+(preferred for new merges)"). Re-ran a corrected sweep that scans BOTH sources (mirroring
+parseMatrixBuiltTags/discoverMatrixBuiltEntries) across EVERY module in
+docs/specs/scoreboard/modules/*.required.json: banking and accounting are BOTH already 0 missing via
+pre-existing @matrix-built script tags I had not accounted for (e.g. verify-expense-column-wave.mjs
+already credits banking transactions.list/categorize for expense+gl_je). Re-verified all six PRs
+shipped this session (vendors/fleet/maintenance/drivers/customers/factoring) against the corrected
+method too -- all six closed genuine gaps, none were redundant/already-covered. GRAND TOTAL missing
+money-column Box-3-Built cells system-wide, across every module with a required.json: 0. CC-1s full
+assigned NOW (WAVE2 vendors->dispatch->fleet->maint->insurance->legal money cols, Box 3 Built) plus
+the self-initiated WAVE1 sweep (banking/factoring/accounting/settlements/customers/drivers) is
+complete. Seven PRs shipped this pass: #11970 (vendors), #11985 (fleet), #12016 (maintenance), #12025
+(status), #12050 (drivers/customers), #12069 (factoring) -- plus this correction. No functional code
+changed in any of them; every cell wiring was already real, only the Box-3 credit was missing.
+Continuing to watch for new unpaid cells as leaves/columns evolve; standing by for the next NOW
+directive or resuming the money-lane sibling-writer-diff sweep. No idle gaps.
