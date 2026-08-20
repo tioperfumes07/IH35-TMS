@@ -50,6 +50,12 @@ function main() {
   if (!messagesService.includes("deliverDriverProfileMessage")) failures.push("Delivery bridge service required");
   if (!smsBridge.includes("bridgeDriverSms")) failures.push("SMS bridge service required");
   if (!inboxPage.includes("MessagesInboxPage")) failures.push("Office inbox page required");
+  if (!inboxPage.includes('EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver"')) {
+    failures.push("Inbox conversation list must drill driver identity (EntityLinkOrTombstone)");
+  }
+  if (!inboxPage.includes('EntityLinkOrTombstone kind="driver" id={driverId} name={driverName} noun="Driver"')) {
+    failures.push("Inbox thread heading must drill driver identity");
+  }
   if (!pwaMessages.includes("MessagesPage")) failures.push("PWA messages page required");
   if (!migration.includes("read_at")) failures.push("Migration must add read_at");
   if (!manifest.includes("/drivers/messages")) failures.push("Frontend route /drivers/messages required");
