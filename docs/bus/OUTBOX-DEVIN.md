@@ -14486,3 +14486,4 @@ Idioma
 Ingles
 Espanol (preview)
 t | NEXT=leaf=accounting:accounting.parity.invoice_create:invoice
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.factoring_detail_page:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/FactoringDetailPage.tsx | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/ healthz=unknown head Checking session... | NEXT=leaf=accounting:accounting.parity.invoice_create:invoice
