@@ -1202,3 +1202,13 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=unknown | mutation=none | NEXT=dispatch.secondary.settlements
+Devin-A | LIVE PASS | module=dispatch | leaf=secondary.settlements | URL=https://app.ih35dispatch.com/driver-finance/settlements | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/driver-finance/settlements ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Driver Settlements
+List + de | healthz=unknown | mutation=none | NEXT=dispatch.secondary.pre_settlements
