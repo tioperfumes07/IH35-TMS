@@ -5151,3 +5151,6 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=fleet:roster.filter.status_active:unit
+Devin-A | LIVE PASS | leaf=fleet:roster.filter.status_active:unit | USMCA | URL=https://app.ih35dispatch.com/fleet?status=InService | healthz=6f50d5d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet?status=InService marker 'fleet' | NEXT=leaf=fleet:roster.filter.status_inshop:unit
+Devin-A | LIVE PASS | leaf=fleet:roster.filter.status_active:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet?status=InService | healthz=6f50d5d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet?status=InService marker 'fleet' | NEXT=leaf=fleet:roster.filter.status_inshop:unit
+Devin-A | LIVE PASS | leaf=fleet:roster.filter.status_active:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet?status=InService | healthz=6f50d5d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet?status=InService marker 'fleet' | NEXT=leaf=fleet:roster.filter.status_inshop:unit
