@@ -78,6 +78,22 @@ export async function getBalanceSheetReport(input: {
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
           AND je.entry_date <= $2::date
           AND a.account_type IN ('Asset', 'Liability', 'Equity')
+          -- ACCT-F5656 — the closing entry that sweeps net income into Retained Earnings must be
+          -- excluded here the SAME way the current-year-earnings query below already excludes it.
+          -- Without this, once any period is closed, its net income is counted TWICE: once via this
+          -- query picking up the closing JE's own credit to the Retained Earnings account (correct
+          -- by itself), and again via the current-year-earnings query below reconstructing the raw
+          -- pre-close revenue/expense activity as its own display line. Equity — and therefore
+          -- assets vs. total-liabilities-and-equity — silently stops balancing the moment the first
+          -- period is ever closed. Currently latent (no period has been closed on any entity yet,
+          -- confirmed via db/migrations/202607020000_accounting_periods_seed_all_entities.sql
+          -- seeding every period status='open'), armed for the first close.
+          AND je.id NOT IN (
+            SELECT ap.retained_earnings_entry_id
+            FROM accounting.periods ap
+            WHERE ap.operating_company_id = $1::uuid
+              AND ap.retained_earnings_entry_id IS NOT NULL
+          )
         GROUP BY a.id, a.account_number, a.account_name, a.account_type
         ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
       `,

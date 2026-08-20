@@ -58,6 +58,7 @@ const guards = [
   "verify-faro-csv-reserve-movement-honest-flag-off.mjs",
   "verify-faro-csv-reserve-movement-idempotent-retry.mjs",
   "verify-financial-column-contracts.mjs",
+  "verify-financial-statements-exclude-closing-entry.mjs",
   "verify-financial-document-reverse-leaves.mjs",
   "verify-fleet-expense-reverse-leaves.mjs",
   "verify-fleet-fuel-cost-attributes-via-unit-id.mjs",

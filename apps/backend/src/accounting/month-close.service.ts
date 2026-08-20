@@ -3,6 +3,17 @@ import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "../ban
 import { withCompanyScope } from "./shared.js";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+
+// ACCT-F5656 — AF-7 money-control gate. `POST /api/v1/accounting/periods/:id/close`
+// (p7-wave2.routes.ts) already refuses to close/lock a period or post the retained-earnings JE
+// unless this flag is ON for the entity, resolved BEFORE BEGIN so an OFF entity never mutates
+// anything. `lockMonthClose` is the SECOND door that does the exact same thing (locks the period,
+// posts the same retained-earnings JE) and had no such check at all — an entity whose owner
+// deliberately left period-close OFF could still close a period and post a retained-earnings JE
+// through this route. Same check, same fail-closed-before-BEGIN placement, matching the sibling
+// route exactly.
+const MONEY_CONTROL_PERIOD_CLOSE_FLAG_KEY = "MONEY_CONTROL_PERIOD_CLOSE_ENABLED";
 
 type BankReconPendingAccount = {
   bank_account_id: string;
@@ -319,6 +330,13 @@ export async function lockMonthClose(input: {
   const periodBounds = parsePeriod(input.period);
 
   return withCompanyScope(input.userId, input.operatingCompanyId, async (client) => {
+    // ACCT-F5656 — resolved BEFORE BEGIN so an OFF entity never posts the retained-earnings JE or
+    // mutates a period, matching the sibling /periods/:id/close route's own placement exactly.
+    const closeEnabled = await isEnabled(client, MONEY_CONTROL_PERIOD_CLOSE_FLAG_KEY, {
+      operating_company_id: input.operatingCompanyId,
+      user_uuid: input.userId,
+    });
+    if (!closeEnabled) throw new Error("period_close_disabled");
     await client.query("BEGIN");
     try {
       const checklist = await loadChecklist(client, {
