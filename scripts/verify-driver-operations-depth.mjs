@@ -107,7 +107,46 @@ contains(`${BACKEND_DIR}/fuel-history.service.ts`, fuelSvc, [
   { pattern: /ft\.vendor_id::text/, label: "fuel SELECT projects vendor_id" },
   { pattern: /ft\.unit_id::text/, label: "fuel SELECT projects unit_id" },
   { pattern: /ft\.load_id::text/, label: "fuel SELECT projects load_id" },
+  { pattern: /NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/, label: "fuel SELECT projects human unit label" },
+  { pattern: /NULLIF\(TRIM\(l\.load_number\), ''\) AS load_number/, label: "fuel SELECT projects human load label" },
+  { pattern: /COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$2::uuid/, label: "fuel unit label join is company scoped" },
+  { pattern: /l\.operating_company_id = \$2::uuid/, label: "fuel load label join is company scoped" },
 ]);
+const accidentSvc = read(`${BACKEND_DIR}/accident-history.service.ts`);
+contains(`${BACKEND_DIR}/accident-history.service.ts`, accidentSvc, [
+  { pattern: /ar\.id::text AS uuid/, label: "accident joined SELECT keeps id unambiguous" },
+  { pattern: /NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/, label: "accident SELECT projects human unit label" },
+  { pattern: /NULLIF\(TRIM\(l\.load_number\), ''\) AS load_number/, label: "accident SELECT projects human load label" },
+  { pattern: /NULLIF\(TRIM\(v\.vendor_name\), ''\) AS vendor_name/, label: "accident SELECT projects human vendor label" },
+  { pattern: /COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$2::uuid/, label: "accident unit label join is company scoped" },
+  { pattern: /l\.operating_company_id = \$2::uuid/, label: "accident load label join is company scoped" },
+  { pattern: /v\.operating_company_id = \$2::uuid/, label: "accident vendor label join is company scoped" },
+]);
+contains(`${PAGE_DIR}/AccidentHistoryView.tsx`, accidentPage, [
+  { pattern: /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/, label: "accident unit renders human label over canonical id" },
+  { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "accident load renders human label over canonical id" },
+  { pattern: /key:\s*"vendor_name"[\s\S]*idKey:\s*"vendor_id"/, label: "accident vendor renders human label over canonical id" },
+]);
+contains(`${PAGE_DIR}/FuelHistoryView.tsx`, fuelPage, [
+  { pattern: /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/, label: "fuel unit renders human label over canonical id" },
+  { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "fuel load renders human label over canonical id" },
+]);
+
+if (process.argv.includes("--selftest")) {
+  const planted = [
+    ["fuel unit producer label", fuelSvc.replace("NULLIF(TRIM(u.unit_number), '') AS unit_number", "ft.unit_id::text AS unit_number"), /NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/],
+    ["fuel load producer scope", fuelSvc.replace("AND l.operating_company_id = $2::uuid", "AND l.id IS NOT NULL"), /l\.operating_company_id = \$2::uuid/],
+    ["accident vendor producer label", accidentSvc.replace("NULLIF(TRIM(v.vendor_name), '') AS vendor_name", "ar.vendor_id::text AS vendor_name"), /NULLIF\(TRIM\(v\.vendor_name\), ''\) AS vendor_name/],
+    ["accident unit consumer label", accidentPage.replace('key: "unit_number"', 'key: "unit_id"'), /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/],
+    ["fuel load consumer label", fuelPage.replace('key: "load_number"', 'key: "load_id"'), /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/],
+  ];
+  const escaped = planted.filter(([, mutated, expected]) => expected.test(mutated));
+  if (escaped.length) {
+    console.error(`verify:driver-operations-depth — SELFTEST FAILED: ${escaped.map(([name]) => name).join(", ")}`);
+    process.exit(1);
+  }
+  console.log(`verify:driver-operations-depth — SELFTEST OK (${planted.length} planted defects detected)`);
+}
 
 // OperationsDepthNav lists all 12 sub-views
 const nav = read("apps/frontend/src/components/drivers/OperationsDepthNav.tsx");

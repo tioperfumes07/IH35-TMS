@@ -15,9 +15,9 @@ export function AccidentHistoryView({ driverId, operatingCompanyId }: Props) {
         { key: "description", label: "Description", entityKind: "accident", idKey: "uuid" },
         { key: "at_fault", label: "At Fault" },
         { key: "preventable", label: "Preventable" },
-        { key: "unit_id", label: "Unit", entityKind: "unit" },
-        { key: "load_id", label: "Load", entityKind: "load" },
-        { key: "vendor_id", label: "Vendor", entityKind: "vendor" },
+        { key: "unit_number", label: "Unit", entityKind: "unit", idKey: "unit_id" },
+        { key: "load_number", label: "Load", entityKind: "load", idKey: "load_id" },
+        { key: "vendor_name", label: "Vendor", entityKind: "vendor", idKey: "vendor_id" },
       ]}
     />
   );

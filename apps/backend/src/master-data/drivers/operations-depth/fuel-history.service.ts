@@ -10,7 +10,9 @@ export type FuelHistoryRow = {
   total_amount: string | null;
   vendor_id: string | null;
   unit_id: string | null;
+  unit_number: string | null;
   load_id: string | null;
+  load_number: string | null;
   created_at: string;
 };
 
@@ -56,11 +58,17 @@ export async function getDriverFuelHistory(
         ft.total_cost::text AS total_amount,
         ft.vendor_id::text,
         ft.unit_id::text,
+        NULLIF(TRIM(u.unit_number), '') AS unit_number,
         ft.load_id::text,
+        NULLIF(TRIM(l.load_number), '') AS load_number,
         ft.created_at::text
       FROM fuel.fuel_transactions ft
       LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id AND v.operating_company_id = ft.operating_company_id
                                 AND v.operating_company_id = $2::uuid
+      LEFT JOIN mdata.units u ON u.id = ft.unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+      LEFT JOIN mdata.loads l ON l.id = ft.load_id
+                              AND l.operating_company_id = $2::uuid
       WHERE ft.driver_id = $1::uuid
         AND ft.operating_company_id = $2::uuid
         AND ft.archived_at IS NULL

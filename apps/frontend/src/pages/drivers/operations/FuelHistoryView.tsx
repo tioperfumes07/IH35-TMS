@@ -15,8 +15,8 @@ export function FuelHistoryView({ driverId, operatingCompanyId }: Props) {
         { key: "merchant", label: "Merchant", entityKind: "vendor", idKey: "vendor_id" },
         { key: "gallons", label: "Gallons" },
         { key: "total_amount", label: "Total" },
-        { key: "unit_id", label: "Unit", entityKind: "unit" },
-        { key: "load_id", label: "Load", entityKind: "load" },
+        { key: "unit_number", label: "Unit", entityKind: "unit", idKey: "unit_id" },
+        { key: "load_number", label: "Load", entityKind: "load", idKey: "load_id" },
       ]}
     />
   );
