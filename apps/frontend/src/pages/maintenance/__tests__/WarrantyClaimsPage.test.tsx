@@ -1,9 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { WarrantyClaimsPage } from "../WarrantyClaimsPage";
+import { pickCombo } from "../../../test-utils/pickCombo";
 
 const listMaintenanceWarrantyClaims = vi.fn();
 const createMaintenanceWarrantyClaim = vi.fn();
@@ -40,36 +41,11 @@ vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
 }));
 
-// LST-PICKER-01/1858: same shim convention as CreateBillModal.test.tsx — a plain <select> stands in
-// for the Combobox dropdown so the test can assert on the CANONICAL vendor options passed in, without
-// re-testing Combobox's own keyboard/mouse interaction.
-vi.mock("../../../components/parity/ReferenceSelect", () => ({
-  ReferenceSelect: ({
-    value,
-    onChange,
-    options,
-    placeholder,
-  }: {
-    value: string | null;
-    onChange: (v: string | null) => void;
-    options: Array<{ value: string; label: string }>;
-    placeholder?: string;
-  }) => (
-    <select
-      aria-label={placeholder ?? "Vendor"}
-      data-testid="warranty-vendor-reference-select"
-      value={value ?? ""}
-      onChange={(event) => onChange(event.target.value || null)}
-    >
-      <option value="">{placeholder ?? "Select…"}</option>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  ),
-}));
+// 2026-08-20 (CC-3): the Vendor field migrated off ReferenceSelect onto the real
+// EntityPicker(kind="vendor", allowCreate) — same canonical mdata.vendors roster, real Combobox
+// interaction. EntityPicker isn't mocked, so this test now drives the real Combobox (open on
+// focus/click, pick the option by visible text) via the shared pickCombo helper, same pattern as
+// AccidentReportDrawer/RecordCCPaymentModal after their equivalent migrations this session.
 
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -167,13 +143,17 @@ describe("Maintenance WarrantyClaimsPage (B33)", () => {
 
     await user.click(screen.getByRole("button", { name: /\+ Create Claim/i }));
 
-    await screen.findByRole("option", { name: "Fleet Parts Co" });
-    expect(listVendors).toHaveBeenCalledWith(
-      expect.objectContaining({ operating_company_id: "11111111-1111-4111-8111-111111111111" })
+    await waitFor(() =>
+      expect(listVendors).toHaveBeenCalledWith(
+        expect.objectContaining({ operating_company_id: "11111111-1111-4111-8111-111111111111" })
+      )
     );
 
     await user.type(screen.getByLabelText("Part description"), "Alternator");
-    await user.selectOptions(screen.getByTestId("warranty-vendor-reference-select"), "vendor-1");
+    const vendorWrap = await screen.findByTestId("warranty-vendor-select");
+    // EntityPicker renders "Name + Type" (QBO-style, "Fleet Parts Co" + sublabel "parts"), so the
+    // option's accessible text is "Fleet Parts Coparts" — match by prefix.
+    pickCombo(within(vendorWrap).getByRole("combobox"), /^Fleet Parts Co/);
 
     await user.click(screen.getByRole("button", { name: "Save claim" }));
 

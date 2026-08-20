@@ -12,6 +12,13 @@ vi.mock("../../../api/identity", () => ({
   listAssignableUsers: () => Promise.resolve({ users: [{ id: "user-1", name: "Alex Mechanic", email: "alex@example.com" }] }),
 }));
 
+// The Authorized-by picker now scopes listAssignableUsers by operatingCompanyId (multi-tenant
+// correctness — an unscoped roster could leak assignable users across companies), which needs
+// useCompanyContext(); this harness doesn't mount a real CompanyProvider tree.
+vi.mock("../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+}));
+
 // GUARD render-guard (false-DONE lesson): prove the render-v5 header fields reach the DOM, not just the
 // source file. Mounts the section and asserts each design label is rendered.
 function Harness() {

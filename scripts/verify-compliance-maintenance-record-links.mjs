@@ -50,9 +50,13 @@ export function verify(source) {
   need("preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "pre-flight queue must not claim its mounted backend is missing");
   need("faultDrafts", 'kind="unit" id={row.unit_id}', "fault drafts must drill to units");
   need("faultDrafts", 'kind="work_order"', "fault draft review must drill to work-order detail");
+  // The fake "Draft WO" placeholder is gone (2026-08-20, CC-3) — this now feeds EntityLinkOrTombstone's
+  // `name` prop, which already has its own honest "Work order — not visible" fallback (entityLabel())
+  // when neither wo_title nor display_id resolves. A hardcoded generic string here would just paint
+  // over that real gap instead of letting the shared honesty fallback do its job.
   need(
     "faultDrafts",
-    'selected.wo_title ?? selected.display_id ?? "Draft WO"',
+    "selected.wo_title ?? selected.display_id",
     "fault draft review title must prefer the canonical WO display ID without exposing a UUID fallback",
   );
   need("idvr", 'kind="work_order"', "iDVIR list must drill to follow-up work orders");
@@ -91,7 +95,7 @@ if (process.argv.includes("--self-test")) {
     ["preFlight", 'kind="work_order"', 'kind="unit"'],
     ["preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "backend is not built"],
     ["faultDrafts", 'kind="work_order"', 'kind="unit"'],
-    ["faultDrafts", 'selected.wo_title ?? selected.display_id ?? "Draft WO"', 'selected.wo_title ?? entityLabel(null, selected.display_id, "Work order") ?? "Draft WO"'],
+    ["faultDrafts", "selected.wo_title ?? selected.display_id", "selected.id"],
     ["idvr", 'kind="work_order"', 'kind="unit"'],
     ["idvr", 'navigate(`/safety/idvr/${encodeURIComponent(id)}`)', 'navigate("/safety/idvr")'],
     ["escrow", 'data-testid={`escrow-driver-link-${row.id}`}', 'data-testid="broken-escrow-link"'],

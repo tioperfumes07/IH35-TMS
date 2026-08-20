@@ -44,7 +44,9 @@ describe("PmAutoEnginePage (B28)", () => {
     runMaintenancePmAutoEngineNow.mockReset();
     getMaintenancePmAutoEngineDashboard.mockResolvedValue({
       runs: [{ id: "run-1", started_at: "2026-06-04T10:00:00Z", status: "completed", schedules_evaluated: 3, work_orders_created: 1, alerts_created: 0 }],
-      recent_log: [{ id: "log-1", action: "wo_created", schedule_label: "Oil change", unit_number: "T-101" }],
+      // EntityLinkOrTombstone renders the honest "—" tombstone the moment `id` is missing, regardless
+      // of `name`/`unit_number` — pm_schedule_id and unit_id were missing from this fixture.
+      recent_log: [{ id: "log-1", action: "wo_created", pm_schedule_id: "sched-1", schedule_label: "Oil change", unit_id: "unit-1", unit_number: "T-101" }],
       settings: { is_paused: false },
       lookahead_miles: 500,
     });

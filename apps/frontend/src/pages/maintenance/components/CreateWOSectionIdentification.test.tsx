@@ -39,29 +39,11 @@ vi.mock("../../../components/drivers/CreateDriverModal", () => ({
     open ? <div data-testid="create-driver-modal-stub">CreateDriverModal</div> : null,
 }));
 
-vi.mock("../../../components/parity/ReferenceSelect", () => ({
-  ReferenceSelect: (props: {
-    createKind?: string;
-    options?: Array<{ value: string; label: string }>;
-    onChange?: (value: string | null) => void;
-    onOptionCreated?: (opt: { value: string; label: string }) => void;
-  }) => (
-    <button
-      type="button"
-      onClick={() => {
-        const fallback =
-          props.createKind === "customer"
-            ? { value: "customer-1", label: "Customer One" }
-            : { value: "vendor-1", label: "Vendor One" };
-        const picked = props.options?.[0] ?? fallback;
-        props.onChange?.(picked.value);
-        props.onOptionCreated?.(picked);
-      }}
-    >
-      {props.createKind === "customer" ? "mock-pick-customer" : "mock-pick-vendor"}
-    </button>
-  ),
-}));
+// 2026-08-20 (CC-3): both vendor and customer migrated off ReferenceSelect onto the real
+// EntityPicker (kind="vendor" / kind="customer", server-search, CLS-SILENT-CAP) — this mock is
+// dead now (nothing in CreateWOSectionIdentification.tsx imports ReferenceSelect any more). The
+// vendor test below now drives the real Combobox the same way the unit/driver tests above it
+// already do (focus the placeholder input, click the option).
 
 function TestHarness() {
   const form = useForm<CreateWOFormValues>({
@@ -186,7 +168,9 @@ describe("CreateWOSectionIdentification", () => {
   it("mirrors canonical vendor into external vendor id", async () => {
     renderSection();
 
-    fireEvent.click(await screen.findByRole("button", { name: "mock-pick-vendor" }));
+    const vendorPicker = await screen.findByPlaceholderText("Search vendors…");
+    fireEvent.focus(vendorPicker);
+    fireEvent.click(await screen.findByRole("option", { name: /Vendor One/ }));
 
     await waitFor(() => {
       expect((document.querySelector('input[name="vendor_id"]') as HTMLInputElement).value).toBe("vendor-1");

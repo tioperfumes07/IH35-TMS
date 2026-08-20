@@ -21,10 +21,15 @@ vi.mock("../../../../api/mdata", () => ({
   listVendors: vi.fn(() => Promise.resolve({ vendors: [{ id: VENDOR_ID, name: "Ace Parts" }] })),
   listDrivers: vi.fn(() => Promise.resolve({ drivers: [] })),
   listUnits: vi.fn(() => Promise.resolve({ units: [{ id: UNIT_ID, unit_number: "T-101" }] })),
+  // CreateDriverModal (nested "+ Create" on the payee/driver picker) references these as
+  // useMutation's mutationFn at render time — must be defined even though this test never submits.
+  createDriver: vi.fn(),
+  checkReturningDriver: vi.fn(),
+  createUnit: vi.fn(),
 }));
 vi.mock("../../../../api/maintenance", () => ({
   getWoCostContext: vi.fn(() =>
-    Promise.resolve({ expense_categories: [{ id: "cat-1", name: "Fuel Category", qbo_id: "CAT-QBO-1" }] })
+    Promise.resolve({ expense_categories: [{ id: "cat-1", name: "Office Supplies", qbo_id: "CAT-QBO-1" }] })
   ),
 }));
 vi.mock("../../../../api/catalog-accounts", () => ({
@@ -125,7 +130,7 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     const { onClose, invalidateSpy } = renderModal(vi.fn(), { linkedUnitId: UNIT_ID });
 
     const form = await screen.findByTestId("record-expense-form");
-    await screen.findByRole("option", { name: "Fuel Category" });
+    await screen.findByRole("option", { name: "Office Supplies" });
     // The account option renders as "Cash" (the picker no longer prefixes the account number, so the old
     // "1000 · Cash" name never matched), and plain text is ambiguous — "Cash" is also a payment METHOD.
     // Wait on the option's VALUE inside the account select instead.
@@ -154,9 +159,13 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     expect(body.memo).toContain("WO: WO-TEST");
     expect(body.expense_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(typeof body.attachment_draft_id).toBe("string");
-
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["accounting", "expenses"] });
+
+    // LINK-F5189: the modal holds a confirmation step (real EntityLink to the just-created expense)
+    // instead of closing straight past it — onClose only fires once the operator dismisses it.
+    await screen.findByTestId("create-expense-modal-view-expense");
+    await user.click(screen.getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
   it("does not submit without a category (canonical required field guarded)", async () => {

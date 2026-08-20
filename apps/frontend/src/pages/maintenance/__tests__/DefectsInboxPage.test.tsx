@@ -50,6 +50,9 @@ describe("DefectsInboxPage (B27)", () => {
           triage_status: "pending",
           submitted_at: "2026-06-04T12:00:00Z",
           unit_number: "T-101",
+          // EntityLinkOrTombstone renders the honest "—" tombstone the moment `id` is missing,
+          // regardless of `name` — driver_id was missing from this fixture.
+          driver_id: "driver-1",
           driver_name: "Alex Driver",
         },
       ],
