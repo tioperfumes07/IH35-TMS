@@ -13434,3 +13434,14 @@ tioperfumes07@gmail.com
 HOME›FORM 425C
 Form 425C
 IH  | NEXT=leaf=form_425:chrome.toolbar_search:connectivity
+Devin-A | LIVE STARVED | leaf=form_425:chrome.toolbar_search:connectivity | USMCA | URL=https://app.ih35dispatch.com/425c?tab=history | healthz=dea2ff1 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/425c?tab=history head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=users:detail.drawer.dispatcher_safety_event:connectivity
