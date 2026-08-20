@@ -11497,3 +11497,7 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.ap:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=65c2571 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=65c2571 head Checking session... | NEXT=leaf=vendors:detail.ap.bill_payments:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=65c2571 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=65c2571 head Checking session... | NEXT=leaf=vendors:detail.ap.bill_payments:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap:reverse_link | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=65c2571 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=65c2571 head Checking session... | NEXT=leaf=vendors:detail.ap.bill_payments:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=65c2571 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=65c2571 head Checking session... | NEXT=leaf=vendors:detail.ap.bill_payments:vendor
