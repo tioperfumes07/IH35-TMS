@@ -14661,3 +14661,14 @@ Devin-A | LIVE PASS | leaf=accounting:invoices.list:invoice | USMCA | URL=https:
 Devin-A | LIVE STARVED | leaf=accounting:je.create:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=dc53eda | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/journal-entries healthz=dc53eda head Checking session... | NEXT=leaf=accounting:je.list:gl_je
 Devin-A | LIVE STARVED | leaf=accounting:je.list:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/journal-entries | healthz=dc53eda | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/journal-entries healthz=dc53eda head Checking session... | NEXT=leaf=accounting:month_close:gl_je
 Devin-A | LIVE PASS | leaf=accounting:month_close:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/month-close | healthz=dc53eda | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/month-close marker 'Month Close' | NEXT=leaf=accounting:payments.receive:gl_je
+Devin-A | LIVE STARVED | leaf=accounting:payments.receive:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/payments | healthz=dc53eda | mutation=none | evidence=No marker at https://app.ih35dispatch.com/accounting/payments head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:period_close:gl_je
