@@ -16,22 +16,23 @@ const path = require("path");
 
 const ROOT = process.env.DEVIN_GIT_ROOT || process.cwd();
 const OUTBOX_REL = "docs/bus/OUTBOX-DEVIN.md";
+/** NOW=accounting first, then rest of WAVE 1, then WAVE 2, then WAVE 3. eld never. */
 const ORDER = [
   "accounting",
+  "banking",
+  "factoring",
+  "settlements",
   "customers",
   "drivers",
-  "vendors",
-  "dispatch",
-  "safety",
-  "fleet",
-  "maintenance",
-  "lists",
-  "settlements",
-  "factoring",
-  "banking",
-  "inventory",
   "insurance",
   "legal",
+  "lists",
+  "safety",
+  "fleet",
+  "vendors",
+  "maintenance",
+  "dispatch",
+  "inventory",
   "compliance",
   "reports",
   "cash-flow",
@@ -49,11 +50,31 @@ const ORDER = [
 ];
 const ALLOWED = new Set(ORDER);
 const FORBIDDEN = new Set(["eld"]);
-const URGENT6 = new Set(["accounting", "customers", "drivers", "vendors", "dispatch", "safety"]);
+const URGENT6 = new Set(["accounting", "banking", "factoring", "settlements", "customers", "drivers"]);
 const URGENT14 = new Set([
-  "accounting", "customers", "drivers", "vendors", "dispatch", "safety",
-  "fleet", "maintenance", "lists", "settlements", "factoring", "banking", "inventory",
+  "accounting", "banking", "factoring", "settlements", "customers", "drivers",
+  "insurance", "legal", "lists", "safety", "fleet", "vendors", "maintenance", "dispatch",
 ]);
+
+/** Accounting Queue 6 — re-walk for CC-2 Box 4 when Clicked keys are already full. Never idle. Never ship duplicate PASS. */
+const QUEUE6_REWALK = [
+  {
+    module: "accounting",
+    leaf: "accounting.parity.credit_memos_page",
+    columns: ["connectivity", "reverse_link", "customer", "qbo_chrome"],
+    url: "https://app.ih35dispatch.com/accounting/credit-memos",
+    markers: ["credit", "memo", "accounting.parity.credit_memos_page"],
+    rewalk: true,
+  },
+  {
+    module: "accounting",
+    leaf: "banking.panel.linked_bank_transactions",
+    columns: ["bank", "gl_je", "connectivity", "reverse_link"],
+    url: "https://app.ih35dispatch.com/vendors",
+    markers: ["vendor", "bank", "banking.panel.linked_bank_transactions"],
+    rewalk: true,
+  },
+];
 
 function loadPlaywright() {
   const tries = ["playwright-core", path.join(ROOT, "apps/frontend/node_modules/playwright-core"), path.join(ROOT, "node_modules/playwright-core")];
@@ -239,9 +260,16 @@ function rebuildQueueFromRequired() {
       });
     }
   }
-  fs.writeFileSync(QUEUE, JSON.stringify(items, null, 2));
-  log(`rebuild queue ${items.length} leaves unpaid — never skip money`);
-  return items;
+  const seeded = seedQueue6RewalkIfEmpty(items);
+  fs.writeFileSync(QUEUE, JSON.stringify(seeded, null, 2));
+  log(`rebuild queue ${seeded.length} leaves unpaid — never skip money`);
+  return seeded;
+}
+
+function seedQueue6RewalkIfEmpty(items) {
+  if (Array.isArray(items) && items.length > 0) return items;
+  log("Clicked keys full — Queue 6 rewalk for CC-2 Box 4 (no OUTBOX ship)");
+  return QUEUE6_REWALK.map((row) => ({ ...row }));
 }
 
 function filterQueue(raw) {
@@ -336,7 +364,9 @@ async function run() {
       const nextLeaf = nextItem ? `${nextItem.module}:${nextItem.leaf}:${(nextItem.columns && nextItem.columns[0]) || "connectivity"}` : "";
       log(`OUTBOX: ${status} ${item.module}:${item.leaf} x${(item.columns || ["connectivity"]).length}`);
 
-      if (status !== "LIVE PASS") {
+      if (item.rewalk) {
+        log(`Queue 6 rewalk CDP ${item.module}:${item.leaf} ${status} — no OUTBOX ship (Clicked keys already full)`);
+      } else if (status !== "LIVE PASS") {
         log(`skip ship STARVED — Clicked only moves on LIVE PASS`);
       } else {
         const lines = creditedLines(item, status, item.url, hz, evidence, nextLeaf);
@@ -352,7 +382,7 @@ async function run() {
       log(`remaining ${queue.length}`);
       await page.waitForTimeout(1500);
     }
-    log("queue empty, stopping");
+    log("queue empty after Queue 6 rewalk — watcher continues, never wait on required.json");
   } catch (e) { log("FATAL: " + (e && e.stack ? e.stack : e)); }
 }
 
@@ -382,8 +412,8 @@ if (process.argv.includes("--selftest")) {
     console.error("SELFTEST FAIL: FAST-MERGE gh pr merge --admin missing");
     process.exit(1);
   }
-  if (!/"accounting"[\s\S]*"customers"[\s\S]*"drivers"[\s\S]*"vendors"[\s\S]*"dispatch"[\s\S]*"safety"/.test(src)) {
-    console.error("SELFTEST FAIL: ORDER must start URGENT-6 accounting→…→safety");
+  if (!/"accounting"[\s\S]*"banking"[\s\S]*"factoring"[\s\S]*"settlements"[\s\S]*"customers"[\s\S]*"drivers"/.test(src)) {
+    console.error("SELFTEST FAIL: ORDER must start WAVE 1 accounting→banking→factoring→settlements→customers→drivers");
     process.exit(1);
   }
   if (!/function judgeClick/.test(src) || !/skip ship STARVED/.test(src) || !/URGENT14\.has\(mod\)/.test(src)) {
@@ -396,6 +426,14 @@ if (process.argv.includes("--selftest")) {
   }
   if (!/never skip money/.test(src) || !/function rebuildQueueFromRequired/.test(src)) {
     console.error("SELFTEST FAIL: queue rebuild must include money cells (never skip money)");
+    process.exit(1);
+  }
+  if (!/function seedQueue6RewalkIfEmpty/.test(src) || !/QUEUE6_REWALK/.test(src) || !/item\.rewalk/.test(src)) {
+    console.error("SELFTEST FAIL: empty Clicked queue must seed accounting Queue 6 rewalk without OUTBOX ship");
+    process.exit(1);
+  }
+  if (/log\("queue empty, stopping"\)/.test(src)) {
+    console.error("SELFTEST FAIL: idle stop on empty queue is forbidden");
     process.exit(1);
   }
   console.log("devin-a-live-loop --selftest PASS");
