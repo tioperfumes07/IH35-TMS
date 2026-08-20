@@ -46,6 +46,23 @@ export async function validateWoVendorInvoiceTotals(
   );
   const lineTotal = linesRes.rows[0]?.total ?? 0;
 
+  // ACCT-F5626 — total_actual_cost is set ONCE at WO creation (two-section-service.ts) and NEVER
+  // written again. Both callers of this function (the line-item add/delete routes,
+  // work-orders.routes.ts) insert/delete maintenance.work_order_lines rows and then call this
+  // function to VALIDATE the new sum against any already-linked bill/parts-invoice — but validating
+  // is not persisting, and nothing else in the codebase ever writes this column post-creation (no
+  // UPDATE, no trigger). autoCreateBillFromWO / autoCreateExpenseFromWO both derive the auto-posted
+  // AP amount directly from total_actual_cost, so editing a WO's lines before its bill/expense is
+  // generated silently posts the STALE, creation-time total — under- or over-billing the vendor by
+  // the exact delta the edit was supposed to correct. Written here, at the single choke point both
+  // line-item routes already call, on every successful validation pass (including the early-return
+  // case below where no bill/parts-invoice is linked yet, which is the exact case most exposed to
+  // going stale since nothing else checks it at all).
+  await client.query(
+    `UPDATE maintenance.work_orders SET total_actual_cost = $2::numeric WHERE id = $1::uuid`,
+    [woId, lineTotal]
+  );
+
   const partsRes = await client.query(
     `
       SELECT

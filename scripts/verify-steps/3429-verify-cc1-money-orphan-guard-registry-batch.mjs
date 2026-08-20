@@ -97,6 +97,7 @@ const guards = [
   "verify-settlements-gl-ap-honest.mjs",
   "verify-unit-finance-gl-je-reverse.mjs",
   "verify-unit-finance-linkage-ap-bill.mjs",
+  "verify-wo-total-actual-cost-recompute.mjs",
   "verify-vendor-bill-payment-write-role-gated.mjs",
   "verify-weekly-close-role-gated.mjs",
   "verify-wave-c-ap-bill-fe-all-modules.mjs",
