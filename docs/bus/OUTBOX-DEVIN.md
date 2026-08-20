@@ -5784,3 +5784,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
