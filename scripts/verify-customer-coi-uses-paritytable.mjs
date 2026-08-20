@@ -63,10 +63,13 @@ function assertMigrated(src, service = "") {
   if (src.includes("Failed to load COI requests.")) {
     errors.push(`${PAGE}: must not use bare red outage banner (use ListErrorState)`);
   }
-  if (!/kind="user"[\s\S]{0,180}?label=\{entityLabel\(request\.requested_by_name,\s*request\.requested_by,\s*"User"\)\}/.test(src)) {
+  // Re-anchored (2026-08-20, CC-3): both columns now compose through the governed
+  // EntityLinkOrTombstone wrapper (name/noun props) instead of a bare EntityLink around a
+  // literal entityLabel() call — same class already fixed for a dozen siblings this session.
+  if (!/kind="user"[\s\S]{0,60}id=\{request\.requested_by\}[\s\S]{0,60}name=\{request\.requested_by_name\}/.test(src)) {
     errors.push(`${PAGE}: requester column must drill to the user with its entity-scoped human label`);
   }
-  if (!/kind="insurance_policy"[\s\S]{0,180}?label=\{entityLabel\(request\.policy_number,\s*request\.policy_id,\s*"Policy"\)\}/.test(src)) {
+  if (!/kind="insurance_policy"[\s\S]{0,60}id=\{request\.policy_id\}[\s\S]{0,60}name=\{request\.policy_number\}/.test(src)) {
     errors.push(`${PAGE}: policy column must drill to the policy with its entity-scoped human label`);
   }
   if (service) {
@@ -96,8 +99,8 @@ function selftest() {
         { key: "requested_at", label: "Requested" },
         { key: "status", label: "Status" },
         { key: "requested_at", label: "Date" },
-        { key: "requested_by", label: "Requester User", render: (request) => <EntityLink kind="user" id={request.requested_by} label={entityLabel(request.requested_by_name, request.requested_by, "User")} /> },
-        { key: "policy_id", label: "Policy Reference", render: (request) => <EntityLink kind="insurance_policy" id={request.policy_id} label={entityLabel(request.policy_number, request.policy_id, "Policy")} /> },
+        { key: "requested_by", label: "Requester User", render: (request) => <EntityLinkOrTombstone kind="user" id={request.requested_by} name={request.requested_by_name} noun="User" /> },
+        { key: "policy_id", label: "Policy Reference", render: (request) => <EntityLinkOrTombstone kind="insurance_policy" id={request.policy_id} name={request.policy_number} noun="Policy" /> },
       ]}
     />
     + Create COI
@@ -115,12 +118,12 @@ function selftest() {
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
   const rawRequesterErrors = assertMigrated(good.replace(
-    'label={entityLabel(request.requested_by_name, request.requested_by, "User")}',
-    'label={request.requested_by}'
+    'id={request.requested_by} name={request.requested_by_name}',
+    'id={request.requested_by}'
   ));
   const rawPolicyErrors = assertMigrated(good.replace(
-    'label={entityLabel(request.policy_number, request.policy_id, "Policy")}',
-    'label={request.policy_id}'
+    'id={request.policy_id} name={request.policy_number}',
+    'id={request.policy_id}'
   ));
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);

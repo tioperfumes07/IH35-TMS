@@ -429,6 +429,7 @@ function MoneyField({
       <span className="mb-1 block text-xs font-semibold text-gray-600">{label}</span>
       <MoneyInput
         id={fieldName}
+        name={fieldName}
         ariaLabel={label}
         valueDollars={value === "" ? null : Number(value)}
         onChangeDollars={(dollars) => onChange(dollars == null ? "" : String(dollars))}
