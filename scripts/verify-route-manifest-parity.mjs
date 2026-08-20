@@ -166,15 +166,12 @@ export const REFUSED_MOUNTS = new Map([
       "Archive-never-delete means the file stays; it must never be mounted.",
   ],
 
-  // ── DESTRUCTIVE: mounting would make a hard DELETE reachable (void-not-delete) ────────────────
-  [
-    "scheduled-reports/scheduled-reports.routes.ts",
-    "BLOCKED on a void-not-delete violation — every handler is auth-gated, role-gated and " +
-      "company-scoped, and apps/frontend/src/api/scheduled-reports.ts calls it, but " +
-      "DELETE /api/v1/scheduled-reports/:id issues a hard `DELETE FROM reporting.scheduled_reports` " +
-      "(scheduled-reports.routes.ts:535). Mounting it makes an unrecoverable delete reachable. Needs a " +
-      "voided_at column + soft-delete first — that is a migration, and migrations are HELD.",
-  ],
+  // scheduled-reports/scheduled-reports.routes.ts — LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED
+  // (commits 39be172965 / f08152bce7) fixed the void-not-delete violation this entry used to refuse on:
+  // a voided_at column was added and DELETE /api/v1/scheduled-reports/:id now does
+  // `UPDATE reporting.scheduled_reports SET voided_at = now(), ...` (scheduled-reports.routes.ts:541-543),
+  // never a hard DELETE. The route is mounted via registerScheduledReportsRoutes in
+  // apps/backend/src/index.ts:961. Entry removed per this guard's own "may only shrink" rule.
 
   // ── BEHAVIOURAL, NOT A ROUTE ──────────────────────────────────────────────────────────────────
   [
