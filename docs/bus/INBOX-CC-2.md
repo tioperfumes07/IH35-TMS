@@ -7,5 +7,5 @@
 **NOW:** WAVE 1 **accounting** (10 Live 4th-✕ on live matrix, e.g. UNIT Live 0% Built 100%) → **customers** (1) → **drivers** (2) → re-prove banking/factoring/settlements Box 4 100% → WAVE 2 → WAVE 3. Picker rebuild **only** on live FAIL.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=accounting Box4 Live | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=accounting Box4 Live | GO
 ```

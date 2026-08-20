@@ -6,8 +6,8 @@ Built 1–11. Not 9227. Not GL. FAST-MERGE every FO.
 
 Software Box 3 **3362/3365** — **3** Required cells not Built. The 9% “wire-only” is Built-not-Live (CC-2 Box 4), not your chrome leftover.
 
-**NOW:** close those **3** Built gaps (find unpaid Built on required maps) → WAVE 1 leftover Built → WAVE 2 → WAVE 3.
+**NOW:** **accounting** Built leftover (swarm) then the 3 system Built gaps if accounting Built is 100%. Not 9227. Not GL.
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=3 Built gaps then WAVE1 leftover | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=accounting Built | GO
 ```

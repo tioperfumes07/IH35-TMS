@@ -1,15 +1,11 @@
-# PASTE ALL SEATS · WAVE1 BAR 100 · THEN WAVE 2 · THEN WAVE 3
+# PASTE ALL SEATS · SWARM ONE MODULE · MONEY IN MISS C
 
 `git pull --ff-only origin main`
 
-**Every hour:** re-read `CODER-INSTRUCTIONS-NOW.md` + your INBOX + `FAST-MERGE-4MIN-LAW.md`. Re-ACK. Keep working.
+**LAW:** All seats on **accounting** now, each their column. Not one-coder-one-whole-module.
 
-**Owner 13:01:** 100% = Box 1–4 **3365/3365** · Miss C **0** · Built wire-only **0** · FW 1–12. Six urgent = WAVE 1 first.
+Devin: NOT DRAINED. `node scripts/ops/devin-a-live-loop.cjs --rebuild-only` then loop. Includes money Clicked.
 
-**WAVE 1 (the 6):** banking → factoring → accounting → settlements → customers → drivers  
-**WAVE 2:** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
-**WAVE 3:** inventory → … → **driver-hub → system → fuel** (Miss C)
+CC-1 accounting money write · CC-2 accounting Box 4 Live · CC-3 accounting Built leftover · Codex accounting reverse · Devin accounting Clicked.
 
-Box 4 Live = CC-2 **PROD-VERIFIED** explicit leaf×col. Clicked = Devin. Built = CC-3. Money = CC-1. Reverse = Codex.
-
-ACK: `STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=<module> <col> | GO`
+ACK: `STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | NOW=accounting <col> | GO`
