@@ -5247,3 +5247,7 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.profile.assignment:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.assignment:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=782460b | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=782460b head Checking session... | NEXT=leaf=fleet:trailer.profile.audit_history:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.assignment:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=782460b | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=782460b head Checking session... | NEXT=leaf=fleet:trailer.profile.audit_history:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.assignment:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=782460b | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=782460b head Checking session... | NEXT=leaf=fleet:trailer.profile.audit_history:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.assignment:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=782460b | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=782460b head Checking session... | NEXT=leaf=fleet:trailer.profile.audit_history:trailer
