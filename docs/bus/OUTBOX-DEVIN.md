@@ -11789,3 +11789,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.profile.payment_terms:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=c1174e6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=c1174e6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=c1174e6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
