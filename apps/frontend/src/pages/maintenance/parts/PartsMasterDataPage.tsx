@@ -11,6 +11,7 @@ import {
   voidMaintenancePart,
 } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
+import { Combobox } from "../../../components/Combobox";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -18,6 +19,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { listVendors } from "../../../api/mdata";
 
 type PartDraft = {
   part_number: string;
@@ -60,6 +62,26 @@ export function PartsMasterDataPage() {
     queryFn: () => getMaintenancePartsKpis(companyId),
     enabled: Boolean(companyId),
   });
+  // parts.create:vendor was ruled false-Required (vendor_default is a denormalized text label, not a
+  // vendor_id FK — see docs/specs/scoreboard/modules/maintenance.required.json's "vendor" drop for this
+  // leaf), so this suggests real roster names without turning the field into an FK picker.
+  const vendorsQuery = useQuery({
+    queryKey: ["maintenance", "master-data", "parts-vendor-suggestions", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId }).then((r) => r.vendors ?? []),
+    enabled: Boolean(companyId) && createOpen,
+    staleTime: 120_000,
+  });
+  const vendorNameOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: Array<{ value: string; label: string }> = [];
+    for (const v of vendorsQuery.data ?? []) {
+      const name = v.name?.trim();
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      options.push({ value: name, label: name });
+    }
+    return options;
+  }, [vendorsQuery.data]);
 
   const refresh = async () => {
     await Promise.all([
@@ -241,7 +263,16 @@ export function PartsMasterDataPage() {
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Name" value={draft.name} onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Vendor default" value={draft.vendor_default} onChange={(e) => setDraft((p) => ({ ...p, vendor_default: e.target.value }))} />
+            <Combobox
+              options={vendorNameOptions}
+              value={draft.vendor_default || null}
+              onChange={(next) => setDraft((p) => ({ ...p, vendor_default: next ?? "" }))}
+              placeholder="Vendor default"
+              loading={vendorsQuery.isLoading}
+              allowClear
+              allowAddNew={{ label: "Use", onAdd: (query) => setDraft((p) => ({ ...p, vendor_default: query })) }}
+              dataTestId="maintenance-create-part-vendor-default"
+            />
             <MoneyInput valueDollars={draft.unit_cost} onChangeDollars={(d) => setDraft((p) => ({ ...p, unit_cost: d }))} ariaLabel="Unit cost" placeholder="Unit cost" />
           </div>
           <div className="grid grid-cols-2 gap-2">
