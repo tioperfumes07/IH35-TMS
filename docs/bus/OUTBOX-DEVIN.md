@@ -6072,3 +6072,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=banking:banking.drawer.match:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.drawer.match:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8f8b195 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.bank_transaction_split:connectivity
+Devin-A | LIVE PASS | leaf=banking:banking.drawer.match:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8f8b195 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.modal.bank_transaction_split:connectivity
