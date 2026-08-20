@@ -14676,3 +14676,36 @@ Devin-A | LIVE PASS | leaf=accounting:period_close:gl_je | USMCA | URL=https://a
 Devin-A | LIVE PASS | leaf=accounting:pre_settlements:liability | USMCA | URL=https://app.ih35dispatch.com/accounting/pre-settlements | healthz=dc53eda | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/pre-settlements marker 'Pre-settlements' | NEXT=leaf=accounting:register:gl_je
 Devin-A | LIVE STARVED | leaf=accounting:register:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/account-register | healthz=dc53eda | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/account-register healthz=dc53eda head Checking session... | NEXT=leaf=accounting:transactions:gl_je
 Devin-A | LIVE STARVED | leaf=accounting:transactions:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/transactions | healthz=dc53eda | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/transactions healthz=dc53eda head Checking session... | NEXT=leaf=accounting:unit.detail.finance_linkage:ap_bill
+Devin-A | LIVE STARVED | leaf=accounting:unit.detail.finance_linkage:ap_bill | USMCA | URL=https://app.ih35dispatch.com/fleet/units/detail?tab=finance | healthz=dc53eda | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/units/detail?tab=finance head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.audit:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:unit.detail.finance_linkage:expense | USMCA | URL=https://app.ih35dispatch.com/fleet/units/detail?tab=finance | healthz=dc53eda | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/units/detail?tab=finance head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.audit:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:unit.detail.finance_linkage:gl_je | USMCA | URL=https://app.ih35dispatch.com/fleet/units/detail?tab=finance | healthz=dc53eda | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/units/detail?tab=finance head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.audit:connectivity
