@@ -266,7 +266,9 @@ const BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL = `
 `;
 
 /** ACCT-F5045 — bill list/panel JE drill (same scalar as getBillDetail; no new GL math). */
-const BILL_JOURNAL_ENTRY_ID_SQL = `
+// Exported for reuse (VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK): fin20-aging's vendor-bills drill
+// resolves the same bill→posted-JE linkage — one canonical subquery, never a duplicate.
+export const BILL_JOURNAL_ENTRY_ID_SQL = `
   (
     SELECT jep.journal_entry_uuid::text
     FROM accounting.journal_entry_postings jep
@@ -300,7 +302,8 @@ const BILL_JOURNAL_ENTRY_DATE_SQL = `
     LIMIT 1
   )
 `;
-const BILL_JOURNAL_ENTRY_MEMO_SQL = `
+// Exported alongside BILL_JOURNAL_ENTRY_ID_SQL for the same fin20-aging reuse.
+export const BILL_JOURNAL_ENTRY_MEMO_SQL = `
   (
     SELECT je.memo
     FROM accounting.journal_entry_postings jep

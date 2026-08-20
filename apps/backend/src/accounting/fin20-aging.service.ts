@@ -17,6 +17,7 @@
 
 import { withCurrentUser } from "../auth/db.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { BILL_JOURNAL_ENTRY_ID_SQL, BILL_JOURNAL_ENTRY_MEMO_SQL } from "./bills.service.js";
 
 export type AgingBuckets = {
   current_cents: number;
@@ -74,6 +75,12 @@ export type ApAgingBillRow = {
   paid_cents: number;
   open_cents: number;
   days_overdue: number;
+  // VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK — the bill's posted JE (nullable: an open/unpaid bill may
+  // not be posted yet). Resolved via the canonical BILL_JOURNAL_ENTRY_ID_SQL subquery, never a
+  // duplicate join.
+  journal_entry_id: string | null;
+  // The JE's memo, for a human label (same pattern as ACCT-F5397's bills-list fix).
+  journal_entry_memo: string | null;
 };
 
 const num = (v: unknown): number => Number(v ?? 0);
@@ -357,6 +364,8 @@ export async function getApAgingVendorBills(input: {
             WITH bill AS (
               SELECT
                 b.id, b.bill_number, b.status, b.bill_date, b.due_date, b.memo,
+                ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
+                ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo,
                 COALESCE(b.amount_cents, 0)::bigint AS amount_cents,
                 COALESCE((
                   SELECT SUM(COALESCE(bp.amount_cents, 0))
@@ -379,6 +388,8 @@ export async function getApAgingVendorBills(input: {
               bill.bill_date::text AS bill_date,
               bill.due_date::text  AS due_date,
               bill.memo            AS memo,
+              bill.journal_entry_id AS journal_entry_id,
+              bill.journal_entry_memo AS journal_entry_memo,
               bill.amount_cents    AS amount_cents,
               bill.paid_as_of      AS paid_cents,
               GREATEST(bill.amount_cents - bill.paid_as_of, 0)::bigint AS open_cents,
@@ -398,6 +409,8 @@ export async function getApAgingVendorBills(input: {
               b.bill_date::text  AS bill_date,
               b.due_date::text   AS due_date,
               b.memo             AS memo,
+              ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
+              ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo,
               COALESCE(b.amount_cents, 0)::bigint AS amount_cents,
               COALESCE(b.paid_cents, 0)::bigint   AS paid_cents,
               GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::bigint AS open_cents,
@@ -429,6 +442,8 @@ export async function getApAgingVendorBills(input: {
       paid_cents: num(r.paid_cents),
       open_cents: num(r.open_cents),
       days_overdue: num(r.days_overdue),
+      journal_entry_id: r.journal_entry_id == null ? null : String(r.journal_entry_id),
+      journal_entry_memo: r.journal_entry_memo == null ? null : String(r.journal_entry_memo),
     }));
   });
 }

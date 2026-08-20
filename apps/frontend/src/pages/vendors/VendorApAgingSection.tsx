@@ -48,7 +48,19 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
         <div className="space-y-1" data-testid="vendor-ap-aging-reverse">
           {bills.map((bill) => (
             <div key={bill.bill_id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
-              <EntityLink kind="bill" id={bill.bill_id} label={entityLabel(bill.bill_number, bill.bill_id, "Bill")} className="font-semibold text-slate-700 hover:underline" />
+              <span className="flex items-center gap-2">
+                <EntityLink kind="bill" id={bill.bill_id} label={entityLabel(bill.bill_number, bill.bill_id, "Bill")} className="font-semibold text-slate-700 hover:underline" />
+                {/* VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK — drill to the bill's posted JE when one
+                    exists (nullable: an open/unpaid bill may not be posted yet). */}
+                {bill.journal_entry_id ? (
+                  <EntityLink
+                    kind="journal_entry"
+                    id={bill.journal_entry_id}
+                    label={entityLabel(bill.journal_entry_memo, bill.journal_entry_id, "Journal entry")}
+                    className="text-slate-500 hover:underline"
+                  />
+                ) : null}
+              </span>
               <span className="flex items-center gap-1 text-gray-600">
                 <span>due {formatDateUS(bill.due_date)}</span>
                 {bill.days_overdue > 0 ? <span className="font-medium text-rose-700">· {bill.days_overdue}d overdue</span> : null}

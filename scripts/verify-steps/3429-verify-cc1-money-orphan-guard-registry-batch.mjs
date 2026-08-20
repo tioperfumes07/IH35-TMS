@@ -10,6 +10,7 @@ const guards = [
   "verify-aging-as-of-functions-current-filters.mjs",
   "verify-aging-report-reverse-leaves.mjs",
   "verify-ar-aging-credit-memo-netting.mjs",
+  "verify-ap-aging-bills-gl-je-link.mjs",
   "verify-ap-bill-inline-surface-linkage.mjs",
   "verify-bank-automatch-memo-threshold-calibrated.mjs",
   "verify-bank-feed-backlog-poster-route.mjs",
