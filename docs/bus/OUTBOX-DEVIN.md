@@ -8103,3 +8103,48 @@ Devin-A | LIVE PASS | leaf=maintenance:vendors.create:vendor | USMCA | URL=https
 Devin-A | LIVE PASS | leaf=maintenance:vendors.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/vendors | healthz=0542f4e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/vendors marker 'maintenance' | NEXT=leaf=maintenance:warranty.create_claim:vendor
 Devin-A | LIVE PASS | leaf=maintenance:vendors.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/vendors | healthz=0542f4e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/vendors marker 'maintenance' | NEXT=leaf=maintenance:warranty.create_claim:vendor
 Devin-A | LIVE PASS | leaf=maintenance:vendors.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/vendors | healthz=0542f4e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/vendors marker 'maintenance' | NEXT=leaf=maintenance:warranty.create_claim:vendor
+Devin-A | LIVE STARVED | leaf=maintenance:warranty.create_claim:vendor | USMCA | URL=https://app.ih35dispatch.com/maintenance/warranty-claims | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/warranty-claims healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=maintenance:wo.console.list:vendor
+Devin-A | LIVE STARVED | leaf=maintenance:warranty.create_claim:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/warranty-claims | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/warranty-claims healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=maintenance:wo.console.list:vendor
+Devin-A | LIVE STARVED | leaf=maintenance:warranty.create_claim:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/warranty-claims | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/warranty-claims healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=maintenance:wo.console.list:vendor
+Devin-A | LIVE STARVED | leaf=maintenance:warranty.create_claim:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/warranty-claims | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/warranty-claims healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=maintenance:wo.console.list:vendor
+Devin-A | LIVE STARVED | leaf=maintenance:warranty.create_claim:reverse_link | USMCA | URL=https://app.ih35dispatch.com/maintenance/warranty-claims | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/warranty-claims healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=maintenance:wo.console.list:vendor
