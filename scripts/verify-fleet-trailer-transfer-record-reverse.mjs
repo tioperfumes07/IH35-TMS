@@ -7,11 +7,13 @@ const files = {
   route: fs.readFileSync("apps/backend/src/dispatch/equipment-transfer/routes.ts", "utf8"),
   service: fs.readFileSync("apps/backend/src/dispatch/equipment-transfer/request.service.ts", "utf8"),
   manifest: fs.readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8"),
+  entityLink: fs.readFileSync("apps/frontend/src/components/shared/EntityLink.tsx", "utf8"),
 };
 
 function audit(s = files) {
   const failures = [];
-  if (!s.reverse.includes('/dispatch/equipment-transfers?transfer_id=${encodeURIComponent(transfer.uuid)}')) failures.push("profile transfer row has no exact record drill");
+  if (!/<EntityLink kind="equipment_transfer" id=\{transfer\.uuid\} label=\{`Equipment transfer · \$\{transfer\.status\}`\}/.test(s.reverse)) failures.push("profile transfer row has no canonical exact record drill");
+  if (!/case "equipment_transfer":[\s\S]{0,100}\/dispatch\/equipment-transfers\?transfer_id=\$\{id\}/.test(s.entityLink)) failures.push("shared resolver lacks exact equipment-transfer route");
   if (!s.page.includes('get("transfer_id")') || !s.page.includes('&transfer_id=${encodeURIComponent(transferId)}')) failures.push("queue does not consume and forward exact transfer id");
   if (!s.route.includes('transfer_id: z.string().uuid().optional()') || !s.route.includes("q.data.transfer_id")) failures.push("route does not validate and forward transfer id");
   if (!/if \(requestUuid\)[\s\S]{0,1800}r\.operating_company_id = \$1::uuid[\s\S]{0,120}r\.uuid = \$2::uuid/.test(s.service)) failures.push("producer lacks exact entity-scoped transfer lookup");
@@ -22,7 +24,8 @@ function audit(s = files) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["reverse", "transfer.uuid)}`", "equipmentId)}`"],
+    ["reverse", 'kind="equipment_transfer"', 'kind="trailer"'],
+    ["entityLink", 'case "equipment_transfer"', 'case "equipment_transfer_missing"'],
     ["page", 'get("transfer_id")', 'get("ignored")'],
     ["route", "q.data.transfer_id", "undefined"],
     ["service", "r.operating_company_id = $1::uuid", "TRUE"],
