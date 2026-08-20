@@ -217,6 +217,9 @@ function repoProblems() {
     if (!svc.includes("parseOutboxClickedKeys") || !svc.includes("GITHUB_OUTBOX_CONTENTS")) {
       problems.push("module-matrix.service.ts must parse OUTBOX Clicked and fetch origin/main via GitHub (docs/** deploy ignore)");
     }
+    if (!svc.includes("GITHUB_OUTBOX_HEAD_BYTES") || !/ledgerInflight/.test(svc)) {
+      problems.push("module-matrix must cap public-raw OUTBOX downloads and single-flight ledger parse (public-repo hang)");
+    }
     if (!/module=\(\[a-z0-9_-\]\+\)/.test(svc) && !svc.includes("module=([a-z0-9_-]+)")) {
       problems.push("module-matrix.service.ts must salvage Devin module= + leaf= LIVE PASS lines");
     }

@@ -98,6 +98,12 @@ const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
 const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
 /** 3s made every All-modules load re-parse 29 boards + GitHub OUTBOX and miss the 20s FE abort. */
 const MATRIX_CACHE_MS = 120_000;
+/** Clicked lines sit at the top of OUTBOX-*.md. After the repo went public, unauthenticated
+ * raw.githubusercontent.com started returning the FULL files (OUTBOX-DEVIN.md ~2.2MB). While the
+ * repo was private, that raw URL 404'd and we fell through to a small disk copy — matrix stayed
+ * fast and stale. Public success + FE poll = overlapping multi-MB downloads on the Node event loop,
+ * module-matrix never completes, healthz/502 during deploy. Cap OUTBOX reads; ledger stays full. */
+const GITHUB_OUTBOX_HEAD_BYTES = 131072;
 
 export type MatrixCellState = "live" | "built" | "audited" | "unaudited" | "na" | "done";
 
@@ -514,38 +520,45 @@ function evidenceIsLiveNeon(text: string): boolean {
 }
 
 let ledgerCache: { atMs: number; rows: LedgerRow[] } | null = null;
+let ledgerInflight: Promise<LedgerRow[]> | null = null;
 
 async function loadLedgerRows(): Promise<LedgerRow[]> {
   const now = Date.now();
   if (ledgerCache && now - ledgerCache.atMs < MATRIX_CACHE_MS) {
     return ledgerCache.rows;
   }
-  // LV-MATRIX-LEDGER-PARSE-SWALLOW-ZEROS-BOX4 — never return [] on parse failure.
-  // Empty ledger made Box 4 show "0 of N LIVE" while Box 3 stayed 100% Built from disk
-  // @matrix-built tags (looked like Live vanished). Fail closed so /program/matrix errors
-  // loudly until AUDIT-COVERAGE-LIVE.md parseFindings succeeds (no duplicate # / bad pipes).
-  // LV-MATRIX-LEDGER-RENDER-DOCS-IGNORE — render.yaml ignoredPaths docs/** so the API
-  // image often has a stale/missing AUDIT-COVERAGE-LIVE.md; parseFindings then 503s
-  // GET /api/v1/program/module-matrix?scope=system (SYSTEM ROLLUP UNAVAILABLE). Same
-  // class as Clicked OUTBOX: prefer origin/main via loadOutboxTextFromGithub.
-  const mod = (await import(pathToFileURL(SCOREBOARD_SCRIPT).href)) as {
-    parseFindings: (md: string) => LedgerRow[];
-  };
-  const remote = await loadOutboxTextFromGithub(LEDGER_REL);
-  const md =
-    remote && remote.includes("| # | Module |")
-      ? remote
-      : existsSync(LEDGER_MD)
-        ? readFileSync(LEDGER_MD, "utf8")
-        : "";
-  if (!md) {
-    throw new Error(
-      "AUDIT-COVERAGE-LIVE.md missing on disk and GitHub origin/main fetch failed",
-    );
-  }
-  const rows = mod.parseFindings(md);
-  ledgerCache = { atMs: now, rows };
-  return rows;
+  if (ledgerInflight) return ledgerInflight;
+  ledgerInflight = (async () => {
+    // LV-MATRIX-LEDGER-PARSE-SWALLOW-ZEROS-BOX4 — never return [] on parse failure.
+    // Empty ledger made Box 4 show "0 of N LIVE" while Box 3 stayed 100% Built from disk
+    // @matrix-built tags (looked like Live vanished). Fail closed so /program/matrix errors
+    // loudly until AUDIT-COVERAGE-LIVE.md parseFindings succeeds (no duplicate # / bad pipes).
+    // LV-MATRIX-LEDGER-RENDER-DOCS-IGNORE — render.yaml ignoredPaths docs/** so the API
+    // image often has a stale/missing AUDIT-COVERAGE-LIVE.md; parseFindings then 503s
+    // GET /api/v1/program/module-matrix?scope=system (SYSTEM ROLLUP UNAVAILABLE). Same
+    // class as Clicked OUTBOX: prefer origin/main via loadOutboxTextFromGithub.
+    const mod = (await import(pathToFileURL(SCOREBOARD_SCRIPT).href)) as {
+      parseFindings: (md: string) => LedgerRow[];
+    };
+    const remote = await loadOutboxTextFromGithub(LEDGER_REL);
+    const md =
+      remote && remote.includes("| # | Module |")
+        ? remote
+        : existsSync(LEDGER_MD)
+          ? readFileSync(LEDGER_MD, "utf8")
+          : "";
+    if (!md) {
+      throw new Error(
+        "AUDIT-COVERAGE-LIVE.md missing on disk and GitHub origin/main fetch failed",
+      );
+    }
+    const rows = mod.parseFindings(md);
+    ledgerCache = { atMs: Date.now(), rows };
+    return rows;
+  })().finally(() => {
+    ledgerInflight = null;
+  });
+  return ledgerInflight;
 }
 
 function loadGuardHits(moduleId: string): string[] {
@@ -1113,18 +1126,29 @@ export function parseOutboxClickedKeys(text: string): Set<string> {
   return keys;
 }
 
+function isBusOutboxRel(rel: string): boolean {
+  return rel.startsWith("docs/bus/OUTBOX");
+}
+
 async function loadOutboxTextFromGithub(rel: string): Promise<string | null> {
   const rawUrl = `https://raw.githubusercontent.com/tioperfumes07/IH35-TMS/main/${rel}`;
   const acRaw = new AbortController();
   const tRaw = setTimeout(() => acRaw.abort(), 8000);
   try {
-    const rawRes = await fetch(rawUrl, { signal: acRaw.signal, headers: { "User-Agent": "ih35-tms-matrix-clicked" } });
-    if (rawRes.ok) return await rawRes.text();
+    const headers: Record<string, string> = { "User-Agent": "ih35-tms-matrix-clicked" };
+    // Never send Authorization on raw — a stale private-repo PAT 401s even after the repo is public.
+    if (isBusOutboxRel(rel)) headers.Range = `bytes=0-${GITHUB_OUTBOX_HEAD_BYTES - 1}`;
+    const rawRes = await fetch(rawUrl, { signal: acRaw.signal, headers });
+    if (rawRes.ok || rawRes.status === 206) {
+      const text = await rawRes.text();
+      return isBusOutboxRel(rel) ? text.slice(0, GITHUB_OUTBOX_HEAD_BYTES) : text;
+    }
   } catch {
-    /* contents API fallback */
+    /* contents API fallback — skip for OUTBOX (files exceed GitHub's 1MB contents cap) */
   } finally {
     clearTimeout(tRaw);
   }
+  if (isBusOutboxRel(rel)) return null;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 8000);
   try {
@@ -1143,25 +1167,35 @@ async function loadOutboxTextFromGithub(rel: string): Promise<string | null> {
   }
 }
 
+let clickedOutboxInflight: Promise<Set<string>> | null = null;
+
 async function loadOutboxClickedKeys(): Promise<Set<string>> {
   const now = Date.now();
   if (clickedOutboxCache && now - clickedOutboxCache.atMs < MATRIX_CACHE_MS) {
     return clickedOutboxCache.keys;
   }
-  const keys = new Set<string>();
-  for (const rel of OUTBOX_CLICKED_FILES) {
-    const full = path.join(REPO_ROOT, rel);
-    if (existsSync(full)) {
-      for (const k of parseOutboxClickedKeys(readFileSync(full, "utf8"))) keys.add(k);
+  if (clickedOutboxInflight) return clickedOutboxInflight;
+  clickedOutboxInflight = (async () => {
+    const keys = new Set<string>();
+    for (const rel of OUTBOX_CLICKED_FILES) {
+      const full = path.join(REPO_ROOT, rel);
+      if (existsSync(full)) {
+        const raw = readFileSync(full, "utf8");
+        const text = isBusOutboxRel(rel) ? raw.slice(0, GITHUB_OUTBOX_HEAD_BYTES) : raw;
+        for (const k of parseOutboxClickedKeys(text)) keys.add(k);
+      }
     }
-  }
-  const remote = await Promise.all(OUTBOX_CLICKED_FILES.map((rel) => loadOutboxTextFromGithub(rel)));
-  for (const text of remote) {
-    if (!text) continue;
-    for (const k of parseOutboxClickedKeys(text)) keys.add(k);
-  }
-  clickedOutboxCache = { atMs: now, keys };
-  return keys;
+    const remote = await Promise.all(OUTBOX_CLICKED_FILES.map((rel) => loadOutboxTextFromGithub(rel)));
+    for (const text of remote) {
+      if (!text) continue;
+      for (const k of parseOutboxClickedKeys(text)) keys.add(k);
+    }
+    clickedOutboxCache = { atMs: Date.now(), keys };
+    return keys;
+  })().finally(() => {
+    clickedOutboxInflight = null;
+  });
+  return clickedOutboxInflight;
 }
 
 /** Clicked ≠ Named. Fan-out rows with 4+ Exact cells do not credit Clicked. */
