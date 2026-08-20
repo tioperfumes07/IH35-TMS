@@ -1,3 +1,5 @@
+# SUPERSEDED · 2026-08-20 — use `docs/bus/CODER-INSTRUCTIONS-NOW.md`
+
 # FINAL — WEEKEND FULL WIRING · 2026-08-12 20:16 CT (CANONICAL)
 
 **Quality bar (non-negotiable):** Desktop `/Users/jorgemunoz/Desktop/Claude.docx`  

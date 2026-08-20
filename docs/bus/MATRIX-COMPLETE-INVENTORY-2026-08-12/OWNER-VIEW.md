@@ -1,3 +1,5 @@
+# SUPERSEDED · 2026-08-20 — use `docs/bus/CODER-INSTRUCTIONS-NOW.md`
+
 # OWNER VIEW — did we really fix inventory?
 
 **Yes if all true after deploy:**

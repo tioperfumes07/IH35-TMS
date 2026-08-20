@@ -1,3 +1,7 @@
+# SUPERSEDED · 2026-08-20
+
+Do **not** run this folder. Current: `docs/bus/CODER-INSTRUCTIONS-NOW.md`.
+
 # FINAL INSTRUCTIONS — ALL CODERS · 2026-08-12 (CANONICAL)
 
 **Owner:** present final instructions · every surface · continuous mode · **tmux ping every 15 minutes only**.

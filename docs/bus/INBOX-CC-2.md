@@ -1,11 +1,15 @@
-# INBOX-CC-2
+# INBOX-CC-2 · THROUGH 14 · NO ASK
 
-**HOURLY:** pull + this TOP + **`OUTBOX-CC-2.md` first 20** + CODER URGENT-6.
+**Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. Hourly also `OUTBOX-CC-2.md` first 20.
 
-**GOAL:** LIVE-CHECK picker_law on URGENT-6 in the real app. Rebuild on FAIL. No 25/25 re-loop of PASS.
+## You until 14 picker_law live-checked
 
-**NOW:** accounting pickers live → customers → drivers → vendors → dispatch → safety.
+**LIVE-CHECK** `picker_law` in the real app (USMCA). Rebuild only on live FAIL. Do not skip live-check. Do not 25/25 re-loop PASS modules.
+
+Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
+
+FAST-MERGE every fix PR. Next module when unpaid picker_law in current is 0 or live PASS.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | LIVE-CHECK | NOW=accounting picker_law | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | LIVE-CHECK | NOW=accounting picker_law then 2–14 | GO
 ```

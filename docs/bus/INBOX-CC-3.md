@@ -1,11 +1,15 @@
-# INBOX-CC-3
+# INBOX-CC-3 · THROUGH 14 · NO ASK
 
-**HOURLY:** pull + CODER URGENT-6 + this file.
+**Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. FAST-MERGE.
 
-**GOAL:** Box **3 Built ✓** `qbo_chrome` + surface-bar on URGENT-6. Not 9227. Not GL.
+## You until 14 qbo_chrome / surface Built unpaid=0
 
-**NOW:** **accounting** unpaid Built → customers → drivers → vendors → dispatch → safety.
+Box **3 Built** `qbo_chrome` + surface-bar. Not 9227. Not GL.
+
+Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
+
+Unpaid Built cell → that cell. Clear → next module. No ask.
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=accounting Built | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=accounting qbo_chrome then 2–14 | GO
 ```

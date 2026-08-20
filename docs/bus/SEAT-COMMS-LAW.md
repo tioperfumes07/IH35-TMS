@@ -1,8 +1,8 @@
-# SEAT COMMS LAW · 2026-08-19T23:10Z · PERMANENT
+# SEAT COMMS LAW · PERMANENT
 
 **Owner:** Jorge. **Lead:** Cursor. **Jorge is not the messenger.**
 
-Coders talk to **Cursor (lead)** and **to each other** on the repo bus. Chat-only is a defect. A stale INBOX that nobody reports is a defect.
+Current work: `CODER-INSTRUCTIONS-NOW.md` (URGENT-14). Coders talk on INBOX/OUTBOX only.
 
 ## Channel (only)
 

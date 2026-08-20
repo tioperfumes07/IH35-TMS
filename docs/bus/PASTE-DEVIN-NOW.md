@@ -1,3 +1,3 @@
-# PASTE DEVIN NOW · RETIRED NAME
+# SUPERSEDED name
 
-Use `docs/bus/PASTE-DEVIN-A-NOW.md` only.
+You are **Devin-A**. Use `PASTE-DEVIN-A-NOW.md` + `INBOX-DEVIN-A.md` only.

@@ -1,77 +1,58 @@
-# CODER INSTRUCTIONS NOW · NO DEVIATE · CONTINUOUS · HOURLY RE-READ · FAST-MERGE
+# CODER INSTRUCTIONS NOW · THROUGH ALL 14 URGENT MODULES · NO ASK · NO WAIT
 
-USMCA only. Fuel never. eld never. No QBO write-back. **No owner gate.** ALL QUESTIONS ASKED AND ANSWERED.
+**Jorge is not the messenger.** Chat is not a queue. This file + your `INBOX-<SEAT>.md` TOP are the only NOW until the **14** are done. Do not wait for Cursor. Do not wait for Jorge. Hourly `git pull --ff-only origin main` and keep going.
 
-**Do not deviate.** This file + your `INBOX-<SEAT>.md` TOP are the only NOW. Chat summaries do not override.
+USMCA only. **Fuel never. eld never.** No TMS→QBO write-back. No owner gate. ALL QUESTIONS ASKED AND ANSWERED.
 
-## GOAL — 4 boxes on the **existing** matrix columns (do not invent a second set)
+**Forbidden stale queues (do not run):** WAVE1-THEN-2 · WAVE 1 banking-first · 8-by-06:00 · 25/25 picker re-loop · poll INBOX idle · Ignore Box 4 · `devin-a/live-outbox-proofs-32` · `git reset --soft origin/main` · extra `devin-a-live-loop` processes.
 
-Program → Module matrix (`/program/matrix`). **Each Required cell has four boxes** (Required · Audited · Built · Live). That is the checkmark bar.
+## 100% (do not lie)
 
-**Do not add columns.** Law: Honest Built — *Do not add scoreboard columns.* Canonical ids are **only** `docs/specs/scoreboard/columns.shared.json` (**25** ids). Modules subset them in `*.required.json`.
+Fully-Wired **1–12** on that module (`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`). Item 12 = Live Chrome. Column **12 Clicked** is green only when **Clicked = every Required cell**. The big Clicked KPI is not 100%. Honest Built: no `leafRe:.*` / `|.*` / word blankets. Do not add scoreboard columns.
 
-| What | What it is | What it is NOT |
-|------|------------|----------------|
-| **25 matrix columns** | Shared vocabulary: **12 linkage** (`driver` `customer` `vendor` `unit` `trailer` `load` `claim` `work_order` `accident` `policy` `settlement` `legal_matter`) + **7 money** (`ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability`) + **2 chrome** (`picker_law` `qbo_chrome`) + **2 wiring** (`connectivity` `reverse_link`) + **2 process** (`scenario.maintenance` `scenario.insurance`) | Not a new queue |
-| **12 linkage columns** | Owner 2026-08-12: §B9 hub types **as columns** (claim/WO/accident/policy/settlement/legal_matter **plus** the 6 hubs). This **is** the consolidation of the old class wall | Do **not** also sweep the archived 31 CLS columns as if they were extra matrix cols |
-| **~31 CLS columns** | Archived class board `/program/legacy-scoreboard` — `CLASS_SCOREBOARD.summary.total = 31` from `wave-queue.json` (CLS-BANK-MATCH-DENSITY, CLS-REVERSE-LINKAGE-MISSING, CLS-DISP-WIRE-01…10, …) | **Not** the live matrix. Do not rebuild that board |
-| **Fully-Wired 1–12** | Depth bar (create → canonical → money → F+R → surface → **Live Chrome last**) | **Not** 12 extra scoreboard columns |
+A cell ✓✓✓✕ is not done.
 
-**Forbidden extra ids (not in `columns.shared.json`):** `payment` `factor` `escrow` as their own columns. Escrow/factoring liability = **`liability` (LIAB/ESCR)**. Customer payment / match = **`invoice` / `bank` / `ap_bill`**. `settlement` is a **linkage** column, not a second money column.
+## Sequence (locked until finished — do not reorder)
 
-`liability` already means LIAB/ESCR. Wiring `reverse_link` already covers CLS-REVERSE-LINKAGE-MISSING / CLS-LINKAGE-ONEWAY. `connectivity` covers nav→API. `picker_law` / `qbo_chrome` cover calendar/orphan-surface chrome classes. **Same work — do not run it twice.**
-
-A cell that is ✓✓✓✕ is **not** done. Box 4 = Devin `leaf=module:leafId:col`. No `leafRe:.*` Built. Never fuel/eld.
-
-Law: `columns.shared.json` · `VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md` · `MODULE-MATRIX-SCOREBOARD-LOCKED.md` · Fully-Wired 1–12 · Honest Built.
-
-
-## Continuous auto mode
-
-Never idle. Never wait for Jorge. Unpaid 4/4 cell → next name in the wave. FAST-MERGE (`docs/bus/FAST-MERGE-4MIN-LAW.md`):
-
-1. `cursor-ship-preflight --body-file` / `money-pr-local-gate` **exit 0**
-2. `git push` — `--no-verify` only after step 1 PASS and only ENV `verify-static-fallback`
-3. `gh pr create` — never `gh pr checks --watch`
-4. `gh pr merge N --squash --delete-branch --admin` immediately
-5. Neon yourself if money/migrations
-6. OUTBOX one line → next unpaid cell same turn
-
-## Hourly re-read
-
-1. `git pull --ff-only origin main`
-2. This file TOP to BOTTOM
-3. Your `INBOX-<SEAT>.md` TOP
-3b. **CC-2:** `OUTBOX-CC-2.md` first 20. **CC-1:** `OUTBOX-CC-1.md` first 20.
-3c. Picker FAIL → prepend `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Plus `OUTBOX-CURSOR.md`. Never chat-only.
-4. `docs/bus/FAST-MERGE-4MIN-LAW.md`
-5. ACK: `STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<module> <col> | GO`
-
-## NOW — chat urgent 14 (owner 2026-08-19). Operational live = 4/4 on these modules.
-
-**URGENT-6 (do these first, all seats, same hour, split columns):**  
+**URGENT-6 first (all seats, split columns, same hour):**  
 1 accounting → 2 customers → 3 drivers → 4 vendors → 5 dispatch → 6 safety
 
-**THEN remaining of the 14 (chat items 7–14; skip fuel):**  
+**Then 7–14 (skip fuel):**  
 7 fleet → 8 maintenance → 9 lists → 10 settlements → 11 factoring → 12 banking → 14 inventory
 
-**THEN** insurance · legal · cash-flow · finance · remainder of sidebar.
+When **your column** has no unpaid Required cells left on module N, **immediately** start module N+1. Do not ask. Do not idle. After 14, insurance → legal → remainder of sidebar (still USMCA, still FAST-MERGE).
 
-Never fuel. Never eld. Do not park vendors or dispatch — they are in the 6.
+## FAST-MERGE (every PR)
 
-Unpaid 4/4 cell in URGENT-6 in your column → that cell. Do not wander to insurance/WAVE-2 leftovers while URGENT-6 unpaid exists in your lane.
+`docs/bus/FAST-MERGE-4MIN-LAW.md`
 
-**100% on an urgent module** = Fully-Wired items **1–12**: honest Built on Required cells **and** column **12 Clicked** green (Clicked = every Required cell on that module). The board’s big Clicked total is not 100%.
+1. Gate `money-pr-local-gate` / `cursor-ship-preflight --body-file` **exit 0**
+2. `git push` — `--no-verify` only after step 1 PASS and only ENV `verify-static-fallback`
+3. `gh pr create` — **never** `gh pr checks --watch`
+4. `gh pr merge N --squash --delete-branch --admin` **same turn**
+5. Neon yourself if money/migrations
+6. OUTBOX one line → next unpaid cell **same turn**
 
-## Seats (columns you own — fill boxes 2–3; Devin fills box 4)
+## Matrix (do not invent columns)
 
-| Seat | Boxes + columns | NOW → then |
-|------|-----------------|------------|
-| **Devin-A** | **Box 4 Live** every Required `leaf:col` | **accounting** Clicked → customers → drivers → vendors → dispatch → safety. Then fleet→…→inventory. `leaf=module:leafId:col`. `shipClickedOntoMain`. chrome=9227. Picker FAIL → OUTBOX-CC-2. |
-| **CC-3** | **Box 3 Built** FE: `qbo_chrome` + surface-bar | **accounting** unpaid Built → customers → drivers → vendors → dispatch → safety |
-| **CC-1** | **Box 3 Built** money columns | **accounting** money unpaid → customers/drivers/vendors/dispatch/safety money cells. Reuse poster. Keep hop.bank. Then settlements→factoring→banking→inventory. |
-| **CC-2** | **Live-check** picker_law | Open URGENT-6 pickers live. Rebuild only on FAIL. Do not skip live-check. No 25/25 re-loop of already PASS. |
-| **Codex** | **Box 3 Built** `reverse_link` + `connectivity` | **accounting** reverse+CONN → customers → drivers → vendors → dispatch → safety. No 9227. |
-| **Cursor** | Lead + leftover Built | Hourly INBOX; leftover URGENT-6 Built; FAST-MERGE this file to main |
+Canonical ids: `docs/specs/scoreboard/columns.shared.json` (**25**). Not 31 CLS. Not extra `payment`/`factor`/`escrow` columns. `liability` = LIAB/ESCR.
 
-ACK: `STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<FO> | GO`
+## Seats until the 14 are done
+
+| Seat | You own | Ladder (no ask) |
+|------|---------|-----------------|
+| **Devin-A** | Box 4 Live Chrome | Clicked every Required `leaf:col` on URGENT-6 then 7–14. `leaf=module:leafId:col \| USMCA`. chrome=9227. See INBOX-DEVIN-A. |
+| **CC-1** | money Built: `ap_bill` `expense` `invoice` `bank` `gl_je` `inventory` `liability` | Same module order. Reuse poster. Keep hop.bank. No manufacture. |
+| **CC-2** | picker_law **live-check in the app** | Same order. Rebuild only on live FAIL. No 25/25 PASS re-loop. |
+| **CC-3** | `qbo_chrome` + surface-bar Built | Same order. Not 9227. Not GL math. |
+| **Codex** | `reverse_link` + `connectivity` Built | Same order. No 9227. |
+| **Cursor** | Lead: keep these files current on main; leftover Built | FAST-MERGE bus; kill extra Devin loops; never Jorge-as-messenger. |
+| **Cascade** | OFF build. Merge if that is your seat. Do not rewrite INBOXes. | |
+
+Picker FAIL → prepend `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Always `OUTBOX-CURSOR.md`. Never chat-only.
+
+## Hourly
+
+`git pull --ff-only origin main` · this file · INBOX TOP · FAST-MERGE law · ACK below · keep working.
+
+ACK: `STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | HOURLY-REREAD | NOW=<module> <col> | GO`

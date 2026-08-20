@@ -1,3 +1,4 @@
 # PASTE CURSOR NOW
-Hourly re-read CODER URGENT-6. Leftover Built on accounting→safety. Feed OUTBOX-CC-2. FAST-MERGE.
-Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=accounting leftover Built | GO
+git pull --ff-only origin main
+Read INBOX-CURSOR + CODER. Lead bus. One Devin loop. FAST-MERGE. No Jorge messenger.
+Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=lead | GO

@@ -1,13 +1,10 @@
-# PASTE ALL SEATS · URGENT-6 = 100% (Fully-Wired 1–12) · FAST-MERGE
+# PASTE ALL SEATS · URGENT-14 · NO ASK · FAST-MERGE
 
 `git pull --ff-only origin main`
-Read `CODER-INSTRUCTIONS-NOW.md` TOP.
+Read `CODER-INSTRUCTIONS-NOW.md` then your `INBOX-<SEAT>.md` TOP.
 
-**100%** = Fully-Wired 1–12 on URGENT-6. Clicked total (e.g. 3012) is not 100%. 12 Clicked column is green only when Clicked = every Required cell on that module.
+**14:** accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory. Fuel never.
 
-**URGENT-6:** accounting → customers → drivers → vendors → dispatch → safety  
-**THEN 7–14:** fleet → maintenance → lists → settlements → factoring → banking → inventory (no fuel)
+**100%** = Fully-Wired 1–12. Jorge is not the messenger. FAST-MERGE `--admin` same turn. Never `gh pr checks --watch`.
 
-CC-1 money Built. CC-3 qbo_chrome Built. Codex reverse+CONN. CC-2 LIVE-CHECK pickers in the app. Devin Clicked `leaf=module:leafId:col` + `gh pr merge --admin`. FAST-MERGE.
-
-ACK: `STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=<module> <col> | GO`
+ACK: `STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | HOURLY-REREAD | NOW=<module> <col> | GO`
