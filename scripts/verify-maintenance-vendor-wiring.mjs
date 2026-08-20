@@ -26,7 +26,7 @@ const FILES = {
   roadServiceList: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
   roadServiceTicket: "apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx",
   partsInventory: "apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx",
-  addPartsLink: "apps/frontend/src/components/maintenance/AddPartsLinkModal.tsx",
+  addPartsLink: "apps/frontend/src/components/maintenance/AddPartsLinkDrawer.tsx",
   vendorsHub: "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
   warranty: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx",
   woDetailModal: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
