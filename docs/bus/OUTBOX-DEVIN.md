@@ -11283,3 +11283,36 @@ Devin-A | LIVE PASS | leaf=lists:catalog.safety.internal_fine_reasons.list:picke
 Devin-A | LIVE PASS | leaf=lists:catalog.safety.internal_fine_reasons.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/safety/internal-fine-reasons | healthz=22de17b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/safety/internal-fine-reasons marker 'lists' | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
 Devin-A | LIVE PASS | leaf=lists:catalog.safety.internal_fine_reasons.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/safety/internal-fine-reasons | healthz=22de17b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/safety/internal-fine-reasons marker 'lists' | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
 Devin-A | LIVE STARVED | leaf=lists:lists.modal.driver_catalog:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=22de17b | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=22de17b head Checking session... | NEXT=leaf=lists:lists.modal.oem_parts_create:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=22de17b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:lists.panel.validation:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=22de17b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:lists.panel.validation:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=22de17b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:lists.panel.validation:connectivity
