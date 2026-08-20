@@ -5523,3 +5523,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=fleet:unit.profile.audit_history:unit
+Devin-A | LIVE PASS | leaf=fleet:unit.profile.audit_history:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=9b96173 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id marker 'fleet' | NEXT=leaf=fleet:unit.profile.bank_txns:unit
+Devin-A | LIVE PASS | leaf=fleet:unit.profile.audit_history:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=9b96173 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id marker 'fleet' | NEXT=leaf=fleet:unit.profile.bank_txns:unit
