@@ -2757,6 +2757,18 @@
       ],
       "leafRe": "^(profiles\\.detail|fleet\\.hos_board|safety\\.panel\\.driver_safety_profile)$",
       "live": "BLOCKED"
+    },
+    {
+      "task": "WAVE2-VENDORS-AP-EXPENSES-BUILT",
+      "modules": [
+        "vendors"
+      ],
+      "cols": [
+        "expense"
+      ],
+      "leafRe": "^detail\\.ap(\\.expenses)?$",
+      "guard": "scripts/verify-vendor-ap-expenses-wired.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
