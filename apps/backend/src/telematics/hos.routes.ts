@@ -78,6 +78,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
         started_at: string;
         ended_at: string | null;
         unit_id: string | null;
+        unit_number: string | null;
         source: string;
         odometer_mi: number | null;
         location: string | null;
@@ -88,15 +89,19 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
             duty_status,
             started_at::text,
             ended_at::text,
-            unit_id::text,
-            source,
-            odometer_mi,
-            location
-          FROM hos.duty_status_events
-          WHERE operating_company_id = $1::uuid
-            AND driver_id = $2::uuid
-            AND started_at >= now() - interval '24 hours'
-          ORDER BY started_at DESC
+            e.unit_id::text,
+            u.unit_number,
+            e.source,
+            e.odometer_mi,
+            e.location
+          FROM hos.duty_status_events e
+          LEFT JOIN mdata.units u
+            ON u.id = e.unit_id
+            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
+          WHERE e.operating_company_id = $1::uuid
+            AND e.driver_id = $2::uuid
+            AND e.started_at >= now() - interval '24 hours'
+          ORDER BY e.started_at DESC
         `,
         [query.data.operating_company_id, params.data.driver_id]
       );
