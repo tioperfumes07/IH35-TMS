@@ -113,8 +113,12 @@ describe("OemPartsCatalog", () => {
 
     expect(await screen.findByText("Engine Oil Filter")).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("button", { name: "+ Create" })[0]!);
-    const heading = await screen.findByText("Create OEM Part Template");
-    const modal = within(heading.closest("div")!.parentElement!);
+    await screen.findByText("Create OEM Part Template");
+    // Modal (variant="drawer") renders a stable role="dialog" wrapper — scope to that instead of
+    // walking up from the heading. The old `heading.closest("div")!.parentElement!` resolved to just
+    // the drawer's HEADER ROW (title + back/close buttons), not the body, once the header gained its
+    // own wrapping div (data-proportion-chrome-header) — so it could never find "Brand" etc.
+    const modal = within(screen.getByRole("dialog"));
 
     fireEvent.change(modal.getByLabelText("Brand"), { target: { value: "Kenworth" } });
     fireEvent.change(modal.getByLabelText("OEM Part #"), { target: { value: "K061-055" } });
