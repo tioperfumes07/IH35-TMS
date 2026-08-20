@@ -1467,3 +1467,5 @@ Thirty-five findings shipped total this segment (ACCT-F5602 through F5637, 5627 
 Thirty-nine findings shipped total this segment (ACCT-F5602 through F5640, 5627 skipped for an id collision). Board closeout in this same PR for F5638/F5639/F5640. GitHub Actions CI has been down since 2026-08-16 (billing/spending-limit block, confirmed still down 2026-08-20 -- all checks stuck at queued/pending indefinitely, zero jobs starting) -- all three PRs merged via gh pr merge --admin per the standing fast-merge method, with fresh git show origin/main verification substituting for the missing CI backstop (no migrations in any of the three, so the elevated Neon-branch-rehearsal standard was not required). Continuing non-stop -- no idle gaps, always fix never defer.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=WAVE2 vendors money cols | GO
