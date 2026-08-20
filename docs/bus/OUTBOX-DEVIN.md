@@ -3019,3 +3019,21 @@ Devin-A | LIVE STARVED | leaf=customers:detail.contacts.create:connectivity | US
 Devin-A | LIVE PASS | leaf=customers:detail.contracts:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=contracts | healthz=0dc7fa0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=contracts marker 'Customer' | NEXT=leaf=customers:detail.documents:customer
 Devin-A | LIVE PASS | leaf=customers:detail.contracts:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=contracts | healthz=0dc7fa0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=contracts marker 'Customer' | NEXT=leaf=customers:detail.documents:customer
 Devin-A | LIVE PASS | leaf=customers:detail.contracts:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=contracts | healthz=0dc7fa0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=contracts marker 'Customer' | NEXT=leaf=customers:detail.documents:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.documents:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=documents | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=documents healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=customers:detail.edit:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.documents:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=documents | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=documents healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=customers:detail.edit:customer
