@@ -348,6 +348,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           assignment={aggregate.current_assignment}
           companyId={companyId}
           driverId={id}
+          driverName={displayName}
         />
       </div>
 
