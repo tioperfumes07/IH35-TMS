@@ -3825,3 +3825,36 @@ Devin-A | LIVE PASS | leaf=lists:catalog.accounting.audit_event_types.list:qbo_c
 Devin-A | LIVE PASS | leaf=lists:catalog.accounting.audit_event_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/audit-event-types | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/accounting/audit-event-types marker 'lists' | NEXT=leaf=lists:catalog.accounting.chart_of_accounts_seeds.create:qbo_chrome
 Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.chart_of_accounts_seeds.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds | healthz=46d3390 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds healthz=46d3390 head Checking session... | NEXT=leaf=lists:catalog.accounting.chart_of_accounts_seeds.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.chart_of_accounts_seeds.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds | healthz=46d3390 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds healthz=46d3390 head Checking session... | NEXT=leaf=lists:catalog.accounting.chart_of_accounts_seeds.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts_seeds.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds marker 'lists' | NEXT=leaf=lists:catalog.accounting.chart_of_accounts.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts_seeds.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds marker 'lists' | NEXT=leaf=lists:catalog.accounting.chart_of_accounts.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts_seeds.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts-seeds marker 'lists' | NEXT=leaf=lists:catalog.accounting.chart_of_accounts.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.chart_of_accounts.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.chart_of_accounts.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.chart_of_accounts.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.classes.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.classes.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.classes.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.accounting.classes.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.accounting.classes.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.accounting.classes.list:picker_law
