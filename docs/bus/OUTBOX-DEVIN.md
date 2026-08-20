@@ -2151,6 +2151,7 @@ Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:vendor | USMCA | UR
 Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:scenario.ap | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
+<<<<<<< HEAD
 Devin-A | LIVE PASS | leaf=vendors:md.txn.filters:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=8f9638d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=transaction_list marker 'vendors' | NEXT=leaf=vendors:detail.profile:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.txn.filters:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=8f9638d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=transaction_list marker 'vendors' | NEXT=leaf=vendors:detail.profile:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.txn.filters:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=8f9638d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=transaction_list marker 'vendors' | NEXT=leaf=vendors:detail.profile:vendor
@@ -2164,3 +2165,45 @@ Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:vendor | USMCA | URL=h
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
+=======
+>>>>>>> e57086623 (FINDING: live vendors md.header.new_transaction pass)
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=8f9638d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with Google
+OR EMAIL
+Email
+Password
+
+Strengt | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=8f9638d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with Google
+OR EMAIL
+Email
+Password
+
+Strengt | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=8f9638d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with Google
+OR EMAIL
+Email
+Password
+
+Strengt | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=8f9638d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with Google
+OR EMAIL
+Email
+Password
+
+Strengt | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
