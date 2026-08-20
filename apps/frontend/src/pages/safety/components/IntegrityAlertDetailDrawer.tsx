@@ -4,6 +4,7 @@ import { acknowledgeIntegrityAlert, resolveIntegrityAlert, snoozeIntegrityAlert 
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
@@ -102,39 +103,30 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           <div><strong>Subject:</strong> {String(alert.subject_type ?? "—")}</div>
           <div>
             <strong>Driver:</strong>{" "}
-            {alert.subject_driver_id ? (
-              <EntityLink
-                kind="driver"
-                id={String(alert.subject_driver_id)}
-                label={entityLabel(alert.subject_driver_name, alert.subject_driver_id, "Driver")}
-              />
-            ) : (
-              "—"
-            )}
+            <EntityLinkOrTombstone
+              kind="driver"
+              id={alert.subject_driver_id == null ? null : String(alert.subject_driver_id)}
+              name={alert.subject_driver_name}
+              noun="Driver"
+            />
           </div>
           <div>
             <strong>Unit:</strong>{" "}
-            {alert.subject_unit_id ? (
-              <EntityLink
-                kind="unit"
-                id={String(alert.subject_unit_id)}
-                label={entityLabel(alert.subject_unit_number, alert.subject_unit_id, "Unit")}
-              />
-            ) : (
-              "—"
-            )}
+            <EntityLinkOrTombstone
+              kind="unit"
+              id={alert.subject_unit_id == null ? null : String(alert.subject_unit_id)}
+              name={alert.subject_unit_number}
+              noun="Unit"
+            />
           </div>
           <div>
             <strong>Vendor:</strong>{" "}
-            {alert.subject_vendor_id ? (
-              <EntityLink
-                kind="vendor"
-                id={String(alert.subject_vendor_id)}
-                label={entityLabel(alert.subject_vendor_name, alert.subject_vendor_id, "Vendor")}
-              />
-            ) : (
-              "—"
-            )}
+            <EntityLinkOrTombstone
+              kind="vendor"
+              id={alert.subject_vendor_id == null ? null : String(alert.subject_vendor_id)}
+              name={alert.subject_vendor_name}
+              noun="Vendor"
+            />
           </div>
           <div><strong>Status:</strong> {String(alert.resolution_status ?? "unresolved")}</div>
           <div><strong>Summary:</strong> {String(alert.detection_summary ?? "—")}</div>
