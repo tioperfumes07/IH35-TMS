@@ -7169,3 +7169,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=lists:lists.modal.quick_create_entity:connectivity
+Devin-A | LIVE PASS | leaf=lists:lists.modal.quick_create_entity:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=8a75d4b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.termination_reason:connectivity
+Devin-A | LIVE PASS | leaf=lists:lists.modal.quick_create_entity:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=8a75d4b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.termination_reason:connectivity
+Devin-A | LIVE PASS | leaf=lists:lists.modal.quick_create_entity:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=8a75d4b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.termination_reason:connectivity
