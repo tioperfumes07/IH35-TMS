@@ -1528,3 +1528,14 @@ Ingles
 Espanol (preview)
 t | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.wizard.border_crossing_wizard_page
 Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.wizard.border_crossing_wizard_page | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=52efe82 | mutation=none | NEXT=dispatch.dispatch.parity.assign_driver_dropdown
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.parity.assign_driver_dropdown | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=4e73f49 | mutation=none | NEXT=dispatch.dispatch.parity.book_load_equipment_section
