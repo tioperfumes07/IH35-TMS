@@ -2966,3 +2966,15 @@ guessing a false-positive guard. | `apps/frontend/src/pages/Drivers.tsx` (cash_a
 chrome (driver-scoped filter) inside this subnav instead of the bare debt-alert panel, or (b) add a real
 "View all →" deep link from the debt-alert panel to `/cash-advances?driver_id=...` if a driver-scoped
 query param exists — needs a product decision on which shape is intended, not a mechanical guess. | OPEN
+
+**UPDATE (CC-3, 2026-08-20 evening):** `QBO-CHROME-THEATER-COVERAGE-5-MODULES` — of the 5 modules
+named above, 3 are now fully closed: **safety** (PR#TBD5, all 12 named leaves real, "the legacy
+duplicate TrainingProgramsPage.tsx concern above was confirmed unfounded — every safety Tab file is
+either the real component directly or a genuine 1-2-layer re-export shim to one real component, no
+dead duplicate found; the tabs/*Tab.tsx files ARE the manifest-mounted routes, they just often
+delegate rather than render inline"), **vendors** (PR#12635, 19/23 real — the other 4 toolbar leaves
+were already real elsewhere), and **dispatch** (PR#12653, all 13 remaining leaves real — 4 toolbar
+leaves already real elsewhere). **Still open: fleet (21 leaves) and maintenance (37 leaves)** — same
+proven pattern (confirm the real mounted component via route manifest + grep, assert its real chrome
+shape, mutation-tested selftest), not yet attempted. URGENT-6's qbo_chrome sequence
+(accounting→customers→drivers→vendors→dispatch→safety) is now fully closed as of this update.
