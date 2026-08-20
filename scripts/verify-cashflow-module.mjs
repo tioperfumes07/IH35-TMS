@@ -5,13 +5,21 @@
  *
  * Asserts:
  *  1. /cash-flow route exists in manifest.tsx (top-level, NOT under /reports/*)
- *  2. CashFlowPage.tsx does NOT import from /reports/cash-flow-* paths
+ *  2. CashFlowPage.tsx does NOT `import ... from` an ES module path under /reports/cash-flow-*
+ *     (an architectural coupling/duplication concern — the page must not pull component code from
+ *     the reports module)
  *  3. Backend cash-flow routes are registered in index.ts
  *  4. Migration 202606080200_cash_flow_adjustments.sql exists
  *
  * PENDING gate: if the /cash-flow route is not yet present, exits with code 0
  * and prints a PENDING notice (allows CI to pass while the route is in-flight).
  * Once the route IS present, all assertions must pass or the script fails.
+ *
+ * 2026-08-21 (CC-3): check 2 originally scanned the WHOLE file body for the literal string
+ * "reports/cash-flow", which also matched legitimate cross-navigation `<Link to="/reports/
+ * cash-flow-statement">` hrefs to related, already-verified reports pages — those are normal
+ * "see also" navigation, not the module-import coupling the check exists to forbid. Narrowed to
+ * only scan `import ... from "..."` statement lines.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -56,10 +64,13 @@ if (/reports\/cash-flow/.test(routeBlock)) {
   errors.push('/cash-flow route must NOT be nested under /reports/cash-flow-*');
 }
 
-// 2. CashFlowPage.tsx must not import from /reports/cash-flow-* paths
+// 2. CashFlowPage.tsx must not `import ... from` a /reports/cash-flow-* module path. Only import
+// statement lines are scanned — a cross-navigation <Link to="/reports/cash-flow-..."> href is a
+// normal "see also" link to an already-verified reports page, not a forbidden module coupling.
 const pagesSrc = readFile(CASHFLOW_PAGE_PATH);
 if (pagesSrc) {
-  if (/reports\/cash-flow/i.test(pagesSrc)) {
+  const importLines = pagesSrc.split("\n").filter((line) => /^\s*import\b/.test(line));
+  if (importLines.some((line) => /reports\/cash-flow/i.test(line))) {
     errors.push("CashFlowPage.tsx must NOT import from /reports/cash-flow-* paths");
   }
 } else {
@@ -79,6 +90,26 @@ if (backendSrc) {
 // 4. Migration file exists
 if (!fs.existsSync(MIGRATION_PATH)) {
   errors.push(`Migration 202606080200_cash_flow_adjustments.sql not found`);
+}
+
+if (process.argv.includes("--selftest")) {
+  // Real fixture check on check #2's import-line-only logic (the regression class this fix
+  // closes): a genuine `import ... from ".../reports/cash-flow-x"` must still be caught; a
+  // `<Link to="/reports/cash-flow-...">` cross-navigation href must NOT be.
+  const badImport = 'import { Foo } from "../reports/cash-flow-statement";\nexport function X() { return null; }';
+  const goodNavLink = 'import { Link } from "react-router-dom";\n<Link to="/reports/cash-flow-statement">See P&L</Link>';
+  const scanImportLines = (src) =>
+    src.split("\n").filter((line) => /^\s*import\b/.test(line)).some((line) => /reports\/cash-flow/i.test(line));
+  if (!scanImportLines(badImport)) {
+    console.error("verify-cashflow-module SELFTEST FAIL — a real cross-module import was not caught");
+    process.exit(1);
+  }
+  if (scanImportLines(goodNavLink)) {
+    console.error("verify-cashflow-module SELFTEST FAIL — a legitimate cross-navigation Link href was flagged");
+    process.exit(1);
+  }
+  console.log("verify-cashflow-module SELFTEST PASS — catches a real cross-module import, ignores a nav Link href");
+  process.exit(0);
 }
 
 if (errors.length > 0) {
