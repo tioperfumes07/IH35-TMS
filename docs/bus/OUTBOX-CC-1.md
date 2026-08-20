@@ -1590,3 +1590,18 @@ depositEscrow and every standalone caller, and adding releaseEscrowOnClient(clie
 this same files own pre-existing recordEscrowPostingOnly(client, ...) convention.
 escrow-separation.service.ts now calls releaseEscrowOnClient with its own already-open, row-locked
 client.
+
+2026-08-20T15:15Z CC-1 | ACCT-F5645 SHIPPED (PR #12541, merged 1ada89c4) -- flagged as a follow-up
+in ACCT-F5644s own REMAINING note. driver-settlement.service.deprecated.tys postSettlement builds a
+Bill + BillPayment on its own client, then called the connection-opening depositEscrow() for a
+bond-deduction settlement -- a failure later in the same function (the capped-recovery JE, or the
+outer commit) would leave the bond escrow genuinely deposited while the settlement/bill/payment rolled
+back, an orphan escrow posting with no settlement behind it. Deprecated, RETIRE-schema module
+(payroll.* -- canonical is driver_finance.*) but confirmed still mounted/reachable
+(registerPayrollDriverSettlementRoutes imported in index.ts). Fixed by adding
+depositEscrowOnClient(client, input, actor) mirroring ACCT-F5644s releaseEscrowOnClient exactly, and
+calling it with the functions own already-open transaction client instead of the connection-opening
+depositEscrow. This closes the deposit-side sibling of ACCT-F5644 in the last reachable caller of the
+connection-opening escrow functions outside escrow/routes.tys own standalone HTTP handlers (which
+correctly have no outer transaction to be atomic with). Found by following up on ACCT-F5644s own
+explicitly-flagged remaining item, continuing the ACCT-F5634..F5644 sibling-writer-diff method.
