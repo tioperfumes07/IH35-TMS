@@ -2,12 +2,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { patchTrailer } from "../../api/fleet-trailers";
+import { listMyCompanies, type MyCompany } from "../../api/org";
 import { useToast } from "../../components/Toast";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
+
+function companyPickerLabel(c: MyCompany): string {
+  const name = (c.short_name ?? c.legal_name ?? "").trim();
+  return name ? `${c.code} · ${name}` : c.code;
+}
 
 const EQUIPMENT_TYPES = [
   "DryVan", "Reefer", "Flatbed", "Tanker", "Container", "Chassis", "StepDeck", "Lowboy", "Conestoga", "RGN", "Other",
@@ -46,6 +53,24 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   const equipment = profileQuery.data?.equipment;
   const primaryPlate = profileQuery.data?.plates?.[0];
 
+  // Leased To Company picker — trailer ownership is locked to TRK for every row (LST-F27 owner
+  // ruling), so there is deliberately no Owner Company field here, unlike EditVehicleModal (units).
+  // Leased To is a real, editable Combobox: an operator reassigning a trailer to a different
+  // operating company's roster needs a way to do that from this modal.
+  const companiesQuery = useQuery({
+    queryKey: ["org", "me-companies", "edit-trailer"],
+    queryFn: () => listMyCompanies().then((r) => r.companies ?? []),
+    enabled: open,
+    staleTime: 120_000,
+  });
+  const companyOptions = useMemo(
+    () =>
+      (companiesQuery.data ?? [])
+        .filter((c) => c.is_active)
+        .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
+    [companiesQuery.data]
+  );
+
   // Initialize once per open so a refetch can't reset the form + wipe edits.
   const initializedRef = useRef(false);
   useEffect(() => {
@@ -69,6 +94,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
       us_insurance_policy_number: str(equipment.us_insurance_policy_number),
       us_insurance_expiration: str(equipment.us_insurance_expiration).slice(0, 10),
       notes: str(equipment.notes),
+      currently_leased_to_company_id: str(equipment.currently_leased_to_company_id),
     };
     setBaseline(next);
     setDraft(next);
@@ -99,6 +125,9 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
       patch.us_insurance_expiration = draft.us_insurance_expiration || null;
     }
     if (draft.notes !== baseline.notes) patch.notes = draft.notes || null;
+    if (draft.currently_leased_to_company_id !== baseline.currently_leased_to_company_id) {
+      patch.currently_leased_to_company_id = draft.currently_leased_to_company_id || null;
+    }
     return patch;
   }, [draft, baseline]);
 
@@ -144,6 +173,19 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
                 </option>
               ))}
             </select>
+          </FormField>
+          <FormField label="Leased To Company" name="currently_leased_to_company_id">
+            <div data-testid="edit-trailer-currently_leased_to_company_id">
+              <Combobox
+                options={companyOptions}
+                value={draft.currently_leased_to_company_id || null}
+                onChange={(v) => set("currently_leased_to_company_id", v ?? "")}
+                placeholder="Select company"
+                loading={companiesQuery.isLoading}
+                allowClear
+                dataField="currently_leased_to_company_id"
+              />
+            </div>
           </FormField>
         </FieldSet>
         <FieldSet title="Specs">

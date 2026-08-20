@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createUnit } from "../../api/mdata";
+import { listMyCompanies, type MyCompany } from "../../api/org";
 import { useToast } from "../Toast";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -17,6 +19,11 @@ type Props = {
 
 const inputClass = "min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs";
 
+function companyPickerLabel(c: MyCompany): string {
+  const name = (c.short_name ?? c.legal_name ?? "").trim();
+  return name ? `${c.code} · ${name}` : c.code;
+}
+
 const EMPTY = {
   unit_number: "",
   vin: "",
@@ -26,6 +33,8 @@ const EMPTY = {
   license_plate: "",
   license_state: "",
   notes: "",
+  owner_company_id: "",
+  currently_leased_to_company_id: "",
 };
 
 /**
@@ -36,14 +45,37 @@ const EMPTY = {
 export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const [draft, setDraft] = useState(EMPTY);
+  const initialDraft = useMemo(
+    () => ({ ...EMPTY, currently_leased_to_company_id: operatingCompanyId }),
+    [operatingCompanyId]
+  );
+  const [draft, setDraft] = useState(initialDraft);
 
   const set = (key: keyof typeof EMPTY, value: string) => setDraft((d) => ({ ...d, [key]: value }));
 
   const resetAndClose = () => {
-    setDraft(EMPTY);
+    setDraft(initialDraft);
     onClose();
   };
+
+  // Owner/Leased pickers: units are NOT locked to a single owner (unlike trailers, LST-F27) — any
+  // of TRANSP/TRK/USMCA may own a unit, so both fields are real, editable Comboboxes. Leased To
+  // defaults to the currently-selected operating company (existing behavior preserved); Owner Company
+  // is left blank by default and the backend's own resolveAssetCompanyIds falls back to TRK when
+  // omitted, so leaving it unset here changes nothing for operators who don't touch the field.
+  const companiesQuery = useQuery({
+    queryKey: ["org", "me-companies", "create-unit"],
+    queryFn: () => listMyCompanies().then((r) => r.companies ?? []),
+    enabled: open,
+    staleTime: 120_000,
+  });
+  const companyOptions = useMemo(
+    () =>
+      (companiesQuery.data ?? [])
+        .filter((c) => c.is_active)
+        .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
+    [companiesQuery.data]
+  );
 
   const createMutation = useMutation({
     mutationFn: () => {
@@ -58,7 +90,8 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
         license_plate: draft.license_plate.trim() || undefined,
         license_state: draft.license_state.trim() || undefined,
         notes: draft.notes.trim() || undefined,
-        currently_leased_to_company_id: operatingCompanyId,
+        owner_company_id: draft.owner_company_id || undefined,
+        currently_leased_to_company_id: draft.currently_leased_to_company_id || operatingCompanyId,
       });
     },
     onSuccess: async (created) => {
@@ -155,6 +188,32 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
               value={draft.license_state}
               onChange={(e) => set("license_state", e.target.value)}
             />
+          </FormField>
+          <FormField label="Owner Company" name="owner_company_id">
+            <div data-testid="fleet-create-unit-owner_company_id">
+              <Combobox
+                options={companyOptions}
+                value={draft.owner_company_id || null}
+                onChange={(v) => set("owner_company_id", v ?? "")}
+                placeholder="Defaults to TRK"
+                loading={companiesQuery.isLoading}
+                allowClear
+                dataField="owner_company_id"
+              />
+            </div>
+          </FormField>
+          <FormField label="Leased To Company" name="currently_leased_to_company_id">
+            <div data-testid="fleet-create-unit-currently_leased_to_company_id">
+              <Combobox
+                options={companyOptions}
+                value={draft.currently_leased_to_company_id || null}
+                onChange={(v) => set("currently_leased_to_company_id", v ?? "")}
+                placeholder="Select company"
+                loading={companiesQuery.isLoading}
+                allowClear
+                dataField="currently_leased_to_company_id"
+              />
+            </div>
           </FormField>
         </FieldSet>
         <FieldSet title="Notes" columns={1}>
