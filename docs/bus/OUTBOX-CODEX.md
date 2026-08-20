@@ -1038,3 +1038,4 @@ Codex | WORKING | FO=CODEX-ACCOUNTING-CREDIT-MEMOS-CONNECTIVITY-REVERSE | leaf=a
 Codex | WORKING | FO=CREDIT-MEMOS-PAGE-CUSTOMER-COLUMN-UNOWNED | leaf=accounting.parity.credit_memos_page:customer | guard=18/18+selftest | zero-remainder=PASS | NEXT=fast-merge then fresh board | GO
 Codex | WORKING | FO=CODEX-CREDIT-MEMOS-LINKAGE-GUARD-ORPHAN | wire=verify-step-3416 | NEXT=fast-merge then board | GO
 Codex | WORKING | FO=DISPATCH-BORDER-WIZARD-SELECTED-ENTITY-LABELS-DISCARDED | leaf=dispatch.wizard.border_crossing_wizard_page:{load,unit,driver,vendor,reverse_link} | guards=2 normal+selftest PASS | NEXT=fast-merge then next reverse census | GO
+Codex | WORKING | FO=DISPATCH-ABANDONMENT-SELECTED-DRIVER-LABEL-DISCARDED | leaf=dispatch.modal.abandonment_report:{driver,reverse_link} | guards=2 normal+selftest PASS | NEXT=fast-merge then next reverse census | GO

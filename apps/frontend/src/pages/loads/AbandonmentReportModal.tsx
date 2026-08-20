@@ -14,6 +14,7 @@ type Props = {
   loadNumber?: string | null;
   operatingCompanyId: string;
   defaultDriverId?: string | null;
+  defaultDriverLabel?: string | null;
   onClose: () => void;
   onRecorded?: () => void;
 };
@@ -23,11 +24,13 @@ export function AbandonmentReportModal({
   loadNumber,
   operatingCompanyId,
   defaultDriverId,
+  defaultDriverLabel,
   onClose,
   onRecorded,
 }: Props) {
   const { pushToast } = useToast();
   const [driverId, setDriverId] = useState(defaultDriverId ?? "");
+  const [driverLabel, setDriverLabel] = useState(defaultDriverLabel ?? "");
   const [abandonmentEventAt, setAbandonmentEventAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [location, setLocation] = useState("");
   const [towing, setTowing] = useState("");
@@ -66,7 +69,7 @@ export function AbandonmentReportModal({
         </span>
         {driverId ? (
           <span>
-            Driver: <EntityLink kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />
+            Driver: <EntityLink kind="driver" id={driverId} label={entityLabel(driverLabel, driverId, "Driver")} />
           </span>
         ) : null}
       </div>
@@ -76,7 +79,11 @@ export function AbandonmentReportModal({
           <DriverPickerWithCreate
             operatingCompanyId={operatingCompanyId}
             value={driverId || null}
-            onChange={(next) => setDriverId(next ?? "")}
+            onChange={(next, option) => {
+              setDriverId(next ?? "");
+              setDriverLabel(option?.label ?? "");
+            }}
+            onSelectedOptionResolved={(option) => setDriverLabel(option?.label ?? "")}
             placeholder="Search driver…"
             className="mt-1 w-full"
           />

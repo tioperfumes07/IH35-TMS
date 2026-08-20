@@ -32,15 +32,18 @@ function check() {
   assert(/kind=["']load["']/.test(modal), "must EntityLink kind=load");
   assert(/kind=["']driver["']/.test(modal), "must EntityLink kind=driver");
   assert(/loadNumber=\{load\.load_number\}/.test(drawer), "LoadDetailDrawer must pass loadNumber");
+  assert(/label=\{entityLabel\(driverLabel, driverId, "Driver"\)\}/.test(modal), "driver drill must use the canonical picker label");
+  assert(!/entityLabel\(null, driverId, "Driver"\)/.test(modal), "driver drill must not rebuild a label from its UUID");
+  assert(/defaultDriverLabel=\{load\.assigned_primary_driver_name \?\? load\.assigned_secondary_driver_name\}/.test(drawer), "LoadDetailDrawer must seed the assigned driver's human label");
 }
 
 function selftest() {
   const original = fs.readFileSync(MODAL, "utf8");
   const broken = original.replace(
-    /data-testid=["']abandonment-report-modal-entitylinks["']/,
-    'data-testid="planted-missing"'
+    /entityLabel\(driverLabel, driverId, "Driver"\)/,
+    'entityLabel(null, driverId, "Driver")'
   );
-  assert(broken !== original, "--selftest plant must mutate testid");
+  assert(broken !== original, "--selftest plant must restore UUID-only driver labeling");
   fs.writeFileSync(MODAL, broken);
   let failed = false;
   try {
