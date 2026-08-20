@@ -10169,3 +10169,5 @@ Ingles
 Espanol (preview)
 tioperfumes07@gmail.com
 Select an operating company. | NEXT=leaf=compliance:tab.hos_viewer:driver
+Devin-A | LIVE STARVED | leaf=compliance:tab.hos_viewer:driver | USMCA | URL=https://app.ih35dispatch.com/compliance?tab=hos_viewer | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/compliance?tab=hos_viewer healthz=unknown head Checking session... | NEXT=leaf=compliance:tab.overview:driver
+Devin-A | LIVE STARVED | leaf=compliance:tab.hos_viewer:connectivity | USMCA | URL=https://app.ih35dispatch.com/compliance?tab=hos_viewer | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/compliance?tab=hos_viewer healthz=unknown head Checking session... | NEXT=leaf=compliance:tab.overview:driver
