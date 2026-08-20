@@ -1656,3 +1656,20 @@ blast radius): POST /settlement-posting/reverse is a live-mounted reversal endpo
 explicitly retired from HTTP in SET-01 -- confirmed via Neon that no settlement was ever posted
 through that path, so dead-code-adjacent today but would misbehave if reactivated -- worth a follow-up
 cleanup pass.
+
+2026-08-20T16:05Z CC-1 | ACCT-F5648 SHIPPED (PR #12638, merged 02c49d8b) -- retired the dead
+POST /settlement-posting/reverse route flagged in ACCT-F5647's own REMAINING note. Its forward
+sibling (/post) was already retired in SET-01 via a 308 redirect, but /reverse was left live and
+genuinely callable via reverseSettlementGlPosting -- confirmed on Neon: 0 rows match the
+ih35:settlement-gl:v1:%:initial_post idempotency-key pattern, so zero current blast radius, and
+reverseSettlementGlPosting never flips driver_settlements.status the way the canonical void/cancel
+executor (executeDriverSettlement) does, so a stale settlement_id hitting it would leave an
+inconsistent state. Retired the same way /post was retired -- added retiredSettlementReverse (308 to
+the canonical /api/v1/governance/void-cancel-requests flow), removed the dead
+reverseSettlementGlPosting call + reverseBody schema from the routes file (service stays exported,
+matching SET-01's own precedent). New guard verify-no-deprecated-settlement-reverse-mounted.mjs
+mirrors the existing SET-01 guard; confirmed the SET-01 guard itself still passes unchanged. Fresh
+git show origin/main confirmed: reverseSettlementGlPosting( call-site count = 0,
+retiredSettlementReverse reference count = 3, guard's ACCT-F5648 marker count = 1. Board closeout
+(GUARD-WORKORDERS.md + CC-3-FINDINGS-CHECKLIST.md) shipped in this same PR cycle. REMAINING: none for
+this finding -- continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
