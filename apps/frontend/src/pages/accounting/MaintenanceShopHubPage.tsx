@@ -94,7 +94,11 @@ export function MaintenanceShopHubPage() {
               label={entityLabel(row.financial_label, row.financial_id, "Record")}
             />
           ) : (
-            <EntityLink kind="expense" id={row.financial_id} label={entityLabel(null, row.financial_id, "Expense")} />
+            <EntityLink
+              kind="expense"
+              id={row.financial_id}
+              label={entityLabel(row.financial_label, row.financial_id, "Expense")}
+            />
           ),
       },
       {

@@ -1041,3 +1041,4 @@ Codex | WORKING | FO=DISPATCH-BORDER-WIZARD-SELECTED-ENTITY-LABELS-DISCARDED | l
 Codex | WORKING | FO=DISPATCH-ABANDONMENT-SELECTED-DRIVER-LABEL-DISCARDED | leaf=dispatch.modal.abandonment_report:{driver,reverse_link} | guards=2 normal+selftest PASS | NEXT=fast-merge then next reverse census | GO
 Codex | WORKING | FO=DRIVER-CURRENT-ASSIGNMENT-SELF-LABEL-DISCARDED | leaf=drivers:profiles.detail:{driver,reverse_link} | guards=3 families normal+selftest PASS | NEXT=fast-merge then next reverse census | GO
 Codex | WORKING | FO=ACCOUNTING-ABANDONMENT-QUEUE-ID-ONLY-REVERSE-DRILLS | leaf=accounting:abandonment.queue:{load,driver,reverse_link} | guard=12/12+selftest | NEXT=fast-merge then accounting reverse census | GO
+Codex | WORKING | FO=ACCT-F5659 | leaf=accounting:maintenance_shop:{expense,reverse_link} | guards=2 normal+selftest | backend-tsc=exit0 | NEXT=fast-merge then accounting reverse census | GO

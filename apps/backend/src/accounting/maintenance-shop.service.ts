@@ -103,7 +103,7 @@ export async function listMaintenanceShopHub(
         SELECT
           'expense'::text AS kind,
           e.id::text AS financial_id,
-          NULL::text AS financial_label,
+          e.expense_number AS financial_label,
           e.transaction_date::text AS txn_date,
           COALESCE(e.total_amount_cents, 0)::bigint AS amount_cents,
           e.status,
