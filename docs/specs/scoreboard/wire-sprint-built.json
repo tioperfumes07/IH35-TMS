@@ -2830,6 +2830,20 @@
       "leafRe": "^(md\\.new_transaction|detail\\.billing(\\.record_payment)?)$",
       "guard": "scripts/verify-customer-billing-invoice-wired.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "WAVE1-FACTORING-LIABILITY-INVOICE-GL-BUILT",
+      "modules": [
+        "factoring"
+      ],
+      "cols": [
+        "invoice",
+        "liability",
+        "gl_je"
+      ],
+      "leafRe": "^(submit\\.queue|accounting\\.(list|detail)|factoring\\.wizard\\.batch)$",
+      "guard": "scripts/verify-factoring-liability-invoice-gl-wired.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
