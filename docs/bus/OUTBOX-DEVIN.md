@@ -4631,3 +4631,19 @@ Devin-A | LIVE PASS | leaf=lists:hub.names_search:customer | USMCA | URL=https:/
 Devin-A | LIVE PASS | leaf=lists:hub.names_search:vendor | USMCA | URL=https://app.ih35dispatch.com/lists/names | healthz=10a21a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/names marker 'lists' | NEXT=leaf=lists:lists.dialog.bulk_progress:connectivity
 Devin-A | LIVE PASS | leaf=lists:hub.names_search:driver | USMCA | URL=https://app.ih35dispatch.com/lists/names | healthz=10a21a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/names marker 'lists' | NEXT=leaf=lists:lists.dialog.bulk_progress:connectivity
 Devin-A | LIVE PASS | leaf=lists:hub.names_search:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/names | healthz=10a21a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/names marker 'lists' | NEXT=leaf=lists:lists.dialog.bulk_progress:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.dialog.bulk_progress:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:lists.dialog.confirm_discard:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:lists.dialog.bulk_progress:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:lists.dialog.confirm_discard:qbo_chrome
