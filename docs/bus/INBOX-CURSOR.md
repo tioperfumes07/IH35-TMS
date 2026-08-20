@@ -1,10 +1,10 @@
 # INBOX-CURSOR
 
-**HOURLY (you too):** pull + re-read `CODER-INSTRUCTIONS-NOW.md` + this file + FAST-MERGE law. Re-instruct seats the same BAR. Continuous. No deviate.
+**HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. Re-instruct seats. No deviate.
 
-Lead. Leftover Built + scoreboard. Item 12 = Devin. Box 4 Live = CC-2 ledger. FAST-MERGE INBOX to main.
+Lead. Swarm **accounting** columns — not one module per seat. Box 4 = CC-2. Item 12 = Devin Clicked. Miss C = unpaid **Live** (#13132), not Devin PASS count. FAST-MERGE this bus.
 
-**NOW:** Box 3 **3365/3365** on live rollup (3 Built leftover **closed**). Accounting Queue **6** = Box 4 Live (CC-2) + Devin Clicked lines. Lead FAST-MERGE. Do **not** credit Live from chrome PRs.
+**NOW:** keep every INBOX/PASTE on accounting Queue 6. If Devin says queue 0 / Miss C=0, rewrite PASTE-DEVIN-A: re-walk Queue 6, never wait on `required.json`.
 
 ```text
 Cursor | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=lead accounting | GO
