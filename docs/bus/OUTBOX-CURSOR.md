@@ -1,3 +1,4 @@
+- 2026-08-20T06:51Z Cursor | URGENT-6-LEAST | settlements→factoring→banking→customers→drivers→accounting · park vendors+dispatch · Devin loop ORDER that 6 | GO
 - 2026-08-20T05:22Z Cursor | FIX | Devin loop cwd=IH35-TMS-clean not /tmp/IH35-devin-a · queue accounting-first · CC-1-QUEUE if board empty · stale pastes SUPERSEDED | GO
 - 2026-08-20T05:14Z Cursor | CC-3 ON | 8-BY-06:00 | PASTE-CC-3-NOW | GO
 - 2026-08-20T04:30Z Cursor | 14-MODULE-100 | CC-2 stop poll · CC-1 not standby · Cursor owns 3 LV · Devin A then B · GO
