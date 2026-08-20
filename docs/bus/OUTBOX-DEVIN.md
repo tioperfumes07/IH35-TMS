@@ -9837,3 +9837,35 @@ Devin-A | LIVE PASS | leaf=maintenance:master.vehicles.create:unit | USMCA | URL
 Devin-A | LIVE PASS | leaf=maintenance:master.vehicles.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/vehicles | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/vehicles marker 'maintenance' | NEXT=leaf=maintenance:parts_inventory.record_purchase:vendor
 Devin-A | LIVE PASS | leaf=maintenance:master.vehicles.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/vehicles | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/vehicles marker 'maintenance' | NEXT=leaf=maintenance:parts_inventory.record_purchase:vendor
 Devin-A | LIVE PASS | leaf=maintenance:master.vehicles.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/vehicles | healthz=ab70a00 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/vehicles marker 'maintenance' | NEXT=leaf=maintenance:parts_inventory.record_purchase:vendor
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:vendor | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=maintenance:pm.auto_engine.run:unit
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:picker_law | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=maintenance:pm.auto_engine.run:unit
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=maintenance:pm.auto_engine.run:unit
+Devin-A | LIVE STARVED | leaf=maintenance:parts_inventory.record_purchase:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance/parts-inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance/parts-inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=maintenance:pm.auto_engine.run:unit
