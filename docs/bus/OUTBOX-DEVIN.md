@@ -4073,3 +4073,27 @@ Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.employment_status.create:con
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.employment_status.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/employment-status | healthz=7410c07 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/employment-status healthz=7410c07 head Checking session... | NEXT=leaf=lists:catalog.drivers.endorsements.create:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.employment_status.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/employment-status | healthz=7410c07 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/employment-status healthz=7410c07 head Checking session... | NEXT=leaf=lists:catalog.drivers.endorsements.create:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.employment_status.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/employment-status | healthz=7410c07 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/employment-status healthz=7410c07 head Checking session... | NEXT=leaf=lists:catalog.drivers.endorsements.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.endorsements.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/endorsements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/endorsements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.drivers.endorsements.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.endorsements.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/endorsements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/endorsements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.drivers.endorsements.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.endorsements.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/endorsements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/endorsements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.drivers.endorsements.list:picker_law
