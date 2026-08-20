@@ -27,7 +27,11 @@ type DraftJeRow = { id: string; account: string; debit: string; credit: string }
 // Owner-locked driver-bond/escrow cap (Phase 3 Settlement Pay-Run spec). This is the total escrow
 // balance ceiling shown as a progress indicator on the close screen — NOT a GL posting rule; the
 // actual escrow-contribution deduction amount continues to come from the existing settlement lines.
-const ESCROW_CAP_DOLLARS = 2000;
+// ACCT-F5657 — was 2000 (superseded). Owner ruling C2b (2026-07-26, "IT IS 2500 NOW") raised the cap
+// to $2,500 — the backend (escrow-resolver.service.ts's ESCROW_CAP_CENTS = 250_000) and its own
+// guard (verify-settlement-escrow-cap.mjs) were already correct; only this display literal was stale,
+// showing "Cap $2,000" / a wrong "% to cap" to the person actually closing the settlement.
+const ESCROW_CAP_DOLLARS = 2500;
 
 const DEDUCTION_LINE_TYPES = new Set(["deduction", "abandonment_chargeback"]);
 const ESCROW_LINE_TYPES = new Set(["escrow_contribution"]);
