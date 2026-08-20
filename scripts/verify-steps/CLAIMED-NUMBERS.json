@@ -2759,6 +2759,86 @@
     "claimed_by": "cursor",
     "purpose": "verify-fleet-unit-profile-query-settles"
   },
+  "4127": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-combobox-anchor-motion-reposition"
+  },
+  "4128": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-combobox-listbox-z-index-above-drawers"
+  },
+  "4129": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-dispatch-awaiting-trailer-reverse"
+  },
+  "4130": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-dispatch-primary-inline-reverse-links"
+  },
+  "4131": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-dtc-auto-work-orders-range"
+  },
+  "4132": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-factoring-list-cap-disclosure"
+  },
+  "4133": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-inventory-assignment-trail-range"
+  },
+  "4134": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-pm-alerts-range"
+  },
+  "4135": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-recent-activity-range"
+  },
+  "4136": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-severe-alerts-reverse"
+  },
+  "4137": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-maintenance-triage-range"
+  },
+  "4138": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-matrix-fetch-timeout"
+  },
+  "4139": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-modal-z-index-above-drawers"
+  },
+  "4140": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-pod-review-entity-tombstones"
+  },
+  "4141": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-unit-parts-history-range"
+  },
+  "4142": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-3",
+    "purpose": "verify-wo-detail-entitylink-id-cast"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
