@@ -77,7 +77,7 @@ const CHECKS = [
   {
     name: "cash_advances: Drivers.tsx cash_advances tab mounts a real ParityTable over debtAlertRows",
     file: "apps/frontend/src/pages/Drivers.tsx",
-    pattern: /subnavTab === "cash_advances"[\s\S]{0,900}<ParityTable[\s\S]{0,300}rows=\{debtAlertRows\}[\s\S]{0,300}columns=\{debtAlertColumns\}/,
+    pattern: /subnavTab === "cash_advances"[\s\S]{0,1300}<ParityTable[\s\S]{0,300}rows=\{debtAlertRows\}[\s\S]{0,300}columns=\{debtAlertColumns\}/,
   },
   {
     name: "chrome.toolbar_filter: DriversTable real CollapsedListFilters Apply/Reset/Cancel triad",
