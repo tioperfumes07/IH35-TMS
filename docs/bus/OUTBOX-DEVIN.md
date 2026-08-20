@@ -3008,3 +3008,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.contacts:customer
+Devin-A | LIVE PASS | leaf=customers:detail.contacts:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=contacts | healthz=0dc7fa0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=contacts marker 'Customer Detail' | NEXT=leaf=customers:detail.contacts.create:customer
+Devin-A | LIVE PASS | leaf=customers:detail.contacts:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=contacts | healthz=0dc7fa0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=contacts marker 'Customer Detail' | NEXT=leaf=customers:detail.contacts.create:customer
+Devin-A | LIVE PASS | leaf=customers:detail.contacts:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=contacts | healthz=0dc7fa0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id?tab=contacts marker 'Customer Detail' | NEXT=leaf=customers:detail.contacts.create:customer
