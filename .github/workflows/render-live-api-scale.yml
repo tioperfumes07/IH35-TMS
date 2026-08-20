@@ -1,0 +1,45 @@
+# Scale the live dashboard service IH35-TMS (api.ih35dispatch.com).
+# Not the blueprint name ih35-tms-backend. 1 instance + auto-deploy = healthz
+# timeout / SYSTEM ROLLUP UNAVAILABLE while Devin Clicked PRs rebuild.
+name: render-live-api-scale
+
+on:
+  workflow_dispatch:
+    inputs:
+      numInstances:
+        description: "Live API instance count (2 keeps one instance serving during rolling deploys)"
+        required: true
+        default: "2"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  scale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Scale IH35-TMS to numInstances
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SERVICE_ID: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
+          N: ${{ github.event.inputs.numInstances }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RENDER_API_KEY:-}" ]; then
+            echo "RENDER_API_KEY secret missing"
+            exit 1
+          fi
+          SID="${SERVICE_ID:-srv-d7rpem7avr4c73fhp4n0}"
+          echo "POST /v1/services/${SID}/scale numInstances=${N}"
+          curl -fsS -X POST "https://api.render.com/v1/services/${SID}/scale" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d "{\"numInstances\": ${N}}"
+          echo
+          echo "GET service numInstances"
+          curl -fsS -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Accept: application/json" \
+            "https://api.render.com/v1/services/${SID}" | jq '{id, name, numInstances: .serviceDetails.numInstances, plan: .serviceDetails.plan}'
