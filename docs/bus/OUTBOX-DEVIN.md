@@ -3772,3 +3772,36 @@ Devin-A | LIVE PASS | leaf=legal:templates.list:connectivity | USMCA | URL=https
 Devin-A | LIVE PASS | leaf=legal:templates.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/legal/templates | healthz=f7a4025 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/legal/templates marker 'legal' | NEXT=leaf=lists:catalog.accounting.abandonment_defaults.create:qbo_chrome
 Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.abandonment_defaults.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/abandonment-defaults | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/abandonment-defaults healthz=unknown head Checking session... | NEXT=leaf=lists:catalog.accounting.abandonment_defaults.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.abandonment_defaults.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/abandonment-defaults | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/abandonment-defaults healthz=unknown head Checking session... | NEXT=leaf=lists:catalog.accounting.abandonment_defaults.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.abandonment_defaults.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/abandonment-defaults | healthz=f7a4025 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/accounting/abandonment-defaults head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:catalog.accounting.account_role_bindings.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.abandonment_defaults.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/abandonment-defaults | healthz=f7a4025 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/accounting/abandonment-defaults head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:catalog.accounting.account_role_bindings.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.abandonment_defaults.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/abandonment-defaults | healthz=f7a4025 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/accounting/abandonment-defaults head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:catalog.accounting.account_role_bindings.create:qbo_chrome
