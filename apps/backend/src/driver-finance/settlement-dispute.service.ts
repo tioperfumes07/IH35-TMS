@@ -4,6 +4,7 @@ import { createJournalEntryOnClient } from "../accounting/journal-entries.servic
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { SETTLEMENT_GL_POSTING_FLAG_KEY } from "../accounting/settlement-posting/settlement-posting.math.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { writeTransactionSourceLink } from "../accounting/accounting-spine-emit.js";
 
 const CLOSED_STATUSES = new Set(["resolved_in_favor", "resolved_rejected", "partially_resolved", "withdrawn"]);
 
@@ -120,6 +121,173 @@ export async function createCorrectiveJournalEntry(
     { userId: params.actorUserId, role: params.actorRole }
   );
   return je.id;
+}
+
+/**
+ * ACCT-F5676 — LOCKED DESIGN (owner 2026-08-20): `settlement_dispute_correction_recovery` is a
+ * LIABILITY / net-pay clearing account, same class as the Driver Escrow liability (locked §9.4 —
+ * every draw debits the liability, never an expense) and 2170 Driver Net-Pay Clearing. Approval
+ * CREDITS the clearing (createCorrectiveJournalEntry above); this function is the DISBURSEMENT half
+ * that was missing (SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH): when cash leaves,
+ * Dr settlement_dispute_correction_recovery / Cr the chosen payment method's cash account —
+ * NEVER a second driver_pay_expense debit (that double-books the expense the approval already
+ * recognized, invisibly to any debits==credits assertion).
+ *
+ * Standalone by design: pay-run close runs AT MOST ONCE per settlement, while most real disputes are
+ * approved AFTER the settlement is closed and paid — so disbursement is its OWN records-only flow
+ * (mirroring driver-reimbursement.service.ts's immediate-path architecture), never a pay-run-close
+ * leg. Records-only: the TMS posts the GL and records the movement; it never moves money.
+ *
+ * Idempotent without schema change: the disbursement JE's debit posting carries a
+ * transaction_source_links row (linked_object_type='dispute_disbursement', linked_object_id=<dispute
+ * id>); an existing live (posted, unreversed) linked JE is RETURNED, never duplicated — the same
+ * return-existing shape the locked re-close design uses. Undo = reverse that JE (canonical
+ * reverseJournalEntryNoFlip path); a later re-disbursement then posts fresh.
+ */
+export async function disburseSettlementDisputeCorrection(
+  userId: string,
+  userRole: string,
+  input: {
+    operating_company_id: string;
+    dispute_id: string;
+    payment_method_id: string;
+    posting_date?: string | null;
+  }
+): Promise<
+  | { ok: true; posted: true; journal_entry_id: string; already_disbursed: boolean }
+  | { ok: false; code: number; error: string; message?: string }
+> {
+  if (!isOwnerOrAdmin(userRole) && userRole !== "Accountant") {
+    return { ok: false, code: 403, error: "owner_admin_accountant_only" };
+  }
+
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+
+    const dispute = await loadDisputeForUpdate(client, input.dispute_id, input.operating_company_id);
+    if (!dispute) return { ok: false as const, code: 404, error: "dispute_not_found" };
+    const status = String(dispute.status);
+    if (status !== "resolved_in_favor" && status !== "partially_resolved") {
+      return { ok: false as const, code: 409, error: "dispute_not_approved", message: `status=${status}` };
+    }
+    const amountCents = Number(dispute.resolution_amount_cents ?? 0);
+    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+      return { ok: false as const, code: 409, error: "no_resolution_amount" };
+    }
+    // The approval-time corrective JE is what credits the clearing; without it there is nothing on
+    // the clearing account to draw down — disbursing would drive the liability negative.
+    if (!dispute.resolution_journal_entry_id) {
+      return { ok: false as const, code: 409, error: "approval_je_missing", message: "the corrective JE never posted (flag was OFF at approval) — nothing sits on the clearing account to disburse" };
+    }
+
+    // Idempotent: a live (posted, unreversed) disbursement JE for this dispute is returned as-is.
+    const existing = await client.query(
+      `
+        SELECT je.id::text AS id
+        FROM accounting.transaction_source_links tsl
+        JOIN accounting.journal_entry_postings jep
+          ON jep.id = tsl.journal_entry_posting_id
+         AND jep.operating_company_id = tsl.operating_company_id
+        JOIN accounting.journal_entries je
+          ON je.id = jep.journal_entry_uuid
+         AND je.operating_company_id = jep.operating_company_id
+        WHERE tsl.operating_company_id = $1::uuid
+          AND tsl.linked_object_type = 'dispute_disbursement'
+          AND tsl.linked_object_id = $2
+          AND je.status = 'posted'
+          AND je.reversed_by_je_id IS NULL
+        LIMIT 1
+      `,
+      [input.operating_company_id, input.dispute_id]
+    );
+    const existingId = existing.rows[0]?.id as string | undefined;
+    if (existingId) return { ok: true as const, posted: true as const, journal_entry_id: existingId, already_disbursed: true };
+
+    const flagOn = await isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, {
+      operating_company_id: input.operating_company_id,
+      user_uuid: userId,
+    });
+    if (!flagOn) return { ok: false as const, code: 409, error: "settlement_gl_posting_disabled" };
+
+    const clearingAccountId = await resolveRoleAccountOptional(
+      client,
+      input.operating_company_id,
+      "settlement_dispute_correction_recovery"
+    );
+    if (!clearingAccountId) return { ok: false as const, code: 409, error: "E_CORRECTIVE_JE_ACCOUNTS_MISSING" };
+
+    // Cash side: the chosen payment method's GL account — the same source pay-run close disburses
+    // from. Entity-scoped, fail-closed.
+    const pm = await client.query(
+      `SELECT gl_account_id::text AS gl_account_id FROM catalogs.payment_methods
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND gl_account_id IS NOT NULL
+        LIMIT 1`,
+      [input.payment_method_id, input.operating_company_id]
+    );
+    const cashAccountId = pm.rows[0]?.gl_account_id as string | undefined;
+    if (!cashAccountId) return { ok: false as const, code: 409, error: "payment_method_gl_account_missing" };
+
+    const entryDate = (input.posting_date ?? new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const je = await createJournalEntryOnClient(
+      client,
+      {
+        operating_company_id: input.operating_company_id,
+        entry_date: entryDate,
+        memo: `Settlement dispute disbursement ${input.dispute_id}`,
+        source: "auto",
+        postings: [
+          {
+            account_id: clearingAccountId,
+            debit_or_credit: "debit",
+            amount_cents: amountCents,
+            description: `Settlement dispute ${input.dispute_id} clearing draw-down`,
+          },
+          {
+            account_id: cashAccountId,
+            debit_or_credit: "credit",
+            amount_cents: amountCents,
+            description: `Settlement dispute ${input.dispute_id} disbursement`,
+          },
+        ],
+      },
+      { userId, role: userRole }
+    );
+
+    const debitPosting = await client.query(
+      `SELECT id::text AS id FROM accounting.journal_entry_postings
+        WHERE journal_entry_uuid = $1::uuid AND operating_company_id = $2::uuid AND debit_or_credit = 'debit'
+        ORDER BY line_sequence ASC LIMIT 1`,
+      [je.id, input.operating_company_id]
+    );
+    const debitPostingId = debitPosting.rows[0]?.id as string | undefined;
+    if (debitPostingId) {
+      await writeTransactionSourceLink(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_posting_id: debitPostingId,
+        linked_object_type: "dispute_disbursement",
+        linked_object_id: input.dispute_id,
+        relationship_role: "dispute_disbursement",
+      });
+    }
+
+    await appendCrudAudit(
+      client,
+      userId,
+      "driver_finance.settlement_dispute.disbursed",
+      {
+        resource_type: "driver_finance.driver_settlement_disputes",
+        resource_id: input.dispute_id,
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: je.id,
+        amount_cents: amountCents,
+        payment_method_id: input.payment_method_id,
+      },
+      "info",
+      "ACCT-F5676"
+    );
+
+    return { ok: true as const, posted: true as const, journal_entry_id: je.id, already_disbursed: false };
+  });
 }
 
 export async function listDisputes(

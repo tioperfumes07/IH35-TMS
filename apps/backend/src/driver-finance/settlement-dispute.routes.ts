@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
+  disburseSettlementDisputeCorrection,
   getDispute,
   listDisputes,
   listMyDisputes,
@@ -222,6 +223,34 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
       const mapped = mapKnownError(error);
       return reply.code(mapped.code).send({ error: mapped.error, message: mapped.message });
     }
+  });
+
+  // ACCT-F5676 — LOCKED DESIGN: disburse an approved dispute correction. Debits the
+  // settlement_dispute_correction_recovery net-pay clearing (which approval credited) and credits
+  // the chosen payment method's cash account. Standalone records-only flow — never a pay-run-close
+  // leg (most real disputes are approved after the settlement's single close). Idempotent: a live
+  // disbursement JE for the dispute is returned, never duplicated.
+  app.post("/api/v1/driver-finance/settlement-disputes/:id/disburse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = auth(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = operatingCompanyBodySchema
+      .extend({
+        payment_method_id: z.string().uuid(),
+        posting_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      })
+      .safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    const result = await disburseSettlementDisputeCorrection(user.uuid, user.role, {
+      operating_company_id: body.data.operating_company_id,
+      dispute_id: params.data.id,
+      payment_method_id: body.data.payment_method_id,
+      posting_date: body.data.posting_date ?? null,
+    });
+    if (!result.ok) return reply.code(result.code).send({ error: result.error, message: result.message });
+    return { data: result };
   });
 
   app.post("/api/v1/driver-finance/settlement-disputes/:id/withdraw", async (req, reply) => {
