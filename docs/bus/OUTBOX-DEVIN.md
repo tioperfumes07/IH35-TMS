@@ -9765,3 +9765,7 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=343a14a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=343a14a head Checking session... | NEXT=leaf=vendors:detail.reactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=343a14a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=343a14a head Checking session... | NEXT=leaf=vendors:detail.reactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=343a14a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=343a14a head Checking session... | NEXT=leaf=vendors:detail.reactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=343a14a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=343a14a head Checking session... | NEXT=leaf=vendors:detail.reactivate:vendor
