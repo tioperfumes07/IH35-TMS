@@ -6930,3 +6930,24 @@ Devin-A | LIVE PASS | leaf=lists:catalog.drivers.license_classes.list:connectivi
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.medical_card_status.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/medical-card-status | healthz=2686ca6 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/medical-card-status healthz=2686ca6 head Checking session... | NEXT=leaf=lists:catalog.drivers.pay_types.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.medical_card_status.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/medical-card-status | healthz=2686ca6 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/medical-card-status healthz=2686ca6 head Checking session... | NEXT=leaf=lists:catalog.drivers.pay_types.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.medical_card_status.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/medical-card-status | healthz=2686ca6 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/drivers/medical-card-status healthz=2686ca6 head Checking session... | NEXT=leaf=lists:catalog.drivers.pay_types.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.pay_types.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/driver/pay-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/driver/pay-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.drivers.termination_reasons.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.pay_types.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/driver/pay-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/driver/pay-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.drivers.termination_reasons.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.drivers.pay_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/driver/pay-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/driver/pay-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.drivers.termination_reasons.list:picker_law
