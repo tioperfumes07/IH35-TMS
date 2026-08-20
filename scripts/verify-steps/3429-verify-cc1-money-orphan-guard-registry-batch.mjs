@@ -39,6 +39,7 @@ const guards = [
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
   "verify-driver-finance-reverse-leaves.mjs",
   "verify-escrow-release-atomic.mjs",
+  "verify-escrow-separation-disbursement-debt-fixes.mjs",
   "verify-escrow-routes-membership-assert.mjs",
   "verify-expense-built-tags-strict.mjs",
   "verify-expense-void-reversal-atomic.mjs",

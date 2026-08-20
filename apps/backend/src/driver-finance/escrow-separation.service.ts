@@ -335,6 +335,47 @@ export async function releaseDriverEscrowSeparation(
         { userId: actor.userId, role: actor.role }
       );
       releasedPostingId = released.posting.id;
+
+      // ESC-SEPARATION-SPLIT (ACCT-F5657) — SAME TRANSACTION as releaseEscrowOnClient above.
+      // Root cause: mirrors ESC-FORFEIT-SPLIT (escrow-forfeit.service.ts) exactly — a release paid
+      // driver_finance.escrow_balances / escrow_ledger, so the driver-facing balance never dropped
+      // and permanently overstated what the driver was still owed. Left unfixed, a later forfeit
+      // (escrow-forfeit.service.ts) reads THIS stale driver-facing balance via
+      // readDriverEscrowBalanceCents as its over-draw guard — a driver already paid out $2,500 via
+      // separation could still forfeit against a "balance" that reads $2,500, driving
+      // accounting.escrow_accounts.balance_cents negative and double-draining the same escrow: once
+      // as cash to the driver, once as a damage recovery. Decrement current_balance_cents and append
+      // the ledger row here so both stores reconcile after a separation release, exactly like the
+      // forfeit path already does. escrow_ledger's CHECK already permits transaction_type='release'.
+      const dfBal = await client.query<{ id: string; current_balance_cents: string }>(
+        `UPDATE driver_finance.escrow_balances
+         SET current_balance_cents = current_balance_cents - $3::bigint,
+             last_updated_at = now()
+         WHERE operating_company_id = $1::uuid
+           AND driver_id = $2::uuid
+           AND current_balance_cents >= $3::bigint
+         RETURNING id::text, current_balance_cents::bigint`,
+        [input.operating_company_id, separation.driver_id, net.net_release_cents]
+      );
+      const dfRow = dfBal.rows[0];
+      if (!dfRow) {
+        throw new Error(
+          "E_ESCROW_BALANCES_MISSING: driver_finance.escrow_balances missing or insufficient — refusing split-brain separation release (accounting posted without driver-facing decrement)"
+        );
+      }
+      await client.query(
+        `INSERT INTO driver_finance.escrow_ledger
+           (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, 'release', $4::bigint, $5::bigint, $6)`,
+        [
+          input.operating_company_id,
+          separation.driver_id,
+          dfRow.id,
+          net.net_release_cents,
+          Number(dfRow.current_balance_cents),
+          `Driver escrow separation payout (>=90 days post-termination)`,
+        ]
+      );
     }
 
     const updated = await client.query<DriverEscrowSeparationRow>(
