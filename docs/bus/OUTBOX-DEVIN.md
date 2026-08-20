@@ -4532,3 +4532,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.safety.accident_types.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.safety.accident_types.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/safety/accident-types | healthz=9e0c56d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/safety/accident-types healthz=9e0c56d head Checking session... | NEXT=leaf=lists:catalog.safety.accident_types.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.safety.accident_types.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/safety/accident-types | healthz=9e0c56d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/safety/accident-types healthz=9e0c56d head Checking session... | NEXT=leaf=lists:catalog.safety.accident_types.list:qbo_chrome
