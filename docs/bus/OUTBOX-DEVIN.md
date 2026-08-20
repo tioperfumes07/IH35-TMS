@@ -12635,3 +12635,33 @@ Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.work_order_statuses.list:co
 Devin-A | LIVE PASS | leaf=lists:catalog.safety.accident_types.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/safety/accident-types | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/safety/accident-types marker 'lists' | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
 Devin-A | LIVE PASS | leaf=lists:catalog.safety.accident_types.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/safety/accident-types | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/safety/accident-types marker 'lists' | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
 Devin-A | LIVE PASS | leaf=lists:lists.modal.driver_catalog:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.oem_parts_create:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Module
+In active development | NEXT=leaf=safety:eld_audit.list:driver
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Module
+In active development | NEXT=leaf=safety:eld_audit.list:driver
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Module
+In active development | NEXT=leaf=safety:eld_audit.list:driver
