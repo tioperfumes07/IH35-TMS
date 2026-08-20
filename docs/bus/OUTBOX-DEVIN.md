@@ -10252,3 +10252,5 @@ The page hit an unexpected error. You can reload to try again, or email support 
 Devin-A | LIVE STARVED | leaf=reports:report.ar_aging:customer | USMCA | URL=https://app.ih35dispatch.com/reports/ar-aging | healthz=6d0f411 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/reports/ar-aging head Something went wrong
 
 The page hit an unexpected error. You can reload to try again, or email support with the prefilled | NEXT=leaf=reports:report.balance_sheet:connectivity
+Devin-A | LIVE PASS | leaf=reports:report.balance_sheet:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/balance-sheet | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/balance-sheet marker 'reports' | NEXT=leaf=reports:report.booking_gap:connectivity
+Devin-A | LIVE PASS | leaf=reports:report.balance_sheet:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/balance-sheet | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/balance-sheet marker 'reports' | NEXT=leaf=reports:report.booking_gap:connectivity
