@@ -3858,3 +3858,6 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=lists:catalog.accounting.classes.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=46d3390 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=46d3390 head Checking session... | NEXT=leaf=lists:catalog.accounting.currency_codes.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=46d3390 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=46d3390 head Checking session... | NEXT=leaf=lists:catalog.accounting.currency_codes.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=46d3390 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=46d3390 head Checking session... | NEXT=leaf=lists:catalog.accounting.currency_codes.create:qbo_chrome
