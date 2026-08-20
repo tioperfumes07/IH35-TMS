@@ -78,6 +78,10 @@ const createCustomerBodySchema = z
   operating_company_id: z.string().uuid().optional(),
   parent_customer_id: z.string().uuid().nullable().optional(), // D1-4: sub-customer -> parent hard link
   customer_type: customerTypeInputSchema.optional(),
+  // LST-WIRE-07-CUSTOMER-TYPES-CATALOG-NO-CONSUMER: additional, optional catalog-backed
+  // classification (catalogs.customer_types) alongside the legacy customer_type enum above — NOT a
+  // replacement. Composite-FK-checked same-entity by the DB (migration 202612820000).
+  customer_type_id: z.string().uuid().nullable().optional(),
   status: customerStatusSchema.optional(),
   default_billing_miles_basis: milesBasisSchema.optional(),
   default_free_time_hours: z.number().min(0).max(99).optional(),
@@ -166,6 +170,7 @@ const updateCustomerBodySchema = z
     operating_company_id: z.string().uuid().optional(),
     parent_customer_id: z.string().uuid().nullable().optional(), // D1-4: sub-customer -> parent hard link
     customer_type: customerTypeInputSchema.nullable().optional(),
+    customer_type_id: z.string().uuid().nullable().optional(),
     status: customerStatusSchema.optional(),
     status_change_reason: z.string().trim().max(1000).optional(),
     default_billing_miles_basis: milesBasisSchema.optional(),
@@ -351,6 +356,7 @@ const CUSTOMER_SELECT_COLUMNS = `
   operating_company_id,
   parent_customer_id,
   customer_type,
+  customer_type_id,
   status,
   default_billing_miles_basis,
   default_free_time_hours,
@@ -676,6 +682,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("credit_limit_source", b.credit_limit_source ?? (b.credit_limit !== undefined ? "manual" : undefined));
         addOptional("credit_limit_updated_at", b.credit_limit_updated_at);
         addOptional("payment_terms_id", b.payment_terms_id);
+        addOptional("customer_type_id", b.customer_type_id);
         addOptional("parent_customer_id", b.parent_customer_id); // D1-4: persist the sub-customer -> parent link
         addOptional("default_billing_miles_basis", b.default_billing_miles_basis ?? "practical_miles");
         addOptional("default_free_time_hours", b.default_free_time_hours ?? 4);
@@ -1012,6 +1019,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("parent_customer_id" in b) add("parent_customer_id", b.parent_customer_id ?? null); // D1-4
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("customer_type" in b) add("customer_type", normalizeCustomerType(b.customer_type ?? null));
+    if ("customer_type_id" in b) add("customer_type_id", b.customer_type_id ?? null);
     if ("status" in b) add("status", b.status);
     if ("default_billing_miles_basis" in b) add("default_billing_miles_basis", b.default_billing_miles_basis);
     if ("default_free_time_hours" in b) add("default_free_time_hours", b.default_free_time_hours);

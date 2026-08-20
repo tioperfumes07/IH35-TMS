@@ -513,6 +513,9 @@ export type Customer = {
   operating_company_id: string;
   parent_customer_id?: string | null; // D1-4: sub-customer -> parent hard link (optional: null/absent for top-level customers)
   customer_type: CustomerType | null;
+  // LST-WIRE-07-CUSTOMER-TYPES-CATALOG-NO-CONSUMER: additional, optional catalogs.customer_types FK
+  // alongside the legacy customer_type enum above — not a replacement.
+  customer_type_id?: string | null;
   status: "active" | "inactive" | "credit_hold" | "blacklist";
   default_billing_miles_basis: MilesBasis;
   default_free_time_hours: string;
@@ -606,6 +609,7 @@ export type CreateCustomerInput = {
   operating_company_id?: string;
   parent_customer_id?: string | null; // D1-4: sub-customer -> parent hard link
   customer_type?: CustomerType | "direct";
+  customer_type_id?: string | null;
   status?: "active" | "inactive" | "credit_hold" | "blacklist";
   default_billing_miles_basis?: MilesBasis;
   default_free_time_hours?: number;
@@ -701,6 +705,7 @@ export type UpdateCustomerInput = Partial<{
   operating_company_id: string;
   parent_customer_id: string | null; // D1-4: sub-customer -> parent hard link
   customer_type: CustomerType | null;
+  customer_type_id: string | null;
   status: "active" | "inactive" | "credit_hold" | "blacklist";
   status_change_reason: string;
   default_billing_miles_basis: MilesBasis;
