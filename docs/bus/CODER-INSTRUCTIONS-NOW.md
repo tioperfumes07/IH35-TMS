@@ -45,25 +45,31 @@ Never idle. Never wait for Jorge. Unpaid 4/4 cell → next name in the wave. FAS
 3b. **CC-2:** `OUTBOX-CC-2.md` first 20. **CC-1:** `OUTBOX-CC-1.md` first 20.
 3c. Picker FAIL → prepend `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Plus `OUTBOX-CURSOR.md`. Never chat-only.
 4. `docs/bus/FAST-MERGE-4MIN-LAW.md`
-5. ACK: `STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<module> <col> | GO`
+5. ACK: `STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<module> <col> | GO`
 
-## Waves (module order — still this sequence)
+## NOW — chat urgent 14 (owner 2026-08-19). Operational live = 4/4 on these modules.
 
-**WAVE 1:** banking → factoring → accounting → settlements → customers → drivers  
-**WAVE 2:** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
-**WAVE 3:** inventory → compliance → reports → cash-flow → finance → form_425 → users → docs → home → tasks → program  
+**URGENT-6 (do these first, all seats, same hour, split columns):**  
+1 accounting → 2 customers → 3 drivers → 4 vendors → 5 dispatch → 6 safety
 
-Never fuel. Never eld.
+**THEN remaining of the 14 (chat items 7–14; skip fuel):**  
+7 fleet → 8 maintenance → 9 lists → 10 settlements → 11 factoring → 12 banking → 14 inventory
+
+**THEN** insurance · legal · cash-flow · finance · remainder of sidebar.
+
+Never fuel. Never eld. Do not park vendors or dispatch — they are in the 6.
+
+Unpaid 4/4 cell in URGENT-6 in your column → that cell. Do not wander to insurance/WAVE-2 leftovers while URGENT-6 unpaid exists in your lane.
 
 ## Seats (columns you own — fill boxes 2–3; Devin fills box 4)
 
 | Seat | Boxes + columns | NOW → then |
 |------|-----------------|------------|
-| **Devin-A** | **Box 4 Live** every Required `leaf:col` | Continue WAVE 2 lists Clicked → safety → fleet → vendors → maintenance → dispatch → WAVE 3. One `leaf=module:leafId:col` per proof. `shipClickedOntoMain`. chrome=9227. Picker FAIL → OUTBOX-CC-2. |
-| **CC-3** | **Box 3 Built** FE: `qbo_chrome` + surface-bar + leftover Built | WAVE 2 insurance Built → legal → lists → … every unpaid Built cell |
-| **CC-1** | **Box 3 Built** money columns | WAVE 2 vendors money → dispatch → fleet → maint → insurance → legal. Reuse poster. Keep hop.bank. |
-| **CC-2** | **Box 2/4** picker_law live-verify | GUARD regression unpaid picker_law cells (not re-loop 25/25 PASS). Rebuild only live FAIL. Read OUTBOX-CC-2. No poll. |
-| **Codex** | **Box 3 Built** `reverse_link` + `connectivity` | WAVE 2 insurance reverse/connectivity → rest WAVE 2–3. No 9227. |
-| **Cursor** | Lead + leftover Built + `qbo_chrome` + honest Required | Hourly INBOX; copy picker pings onto OUTBOX-CC-2; FAST-MERGE this file to main |
+| **Devin-A** | **Box 4 Live** every Required `leaf:col` | **accounting** Clicked → customers → drivers → vendors → dispatch → safety. Then fleet→…→inventory. `leaf=module:leafId:col`. `shipClickedOntoMain`. chrome=9227. Picker FAIL → OUTBOX-CC-2. |
+| **CC-3** | **Box 3 Built** FE: `qbo_chrome` + surface-bar | **accounting** unpaid Built → customers → drivers → vendors → dispatch → safety |
+| **CC-1** | **Box 3 Built** money columns | **accounting** money unpaid → customers/drivers/vendors/dispatch/safety money cells. Reuse poster. Keep hop.bank. Then settlements→factoring→banking→inventory. |
+| **CC-2** | **Box 2/4** picker_law live-verify | Unpaid **picker_law** on URGENT-6 (accounting first). Rebuild only live FAIL. Read OUTBOX-CC-2. No poll. No 25/25 re-loop. |
+| **Codex** | **Box 3 Built** `reverse_link` + `connectivity` | **accounting** reverse+CONN → customers → drivers → vendors → dispatch → safety. No 9227. |
+| **Cursor** | Lead + leftover Built | Hourly INBOX; leftover URGENT-6 Built; FAST-MERGE this file to main |
 
-ACK: `STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<FO> | GO`
+ACK: `STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<FO> | GO`

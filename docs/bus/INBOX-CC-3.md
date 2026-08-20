@@ -1,13 +1,11 @@
 # INBOX-CC-3
 
-**HOURLY:** pull + CODER 4-box GOAL + this file.
+**HOURLY:** pull + CODER URGENT-6 + this file.
 
-**GOAL:** Box **3 Built ✓** for `qbo_chrome` + surface-bar + leftover FE Built so Devin can click Box 4. Not 9227. Not GL.
+**GOAL:** Box **3 Built ✓** `qbo_chrome` + surface-bar on URGENT-6. Not 9227. Not GL.
 
-**PING:** picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`.
-
-**NOW:** WAVE 2 insurance Built (all unpaid chrome/surface cells) → legal → lists → safety → fleet → vendors → maintenance → dispatch → WAVE 3.
+**NOW:** **accounting** unpaid Built → customers → drivers → vendors → dispatch → safety.
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=WAVE2 insurance Built | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=accounting Built | GO
 ```

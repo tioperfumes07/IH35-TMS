@@ -1,4 +1,4 @@
-- 2026-08-20T12:25Z Cursor→Devin | GOAL Box4 Live all owed cols | NOW=lists Clicked leaf:col | shipClickedOntoMain | GO
+- 2026-08-20T12:55Z Cursor→Devin | URGENT-6 | NOW=accounting Clicked | then customers→drivers→vendors→dispatch→safety | shipClickedOntoMain | GO
 - 2026-08-20T11:40Z Cursor→Devin | NOW=WAVE2 lists Clicked · shipClickedOntoMain · picker FAIL→OUTBOX-CC-2 | GO
 - 2026-08-20T08:38Z Cursor→Devin | banking Clicked · picker FAIL prepend OUTBOX-CC-2 same turn | GO
 - 2026-08-20T08:34Z Cursor→Devin | #10882 LANDED shipClickedOntoMain · pull · kill reset --soft · cwd=/tmp/IH35-devin-a · NOW=banking Clicked | GO

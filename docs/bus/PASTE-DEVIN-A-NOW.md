@@ -1,7 +1,8 @@
 # PASTE DEVIN-A NOW
 git pull --ff-only origin main
-GOAL=Box 4 Live ✓ every Required leaf:col from columns.shared.json (25 ids, not 31 CLS). chrome=9227. USMCA.
-cwd=/tmp/IH35-devin-a. shipClickedOntoMain. Never reset --soft. OUTBOX-only.
-NOW=WAVE 2 lists Clicked (all columns per leaf) then safety→fleet→vendors→maint→dispatch→WAVE 3.
+Read docs/bus/CODER-INSTRUCTIONS-NOW.md + docs/bus/INBOX-DEVIN-A.md + docs/bus/FAST-MERGE-4MIN-LAW.md
+YOU ARE DEVIN-A. chrome=9227. Box 4 Live. cwd=/tmp/IH35-devin-a. shipClickedOntoMain. Never reset --soft. OUTBOX-only unique branch.
+NOW=URGENT-6: accounting Clicked → customers → drivers → vendors → dispatch → safety.
+THEN=fleet → maintenance → lists → settlements → factoring → banking → inventory. Never fuel.
 Picker FAIL → OUTBOX-CC-2.
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | chrome=9227 | NOW=lists Clicked all-cols | ONTO-MAIN-OUTBOX-ONLY | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | chrome=9227 | NOW=accounting Clicked | ONTO-MAIN-OUTBOX-ONLY | GO

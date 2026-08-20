@@ -1,3 +1,22 @@
+# STATUS-NOW · 2026-08-20T12:55Z
+
+**Lead:** Cursor · FAST-MERGE ON · **URGENT-6 (chat 2026-08-19):** accounting → customers → drivers → vendors → dispatch → safety  
+**THEN 7–14:** fleet → maintenance → lists → settlements → factoring → banking → inventory (fuel never)
+
+| Seat | NOW |
+|------|-----|
+| CC-1 | Box 3 **accounting money** |
+| CC-2 | unpaid **picker_law** accounting → URGENT-6 · READ OUTBOX-CC-2 · no poll |
+| CC-3 | Box 3 **accounting Built** (qbo_chrome/surface) |
+| Codex | Box 3 **accounting reverse+connectivity** |
+| Devin-A | Box 4 **accounting Clicked** · shipClickedOntoMain · 9227 |
+| Cursor | leftover **accounting** Built + bus |
+| Cascade | OFF |
+
+---
+
+# ARCHIVE · older STATUS (VOID if it contradicts 12:55Z URGENT-6)
+
 # STATUS-NOW · 2026-08-20T12:25Z
 
 **Lead:** Cursor · **GOAL: 4/4 boxes on every Required cell × every owed column** (USMCA, no fuel/eld)
