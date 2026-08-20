@@ -5951,3 +5951,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=vendors:md.notes:vendor
+Devin-A | LIVE PASS | leaf=vendors:md.notes:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=notes | healthz=1593ca3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=notes marker 'vendors' | NEXT=leaf=vendors:md.transaction_list:vendor
+Devin-A | LIVE PASS | leaf=vendors:md.notes:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=notes | healthz=1593ca3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=notes marker 'vendors' | NEXT=leaf=vendors:md.transaction_list:vendor
