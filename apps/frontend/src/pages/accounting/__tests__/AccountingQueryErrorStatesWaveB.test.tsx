@@ -154,6 +154,7 @@ describe("Accounting Wave B query error states", () => {
     results.set(keyOf(["factoring-vendors", "company-1"]), failed);
     results.set(keyOf(["factoring-candidates", "company-1"]), success([]));
     results.set(keyOf(["factoring", "summary", "company-1"]), success({}));
+    results.set(keyOf(["factoring", "factors", "company-1", "active"]), success([]));
 
     render(<SubmitFactoringModal open operatingCompanyId="company-1" onClose={vi.fn()} onCreated={vi.fn()} />);
     expect(screen.queryByText(/Failed to load eligible invoices:/)).not.toBeInTheDocument();
@@ -166,6 +167,7 @@ describe("Accounting Wave B query error states", () => {
     results.set(keyOf(["factoring-vendors", "company-1"]), success([]));
     results.set(keyOf(["factoring-candidates", "company-1"]), failed);
     results.set(keyOf(["factoring", "summary", "company-1"]), success({}));
+    results.set(keyOf(["factoring", "factors", "company-1", "active"]), success([]));
 
     render(<SubmitFactoringModal open operatingCompanyId="company-1" onClose={vi.fn()} onCreated={vi.fn()} />);
     expect(screen.queryByText(/Failed to load factoring companies:/)).not.toBeInTheDocument();
@@ -178,6 +180,7 @@ describe("Accounting Wave B query error states", () => {
     results.set(keyOf(["factoring-vendors", "company-1"]), success([]));
     results.set(keyOf(["factoring-candidates", "company-1"]), success([]));
     results.set(keyOf(["factoring", "summary", "company-1"]), failed);
+    results.set(keyOf(["factoring", "factors", "company-1", "active"]), success([]));
 
     render(<SubmitFactoringModal open operatingCompanyId="company-1" onClose={vi.fn()} onCreated={vi.fn()} />);
     expect(screen.queryByText(/Failed to load factoring companies:/)).not.toBeInTheDocument();
@@ -188,7 +191,7 @@ describe("Accounting Wave B query error states", () => {
   it("renders and retries InvoicesListPage customersQuery without an invoices query error", () => {
     const failed = failure("customers unavailable");
     results.set(keyOf(["mdata", "customers", "invoice-filter", "company-1"]), failed);
-    results.set(keyOf(["accounting", "invoices", "company-1", "", "", "", "", ""]), success([]));
+    results.set(keyOf(["accounting", "invoices", "company-1", "", false, "", "", "", "", null]), success({ invoices: [] }));
 
     render(<InvoicesListPage />);
     expect(screen.queryByText("Failed to load. Try refreshing.")).not.toBeInTheDocument();
@@ -198,7 +201,7 @@ describe("Accounting Wave B query error states", () => {
   it("renders and retries BillPaymentsListPage unpaidBillsQuery without a payments query error", () => {
     results.set(keyOf(["accounting", "bill-payments-list", "company-1", "", "", ""]), success({ rows: [] }));
     const failed = failure("unpaid bills unavailable");
-    results.set(keyOf(["accounting", "bills-unpaid", "company-1"]), failed);
+    results.set(keyOf(["accounting", "bills-has-balance", "company-1"]), failed);
 
     render(<BillPaymentsListPage />);
     expect(screen.queryByText("Failed to load. Try refreshing.")).not.toBeInTheDocument();
@@ -208,6 +211,8 @@ describe("Accounting Wave B query error states", () => {
   it("renders and retries RecurringBillCreate vendorsQuery", () => {
     const failed = failure("vendors unavailable");
     results.set(keyOf(["mdata", "vendors", "company-1"]), failed);
+    // coaQuery — a real second query added since this harness was last updated; not under test.
+    results.set(keyOf(["recurring-bill", "coa", "company-1"]), success({ accounts: [] }));
 
     render(<RecurringBillCreate />);
     expectVisibleRetry(/Failed to load recurring-bill vendors: vendors unavailable/, failed);

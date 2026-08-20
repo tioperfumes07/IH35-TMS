@@ -10,6 +10,10 @@ vi.mock("../../api/account-type-catalog", () => ({
   getAccountTypeCatalog: vi.fn(),
 }));
 
+vi.mock("../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+}));
+
 function wrap(ui: ReactElement) {
   return (
     <MemoryRouter>

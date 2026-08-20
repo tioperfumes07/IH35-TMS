@@ -141,9 +141,14 @@ const CHECKS = [
     pattern: /dataTestId="invoices-filter-load"/,
   },
   {
-    name: "LST-F5199: InvoicesListPage setSourceLoadId",
+    // LV-INVOICES-FILTER-APPLY-DROPS-FIELDS (2026-08-20, CC-3): the standalone setStatus/
+    // setCustomerId/setSourceLoadId functions were folded into one combined applyUrlFilters()
+    // write — react-router's setSearchParams closes over the render's searchParams snapshot, so
+    // 3 separate synchronous calls each overwrote the previous one's diff (only the last field
+    // survived Apply). source_load_id is still written on Apply, just via the single combined call.
+    name: "LST-F5199: InvoicesListPage source_load_id filter write (single combined applyUrlFilters call)",
     file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    pattern: /function setSourceLoadId/,
+    pattern: /function applyUrlFilters[\s\S]{0,700}source_load_id/,
   },
 
   {
@@ -189,7 +194,8 @@ if (process.argv.includes("--selftest")) {
       "to={`/accounting/bills?legal_matter_id=${encodeURIComponent(legalMatterId)}`}",
     "apps/frontend/src/components/accounting/BillsReverseSection.tsx":
       'to={`/accounting/bills?${filterKey}= <EntityLinkOrTombstone kind="vendor" id={billVendorDrillId(row)} name={row.vendor_name} noun="Vendor" />',
-    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx": 'searchParams.get("source_load_id") dataTestId="invoices-filter-load" function setSourceLoadId',
+    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx":
+      'searchParams.get("source_load_id") dataTestId="invoices-filter-load" function applyUrlFilters(next) { if (next.sourceLoadId) params.set("source_load_id", next.sourceLoadId); }',
     "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx":
       "to={`/accounting/invoices?${filterKey}=",
   };

@@ -189,6 +189,10 @@ describe("reverse drill-through production behavior", () => {
         {
           posting_id: "p-1",
           journal_entry_id: "je-inv-900",
+          // F-18b: memo IS the JE's human identity (accounting.journal_entries has no
+          // number/ref/doc column) — without it entityLabel() honestly falls back to
+          // "Journal entry — not visible" instead of ever truncating the raw uuid.
+          memo: "Invoice INV-100 posting",
           posting_batch_id: null,
           source_transaction_type: "invoice",
           source_transaction_id: "inv-100",
@@ -212,7 +216,7 @@ describe("reverse drill-through production behavior", () => {
       "href",
       "/customers/customer-44",
     );
-    expect(await screen.findByRole("link", { name: "je-inv-9" })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "Invoice INV-100 posting" })).toHaveAttribute(
       "href",
       "/accounting/journal-entries/je-inv-900",
     );
@@ -428,11 +432,17 @@ describe("reverse drill-through production behavior", () => {
     });
     renderAt(<FaultDraftsPage />, "/maintenance/fault-drafts?unit_id=unit-a");
 
-    expect(await screen.findByRole("link", { name: "UNIT-A" })).toHaveAttribute(
-      "href",
-      "/fleet/units/unit-a",
-    );
+    // "UNIT-A" now renders twice — once in the "Filtered to unit" banner, once in the table
+    // row's EntityLinkOrTombstone — both are the same honest drill-through, so assert at least
+    // one resolves to the real unit route rather than picking a single (now ambiguous) match.
+    const unitALinks = await screen.findAllByRole("link", { name: "UNIT-A" });
+    expect(unitALinks.length).toBeGreaterThanOrEqual(1);
+    for (const link of unitALinks) {
+      expect(link).toHaveAttribute("href", "/fleet/units/unit-a");
+    }
     expect(screen.queryByRole("link", { name: "UNIT-B" })).not.toBeInTheDocument();
-    expect(screen.getByText(/Filtered to unit/)).toBeInTheDocument();
+    expect(screen.getByTestId("fault-drafts-unit-reverse-banner")).toHaveTextContent(
+      /Showing fault-driven drafts for the selected unit/,
+    );
   });
 });

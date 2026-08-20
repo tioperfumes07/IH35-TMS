@@ -53,7 +53,9 @@ describe("VendorBillCreatePage", () => {
 
     expect(screen.getByText("Bill Details")).toBeInTheDocument();
     expect(screen.getByText("Repair Bill")).toBeInTheDocument();
-    expect(screen.getByText("Bill Total = A + B")).toBeInTheDocument();
+    // Copy generalized from the old fixed 2-line "A + B" formula to support any number of line
+    // items (VendorBillForm.tsx's grandLabel).
+    expect(screen.getByText("Bill Total = sum of lines")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Create bill/i })).toBeInTheDocument();
   });
 });
