@@ -1948,3 +1948,67 @@ Devin-A | LIVE STARVED | leaf=settlements:settlements.list:load | USMCA | URL=ht
 Devin-A | LIVE STARVED | leaf=settlements:settlements.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head Checking session... | NEXT=leaf=settlements:settlements.detail:driver
 Devin-A | LIVE STARVED | leaf=settlements:settlements.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head Checking session... | NEXT=leaf=settlements:settlements.detail:driver
 Devin-A | LIVE STARVED | leaf=settlements:settlements.list:settlement | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head Checking session... | NEXT=leaf=settlements:settlements.detail:driver
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/driver-finance/settlements head  | NEXT=leaf=vendors:md.vendor_details:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/driver-finance/settlements head  | NEXT=leaf=vendors:md.vendor_details:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/driver-finance/settlements head  | NEXT=leaf=vendors:md.vendor_details:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/driver-finance/settlements head  | NEXT=leaf=vendors:md.vendor_details:vendor
+Devin-A | LIVE PASS | leaf=vendors:detail.w9_1099:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=a43e048
+Devin-A | LIVE PASS | leaf=vendors:detail.w9_1099:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=a43e048
+Devin-A | LIVE PASS | leaf=vendors:detail.w9_1099:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=a43e048
+Devin-A | LIVE STARVED | leaf=settlements:settlements.detail:driver | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=:id | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=settlements:settlements.disputes:driver
+Devin-A | LIVE STARVED | leaf=settlements:settlements.detail:load | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=:id | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=settlements:settlements.disputes:driver
+Devin-A | LIVE STARVED | leaf=settlements:settlements.detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=:id | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=settlements:settlements.disputes:driver
+Devin-A | LIVE STARVED | leaf=settlements:settlements.detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=:id | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=settlements:settlements.disputes:driver
+Devin-A | LIVE STARVED | leaf=settlements:settlements.detail:settlement | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=:id | healthz=a43e048 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=settlements:settlements.disputes:driver
+Devin-A | LIVE PASS | leaf=vendors:list.export_csv:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=a43e048 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:md.transaction_list:vendor
+Devin-A | LIVE PASS | leaf=vendors:list.export_csv:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=a43e048 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:md.transaction_list:vendor
