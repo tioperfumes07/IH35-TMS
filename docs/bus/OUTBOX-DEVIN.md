@@ -2890,3 +2890,6 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=accounting:payment_methods_catalog.create:connectivity
+Devin-A | LIVE PASS | leaf=accounting:payment_methods_catalog.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/payment-methods-catalog | healthz=a7ccfe3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/payment-methods-catalog marker 'accounting' | NEXT=leaf=accounting:payments.receive:customer
+Devin-A | LIVE PASS | leaf=accounting:payment_methods_catalog.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/payment-methods-catalog | healthz=a7ccfe3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/payment-methods-catalog marker 'accounting' | NEXT=leaf=accounting:payments.receive:customer
+Devin-A | LIVE PASS | leaf=accounting:payment_methods_catalog.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting/payment-methods-catalog | healthz=a7ccfe3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/payment-methods-catalog marker 'accounting' | NEXT=leaf=accounting:payments.receive:customer
