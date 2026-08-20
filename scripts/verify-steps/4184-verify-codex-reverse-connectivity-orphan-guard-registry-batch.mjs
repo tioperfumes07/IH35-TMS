@@ -1,5 +1,5 @@
 // CODEX-REVERSE-CONNECTIVITY-ORPHAN-GUARD-REGISTRY-BATCH
-// Executes the six leaf-specific reverse_link/connectivity ratchets routed to Codex.
+// Executes the ten leaf-specific reverse_link/connectivity and supporting mechanical ratchets.
 // Rule 37 claim 4184 landed on main in PR #13250 before this wrapper was authored.
 const GUARDS = [
   "verify-bill-detail-linked-identity-human-labels.mjs",
