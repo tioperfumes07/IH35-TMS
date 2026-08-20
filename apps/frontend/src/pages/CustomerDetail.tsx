@@ -1273,7 +1273,7 @@ export function CustomerDetailPage() {
                 <EntityLinkOrTombstone
                   kind="customer"
                   id={customer.parent_customer_id}
-                  name={customer.parent_customer_name ?? "View parent"}
+                  name={customer.parent_customer_name}
                   noun="Customer"
                   className="self-start text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
                   data-testid="customer-parent-record-link"

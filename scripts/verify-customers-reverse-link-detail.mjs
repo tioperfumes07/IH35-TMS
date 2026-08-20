@@ -73,7 +73,11 @@ const CHECKS = [
     file: MDATA_API,
     pattern: /export type CustomerBillingSummary = \{[\s\S]{0,260}factoring_company_vendor_name: string \| null;/,
   },
-  { name: "parent customer EntityLinkOrTombstone", file: DETAIL, pattern: /data-testid="customer-parent-record-link"/ },
+  {
+    name: "parent customer drill preserves nullable canonical label for tombstone handling",
+    file: DETAIL,
+    pattern: /kind="customer"\s+id=\{customer\.parent_customer_id\}\s+name=\{customer\.parent_customer_name\}\s+noun="Customer"[\s\S]{0,240}data-testid="customer-parent-record-link"/,
+  },
   { name: "sub-customer EntityLinkOrTombstone", file: DETAIL, pattern: /customer-sub-record-link-/ },
   {
     name: "payment application invoice EntityLinkOrTombstone",

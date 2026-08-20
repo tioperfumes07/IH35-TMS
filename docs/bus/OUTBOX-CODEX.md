@@ -1,3 +1,4 @@
+Codex | FINDING | CUSTOMER-PARENT-FALSE-HUMAN-LABEL | OWNER=Codex | board=FIXED CODE THIS PR | guard=25/25-selftest | LIVE=UNVERIFIED-INBOX-NO-CHROME | GO
 Codex | FINDING | CUSTOMER-LIST-DETAILS-FACTOR-VENDOR-DEAD-DRILL | OWNER=Codex | board=FIXED CODE THIS PR | guard=25/25-selftest | LIVE=UNVERIFIED-INBOX-NO-CHROME | GO
 Codex | WORKING | STANDARD=14-MODULE-100 | NOW=customers reverse mounted billing consumers | source=CUSTOMER-FACTOR-VENDOR-HUMAN-LABEL already PR#10585 on origin/main | GO
 Codex | ACK | STANDARD=14-MODULE-100 | NOW=customers reverse | NEXT=vendors reverse | GO
