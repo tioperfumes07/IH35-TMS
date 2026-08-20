@@ -3,12 +3,15 @@
 // C7 — the shared create drawer. These assertions are the RUNTIME half of
 // scripts/verify-create-surface-is-drawer.mjs: the static guard proves every create surface passes
 // `variant="drawer"`, and this proves the shape that prop actually produces.
+import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Modal } from "../Modal";
 import { PARITY_CREATE_DRAWER_WIDTH, paritySizing } from "../parity/sizing";
 import { CivilFineTypeModal } from "../../pages/lists/safety/CivilFineTypeModal";
+
+expect.extend(jestDomMatchers);
 
 function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
