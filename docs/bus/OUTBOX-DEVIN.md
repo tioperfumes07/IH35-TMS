@@ -1421,3 +1421,14 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.driver_pay
+Devin-A | LIVE PASS | module=dispatch | leaf=load.drawer.driver_pay | URL=https://app.ih35dispatch.com/dispatch/loads/:id?tab=Driver%20Pay | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/loads/:id?tab=Driver+Pay&view=list ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=1b8adac | mutation=none | NEXT=dispatch.load.drawer.documents
