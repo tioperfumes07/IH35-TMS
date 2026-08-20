@@ -970,3 +970,6 @@ Codex | LIVE PASS program:scenario-matrix-completion-tracker | evidence=selected
 Codex | LIVE FAIL program:tracker-historical-gated-copy | evidence=Tracker rows showed PENDING (GATED) without no-owner-approval disclosure; reconcile/sweep/XLSX sources still said needs Jorge gate | mutation=none | HANDOFF=Cursor | finding=LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY | product-Live=BLOCKED
 Codex | SHIPPED LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY | PR#8015 @ af072c11d | gate=exit0 | merge=admin-squash | main=verified | NEXT=system:remaining-live-leaves
 Codex | LIVE CLAIM system:remaining-tabs-and-health | entity=USMCA | mutation=none
+Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | SHIPPED DISPATCH-PRIMARY-INLINE-ASSIGNMENT-DEAD-DRILLS | PR#10260 @ 2dbb0a911 | gate=exit0 | merge=admin-squash | main=verified | NEXT=fleet Band B trailer.profile reverse
+Codex | WORKING | NOW=drivers reverse FE | NEXT=customers reverse | GO

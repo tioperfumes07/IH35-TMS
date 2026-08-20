@@ -10,6 +10,7 @@ import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
@@ -31,14 +32,26 @@ const ASSIGNED_COLUMNS: Array<ParityColumn<DriverAssignedLoad>> = [
     key: "customer_name",
     label: "Customer",
     sortable: true,
-    render: (row) => <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />,
+    render: (row) => (
+      <EntityLinkOrTombstone
+        kind="customer"
+        id={row.customer_id}
+        name={row.customer_name}
+        noun="Customer"
+      />
+    ),
   },
   {
     key: "assigned_unit_number",
     label: "Unit",
     sortable: true,
     render: (row) => (
-      <EntityLink kind="unit" id={row.assigned_unit_id} label={entityLabel(row.assigned_unit_number, row.assigned_unit_id, "Unit")} />
+      <EntityLinkOrTombstone
+        kind="unit"
+        id={row.assigned_unit_id}
+        name={row.assigned_unit_number}
+        noun="Unit"
+      />
     ),
   },
   {
@@ -75,10 +88,11 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
     label: "Previous Driver",
     sortable: true,
     render: (row) => (
-      <EntityLink
+      <EntityLinkOrTombstone
         kind="driver"
         id={row.previous_driver_id}
-        label={entityLabel(row.previous_driver_name, row.previous_driver_id, "Driver")}
+        name={row.previous_driver_name}
+        noun="Driver"
         data-testid={`driver-load-history-prev-driver-${row.id}`}
       />
     ),
@@ -88,10 +102,11 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
     label: "New Driver",
     sortable: true,
     render: (row) => (
-      <EntityLink
+      <EntityLinkOrTombstone
         kind="driver"
         id={row.new_driver_id}
-        label={entityLabel(row.new_driver_name, row.new_driver_id, "Driver")}
+        name={row.new_driver_name}
+        noun="Driver"
         data-testid={`driver-load-history-new-driver-${row.id}`}
       />
     ),
