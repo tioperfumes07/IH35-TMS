@@ -490,6 +490,27 @@ export async function depositEscrow(
 }
 
 /**
+ * ACCT-F5645 — client-taking sibling of depositEscrow, for a caller that already holds its own open
+ * transaction (e.g. driver-settlement.service.deprecated.ts's postSettlement, mid-way through building
+ * a Bill + BillPayment on the same client) and needs the escrow deposit atomic with the rest of that
+ * transaction, not committed on a second connection — the ACCT-F5644 pattern applied to deposits.
+ */
+export async function depositEscrowOnClient(
+  client: Parameters<typeof createJournalEntryOnClient>[0],
+  input: {
+    operating_company_id: string;
+    escrow_account_id: string;
+    amount_cents: number;
+    source_type: EscrowSourceType;
+    source_id?: string | null;
+    note?: string | null;
+  },
+  actor: { userId: string; role: string }
+) {
+  return postEscrowTransactionOnClient(client, { ...input, posting_type: "deposit" }, actor);
+}
+
+/**
  * ACCT-R-01 (0007-pattern-5 escrow split-brain finding) — record a GL-linked escrow posting WITHOUT
  * creating a second journal entry. Use this when the JE already exists (e.g. the settlement pay-run's
  * OWN composite JE already carries the escrow-liability credit leg via
