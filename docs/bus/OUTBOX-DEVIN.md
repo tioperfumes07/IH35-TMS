@@ -4656,3 +4656,10 @@ Tasks
 P | NEXT=leaf=lists:lists.dialog.part_location_map:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:lists.dialog.part_location_map:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=10a21a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.drawer.account:connectivity
 Devin-A | LIVE STARVED | leaf=lists:lists.drawer.account:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=10a21a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=10a21a9 head Checking session... | NEXT=leaf=lists:lists.drawer.accounting_catalog_profile:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.drawer.accounting_catalog_profile:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:lists.drawer.catalog_quick_create:connectivity
