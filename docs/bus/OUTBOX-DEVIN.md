@@ -7542,3 +7542,24 @@ Devin-A | LIVE PASS | leaf=fleet:unit.detail.toll_tags:unit | USMCA | URL=https:
 Devin-A | LIVE PASS | leaf=fleet:unit.detail.toll_tags:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id/detail?tab=toll-tags | healthz=4508449 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id/detail?tab=toll-tags marker 'fleet' | NEXT=leaf=fleet:unit.edit.documents:unit
 Devin-A | LIVE PASS | leaf=fleet:unit.edit.documents:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=4508449 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id marker 'fleet' | NEXT=leaf=fleet:unit.profile.action_bar:unit
 Devin-A | LIVE PASS | leaf=fleet:unit.edit.documents:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=4508449 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/units/:id marker 'fleet' | NEXT=leaf=fleet:unit.profile.action_bar:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.profile.action_bar:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:unit.profile.border_crossings_reverse:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.profile.action_bar:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:unit.profile.border_crossings_reverse:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.profile.action_bar:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:unit.profile.border_crossings_reverse:unit
