@@ -3953,3 +3953,17 @@ Devin-A | LIVE PASS | leaf=lists:catalog.customers.customer_quality_event_reason
 Devin-A | LIVE PASS | leaf=lists:catalog.customers.customer_quality_event_reasons.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/customers/customer-quality-event-reasons | healthz=b68a216 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/customers/customer-quality-event-reasons marker 'lists' | NEXT=leaf=lists:catalog.customers.customer_types.create:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.customers.customer_types.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/customers/customer-types | healthz=b68a216 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/customers/customer-types marker 'lists' | NEXT=leaf=lists:catalog.customers.customer_types.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.customers.customer_types.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/customers/customer-types | healthz=b68a216 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/customers/customer-types marker 'lists' | NEXT=leaf=lists:catalog.customers.customer_types.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.customers.customer_types.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/customers/customer-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/customers/customer-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.dispatch.additional_charges.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.customers.customer_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/customers/customer-types | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/customers/customer-types healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.dispatch.additional_charges.create:qbo_chrome
