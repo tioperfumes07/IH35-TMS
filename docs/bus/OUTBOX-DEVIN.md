@@ -5374,3 +5374,25 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.profile.reefer:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.reefer:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.safety_reverse:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.reefer:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=b235cea | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.safety_reverse:trailer
