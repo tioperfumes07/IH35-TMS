@@ -189,6 +189,10 @@
     "202612830000": {
       "claimed_by": "cc-1",
       "purpose": "acct_f5658_aging_as_of_stale_filters"
+    },
+    "202612840000": {
+      "claimed_by": "cc-1",
+      "purpose": "acct_f5677_factoring_audit_trigger_coverage"
     }
   }
 }
