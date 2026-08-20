@@ -7299,3 +7299,36 @@ Devin-A | LIVE PASS | leaf=fleet:roster.filter.type:unit | USMCA | URL=https://a
 Devin-A | LIVE PASS | leaf=fleet:roster.filter.type:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet?type= | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet?type= marker 'fleet' | NEXT=leaf=fleet:trailer.edit:trailer
 Devin-A | LIVE PASS | leaf=fleet:roster.filter.type:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet?type= | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet?type= marker 'fleet' | NEXT=leaf=fleet:trailer.edit:trailer
 Devin-A | LIVE PASS | leaf=fleet:roster.filter.type:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet?type= | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet?type= marker 'fleet' | NEXT=leaf=fleet:trailer.edit:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.edit:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.action_bar:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.edit:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.action_bar:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.edit:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.action_bar:trailer
