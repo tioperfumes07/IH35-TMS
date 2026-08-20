@@ -46,6 +46,10 @@ const ORDER = [
 const ALLOWED = new Set(ORDER);
 const FORBIDDEN = new Set(["fuel", "eld"]);
 const URGENT6 = new Set(["accounting", "customers", "drivers", "vendors", "dispatch", "safety"]);
+const URGENT14 = new Set([
+  "accounting", "customers", "drivers", "vendors", "dispatch", "safety",
+  "fleet", "maintenance", "lists", "settlements", "factoring", "banking", "inventory",
+]);
 
 function loadPlaywright() {
   const tries = ["playwright-core", path.join(ROOT, "apps/frontend/node_modules/playwright-core"), path.join(ROOT, "node_modules/playwright-core")];
@@ -183,7 +187,7 @@ function filterQueue(raw) {
     .filter((item) => {
       const mod = String(item.module || "").toLowerCase();
       if (FORBIDDEN.has(mod)) return false;
-      if (!URGENT6.has(mod)) return false;
+      if (!URGENT14.has(mod)) return false;
       return ALLOWED.has(mod);
     })
     .sort((a, b) => {
@@ -248,7 +252,7 @@ async function run() {
     if (!page) page = await ctx.newPage();
 
     let queue = ensureQueue();
-    log(`URGENT-6 queue ${queue.length} leaves`);
+    log(`URGENT-14 queue ${queue.length} leaves`);
     while (queue.length > 0) {
       const item = queue[0];
       if (FORBIDDEN.has(String(item.module).toLowerCase()) || !ALLOWED.has(String(item.module).toLowerCase())) {
@@ -320,8 +324,8 @@ if (process.argv.includes("--selftest")) {
     console.error("SELFTEST FAIL: ORDER must start URGENT-6 accounting→…→safety");
     process.exit(1);
   }
-  if (!/function judgeClick/.test(src) || !/skip ship STARVED/.test(src) || !/URGENT6\.has\(mod\)/.test(src)) {
-    console.error("SELFTEST FAIL: column-12 LIVE PASS judge + no STARVED ship + URGENT-6 queue filter missing");
+  if (!/function judgeClick/.test(src) || !/skip ship STARVED/.test(src) || !/URGENT14\.has\(mod\)/.test(src)) {
+    console.error("SELFTEST FAIL: column-12 LIVE PASS judge + no STARVED ship + URGENT-14 queue filter missing");
     process.exit(1);
   }
   if (/!hz \|\| hz === "unknown"/.test(src)) {
