@@ -1,9 +1,11 @@
-# INBOX-CURSOR · VERIFY BEFORE INSTRUCT
+# INBOX-CURSOR
 
-Lead. Recount Clicked before rewriting INBOX. Least: banking factoring accounting settlements customers drivers. Park vendors/dispatch.
+**HOURLY (you too):** pull + re-read `CODER-INSTRUCTIONS-NOW.md` + this file + FAST-MERGE law. Re-instruct seats the same waves. Continuous. No deviate.
 
-CC-1 queue complete. CC-2 pickers complete. Loop ORDER must match INBOX (no vendors/dispatch).
+Lead. Leftover WAVE 1 Built + scoreboard. Item 12 = Devin. FAST-MERGE INBOX to main.
+
+**NOW:** banking Built leftover if unpaid → rest WAVE 1 → WAVE 2
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=lead — verify OUTBOX before instruct | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=lead | GO
 ```

@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 /**
- * Devin-A Clicked loop — URGENT 6 only.
- * Credited OUTBOX: `Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | USMCA | …`
- * Canonical cwd: IH35-TMS-clean main clone.
- * Do not close the CDP browser.
+ * Devin-A Clicked — WAVE 1 then WAVE 2. Item 12 Live Chrome.
  */
 const { execSync } = require("child_process");
 const fs = require("fs");
@@ -17,9 +14,17 @@ const ORDER = [
   "settlements",
   "customers",
   "drivers",
+  "insurance",
+  "legal",
+  "lists",
+  "safety",
+  "fleet",
+  "vendors",
+  "maintenance",
+  "dispatch",
 ];
 const ALLOWED = new Set(ORDER);
-const FORBIDDEN = new Set(["fleet", "fuel", "maintenance", "safety", "insurance", "legal", "lists", "program", "system", "vendors", "dispatch"]);
+const FORBIDDEN = new Set(["fuel", "eld"]);
 
 function loadPlaywright() {
   const tries = ["playwright-core", path.join(ROOT, "apps/frontend/node_modules/playwright-core"), path.join(ROOT, "node_modules/playwright-core")];
