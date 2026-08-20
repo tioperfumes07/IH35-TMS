@@ -74,6 +74,9 @@ describe("FleetTablePage type filter", () => {
       expect(screen.getByLabelText("Filter fleet by type")).toBeTruthy();
     });
     fireEvent.change(screen.getByLabelText("Filter fleet by type"), { target: { value: "Reefer" } });
+    // Filters are staged (useStagedListFilters/CollapsedListFilters, the shared Apply/Cancel/Reset
+    // chrome) — a select change only updates the draft; the URL/query commit fires on Apply.
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
     await waitFor(() => {
       expect(screen.getByText("Showing 1 of 3 vehicles")).toBeTruthy();
     });
