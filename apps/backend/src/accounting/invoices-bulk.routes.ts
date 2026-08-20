@@ -8,6 +8,13 @@ import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.fact
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";
+import {
+  auditVoid,
+  isVoidEnforcementEnabled,
+  pgDateColumnToIsoDay,
+  postVoidReversal,
+  type VoidReversalResult,
+} from "./void.service.js";
 
 const invoiceStatusSchema = z.enum(["draft", "sent", "paid", "void", "factored"]);
 
@@ -68,6 +75,14 @@ type InvoiceDbClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
 };
 
+// void.service.ts's QueryableClient is a generic `query<T>` (not exported); ctx.client's bulk-factory type
+// is non-generic (`rows: unknown[]`), so it isn't structurally assignable without a cast. Mirrors the
+// `as unknown as <ClientType>` pattern already used elsewhere in this codebase for the same shape gap
+// (e.g. bills-bulk.routes.ts's `client as unknown as BillMutationClient` for ACCT-F5634).
+type VoidQueryableClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
 async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>): Promise<BulkPerEntityResult> {
   const { id, action, payload, reason, operatingCompanyId, actorUserId, bulkCallId, client } = ctx;
   const invoiceClient = client as unknown as InvoiceDbClient;
@@ -106,6 +121,36 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
       }
     }
 
+    // ACCT-F5638 — this branch used to flip an invoice to 'void' with NO GL reversal call at all: the
+    // THIRD independent invoice-void writer in the backend (alongside the direct /invoices/:id/void
+    // route and governance/void-cancel-executors.ts's executeInvoice, both of which correctly reverse
+    // the posted JE behind isVoidEnforcementEnabled) and the only one that didn't. An invoice voided
+    // through this bulk endpoint kept its original DR ar_control / CR revenue JE posted forever with no
+    // reversing entry, while the invoice record itself read as cleanly voided — a silent GL-vs-subledger
+    // tie-out gap (overstated A/R + revenue), not a visible failure. Reuse the SAME primitives the other
+    // two writers already call (postVoidReversal / isVoidEnforcementEnabled / auditVoid from
+    // void.service.js) instead of reimplementing partial GL logic, so this path can never drift from
+    // them again.
+    const voidClient = client as unknown as VoidQueryableClient;
+    let reversal: VoidReversalResult | null = null;
+    if (statusPayload.status === "void") {
+      const flagOn = await isVoidEnforcementEnabled(voidClient, operatingCompanyId, actorUserId);
+      if (flagOn) {
+        const originalDate = pgDateColumnToIsoDay(oldRow.issue_date);
+        reversal = await postVoidReversal(
+          voidClient,
+          {
+            operatingCompanyId,
+            entityType: "invoice",
+            entityId: id,
+            originalDate,
+            memo: `Void reversal of invoice ${id}: ${reason ?? "Bulk void"}`,
+          },
+          { userId: actorUserId }
+        );
+      }
+    }
+
     const updateRes = await client.query(
       `
         UPDATE accounting.invoices
@@ -124,6 +169,15 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
       return { ok: false, code: "E_UPDATE_FAILED", message: "Invoice status update failed" };
     }
     auditPayload.changes = buildPatchChanges({ status: statusPayload.status }, oldRow, updateRes.rows[0] as Record<string, unknown>);
+    if (statusPayload.status === "void" && reversal) {
+      auditPayload.reversal_journal_entry_id = reversal.reversal_journal_entry_id;
+      await auditVoid(voidClient, actorUserId, "invoice", {
+        operatingCompanyId,
+        entityId: id,
+        reason: reason ?? "Bulk void",
+        reversal,
+      });
+    }
     // ACCT-F100 — post on the FIRST transition into a real A/R state. Owner ruling 2026-08-03:
     // Finalize/Post OR Send, whichever comes first. Deliberately NOT on 'draft' (not yet an
     // obligation) and NOT on 'void' (posting a void would be the opposite of the intent). 'paid' and
