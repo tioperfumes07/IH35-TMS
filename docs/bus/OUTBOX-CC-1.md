@@ -1687,3 +1687,20 @@ entire check-generate-advance sequence in one transaction, adding a fresh-read g
 racer proceeding after the winner committed, and making the final UPDATE a real compare-and-swap.
 Board closeout shipped in this same PR cycle. REMAINING: none for this finding -- continuing the
 money-lane sweep non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T16:20Z CC-1 | ACCT-F5650 SHIPPED (PR #12733, merged e7a55ece) -- dedicated read-only sweep
+of prepaid/maintenance/factoring/void-executor/banking writers not yet covered by ACCT-F5634..F5649.
+applyInvoiceAndReserveUpdates (Faro CSV import) called postReserveMovement unconditionally per CSV
+line regardless of whether the invoice UPDATE actually matched a row -- postReserveMovement is a pure
+INSERT with no idempotency check of its own, no unique constraint on factoring.reserve_movement
+either. Re-uploading the same Faro CSV file (a natural retry after any downstream failure, or an
+honest duplicate upload) silently double-credited the reserve. Funding/chargeback JE posters checked
+clean (already idempotent, memo/event-key-checked). Fixed by gating on wasNewlyAdvanced (the invoice
+UPDATE's own row-count) plus a pre-insert existence check keyed on the same per-invoice reason string;
+updated the pre-existing ACCT-F5614 flag-off guard's marker string to match (postingEnabled remains
+required either way). Board closeout shipped in this same PR cycle. REMAINING: the funding/chargeback
+posting loop in commitFaroCsvImport still runs on separate connections after the atomic commit with no
+try/catch per-advance -- a mid-loop failure leaves later advances un-posted for that request, though a
+retry is safe today since the JE posters are independently idempotent. Worth a follow-up reliability
+pass, not a money-correctness bug on its own. Continuing the money-lane sweep non-stop, no idle gaps,
+always fix never defer.
