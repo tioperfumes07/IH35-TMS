@@ -13795,3 +13795,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=safety:eld_audit.list:driver
+Devin-A | LIVE PASS | leaf=safety:eld_audit.list:driver | USMCA | URL=https://app.ih35dispatch.com/safety/eld/audit-trail | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/eld/audit-trail marker 'safety' | NEXT=leaf=vendors:detail.ap:vendor
+Devin-A | LIVE PASS | leaf=safety:eld_audit.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety/eld/audit-trail | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/eld/audit-trail marker 'safety' | NEXT=leaf=vendors:detail.ap:vendor
