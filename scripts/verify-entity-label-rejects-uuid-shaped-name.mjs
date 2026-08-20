@@ -1852,7 +1852,7 @@ export function auditCustomerLoadEntityLinks(src) {
 
 export function auditVendorWorkOrderUnitLink(src) {
   const problems = [];
-  if (!/<EntityLink\s+kind="unit"\s+id=\{workOrder\.unit_id\}\s+label=\{entityLabel\(workOrder\.unit_number, workOrder\.unit_id, "Unit"\)\}/.test(src)) {
+  if (!/<EntityLinkOrTombstone\s+kind="unit"\s+id=\{workOrder\.unit_id\}\s+name=\{workOrder\.unit_number\}\s+noun="Unit"/.test(src)) {
     problems.push(`${VENDOR_WORK_ORDERS}: vendor work-order rows must drill through the unit FK`);
   }
   return problems;
@@ -1934,7 +1934,7 @@ ORDER BY w.opened_at DESC NULLS LAST`;
   if (!auditCustomerLoadEntityLinks(goodCustomerLoadLinks.replace('kind="unit"', 'kind="load"')).some((p) => p.includes("unit FK"))) {
     failures.push("selftest: missing customer load unit link NOT detected");
   }
-  const goodVendorWorkOrderUnitLink = '<EntityLink kind="unit" id={workOrder.unit_id} label={entityLabel(workOrder.unit_number, workOrder.unit_id, "Unit")} />';
+  const goodVendorWorkOrderUnitLink = '<EntityLinkOrTombstone kind="unit" id={workOrder.unit_id} name={workOrder.unit_number} noun="Unit" />';
   if (auditVendorWorkOrderUnitLink(goodVendorWorkOrderUnitLink).length) {
     failures.push("selftest: good vendor work-order unit link flagged");
   }

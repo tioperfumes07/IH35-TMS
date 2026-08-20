@@ -23,7 +23,7 @@ function audit(s) {
   if (!/getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId \}\)/.test(s.reverse)) failures.push("vendor profile must request exact reverse page");
   if (/\.filter\(\(row\) => row\.vendor_id === vendorId\)/.test(s.reverse)) failures.push("vendor profile must not browser-filter capped company response");
   if (!/ListErrorBanner/.test(s.reverse) || !/No parts invoices are linked/.test(s.reverse)) failures.push("reverse surface must preserve honest states");
-  if (!/kind="work_order"[\s\S]{0,100}work_order_id/.test(s.reverse)) failures.push("reverse rows must drill to canonical work order");
+  if (!/<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/.test(s.reverse)) failures.push("reverse rows must drill to canonical work order or show its tombstone");
   if (!/kind="inventory_part"[\s\S]{0,140}parts_inventory_id[\s\S]{0,140}part_description/.test(s.reverse)) failures.push("reverse rows must drill to canonical part or show its tombstone");
   if (!/kind="unit"[\s\S]{0,140}unit_id[\s\S]{0,140}unit_number/.test(s.reverse)) failures.push("reverse rows must drill to canonical unit or show its tombstone");
   if (!/totalCount > rows\.length/.test(s.reverse) || !/Showing \{rows\.length\} of \{totalCount\} parts invoices/.test(s.reverse)) failures.push("capped vendor reverse must disclose exact range");
@@ -43,7 +43,7 @@ if (process.argv.includes("--selftest")) {
     ["api", "api", /query\.set\("vendor_id", filters\.vendor_id\)/g, 'query.set("status", filters.vendor_id)'],
     ["reverse", "reverse", /getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId \}\)/, "getPartsAssignmentsPage(operatingCompanyId)"],
     ["error", "reverse", /ListErrorBanner/g, "MissingError"],
-    ["drill", "reverse", /kind="work_order"/, 'kind="vendor"'],
+    ["drill", "reverse", /<EntityLinkOrTombstone kind="work_order" id=\{row\.work_order_id\} name=\{row\.work_order_display_id\} noun="Work order"/, '<EntityLinkOrTombstone kind="vendor" id={row.work_order_id} name={null} noun="Vendor"'],
     ["part drill", "reverse", /kind="inventory_part"/, 'kind="vendor"'],
     ["unit drill", "reverse", /kind="unit"/, 'kind="vendor"'],
     ["route", "link", /case "work_order":/, 'case "work_order_missing":'],
