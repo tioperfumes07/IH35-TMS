@@ -1748,3 +1748,14 @@ Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.audit_history | URL=ht
 Devin-A | LIVE STARVED | module=vendors | leaf=list.segment.inactive | URL=https://app.ih35dispatch.com/vendors?listTab=inactive | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/vendors?listTab=inactive ; body head Checking session... | healthz=unknown | mutation=none | NEXT=vendors.list.segment.by_category
 Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.driver_assign | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/vendors?listTab=by-category ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.quick_assign
 Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.qbo_mapping | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/vendors?listTab=by-category ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.action_bar
+Devin-A | LIVE PASS | module=fleet | leaf=unit.profile.action_bar | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+FLEET›UNIT LOADING…
+Unit L | healthz=unknown | mutation=none | NEXT=fleet.unit.edit.identity
