@@ -1604,3 +1604,15 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | healthz=unknown | mutation=none | NEXT=fleet.roster.bulk.inactivate
+Devin-A | LIVE STARVED | module=fleet | leaf=roster.kind.trucks | URL=https://app.ih35dispatch.com/fleet?kind=truck | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.roster.kind.trailers
+Devin-A | LIVE PASS | module=fleet | leaf=roster.bulk.inactivate | URL=https://app.ih35dispatch.com/fleet | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+FLEET
+
+Trucks, trailers, and | healthz=unknown | mutation=none | NEXT=fleet.roster.row.edit_unit
