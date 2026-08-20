@@ -338,6 +338,10 @@ export async function approveDetentionRequest(
   }
 
   const result = await withCompany(userId, operatingCompanyId, async (client) => {
+    // ACCT-F5624 — bridgeDetentionToBilling (above) now re-syncs any existing draft/proforma invoice
+    // itself (or mints the long-overdue one) whenever it raises rate_total_cents, so buildInvoiceFromLoad
+    // here always sees an up-to-date invoice — see detention.service.ts for the root fix and why it
+    // lives there rather than here (this route is not the only caller of bridgeDetentionToBilling).
     const built = await buildInvoiceFromLoad(client, {
       userId,
       operatingCompanyId,

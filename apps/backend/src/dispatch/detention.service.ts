@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { sendEmail } from "../notifications/email.service.js";
+import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import {
   buildDetentionAccessorialBridge,
   computeDetentionAccrualCents,
@@ -258,7 +259,7 @@ export async function bridgeDetentionToBilling(
       : [];
     const accessorial_bridge_rows = [...priorRows, bridge];
 
-    await client.query(
+    const loadUpdate = await client.query<{ rate_total_cents: string | number | null }>(
       `
         UPDATE mdata.loads
         SET rate_total_cents = COALESCE(rate_total_cents, 0) + $2,
@@ -266,9 +267,31 @@ export async function bridgeDetentionToBilling(
               || jsonb_build_object('accessorial_bridge_rows', $3::jsonb),
             updated_at = now()
         WHERE id = $1
+        RETURNING rate_total_cents
       `,
       [row.load_id, amount, JSON.stringify(accessorial_bridge_rows)]
     );
+
+    // ACCT-F5624 — the UPDATE above just raised the load's billable total, but a draft/proforma
+    // invoice minted at booking time is a snapshot taken once and never re-read on its own
+    // (buildInvoiceFromLoad's idempotency check returns any existing non-void invoice UNCHANGED by
+    // design — see from-load.ts's ACCT-F267 comment on why it refuses to silently touch a document
+    // the customer may have already seen). Without this call, the detention amount landed on
+    // rate_total_cents but never reached the invoice line or its total whenever a proforma already
+    // existed for the load — while detention_requests.status still flipped to 'invoiced' and the
+    // customer notification still fired, both asserting the charge was billed when it was not.
+    // resyncProformaInvoiceFromLoadRate is idempotent, scoped to draft/proforma + non-void only, and
+    // is the SAME function update-load.service.ts / loads.routes.ts already call for a plain rate
+    // edit — this closes the identical gap for the detention-specific rate-raising path, which never
+    // got wired to it. Called from here (not from each caller) because this bridge has two callers
+    // (detention-approval.service.ts's approveDetentionRequest AND detention.routes.ts's standalone
+    // bridge-billing route) and both need the same fix.
+    await resyncProformaInvoiceFromLoadRate(client, {
+      loadId: String(row.load_id),
+      operatingCompanyId,
+      newRateTotalCents: Number(loadUpdate.rows[0]?.rate_total_cents ?? 0),
+      userId,
+    });
 
     const updated = await client.query(
       `
