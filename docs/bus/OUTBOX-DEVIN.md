@@ -1353,3 +1353,10 @@ Use your Google account or email and password.
 
 Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.docs.ocr
 Devin-A | LIVE STARVED | module=dispatch | leaf=docs.ocr | URL=https://app.ih35dispatch.com/dispatch/ocr-queue | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/ocr-queue ; body head Checking session... | healthz=62c3947 | mutation=none | NEXT=dispatch.docs.equipment_transfers
+Devin-A | LIVE STARVED | module=dispatch | leaf=docs.equipment_transfers | URL=https://app.ih35dispatch.com/dispatch/equipment-transfers | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/home ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | healthz=62c3947 | mutation=none | NEXT=dispatch.settings.dispatch
