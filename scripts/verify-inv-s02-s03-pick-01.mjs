@@ -31,7 +31,14 @@ export function verifyInvS02S03Pick(root = ROOT, overrides = {}) {
   const manifest = source("apps/frontend/src/routes/manifest.tsx");
 
   // INV-S02
-  if (!/listPartsAssignments/.test(assign)) errs.push("Assignments page must call listPartsAssignments");
+  // 2026-08-21 (CC-3): InventoryAssignmentsPage.tsx was refactored to call the paginated
+  // getPartsAssignmentsPage(...) directly instead of the older listPartsAssignments wrapper —
+  // same real endpoint (/api/v1/maintenance/parts-invoice-links), same real SoR (asserted below);
+  // listPartsAssignments itself still exists in api/maintenance.ts as a thin compat wrapper over
+  // getPartsAssignmentsPage. Accept either call shape.
+  if (!/listPartsAssignments/.test(assign) && !/getPartsAssignmentsPage/.test(assign)) {
+    errs.push("Assignments page must call listPartsAssignments (or getPartsAssignmentsPage)");
+  }
   if (!/No part assignments yet/.test(assign)) errs.push("Assignments missing honest emptyText");
   if (!/parts_invoice_links/.test(assign) || !/parts_invoice_links/.test(routes)) {
     errs.push("Assignments SoR must be maintenance.parts_invoice_links");
@@ -45,7 +52,9 @@ export function verifyInvS02S03Pick(root = ROOT, overrides = {}) {
   if (!/listPartsPurchases/.test(purch)) {
     errs.push("Purchases page must call listPartsPurchases");
   }
-  if (!/No purchases recorded yet\. Record a purchase from Parts & Stock to see it here\./.test(purch)) {
+  // 2026-08-21 (CC-3): copy reworded to point at the real "+ Record Purchase" CTA instead of the
+  // vaguer "Parts & Stock" reference — still an honest, non-fabricated empty state.
+  if (!/No purchases recorded yet\. Use \+ Record Purchase to add a receipt through Maintenance Parts Inventory\./.test(purch)) {
     errs.push("Purchases page missing honest emptyText");
   }
   if (!/maintenance\.parts_purchases \(append-only\)/.test(purch)) {
@@ -94,7 +103,7 @@ if (SELFTEST) {
   const routePath = "apps/backend/src/maintenance/parts-inventory.routes.ts";
   const fixtures = [
     ["missing list reader", purchPath, /listPartsPurchases/g, "listPurchases_REMOVED"],
-    ["missing honest empty", purchPath, /No purchases recorded yet\. Record a purchase from Parts & Stock to see it here\./g, "History unavailable"],
+    ["missing honest empty", purchPath, /No purchases recorded yet\. Use \+ Record Purchase to add a receipt through Maintenance Parts Inventory\./g, "History unavailable"],
     ["wrong SoR copy", purchPath, /maintenance\.parts_purchases \(append-only\)/g, "maintenance.parts_inventory"],
     ["wrong client endpoint", apiPath, /\/api\/v1\/maintenance\/parts-inventory\/purchases\?/g, "/api/v1/maintenance/parts?"],
     ["wrong backend table", routePath, /FROM maintenance\.parts_purchases pp/g, "FROM maintenance.parts_inventory pp"],

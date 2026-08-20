@@ -40,8 +40,15 @@ export function computeFailures(files) {
   if (!/listPartsPurchases/.test(purchases)) {
     errors.push("InventoryPurchasesPage must load the real purchase-event SoR via listPartsPurchases");
   }
-  if (!/listPartsAssignments/.test(assignments) || !/parts-assignments/.test(assignments)) {
-    errors.push("InventoryAssignmentsPage must load listPartsAssignments / parts-assignments SoR");
+  // 2026-08-21 (CC-3): the page was refactored to call the paginated getPartsAssignmentsPage(...)
+  // directly instead of the older listPartsAssignments wrapper — same real endpoint/SoR (asserted
+  // elsewhere in this file); listPartsAssignments itself still exists in api/maintenance.ts as a
+  // thin compat wrapper over getPartsAssignmentsPage. Accept either call shape.
+  if (
+    (!/listPartsAssignments/.test(assignments) && !/getPartsAssignmentsPage/.test(assignments)) ||
+    !/parts-assignments/.test(assignments)
+  ) {
+    errors.push("InventoryAssignmentsPage must load listPartsAssignments (or getPartsAssignmentsPage) / parts-assignments SoR");
   }
   if (/<code[^>]*>\s*maintenance\.parts_invoice_links\s*<\/code>/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must not expose its internal database table name to operators");
