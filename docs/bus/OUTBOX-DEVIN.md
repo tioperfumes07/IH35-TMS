@@ -14223,3 +14223,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.reactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.reactivate:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=f92fa7d head Checking session... | NEXT=leaf=vendors:detail.safer_verify:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.reactivate:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=f92fa7d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=f92fa7d head Checking session... | NEXT=leaf=vendors:detail.safer_verify:vendor
