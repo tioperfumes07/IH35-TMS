@@ -1116,3 +1116,14 @@ Ingles
 Espanol (preview)
 6 | healthz=337ab0c | mutation=none | NEXT=finance.nav.amortization
 Devin-A | LIVE STARVED | module=finance | leaf=nav.amortization | URL=https://app.ih35dispatch.com/finance/amortization | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/finance/amortization ; body head Checking session... | healthz=337ab0c | mutation=none | NEXT=finance.nav.loan_wizard
+Devin-A | LIVE PASS | module=finance | leaf=nav.loan_wizard | URL=https://app.ih35dispatch.com/finance/loan-wizard | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/finance/loan-wizard ; marker 'Loan Wizard' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=337ab0c | mutation=none | NEXT=finance.hop.accounting
