@@ -103,7 +103,6 @@ type BoardLoadExtras = {
   customer_wo_number?: string | null;
   commodity?: string | null;
   linehaul_cents?: number | null;
-  trailer_number?: string | null;
 };
 
 type BoardLoad = DispatchLoadRow & BoardLoadExtras;
@@ -708,8 +707,8 @@ export function DispatchBoard({
       <InlineTrailerPicker
         loadId={load.id}
         operatingCompanyId={companyId}
-        trailerId={rowOverrides[load.id]?.trailerId ?? (load as { trailer_id?: string | null }).trailer_id ?? null}
-        displayLabel={rowOverrides[load.id]?.trailerLabel ?? entityLabel(load.trailer_number, (load as { trailer_id?: string | null }).trailer_id, "Trailer")}
+        trailerId={rowOverrides[load.id]?.trailerId ?? load.trailer_id ?? null}
+        displayLabel={rowOverrides[load.id]?.trailerLabel ?? entityLabel(load.trailer_number, load.trailer_id, "Trailer")}
         onAssigned={({ trailerId, label }) =>
           setRowOverrides((prev) => ({
             ...prev,
@@ -727,7 +726,7 @@ export function DispatchBoard({
     ) : (
       <EntityLinkOrTombstone
         kind="trailer"
-        id={(load as { trailer_id?: string | null }).trailer_id ?? null}
+        id={load.trailer_id}
         name={load.trailer_number}
         noun="Trailer"
       />

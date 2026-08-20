@@ -73,6 +73,8 @@ export type DispatchLoadRow = {
   currency_code: "USD" | "MXN";
   assigned_unit_id: string | null;
   assigned_unit_number: string | null;
+  trailer_id?: string | null;
+  trailer_number?: string | null;
   assigned_primary_driver_id: string | null;
   assigned_primary_driver_name: string | null;
   assigned_secondary_driver_id: string | null;

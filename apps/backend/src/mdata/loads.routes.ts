@@ -716,6 +716,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             l.dispatcher_user_id, l.notes, l.dispatch_flag_color_id, l.created_at, l.updated_at, l.soft_deleted_at, l.deleted_by_user_id,
             c.customer_name AS customer_name,
             u.unit_number AS assigned_unit_number,
+            tr.id AS trailer_id,
+            tr.equipment_number AS trailer_number,
             CASE
               WHEN d.id IS NULL THEN NULL
               ELSE CONCAT_WS(' ', d.first_name, d.last_name)
@@ -737,6 +739,21 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                                 AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+          -- DISPATCH-PRIMARY-TRAILER-REVERSE: mdata.loads has no trailer FK. Resolve the latest
+          -- canonical assignment-history trailer and scope the equipment join to this load's entity;
+          -- otherwise the mounted DispatchBoard receives neither the id nor human label it needs
+          -- for the closed-state trailer reverse drill.
+          LEFT JOIN LATERAL (
+            SELECT eq.id, eq.equipment_number
+            FROM dispatch.load_assignment_history lah
+            JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+                                   AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id
+            WHERE lah.load_id = l.id
+              AND lah.operating_company_id = l.operating_company_id
+              AND lah.new_trailer_id IS NOT NULL
+            ORDER BY lah.assigned_at DESC, lah.created_at DESC
+            LIMIT 1
+          ) tr ON true
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                    AND d.operating_company_id = l.operating_company_id
           JOIN catalogs.dispatch_flag_colors df ON df.id = l.dispatch_flag_color_id
