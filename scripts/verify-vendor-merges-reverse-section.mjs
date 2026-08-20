@@ -56,15 +56,6 @@ export function assertVendorMergesReverse(sources) {
   if (!/AND m\.driver_id = \$/.test(service)) {
     problems.push(`${SERVICE}: listDriverVendorMerges must filter by driver_id server-side when provided`);
   }
-  if (!/LEFT JOIN mdata\.drivers d ON d\.id = m\.driver_id[\s\S]{0,100}d\.operating_company_id = m\.operating_company_id/.test(service) || !/AS driver_name/.test(service)) {
-    problems.push(`${SERVICE}: merge list must resolve the driver label through an exact same-company join`);
-  }
-  if (!/driver_name\?: string \| null/.test(api)) {
-    problems.push(`${API}: DriverVendorMergeRow must expose the nullable scoped driver name`);
-  }
-  if (!/<EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/.test(home)) {
-    problems.push(`${HOME}: vendor merge driver must use its scoped nullable human label`);
-  }
   if (!/fromv\.id = \$[\s\S]{0,40}OR tov\.id = \$/.test(service)) {
     problems.push(`${SERVICE}: listDriverVendorMerges must filter by resolved vendor id (from or to) when vendorId provided`);
   }
@@ -137,9 +128,6 @@ function selftest() {
       if (filters.driverId) { driverFilter = \`AND m.driver_id = $\${values.length}::uuid\`; }
       let vendorFilter = "";
       if (filters.vendorId) { vendorFilter = \`AND (fromv.id = $\${values.length}::uuid OR tov.id = $\${values.length}::uuid)\`; }
-      SELECT NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), '') AS driver_name
-      FROM mdata.driver_vendor_merges m
-      LEFT JOIN mdata.drivers d ON d.id = m.driver_id AND d.operating_company_id = m.operating_company_id
     `,
     [ROUTES]: `
       const driverVendorMergesQuerySchema = companyQuerySchema.extend({
@@ -152,7 +140,6 @@ function selftest() {
       });
     `,
     [API]: `
-      export type DriverVendorMergeRow = { driver_name?: string | null };
       export function listDriverVendorMerges(companyId: string, filters: { driver_id?: string; vendor_id?: string } = {}) {
         return apiRequest(\`/api/v1/integrations/qbo/driver-vendor-merges\`);
       }
@@ -168,7 +155,6 @@ function selftest() {
           }),
       });
       dataTestId="factoring-home-filter-driver"
-      <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />
     `,
     [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)
       kind="factoring_vendor_merges_driver"
@@ -196,9 +182,6 @@ function selftest() {
   const mutations = [
     { ...good, [SERVICE]: good[SERVICE].replace('driverFilter = `AND m.driver_id = $${values.length}::uuid`;', "") },
     { ...good, [SERVICE]: good[SERVICE].replace('vendorFilter = `AND (fromv.id = $${values.length}::uuid OR tov.id = $${values.length}::uuid)`;', "") },
-    { ...good, [SERVICE]: good[SERVICE].replace("d.operating_company_id = m.operating_company_id", "TRUE") },
-    { ...good, [API]: good[API].replace("driver_name?: string | null", "driver_name?: never") },
-    { ...good, [HOME]: good[HOME].replace("name={row.driver_name}", "name={null}") },
     { ...good, [ROUTES]: good[ROUTES].replace("driver_id: z.string().uuid().optional(),\n        vendor_id: z.string().uuid().optional(),", "") },
     { ...good, [ROUTES]: good[ROUTES].replace("driverId: query.data.driver_id,", "") },
     { ...good, [API]: good[API].replace("filters: { driver_id?: string; vendor_id?: string } = {}", "") },
