@@ -7982,3 +7982,24 @@ Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.create_work_order:picke
 Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.create_work_order:unit | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=1505d91 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.fault_rule:connectivity
 Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.create_work_order:vendor | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=1505d91 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.fault_rule:connectivity
 Devin-A | LIVE PASS | leaf=maintenance:maintenance.modal.fault_rule:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=1505d91 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance marker 'maintenance' | NEXT=leaf=maintenance:maintenance.modal.road_service_ticket:connectivity
+Devin-A | LIVE STARVED | leaf=maintenance:maintenance.modal.road_service_ticket:connectivity | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=maintenance:maintenance.modal.triage:connectivity
+Devin-A | LIVE STARVED | leaf=maintenance:maintenance.modal.road_service_ticket:unit | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=maintenance:maintenance.modal.triage:connectivity
+Devin-A | LIVE STARVED | leaf=maintenance:maintenance.modal.road_service_ticket:vendor | USMCA | URL=https://app.ih35dispatch.com/maintenance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/maintenance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=maintenance:maintenance.modal.triage:connectivity
