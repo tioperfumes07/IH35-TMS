@@ -23,6 +23,7 @@ const guards = [
   "verify-cash-forecast-profile-reverse.mjs",
   "verify-categorization-rule-apply-historical-not-dry-run.mjs",
   "verify-categorize-field-existence-checked.mjs",
+  "verify-customer-payment-apply-nets-credit-memos.mjs",
   "verify-customer-payment-write-role-gated.mjs",
   "verify-deductions-write-role-gated.mjs",
   "verify-coa-asymmetry-account-entitylink.mjs",
