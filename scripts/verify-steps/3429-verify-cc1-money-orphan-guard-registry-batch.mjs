@@ -55,6 +55,7 @@ const guards = [
   "verify-obligation-reconcile-existence-checked.mjs",
   "verify-obligation-reconcile-settlement-net-pay-column.mjs",
   "verify-payment-application-write-role-gated.mjs",
+  "verify-payment-void-recompute-unapplied-filter.mjs",
   "verify-payments-create-role-gated.mjs",
   "verify-payrun-close-reimbursements-and-active-lines.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
