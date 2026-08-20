@@ -14,6 +14,7 @@ export function SafetyEventsView({ driverId, operatingCompanyId }: Props) {
         { key: "occurred_at", label: "Occurred" },
         { key: "event_type", label: "Type" },
         { key: "severity", label: "Severity" },
+        { key: "unit_number", label: "Unit", entityKind: "unit", idKey: "unit_id" },
         { key: "source", label: "Source" },
       ]}
     />

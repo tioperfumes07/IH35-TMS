@@ -36,7 +36,9 @@ const API = "apps/frontend/src/api/safety.ts";
 const INTERNAL_FINES_ROUTE = "apps/backend/src/safety/safety-v5.routes.ts";
 const COMPLAINTS_ROUTE = "apps/backend/src/routes/safety/complaints.ts";
 const DOT_ROUTE = "apps/backend/src/routes/safety/dot-inspections.ts";
-const FILES = [SECTION, DRIVER_DETAIL, DRIVER_PROFILE, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE, DOT_ROUTE];
+const OPS_SAFETY_VIEW = "apps/frontend/src/pages/drivers/operations/SafetyEventsView.tsx";
+const OPS_SAFETY_SERVICE = "apps/backend/src/master-data/drivers/operations-depth/safety-events.service.ts";
+const FILES = [SECTION, DRIVER_DETAIL, DRIVER_PROFILE, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE, DOT_ROUTE, OPS_SAFETY_VIEW, OPS_SAFETY_SERVICE];
 const LABEL = "verify-driver-safety-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -109,13 +111,23 @@ export function assertDriverSafetyReverse(sources) {
     problems.push(`${DOT_ROUTE}: POST must reject driver/unit ids that are not linked to the selected operating company before insert.`);
   }
 
-  // 4. Complaints match either side of the record.
+  // 4. The mounted Operations → Safety Events consumer must preserve harsh_events.unit_id.
+  // A human event label without its canonical Unit drill loses a real FK at the API boundary.
+  if (!/key: "unit_number", label: "Unit", entityKind: "unit", idKey: "unit_id"/.test(src[OPS_SAFETY_VIEW])) {
+    problems.push(`${OPS_SAFETY_VIEW}: Safety Events must render the row's canonical unit_id as a Unit EntityLink.`);
+  }
+  if (!/he\.unit_id::text[\s\S]{0,180}NULLIF\(TRIM\(u\.unit_number\), ''\) AS unit_number/.test(src[OPS_SAFETY_SERVICE]) ||
+      !/JOIN mdata\.units u[\s\S]{0,220}u\.owner_company_id = \$2::uuid OR u\.currently_leased_to_company_id = \$2::uuid/.test(src[OPS_SAFETY_SERVICE])) {
+    problems.push(`${OPS_SAFETY_SERVICE}: Safety Events producer must return unit_id + human unit_number through a selected-company-scoped unit join.`);
+  }
+
+  // 5. Complaints match either side of the record.
   const complaintsSql = src[COMPLAINTS_ROUTE];
   if (!complaintsSql.includes("complainant_driver_id = $") || !complaintsSql.includes("respondent_driver_id = $")) {
     problems.push(`${COMPLAINTS_ROUTE}: driver filter does not match BOTH complainant_driver_id and respondent_driver_id — half the driver's complaints stay hidden.`);
   }
 
-  // 5. Money units not crossed (civil = cents, internal = dollars).
+  // 6. Money units not crossed (civil = cents, internal = dollars).
   if (!/formatUsdCents\(fine\.amount_cents/.test(src[SECTION])) {
     problems.push(`${SECTION}: civil fine amount must render via formatUsdCents(amount_cents) — safety.civil_fines.amount_cents is integer cents.`);
   }
@@ -165,6 +177,16 @@ if (SELFTEST) {
     "dot-writer-membership-removed",
     { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/linked_entity_not_in_operating_company/g, "invalid_link") },
     "POST must reject driver/unit ids"
+  );
+  expectCaught(
+    "operations-safety-unit-drill-removed",
+    { ...live, [OPS_SAFETY_VIEW]: live[OPS_SAFETY_VIEW].replace(/entityKind: "unit", idKey: "unit_id"/g, "") },
+    "canonical unit_id as a Unit EntityLink"
+  );
+  expectCaught(
+    "operations-safety-unit-producer-scope-removed",
+    { ...live, [OPS_SAFETY_SERVICE]: live[OPS_SAFETY_SERVICE].replace(/ OR u\.currently_leased_to_company_id = \$2::uuid/g, "") },
+    "selected-company-scoped unit join"
   );
   // 2. a read stops being driver-scoped (shows the whole company on one driver's page).
   expectCaught(
@@ -229,7 +251,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 13 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 15 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
