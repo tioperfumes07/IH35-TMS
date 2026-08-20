@@ -3969,3 +3969,17 @@ Tasks
 P | NEXT=leaf=lists:catalog.dispatch.additional_charges.create:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.dispatch.additional_charges.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/additional-charges | healthz=b68a216 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/dispatch/additional-charges marker 'lists' | NEXT=leaf=lists:catalog.dispatch.additional_charges.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.dispatch.additional_charges.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/additional-charges | healthz=b68a216 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/dispatch/additional-charges marker 'lists' | NEXT=leaf=lists:catalog.dispatch.additional_charges.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.dispatch.additional_charges.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/additional-charges | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/dispatch/additional-charges healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.dispatch.detention_reasons.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.dispatch.additional_charges.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/dispatch/additional-charges | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/dispatch/additional-charges healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.dispatch.detention_reasons.create:qbo_chrome
