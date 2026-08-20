@@ -11679,3 +11679,36 @@ Espanol (preview)
 t | NEXT=leaf=vendors:detail.profile.category_save:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.category_save:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.category_save:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=c1174e6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.driver_link:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=c1174e6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.driver_link:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.default_expense_account:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=c1174e6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.driver_link:vendor
