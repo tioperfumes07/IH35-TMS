@@ -197,6 +197,10 @@
     "202612850000": {
       "claimed_by": "cc-1",
       "purpose": "acct_f5678_usmca_payment_method_gl_binding"
+    },
+    "202612860000": {
+      "claimed_by": "cc-1",
+      "purpose": "acct_f5679_usmca_net_pay_floor_locked_5pct"
     }
   }
 }
