@@ -107,19 +107,23 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
     `
       SELECT
         i.*,
-        c.customer_name,
+        -- ACCT-F5611 — see the list/count queries above for the full root-cause writeup: a plain
+        -- (INNER) JOIN to mdata.customers made this SELECT return zero rows (a 404 on the detail
+        -- page) for any invoice whose customer was later deactivated. LEFT JOIN + resolver fallback
+        -- mirrors the fix there exactly.
+        COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) AS customer_name,
         fa.display_id AS factoring_display_id,
         COALESCE(l.customer_chargeback_requested, false) AS source_load_chargeback_requested,
         l.customer_chargeback_reason AS source_load_chargeback_reason,
         l.load_number AS source_load_number,
         CASE i.bill_to_entity_type
-          WHEN 'customer' THEN COALESCE(btc.customer_name, c.customer_name)
+          WHEN 'customer' THEN COALESCE(btc.customer_name, mdata.resolve_customer_label_same_company(i.bill_to_entity_id, i.operating_company_id), c.customer_name)
           WHEN 'driver' THEN NULLIF(TRIM(COALESCE(btd.first_name, '') || ' ' || COALESCE(btd.last_name, '')), '')
           WHEN 'vendor' THEN btv.vendor_name
           ELSE NULL
         END AS bill_to_entity_label
       FROM accounting.invoices i
-      JOIN mdata.customers c
+      LEFT JOIN mdata.customers c
         ON c.id = i.customer_id
        AND c.operating_company_id = i.operating_company_id
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the invoice is scoped and its customer/load joins
@@ -275,11 +279,19 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       }
       // Same extra filters for COUNT and LIST (bind indices identical until LIMIT/OFFSET appended).
       const extraSql = extraWhere.length ? `AND ${extraWhere.join(" AND ")}` : "";
+      // ACCT-F5611 — LEFT JOIN, not the previous plain (INNER) JOIN. mdata.customers' own
+      // customers_select RLS policy excludes deactivated_at IS NOT NULL rows for a non-bypass reader,
+      // so an INNER JOIN silently dropped every invoice whose customer was later deactivated from
+      // BOTH the count and the list -- confirmed live: 7 of USMCA's 37 invoices, exactly matching the
+      // reported "shows 30 of 37" gap. The customer_id FK is still valid; only the customer's
+      // selectable-for-new-work status changed. c.customer_name in the search filter below still
+      // works against a LEFT JOIN (NULL-safe ILIKE simply never matches on the joined-out rows,
+      // narrowing search results correctly rather than hiding whole invoices).
       const countRes = await client.query(
         `
           SELECT COUNT(*)::int AS total
           FROM accounting.invoices i
-          JOIN mdata.customers c
+          LEFT JOIN mdata.customers c
             ON c.id = i.customer_id
            AND c.operating_company_id = i.operating_company_id
            AND c.operating_company_id = $1::uuid
@@ -297,7 +309,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `
           SELECT
             i.*,
-            c.customer_name,
+            -- ACCT-F5611 — c.customer_name is NULL for a deactivated customer under the LEFT JOIN
+            -- below (RLS still applies to the joined row, it just no longer drops the outer invoice
+            -- row); the resolver mirrors mdata.resolve_vendor_label_same_company (202612780000) to
+            -- supply the real name for a HISTORICAL reference, same-company-only, label-only.
+            COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) AS customer_name,
             fa.display_id AS factoring_display_id,
             l.load_number AS source_load_number,
             COALESCE(l.customer_chargeback_requested, false) AS source_load_chargeback_requested,
@@ -308,7 +324,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
               WHERE il.invoice_id = i.id
             )::int AS line_count
           FROM accounting.invoices i
-          JOIN mdata.customers c
+          LEFT JOIN mdata.customers c
             ON c.id = i.customer_id
            AND c.operating_company_id = i.operating_company_id
            AND c.operating_company_id = $1::uuid
@@ -1042,10 +1058,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `
           SELECT
             i.*,
-            c.customer_name,
+            -- ACCT-F5611 — same LEFT JOIN + resolver fallback fix as the main list/detail queries above.
+            COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) AS customer_name,
             fa.display_id AS factoring_display_id
           FROM accounting.invoices i
-          JOIN mdata.customers c
+          LEFT JOIN mdata.customers c
             ON c.id = i.customer_id
            AND c.operating_company_id = i.operating_company_id
           -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the invoice is scoped and its customer/load joins
