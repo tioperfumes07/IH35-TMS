@@ -1494,6 +1494,7 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
   clickedCells: number;
   frozenOps: number;
   opsClicked: number;
+  opsLive: number;
   missOpsClicked: number;
   readyAbl: MatrixAblPct;
   fwAbl: Record<string, MatrixAblPct>;
@@ -1510,6 +1511,7 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
   let opsReq = 0;
   let opsBu = 0;
   let opsClicked = 0;
+  let opsLive = 0;
   const columns: SystemMatrixColumn[] = board.columns.map((c) => ({
     id: c.id,
     label: c.label,
@@ -1556,6 +1558,7 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
         opsReq += 1;
         if (built) opsBu += 1;
         if (cell.clicked) opsClicked += 1;
+        if (live) opsLive += 1;
       }
     }
   }
@@ -1605,12 +1608,13 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
     clickedCells: mClicked,
     frozenOps: opsReq,
     opsClicked,
-    missOpsClicked: Math.max(0, opsReq - opsClicked),
+    opsLive,
+    missOpsClicked: Math.max(0, opsReq - opsLive),
     readyAbl: ablFromCounts(
       opsReq,
       opsClicked,
       opsBu,
-      opsReq > 0 && opsClicked === opsReq && opsBu === opsReq ? opsReq : 0,
+      opsLive,
     ),
     fwAbl,
     fwCounts,
@@ -1675,6 +1679,7 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
   let sysModals = 0;
   let sysFrozenOps = 0;
   let sysOpsClicked = 0;
+  let sysOpsLive = 0;
   const sysFwCounts = new Map<string, { req: number; aud: number; bu: number; li: number }>();
   for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
     sysFwCounts.set(spec.id, { req: 0, aud: 0, bu: 0, li: 0 });
@@ -1700,6 +1705,7 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
       sysModals += Number(board.metrics.modalLeafCount) || 0;
       sysFrozenOps += abl.frozenOps;
       sysOpsClicked += abl.opsClicked;
+      sysOpsLive += abl.opsLive;
       for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
         const from = abl.fwCounts[spec.id];
         if (!from) continue;
@@ -1830,12 +1836,12 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
       clickedCells: sysClicked,
       frozenOps: sysFrozenOps,
       opsClicked: sysOpsClicked,
-      missOpsClicked: Math.max(0, sysFrozenOps - sysOpsClicked),
+      missOpsClicked: Math.max(0, sysFrozenOps - sysOpsLive),
       readyAbl: ablFromCounts(
         sysFrozenOps,
         sysOpsClicked,
         sysOpsClicked,
-        sysFrozenOps > 0 && sysOpsClicked === sysFrozenOps ? sysFrozenOps : 0,
+        sysOpsLive,
       ),
       fwAbl,
     },

@@ -234,7 +234,9 @@ export function ModuleMatrixSystemView() {
     const clicked = row.clickedCells ?? 0;
     const frozenOps = row.frozenOps ?? 0;
     const opsClicked = row.opsClicked ?? 0;
-    const missC = row.missOpsClicked ?? Math.max(0, frozenOps - opsClicked);
+    const missC =
+      row.missOpsClicked ??
+      Math.max(0, frozenOps - Number(row.metrics?.liveCells ?? opsClicked));
     return (
       <tr key={row.module} className={row.available ? "" : "dim-row"} data-testid={`system-row-${row.module}`}>
         <td className="sticky-col">
@@ -320,7 +322,7 @@ export function ModuleMatrixSystemView() {
           Live). Column <b>12 Clicked</b> is 4/4 only when Clicked = every Required cell. Partial =
           yellow/red until 100%.
           Urgent-6 100% = Fully-Wired 1–12 on accounting→customers→drivers→vendors→dispatch→safety.
-          Do not add leaves. Ignore Box 4 keyword fan-out. Money cells count in Frozen / Miss C / READY. READY Live✓ when Miss C = 0.
+          Do not add leaves. Ignore Box 4 keyword fan-out. Money cells count in Frozen / Miss C / READY. Miss C = Required cells that are not Box 4 Live (Clicked 100% does not zero Miss C). READY Live✓ when Miss C = 0.
           Urgent 16 A–Z first ({URGENT_16_MODULE_IDS.length}), then remainder A–Z ({restRows.length}).
           {tip ? (
             <>
@@ -376,7 +378,7 @@ export function ModuleMatrixSystemView() {
             <div className="l">
               Miss C
               <br />
-              unpaid Clicked of frozen
+              unpaid Live of frozen (money in)
             </div>
           </div>
           <div className="metric">
@@ -417,7 +419,7 @@ export function ModuleMatrixSystemView() {
         <b>Named</b> = PROD-VERIFIED rows with an explicit <code>leaf:col</code> (not Box 4 fan-out).{" "}
         <b>Leaves</b> = required-map surfaces (tabs/pages), not cells. <b>Modals</b> = those leaves whose
         id looks like create/modal/drawer/wizard. <b>Clicked</b> = Chrome USMCA click credit (1–3 exact
-        cells; same as column 12 Clicked). Frozen / Miss C include money.
+        cells; same as column 12 Clicked). Frozen / Miss C include money. Miss C is unpaid Live, not unpaid Clicked.
       </p>
 
       <div className="legend" data-testid="module-matrix-system-legend">

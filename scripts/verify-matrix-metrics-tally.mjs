@@ -121,6 +121,14 @@ export function matrixPreviewRecentProblems(preview) {
   return problems;
 }
 
+export function missCLiveProblems(svc) {
+  const problems = [];
+  if (!/opsReq - opsLive/.test(svc) || !/sysFrozenOps - sysOpsLive/.test(svc)) {
+    problems.push("Miss C must be frozen minus Live (opsLive / sysOpsLive), not frozen minus Clicked");
+  }
+  return problems;
+}
+
 export function moneyParkProblems(svc, view) {
   const problems = [];
   if (/\(\s*group\s*\|\|\s*"other"\s*\)\s*!==\s*"money"/.test(svc) || /excludes money-group/.test(svc)) {
@@ -189,8 +197,9 @@ function repoProblems() {
       problems.push("fw12 Clicked rollup must set Built=Clicked (never bu:0 which paints Built always red)");
     }
     if (!/frozenOps/.test(svc) || !/readyAbl/.test(svc) || !/isOpsReadyColumn/.test(svc)) {
-      problems.push("module-matrix.service.ts must expose frozen READY (all Required cells including money, USMCA Clicked)");
+      problems.push("module-matrix.service.ts must expose frozen READY (all Required cells including money)");
     }
+    problems.push(...missCLiveProblems(svc));
     if (/\(\s*group\s*\|\|\s*"other"\s*\)\s*!==\s*"money"/.test(svc) || /excludes money-group/.test(svc)) {
       problems.push("READY/Miss C must include money — isOpsReadyColumn must not exclude group money (owner 2026-08-20)");
     }
@@ -217,8 +226,8 @@ function repoProblems() {
     if (!/module-matrix-kpi-frozen/.test(view) || !/module-matrix-kpi-miss-c/.test(view)) {
       problems.push("system matrix must show Frozen and Miss C KPIs as opsClicked of frozenOps");
     }
-    if (!/ops Clicked of frozen cells/.test(view) || !/unpaid Clicked of frozen/.test(view)) {
-      problems.push("Frozen/Miss C KPI labels must be X of frozen (not Box 4)");
+    if (!/unpaid Live of frozen/.test(view) || !/ops Clicked of frozen cells/.test(view)) {
+      problems.push("Frozen KPI = Clicked of frozen; Miss C KPI = unpaid Live of frozen (Clicked 100% must not zero Miss C)");
     }
     if (/MONEY parked/.test(view) || /Miss C ignore MONEY/.test(view)) {
       problems.push("system matrix must not park money out of Frozen/Miss C/READY");
@@ -309,6 +318,22 @@ if (SELFTEST) {
     !moneyParkProblems(plantedMoneyPark, parkedView).some((p) => p.includes("must not park money"))
   ) {
     console.error(`${LABEL} selftest: money-park mutation escaped`, moneyParkProblems(plantedMoneyPark, parkedView));
+    process.exit(1);
+  }
+  const plantedMissClicked = fs
+    .readFileSync(MATRIX_SVC, "utf8")
+    .replaceAll("opsReq - opsLive", "opsReq - opsClicked")
+    .replaceAll("sysFrozenOps - sysOpsLive", "sysFrozenOps - sysOpsClicked");
+  if (/opsReq - opsLive/.test(plantedMissClicked) || /sysFrozenOps - sysOpsLive/.test(plantedMissClicked)) {
+    console.error(`${LABEL} selftest: could not plant Clicked Miss C`);
+    process.exit(1);
+  }
+  if (!/opsReq - opsClicked/.test(plantedMissClicked)) {
+    console.error(`${LABEL} selftest: planted Miss C did not revert to Clicked`);
+    process.exit(1);
+  }
+  if (!missCLiveProblems(plantedMissClicked).some((p) => p.includes("frozen minus Live"))) {
+    console.error(`${LABEL} selftest: Miss C Clicked-zero mutation escaped`);
     process.exit(1);
   }
   const repo = repoProblems();
