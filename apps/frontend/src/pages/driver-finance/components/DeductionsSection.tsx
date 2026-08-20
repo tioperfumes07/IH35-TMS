@@ -1,5 +1,5 @@
 import { Button } from "../../../components/Button";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 export type DeductionRow = {
   id: string;
@@ -49,11 +49,12 @@ export function DeductionsSection({ rows, onHold, onResume }: Props) {
               {row.is_held ? (
                 <div className="text-slate-700">
                   HELD by{" "}
-                  {row.held_by_user_id ? (
-                    <EntityLink kind="user" id={row.held_by_user_id} label={row.held_by_user ?? "user"} />
-                  ) : (
-                    row.held_by_user ?? "user"
-                  )}
+                  <EntityLinkOrTombstone
+                    kind="user"
+                    id={row.held_by_user_id}
+                    name={row.held_by_user}
+                    noun="User"
+                  />
                 </div>
               ) : null}
             </div>
