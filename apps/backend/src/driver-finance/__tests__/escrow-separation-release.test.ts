@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocked = vi.hoisted(() => ({
   queryMock: vi.fn(),
   isEnabledMock: vi.fn(),
-  releaseEscrowMock: vi.fn(),
+  releaseEscrowOnClientMock: vi.fn(),
   appendCrudAuditMock: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -12,7 +12,7 @@ vi.mock("../../auth/db.js", () => ({
     fn({ query: mocked.queryMock }),
 }));
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: mocked.isEnabledMock }));
-vi.mock("../../accounting/escrow/service.js", () => ({ releaseEscrow: mocked.releaseEscrowMock }));
+vi.mock("../../accounting/escrow/service.js", () => ({ releaseEscrowOnClient: mocked.releaseEscrowOnClientMock }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: mocked.appendCrudAuditMock }));
 
 import { releaseDriverEscrowSeparation } from "../escrow-separation.service.js";
@@ -72,7 +72,7 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
   beforeEach(() => {
     mocked.queryMock.mockReset();
     mocked.isEnabledMock.mockReset();
-    mocked.releaseEscrowMock.mockReset();
+    mocked.releaseEscrowOnClientMock.mockReset();
     mocked.appendCrudAuditMock.mockClear();
   });
 
@@ -94,7 +94,7 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
       { userId: "user-1", role: "Owner" }
     );
     expect(result).toEqual({ result: "skipped_flag_off" });
-    expect(mocked.releaseEscrowMock).not.toHaveBeenCalled();
+    expect(mocked.releaseEscrowOnClientMock).not.toHaveBeenCalled();
   });
 
   it("refuses release before the 90-day eligible_release_date", async () => {
@@ -105,12 +105,12 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
       { userId: "user-1", role: "Owner" }
     );
     expect(result).toMatchObject({ result: "not_eligible" });
-    expect(mocked.releaseEscrowMock).not.toHaveBeenCalled();
+    expect(mocked.releaseEscrowOnClientMock).not.toHaveBeenCalled();
   });
 
   it("releases the full balance to the driver when there are no outstanding damage claims", async () => {
     mocked.isEnabledMock.mockResolvedValue(true);
-    mocked.releaseEscrowMock.mockResolvedValue({ posting: { id: "posting-1" }, balance_cents: 0 });
+    mocked.releaseEscrowOnClientMock.mockResolvedValue({ posting: { id: "posting-1" }, balance_cents: 0 });
     mockQueryImplementation({ balanceCents: 50000, outstandingDamageCents: 0 });
 
     const result = await releaseDriverEscrowSeparation(
@@ -119,7 +119,10 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
     );
 
     expect(result).toMatchObject({ result: "released", net_release_cents: 50000, retained_for_damages_cents: 0 });
-    expect(mocked.releaseEscrowMock).toHaveBeenCalledWith(
+    // ACCT-F5644 — releaseEscrowOnClient's FIRST argument must be this same function's own client
+    // (the one already holding the FOR UPDATE lock on the separation row), never a second connection.
+    expect(mocked.releaseEscrowOnClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: mocked.queryMock }),
       expect.objectContaining({ amount_cents: 50000, source_type: "manual", source_id: SEPARATION_ROW.id }),
       { userId: "user-1", role: "Owner" }
     );
@@ -135,7 +138,7 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
     );
 
     expect(result).toMatchObject({ result: "released", net_release_cents: 0, retained_for_damages_cents: 20000 });
-    expect(mocked.releaseEscrowMock).not.toHaveBeenCalled();
+    expect(mocked.releaseEscrowOnClientMock).not.toHaveBeenCalled();
   });
 
   it("rejects re-release of an already-resolved separation", async () => {

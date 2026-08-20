@@ -1,6 +1,6 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
-import { createJournalEntry } from "../journal-entries.service.js";
+import { createJournalEntryOnClient } from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 
@@ -273,7 +273,27 @@ export async function listEscrowPostings(input: { operating_company_id: string; 
   });
 }
 
-async function postEscrowTransaction(
+/**
+ * ACCT-F5644 — the caller's own client, atomic with any outer transaction/row-lock the caller already
+ * holds. `postEscrowTransaction` below used to run this ENTIRE body inside its own `withCurrentUser`
+ * connection (call it connection A) and then post the journal entry via `createJournalEntry` — a
+ * DIFFERENT, connection-opening function that opens its OWN, SECOND connection (connection B)
+ * internally and commits independently. Even a standalone call had two connections mid-flight
+ * simultaneously: the JE could commit on connection B while a later failure on connection A (the
+ * escrow_postings INSERT, the audit write, the balance re-read) rolled connection A back — leaving an
+ * orphan, committed journal entry with NO escrow_postings row ever backing it, permanently
+ * un-reconcilable against the escrow subledger. On top of that, any caller that already held its own
+ * open transaction (escrow-separation.service.ts's releaseDriverEscrowSeparation, ACCT-F5643's own
+ * REMAINING note) could never post atomically with this function at all, since it always opened yet
+ * another independent connection regardless of caller context.
+ *
+ * Exported so a caller with its own already-open, row-locked client (mirroring
+ * createJournalEntryOnClient's own client-taking convention, and this file's own pre-existing
+ * recordEscrowPostingOnly(client, ...) primitive) can post atomically with its own transaction — no
+ * new GL math, same postings this function has always computed.
+ */
+export async function postEscrowTransactionOnClient(
+  client: Parameters<typeof createJournalEntryOnClient>[0],
   input: {
     operating_company_id: string;
     escrow_account_id: string;
@@ -286,7 +306,7 @@ async function postEscrowTransaction(
   actor: { userId: string; role: string }
 ) {
   if (input.amount_cents <= 0) throw new Error("escrow_amount_must_be_positive");
-  return withCurrentUser(actor.userId, async (client) => {
+  {
     await setCompanyScope(client, input.operating_company_id);
     const accountRes = await client.query<EscrowAccount>(
       `
@@ -319,7 +339,8 @@ async function postEscrowTransaction(
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
     const memoPrefix = input.posting_type === "deposit" ? "Escrow deposit" : input.posting_type === "release" ? "Escrow release" : "Escrow adjustment";
     const postingDate = companyBusinessDate();
-    const journalEntry = await createJournalEntry(
+    const journalEntry = await createJournalEntryOnClient(
+      client,
       {
         operating_company_id: input.operating_company_id,
         entry_date: postingDate,
@@ -435,7 +456,23 @@ async function postEscrowTransaction(
       balance_cents: cents(refreshed.rows[0]?.balance_cents),
       linked_journal_entry_id: journalEntry.id,
     };
-  });
+  }
+}
+
+/** Thin wrapper preserving the exact pre-existing external behavior for callers with no open transaction of their own. */
+async function postEscrowTransaction(
+  input: {
+    operating_company_id: string;
+    escrow_account_id: string;
+    posting_type: EscrowPostingType;
+    amount_cents: number;
+    source_type: EscrowSourceType;
+    source_id?: string | null;
+    note?: string | null;
+  },
+  actor: { userId: string; role: string }
+) {
+  return withCurrentUser(actor.userId, (client) => postEscrowTransactionOnClient(client, input, actor));
 }
 
 export async function depositEscrow(
@@ -553,4 +590,24 @@ export async function releaseEscrow(
   actor: { userId: string; role: string }
 ) {
   return postEscrowTransaction({ ...input, posting_type: "release" }, actor);
+}
+
+/**
+ * ACCT-F5644 — client-taking sibling of releaseEscrow, for a caller that already holds its own open,
+ * row-locked transaction (e.g. escrow-separation.service.ts's releaseDriverEscrowSeparation) and needs
+ * the release atomic with its own status flip/balance stamp, not committed on a second connection.
+ */
+export async function releaseEscrowOnClient(
+  client: Parameters<typeof createJournalEntryOnClient>[0],
+  input: {
+    operating_company_id: string;
+    escrow_account_id: string;
+    amount_cents: number;
+    source_type: EscrowSourceType;
+    source_id?: string | null;
+    note?: string | null;
+  },
+  actor: { userId: string; role: string }
+) {
+  return postEscrowTransactionOnClient(client, { ...input, posting_type: "release" }, actor);
 }
