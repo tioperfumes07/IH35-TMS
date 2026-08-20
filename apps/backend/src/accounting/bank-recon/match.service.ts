@@ -248,7 +248,31 @@ export function computeMatchScore(input: {
   return Number((0.55 * amountScore + 0.2 * dateScore + 0.25 * memoScore).toFixed(6));
 }
 
-async function loadTransaction(client: DbClient, operatingCompanyId: string, bankTransactionId: string): Promise<BankTxn | null> {
+/**
+ * ACCT-F5647 — `forUpdate` defaults false because this helper is shared by read-only paths
+ * (findCandidates' candidate search, previewMatchVariance) as well as the actual accept-match writer.
+ * acceptMatchWithResolveDifference is the ONLY caller that passes `forUpdate: true` — locking this
+ * bank transaction for the entire accept-match flow below. Previously NONE of the three callers
+ * locked the row: acceptMatchWithResolveDifference's only duplicate-match guard was a plain read of
+ * review_state, and the final UPDATE (below) was an unconditional blind write with no
+ * WHERE review_state <> 'matched' compare-and-swap either — so two near-simultaneous accept-match
+ * calls against the SAME bank_transaction_id but DIFFERENT ledger entries could both pass the
+ * unlocked check and both commit: two rows in banking.reconciliation_matches for one bank line, two
+ * different bill_payments/payments rows stamped with the same source_bank_transaction_id, and (if
+ * either match had a variance) two independent difference journal entries posted against the same
+ * bank cash account — a silent GL overstatement, with the bank_transactions row itself only ever
+ * showing ONE of the two matches (last UPDATE wins), so the duplicate leg is invisible to
+ * reconciliation forever. The schema's own uniqueness constraint on reconciliation_matches
+ * (bank_transaction_id, ledger_entry_kind, ledger_entry_id) does not catch this either, since it
+ * includes the ledger entry id — two DIFFERENT ledger entries matched to the same bank transaction
+ * pass it cleanly.
+ */
+async function loadTransaction(
+  client: DbClient,
+  operatingCompanyId: string,
+  bankTransactionId: string,
+  forUpdate = false
+): Promise<BankTxn | null> {
   // BANK-ACCOUNT-HIDE: a transaction on an account hidden for THIS entity must be unreachable by the
   // categorization/matching flow (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
   const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
@@ -270,6 +294,7 @@ async function loadTransaction(client: DbClient, operatingCompanyId: string, ban
         AND bt.operating_company_id = $2::uuid
         ${bankTransactionHiddenFilterSql(hideOn, "bt")}
       LIMIT 1
+      ${forUpdate ? "FOR UPDATE" : ""}
     `,
     [bankTransactionId, operatingCompanyId]
   );
@@ -851,7 +876,8 @@ export async function findCandidates(input: {
 export async function acceptMatchWithResolveDifference(input: ResolveDifferenceInput): Promise<ResolveDifferenceResult> {
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id);
+    // ACCT-F5647 — FOR UPDATE, locking this bank transaction for the entire accept-match flow below.
+    const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id, true);
     if (!txn) {
       throw new Error("bank_transaction_not_found");
     }
@@ -921,15 +947,22 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // banking.reconciliation_matches. Column name comes from a fixed whitelist (never user input).
     const matchedColumn = MATCHED_COLUMN_BY_KIND[input.ledger_entry_kind];
     if (matchedColumn) {
-      await client.query(
+      // ACCT-F5647 — belt-and-suspenders alongside the row lock above: WHERE review_state <> 'matched',
+      // with the zero-row result surfaced as the same already-matched error the earlier read-based
+      // check already returns, matching payments.routes.ts's own ACCT-F5636 pattern.
+      const cleared = await client.query(
         `UPDATE banking.bank_transactions
             SET review_state = 'matched',
                 reviewed_at = now(),
                 ${matchedColumn} = $3::uuid
           WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid`,
+            AND operating_company_id = $2::uuid
+            AND review_state <> 'matched'`,
         [input.bank_transaction_id, input.operating_company_id, input.ledger_entry_id]
       );
+      if (cleared.rowCount === 0) {
+        throw new Error("bank_transaction_already_matched");
+      }
     }
 
     // WAVE-H3 (LINK-007/008): reverse stamp money → bank. Forward-only matched_* left payments /
