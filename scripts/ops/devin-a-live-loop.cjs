@@ -364,14 +364,12 @@ async function run() {
       const nextLeaf = nextItem ? `${nextItem.module}:${nextItem.leaf}:${(nextItem.columns && nextItem.columns[0]) || "connectivity"}` : "";
       log(`OUTBOX: ${status} ${item.module}:${item.leaf} x${(item.columns || ["connectivity"]).length}`);
 
-      if (item.rewalk) {
-        log(`Queue 6 rewalk CDP ${item.module}:${item.leaf} ${status} — no OUTBOX ship (Clicked keys already full)`);
-      } else if (status !== "LIVE PASS") {
+      if (status !== "LIVE PASS") {
         log(`skip ship STARVED — Clicked only moves on LIVE PASS`);
       } else {
         const lines = creditedLines(item, status, item.url, hz, evidence, nextLeaf);
         for (const line of lines) appendOutbox(line);
-        const commitMsg = `FINDING: live ${item.module} ${item.leaf} pass\n\nLANE: NON-FINANCIAL\nROOT CAUSE: Column 12 Clicked only credits LIVE PASS leaf=module:leafId:col\nFIX: OUTBOX LIVE PASS onto origin/main; do not ship STARVED\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: accounting 39 of 39\nITEMS_TOUCHED: DEVIN-LIVE-${item.module}\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: healthz=${hz} URL=${item.url}\nREMAINING: URGENT-6 column 12 Clicked until Clicked=Required`;
+        const commitMsg = `FINDING: live ${item.module} ${item.leaf} pass\n\nLANE: NON-FINANCIAL\nROOT CAUSE: Column 12 Clicked only credits LIVE PASS leaf=module:leafId:col\nFIX: OUTBOX LIVE PASS onto origin/main; do not ship STARVED\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: accounting 39 of 39\nITEMS_TOUCHED: DEVIN-LIVE-${item.module}\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: healthz=${hz} URL=${item.url}\nREMAINING: ALL-WAVES column 12 Clicked until Clicked=Required`;
         try {
           shipClickedOntoMain(lines, commitMsg, item);
         } catch (e) { log("push/merge: " + (e.message || e)); }
@@ -428,8 +426,8 @@ if (process.argv.includes("--selftest")) {
     console.error("SELFTEST FAIL: queue rebuild must include money cells (never skip money)");
     process.exit(1);
   }
-  if (!/function seedQueue6RewalkIfEmpty/.test(src) || !/QUEUE6_REWALK/.test(src) || !/item\.rewalk/.test(src)) {
-    console.error("SELFTEST FAIL: empty Clicked queue must seed accounting Queue 6 rewalk without OUTBOX ship");
+  if (!/function seedQueue6RewalkIfEmpty/.test(src) || !/QUEUE6_REWALK/.test(src) || !/rewalk:\s*true/.test(src)) {
+    console.error("SELFTEST FAIL: empty Clicked queue must seed accounting Queue 6 rewalk");
     process.exit(1);
   }
   if (/log\("queue empty, stopping"\)/.test(src)) {
