@@ -1879,3 +1879,27 @@ no new GL math. Guard: tried generalizing the existing SUM-pattern matcher first
 positives, reverted, shipped a narrow dedicated guard instead. 134 tests across 21 files confirm no
 posting regression. Board closeout shipped in this same PR cycle. REMAINING: none for this finding.
 Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T18:24Z CC-1 | ACCT-F5656 SHIPPED (PR #13039, merged 09794adf) -- dedicated period-close/
+opening-balance correctness audit, a fresh angle. 4 findings total; 2 fixed here (pure bug fixes
+applying already-decided rules), 2 routed to the OWNER as fresh OPEN rows (touch actual GL-posting
+amounts -- accounting-treatment/design decisions, not something I fix unilaterally). FIXED: (1)
+lockMonthClose (POST /api/v1/accounting/month-close) had NO MONEY_CONTROL_PERIOD_CLOSE_ENABLED check
+while its sibling /periods/:id/close route already refused correctly -- same "N-1 of N" gate class
+fixed repeatedly this session. Added the identical check, same placement, same error code. (2)
+balance-sheet.service.ts / profit-loss.service.ts / cash-basis/period-close-snapshot.service.ts each
+had an aggregate that failed to exclude a period's retained-earnings closing entry the same way a
+SIBLING aggregate in the same file already did -- silently double-counting a closed period's net
+income in equity (balanced flag flips false) or zeroing it out in a P&L spanning the close date.
+Currently latent (every period on every entity seeded status='open'), armed for the first period ever
+closed on a fiscal year-end -- TRANSP/TRK have open Dec-2024/2025 rows, USMCA an open Dec-2026 row.
+Fixed by adding the identical already-established exclusion to each missing aggregate. ROUTED TO
+OWNER (not fixed, filed as OPEN rows): (a) the year-end retained-earnings sweep's date window uses the
+closing period's own start (December only, given monthly periods) instead of fiscal-year start, so
+Retained Earnings currently captures only ~1/12 of each year's net income -- entangled with monthly-
+vs-annual close-granularity intent. (b) reopening then re-closing a period reuses the same idempotency
+key with a restarted line-sequence counter, risking a silently empty or unbalanced posted closing JE
+on correction -- needs a re-close semantics design decision (reverse-first vs. close-cycle-scoped key).
+Board closeout shipped in this same PR cycle. REMAINING: the 2 owner-decision items above stay OPEN
+pending an owner ruling. Continuing the money-lane sweep non-stop, no idle gaps, always fix never
+defer.
