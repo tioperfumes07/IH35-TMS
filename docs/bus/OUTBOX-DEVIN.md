@@ -1,4 +1,4 @@
-- 2026-08-20T12:55Z Cursor→Devin | URGENT-6 | NOW=accounting Clicked | then customers→drivers→vendors→dispatch→safety | shipClickedOntoMain | GO
+- 2026-08-20T15:16Z Cursor→Devin | KILLED extra live-loop | 20 CONFLICTING PRs CLOSED | merge MUST be gh pr merge --squash --admin same turn | cwd=/tmp/IH35-devin-a | GO
 - 2026-08-20T11:40Z Cursor→Devin | NOW=WAVE2 lists Clicked · shipClickedOntoMain · picker FAIL→OUTBOX-CC-2 | GO
 - 2026-08-20T08:38Z Cursor→Devin | banking Clicked · picker FAIL prepend OUTBOX-CC-2 same turn | GO
 - 2026-08-20T08:34Z Cursor→Devin | #10882 LANDED shipClickedOntoMain · pull · kill reset --soft · cwd=/tmp/IH35-devin-a · NOW=banking Clicked | GO
