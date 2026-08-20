@@ -1,9 +1,18 @@
 /**
  * packet-assemble.service.ts — Auto-assemble factoring packet on delivery + POD approval.
  *
- * Trigger points (wired by callers, e.g. pod.routes.ts on POD approval):
- *   - load.status transitions to 'delivered'
- *   - POD document approved with signature (dispatch.pod_documents.status = 'approved')
+ * ACCT-F5630 — this header used to CLAIM a live trigger ("wired by callers, e.g. pod.routes.ts on POD
+ * approval") that did not exist: assembleFactoringPacket and sweepAndAssemblePackets both had ZERO
+ * call sites anywhere in the backend. Confirmed live: pod.routes.ts's POST .../pod-documents/:id/review
+ * route never called this file at all. Fixed by wiring assembleFactoringPacket into that exact route
+ * (fire-and-forget on approval) and sweepAndAssemblePackets into a new daily cron
+ * (initializeFactoringPacketSweepCron, below) as the periodic-backfill trigger. The header below is now
+ * accurate, not aspirational.
+ *
+ * Trigger points (both live):
+ *   - POST /api/v1/dispatch/pod-documents/:id/review approves a POD (pod.routes.ts, fire-and-forget)
+ *   - Daily 06:30 America/Chicago sweep cron (initializeFactoringPacketSweepCron) catches any load
+ *     whose live trigger failed transiently or whose POD was approved before this wiring shipped
  *
  * What it does:
  *   1. Validates load is in a deliverable state and has an approved POD
@@ -16,8 +25,16 @@
  *   - Creates journal entries or touches any posting code
  *   - Modifies factoring_status (that stays on invoice, controlled by accounting routes)
  */
-import { withCurrentUser } from "../auth/db.js";
+import type { FastifyInstance } from "fastify";
+import cron from "node-cron";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+
+// Mirrors the established SYSTEM_ACTOR_USER_ID convention used by every other unattended cron in this
+// backend (depreciation-autopost.cron.ts, factoring-posting/default-interest.service.ts, etc.).
+const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
 const PACKET_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
 
@@ -296,4 +313,50 @@ export async function sweepAndAssemblePackets(
 
     return { assembled, skipped, errored };
   });
+}
+
+/**
+ * ACCT-F5630 — assembleFactoringPacket is now called at its intended live trigger (POD approval,
+ * pod.routes.ts) as a fire-and-forget best-effort call. This cron is the SECOND intended trigger this
+ * file's own header always claimed to have — a periodic sweep catching any load whose POD-approval
+ * call failed transiently or whose POD was approved before this wiring shipped — and, like the live
+ * trigger, it had zero call sites anywhere in the backend before this. Mirrors
+ * initializeInsuranceLateFeeCron's own registration shape (ACCT-F5628): same company-list sweep, same
+ * tenant-context assertion, same wrapBackgroundJobTick wrapper.
+ */
+let packetSweepCronInitialized = false;
+
+export function initializeFactoringPacketSweepCron(app: FastifyInstance) {
+  if (packetSweepCronInitialized) return;
+  packetSweepCronInitialized = true;
+
+  cron.schedule(
+    "30 6 * * *",
+    async () => {
+      await wrapBackgroundJobTick(
+        "factoring.packet_sweep_cron",
+        async () => {
+          await withLuciaBypass(async (client) => {
+            const companies = await client.query<{ id: string }>(
+              `
+                SELECT id::text AS id
+                FROM org.companies
+                WHERE is_active = true
+                  AND deactivated_at IS NULL
+                ORDER BY id
+              `
+            );
+            for (const company of companies.rows) {
+              assertTenantContext(company.id, "factoring.packet_sweep_cron");
+              await sweepAndAssemblePackets(SYSTEM_ACTOR_ID, company.id);
+            }
+          });
+        },
+        app.log
+      );
+    },
+    { timezone: "America/Chicago" }
+  );
+
+  app.log.info("Factoring packet sweep cron scheduled (daily 06:30 America/Chicago)");
 }

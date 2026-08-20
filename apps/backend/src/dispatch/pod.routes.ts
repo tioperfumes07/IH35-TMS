@@ -7,6 +7,7 @@ import { requireDriverSession } from "../driver/auth.js";
 import { withCurrentUser } from "../auth/db.js";
 import { generatePresignedDownloadUrl, isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { fetchBolPayload, generateAndStoreBol, generateBolPdf } from "./bol-generator.service.js";
+import { assembleFactoringPacket } from "../factoring/packet-assemble.service.js";
 
 const loadParamsSchema = z.object({ loadId: z.string().uuid() });
 const stopParamsSchema = z.object({ loadId: z.string().uuid(), stopId: z.string().uuid() });
@@ -260,7 +261,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
               updated_at = now()
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
-          RETURNING id::text, status, reviewed_at::text, review_notes
+          RETURNING id::text, status, reviewed_at::text, review_notes, load_id::text
         `,
         [params.data.id, body.data.operating_company_id, body.data.status, user.uuid, body.data.review_notes ?? null]
       );
@@ -273,6 +274,27 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
 
     if (!updated) return reply.code(404).send({ error: "pod_not_found" });
     if ("error" in updated) return reply.code(409).send({ error: updated.error });
+
+    // ACCT-F5630 — packet-assemble.service.ts's own header comment claims this route is its trigger
+    // point ("wired by callers, e.g. pod.routes.ts on POD approval"), but nothing here ever called it
+    // — assembleFactoringPacket and its batch sibling sweepAndAssemblePackets had ZERO call sites
+    // anywhere in the backend. The intended automation (auto-stamp a load's factoring-packet metadata
+    // + auto-create its invoice the moment a load's POD is approved) silently never ran; every load
+    // depended on a human remembering to click FactoringTab.tsx's manual "Mark packet ready" button,
+    // with nothing catching a missed one. Fire-and-forget AFTER the review transaction commits — a
+    // packet-assembly failure must never block or roll back the POD review itself, and the function is
+    // already idempotent (skips if already assembled) and self-validating (requires an approved POD,
+    // which this branch guarantees).
+    if (updated.pod?.status === "approved" && updated.pod.load_id) {
+      void assembleFactoringPacket({
+        loadId: updated.pod.load_id,
+        operatingCompanyId: body.data.operating_company_id,
+        userId: user.uuid,
+      }).catch((err) => {
+        req.log.warn({ err, pod_id: params.data.id, load_id: updated.pod.load_id }, "assemble_factoring_packet_failed");
+      });
+    }
+
     return updated;
   });
 
