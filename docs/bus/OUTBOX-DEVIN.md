@@ -1188,3 +1188,4 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=unknown | mutation=none | NEXT=dispatch.home.list
+Devin-A | LIVE STARVED | module=dispatch | leaf=home.list | URL=https://app.ih35dispatch.com/dispatch?view=list | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch?view=list ; body head Checking session... | healthz=ca726a2 | mutation=none | NEXT=dispatch.home.round_trips
