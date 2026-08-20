@@ -14604,3 +14604,17 @@ Devin-A | LIVE PASS | leaf=accounting:bill_payments.create:ap_bill | USMCA | URL
 Devin-A | LIVE PASS | leaf=accounting:bill_payments.create:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'Bill Payment' | NEXT=leaf=accounting:bill_payments.list:ap_bill
 Devin-A | LIVE PASS | leaf=accounting:bill_payments.list:ap_bill | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'Bill Payment' | NEXT=leaf=accounting:bills.create.driver:ap_bill
 Devin-A | LIVE PASS | leaf=accounting:bill_payments.list:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/bill-payments | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bill-payments marker 'Bill Payment' | NEXT=leaf=accounting:bills.create.driver:ap_bill
+Devin-A | LIVE STARVED | leaf=accounting:bills.create.driver:ap_bill | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/driver | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills?category=driver&create=1 healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:bills.create.fuel:ap_bill
+Devin-A | LIVE STARVED | leaf=accounting:bills.create.driver:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/driver | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/bills?category=driver&create=1 healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:bills.create.fuel:ap_bill
