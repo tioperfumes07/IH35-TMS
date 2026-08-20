@@ -330,7 +330,9 @@ export async function queryExpensesList(
       LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id
         AND (tr.owner_company_id = e.operating_company_id OR tr.currently_leased_to_company_id = e.operating_company_id)
-      LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid
+      LEFT JOIN maintenance.work_orders wo
+        ON wo.id = e.linked_work_order_uuid
+       AND wo.operating_company_id = e.operating_company_id
       LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
       WHERE ${where.join(" AND ")}
       ORDER BY e.transaction_date DESC, e.created_at DESC
@@ -477,7 +479,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           LEFT JOIN banking.bank_transactions bt ON bt.matched_expense_id = e.id AND bt.operating_company_id = e.operating_company_id
           ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id" : ""}
           ${hasTrailerId ? "LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id AND COALESCE(tr.currently_leased_to_company_id, tr.owner_company_id) = e.operating_company_id" : ""}
-          ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid" : ""}
+          ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid AND wo.operating_company_id = e.operating_company_id" : ""}
           ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid AND pay_acct.operating_company_id = e.operating_company_id" : "LEFT JOIN catalogs.accounts pay_acct ON false"}
           WHERE e.id = $1::uuid
             AND e.operating_company_id = $2::uuid
