@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements","drivers"],"cols":["reverse_link","connectivity","load"],"leafRe":"^(settlements\\.|settlement_close|pre_settlements|profiles\\.|^settlements$|^pre_settlements$)","task":"P30","pr":"#5979"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\.detail$","task":"P30","pr":"#5979"} */
 /**
  * verify-driver-profile-settlement-reverse-link.mjs
  *
@@ -23,11 +23,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-profile-settlement-reverse-link";
 const BACKEND = "apps/backend/src/mdata/driver-aggregate.service.ts";
 const SECTION = "apps/frontend/src/components/driver-profile/SettlementsSection.tsx";
+const PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
+const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
 export function check(sources) {
   const problems = [];
   const be = sources[BACKEND];
   const fe = sources[SECTION];
+  const profile = sources[PROFILE];
+  const manifest = sources[MANIFEST];
 
   if (!be) {
     problems.push(`${BACKEND}: missing`);
@@ -36,6 +40,12 @@ export function check(sources) {
     if (!/id::text AS settlement_id/.test(weeksCte)) {
       problems.push(`${BACKEND}: weeks CTE must SELECT id::text AS settlement_id — without it no per-row link is possible`);
     }
+  }
+  if (!profile?.includes("<SettlementsSection") || !profile?.includes("settlements={aggregate.settlements ?? {}}")) {
+    problems.push(`${PROFILE}: driver profile must mount SettlementsSection from the scoped aggregate`);
+  }
+  if (!/path="\/drivers\/:id\/profile"[\s\S]{0,180}<DriverProfilePage \/>/.test(manifest ?? "")) {
+    problems.push(`${MANIFEST}: canonical driver profile route must remain mounted`);
   }
 
   if (!fe) {
@@ -57,7 +67,7 @@ function readAll() {
     const p = path.join(ROOT, rel);
     return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
   };
-  return { [BACKEND]: read(BACKEND), [SECTION]: read(SECTION) };
+  return { [BACKEND]: read(BACKEND), [SECTION]: read(SECTION), [PROFILE]: read(PROFILE), [MANIFEST]: read(MANIFEST) };
 }
 
 if (process.argv.includes("--selftest")) {
@@ -76,9 +86,13 @@ if (process.argv.includes("--selftest")) {
           id={row.settlement_id}
         />
     `,
+    [PROFILE]: `<SettlementsSection settlements={aggregate.settlements ?? {}} />`,
+    [MANIFEST]: `<Route path="/drivers/:id/profile"><DriverProfilePage /></Route>`,
   };
   const badBackend = { ...good, [BACKEND]: good[BACKEND].replace("id::text AS settlement_id,\n", "") };
   const badFrontend = { ...good, [SECTION]: good[SECTION].replace('kind="settlement"', 'kind="driver"') };
+  const badMount = { ...good, [PROFILE]: good[PROFILE].replace("<SettlementsSection", "<RemovedSettlementsSection") };
+  const badRoute = { ...good, [MANIFEST]: good[MANIFEST].replace('path="/drivers/:id/profile"', 'path="/drivers/:id/removed"') };
 
   const goodProblems = check(good);
   if (goodProblems.length) {
@@ -93,7 +107,15 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL: swapped EntityLink kind not caught`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest OK`);
+  if (!check(badMount).some((p) => p.includes("must mount SettlementsSection"))) {
+    console.error(`${LABEL} --selftest FAIL: removed profile mount not caught`);
+    process.exit(1);
+  }
+  if (!check(badRoute).some((p) => p.includes("canonical driver profile route"))) {
+    console.error(`${LABEL} --selftest FAIL: removed canonical route not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest OK — 4/4 planted defects caught`);
 } else {
   const problems = check(readAll());
   if (problems.length) {
