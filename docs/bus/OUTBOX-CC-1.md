@@ -1755,3 +1755,19 @@ tests unchanged. Ruled out lower-priority in the same sweep: fundBatch (dead cod
 faro-csv-import.ts's post-commit loop (not nested in an open txn, doesn't hit this deadlock -- already
 flagged as F5650's own REMAINING). Board closeout shipped in this same PR cycle. REMAINING: none for
 this finding. Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T16:52Z CC-1 | ACCT-F5652 SHIPPED (PR #12868, merged b52b3498) -- dedicated sweep hunting
+for more instances of the lock-order-deadlock/non-atomic-second-connection class this session already
+confirmed twice (ACCT-F5637, ACCT-F5651). closeSettlementPayRun (the CANONICAL driver-settlement close
+path -- settlement-posting.routes.ts's own SET-01 note redirects every caller here) runs its whole
+body in one caller-owned transaction, already holding FOR UPDATE locks + an uncommitted payrun_gl_runs
+idempotency claim, then called createJournalEntry with NO client -- a second, independent connection
+that commits the JE entirely on its own. A failure after that call rolled back the outer transaction
+(undoing the idempotency claim + recovery stamps) while the JE stayed permanently posted with no
+settlement linkage; the rolled-back claim also meant a retry would post a SECOND balanced JE for the
+same settlement. Fixed by passing {client, suppressSideEffects: true} (reusing the existing
+createJournalEntryOnClient primitive, same pattern as factoring-posting/poster.service.ts's own
+funding path) and deferring QBO sync-job/push side effects to run after commit via the existing
+enqueueJournalEntrySideEffects helper -- external return shape unchanged. Board closeout shipped in
+this same PR cycle. REMAINING: none for this finding. Continuing the money-lane sweep non-stop, no
+idle gaps, always fix never defer.
