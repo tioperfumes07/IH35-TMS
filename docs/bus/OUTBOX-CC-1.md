@@ -1562,3 +1562,31 @@ observation from the same sweep, NOT fixed here (kept this PR single-domain): es
 .service.tys releaseDriverEscrowSeparation has the identical shape -- locks the separation row FOR
 UPDATE, then calls releaseEscrow() which opens its OWN connection and commits the GL release
 independently before the outer transaction flips status -- flagged for a follow-up finding.
+
+2026-08-20T13:50Z CC-1 | ACCT-F5644 SHIPPED (PR #12221, merged a1f7d4e9) -- the forward-posting
+sibling of ACCT-F5643, explicitly flagged in that findings own REMAINING note. postEscrowTransaction
+(accounting/escrow/service.ts) ran its ENTIRE body inside its own withCurrentUser connection and
+posted the JE via createJournalEntry() -- a DIFFERENT, connection-opening function that opens its OWN
+SECOND connection internally. Even a STANDALONE call had two connections mid-flight: the JE could
+commit on the second connection while a later failure on the first (the escrow_postings insert, the
+audit write, the balance re-read) rolled it back -- an orphan, permanently-committed JE with NO
+escrow_postings row ever backing it. On top of that, escrow-separation.service.tys
+releaseDriverEscrowSeparation already held its own open, row-locked (FOR UPDATE) transaction and
+called the connection-opening releaseEscrow -- it could never post atomically with its own
+status/balance-stamp UPDATE. Real-world consequence: a failure between the inner GL-release commit and
+the outer commit leaves the escrow cash genuinely released (GL posted, balance decremented) while the
+separation row rolls back to pending/eligible; a retry then computes the release amount against the
+ALREADY-drained balance (likely $0), permanently mis-recording how much escrow was actually returned
+to a separated driver. Investigated further while fixing: escrow/routes.tys direct HTTP handlers call
+depositEscrow/releaseEscrow standalone with no outer transaction -- correct as-is, no change needed.
+payroll/driver-settlement.service.deprecated.ts (a deprecated, RETIRE-schema payroll module per this
+repos own LINKAGE LAW -- canonical is driver_finance.*, not payroll.* -- but still mounted/reachable
+via driver-settlement.routes.ts) has the IDENTICAL call shape for a driver-bond deduction -- flagged
+as a follow-up, not fixed here to keep this PR single-domain and because it sits in a module already
+marked for retirement. Fixed by extracting postEscrowTransactionOnClient(client, ...) (posts via
+createJournalEntryOnClient on the callers own client, no internal second connection), keeping
+postEscrowTransaction as a thin wrapper preserving the exact pre-existing external behavior for
+depositEscrow and every standalone caller, and adding releaseEscrowOnClient(client, ...) mirroring
+this same files own pre-existing recordEscrowPostingOnly(client, ...) convention.
+escrow-separation.service.ts now calls releaseEscrowOnClient with its own already-open, row-locked
+client.
