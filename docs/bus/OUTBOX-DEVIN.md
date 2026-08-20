@@ -2404,3 +2404,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=accounting:accounting.panel.receipt_detail:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.panel.receipt_detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/receipts | healthz=7ba771a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/receipts marker 'accounting' | NEXT=leaf=accounting:accounting.panel.schedule:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.panel.receipt_detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/receipts | healthz=7ba771a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/receipts marker 'accounting' | NEXT=leaf=accounting:accounting.panel.schedule:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.panel.receipt_detail:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/receipts | healthz=7ba771a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/receipts marker 'accounting' | NEXT=leaf=accounting:accounting.panel.schedule:connectivity
