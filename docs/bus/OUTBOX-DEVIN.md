@@ -4195,3 +4195,23 @@ Devin-A | LIVE PASS | leaf=lists:catalog.fleet.equipment_types.list:qbo_chrome |
 Devin-A | LIVE PASS | leaf=lists:catalog.fleet.equipment_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/equipment-types | healthz=c8a47d0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/equipment-types marker 'lists' | NEXT=leaf=lists:catalog.fleet.lease_terms.create:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.fleet.lease_terms.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/lease-terms | healthz=c8a47d0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/lease-terms marker 'lists' | NEXT=leaf=lists:catalog.fleet.lease_terms.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.fleet.lease_terms.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/lease-terms | healthz=c8a47d0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fleet/lease-terms marker 'lists' | NEXT=leaf=lists:catalog.fleet.lease_terms.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.lease_terms.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/lease-terms | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/lease-terms healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.ownership_types.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.lease_terms.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/lease-terms | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/lease-terms healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.ownership_types.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.ownership_types.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/ownership-types | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/ownership-types healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.ownership_types.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/ownership-types | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/ownership-types healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.ownership_types.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/ownership-types | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/ownership-types healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tire_positions.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tire-positions | healthz=c8a47d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tire-positions healthz=c8a47d0 head Checking session... | NEXT=leaf=lists:catalog.fleet.tire_positions.list:picker_law
