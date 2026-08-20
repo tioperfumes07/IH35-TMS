@@ -2106,3 +2106,15 @@ correction landed, is WITHDRAWN). This seat's OPEN-row count in GUARD-WORKORDERS
 covers 68848c814/e63d4df24 -- re-walking Queue 6 is the Live lane's next step, not mine. Next loop:
 board re-walk for any remaining OPEN money rows, mining .block-ready/AUDIT-COVERAGE if the board is
 thin, per continuous-mode law.
+
+2026-08-21T04:15Z CC-1 | Miss C was N now M -- ACCT-F5677 SHIPPED (PR #13276, merged 30cb8c571):
+factoring-schema audit-trigger gap (6 tables, 0 audit triggers) closed via the same reused
+tg_audit_row() pattern, Neon-branch rehearsed then applied live myself. Money-lane audit-trigger
+coverage (accounting/banking/driver_finance/factoring) is now 100% -- 0 tables missing, verified
+live post-apply. Also this loop: cleaned 35+7 stale self-declared-superseded docs/bus/ files
+(#13269, #13271) + 20 remote branches + ~50 local merged branches, matching the cross-seat cleanup
+request. Continuing WAVE 1: accounting sweep is exhausted of genuinely-live OPEN CC-1 money rows
+(triaged the full 2026-08-17 subagent batch -- LV-BANK-TWO-SIGN-CONVENTIONS, LV-CREDITMEMO-NOPATH,
+ACCOUNTING-PERIOD-FIXTURE-MISSING-CLOSING-JE, LV-PAY-SETTLE-NOPOST all already closed by prior
+work; only LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER had a live residue, now closed). Moving to
+WAVE 1's next module per the seat order: customers money.
