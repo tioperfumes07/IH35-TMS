@@ -4697,3 +4697,12 @@ Devin-A | LIVE PASS | leaf=lists:lists.modal.dot_violation_type:picker_law | USM
 Devin-A | LIVE STARVED | leaf=lists:lists.modal.driver_catalog:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=6b79a25 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=6b79a25 head Checking session... | NEXT=leaf=lists:lists.modal.driver_team:connectivity
 Devin-A | LIVE PASS | leaf=lists:lists.modal.driver_team:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=9eda465 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.drivers_reference_catalog:connectivity
 Devin-A | LIVE PASS | leaf=lists:lists.modal.driver_team:driver | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=9eda465 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.drivers_reference_catalog:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.drivers_reference_catalog:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=lists:lists.modal.fleet_catalog:connectivity
