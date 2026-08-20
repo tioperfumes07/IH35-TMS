@@ -54,8 +54,10 @@ export function assertAccidentsNames(sources) {
   if (!/LEFT JOIN mdata\.units/.test(handler)) {
     problems.push(`${ROUTE}: accidents list does not LEFT JOIN mdata.units — no unit number to show.`);
   }
-  // The unit join must be owner/lessee scoped (units have NO operating_company_id).
-  if (/LEFT JOIN mdata\.units/.test(handler) && !/owner_company_id|currently_leased_to_company_id/.test(handler)) {
+  // The unit join itself must be owner/lessee scoped (units have NO operating_company_id). Do not
+  // let the adjacent trailer join's identical columns satisfy this invariant.
+  const unitJoin = handler.match(/LEFT JOIN mdata\.units[\s\S]*?(?=LEFT JOIN)/)?.[0] ?? "";
+  if (unitJoin && !/u\.owner_company_id|u\.currently_leased_to_company_id/.test(unitJoin)) {
     problems.push(`${ROUTE}: the mdata.units join is not scoped by owner_company_id/currently_leased_to_company_id (units have no operating_company_id).`);
   }
   if (!/AS driver_name/.test(handler) || !/AS unit_number/.test(handler)) {
