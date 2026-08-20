@@ -14358,3 +14358,25 @@ tioperfumes0 | NEXT=leaf=accounting:accounting.modal.manual_invoice:invoice
 Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.manual_invoice:invoice | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/modals/ManualInvoiceModal.tsx | healthz=ccfe302 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/ healthz=ccfe302 head Checking session... | NEXT=leaf=accounting:accounting.modal.manual_je:gl_je
 Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.manual_invoice:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/modals/ManualInvoiceModal.tsx | healthz=ccfe302 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/ healthz=ccfe302 head Checking session... | NEXT=leaf=accounting:accounting.modal.manual_je:gl_je
 Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.manual_je:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/ManualJEModal.tsx | healthz=ccfe302 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/ healthz=ccfe302 head Checking session... | NEXT=leaf=accounting:accounting.modal.pay_bill:ap_bill
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.pay_bill:ap_bill | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/PayBillModal.tsx | healthz=ccfe302 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:accounting.modal.payment_apply:gl_je
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.pay_bill:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/PayBillModal.tsx | healthz=ccfe302 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:accounting.modal.payment_apply:gl_je
