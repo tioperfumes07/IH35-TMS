@@ -44,7 +44,24 @@ if (!classAllocator.includes("OFFICE")) fail("class allocator must define OFFICE
 if (!classAllocator.includes("allocatePayrollClass")) fail("must export allocatePayrollClass");
 
 if (!tmsPull.includes("driver_finance.driver_settlements")) fail("tms-pull must query driver_finance.driver_settlements");
-if (!qboPull.includes("qbo_payroll_links")) fail("qbo-pull must query accounting.qbo_payroll_links");
+// ACCT-F5654 — the loose, schema-unqualified `.includes("qbo_payroll_links")` check below used to
+// pass whether qbo-pull queried the real table or a phantom one, so it never actually verified
+// anything. `accounting.qbo_payroll_links` has NEVER existed in any migration; the only table ever
+// created is `integrations.qbo_payroll_links` (migration 0371), and per
+// scripts/verify-phantom-relations.mjs's own HOLD note it is a per-payroll-run aggregate
+// (qbo_payroll_run_id/gross_cents/net_cents/employee_count), not the per-employee shape this
+// module's code assumes — a genuine data-model mismatch pending an owner decision, not something
+// this guard can silently wave through as "verified." Require the correct schema-qualified table and
+// explicitly reject the phantom one, so this guard fails honestly until the underlying code (and the
+// data-model decision it's blocked on) is actually fixed — never PASS over code that would throw
+// `relation "accounting.qbo_payroll_links" does not exist` on its first real query. Not fixing the
+// dormant application code itself here: the route is HELD-FOR-OWNER/unmounted and this guard is not
+// wired into CI (scripts/.guard-exempt.json), so there is no live blast radius today — the fix scope
+// for THIS PR is restoring honest guard behavior, not making an owner data-model call unilaterally.
+if (qboPull.includes("accounting.qbo_payroll_links")) {
+  fail("qbo-pull must NOT query the phantom accounting.qbo_payroll_links (never existed in any migration) — see verify-phantom-relations.mjs's HOLD note; the real table is integrations.qbo_payroll_links, and its per-run shape still needs an owner data-model decision before this code can be correct");
+}
+if (!qboPull.includes("integrations.qbo_payroll_links")) fail("qbo-pull must query the real, schema-qualified integrations.qbo_payroll_links");
 
 if (!page.includes("Driver Settlements")) fail("page must show Driver Settlements KPI");
 if (!page.includes("W-2 Payroll")) fail("page must show W-2 Payroll KPI");
