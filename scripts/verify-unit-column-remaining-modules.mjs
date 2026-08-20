@@ -41,7 +41,7 @@ const CHECKS = [
   // customers: detail.loads
   ["apps/frontend/src/pages/CustomerDetail.tsx", /kind="unit"[\s\S]{0,40}id=\{load\.assigned_unit_id\}/],
   // drivers: profiles.detail
-  ["apps/frontend/src/components/driver-profile/CurrentAssignmentSection.tsx", /kind="unit"[\s\S]{0,40}id=\{String\(cur\.unit_id\)\}/],
+  ["apps/frontend/src/components/driver-profile/CurrentAssignmentSection.tsx", /<EntityLinkOrTombstone[\s\S]{0,80}kind="unit"[\s\S]{0,120}id=\{cur\.unit_id == null \? null : String\(cur\.unit_id\)\}[\s\S]{0,80}name=\{cur\.unit_number\}[\s\S]{0,40}noun="Unit"/],
   // factoring: home.equipment_loans
   ["apps/frontend/src/pages/factoring/FactoringHome.tsx", /tab === "equipment_loans"[\s\S]{0,400}kind="unit"/],
   // home: role.dispatcher

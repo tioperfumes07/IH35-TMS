@@ -229,7 +229,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/driver-profile/CurrentAssignmentSection.tsx",
     bad: /unit_number\s*\?\?\s*def\.unit_id|load\.load_number\s*\?\?\s*load\.load_id/,
-    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.load_id\s*,\s*"Load"\s*\)/,
+    good: /<EntityLinkOrTombstone[\s\S]{0,100}kind="load"[\s\S]{0,160}name=\{load\.load_number\}[\s\S]{0,60}noun="Load"/,
   },
   {
     rel: "apps/frontend/src/components/vehicle-profile/UnitPartsHistorySection.tsx",

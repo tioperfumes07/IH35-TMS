@@ -25,8 +25,9 @@ const read = (file) => fs.readFileSync(file, "utf8");
 function check(sources) {
   const failures = [];
   const expects = [
-    ["driver", /kind="unit"[\s\S]{0,120}id=\{String\(def\.unit_id\)\}/, "default unit"],
-    ["driver", /kind="unit"[\s\S]{0,120}id=\{String\(cur\.unit_id\)\}/, "current unit"],
+    ["driver", /<EntityLinkOrTombstone[\s\S]{0,80}kind="unit"[\s\S]{0,120}id=\{def\.unit_id == null \? null : String\(def\.unit_id\)\}[\s\S]{0,80}name=\{def\.unit_number\}[\s\S]{0,40}noun="Unit"/, "default unit"],
+    ["driver", /<EntityLinkOrTombstone[\s\S]{0,80}kind="unit"[\s\S]{0,120}id=\{cur\.unit_id == null \? null : String\(cur\.unit_id\)\}[\s\S]{0,80}name=\{cur\.unit_number\}[\s\S]{0,40}noun="Unit"/, "current unit"],
+    ["driver", /<EntityLinkOrTombstone[\s\S]{0,80}kind="load"[\s\S]{0,120}id=\{load\.load_id == null \? null : String\(load\.load_id\)\}[\s\S]{0,80}name=\{load\.load_number\}[\s\S]{0,40}noun="Load"/, "current load"],
     ["trailer", /kind="unit"[\s\S]{0,120}id=\{String\(unit\.unit_id\)\}/, "attached unit"],
     [
       "trailer",
@@ -75,7 +76,9 @@ const sources = Object.fromEntries(
 
 if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
   const mutations = [
-    ["driver", 'kind="unit"', 'kind="vendor"'],
+    ["driver", 'name={def.unit_number}', 'name={def.unit_id}'],
+    ["driver", 'name={cur.unit_number}', 'name={cur.unit_id}'],
+    ["driver", 'name={load.load_number}', 'name={load.load_id}'],
     ["trailer", 'kind="load"', 'kind="customer"'],
     ["safety", "id={s(row.driver_id)}", "id={undefined}"],
     ["safety", "id={s(row.unit_id)}", "id={undefined}"],

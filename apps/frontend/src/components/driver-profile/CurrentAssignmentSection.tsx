@@ -1,5 +1,5 @@
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export function CurrentAssignmentSection({
   assignment,
@@ -30,10 +30,11 @@ export function CurrentAssignmentSection({
         <div>
           <div className="font-semibold text-slate-800">Default truck</div>
           {def ? (
-            <EntityLink
+            <EntityLinkOrTombstone
               kind="unit"
-              id={String(def.unit_id)}
-              label={entityLabel(def.unit_number, def.unit_id, "Unit")}
+              id={def.unit_id == null ? null : String(def.unit_id)}
+              name={def.unit_number}
+              noun="Unit"
             />
           ) : (
             <span>—</span>
@@ -43,10 +44,11 @@ export function CurrentAssignmentSection({
           <div className="font-semibold text-slate-800">Currently driving</div>
           {cur ? (
             <>
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="unit"
-                id={String(cur.unit_id)}
-                label={entityLabel(cur.unit_number, cur.unit_id, "Unit")}
+                id={cur.unit_id == null ? null : String(cur.unit_id)}
+                name={cur.unit_number}
+                noun="Unit"
               />
               {cur.samsara_logged_in_at ? (
                 <div className="text-slate-500">
@@ -61,11 +63,15 @@ export function CurrentAssignmentSection({
         <div>
           <div className="font-semibold text-slate-800">Current load</div>
           {load ? (
-            <EntityLink
-              kind="load"
-              id={String(load.load_id)}
-              label={`${entityLabel(load.load_number, load.load_id, "Load")} · ${String(load.status ?? "—")}`}
-            />
+            <>
+              <EntityLinkOrTombstone
+                kind="load"
+                id={load.load_id == null ? null : String(load.load_id)}
+                name={load.load_number}
+                noun="Load"
+              />
+              <span> · {String(load.status ?? "—")}</span>
+            </>
           ) : (
             <span>—</span>
           )}
