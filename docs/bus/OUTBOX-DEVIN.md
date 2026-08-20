@@ -10956,3 +10956,25 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.portal_users:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=portal | healthz=7e9d976 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=portal head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=portal | healthz=7e9d976 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=portal head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.quality:customer
