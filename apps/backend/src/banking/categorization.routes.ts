@@ -1147,6 +1147,64 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     }
   });
 
+  // ACCT-F5660 — CHAIN-05 backlog poster. Every existing invocation of maybePostBankCategorizationToGl
+  // fires only AT categorize time (single/bulk categorize + the Plaid path), so a transaction
+  // categorized while BANK_FEED_GL_POSTING_ENABLED was OFF — or whose best-effort post failed — is
+  // stuck forever: status='categorized', linkage tags persisted, matched_journal_entry_id NULL.
+  // Measured live on USMCA (bypass + completeness discriminator): 32 categorized / 28 tagged, only 8
+  // with a JE — the linked-bank panels' bank→JE drill is dark for the other rows and nothing can ever
+  // light it. This route re-invokes the SAME idempotent poster per stuck row (its own
+  // matched_journal_entry_id-NULL guard + flag gate + posting-engine idempotency make a re-run safe
+  // and a flag-OFF entity a structured no-op). Mirrors bulk-categorize's own shape exactly: the
+  // backlog ids are collected inside withCompanyScope, the poster loop runs AFTER that scope closes —
+  // never inside a held transaction (the ACCT-F5651 lock-order lesson).
+  app.post("/api/v1/banking/transactions/post-categorized-backlog", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const query = companyQuerySchema
+      .extend({ limit: z.coerce.number().int().min(1).max(500).default(100) })
+      .safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const backlogIds = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          SELECT bt.id::text AS id
+          FROM banking.bank_transactions bt
+          WHERE bt.operating_company_id = $1::uuid
+            AND bt.status = 'categorized'
+            AND bt.matched_journal_entry_id IS NULL
+          ORDER BY bt.transaction_date ASC, bt.created_at ASC
+          LIMIT $2
+        `,
+        [query.data.operating_company_id, query.data.limit]
+      );
+      return (res.rows as Array<{ id: string }>).map((r) => r.id);
+    });
+
+    const results: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
+    for (const id of backlogIds) {
+      try {
+        const posting = await maybePostBankCategorizationToGl({
+          companyId: query.data.operating_company_id,
+          actorUserUuid: String(user.uuid),
+          bankTransactionId: id,
+        });
+        results.push({ bank_transaction_id: id, ...posting });
+      } catch (error) {
+        results.push({ bank_transaction_id: id, posted: false, reason: "post_failed", message: String((error as Error)?.message ?? error) });
+      }
+    }
+
+    return {
+      ok: true,
+      backlog_count: backlogIds.length,
+      posted_count: results.filter((r) => r.posted).length,
+      results,
+    };
+  });
+
   app.post("/api/v1/banking/transactions/bulk-post-as-bills", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
