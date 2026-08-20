@@ -2217,3 +2217,20 @@ Devin-A | LIVE PASS | leaf=accounting:accounting.modal.manual_invoice:connectivi
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.manual_invoice:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=1cd48d0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.manual_je:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.pay_bill:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=42f127a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.payment_apply:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.pay_bill:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=42f127a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.payment_apply:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.vendor_chargeback:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head  | NEXT=leaf=accounting:accounting.modal.void_reason:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.vendor_chargeback:vendor | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head  | NEXT=leaf=accounting:accounting.modal.void_reason:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.vendor_chargeback:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head  | NEXT=leaf=accounting:accounting.modal.void_reason:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.void_reason:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:accounting.panel.bill_detail:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.void_reason:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:accounting.panel.bill_detail:connectivity
