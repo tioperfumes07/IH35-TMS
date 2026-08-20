@@ -1812,3 +1812,6 @@ t | healthz=unknown | mutation=none | NEXT=vendors.list.bulk
 Devin-A | LIVE STARVED | leaf=vendors:home.roster:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown
 Devin-A | LIVE STARVED | leaf=vendors:home.roster:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown
 Devin-A | LIVE STARVED | leaf=vendors:home.roster:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown
+Devin-A | LIVE STARVED | leaf=vendors:list.view_list:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown
+Devin-A | LIVE STARVED | leaf=vendors:list.view_list:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown
+Devin-A | LIVE STARVED | leaf=vendors:list.view_list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown
