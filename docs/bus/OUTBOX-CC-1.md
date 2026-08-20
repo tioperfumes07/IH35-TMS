@@ -1771,3 +1771,8 @@ funding path) and deferring QBO sync-job/push side effects to run after commit v
 enqueueJournalEntrySideEffects helper -- external return shape unchanged. Board closeout shipped in
 this same PR cycle. REMAINING: none for this finding. Continuing the money-lane sweep non-stop, no
 idle gaps, always fix never defer.
+
+CC-1 | Money FAIL | leaf=settlements:liabilities.list:liability | USMCA | URL=https://app.ih35dispatch.com/settlements/liabilities | evidence=LIVE STARVED: no liability marker
+CC-1 | Money FAIL | leaf=settlements:settlements.panel.pre_settlements:pre_settlement | USMCA | URL=https://app.ih35dispatch.com/settlements | evidence=LIVE STARVED: no pre_settlement marker
+CC-1 | Money FAIL | leaf=factoring:factoring.wizard.batch:batch | USMCA | URL=https://app.ih35dispatch.com/factoring | evidence=LIVE STARVED: no batch marker
+CC-1 | Money FAIL | leaf=banking:reconciliation:reconciliation | USMCA | URL=https://app.ih35dispatch.com/banking/reconciliation | evidence=LIVE STARVED: no reconciliation marker
