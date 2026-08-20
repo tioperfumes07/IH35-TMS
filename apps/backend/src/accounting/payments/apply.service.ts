@@ -16,6 +16,36 @@ type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
+/**
+ * ACCT-F5633 — accounting.invoices.amount_open_cents is a GENERATED column (total_cents -
+ * amount_paid_cents, migration 0123) with NO knowledge of accounting.credit_memo_applications.
+ * credit-memos.routes.ts's own apply route already nets this off before capping a credit-memo
+ * application (its own comment: "a naive check against it alone would let a credit memo overshoot an
+ * invoice that a PRIOR credit-memo application had already partially covered"), and ar-aging.service.ts
+ * was retrofitted the same way under ACCT-F5612 — but neither of the two CASH-payment-apply cap checks
+ * (this file's own applyToInvoice below, and customer-payments.routes.ts's inline duplicate) ever got
+ * the same netting. Without it: a $1,000 invoice partly settled by a $600 credit memo still reports
+ * amount_open_cents=$1,000 (the generated column never saw the credit memo), so a cash payment could
+ * still apply up to the full $1,000 on top — a real $600 overcollection of A/R that the system's own
+ * guard should have refused. Exported so every cash-payment-apply cap check can share one definition
+ * rather than re-deriving the same subquery a third and fourth time.
+ */
+export async function getAppliedCreditMemoCents(
+  client: Queryable,
+  operatingCompanyId: string,
+  invoiceId: string
+): Promise<number> {
+  const res = await client.query<{ applied_cents: string }>(
+    `SELECT COALESCE(SUM(applied_cents), 0)::text AS applied_cents
+       FROM accounting.credit_memo_applications
+      WHERE invoice_id = $1
+        AND operating_company_id = $2::uuid
+        AND voided_at IS NULL`,
+    [invoiceId, operatingCompanyId]
+  );
+  return Number(res.rows[0]?.applied_cents ?? 0);
+}
+
 export type PaymentApplicationTargetKind = "invoice" | "bill";
 
 export type PaymentApplicationInput = {
@@ -142,7 +172,9 @@ async function applyToInvoice(
   if (!["sent", "partial"].includes(String(invoice.status))) {
     throw new ApplyPaymentError("invoice_not_open_for_payment", "invoice is not open for payment application");
   }
-  if (row.amount_cents > Number(invoice.amount_open_cents ?? 0)) {
+  const appliedCreditMemoCents = await getAppliedCreditMemoCents(client, operatingCompanyId, invoice.id);
+  const invoiceRemainingCents = Number(invoice.amount_open_cents ?? 0) - appliedCreditMemoCents;
+  if (row.amount_cents > invoiceRemainingCents) {
     throw new ApplyPaymentError("amount_exceeds_invoice_open", "application amount exceeds invoice open amount");
   }
 

@@ -12,6 +12,7 @@ import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
+import { getAppliedCreditMemoCents } from "./payments/apply.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -275,7 +276,13 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         const invoice = invoiceRes.rows[0] as { id: string; amount_open_cents: number; status: string } | null;
         if (!invoice) return { code: 404 as const, error: "invoice_not_found_for_customer" as const };
         if (!["sent", "partial"].includes(String(invoice.status))) return { code: 409 as const, error: "invoice_not_open_for_payment" as const };
-        if (Number(applyRow.amount_cents) > Number(invoice.amount_open_cents ?? 0)) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" as const };
+        // ACCT-F5633 — amount_open_cents (a GENERATED column) has no knowledge of non-voided
+        // credit-memo applications; net them off the same way credit-memos.routes.ts's own apply
+        // route and ar-aging.service.ts (ACCT-F5612) already do, or a cash payment could still apply
+        // on top of a balance a credit memo already covered.
+        const appliedCreditMemoCents = await getAppliedCreditMemoCents(client, query.data.operating_company_id, invoice.id);
+        const invoiceRemainingCents = Number(invoice.amount_open_cents ?? 0) - appliedCreditMemoCents;
+        if (Number(applyRow.amount_cents) > invoiceRemainingCents) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" as const };
 
         await client.query(
           `
