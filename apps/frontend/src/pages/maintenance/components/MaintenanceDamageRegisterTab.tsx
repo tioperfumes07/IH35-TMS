@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { listSafetyIncidents } from "../../../api/safety";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 type Props = {
   operatingCompanyId: string;
@@ -74,7 +74,7 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />,
+      render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" />,
     },
     {
       key: "incident_at",
@@ -98,12 +98,14 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       // equipment/breakdown incidents. Only those rows carry a value — others honestly show "—".
       key: "work_order_id",
       label: "Linked WO",
-      render: (row) =>
-        row.work_order_id ? (
-          <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "WO")} />
-        ) : (
-          "—"
-        ),
+      render: (row) => (
+        <EntityLinkOrTombstone
+          kind="work_order"
+          id={row.work_order_id}
+          name={row.work_order_display_id}
+          noun="Work order"
+        />
+      ),
     },
     {
       key: "status",
