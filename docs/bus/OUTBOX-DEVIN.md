@@ -10036,3 +10036,33 @@ Devin-A | LIVE PASS | leaf=dispatch:secondary.book_load:picker_law | USMCA | URL
 Devin-A | LIVE PASS | leaf=dispatch:secondary.book_load:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/dispatch/book-load | healthz=6e88489 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/book-load marker 'dispatch' | NEXT=leaf=inventory:assignments.honest_empty:connectivity
 Devin-A | LIVE PASS | leaf=dispatch:secondary.book_load:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch/book-load | healthz=6e88489 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch/book-load marker 'dispatch' | NEXT=leaf=inventory:assignments.honest_empty:connectivity
 Devin-A | LIVE PASS | leaf=inventory:assignments.honest_empty:connectivity | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=6e88489 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/inventory/assignments marker 'inventory' | NEXT=leaf=inventory:assignments.trail:vendor
+Devin-A | LIVE STARVED | leaf=inventory:assignments.trail:vendor | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=6e88489 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/inventory/assignments head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading…
+FAQ | NEXT=leaf=inventory:assignments.unit_link:unit
+Devin-A | LIVE STARVED | leaf=inventory:assignments.trail:unit | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=6e88489 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/inventory/assignments head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading…
+FAQ | NEXT=leaf=inventory:assignments.unit_link:unit
+Devin-A | LIVE STARVED | leaf=inventory:assignments.trail:connectivity | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=6e88489 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/inventory/assignments head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Loading…
+FAQ | NEXT=leaf=inventory:assignments.unit_link:unit
