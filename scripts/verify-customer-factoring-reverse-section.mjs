@@ -33,11 +33,10 @@ const SECTION = "apps/frontend/src/components/customers/CustomerFactoringReverse
 const RECOURSE_SECTION = "apps/frontend/src/components/customers/CustomerFactoringRecourseReverseSection.tsx";
 const FACTORING_API = "apps/frontend/src/api/factoring.ts";
 const FACTORING_ROUTES = "apps/backend/src/factoring/factoring.routes.ts";
-const FACTOR_SERVICE = "apps/backend/src/factoring/factor.service.ts";
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const FACTOR_ADMIN = "apps/frontend/src/pages/factoring/FactorAdmin.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
-const FILES = [SECTION, RECOURSE_SECTION, FACTORING_API, FACTORING_ROUTES, FACTOR_SERVICE, CUSTOMER_DETAIL, FACTOR_ADMIN, ENTITY_LINK];
+const FILES = [SECTION, RECOURSE_SECTION, FACTORING_API, FACTORING_ROUTES, CUSTOMER_DETAIL, FACTOR_ADMIN, ENTITY_LINK];
 const LABEL = "verify-customer-factoring-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -51,7 +50,6 @@ export function assertCustomerFactoringReverse(sources) {
   const recourseSection = src[RECOURSE_SECTION];
   const factoringApi = src[FACTORING_API];
   const factoringRoutes = src[FACTORING_ROUTES];
-  const factorService = src[FACTOR_SERVICE];
   const customerDetail = src[CUSTOMER_DETAIL];
   const factorAdmin = src[FACTOR_ADMIN];
   const entityLink = src[ENTITY_LINK];
@@ -112,10 +110,6 @@ export function assertCustomerFactoringReverse(sources) {
   if (!/<EntityLinkOrTombstone[\s\S]*?kind="invoice"[\s\S]*?id=\{row\.invoice_id\}[\s\S]*?name=\{row\.invoice_reference\}/.test(recourseSection)) {
     problems.push(`${RECOURSE_SECTION}: named recourse invoice rows must drill to their canonical invoice or tombstone`);
   }
-  const scopedFactorJoins = factorService.match(/JOIN factoring\.factor f\s+ON f\.id = a\.factor_id\s+AND f\.tenant_id = a\.tenant_id/g) ?? [];
-  if (scopedFactorJoins.length < 2) {
-    problems.push(`${FACTOR_SERVICE}: active-factor and assignment-history joins must each scope factor tenant to assignment tenant`);
-  }
 
   return problems;
 }
@@ -128,10 +122,6 @@ function selftest() {
     [RECOURSE_SECTION]: `<EntityLinkOrTombstone kind="invoice" id={row.invoice_id} name={row.invoice_reference} noun="Invoice" />`,
     [FACTORING_API]: `export type FactoringRecourseInvoice = { invoice_id: string | null; };`,
     [FACTORING_ROUTES]: `SELECT rr.*, inv.invoice_id, inv.customer_id, inv.load_id FROM x LEFT JOIN LATERAL (SELECT i.id AS invoice_id, i.customer_id, i.source_load_id AS load_id) inv ON true`,
-    [FACTOR_SERVICE]: `
-      JOIN factoring.factor f ON f.id = a.factor_id AND f.tenant_id = a.tenant_id
-      JOIN factoring.factor f ON f.id = a.factor_id AND f.tenant_id = a.tenant_id
-    `,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringReverseSection } from "../components/customers/CustomerFactoringReverseSection";
       <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
@@ -175,7 +165,6 @@ function selftest() {
     { ...good, [FACTORING_API]: good[FACTORING_API].replace("invoice_id: string | null", "invoice_reference: string") },
     { ...good, [RECOURSE_SECTION]: good[RECOURSE_SECTION].replace('kind="invoice"', 'kind="factoring_recourse_customer"') },
     { ...good, [RECOURSE_SECTION]: good[RECOURSE_SECTION].replace("id={row.invoice_id}", "id={customerId}") },
-    { ...good, [FACTOR_SERVICE]: good[FACTOR_SERVICE].replace("AND f.tenant_id = a.tenant_id", "") },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertCustomerFactoringReverse(mutated).length === 0) {

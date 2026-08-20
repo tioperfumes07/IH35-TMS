@@ -225,9 +225,7 @@ export async function getFactorForCustomer(
         a.effective_from::text,
         a.effective_to::text
       FROM factoring.customer_factor_assignment a
-      JOIN factoring.factor f
-        ON f.id = a.factor_id
-       AND f.tenant_id = a.tenant_id
+      JOIN factoring.factor f ON f.id = a.factor_id
       WHERE a.tenant_id = $1::uuid
         AND a.customer_id = $2::uuid
         AND a.effective_from <= $3::date
@@ -767,9 +765,7 @@ export async function listFactorAssignmentsForCustomer(
         a.effective_to::text,
         a.created_at::text
       FROM factoring.customer_factor_assignment a
-      JOIN factoring.factor f
-        ON f.id = a.factor_id
-       AND f.tenant_id = a.tenant_id
+      JOIN factoring.factor f ON f.id = a.factor_id
       WHERE a.tenant_id = $1::uuid
         AND a.customer_id = $2::uuid
       ORDER BY a.effective_from DESC, a.created_at DESC

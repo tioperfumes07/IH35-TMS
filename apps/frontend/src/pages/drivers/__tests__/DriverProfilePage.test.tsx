@@ -6,9 +6,6 @@ import { cleanup } from "@testing-library/react";
 import * as clientApi from "../../../api/client";
 import * as mdataApi from "../../../api/mdata";
 import * as safetyApi from "../../../api/safety";
-import * as cashAdvancesApi from "../../../api/cashAdvances";
-import * as cashAdvanceRequestsApi from "../../../api/cashAdvanceRequests";
-import * as dataInfraApi from "../../../api/data-infra";
 import { DriverProfilePage } from "../DriverProfilePage";
 import { ToastProvider } from "../../../components/Toast";
 
@@ -80,12 +77,6 @@ describe("DriverProfilePage", () => {
     vi.spyOn(mdataApi, "getDriver").mockResolvedValue(driverFixture as never);
     vi.spyOn(clientApi, "apiRequest").mockResolvedValue(profileFixture as never);
     vi.spyOn(safetyApi, "listDriverQualificationItems").mockResolvedValue({ items: [] } as never);
-    // DriverCashAdvancesReverseSection + DriverVendorMergesReverseSection (LINK-F5171/F5183/F5185)
-    // call these directly — the blanket apiRequest spy above resolves to profileFixture for every
-    // URL, which lacks the .advances/.requests/.rows shape these three expect.
-    vi.spyOn(cashAdvancesApi, "listCashAdvances").mockResolvedValue({ advances: [] } as never);
-    vi.spyOn(cashAdvanceRequestsApi.cashAdvanceRequestsOfficeApi, "listPending").mockResolvedValue({ requests: [] } as never);
-    vi.spyOn(dataInfraApi, "listDriverVendorMerges").mockResolvedValue({ rows: [] } as never);
   });
 
   it("renders six profile sections", async () => {

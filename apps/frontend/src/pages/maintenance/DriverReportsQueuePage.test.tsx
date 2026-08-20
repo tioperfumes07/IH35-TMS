@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
 import { DriverReportsQueuePage } from "./DriverReportsQueuePage";
 
 vi.mock("../../contexts/CompanyContext", () => ({
@@ -21,11 +20,9 @@ describe("DriverReportsQueuePage", () => {
   it("renders queue heading", async () => {
     const qc = new QueryClient();
     render(
-      <MemoryRouter>
-        <QueryClientProvider client={qc}>
-          <DriverReportsQueuePage />
-        </QueryClientProvider>
-      </MemoryRouter>
+      <QueryClientProvider client={qc}>
+        <DriverReportsQueuePage />
+      </QueryClientProvider>
     );
     expect(await screen.findByText("Driver Reports Queue")).toBeTruthy();
   });

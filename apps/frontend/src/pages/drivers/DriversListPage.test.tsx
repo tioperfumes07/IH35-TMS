@@ -67,10 +67,7 @@ describe("DriversListPage", () => {
     );
 
     expect(await screen.findByText("Driver qualification profiles")).toBeInTheDocument();
-    // Two real links now carry the driver's name on the same row (the name column + a distinct
-    // "open profile" action link, DriversTable.tsx) — assert the canonical one by testid rather
-    // than an ambiguous getByText that now matches both.
-    expect(await screen.findByTestId("drivers-table-name-link")).toHaveTextContent("Alex Rivera");
+    expect(await screen.findByText("Alex Rivera")).toBeInTheDocument();
     expect(await screen.findByText("No DQF items")).toBeInTheDocument();
   });
 });
