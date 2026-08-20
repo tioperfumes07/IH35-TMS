@@ -14578,3 +14578,25 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=accounting:banking.panel.linked_bank_transactions:bank
+Devin-A | LIVE STARVED | leaf=accounting:banking.panel.linked_bank_transactions:bank | USMCA | URL=https://app.ih35dispatch.com/surface://components/banking/LinkedBankTransactionsPanel.tsx | healthz=c087960 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:bill_payments.create:ap_bill
+Devin-A | LIVE STARVED | leaf=accounting:banking.panel.linked_bank_transactions:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://components/banking/LinkedBankTransactionsPanel.tsx | healthz=c087960 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:bill_payments.create:ap_bill
