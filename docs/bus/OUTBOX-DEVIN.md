@@ -1267,3 +1267,14 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Dispatch alerts
 Live count | healthz=92f2779 | mutation=none | NEXT=dispatch.queues.live_map
+Devin-A | LIVE PASS | module=dispatch | leaf=queues.live_map | URL=https://app.ih35dispatch.com/dispatch/geofencing | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/geofencing ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Geofences
+Polygon geofence | healthz=21732e8 | mutation=none | NEXT=dispatch.queues.map
