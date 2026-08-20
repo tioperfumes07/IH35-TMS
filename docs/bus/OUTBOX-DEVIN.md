@@ -2779,3 +2779,19 @@ Devin-A | LIVE STARVED | leaf=accounting:accounting.drawer.new_service_drawer_fo
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.bill_payment:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.bill_payment:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.bill_payment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:accounting.modal.create:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:accounting.modal.create:connectivity
