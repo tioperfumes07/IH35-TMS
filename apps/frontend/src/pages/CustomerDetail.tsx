@@ -2296,11 +2296,27 @@ export function CustomerDetailPage() {
                     key: "applied",
                     label: "Applied",
                     sortable: true,
-                    cellClass: "text-right tabular-nums",
+                    cellClass: "text-right",
                     sortValue: (p) => p.applied_to_invoices?.reduce((sum, inv) => sum + inv.amount_cents, 0) ?? 0,
                     render: (p) => {
-                      const appliedTotal = p.applied_to_invoices?.reduce((sum, inv) => sum + inv.amount_cents, 0) ?? 0;
-                      return appliedTotal > 0 ? formatCurrencyCents(appliedTotal) : "—";
+                      const applications = p.applied_to_invoices ?? [];
+                      if (applications.length === 0) return "—";
+                      return (
+                        <div className="flex flex-col items-end gap-1">
+                          {applications.map((application) => (
+                            <div key={application.invoice_id} className="flex items-center justify-end gap-2">
+                              <EntityLinkOrTombstone
+                                kind="invoice"
+                                id={application.invoice_id}
+                                name={application.invoice_display_id}
+                                noun="Invoice"
+                                className="font-medium text-slate-700 hover:underline"
+                              />
+                              <span className="tabular-nums">{formatCurrencyCents(application.amount_cents)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
                     },
                   },
                   { key: "qbo_payment_id", label: "Reference", sortable: true, render: (p) => p.qbo_payment_id ?? "—" },
