@@ -73,6 +73,14 @@ export const COA_ROLE_VALUES = [
   "other_recovery",
   // Pay-run close residual (#3109 left this on the legacy table): abandonment chargeback recovery credit.
   "abandonment_chargeback_recovery",
+  // ACCT-F5616 — settlement dispute corrective JE credit. createCorrectiveJournalEntry
+  // (settlement-dispute.service.ts) previously picked whichever TWO accounts sorted first by
+  // created_at (`ORDER BY created_at ASC LIMIT 2`) — exactly the anti-pattern "never ORDER BY
+  // created_at LIMIT 2" documented a few roles below in this same file. Dr driver_pay_expense /
+  // Cr settlement_dispute_correction_recovery, mirroring reimbursement_expense's shape.
+  // DELIBERATELY absent from ROLE_FALLBACKS — a dispute-correction offset account is an owner
+  // accounting-treatment decision, never a guess; fails closed until designated.
+  "settlement_dispute_correction_recovery",
   // Settlement BillPayment DIP cash bridge (lane defect A / 202607760000): was legacy-bindings-only.
   "cash_dip",
   // SAFETY FINE-GL HOP (migration 202608110000) — the COMPANY-PAID civil fine expense leg.
