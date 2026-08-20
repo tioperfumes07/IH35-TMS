@@ -149,6 +149,21 @@ function CustomerDetailsTab({
           <DetailRow label="DOT number" value={dash(customer.dot_number)} />
           <DetailRow label="Tax ID (EIN)" value={dash(customer.tax_id)} />
           <DetailRow label="Factoring" value={factoring} />
+          <DetailRow
+            label="Factoring company"
+            value={
+              summary?.factoring_company_vendor_id ? (
+                <EntityLinkOrTombstone
+                  kind="vendor"
+                  id={summary.factoring_company_vendor_id}
+                  name={summary.factoring_company_vendor_name}
+                  noun="Vendor"
+                />
+              ) : (
+                "—"
+              )
+            }
+          />
           <DetailRow label="Recourse type" value={dash(customer.factoring_recourse_type)} />
           <DetailRow label="Status" value={customerStatusLabel(customer.status)} />
           <DetailRow label="Open balance" value={fmtMoney(summary?.aging_buckets?.total_open ?? 0)} />
