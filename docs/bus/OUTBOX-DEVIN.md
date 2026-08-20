@@ -12072,3 +12072,14 @@ Devin-A | LIVE PASS | leaf=reports:subnav.category_hub:connectivity | USMCA | UR
 Devin-A | LIVE PASS | leaf=reports:subnav.category_hub:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/hub | healthz=4c8dde3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/hub marker 'reports' | NEXT=leaf=reports:subnav.reports:connectivity
 Devin-A | LIVE PASS | leaf=reports:subnav.reports:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=4c8dde3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports marker 'reports' | NEXT=leaf=cash-flow:chrome.toolbar_filter:connectivity
 Devin-A | LIVE PASS | leaf=reports:subnav.reports:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=4c8dde3 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports marker 'reports' | NEXT=leaf=cash-flow:chrome.toolbar_filter:connectivity
+Devin-A | LIVE STARVED | leaf=cash-flow:chrome.toolbar_filter:connectivity | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected | healthz=4c8dde3 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/cash-flow?tab=actual_vs_projected head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=cash-flow:chrome.toolbar_gear:connectivity
