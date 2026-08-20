@@ -974,3 +974,6 @@ Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers re
 Codex | SHIPPED DISPATCH-PRIMARY-INLINE-ASSIGNMENT-DEAD-DRILLS | PR#10260 @ 2dbb0a911 | gate=exit0 | merge=admin-squash | main=verified | NEXT=fleet Band B trailer.profile reverse
 Codex | WORKING | NOW=drivers reverse FE | NEXT=customers reverse | GO
 Codex | SHIPPED DRIVERS-LOAD-HISTORY-NULLABLE-RELATED-DEAD-DRILLS | PR#10268 @ 1792e6ac2 | gate=exit0 | merge=admin-squash | main=verified | NEXT=customers reverse
+Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | STALE INBOX | target=Codex | why=DRV-PROFILE-OPS-REVERSE already shipped through PR #10380 on origin/main cd24b842e | GO
+Codex | WORKING | NOW=drivers reverse FE exhaustive mounted-consumer trace | NEXT=next genuine unpaid reverse FO | GO

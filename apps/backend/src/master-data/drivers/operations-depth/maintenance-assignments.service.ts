@@ -44,7 +44,7 @@ export async function getDriverMaintenanceAssignments(
         a.driver_id::text,
         a.operating_company_id::text,
         a.unit_id::text,
-        COALESCE(NULLIF(TRIM(u.unit_number), ''), a.unit_id::text) AS unit_number,
+        NULLIF(TRIM(u.unit_number), '') AS unit_number,
         a.started_at::text AS assigned_at,
         a.ended_at::text AS unassigned_at,
         a.created_at::text
