@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createEquipment, type CreateEquipmentInput } from "../../api/mdata";
+import { listMyCompanies, type MyCompany } from "../../api/org";
 import { useToast } from "../Toast";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
 import { userFacingApiError } from "../../lib/api-error-message";
+
+function companyPickerLabel(c: MyCompany): string {
+  const name = (c.short_name ?? c.legal_name ?? "").trim();
+  return name ? `${c.code} · ${name}` : c.code;
+}
 
 const EQUIPMENT_TYPES = [
   "DryVan",
@@ -47,6 +54,7 @@ const EMPTY = {
   model: "",
   year: "",
   notes: "",
+  currently_leased_to_company_id: "",
 };
 
 /**
@@ -57,7 +65,11 @@ const EMPTY = {
 export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreated, equipmentKind }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const [draft, setDraft] = useState(EMPTY);
+  const initialDraft = useMemo(
+    () => ({ ...EMPTY, currently_leased_to_company_id: operatingCompanyId }),
+    [operatingCompanyId]
+  );
+  const [draft, setDraft] = useState(initialDraft);
   const allowedTypes = useMemo(() => equipmentTypesForPickerKind(equipmentKind), [equipmentKind]);
 
   useEffect(() => {
@@ -72,9 +84,27 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
     setDraft((d) => ({ ...d, [key]: value }));
 
   const resetAndClose = () => {
-    setDraft(EMPTY);
+    setDraft(initialDraft);
     onClose();
   };
+
+  // Leased To Company only — trailer ownership is locked to TRK for every row (LST-F27 owner
+  // ruling: "trucking is the only owner of the equipment"), so there is deliberately no Owner
+  // Company picker here, unlike CreateUnitModal. Leased To defaults to the currently-selected
+  // operating company (existing behavior preserved) but is now visible and editable.
+  const companiesQuery = useQuery({
+    queryKey: ["org", "me-companies", "create-trailer"],
+    queryFn: () => listMyCompanies().then((r) => r.companies ?? []),
+    enabled: open,
+    staleTime: 120_000,
+  });
+  const companyOptions = useMemo(
+    () =>
+      (companiesQuery.data ?? [])
+        .filter((c) => c.is_active)
+        .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
+    [companiesQuery.data]
+  );
 
   const createMutation = useMutation({
     mutationFn: () => {
@@ -88,7 +118,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
         model: draft.model.trim() || undefined,
         year: year != null && Number.isFinite(year) ? year : undefined,
         notes: draft.notes.trim() || undefined,
-        currently_leased_to_company_id: operatingCompanyId,
+        currently_leased_to_company_id: draft.currently_leased_to_company_id || operatingCompanyId,
       });
     },
     onSuccess: async (created) => {
@@ -176,6 +206,19 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
           </FormField>
           <FormField label="Model" name="model">
             <input id="model" className={inputClass} value={draft.model} onChange={(e) => set("model", e.target.value)} />
+          </FormField>
+          <FormField label="Leased To Company" name="currently_leased_to_company_id">
+            <div data-testid="fleet-create-trailer-currently_leased_to_company_id">
+              <Combobox
+                options={companyOptions}
+                value={draft.currently_leased_to_company_id || null}
+                onChange={(v) => set("currently_leased_to_company_id", v ?? "")}
+                placeholder="Select company"
+                loading={companiesQuery.isLoading}
+                allowClear
+                dataField="currently_leased_to_company_id"
+              />
+            </div>
           </FormField>
         </FieldSet>
         <FieldSet title="Notes" columns={1}>

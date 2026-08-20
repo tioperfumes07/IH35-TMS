@@ -69,6 +69,9 @@ const patchTrailerBodySchema = z
     mx_insurance_policy_number: z.string().trim().max(200).nullable().optional(),
     mx_insurance_expiration: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
+    // Leased To Company only — trailer ownership (owner_company_id) is locked to TRK for every
+    // row by owner ruling (LST-F27, migration 202610240000) and is never writable via this route.
+    currently_leased_to_company_id: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -234,6 +237,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
     if ("mx_insurance_policy_number" in b) add("mx_insurance_policy_number", b.mx_insurance_policy_number ?? null);
     if ("mx_insurance_expiration" in b) add("mx_insurance_expiration", b.mx_insurance_expiration ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
+    if ("currently_leased_to_company_id" in b) add("currently_leased_to_company_id", b.currently_leased_to_company_id ?? null);
     add("updated_by_user_id", authUser.uuid);
     values.push(parsedParams.data.id);
     const idIdx = values.length;
