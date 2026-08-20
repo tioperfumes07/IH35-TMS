@@ -1026,3 +1026,4 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=69d7810 | mutation=none | NEXT=system.audit.trail
+Devin-A | LIVE STARVED | module=system | leaf=audit.trail | URL=https://app.ih35dispatch.com/audit/trail | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/audit/trail ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.claude_coder
