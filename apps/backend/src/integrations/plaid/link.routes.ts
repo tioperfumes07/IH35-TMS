@@ -323,12 +323,32 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.pending,
           bt.is_credit,
           bt.matched_load_id,
+          -- BANK-F5662 — the per-account register selected the matched-entity FKs with NO human-label
+          -- joins at all, so BankAccountDetail's Matched column could only ever render "— not visible"
+          -- tombstones for fully-resolvable loads/bills/settlements/JEs. Same ACCT-F5153 convention as
+          -- the company-transactions SELECT below: entity-scoped LEFT JOINs, label alongside FK.
+          l.load_number AS matched_load_number,
           bt.matched_bill_id,
+          bill.bill_number AS matched_bill_number,
           bt.matched_settlement_id,
+          settlement.display_id AS matched_settlement_display_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
+          je.memo AS matched_journal_entry_memo,
           bt.notes,
           bt.created_at
         FROM banking.bank_transactions bt
+        LEFT JOIN mdata.loads l
+          ON l.id = bt.matched_load_id
+         AND l.operating_company_id = bt.operating_company_id
+        LEFT JOIN accounting.bills bill
+          ON bill.id = bt.matched_bill_id
+         AND bill.operating_company_id = bt.operating_company_id
+        LEFT JOIN driver_finance.driver_settlements settlement
+          ON settlement.id = bt.matched_settlement_id
+         AND settlement.operating_company_id = bt.operating_company_id
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = bt.matched_journal_entry_id
+         AND je.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY bt.transaction_date DESC, bt.created_at DESC
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

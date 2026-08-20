@@ -438,19 +438,19 @@ const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
         <EntityLink
           kind="load"
           id={row.matched_load_id}
-          label={entityLabel(null, row.matched_load_id, "Load")}
+          label={entityLabel(row.matched_load_number ?? null, row.matched_load_id, "Load")}
         />
       ) : row.matched_bill_id ? (
         <EntityLink
           kind="bill"
           id={row.matched_bill_id}
-          label={entityLabel(null, row.matched_bill_id, "Bill")}
+          label={entityLabel(row.matched_bill_number ?? null, row.matched_bill_id, "Bill")}
         />
       ) : row.matched_settlement_id ? (
         <EntityLink
           kind="settlement"
           id={row.matched_settlement_id}
-          label={entityLabel(null, row.matched_settlement_id, "Settlement")}
+          label={entityLabel(row.matched_settlement_display_id ?? null, row.matched_settlement_id, "Settlement")}
         />
       ) : (
         "No"
