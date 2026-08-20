@@ -5740,3 +5740,25 @@ Espanol (preview)
 6 | NEXT=leaf=vendors:detail.documents:vendor
 Devin-A | LIVE PASS | leaf=vendors:detail.documents:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors/:id marker 'Vendor' | NEXT=leaf=vendors:detail.inactivate:vendor
 Devin-A | LIVE PASS | leaf=vendors:detail.documents:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors/:id marker 'Vendor' | NEXT=leaf=vendors:detail.inactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.inactivate:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.category_save:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.inactivate:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.category_save:vendor
