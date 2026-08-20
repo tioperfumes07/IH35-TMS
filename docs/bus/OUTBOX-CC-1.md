@@ -1339,3 +1339,9 @@ Also: before touching ANY code on "dispute_adjustment never reaches net pay" (th
 Sixteen findings shipped total this segment (ACCT-F5602 through F5618, 2 skipped in the id sequence for the claim-only migration PRs). Continuing non-stop.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T10:35Z CC-1 | ACCT-F5619 SHIPPED (PR #10719, merged 189fe149) -- closed the narrower, owner-decision-independent half of the OPEN SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH board finding, exactly as that row's own action item (3) scoped it. settlement_lines('dispute_adjustment') was written by only 1 of 3 mounted dispute-resolution routes and read by none -- so the settlement header/PDF/approval screen's net_pay stayed blind to an approved correction regardless of which endpoint an operator hit. Fixed by adding the identical INSERT to the other 2 routes and folding dispute_adjustment into aggregateSettlementTotals's reimbursements bucket. Deliberately did NOT touch settlement-payrun-close.service.ts or add any new GL leg -- the board row's own double-posting-risk analysis stands untouched, disbursement stays fully OPEN pending the owner's account-type decision. Amended the board row with a PROGRESS note (never deleting/closing it) so the next reader sees exactly what's done vs. still blocked.
+
+Seventeen findings shipped total this segment (ACCT-F5602 through F5619). All fixes + board closeouts verified merged via a fresh gh pr view/api call before any branch cleanup, per standing law. Continuing non-stop -- no idle gaps, always fix never defer.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
