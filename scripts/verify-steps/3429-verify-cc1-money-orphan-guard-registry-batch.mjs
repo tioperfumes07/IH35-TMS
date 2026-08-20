@@ -38,6 +38,7 @@ const guards = [
   "verify-detention-billing-bridge-resyncs-invoice.mjs",
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
   "verify-driver-finance-reverse-leaves.mjs",
+  "verify-escrow-cap-display-not-stale.mjs",
   "verify-escrow-release-atomic.mjs",
   "verify-escrow-separation-disbursement-debt-fixes.mjs",
   "verify-escrow-routes-membership-assert.mjs",
