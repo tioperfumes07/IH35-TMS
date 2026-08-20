@@ -7954,3 +7954,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:list.sync:vendor
+Devin-A | LIVE PASS | leaf=vendors:list.sync:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=b3b4579 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:md.header.edit:vendor
+Devin-A | LIVE PASS | leaf=vendors:list.sync:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=b3b4579 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:md.header.edit:vendor
