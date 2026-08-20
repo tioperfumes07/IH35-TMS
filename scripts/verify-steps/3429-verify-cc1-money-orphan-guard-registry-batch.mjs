@@ -89,6 +89,7 @@ const guards = [
   "verify-payment-void-row-locked.mjs",
   "verify-payments-create-role-gated.mjs",
   "verify-payrun-close-reimbursements-and-active-lines.mjs",
+  "verify-period-close-fy-window-and-idempotent-reclose.mjs",
   "verify-pre-settlement-add-load-rejects-cancelled.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
   "verify-prepaid-void-reverses-amortization.mjs",

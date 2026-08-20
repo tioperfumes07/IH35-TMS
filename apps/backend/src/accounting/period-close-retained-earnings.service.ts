@@ -17,6 +17,19 @@ type CloseLine = {
 /**
  * Year-end only (period_end == Dec 31): inserts a balancing posted JE closing P&L into retained earnings.
  * Caller owns BEGIN/COMMIT together with period close UPDATE.
+ *
+ * LOCKED DESIGN (owner 2026-08-20; OWNER-DECISIONS-FINAL E7/E8 + blueprint 16825):
+ *   - Fiscal year = calendar Jan–Dec. The sweep aggregates the FULL fiscal year
+ *     (Jan 1 of fiscal_year → period_end), NEVER the closing period's own bounds — prod periods are
+ *     monthly, so the old period_start window swept only December and understated Retained Earnings
+ *     by ~11/12 of each year's net income (RETAINED-EARNINGS-SWEEP-SCOPED-TO-CLOSING-PERIOD row).
+ *   - Re-close is IDEMPOTENT: if this fiscal year already has an unreversed posted closing JE, that
+ *     JE is RETURNED — a second one is never posted. Undo = reverse the closing JE (canonical
+ *     reverseJournalEntryNoFlip path), then close again: the fresh close posts under a
+ *     reversal-count-scoped idempotency key so its lines can never ON-CONFLICT-collide with the
+ *     reversed close's rows (PERIOD-RECLOSE-AFTER-REOPEN-IDEMPOTENCY-KEY-COLLISION row). The
+ *     reversed-count discriminator mirrors BANK-F05: it rises only when someone reverses, never on
+ *     a retry, so a double-submit still no-ops.
  */
 export async function insertRetainedEarningsClosingJournalIfNeeded(
   client: PoolClient,
@@ -29,6 +42,30 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
   }
 ): Promise<string | null> {
   if (!isDec31(params.period_end)) return null;
+
+  // Idempotent re-close: an unreversed posted closing JE for this fiscal year IS the close — return
+  // it. Reversed ones (the explicit undo path) are counted to scope the fresh close's idempotency
+  // key past the dead rows.
+  const priorCloses = await client.query<{ id: string; status: string; reversed: boolean }>(
+    `
+      SELECT DISTINCT je.id::text AS id, je.status::text AS status,
+             (je.reversed_by_je_id IS NOT NULL) AS reversed
+      FROM accounting.journal_entry_postings jep
+      INNER JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+       AND je.operating_company_id = jep.operating_company_id
+      WHERE jep.operating_company_id = $1::uuid
+        AND jep.idempotency_key LIKE $2
+    `,
+    [params.operating_company_id, `period_close:FY${params.fiscal_year}:%`]
+  );
+  const liveClose = priorCloses.rows.find((r) => r.status === "posted" && !r.reversed);
+  if (liveClose) return liveClose.id;
+  const reversedCloseCount = priorCloses.rows.filter((r) => r.reversed).length;
+
+  // FISCAL-YEAR window (Jan 1 → period_end), never the closing period's own start. A prior reversed
+  // close and its reversal both fall inside this window and self-cancel, so the aggregation below
+  // stays correct after an undo without any special-casing.
+  const fiscalYearStart = `${params.fiscal_year}-01-01`;
 
   const agg = await client.query<{ account_id: string; account_type: string; debits: string; credits: string }>(
     `
@@ -46,7 +83,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         AND je.entry_date BETWEEN $2::date AND $3::date
       GROUP BY jep.account_id, a.account_type
     `,
-    [params.operating_company_id, params.period_start, params.period_end]
+    [params.operating_company_id, fiscalYearStart, params.period_end]
   );
 
   const lines: CloseLine[] = [];
@@ -204,8 +241,12 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         ln.description,
         // BLOCK 2: deterministic key per fiscal-year close so a re-run of the same year-end close is a
         // safe no-op (uq_jep_company_idempotency_line) — a double-posted retained-earnings close is the
-        // worst-case duplicate, so this path is protected first.
-        `period_close:FY${params.fiscal_year}:${params.period_end.slice(0, 10)}`,
+        // worst-case duplicate, so this path is protected first. LOCKED DESIGN 2026-08-20: the key is
+        // scoped by the count of REVERSED prior closes (`:r{n}` suffix, absent on the first close so
+        // pre-existing rows keep matching), so a legitimate close-after-undo can never
+        // ON-CONFLICT-collide with the reversed close's rows and silently post a zero-line or
+        // unbalanced JE.
+        `period_close:FY${params.fiscal_year}:${params.period_end.slice(0, 10)}${reversedCloseCount > 0 ? `:r${reversedCloseCount}` : ""}`,
       ]
     );
     // CODER-12 audit-spine: link each closing line to the fiscal-year close. Skip on a BLOCK-2
