@@ -160,28 +160,23 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
     const user = userEvent.setup();
     render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={draft} createMode onClose={() => {}} onUpdated={() => {}} />));
 
-    const pick = async (testid: string, value: string, label: RegExp) => {
-      const wrapEl = await screen.findByTestId(testid);
-      const select = within(wrapEl).getByRole("combobox") as HTMLSelectElement;
-      await waitFor(() => expect(within(wrapEl).getByRole("option", { name: label })).toBeInTheDocument());
-      await user.selectOptions(select, value);
-      expect(select.value).toBe(value);
-    };
-    // Driver AND unit use the real Combobox; only vendor + load are the mocked native selects.
-    // The unit picker migrated to `EntityPicker kind="unit"` (AccidentReportDrawer.tsx:282), which this
-    // file does NOT stub — it stubs shared/Combobox and parity/ReferenceSelect. So `pick()` no longer
-    // applies to it: user.selectOptions drives a real <select>, and the EntityPicker renders an
-    // input role="combobox" whose options exist only while the listbox is OPEN. That mismatch surfaced as
-    // `Unable to find role="option" and name /T-101/`, which reads as a missing unit rather than as a
-    // control that had never been opened. The comment on this line said "the other three are the mocked
-    // native selects" — true before the migration, stale after it.
+    // Driver, unit, vendor, AND load all use the real Combobox now — none of them are a native
+    // <select> any more. The unit picker migrated to `EntityPicker kind="unit"`
+    // (AccidentReportDrawer.tsx:282), and vendor migrated to `EntityPicker kind="vendor"`
+    // (AccidentReportDrawer.tsx:367 — SAF-F31, superseding the old Combobox+vendorSearch shape). This
+    // file does NOT stub EntityPicker — it stubs shared/Combobox and parity/ReferenceSelect, so every
+    // EntityPicker-backed field renders a real `input role="combobox"` whose options exist only while
+    // the listbox is OPEN. `user.selectOptions` against a real `<select>` no longer applies to any of
+    // these four fields; use `pickCombo` (focus+click to open, click the option by visible text) for
+    // all of them, exactly like the unit/load pickers already do.
     const driverWrap = await screen.findByTestId("accident-driver-picker");
     const driverInput = within(driverWrap).getByRole("combobox") as HTMLInputElement;
     await user.click(driverInput);
     await user.click(await screen.findByText("Alfredo Cazares"));
     const unitWrap = await screen.findByTestId("accident-unit-picker");
     pickCombo(within(unitWrap).getByRole("combobox"), /T-101/);
-    await pick("accident-vendor-picker", "vendor-uuid-1", /Laredo Diesel/);
+    const vendorWrap = await screen.findByTestId("accident-vendor-picker");
+    pickCombo(within(vendorWrap).getByRole("combobox"), /Laredo Diesel/);
     const loadWrap = await screen.findByTestId("accident-load-picker");
     pickCombo(within(loadWrap).getByRole("combobox"), /LD-9001/);
 
