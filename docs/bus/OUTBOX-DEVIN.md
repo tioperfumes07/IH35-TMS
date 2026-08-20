@@ -3658,3 +3658,42 @@ Devin-A | LIVE PASS | leaf=insurance:claims.list:picker_law | USMCA | URL=https:
 Devin-A | LIVE PASS | leaf=insurance:coverage_gaps:unit | USMCA | URL=https://app.ih35dispatch.com/safety/insurance/coverage-gaps | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance/coverage-gaps marker 'insurance' | NEXT=leaf=insurance:insurance.modal.claim_create:connectivity
 Devin-A | LIVE PASS | leaf=insurance:coverage_gaps:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety/insurance/coverage-gaps | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance/coverage-gaps marker 'insurance' | NEXT=leaf=insurance:insurance.modal.claim_create:connectivity
 Devin-A | LIVE PASS | leaf=insurance:coverage_gaps:reverse_link | USMCA | URL=https://app.ih35dispatch.com/safety/insurance/coverage-gaps | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance/coverage-gaps marker 'insurance' | NEXT=leaf=insurance:insurance.modal.claim_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.modal.claim_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.modal.lawsuit_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.modal.claim_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.modal.lawsuit_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.modal.claim_create:driver | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.modal.lawsuit_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.modal.claim_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.modal.lawsuit_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.modal.lawsuit_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:insurance.modal.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.modal.lawsuit_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:insurance.modal.policy_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.modal.policy_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.claim_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.modal.policy_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.claim_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.modal.policy_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.claim_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.parity.claim_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.lawsuit_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.parity.claim_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.lawsuit_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.parity.claim_create:driver | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.lawsuit_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.parity.claim_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.lawsuit_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.parity.lawsuit_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.policy_create:connectivity
+Devin-A | LIVE PASS | leaf=insurance:insurance.parity.lawsuit_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/insurance marker 'insurance' | NEXT=leaf=insurance:insurance.parity.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.parity.policy_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=insurance:insurance.wizard.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.parity.policy_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=insurance:insurance.wizard.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.parity.policy_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=insurance:insurance.wizard.policy_create:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.wizard.policy_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:landing:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.wizard.policy_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:landing:connectivity
+Devin-A | LIVE STARVED | leaf=insurance:insurance.wizard.policy_create:unit | USMCA | URL=https://app.ih35dispatch.com/insurance | healthz=22d35a9 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/insurance healthz=22d35a9 head Checking session... | NEXT=leaf=insurance:landing:connectivity
