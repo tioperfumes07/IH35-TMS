@@ -9599,3 +9599,25 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Loading vendor...
 FAQ | NEXT=leaf=vendors:detail.audit_history:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=343a14a | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.inactivate:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=343a14a | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.inactivate:vendor
