@@ -14900,3 +14900,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.profile:bank
+Devin-A | LIVE PASS | leaf=customers:detail.profile:bank | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:load
+Devin-A | LIVE PASS | leaf=customers:detail.profile:gl_je | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:load
