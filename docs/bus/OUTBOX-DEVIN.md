@@ -14618,3 +14618,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=accounting:bills.create.fuel:ap_bill
+Devin-A | LIVE PASS | leaf=accounting:bills.create.fuel:ap_bill | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/fuel | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?category=fuel&create=1 marker 'Bills' | NEXT=leaf=accounting:bills.create.maintenance:ap_bill
+Devin-A | LIVE PASS | leaf=accounting:bills.create.fuel:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/bills/fuel | healthz=357e570 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?category=fuel&create=1 marker 'Bills' | NEXT=leaf=accounting:bills.create.maintenance:ap_bill
