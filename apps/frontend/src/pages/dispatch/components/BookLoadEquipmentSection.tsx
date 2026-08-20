@@ -1,4 +1,4 @@
-import { useEffect, type JSX } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listDriverTeams } from "../../../api/mdata";
@@ -13,6 +13,7 @@ import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCa
 import { loadTrailerEquipmentCatalogClient, type DispatchCatalogRow } from "../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -33,6 +34,10 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "") : "";
   const assignedUnitId = watch ? String(watch("assigned_unit_id") ?? "") : "";
   const assignedTrailerUnitId = watch ? String(watch("assigned_trailer_unit_id") ?? "") : "";
+  const [primaryDriverOption, setPrimaryDriverOption] = useState<EntityPickerOption | null>(null);
+  const [secondaryDriverOption, setSecondaryDriverOption] = useState<EntityPickerOption | null>(null);
+  const [unitOption, setUnitOption] = useState<EntityPickerOption | null>(null);
+  const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   const temperatureType = watch ? String(watch("temperature_type") ?? "") : ""; // W-FIX-1 Frozen/Fresh segmented
@@ -116,7 +121,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               kind="unit"
               operatingCompanyId={operatingCompanyId ?? ""}
               value={assignedUnitId || null}
-              onChange={(next) => setValue?.("assigned_unit_id", next ?? "", { shouldDirty: true })}
+              onChange={(next, option) => {
+                setUnitOption(option ?? null);
+                setValue?.("assigned_unit_id", next ?? "", { shouldDirty: true });
+              }}
+              onSelectedOptionResolved={setUnitOption}
               className="h-7 w-full text-xs"
               placeholder={operatingCompanyId ? "Select truck unit" : "Select company first"}
               dataField="assigned_unit_id"
@@ -131,7 +140,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               kind="trailer"
               operatingCompanyId={operatingCompanyId ?? ""}
               value={assignedTrailerUnitId || null}
-              onChange={(next) => setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true })}
+              onChange={(next, option) => {
+                setTrailerOption(option ?? null);
+                setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true });
+              }}
+              onSelectedOptionResolved={setTrailerOption}
               className="h-7 w-full text-xs"
               placeholder={operatingCompanyId ? "Select trailer unit" : "Select company first"}
               dataField="assigned_trailer_unit_id"
@@ -150,24 +163,24 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           {primaryDriverId ? (
             <span data-testid="book-load-equipment-driver-link">
               Driver:{" "}
-              <EntityLinkOrTombstone kind="driver" id={primaryDriverId} name={null} noun="Driver" />
+              <EntityLinkOrTombstone kind="driver" id={primaryDriverId} name={primaryDriverOption?.label ?? null} noun="Driver" />
             </span>
           ) : null}
           {secondaryDriverId ? (
             <span data-testid="book-load-equipment-team-driver-link">
               Team:{" "}
-              <EntityLinkOrTombstone kind="driver" id={secondaryDriverId} name={null} noun="Driver" />
+              <EntityLinkOrTombstone kind="driver" id={secondaryDriverId} name={secondaryDriverOption?.label ?? null} noun="Driver" />
             </span>
           ) : null}
           {assignedUnitId ? (
             <span data-testid="book-load-equipment-unit-link">
-              Unit: <EntityLinkOrTombstone kind="unit" id={assignedUnitId} name={null} noun="Unit" />
+              Unit: <EntityLinkOrTombstone kind="unit" id={assignedUnitId} name={unitOption?.label ?? null} noun="Unit" />
             </span>
           ) : null}
           {assignedTrailerUnitId ? (
             <span data-testid="book-load-equipment-trailer-link">
               Trailer:{" "}
-              <EntityLinkOrTombstone kind="trailer" id={assignedTrailerUnitId} name={null} noun="Trailer" />
+              <EntityLinkOrTombstone kind="trailer" id={assignedTrailerUnitId} name={trailerOption?.label ?? null} noun="Trailer" />
             </span>
           ) : null}
         </div>
@@ -179,7 +192,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             <DriverPickerWithCreate
               operatingCompanyId={operatingCompanyId ?? ""}
               value={primaryDriverId || null}
-              onChange={(next) => setValue?.("assigned_primary_driver_id", next ?? "", { shouldDirty: true })}
+              onChange={(next, option) => {
+                setPrimaryDriverOption(option ?? null);
+                setValue?.("assigned_primary_driver_id", next ?? "", { shouldDirty: true });
+              }}
+              onSelectedOptionResolved={setPrimaryDriverOption}
               className="h-7 w-full text-xs"
               placeholder="Select driver"
               dataField="assigned_primary_driver_id"
@@ -195,7 +212,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             <DriverPickerWithCreate
               operatingCompanyId={operatingCompanyId ?? ""}
               value={secondaryDriverId || null}
-              onChange={(next) => setValue?.("assigned_secondary_driver_id", next ?? "", { shouldDirty: true })}
+              onChange={(next, option) => {
+                setSecondaryDriverOption(option ?? null);
+                setValue?.("assigned_secondary_driver_id", next ?? "", { shouldDirty: true });
+              }}
+              onSelectedOptionResolved={setSecondaryDriverOption}
               className="h-7 w-full text-xs"
               placeholder="Solo load (optional)"
               dataField="assigned_secondary_driver_id"
