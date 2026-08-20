@@ -16,7 +16,8 @@
  *   3. apps/frontend/src/api/data-infra.ts's listDriverVendorMerges accepts and forwards both.
  *   4. FactoringHome.tsx reads driver_id/vendor_id from the URL and forwards them to the query.
  *   5. DriverVendorMergesReverseSection.tsx (new) queries the driver-scoped endpoint;
- *      DriverProfilePage.tsx mounts it.
+ *      DriverProfilePage.tsx mounts it, and each resolved from/to vendor drills to its canonical
+ *      profile (or renders an honest tombstone when the QBO id has no scoped internal match).
  *   6. VendorMergesReverseSection.tsx (new) queries the vendor-scoped endpoint; VendorDetail.tsx
  *      mounts it.
  */
@@ -105,11 +106,17 @@ export function assertVendorMergesReverse(sources) {
   if (!/kind="factoring_vendor_merges_vendor"/.test(vendorSection) || /from "react-router-dom"/.test(vendorSection)) {
     problems.push(`${VENDOR_SECTION}: Open queue must EntityLink kind=factoring_vendor_merges_vendor (no bare Link)`);
   }
-  for (const [file, section] of [[DRIVER_SECTION, driverSection], [VENDOR_SECTION, vendorSection]]) {
-    if (!/entityLabel\(m\.from_vendor_name, m\.from_qbo_vendor_id, "Vendor"\)/.test(section) ||
-        !/entityLabel\(m\.to_vendor_name, m\.to_qbo_vendor_id, "Vendor"\)/.test(section)) {
-      problems.push(`${file}: merge labels must reject raw QBO vendor-id fallbacks`);
-    }
+  if (!/EntityLinkOrTombstone/.test(driverSection) ||
+      !/kind="vendor"[\s\S]{0,100}id=\{m\.from_vendor_id\}[\s\S]{0,100}name=\{m\.from_vendor_name\}/.test(driverSection) ||
+      !/kind="vendor"[\s\S]{0,100}id=\{m\.to_vendor_id\}[\s\S]{0,100}name=\{m\.to_vendor_name\}/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: each resolved from/to vendor must use canonical EntityLinkOrTombstone`);
+  }
+  if (/id=\{driverId\}[\s\S]{0,160}from_vendor_name/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: merge rows must not collapse vendor identities into a driver-filter queue link`);
+  }
+  if (!/entityLabel\(m\.from_vendor_name, m\.from_qbo_vendor_id, "Vendor"\)/.test(vendorSection) ||
+      !/entityLabel\(m\.to_vendor_name, m\.to_qbo_vendor_id, "Vendor"\)/.test(vendorSection)) {
+    problems.push(`${VENDOR_SECTION}: merge labels must reject raw QBO vendor-id fallbacks`);
   }
   return problems;
 }
@@ -151,8 +158,8 @@ function selftest() {
     `,
     [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)
       kind="factoring_vendor_merges_driver"
-      entityLabel(m.from_vendor_name, m.from_qbo_vendor_id, "Vendor")
-      entityLabel(m.to_vendor_name, m.to_qbo_vendor_id, "Vendor")`,
+      EntityLinkOrTombstone kind="vendor" id={m.from_vendor_id} name={m.from_vendor_name} noun="Vendor"
+      EntityLinkOrTombstone kind="vendor" id={m.to_vendor_id} name={m.to_vendor_name} noun="Vendor"`,
     [DRIVER_PROFILE]: `
       import { DriverVendorMergesReverseSection } from "../../components/driver-profile/DriverVendorMergesReverseSection";
       <DriverVendorMergesReverseSection operatingCompanyId={companyId} driverId={id} />
@@ -187,7 +194,8 @@ function selftest() {
     { ...good, [VENDOR_SECTION]: good[VENDOR_SECTION].replace("{ vendor_id: vendorId }", "{}") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("import { VendorMergesReverseSection }", "// removed") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("vendorId={vendor.id}", "") },
-    { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace(/entityLabel/g, "rawLabel") },
+    { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("id={m.from_vendor_id}", "id={driverId}") },
+    { ...good, [DRIVER_SECTION]: good[DRIVER_SECTION].replace("id={m.to_vendor_id}", "id={driverId}") },
     { ...good, [VENDOR_SECTION]: good[VENDOR_SECTION].replace(/entityLabel/g, "rawLabel") },
     {
       ...good,
