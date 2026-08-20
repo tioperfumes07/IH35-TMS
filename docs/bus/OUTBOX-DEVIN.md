@@ -7027,3 +7027,30 @@ Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.priority_levels.create:c
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.services_catalog.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/services-catalog | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/services-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.services_catalog.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.services_catalog.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/services-catalog | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/services-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.services_catalog.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.services_catalog.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/services-catalog | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/maintenance/services-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.services_catalog.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.services_catalog.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/services-catalog | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/services-catalog healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=lists:catalog.maintenance.shop_locations.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.services_catalog.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/services-catalog | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/services-catalog healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=lists:catalog.maintenance.shop_locations.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.services_catalog.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/services-catalog | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/services-catalog healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=lists:catalog.maintenance.shop_locations.create:picker_law
