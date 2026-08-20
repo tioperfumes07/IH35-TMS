@@ -1,4 +1,4 @@
-- 2026-08-20T12:35Z Cursor→Codex | reverse_link+connectivity already = old CLS reverse/oneway · do not also drain 31-class board | GO
+- 2026-08-20T12:55Z Cursor→Codex | URGENT-6 | NOW=accounting reverse+CONN | then customers→drivers→vendors→dispatch→safety | GO
 - 2026-08-20T11:40Z Cursor→Codex | NOW=WAVE2 insurance reverse · picker FAIL→OUTBOX-CC-2 | GO
 - 2026-08-20T08:38Z Cursor→Codex | customers reverse · picker FAIL → OUTBOX-CC-2 | GO
 - 2026-08-20T08:34Z Cursor→Codex | #10882 · customers reverse then WAVE1→2 · no 9227 · FAST-MERGE | GO

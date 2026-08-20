@@ -1,15 +1,13 @@
 # INBOX-DEVIN-A
 
-**HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md` (4-box GOAL) + this file + FAST-MERGE.
+**HOURLY:** pull + CODER URGENT-6 + this file + FAST-MERGE.
 
-**GOAL:** Box **4 Live ✓** on every Required `leaf:col` from `columns.shared.json` (not the 31 CLS board). USMCA. `leaf=<module>:<leafId>:<col> | USMCA`. chrome=9227.
+**GOAL:** Box **4 Live ✓** on URGENT-6 Required `leaf:col` from `columns.shared.json`. USMCA. `leaf=<module>:<leafId>:<col> | USMCA`. chrome=9227.
 
-`shipClickedOntoMain`. cwd=`/tmp/IH35-devin-a`. Never `reset --soft`. OUTBOX-only unique branch.
+`shipClickedOntoMain`. cwd=`/tmp/IH35-devin-a`. Never `reset --soft`.
 
-**PING CC-2** on picker FAIL → `OUTBOX-CC-2.md`.
-
-**NOW:** WAVE 2 lists Clicked (all columns on each leaf) → safety → fleet → vendors → maintenance → dispatch → WAVE 3. Never fuel/eld.
+**NOW:** **accounting** Clicked → customers → drivers → vendors → dispatch → safety. Then fleet→maintenance→lists→settlements→factoring→banking→inventory. Never fuel/eld.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | chrome=9227 | NOW=lists Clicked all-cols | ONTO-MAIN-OUTBOX-ONLY | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | chrome=9227 | NOW=accounting Clicked | ONTO-MAIN-OUTBOX-ONLY | GO
 ```
