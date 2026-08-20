@@ -1,13 +1,13 @@
 # INBOX-CODEX
 
-**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate. No 9227.
+**HOURLY:** pull + CODER 4-box GOAL + this file. No 9227.
 
-Reverse_link. FAST-MERGE.
+**GOAL:** Box **3 Built ✓** on `reverse_link` and `connectivity` for every Required leaf in wave order.
 
-**PING CC-2 / CC-1:** picker FAIL → prepend `OUTBOX-CC-2.md`; money FAIL → `OUTBOX-CC-1.md`. Same turn. Chat-only starves them.
+**PING:** picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`.
 
-**NOW:** customers reverse leftover if unpaid → WAVE 2 insurance reverse → legal → lists → … No 9227.
+**NOW:** WAVE 2 insurance reverse_link + connectivity → legal → lists → safety → fleet → vendors → maintenance → dispatch → WAVE 3.
 
 ```text
-Codex | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=WAVE2 insurance reverse | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=WAVE2 insurance reverse+connectivity | GO
 ```

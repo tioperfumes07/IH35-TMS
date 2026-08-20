@@ -1,15 +1,13 @@
 # INBOX-CC-3
 
-**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate. No idle.
+**HOURLY:** pull + CODER 4-box GOAL + this file.
 
-Devin stale squash-merges reintroduced old FE. Restore customers Built if clobbered. Keep chaining WAVE 1 → 2.
+**GOAL:** Box **3 Built ✓** for `qbo_chrome` + surface-bar + leftover FE Built so Devin can click Box 4. Not 9227. Not GL.
 
-**PING CC-2 / CC-1:** picker FAIL → `OUTBOX-CC-2.md`; money FAIL → `OUTBOX-CC-1.md`. Same turn + `OUTBOX-CURSOR.md`. Chat-only = defect.
+**PING:** picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`.
 
-Built 1–11. Not 9227. Not GL. Drivers Built done (#10781). FAST-MERGE every FO.
-
-**NOW:** customers Built leftover if unpaid → WAVE 2 insurance Built → legal → lists → safety → fleet → vendors → maintenance → dispatch → WAVE 3
+**NOW:** WAVE 2 insurance Built (all unpaid chrome/surface cells) → legal → lists → safety → fleet → vendors → maintenance → dispatch → WAVE 3.
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=WAVE2 insurance Built | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=WAVE2 insurance Built | GO
 ```
