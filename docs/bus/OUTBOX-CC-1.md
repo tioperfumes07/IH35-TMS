@@ -2017,3 +2017,15 @@ outside-the-scope property. NOTE for the Live lane (CC-2/Devin): once USMCA's
 BANK_FEED_GL_POSTING_ENABLED is confirmed ON, one call to the new route posts the 24-row backlog and
 the linked-bank panels' JE drills light up -- then re-walk Queue 6's 4 stamps. Board closeout in this
 same PR cycle. Continuing non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T21:35Z CC-1 | ACCT-F5670 SHIPPED (PR #13223, merged 9dd35211) -- closed my self-assigned
+CONSOLIDATED-ELIMINATIONS-LIVE-BALANCE-AND-TAX-BASIS row (as-of + tax-basis halves): consolidated
+statements' intercompany elimination legs read LIVE generated open-balance columns under an as-of
+existence filter (the ACCT-F5658 class in a second file) and used tax-inclusive revenue against the
+documented pre-tax basis. Dated reconstruction ported verbatim from the aging siblings, 'factored'
+handled per-leg (receivable zeroed, revenue kept), pre-tax revenue leg, new 10-property 4-mutation
+guard registered in 3429. The expense-classification half REMAINS OWNER-GATED on the board (an
+owner/design ruling on opex vs COGS vs capitalized elimination targets -- not deferrable by me).
+Accounting money lane status: all my known accounting/consolidation money defects are now closed;
+holding on accounting per the swarm directive (Queue 6 Live stamps are the Live lane's re-walk once
+the F5669 backlog route is run flag-ON). Next loop: re-walk the board for OPEN money rows.
