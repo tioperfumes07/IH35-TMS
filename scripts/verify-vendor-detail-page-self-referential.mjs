@@ -21,7 +21,9 @@ const LABEL = "verify-vendor-detail-page-self-referential";
 const CHECKS = [
   ["profile", /queryKey: \["vendor", id\]/],
   ["profile.edit", /return updateVendor\(id, \{/],
-  ["profile.driver_link", /kind="driver" id=\{vendor\.driver_id\}/],
+  // kind="driver" and id={vendor.driver_id} can land on the same line or wrap onto their own
+  // JSX-prop lines (2026-08-20, CC-3: VendorDetail.tsx's reverse EntityLink reformatted multi-line).
+  ["profile.driver_link", /kind="driver"\s+id=\{vendor\.driver_id\}/],
   ["profile.vendor_type_picker", /vendorTypesQuery = useCatalogQuery/],
   ["profile.default_expense_account", /defaultExpenseAccountId: string \| null/],
   ["profile.payment_terms", /paymentTermsId: string \| null/],

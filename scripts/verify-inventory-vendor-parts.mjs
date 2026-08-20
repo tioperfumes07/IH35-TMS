@@ -20,9 +20,14 @@ const FILES = {
 };
 const LABEL = "verify-inventory-vendor-parts";
 
+// kind="vendor" and id={row.vendor_id} can land on the same line or wrap onto their own JSX-prop
+// lines (2026-08-20, CC-3: InventoryPartsStockPage.tsx's EntityLink reformatted multi-line) —
+// tolerate whitespace/newlines between the two props instead of requiring a single-line match.
+const VENDOR_LINK_RE = /kind="vendor"\s+id=\{row\.vendor_id\}/;
+
 export function audit(src) {
   const failures = [];
-  if (!/kind="vendor" id=\{row\.vendor_id\}/.test(src.stock)) {
+  if (!VENDOR_LINK_RE.test(src.stock)) {
     failures.push(`${FILES.stock}: parts roster/column must render a real vendor EntityLink`);
   }
   if (!/data-testid="inv-part-create-vendor-picker"/.test(src.createDrawer) || !/kind="vendor"/.test(src.createDrawer) || !/allowCreate/.test(src.createDrawer)) {
@@ -31,7 +36,7 @@ export function audit(src) {
   if (!/data-testid="inv-part-edit-vendor-picker"/.test(src.editDrawer) || !/kind="vendor"/.test(src.editDrawer) || !/allowCreate/.test(src.editDrawer)) {
     failures.push(`${FILES.editDrawer}: part edit must have EntityPicker kind=vendor with allowCreate`);
   }
-  if (!/kind="vendor" id=\{row\.vendor_id\}/.test(src.assignments)) {
+  if (!VENDOR_LINK_RE.test(src.assignments)) {
     failures.push(`${FILES.assignments}: assignments trail/vendor-link must render a real vendor EntityLink`);
   }
   return failures;
@@ -48,10 +53,10 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["stock-link", "stock", /kind="vendor" id=\{row\.vendor_id\}/, 'kind="unit" id={row.unit_id}'],
+    ["stock-link", "stock", VENDOR_LINK_RE, 'kind="unit"\n          id={row.unit_id}'],
     ["create-picker", "createDrawer", /data-testid="inv-part-create-vendor-picker"/, 'data-testid="inv-part-create-vendor-picker-unused"'],
     ["edit-picker", "editDrawer", /data-testid="inv-part-edit-vendor-picker"/, 'data-testid="inv-part-edit-vendor-picker-unused"'],
-    ["assignments-link", "assignments", /kind="vendor" id=\{row\.vendor_id\}/, 'kind="unit" id={row.unit_id}'],
+    ["assignments-link", "assignments", VENDOR_LINK_RE, 'kind="unit" id={row.unit_id}'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
