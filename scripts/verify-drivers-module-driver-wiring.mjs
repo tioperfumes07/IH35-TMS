@@ -37,6 +37,9 @@ const CHECKS = [
   ["apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx", /driver_id: driverId,/],
   ["apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx", /listDriverQualificationItems\(driverId, companyId\)/],
   ["apps/frontend/src/pages/drivers/OnboardingWizardPage.tsx", /entity_links: driverId \? \[\{ entity_type: "driver", entity_id: driverId \}\] : undefined,/],
+  ["apps/frontend/src/pages/drivers/OnboardingWizardPage.tsx", /<EntityLinkOrTombstone[\s\S]*?id=\{driverId\}[\s\S]*?name=\{session\.driver_name\}[\s\S]*?noun="Driver"/],
+  ["apps/frontend/src/api/onboarding.ts", /driver_name: string \| null;/],
+  ["apps/backend/src/safety/onboarding.routes.ts", /LEFT JOIN mdata\.drivers driver[\s\S]*?driver\.operating_company_id = session\.operating_company_id/],
   ["apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx", /kind="driver"/],
 ];
 

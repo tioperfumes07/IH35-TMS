@@ -999,3 +999,4 @@ Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers re
 Codex | STALE INBOX | target=Codex | why=DRV-PROFILE-OPS-REVERSE already shipped through PR #10380 on origin/main cd24b842e | GO
 Codex | WORKING | NOW=drivers reverse FE exhaustive mounted-consumer trace | NEXT=next genuine unpaid reverse FO | GO
 Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | WORKING | FINDING=DRIVER-ONBOARDING-PROFILE-FALSE-HUMAN-LABEL | leaf=drivers:onboarding.wizard:driver/reverse_link | guard=normal+selftest | NEXT=fast-merge | GO
