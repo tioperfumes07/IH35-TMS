@@ -32,6 +32,7 @@ const BACKEND = "apps/backend/src/home/scenario-registry.ts";
 const FE = "apps/frontend/src/pages/program/scenario-tracker/registry.ts";
 const CERTIFIER = "scripts/scenario-certify.mjs";
 const SCOREBOARD = "scripts/scoreboard-from-live.mjs";
+const HOME = "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx";
 
 /** Money probes that MUST exclude imported rows, and the discriminator each one needs. */
 const ORIGIN_REQUIRED = [
@@ -121,12 +122,41 @@ function check(sources) {
       errors.push(`${f}: appears to certify with is_test_data=true — a fixture cert must never move a real dot.`);
     }
   }
+
+  // 5 — every rendered slice must click through to a real in-app route (V3). Dead titles = tracker theater.
+  const home = sources[HOME] ?? "";
+  if (!/to=\{hop\.href\}/.test(home)) {
+    errors.push(`${HOME}: Part A hops must Link with to={hop.href} — titles were dead before this pin.`);
+  }
+  if (!/to=\{item\.href\}/.test(home)) {
+    errors.push(`${HOME}: Part B cards must Link with to={item.href} — titles were dead before this pin.`);
+  }
+  if (!/useState<EntityScope>\("USMCA"\)/.test(home)) {
+    errors.push(`${HOME}: default entity must be USMCA (launch law — do not default ALL/TRANSP).`);
+  }
+  const feSrc = sources[FE] ?? "";
+  const feKeysForHref = keysIn(stripComments(feSrc));
+  for (const k of feKeysForHref) {
+    const needle = `key: "${k}"`;
+    const at = feSrc.indexOf(needle);
+    if (at === -1) {
+      errors.push(`${FE}: slice "${k}" key not found as key: "…" (href pin).`);
+      continue;
+    }
+    const rest = feSrc.slice(at + needle.length);
+    const next = rest.search(/key:\s*"(?:hop|scenario)\./);
+    const block = rest.slice(0, next === -1 ? undefined : next);
+    if (!/href:\s*"\/[^"]+"/.test(block)) {
+      errors.push(`${FE}: slice "${k}" has no href:"/…" — the tracker cannot open the wizard that performs the hop.`);
+    }
+  }
+
   return errors;
 }
 
 function loadAll() {
   const out = {};
-  for (const f of [BACKEND, FE, CERTIFIER, SCOREBOARD]) {
+  for (const f of [BACKEND, FE, CERTIFIER, SCOREBOARD, HOME]) {
     try {
       out[f] = readFileSync(f, "utf8");
     } catch {
@@ -153,6 +183,8 @@ function selftest() {
     ["scoreboard loses its masking guard", (s) => ({ ...s, [SCOREBOARD]: s[SCOREBOARD].split("assertNotMasked").join("skipCheck") })],
     ["certifier bypass becomes transaction-local", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].replace("'app.bypass_rls','lucia',false", "'app.bypass_rls','lucia',true") })],
     ["a Part B slice is dropped", (s) => ({ ...s, [BACKEND]: s[BACKEND].split('"scenario.escrow"').join('"scenario.gone"') })],
+    ["hop.book loses its href", (s) => ({ ...s, [FE]: s[FE].replace('href: "/dispatch/book-load"', "href_missing: true") })],
+    ["hop Link wiring removed", (s) => ({ ...s, [HOME]: s[HOME].replace("to={hop.href}", "to=\"/program\"") })],
   ];
   for (const [name, mutate] of mutations) {
     const broken = mutate(real);
@@ -178,6 +210,6 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} PASS — all FE keys bound, money probes exclude imported rows, and both live writers refuse ` +
-    `to publish from a masked connection.`
+    `${LABEL} PASS — all FE keys bound, money probes exclude imported rows, both live writers refuse ` +
+      `to publish from a masked connection, and every slice hrefs a live in-app route.`
 );
