@@ -9470,3 +9470,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.profile.legal_reverse:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.legal_reverse:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=343a14a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=343a14a head Checking session... | NEXT=leaf=fleet:trailer.profile.reefer:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.legal_reverse:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=343a14a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=343a14a head Checking session... | NEXT=leaf=fleet:trailer.profile.reefer:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.legal_reverse:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=343a14a | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=343a14a head Checking session... | NEXT=leaf=fleet:trailer.profile.reefer:trailer
