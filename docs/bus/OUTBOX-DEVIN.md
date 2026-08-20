@@ -4989,3 +4989,4 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=safety:settings.list:connectivity
+Devin-A | LIVE PASS | leaf=safety:settings.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety/settings | healthz=befa817 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/settings marker 'safety' | NEXT=leaf=safety:trailer_interchanges.list:trailer
