@@ -10214,3 +10214,14 @@ Devin-A | LIVE PASS | leaf=reports:filter.drivers:qbo_chrome | USMCA | URL=https
 Devin-A | LIVE STARVED | leaf=reports:filter.financial:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=2b859a1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports healthz=2b859a1 head Checking session... | NEXT=leaf=reports:filter.fleet:qbo_chrome
 Devin-A | LIVE PASS | leaf=reports:filter.fleet:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=2b859a1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports marker 'reports' | NEXT=leaf=reports:filter.fuel:qbo_chrome
 Devin-A | LIVE STARVED | leaf=reports:filter.fuel:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=2b859a1 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports healthz=2b859a1 head Checking session... | NEXT=leaf=reports:filter.operations:qbo_chrome
+Devin-A | LIVE STARVED | leaf=reports:filter.operations:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports | healthz=2b859a1 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/reports head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=reports:filter.safety:qbo_chrome
