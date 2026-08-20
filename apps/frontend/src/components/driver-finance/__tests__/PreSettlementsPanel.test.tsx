@@ -16,14 +16,16 @@ function wrap(ui: React.ReactElement) {
 
 describe("PreSettlementsPanel (DISP-S33)", () => {
   it("shows the honest empty state on a genuine zero-row result", () => {
+    // Copy evolved to explain WHY it's empty and what to do about it (more honest/actionable
+    // than the old "ready right now." string) — anchor on the stable testid instead of prose.
     wrap(<PreSettlementsPanel rows={[]} loading={false} isError={false} />);
-    expect(screen.getByText("No pre-settlements ready right now.")).toBeTruthy();
+    expect(screen.getByTestId("dispatch-pre-settlements-honest-empty")).toBeTruthy();
   });
 
   it("shows a named error instead of the empty text when the fetch failed", () => {
     wrap(<PreSettlementsPanel rows={[]} loading={false} isError={true} />);
     expect(screen.getByTestId("pre-settlements-error")).toBeTruthy();
-    expect(screen.queryByText("No pre-settlements ready right now.")).toBeNull();
+    expect(screen.queryByTestId("dispatch-pre-settlements-honest-empty")).toBeNull();
   });
 
   it("does not show the total-payout row when the fetch failed (no fabricated $0 total)", () => {

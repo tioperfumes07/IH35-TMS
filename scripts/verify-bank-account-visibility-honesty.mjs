@@ -9,12 +9,19 @@ const LABEL = "verify-bank-account-visibility-honesty";
 
 function failures(source) {
   const errors = [];
+  // Re-anchored (2026-08-20, CC-3): the page migrated its hand-rolled honest-empty-state JSX
+  // (`{!query.isError ? <div` + `accounts.length === 0 && !query.isError`) to the shared
+  // ParityTable component, which owns empty/loading/error state itself via its own `emptyText`
+  // prop — matching the repo-wide "shared QBO-parity grammar" convention (CLAUDE.md §7). The
+  // honesty invariant this guard exists to protect (never fabricate a green empty state while
+  // erroring) now lives in `{query.isError ? <ListErrorBanner .../> : <ParityTable emptyText=.../>}`
+  // instead.
   const required = [
     'import { entityLabel } from "../../lib/entity-label"',
     'entityLabel(account.account_name ?? account.display_name, account.id, "Account")',
     "accountLabel(account)",
-    "{!query.isError ? <div",
-    "accounts.length === 0 && !query.isError",
+    "query.isError ? (",
+    'emptyText="No bank accounts for this company."',
     "<ListErrorBanner onRetry={() => void query.refetch()} />",
   ];
   for (const needle of required) if (!source.includes(needle)) errors.push(`missing ${JSON.stringify(needle)}`);
@@ -27,18 +34,21 @@ function failures(source) {
 if (process.argv.includes("--selftest")) {
   const good = `
     import { entityLabel } from "../../lib/entity-label";
-    <ListErrorBanner onRetry={() => void query.refetch()} />
     const accountLabel = (account) => entityLabel(account.account_name ?? account.display_name, account.id, "Account");
-    {!query.isError ? <div>{accountLabel(account)}</div> : null}
-    {accounts.length === 0 && !query.isError ? <p>No bank accounts</p> : null}
+    render: (account) => <span>{accountLabel(account)}</span>,
+    {query.isError ? (
+      <ListErrorBanner onRetry={() => void query.refetch()} />
+    ) : (
+      <ParityTable columns={columns} rows={accounts} emptyText="No bank accounts for this company." />
+    )}
   `;
   if (failures(good).length) throw new Error(`${LABEL}: good fixture failed: ${failures(good).join("; ")}`);
   const mutations = [
     'import { entityLabel } from "../../lib/entity-label"',
     'entityLabel(account.account_name ?? account.display_name, account.id, "Account")',
     "accountLabel(account)",
-    "{!query.isError ? <div",
-    "accounts.length === 0 && !query.isError",
+    "query.isError ? (",
+    'emptyText="No bank accounts for this company."',
     "<ListErrorBanner onRetry={() => void query.refetch()} />",
   ];
   for (const mutation of mutations) {
