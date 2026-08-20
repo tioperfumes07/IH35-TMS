@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBankTransactionsByLinkage } from "../../api/banking";
-import { EntityLink } from "../shared/EntityLink";
-import { entityLabel as formatEntityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
@@ -19,6 +18,7 @@ type LinkageRow = {
   bank_transaction_id: string;
   transaction_date: string | null;
   description: string | null;
+  bank_transaction_name: string | null;
   amount_cents: number | string | null;
   is_credit: boolean | null;
   category_kind: string | null;
@@ -85,10 +85,11 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                 className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
               >
                 <div className="min-w-0">
-                  <EntityLink
+                  <EntityLinkOrTombstone
                     kind="bank_transaction"
                     id={row.bank_transaction_id}
-                    label={formatEntityLabel(row.description?.trim() || null, row.bank_transaction_id, "Bank transaction")}
+                    name={row.bank_transaction_name}
+                    noun="Bank transaction"
                   />
                   <div className="mt-0.5 text-[11px] text-gray-500">
                     {formatDateUS(row.transaction_date) || "—"}
@@ -96,10 +97,11 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                     {row.matched_journal_entry_id ? (
                       <>
                         {" · "}
-                        <EntityLink
+                        <EntityLinkOrTombstone
                           kind="journal_entry"
                           id={row.matched_journal_entry_id}
-                          label={formatEntityLabel(row.matched_journal_entry_memo, row.matched_journal_entry_id, "Journal entry")}
+                          name={row.matched_journal_entry_memo}
+                          noun="Journal entry"
                         />
                       </>
                     ) : null}

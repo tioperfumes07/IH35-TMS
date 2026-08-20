@@ -24,6 +24,9 @@ const CHECKS = [
   { name: "Plaid panel EntityLink", file: "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx", pattern: /EntityLink/ },
 ];
 
+const LINKED_PANEL = "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx";
+const LINKAGE_ROUTE = "apps/backend/src/banking/categorization.routes.ts";
+
 function run(root = ROOT) {
   const fails = [];
   for (const c of CHECKS) {
@@ -33,6 +36,30 @@ function run(root = ROOT) {
       continue;
     }
     if (!c.pattern.test(fs.readFileSync(abs, "utf8"))) fails.push(`${c.name}: no EntityLink`);
+  }
+  const linkedPanel = path.join(root, LINKED_PANEL);
+  if (!fs.existsSync(linkedPanel)) {
+    fails.push(`LinkedBankTransactionsPanel: missing ${LINKED_PANEL}`);
+  } else {
+    const src = fs.readFileSync(linkedPanel, "utf8");
+    if (!/bank_transaction_name: string \| null/.test(src)) {
+      fails.push("LinkedBankTransactionsPanel: typed producer label missing");
+    }
+    if (!/EntityLinkOrTombstone[\s\S]*kind="bank_transaction"[\s\S]*name=\{row\.bank_transaction_name\}[\s\S]*noun="Bank transaction"/.test(src)) {
+      fails.push("LinkedBankTransactionsPanel: bank transaction reverse drill must be tombstone-safe");
+    }
+    if (!/EntityLinkOrTombstone[\s\S]*kind="journal_entry"[\s\S]*name=\{row\.matched_journal_entry_memo\}[\s\S]*noun="Journal entry"/.test(src)) {
+      fails.push("LinkedBankTransactionsPanel: journal entry reverse drill must be tombstone-safe");
+    }
+  }
+  const linkageRoute = path.join(root, LINKAGE_ROUTE);
+  if (!fs.existsSync(linkageRoute)) {
+    fails.push(`banking linkage route: missing ${LINKAGE_ROUTE}`);
+  } else {
+    const src = fs.readFileSync(linkageRoute, "utf8");
+    if (!/COALESCE\(NULLIF\(TRIM\(bt\.description\), ''\), NULLIF\(TRIM\(bt\.merchant_name\), ''\)\) AS bank_transaction_name/.test(src)) {
+      fails.push("banking linkage route: canonical description/merchant human label projection missing");
+    }
   }
   // Factoring virtual bank tile lives on BankingHome — assert route + home
   const home = path.join(root, "apps/frontend/src/pages/banking/BankingHome.tsx");
@@ -54,8 +81,14 @@ if (process.argv.includes("--selftest")) {
       fs.mkdirSync(path.dirname(abs), { recursive: true });
       fs.writeFileSync(abs, "// poison\n");
     }
+    const linkedPanel = path.join(tmp, LINKED_PANEL);
+    fs.mkdirSync(path.dirname(linkedPanel), { recursive: true });
+    fs.writeFileSync(linkedPanel, "// poison\n");
+    const linkageRoute = path.join(tmp, LINKAGE_ROUTE);
+    fs.mkdirSync(path.dirname(linkageRoute), { recursive: true });
+    fs.writeFileSync(linkageRoute, "// poison\n");
     const planted = run(tmp);
-    if (planted.length < CHECKS.length) {
+    if (planted.length < CHECKS.length + 2) {
       console.error(`${LABEL} SELFTEST FAIL (${planted.length})`);
       process.exit(1);
     }
