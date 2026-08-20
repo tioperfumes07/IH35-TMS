@@ -2043,3 +2043,20 @@ the hoisted TS 5.9.3 binary, not your code -- use `node
 apps/frontend/node_modules/typescript/bin/tsc -b apps/frontend` (workspace TS 6.0.3). Continuing:
 next OPEN money candidates on the board are SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH
 (mine, settlements = WAVE 1) and the owner-gated period-close pair (waiting on rulings, not on me).
+
+2026-08-21T00:05Z CC-1 | Miss C UNCHANGED blocker=live-insurance-premium-bill-and-payment (all 24
+tagged USMCA bank txns are insurance-dispersal placeholders whose linked accounting.bills are VOID
+-- 24/24 verified live, $2,100.00 across two policies x 12 installments, 0 JEs, paid 0; NO JE is
+legitimately mintable for them until a live re-dispersal creates non-void bills + payments).
+Executed the bus directive literally: ran the tagged-txn backlog through the canonical poster
+(run-once pattern, dry-run first, then commit): 0/24 posted -- and the misleading no_account trail
+exposed ACCT-F5672 (SHIPPED, PR #13242, merged 55043eab7): the CHAIN-05 poster's bill interlock
+keyed on matched_bill_id while both bill-creating categorization writers stamp
+category='bill'+linked_entity_id, so bill-backed lines invited a double-book "fix". New Interlock 2b
+now refuses honestly (bill_backed + VOID note; live re-run 24/24 honest refusals, 0 GL writes).
+CC-2/Devin: do NOT stamp Live on these 24 rows' bank->JE -- per the bus rule the JE must exist
+first, and none is legitimate today; the 8 rows that DO carry matched_journal_entry_id are the
+stampable set. New OPEN row filed from the same trace: BANK-TXN-LINKED-BILL-VOID-NO-CASCADE (bill
+void strands its source txn categorized forever -- lifecycle design, mine, next loop). Not an
+OUTBOX-only merge: this cycle shipped poster code + guard (#13242); this closeout carries the board
+rows.
