@@ -36,7 +36,11 @@ function audit(s) {
       || !/LEFT JOIN mdata\.units u/.test(s.detectorHistory)
       || !/owner_company_id = e\.operating_company_id/.test(s.detectorHistory)
       || !/currently_leased_to_company_id = e\.operating_company_id/.test(s.detectorHistory)) failures.push("detector history must resolve canonical same-company unit labels");
-  if (!/event\.unit_id[\s\S]{0,180}<EntityLink kind="unit"[\s\S]{0,120}entityLabel\(event\.unit_number, event\.unit_id, "Unit"\)/.test(s.overview)) failures.push("dispatch overview must render the resolved unit label and drill-through");
+  // Re-anchored (2026-08-20, CC-3): DispatchOverview now composes this through the governed
+  // EntityLinkOrTombstone wrapper (name/noun props) instead of a bare EntityLink around a
+  // literal entityLabel() call — same honest UUID-rejection behavior, moved one layer down,
+  // same class already fixed for the 11 other siblings this session.
+  if (!/event\.unit_id[\s\S]{0,60}<EntityLinkOrTombstone kind="unit" id=\{event\.unit_id\} name=\{event\.unit_number\} noun="Unit"/.test(s.overview)) failures.push("dispatch overview must render the resolved unit label and drill-through");
   if (/entityLabel\(null,\s*event\.vehicle_id,\s*"Record"\)/.test(s.overview)) failures.push("dispatch overview must not turn the raw vehicle id into Record — not visible");
   return failures;
 }
@@ -53,7 +57,7 @@ if (process.argv.includes("--selftest")) {
     ["mount", "profile", /UnitBorderCrossingsReverseSection/g, "MissingBorderReverse"],
     ["fleet-leaf", "fleetRequired", /"id"\s*:\s*"unit\.profile\.border_crossings_reverse"/, '"id": "unit.profile.safety_reverse_MISSING"'],
     ["history-label", "detectorHistory", /u\.unit_number/, "NULL::text AS unit_number"],
-    ["overview-label", "overview", /entityLabel\(event\.unit_number, event\.unit_id, "Unit"\)/, 'entityLabel(null, event.vehicle_id, "Record")'],
+    ["overview-label", "overview", /<EntityLinkOrTombstone kind="unit" id=\{event\.unit_id\} name=\{event\.unit_number\} noun="Unit" \/>/, 'entityLabel(null, event.vehicle_id, "Record")'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
