@@ -33,7 +33,7 @@ function check(sources) {
     ["arriving", /<EntityLinkOrTombstone kind="load" id=\{card\.load_id\} name=\{card\.load_display_id\} noun="Load"/, "arriving-soon load"],
     ["transit", /<EntityLinkOrTombstone kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_display_id\} noun="Unit"/, "in-transit unit"],
     ["preferred", /<EntityLink kind="inventory_part" id=\{part\.id\}/, "preferred part"],
-    ["inventory", /<EntityLink kind="parts_inventory" id=\{row\.id\}/, "purchased inventory"],
+    ["inventory", /<EntityLinkOrTombstone kind="parts_inventory" id=\{row\.id\} name=\{row\.part_description\} noun="Part"/, "purchased inventory"],
     ["catalog", /<EntityLink kind="maintenance_vendor" id=\{row\.id\}/, "maintenance vendor"],
   ];
   for (const [key, pattern, label] of expects) {

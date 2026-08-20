@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
@@ -34,18 +33,20 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
         <div className="space-y-1" data-testid="vendor-work-orders-reverse">
           {query.data?.work_orders?.map((workOrder) => (
             <div key={workOrder.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="work_order"
                 id={workOrder.id}
-                label={entityLabel(workOrder.display_id, workOrder.id, "Work order")}
+                name={workOrder.display_id}
+                noun="Work order"
                 className="font-semibold text-slate-700 hover:underline"
                 data-testid="vendor-work-order-reverse-link"
               />
               <span className="flex items-center gap-1 text-gray-600">
-                <EntityLink
+                <EntityLinkOrTombstone
                   kind="unit"
                   id={workOrder.unit_id}
-                  label={entityLabel(workOrder.unit_number, workOrder.unit_id, "Unit")}
+                  name={workOrder.unit_number}
+                  noun="Unit"
                 />
                 <span>· {[workOrder.status, formatDateUS(workOrder.opened_at)].filter(Boolean).join(" · ")}</span>
               </span>
