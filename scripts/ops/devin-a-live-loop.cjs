@@ -17,21 +17,21 @@ const path = require("path");
 const ROOT = process.env.DEVIN_GIT_ROOT || process.cwd();
 const OUTBOX_REL = "docs/bus/OUTBOX-DEVIN.md";
 const ORDER = [
-  "banking",
-  "factoring",
   "accounting",
-  "settlements",
   "customers",
   "drivers",
-  "insurance",
-  "legal",
-  "lists",
+  "vendors",
+  "dispatch",
   "safety",
   "fleet",
-  "vendors",
   "maintenance",
-  "dispatch",
+  "lists",
+  "settlements",
+  "factoring",
+  "banking",
   "inventory",
+  "insurance",
+  "legal",
   "compliance",
   "reports",
   "cash-flow",
@@ -297,6 +297,10 @@ if (process.argv.includes("--selftest")) {
   }
   if (!/gh pr merge \$\{pr\.number\} --squash --admin/.test(src)) {
     console.error("SELFTEST FAIL: FAST-MERGE gh pr merge --admin missing");
+    process.exit(1);
+  }
+  if (!/"accounting"[\s\S]*"customers"[\s\S]*"drivers"[\s\S]*"vendors"[\s\S]*"dispatch"[\s\S]*"safety"/.test(src)) {
+    console.error("SELFTEST FAIL: ORDER must start URGENT-6 accounting→…→safety");
     process.exit(1);
   }
   console.log("devin-a-live-loop --selftest PASS");

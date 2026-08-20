@@ -2,10 +2,10 @@
 
 **HOURLY:** pull + this TOP + **`OUTBOX-CC-2.md` first 20** + CODER URGENT-6.
 
-**GOAL:** `picker_law` 4/4 on URGENT-6. Rebuild only live FAIL. No 25/25 re-loop. Never poll.
+**GOAL:** LIVE-CHECK picker_law on URGENT-6 in the real app. Rebuild on FAIL. No 25/25 re-loop of PASS.
 
-**NOW:** Unpaid picker_law on **accounting** then customers → drivers → vendors → dispatch → safety.
+**NOW:** accounting pickers live → customers → drivers → vendors → dispatch → safety.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=accounting picker_law | READ-OUTBOX-CC-2 | NO-POLL | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | LIVE-CHECK | NOW=accounting picker_law | GO
 ```

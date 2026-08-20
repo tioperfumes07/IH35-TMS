@@ -1567,8 +1567,10 @@ function ablMetricsFromBoard(board: ModuleMatrixPayload): {
   const fwCounts: Record<string, { req: number; aud: number; bu: number; li: number }> = {};
   for (const spec of FULLY_WIRED_MATRIX_ITEMS) {
     if (spec.closedAllowlist) {
-      fwCounts[spec.id] = { req: mReq, aud: mClicked, bu: 0, li: mClicked };
-      fwAbl[spec.id] = ablFromCounts(mReq, mClicked, 0, mClicked);
+      // Item 12 = Chrome Clicked. All four boxes track Clicked/Required.
+      // bu:0 made Built always red while Audited/Live followed Clicked — lying chrome.
+      fwCounts[spec.id] = { req: mReq, aud: mClicked, bu: mClicked, li: mClicked };
+      fwAbl[spec.id] = ablFromCounts(mReq, mClicked, mClicked, mClicked);
       continue;
     }
     let req = 0;

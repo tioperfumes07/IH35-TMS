@@ -7,5 +7,5 @@
 **NOW:** **accounting** unpaid Built → customers → drivers → vendors → dispatch → safety.
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=accounting Built | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=accounting Built | GO
 ```
