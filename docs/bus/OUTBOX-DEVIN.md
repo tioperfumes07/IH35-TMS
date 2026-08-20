@@ -1191,3 +1191,14 @@ t | healthz=unknown | mutation=none | NEXT=dispatch.home.list
 Devin-A | LIVE STARVED | module=dispatch | leaf=home.list | URL=https://app.ih35dispatch.com/dispatch?view=list | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch?view=list ; body head Checking session... | healthz=ca726a2 | mutation=none | NEXT=dispatch.home.round_trips
 Devin-A | LIVE STARVED | module=dispatch | leaf=home.round_trips | URL=https://app.ih35dispatch.com/dispatch?view=units | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch?view=units ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.secondary.book_load
 Devin-A | LIVE STARVED | module=dispatch | leaf=secondary.book_load | URL=https://app.ih35dispatch.com/dispatch/book-load | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/book-load ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.secondary.assignments
+Devin-A | LIVE PASS | module=dispatch | leaf=secondary.assignments | URL=https://app.ih35dispatch.com/dispatch/assignment-history | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/assignment-history ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=unknown | mutation=none | NEXT=dispatch.secondary.settlements
