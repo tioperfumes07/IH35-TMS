@@ -1150,3 +1150,15 @@ tioperfumes07@gmail.com
 Reports
 Category hub
 Run rep | healthz=f053c94 | mutation=none | NEXT=finance.finance.wizard.loan_wizard_page
+Devin-A | LIVE PASS | module=finance | leaf=finance.wizard.loan_wizard_page | URL=https://app.ih35dispatch.com/finance | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/finance ; marker 'finance' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Overview
+Projections
+Scena | healthz=f053c94 | mutation=none | NEXT=finance.chrome.toolbar_search
