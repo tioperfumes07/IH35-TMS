@@ -49,21 +49,33 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where = [`operating_company_id = $1::uuid`];
+      const where = [`ac.operating_company_id = $1::uuid`];
       const statusFilter = q.status && q.status !== "all" ? q.status : null;
       if (statusFilter) {
         values.push(statusFilter);
-        where.push(`status = $${values.length}`);
+        where.push(`ac.status = $${values.length}`);
       }
       if (q.driver_id) {
         values.push(q.driver_id);
-        where.push(`driver_id = $${values.length}`);
+        where.push(`ac.driver_id = $${values.length}`);
       }
 
       const rowsRes = await client.query(
         `
-          SELECT *
-          FROM driver_finance.abandonment_chargebacks
+          SELECT ac.*,
+                 l.load_number,
+                 NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name,
+                 ds.display_id AS settlement_display_id
+          FROM driver_finance.abandonment_chargebacks ac
+          LEFT JOIN mdata.loads l
+            ON l.id = ac.load_id
+           AND l.operating_company_id = ac.operating_company_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = ac.driver_id
+           AND d.operating_company_id = ac.operating_company_id
+          LEFT JOIN driver_finance.driver_settlements ds
+            ON ds.id = ac.applied_to_settlement_id
+           AND ds.operating_company_id = ac.operating_company_id
           WHERE ${where.join(" AND ")}
           ORDER BY abandonment_event_at DESC
           LIMIT 500

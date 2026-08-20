@@ -1,6 +1,14 @@
 import { apiRequest } from "./client";
 
-export type AbandonmentChargebackRow = Record<string, unknown>;
+export type AbandonmentChargebackRow = Record<string, unknown> & {
+  id: string;
+  load_id: string | null;
+  load_number: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  applied_to_settlement_id: string | null;
+  settlement_display_id: string | null;
+};
 
 export async function listAbandonmentChargebacks(params: {
   operating_company_id: string;
