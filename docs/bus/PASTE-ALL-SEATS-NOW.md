@@ -8,6 +8,6 @@
 **WAVE 2:** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
 **WAVE 3:** inventory → compliance → reports → cash-flow → finance → form_425 → users → docs → home → tasks → program  
 
-Complete = Fully-Wired **1–12** (Live Chrome last = Devin). Devin Clicked = OUTBOX-only onto **current** `origin/main` (no stale-branch revert of CC-1/CC-3). Gate → push → create → `gh pr merge --admin` same turn. Never `gh pr checks --watch`.
+Complete = Fully-Wired **1–12** (Live Chrome last = Devin). Gate → push → create → `gh pr merge --admin` same turn. Never `gh pr checks --watch`.
 
 ACK: `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=<module> <col> | GO`
