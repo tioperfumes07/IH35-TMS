@@ -14,6 +14,7 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 function applicantName(row: DriverApplicant) {
   return `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || "Applicant";
@@ -35,7 +36,13 @@ function ApplicantCard({
       className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 shadow-xs"
       data-testid={`applicant-card-${row.id}`}
     >
-      <div className="font-semibold text-gray-900">{applicantName(row)}</div>
+      <div className="font-semibold text-gray-900">
+        {row.converted_driver_id ? (
+          <EntityLinkOrTombstone kind="driver" id={row.converted_driver_id} name={applicantName(row)} noun="Driver" data-testid={`applicant-converted-driver-${row.id}`} />
+        ) : (
+          applicantName(row)
+        )}
+      </div>
       <p className="text-xs text-gray-600">{row.phone}</p>
       {row.email ? <p className="text-xs text-gray-500">{row.email}</p> : null}
       <div className="flex flex-wrap gap-1">
