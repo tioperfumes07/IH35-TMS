@@ -621,7 +621,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
                                         AND cust.operating_company_id = bt.operating_company_id
           LEFT JOIN catalogs.items itm ON itm.id = bt.categorization_item_id
                                       AND itm.operating_company_id = bt.operating_company_id
-          LEFT JOIN driver_finance.driver_settlement_deductions ded ON ded.id = bt.categorization_deduction_id
+          LEFT JOIN driver_finance.driver_settlement_deductions ded
+            ON ded.id = bt.categorization_deduction_id
+           AND ded.operating_company_id = bt.operating_company_id
           WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
           LIMIT 1
         `,

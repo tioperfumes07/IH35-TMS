@@ -15,21 +15,6 @@ type Props = {
   entityLabel?: string;
 };
 
-type LinkageRow = {
-  bank_transaction_id: string;
-  transaction_date: string | null;
-  description: string | null;
-  amount_cents: number | string | null;
-  is_credit: boolean | null;
-  category_kind: string | null;
-  matched_journal_entry_id: string | null;
-  matched_journal_entry_memo: string | null;
-  deduction_id: string | null;
-  deduction_amount_cents: number | string | null;
-  deduction_status: string | null;
-  deduction_type: string | null;
-};
-
 /**
  * Law §9 REVERSE drill — BLOCK-6b.
  * API `GET /banking/transactions/by-linkage` existed with zero UI callers.
@@ -47,7 +32,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
     enabled: Boolean(companyId && linkage.id),
   });
 
-  const rows = (query.data?.rows ?? []) as LinkageRow[];
+  const rows = query.data?.rows ?? [];
 
   return (
     <div

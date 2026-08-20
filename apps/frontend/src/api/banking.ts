@@ -600,10 +600,25 @@ export function getBankTransactionsByLinkage(
   if (linkage.vendor_id) params.set("vendor_id", linkage.vendor_id);
   if (linkage.customer_id) params.set("customer_id", linkage.customer_id);
   if (linkage.limit != null) params.set("limit", String(linkage.limit));
-  return apiRequest<{ rows: Array<Record<string, unknown>>; total_count: number }>(
+  return apiRequest<{ rows: LinkedBankTransactionRow[]; total_count: number }>(
     `/api/v1/banking/transactions/by-linkage?${params.toString()}`
   );
 }
+
+export type LinkedBankTransactionRow = {
+  bank_transaction_id: string;
+  transaction_date: string | null;
+  description: string | null;
+  amount_cents: number | string | null;
+  is_credit: boolean | null;
+  category_kind: string | null;
+  matched_journal_entry_id: string | null;
+  matched_journal_entry_memo: string | null;
+  deduction_id: string | null;
+  deduction_amount_cents: number | string | null;
+  deduction_status: string | null;
+  deduction_type: string | null;
+};
 
 // ── BANK-SPLIT-1 — QBO-style split-transaction popup (real, persisted; behind BANK_TX_SPLIT_ENABLED) ─────
 export type BankTransactionSplitMode = "single_vendor_multi_category" | "multi_vendor";
