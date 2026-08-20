@@ -17,7 +17,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { releaseEscrow } from "../accounting/escrow/service.js";
+import { releaseEscrowOnClient } from "../accounting/escrow/service.js";
 import {
   DRIVER_ESCROW_SEPARATION_RETURN_FLAG_KEY,
   computeNetEscrowReturn,
@@ -314,7 +314,16 @@ export async function releaseDriverEscrowSeparation(
 
     let releasedPostingId: string | null = null;
     if (net.net_release_cents > 0) {
-      const released = await releaseEscrow(
+      // ACCT-F5644 — releaseEscrowOnClient posts on THIS client, atomic with the FOR UPDATE lock
+      // already held above and the status/balance-stamp UPDATE below. The prior releaseEscrow() call
+      // opened its own, second connection and committed the GL release independently — a failure
+      // between that inner commit and this function's own outer commit left the escrow cash genuinely
+      // released (GL posted, balance_cents decremented) while this separation row rolled back to
+      // pending/eligible with released_amount_cents unset; a retry would then compute net_release_cents
+      // against the ALREADY-drained balance (likely $0), permanently mis-recording how much escrow was
+      // actually returned to a separated driver.
+      const released = await releaseEscrowOnClient(
+        client,
         {
           operating_company_id: input.operating_company_id,
           escrow_account_id: separation.escrow_account_id,
