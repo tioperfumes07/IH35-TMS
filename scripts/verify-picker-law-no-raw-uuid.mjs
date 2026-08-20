@@ -167,31 +167,22 @@ const EXEMPTIONS = [
     reason:
       "Accounting audit trail source_id filter, polymorphic over invoice|bill|payment as typed into the sibling source_type box. Read-only forensic filter on an audit surface; wiring a picker here needs a source_type-driven lookup that is C6/accounting lane work, not C1.",
   },
-  {
-    file: `${SRC}/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx`,
-    field: "qbo_vendor_id",
-    category: "blocked-needs-backend",
-    blocker:
-      "The field IS a QBO-mirror identifier (mdata.qbo_vendors), and the picker law forbids a picker that reads the QBO mirror. A compliant control would have to pick a canonical mdata.vendors row and resolve its qbo id server-side — a mapping-route change outside C1.",
-    reason:
-      "Samsara→QBO vendor mapping resolution. Wiring a picker over the mirror would violate the canonical-table clause it is meant to enforce, so it is reported, not wired.",
-  },
-  {
-    file: `${SRC}/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx`,
-    field: "canonical_qbo_vendor_id",
-    category: "blocked-needs-backend",
-    blocker:
-      "Same QBO-mirror constraint as the link field above: the dedupe target is addressed by qbo id, so any picker here would read mdata.qbo_vendors — forbidden by the picker law.",
-    reason:
-      "Samsara→QBO vendor dedupe target. Reported as a canonical/mirror divergence finding rather than wired against the mirror.",
-  },
+  // P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID CLOSED: VendorMappingResolutionPage's link ("qbo_vendor_id")
+  // and dedupe ("canonical_qbo_vendor_id") raw-uuid inputs are gone -- both fields now bind to
+  // ReferenceSelect over canonical mdata.vendors (vendor_id / canonical_vendor_id), and the backend
+  // (vendor-mapping-actions.routes.ts) resolves the linked qbo_vendor_id server-side. confirm-mismatch's
+  // matching field never gets its own exemption entry here (same file+field key as link would have
+  // collapsed to one), because it was converted to a read-only display, not a raw-uuid `<input>` at all.
 ];
 
 /**
  * The exemption list is a RATCHET: it may shrink, never grow. Raising this number is a visible,
  * reviewable edit to the guard itself — which is the point. It is not a threshold to tune.
  */
-const EXEMPTION_CEILING = 11;
+// NOTE: ceiling must stay >= (real EXEMPTIONS.length + 1) -- --selftest temporarily pushes one
+// synthetic "archived-superseded" fixture onto EXEMPTIONS to exercise that category's assertions,
+// so a ceiling set to exactly the real count fails the selftest's own good-fixture check.
+const EXEMPTION_CEILING = 8;
 
 /** An "admin-audit-forensic-id" exemption must actually live on an admin/audit surface. */
 const AUDIT_PATH = /\/(admin|audit)\/|AuditTrail|AuditLog|ActivityLog|audit-log/;
@@ -1030,8 +1021,17 @@ function selftest() {
     [
       'a "blocked-needs-backend" exemption names no blocker',
       () => {
+        // P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID closed both real "blocked-needs-backend" exemptions,
+        // so none remains in EXEMPTIONS to corrupt -- build a synthetic one instead, same technique
+        // already used for the archived-superseded fixture above. This checks the RULE, not real code.
         EXEMPTIONS.length = 0;
-        EXEMPTIONS.push({ ...original.find((e) => e.category === "blocked-needs-backend"), blocker: "" });
+        EXEMPTIONS.push({
+          file: `${SRC}/pages/x/SyntheticBlockedFixture.tsx`,
+          field: "syntheticField",
+          category: "blocked-needs-backend",
+          blocker: "",
+          reason: "selftest fixture for blocked-needs-backend mutation checks, matches no real code",
+        });
       },
       /EXEMPT-BLOCKER/,
     ],

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
+import { listVendors } from "../../api/mdata";
 import {
   confirmVendorNameMismatch,
   dedupeVendorMapping,
@@ -12,20 +13,25 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
 
+// P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: link/dedupe used to be free-text QBO-mirror-id inputs
+// (picker-law violation — the mirror is not a valid picker source). Both now address the canonical
+// mdata.vendors row via ReferenceSelect; the backend resolves the linked qbo_vendor_id server-side.
 type ActionDraft =
   | {
       type: "link";
       samsara_driver_id: string;
-      qbo_vendor_id: string;
+      vendor_id: string;
       label: string;
     }
   | {
       type: "dedupe";
       samsara_driver_id: string;
-      canonical_qbo_vendor_id: string;
+      canonical_vendor_id: string;
       deprecated_qbo_vendor_ids_csv: string;
       label: string;
     }
@@ -33,6 +39,7 @@ type ActionDraft =
       type: "confirm";
       samsara_driver_id: string;
       qbo_vendor_id: string;
+      qbo_vendor_name: string;
       label: string;
       similarity_score: number;
     };
@@ -84,21 +91,36 @@ export function VendorMappingResolutionPage() {
     retry: false,
   });
 
+  // P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: canonical picker roster for link/dedupe — same
+  // mdata.vendors source + option shape VendorBillForm already uses, not the QBO mirror.
+  const vendorsQuery = useQuery({
+    queryKey: ["samsara-vendor-mapping-resolution", "vendors", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, status: "active" }),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+  });
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
+    [vendorsQuery.data?.vendors],
+  );
+
   const actionMutation = useMutation({
     mutationFn: async (nextDraft: ActionDraft) => {
       if (!companyId) throw new Error("Select an operating company");
       if (nextDraft.type === "link") {
+        if (!nextDraft.vendor_id) throw new Error("Select a vendor");
         return linkVendorMapping({
           operating_company_id: companyId,
           samsara_driver_id: nextDraft.samsara_driver_id,
-          qbo_vendor_id: nextDraft.qbo_vendor_id.trim(),
+          vendor_id: nextDraft.vendor_id,
         });
       }
       if (nextDraft.type === "dedupe") {
+        if (!nextDraft.canonical_vendor_id) throw new Error("Select the canonical vendor");
         return dedupeVendorMapping({
           operating_company_id: companyId,
           samsara_driver_id: nextDraft.samsara_driver_id,
-          canonical_qbo_vendor_id: nextDraft.canonical_qbo_vendor_id.trim(),
+          canonical_vendor_id: nextDraft.canonical_vendor_id,
           deprecated_qbo_vendor_ids: splitCsv(nextDraft.deprecated_qbo_vendor_ids_csv),
         });
       }
@@ -162,7 +184,7 @@ export function VendorMappingResolutionPage() {
               setDraft({
                 type: "link",
                 samsara_driver_id: row.samsara_driver_id,
-                qbo_vendor_id: "",
+                vendor_id: "",
                 label: `Link ${entityLabel(row.driver_name, row.local_driver_id, "Driver")}`,
               })
             }
@@ -195,8 +217,12 @@ export function VendorMappingResolutionPage() {
               setDraft({
                 type: "dedupe",
                 samsara_driver_id: row.samsara_driver_id,
-                canonical_qbo_vendor_id: row.qbo_vendor_ids[0] ?? "",
-                deprecated_qbo_vendor_ids_csv: row.qbo_vendor_ids.slice(1).join(","),
+                // Canonical target is now picked from mdata.vendors (see ReferenceSelect below), not
+                // pre-guessed from the mirror-id list — starts unselected. The deprecated CSV still
+                // pre-fills with every detected mirror id; whichever one the picked vendor resolves to
+                // is self-filtered server-side (a no-op dedupe candidate), so leaving it in here is safe.
+                canonical_vendor_id: "",
+                deprecated_qbo_vendor_ids_csv: row.qbo_vendor_ids.join(","),
                 label: `Dedupe ${row.samsara_driver_id}`,
               })
             }
@@ -231,6 +257,7 @@ export function VendorMappingResolutionPage() {
                 type: "confirm",
                 samsara_driver_id: row.samsara_driver_id,
                 qbo_vendor_id: row.qbo_vendor_id,
+                qbo_vendor_name: row.qbo_vendor_name,
                 label: `Confirm ${row.samsara_driver_id}`,
                 similarity_score: row.similarity_score,
               })
@@ -246,22 +273,24 @@ export function VendorMappingResolutionPage() {
   const preview = useMemo(() => {
     if (!draft) return null;
     if (draft.type === "link") {
+      const selected = vendorOptions.find((o) => o.value === draft.vendor_id);
       return {
         before: "Driver has no valid QBO vendor mapping",
-        after: `Driver mapping will point to vendor ${draft.qbo_vendor_id || "(required)"}`,
+        after: `Driver mapping will point to vendor ${selected?.label ?? "(required)"}`,
       };
     }
     if (draft.type === "dedupe") {
+      const selected = vendorOptions.find((o) => o.value === draft.canonical_vendor_id);
       return {
         before: `Deprecated vendors: ${draft.deprecated_qbo_vendor_ids_csv || "(required)"}`,
-        after: `All listed mappings will point to canonical vendor ${draft.canonical_qbo_vendor_id || "(required)"}`,
+        after: `All listed mappings will point to canonical vendor ${selected?.label ?? "(required)"}`,
       };
     }
     return {
       before: `Name mismatch remains visible (score ${draft.similarity_score.toFixed(3)})`,
-      after: `Owner confirmation will be recorded for vendor ${draft.qbo_vendor_id || "(required)"}`,
+      after: `Owner confirmation will be recorded for vendor ${draft.qbo_vendor_name || "(required)"}`,
     };
-  }, [draft]);
+  }, [draft, vendorOptions]);
 
   return (
     <div className="space-y-4 p-4">
@@ -335,28 +364,36 @@ export function VendorMappingResolutionPage() {
             <div className="mb-3 text-sm font-semibold text-slate-900">{draft.label}</div>
 
             {draft.type === "link" ? (
-              <label className="mb-3 block text-xs text-slate-700">
-                QBO vendor id
-                <input
-                  value={draft.qbo_vendor_id}
-                  onChange={(e) => setDraft({ ...draft, qbo_vendor_id: e.target.value })}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
-                  placeholder="vendor UUID or qbo_id"
+              <div className="mb-3 text-xs text-slate-700">
+                Vendor
+                {/* P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: canonical mdata.vendors picker, never a
+                    hand-typed QBO-mirror id. */}
+                <ReferenceSelect
+                  value={draft.vendor_id || null}
+                  onChange={(next) => setDraft({ ...draft, vendor_id: next ?? "" })}
+                  options={vendorOptions}
+                  createKind="vendor"
+                  operatingCompanyId={companyId}
+                  placeholder="Select vendor..."
+                  loading={vendorsQuery.isLoading}
                 />
-              </label>
+              </div>
             ) : null}
 
             {draft.type === "dedupe" ? (
               <div className="space-y-3">
-                <label className="block text-xs text-slate-700">
-                  Canonical vendor id
-                  <input
-                    value={draft.canonical_qbo_vendor_id}
-                    onChange={(e) => setDraft({ ...draft, canonical_qbo_vendor_id: e.target.value })}
-                    className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
-                    placeholder="vendor UUID or qbo_id"
+                <div className="text-xs text-slate-700">
+                  Canonical vendor
+                  <ReferenceSelect
+                    value={draft.canonical_vendor_id || null}
+                    onChange={(next) => setDraft({ ...draft, canonical_vendor_id: next ?? "" })}
+                    options={vendorOptions}
+                    createKind="vendor"
+                    operatingCompanyId={companyId}
+                    placeholder="Select the canonical vendor..."
+                    loading={vendorsQuery.isLoading}
                   />
-                </label>
+                </div>
                 <label className="block text-xs text-slate-700">
                   Deprecated vendor ids (comma-separated)
                   <input
@@ -370,14 +407,15 @@ export function VendorMappingResolutionPage() {
             ) : null}
 
             {draft.type === "confirm" ? (
-              <label className="mb-3 block text-xs text-slate-700">
-                QBO vendor id
-                <input
-                  value={draft.qbo_vendor_id}
-                  onChange={(e) => setDraft({ ...draft, qbo_vendor_id: e.target.value })}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
-                />
-              </label>
+              <div className="mb-3 text-xs text-slate-700">
+                QBO vendor
+                {/* Read-only: this is the system-detected candidate the operator is confirming, not a
+                    freeform field — editing it here would defeat the point of "confirm this match"
+                    and (pre-fix) let a hand-typed mirror id slip past the picker law unnoticed. */}
+                <div className="mt-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-slate-900">
+                  {draft.qbo_vendor_name}
+                </div>
+              </div>
             ) : null}
 
             <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">

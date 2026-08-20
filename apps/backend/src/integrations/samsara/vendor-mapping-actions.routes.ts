@@ -6,16 +6,22 @@ function officeRole(role: string) {
   return role !== "Driver";
 }
 
+// P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: link/dedupe used to accept a raw QBO-mirror id (uuid or
+// qbo_id string) typed by hand into a free-text box -- the picker law forbids a picker sourced from
+// the mirror (mdata.qbo_vendors), so the only compliant fix is to address the CANONICAL mdata.vendors
+// row instead and resolve its linked qbo_vendor_id server-side (below), never trusting a client-typed
+// mirror id directly. confirm-mismatch is untouched: its value is a system-detected candidate the FE
+// now renders read-only rather than an editable input, so no raw-uuid text box exists for it either.
 const linkSchema = z.object({
   operating_company_id: z.string().uuid(),
   samsara_driver_id: z.string().min(1),
-  qbo_vendor_id: z.string().min(1),
+  vendor_id: z.string().uuid(),
 });
 
 const dedupeSchema = z.object({
   operating_company_id: z.string().uuid(),
   samsara_driver_id: z.string().min(1),
-  canonical_qbo_vendor_id: z.string().min(1),
+  canonical_vendor_id: z.string().uuid(),
   deprecated_qbo_vendor_ids: z.array(z.string().min(1)).min(1),
 });
 
@@ -57,6 +63,26 @@ async function resolveVendorInTenant(client: DbClient, operatingCompanyId: strin
   return vendor.rows[0] ?? null;
 }
 
+// P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: the canonical entry point for link/dedupe -- resolves a
+// picker-selected mdata.vendors.id (never client-supplied mirror text) to that vendor's linked
+// qbo_vendor_id, scoped to the tenant. The caller still funnels the resolved value through
+// resolveVendorInTenant() above against mdata.qbo_vendors, unchanged, so every downstream write /
+// audit record keeps today's exact shape -- only the untrusted client input changes.
+async function resolveVendorQboIdInTenant(client: DbClient, operatingCompanyId: string, vendorId: string) {
+  const vendor = await client.query<{ id: string; qbo_vendor_id: string | null }>(
+    `
+      SELECT id::text AS id, qbo_vendor_id
+      FROM mdata.vendors
+      WHERE operating_company_id = $1::uuid
+        AND id = $2::uuid
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [operatingCompanyId, vendorId],
+  );
+  return vendor.rows[0] ?? null;
+}
+
 async function appendResolutionAudit(
   client: DbClient,
   params: {
@@ -93,7 +119,10 @@ async function appendResolutionAudit(
 }
 
 export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInstance) {
-  app.post("/api/v1/samsara/vendor-mapping/link", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post(
+    "/api/v1/samsara/vendor-mapping/link",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -106,7 +135,10 @@ export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInst
         return { status: "forbidden" as const };
       }
 
-      const resolvedVendor = await resolveVendorInTenant(client, parsed.data.operating_company_id, parsed.data.qbo_vendor_id);
+      const vendorRow = await resolveVendorQboIdInTenant(client, parsed.data.operating_company_id, parsed.data.vendor_id);
+      if (!vendorRow) return { status: "vendor_missing" as const };
+      if (!vendorRow.qbo_vendor_id) return { status: "vendor_not_linked_to_qbo" as const };
+      const resolvedVendor = await resolveVendorInTenant(client, parsed.data.operating_company_id, vendorRow.qbo_vendor_id);
       if (!resolvedVendor) return { status: "vendor_missing" as const };
 
       const driver = await client.query<{ driver_id: string; qbo_vendor_id: string | null }>(
@@ -156,11 +188,16 @@ export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInst
 
     if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
     if (result.status === "vendor_missing") return reply.code(404).send({ error: "vendor_not_found" });
+    if (result.status === "vendor_not_linked_to_qbo") return reply.code(409).send({ error: "vendor_not_linked_to_qbo" });
     if (result.status === "driver_missing") return reply.code(404).send({ error: "driver_not_found" });
     return reply.code(200).send(result);
-  });
+    },
+  );
 
-  app.post("/api/v1/samsara/vendor-mapping/dedupe", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post(
+    "/api/v1/samsara/vendor-mapping/dedupe",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -169,17 +206,24 @@ export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInst
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const deprecatedRaw = Array.from(new Set(parsed.data.deprecated_qbo_vendor_ids));
-    const deprecatedWithoutCanonical = deprecatedRaw.filter((id) => id !== parsed.data.canonical_qbo_vendor_id);
-    if (deprecatedWithoutCanonical.length === 0) {
-      return reply.code(400).send({ error: "deprecated_qbo_vendor_ids_required" });
-    }
 
     const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client: DbClient) => {
       if (!(await hasCompanyAccess(client, user.uuid, parsed.data.operating_company_id))) {
         return { status: "forbidden" as const };
       }
 
-      const canonicalVendor = await resolveVendorInTenant(client, parsed.data.operating_company_id, parsed.data.canonical_qbo_vendor_id);
+      const canonicalVendorRow = await resolveVendorQboIdInTenant(client, parsed.data.operating_company_id, parsed.data.canonical_vendor_id);
+      if (!canonicalVendorRow) return { status: "canonical_vendor_missing" as const };
+      if (!canonicalVendorRow.qbo_vendor_id) return { status: "canonical_vendor_not_linked_to_qbo" as const };
+
+      // Self-reference guard, same intent as the pre-fix version: a deprecated id equal to the
+      // canonical target's OWN resolved qbo_vendor_id is a no-op, not a real dedupe candidate.
+      const deprecatedWithoutCanonical = deprecatedRaw.filter((id) => id !== canonicalVendorRow.qbo_vendor_id);
+      if (deprecatedWithoutCanonical.length === 0) {
+        return { status: "deprecated_vendor_ids_required" as const };
+      }
+
+      const canonicalVendor = await resolveVendorInTenant(client, parsed.data.operating_company_id, canonicalVendorRow.qbo_vendor_id);
       if (!canonicalVendor) return { status: "canonical_vendor_missing" as const };
 
       const deprecatedVendors = await client.query<{ id: string; qbo_id: string | null }>(
@@ -234,12 +278,18 @@ export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInst
 
     if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
     if (result.status === "canonical_vendor_missing") return reply.code(404).send({ error: "canonical_vendor_not_found" });
+    if (result.status === "canonical_vendor_not_linked_to_qbo") return reply.code(409).send({ error: "canonical_vendor_not_linked_to_qbo" });
+    if (result.status === "deprecated_vendor_ids_required") return reply.code(400).send({ error: "deprecated_qbo_vendor_ids_required" });
     if (result.status === "deprecated_vendor_missing") return reply.code(404).send({ error: "deprecated_vendor_not_found" });
     if (result.status === "driver_mapping_missing") return reply.code(404).send({ error: "driver_mapping_not_found" });
     return reply.code(200).send(result);
-  });
+    },
+  );
 
-  app.post("/api/v1/samsara/vendor-mapping/confirm-mismatch", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post(
+    "/api/v1/samsara/vendor-mapping/confirm-mismatch",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -289,5 +339,6 @@ export async function registerSamsaraVendorMappingActionsRoutes(app: FastifyInst
     if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
     if (result.status === "mapping_missing") return reply.code(404).send({ error: "mapping_not_found" });
     return reply.code(200).send(result);
-  });
+    },
+  );
 }
