@@ -8734,3 +8734,7 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:customer | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:load | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
+Devin-A | LIVE PASS | leaf=factoring:batches.detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/:id | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/batches/:id marker 'Batch detail' | NEXT=leaf=factoring:home.reserve_tracker:load
