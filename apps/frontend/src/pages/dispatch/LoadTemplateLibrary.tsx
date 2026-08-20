@@ -366,6 +366,16 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
   const [name, setName] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Save-time Customer scope is editable (defaults to the inherited source load's customer, when
+  // saving from a load) — the template's own customer_id/customer_name are what the Load Templates
+  // library filter matches on (dispatch-refinements.service.ts's template_json->>'customer_id'), so
+  // a read-only inherited value left the operator no way to save a cross-customer / generic template.
+  const [templateCustomerId, setTemplateCustomerId] = useState<string | null>(customerId ?? null);
+  const [templateCustomerName, setTemplateCustomerName] = useState<string | null>(customerName ?? null);
+  useEffect(() => {
+    setTemplateCustomerId(customerId ?? null);
+    setTemplateCustomerName(customerName ?? null);
+  }, [customerId, customerName, open]);
 
   return (
     <Modal open={open} onClose={onClose} title="Save load as template">
@@ -383,7 +393,11 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
             await createLoadTemplate({
               operating_company_id: operatingCompanyId,
               name: name.trim(),
-              template_json: initialJson,
+              template_json: {
+                ...initialJson,
+                customer_id: templateCustomerId || undefined,
+                customer_name: templateCustomerName || undefined,
+              },
             });
             onSaved?.();
             onClose();
@@ -415,6 +429,23 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
             ) : null}
           </div>
         ) : null}
+        <label className="block text-[11px] text-slate-600">
+          Template customer (editable — defaults to the source load's customer above; clear for a generic template)
+          <EntityPicker
+            kind="customer"
+            operatingCompanyId={operatingCompanyId}
+            value={templateCustomerId}
+            onChange={(next, option) => {
+              setTemplateCustomerId(next);
+              setTemplateCustomerName(next ? option?.label ?? null : null);
+            }}
+            allowCreate={false}
+            allowClear
+            placeholder="No customer (generic template)"
+            className="mt-1"
+            dataTestId="save-load-template-modal-customer"
+          />
+        </label>
         <label className="text-xs font-semibold text-gray-600">
           Template name
           <input value={name} onChange={(ev) => setName(ev.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
