@@ -1,8 +1,10 @@
 # MATRIX READY STANDARD — FROZEN USMCA OPS (owner 2026-08-19)
 
+**SUPERSEDED IN PART (owner 2026-08-20):** **Do not park money.** Frozen / Miss C / READY include **money-group** Required cells. Clicked on AP/BILL, BANK, EXP, GL/JE, INV, AR, LIAB is **in** the 100. TRANSP QBO parallel books stay parked (no TMS→QBO write-back). USMCA money Chrome **is not parked**.
+
 **Answered = closed. Do not re-ask. Do not add Required leaves until READY is ✓.**
 
-**Operating company for this close-out:** USMCA only. TRANSP QBO parallel books / TMS→QBO linkage are **parked**. They do not block READY.
+**Operating company for this close-out:** USMCA only. TRANSP QBO parallel books / TMS→QBO linkage are **parked**. They do not block READY. USMCA money cells **do** block READY.
 
 **Denominator:** current `docs/specs/scoreboard/modules/*.required.json` — **frozen**. No new leaves, modals, or Required cells until Jorge unfreezes.
 
@@ -12,13 +14,13 @@
 
 | Column | 100 means | Use as “done”? |
 |--------|-----------|----------------|
-| **READY** Live ✓ | Every **non-money** Required cell is **Built** and **USMCA Clicked** | **YES — this is ready** |
-| **Miss C** | Integer unpaid Clicked on that frozen ops set | **0 = no Clicked work left on ops** |
+| **READY** Live ✓ | Every Required cell (including **money**) is **Built** and **USMCA Clicked** | **YES — this is ready** |
+| **Miss C** | Integer unpaid Clicked on that frozen set (including money) | **0 = no Clicked work left** |
 | Built | Guard on disk for Required cell | No |
 | Box 4 Live | Ledger fan-out | **Never** |
 | Named | `` `leaf:col` `` on PROD-VERIFIED | No |
-| Clicked (all cells) | Includes money-group cells | Progress only; READY excludes money |
-| MONEY atoms | Still on the board | **Parked** — CC-1 still ships money, not in READY 100 |
+| Clicked (all cells) | Includes money-group cells | Same set as Frozen / Miss C / READY |
+| MONEY atoms | On the board and in READY | **Not parked** — Devin Clicked + CC-1 economics |
 
 **Clicked credit (USMCA):** OUTBOX `LIVE PASS` + `leaf=<module>:<leafId>:<col>` with USMCA on the line, **or** ledger `LIVE PASS · 1–3 Exact cells` + USMCA. Fan-out rows with 4+ Exact cells do **not** fill Clicked.
 
