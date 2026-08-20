@@ -4236,3 +4236,17 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tractor_statuses.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tractor-statuses healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.fleet.tractor_statuses.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fleet/tractor-statuses | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fleet/tractor-statuses healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fleet.tractor_statuses.list:qbo_chrome
