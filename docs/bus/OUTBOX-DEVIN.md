@@ -4136,3 +4136,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.drivers.medical_card_status.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.medical_card_status.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/medical-card-status | healthz=043d9e4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/medical-card-status marker 'lists' | NEXT=leaf=lists:catalog.drivers.medical_card_status.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.medical_card_status.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/medical-card-status | healthz=043d9e4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/medical-card-status marker 'lists' | NEXT=leaf=lists:catalog.drivers.medical_card_status.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.medical_card_status.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/medical-card-status | healthz=043d9e4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/medical-card-status marker 'lists' | NEXT=leaf=lists:catalog.drivers.medical_card_status.list:picker_law
