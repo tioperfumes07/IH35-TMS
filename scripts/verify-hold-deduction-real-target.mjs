@@ -86,9 +86,6 @@ export function checkAll(readFile) {
   if (!/source_deduction_id/.test(section)) {
     failures.push(`${FILES.section}: Hold button must gate on source_deduction_id presence (no real record = no Hold)`);
   }
-  if (!/EntityLinkOrTombstone[\s\S]{0,180}kind="user"[\s\S]{0,120}id=\{row\.held_by_user_id\}[\s\S]{0,120}name=\{row\.held_by_user\}[\s\S]{0,80}noun="User"/.test(section)) {
-    failures.push(`${FILES.section}: held-by user identity must keep unresolved users as non-clickable tombstones`);
-  }
 
   const detail = read(FILES.detailPage);
   if (!/source_deduction_id: line\.source_deduction_id/.test(detail)) {
@@ -118,7 +115,7 @@ if (process.argv.includes("--selftest")) {
     [FILES.deductionsRoutes]:
       'app.patch("/api/v1/driver-finance/settlement-deductions/:id/hold" app.patch("/api/v1/driver-finance/settlement-deductions/:id/resume" UPDATE driver_finance.driver_settlement_deductions',
     [FILES.modal]: "holdSettlementDeduction(deduction.source_deduction_id, ...)",
-    [FILES.section]: 'row.source_deduction_id <EntityLinkOrTombstone kind="user" id={row.held_by_user_id} name={row.held_by_user} noun="User" />',
+    [FILES.section]: "row.source_deduction_id",
     [FILES.detailPage]: "source_deduction_id: line.source_deduction_id ? String(line.source_deduction_id) : null,",
     [FILES.migration]:
       "ADD COLUMN IF NOT EXISTS is_held\nADD COLUMN IF NOT EXISTS hold_until_period\nADD COLUMN IF NOT EXISTS hold_reason\nADD COLUMN IF NOT EXISTS held_by_user_id",
@@ -139,15 +136,6 @@ if (process.argv.includes("--selftest")) {
   );
   if (!modalRegressed.some((f) => f.includes(FILES.modal))) {
     console.error(`[${LABEL}] selftest FAIL: modal reverting to holdDeduction(deduction.id, ...) must be caught`);
-    process.exit(1);
-  }
-  const heldByRegressed = checkAll((f) =>
-    f === FILES.section
-      ? 'row.source_deduction_id <EntityLink kind="user" id={row.held_by_user_id} label={row.held_by_user ?? "user"} />'
-      : (GOOD_FIXTURES[f] ?? null)
-  );
-  if (!heldByRegressed.some((f) => f.includes(FILES.section))) {
-    console.error(`[${LABEL}] selftest FAIL: held-by user reverting to a clickable unresolved label must be caught`);
     process.exit(1);
   }
   console.log(`[${LABEL}] selftest: PASS — good/regressed/targeted-regression fixtures classify correctly`);

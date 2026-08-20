@@ -2779,3 +2779,30 @@ Devin-A | LIVE STARVED | leaf=accounting:accounting.drawer.new_service_drawer_fo
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.bill_payment:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.bill_payment:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.modal.bill_payment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:accounting.modal.create:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=accounting:accounting.modal.create:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/prepaid-expenses | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/prepaid-expenses marker 'accounting' | NEXT=leaf=accounting:accounting.modal.customer_adjustment:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting/prepaid-expenses | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/prepaid-expenses marker 'accounting' | NEXT=leaf=accounting:accounting.modal.customer_adjustment:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/prepaid-expenses | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/prepaid-expenses marker 'accounting' | NEXT=leaf=accounting:accounting.modal.customer_adjustment:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.customer_adjustment:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.decide:driver
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.customer_adjustment:customer | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.decide:driver
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.customer_adjustment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.decide:driver
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.decide:driver | USMCA | URL=https://app.ih35dispatch.com/accounting/dispute-queue | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/dispute-queue marker 'accounting' | NEXT=leaf=accounting:accounting.modal.driver_damage_invoice:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.decide:settlement | USMCA | URL=https://app.ih35dispatch.com/accounting/dispute-queue | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/dispute-queue marker 'accounting' | NEXT=leaf=accounting:accounting.modal.driver_damage_invoice:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.decide:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/dispute-queue | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/dispute-queue marker 'accounting' | NEXT=leaf=accounting:accounting.modal.driver_damage_invoice:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.decide:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/dispute-queue | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/dispute-queue marker 'accounting' | NEXT=leaf=accounting:accounting.modal.driver_damage_invoice:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.modal.decide:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/dispute-queue | healthz=f764ee4 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/dispute-queue marker 'accounting' | NEXT=leaf=accounting:accounting.modal.driver_damage_invoice:connectivity
