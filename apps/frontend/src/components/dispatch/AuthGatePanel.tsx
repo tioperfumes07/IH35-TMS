@@ -47,7 +47,7 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
           gates used UUIDs as query params only; expose real EntityLinks for bound identities. */}
       {hasIdentity ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+          className="flex flex-wrap gap-x-3 gap-y-1 bg-white px-2 py-1.5 text-[11px] text-slate-700"
           data-testid="auth-gate-panel-entitylinks"
         >
           {props.loadUuid ? (

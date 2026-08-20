@@ -412,7 +412,7 @@ export function VendorMappingResolutionPage() {
                 {/* Read-only: this is the system-detected candidate the operator is confirming, not a
                     freeform field — editing it here would defeat the point of "confirm this match"
                     and (pre-fix) let a hand-typed mirror id slip past the picker law unnoticed. */}
-                <div className="mt-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-slate-900">
+                <div className="mt-1 bg-slate-50 px-2 py-1 text-sm text-slate-900">
                   {draft.qbo_vendor_name}
                 </div>
               </div>
