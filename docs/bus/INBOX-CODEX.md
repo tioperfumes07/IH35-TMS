@@ -4,7 +4,7 @@
 
 Reverse_link. FAST-MERGE.
 
-**NOW:** **accounting** reverse_link unpaid (swarm) → rest WAVE 1 → WAVE 2.
+**NOW:** accounting reverse on `accounting.parity.credit_memos_page` + `banking.panel.linked_bank_transactions` → WAVE 2.
 
 ```text
 Codex | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=accounting reverse | GO

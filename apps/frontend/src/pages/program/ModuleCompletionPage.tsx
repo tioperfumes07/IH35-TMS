@@ -242,6 +242,15 @@ export function ModuleCompletionPage() {
     <div className="space-y-3">
       <Breadcrumb items={[{ label: "Program", href: "/program" }, { label: "Module Completion" }]} />
       <PageHeader title="Module Completion" />
+      <p
+        className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-700"
+        data-testid="module-completion-honest-purpose"
+      >
+        This is Rule 24&apos;s <b>N of M</b> checklist from <code>docs/module-completion/*.json</code> — CI
+        items, not USMCA launch. <b>Code-verified</b> = repo/CI says the item passed. <b>Certified</b> =
+        GUARD live-clicked it. Launch 100% is Module matrix Box 1–4 + money on USMCA, then Scenario
+        tracker. Frozen TRANSP/TRK rows here are historical.
+      </p>
 
       <div className="flex items-center gap-2">
         <button

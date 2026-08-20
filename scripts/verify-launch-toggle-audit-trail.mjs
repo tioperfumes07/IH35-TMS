@@ -41,6 +41,12 @@ async function main() {
   if (!migration.includes("admin.launch_toggles")) fail("0388 must create admin.launch_toggles");
   if (!frontend.includes("Launch toggles")) fail("LaunchToggles admin UI required");
   if (!switcher.includes("is_active")) fail("CarrierSwitcher must filter inactive carriers");
+  if (!switcher.includes("filterLaunchOperatingCompanies")) {
+    fail("CarrierSwitcher must hide TRANSP/TRK until launch (USMCA-only)");
+  }
+  const launchHelper = readRequired("apps/frontend/src/lib/launch-operating-company.ts");
+  if (!launchHelper.includes('["USMCA"]')) fail("launch helper must allow only USMCA");
+  if (!launchHelper.includes("TRANSP")) fail("launch helper must document TRANSP is hidden, not deleted");
   if (!manifest.includes("/admin/launch-toggles")) fail("frontend route /admin/launch-toggles required");
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
