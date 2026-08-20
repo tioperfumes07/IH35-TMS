@@ -6365,3 +6365,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=4fd8fd6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.contacts.create:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=4fd8fd6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.contacts.create:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.coi:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=coi | healthz=4fd8fd6 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=coi head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.contacts.create:customer
