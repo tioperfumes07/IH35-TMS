@@ -9,6 +9,7 @@ const FILES = [
   "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
   "apps/frontend/src/pages/accounting/MaintenanceShopHubPage.tsx",
   "apps/frontend/src/pages/accounting/BillsPage.tsx",
+  "apps/backend/src/accounting/maintenance-shop.service.ts",
 ];
 const LABEL = "verify-invoice-maint-shop-human-labels";
 const SELFTEST = process.argv.includes("--selftest");
@@ -25,7 +26,13 @@ function assertAll(srcs) {
     if (/jeId\.slice\(0,\s*8\)/.test(src) || /journal_entry_id\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: invoice JE still UUID-slices`);
     }
-    if (!/entityLabel\(/.test(src)) {
+    if (file.endsWith("MaintenanceShopHubPage.tsx") && !/entityLabel\(row\.financial_label, row\.financial_id, "Expense"\)/.test(src)) {
+      problems.push(`${file}: expense drill must use the producer's financial label`);
+    }
+    if (file.endsWith("maintenance-shop.service.ts") && !/e\.expense_number AS financial_label/.test(src)) {
+      problems.push(`${file}: expense query must project canonical expense_number`);
+    }
+    if (!file.endsWith("maintenance-shop.service.ts") && !/entityLabel\(/.test(src)) {
       problems.push(`${file}: missing entityLabel`);
     }
   }
@@ -36,14 +43,17 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 
 if (SELFTEST) {
   const srcs = read();
-  const planted = { ...srcs };
-  planted[FILES[2]] = planted[FILES[2]].replace(
-    /entityLabel\(rows\.find[\s\S]*?highlightedBillId,\s*"Bill"\)/,
-    "highlightedBillId.slice(0, 8)",
-  );
-  if (!assertAll(planted).length) {
-    console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
-    process.exit(1);
+  const mutations = [
+    [FILES[2], /entityLabel\(rows\.find[\s\S]*?highlightedBillId,\s*"Bill"\)/, "highlightedBillId.slice(0, 8)"],
+    [FILES[1], 'entityLabel(row.financial_label, row.financial_id, "Expense")', 'entityLabel(null, row.financial_id, "Expense")'],
+    [FILES[3], "e.expense_number AS financial_label", "NULL::text AS financial_label"],
+  ];
+  for (const [file, pattern, replacement] of mutations) {
+    const planted = { ...srcs, [file]: srcs[file].replace(pattern, replacement) };
+    if (planted[file] === srcs[file] || !assertAll(planted).length) {
+      console.error(`${LABEL} SELFTEST FAILED: planted defect not caught in ${file}`);
+      process.exit(1);
+    }
   }
   const live = assertAll(srcs);
   if (live.length) {
