@@ -214,6 +214,15 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
       );
       const settlement = sRes.rows[0] as Record<string, unknown> | undefined;
       if (!settlement) return { notFound: true as const };
+      // ACCT-F5631 — trip_closed_at is NOT a reliable "is this settlement still live" check on its
+      // own. The governance void path (governance/void-cancel-executors.ts's executeDriverSettlement)
+      // flips status='cancelled' + reversed_at on a voided settlement but deliberately never touches
+      // trip_closed_at — the exact gap settlements-load-bookended.service.ts's own ACCT-F347 comment
+      // documents and fixes for its sibling queries ("a settlement that was CANCELLED while its anchor
+      // load stayed alive remained open forever: cancelling does not set trip_closed_at"). Without this
+      // check, add-load could append a fresh earnings line and recompute net_pay onto a settlement the
+      // system has already reversed — a live money write on a document that is supposed to be WORM.
+      if (settlement.status === "cancelled") return { cancelled: true as const };
       if (settlement.trip_closed_at) return { alreadyClosed: true as const };
 
       const loadRes = await client.query(
@@ -288,6 +297,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
 
     if (result && "unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
     if (result && "notFound" in result) return reply.code(404).send({ error: "pre_settlement_not_found" });
+    if (result && "cancelled" in result) return reply.code(409).send({ error: "pre_settlement_cancelled" });
     if (result && "alreadyClosed" in result) return reply.code(409).send({ error: "pre_settlement_already_closed" });
     if (result && "loadNotFound" in result) return reply.code(404).send({ error: "load_not_found" });
     if (result && "driverMismatch" in result) return reply.code(422).send({ error: "driver_not_assigned_to_load" });
