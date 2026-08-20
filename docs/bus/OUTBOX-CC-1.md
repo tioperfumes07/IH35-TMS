@@ -1470,4 +1470,18 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 
 CC-1 | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=WAVE2 vendors money cols | GO
 
+2026-08-20T14:05Z CC-1 | WAVE2 Box-3-Built money columns SHIPPED: vendors (PR #11970, expense on
+detail.ap/detail.ap.expenses, 2/2 closed -- 15/15 vendors money cells now Built), dispatch (checked,
+already 0 missing, no PR needed), fleet (PR #11985, expense on unit.profile.expenses_reverse/
+trailer.profile.expenses_reverse via the shared ExpensesReverseSection, 2/2 closed), maintenance (PR
+#12016, expense+gl_je on the WO create/source/bill/expense cluster (wo.create, 7x wo.source.*,
+wo.create_bill, wo.create_expense, maintenance.modal.create_expense) reusing the canonical
+createVendorBill/RecordExpenseForm creation paths, plus gl_je on parts_inventory.record_purchase via
+LINK-F5186's already-real gl_posting surfacing -- 20/20 maintenance money cells closed). No functional
+code changed in any of these four PRs -- every cell's wiring was already real (confirmed via direct
+frontend investigation each time), only the Box-3 credit was never claimed in wire-sprint-built.json.
+All four leafRe patterns are anchored, leaf-specific alternations (no wildcards/word-blankets) per
+HONEST-BUILT-LAUNCH-LAW, verified by verify-matrix-built-leaf-specific.mjs after each PR. Continuing
+WAVE2 vendors->dispatch->fleet->maint->insurance->legal per the coordination NOW: insurance next.
+
 2026-08-20T13:40Z CC-1 | ACCT-F5641 SHIPPED (PR #11928, merged 8b355d28) -- fixed-asset/loan-payment void-writer sweep, continuing the ACCT-F5634..F5640 method. postDepreciation books the depreciation JE on the TITLE-HOLDER (owner_operating_company_id), not the assets own operating company, when they differ (FLT-04, leased/cross-entity asset). reverseSchedules depreciation branch looked up the posted JE under the assets own operating_company_id unconditionally -- zero rows for a cross-entity asset -- so !je was silently treated identically to already reversed and the period was skipped. With every period cross-entity, the reversal returns { result: "nothing_to_reverse" } -- a false all-clear -- while the real, posted depreciation JE stands forever with no repair path (Accumulated Depreciation permanently stranded on the title-holders books). Sits directly under the already-documented ACCT-F163 landmine (USMCA becomes lessee of TRK-owned units). Live-checked: exactly 1 active fixed_assets row exists today, owner==operating (TRK/TRK) -- hasnt fired live yet but is a landmine directly under the USMCA-as-lessee rollout, not theoretical. Also investigated in the same sweep: loan_payment posts NO GL at origination (nothing for a void writer to skip) and its own reverseLoanPayments already correctly reverses per-period -- clean. owned-asset-disposal.services postOwnedAssetDisposal has the SAME missing-owner-company-resolution root cause on a DIFFERENT writer (disposal, not reversal) -- flagged for a follow-up finding, not fixed here to keep this PR single-domain. Fixed by resolving the same booksCompanyId postDepreciation resolves (owner_operating_company_id) before the JE lookup/reversal/void, switching the RLS GUC + query params to booksCompanyId around that block and restoring input.operatingCompanyId before touching the asset-home-scoped schedule-row table -- mirroring postDepreciations own established FLT-04 pattern exactly, no new GL math.
