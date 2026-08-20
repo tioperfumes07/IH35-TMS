@@ -8319,3 +8319,19 @@ Devin-A | LIVE STARVED | leaf=dispatch:dispatch.drawer.load_detail:driver | USMC
 Devin-A | LIVE STARVED | leaf=dispatch:dispatch.drawer.load_detail:unit | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=b972f2e | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/dispatch healthz=b972f2e head Checking session... | NEXT=leaf=dispatch:dispatch.modal.abandonment_report:connectivity
 Devin-A | LIVE STARVED | leaf=dispatch:dispatch.drawer.load_detail:trailer | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=b972f2e | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/dispatch healthz=b972f2e head Checking session... | NEXT=leaf=dispatch:dispatch.modal.abandonment_report:connectivity
 Devin-A | LIVE STARVED | leaf=dispatch:dispatch.drawer.load_detail:customer | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=b972f2e | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/dispatch healthz=b972f2e head Checking session... | NEXT=leaf=dispatch:dispatch.modal.abandonment_report:connectivity
+Devin-A | LIVE STARVED | leaf=dispatch:dispatch.modal.abandonment_report:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/dispatch healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=dispatch:dispatch.modal.book_load_modal_v4:connectivity
+Devin-A | LIVE STARVED | leaf=dispatch:dispatch.modal.abandonment_report:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/dispatch healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=dispatch:dispatch.modal.book_load_modal_v4:connectivity
