@@ -1971,3 +1971,21 @@ claim-before-author rule (chore claim PR merged before the migration PR). New la
 guard registered in verify-steps/3429. Board closeout in this same PR cycle. REMAINING: only the
 owner-gated consolidate-the-three-aging-engines question (already filed). Continuing non-stop, no
 idle gaps, always fix never defer.
+
+2026-08-20T20:20Z CC-1 | ACCT-F5659 SHIPPED (PR #13190, merged f81c594f) -- export-vs-screen
+engine-parity audit (follow-the-thread from F5658; statement-export.service.ts itself came back
+fully clean: all six exports delegate to the screens' own engines). Two fixes: (1) 'factored'
+invoices -- the A/R Export PDF + the seeded weekly A/R email were the LONE surface of four still
+counting factored-and-recoursed invoices, at full face value, in the oldest bucket, directly against
+the chargeback poster's own documented intent ("so the invoice leaves the ar_aging sent/partial
+pool"); converged, with a new ENGINE-PARITY guard that set-compares the TS tuple against the
+last-declaring migration so a lone divergent literal can never survive again. (2) the owner's seeded
+monthly P&L PDF handed RAW CENTS to the template ($12,345.67 printed as 1234567, while the XLSX
+branch of the same report divided by 100), left the three footer totals blank, and said "COMPANY"
+instead of the entity -- now mirrors the canonical exporter exactly. Books untouched in both; the GL
+was right, the outbound documents lied. Board closeout in this same PR cycle. NEXT (self-assigned,
+filed as an OPEN row): consolidated-statements' intercompany eliminations read LIVE open balances
+inside an as-of report (the F5658 class in a second file -- a paid-since intercompany invoice
+eliminates $0, overstating consolidated assets AND liabilities equally so `balanced:true` still
+reports) + a tax-basis mismatch; the expense-classification sub-question routed to the OWNER.
+Continuing non-stop, no idle gaps, always fix never defer.
