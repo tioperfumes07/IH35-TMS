@@ -41,6 +41,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
+import { BankTransactionAttachmentsNotesModal } from "./BankTransactionAttachmentsNotesModal";
 import { MatchDrawer } from "./MatchDrawer";
 import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
@@ -298,6 +299,10 @@ export function BankingTransactionsDesignView({
   const [matchDrawerTxId, setMatchDrawerTxId] = useState<string | null>(null);
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
+  // ACCT-F5621 — the transaction whose attachments/notes drawer is currently open. Replaces the two
+  // permanently-disabled paperclip/note icons now that bank_transaction is an attachable entity_type
+  // and a real notes PATCH route exists (see BankTransactionAttachmentsNotesModal.tsx).
+  const [attachNotesTx, setAttachNotesTx] = useState<PlaidBankTransaction | null>(null);
   // PLUS-DRIVER-MONEY: nested "+ Create driver" from the categorization row's Driver picker.
   // Bulk categorize-to-account (QBO parity): the operator multi-selects for-review rows, picks ONE GL
   // account, and the real POST /banking/transactions/categorize-bulk applies it. No new GL math — the
@@ -1108,24 +1113,27 @@ export function BankingTransactionsDesignView({
                 </div>
               ) : null}
             </div>
-            <div className="inline-flex items-center gap-1 text-gray-400">
+            <div
+              className="inline-flex items-center gap-1 text-gray-500"
+              onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+            >
               <button
                 type="button"
-                disabled
-                data-testid="bank-txn-attach-disabled"
-                aria-label="Attach file (disabled — file attachments aren't available on bank transaction rows yet)"
-                title="Disabled: file attachments aren't available on bank transaction rows yet. Attach receipts to the Bill, Expense, or JE this row posts to."
-                className="cursor-not-allowed opacity-60"
+                data-testid="bank-txn-attach"
+                aria-label="Attachments"
+                title="Attachments"
+                className="rounded-sm p-1 hover:bg-gray-100"
+                onClick={() => setAttachNotesTx(tx)}
               >
                 <Paperclip className="h-4 w-4" />
               </button>
               <button
                 type="button"
-                disabled
-                data-testid="bank-txn-note-disabled"
-                aria-label="Add note (disabled — no notes PATCH route)"
-                title="Disabled: notes on bank transactions are system-only today; there is no way to save an operator note here yet."
-                className="cursor-not-allowed opacity-60"
+                data-testid="bank-txn-note"
+                aria-label="Notes"
+                title="Notes"
+                className="rounded-sm p-1 hover:bg-gray-100"
+                onClick={() => setAttachNotesTx(tx)}
               >
                 <MessageSquare className="h-4 w-4" />
               </button>
@@ -2326,31 +2334,6 @@ export function BankingTransactionsDesignView({
               </>
             )}
           </div>
-          {/* BANK-F5429 — honesty guard (verify-banking-attachments-notes-honesty.mjs) requires this
-          claim to be independently verifiable: attachments write to documents.attachments, which
-          does not accept bank_transaction as an attachable entity_type; notes would need a real
-          write path on PATCH /api/v1/banking/transactions/:id (today's row-edit endpoint, which
-          only updates the manual date). Cited here in a comment, not in the rendered banner text
-          below — an operator-facing banner must not print a raw schema.table name
-          (verify-no-internal-language-in-prod-ui.mjs). */}
-          <div
-            className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
-            data-testid="banking-bank-row-attachments-notes-honesty-banner"
-          >
-            <p className="font-semibold">Bank row attachments and notes are not wired yet</p>
-            <p className="mt-1">
-              QBO-style paperclip and note icons stay visible but disabled.{" "}
-              <strong>Attachments:</strong>{" "}
-              the attachment system does not accept{" "}
-              <code className="text-[11px]">bank_transaction</code> as an attachable record type, and the
-              file-upload endpoint rejects bank feed rows — attach
-              receipts to the Bill, Expense, or JE this transaction posts to instead.{" "}
-              <strong>Notes:</strong>{" "}
-              bank transaction notes are reserved for system/skip/investigate
-              text only; there is no way to save an operator note here yet (today&apos;s
-              row-edit endpoint only updates the manual date).
-            </p>
-          </div>
         </>
       ) : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -3015,6 +2998,15 @@ export function BankingTransactionsDesignView({
         onClose={() => setCcPaymentModalTx(null)}
         onSaved={() => {
           setCcPaymentModalTx(null);
+          onDataChanged();
+        }}
+      />
+      <BankTransactionAttachmentsNotesModal
+        open={Boolean(attachNotesTx)}
+        operatingCompanyId={companyId}
+        tx={attachNotesTx}
+        onClose={() => setAttachNotesTx(null)}
+        onNoteSaved={() => {
           onDataChanged();
         }}
       />

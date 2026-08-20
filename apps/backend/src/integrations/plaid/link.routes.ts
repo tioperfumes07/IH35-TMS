@@ -72,6 +72,19 @@ const manualTxnDatePatchBodySchema = z.object({
   transaction_date: z.string().date(),
 });
 
+// ACCT-F5621 — bank transaction notes. Deliberately a SEPARATE route from the manual-date PATCH
+// above rather than a branch inside it: that route is intentionally locked to manual, non-bank-fed
+// rows (QBO-style date immutability for bank-fed data), but a note is an operator annotation, not an
+// edit to the bank's own reported facts — it must work on ANY row, Plaid-fed included. Deliberately
+// NOT gated by assertBankTxnNotInReconciledSession (unlike skip/investigate/categorize in
+// categorization.routes.ts): those routes change WHICH ledger entry a transaction resolves to, which
+// reconciliation closure must freeze; a note is pure metadata and never affects reconciliation state,
+// so there is no reason to block it once a session is closed.
+const bankTxnNotePatchBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  note: z.string().trim().min(1).max(2000),
+});
+
 const itemDisconnectBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   plaid_item_id: z.string().trim().min(3),
@@ -741,4 +754,58 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     }
     return { ok: true, id: outcome.id, transaction_date: outcome.transaction_date };
   });
+
+  // ACCT-F5621 — append an operator note to ANY bank transaction (manual or bank-fed). Append-only:
+  // the notes column already carries system-written provenance text from bank-tx-dedup.ts's
+  // 'merged_manual_stub:' markers, so an operator PATCH must never clobber it — mirrors
+  // reconciliation.routes.ts's own notes CASE/concat pattern exactly.
+  app.patch(
+    "/api/v1/banking/transactions/:id/notes",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!ensureRole(reply, user.role, ownerAdminRoles)) return;
+
+      const params = accountParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return sendValidationError(reply, params.error);
+      const body = bankTxnNotePatchBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+
+      const outcome = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        const updated = await client.query<{ id: string; notes: string | null }>(
+          `UPDATE banking.bank_transactions
+              SET notes = CASE
+                    WHEN notes IS NULL OR notes = '' THEN $3::text
+                    ELSE concat(notes, E'\\n', $3::text)
+                  END,
+                  updated_at = now()
+            WHERE id = $1
+              AND operating_company_id = $2::uuid
+            RETURNING id, notes`,
+          [params.data.id, body.data.operating_company_id, body.data.note]
+        );
+        const result = updated.rows[0] ?? null;
+        if (!result) return { status: "not_found" as const };
+
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "banking.transaction.note_added",
+          {
+            resource_type: "banking.bank_transactions",
+            resource_id: result.id,
+            operating_company_id: body.data.operating_company_id,
+            note: body.data.note,
+          },
+          "info",
+          "ACCT-F5621"
+        );
+        return { status: "ok" as const, id: result.id, notes: result.notes };
+      });
+
+      if (outcome.status === "not_found") return reply.code(404).send({ error: "bank_transaction_not_found" });
+      return { ok: true, id: outcome.id, notes: outcome.notes };
+    }
+  );
 }

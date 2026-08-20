@@ -15,6 +15,7 @@ const guards = [
   "verify-bank-linkage-gl-je-reverse.mjs",
   "verify-bank-recon-accept-invoice-backlink.mjs",
   "verify-banking-factoring-liability-built.mjs",
+  "verify-banking-transaction-notes-patch-route.mjs",
   "verify-banking-matched-bill-drill.mjs",
   "verify-banking-reverse-link-list-surfaces.mjs",
   "verify-bills-membership-assert-full-coverage.mjs",

@@ -21,7 +21,10 @@ export type AttachmentEntityType =
   | "vendor"
   | "unit"
   | "equipment"
-  | "manual";
+  | "manual"
+  // ACCT-F5621 — banking.bank_transactions; widened alongside the backend Zod enum
+  // (attachments.routes.ts) and the DB CHECK constraint in the same PR.
+  | "bank_transaction";
 
 export type AttachmentCategory =
   | "bol"

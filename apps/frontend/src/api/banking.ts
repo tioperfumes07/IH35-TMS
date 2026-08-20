@@ -156,6 +156,19 @@ export function updateBankTransactionDate(
   );
 }
 
+/**
+ * ACCT-F5621 — append an operator note to ANY bank transaction (manual or bank-fed). Unlike
+ * updateBankTransactionDate above, this is NOT restricted to manual rows: a note is metadata, not an
+ * edit to the bank's own reported facts, so it works on every source. Append-only server-side (the
+ * new note is concatenated onto any existing notes, never overwritten).
+ */
+export function addBankTransactionNote(transactionId: string, operatingCompanyId: string, note: string) {
+  return apiRequest<{ ok: true; id: string; notes: string | null }>(
+    `/api/v1/banking/transactions/${transactionId}/notes`,
+    { method: "PATCH", body: { operating_company_id: operatingCompanyId, note } }
+  );
+}
+
 export type ReconciliationSession = {
   id: string;
   bank_account_id: string;

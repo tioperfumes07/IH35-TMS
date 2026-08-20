@@ -33,6 +33,10 @@ const uploadUrlBodySchema = z.object({
     "unit",
     "equipment",
     "manual",
+    // ACCT-F5621 — banking.bank_transactions; widened alongside the DB CHECK
+    // (202612811900_acct_f5621_bank_transaction_attachable_type.sql) and the frontend TS union
+    // (api/attachments.ts) in the same PR, all three allowlists moving together.
+    "bank_transaction",
   ]),
   entity_id: z.string().uuid(),
   filename: z.string().trim().min(1).max(255),
