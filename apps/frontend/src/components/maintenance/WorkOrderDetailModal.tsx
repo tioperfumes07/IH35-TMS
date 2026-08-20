@@ -9,7 +9,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { listPartsAssignments } from "../../api/maintenance";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { AddPartsLinkModal } from "./AddPartsLinkModal";
+import { AddPartsLinkDrawer } from "./AddPartsLinkDrawer";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) || 0);
@@ -233,7 +233,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
                 </ul>
               );
             })()}
-            <AddPartsLinkModal
+            <AddPartsLinkDrawer
               open={addPartsLinkOpen}
               workOrderId={workOrderId}
               operatingCompanyId={operatingCompanyId}
