@@ -7426,3 +7426,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.profile.expenses_reverse:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.expenses_reverse:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.identity:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.expenses_reverse:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.identity:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.profile.expenses_reverse:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.identity:trailer
