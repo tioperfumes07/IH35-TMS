@@ -2974,6 +2974,20 @@ chrome (driver-scoped filter) inside this subnav instead of the bare debt-alert 
 "View all →" deep link from the debt-alert panel to `/cash-advances?driver_id=...` if a driver-scoped
 query param exists — needs a product decision on which shape is intended, not a mechanical guess. | OPEN
 
+**RESOLVED (CC-3, 2026-08-21, SWARM-ONE-MODULE follow-up):** `DRIVERS-CASH-ADVANCES-SUBNAV-NO-QBO-CHROME`
+— fixed via option (a): Drivers.tsx's `cash_advances` subnav now mounts a real `<ParityTable>` (sortable
+Driver/Reason/Liability/Outstanding columns) over the same `debtAlertRows` data instead of the bare
+hand-rolled `DataPanelRow` loop — same rows, same top-8 cap, real QBO-parity grid chrome. Also found while
+re-auditing: this gap was silently masked on the live scoreboard the whole time — the broad
+`verify-cursor-vertical-qbo-picker-modules.mjs` sweep's `leafRe` matches `cash_advances` and
+`matrix-built-auto.ts`'s `isLeafSpecific()` accepted that anchored-alternation pattern, so the leaf was
+credited "Built" via a claim whose runtime check never actually opens Drivers.tsx — same
+theater-scoreboard-drift class as the accounting `chrome.toolbar_search` finding this same session. Added a
+real leaf-specific `@matrix-built` claim + check to `scripts/verify-drivers-qbo-chrome-leaves.mjs` (now 13
+of 16 drivers qbo_chrome leaves, up from 12). `apps/frontend/src/pages/Drivers.tsx` (cash_advances subnav
+block, `debtAlertColumns` + `DebtAlertRow` type) | `scripts/verify-drivers-qbo-chrome-leaves.mjs` --selftest
++ live both PASS | RESOLVED
+
 **UPDATE (CC-3, 2026-08-20 evening):** `QBO-CHROME-THEATER-COVERAGE-5-MODULES` — of the 5 modules
 named above, 3 are now fully closed: **safety** (PR#TBD5, all 12 named leaves real, "the legacy
 duplicate TrainingProgramsPage.tsx concern above was confirmed unfounded — every safety Tab file is

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Drivers qbo_chrome — leaf-specific Built for 12 of the 16 leaves only "claimed" by the broad
+ * Drivers qbo_chrome — leaf-specific Built for 13 of the 16 leaves only "claimed" by the broad
  * verify-cursor-vertical-qbo-picker-modules.mjs sweep (leafRe: ^(cash_advances|chrome|deductions|
  * drivers|pay_rate_templates|profiles|teams)(\.|$)) — same theater-coverage class already found+
  * fixed for insurance/legal/accounting/customers/safety+dispatch this session: it verifies generic
@@ -35,14 +35,22 @@
  *   - drivers.panel.team_split_config: TeamSplitConfig.tsx's real Modal variant="drawer" with a real
  *     DriverPickerWithCreate EntityPicker-class field.
  *
- * NOT claimed here — genuine gap, not theater: `cash_advances` (route /drivers/cash-advances).
- * Drivers.tsx's "cash_advances" subnav renders only a bare DataPanel debt-alert summary (title +
- * rows + optional "View all" link — see components/layout/DataPanel.tsx) with no ParityTable, no
- * CollapsedListFilters, no create modal, and no deep link to the real Cash Advances list
- * (CashAdvancesHomePage, which lives at the unrelated top-level /cash-advances route, credited to a
- * different module's required map). Left unclaimed on purpose; see GUARD-WORKORDERS.md finding
- * DRIVERS-CASH-ADVANCES-SUBNAV-NO-QBO-CHROME for the routed follow-up.
+ * 2026-08-21 (CC-3, SWARM-ONE-MODULE follow-up): `cash_advances` (route /drivers/cash-advances) was
+ * left unclaimed on purpose in the original version of this file — a genuine gap, not theater —
+ * because Drivers.tsx's "cash_advances" subnav rendered only a bare DataPanel debt-alert summary
+ * (title + hand-rolled DataPanelRow loop, no ParityTable, no CollapsedListFilters, no create modal),
+ * unlike every sibling drivers panel which has SOME real QBO-parity chrome. This was also masked on
+ * the live scoreboard: the broad CURSOR-VERTICAL sweep's leafRe (`^(cash_advances|chrome|...)`) DOES
+ * match `cash_advances`, and matrix-built-auto.ts's `isLeafSpecific()` accepts that anchored
+ * alternation pattern, so the leaf was silently credited "Built" via that broad claim even though
+ * the sweep's own runtime check never opens Drivers.tsx looking for cash_advances chrome at all —
+ * same theater-scoreboard-drift class as the accounting `chrome.toolbar_search` finding this same
+ * session. FIXED in this PR: Drivers.tsx's cash_advances tab now renders the same debtAlertRows data
+ * through a real `<ParityTable>` (sortable Driver/Reason/Liability/Outstanding columns) instead of
+ * the manual DataPanelRow loop — same rows, same top-8 cap, real QBO-parity grid chrome. Closed
+ * DRIVERS-CASH-ADVANCES-SUBNAV-NO-QBO-CHROME on GUARD-WORKORDERS.md.
  *
+ * @matrix-built {"modules":["drivers"],"cols":["qbo_chrome"],"leafRe":"^cash_advances$","task":"VERTICAL-QBO-CHROME-drivers-cash-advances","vertical":"column-wave"}
  * @matrix-built {"modules":["drivers"],"cols":["qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"VERTICAL-QBO-CHROME-drivers-toolbar-filter","vertical":"column-wave"}
  * @matrix-built {"modules":["drivers"],"cols":["qbo_chrome"],"leafRe":"^profiles\\.create$","task":"VERTICAL-QBO-CHROME-drivers-profiles-create","vertical":"column-wave"}
  * @matrix-built {"modules":["drivers"],"cols":["qbo_chrome"],"leafRe":"^pay_rate_templates$","task":"VERTICAL-QBO-CHROME-drivers-pay-rate-templates","vertical":"column-wave"}
@@ -66,6 +74,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-drivers-qbo-chrome-leaves";
 
 const CHECKS = [
+  {
+    name: "cash_advances: Drivers.tsx cash_advances tab mounts a real ParityTable over debtAlertRows",
+    file: "apps/frontend/src/pages/Drivers.tsx",
+    pattern: /subnavTab === "cash_advances"[\s\S]{0,900}<ParityTable[\s\S]{0,300}rows=\{debtAlertRows\}[\s\S]{0,300}columns=\{debtAlertColumns\}/,
+  },
   {
     name: "chrome.toolbar_filter: DriversTable real CollapsedListFilters Apply/Reset/Cancel triad",
     file: "apps/frontend/src/pages/drivers/DriversTable.tsx",
@@ -169,4 +182,4 @@ if (fails.length) {
   console.error(`${LABEL} FAIL (${fails.length}):\n- ${fails.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — ${CHECKS.length} checks / 12 drivers qbo_chrome leaf asserts (cash_advances left as a real gap, see header)`);
+console.log(`${LABEL} PASS — ${CHECKS.length} checks / 13 drivers qbo_chrome leaf asserts`);
