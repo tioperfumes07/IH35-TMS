@@ -96,7 +96,7 @@ async function fetchSystemMatrix(): Promise<SystemPayload> {
   // rejection instead of hanging.
   const r = await fetch(resolveApiUrl("/api/v1/program/module-matrix?scope=system"), {
     credentials: "include",
-    signal: AbortSignal.timeout(20_000),
+    signal: AbortSignal.timeout(60_000),
   });
   const json = (await r.json().catch(() => null)) as
     | (SystemPayload & { error?: string; message?: string; tipSha?: string; meta?: { tipSha?: string } })

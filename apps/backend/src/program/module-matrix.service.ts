@@ -95,7 +95,8 @@ function isUsmcaClickedHay(hay: string): boolean {
 const GUARD_MD = path.join(REPO_ROOT, "docs/audit/GUARD-WORKORDERS.md");
 const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
 const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
-const MATRIX_CACHE_MS = 3_000;
+/** 3s made every All-modules load re-parse 29 boards + GitHub OUTBOX and miss the 20s FE abort. */
+const MATRIX_CACHE_MS = 120_000;
 
 export type MatrixCellState = "live" | "built" | "audited" | "unaudited" | "na" | "done";
 
@@ -1091,6 +1092,17 @@ export function parseOutboxClickedKeys(text: string): Set<string> {
 }
 
 async function loadOutboxTextFromGithub(rel: string): Promise<string | null> {
+  const rawUrl = `https://raw.githubusercontent.com/tioperfumes07/IH35-TMS/main/${rel}`;
+  const acRaw = new AbortController();
+  const tRaw = setTimeout(() => acRaw.abort(), 8000);
+  try {
+    const rawRes = await fetch(rawUrl, { signal: acRaw.signal, headers: { "User-Agent": "ih35-tms-matrix-clicked" } });
+    if (rawRes.ok) return await rawRes.text();
+  } catch {
+    /* contents API fallback */
+  } finally {
+    clearTimeout(tRaw);
+  }
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 8000);
   try {
@@ -1620,8 +1632,9 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     return systemCache.payload;
   }
 
-  // Warm ledger once — buildModuleMatrix used to re-parse AUDIT-COVERAGE-LIVE per module (29×).
+  // Warm ledger + Clicked OUTBOX once — GitHub raw, not 29× Contents API inside the 20s FE abort.
   await loadLedgerRows();
+  await loadOutboxClickedKeys();
 
   const order = loadMatrixModuleOrder();
   const modules: SystemModuleMatrixRow[] = [];
