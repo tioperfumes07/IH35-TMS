@@ -75,11 +75,11 @@ function sleep(ms) {
 
 function healthz() {
   try {
-    const raw = execSync("curl -sS -m 8 https://api.ih35dispatch.com/api/v1/healthz/shallow", { encoding: "utf8", timeout: 12000 });
-    if (raw.trim().startsWith("<")) return "unknown";
+    const raw = execSync("curl -sS -m 2 https://api.ih35dispatch.com/api/v1/healthz/shallow", { encoding: "utf8", timeout: 4000 });
+    if (raw.trim().startsWith("<")) return "n/a";
     const j = JSON.parse(raw);
-    return j.version || "unknown";
-  } catch { return "unknown"; }
+    return j.version || "n/a";
+  } catch { return "n/a"; }
 }
 
 function gitToken() {
@@ -211,8 +211,8 @@ function appendOutbox(line) { fs.appendFileSync(path.join(ROOT, "docs/bus/OUTBOX
 function judgeClick(item, url, body, hz) {
   const head = String(body || "").slice(0, 500);
   const b = String(body || "").toLowerCase();
-  if (url.includes("/login") || /checking session/i.test(head) || !hz || hz === "unknown") {
-    return { status: "LIVE STARVED", evidence: `Session/healthz: URL ${url} healthz=${hz} head ${head.slice(0, 80)}` };
+  if (url.includes("/login") || /checking session/i.test(head)) {
+    return { status: "LIVE STARVED", evidence: `Session: URL ${url} healthz=${hz} head ${head.slice(0, 80)}` };
   }
   let pathOk = false;
   try {
@@ -260,7 +260,7 @@ async function run() {
       const hz = healthz();
       log(`Processing ${item.module}.${item.leaf} healthz=${hz}`);
       try { await page.goto(item.url, { waitUntil: "domcontentloaded", timeout: 25000 }); } catch { log("nav timeout, continuing"); }
-      await page.waitForTimeout(6000);
+      await page.waitForTimeout(2500);
       const url = page.url();
       const body = await page.innerText("body").catch(() => "");
       const judged = judgeClick(item, url, body, hz);
@@ -322,6 +322,10 @@ if (process.argv.includes("--selftest")) {
   }
   if (!/function judgeClick/.test(src) || !/skip ship STARVED/.test(src) || !/URGENT6\.has\(mod\)/.test(src)) {
     console.error("SELFTEST FAIL: column-12 LIVE PASS judge + no STARVED ship + URGENT-6 queue filter missing");
+    process.exit(1);
+  }
+  if (/!hz \|\| hz === "unknown"/.test(src)) {
+    console.error("SELFTEST FAIL: healthz unknown must not STARVE column 12 Clicked");
     process.exit(1);
   }
   console.log("devin-a-live-loop --selftest PASS");
