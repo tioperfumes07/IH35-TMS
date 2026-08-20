@@ -4097,3 +4097,6 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=lists:catalog.drivers.endorsements.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.endorsements.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/endorsements | healthz=7410c07 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/endorsements marker 'lists' | NEXT=leaf=lists:catalog.drivers.escrow_types.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.endorsements.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/endorsements | healthz=7410c07 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/endorsements marker 'lists' | NEXT=leaf=lists:catalog.drivers.escrow_types.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.endorsements.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/endorsements | healthz=7410c07 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/endorsements marker 'lists' | NEXT=leaf=lists:catalog.drivers.escrow_types.create:picker_law
