@@ -13454,3 +13454,25 @@ Devin-A | LIVE PASS | leaf=docs:tab.all:vendor | USMCA | URL=https://app.ih35dis
 Devin-A | LIVE PASS | leaf=docs:tab.all:unit | USMCA | URL=https://app.ih35dispatch.com/docs | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/docs marker 'docs' | NEXT=leaf=home:chrome.toolbar_range:connectivity
 Devin-A | LIVE PASS | leaf=docs:tab.all:load | USMCA | URL=https://app.ih35dispatch.com/docs | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/docs marker 'docs' | NEXT=leaf=home:chrome.toolbar_range:connectivity
 Devin-A | LIVE PASS | leaf=docs:tab.all:connectivity | USMCA | URL=https://app.ih35dispatch.com/docs | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/docs marker 'docs' | NEXT=leaf=home:chrome.toolbar_range:connectivity
+Devin-A | LIVE STARVED | leaf=customers:detail.audit:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=audit | healthz=dea2ff1 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=audit head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.billing:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.audit:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=audit | healthz=dea2ff1 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=audit head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.billing:customer
