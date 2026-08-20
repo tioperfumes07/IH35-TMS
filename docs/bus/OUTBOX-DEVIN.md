@@ -9975,3 +9975,7 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=dispatch:dispatch.panel.auth_gate:connectivity
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.panel.auth_gate:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=6e88489 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.panel.pre_settlement:connectivity
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.panel.auth_gate:load | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=6e88489 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.panel.pre_settlement:connectivity
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.panel.auth_gate:unit | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=6e88489 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.panel.pre_settlement:connectivity
+Devin-A | LIVE PASS | leaf=dispatch:dispatch.panel.auth_gate:trailer | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=6e88489 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.panel.pre_settlement:connectivity
