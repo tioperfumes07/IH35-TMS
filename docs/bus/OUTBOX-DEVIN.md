@@ -10066,3 +10066,6 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Loading…
 FAQ | NEXT=leaf=inventory:assignments.unit_link:unit
+Devin-A | LIVE STARVED | leaf=inventory:assignments.unit_link:unit | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/inventory/assignments healthz=unknown head Checking session... | NEXT=leaf=inventory:assignments.vendor_link:vendor
+Devin-A | LIVE STARVED | leaf=inventory:assignments.unit_link:connectivity | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/inventory/assignments healthz=unknown head Checking session... | NEXT=leaf=inventory:assignments.vendor_link:vendor
+Devin-A | LIVE STARVED | leaf=inventory:assignments.unit_link:reverse_link | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/inventory/assignments healthz=unknown head Checking session... | NEXT=leaf=inventory:assignments.vendor_link:vendor
