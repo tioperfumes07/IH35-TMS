@@ -2984,6 +2984,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-accounting-qbo-chrome-toolbar-search-and-panels"
   },
+  "4182": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-accounting-qbo-chrome-toolbar-range-gear-and-expenses-create"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -4972,5 +4977,5 @@
       "4127-verify-wo-cancellation-reason-picker-law.mjs"
     ]
   },
-  "total_claimed": 1208
+  "total_claimed": 1209
 }
