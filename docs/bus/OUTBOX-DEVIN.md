@@ -14509,3 +14509,17 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=accounting:accounting.parity.pay_bill:ap_bill
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.pay_bill:ap_bill | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/PayBillModal.tsx | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/home healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:accounting.parity.payment_apply:gl_je
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.pay_bill:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/PayBillModal.tsx | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/home healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:accounting.parity.payment_apply:gl_je
