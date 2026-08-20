@@ -2,8 +2,8 @@
 
 `git pull --ff-only origin main`
 
-Reverse on the 6 least-Clicked. Start **settlements**.
+Customers reverse only if unpaid. Vendors parked. Do not restart settlements reverse.
 
 ```text
-Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=settlements reverse_link | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=customers reverse if unpaid FAIL | GO
 ```

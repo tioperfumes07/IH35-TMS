@@ -10,9 +10,16 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const ORDER = ["accounting", "banking", "customers", "vendors", "factoring", "settlements", "dispatch", "drivers"];
+const ORDER = [
+  "banking",
+  "factoring",
+  "accounting",
+  "settlements",
+  "customers",
+  "drivers",
+];
 const ALLOWED = new Set(ORDER);
-const FORBIDDEN = new Set(["fleet", "fuel", "maintenance", "safety", "insurance", "legal", "lists", "program", "system"]);
+const FORBIDDEN = new Set(["fleet", "fuel", "maintenance", "safety", "insurance", "legal", "lists", "program", "system", "vendors", "dispatch"]);
 
 function loadPlaywright() {
   const tries = ["playwright-core", path.join(ROOT, "apps/frontend/node_modules/playwright-core"), path.join(ROOT, "node_modules/playwright-core")];

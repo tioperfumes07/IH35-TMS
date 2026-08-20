@@ -1,26 +1,27 @@
-# CODER INSTRUCTIONS NOW · URGENT 6 = LEAST PROGRESS · USMCA
+# CODER INSTRUCTIONS NOW · VERIFIED 2026-08-20T07:21Z FROM GITHUB MAIN OUTBOX
 
-Owner 2026-08-20 01:51 CT: **the six most urgent are the ones with the least progress.**
+Owner: six with **least Clicked**. Park vendors + dispatch.
 
-Measured from `OUTBOX-DEVIN.md` LIVE PASS vs the night-8 (fuel never). **Vendors** and **dispatch** have the most Clicked lines — park them. Do those six:
+**Same six modules.** Re-counted `OUTBOX-DEVIN.md` LIVE PASS on GitHub main (module= or leaf=module:):  
+banking **2** · factoring **5** · accounting **17** · settlements **24** · customers **30** · drivers **31** · vendors **73** · dispatch **157**.
 
-**settlements → factoring → banking → customers → drivers → accounting**
+**Clicked order (least first):** banking → factoring → accounting → settlements → customers → drivers.
 
-Evidence (LIVE PASS lines on main OUTBOX): settlements ~0 · factoring 1 · banking 2 · customers 4 · drivers 4 · accounting 6. Vendors 69 · dispatch 49 (not urgent).
+Do **not** use the stale ~0 settlements count. Loop on main had vendors+dispatch in ORDER — that was a defect.
 
-**100% of a module:** Fully-Wired **1–11 Built** + Devin **item 12** Clicked `leaf=<module>:<leafId>:<col> | USMCA`.
+**Already done (do not restart):**
+- **CC-2 picker_law:** OUTBOX “closes out picker_law coverage across all 8” + later “URGENT-6-LEAST picker_law sweep complete”. Live click only.
+- **CC-1 queue items 1–6:** OUTBOX 2026-08-20T09:35Z “FULL QUEUE COMPLETE” (accounting/banking/factoring/settlements + theater + audit parse). Do not re-issue “NOW=settlements TMS money”.
 
-USMCA only. No TRK. No TRANSP. No QBO. Never idle.
+**100%:** Fully-Wired 1–11 Built + Devin item 12 Clicked. USMCA only.
 
-## Seat split
+| Seat | VERIFIED NOW |
+|------|----------------|
+| **Devin-A** | Clicked least-first. chrome=9227. Park vendors/dispatch. |
+| **CC-2** | Live click only. No picker rebuild. |
+| **CC-1** | Queue 1–6 complete per their OUTBOX. Next money FAIL on the 6 only if a new OPEN row exists. |
+| **CC-3** | UNVERIFIED whether unpaid **drivers Built** leaves remain — grep `drivers.required.json` vs last SHIPPED; do not rebuild dispatch. |
+| **Codex** | OUTBOX already customers reverse; NEXT vendors is **parked**. Do not restart settlements reverse from zero. Live=UNVERIFIED until Devin clicks. |
+| **Cursor** | Lead. Verify OUTBOX before any INBOX rewrite. |
 
-| Seat | NOW |
-|------|-----|
-| **Cursor** | Lead · scoreboard API · customers Built leftover |
-| **CC-1** | TMS money: **settlements → factoring → banking** then accounting. `CC-1-QUEUE-UNTIL-06.md` |
-| **CC-2** | **LIVE VERIFY + click only.** Pickers already checked — do not rebuild `picker_law`. File a FINDING only if a live click FAILs. |
-| **CC-3** | **drivers Built** (least FE). Not dispatch. |
-| **Codex** | reverse_link on the 6 in that order |
-| **Devin-A** | Clicked the 6 in that order. chrome=9227 |
-
-ACK: `STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=<FO> | GO`
+ACK: `STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=<verified FO> | GO`
