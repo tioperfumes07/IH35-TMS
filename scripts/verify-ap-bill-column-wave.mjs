@@ -121,6 +121,16 @@ const CHECKS = [
     pattern: /to=\{`\/accounting\/bills\?\$\{filterKey\}=/,
   },
   {
+    name: "ACCOUNTING-BILLS-REVERSE-VENDOR-DRILL: canonical vendor identity is tombstone-safe",
+    file: "apps/frontend/src/components/accounting/BillsReverseSection.tsx",
+    pattern: /EntityLinkOrTombstone kind="vendor" id=\{billVendorDrillId\(row\)\} name=\{row\.vendor_name\} noun="Vendor"/,
+  },
+  {
+    name: "ACCOUNTING-BILLS-REVERSE-VENDOR-DRILL: list producer resolves scoped canonical vendor label",
+    file: "apps/backend/src/accounting/bills.service.ts",
+    pattern: /SELECT b\.\*, v\.vendor_name,[\s\S]{0,500}\$\{BILL_VENDOR_RESOLVE_JOIN_SQL\}[\s\S]{0,1800}vendor_name: row\.vendor_name \?\?/,
+  },
+  {
     name: "ACCT-F5049: InvoicesListPage reads source_load_id from the URL",
     file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
     pattern: /searchParams\.get\("source_load_id"\)/,
@@ -173,10 +183,12 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/accounting/bills.service.ts":
       "const X = `\n  COALESCE(\n    bp.source_bank_transaction_id::text,\n    (SELECT 1)\n  )\n`;\n" +
       "linked_cash_advance_id: linkedCashAdvanceId,\n" +
-      "b.legal_matter_id = $${values.length}::uuid",
+      "b.legal_matter_id = $${values.length}::uuid\n" +
+      "SELECT b.*, v.vendor_name, x FROM accounting.bills b ${BILL_VENDOR_RESOLVE_JOIN_SQL} x vendor_name: row.vendor_name ?? null",
     "apps/frontend/src/components/accounting/LegalMatterCostsReverseSection.tsx":
       "to={`/accounting/bills?legal_matter_id=${encodeURIComponent(legalMatterId)}`}",
-    "apps/frontend/src/components/accounting/BillsReverseSection.tsx": "to={`/accounting/bills?${filterKey}=",
+    "apps/frontend/src/components/accounting/BillsReverseSection.tsx":
+      'to={`/accounting/bills?${filterKey}= <EntityLinkOrTombstone kind="vendor" id={billVendorDrillId(row)} name={row.vendor_name} noun="Vendor" />',
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx": 'searchParams.get("source_load_id") dataTestId="invoices-filter-load" function setSourceLoadId',
     "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx":
       "to={`/accounting/invoices?${filterKey}=",

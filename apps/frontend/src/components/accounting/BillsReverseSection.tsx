@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { listBills } from "../../api/accounting";
+import { billVendorDrillId, listBills } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { CappedListNotice } from "../CappedListNotice";
 
@@ -69,7 +70,9 @@ export function BillsReverseSection({
               <EntityLink kind="bill" id={row.id} label={entityLabel(row.bill_number, row.id, "Bill")} className="font-medium" />
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.bill_date)} · {formatMoneyCents(Number(row.amount_cents), "USD")} · {row.status}
-                {row.vendor_name ? ` · ${row.vendor_name}` : ""}
+                {row.vendor_name || billVendorDrillId(row) ? (
+                  <> · <EntityLinkOrTombstone kind="vendor" id={billVendorDrillId(row)} name={row.vendor_name} noun="Vendor" /></>
+                ) : null}
               </span>
             </li>
           ))}
