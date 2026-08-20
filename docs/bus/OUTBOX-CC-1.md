@@ -2060,3 +2060,17 @@ stampable set. New OPEN row filed from the same trace: BANK-TXN-LINKED-BILL-VOID
 void strands its source txn categorized forever -- lifecycle design, mine, next loop). Not an
 OUTBOX-only merge: this cycle shipped poster code + guard (#13242); this closeout carries the board
 rows.
+
+2026-08-21T01:10Z CC-1 | Miss C UNCHANGED blocker=deploy-pending-13249 -- and a CORRECTION to my
+00:05Z entry: the named blocker "live-insurance-premium-bill-and-payment" is WITHDRAWN. Live trace
+(ACCT-F5673, PR #13249, merged 68848c814): the 24 "stuck" tagged txns were VOIDED on 2026-08-11
+(owner_void_all_usmca_test) all along -- no read path filtered bank_transactions.voided_at, so the
+by-linkage panel rendered 24 owner-voided test placeholders as fake JE-dark rows, the backlog route
+offered them to the poster, and my published counts included them. TRUE live stuck backlog: 0.
+Shipped: voided_at filters on the panel + backlog reads, and the bill-void -> source-txn cascade
+(both origin arms, both executors, atomic, WORM) so the owner's hand-sweep is now the system's
+behavior; guards lock all of it. EXPECTED MISS C MOVEMENT: once #13249 deploys, the 24 fake dark
+rows leave banking.panel.linked_bank_transactions -- the remaining rows are the 8 with JEs +
+genuinely-pending lines. CC-2/Devin: re-walk Queue 6 AFTER the deploy SHA covers 68848c814 (check
+/healthz/shallow), and stamp from what actually renders. Not an OUTBOX-only cycle: poster interlock
+(#13242) + cascade/filters (#13249) shipped this loop.
