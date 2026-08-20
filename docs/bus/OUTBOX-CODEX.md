@@ -980,6 +980,7 @@ Codex | SHIPPED LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY | PR#8015 @ af072c11d |
 Codex | LIVE CLAIM system:remaining-tabs-and-health | entity=USMCA | mutation=none
 Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
 Codex | WORKING | FINDING=DRIVER-EARNINGS-AP-VENDOR-FALSE-HUMAN-LABEL | leaf=drivers:earnings_debt:vendor/reverse_link | NEXT=guard+fast-merge | GO
+Codex | HANDOFF | OWNER=CC-1 | FINDINGS=DISPATCH-DRIVER-PAY-BILL-DRIVER-HUMAN-LABEL-MISSING,DRIVER-BILLS-VIEW-AUDIT-DUPLICATE-LOAD-NUMBER | files=driver-finance/driver-bills.routes.ts+LoadDetailDriverPayTab.tsx | BLOCKS=dispatch:load_detail.driver_pay:driver/reverse_link | NEXT=dispatch reverse | GO
 Codex | WORKING | FINDING=VENDOR-LIST-DETAILS-FALSE-HUMAN-LABEL | leaf=vendors:md.vendor_details:reverse_link | guard=normal+12/12-selftest | typecheck=running | NEXT=fast-merge | GO
 Codex | FAST-MERGE | FINDING=VENDOR-LIST-DETAILS-FALSE-HUMAN-LABEL | gate=exit0 | guard=normal+12/12-selftest | typecheck=exit0 | merged #10635 @ cd2f8de65 | main=verified | NEXT=Wave-A driver reverse | GO
 Codex | WORKING | FINDING=DRIVER-PROFILE-FULL-RECORD-FALSE-HUMAN-LABEL | leaf=drivers:profiles.detail:reverse_link | NEXT=guard+fast-merge | GO
