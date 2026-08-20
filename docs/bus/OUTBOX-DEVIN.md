@@ -14280,3 +14280,25 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=accounting:accounting.modal.ccpayment:ap_bill
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:ap_bill | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/bill-payments/CCPaymentModal.tsx | healthz=ccfe302 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:accounting.modal.customer_adjustment:gl_je
+Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.ccpayment:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/bill-payments/CCPaymentModal.tsx | healthz=ccfe302 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:accounting.modal.customer_adjustment:gl_je
