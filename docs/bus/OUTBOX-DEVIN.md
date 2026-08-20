@@ -4663,3 +4663,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:lists.drawer.catalog_quick_create:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.drawer.catalog_quick_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head Checking session... | NEXT=leaf=lists:lists.drawer.inline_create:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.drawer.catalog_quick_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head Checking session... | NEXT=leaf=lists:lists.drawer.inline_create:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.drawer.catalog_quick_create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=unknown head Checking session... | NEXT=leaf=lists:lists.drawer.inline_create:connectivity
