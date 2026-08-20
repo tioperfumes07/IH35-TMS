@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { getDriverHosDetail } from "../../api/hos";
 import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -100,6 +101,13 @@ export function DriverHosDetailPage() {
                   <span className="font-semibold">{event.duty_status}</span>
                   <span>{formatDateTimeUS(event.started_at)} CT → {event.ended_at ? `${formatDateTimeUS(event.ended_at)} CT` : "open"}</span>
                   <span className="text-gray-500">{event.location ?? "location n/a"}</span>
+                  <EntityLinkOrTombstone
+                    kind="unit"
+                    id={event.unit_id}
+                    name={event.unit_number}
+                    noun="Unit"
+                    data-testid={`driver-hos-event-unit-${event.id}`}
+                  />
                 </div>
               ))}
               {hosQuery.data.timeline_24h.length === 0 ? <div className="text-xs text-gray-500">No duty status events in the last 24 hours.</div> : null}

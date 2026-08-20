@@ -16,6 +16,7 @@ export type DriverHosDetail = {
     started_at: string;
     ended_at: string | null;
     unit_id: string | null;
+    unit_number: string | null;
     source: string;
     odometer_mi: number | null;
     location: string | null;
