@@ -6,10 +6,10 @@
 
 **NOW accounting Queue 6:**
 
-1. `accounting.parity.credit_memos_page` — remaining Live ✕ among `connectivity` `reverse_link` `customer` `qbo_chrome`. `/accounting/credit-memos`.
-2. `banking.panel.linked_bank_transactions` — `bank` `gl_je` `connectivity` `reverse_link`. Linked-bank panel. Stamp after live reverse drill (CC-1 supplies JE).
+1. `accounting.parity.credit_memos_page` — remaining honest gap is `reverse_link` if 0 memos (do not fabricate). Other cols only if still ✕ after named-leaf credit from `bank ·` rows.
+2. `banking.panel.linked_bank_transactions` — `bank`/`gl_je` data-backed JE drill waits on CC-1. Chrome stamp is not empty-tag theater.
 
-Then next WAVE 1 name Box 4 (banking → factoring → …). Accounting jumped first because of these ✕s.
+Do **not** jump WAVE 2 while CC-1 money on this module is still open. Swarm stays accounting.
 
 ```text
 CC-2 | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | HOURLY-REREAD | NOW=accounting Box4 Live | GO

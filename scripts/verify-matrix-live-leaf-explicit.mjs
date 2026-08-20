@@ -132,6 +132,9 @@ function assertServiceWiring(src) {
     if (!/leafColumnHasLaterContradictingFail\(leaf,\s*colId,\s*moduleId,\s*ledger,\s*row\.num\)/.test(liveFn[0])) {
       errs.push("leafColumnLiveReason must skip Live when a later FAIL exists for the same leaf×column");
     }
+    if (!/rowTouchesModuleOrNamedLeaf\(row,\s*moduleId,\s*leaf\)/.test(liveFn[0])) {
+      errs.push("leafColumnLiveReason must credit a named leaf on a bank-prefixed ledger row");
+    }
   }
   if (!/no stem\/keyword fan-out/.test(src) && !/LV-MATRIX-LIVE-KEYWORD-FANOUT/.test(src)) {
     errs.push("service must document LV-MATRIX-LIVE-KEYWORD-FANOUT / no stem fan-out");
