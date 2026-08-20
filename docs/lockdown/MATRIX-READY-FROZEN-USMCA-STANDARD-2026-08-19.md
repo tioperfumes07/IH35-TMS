@@ -15,7 +15,7 @@
 | Column | 100 means | Use as “done”? |
 |--------|-----------|----------------|
 | **READY** Live ✓ | Every Required cell (including **money**) is **Built** and **USMCA Clicked** | **YES — this is ready** |
-| **Miss C** | Integer unpaid Clicked on that frozen set (including money) | **0 = no Clicked work left** |
+| **Miss C** | Integer unpaid **Box 4 Live** on the frozen Required set (including money). Clicked 100% does **not** zero Miss C. | **0 = every Frozen cell is Live** |
 | Built | Guard on disk for Required cell | No |
 | Box 4 Live | Ledger fan-out | **Never** |
 | Named | `` `leaf:col` `` on PROD-VERIFIED | No |
