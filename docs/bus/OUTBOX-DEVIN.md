@@ -13321,3 +13321,6 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=inventory:parts.edit.vendor_picker:vendor
+Devin-A | LIVE PASS | leaf=inventory:parts.edit.vendor_picker:vendor | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/inventory marker 'inventory' | NEXT=leaf=compliance:hop.safety_hos:driver
+Devin-A | LIVE PASS | leaf=inventory:parts.edit.vendor_picker:picker_law | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/inventory marker 'inventory' | NEXT=leaf=compliance:hop.safety_hos:driver
+Devin-A | LIVE PASS | leaf=inventory:parts.edit.vendor_picker:connectivity | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/inventory marker 'inventory' | NEXT=leaf=compliance:hop.safety_hos:driver
