@@ -5214,3 +5214,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.profile.action_bar:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.action_bar:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=782460b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.assignment:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.action_bar:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=782460b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.assignment:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.action_bar:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=782460b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/fleet/trailers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=fleet:trailer.profile.assignment:trailer
