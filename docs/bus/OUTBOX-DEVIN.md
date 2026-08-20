@@ -14409,3 +14409,25 @@ Devin-A | LIVE STARVED | leaf=accounting:accounting.panel.bill_detail:gl_je | US
 Devin-A | LIVE STARVED | leaf=accounting:accounting.panel.detail:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/fixed-assets | healthz=c087960 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/fixed-assets healthz=c087960 head Checking session... | NEXT=leaf=accounting:accounting.panel.leakage:gl_je
 Devin-A | LIVE STARVED | leaf=accounting:accounting.panel.leakage:gl_je | USMCA | URL=https://app.ih35dispatch.com/accounting/revenue-recognition | healthz=c087960 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/my-accountant healthz=c087960 head Checking session... | NEXT=leaf=accounting:accounting.panel.period_status:gl_je
 Devin-A | LIVE PASS | leaf=accounting:accounting.panel.reallocate:ap_bill | USMCA | URL=https://app.ih35dispatch.com/accounting/allocations | healthz=c087960 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/allocations marker 'Allocations' | NEXT=leaf=accounting:accounting.panel.schedule:gl_je
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.ccpayment:ap_bill | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/bill-payments/CCPaymentModal.tsx | healthz=c087960 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:accounting.parity.expense_create_page:expense
+Devin-A | LIVE STARVED | leaf=accounting:accounting.parity.ccpayment:gl_je | USMCA | URL=https://app.ih35dispatch.com/surface://pages/accounting/bill-payments/CCPaymentModal.tsx | healthz=c087960 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=accounting:accounting.parity.expense_create_page:expense
