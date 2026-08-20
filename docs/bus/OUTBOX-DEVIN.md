@@ -8683,3 +8683,19 @@ Devin-A | LIVE PASS | leaf=banking:banking.parity.manual_je:connectivity | USMCA
 Devin-A | LIVE PASS | leaf=banking:banking.parity.manual_je:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:banking.parity.record_ccpayment:connectivity
 Devin-A | LIVE PASS | leaf=banking:banking.parity.record_ccpayment:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:statement_import:connectivity
 Devin-A | LIVE PASS | leaf=banking:banking.parity.record_ccpayment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking | healthz=8ba4af1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/banking marker 'banking' | NEXT=leaf=banking:statement_import:connectivity
+Devin-A | LIVE STARVED | leaf=banking:statement_import:connectivity | USMCA | URL=https://app.ih35dispatch.com/banking/statement-import | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/banking/statement-import healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=factoring:batches.create:customer
+Devin-A | LIVE STARVED | leaf=banking:statement_import:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/banking/statement-import | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/banking/statement-import healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=factoring:batches.create:customer
