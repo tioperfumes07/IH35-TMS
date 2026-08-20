@@ -3627,3 +3627,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=drivers:settlements:connectivity
+Devin-A | LIVE PASS | leaf=drivers:settlements:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/settlements | healthz=5261a46 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'drivers' | NEXT=leaf=drivers:team_splits:driver
+Devin-A | LIVE PASS | leaf=drivers:settlements:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/settlements | healthz=5261a46 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements marker 'drivers' | NEXT=leaf=drivers:team_splits:driver
