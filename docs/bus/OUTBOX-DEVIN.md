@@ -6918,3 +6918,6 @@ Idioma
 Ingles
 Espanol (preview)
 t | NEXT=leaf=lists:catalog.drivers.employment_status.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.employment_status.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/employment-status | healthz=2686ca6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/employment-status marker 'lists' | NEXT=leaf=lists:catalog.drivers.endorsements.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.employment_status.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/employment-status | healthz=2686ca6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/employment-status marker 'lists' | NEXT=leaf=lists:catalog.drivers.endorsements.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.drivers.employment_status.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/drivers/employment-status | healthz=2686ca6 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/drivers/employment-status marker 'lists' | NEXT=leaf=lists:catalog.drivers.endorsements.create:picker_law
