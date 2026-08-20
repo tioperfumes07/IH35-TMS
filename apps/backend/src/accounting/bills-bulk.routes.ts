@@ -4,6 +4,7 @@ import { z } from "zod";
 import { buildPatchChanges } from "../audit/crud-audit.js";
 import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.factory.js";
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
+import { getAppliedVendorCreditsCents } from "./bills.service.js";
 
 const billStatusSchema = z.enum(["open", "partial", "paid", "voided"]);
 
@@ -131,7 +132,12 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
 
     const amountCents = Number(oldRow.amount_cents ?? 0);
     const paidCents = Number(oldRow.paid_cents ?? 0);
-    const remaining = amountCents - paidCents;
+    // ACCT-F5623 — this bulk action pays whatever `remaining` computes to, with NO caller-specified
+    // amount to cap it — the most exposed of the three bill-payment writers, since a bill already
+    // settled (in whole or part) by a non-voided vendor credit would otherwise get its full
+    // amount-minus-payments paid in cash automatically, on every bill in the batch.
+    const appliedCreditsCents = await getAppliedVendorCreditsCents(client, id, operatingCompanyId);
+    const remaining = amountCents - paidCents - appliedCreditsCents;
     if (remaining <= 0) {
       return { ok: false, code: "E_STATE_INVALID", message: "Bill has no remaining balance" };
     }

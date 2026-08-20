@@ -362,6 +362,32 @@ const APPLIED_VENDOR_CREDITS_SQL = `COALESCE((
 /** Open balance net of payments AND non-voided vendor credits. */
 const BILL_OPEN_BALANCE_SQL = `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0) - ${APPLIED_VENDOR_CREDITS_SQL})`;
 
+/**
+ * ACCT-F5623 — the sum of non-voided accounting.vendor_credit_applications for ONE bill, for callers
+ * that need the number in application code rather than embedded in a larger SELECT (the three
+ * bill-payment WRITE paths below). Reuses the identical predicate BILL_OPEN_BALANCE_SQL already uses
+ * on the READ side (AP aging / bills list / Pay-Bill picker) — same partial index
+ * (idx_vendor_credit_app_bill_active), same voided_at IS NULL exclusion, same company scope.
+ */
+export async function getAppliedVendorCreditsCents(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }> },
+  billId: string,
+  operatingCompanyId: string
+): Promise<number> {
+  const res = await client.query(
+    `
+      SELECT COALESCE(SUM(vca.applied_cents), 0)::bigint AS applied_cents
+      FROM accounting.vendor_credit_applications vca
+      WHERE vca.bill_id = $1::uuid
+        AND vca.operating_company_id = $2::uuid
+        AND vca.voided_at IS NULL
+    `,
+    [billId, operatingCompanyId]
+  );
+  const row = res.rows[0] as { applied_cents?: unknown } | undefined;
+  return Number(row?.applied_cents ?? 0);
+}
+
 /** ACCT-F603 — resolve bill → mdata.vendors via canonical uuid columns, never legacy QBO vendor_id text. */
 const BILL_VENDOR_UUID_PATTERN = `'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'`;
 
@@ -2224,7 +2250,12 @@ export async function payBill(input: PayBillInput, userId: string) {
     if (bill.status === "voided") throw new Error("bill_voided");
     if (bill.status === "paid") throw new Error("bill_already_paid");
 
-    const remaining = Number(bill.amount_cents) - Number(bill.paid_cents);
+    // ACCT-F5623 — remaining balance must net out non-voided vendor credits, same as
+    // BILL_OPEN_BALANCE_SQL already does on the read side (AP aging / bills list / Pay-Bill picker).
+    // Without this, a bill already partly or fully settled by a vendor credit could still be paid in
+    // cash up to its full face amount, double-discharging the same liability.
+    const appliedCreditsCents = await getAppliedVendorCreditsCents(client, input.billId, input.operatingCompanyId);
+    const remaining = Number(bill.amount_cents) - Number(bill.paid_cents) - appliedCreditsCents;
     if (input.amountCents > remaining) throw new Error("payment_exceeds_remaining_balance");
 
     const paymentRes = await client.query<BillPaymentRow>(

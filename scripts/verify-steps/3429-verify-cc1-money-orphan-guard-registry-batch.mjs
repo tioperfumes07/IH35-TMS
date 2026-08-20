@@ -18,6 +18,7 @@ const guards = [
   "verify-banking-transaction-notes-patch-route.mjs",
   "verify-banking-matched-bill-drill.mjs",
   "verify-banking-reverse-link-list-surfaces.mjs",
+  "verify-bill-payment-nets-vendor-credits.mjs",
   "verify-bills-membership-assert-full-coverage.mjs",
   "verify-cash-forecast-profile-reverse.mjs",
   "verify-categorization-rule-apply-historical-not-dry-run.mjs",
