@@ -52,12 +52,23 @@ export async function calculatePerTruckCpm(
         GROUP BY ls.assigned_unit_id
       ),
       fuel AS (
-        SELECT l.assigned_unit_id AS unit_id,
+        -- ACCT-F5625 — fuel.fuel_transactions.load_id is legitimately NULL on most rows (fuel cards
+        -- swipe with no load at ingest time), but those same rows overwhelmingly DO carry a real
+        -- unit_id (indexed, populated at ingest). Attributing fuel ONLY via the load_scope join
+        -- silently computed $0.00 fuel cost for every truck whose fuel spend has no load_id —
+        -- confirmed live: 1,416 of 1,556 TRANSP fuel rows, $571,802.14. COALESCE(l.assigned_unit_id,
+        -- ft.unit_id) attributes via the load when one matched load_scope (period-scoped there
+        -- already), falling back to the transaction's own unit_id + its own transaction_at date
+        -- otherwise, so a no-load row is never silently dropped by a load-only period filter.
+        SELECT COALESCE(l.assigned_unit_id, ft.unit_id) AS unit_id,
                COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS cents
         FROM fuel.fuel_transactions ft
-        JOIN load_scope l ON l.id = ft.load_id
+        LEFT JOIN load_scope l ON l.id = ft.load_id
         WHERE ft.operating_company_id = $1::uuid
-        GROUP BY l.assigned_unit_id
+          AND ft.archived_at IS NULL
+          AND (l.id IS NOT NULL OR ft.transaction_at::date BETWEEN $2::date AND $3::date)
+          AND COALESCE(l.assigned_unit_id, ft.unit_id) IS NOT NULL
+        GROUP BY COALESCE(l.assigned_unit_id, ft.unit_id)
       ),
       maint AS (
         SELECT wo.unit_id,

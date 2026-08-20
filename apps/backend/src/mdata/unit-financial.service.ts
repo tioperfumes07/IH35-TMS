@@ -145,14 +145,26 @@ async function queryUnitFinancialRow(
     () =>
       client.query<{ fuel_cents: string }>(
         `
+        -- ACCT-F5625 — fuel.fuel_transactions.load_id is legitimately NULL on the large majority of
+        -- rows (fuel cards swipe with no load at ingest time — see fuel.fuel_transactions itself and
+        -- the withdrawn LV-FUEL-LOAD-ATTRIBUTION-NEVER-MATCHES row), but the SAME rows overwhelmingly
+        -- DO carry a real unit_id. Attributing fuel to a unit ONLY via the load join therefore
+        -- silently computed $0.00 fuel cost for every unit whose fuel spend has no load_id — confirmed
+        -- live on prod: 1,416 of 1,556 TRANSP fuel rows have a populated unit_id and zero of them have
+        -- a load_id, worth $571,802.14 that never reached this P&L. COALESCE(l.assigned_unit_id,
+        -- ft.unit_id) attributes by the load's assigned unit when a load exists (preserving the prior
+        -- date-scope behavior for load-attributed rows), falling back to the fuel transaction's own
+        -- unit_id when it doesn't — and the date scope falls back the same way, to the transaction's
+        -- own date, so a no-load row is never silently excluded by a load-only date filter either.
         SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
         FROM fuel.fuel_transactions ft
-        JOIN mdata.loads l ON l.id = ft.load_id
-                           AND l.operating_company_id = $1::uuid
+        LEFT JOIN mdata.loads l ON l.id = ft.load_id
+                                AND l.operating_company_id = $1::uuid
+                                AND l.soft_deleted_at IS NULL
         WHERE ft.operating_company_id = $1::uuid
-          AND l.assigned_unit_id = $2::uuid
-          AND l.soft_deleted_at IS NULL
-          AND l.created_at::date BETWEEN $3::date AND $4::date
+          AND ft.archived_at IS NULL
+          AND COALESCE(l.assigned_unit_id, ft.unit_id) = $2::uuid
+          AND COALESCE(l.created_at::date, ft.transaction_at::date) BETWEEN $3::date AND $4::date
       `,
         [operatingCompanyId, unitId, periodStart, periodEnd]
       ),
