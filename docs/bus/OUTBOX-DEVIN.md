@@ -6534,3 +6534,58 @@ Devin-A | LIVE PASS | leaf=drivers:drivers.modal.driver_import:connectivity | US
 Devin-A | LIVE PASS | leaf=drivers:drivers.modal.driver_import:driver | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.modal.send_message:connectivity
 Devin-A | LIVE PASS | leaf=drivers:drivers.modal.send_message:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
 Devin-A | LIVE PASS | leaf=drivers:drivers.modal.send_message:driver | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.panel.auto_deduction_policies:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:home:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:home:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:reverse_link | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:home:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:picker_law | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:home:driver
+Devin-A | LIVE STARVED | leaf=drivers:drivers.panel.auto_deduction_policies:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers/auto-deduction-policies | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/auto-deduction-policies head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:home:driver
