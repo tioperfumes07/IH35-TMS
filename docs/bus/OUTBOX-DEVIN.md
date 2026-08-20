@@ -1864,3 +1864,6 @@ Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:picker_law |
 Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
 Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
 Devin-A | LIVE STARVED | leaf=vendors:detail.ap.record_bill_payment:scenario.ap | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=ac31a68
+Devin-A | LIVE STARVED | leaf=vendors:home.roster:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=ac31a68 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors head  | NEXT=leaf=vendors:list.view_list:vendor
+Devin-A | LIVE STARVED | leaf=vendors:home.roster:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=ac31a68 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors head  | NEXT=leaf=vendors:list.view_list:vendor
+Devin-A | LIVE STARVED | leaf=vendors:home.roster:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=ac31a68 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors head  | NEXT=leaf=vendors:list.view_list:vendor
