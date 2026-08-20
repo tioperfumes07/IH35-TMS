@@ -12665,3 +12665,5 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Module
 In active development | NEXT=leaf=safety:eld_audit.list:driver
+Devin-A | LIVE STARVED | leaf=safety:eld_audit.list:driver | USMCA | URL=https://app.ih35dispatch.com/safety/eld/audit-trail | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/eld/audit-trail healthz=unknown head Checking session... | NEXT=leaf=fleet:roster.bulk.status:unit
+Devin-A | LIVE STARVED | leaf=safety:eld_audit.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety/eld/audit-trail | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/eld/audit-trail healthz=unknown head Checking session... | NEXT=leaf=fleet:roster.bulk.status:unit
