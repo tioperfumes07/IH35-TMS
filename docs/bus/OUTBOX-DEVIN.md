@@ -1038,3 +1038,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=69d7810 | mutation=none | NEXT=system.hop.program_matrix
+Devin-A | LIVE STARVED | module=system | leaf=system.panel.usmcaactivation | URL=https://app.ih35dispatch.com/admin/usmca-activation | USMCA | cells=auto | evidence=No marker found at https://app.ih35dispatch.com/admin/usmca-activation ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=b133728 | mutation=none | NEXT=system.chrome.toolbar_search
