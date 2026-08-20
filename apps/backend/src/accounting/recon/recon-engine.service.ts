@@ -185,21 +185,33 @@ export async function runCategorizationDiffPass(
 
 /** TMS side — bank transactions with their COA mapping in the window. */
 async function readTmsBankEntries(client: PoolClient, opco: string, ws: string, we: string): Promise<ReconEntry[]> {
-  // LV-BANK-TWO-SIGN-CONVENTIONS (2026-08-16) — this comment previously claimed amount_cents is always a
-  // positive magnitude and this CASE normalizes it to "credit positive." Live-measured on prod: it is
-  // NOT a clean magnitude — is_credit=true rows are stored negative in 2,687 of 2,795 cases, positive in
-  // the remaining 108 (all one documented cohort, Relay Fuel Wallet). For those 2,687 rows this CASE
-  // (which takes amount_cents unchanged when is_credit) therefore returns a NEGATIVE value for a credit,
-  // not the "credit positive" the old comment claimed. Left AS-IS here rather than silently reversed: an
-  // in-place sign flip on a live bank-reconciliation match function is a money-matching behavior change
-  // that needs its own verified fix (confirm the QBO-side comparison's actual convention first — a
-  // one-sided change here could flip which rows currently DO match into ones that no longer do), not a
-  // guess bundled into a comment-honesty pass. Filed as its own open item; do not "fix" this expression
-  // without live-verifying both sides of the comparison first. Columns verified against 0073/0087 (no
-  // external_id/voided_at exist): reference = description/merchant_name; TMS categorization = coa_account_id.
+  // ACCT-F5605 (2026-08-20) — resolves LV-BANK-TWO-SIGN-CONVENTIONS, live-verified both sides before
+  // fixing per the 2026-08-16 comment's own instruction ("do not fix without live-verifying both sides").
+  //
+  // QBO SIDE (recon-cron.service.ts's buildReconEntriesFromQboRegister, the real wired source — NOT a
+  // stub; TMS_QBO_RECON_ENABLED default OFF, no override row for any entity as of this fix, so this
+  // comparison has never yet run against real QBO data and there is zero current live behavior to
+  // regress): Deposit +, Purchase -magnitude (Credit=true flips to +), Transfer from -/to +, BillPayment
+  // -, Payment (direct-to-bank) +, JournalEntry debit-to-bank + / credit-to-bank - . Genuinely, deliberately
+  // "money-in positive, money-out negative" -- confirmed by reading the function, not inferred.
+  //
+  // TMS SIDE, OLD (broken): `CASE WHEN is_credit THEN amount_cents ELSE -amount_cents END` trusted the
+  // STORED sign for credits. Live-measured: is_credit=true rows are stored negative in 2,687 of 2,795
+  // cases (positive only for the 108-row Relay Fuel Wallet cohort), so the old expression returned
+  // NEGATIVE for 96% of credits -- the exact opposite of the QBO side's "credit positive." Because
+  // matchKey() embeds this signed amount_cents directly, and computeBankCountExceptions sums it, this
+  // was not cosmetic: it would have produced a false SUM_MISMATCH/false REFERENCE_INTEGRITY on every
+  // credit-bearing window the moment the flag was ever turned on for a connected entity.
+  //
+  // FIX: trust is_credit as the SOLE direction authority (the law already stated in
+  // posting-engine.service.ts and bank-feed-gl-posting.service.ts's own "DIRECTION IS DRIVEN ONLY BY
+  // is_credit, NEVER by the sign of amount_cents") and reconstruct via ABS(), not the raw stored sign.
+  // This is convention-agnostic by construction: a credit stored negative (the 2,687) or positive (the
+  // 108 Relay rows) both normalize to the SAME correct positive output, so the Relay exception needs no
+  // separate per-row/per-feed convention tracking -- ABS(amount_cents) is identical either way.
   const res = await client.query<{ id: string; posted_date: string; amount_cents: string; reference: string | null; coa_account_id: string | null }>(
     `SELECT id::text, posted_date::text,
-            (CASE WHEN is_credit THEN amount_cents ELSE -amount_cents END)::text AS amount_cents,
+            (CASE WHEN is_credit THEN ABS(amount_cents) ELSE -ABS(amount_cents) END)::text AS amount_cents,
             COALESCE(description, merchant_name) AS reference,
             coa_account_id::text
        FROM banking.bank_transactions
