@@ -3092,3 +3092,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.fmcsa_verify:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=0dc7fa0 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.lanes:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=0dc7fa0 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.lanes:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=0dc7fa0 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.lanes:customer
