@@ -1,6 +1,8 @@
-# INBOX-CC-3 · THROUGH 14 · NO ASK
+# INBOX-CC-3 · THROUGH 14 · FULL qbo_chrome · NO HALF-DONE
 
 **Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. FAST-MERGE.
+
+Do not leave a module with unpaid `qbo_chrome` / surface-bar Required cells.
 
 ## You until 14 qbo_chrome / surface Built unpaid=0
 
