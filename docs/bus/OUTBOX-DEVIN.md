@@ -1698,3 +1698,5 @@ Espanol (preview)
 tioperfumes07@gmail.com
 FLEET›UNIT LOADING…
 Unit Loa | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.trip_cost
+Devin-A | LIVE STARVED | module=fleet | leaf=roster.filter.status_oos | URL=https://app.ih35dispatch.com/fleet?status=OutOfService | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet/units/:id ; body head Checking session... | healthz=596b3bd | mutation=none | NEXT=fleet.roster.bulk.status
+Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.maintenance | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet/units/:id ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.compliance
