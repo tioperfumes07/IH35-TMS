@@ -7,8 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -46,30 +45,21 @@ export function AbandonmentQueuePage() {
         key: "load_id",
         label: "Load",
         render: (row) => {
-          const loadId = String(row.load_id ?? "");
-          return <EntityLink kind="load" id={row.load_id as string | undefined} label={loadId ? entityLabel(null, loadId, "Load") : undefined} />;
+          return <EntityLinkOrTombstone kind="load" id={row.load_id} name={row.load_number} noun="Load" />;
         },
       },
       {
         key: "driver_id",
         label: "Driver",
         render: (row) => {
-          const driverId = String(row.driver_id ?? "");
-          return <EntityLink kind="driver" id={row.driver_id as string | undefined} label={driverId ? entityLabel(null, driverId, "Driver") : undefined} />;
+          return <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />;
         },
       },
       {
         key: "applied_to_settlement_id",
         label: "Settlement",
         render: (row) => {
-          const settlementId = row.applied_to_settlement_id as string | undefined;
-          return (
-            <EntityLink
-              kind="settlement"
-              id={settlementId}
-              label={settlementId ? entityLabel(null, settlementId, "Settlement") : undefined}
-            />
-          );
+          return <EntityLinkOrTombstone kind="settlement" id={row.applied_to_settlement_id} name={row.settlement_display_id} noun="Settlement" />;
         },
       },
       { key: "total_chargeback_cents", label: "Total ¢", render: (row) => String(row.total_chargeback_cents ?? "") },
