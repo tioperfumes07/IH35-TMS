@@ -127,9 +127,15 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     const session = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.onboarding_sessions
-          WHERE id = $1 AND operating_company_id = $2::uuid
+          SELECT
+            session.*,
+            NULLIF(TRIM(CONCAT_WS(' ', driver.first_name, driver.last_name)), '') AS driver_name
+          FROM safety.onboarding_sessions session
+          LEFT JOIN mdata.drivers driver
+            ON driver.id = session.driver_id
+           AND driver.operating_company_id = session.operating_company_id
+          WHERE session.id = $1
+            AND session.operating_company_id = $2::uuid
         `,
         [params.data.session_id, company.data.operating_company_id]
       );

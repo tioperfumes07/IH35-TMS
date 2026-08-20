@@ -97,7 +97,7 @@ describe("safety onboarding routes (A24-8)", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
       if (sql.includes("FROM safety.onboarding_sessions")) {
-        return { rows: [baseSession({ current_step: 3 })], rowCount: 1 };
+        return { rows: [baseSession({ current_step: 3, driver_name: "Jamie Rivera" })], rowCount: 1 };
       }
       return { rows: [], rowCount: 0 };
     });
@@ -109,6 +109,7 @@ describe("safety onboarding routes (A24-8)", () => {
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.session.current_step).toBe(3);
+    expect(body.session.driver_name).toBe("Jamie Rivera");
     expect(body.steps).toEqual(ONBOARDING_STEP_KEYS);
   });
 

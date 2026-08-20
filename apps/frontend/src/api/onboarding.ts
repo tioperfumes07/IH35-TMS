@@ -4,6 +4,7 @@ export type OnboardingSession = {
   id: string;
   operating_company_id: string;
   driver_id: string | null;
+  driver_name: string | null;
   current_step: number;
   status: "in_progress" | "completed" | "cancelled";
   step_data: Record<string, Record<string, unknown>>;

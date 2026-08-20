@@ -1,11 +1,17 @@
+// @vitest-environment jsdom
+
 import type React from "react";
+import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as onboardingApi from "../../../api/onboarding";
 import { OnboardingWizardPage } from "../OnboardingWizardPage";
+
+expect.extend(jestDomMatchers);
+afterEach(cleanup);
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
 const sessionId = "a1111111-1111-4111-8111-111111111111";
@@ -14,6 +20,7 @@ const baseSession = {
   id: sessionId,
   operating_company_id: companyId,
   driver_id: "d1111111-1111-4111-8111-111111111111",
+  driver_name: "Jane Driver",
   current_step: 1,
   status: "in_progress" as const,
   step_data: {},
