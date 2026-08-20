@@ -10832,3 +10832,25 @@ Devin-A | LIVE PASS | leaf=settlements:settlements.disputes:driver | USMCA | URL
 Devin-A | LIVE PASS | leaf=settlements:settlements.disputes:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes | healthz=5b9161e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes marker 'settlements' | NEXT=leaf=customers:detail.audit:customer
 Devin-A | LIVE PASS | leaf=settlements:settlements.disputes:reverse_link | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes | healthz=5b9161e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes marker 'settlements' | NEXT=leaf=customers:detail.audit:customer
 Devin-A | LIVE PASS | leaf=settlements:settlements.disputes:settlement | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes | healthz=5b9161e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-finance/settlements?tab=disputes marker 'settlements' | NEXT=leaf=customers:detail.audit:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.audit:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=audit | healthz=5b9161e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=audit head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.billing:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.audit:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=audit | healthz=5b9161e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=audit head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.billing:customer
