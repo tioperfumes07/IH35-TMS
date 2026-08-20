@@ -90,6 +90,9 @@ describe("PodReviewPage (B21-D10)", () => {
     //     It is a HARNESS artifact, not a product defect: driving the same control with fireEvent (what
     //     `pickCombo` does, and why the LoadReassignModal/BookLoad picker tests pass) commits correctly.
     pickCombo(input!, /L-500/);
+    // Filters are staged (useStagedListFilters/CollapsedListFilters) — picking a load only updates
+    // the draft; loadId (which mounts LoadBolPanel) only commits on Apply.
+    await user.click(screen.getByRole("button", { name: "Apply" }));
     expect(await screen.findByTestId("load-pod-bol-panel")).toBeTruthy();
     expect(screen.getByTestId("bol-generate-button")).toBeTruthy();
     expect(screen.getByTestId("bol-download-link")).toBeTruthy();
