@@ -6,6 +6,7 @@ const guards = [
   "verify-inventory-inline-surface-applicability.mjs",
   "verify-safety-profile-error-contract.mjs",
   "verify-work-order-col-remainder.mjs",
+  "verify-accounting-credit-memos-connectivity-reverse.mjs",
 ];
 
 export default {

@@ -1036,3 +1036,4 @@ Codex | WORKING | FO=CODEX-DOCS-ENTITY-LABEL-GUARD-STALE-RESOLVED-BRANCH | guard
 Codex | WORKING | FO=CODEX-SYSTEM-NAV-VISIBLE-TABS-GUARD-DRIFT | guard normal PASS+selftest 26/26 | NEXT=all-module mutation rescan | GO
 Codex | WORKING | FO=CODEX-ACCOUNTING-CREDIT-MEMOS-CONNECTIVITY-REVERSE | leaf=accounting.parity.credit_memos_page:{connectivity,reverse_link} | guard normal PASS+selftest 15/15 | NEXT=exact unpaid recount | GO
 Codex | WORKING | FO=CREDIT-MEMOS-PAGE-CUSTOMER-COLUMN-UNOWNED | leaf=accounting.parity.credit_memos_page:customer | guard=18/18+selftest | zero-remainder=PASS | NEXT=fast-merge then fresh board | GO
+Codex | WORKING | FO=CODEX-CREDIT-MEMOS-LINKAGE-GUARD-ORPHAN | wire=verify-step-3416 | NEXT=fast-merge then board | GO
