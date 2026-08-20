@@ -46,7 +46,7 @@ describe("HoursOfServicePage", () => {
             last_reset_at: null,
             status: "warning_15min",
           },
-          timeline_24h: [{ id: "e1", duty_status: "driving", started_at: "2026-06-03T10:00:00Z", ended_at: null, unit_id: null, source: "eld", odometer_mi: null, location: null }],
+          timeline_24h: [{ id: "e1", duty_status: "driving", started_at: "2026-06-03T10:00:00Z", ended_at: null, unit_id: null, unit_number: null, source: "eld", odometer_mi: null, location: null }],
           summary_8d: [],
           manual_edits: { count: 0, requires_supervisor_signoff: true, events: [] },
         };
@@ -61,7 +61,7 @@ describe("HoursOfServicePage", () => {
           last_reset_at: null,
           status: "ok",
         },
-        timeline_24h: [{ id: "e2", duty_status: "off_duty", started_at: "2026-06-03T08:00:00Z", ended_at: null, unit_id: null, source: "eld", odometer_mi: null, location: null }],
+        timeline_24h: [{ id: "e2", duty_status: "off_duty", started_at: "2026-06-03T08:00:00Z", ended_at: null, unit_id: null, unit_number: null, source: "eld", odometer_mi: null, location: null }],
         summary_8d: [],
         manual_edits: { count: 0, requires_supervisor_signoff: true, events: [] },
       };
