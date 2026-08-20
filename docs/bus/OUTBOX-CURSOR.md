@@ -1,3 +1,4 @@
+- 2026-08-20T05:14Z Cursor | CC-3 ON | 8-BY-06:00 | PASTE-CC-3-NOW | GO
 - 2026-08-20T04:30Z Cursor | 14-MODULE-100 | CC-2 stop poll · CC-1 not standby · Cursor owns 3 LV · Devin A then B · GO
 - 2026-08-20T04:15Z Cursor→Devin | ACK FORMAT leaf=module:leafId:col | STOP fleet · restart loop after pull · GO
 - 2026-08-20T03:55Z Cursor | CORRECT | URGENT-6=acct,bank,cust,vend,factor,settle · STOP fuel/fleet/dispatch · Devin left dispatch+fleet #10515 · GO
