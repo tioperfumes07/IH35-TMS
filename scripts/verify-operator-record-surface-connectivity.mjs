@@ -78,7 +78,7 @@ export function verify(source) {
   // LV-INVENTORY-ASSIGNMENTS-DUPLICATE-SEARCH (Cursor, 2026-08-15): the page-local search input
   // was removed in favor of ParityTable's own canonical Search+Range+gear toolbar — the literal
   // placeholder assertion this used to check is now permanently gone by design, not a regression.
-  for (const token of ["listPartsAssignments", 'kind="work_order"', 'kind="unit"', 'kind="vendor"', "canonical ParityTable UniversalListToolbar", 'to="/inventory"', 'to="/inventory/purchases"']) need("inventoryAssignments", token, `inventory assignments must retain ${token}`);
+  for (const token of ["getPartsAssignmentsPage", 'kind="work_order"', 'kind="unit"', 'kind="vendor"', "canonical ParityTable UniversalListToolbar", 'to="/inventory"', 'to="/inventory/purchases"']) need("inventoryAssignments", token, `inventory assignments must retain ${token}`);
   // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT (owner-approved 2026-08-15): the honest-empty placeholder
   // is superseded by the real append-only SoR — assert the real list load instead.
   need("inventoryPurchases", "listPartsPurchases", "inventory purchases must load the real append-only SoR via listPartsPurchases");
@@ -129,8 +129,9 @@ if (process.argv.includes("--self-test")) {
     ["compliance", "<SummaryCards", "<BrokenSummary"], ["propertyTax", 'data-testid="property-tax-list"', 'data-testid="broken"'],
     ["form2290", "export function Form2290Filings", "function Broken2290"], ["filings", 'drill_through: "/compliance/form-2290"', 'drill_through: "/safety/permits"'],
     ["insurance", 'to="/safety/insurance/policies"', 'to="/broken"'], ["insuranceTypes", "<ParityTable", "<BrokenTable"],
-    ["inventoryTabs", 'to: "/inventory/assignments"', 'to: "/broken"'], ["inventoryAssignments", 'kind="work_order"', 'kind="broken"'],
-    ["inventoryAssignments", 'to="/inventory/purchases"', 'to="/broken"'], ["inventoryPurchases", 'data-testid="inventory-purchases-honest-empty"', 'data-testid="broken"'],
+    ["inventoryTabs", 'to: "/inventory/assignments"', 'to: "/broken"'], ["inventoryAssignments", "getPartsAssignmentsPage", "brokenAssignmentsPage"],
+    ["inventoryAssignments", 'kind="work_order"', 'kind="broken"'],
+    ["inventoryAssignments", 'to="/inventory/purchases"', 'to="/broken"'], ["inventoryPurchases", "listPartsPurchases", "brokenPartsPurchases"],
     ["legalTabs", 'to: "/legal/contracts"', 'to: "/broken"'], ["legalTemplateDetail", 'data-testid="legal-template-detail-page"', 'data-testid="broken"'],
     ["maintRoad", 'data-testid="road-service-list"', 'data-testid="broken"'], ["maintDefects", 'data-testid="maint-dvir-defects-inbox"', 'data-testid="broken"'],
     ["maintPreflight", 'data-testid="pre-flight-dvir-queue"', 'data-testid="broken"'], ["tasksBoard", "<TaskPlannerGrid />", "<div />"],

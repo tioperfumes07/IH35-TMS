@@ -9,11 +9,11 @@ describe("InventoryAssignmentsPage honesty (audit 08-INVENTORY)", () => {
     // Purchases must stay honest — no stock twin (0441-mod13)
     expect(purchases).not.toMatch(/listPartsInventory/);
     expect(purchases).not.toMatch(/PartsInventoryTable/);
-    expect(purchases).toMatch(/inventory-purchases-honest-empty|not yet tracked/i);
+    expect(purchases).toMatch(/listPartsPurchases/);
   });
 
   it("loads the real assignment trail API (parts-invoice-links SoR)", () => {
-    expect(assignments).toMatch(/listPartsAssignments/);
+    expect(assignments).toMatch(/getPartsAssignmentsPage/);
     expect(assignments).toMatch(/parts-assignments/);
   });
 
