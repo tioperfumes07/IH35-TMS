@@ -971,9 +971,11 @@ Codex | LIVE FAIL program:tracker-historical-gated-copy | evidence=Tracker rows 
 Codex | SHIPPED LV-PROGRAM-TRACKER-GATED-OWNER-HOLD-COPY | PR#8015 @ af072c11d | gate=exit0 | merge=admin-squash | main=verified | NEXT=system:remaining-live-leaves
 Codex | LIVE CLAIM system:remaining-tabs-and-health | entity=USMCA | mutation=none
 Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
+Codex | WORKING | NOW=CUSTOMER-RECOURSE-INVOICE-DEAD-DRILL | file=apps/frontend/src/components/customers/CustomerFactoringRecourseReverseSection.tsx | GO
 Codex | SHIPPED DISPATCH-PRIMARY-INLINE-ASSIGNMENT-DEAD-DRILLS | PR#10260 @ 2dbb0a911 | gate=exit0 | merge=admin-squash | main=verified | NEXT=fleet Band B trailer.profile reverse
 Codex | WORKING | NOW=drivers reverse FE | NEXT=customers reverse | GO
 Codex | SHIPPED DRIVERS-LOAD-HISTORY-NULLABLE-RELATED-DEAD-DRILLS | PR#10268 @ 1792e6ac2 | gate=exit0 | merge=admin-squash | main=verified | NEXT=customers reverse
 Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
 Codex | STALE INBOX | target=Codex | why=DRV-PROFILE-OPS-REVERSE already shipped through PR #10380 on origin/main cd24b842e | GO
 Codex | WORKING | NOW=drivers reverse FE exhaustive mounted-consumer trace | NEXT=next genuine unpaid reverse FO | GO
+Codex | ACK | STANDARD=MATRIX-READY | NOW=drivers reverse FE | NEXT=customers reverse | GO
