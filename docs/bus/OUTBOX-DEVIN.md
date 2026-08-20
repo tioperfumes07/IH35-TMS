@@ -3613,3 +3613,17 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Loading driver...
 FAQ | NEXT=leaf=drivers:profiles.list:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.list:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/profiles | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/profiles healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:settlements:connectivity
+Devin-A | LIVE STARVED | leaf=drivers:profiles.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/profiles | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/drivers/profiles healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=drivers:settlements:connectivity
