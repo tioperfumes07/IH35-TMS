@@ -1,5 +1,7 @@
-# SESSION BOOT · 2026-08-20T04:30Z
+# SESSION BOOT · 8 BY 06:00 CT
 
 `CODER-INSTRUCTIONS-NOW.md` then `INBOX-<SEAT>.md`.
 
-**14-MODULE 100%.** Wave A then Wave B. Fuel forbidden. LIVE PASS credited `leaf=module:leafId:col | USMCA`. Triple-lock findings. No poll. No standby. FAST-MERGE. ACK `STANDARD=14-MODULE-100`.
+**CC-3 is ON.** 8 USMCA modules by 06:00 CT. Fully-Wired 1–12. No TRK/TRANSP. No QBO. No idle.
+
+ACK `STANDARD=USMCA-LAUNCH | 8-BY-06:00`

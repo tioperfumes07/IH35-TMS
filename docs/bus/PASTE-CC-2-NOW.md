@@ -1,8 +1,9 @@
-# PASTE CC-2 · 2026-08-20T04:30Z
+# PASTE CC-2 NOW
 
-Stop polling. Drivers catalogs `+ Add new`, then lists remaining on the 14. Cursor owns the three customer/vendor LV rows.
+`git pull --ff-only origin main`
+
+8 modules by 06:00 CT. Pickers. No poll.
 
 ```text
-git pull --ff-only origin main
-CC-2 | ACK | STANDARD=14-MODULE-100 | NOW=lists drivers catalogs +Add new | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | GO
 ```

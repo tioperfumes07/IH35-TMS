@@ -1,15 +1,8 @@
-# INBOX-DEVIN-A · USMCA Clicked that MOVES the board
+# INBOX-DEVIN-A · 8 BY 06:00 · CLICKED
 
-chrome=9227. **USMCA only.** No Trucking. No TRANSP. No QBO.
-
-**Clicked only counts if the line has USMCA and either:**
-`leaf=<module>:<leafId>:<col>`
-**or** `module=<module> | leaf=<leafId> | cells=...`
-
-Wrong: `leaf=unit.profile.reverse_link` without `module=` — wait, that HAS module= in samples. The colon form is still best.
-
-NOW: unpaid USMCA Clicked on accounting→customers→vendors (not fleet). Hard refresh matrix after API deploy of Clicked-from-GitHub.
+Deadline 06:00 CT. chrome=9227. Order: accounting → banking → customers → vendors → factoring → settlements → dispatch → drivers.  
+`leaf=<module>:<leafId>:<col> | USMCA`. No fleet-first. No TRK/TRANSP.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | NOW=Clicked USMCA leaf=module:id:col | chrome=9227 | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | chrome=9227 | GO
 ```

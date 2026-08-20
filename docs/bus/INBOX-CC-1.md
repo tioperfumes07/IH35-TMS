@@ -1,7 +1,7 @@
-# INBOX-CC-1 · USMCA TMS only · NO QBO SYNC
+# INBOX-CC-1 · 8 BY 06:00 · USMCA TMS MONEY · NO QBO
 
-Do not standby. Do not QBO. Entity USMCA. Item-3 money only when a USMCA surface owes TMS economics.
+Deadline 06:00 CT. Modules: accounting banking factoring settlements (money). Not QBO sync. Not 11k bank-rules. Not TRK/TRANSP. Never standby.
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | ENTITY=USMCA | NO QBO | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=next TMS money FO | GO
 ```

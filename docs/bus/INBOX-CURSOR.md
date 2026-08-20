@@ -1,7 +1,7 @@
-# INBOX-CURSOR · Clicked scoreboard fix
+# INBOX-CURSOR · 8 BY 06:00 · CC-3 ON
 
-Lead. USMCA only. After Clicked-from-GitHub ships, hard-refresh All-modules. Keep seats on Fully-Wired 1–12 USMCA. No TRK/TRANSP. No QBO sync.
+Lead. Deadline 06:00 CT. Eight USMCA modules. CC-3 is ON (dispatch→drivers Built). Keep INBOX/OUTBOX true. Scoreboard Clicked = #10636 on API — hard-refresh after healthz new SHA.
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | NOW=Clicked GitHub OUTBOX on API | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=lead + customers/vendors leftover | GO
 ```
