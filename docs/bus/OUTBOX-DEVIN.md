@@ -1707,3 +1707,25 @@ Use your Google account or email and password.
 
 Sign in with | healthz=1d0eee9 | mutation=none | NEXT=fleet.roster.bulk.type
 Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.expenses_reverse | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.insurance_summary
+Devin-A | LIVE STARVED | module=vendors | leaf=home.roster | URL=https://app.ih35dispatch.com/vendors | USMCA | cells=auto | evidence=No marker found at https://app.ih35dispatch.com/fleet/units/:id ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+FLEET›UNIT LOADING…
+Unit L | healthz=unknown | mutation=none | NEXT=vendors.list.view_list
+Devin-A | LIVE PASS | module=fleet | leaf=unit.profile.insurance_summary | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+FLEET›UNIT LOADING…
+Unit L | healthz=1d0eee9 | mutation=none | NEXT=fleet.unit.profile.reefer
