@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Devin-A Clicked loop — 8 BY 06:00 CT.
+ * Devin-A Clicked loop — URGENT 6 = least Clicked progress.
  * Canonical cwd: the GitHub clone Jorge's Cursor has open (IH35-TMS-clean).
  * Do NOT run from /tmp/IH35-devin-a — that is a stale worktree and desyncs the IDE.
  * Credited OUTBOX: `Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | USMCA | …`
@@ -12,14 +12,12 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const ORDER = [
-  "accounting",
+  "settlements",
+  "factoring",
   "banking",
   "customers",
-  "vendors",
-  "factoring",
-  "settlements",
-  "dispatch",
   "drivers",
+  "accounting",
 ];
 const ALLOWED = new Set(ORDER);
 const FORBIDDEN = new Set([
@@ -32,6 +30,8 @@ const FORBIDDEN = new Set([
   "lists",
   "program",
   "system",
+  "vendors",
+  "dispatch",
 ]);
 
 function loadPlaywright() {

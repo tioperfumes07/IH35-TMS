@@ -263,7 +263,33 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         await resolveVendorIdentitySet(client, query.data.operating_company_id, String(credit.vendor_id))
       );
 
-      const totalApplying = body.data.applications.reduce((s, a) => s + a.applied_cents, 0);
+      // ACCT-F5618 — resolve idempotent replays FIRST, before the over-apply check. A retried
+      // request (double-click, client timeout+retry) with the same idempotency_key must return the
+      // SAME success result, never a fresh INSERT and never a stale over-apply rejection computed
+      // against a balance that ALREADY reflects the first successful call. Mirrors
+      // settlement-posting.service.ts's own findExistingPostedJe pre-check pattern (look up by the
+      // uq_vendor_credit_app_idempotency unique index, 202607750000, before inserting) rather than
+      // catching 23505 — catching after the fact would still 500/409 on the retry instead of
+      // transparently replaying. Same fix, same shape, as the AR sibling (credit-memos.routes.ts).
+      const applicationIds: string[] = [];
+      const newApplications: typeof body.data.applications = [];
+      for (const app of body.data.applications) {
+        if (app.idempotency_key) {
+          const existing = await client.query(
+            `SELECT id FROM accounting.vendor_credit_applications
+              WHERE operating_company_id = $1::uuid AND idempotency_key = $2 AND voided_at IS NULL
+              LIMIT 1`,
+            [query.data.operating_company_id, app.idempotency_key]
+          );
+          if (existing.rows[0]) {
+            applicationIds.push(String(existing.rows[0].id));
+            continue;
+          }
+        }
+        newApplications.push(app);
+      }
+
+      const totalApplying = newApplications.reduce((s, a) => s + a.applied_cents, 0);
       const unapplied = Number(credit.amount_unapplied_cents);
       if (totalApplying > unapplied) {
         return {
@@ -274,8 +300,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         };
       }
 
-      const applicationIds: string[] = [];
-      for (const app of body.data.applications) {
+      for (const app of newApplications) {
         const billRes = await client.query(
           `SELECT id, amount_cents, paid_cents,
                   COALESCE(NULLIF(vendor_id, ''), NULLIF(vendor_uuid, '')) AS vendor_id

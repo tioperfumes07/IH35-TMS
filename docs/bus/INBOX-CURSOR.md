@@ -1,7 +1,7 @@
-# INBOX-CURSOR · 8 BY 06:00 · CC-3 ON
+# INBOX-CURSOR · URGENT 6 LEAST PROGRESS
 
-Lead. Deadline 06:00 CT. Eight USMCA modules. CC-3 is ON (dispatch→drivers Built). Keep INBOX/OUTBOX true. Scoreboard Clicked = #10636 on API — hard-refresh after healthz new SHA.
+Lead. Six with least Clicked: settlements factoring banking customers drivers accounting. Customers Built leftover. Scoreboard #10686 on healthz `d7b3c74` — hard refresh All modules.
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=lead + customers/vendors leftover | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=lead + customers Built | GO
 ```

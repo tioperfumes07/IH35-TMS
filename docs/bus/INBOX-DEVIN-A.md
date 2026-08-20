@@ -1,10 +1,10 @@
-# INBOX-DEVIN-A · 8 BY 06:00 · CLICKED
+# INBOX-DEVIN-A · URGENT 6 LEAST PROGRESS
 
-chrome=9227. Loop cwd = **this clone** (`IH35-TMS-clean`), never `/tmp/IH35-devin-a`.
+chrome=9227. Ignore PID 43636 / `/tmp/IH35-devin-a`.
 
-Order: accounting → banking → customers → vendors → factoring → settlements → dispatch → drivers.  
-`leaf=<module>:<leafId>:<col> | USMCA`. No fuel. No fleet-first. No TRK/TRANSP.
+**Order:** settlements → factoring → banking → customers → drivers → accounting.  
+Park vendors + dispatch. `leaf=<module>:<leafId>:<col> | USMCA`.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | chrome=9227 | NOW=accounting Clicked | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | chrome=9227 | NOW=settlements Clicked | GO
 ```

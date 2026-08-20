@@ -20,47 +20,27 @@
 
 ## Deadline (owner)
 
-**8 modules Fully-Wired 1–11 Built + Devin item 12 Clicked on USMCA by 06:00 CT (6 hours, 6 seats).**
+**Urgent 6 = least Clicked progress.** Park vendors + dispatch.
 
-The 8:
+settlements → factoring → banking → customers → drivers → accounting.
 
-1. accounting  
-2. banking  
-3. customers  
-4. vendors  
-5. factoring  
-6. settlements  
-7. dispatch  
-8. drivers  
+## Your NOW (CC-3) — mechanical FE on **drivers**
 
-Not tonight: lists/fleet/maint/safety/insurance/legal (after 06:00 unless an 8 is green and you still have time). **Fuel never.**
+You own **Built** on **drivers** (least FE progress). **Not** dispatch. **Not** GL. **Not** 9227.
 
-## Your NOW (CC-3) — mechanical FE on **dispatch** then **drivers**
-
-You own **Built** that unblocks those two: routes live, `+ Create`/`+ Book`, filters Apply, pickers `+ Add new` first row, EntityLink not raw UUID, no box-in-box. **Not** GL math (CC-1). **Not** reverse-file steal from Codex. **Not** Clicked CDP (Devin 9227).
-
-Loop until 06:00:
+Loop:
 
 1. `git pull --ff-only origin main`
-2. Grep board OPEN for **dispatch** / **drivers** in your lane (mechanical FE)
-3. One FO → guard if new class → FAST-MERGE
+2. Unpaid Fully-Wired 1–11 on **drivers** vs `docs/specs/scoreboard/modules/drivers.required.json`
+3. One FO → FAST-MERGE
 4. OUTBOX `SHIPPED PR#` + next FO
-5. If board empty: inventory unpaid Fully-Wired 1–11 leaves on dispatch then drivers vs `docs/specs/scoreboard/modules/dispatch.required.json` and `drivers.required.json` — ship the next unpaid Built cell
 
-## Cooperate (do not deviate)
-
-| Seat | Does | You do not |
-|------|------|------------|
-| Cursor | Lead · INBOX · scoreboard · customers/vendors leftover LVs | Rewrite INBOX |
-| CC-1 | TMS money on accounting/banking/factoring/settlements when owed | QBO / bank-rules 11k |
-| CC-2 | lists `+ Add new` / picker_law on the 8 | Poll |
-| **CC-3 = you** | dispatch → drivers Built | Reverse hotfiles Codex owns · money posters |
-| Codex | reverse_link on the 8 | CDP 9227 |
-| Devin-A | Clicked `leaf=module:leafId:col \| USMCA` chrome=9227 | Fleet-first |
-
-Ping stale INBOX on `OUTBOX-CURSOR.md`. Jorge is not the messenger.
+| Seat | Does |
+|------|------|
+| **CC-3 = you** | drivers Built |
+| CC-1 | settlements → factoring → banking money |
+| Devin-A | Clicked the 6 in that order |
 
 ```text
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | ENTITY=USMCA | NOW=dispatch Built | GO
-CC-3 | WORKING | NOW=<leaf:col> | file=<path> | GO
+CC-3 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=drivers Built | GO
 ```

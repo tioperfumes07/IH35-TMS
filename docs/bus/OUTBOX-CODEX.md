@@ -1007,3 +1007,4 @@ Codex | WORKING | FINDING=DRIVER-SATELLITE-PROFILE-FALSE-HUMAN-LABELS | leaves=d
 Codex | WORKING | FINDING=DISPATCH-LOAD-BANKING-UNSCOPED-FALSE-HUMAN-LABEL | leaf=dispatch:load.banking:{load,connectivity,reverse_link} | guard=normal+selftest | tests=3/3 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=CUSTOMER-COI-REQUESTER-POLICY-DEAD-TOMBSTONE-DRILLS | leaf=customers:detail.coi:{connectivity,reverse_link} | guard=normal+selftest | typecheck=exit0 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=VENDOR-REVERSE-PANELS-DEAD-TOMBSTONE-DRILL-CLASS | leaf=vendors:detail.profile:reverse_link | guards=3 normal+selftest | typecheck=exit0 | NEXT=fast-merge | GO
+Codex | WORKING | FINDING=DISPATCH-EQUIPMENT-TRANSFER-ADHOC-REVERSE-DRILL | leaf=dispatch:equipment_transfers:reverse_link | guard=8/8-selftest | typecheck=exit0 | NEXT=fast-merge | GO

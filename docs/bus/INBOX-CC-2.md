@@ -1,7 +1,7 @@
-# INBOX-CC-2 · 8 BY 06:00 · PICKERS · NO POLL
+# INBOX-CC-2 · URGENT 6 · PICKERS
 
-Deadline 06:00 CT. `+ Add new` / picker_law on the 8. USMCA. Never 4-minute poll. Cursor owns the three LV-* customer/vendor rows if still OPEN.
+picker_law / `+ Add new` on settlements factoring banking customers drivers accounting. No poll. Park vendors/dispatch.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=picker_law on the 8 | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=settlements picker_law | GO
 ```
