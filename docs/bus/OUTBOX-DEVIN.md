@@ -13539,3 +13539,25 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Loading customer...
 FAQ | NEXT=leaf=customers:detail.pnl:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.pnl:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=pnl | healthz=dea2ff1 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=pnl head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.portal_users:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.pnl:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=pnl | healthz=dea2ff1 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id?tab=pnl head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.portal_users:customer
