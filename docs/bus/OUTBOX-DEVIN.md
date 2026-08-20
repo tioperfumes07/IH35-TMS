@@ -6591,3 +6591,5 @@ Espanol (preview)
 6 | NEXT=leaf=drivers:home:driver
 Devin-A | LIVE PASS | leaf=drivers:home:driver | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:permits:driver
 Devin-A | LIVE PASS | leaf=drivers:home:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:permits:driver
+Devin-A | LIVE PASS | leaf=drivers:permits:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/permits | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/permits marker 'drivers' | NEXT=leaf=drivers:pre_settlements:driver
+Devin-A | LIVE PASS | leaf=drivers:permits:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/permits | healthz=7a9e19f | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers/permits marker 'drivers' | NEXT=leaf=drivers:pre_settlements:driver
