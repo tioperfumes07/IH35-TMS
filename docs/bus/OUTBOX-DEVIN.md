@@ -1311,3 +1311,8 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=21732e8 | mutation=none | NEXT=dispatch.queues.factoring
+Devin-A | LIVE STARVED | module=dispatch | leaf=queues.factoring | URL=https://app.ih35dispatch.com/accounting/factoring | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.queues.factoring_queue
