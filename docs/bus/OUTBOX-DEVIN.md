@@ -13241,3 +13241,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.safer_verify:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.safer_verify:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:list.bulk:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.safer_verify:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:list.bulk:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.safer_verify:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=1cbe5e2 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:list.bulk:vendor
