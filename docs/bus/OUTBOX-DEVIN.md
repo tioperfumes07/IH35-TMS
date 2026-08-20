@@ -1759,3 +1759,25 @@ Espanol (preview)
 tioperfumes07@gmail.com
 FLEET›UNIT LOADING…
 Unit L | healthz=unknown | mutation=none | NEXT=fleet.unit.edit.identity
+Devin-A | LIVE PASS | module=fleet | leaf=unit.profile.quick_assign | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=10bb49f | mutation=none | NEXT=fleet.unit.profile.current_load
+Devin-A | LIVE PASS | module=fleet | leaf=unit.edit.identity | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=10bb49f | mutation=none | NEXT=fleet.unit.edit.insurance
