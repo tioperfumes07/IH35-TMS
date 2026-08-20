@@ -8699,3 +8699,38 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=factoring:batches.create:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:customer | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:load | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
+Devin-A | LIVE STARVED | leaf=factoring:batches.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/batches/new | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/batches/new healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:batches.detail:customer
