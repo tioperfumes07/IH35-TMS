@@ -2135,3 +2135,21 @@ pay decision, filed as its own narrow OPEN row, not pushed through by me. Struct
 every FUTURE USMCA settlement close. Continuing WAVE 1: drivers-money sweep otherwise clean (no
 other genuinely-live driver-money OPEN rows found in this pass beyond the escrow chain now
 closed). Moving to WAVE 1's next module: vendors money.
+
+2026-08-21T06:50Z CC-1 | Miss C was N now M -- ACCT-F5679 SHIPPED (PR #13299, merged 18e9b6c9a):
+corrected USMCA's net-pay floor from a stale 50% DB-column default to the owner-locked 5% (owner
+correction received: not an owner question, use Accept/Edit, do not park it). Neon-rehearsed,
+applied live, independently verified. LIVE EXERCISE proves the floor-breach class is gone -- the
+real closeSettlementPayRun now runs past it and correctly hits the NEXT real control:
+DRIVER_ESCROW_ACCOUNT_UNBOUND. Traced that to a precise root cause: USMCA already has the correct
+Liability escrow account (2100 "Driver Escrow - Held in Trust") but the provisioner's
+literal-name-match resolver only recognizes "Damage Claim Escrow" (TRANSP's name), so all 11 USMCA
+drivers silently no-op as "no escrow chart" via the same graceful path built for TRK. Filed
+precisely (not vaguely parked): a naming-convention decision (rename vs. generalize the resolver),
+with the exact fix mechanically ready the moment it's chosen -- runDriverSubAccountBackfill
+--commit (dry-run already proven: 11 drivers, 0 blocked once the parent resolves) then close
+S-2026-0002 for real. STOPPED the in-progress vendor-payment-methods build per direct instruction
+(order is accounting -> customers -> drivers -> vendors; that build is deferred, not shipped --
+files left uncommitted in the worktree, nothing pushed to main). Drivers-money WAVE 1 item is now
+as far as it can go without the naming decision. Moving to WAVE 1's next module: vendors money
+(the AP-side sweep, not the payment-methods feature).
