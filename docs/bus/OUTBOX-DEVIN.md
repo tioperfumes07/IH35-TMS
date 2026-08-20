@@ -1656,3 +1656,14 @@ tioperfumes07@gmail.com
 FLEET
 
 Trucks, trailers, a | healthz=unknown | mutation=none | NEXT=fleet.roster.filter.status_active
+Devin-A | LIVE PASS | module=fleet | leaf=unit.profile.telemetry | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+FLEET›UNIT LOADING…
+Unit L | healthz=596b3bd | mutation=none | NEXT=fleet.unit.profile.driver_assign
