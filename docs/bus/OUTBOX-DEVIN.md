@@ -1505,3 +1505,13 @@ Espanol (preview)
 Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.panel.auth_gate | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=52efe82 | mutation=none | NEXT=dispatch.dispatch.panel.deadhead_optimizer
 Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.panel.deadhead_optimizer | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.panel.load_bol
 Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.panel.load_bol | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=52efe82 | mutation=none | NEXT=dispatch.dispatch.panel.optimal_drivers
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.panel.optimal_drivers | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Dispatch
+Loads, stops, assig | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.panel.pre_dispatch_validation
