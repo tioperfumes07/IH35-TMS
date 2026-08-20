@@ -794,6 +794,7 @@ export type CustomerBillingSummary = {
   credit_terms_days: number | null;
   factoring_eligible: boolean;
   factoring_company_vendor_id: string | null;
+  factoring_company_vendor_name: string | null;
   factoring_recourse_type: "recourse" | "non_recourse" | null;
   factoring_advance_rate_override: string | null;
   factoring_reserve_pct_override: string | null;
