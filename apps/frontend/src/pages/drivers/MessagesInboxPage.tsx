@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import {
   getDriverMessageThread,
@@ -15,7 +14,6 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { SendMessageModal } from "../../components/drivers/SendMessageModal";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
 
 // Office-facing timestamps must render through the shared US/Central formatter (never device
 // locale/timezone) — same rule already applied on DriverHosDetailPage; this inbox was the one
@@ -96,13 +94,6 @@ function ThreadPane({
           <h2 className="text-lg font-semibold text-gray-900">
             <EntityLinkOrTombstone kind="driver" id={driverId} name={driverName} noun="Driver" data-testid="messages-inbox-thread-driver" />
           </h2>
-          <EntityLink
-            kind="driver"
-            id={driverId}
-            label={entityLabel(driverName, driverId, "Driver")}
-            className="text-xs text-slate-700 hover:underline"
-            data-testid="messages-inbox-driver-profile-link"
-          />
         </div>
         <Button type="button" data-testid="inbox-send-message" onClick={() => setSendOpen(true)}>
           Send Message
