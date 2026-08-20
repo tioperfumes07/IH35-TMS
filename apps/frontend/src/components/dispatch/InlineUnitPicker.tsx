@@ -2,6 +2,7 @@ import { useState } from "react";
 import { patchAssignUnit } from "../../api/dispatch";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityPicker } from "../parity/EntityPicker";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 
 type Props = {
@@ -19,19 +20,32 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
 
   if (!open) {
     return (
-      <button
-        type="button"
-        className="code-cell w-full text-left font-medium text-gray-800 hover:text-slate-700"
-        data-testid={`inline-unit-picker-${loadId}`}
-        onClick={(event) => {
-          event.stopPropagation();
-          setOpen(true);
-          setError(null);
-        }}
-      >
-        {displayLabel || "—"}
-        {error ? <span className="ml-1 rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
-      </button>
+      <div className="flex min-w-0 items-center gap-1" onClick={(event) => event.stopPropagation()}>
+        {unitId ? (
+          <EntityLinkOrTombstone
+            kind="unit"
+            id={unitId}
+            name={displayLabel}
+            noun="Unit"
+            className="code-cell min-w-0 flex-1 font-medium text-gray-800 hover:underline"
+            data-testid={`inline-unit-link-${loadId}`}
+          />
+        ) : (
+          <span className="code-cell min-w-0 flex-1 text-slate-500">—</span>
+        )}
+        <button
+          type="button"
+          className="shrink-0 rounded-sm px-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          data-testid={`inline-unit-picker-${loadId}`}
+          onClick={() => {
+            setOpen(true);
+            setError(null);
+          }}
+        >
+          {unitId ? "Change" : "Assign"}
+        </button>
+        {error ? <span className="rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
+      </div>
     );
   }
 

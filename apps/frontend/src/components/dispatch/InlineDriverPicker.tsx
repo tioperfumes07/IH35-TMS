@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { patchAssignDriver } from "../../api/dispatch";
 import { EntityPicker } from "../parity/EntityPicker";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 
 type Props = {
@@ -18,19 +19,32 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
 
   if (!open) {
     return (
-      <button
-        type="button"
-        className="single-line-name w-full text-left hover:text-slate-700"
-        data-testid={`inline-driver-picker-${loadId}`}
-        onClick={(event) => {
-          event.stopPropagation();
-          setOpen(true);
-          setError(null);
-        }}
-      >
-        <span title={displayLabel || undefined}>{displayLabel || "Unassigned"}</span>
-        {error ? <span className="ml-1 rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
-      </button>
+      <div className="flex min-w-0 items-center gap-1" onClick={(event) => event.stopPropagation()}>
+        {driverId ? (
+          <EntityLinkOrTombstone
+            kind="driver"
+            id={driverId}
+            name={displayLabel}
+            noun="Driver"
+            className="single-line-name min-w-0 flex-1 hover:underline"
+            data-testid={`inline-driver-link-${loadId}`}
+          />
+        ) : (
+          <span className="single-line-name min-w-0 flex-1 text-slate-500">Unassigned</span>
+        )}
+        <button
+          type="button"
+          className="shrink-0 rounded-sm px-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          data-testid={`inline-driver-picker-${loadId}`}
+          onClick={() => {
+            setOpen(true);
+            setError(null);
+          }}
+        >
+          {driverId ? "Change" : "Assign"}
+        </button>
+        {error ? <span className="rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
+      </div>
     );
   }
 
