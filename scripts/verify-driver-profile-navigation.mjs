@@ -27,6 +27,10 @@ const profile = readFileSync(profilePath, "utf8");
 const table = readFileSync(tablePath, "utf8");
 const header = readFileSync(headerPath, "utf8");
 
+function hasCanonicalFullRecordIdentity(value) {
+  return /<EntityLink[\s\S]{0,180}kind="driver"[\s\S]{0,180}id=\{driver\.id\}[\s\S]{0,180}label=\{displayName\}[\s\S]{0,220}data-testid="driver-profile-open-full-record-link"/.test(value);
+}
+
 // D2: driver identity sourced from the aggregate, not a bare getDriver() gate.
 if (/\bgetDriver\s*\(/.test(profile)) {
   failures.push(
@@ -62,10 +66,22 @@ if (!/onOpenProfile\(row\.driverId\)/.test(table) || !d1Routed) {
 if (!/EntityLinkOrTombstone/.test(table)) {
   failures.push(`${tablePath}: routed driver hops must use EntityLinkOrTombstone so unresolved identities are not clickable.`);
 }
+if (!hasCanonicalFullRecordIdentity(profile)) {
+  failures.push(`${profilePath}: full-record drill must bind driver.id to the canonical displayName, never an invented action label.`);
+}
 
 if (failures.length > 0) {
   console.error("\n✗ verify-driver-profile-navigation: driver-profile navigation (D1/D2/D3) regressed.\n");
   for (const f of failures) console.error("  " + f);
   process.exit(1);
+}
+if (process.argv.includes("--selftest")) {
+  const planted = profile.replace("label={displayName}", 'label="Open full driver record"');
+  if (planted === profile || hasCanonicalFullRecordIdentity(planted)) {
+    console.error("verify-driver-profile-navigation SELFTEST FAIL — fabricated full-record label escaped");
+    process.exit(1);
+  }
+  console.log("verify-driver-profile-navigation SELFTEST PASS — fabricated full-record label rejected");
+  process.exit(0);
 }
 console.log("✓ verify-driver-profile-navigation: name-click + aggregate-scoped profile + module-header back/breadcrumb intact.");
