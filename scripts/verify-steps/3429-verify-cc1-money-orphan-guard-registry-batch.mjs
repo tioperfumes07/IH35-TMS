@@ -12,6 +12,7 @@ const guards = [
   "verify-ar-aging-credit-memo-netting.mjs",
   "verify-ap-bill-inline-surface-linkage.mjs",
   "verify-bank-automatch-memo-threshold-calibrated.mjs",
+  "verify-bank-feed-backlog-poster-route.mjs",
   "verify-bank-recon-accept-match-row-locked.mjs",
   "verify-bank-inline-surface-applicability.mjs",
   "verify-bank-linkage-gl-je-reverse.mjs",
