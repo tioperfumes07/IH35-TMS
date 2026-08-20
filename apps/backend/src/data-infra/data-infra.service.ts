@@ -150,11 +150,14 @@ export async function listDriverVendorMerges(
       `
         SELECT
           m.*,
+          NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name,
           fromv.id AS from_vendor_id,
           fromv.vendor_name AS from_vendor_name,
           tov.id AS to_vendor_id,
           tov.vendor_name AS to_vendor_name
         FROM mdata.driver_vendor_merges m
+        LEFT JOIN mdata.drivers d ON d.id = m.driver_id
+                                 AND d.operating_company_id = m.operating_company_id
         LEFT JOIN mdata.vendors fromv ON fromv.qbo_vendor_id = m.from_qbo_vendor_id
                                       AND fromv.operating_company_id = m.operating_company_id
         LEFT JOIN mdata.vendors tov ON tov.qbo_vendor_id = m.to_qbo_vendor_id

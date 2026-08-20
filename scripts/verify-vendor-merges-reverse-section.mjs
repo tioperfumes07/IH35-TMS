@@ -56,6 +56,9 @@ export function assertVendorMergesReverse(sources) {
   if (!/AND m\.driver_id = \$/.test(service)) {
     problems.push(`${SERVICE}: listDriverVendorMerges must filter by driver_id server-side when provided`);
   }
+  if (!/NULLIF\(TRIM\(CONCAT\(d\.first_name, ' ', d\.last_name\)\), ''\) AS driver_name/.test(service) || !/LEFT JOIN mdata\.drivers d ON d\.id = m\.driver_id[\s\S]{0,100}d\.operating_company_id = m\.operating_company_id/.test(service)) {
+    problems.push(`${SERVICE}: merge list must resolve an entity-scoped human driver label`);
+  }
   if (!/fromv\.id = \$[\s\S]{0,40}OR tov\.id = \$/.test(service)) {
     problems.push(`${SERVICE}: listDriverVendorMerges must filter by resolved vendor id (from or to) when vendorId provided`);
   }
@@ -71,11 +74,17 @@ export function assertVendorMergesReverse(sources) {
   if (!/export function listDriverVendorMerges\(companyId: string, filters:/.test(api)) {
     problems.push(`${API}: listDriverVendorMerges must accept a filters param`);
   }
+  if (!/driver_name\?:\s*string \| null/.test(api)) {
+    problems.push(`${API}: DriverVendorMergeRow must carry nullable driver_name`);
+  }
   if (!/searchParams\.get\("driver_id"\)/.test(home)) {
     problems.push(`${HOME}: must read driver_id from URL search params`);
   }
   if (!/listDriverVendorMerges\(companyId,\s*\{[\s\S]{0,80}driver_id:\s*deepLinkDriverId/.test(home)) {
     problems.push(`${HOME}: must forward deepLinkDriverId to listDriverVendorMerges`);
+  }
+  if (!/EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/.test(home)) {
+    problems.push(`${HOME}: vendor merge queue must use the scoped driver label with tombstone safety`);
   }
   // LST-F5193 — visible driver/vendor filters must write URL.
   if (!/setSearchParams/.test(home) || !/dataTestId="factoring-home-filter-driver"/.test(home)) {
@@ -124,6 +133,8 @@ export function assertVendorMergesReverse(sources) {
 function selftest() {
   const good = {
     [SERVICE]: `
+      NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name
+      LEFT JOIN mdata.drivers d ON d.id = m.driver_id AND d.operating_company_id = m.operating_company_id
       let driverFilter = "";
       if (filters.driverId) { driverFilter = \`AND m.driver_id = $\${values.length}::uuid\`; }
       let vendorFilter = "";
@@ -140,6 +151,7 @@ function selftest() {
       });
     `,
     [API]: `
+      export type DriverVendorMergeRow = { driver_name?: string | null };
       export function listDriverVendorMerges(companyId: string, filters: { driver_id?: string; vendor_id?: string } = {}) {
         return apiRequest(\`/api/v1/integrations/qbo/driver-vendor-merges\`);
       }
@@ -155,6 +167,7 @@ function selftest() {
           }),
       });
       dataTestId="factoring-home-filter-driver"
+      EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver"
     `,
     [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)
       kind="factoring_vendor_merges_driver"
@@ -180,6 +193,9 @@ function selftest() {
   }
 
   const mutations = [
+    { ...good, [SERVICE]: good[SERVICE].replace("d.operating_company_id = m.operating_company_id", "TRUE") },
+    { ...good, [API]: good[API].replace("driver_name?: string | null", "driver_name?: never") },
+    { ...good, [HOME]: good[HOME].replace('EntityLinkOrTombstone kind="driver"', 'EntityLink kind="driver"') },
     { ...good, [SERVICE]: good[SERVICE].replace('driverFilter = `AND m.driver_id = $${values.length}::uuid`;', "") },
     { ...good, [SERVICE]: good[SERVICE].replace('vendorFilter = `AND (fromv.id = $${values.length}::uuid OR tov.id = $${values.length}::uuid)`;', "") },
     { ...good, [ROUTES]: good[ROUTES].replace("driver_id: z.string().uuid().optional(),\n        vendor_id: z.string().uuid().optional(),", "") },

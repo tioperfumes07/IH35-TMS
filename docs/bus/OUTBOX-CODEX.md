@@ -1018,3 +1018,4 @@ Codex | WORKING | FINDING=SETTLEMENT-DEDUCTION-HELD-BY-USER-DEAD-TOMBSTONE-DRILL
 Codex | WORKING | FINDING=DRIVERS-MESSAGES-THREAD-DUPLICATE-ACTIVE-DRILL | leaf=drivers:messages.inbox:reverse_link | guard=normal+selftest | typecheck=frontend exit0 | NEXT=fast-merge then accounting reverse | GO
 Codex | WORKING | FINDING=ACCOUNTING-BILLS-REVERSE-VENDOR-DEAD-TEXT | leaf=accounting:bills.reverse:vendor/reverse_link | guard=normal+selftest | typecheck=frontend exit0 | NEXT=fast-merge then banking reverse | GO
 Codex | WORKING | FINDING=BANK-F5153 | leaf=banking:plaid.transactions:{ap_bill,reverse_link} | guard=normal+8-selftest | typecheck=backend+frontend exit0 | NEXT=fast-merge then factoring reverse | GO
+Codex | WORKING | FINDING=FACTORING-VENDOR-MERGE-DRIVER-LABEL-MISSING | leaf=factoring:home.vendor_merges:driver/reverse_link | guard=normal+22-selftest | typecheck=backend+frontend exit0 | NEXT=fast-merge then Wave1 remainder | GO
