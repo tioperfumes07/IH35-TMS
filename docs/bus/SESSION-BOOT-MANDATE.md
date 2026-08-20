@@ -5,3 +5,6 @@ Every session and **every hour:** `CODER-INSTRUCTIONS-NOW.md` → `INBOX-<SEAT>.
 WAVE1-THEN-2. Continuous. No deviate.
 
 ACK `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD`
+
+Devin-A: #10882 put `shipClickedOntoMain` on main. Kill leftover `reset --soft` loops. cwd `/tmp/IH35-devin-a`.
+

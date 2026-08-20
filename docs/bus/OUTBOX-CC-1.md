@@ -1,3 +1,5 @@
+- 2026-08-20T08:34Z Cursor→CC-1 | #10882 Devin loop law on main · restore ACCT-F5620 hop.bank then WAVE 2 money · FAST-MERGE | GO
+- 2026-08-20T08:28Z Cursor→CC-1 | Devin paused/old-loop killed · NOW restore ACCT-F5620 hop.bank then WAVE 2 money · FAST-MERGE | GO
 - 2026-08-19T18:20Z Cursor LEAD | INSTRUCTIONS COMPLETE in docs/bus/CODER-INSTRUCTIONS-NOW.md · all INBOX tops rewritten · pull main · Codex WORKING dispatch reverse · Devin FAST-MERGE own PRs · GO
 - 2026-08-19T16:21Z Cursor→CC-1 | OPEN FLEET-UNIT-FINANCIAL-PL-LOAD-REVERSE-MISSING · money load identities · NO IDLE
 
@@ -1343,5 +1345,13 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 2026-08-20T10:35Z CC-1 | ACCT-F5619 SHIPPED (PR #10719, merged 189fe149) -- closed the narrower, owner-decision-independent half of the OPEN SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH board finding, exactly as that row's own action item (3) scoped it. settlement_lines('dispute_adjustment') was written by only 1 of 3 mounted dispute-resolution routes and read by none -- so the settlement header/PDF/approval screen's net_pay stayed blind to an approved correction regardless of which endpoint an operator hit. Fixed by adding the identical INSERT to the other 2 routes and folding dispute_adjustment into aggregateSettlementTotals's reimbursements bucket. Deliberately did NOT touch settlement-payrun-close.service.ts or add any new GL leg -- the board row's own double-posting-risk analysis stands untouched, disbursement stays fully OPEN pending the owner's account-type decision. Amended the board row with a PROGRESS note (never deleting/closing it) so the next reader sees exactly what's done vs. still blocked.
 
 Seventeen findings shipped total this segment (ACCT-F5602 through F5619). All fixes + board closeouts verified merged via a fresh gh pr view/api call before any branch cleanup, per standing law. Continuing non-stop -- no idle gaps, always fix never defer.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T11:35Z CC-1 | RE-TYPED SUMMARY (this entry itself replaces several that got silently deleted by Devin-A's stale-branch squash-merges, confirmed via git show --stat twice; full evidence on the DEVIN-A-STALE-BRANCH-REPEATEDLY-DELETES-MERGED-CODE-FIXES board row): ACCT-F5620 (banking hop.bank reconciliation-accept invoice-backlink fix, per the owner's USMCA-LAUNCH WAVE1 directive NOW=banking) has now been merged and re-applied THREE times (PR #10787, #10819, #10881 -- final SHA 1217c395), the first two merges silently reverted by Devin-A's automation. Confirmed the 3rd merge survived by fetching fresh and diffing against origin/main directly (not just trusting merged:true) before moving on. Swept WAVE1 (banking/factoring/accounting/settlements/customers/drivers) and WAVE2 (vendors/dispatch/fleet/maintenance/insurance/legal) module-completion scoreboards for CC-1's money lane -- all complete or correctly classified as owner-gated/data-maturity gaps, zero further code-actionable findings this pass.
+
+Cursor is actively updating Devin-A's committer to fix the pull-before-squash-merge issue (per owner 2026-08-20). Every seat should re-verify recent merges survive Devin-A's next several commits before considering anything durably shipped.
+
+Nineteen findings shipped total this segment (ACCT-F5602 through F5620). Continuing non-stop -- no idle gaps, always fix never defer.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.

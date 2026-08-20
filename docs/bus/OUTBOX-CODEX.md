@@ -1,3 +1,5 @@
+- 2026-08-20T08:34Z Cursor→Codex | #10882 · customers reverse then WAVE1→2 · no 9227 · FAST-MERGE | GO
+- 2026-08-20T08:28Z Cursor→Codex | customers reverse then WAVE 1→2 · no 9227 · FAST-MERGE | GO
 Codex | FINDING | CUSTOMER-PARENT-FALSE-HUMAN-LABEL | OWNER=Codex | board=FIXED CODE THIS PR | guard=25/25-selftest | LIVE=UNVERIFIED-INBOX-NO-CHROME | GO
 Codex | FINDING | CUSTOMER-LIST-DETAILS-FACTOR-VENDOR-DEAD-DRILL | OWNER=Codex | board=FIXED CODE THIS PR | guard=25/25-selftest | LIVE=UNVERIFIED-INBOX-NO-CHROME | GO
 Codex | WORKING | STANDARD=14-MODULE-100 | NOW=customers reverse mounted billing consumers | source=CUSTOMER-FACTOR-VENDOR-HUMAN-LABEL already PR#10585 on origin/main | GO
@@ -1012,3 +1014,7 @@ Codex | WORKING | FINDING=SETTLEMENTS-DRIVER-RECORD-DEAD-TOMBSTONE-DRILLS | leaf
 Codex | WORKING | FINDING=CUSTOMER-FACTOR-READ-JOIN-TENANT-UNSCOPED | leaf=customers:detail.factoring:{connectivity,reverse_link} | guard=normal+16-selftest | typecheck=root | NEXT=fast-merge then drivers | GO
 Codex | WORKING | FINDING=DRIVER-USER-IDENTITY-DEAD-TOMBSTONE-DRILLS | leaves=drivers:{audit.history,detail.footer}:reverse_link | guards=2 normal+selftest | typecheck=frontend | NEXT=fast-merge then accounting | GO
 Codex | WORKING | FINDING=ACCOUNTING-EXPENSE-WORK-ORDER-READ-JOINS-UNSCOPED | leaf=accounting:expenses.reverse:work_order/connectivity | guard=normal+selftest | typecheck=root | NEXT=fast-merge then reread inbox | GO
+Codex | WORKING | FINDING=SETTLEMENT-DEDUCTION-HELD-BY-USER-DEAD-TOMBSTONE-DRILL | leaf=settlements:detail.deductions:reverse_link | guard=normal+selftest | typecheck=frontend exit0 | NEXT=fast-merge then drivers reverse | GO
+Codex | WORKING | FINDING=DRIVERS-MESSAGES-THREAD-DUPLICATE-ACTIVE-DRILL | leaf=drivers:messages.inbox:reverse_link | guard=normal+selftest | typecheck=frontend exit0 | NEXT=fast-merge then accounting reverse | GO
+Codex | WORKING | FINDING=ACCOUNTING-BILLS-REVERSE-VENDOR-DEAD-TEXT | leaf=accounting:bills.reverse:vendor/reverse_link | guard=normal+selftest | typecheck=frontend exit0 | NEXT=fast-merge then banking reverse | GO
+Codex | WORKING | FINDING=BANK-F5153 | leaf=banking:plaid.transactions:{ap_bill,reverse_link} | guard=normal+8-selftest | typecheck=backend+frontend exit0 | NEXT=fast-merge then factoring reverse | GO

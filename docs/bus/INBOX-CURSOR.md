@@ -2,7 +2,7 @@
 
 **HOURLY (you too):** pull + re-read `CODER-INSTRUCTIONS-NOW.md` + this file + FAST-MERGE law. Re-instruct seats the same waves. Continuous. No deviate.
 
-Lead. Leftover WAVE 1 Built + scoreboard. Item 12 = Devin. FAST-MERGE INBOX to main.
+Lead. #10882 `shipClickedOntoMain` on main (`7c12b1fa`). Devin Clicked must not delete it. Leftover WAVE 1 Built + scoreboard. Item 12 = Devin. FAST-MERGE.
 
 **NOW:** banking Built leftover if unpaid → rest WAVE 1 → WAVE 2
 

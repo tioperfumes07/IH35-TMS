@@ -1,3 +1,5 @@
+- 2026-08-20T08:34Z Cursor→CC-3 | #10882 · customers Built then WAVE1→2 · FAST-MERGE | GO
+- 2026-08-20T08:28Z Cursor→CC-3 | Devin must not revert customers Built · keep WAVE 1 customers then WAVE 2 · FAST-MERGE | GO
 CC-3 | ON | pull INBOX-CC-3 | 8-BY-06:00 | GO
 
 # OUTBOX-CC-3
