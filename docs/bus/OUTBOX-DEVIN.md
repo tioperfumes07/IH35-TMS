@@ -2131,3 +2131,19 @@ P | NEXT=leaf=vendors:md.vendor_details:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.vendor_details:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=vendor_details | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=vendor_details marker 'vendors' | NEXT=leaf=vendors:md.notes:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.vendor_details:reverse_link | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=vendor_details | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=vendor_details marker 'vendors' | NEXT=leaf=vendors:md.notes:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.vendor_details:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=vendor_details | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=vendor_details marker 'vendors' | NEXT=leaf=vendors:md.notes:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.notes:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=notes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?tab=notes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=vendors:md.header.edit:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.notes:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=notes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?tab=notes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=vendors:md.header.edit:vendor
