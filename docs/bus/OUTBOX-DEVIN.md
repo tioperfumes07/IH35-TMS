@@ -1834,3 +1834,7 @@ Devin-A | LIVE STARVED | leaf=vendors:list.filters:qbo_chrome | USMCA | URL=http
 Devin-A | LIVE PASS | leaf=vendors:list.filter_chips:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
 Devin-A | LIVE PASS | leaf=vendors:list.filter_chips:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
 Devin-A | LIVE PASS | leaf=vendors:list.filter_chips:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
+Devin-A | LIVE STARVED | leaf=vendors:list.create:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
+Devin-A | LIVE STARVED | leaf=vendors:list.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
+Devin-A | LIVE STARVED | leaf=vendors:list.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
+Devin-A | LIVE STARVED | leaf=vendors:list.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
