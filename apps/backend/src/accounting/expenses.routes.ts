@@ -8,7 +8,8 @@ import { attributeExpenseToLoad } from "../expense-attribution/attribute.service
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
-import { postSourceTransaction, reversePostedSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
+import { postSourceTransaction, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
+import { todayIso } from "./void.service.js";
 import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -1296,34 +1297,49 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if (pre.kind === "not_found") return reply.code(404).send({ error: "expense_not_found" });
     if (pre.kind === "already_void") return reply.code(409).send({ error: "expense_already_void" });
 
-    let reversingJeId: string | null = null;
-    if (pre.posting_status === "posted") {
-      try {
-        const rev = await reversePostedSourceTransaction(
-          { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
-          { userId: String(user.uuid) }
-        );
-        reversingJeId = rev.journal_entry_id;
-      } catch (err) {
-        if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
-        throw err;
-      }
-    }
+    // ACCT-F5635 — the reversal and the header status-flip used to run as TWO independent
+    // transactions (reversePostedSourceTransaction opens+commits its own connection internally, then
+    // a SEPARATE withCompanyScope call did the UPDATE). If the process/connection died between the
+    // two, the result was a fully-reversed GL entry (money net to zero, already durable) attached to
+    // an expense header still reporting status='posted' -- a subledger-vs-GL divergence that would
+    // keep showing as an active, uncorrected posted cost in every expense list/report even though the
+    // GL had already zeroed it out. governance/void-cancel-executors.ts's executeExpense and
+    // work-orders.routes.ts's WO-void cascade both already do the reversal + flip atomically on one
+    // client; this route is the third writer and the only one that didn't. Fixed by using
+    // reversePostedSourceTransactionInClientTx (the client-taking variant posting-engine.service.ts
+    // already exports for exactly this) inside the SAME withCompanyScope transaction as the UPDATE --
+    // no new GL math, reuses the identical posting-engine reversal semantics this route already used.
+    try {
+      const voided = await withCompanyScope(user.uuid, oci, async (client) => {
+        let reversingJeId: string | null = null;
+        if (pre.posting_status === "posted") {
+          const rev = await reversePostedSourceTransactionInClientTx(
+            client,
+            { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
+            { userId: String(user.uuid) },
+            todayIso()
+          );
+          reversingJeId = rev.journal_entry_id;
+        }
 
-    await withCompanyScope(user.uuid, oci, async (client) => {
-      await client.query(
-        `UPDATE accounting.expenses
-         SET status='void',
-             posting_status = CASE WHEN posting_status='posted' THEN 'reversed' ELSE posting_status END,
-             reversed_by_je_id = COALESCE($2::uuid, reversed_by_je_id),
-             voided_at=now(), voided_by_user_id=$3::uuid, void_reason=$4, updated_at=now()
-         WHERE id=$1::uuid AND operating_company_id=$5::uuid`,
-        [expenseId, reversingJeId, user.uuid, body.data.reason, oci]
-      );
-      await appendCrudAudit(client, user.uuid, "expense.voided",
-        { expense_id: expenseId, reversing_journal_entry_id: reversingJeId, reason: body.data.reason }, "warning");
-    });
-    return reply.code(200).send({ expense_id: expenseId, status: "void", reversing_journal_entry_id: reversingJeId });
+        await client.query(
+          `UPDATE accounting.expenses
+           SET status='void',
+               posting_status = CASE WHEN posting_status='posted' THEN 'reversed' ELSE posting_status END,
+               reversed_by_je_id = COALESCE($2::uuid, reversed_by_je_id),
+               voided_at=now(), voided_by_user_id=$3::uuid, void_reason=$4, updated_at=now()
+           WHERE id=$1::uuid AND operating_company_id=$5::uuid`,
+          [expenseId, reversingJeId, user.uuid, body.data.reason, oci]
+        );
+        await appendCrudAudit(client, user.uuid, "expense.voided",
+          { expense_id: expenseId, reversing_journal_entry_id: reversingJeId, reason: body.data.reason }, "warning");
+        return { reversingJeId };
+      });
+      return reply.code(200).send({ expense_id: expenseId, status: "void", reversing_journal_entry_id: voided.reversingJeId });
+    } catch (err) {
+      if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+      throw err;
+    }
   });
 
   // Reverse drill-through: list expenses attributed to a specific load. Read-only SELECT, company-scoped.
