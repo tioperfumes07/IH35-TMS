@@ -1838,3 +1838,24 @@ Devin-A | LIVE STARVED | leaf=vendors:list.create:vendor | USMCA | URL=https://a
 Devin-A | LIVE STARVED | leaf=vendors:list.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
 Devin-A | LIVE STARVED | leaf=vendors:list.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
 Devin-A | LIVE STARVED | leaf=vendors:list.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.bills:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:detail.ap.expenses:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.bills:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:detail.ap.expenses:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.ap.bills:reverse_link | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:detail.ap.expenses:vendor
