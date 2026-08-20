@@ -13285,3 +13285,39 @@ Devin-A | LIVE PASS | leaf=inventory:assignments.vendor_link:vendor | USMCA | UR
 Devin-A | LIVE PASS | leaf=inventory:assignments.vendor_link:connectivity | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/inventory/assignments marker 'inventory' | NEXT=leaf=inventory:parts.column.low_stock:connectivity
 Devin-A | LIVE PASS | leaf=inventory:assignments.vendor_link:reverse_link | USMCA | URL=https://app.ih35dispatch.com/inventory/assignments | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/inventory/assignments marker 'inventory' | NEXT=leaf=inventory:parts.column.low_stock:connectivity
 Devin-A | LIVE PASS | leaf=inventory:parts.column.low_stock:connectivity | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/inventory marker 'inventory' | NEXT=leaf=inventory:parts.create.vendor_picker:vendor
+Devin-A | LIVE STARVED | leaf=inventory:parts.create.vendor_picker:vendor | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=inventory:parts.edit.vendor_picker:vendor
+Devin-A | LIVE STARVED | leaf=inventory:parts.create.vendor_picker:picker_law | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=inventory:parts.edit.vendor_picker:vendor
+Devin-A | LIVE STARVED | leaf=inventory:parts.create.vendor_picker:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=inventory:parts.edit.vendor_picker:vendor
+Devin-A | LIVE STARVED | leaf=inventory:parts.create.vendor_picker:connectivity | USMCA | URL=https://app.ih35dispatch.com/inventory | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/inventory healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=inventory:parts.edit.vendor_picker:vendor
