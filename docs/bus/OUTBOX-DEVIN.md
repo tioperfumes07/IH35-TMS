@@ -9732,3 +9732,36 @@ Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:vendor | USMCA | URL=h
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.payment_terms:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.payment_terms:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.payment_terms:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=ab70a00 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=ab70a00 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.profile.payment_terms:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=ab70a00 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.profile.vendor_type_picker:vendor
