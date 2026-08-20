@@ -1,15 +1,20 @@
 # SESSION BOOT MANDATE — autoload every agent, every new session
 
-**If you skip this file, you will deviate.** Read `docs/bus/CODER-INSTRUCTIONS-NOW.md` (TOP) + `INBOX-<SEAT>.md` (TOP) + **`docs/bus/SEAT-COMMS-LAW.md`** before any other work.
+**If you skip this file, you will deviate.** Read `docs/bus/CODER-INSTRUCTIONS-NOW.md` (TOP) + `INBOX-<SEAT>.md` (TOP) + **`docs/bus/SEAT-COMMS-LAW.md`**.
 
-**Stale INBOX:** ping Cursor via your OUTBOX **and** `OUTBOX-CURSOR.md` same turn (`SEAT | STALE INBOX | target=… | why=… | GO`). Seats do not rewrite another seat’s INBOX. Codex: `git pull` — factoring cap VOID (#10144). **OWNER SEQ NOW = DRV-PROFILE-OPS-REVERSE** (`PASTE-CODEX-NOW.md`). CC-2: `PASTE-CC-2-NOW.md` — **not idle**. Generic “continuous mode” paste is not an ACK.
+## ★ URGENT 6 ONLY (owner 2026-08-20 03:50Z — Cursor lead failed this once; do not fail it again)
 
-1. **GitHub stays.** No GitLab. Speed = FAST-MERGE (gate 0 → one push → squash `--admin`). Never `gh pr checks --watch`.
-2. **100 = READY Live ✓ and Miss C = 0** (`docs/lockdown/MATRIX-READY-FROZEN-USMCA-STANDARD-2026-08-19.md`). Box 4 is never ready. No new Required leaves until Jorge unfreezes.
-3. **ACK** first OUTBOX line, then `WORKING`. No ACK = not on instructions.
-4. **Findings:** same turn `GUARD-WORKORDERS.md` + checklist ☐ + Desktop `FINDINGS-OPEN-P1-ROUTING.md` + OUTBOX `FINDING`. Chat-only = unfixed. Owner FAST-MERGES immediately. Never “later sweep.”
-5. **Seats:** Cursor = lead + **drivers→customers→vendors→dispatch Built**. Codex = reverse FO same order (no CDP). **Devin-A = Clicked 9227 AUTO on OWNER SEQ — never pause for continue.** CC-1 = money/GL **accounting→banking→factoring→settlements**. CC-2 = lists pickers (drivers first). CC-3/Cascade = OFF.
-6. **OWNER SEQ (urgency, not A–Z):** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch. Then rest.
-7. **API 502:** caused by bouncing the **one** Render API instance on every `main` merge (including Devin “outage” PRs). **Devin-A: never open/merge a PR whose only purpose is recording 502.** Append OUTBOX; poll healthz; resume Clicked on HTTP 200. Do not ask Jorge A-or-B.
+**NOW modules (only):** accounting · banking · customers · vendors · factoring · settlements.
 
-OUTBOX: `<SEAT> | ACK | STANDARD=MATRIX-READY | NOW=<INBOX top> | GO`
+**FORBIDDEN until Jorge unfreezes:** **fuel** (last module — do not touch) · fleet · maintenance · safety · **dispatch** · drivers-as-primary · IFTA.
+
+Stale INBOX → ping Cursor OUTBOX same turn. Codex: factoring cap VOID (#10144). Generic continuous-mode paste ≠ ACK.
+
+1. **GitHub stays.** FAST-MERGE. Never `gh pr checks --watch`.
+2. **100 = READY Live ✓ and Miss C = 0** on the frozen USMCA ops set. Box 4 never ready.
+3. **ACK** then `WORKING`. No ACK = not on instructions.
+4. **Findings triple-lock same turn:** `GUARD-WORKORDERS.md` OPEN · `CC-3-FINDINGS-CHECKLIST.md` ☐ · Desktop `FINDINGS-OPEN-P1-ROUTING.md` · OUTBOX `FINDING | id | OWNER=… | board OPEN`. Chat-only = unfixed. Law: `docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md`.
+5. **Seats:** CC-1 = money on accounting→banking→factoring→settlements. Cursor Built = customers→vendors (then leftover on those money modules’ chrome, not fleet). Codex reverse = customers→vendors then factoring/settlements FE reverse (no posters). Devin-A Clicked **only URGENT 6** on 9227. CC-2 = lists pickers customers→vendors. CC-3/Cascade = OFF.
+6. **API 502:** poll healthz JSON. **Never** 502-diary PRs. **Never** fleet/fuel Clicked to “keep the loop moving.”
+
+OUTBOX: `<SEAT> | ACK | STANDARD=URGENT-6 | NOW=<INBOX top> | GO`
