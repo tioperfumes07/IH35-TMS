@@ -1798,3 +1798,14 @@ Espanol (preview)
 tioperfumes07@gmail.com
 FLEET›UNIT LOADING…
 Unit Loa | healthz=unknown | mutation=none | NEXT=fleet.unit.edit.lifecycle
+Devin-A | LIVE PASS | module=vendors | leaf=list.sync | URL=https://app.ih35dispatch.com/vendors | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/vendors ; marker 'vendors' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=unknown | mutation=none | NEXT=vendors.list.bulk
