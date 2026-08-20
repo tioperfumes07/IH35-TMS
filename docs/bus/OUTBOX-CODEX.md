@@ -1047,3 +1047,4 @@ Codex | WORKING | FO=ACCT-F5661 | leaf=accounting:factor_reconciliation.items:{c
 Codex | WORKING | FO=ACCT-F5662 | leaf=accounting:bills.detail:{connectivity,reverse_link} | guard=4/4+selftest | backend-tsc=exit0 | NEXT=fast-merge then accounting reverse census | GO
 Codex | WORKING | FO=ACCT-F5663 | leaf=banking.panel.linked_bank_transactions:{bank,gl_je,connectivity,reverse_link} | guard=4/4+selftest | backend-tsc=exit0 | NEXT=fast-merge then WAVE2 | GO
 Codex | WORKING | FO=ACCT-F5664 | leaf=insurance:claims.list:{driver,unit,trailer,load,connectivity,reverse_link} | guard=10/10+selftest | global-uuid=PASS | NEXT=fast-merge then legal reverse | GO
+Codex | WORKING | FO=ACCT-F5665 | leaf=legal:templates.detail:{connectivity,reverse_link} | guard=3/3+selftest | NEXT=fast-merge then lists reverse | GO

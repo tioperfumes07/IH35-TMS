@@ -11,7 +11,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
-import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 
 function auditActorLabel(row: TemplateAuditEvent): string {
   if (row.actor_user_id) return entityLabel(row.actor_name, row.actor_user_id, "User");
@@ -21,7 +21,7 @@ function auditActorLabel(row: TemplateAuditEvent): string {
 
 function auditActorCell(row: TemplateAuditEvent) {
   if (row.actor_user_id) {
-    return <EntityLink kind="user" id={row.actor_user_id} label={auditActorLabel(row)} />;
+    return <EntityLinkOrTombstone kind="user" id={row.actor_user_id} name={row.actor_name} noun="User" />;
   }
   return auditActorLabel(row);
 }
