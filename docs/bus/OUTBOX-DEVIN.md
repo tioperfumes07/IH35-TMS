@@ -6151,3 +6151,6 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=accounting:accounting.drawer.new_service_drawer_form:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.drawer.new_service_drawer_form:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=a69a9eb | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.drawer.new_service_drawer_form:picker_law | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=a69a9eb | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
+Devin-A | LIVE PASS | leaf=accounting:accounting.drawer.new_service_drawer_form:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=a69a9eb | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:accounting.modal.ccpayment:connectivity
