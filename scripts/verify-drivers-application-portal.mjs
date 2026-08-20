@@ -60,6 +60,9 @@ function main() {
   if (!applicationPage.includes("ApplicationPage")) failures.push("ApplicationPage required");
   if (!applicationPage.includes("fcra_notice")) failures.push("ApplicationPage must show FCRA compliance notice");
   if (!pipelinePage.includes("ApplicantsPipelinePage")) failures.push("ApplicantsPipelinePage required");
+  if (!pipelinePage.includes('kind="driver" id={row.converted_driver_id}')) {
+    failures.push("Converted applicant name must drill canonical driver identity");
+  }
   if (!pipelinePage.includes("Convert to driver")) failures.push("Pipeline must expose convert action");
   if (!pipelinePage.includes('kind="onboarding_session"') || !pipelinePage.includes("id={row.onboarding_session_id}")) {
     failures.push("Pipeline onboarding drill must use EntityLink kind=onboarding_session");
