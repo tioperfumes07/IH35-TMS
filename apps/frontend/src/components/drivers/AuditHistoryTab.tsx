@@ -8,7 +8,7 @@ import { CappedListNotice } from "../CappedListNotice";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Download, AlertTriangle } from "lucide-react";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { MultiSelectDropdown } from "../forms/MultiSelectDropdown";
 
 type Props = {
@@ -138,7 +138,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         label: "Actor",
         sortable: true,
         sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
-        render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"} className="text-gray-800" />,
+        render: (row) => <EntityLinkOrTombstone kind="user" id={row.actor_user_id} name={row.actor_email} noun="User" className="text-gray-800" />,
       },
       {
         key: "event_type",

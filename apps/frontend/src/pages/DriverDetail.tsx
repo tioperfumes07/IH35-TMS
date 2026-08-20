@@ -1748,7 +1748,7 @@ export function DriverDetailPage() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
-        Last updated by <EntityLink kind="user" id={driver.updated_by_user_id} label={entityLabel(driver.updated_by_user_label, driver.updated_by_user_id, "User")} /> on {new Date(driver.updated_at).toLocaleString()}
+        Last updated by <EntityLinkOrTombstone kind="user" id={driver.updated_by_user_id} name={driver.updated_by_user_label} noun="User" /> on {new Date(driver.updated_at).toLocaleString()}
       </div>
 
       <Modal variant="drawer" open={addQualificationOpen} onClose={() => setAddQualificationOpen(false)} title="Create Equipment Qualification">

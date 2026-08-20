@@ -53,6 +53,9 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="driver-audit-table"')) {
     errors.push(`${PAGE}: must preserve tableTestId="driver-audit-table"`);
   }
+  if (!/<EntityLinkOrTombstone\s+kind="user"\s+id=\{row\.actor_user_id\}\s+name=\{row\.actor_email\}\s+noun="User"/.test(src)) {
+    errors.push(`${PAGE}: unresolved audit actors must render a non-clickable user tombstone`);
+  }
   return errors;
 }
 
@@ -74,6 +77,7 @@ function selftest() {
       tableTestId="driver-audit-table"
       renderExpanded={(row) => <pre>{payloadDiff(row.payload)}</pre>}
     />
+    <EntityLinkOrTombstone kind="user" id={row.actor_user_id} name={row.actor_email} noun="User" />
   `;
   const bad = `
     export function AuditHistoryTab() {

@@ -79,7 +79,7 @@ function assertUpdater(srcs) {
   if (!/LEFT JOIN identity\.users updater ON updater\.id = d\.updated_by_user_id/.test(srcs.aggregate)) errors.push(`${AGGREGATE}: aggregate must join canonical updater`);
   if (!/WHERE updater\.id = mdata\.drivers\.updated_by_user_id[\s\S]{0,80}AS updated_by_user_label/.test(srcs.routes)) errors.push(`${ROUTES}: flat driver read must project canonical updater label`);
   if (!/updated_by_user_label: string \| null/.test(srcs.types)) errors.push(`${TYPES}: Driver must type updater label`);
-  if (!/entityLabel\(driver\.updated_by_user_label, driver\.updated_by_user_id, "User"\)/.test(srcs.page)) errors.push(`${PAGE}: footer must consume updater label`);
+  if (!/<EntityLinkOrTombstone kind="user" id=\{driver\.updated_by_user_id\} name=\{driver\.updated_by_user_label\} noun="User" \/>/.test(srcs.page)) errors.push(`${PAGE}: footer must consume updater id/label through tombstone-safe identity`);
   return errors;
 }
 
@@ -136,7 +136,7 @@ function selftest() {
     ["aggregate", "LEFT JOIN identity.users updater ON updater.id = d.updated_by_user_id", "LEFT JOIN identity.users updater ON FALSE"],
     ["routes", "WHERE updater.id = mdata.drivers.updated_by_user_id", "WHERE FALSE"],
     ["types", "updated_by_user_label: string | null", "updated_by_user_label?: string | null"],
-    ["page", 'entityLabel(driver.updated_by_user_label, driver.updated_by_user_id, "User")', 'entityLabel(null, driver.updated_by_user_id, "User")'],
+    ["page", '<EntityLinkOrTombstone kind="user" id={driver.updated_by_user_id} name={driver.updated_by_user_label} noun="User" />', '<EntityLink kind="user" id={driver.updated_by_user_id} label="User" />'],
   ];
   for (const [key, from, to] of mutations) {
     if (!live[key].includes(from) || !assertUpdater({ ...live, [key]: live[key].replace(from, to) }).length) {
