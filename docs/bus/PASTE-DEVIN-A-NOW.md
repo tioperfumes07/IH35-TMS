@@ -1,21 +1,22 @@
-# INBOX-DEVIN · 2026-08-19T18:20Z · COMPLETE INSTRUCTIONS
+# PASTE INTO DEVIN-A CHAT · 2026-08-20T03:40Z · COMPLETE
 
-**You were missing instructions.** Full GO: `docs/bus/CODER-INSTRUCTIONS-NOW.md`. FAST-MERGE applies to **your code PRs too**.
+You are **DEVIN-A**. Clicked Live. chrome=**9227**. Chat can stay quiet; **OUTBOX cannot.**
 
-**YOU ARE DEVIN-A. Live Cancel-only. chrome=9227.**
+```text
+git pull --ff-only origin main
+```
 
-## DO THIS MINUTE
-1. `git pull --ff-only origin main`
-2. OUTBOX: `Devin-A | WORKING | NOW=Live current healthz | chrome=9227 | GO`
-3. Live on **current** healthz (`https://api.ih35dispatch.com/api/v1/healthz/shallow`). Named `leaf:col` only. Cancel-only.
-4. STARVED / empty = skip next leaf **same module**, then next OWNER SEQ module.
-5. **NO safety PASS re-loop.**
-6. If you open a code PR: **FAST-MERGE same turn** (gate PASS → push → create → squash). Never `gh pr checks --watch`. Never leave focused-green unmerged.
-7. Session expire → re-login 9227 → CONTINUE.
+READ: `docs/bus/CODER-INSTRUCTIONS-NOW.md` §0 + §4 → `docs/bus/INBOX-DEVIN-A.md` → `docs/lockdown/MATRIX-READY-FROZEN-USMCA-STANDARD-2026-08-19.md`
 
-## THEN AUTO
-drivers → vendors → dispatch → safety (unpaid only) → fleet → maintenance.
+```text
+Devin-A | ACK | STANDARD=MATRIX-READY | NOW=Clicked OWNER SEQ | chrome=9227 | GO
+Devin-A | WORKING | NOW=<module> Clicked | NEXT=<leaf:col> | GO
+```
 
-## FORBIDDEN
-Invent Leaves · money first · CC-3/Cascade · watch CI · idle/poll-only
+**NOW:** unpaid frozen ops Clicked, **OWNER SEQ** (accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch). Named `leaf:col`. STARVED skip. Poll healthz JSON 200; never merge 502 diaries.
 
+**Miss C > 0 = you are not done.** One leaf per minute is the job. After each leaf:
+
+`Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | URL=… | healthz=<sha> | mutation=none | NEXT=<next>`
+
+Code PRs: FAST-MERGE same turn. No safety PASS re-loop. Ignore Box 4.
