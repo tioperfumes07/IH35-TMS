@@ -6996,3 +6996,17 @@ Devin-A | LIVE PASS | leaf=lists:catalog.fuel.station_states.list:connectivity |
 Devin-A | LIVE PASS | leaf=lists:catalog.fuel.stop_reason_codes.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/stop-reason-codes | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/stop-reason-codes marker 'lists' | NEXT=leaf=lists:catalog.maintenance.air_bag_catalog.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.fuel.stop_reason_codes.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/stop-reason-codes | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/stop-reason-codes marker 'lists' | NEXT=leaf=lists:catalog.maintenance.air_bag_catalog.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.fuel.stop_reason_codes.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/stop-reason-codes | healthz=b143665 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/stop-reason-codes marker 'lists' | NEXT=leaf=lists:catalog.maintenance.air_bag_catalog.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.air_bag_catalog.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/air-bag-catalog | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/maintenance/air-bag-catalog healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.maintenance.battery_catalog.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.air_bag_catalog.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/air-bag-catalog | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/maintenance/air-bag-catalog healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.maintenance.battery_catalog.create:qbo_chrome
