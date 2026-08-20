@@ -14709,3 +14709,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.audit:connectivity
+Devin-A | LIVE STARVED | leaf=customers:detail.audit:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc53eda | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.billing:customer
