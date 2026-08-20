@@ -1,0 +1,16 @@
+---
+description: PERMANENT — USMCA only until launch; no TRK/TRANSP work; QBO sync parked; 100% = Fully-Wired 1–12
+alwaysApply: true
+---
+
+# USMCA ONLY UNTIL LAUNCH (owner 2026-08-19)
+
+**Canonical:** `docs/lockdown/USMCA-ONLY-UNTIL-LAUNCH-LAW-2026-08-19.md`
+
+- **Only USMCA is operating.** Do not work IH 35 Trucking or IH 35 Transportation until USMCA is fully launched.
+- **QBO sync is irrelevant.** Do not run TRANSP QBO-mirror / recon / sync campaigns. No TMS→QBO write-back.
+- **100% / launched** = Fully-Wired **items 1–12** on USMCA (`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`). McLeod/QBO-*product* quality — not Box 1–4, not Miss C alone.
+- Extra scoreboard columns stay. Miss C / READY ops KPI ≠ launch.
+- Chrome that *looks* like QBO ≠ QBO sync.
+
+Presence: `scripts/verify-standing-directive-present.mjs` (step 2374).
