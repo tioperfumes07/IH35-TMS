@@ -63,6 +63,7 @@ const guards = [
   "verify-payment-void-recompute-unapplied-filter.mjs",
   "verify-payments-create-role-gated.mjs",
   "verify-payrun-close-reimbursements-and-active-lines.mjs",
+  "verify-pre-settlement-add-load-rejects-cancelled.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
   "verify-qbo-outbound-expense-total-amount-cents-column.mjs",
   "verify-reconciliation-match-existence-checked.mjs",
