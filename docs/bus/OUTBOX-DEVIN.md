@@ -1701,3 +1701,9 @@ Unit Loa | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.trip_cost
 Devin-A | LIVE STARVED | module=fleet | leaf=roster.filter.status_oos | URL=https://app.ih35dispatch.com/fleet?status=OutOfService | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet/units/:id ; body head Checking session... | healthz=596b3bd | mutation=none | NEXT=fleet.roster.bulk.status
 Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.maintenance | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet/units/:id ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.compliance
 Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.compliance | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.expenses_reverse
+Devin-A | LIVE STARVED | module=fleet | leaf=roster.bulk.status | URL=https://app.ih35dispatch.com/fleet | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=1d0eee9 | mutation=none | NEXT=fleet.roster.bulk.type
+Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.expenses_reverse | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.insurance_summary
