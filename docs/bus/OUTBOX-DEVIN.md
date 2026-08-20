@@ -3163,3 +3163,80 @@ Espanol (preview)
 6 | NEXT=leaf=customers:detail.portal_users:customer
 Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=portal | healthz=ecd75c8 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=portal healthz=ecd75c8 head Checking session... | NEXT=leaf=customers:detail.profile:customer
 Devin-A | LIVE STARVED | leaf=customers:detail.portal_users:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=portal | healthz=ecd75c8 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=portal healthz=ecd75c8 head Checking session... | NEXT=leaf=customers:detail.profile:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.profile:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=ecd75c8 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Loading customer...
+FAQ | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.profile:vendor | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=ecd75c8 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Loading customer...
+FAQ | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.profile:load | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=ecd75c8 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Loading customer...
+FAQ | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.profile:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=ecd75c8 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Loading customer...
+FAQ | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.profile:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=ecd75c8 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Loading customer...
+FAQ | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.profile:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=ecd75c8 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Loading customer...
+FAQ | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.profile:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=ecd75c8 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers/:id head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfumes07@gmail.com
+Loading customer...
+FAQ | NEXT=leaf=customers:detail.quality:customer
