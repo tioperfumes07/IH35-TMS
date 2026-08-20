@@ -1127,3 +1127,14 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=337ab0c | mutation=none | NEXT=finance.hop.accounting
+Devin-A | LIVE PASS | module=finance | leaf=hop.accounting | URL=https://app.ih35dispatch.com/accounting | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/accounting ; marker 'Accounting' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=f053c94 | mutation=none | NEXT=finance.hop.cash_flow
