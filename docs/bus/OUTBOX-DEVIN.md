@@ -10422,3 +10422,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=reports:runner.profit_truck_mtd:connectivity
+Devin-A | LIVE PASS | leaf=reports:runner.profit_truck_mtd:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/run/profit-truck-mtd | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/profit-per-truck marker 'reports' | NEXT=leaf=reports:runner.saved_owner_pack:connectivity
+Devin-A | LIVE PASS | leaf=reports:runner.profit_truck_mtd:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/profit-truck-mtd | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/profit-per-truck marker 'reports' | NEXT=leaf=reports:runner.saved_owner_pack:connectivity
