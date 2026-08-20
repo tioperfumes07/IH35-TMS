@@ -1045,3 +1045,4 @@ Codex | WORKING | FO=ACCT-F5659 | leaf=accounting:maintenance_shop:{expense,reve
 Codex | WORKING | FO=ACCT-F5660 | leaf=accounting:bills.payments:{connectivity,reverse_link} | guard=3/3+selftest | backend-tsc=exit0 | NEXT=fast-merge then accounting reverse census | GO
 Codex | WORKING | FO=ACCT-F5661 | leaf=accounting:factor_reconciliation.items:{connectivity,reverse_link} | guard=3/3+selftest | backend-tsc=exit0 | NEXT=fast-merge then accounting reverse census | GO
 Codex | WORKING | FO=ACCT-F5662 | leaf=accounting:bills.detail:{connectivity,reverse_link} | guard=4/4+selftest | backend-tsc=exit0 | NEXT=fast-merge then accounting reverse census | GO
+Codex | WORKING | FO=ACCT-F5663 | leaf=banking.panel.linked_bank_transactions:{bank,gl_je,connectivity,reverse_link} | guard=4/4+selftest | backend-tsc=exit0 | NEXT=fast-merge then WAVE2 | GO
