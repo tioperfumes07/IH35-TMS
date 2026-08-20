@@ -20,30 +20,36 @@ const LABEL = "verify-ar-aging-credit-memo-netting";
 const SELFTEST = process.argv.includes("--selftest");
 const FILE = "apps/backend/src/accounting/ar-aging.service.ts";
 
-const SELECT_LINE = "(i.amount_open_cents - COALESCE(cma.applied_cents, 0))::bigint AS amount_open_cents";
-const SUBQUERY_JOIN = "LEFT JOIN (";
-const SUBQUERY_FROM = "FROM accounting.credit_memo_applications";
-const SUBQUERY_VOID_FILTER = "AND voided_at IS NULL";
+// ACCT-F5658 — the mechanism this guard pins changed shape when A/R aging was rewritten to
+// reconstruct open-as-of (mirroring ap-aging.service.ts): the credit-memo netting moved from a
+// LEFT JOIN prejoin subtracted off the live generated column into an as-of-dated correlated
+// subquery subtracted inside the GREATEST(total − payments − credit-memos, 0) reconstruction.
+// The REQUIREMENT (ACCT-F5612: applied, non-voided credit-memo cents are netted off the reported
+// balance) is unchanged; the assertions now target it in its current, dated form.
+const SUBQUERY_SUBTRACT = "- COALESCE((\n                  SELECT SUM(cma.applied_cents)";
+const SUBQUERY_FROM = "FROM accounting.credit_memo_applications cma";
+const SUBQUERY_VOID_FILTER = "AND cma.voided_at IS NULL";
+const SUBQUERY_AS_OF_FILTER = "AND (cma.applied_at AT TIME ZONE 'UTC')::date <= $2::date";
 
 function assertAll(src) {
   const problems = [];
-  if (!src.includes(SELECT_LINE)) {
+  if (!src.includes(SUBQUERY_SUBTRACT) || !src.includes(SUBQUERY_FROM)) {
     problems.push(
-      `A/R aging's SELECT does not net COALESCE(cma.applied_cents, 0) off amount_open_cents -- either ` +
-        `reverted to selecting the raw generated column, or drifted to a different expression.`
+      `A/R aging does not subtract a per-invoice accounting.credit_memo_applications SUM inside its ` +
+        `outstanding reconstruction -- an applied AR credit memo will not be netted out of the ` +
+        `reported balance at all (ACCT-F5612).`
     );
   }
-  if (!src.includes(SUBQUERY_JOIN) || !src.includes(SUBQUERY_FROM)) {
+  if (!src.includes(SUBQUERY_VOID_FILTER)) {
     problems.push(
-      `A/R aging does not LEFT JOIN a per-invoice accounting.credit_memo_applications subquery -- an ` +
-        `applied AR credit memo will not be netted out of the reported balance at all.`
+      `A/R aging's credit_memo_applications subquery does not exclude voided rows -- a voided ` +
+        `(reversed) credit-memo application would still incorrectly reduce reported AR.`
     );
   }
-  const cmaBlockMatch = src.match(/LEFT JOIN \(([\s\S]*?)\) cma ON cma\.invoice_id = i\.id/);
-  if (!cmaBlockMatch || !cmaBlockMatch[1].includes(SUBQUERY_VOID_FILTER)) {
+  if (!src.includes(SUBQUERY_AS_OF_FILTER)) {
     problems.push(
-      `A/R aging's credit_memo_applications subquery does not exclude voided_at IS NOT NULL rows -- a ` +
-        `voided (reversed) credit-memo application would still incorrectly reduce reported AR.`
+      `A/R aging's credit_memo_applications subquery is not dated (applied_at <= as_of) -- a credit ` +
+        `memo applied AFTER the statement date would wrongly reduce a historical statement (ACCT-F5658).`
     );
   }
   return problems;
@@ -54,21 +60,33 @@ const read = () => fs.readFileSync(path.join(ROOT, FILE), "utf8");
 if (SELFTEST) {
   const src = read();
 
-  const revertedSelect = src.replace(SELECT_LINE, "i.amount_open_cents::bigint AS amount_open_cents");
-  const revertedProblems = assertAll(revertedSelect);
-  if (!revertedProblems.some((p) => p.includes("net"))) {
-    console.error(`${LABEL} SELFTEST FAILED: reverting to the raw ungenerated-netted column not caught`);
+  const droppedNetting = src.split(SUBQUERY_FROM).join("FROM accounting.credit_memo_applications_RENAMED cma");
+  if (droppedNetting === src) {
+    console.error(`${LABEL} SELFTEST SETUP FAILED: netting-subquery mutation string did not match live source`);
+    process.exit(1);
+  }
+  if (!assertAll(droppedNetting).some((p) => p.includes("netted out"))) {
+    console.error(`${LABEL} SELFTEST FAILED: removing the credit-memo netting subquery not caught`);
     process.exit(1);
   }
 
-  const droppedVoidFilter = src.replace(`\n            AND voided_at IS NULL\n          GROUP BY invoice_id`, `\n          GROUP BY invoice_id`);
+  const droppedVoidFilter = src.split(SUBQUERY_VOID_FILTER).join("");
   if (droppedVoidFilter === src) {
     console.error(`${LABEL} SELFTEST SETUP FAILED: droppedVoidFilter mutation string did not match live source`);
     process.exit(1);
   }
-  const droppedProblems = assertAll(droppedVoidFilter);
-  if (!droppedProblems.some((p) => p.includes("voided"))) {
+  if (!assertAll(droppedVoidFilter).some((p) => p.includes("voided"))) {
     console.error(`${LABEL} SELFTEST FAILED: dropping the voided_at IS NULL filter on the subquery not caught`);
+    process.exit(1);
+  }
+
+  const droppedAsOf = src.split(SUBQUERY_AS_OF_FILTER).join("");
+  if (droppedAsOf === src) {
+    console.error(`${LABEL} SELFTEST SETUP FAILED: droppedAsOf mutation string did not match live source`);
+    process.exit(1);
+  }
+  if (!assertAll(droppedAsOf).some((p) => p.includes("dated"))) {
+    console.error(`${LABEL} SELFTEST FAILED: dropping the applied_at <= as_of dating not caught`);
     process.exit(1);
   }
 
