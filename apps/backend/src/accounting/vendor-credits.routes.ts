@@ -246,9 +246,16 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // ACCT-F5639 — FOR UPDATE, same row-lock pattern applied to the sibling /void endpoint below and
+      // the AR mirror (credit-memos.routes.ts). Closes two races at once: a concurrent /void call can
+      // no longer read this row unlocked while this apply is mid-flight (which previously let a vendor
+      // credit end up 'voided' with a live, non-voided application row still standing), and two
+      // concurrent /apply calls can no longer both read the same stale amount_unapplied_cents and
+      // jointly over-apply the credit beyond its face amount across two different bills.
       const creditRes = await client.query(
         `SELECT id, status, vendor_id, amount_unapplied_cents FROM accounting.vendor_credits
-         WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+         WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1
+         FOR UPDATE`,
         [params.data.id, query.data.operating_company_id]
       );
       const credit = creditRes.rows[0];
@@ -420,9 +427,20 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // ACCT-F5639 — FOR UPDATE, matching the sibling row-lock pattern this codebase already uses on
+      // every other void writer (bills.service.ts, payments.routes.ts's ACCT-F5636 fix, every
+      // governance/void-cancel-executors.ts executor, and the AR mirror credit-memos.routes.ts).
+      // Without it, a concurrent /apply request can INSERT a vendor_credit_applications row and this
+      // /void call's status check can both read the pre-apply state before either commits — the
+      // applications UPDATE below (voided_at IS NULL) then misses the just-applied row entirely
+      // (invisible under READ COMMITTED), so the credit ends up status='voided' while a live,
+      // non-voided application row still stands: a permanently stranded application that every
+      // downstream netting query (verify-bill-payment-nets-vendor-credits, ACCT-F5623) will keep
+      // counting against the bill forever, understating its true open balance.
       const creditRes = await client.query(
         `SELECT id, status FROM accounting.vendor_credits
-         WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+         WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1
+         FOR UPDATE`,
         [params.data.id, query.data.operating_company_id]
       );
       const credit = creditRes.rows[0];
@@ -436,13 +454,16 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
          WHERE credit_id = $1 AND voided_at IS NULL`,
         [params.data.id, user.uuid, body.data.reason]
       );
-      // Zero out applied amount and mark voided
-      await client.query(
+      // Zero out applied amount and mark voided. Belt-and-suspenders alongside the row lock: WHERE
+      // status <> 'voided', matching payments.routes.ts's own pattern.
+      const flipped = await client.query(
         `UPDATE accounting.vendor_credits
          SET status = 'voided', amount_applied_cents = 0
-         WHERE id = $1`,
+         WHERE id = $1
+           AND status <> 'voided'`,
         [params.data.id]
       );
+      if (flipped.rowCount === 0) return { code: 409 as const, error: "already_voided" };
 
       await appendCrudAudit(
         client,

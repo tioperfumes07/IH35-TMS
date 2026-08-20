@@ -29,6 +29,7 @@ const guards = [
   "verify-customer-payment-write-role-gated.mjs",
   "verify-deductions-write-role-gated.mjs",
   "verify-coa-asymmetry-account-entitylink.mjs",
+  "verify-credit-memo-vendor-credit-row-locked.mjs",
   "verify-credit-vendor-apply-idempotent-replay.mjs",
   "verify-detention-billing-bridge-resyncs-invoice.mjs",
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
