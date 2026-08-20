@@ -52,6 +52,9 @@ export function audit(src) {
   if (!/vendor_id=\$\{selectedVendor\.id\}/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: md.header.new_transaction must navigate with the real selected vendor's id`);
   }
+  if (!/data-testid="vendor-details-full-profile-record-link"/.test(src.vendors) || !/kind="vendor"/.test(src.vendors)) {
+    failures.push(`${FILES.vendors}: vendor_details full-profile hop must use EntityLinkOrTombstone kind=vendor`);
+  }
   if (!/bulkUpdate\(\{ domain: "mdata", resource: "vendors"/.test(src.listView)) {
     failures.push(`${FILES.listView}: list.bulk must target the real mdata.vendors resource`);
   }
@@ -83,6 +86,7 @@ if (process.argv.includes("--selftest")) {
     ["sync-panel", "vendors", /<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>/, "null"],
     ["header-edit-nav", "vendors", /onClick=\{\(\) => navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)\}\s*data-testid="vendor-header-edit"/, 'onClick={() => navigate(`/vendors`)} data-testid="vendor-header-edit"'],
     ["header-new-tx-nav", "vendors", /vendor_id=\$\{selectedVendor\.id\}/, "vendor_id=none"],
+    ["full-profile-entitylink", "vendors", /data-testid="vendor-details-full-profile-record-link"/, 'data-testid="vendor-details-full-profile-plain"'],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "vendors"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],
     ["export-fn", "listView", /function exportVendorsCsv/, "function exportSomethingElse"],
   ];
