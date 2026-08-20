@@ -161,6 +161,10 @@
     "202612780000": {
       "claimed_by": "claude",
       "purpose": "lv_inventory_parts_deactivated_vendor_historical_label_canonical_resolver"
+    },
+    "202612820000": {
+      "claimed_by": "claude",
+      "purpose": "customer_types_fk_lst_wire_07_customer_types_catalog_no_consumer"
     }
   }
 }
