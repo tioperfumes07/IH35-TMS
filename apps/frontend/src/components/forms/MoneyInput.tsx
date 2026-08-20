@@ -20,7 +20,6 @@ type Props = {
   className?: string;
   disabled?: boolean;
   id?: string;
-  name?: string;
   ariaLabel?: string;
 };
 
@@ -62,7 +61,6 @@ export function MoneyInput({
   className = "",
   disabled,
   id,
-  name,
   ariaLabel,
 }: Props) {
   // DOLLARS mode is selected when a dollars prop is supplied; otherwise CENTS mode (the default).
@@ -92,7 +90,6 @@ export function MoneyInput({
       <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">$</span>
       <input
         id={id}
-        name={name}
         aria-label={ariaLabel}
         inputMode="decimal"
         disabled={disabled}

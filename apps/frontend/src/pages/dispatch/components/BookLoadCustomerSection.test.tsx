@@ -3,7 +3,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { useForm } from "react-hook-form";
-import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
 
@@ -48,11 +47,7 @@ function TestHarness({ operatingCompanyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f607
 
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <MemoryRouter>
-      <QueryClientProvider client={qc}>{ui}</QueryClientProvider>
-    </MemoryRouter>
-  );
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
 }
 
 describe("BookLoadCustomerSection", () => {
