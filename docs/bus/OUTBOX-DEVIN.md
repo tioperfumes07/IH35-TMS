@@ -1563,3 +1563,25 @@ Devin-A | LIVE STARVED | module=fleet | leaf=roster.kind.all | URL=https://app.i
 Devin-A | LIVE STARVED | module=fleet | leaf=roster.kind.trucks | URL=https://app.ih35dispatch.com/fleet?kind=truck | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet?kind=truck ; body head Checking session... | healthz=c9e8984 | mutation=none | NEXT=fleet.roster.kind.trailers
 Devin-A | LIVE STARVED | module=fleet | leaf=roster.kind.trailers | URL=https://app.ih35dispatch.com/fleet?kind=trailer | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=79be3b0 | mutation=none | NEXT=fleet.roster.filter.type
 Devin-A | LIVE STARVED | module=fleet | leaf=roster.filter.type | URL=https://app.ih35dispatch.com/fleet?type= | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/fleet?type= ; body head Checking session... | healthz=79be3b0 | mutation=none | NEXT=fleet.roster.filter.status_active
+Devin-A | LIVE PASS | module=fleet | leaf=home.create_unit | URL=https://app.ih35dispatch.com/fleet | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet?status=InService ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+FLEET
+
+Trucks, trailers, and | healthz=79be3b0 | mutation=none | NEXT=fleet.home.create_trailer
+Devin-A | LIVE PASS | module=fleet | leaf=roster.filter.status_active | URL=https://app.ih35dispatch.com/fleet?status=InService | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet?status=InService ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+FLEET
+
+Trucks, trailers, and | healthz=unknown | mutation=none | NEXT=fleet.roster.filter.status_inshop
