@@ -10408,3 +10408,17 @@ Loading…
 FAQ | NEXT=leaf=reports:runner.ifta_quarterly:connectivity
 Devin-A | LIVE PASS | leaf=reports:runner.ifta_quarterly:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/run/ifta-quarterly | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/ifta-preparer marker 'reports' | NEXT=leaf=reports:runner.maint_cost_unit:connectivity
 Devin-A | LIVE PASS | leaf=reports:runner.ifta_quarterly:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/ifta-quarterly | healthz=1495260 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/ifta-preparer marker 'reports' | NEXT=leaf=reports:runner.maint_cost_unit:connectivity
+Devin-A | LIVE STARVED | leaf=reports:runner.maint_cost_unit:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/run/maint-cost-unit | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/run/maint-cost-unit healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=reports:runner.profit_truck_mtd:connectivity
+Devin-A | LIVE STARVED | leaf=reports:runner.maint_cost_unit:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/run/maint-cost-unit | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/run/maint-cost-unit healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=reports:runner.profit_truck_mtd:connectivity
