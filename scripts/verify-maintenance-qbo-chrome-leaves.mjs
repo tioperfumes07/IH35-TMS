@@ -14,12 +14,16 @@
  * included). chrome.toolbar_filter is already real via CODEX-ZERO-REMAINDER-PROTECTED-CHROME-7
  * (maintenance included). None of the 4 toolbar leaves are re-claimed here.
  *
- * All 33 leaves below are genuinely built, traced through the real route/component wiring:
+ * All 34 leaves below are genuinely built, traced through the real route/component wiring:
  *   - wo.create: MaintenanceHome.tsx's QuickActionsBar "+ Create Work Order" mounts the real
  *     CreateWorkOrderModal (components/) — a real Modal ("Create Work Order", sizePreset=lg wide).
- *   - wo.source.is/es/ac/et/rt/it: CreateWOSectionIdentification.tsx's real SOURCE_TYPES config
- *     array carries all 6 codes (IS/ES/AC/ET/RT/IT) with real labels, driving the WO creator's
- *     source-type picker.
+ *   - wo.source.is/es/ac/et/rt/it/rs: CreateWOSectionIdentification.tsx's real SOURCE_TYPES config
+ *     array carries all 7 codes (IS/ES/AC/ET/RT/IT/RS) with real labels, driving the WO creator's
+ *     source-type picker. 2026-08-21 (CC-3, SWARM straggler-check): `rs` was omitted from the
+ *     original leafRe/pattern even though CreateWOSectionIdentification.tsx already had a real RS
+ *     entry (added by a later, unrelated commit) — silently left "Built" only via the broad
+ *     CURSOR-VERTICAL sweep, whose runtime check never opens this file at all. No product code
+ *     changed — guard-only fix, matching the leaf to chrome that was already real.
  *   - wo.create_bill: CreateBillModal.tsx, a real ParityDrawer with a real EntityPicker.
  *   - wo.create_expense: CreateExpenseModal.tsx, a real ParityDrawer with a real EntityPicker.
  *   - in_transit.promote_to_wo: ConvertIssueToWOModal.tsx, a real Modal (ModalCloseButton
@@ -66,7 +70,7 @@
  *     ("Create Vehicle").
  *
  * @matrix-built {"modules":["maintenance"],"cols":["qbo_chrome"],"leafRe":"^wo\\.create$","task":"VERTICAL-QBO-CHROME-maintenance-wo-create","vertical":"column-wave"}
- * @matrix-built {"modules":["maintenance"],"cols":["qbo_chrome"],"leafRe":"^wo\\.source\\.(is|es|ac|et|rt|it)$","task":"VERTICAL-QBO-CHROME-maintenance-wo-source","vertical":"column-wave"}
+ * @matrix-built {"modules":["maintenance"],"cols":["qbo_chrome"],"leafRe":"^wo\\.source\\.(is|es|ac|et|rt|it|rs)$","task":"VERTICAL-QBO-CHROME-maintenance-wo-source","vertical":"column-wave"}
  * @matrix-built {"modules":["maintenance"],"cols":["qbo_chrome"],"leafRe":"^wo\\.create_bill$","task":"VERTICAL-QBO-CHROME-maintenance-wo-create-bill","vertical":"column-wave"}
  * @matrix-built {"modules":["maintenance"],"cols":["qbo_chrome"],"leafRe":"^wo\\.create_expense$","task":"VERTICAL-QBO-CHROME-maintenance-wo-create-expense","vertical":"column-wave"}
  * @matrix-built {"modules":["maintenance"],"cols":["qbo_chrome"],"leafRe":"^in_transit\\.promote_to_wo$","task":"VERTICAL-QBO-CHROME-maintenance-in-transit-promote","vertical":"column-wave"}
@@ -114,9 +118,9 @@ const CHECKS = [
     pattern: /<Modal open=\{open\} onClose=\{handleModalClose\} title="Create Work Order" sizePreset="lg" wide>/,
   },
   {
-    name: "wo.source.is/es/ac/et/rt/it: CreateWOSectionIdentification real SOURCE_TYPES config with all 6 codes",
+    name: "wo.source.is/es/ac/et/rt/it/rs: CreateWOSectionIdentification real SOURCE_TYPES config with all 7 codes",
     file: "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
-    pattern: /IS - Internal shop[\s\S]{0,700}IT - Internal tires/,
+    pattern: /IS - Internal shop[\s\S]{0,900}IT - Internal tires[\s\S]{0,300}RS - Roadside service/,
   },
   {
     name: "wo.create_bill: CreateBillModal real ParityDrawer with real EntityPicker",
@@ -281,4 +285,4 @@ if (fails.length) {
   console.error(`${LABEL} FAIL (${fails.length}):\n- ${fails.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — ${CHECKS.length} checks / 33 maintenance qbo_chrome leaf asserts`);
+console.log(`${LABEL} PASS — ${CHECKS.length} checks / 34 maintenance qbo_chrome leaf asserts`);
