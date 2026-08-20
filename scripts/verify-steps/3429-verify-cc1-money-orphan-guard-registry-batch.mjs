@@ -52,6 +52,7 @@ const guards = [
   "verify-payment-application-write-role-gated.mjs",
   "verify-payments-create-role-gated.mjs",
   "verify-pre-settlement-write-role-gated.mjs",
+  "verify-qbo-outbound-expense-total-amount-cents-column.mjs",
   "verify-reconciliation-match-existence-checked.mjs",
   "verify-relay-wallet-balance-fuel-total-cost-column.mjs",
   "verify-recon-engine-sign-convention-abs-is-credit.mjs",

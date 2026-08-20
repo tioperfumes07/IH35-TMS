@@ -930,15 +930,28 @@ export async function buildAccountingOutboundPayload(
     }
 
     case "expense": {
+      // ACCT-F5610 — this read a phantom `total_amount` column that never existed on
+      // accounting.expenses (confirmed live: absent). The real column is `total_amount_cents`,
+      // bigint CENTS -- so a naive rename alone would have been wrong in the OTHER direction from
+      // ACCT-F5607/F5609's dollars-stored-as-numeric bug: every other QBO outbound translator in
+      // this codebase (invoice.ts, bill.ts, payment.ts, bill_payment.ts, credit_memo.ts,
+      // journal_entry.ts, journal-entry-qbo-mapping.ts) divides amount_cents by 100 before handing
+      // it to QBO's Amount field, since QBO's API takes decimal dollars. Renaming the column
+      // without also dividing would have pushed every synced expense to QuickBooks at 100x
+      // overstated. Currently unreachable in practice: this path only fires when a recurring
+      // template's kind is "expense" AND the entity has an active QBO connection, and
+      // accounting.recurring_templates has 0 rows in prod today (confirmed live, 2 consecutive
+      // reads) -- fixed anyway since the query is otherwise genuinely broken and the table is
+      // reachable the moment a template is ever created.
       const ex = await client.query<{
         transaction_date: string;
-        total_amount: string;
+        total_amount_cents: string;
         memo: string | null;
         vendor_uuid: string | null;
         payment_account_uuid: string | null;
       }>(
         `
-          SELECT transaction_date::text, total_amount::text, memo,
+          SELECT transaction_date::text, total_amount_cents::text, memo,
                  vendor_uuid::text, payment_account_uuid::text
           FROM accounting.expenses
           WHERE id = $1::uuid AND operating_company_id = $2::uuid
@@ -987,7 +1000,7 @@ export async function buildAccountingOutboundPayload(
         ).rows[0]?.qbo_entity_id;
       if (!expenseAccount) throw new Error("expense_account_qbo_unresolved");
 
-      const total = Number(e.total_amount);
+      const total = Number(e.total_amount_cents) / 100;
       const body = buildQboExpensePurchasePayload({
         txnDate: e.transaction_date,
         totalAmount: total,
