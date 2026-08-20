@@ -8,6 +8,7 @@ const guards = [
   "verify-accounting-vendor-reverse-link-wired.mjs",
   "verify-acct-ap-bill-surface-wiring.mjs",
   "verify-aging-report-reverse-leaves.mjs",
+  "verify-ar-aging-credit-memo-netting.mjs",
   "verify-ap-bill-inline-surface-linkage.mjs",
   "verify-bank-automatch-memo-threshold-calibrated.mjs",
   "verify-bank-inline-surface-applicability.mjs",

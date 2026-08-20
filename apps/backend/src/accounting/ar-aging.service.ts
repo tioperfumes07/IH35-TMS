@@ -50,11 +50,25 @@ export async function getArAgingReport(input: {
           i.customer_id::text AS customer_id,
           COALESCE(c.customer_name, '') AS customer_name,
           i.due_date::text AS due_date,
-          i.amount_open_cents::bigint AS amount_open_cents
+          -- ACCT-F5612 — amount_open_cents is a GENERATED column (total_cents - amount_paid_cents,
+          -- migration 0123) with NO knowledge of accounting.credit_memo_applications (added by
+          -- ACCT-F5606). credit-memos.routes.ts already nets applied, non-voided credit-memo cents
+          -- off an invoice's TRUE remaining balance for its own over-apply guard; AR aging — a real
+          -- collections/DSO report — did not do the same subtraction, so any invoice with an applied
+          -- AR credit memo overstated its reported open balance here. Mirrors that route's own
+          -- already-applied-ceiling query exactly (SUM applied_cents WHERE voided_at IS NULL).
+          (i.amount_open_cents - COALESCE(cma.applied_cents, 0))::bigint AS amount_open_cents
         FROM accounting.invoices i
         LEFT JOIN mdata.customers c
           ON c.id = i.customer_id
           AND c.operating_company_id = i.operating_company_id
+        LEFT JOIN (
+          SELECT invoice_id, SUM(applied_cents) AS applied_cents
+          FROM accounting.credit_memo_applications
+          WHERE operating_company_id = $1::uuid
+            AND voided_at IS NULL
+          GROUP BY invoice_id
+        ) cma ON cma.invoice_id = i.id
         WHERE i.operating_company_id = $1::uuid
           AND i.amount_open_cents IS NOT NULL
           AND i.amount_open_cents > 0
