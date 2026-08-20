@@ -1956,3 +1956,18 @@ functions (the on-screen historical path + every Month-Close review link) still 
 proforma/void classes the TS fixes already exclude ($22,720 + $2,450 live on USMCA) and net no
 credits; fix is a CREATE OR REPLACE migration, rehearsing on a disposable Neon branch first per the
 CI-down rule. Continuing non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T19:55Z CC-1 | ACCT-F5658B SHIPPED (claim PR #13175 merged 76f0d660 + migration PR #13177
+merged a8086eff) -- the aging-as-of SQL functions migration, rehearsed FIRST on disposable Neon
+branch br-ancient-truth-ak5ja04s off prod per the CI-down rule. Rehearsal proof: USMCA A/R as-of
+2026-08-19 went $3,200.00 -> $0.00, and a per-status decomposition under the OLD arithmetic proved
+the entire delta was exactly 3 PROFORMA invoices -- the old function was reporting $3,200.00 of pure
+invented receivables (projections with zero JE rows) and ZERO legitimate rows were dropped; A/P
+unchanged; TRANSP/TRK healthy at scale; full re-apply idempotent. Both historical aging functions
+now carry the already-decided void/proforma/draft exclusions + dated credit-memo/vendor-credit
+netting, so the on-screen aging tables and Month-Close review links stop changing their filtering
+rules when the date picker moves off today. Migration number claimed first per the registry's own
+claim-before-author rule (chore claim PR merged before the migration PR). New last-declaration-wins
+guard registered in verify-steps/3429. Board closeout in this same PR cycle. REMAINING: only the
+owner-gated consolidate-the-three-aging-engines question (already filed). Continuing non-stop, no
+idle gaps, always fix never defer.
