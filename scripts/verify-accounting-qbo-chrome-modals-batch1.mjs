@@ -45,6 +45,7 @@
  * @matrix-built {"modules":["accounting"],"cols":["qbo_chrome"],"leafRe":"^accounting\\.parity\\.receipts_page$","task":"VERTICAL-QBO-CHROME-accounting-receipts-page","vertical":"column-wave"}
  * @matrix-built {"modules":["accounting"],"cols":["qbo_chrome"],"leafRe":"^accounting\\.parity\\.vendor_bill_create_page$","task":"VERTICAL-QBO-CHROME-accounting-vendor-bill-create-page","vertical":"column-wave"}
  * @matrix-built {"modules":["accounting"],"cols":["qbo_chrome"],"leafRe":"^accounting\\.parity\\.vendor_credits_page$","task":"VERTICAL-QBO-CHROME-accounting-vendor-credits-page","vertical":"column-wave"}
+ * @matrix-built {"modules":["accounting"],"cols":["qbo_chrome"],"leafRe":"^accounting\\.parity\\.credit_memos_page$","task":"VERTICAL-QBO-CHROME-accounting-credit-memos-page","vertical":"column-wave"}
  * @matrix-built {"modules":["accounting"],"cols":["qbo_chrome"],"leafRe":"^payment_methods_catalog\\.create$","task":"VERTICAL-QBO-CHROME-accounting-payment-methods-catalog-create","vertical":"column-wave"}
  * @matrix-built {"modules":["accounting"],"cols":["qbo_chrome"],"leafRe":"^bills\\.multiple$","task":"VERTICAL-QBO-CHROME-accounting-bills-multiple","vertical":"column-wave"}
  *
@@ -87,6 +88,7 @@ const CHECKS = [
   { name: "accounting.parity.receipts_page: ReceiptsPage real chrome", file: "apps/frontend/src/pages/accounting/ReceiptsPage.tsx", pattern: /(ParityTable|CollapsedListFilters|MoneyInput)/ },
   { name: "accounting.parity.vendor_bill_create_page: VendorBillCreatePage real chrome", file: "apps/frontend/src/pages/accounting/VendorBillCreatePage.tsx", pattern: /(ParityDrawer|MoneyInput|DatePicker)/ },
   { name: "accounting.parity.vendor_credits_page: VendorCreditsPage real chrome", file: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx", pattern: /(ParityTable|ParityDrawer|MoneyInput)/ },
+  { name: "accounting.parity.credit_memos_page: CreditMemosPage real ParityDrawer + EntityPicker chrome", file: "apps/frontend/src/pages/accounting/CreditMemosPage.tsx", pattern: /(ParityDrawer|EntityPicker)/ },
   { name: "payment_methods_catalog.create: PaymentMethodsCatalogPage real chrome", file: "apps/frontend/src/pages/accounting/PaymentMethodsCatalogPage.tsx", pattern: /(ParityTable|ParityDrawer|Modal\b)/ },
   { name: "bills.multiple: CreateMultipleBillsPage real chrome", file: "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx", pattern: /(ParityDrawer|ParityTable|MoneyInput)/ },
 ];

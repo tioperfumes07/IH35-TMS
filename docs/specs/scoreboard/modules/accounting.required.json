@@ -979,6 +979,20 @@
       ]
     },
     {
+      "id": "accounting.parity.credit_memos_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Credit Memos Page",
+      "route_hint": "surface://pages/accounting/CreditMemosPage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/CreditMemosPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "customer",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "accounting.parity.ccpayment",
       "tab": "Parity / side panels",
       "sub": "ParityDrawer site: CCPayment",

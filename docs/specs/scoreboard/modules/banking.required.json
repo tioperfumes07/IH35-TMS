@@ -151,7 +151,9 @@
       "sub": "Match / Categorize",
       "route_hint": "/banking/transactions",
       "owned_surface_paths": [
-        "pages/banking/BankTxCategorizationPage.tsx"
+        "pages/banking/BankTxCategorizationPage.tsx",
+        "pages/banking/components/BankingTransactionsDesignView.tsx",
+        "pages/banking/components/BankTransactionAttachmentsNotesModal.tsx"
       ],
       "required": [
         "vendor",
@@ -170,6 +172,7 @@
       "tab": "Reconciliation",
       "sub": "Reconciliation workspace",
       "route_hint": "/banking/reconciliation",
+      "surface_path": "pages/banking/BankReconciliationPage.tsx",
       "required": [
         "connectivity",
         "qbo_chrome",

@@ -146,7 +146,8 @@
       "sub": "Roster · ParityTable from maintenance.parts_inventory",
       "route_hint": "/inventory",
       "owned_surface_paths": [
-        "pages/maintenance/components/PartsInventoryTable.tsx"
+        "pages/maintenance/components/PartsInventoryTable.tsx",
+        "pages/inventory/InventoryPartsStockPage.tsx"
       ],
       "required": [
         "vendor",
