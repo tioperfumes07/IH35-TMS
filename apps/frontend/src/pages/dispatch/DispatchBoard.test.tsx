@@ -26,13 +26,6 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
       ],
     }),
     listDispatchInShopUnits: vi.fn().mockResolvedValue({ units: [] }),
-    getDispatchLoadEta: vi.fn().mockResolvedValue({
-      driver_lat: 30.2,
-      driver_lng: -97.7,
-      distance_remaining_miles: 88,
-      eta_at: "2026-05-12T18:42:00.000Z",
-      source: "fallback" as const,
-    }),
   };
 });
 
@@ -61,6 +54,10 @@ function mockLoad(overrides: Partial<DispatchLoadRow> = {}): DispatchLoadRow {
     updated_at: "2026-01-01T00:00:00.000Z",
     soft_deleted_at: null,
     deleted_by_user_id: null,
+    // The ETA chip (SamsaraEtaColumn, components/dispatch/LiveEtaColumns.tsx) reads these fields
+    // directly off the load row now — no more per-row getDispatchLoadEta() fetch.
+    samsara_eta_at: "2026-05-12T18:42:00.000Z",
+    samsara_eta_source: "samsara",
     ...overrides,
   };
 }

@@ -165,7 +165,9 @@ function renderDrawer(ui: ReactElement) {
 }
 
 function footerPrimaryAction() {
-  const footer = screen.getByRole("complementary").querySelector("footer");
+  // The drawer's <aside> now has an explicit role="dialog" (a slide-out modal, not page-level
+  // complementary content) — the shared ParityDrawer a11y convention.
+  const footer = screen.getByRole("dialog").querySelector("footer");
   expect(footer).toBeTruthy();
   return within(footer as HTMLElement).getAllByRole("button")[0];
 }
