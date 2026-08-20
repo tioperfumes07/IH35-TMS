@@ -1669,3 +1669,12 @@ FLEET›UNIT LOADING…
 Unit L | healthz=596b3bd | mutation=none | NEXT=fleet.unit.profile.driver_assign
 Devin-A | LIVE STARVED | module=fleet | leaf=roster.filter.status_active | URL=https://app.ih35dispatch.com/fleet?status=InService | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.roster.filter.status_inshop
 Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.driver_assign | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.quick_assign
+Devin-A | LIVE STARVED | module=fleet | leaf=unit.profile.quick_assign | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/home ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.current_load
