@@ -3426,3 +3426,5 @@ Idioma
 Ingles
 Espanol (preview)
 t | NEXT=leaf=drivers:drivers.panel.driver_dqf:connectivity
+Devin-A | LIVE PASS | leaf=drivers:drivers.panel.driver_dqf:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=3a0176e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.panel.pending_settlement_deductions:connectivity
+Devin-A | LIVE PASS | leaf=drivers:drivers.panel.driver_dqf:driver | USMCA | URL=https://app.ih35dispatch.com/drivers | healthz=3a0176e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/drivers marker 'drivers' | NEXT=leaf=drivers:drivers.panel.pending_settlement_deductions:connectivity
