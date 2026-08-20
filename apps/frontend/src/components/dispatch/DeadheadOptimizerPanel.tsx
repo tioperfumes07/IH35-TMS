@@ -6,6 +6,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 export type DeadheadOptimizerPanelProps = {
   operatingCompanyId: string;
   unitUuid: string;
+  unitName?: string | null;
   afterDeliveryAt: string;
   dropCity?: string;
   dropState?: string;
@@ -25,6 +26,7 @@ function fmtMoneyCents(cents: number) {
 export function DeadheadOptimizerPanel({
   operatingCompanyId,
   unitUuid,
+  unitName,
   afterDeliveryAt,
   dropCity,
   dropState,
@@ -62,7 +64,7 @@ export function DeadheadOptimizerPanel({
         {/* Exact Leaves dispatch.panel.deadhead_optimizer:unit — unitUuid was API-only */}
         {unitUuid ? (
           <p className="mt-1 text-xs text-slate-600" data-testid="deadhead-optimizer-unit-entitylink">
-            Unit: <EntityLinkOrTombstone kind="unit" id={unitUuid} name={null} noun="Unit" />
+            Unit: <EntityLinkOrTombstone kind="unit" id={unitUuid} name={unitName} noun="Unit" />
           </p>
         ) : null}
       </div>
