@@ -1673,3 +1673,16 @@ git show origin/main confirmed: reverseSettlementGlPosting( call-site count = 0,
 retiredSettlementReverse reference count = 3, guard's ACCT-F5648 marker count = 1. Board closeout
 (GUARD-WORKORDERS.md + CC-3-FINDINGS-CHECKLIST.md) shipped in this same PR cycle. REMAINING: none for
 this finding -- continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
+
+2026-08-20T16:12Z CC-1 | ACCT-F5649 SHIPPED (PR #12689, merged 2c41d5a1) -- dedicated read-only sweep
+of recurring-bill/prepaid/weekly-close/detention-billing/obligation-reconcile/owner-token-advance/
+factoring/maintenance writers not yet covered by ACCT-F5634..F5648. generateFromTemplate
+(recurring-bill-template generate-now, live route + daily cron worker) read the template unlocked, ran
+createBill() on a separate connection, then advanced next_generation_date with a blind non-CAS UPDATE
+-- and the route's Idempotency-Key header requirement was pure theater, never actually checked against
+anything. Two near-simultaneous calls could both create a real duplicate AP bill (and duplicate GL JEs
+if BILL_GL_POSTING_ENABLED is on for that entity). Fixed by locking the template row FOR UPDATE for the
+entire check-generate-advance sequence in one transaction, adding a fresh-read guard against a blocked
+racer proceeding after the winner committed, and making the final UPDATE a real compare-and-swap.
+Board closeout shipped in this same PR cycle. REMAINING: none for this finding -- continuing the
+money-lane sweep non-stop, no idle gaps, always fix never defer.
