@@ -16,6 +16,7 @@ import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { StateSelect } from "../../../components/forms/StateSelect";
 
 const LINK = "text-slate-700 hover:underline";
 
@@ -241,7 +242,12 @@ export function DriversMasterDataPage() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="CDL number" value={draft.cdl_number} onChange={(e) => setDraft((p) => ({ ...p, cdl_number: e.target.value }))} />
-            <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="CDL state" value={draft.cdl_state} onChange={(e) => setDraft((p) => ({ ...p, cdl_state: e.target.value }))} />
+            <StateSelect
+              value={draft.cdl_state}
+              onChange={(code) => setDraft((p) => ({ ...p, cdl_state: code }))}
+              placeholder="CDL state"
+              id="maintenance-create-driver-cdl-state"
+            />
           </div>
           <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
           <Button disabled={!draft.first_name || !draft.last_name || !draft.phone || createMutation.isPending} onClick={() => createMutation.mutate()}>
