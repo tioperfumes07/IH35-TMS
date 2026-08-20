@@ -78,6 +78,7 @@ const guards = [
   "verify-recurring-bill-template-ownership-check.mjs",
   "verify-recurring-bill-template-role-gated.mjs",
   "verify-invoice-inline-surface-applicability.mjs",
+  "verify-invoices-bulk-void-reverses-gl.mjs",
   "verify-invoices-customer-historical-label-resolver.mjs",
   "verify-liabilities-table-display-id-no-false-tombstone.mjs",
   "verify-liability-built-tags-strict.mjs",
