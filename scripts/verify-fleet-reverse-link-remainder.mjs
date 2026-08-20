@@ -30,7 +30,7 @@ function failures(s = {}) {
   return [
     ["unit document exact drill", u.includes('kind="document" id={row.file_id}')],
     ["quick availability driver FK", e.includes('{ key: "assigned_driver_id", label: "Default Driver", type: "driver", tab: "Quick-availability" }')],
-    ["default-driver reverse unit drill", da.includes('kind="unit"') && da.includes('id={String(def.unit_id)}')],
+    ["default-driver reverse unit drill", da.includes('EntityLinkOrTombstone') && da.includes('id={def.unit_id == null ? null : String(def.unit_id)}') && da.includes('name={def.unit_number}')],
     ["trailer assignment unit drill", ta.includes('EntityLinkOrTombstone') && ta.includes('kind="unit"') && ta.includes('id={String(unit.unit_id)}') && ta.includes('name={unit.unit_number}')],
     ["trailer assignment load drill", ta.includes('EntityLinkOrTombstone') && ta.includes('kind="load"') && ta.includes('id={String(load.load_id)}') && ta.includes('name={load.load_number}')],
     ["trailer maintenance WO drill", /kind="work_order"/.test(m) || m.includes('/maintenance/work-orders/${String(wo.wo_id)}')],
@@ -48,7 +48,7 @@ if (process.argv.includes("--selftest")) {
   parsed.leaves.find((leaf) => leaf.id === "unit.profile.qbo_mapping").required.push("reverse_link");
   const checks = [
     failures({ unitDocs: unitDocs.replace('kind="document" id={row.file_id}', 'kind="unit" id={row.file_id}') }).includes("unit document exact drill"),
-    failures({ driverAssignment: driverAssignment.replace('id={String(def.unit_id)}', 'id={driverId}') }).includes("default-driver reverse unit drill"),
+    failures({ driverAssignment: driverAssignment.replace('name={def.unit_number}', 'name={def.unit_id}') }).includes("default-driver reverse unit drill"),
     failures({ trailerAssignment: trailerAssignment.replace('id={String(unit.unit_id)}', 'id={String(load.load_id)}') }).includes("trailer assignment unit drill"),
     failures({ trailerAssignment: trailerAssignment.replace('name={load.load_number}', 'name={load.load_id}') }).includes("trailer assignment load drill"),
     failures({ maintenance: maintenance.replaceAll('kind="work_order"', 'kind="unit"') }).includes("trailer maintenance WO drill"),
