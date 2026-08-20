@@ -138,6 +138,47 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
 };
 
 const MATRIX_POLL_MS = 3000;
+const SCOREBOARD_POLL_MS = 3000;
+
+type MatrixRecentPr = {
+  number: number;
+  title: string;
+  state?: string;
+  mergedAtCt: string;
+  url: string;
+};
+
+function formatCtStamp(iso: string | number | Date | null | undefined): string {
+  if (iso == null || iso === "") return "—";
+  const d = typeof iso === "number" || iso instanceof Date ? new Date(iso) : new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("month")}/${get("day")}/${get("year")} ${get("hour")}:${get("minute")}:${get("second")} ${get("dayPeriod")} CT`;
+}
+
+async function fetchMatrixRecentMerged(): Promise<{
+  items: MatrixRecentPr[];
+  source?: "git_log" | "github" | "ledger_committed";
+}> {
+  const r = await fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), { credentials: "include" });
+  if (!r.ok || r.status === 204) return { items: [] };
+  const json = (await r.json()) as {
+    recentActivity?: MatrixRecentPr[];
+    meta?: { recentActivitySource?: "git_log" | "github" | "ledger_committed" };
+  };
+  const items = Array.isArray(json.recentActivity) ? json.recentActivity.slice(0, 10) : [];
+  return { items, source: json.meta?.recentActivitySource };
+}
 
 type Row =
   | { kind: "section"; label: string }
@@ -444,6 +485,27 @@ export function ModuleMatrixPreviewPage() {
   // Query key MUST stay distinct from ModuleMatrixSystemView's scope=system rollup key.
   // Colliding on ["program","module-matrix","system"] lets the rollup payload (no leaf array)
   // poison the System *module* board → ErrorBoundary "_.leaves is not iterable".
+  const { data: recentMerged } = useQuery({
+    queryKey: ["program", "audit-scoreboard", "matrix-recent"],
+    queryFn: fetchMatrixRecentMerged,
+    refetchInterval: SCOREBOARD_POLL_MS,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    retry: 1,
+  });
+  const recentRows = recentMerged?.items ?? [];
+  const recentSource = recentMerged?.source;
+  const recentSourceLabel =
+    recentSource === "git_log"
+      ? "live git log (request-time)"
+      : recentSource === "github"
+        ? "live GitHub pulls API"
+        : recentSource === "ledger_committed"
+          ? "committed ledger snapshot (may lag tip — not live)"
+          : recentMerged
+            ? "source unknown"
+            : "loading";
+
   const { data: live, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
     queryKey: ["program", "module-matrix", "module", moduleId],
     queryFn: () => fetchModuleMatrix(moduleId),
@@ -531,7 +593,7 @@ export function ModuleMatrixPreviewPage() {
               {" "}
               · refreshed{" "}
               <span data-testid="module-matrix-last-refresh">
-                {new Date(dataUpdatedAt).toLocaleTimeString()}
+                {formatCtStamp(dataUpdatedAt)}
               </span>
               {isFetching ? " (polling…)" : null}
             </>
@@ -574,6 +636,46 @@ export function ModuleMatrixPreviewPage() {
           )}
         </div>
       </header>
+
+      <section className="recent" data-testid="module-matrix-recent-activity">
+        <h2>
+          Recent activity — last 10 merged PRs{" "}
+          <span className="sub" data-testid="module-matrix-recent-source">
+            {recentSourceLabel} · merge times in CT (America/Chicago)
+          </span>
+        </h2>
+        {recentSource === "ledger_committed" ? (
+          <div className="clsWarn" data-testid="module-matrix-recent-stale-warning">
+            Showing the committed scoreboard snapshot — live git log / GitHub did not answer. This can
+            lag tip; it is not a live feed.
+          </div>
+        ) : null}
+        {recentRows.length === 0 ? (
+          <p className="recent-empty" data-testid="module-matrix-recent-empty">
+            No recent PRs from git log, GitHub, or the committed ledger — empty is honest, not a fake
+            green panel.
+          </p>
+        ) : (
+          <ul className="recent-list">
+            {recentRows.map((row) => (
+              <li key={row.number || row.title} data-testid={`module-matrix-recent-pr-${row.number}`}>
+                {row.url ? (
+                  <a href={row.url} target="_blank" rel="noreferrer">
+                    #{row.number}
+                  </a>
+                ) : (
+                  <span>#{row.number || "—"}</span>
+                )}
+                <span className="recent-title">
+                  {row.state ? <span className="recent-state">{row.state}</span> : null}
+                  {row.title}
+                </span>
+                <span className="recent-when">{row.mergedAtCt || "—"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="module-rail" data-testid="module-matrix-module-rail">
         <div className="lbl">
@@ -899,6 +1001,16 @@ const CSS = `
 .ih35mm .note{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-top:16px;font-size:13px;color:#78350f;line-height:1.55}
 .ih35mm .foot{color:var(--slate-lt);font-size:11.5px;margin-top:18px;line-height:1.6}
 .ih35mm .foot a{color:var(--navy);font-weight:600}
+.ih35mm .recent{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:0 0 14px}
+.ih35mm .recent h2{margin:0 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.ih35mm .recent-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ih35mm .recent-list li{display:grid;grid-template-columns:72px 1fr auto;gap:10px;align-items:baseline;font-size:12.5px}
+.ih35mm .recent-list a{color:var(--navy);font-weight:700}
+.ih35mm .recent-title{color:var(--slate)}
+.ih35mm .recent-state{display:inline-block;margin-right:8px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--slate-lt)}
+.ih35mm .recent-when{font-variant-numeric:tabular-nums;color:var(--navy);font-weight:700;white-space:nowrap}
+.ih35mm .recent-empty{margin:0;font-size:12.5px;color:var(--slate-lt)}
+.ih35mm .clsWarn{background:var(--amber-bg);border:1px solid #fde68a;color:#78350f;border-radius:8px;padding:8px 10px;font-size:12px;margin:0 0 10px}
 .ih35mm code{background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:12px}
 @media(max-width:900px){.ih35mm .metrics{grid-template-columns:repeat(2,1fr)}}
 `;
