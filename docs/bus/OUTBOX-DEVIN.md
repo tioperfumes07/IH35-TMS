@@ -1139,3 +1139,14 @@ Ingles
 Espanol (preview)
 6 | healthz=f053c94 | mutation=none | NEXT=finance.hop.cash_flow
 Devin-A | LIVE STARVED | module=finance | leaf=hop.cash_flow | URL=https://app.ih35dispatch.com/cash-flow | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/cash-flow ; body head Checking session... | healthz=f053c94 | mutation=none | NEXT=finance.hop.reports
+Devin-A | LIVE PASS | module=finance | leaf=hop.reports | URL=https://app.ih35dispatch.com/reports/profit-loss | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/reports/profit-loss ; marker 'Reports' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+Reports
+Category hub
+Run rep | healthz=f053c94 | mutation=none | NEXT=finance.finance.wizard.loan_wizard_page
