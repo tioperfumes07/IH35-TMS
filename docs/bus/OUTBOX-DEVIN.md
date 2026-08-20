@@ -4962,3 +4962,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=safety:safety.parity.fine_create:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.fine_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=0157843 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety healthz=0157843 head Checking session... | NEXT=leaf=safety:safety.parity.fine_detail:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.fine_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=0157843 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety healthz=0157843 head Checking session... | NEXT=leaf=safety:safety.parity.fine_detail:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.fine_create:driver | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=0157843 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety healthz=0157843 head Checking session... | NEXT=leaf=safety:safety.parity.fine_detail:connectivity
