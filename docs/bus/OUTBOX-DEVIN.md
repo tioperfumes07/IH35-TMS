@@ -5463,3 +5463,7 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=fleet:unit.detail.finance_linkage:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.detail.finance_linkage:unit | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance healthz=unknown head Checking session... | NEXT=leaf=fleet:unit.detail.permits:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.detail.finance_linkage:vendor | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance healthz=unknown head Checking session... | NEXT=leaf=fleet:unit.detail.permits:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.detail.finance_linkage:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance healthz=unknown head Checking session... | NEXT=leaf=fleet:unit.detail.permits:unit
+Devin-A | LIVE STARVED | leaf=fleet:unit.detail.finance_linkage:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/units/:id/detail?tab=finance healthz=unknown head Checking session... | NEXT=leaf=fleet:unit.detail.permits:unit
