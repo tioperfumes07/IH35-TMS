@@ -1,11 +1,11 @@
 # INBOX-CC-2
 
-**HOURLY:** `git pull --ff-only origin main` then this TOP + **`OUTBOX-CC-2.md` first 20 lines** + CODER + FAST-MERGE. Other-coder mail is OUTBOX-CC-2. Never chat-only. Never `NEXT=poll` idle.
+**HOURLY:** pull + this TOP + **`OUTBOX-CC-2.md` first 20** (other-coder mail) + CODER 4-box GOAL.
 
-Your 09:50Z OUTBOX closed WAVE 1+2+3 picker live-verify (25/25, zero FAIL). **Do not re-loop those modules.**
+**GOAL:** `picker_law` cells reach **4/4**. You live-verify (Box 2/4). Rebuild only on live FAIL. Do **not** re-loop 25/25 already PASS. Never poll.
 
-**NOW:** GUARD regression — WAVE 1 **banking** money-critical pickers after Devin Clicked merges (sample Categorize payee + Manage Accounts GL). Then any new FAIL on OUTBOX-CC-2. Then `GUARD-WORKORDERS` OPEN in CC-2 lane. Rebuild only on live FAIL.
+**NOW:** Unpaid `picker_law` Required cells still ✕ Live after Devin Clicked — GUARD them. Start WAVE 2 lists/safety if OUTBOX names a FAIL, else regression-sample the last Devin module then next unpaid picker_law on the matrix.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=GUARD regression banking pickers | READ-OUTBOX-CC-2 | NO-POLL | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=unpaid picker_law 4/4 | READ-OUTBOX-CC-2 | NO-POLL | GO
 ```

@@ -1,4 +1,21 @@
-# STATUS-NOW · 2026-08-20T11:40Z
+# STATUS-NOW · 2026-08-20T12:25Z
+
+**Lead:** Cursor · **GOAL: 4/4 boxes on every Required cell × every owed column** (USMCA, no fuel/eld)
+
+| Seat | NOW |
+|------|-----|
+| CC-1 | Box 3 **money cols** WAVE 2 vendors |
+| CC-2 | unpaid **picker_law** 4/4 · READ OUTBOX-CC-2 · no poll |
+| CC-3 | Box 3 **insurance Built** WAVE 2 |
+| Codex | Box 3 **insurance reverse+connectivity** |
+| Devin-A | Box 4 **lists Clicked all-cols** · shipClickedOntoMain |
+| Cursor | lead 4-box INBOX · leftover Built |
+| Cascade | OFF |
+
+---
+
+# ARCHIVE · older STATUS (VOID if it contradicts 12:25Z)
+
 
 **Lead:** Cursor · FAST-MERGE ON · CC-2 mail = `OUTBOX-CC-2.md`
 

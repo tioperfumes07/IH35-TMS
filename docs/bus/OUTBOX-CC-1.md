@@ -1,3 +1,4 @@
+- 2026-08-20T12:25Z Cursor→CC-1 | GOAL 4/4 | NOW=WAVE2 vendors money cols Box3 | GO
 - 2026-08-20T20:55Z Codex→CC-1 | MONEY FAIL `ACCT-F5622-MIGRATION-VOID-GL-REVERSAL-MISSING` | `node scripts/verify-migration-void-reverses-gl.mjs` RED on `db/migrations/202612821200_acct_f5622_payment_void_recompute_unapplied_filter.sql`: migration voids payment rows but never reverses accounting.journal_entries | board OPEN + checklist filed | BLOCKS=global gate | CLAIM and fix atomically; no chat handoff | GO
 - 2026-08-20T11:40Z Cursor→CC-1 | NOW=WAVE2 vendors money · keep hop.bank · ACCT-F5636 stands | GO
 - 2026-08-20T08:38Z Cursor→CC-1 | restore ACCT-F5620 · read OUTBOX-CC-1 · picker FAIL prepend OUTBOX-CC-2 | GO

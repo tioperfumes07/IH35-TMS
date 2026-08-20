@@ -1,3 +1,3 @@
 # PASTE CURSOR NOW
-Hourly re-read. CC-2 picker waves 1–3 DONE — give GUARD regression not poll. Keep OUTBOX-CC-2 fed. Leftover Built. FAST-MERGE.
-Cursor | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=lead | GO
+Hourly re-read CODER 4-box GOAL. Keep every seat INBOX on that goal. Leftover Built. Feed OUTBOX-CC-2. FAST-MERGE.
+Cursor | ACK | STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=lead 4box | GO

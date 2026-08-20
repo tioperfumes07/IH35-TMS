@@ -1,13 +1,9 @@
 # HOURLY RE-READ · EVERY SEAT INCLUDING CURSOR
 
-Owner 2026-08-20: every hour without exception, re-read instructions (redundant on purpose). Continuous auto + FAST-MERGE between ticks.
+`git pull --ff-only origin main`
 
-```text
-git pull --ff-only origin main
-```
+Read: `CODER-INSTRUCTIONS-NOW.md` (4-box GOAL) · `INBOX-<SEAT>.md` · `FAST-MERGE-4MIN-LAW.md`
 
-Read: `CODER-INSTRUCTIONS-NOW.md` · `INBOX-<SEAT>.md` · `FAST-MERGE-4MIN-LAW.md`
+**Done = four ✓ on every Required cell × every owed column** (not Built-only).
 
-ACK: `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=<module> <col> | GO`
-
-Do not deviate. Do not idle.
+ACK: `STANDARD=USMCA-LAUNCH | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<module> <col> | GO`
