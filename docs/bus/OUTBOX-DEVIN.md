@@ -10581,3 +10581,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=finance:hub.alias:connectivity
+Devin-A | LIVE PASS | leaf=finance:hub.alias:connectivity | USMCA | URL=https://app.ih35dispatch.com/finance-hub | healthz=96d4d16 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance/hub marker 'finance' | NEXT=leaf=finance:nav.amortization:connectivity
+Devin-A | LIVE PASS | leaf=finance:hub.alias:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance-hub | healthz=96d4d16 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance/hub marker 'finance' | NEXT=leaf=finance:nav.amortization:connectivity
