@@ -93,9 +93,9 @@ if (!/listWorkOrdersFiltered\s*\(/.test(drvSection) || !/driver_id:\s*driverId/.
 if (!/kind=["']work_order["']/.test(drvSection)) {
   failures.push(`${driverWoSection}: must EntityLink kind="work_order".`);
 }
-const driverLoadLabelPattern = /entityLabel\(\s*wo\.linked_load_number\s*,\s*wo\.load_id\s*,\s*["']Load["']\s*\)/;
+const driverLoadLabelPattern = /<EntityLinkOrTombstone[\s\S]{0,180}kind=["']load["'][\s\S]{0,120}id=\{String\(wo\.load_id\)\}[\s\S]{0,120}name=\{wo\.linked_load_number\}[\s\S]{0,80}noun=["']Load["']/;
 if (!driverLoadLabelPattern.test(drvSection)) {
-  failures.push(`${driverWoSection}: load EntityLink must consume the persisted linked_load_number instead of exposing an unresolved UUID.`);
+  failures.push(`${driverWoSection}: load drill must bind load_id + persisted linked_load_number through EntityLinkOrTombstone.`);
 }
 const drvDetail = read(driverDetail);
 if (!/<DriverWorkOrdersReverseSection(?![A-Za-z0-9_])/.test(drvDetail)) {
@@ -163,7 +163,7 @@ if (selftest) {
     console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted DriverProfilePage reverse-mount defect escaped");
     process.exit(1);
   }
-  const planted = drvSection.replace("wo.linked_load_number", "null");
+  const planted = drvSection.replace("name={wo.linked_load_number}", "name={null}");
   if (planted === drvSection || driverLoadLabelPattern.test(planted)) {
     console.error("FAIL verify-load-reverse-work-orders SELFTEST — planted driver WO load-label defect escaped");
     process.exit(1);
