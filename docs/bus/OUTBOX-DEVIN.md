@@ -2044,3 +2044,8 @@ Devin-A | LIVE PASS | leaf=vendors:chrome.toolbar_gear:qbo_chrome | USMCA | URL=
 Devin-A | LIVE PASS | leaf=vendors:chrome.toolbar_gear:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=525db9b
 Devin-A | LIVE STARVED | leaf=vendors:chrome.toolbar_filter:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=525db9b
 Devin-A | LIVE STARVED | leaf=vendors:chrome.toolbar_filter:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=525db9b
+Devin-A | LIVE STARVED | leaf=settlements:settlements.list:driver | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
+Devin-A | LIVE STARVED | leaf=settlements:settlements.list:load | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
+Devin-A | LIVE STARVED | leaf=settlements:settlements.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
+Devin-A | LIVE STARVED | leaf=settlements:settlements.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
+Devin-A | LIVE STARVED | leaf=settlements:settlements.list:settlement | USMCA | URL=https://app.ih35dispatch.com/driver-finance/settlements | healthz=525db9b
