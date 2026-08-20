@@ -16,7 +16,9 @@ function audit(frontend, backend) {
   if (!/setDriverId\(next \?\? ""\)/.test(picker)) failures.push("driver selection must update submitted driver state");
   if (!/driver_id:\s*driverId \|\| undefined/.test(frontend)) failures.push("creator must forward selected driver_id");
   if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(backend)) failures.push("POST schema must accept driver_id");
-  if (!/body\.data\.driver_id \?\? null/.test(backend)) failures.push("POST writer must persist driver_id");
+  if (!/body\.data\.unit_id,\s*body\.data\.driver_id \?\? null,\s*user\.uuid/.test(backend)) {
+    failures.push("POST INSERT values must persist driver_id between unit_id and dispatcher_user_id");
+  }
   return failures;
 }
 
@@ -24,7 +26,14 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [fe.replace('kind="driver"', 'kind="unit"'), api, "picker kind"],
     [fe.replace("driver_id: driverId || undefined", "driver_id: undefined"), api, "submit FK"],
-    [fe, api.replace("body.data.driver_id ?? null", "null"), "writer FK"],
+    [
+      fe,
+      api.replace(
+        /body\.data\.unit_id,(\s*)body\.data\.driver_id \?\? null,(\s*)user\.uuid/,
+        "body.data.unit_id,$1null,$2user.uuid",
+      ),
+      "writer FK",
+    ],
   ];
   for (const [front, back, name] of mutations) {
     if (audit(front, back).length === 0) {
