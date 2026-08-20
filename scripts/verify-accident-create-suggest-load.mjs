@@ -13,7 +13,9 @@ function audit(body) {
   for (const field of ["driver_id: driverId", "unit_id: unitId", "transaction_date: incidentDate"]) {
     if (!request.includes(field)) failures.push(`suggestion request missing ${field}`);
   }
-  if (!/enabled:\s*open && createMode &&/.test(body)) failures.push("suggest-load must run only on createMode");
+  if (!body.includes("enabled: open && createMode && Boolean(operatingCompanyId && incidentDate && (driverId || unitId || trailerId))")) {
+    failures.push("suggest-load must be create-only and require company, date, and a driver/unit/trailer anchor");
+  }
   if (!/if \(loadId \|\| suggestionPinned\) return/.test(body)) failures.push("resolver must not overwrite an operator-selected load");
   if (!/setLoadId\(suggested\.load_id\)/.test(body)) failures.push("suggested load id must reach the controlled create payload state");
   if (!/load_id:\s*loadId \|\| null/.test(body)) failures.push("create/save payload must still forward load_id");
@@ -26,7 +28,7 @@ if (process.argv.includes("--selftest")) {
     ["unit_id: unitId", "unit_id: undefined"],
     ["if (loadId || suggestionPinned) return", "if (suggestionPinned) return"],
     ["setLoadId(suggested.load_id)", "void suggested.load_id"],
-    ["enabled: open && createMode && Boolean(operatingCompanyId && incidentDate && (driverId || unitId))", "enabled: open && Boolean(operatingCompanyId)"],
+    ["enabled: open && createMode && Boolean(operatingCompanyId && incidentDate && (driverId || unitId || trailerId))", "enabled: open && Boolean(operatingCompanyId)"],
   ];
   for (const [from, to] of mutations) {
     const requestStart = source.indexOf("suggestExpenseLoad({");
