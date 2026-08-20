@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leafRe":"^load\.drawer\.settlement$","task":"LINK-F5127-LOAD-DRILL-ROUTES","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leafRe":"^load\\.drawer\\.settlement$","task":"LINK-F5127-LOAD-DRILL-ROUTES","vertical":"class-sweep"} */
 
 import fs from "node:fs";
 
@@ -11,6 +11,7 @@ const sources = {
   ediRoute: fs.readFileSync("apps/backend/src/integrations/edi/edi.routes.ts", "utf8"),
   routes: fs.readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8"),
   entityLink: fs.readFileSync("apps/frontend/src/components/shared/EntityLink.tsx", "utf8"),
+  matrix: fs.readFileSync("docs/specs/scoreboard/modules/dispatch.required.json", "utf8"),
 };
 
 const checks = [
@@ -26,7 +27,16 @@ const checks = [
   ["entityLink", /case "driver_app_load":[\s\S]*?return `\/driver\/loads\/\$\{id\}`/, "driver-app load resolver targets /driver/loads/:id"],
 ];
 
-const failures = (candidate) => checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
+const failures = (candidate) => {
+  const missing = checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
+  try {
+    const leaf = JSON.parse(candidate.matrix).leaves?.find((item) => item.id === "load.drawer.settlement");
+    if (!leaf?.required?.includes("reverse_link")) missing.push("exact dispatch settlement leaf owns reverse_link");
+  } catch {
+    missing.push("dispatch Required matrix parses");
+  }
+  return missing;
+};
 const found = failures(sources);
 if (found.length) {
   console.error(`verify-load-drill-route-vertical-sweep: FAIL — ${found.join("; ")}`);
@@ -41,7 +51,15 @@ if (process.argv.includes("--self-test")) {
       process.exit(1);
     }
   }
-  console.log(`verify-load-drill-route-vertical-sweep: SELF-TEST PASS — ${checks.length} planted defects rejected`);
+  const matrixMutant = {
+    ...sources,
+    matrix: sources.matrix.replace('"id": "load.drawer.settlement"', '"id": "load.drawer.settlement.removed"'),
+  };
+  if (!failures(matrixMutant).includes("exact dispatch settlement leaf owns reverse_link")) {
+    console.error("verify-load-drill-route-vertical-sweep: SELF-TEST FAIL — exact leaf ownership");
+    process.exit(1);
+  }
+  console.log(`verify-load-drill-route-vertical-sweep: SELF-TEST PASS — ${checks.length + 1} planted defects rejected`);
 }
 
-console.log(`verify-load-drill-route-vertical-sweep: PASS — ${checks.length} load drill-route invariants`);
+console.log(`verify-load-drill-route-vertical-sweep: PASS — ${checks.length + 1} exact leaf + load drill-route invariants`);
