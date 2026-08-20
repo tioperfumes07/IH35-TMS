@@ -13274,3 +13274,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:list.bulk:vendor
+Devin-A | LIVE PASS | leaf=vendors:list.bulk:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:list.filter_chips:vendor
+Devin-A | LIVE PASS | leaf=vendors:list.bulk:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:list.filter_chips:vendor
