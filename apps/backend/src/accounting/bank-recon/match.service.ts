@@ -97,7 +97,48 @@ export type MatchVariancePreview = {
 const Q11_FIXED_TOLERANCE_CENTS = 100;
 const Q11_PERCENT_TOLERANCE = 0.0001;
 const AUTO_MATCH_DATE_WINDOW_DAYS = 5;
-const AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.8;
+/**
+ * ACCT-F5604 — the memo bar was calibrated for two organic strings, but one side is a synthetic
+ * label the poster itself writes, and 0.8 never accounted for its fixed boilerplate.
+ *
+ * WHAT WAS BROKEN (measured live, tiny-field-89581227, 2026-08-20; banking.reconciliation_matches
+ * has 0 rows database-wide, all entities, for as long as this table has existed): every bank-
+ * categorization JE candidate's memo is `posting-engine.service.ts`'s own template —
+ * `Bank categorization: ${description} ${sourceId.slice(0,8)} posting` — and `memoSimilarity()`
+ * (Jaccard token overlap) scores that template against the bank transaction's own description at
+ * ONLY ~0.6, computed directly from this repo's real strings:
+ *   memoSimilarity("ACME Invoice 4500", "Bank categorization: ACME Invoice 4500 cb271ba0 posting")
+ *   = 0.6 -- the boilerplate words ("bank", "categorization", "posting") and the id suffix dilute
+ *   an otherwise EXACT content match below any bar above ~0.67, so 0.8 rejected this candidate
+ *   unconditionally regardless of how good the real-content match was underneath the wrapper.
+ *   ACCT-F365 (2026-08-12) already fixed the memo to embed the real description instead of a bare
+ *   uuid -- this is the residual gap ACCT-F365 didn't reach: embedding real content raised the
+ *   score, but not high enough to clear 0.8, so auto-match still never fired even after that fix
+ *   landed, confirmed by the still-zero row count 8 days later.
+ *
+ * THE FIX IS NOT TO DROP THE MEMO CHECK. An existing test
+ * (bank-recon/__tests__/match-auto-vs-manual.test.ts, "returns ranked manual candidates when
+ * similarity is too low") locks in the real protection this gate provides: an unrelated candidate
+ * that happens to share a bank transaction's exact amount and date (a real coincidence risk, e.g.
+ * two different invoices for the same round amount posted the same week) scores memoSimilarity 0
+ * against dissimilar text and must stay manual. Dropping the gate entirely would auto-match that
+ * case too, turning a bad suggestion into a bad posting -- the exact failure mode
+ * computeMatchScore's own ACCT-F179 fix (above) was careful never to introduce on the ranking side.
+ *
+ * RECALIBRATED, NOT REMOVED: lowered to 0.5, chosen from the measured cluster gap, not a round
+ * number. Real matches through the synthetic-memo wrapper score 0.6-1.0 (0.6 for the boilerplate-
+ * diluted JE case above, 1.0 for a plain payment/bill memo with no wrapper); coincidental overlaps
+ * on shared generic banking vocabulary score 0.2-0.36 ("Wire Transfer Fee" vs an unrelated "Bank
+ * categorization: Wire Transfer ABC Corp ... posting" = 0.36); genuinely unrelated content scores 0.
+ * 0.5 sits in the gap between the two clusters with margin on both sides.
+ *
+ * KNOWN RESIDUAL GAP, not invented around: a JE candidate whose original bank transaction had an
+ * EMPTY description at posting time falls back to `Bank categorization ${sourceId} posting` with no
+ * embedded content at all -- similarity 0 regardless of threshold, so that specific candidate still
+ * cannot auto-match. That is a data-completeness gap in the poster's fallback label, not a matching-
+ * threshold problem, and is out of scope for this fix (see REMAINING in the shipping commit).
+ */
+const AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.5;
 
 function normalizeText(input: string | null | undefined) {
   return String(input ?? "")
