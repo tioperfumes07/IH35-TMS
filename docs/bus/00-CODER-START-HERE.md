@@ -1,4 +1,4 @@
-# START HERE · 2026-08-20T03:40Z · COMPLETE INSTRUCTIONS
+# START HERE · 2026-08-20T03:55Z · URGENT 6 LOCK
 
 **Canonical bus = `docs/bus/` in the repo after `git pull --ff-only origin main`.**  
 Desktop `USMCA-WEEKEND-LEAD-2026-08-07/` must match. Chat is not the command channel. Jorge is not the messenger.
@@ -13,7 +13,7 @@ Desktop `USMCA-WEEKEND-LEAD-2026-08-07/` must match. Chat is not the command cha
 
 Then write OUTBOX `WORKING` and start the NOW FO. Continuous. Never idle.
 
-**OWNER SEQ (urgency):** accounting → banking → factoring → settlements → drivers → customers → vendors → dispatch. Then rest.
+**URGENT 6 ONLY:** accounting · banking · customers · vendors · factoring · settlements. **Fuel is last — do not touch.** STOP fleet/dispatch.
 
 **Codex RIGHT NOW:** paste/ACK `docs/bus/PASTE-CODEX-NOW.md` (03:40Z). Remaining drivers reverse → customers. Generic continuous-mode paste is not an ACK. **CC-2:** `PASTE-CC-2-NOW.md` — not idle. **Devin:** `PASTE-DEVIN-A-NOW.md` — Miss C is remaining work.
 

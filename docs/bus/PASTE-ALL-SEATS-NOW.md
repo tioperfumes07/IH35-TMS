@@ -1,18 +1,20 @@
-# PASTE TO EVERY SEAT · 2026-08-20T03:40Z · COMPLETE LAW
+# PASTE TO EVERY SEAT · 2026-08-20T03:55Z · URGENT 6 · STOP FUEL/FLEET/DISPATCH
 
 `git pull --ff-only origin main`
 
-READ: `docs/bus/CODER-INSTRUCTIONS-NOW.md` **§0 (truly done)** then your `docs/bus/INBOX-<SEAT>.md` TOP.
+**Jorge: you deviated.** NOW is **only:** accounting, banking, customers, vendors, factoring, settlements.
 
-Jorge is not the messenger. Empty chat ≠ idle. Empty OUTBOX = idle = defect.
+**DO NOT TOUCH: fuel** (last module). **STOP fleet. STOP dispatch Clicked.**
+
+READ: `docs/bus/CODER-INSTRUCTIONS-NOW.md` then `INBOX-<SEAT>.md`.
 
 | Seat | NOW |
 |------|-----|
-| Cursor | Lead + drivers→customers→vendors→dispatch **Built** leftovers |
-| Codex | Drivers reverse FE remaining → customers → vendors → dispatch (no CDP). ACK `PASTE-CODEX-NOW.md` |
-| Devin-A | Clicked OWNER SEQ, `leaf:col`, chrome 9227, OUTBOX `LIVE PASS`. Miss C is remaining work. Never 502 diary |
-| CC-1 | Accounting money/GL → banking → factoring → settlements |
-| CC-2 | Lists `+ Add new` **customers catalogs** (not “lane clean”). See `PASTE-CC-2-NOW.md` |
-| CC-3 / Cascade | **OFF** |
+| CC-1 | accounting money → banking → factoring → settlements |
+| Cursor | customers Built → vendors Built |
+| Codex | customers reverse → vendors reverse |
+| Devin-A | Clicked URGENT 6 only · 9227 · no fleet no fuel no dispatch |
+| CC-2 | lists customers +Add new → vendors |
+| CC-3 / Cascade | OFF |
 
-**Truly done this wave** = READY ✓ + Miss C = 0 on frozen USMCA ops. **Fully wired** = items 1–12. Live Chrome last. Box 4 never done.
+ACK: `STANDARD=URGENT-6`
