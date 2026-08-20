@@ -316,7 +316,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
     bad: /display_id\s*\?\?\s*"—"|label=\{row\.display_id\s*\?\?/,
-    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Settlement"\s*\)/,
+    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Settlement"\s*\)|<EntityLinkOrTombstone kind="settlement" id=\{row\.id\} name=\{row\.display_id\} noun="Settlement"/,
   },
   {
     rel: "apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx",
@@ -366,7 +366,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
     bad: /driver_full_name\s*\|\|\s*"Driver"/,
-    good: /entityLabel\(\s*settlement\.driver_full_name\s*,\s*settlement\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*settlement\.driver_full_name\s*,\s*settlement\.driver_id\s*,\s*"Driver"\s*\)|<EntityLinkOrTombstone[\s\S]{0,100}kind="driver"[\s\S]{0,100}name=\{settlement\.driver_full_name\}/,
   },
   {
     rel: "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx",
@@ -714,7 +714,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
     bad: /label=\{row\.driver_full_name\}/,
-    good: /entityLabel\(\s*row\.driver_full_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*row\.driver_full_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)|<EntityLinkOrTombstone[\s\S]{0,100}kind="driver"[\s\S]{0,100}name=\{row\.driver_full_name\}/,
   },
   {
     rel: "apps/frontend/src/components/drivers/EarningsTab.tsx",

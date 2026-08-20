@@ -1,11 +1,11 @@
 import type { SettlementListRow } from "../../api/driverFinance";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { DataPanel } from "../layout/DataPanel";
 import { DataPanelRow } from "../layout/DataPanelRow";
 import { colors } from "../../design/tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(value: number) {
   return formatUsd(value);
@@ -40,10 +40,11 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
         rows.map((settlement) => (
           <DataPanelRow key={settlement.id} data-testid="pre-settlement-row-reverse">
             <span className="flex flex-wrap items-center gap-1 text-sm">
-              <EntityLink
+              <EntityLinkOrTombstone
                 kind="driver"
                 id={settlement.driver_id}
-                label={entityLabel(settlement.driver_full_name, settlement.driver_id, "Driver")}
+                name={settlement.driver_full_name}
+                noun="Driver"
               />
               <span className="text-gray-400">·</span>
               <EntityLink
