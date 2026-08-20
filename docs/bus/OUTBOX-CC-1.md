@@ -1539,3 +1539,26 @@ same booksCompanyId postDepreciation/reverseSchedule resolve, switching the RLS 
 resolution (gain/loss, cash-like proceeds) + open-period lock + JE header + postings + source links to
 it, restoring input.operatingCompanyId before the fixed_asset_disposals INSERT and fixed_assets status
 UPDATE (both stay scoped to the assets own home company).
+
+2026-08-20T13:40Z CC-1 | ACCT-F5643 SHIPPED (PR #12175, merged 7abc8eb8) -- settlement-dispute /
+driver-escrow void-writer sweep, continuing the ACCT-F5634..F5642 method. createCorrectiveJournalEntry
+(settlement-dispute.service.ts) opened its OWN withCurrentUser connection -- a SECOND, independent DB
+connection -- and posted the corrective JE via createJournalEntry() on it, even though all THREE of
+its call sites (resolveDispute in the same file, reviewSettlementDispute in disputes.routes.ts,
+decideDispute in settlement-disputes-p6.service.ts) already open their own transaction and lock the
+dispute row FOR UPDATE before calling this. A failure anywhere AFTER the inner connections commit --
+the settlement_lines(dispute_adjustment) insert, the status-flip UPDATE, appendCrudAudit, or even the
+OUTER transactions own COMMIT -- left a permanently-posted corrective JE committed on its own
+connection while the dispute row rolled back to still-open with resolution_journal_entry_id still
+NULL. Neither the JE nor the settlement_lines row carries any unique constraint tying it to a
+dispute_id, so a retry (an Owner naturally re-clicking Approve after seeing an error) posts a SECOND
+corrective JE for the same dispute -- an unguarded double-payment. The correct pattern already exists
+in this same codebase area: escrow-forfeit.service.ts posts its GL entry plus status flip entirely on
+ONE connection via createJournalEntryOnClient(client, ...); createCorrectiveJournalEntry simply never
+reused it. Fixed by threading the callers own client through createCorrectiveJournalEntry and posting
+via createJournalEntryOnClient directly on it -- atomic with the row lock and the status flip, no new
+GL math. All three call sites updated to pass their own already-open, row-locked client. Secondary
+observation from the same sweep, NOT fixed here (kept this PR single-domain): escrow-separation
+.service.tys releaseDriverEscrowSeparation has the identical shape -- locks the separation row FOR
+UPDATE, then calls releaseEscrow() which opens its OWN connection and commits the GL release
+independently before the outer transaction flips status -- flagged for a follow-up finding.
