@@ -1,11 +1,11 @@
-# INBOX-CC-2 · LIVE VERIFY · NOT PICKER BUILD
+# INBOX-CC-2
 
-Owner: pickers were already checked. **Do not** sweep `picker_law` / rebuild `+ Add new`.
+**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate.
 
-**NOW:** live click the 6 (settlements → factoring → banking → customers → drivers → accounting). Prove the picker already works. OUTBOX `LIVE PASS` or `LIVE FAIL` with `leaf=module:leafId:col | USMCA`. Code PR only if a live click FAILs.
+Picker live-verify. Rebuild only on live FAIL. FAST-MERGE.
 
-Park vendors/dispatch. No poll-for-work.
+**NOW:** banking pickers → rest WAVE 1 → WAVE 2 → WAVE 3
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=live click verify pickers (no picker_law rebuild) | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=banking picker live-verify | GO
 ```

@@ -7,7 +7,6 @@ import {
 } from "../../banking/bank-account-visibility.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
-import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";
 
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
@@ -942,33 +941,6 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
           WHERE id = $2::uuid
             AND operating_company_id = $3::uuid`,
         [input.bank_transaction_id, input.ledger_entry_id, input.operating_company_id]
-      );
-
-      // ACCT-F5620 — the payment→invoice back-link (backlinkBankTransactionToInvoice,
-      // scripts/verify-bank-invoice-backlink.mjs) only runs ONCE, synchronously, inside
-      // apply.service.ts's applyPayment, at the moment invoice applications happen. When a payment
-      // is applied to an invoice FIRST and only matched to a bank transaction LATER via this
-      // reconciliation accept flow (the ordering every live USMCA case has actually taken —
-      // source_bank_transaction_id above was NULL before this UPDATE), that one-time attempt always
-      // ran with no source bank transaction yet and never gets a second chance: the bank line stays
-      // matched_payment_id-only forever, matched_invoice_id permanently NULL. hop.bank ("a bank line
-      // matched to an invoice") measured 0 on prod for exactly this reason even after the writer
-      // shipped. Re-attempt the SAME fill-only-NULL, single-invoice-only, never-throws backlink here
-      // — now that source_bank_transaction_id is set — using whatever invoice(s) this payment has
-      // already been applied to.
-      const invoiceRes = await client.query<{ invoice_id: string }>(
-        `SELECT DISTINCT invoice_id::text AS invoice_id
-           FROM accounting.payment_applications
-          WHERE payment_id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND invoice_id IS NOT NULL`,
-        [input.ledger_entry_id, input.operating_company_id]
-      );
-      await backlinkBankTransactionToInvoice(
-        client,
-        input.operating_company_id,
-        input.ledger_entry_id,
-        invoiceRes.rows.map((r) => r.invoice_id)
       );
     } else if (input.ledger_entry_kind === "bill_payment") {
       await client.query(

@@ -1,9 +1,11 @@
-# INBOX-CC-1 · DO NOT RESTART COMPLETED QUEUE
+# INBOX-CC-1
 
-Verified: your OUTBOX 2026-08-20T09:35Z — Items 1–6 **FULL QUEUE COMPLETE**.
+**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No owner gate. No deviate.
 
-**NOW:** do not restart settlements TMS money. Next = only a new OPEN money FAIL on banking/factoring/accounting/settlements. If none, say `QUEUE COMPLETE | IDLE-FOR-NEW-FAIL` on OUTBOX and keep `git pull`.
+Money. Reuse poster. Bill+BillPayment. F5602–F5619 stand. FAST-MERGE.
+
+**NOW:** banking money → factoring → accounting → settlements → WAVE 2 vendors → dispatch → fleet → maintenance → insurance → legal → WAVE 3 money modules
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=queue 1-6 complete — no restart | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=banking money | GO
 ```

@@ -1,12 +1,13 @@
-# INBOX-DEVIN-A · LEAST CLICKED FIRST · VERIFIED COUNTS
+# INBOX-DEVIN-A
 
-chrome=9227. Ignore `/tmp/IH35-devin-a`.
+**HOURLY:** pull + re-read this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE law. Continuous. No deviate.
 
-**Order (LIVE PASS on main OUTBOX):** banking → factoring → accounting → settlements → customers → drivers.  
-**Park:** vendors, dispatch.
+chrome=9227. Item 12. `leaf=<module>:<leafId>:<col> | USMCA`
 
-`leaf=<module>:<leafId>:<col> | USMCA`
+**NOW:** WAVE 1 banking Clicked → factoring → accounting → settlements → customers → drivers  
+**THEN:** WAVE 2 insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
+**THEN:** WAVE 3. Never fuel. Never idle.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | chrome=9227 | NOW=banking Clicked | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | chrome=9227 | NOW=banking Clicked | GO
 ```
