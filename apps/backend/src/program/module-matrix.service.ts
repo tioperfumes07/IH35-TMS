@@ -827,6 +827,12 @@ export function leafExplicitlyNamedInLiveEvidence(leaf: RequiredLeaf, text: stri
   return false;
 }
 
+/** Inverse of banking→bank: accounting required.json can host a banking.panel.* leaf stamped on a `bank ·` row. Named leaf only. */
+function rowTouchesModuleOrNamedLeaf(row: LedgerRow, moduleId: string, leaf: RequiredLeaf): boolean {
+  if (rowTouchesModule(row, moduleId)) return true;
+  return leafExplicitlyNamedInLiveEvidence(leaf, moduleHay(row));
+}
+
 /**
  * An evidence row that declares a closed column claim is making an auditable allowlist.
  * Recognized forms (LV-MATRIX-LEAVES-CELLS-ALLOWLIST-BYPASS):
@@ -889,7 +895,7 @@ export function leafColumnHasLaterContradictingFail(
   const col = colId.toLowerCase();
   for (const row of ledger) {
     if (row.num <= afterNum) continue;
-    if (!rowTouchesModule(row, moduleId)) continue;
+    if (!rowTouchesModuleOrNamedLeaf(row, moduleId, leaf)) continue;
     if (isSupersededRow(row)) continue;
     const hay = moduleHay(row);
     const blob = `${row.verdict} ${row.status} ${hay}`.replace(/\*\*/g, "");
@@ -1011,7 +1017,7 @@ function leafColumnLiveReason(
   ledger: LedgerRow[],
 ): string | undefined {
   for (const row of ledger) {
-    if (!rowTouchesModule(row, moduleId)) continue;
+    if (!rowTouchesModuleOrNamedLeaf(row, moduleId, leaf)) continue;
     if (isSupersededRow(row)) continue;
     const hay = moduleHay(row);
     if (!isProdVerifiedBlob(hay)) continue;
@@ -1037,7 +1043,7 @@ function leafColumnClosedAllowlistReason(
   ledger: LedgerRow[],
 ): string | undefined {
   for (const row of ledger) {
-    if (!rowTouchesModule(row, moduleId)) continue;
+    if (!rowTouchesModuleOrNamedLeaf(row, moduleId, leaf)) continue;
     if (isSupersededRow(row)) continue;
     const hay = moduleHay(row);
     if (!isProdVerifiedBlob(hay)) continue;
@@ -1169,7 +1175,7 @@ function leafColumnClickedReason(
   const k = `${moduleId}:${leaf.id}:${colId}`.toLowerCase();
   if (outboxKeys.has(k)) return `OUTBOX LIVE PASS ${k}`;
   for (const row of ledger) {
-    if (!rowTouchesModule(row, moduleId)) continue;
+    if (!rowTouchesModuleOrNamedLeaf(row, moduleId, leaf)) continue;
     if (isSupersededRow(row)) continue;
     const hay = moduleHay(row);
     if (!isProdVerifiedBlob(hay)) continue;
