@@ -16,7 +16,7 @@ const checks = [
   // Allow attrs (data-testid / className / multiline) between EntityLink and kind/id/label.
   [
     "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx",
-    /const label = entityLabel\(row\.display_name, row\.entity_id, noun\);[\s\S]{0,500}<EntityLink[\s\S]{0,160}kind=\{kind\}[\s\S]{0,80}id=\{row\.entity_id\}[\s\S]{0,80}label=\{label\}/,
+    /const label = entityLabel\(row\.display_name, row\.entity_id, noun\);[\s\S]{0,120}const canonicalRoute = canonicalEntityRoute\(row, kind\);[\s\S]{0,700}<EntityLink[\s\S]{0,160}kind=\{kind\}[\s\S]{0,80}id=\{row\.entity_id\}[\s\S]{0,80}label=\{label\}/,
     "names canonical labeled drill",
   ],
   [
