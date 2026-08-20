@@ -2974,6 +2974,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-parity-drawer-z-index-above-modal"
   },
+  "4180": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-confirm-discard-dialog-z-index-above-modal"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -4962,5 +4967,5 @@
       "4127-verify-wo-cancellation-reason-picker-law.mjs"
     ]
   },
-  "total_claimed": 1206
+  "total_claimed": 1207
 }
