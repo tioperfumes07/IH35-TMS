@@ -2849,6 +2849,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-customer-types-seed-backfill"
   },
+  "4155": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-load-cancellations-report"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -4837,5 +4842,5 @@
       "4127-verify-wo-cancellation-reason-picker-law.mjs"
     ]
   },
-  "total_claimed": 1181
+  "total_claimed": 1182
 }
