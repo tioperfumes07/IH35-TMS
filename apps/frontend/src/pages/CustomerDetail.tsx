@@ -1263,13 +1263,14 @@ export function CustomerDetailPage() {
                   }}
                 />
               ) : customer.parent_customer_id ? (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/customers/${customer.parent_customer_id}`)}
+                <EntityLinkOrTombstone
+                  kind="customer"
+                  id={customer.parent_customer_id}
+                  name={customer.parent_customer_name ?? "View parent"}
+                  noun="Customer"
                   className="self-start text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
-                >
-                  {customer.parent_customer_name ?? "View parent"}
-                </button>
+                  data-testid="customer-parent-record-link"
+                />
               ) : (
                 <span className="text-sm text-gray-500">Top-level customer (no parent)</span>
               )}
@@ -1282,13 +1283,14 @@ export function CustomerDetailPage() {
                 <ul className="flex flex-col gap-1">
                   {customer.sub_customers.map((sub) => (
                     <li key={sub.id}>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/customers/${sub.id}`)}
+                      <EntityLinkOrTombstone
+                        kind="customer"
+                        id={sub.id}
+                        name={sub.customer_code ? `${sub.name} (${sub.customer_code})` : sub.name}
+                        noun="Customer"
                         className="text-left text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
-                      >
-                        {sub.customer_code ? `${sub.name} (${sub.customer_code})` : sub.name}
-                      </button>
+                        data-testid={`customer-sub-record-link-${sub.id}`}
+                      />
                     </li>
                   ))}
                 </ul>
