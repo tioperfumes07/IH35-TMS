@@ -1050,3 +1050,14 @@ Ingles
 Espanol (preview)
 6 | healthz=b133728 | mutation=none | NEXT=system.chrome.toolbar_search
 Devin-A | LIVE STARVED | module=system | leaf=chrome.toolbar_range | URL=https://app.ih35dispatch.com/system?tab=program | USMCA | cells=auto | evidence=No marker found at https://app.ih35dispatch.com/system?tab=program ; body head  | healthz=b133728 | mutation=none | NEXT=system.chrome.toolbar_gear
+Devin-A | LIVE PASS | module=system | leaf=chrome.toolbar_gear | URL=https://app.ih35dispatch.com/system?tab=program | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/system?tab=program ; marker 'system' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=e4d97a9 | mutation=none | NEXT=system.chrome.toolbar_filter
