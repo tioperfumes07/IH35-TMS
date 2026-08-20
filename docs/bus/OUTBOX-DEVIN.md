@@ -7229,3 +7229,10 @@ Devin-A | LIVE PASS | leaf=safety:safety.drawer.anomaly_detail:reverse_link | US
 Devin-A | LIVE PASS | leaf=safety:safety.drawer.anomaly_detail:driver | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=48f041d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.modal.company_violation_create:connectivity
 Devin-A | LIVE STARVED | leaf=safety:safety.modal.company_violation_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=48f041d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety healthz=48f041d head Checking session... | NEXT=leaf=safety:safety.parity.escrow_forfeit:connectivity
 Devin-A | LIVE STARVED | leaf=safety:safety.modal.company_violation_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=48f041d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety healthz=48f041d head Checking session... | NEXT=leaf=safety:safety.parity.escrow_forfeit:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.escrow_forfeit:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/home healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=safety:safety.parity.fine_create:connectivity
