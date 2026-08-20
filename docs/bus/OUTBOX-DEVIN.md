@@ -13403,3 +13403,12 @@ Espanol (preview)
 6 | NEXT=leaf=finance:hub:connectivity
 Devin-A | LIVE PASS | leaf=finance:hub:connectivity | USMCA | URL=https://app.ih35dispatch.com/finance | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance marker 'finance' | NEXT=leaf=finance:nav.scenarios:qbo_chrome
 Devin-A | LIVE PASS | leaf=finance:hub:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance | healthz=dea2ff1 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance marker 'finance' | NEXT=leaf=finance:nav.scenarios:qbo_chrome
+Devin-A | LIVE STARVED | leaf=finance:nav.scenarios:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance/scenarios | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/finance/scenarios healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=form_425:chrome.toolbar_gear:connectivity
