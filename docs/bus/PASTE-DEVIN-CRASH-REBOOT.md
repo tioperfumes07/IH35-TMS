@@ -1,3 +1,3 @@
-# SUPERSEDED
+# SUPERSEDED crash card
 
-Use `docs/bus/PASTE-DEVIN-A-NOW.md`. Crash-reboot paste is retired.
+Current Devin: `INBOX-DEVIN-A.md`. One loop. LIVE PASS only. `shipClickedOntoMain`. Never `--soft`. Never `live-outbox-proofs-32`.

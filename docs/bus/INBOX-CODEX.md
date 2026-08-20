@@ -1,11 +1,15 @@
-# INBOX-CODEX
+# INBOX-CODEX · THROUGH 14 · NO ASK
 
-**HOURLY:** pull + CODER URGENT-6 + this file. No 9227.
+**Jorge is not the messenger.** Pull main. `CODER-INSTRUCTIONS-NOW.md` + this TOP. No 9227. FAST-MERGE.
 
-**GOAL:** Box **3 Built ✓** `reverse_link` + `connectivity` on URGENT-6. Do not drain 31 CLS.
+## You until 14 reverse+CONN Built unpaid=0
 
-**NOW:** **accounting** reverse+CONN → customers → drivers → vendors → dispatch → safety. Then fleet→…→inventory.
+Box **3 Built** `reverse_link` + `connectivity`. Do not drain 31 CLS as extra columns.
+
+Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
+
+Unpaid → that cell. Clear → next module. No ask.
 
 ```text
-Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=accounting reverse+connectivity | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=accounting reverse+connectivity then 2–14 | GO
 ```

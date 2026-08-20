@@ -1,3 +1,7 @@
+# SUPERSEDED · 2026-08-20
+
+Do **not** run this folder. Current: `docs/bus/CODER-INSTRUCTIONS-NOW.md` + `INBOX-<SEAT>.md`. URGENT-14.
+
 # OWNER LAW — CHROME + FULL SURFACE INVENTORY (2026-08-12) · CANONICAL
 
 **Process law (owner):** Instructions to every coder **FIRST**. Then build. Never start a wave while seats have no paste.

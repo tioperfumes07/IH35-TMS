@@ -1,3 +1,3 @@
-# SUPERSEDED
+# SUPERSEDED — 8H / 06:00 CT pack
 
-Use `docs/bus/PASTE-ALL-SEATS-NOW.md` (8 BY 06:00). This 8H paste is retired.
+Do **not** run. Current: `CODER-INSTRUCTIONS-NOW.md` + INBOX. URGENT-14.

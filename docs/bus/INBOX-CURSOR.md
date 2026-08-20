@@ -1,11 +1,9 @@
-# INBOX-CURSOR
+# INBOX-CURSOR · THROUGH 14 · NO ASK
 
-**HOURLY:** pull + CODER URGENT-6 + this file. Re-instruct seats. FAST-MERGE INBOX to main.
+**Jorge is not the messenger.** Pull main. Keep INBOXes = this law. FAST-MERGE bus to main. Kill extra `devin-a-live-loop` (one only). Rebuild `/tmp/devin-a-queue.json` when empty. Leftover Box 3 Built on the same 14 order.
 
-**GOAL:** lead until every Required cell on **URGENT-6** is **4/4**. Leftover Box 3 Built (`qbo_chrome` / surface-bar) on accounting→…→safety. Do not fake bank attachments Built.
-
-**NOW:** unpaid Built on **accounting** then customers → drivers → vendors → dispatch → safety.
+Order: accounting → customers → drivers → vendors → dispatch → safety → fleet → maintenance → lists → settlements → factoring → banking → inventory.
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=accounting leftover Built | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-14 | 100PCT-FW12 | NOW=lead leftover Built + Devin one-loop | GO
 ```

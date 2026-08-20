@@ -1,3 +1,3 @@
-# SUPERSEDED
+# SUPERSEDED 8H launch pack
 
-Use `docs/bus/PASTE-ALL-SEATS-NOW.md` (8 BY 06:00).
+Current: `CODER-INSTRUCTIONS-NOW.md`. URGENT-14.
