@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * WO-CREATE-UX — Create Work Order nested QuickCreate must stack above Modal z-[70] and Escape
+ * WO-CREATE-UX — Create Work Order nested QuickCreate must stack above Modal z-[215] and Escape
  * must not discard the parent wizard when a Combobox list or nested ParityDrawer is open.
+ * z-tier updated 2026-08-21 (CC-3) alongside CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER's Modal
+ * z-[70]->z-[215] bump — see verify-parity-drawer-z-index-above-modal.mjs for the primary lock.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -35,7 +37,7 @@ export function run() {
 
   const checks = [
     ["parity-stack-prop", /stackAboveModal\?:\s*boolean/.test(parityDrawer)],
-    ["parity-z80", /stackAboveModal\s*\?\s*"z-\[80\]"/.test(parityDrawer)],
+    ["parity-z218", /stackAboveModal\s*\?\s*"z-\[218\]"/.test(parityDrawer)],
     ["parity-escape-capture", /stackAboveModal\s*\?\s*\{\s*capture:\s*true\s*\}/.test(parityDrawer)],
     ["parity-stack-marker", /data-parity-drawer-stack-above-modal/.test(parityDrawer)],
     ["quick-create-stack", /stackAboveModal/.test(quickCreate)],
@@ -69,11 +71,11 @@ function selftest() {
   try {
     writeFileSync(
       FILES.parityDrawer,
-      original.replace('stackAboveModal ? "z-[80]" : "z-[60]"', '"z-[60]"'),
+      original.replace('stackAboveModal ? "z-[218]" : "z-[60]"', '"z-[60]"'),
       "utf8",
     );
     const caught = run();
-    if (caught.ok || !caught.failed.includes("parity-z80")) {
+    if (caught.ok || !caught.failed.includes("parity-z218")) {
       console.error(`${LABEL} SELFTEST FAIL: planted z-index regression not caught`, caught);
       process.exit(1);
     }
