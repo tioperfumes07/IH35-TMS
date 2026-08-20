@@ -263,6 +263,9 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
         sub="Live build status — derived from merges + deploys, not a static field."
         footer={<GhostButton onClick={() => onOpen("program")}>Open Program Tracker</GhostButton>}
       >
+        <Row label="Registered">
+          {tracker.data ? <span className="tabular-nums">{tracker.data.registered_total}</span> : "—"}
+        </Row>
         <Row label="Active tracked blocks">
           {tracker.data ? <span className="tabular-nums">{activeTrackerCount(tracker.data)}</span> : <Pill tone="warn">LIVE COUNT PENDING</Pill>}
         </Row>
