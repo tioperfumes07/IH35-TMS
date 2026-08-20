@@ -251,6 +251,15 @@ async function loadDriverBills(client: DbClient, operatingCompanyId: string, set
             SELECT sl.source_driver_bill_id
             FROM driver_finance.settlement_lines sl
             WHERE sl.settlement_id = $2::uuid AND sl.source_driver_bill_id IS NOT NULL
+              -- ACCT-F5655 — settlement_lines soft-deletes via is_active (ACCT-F156). Three sibling
+              -- queries (settlement-payrun-close.service.ts, settlement-deduction-cap.service.ts,
+              -- settlements-load-bookended.service.ts) already filter is_active=true on this same
+              -- table; this poster -- the one that actually creates the driver's A/P bill and its GL --
+              -- was the residual instance that missed it. No writer currently sets is_active=false on
+              -- this table (only approve/reject status flips exist today), so this has never produced a
+              -- wrong number -- applying the same already-decided exclusion before any deactivation
+              -- feature ever lands.
+              AND sl.is_active = true
           )
         )
       ORDER BY db.created_at ASC, db.id ASC
