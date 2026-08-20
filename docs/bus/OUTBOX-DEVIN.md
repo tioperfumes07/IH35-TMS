@@ -1373,3 +1373,14 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=unknown | mutation=none | NEXT=dispatch.misc.geofence_history
+Devin-A | LIVE PASS | module=dispatch | leaf=misc.geofence_history | URL=https://app.ih35dispatch.com/dispatch/borders/geofence-history | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/borders/geofence-history ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=62c3947 | mutation=none | NEXT=dispatch.misc.chat
