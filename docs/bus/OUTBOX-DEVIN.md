@@ -4502,3 +4502,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=lists:catalog.maintenance.trailer_parts.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.trailer_parts.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/trailer-parts | healthz=33a48fc | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/trailer-parts healthz=33a48fc head Checking session... | NEXT=leaf=lists:catalog.maintenance.trailer_parts.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.trailer_parts.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/trailer-parts | healthz=33a48fc | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/trailer-parts healthz=33a48fc head Checking session... | NEXT=leaf=lists:catalog.maintenance.trailer_parts.list:qbo_chrome
