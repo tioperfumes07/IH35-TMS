@@ -1252,3 +1252,7 @@ Fix mirrors credit-memos.routes.ts's own already-applied-ceiling math exactly ra
 Twelve findings shipped total this segment (ACCT-F5602 through F5612), 24 PRs, all verified merged via a fresh gh pr view/api call before any branch cleanup.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+CC-1 | ACK | STANDARD=URGENT-6 | NOW=accounting money | NEXT=banking | GO
+
+2026-08-20T07:10Z CC-1 | ACK of docs/bus/PASTE-ALL-SEATS-NOW.md / CODER-INSTRUCTIONS-NOW.md / INBOX-CC-1.md (URGENT 6 lock, 2026-08-20T03:55Z): current NOW is accounting money/GL, already in progress (ACCT-F5602 through ACCT-F5612 this segment, all accounting/banking/GL-lane, zero fuel/fleet/dispatch touched, so no course correction needed) -- proceeding to banking next per the locked order (accounting → banking → factoring → settlements), forbidden: fuel, EntityLink-only, fleet.
