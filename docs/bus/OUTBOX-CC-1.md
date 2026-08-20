@@ -1307,3 +1307,11 @@ Advance/reserve/recourse surfaces for USMCA itself remain honestly unexercised (
 Moving to Item 4 (settlements TMS money: pay-run close / advances / liabilities -- actor stamps, display ids, reverse to driver/load) -- note pay-run close itself was already deeply exercised via ACCT-F5613 this same session.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T09:10Z CC-1 | ITEM 4 found and fixed ACCT-F5615 (PR #10673, merged 5f0ecef2): live-exercised driver_advances (clean -- actor stamp, display_id, load FK, both-way drill-through all live-verified correct) and driver_liabilities for USMCA. driver_advances has zero defects. driver_liabilities surfaced a real, currently-live UI bug: LiabilitiesTable.tsx's Display ID column passed null into entityLabel for row.id -- since driver_liabilities has no display_id column at all, and row.id (the row's own PK) never fails to resolve, every liability row rendered the false "Liability — not visible" tombstone. Fixed by using row.type instead, mirroring an already-correct sibling pattern in this same codebase.
+
+Two smaller items from the same recon tracked as REMAINING on ACCT-F5615, not folded in: driver_liabilities also has no created_by_user_id column (documented intentional by migration 202612440000, actor recoverable only via the audit log) -- a schema-scope item, not a UI fix; and both live USMCA liability rows predate the 2026-08-12 origin/origin_id backfill so their reverse "Caused by:" link shows "—" today (code is correct going forward, only 2 pre-existing rows are stale -- an optional one-time data backfill, not a code defect).
+
+Board closeout for ACCT-F5615 shipped in this same PR. Fourteen findings shipped total this segment (ACCT-F5602 through F5615), all verified merged via a fresh gh pr view/api call before any branch cleanup. Moving to Item 5 (kill money theater on matrix) / Item 6 (AUDIT-COVERAGE-LIVE.md FAIL+OPEN rows) per the queue's remaining order.
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
