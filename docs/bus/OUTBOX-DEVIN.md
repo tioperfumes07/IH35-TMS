@@ -11921,3 +11921,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:list.bulk:vendor
+Devin-A | LIVE STARVED | leaf=vendors:list.bulk:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors healthz=unknown head Checking session... | NEXT=leaf=vendors:list.filter_chips:vendor
+Devin-A | LIVE STARVED | leaf=vendors:list.bulk:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors healthz=unknown head Checking session... | NEXT=leaf=vendors:list.filter_chips:vendor
