@@ -10490,3 +10490,12 @@ Devin-A | LIVE PASS | leaf=cash-flow:tab.daily_prediction:customer | USMCA | URL
 Devin-A | LIVE PASS | leaf=cash-flow:tab.daily_prediction:load | USMCA | URL=https://app.ih35dispatch.com/cash-flow | healthz=80b3b12 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow marker 'cash-flow' | NEXT=leaf=cash-flow:tab.manual_daily_projections:connectivity
 Devin-A | LIVE PASS | leaf=cash-flow:tab.daily_prediction:reverse_link | USMCA | URL=https://app.ih35dispatch.com/cash-flow | healthz=80b3b12 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow marker 'cash-flow' | NEXT=leaf=cash-flow:tab.manual_daily_projections:connectivity
 Devin-A | LIVE PASS | leaf=cash-flow:tab.manual_daily_projections:connectivity | USMCA | URL=https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections | healthz=80b3b12 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/cash-flow?tab=manual_daily_projections marker 'Manual Daily Projections' | NEXT=leaf=finance:chrome.toolbar_filter:qbo_chrome
+Devin-A | LIVE STARVED | leaf=finance:chrome.toolbar_filter:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance/ar-ap-aging | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/finance/ar-ap-aging healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=finance:chrome.toolbar_gear:qbo_chrome
