@@ -1,10 +1,9 @@
-# PASTE DEVIN-A
+# PASTE DEVIN-A NOW
 
 `git pull --ff-only origin main`
 
-USMCA only. chrome=9227. Every line:
-`Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | USMCA | URL=… | healthz=<sha> | mutation=none`
+8 modules by 06:00 CT. chrome=9227. `leaf=module:leafId:col | USMCA`.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | ENTITY=USMCA | chrome=9227 | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | chrome=9227 | GO
 ```

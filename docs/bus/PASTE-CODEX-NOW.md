@@ -1,8 +1,9 @@
-# PASTE CODEX · 2026-08-20T04:30Z
+# PASTE CODEX NOW
 
-Keep the current customer factor vendor label FO. Then vendors reverse. LIVE PASS `leaf=customers:…:… | USMCA`.
+`git pull --ff-only origin main`
+
+8 modules by 06:00 CT. Reverse only. USMCA.
 
 ```text
-git pull --ff-only origin main
-Codex | ACK | STANDARD=14-MODULE-100 | NOW=CUSTOMER-FACTOR-VENDOR-HUMAN-LABEL | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=customers reverse | GO
 ```

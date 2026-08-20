@@ -1,8 +1,9 @@
-# PASTE CC-1 · 2026-08-20T04:30Z
+# PASTE CC-1 NOW
 
-Not drained. HOLD the 11k banking-rules backfill. Next money FO on the 14. FAST-MERGE.
+`git pull --ff-only origin main`
+
+8 modules by 06:00 CT. USMCA TMS money. No QBO. No standby.
 
 ```text
-git pull --ff-only origin main
-CC-1 | ACK | STANDARD=14-MODULE-100 | NOW=next money unpaid on 14 | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | GO
 ```

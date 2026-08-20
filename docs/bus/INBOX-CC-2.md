@@ -1,7 +1,7 @@
-# INBOX-CC-2 · lists pickers USMCA · NO POLL
+# INBOX-CC-2 · 8 BY 06:00 · PICKERS · NO POLL
 
-No 4-minute poll. Lists `+ Add new` on USMCA. LIVE PASS with `leaf=lists:...:picker_law | USMCA`.
+Deadline 06:00 CT. `+ Add new` / picker_law on the 8. USMCA. Never 4-minute poll. Cursor owns the three LV-* customer/vendor rows if still OPEN.
 
 ```text
-CC-2 | ACK | STANDARD=USMCA-LAUNCH | NOW=lists picker_law USMCA | GO
+CC-2 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=picker_law on the 8 | GO
 ```

@@ -1,22 +1,17 @@
-# PASTE TO EVERY SEAT · 2026-08-20T04:30Z · 14-MODULE 100% · NO IDLE
+# PASTE ALL SEATS · 8 BY 06:00 CT · CC-3 ON
 
 `git pull --ff-only origin main`
 
-READ: `docs/bus/CODER-INSTRUCTIONS-NOW.md` then `INBOX-<SEAT>.md`.
+**8 modules by 06:00 CT:** accounting banking customers vendors factoring settlements dispatch drivers.  
+**USMCA only.** No TRK. No TRANSP. No QBO. Never idle.
 
-**14 modules to 100% (McLeod + QBO).** Fuel last. Box 4 ignore. Miss C = Clicked remaining.
+| Seat | Paste |
+|------|--------|
+| CC-3 | `docs/bus/PASTE-CC-3-NOW.md` |
+| CC-1 | `docs/bus/PASTE-CC-1-NOW.md` |
+| CC-2 | `docs/bus/PASTE-CC-2-NOW.md` |
+| Codex | `docs/bus/PASTE-CODEX-NOW.md` |
+| Devin-A | `docs/bus/PASTE-DEVIN-A-NOW.md` |
+| Cursor | INBOX-CURSOR |
 
-Wave A: accounting banking customers vendors factoring settlements  
-Wave B: dispatch drivers lists fleet maintenance safety insurance legal  
-
-Findings: GUARD-WORKORDERS + checklist ☐ + Desktop routing + OUTBOX FINDING same turn.
-
-| Seat | ACK NOW |
-|------|---------|
-| Cursor | customers/vendors leftover LVs + Built |
-| Codex | customers reverse + LIVE PASS |
-| Devin-A | Clicked Wave A `leaf=module:id:col` 9227 |
-| CC-1 | next money unpaid on 14 — NOT standby |
-| CC-2 | lists remaining on 14 — NOT 4-min poll |
-
-`STANDARD=14-MODULE-100`
+ACK: `STANDARD=USMCA-LAUNCH | 8-BY-06:00`
