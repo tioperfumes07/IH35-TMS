@@ -4486,3 +4486,19 @@ Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.shop_locations.list:qbo_
 Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.shop_locations.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/shop-locations | healthz=1aa6a5b | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/login healthz=1aa6a5b head Checking session... | NEXT=leaf=lists:catalog.maintenance.tire_catalog.create:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.tire_catalog.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/tire-catalog | healthz=1aa6a5b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/maintenance/tire-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.tire_catalog.list:qbo_chrome
 Devin-A | LIVE PASS | leaf=lists:catalog.maintenance.tire_catalog.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/tire-catalog | healthz=1aa6a5b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/catalogs/maintenance/tire-catalog marker 'lists' | NEXT=leaf=lists:catalog.maintenance.tire_catalog.list:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.tire_catalog.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/tire-catalog | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/maintenance/tire-catalog healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.maintenance.trailer_parts.create:qbo_chrome
+Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.tire_catalog.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/tire-catalog | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/catalogs/maintenance/tire-catalog healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.maintenance.trailer_parts.create:qbo_chrome
