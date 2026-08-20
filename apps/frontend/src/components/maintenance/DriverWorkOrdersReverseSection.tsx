@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
-import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -58,22 +58,28 @@ export function DriverWorkOrdersReverseSection({
         <ul className="space-y-2">
           {rows.map((wo) => {
             const id = String(wo.id ?? "");
-            const label = entityLabel(wo.display_id ?? wo.description, id, "Work order");
             return (
               <li key={id} className="flex flex-wrap items-center gap-2 text-sm">
-                <EntityLink kind="work_order" id={id} label={label} />
+                <EntityLinkOrTombstone
+                  kind="work_order"
+                  id={id || null}
+                  name={wo.display_id ?? wo.description}
+                  noun="Work order"
+                />
                 {wo.unit_id ? (
-                  <EntityLink
+                  <EntityLinkOrTombstone
                     kind="unit"
                     id={String(wo.unit_id)}
-                    label={entityLabel(wo.unit_number, wo.unit_id, "Unit")}
+                    name={wo.unit_number}
+                    noun="Unit"
                   />
                 ) : null}
                 {wo.load_id ? (
-                  <EntityLink
+                  <EntityLinkOrTombstone
                     kind="load"
                     id={String(wo.load_id)}
-                    label={entityLabel(wo.linked_load_number, wo.load_id, "Load")}
+                    name={wo.linked_load_number}
+                    noun="Load"
                   />
                 ) : null}
                 <span className="text-xs text-slate-500">{String(wo.status ?? "")}</span>
