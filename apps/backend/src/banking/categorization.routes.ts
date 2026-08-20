@@ -700,7 +700,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             ded.status AS deduction_status,
             ded.deduction_type AS deduction_type
           FROM banking.bank_transactions bt
-          LEFT JOIN driver_finance.driver_settlement_deductions ded ON ded.id = bt.categorization_deduction_id
+          LEFT JOIN driver_finance.driver_settlement_deductions ded
+            ON ded.id = bt.categorization_deduction_id
+           AND ded.operating_company_id = bt.operating_company_id
           LEFT JOIN accounting.journal_entries je
             ON je.id = bt.matched_journal_entry_id
            AND je.operating_company_id = bt.operating_company_id
