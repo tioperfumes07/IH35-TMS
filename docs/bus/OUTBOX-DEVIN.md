@@ -14855,3 +14855,25 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Customers
 Customer list and  | NEXT=leaf=customers:detail.fmcsa_verify:connectivity
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:connectivity
+Devin-A | LIVE STARVED | leaf=customers:detail.fmcsa_verify:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers | healthz=dc5903e | mutation=none | evidence=No marker at https://app.ih35dispatch.com/customers head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=customers:detail.pnl:connectivity
