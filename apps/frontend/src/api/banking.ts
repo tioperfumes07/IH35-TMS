@@ -1009,9 +1009,16 @@ export function deactivateCategorizationRule(id: string, operatingCompanyId: str
 }
 
 export function applyCategorizationRuleHistorical(id: string, operatingCompanyId: string) {
-  return apiRequest<{ matched: number }>(`/api/v1/banking/categorization-rules/${id}/apply-historical?${q(operatingCompanyId)}`, {
-    method: "POST",
-  });
+  // CLS-BANK-MATCH-DENSITY / ACCT-F5601: the backend route's dry_run param defaults to true when
+  // absent (ACCT-LINK-06 safety default -- so Owner/Accountant cannot mint mass bank_categorization
+  // JEs by accident). This "Apply to Historical Transactions" action is the caller's deliberate,
+  // distinct commit step AFTER already reviewing the read-only preview (getCategorizationPreview,
+  // rendered separately in CategorizationRulesPage.tsx) -- it must always request the REAL, non-dry
+  // application, or every click here silently no-ops while still showing a "matched N" success toast.
+  return apiRequest<{ matched: number }>(
+    `/api/v1/banking/categorization-rules/${id}/apply-historical?${q(operatingCompanyId)}&dry_run=false`,
+    { method: "POST" }
+  );
 }
 
 type CoaAccountPickerRow = {
