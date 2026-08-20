@@ -2700,3 +2700,5 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=factoring:home.chargebacks_fees:connectivity
+Devin-A | LIVE PASS | leaf=factoring:home.chargebacks_fees:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/chargebacks-fees | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/chargebacks-fees marker 'factoring' | NEXT=leaf=factoring:home.equipment_loans:vendor
+Devin-A | LIVE PASS | leaf=factoring:home.chargebacks_fees:reverse_link | USMCA | URL=https://app.ih35dispatch.com/factoring/chargebacks-fees | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/chargebacks-fees marker 'factoring' | NEXT=leaf=factoring:home.equipment_loans:vendor
