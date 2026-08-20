@@ -1400,3 +1400,12 @@ tioperfumes07@gmail.com
 DRIVERS›LAYOVERS
 Driver Layo | healthz=f12a9e2 | mutation=none | NEXT=dispatch.load.detail
 Devin-A | LIVE STARVED | module=dispatch | leaf=load.detail | URL=https://app.ih35dispatch.com/dispatch/loads/:id | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/loads/:id ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.load.banking
+Devin-A | LIVE PASS | module=dispatch | leaf=load.banking | URL=https://app.ih35dispatch.com/dispatch/loads/:id/banking | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/loads/:id/banking ; marker 'dispatch' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+DISPATCH›LOADS›LOAD — NOT VI | healthz=unknown | mutation=none | NEXT=dispatch.load.drawer.overview
