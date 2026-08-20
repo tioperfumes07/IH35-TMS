@@ -19,6 +19,7 @@ import { auditVoid, isVoidEnforcementEnabled, postVoidReversal } from "../accoun
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
+import { voidBillPaymentInClientTx } from "../accounting/bills.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
 
@@ -456,11 +457,26 @@ const executeExpense: EntityExecutor = async (ctx) => {
 // VOID-EVERYWHERE PR-3 — bill_payment executor. Mirrors bills.service.ts voidBillPayment's guards
 // (not-found / already-voided), reverses any posted GL for this bill_payment via postVoidReversal
 // (entityType 'bill_payment' — additive VoidableEntityType, same generic source-linked path), THEN
-// reuses the EXISTING voidBillPayment() for the status flip + bill paid_cents recompute + bank-balance
-// restore (bank-balance math must never be duplicated — reuse the live function verbatim). That call
-// opens its own transaction (same non-atomic-with-caller pattern already accepted for
-// expense/driver_settlement below) — the GL reversal above is what must never be orphaned, and it runs
-// atomically on ctx.client.
+// reuses the EXISTING voidBillPaymentInClientTx for the status flip + bill paid_cents recompute +
+// bank-balance restore (bank-balance math must never be duplicated — reuse the live function
+// verbatim).
+//
+// ACCT-F5637 — this used to call the voidBillPayment() WRAPPER instead of the ...InClientTx variant.
+// That wrapper opens its OWN pool connection (withCurrentUser) and immediately runs its own
+// SELECT ... FOR UPDATE on the SAME accounting.bill_payments row ctx.client's own SELECT ... FOR
+// UPDATE above already holds, uncommitted, for the duration of this request. The second connection's
+// lock request blocks waiting for the first connection's transaction to commit; the first connection
+// is synchronously awaiting the second connection's promise to resolve before it can commit — an
+// application-level self-deadlock across two DB sessions that Postgres's own deadlock detector cannot
+// see (there is no DB-visible wait-for cycle; connection A simply never finishes). Prod has
+// statement_timeout=0/lock_timeout=0, so the blocked query hangs indefinitely rather than erroring,
+// permanently pinning two pool connections per stuck attempt. Fixed by calling
+// voidBillPaymentInClientTx DIRECTLY on ctx.client (the same atomic pattern executeDriverSettlement
+// below already uses for its own bill-payment/bill reversal calls) with reversePostedGl explicitly
+// false, since the postVoidReversal call above already performed the GL reversal for this request —
+// letting voidBillPaymentInClientTx's own naive hasPostedBatch check run again would risk a second,
+// redundant reversing JE (it cannot distinguish an original posting from the reversal postVoidReversal
+// just inserted, both tagged with the same source_transaction_type/id by design).
 const executeBillPayment: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
@@ -496,9 +512,15 @@ const executeBillPayment: EntityExecutor = async (ctx) => {
   }
 
   // Reuse the LIVE status-flip / paid_cents-recompute / bank-balance-restore function verbatim — never
-  // re-derive money math. Opens its own transaction (see header comment).
-  const { voidBillPayment } = await import("../accounting/bills.service.js");
-  await voidBillPayment(operatingCompanyId, entityId, reason, userId);
+  // re-derive money math. Runs on ctx.client (see header comment — ACCT-F5637).
+  await voidBillPaymentInClientTx(client, {
+    operatingCompanyId,
+    paymentId: entityId,
+    reason,
+    userId,
+    reversePostedGl: false,
+    currentBusinessDate: companyBusinessDate(),
+  });
 
   await appendCrudAudit(
     client,
