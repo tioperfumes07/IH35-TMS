@@ -1,3 +1,0 @@
-# SUPERSEDED
-
-Cascade: `INBOX-CASCADE.md`. Coders: `PASTE-ALL-SEATS-NOW.md`.
