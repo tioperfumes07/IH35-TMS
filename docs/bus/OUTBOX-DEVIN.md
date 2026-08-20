@@ -2468,3 +2468,5 @@ Idioma
 Ingles
 Espanol (preview)
 tioperfumes0 | NEXT=leaf=accounting:banking.panel.linked_bank_transactions:connectivity
+Devin-A | LIVE PASS | leaf=accounting:banking.panel.linked_bank_transactions:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=ee2c149 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:bill_payments.create:vendor
+Devin-A | LIVE PASS | leaf=accounting:banking.panel.linked_bank_transactions:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=ee2c149 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting marker 'accounting' | NEXT=leaf=accounting:bill_payments.create:vendor
