@@ -8,6 +8,7 @@ const REQUIRED = [
   "verify-arriving-soon-work-order-reverse.mjs", "verify-border-crossing-broker-linkage.mjs",
   "verify-complaint-linkage.mjs", "verify-docs-module-reverse-link-wired.mjs",
   "verify-entity-tasks-reverse-leaves.mjs", "verify-equipment-transfer-human-label.mjs",
+  "verify-fleet-trailer-transfer-record-reverse.mjs",
   "verify-fleet-reverse-link-remainder.mjs", "verify-fleet-reverse-link-transfers.mjs",
   "verify-geofence-entitylink-drill.mjs", "verify-hos-violation-linkage.mjs",
   "verify-inline-surface-connectivity-routes.mjs", "verify-insurance-coi-policy-reverse.mjs",
@@ -47,4 +48,4 @@ if (problems.length) {
   console.error(`${LABEL} FAIL\n${problems.join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — 37 non-money reverse-link guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — 38 non-money reverse-link guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -26,14 +27,16 @@ type TransferRow = {
 export function EquipmentTransferRequests() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const transferId = searchParams.get("transfer_id")?.trim() ?? "";
   const [showModal, setShowModal] = useState(false);
 
   const query = useQuery({
-    queryKey: ["dispatch", "equipment-transfers", companyId],
+    queryKey: ["dispatch", "equipment-transfers", companyId, transferId],
     enabled: Boolean(companyId),
     queryFn: () =>
       apiRequest<{ requests: TransferRow[] }>(
-        `/api/v1/dispatch/equipment-transfers/pending?operating_company_id=${encodeURIComponent(companyId)}`
+        `/api/v1/dispatch/equipment-transfers/pending?operating_company_id=${encodeURIComponent(companyId)}${transferId ? `&transfer_id=${encodeURIComponent(transferId)}` : ""}`
       ),
   });
 
@@ -117,7 +120,7 @@ export function EquipmentTransferRequests() {
         rows={query.data?.requests ?? []}
         rowKey={(row) => row.uuid}
         loading={query.isLoading}
-        emptyText="No pending equipment transfer requests."
+        emptyText={transferId ? "That equipment transfer was not found for this operating company." : "No pending equipment transfer requests."}
         storageKey="dispatch-equipment-transfer-requests"
         exportFilename="equipment-transfer-requests"
         />

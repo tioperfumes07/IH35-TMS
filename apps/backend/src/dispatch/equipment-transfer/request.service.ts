@@ -142,8 +142,32 @@ export async function listPendingForDriver(
   operatingCompanyId: string,
   driverUuid?: string,
   direction?: "outbound" | "inbound" | "both",
-  equipmentUuid?: string
+  equipmentUuid?: string,
+  requestUuid?: string
 ): Promise<TransferRequestRow[]> {
+  if (requestUuid) {
+    const res = await client.query(
+      `
+        SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+               e.equipment_number,
+               r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
+               r.outbound_confirmed_at::text, r.outbound_evidence_uuid::text,
+               r.inbound_confirmed_at::text, r.inbound_evidence_uuid::text, r.created_at::text,
+               NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
+               NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
+        FROM dispatch.equipment_transfer_requests r
+        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND fd.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND td.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
+                                   AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
+        WHERE r.operating_company_id = $1::uuid
+          AND r.uuid = $2::uuid
+        LIMIT 1
+      `,
+      [operatingCompanyId, requestUuid]
+    );
+    return res.rows as TransferRequestRow[];
+  }
   if (equipmentUuid) {
     const res = await client.query(
       `
@@ -321,11 +345,12 @@ export async function listPendingForDriverForUser(
   operatingCompanyId: string,
   driverUuid?: string,
   direction?: "outbound" | "inbound" | "both",
-  equipmentUuid?: string
+  equipmentUuid?: string,
+  requestUuid?: string
 ) {
   return withCurrentUser(userId, async (client) => {
     await setTransferCompanyScope(client, operatingCompanyId);
-    const requests = await listPendingForDriver(client, operatingCompanyId, driverUuid, direction, equipmentUuid);
+    const requests = await listPendingForDriver(client, operatingCompanyId, driverUuid, direction, equipmentUuid, requestUuid);
     return { requests };
   });
 }
