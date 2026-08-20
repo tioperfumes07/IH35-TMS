@@ -298,7 +298,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             <EntityLink
               kind="driver"
               id={driver.id}
-              label="Open full driver record"
+              label={displayName}
               className="text-xs font-semibold text-slate-700 hover:underline"
               data-testid="driver-profile-open-full-record-link"
             />
