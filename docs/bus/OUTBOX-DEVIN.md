@@ -5926,3 +5926,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=vendors:detail.tasks:vendor
+Devin-A | LIVE PASS | leaf=vendors:detail.tasks:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors/:id marker 'Tasks' | NEXT=leaf=vendors:list.sync:vendor
+Devin-A | LIVE PASS | leaf=vendors:detail.tasks:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=064a593 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors/:id marker 'Tasks' | NEXT=leaf=vendors:list.sync:vendor
