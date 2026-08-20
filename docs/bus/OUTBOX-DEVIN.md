@@ -1384,3 +1384,8 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=62c3947 | mutation=none | NEXT=dispatch.misc.chat
+Devin-A | LIVE STARVED | module=dispatch | leaf=misc.chat | URL=https://app.ih35dispatch.com/dispatch/chat | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.misc.layover
