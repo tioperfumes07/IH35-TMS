@@ -1352,3 +1352,4 @@ Devin-A | LIVE STARVED | module=dispatch | leaf=docs.pod | URL=https://app.ih35d
 Use your Google account or email and password.
 
 Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.docs.ocr
+Devin-A | LIVE STARVED | module=dispatch | leaf=docs.ocr | URL=https://app.ih35dispatch.com/dispatch/ocr-queue | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/ocr-queue ; body head Checking session... | healthz=62c3947 | mutation=none | NEXT=dispatch.docs.equipment_transfers
