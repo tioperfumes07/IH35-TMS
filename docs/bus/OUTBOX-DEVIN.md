@@ -12256,3 +12256,12 @@ Devin-A | LIVE PASS | leaf=docs:table.entity_link:load | USMCA | URL=https://app
 Devin-A | LIVE PASS | leaf=docs:table.entity_link:connectivity | USMCA | URL=https://app.ih35dispatch.com/docs | healthz=5e4cae0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/docs marker 'docs' | NEXT=leaf=home:chrome.toolbar_range:connectivity
 Devin-A | LIVE STARVED | leaf=home:chrome.toolbar_range:connectivity | USMCA | URL=https://app.ih35dispatch.com/home | healthz=5e4cae0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/home healthz=5e4cae0 head Checking session... | NEXT=leaf=home:home.panel.dispatcher_pending_actions:connectivity
 Devin-A | LIVE PASS | leaf=home:home.panel.dispatcher_pending_actions:connectivity | USMCA | URL=https://app.ih35dispatch.com/home | healthz=5e4cae0 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/home marker 'home' | NEXT=leaf=home:role.accountant:connectivity
+Devin-A | LIVE STARVED | leaf=home:role.accountant:connectivity | USMCA | URL=https://app.ih35dispatch.com/home | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/home healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=home:role.default:connectivity
