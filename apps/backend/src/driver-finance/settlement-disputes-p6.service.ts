@@ -469,6 +469,19 @@ export async function decideSettlementDisputeP6(
         amountCents: adjustment,
         resolutionNotes: input.resolution_text.trim(),
       });
+
+      // ACCT-F5619 — write the settlement_lines('dispute_adjustment') memo row REGARDLESS of
+      // journalId (GL posting can be flag-OFF while the settlement still needs to record what was
+      // approved). Without this, an approved correction on THIS route (the P6 decide-dispute path)
+      // never appears on the settlement header/PDF/driver statement -- the only sibling that DOES
+      // write this row is disputes.routes.ts's own resolveDispute.
+      await client.query(
+        `
+          INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
+          VALUES ($1::uuid, 'dispute_adjustment', $2, $3::numeric)
+        `,
+        [dispute.settlement_id, `Dispute adjustment (${nextCanonical})`, adjustment / 100]
+      );
     }
 
     await client.query(
