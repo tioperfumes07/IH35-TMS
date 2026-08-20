@@ -14,6 +14,7 @@
  *   3. `data-testid="*-reverse-drill"` — the explicit reverse-drill marker convention already used by
  *                                        RevenueRecognitionPage
  *   4. an `EntityLink` / `<Link>` to a parent record — a real drill back to the owner
+ *      (`EntityLinkOrTombstone` is the governed nullable-label form of the same drill)
  * A page satisfying NONE of these is reachable but not escapable.
  *
  * WHY A MARKER CONTRACT AND NOT A KEYWORD SCAN: the tracker item that requested this
@@ -42,6 +43,7 @@ const REVERSE_MARKERS = [
   /\bbreadcrumb\s*=/,
   /<Breadcrumb\b/,
   /data-testid=["'][^"']*reverse-drill["']/,
+  /<EntityLinkOrTombstone\b/,
   /<EntityLink\b/,
   /<Link\b/,
 ];
@@ -117,17 +119,19 @@ function selftest() {
     failures.push("case4 FAIL — the reverse-drill marker was not accepted");
   if (!hasReverseLink('<EntityLink kind="vendor" id={x} />'))
     failures.push("case5 FAIL — an EntityLink back to the owner was not accepted");
+  if (!hasReverseLink('<EntityLinkOrTombstone kind="driver" id={id} name={driverName} noun="Driver" />'))
+    failures.push("case6 FAIL — a governed nullable-label EntityLink back to the owner was not accepted");
   if (!hasReverseLink('<Breadcrumb items={[{ label: "Loads", href: "/dispatch" }]} />'))
-    failures.push("case6 FAIL — a navigable Breadcrumb was not accepted");
+    failures.push("case7 FAIL — a navigable Breadcrumb was not accepted");
 
   const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case7 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
+  if (tree.length !== 0) failures.push(`case8 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — bare page caught; backHref/breadcrumb/marker/EntityLink all accepted`);
+  console.log(`${LABEL}: selftest PASS — bare page caught; backHref/breadcrumb/marker/EntityLink/EntityLinkOrTombstone all accepted`);
 }
 
 function main() {
