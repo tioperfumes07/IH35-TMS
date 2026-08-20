@@ -2686,3 +2686,17 @@ Devin-A | LIVE PASS | leaf=factoring:factors.admin:picker_law | USMCA | URL=http
 Devin-A | LIVE PASS | leaf=factoring:factors.admin:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/factoring/factors | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/factors marker 'factoring' | NEXT=leaf=factoring:faro.import:customer
 Devin-A | LIVE PASS | leaf=factoring:factors.admin:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/factors | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/factors marker 'factoring' | NEXT=leaf=factoring:faro.import:customer
 Devin-A | LIVE PASS | leaf=factoring:factors.admin:reverse_link | USMCA | URL=https://app.ih35dispatch.com/factoring/factors | healthz=11fe5d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/factoring/factors marker 'factoring' | NEXT=leaf=factoring:faro.import:customer
+Devin-A | LIVE STARVED | leaf=factoring:faro.import:customer | USMCA | URL=https://app.ih35dispatch.com/factoring/faro-import | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/faro-import healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:home.chargebacks_fees:connectivity
+Devin-A | LIVE STARVED | leaf=factoring:faro.import:connectivity | USMCA | URL=https://app.ih35dispatch.com/factoring/faro-import | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/factoring/faro-import healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=factoring:home.chargebacks_fees:connectivity
