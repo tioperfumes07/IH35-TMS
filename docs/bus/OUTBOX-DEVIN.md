@@ -1883,3 +1883,34 @@ Devin-A | LIVE STARVED | leaf=vendors:detail.ap.bill_payments:scenario.ap | USMC
 Devin-A | LIVE STARVED | leaf=vendors:detail.ap.expenses:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=3316668
 Devin-A | LIVE STARVED | leaf=vendors:detail.ap.expenses:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=3316668
 Devin-A | LIVE STARVED | leaf=vendors:detail.ap.expenses:reverse_link | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=3316668
+Devin-A | LIVE STARVED | leaf=vendors:list.filters:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=3316668 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head  | NEXT=leaf=vendors:list.filter_chips:vendor
+Devin-A | LIVE STARVED | leaf=vendors:list.filters:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=3316668 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head  | NEXT=leaf=vendors:list.filter_chips:vendor
+Devin-A | LIVE STARVED | leaf=vendors:list.filters:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=3316668 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head  | NEXT=leaf=vendors:list.filter_chips:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.documents:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=3316668 head Checking session... | NEXT=leaf=vendors:detail.audit_history:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.documents:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=3316668 head Checking session... | NEXT=leaf=vendors:detail.audit_history:vendor
+Devin-A | LIVE STARVED | leaf=vendors:list.segment.all:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=all | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?listTab=all healthz=unknown head Checking session... | NEXT=leaf=vendors:list.segment.active:vendor
+Devin-A | LIVE STARVED | leaf=vendors:list.segment.all:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=all | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?listTab=all healthz=unknown head Checking session... | NEXT=leaf=vendors:list.segment.active:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.tasks:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.tasks:vendor
+Devin-A | LIVE PASS | leaf=vendors:detail.ap.vendor_credits:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=3316668
+Devin-A | LIVE PASS | leaf=vendors:detail.ap.vendor_credits:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id?tab=ap | healthz=3316668
