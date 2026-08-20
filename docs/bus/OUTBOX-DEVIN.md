@@ -3834,3 +3834,27 @@ Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.create:con
 Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.classes.create:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.classes.create:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.accounting.chart_of_accounts.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/chart-of-accounts | healthz=46d3390 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/chart-of-accounts marker 'lists' | NEXT=leaf=lists:catalog.accounting.classes.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.accounting.classes.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.accounting.classes.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.accounting.classes.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/classes | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/accounting/classes healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:catalog.accounting.classes.list:picker_law
