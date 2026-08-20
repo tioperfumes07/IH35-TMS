@@ -1074,3 +1074,14 @@ Overview
 Projections
 Scenari | healthz=e4d97a9 | mutation=none | NEXT=finance.nav.statements
 Devin-A | LIVE STARVED | module=finance | leaf=statements.bs | URL=https://app.ih35dispatch.com/finance/statements?tab=bs | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/finance/statements?tab=bs ; body head Checking session... | healthz=e4d97a9 | mutation=none | NEXT=finance.statements.tb
+Devin-A | LIVE PASS | module=finance | leaf=nav.ar_ap_aging | URL=https://app.ih35dispatch.com/finance/ar-ap-aging | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/finance/ar-ap-aging ; marker 'AR/AP Aging' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | healthz=337ab0c | mutation=none | NEXT=finance.nav.projections
