@@ -1825,3 +1825,6 @@ Devin-A | LIVE PASS | leaf=vendors:list.segment.active:vendor | USMCA | URL=http
 Devin-A | LIVE PASS | leaf=vendors:list.segment.active:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ed4880
 Devin-A | LIVE PASS | leaf=vendors:list.segment.inactive:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=inactive | healthz=4ed4880
 Devin-A | LIVE PASS | leaf=vendors:list.segment.inactive:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=inactive | healthz=4ed4880
+Devin-A | LIVE PASS | leaf=vendors:list.segment.by_category:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=by-category | healthz=4ed4880
+Devin-A | LIVE PASS | leaf=vendors:list.segment.by_category:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=by-category | healthz=4ed4880
+Devin-A | LIVE PASS | leaf=vendors:list.segment.by_category:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=by-category | healthz=4ed4880
