@@ -423,6 +423,20 @@ export const CATALOG_PICKER_CONFIGS = {
     ],
   }),
 
+  // LST-WIRE-07-CUSTOMER-TYPES-CATALOG-NO-CONSUMER — catalogs.customer_types (LST-WIRE-07,
+  // migration 202610150000) had zero registry entry and zero consumer anywhere: the customer-side
+  // mirror of vendor_type above, same generic-catalog factory shape, same {code, display_name,
+  // description} CATALOG_FIELDS. Deliberately separate from the legacy 2-value customer_type text
+  // enum (broker/direct_shipper) — this is an ADDITIONAL classification, not a replacement.
+  customer_type: catalogEntry({
+    key: "customer_type",
+    label: "Customer type",
+    table: "catalogs.customer_types",
+    endpoint: "/api/v1/catalogs/customers/customer-types",
+    evidence: "apps/backend/src/catalogs/generic-catalog.routes.ts:692-700 (customerTypesCatalogConfig) — one GenericCatalogConfig drives SELECT and INSERT",
+    consumerPath: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
+  }),
+
 
 
   load_type: catalogEntry({

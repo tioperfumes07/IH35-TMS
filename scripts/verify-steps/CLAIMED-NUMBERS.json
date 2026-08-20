@@ -2839,6 +2839,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-wo-detail-entitylink-id-cast"
   },
+  "4143": {
+    "claimed_at": "2026-08-20",
+    "claimed_by": "cc-2",
+    "purpose": "verify-customer-type-picker-law"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",

@@ -21,6 +21,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { CreateCustomerInput, Customer, PaymentTermOption, UpdateCustomerInput } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { customerTypesCatalogClient } from "../../api/catalogs-customers";
 import type { CustomerType, MilesBasis } from "../../types/api";
 import { MoneyInput } from "../forms/MoneyInput";
 import { EntityPicker } from "../parity/EntityPicker";
@@ -29,6 +30,9 @@ export type CustomerProfileFormValues = {
   // Name & contact
   name: string;
   customer_type: "" | CustomerType;
+  // LST-WIRE-07-CUSTOMER-TYPES-CATALOG-NO-CONSUMER: additional, optional catalogs.customer_types
+  // FK ("Customer category") alongside the legacy customer_type enum above — not a replacement.
+  customer_type_id: string; // "" = none selected
   parent_customer_id: string; // D1-4: sub-customer -> parent hard link ("" = top-level customer)
   email: string;
   phone: string;
@@ -95,6 +99,7 @@ export function emptyCustomerProfileValues(): CustomerProfileFormValues {
   return {
     name: "",
     customer_type: "",
+    customer_type_id: "",
     parent_customer_id: "",
     email: "",
     phone: "",
@@ -154,6 +159,7 @@ export function customerToProfileValues(c: Customer): CustomerProfileFormValues 
   return {
     name: str(c.name),
     customer_type: c.customer_type ?? "",
+    customer_type_id: str(c.customer_type_id),
     parent_customer_id: str(c.parent_customer_id),
     email: str(c.email),
     phone: str(c.phone),
@@ -247,6 +253,7 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     legal_name: name,
     customer_code: trimOrUndef(v.customer_code),
     customer_type: v.customer_type || undefined,
+    customer_type_id: v.customer_type_id || undefined,
     parent_customer_id: v.parent_customer_id || undefined, // D1-4: persist parent hard link
     email,
     phone: trimOrUndef(v.phone),
@@ -306,6 +313,7 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     name,
     customer_code: trimOrNull(v.customer_code),
     customer_type: v.customer_type || null,
+    customer_type_id: v.customer_type_id || null,
     parent_customer_id: v.parent_customer_id || null, // D1-4: persist / clear parent hard link
     email: trimOrNull(v.email),
     phone: trimOrNull(v.phone),
@@ -503,6 +511,20 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
     return terms.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` }));
   }, [paymentTermOptions]);
 
+  // LST-WIRE-07-CUSTOMER-TYPES-CATALOG-NO-CONSUMER: catalogs.customer_types had a working backend
+  // route and zero frontend consumers. Self-contained fetch (mirrors detentionReasonsCatalogClient
+  // and every other generic-catalog picker) rather than threading a new prop through 3 parents.
+  const customerTypeCatalogQuery = useQuery({
+    queryKey: ["catalogs", "customer-types", operatingCompanyId],
+    queryFn: () => customerTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true" }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const customerTypeOptions = useMemo(() => {
+    const rows = customerTypeCatalogQuery.data?.rows ?? [];
+    return rows.map((row) => ({ value: row.id, label: row.display_name }));
+  }, [customerTypeCatalogQuery.data?.rows]);
+
   // D1-4: parent-customer options, excluding the row being edited (a customer can't be its own parent).
   const parentOptions = useMemo(() => {
     const rows = Array.isArray(parentCustomerOptions) ? parentCustomerOptions : [];
@@ -552,6 +574,18 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               { value: "direct_shipper", label: "Direct shipper" },
             ]}
           />
+          <div className="block text-sm">
+            <span className="mb-1 block text-xs font-semibold text-gray-600">Customer category</span>
+            <ReferenceSelect
+              value={values.customer_type_id || null}
+              onChange={(next) => onPatch({ customer_type_id: next ?? "" })}
+              options={customerTypeOptions}
+              createKind="customer_type"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select category"
+              onOptionCreated={() => void customerTypeCatalogQuery.refetch()}
+            />
+          </div>
           <TextField label="Email" type="email" value={values.email} onChange={(email) => onPatch({ email })} required />
           <TextField label="Phone" value={values.phone} onChange={(phone) => onPatch({ phone })} />
           <TextField label="Mobile" value={values.mobile} onChange={(mobile) => onPatch({ mobile })} />
