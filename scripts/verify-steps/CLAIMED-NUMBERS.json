@@ -2964,6 +2964,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-system-module"
   },
+  "4178": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-no-nested-modal-frames"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -4952,5 +4957,5 @@
       "4127-verify-wo-cancellation-reason-picker-law.mjs"
     ]
   },
-  "total_claimed": 1204
+  "total_claimed": 1205
 }
