@@ -2769,6 +2769,18 @@
       "leafRe": "^detail\\.ap(\\.expenses)?$",
       "guard": "scripts/verify-vendor-ap-expenses-wired.mjs",
       "live": "BLOCKED"
+    },
+    {
+      "task": "WAVE2-FLEET-UNIT-TRAILER-EXPENSES-REVERSE-BUILT",
+      "modules": [
+        "fleet"
+      ],
+      "cols": [
+        "expense"
+      ],
+      "leafRe": "^(unit|trailer)\\.profile\\.expenses_reverse$",
+      "guard": "scripts/verify-fleet-unit-trailer-expenses-reverse-wired.mjs",
+      "live": "BLOCKED"
     }
   ]
 }
