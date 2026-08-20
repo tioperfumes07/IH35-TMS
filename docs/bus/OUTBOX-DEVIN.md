@@ -7136,3 +7136,36 @@ Devin-A | LIVE PASS | leaf=lists:lists.modal.detail_type:picker_law | USMCA | UR
 Devin-A | LIVE PASS | leaf=lists:lists.modal.detail_type:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/accounting/detail-types | healthz=8a75d4b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/accounting/detail-types marker 'lists' | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
 Devin-A | LIVE STARVED | leaf=lists:lists.modal.driver_catalog:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=8a75d4b | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists healthz=8a75d4b head Checking session... | NEXT=leaf=lists:lists.modal.drivers_reference_catalog:connectivity
 Devin-A | LIVE PASS | leaf=lists:lists.modal.drivers_reference_catalog:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=8a75d4b | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.oem_parts_create:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=8a75d4b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:lists.modal.quick_create_entity:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=8a75d4b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:lists.modal.quick_create_entity:connectivity
+Devin-A | LIVE STARVED | leaf=lists:lists.modal.oem_parts_create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/oem-parts | healthz=8a75d4b | mutation=none | evidence=No marker at https://app.ih35dispatch.com/lists/maintenance/oem-parts head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=lists:lists.modal.quick_create_entity:connectivity
