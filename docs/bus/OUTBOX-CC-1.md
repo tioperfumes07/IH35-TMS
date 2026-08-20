@@ -1351,3 +1351,7 @@ verify:static: continuing non-stop, fast-merge, no idle gaps.
 Moving to other work (factoring, per the wave order) rather than retry-looping against an actively churning target. Will re-verify and re-apply ACCT-F5620 once more before this session ends if it's still missing.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=factoring money | GO
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
