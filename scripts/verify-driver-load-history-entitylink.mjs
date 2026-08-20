@@ -5,7 +5,8 @@
  * entitylink-driver-load-history (GATED-no):
  * Driver Load History + Dispatch Assignment History must:
  *  1. Expose previous_driver_id / new_driver_id from the assignment-history API
- *  2. Render EntityLink kind="load" + kind="driver" (not plain text / ad-hoc Link)
+ *  2. Render the canonical load link and nullable related identities through
+ *     EntityLinkOrTombstone (not dead links / plain text / ad-hoc Link)
  *  3. Surface query failures via ListErrorState (not false-empty)
  *
  * Rule 17 — verify-step only (no package.json / locked-guards / ci.yml).
@@ -64,6 +65,17 @@ export function check(sources) {
     if (!/kind\s*=\s*["']unit["']/.test(loadHistory)) {
       failures.push(`${FILES.loadHistory}: assigned loads must EntityLink kind="unit"`);
     }
+    const nullableRelations = [
+      ["assigned-load customer", /<EntityLinkOrTombstone\s+kind="customer"\s+id=\{row\.customer_id\}\s+name=\{row\.customer_name\}\s+noun="Customer"/],
+      ["assigned-load unit", /<EntityLinkOrTombstone\s+kind="unit"\s+id=\{row\.assigned_unit_id\}\s+name=\{row\.assigned_unit_number\}\s+noun="Unit"/],
+      ["previous driver", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.previous_driver_id\}\s+name=\{row\.previous_driver_name\}\s+noun="Driver"/],
+      ["new driver", /<EntityLinkOrTombstone\s+kind="driver"\s+id=\{row\.new_driver_id\}\s+name=\{row\.new_driver_name\}\s+noun="Driver"/],
+    ];
+    for (const [relation, pattern] of nullableRelations) {
+      if (!pattern.test(loadHistory)) {
+        failures.push(`${FILES.loadHistory}: ${relation} must use EntityLinkOrTombstone with its canonical id + human label`);
+      }
+    }
     if (!/previous_driver_id/.test(loadHistory) || !/new_driver_id/.test(loadHistory)) {
       failures.push(`${FILES.loadHistory}: must wire previous_driver_id + new_driver_id into EntityLink`);
     }
@@ -113,14 +125,15 @@ function selftest() {
     loadHistory: `
       import { ListErrorState } from "../ListErrorState";
       import { EntityLink } from "../shared/EntityLink";
+      import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
       import { listDriverAssignedLoads } from "../../api/mdata";
       {historyQ.isError ? <ListErrorState title="x" status={0} onRetry={() => {}} /> : null}
       {!historyQ.isLoading && !historyQ.isError && rows.length === 0 ? <p>empty</p> : null}
       <EntityLink kind="load" id={row.load_id} />
-      <EntityLink kind="driver" id={row.previous_driver_id} />
-      <EntityLink kind="driver" id={row.new_driver_id} />
-      <EntityLink kind="customer" id={row.customer_id} />
-      <EntityLink kind="unit" id={row.assigned_unit_id} />
+      <EntityLinkOrTombstone kind="driver" id={row.previous_driver_id} name={row.previous_driver_name} noun="Driver" />
+      <EntityLinkOrTombstone kind="driver" id={row.new_driver_id} name={row.new_driver_name} noun="Driver" />
+      <EntityLinkOrTombstone kind="customer" id={row.customer_id} name={row.customer_name} noun="Customer" />
+      <EntityLinkOrTombstone kind="unit" id={row.assigned_unit_id} name={row.assigned_unit_number} noun="Unit" />
     `,
     assignmentHistory: `
       import { ListErrorState } from "../../components/ListErrorState";
@@ -155,7 +168,19 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAILED — bad fixture accepted`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS`);
+  const nullableMutations = [
+    ["customer dead drill", good.loadHistory.replace("<EntityLinkOrTombstone kind=\"customer\"", "<EntityLink kind=\"customer\"")],
+    ["unit dead drill", good.loadHistory.replace("<EntityLinkOrTombstone kind=\"unit\"", "<EntityLink kind=\"unit\"")],
+    ["previous-driver dead drill", good.loadHistory.replace("<EntityLinkOrTombstone kind=\"driver\" id={row.previous_driver_id}", "<EntityLink kind=\"driver\" id={row.previous_driver_id}")],
+    ["new-driver dead drill", good.loadHistory.replace("<EntityLinkOrTombstone kind=\"driver\" id={row.new_driver_id}", "<EntityLink kind=\"driver\" id={row.new_driver_id}")],
+  ];
+  for (const [name, loadHistory] of nullableMutations) {
+    if (!check({ ...good, loadHistory }).some((failure) => failure.includes("EntityLinkOrTombstone"))) {
+      console.error(`${LABEL} SELFTEST FAILED — ${name} mutation survived`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL}: selftest PASS — ${nullableMutations.length} nullable-relation mutations detected`);
 }
 
 function main() {
