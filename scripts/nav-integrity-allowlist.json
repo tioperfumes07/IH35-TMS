@@ -616,5 +616,11 @@
       "path": "/driver-finance/settlement-close",
       "reason": "on-arrival settlement-close action page reached contextually from the Settlements subnav (settlement pay-run build)"
     }
+  ],
+  "REDIRECT_ROUTES": [
+    {
+      "path": "/settings/company",
+      "reason": "LV-SETTINGS-COMPANY-REDIRECT (manifest.tsx) — pure legacy-URL redirect to /system, not a real page; the subnav lives on the real destination /system, not on the redirect stub itself"
+    }
   ]
 }
