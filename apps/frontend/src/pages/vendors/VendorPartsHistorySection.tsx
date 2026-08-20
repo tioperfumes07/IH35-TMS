@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPartsAssignmentsPage } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
@@ -52,11 +53,25 @@ export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Prop
           {rows.map((row) => (
             <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
               <span className="flex items-center gap-1 font-semibold text-slate-700">
-                {row.part_description}
+                <EntityLinkOrTombstone
+                  kind="inventory_part"
+                  id={row.parts_inventory_id}
+                  name={row.part_description}
+                  noun="Part"
+                  data-testid="vendor-parts-history-part-link"
+                />
                 {row.part_number ? <span className="font-normal text-gray-500">({row.part_number})</span> : null}
               </span>
               <span className="flex items-center gap-1 text-gray-600">
                 <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} />
+                <span>·</span>
+                <EntityLinkOrTombstone
+                  kind="unit"
+                  id={row.unit_id}
+                  name={row.unit_number}
+                  noun="Unit"
+                  data-testid="vendor-parts-history-unit-link"
+                />
                 <span>
                   · qty {row.qty_used} · {row.vendor_invoice_number ? `inv ${row.vendor_invoice_number} · ` : ""}
                   {formatMoney(row.vendor_invoice_amount)} · {formatDateUS(row.created_at)}
