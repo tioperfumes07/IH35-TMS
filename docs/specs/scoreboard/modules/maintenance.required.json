@@ -621,6 +621,7 @@
       "route_hint": "surface://components/maintenance/WorkOrderDetailModal.tsx",
       "surface_kind": "modal",
       "surface_path": "components/maintenance/WorkOrderDetailModal.tsx",
+      "owned_surface_paths": ["components/maintenance/AddPartsLinkDrawer.tsx"],
       "required": [
         "connectivity",
         "reverse_link",
