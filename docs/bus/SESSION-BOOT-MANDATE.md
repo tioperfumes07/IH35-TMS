@@ -1,7 +1,7 @@
-# SESSION BOOT · URGENT 6 = LEAST PROGRESS
+# SESSION BOOT · VERIFIED LEAST-CLICKED
 
 `CODER-INSTRUCTIONS-NOW.md` then `INBOX-<SEAT>.md`.
 
-**Urgent 6:** settlements → factoring → banking → customers → drivers → accounting.
+Clicked least-first: banking → factoring → accounting → settlements → customers → drivers.
 
 ACK `STANDARD=USMCA-LAUNCH | URGENT-6-LEAST`

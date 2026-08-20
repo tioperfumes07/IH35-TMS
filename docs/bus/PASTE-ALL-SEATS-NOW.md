@@ -1,9 +1,8 @@
-# PASTE ALL SEATS · URGENT 6 = LEAST PROGRESS
+# PASTE ALL SEATS · VERIFIED LEAST-CLICKED
 
 `git pull --ff-only origin main`
 
-**NOW:** settlements · factoring · banking · customers · drivers · accounting.  
-Park vendors + dispatch (most Clicked). Fuel never. USMCA only.  
-**Pickers already checked** — CC-2 live-clicks; Devin-A item-12 Clicked. No picker rebuild.
+Clicked least-first: **banking → factoring → accounting → settlements → customers → drivers**. Park vendors/dispatch.  
+CC-1 queue 1–6 complete. CC-2 pickers complete. No rebuild.
 
 ACK: `STANDARD=USMCA-LAUNCH | URGENT-6-LEAST`
