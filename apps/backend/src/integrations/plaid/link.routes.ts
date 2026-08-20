@@ -666,7 +666,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN accounting.bills bill
           ON bill.id = bt.matched_bill_id
          AND bill.operating_company_id = bt.operating_company_id
-        LEFT JOIN driver_finance.settlements settlement
+        LEFT JOIN driver_finance.driver_settlements settlement
           ON settlement.id = bt.matched_settlement_id
          AND settlement.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
