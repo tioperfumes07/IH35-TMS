@@ -4968,3 +4968,24 @@ Devin-A | LIVE STARVED | leaf=safety:safety.parity.fine_create:driver | USMCA | 
 Devin-A | LIVE PASS | leaf=safety:safety.parity.fine_detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=befa817 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.integrity_alert_detail:connectivity
 Devin-A | LIVE PASS | leaf=safety:safety.parity.fine_detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=befa817 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.integrity_alert_detail:connectivity
 Devin-A | LIVE PASS | leaf=safety:safety.parity.fine_detail:driver | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=befa817 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.integrity_alert_detail:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.integrity_alert_detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/home healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=safety:settings.list:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.integrity_alert_detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/home healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=safety:settings.list:connectivity
+Devin-A | LIVE STARVED | leaf=safety:safety.parity.integrity_alert_detail:driver | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/safety/home healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=safety:settings.list:connectivity
