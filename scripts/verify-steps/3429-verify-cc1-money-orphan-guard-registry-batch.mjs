@@ -135,6 +135,7 @@ const guards = [
   "verify-settlements-driver-wiring.mjs",
   "verify-settlements-gl-ap-honest.mjs",
   "verify-unit-finance-gl-je-reverse.mjs",
+  "verify-usmca-payment-method-gl-binding-migration.mjs",
   "verify-unit-finance-linkage-ap-bill.mjs",
   "verify-wo-total-actual-cost-recompute.mjs",
   "verify-vendor-bill-payment-write-role-gated.mjs",
