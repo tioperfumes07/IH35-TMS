@@ -1776,3 +1776,21 @@ CC-1 | Money FAIL | leaf=settlements:liabilities.list:liability | USMCA | URL=ht
 CC-1 | Money FAIL | leaf=settlements:settlements.panel.pre_settlements:pre_settlement | USMCA | URL=https://app.ih35dispatch.com/settlements | evidence=LIVE STARVED: no pre_settlement marker
 CC-1 | Money FAIL | leaf=factoring:factoring.wizard.batch:batch | USMCA | URL=https://app.ih35dispatch.com/factoring | evidence=LIVE STARVED: no batch marker
 CC-1 | Money FAIL | leaf=banking:reconciliation:reconciliation | USMCA | URL=https://app.ih35dispatch.com/banking/reconciliation | evidence=LIVE STARVED: no reconciliation marker
+
+2026-08-20T17:08Z CC-1 | ACCT-F5653 SHIPPED (PR #12904, merged 6c95db8d) -- dedicated cross-entity
+leak sweep of money-path surfaces via the specialized cross-entity-leak auditor, since USMCA is live
+(went live 2026-08-10). posting-engine.service.ts's 3 creditAccountId-consuming builders wrote a
+caller-supplied credit_account_id straight into journal_entry_postings.account_id with NO check it
+belongs to the posting entity's chart of accounts -- reachable via POST /cash-advance-requests and
+.../approve (bare UUID validation, no ownership check). journal_entry_postings.account_id's FK to
+catalogs.accounts is single-column, not composite with operating_company_id, and catalogs.accounts'
+FORCE RLS doesn't guard FK references from a foreign INSERT -- a stale/mistyped/cross-entity UUID
+could post a real JE crediting a DIFFERENT entity's GL account while tagged with the approving
+company's operating_company_id, silently corrupting that entity's balance rollups.
+resolveBankLedgerAccountId's own sibling pattern in the same file already had the correct validation
+shape -- just never applied to credit_account_id. Fixed by adding
+verifyCreditAccountBelongsToCompany (mirrors resolveBankLedgerAccountId) and applying it at all 3
+call sites, failing closed with a new CREDIT_ACCOUNT_CROSS_ENTITY code. Updated 2 existing unit-test
+suites + added 2 new regression tests proving a foreign-entity account is now refused. Board closeout
+shipped in this same PR cycle. REMAINING: none for this finding. Continuing the money-lane sweep
+non-stop, no idle gaps, always fix never defer.
