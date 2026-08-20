@@ -6459,3 +6459,10 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=customers:detail.profile:customer
+Devin-A | LIVE PASS | leaf=customers:detail.profile:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE PASS | leaf=customers:detail.profile:vendor | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE PASS | leaf=customers:detail.profile:load | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE PASS | leaf=customers:detail.profile:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE PASS | leaf=customers:detail.profile:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE PASS | leaf=customers:detail.profile:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
+Devin-A | LIVE PASS | leaf=customers:detail.profile:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=a9866fc | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/customers/:id marker 'Customer Detail' | NEXT=leaf=customers:detail.quality:customer
