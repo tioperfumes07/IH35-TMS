@@ -170,7 +170,17 @@ async function fetchMatrixRecentMerged(): Promise<{
   items: MatrixRecentPr[];
   source?: "git_log" | "github" | "ledger_committed";
 }> {
-  const r = await fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), { credentials: "include" });
+  // MATRIX-INFINITE-PENDING-FEED: a hung /api fetch (no client-side timeout) left this query's
+  // promise permanently unsettled — React Query's retry/error handling only runs on a REJECTED
+  // promise, so a stalled connection never surfaced the "unavailable" banner the design doc
+  // promises; the board just sat on "PENDING FEED" forever with zero indication anything was
+  // wrong. Same class as LV-COMPLIANCE-FLEET-HOS-DRIVER-DETAIL-INFINITE-LOADING (apps/frontend/src
+  // /api/mdata.ts getDriver) — bound the read with AbortSignal.timeout so a stall always resolves
+  // to a real rejection.
+  const r = await fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), {
+    credentials: "include",
+    signal: AbortSignal.timeout(20_000),
+  });
   if (!r.ok || r.status === 204) return { items: [] };
   const json = (await r.json()) as {
     recentActivity?: MatrixRecentPr[];
@@ -457,9 +467,11 @@ function titleCase(id: MatrixModuleId): string {
 }
 
 async function fetchModuleMatrix(moduleId: MatrixModuleId): Promise<LiveMatrix | null> {
+  // MATRIX-INFINITE-PENDING-FEED: see fetchMatrixRecentMerged's comment above — same missing-
+  // timeout gap, same fix.
   const r = await fetch(
     resolveApiUrl(`/api/v1/program/module-matrix?module=${moduleId}`),
-    { credentials: "include" },
+    { credentials: "include", signal: AbortSignal.timeout(20_000) },
   );
   if (!r.ok) return null;
   const json = (await r.json()) as LiveMatrix;
