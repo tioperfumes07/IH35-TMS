@@ -4,6 +4,7 @@ import fs from "node:fs";
 const LABEL = "verify-bank-linkage-gl-je-reverse";
 const files = {
   route: "apps/backend/src/banking/categorization.routes.ts",
+  api: "apps/frontend/src/api/banking.ts",
   panel: "apps/frontend/src/components/banking/LinkedBankTransactionsPanel.tsx",
   driver: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
   load: "apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx",
@@ -17,7 +18,11 @@ function audit(s) {
   const failures = [];
   if (!/bt\.matched_journal_entry_id::text AS matched_journal_entry_id/.test(s.route) || !/je\.memo AS matched_journal_entry_memo/.test(s.route)) failures.push("bank→JE fields missing");
   if (!/je\.id = bt\.matched_journal_entry_id/.test(s.route) || !/je\.operating_company_id = bt\.operating_company_id/.test(s.route)) failures.push("entity-scoped bank→JE join missing");
-  if (!/matched_journal_entry_id: string \| null/.test(s.panel) || !/matched_journal_entry_memo: string \| null/.test(s.panel)) failures.push("typed panel JE fields missing");
+  if (
+    !/export type LinkedBankTransactionRow[\s\S]{0,700}matched_journal_entry_id: string \| null/.test(s.api) ||
+    !/export type LinkedBankTransactionRow[\s\S]{0,700}matched_journal_entry_memo: string \| null/.test(s.api) ||
+    !/apiRequest<\{ rows: LinkedBankTransactionRow\[\]; total_count: number \}>/.test(s.api)
+  ) failures.push("typed panel JE fields missing");
   if (!/kind="journal_entry"/.test(s.panel) || !/row\.matched_journal_entry_id/.test(s.panel)) failures.push("canonical conditional JE drill missing");
   if (!/query\.isError/.test(s.panel) || !/linked-bank-transactions-empty/.test(s.panel)) failures.push("honest panel states missing");
   const mounts = { driver: "driver_id", load: "load_id", unit: "unit_id", trailer: "trailer_id", vendor: "vendor_id", customer: "customer_id" };
@@ -30,6 +35,9 @@ if (process.argv.includes("--selftest")) {
     ["memo", "route", /je\.memo AS matched_journal_entry_memo/g, "NULL AS matched_journal_entry_memo"],
     ["join", "route", /je\.id = bt\.matched_journal_entry_id/g, "FALSE"],
     ["scope", "route", /je\.operating_company_id = bt\.operating_company_id/g, "TRUE"],
+    ["typed-je-id", "api", /matched_journal_entry_id: string \| null;/g, "matched_journal_entry_id: null;"],
+    ["typed-je-memo", "api", /matched_journal_entry_memo: string \| null;/g, "matched_journal_entry_memo: null;"],
+    ["typed-return", "api", /apiRequest<\{ rows: LinkedBankTransactionRow\[\]; total_count: number \}>/g, "apiRequest<{ rows: unknown[]; total_count: number }>"] ,
     ["drill", "panel", /kind="journal_entry"/g, 'kind="bank_transaction"'],
     ["driver", "driver", /kind: "driver_id"/g, 'kind: "unit_id"'],
     ["load", "load", /kind: "load_id"/g, 'kind: "unit_id"'],
