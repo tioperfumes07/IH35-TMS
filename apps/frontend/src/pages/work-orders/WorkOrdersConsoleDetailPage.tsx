@@ -7,6 +7,7 @@ import {
   approveWorkOrderConsole,
   cancelWorkOrderConsole,
   completeWorkOrderConsole,
+  createWoCancellationReason,
   getWorkOrderConsoleDetail,
   listWoCancellationReasons,
   requestWorkOrderPhotoUpload,
@@ -97,6 +98,18 @@ export function WorkOrdersConsoleDetailPage() {
       })),
     [woCancelReasonsQ.data?.reasons]
   );
+  // WO-CANCEL-REASON-NO-CREATE-ROUTE: same fix as WorkOrderDetailPage.tsx — this catalog is GLOBAL
+  // (no operating_company_id), so it uses the Combobox's own allowAddNew/onAddNew rather than the
+  // entity-scoped registry/ReferenceSelect inline-create flow.
+  const createWoReasonMut = useMutation({
+    mutationFn: (label: string) => createWoCancellationReason(label),
+    onSuccess: (created) => {
+      void queryClient.invalidateQueries({ queryKey: ["catalogs", "wo-cancellation-reasons"] });
+      setCancelReasonCode(created.reason_code);
+      pushToast(`Added cancellation reason "${created.reason_label}"`, "success");
+    },
+    onError: () => pushToast("Could not add that cancellation reason", "error"),
+  });
 
   const cancelMut = useMutation({
     mutationFn: (body: { cancel_reason_code: string; cancel_notes?: string }) =>
@@ -246,6 +259,11 @@ export function WorkOrdersConsoleDetailPage() {
                   options={woCancelReasonOptions}
                   placeholder="Select a cancellation reason…"
                   disabled={woCancelReasonsQ.isLoading}
+                  allowAddNew
+                  onAddNew={(typedText) => {
+                    const label = typedText.trim();
+                    if (label) createWoReasonMut.mutate(label);
+                  }}
                 />
                 <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-console-cancel-notes">
                   Notes (optional)

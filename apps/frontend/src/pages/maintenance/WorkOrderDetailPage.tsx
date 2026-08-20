@@ -10,7 +10,7 @@ import {
   listSevereRepairEstimates,
   type WorkOrderPostingPreviewLine,
 } from "../../api/maintenance";
-import { cancelWorkOrderConsole, listWoCancellationReasons, voidWorkOrderConsole } from "../../api/workOrdersConsole";
+import { cancelWorkOrderConsole, createWoCancellationReason, listWoCancellationReasons, voidWorkOrderConsole } from "../../api/workOrdersConsole";
 import { CreateWorkOrderModal, type EditWorkOrderLine, type EditWorkOrderTarget } from "./components/CreateWorkOrderModal";
 import { Button } from "../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
@@ -305,6 +305,19 @@ export function WorkOrderDetailPage() {
       })),
     [woCancelReasonsQ.data?.reasons]
   );
+  // WO-CANCEL-REASON-NO-CREATE-ROUTE: this Combobox previously had no create affordance because the
+  // backend route was GET-only. Now that createWoCancellationReason exists, wire it through the
+  // Combobox's own allowAddNew/onAddNew (this catalog is GLOBAL — no operating_company_id — so the
+  // registry/ReferenceSelect inline-create flow, which assumes entity scoping, does not apply here).
+  const createWoReasonMut = useMutation({
+    mutationFn: (label: string) => createWoCancellationReason(label),
+    onSuccess: (created) => {
+      void queryClient.invalidateQueries({ queryKey: ["catalogs", "wo-cancellation-reasons"] });
+      setCancelReasonCode(created.reason_code);
+      pushToast(`Added cancellation reason "${created.reason_label}"`, "success");
+    },
+    onError: () => pushToast("Could not add that cancellation reason", "error"),
+  });
   const cancelMut = useMutation({
     mutationFn: (body: { cancel_reason_code: string; cancel_notes?: string }) =>
       cancelWorkOrderConsole(String(id), companyId, body),
@@ -635,6 +648,11 @@ export function WorkOrderDetailPage() {
                   options={woCancelReasonOptions}
                   placeholder="Select a cancellation reason…"
                   disabled={woCancelReasonsQ.isLoading}
+                  allowAddNew
+                  onAddNew={(typedText) => {
+                    const label = typedText.trim();
+                    if (label) createWoReasonMut.mutate(label);
+                  }}
                 />
                 <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-cancel-notes">
                   Notes (optional)

@@ -77,6 +77,29 @@ export async function listWoCancellationReasons() {
   return apiRequest<{ reasons: WoCancellationReason[] }>("/api/v1/catalogs/wo-cancellation-reasons");
 }
 
+// reason_code is the catalog's PRIMARY KEY (uppercase snake_case, matches the six seeded rows —
+// DUPLICATE, CREATED_IN_ERROR, …). WO-CANCEL-REASON-NO-CREATE-ROUTE: this endpoint did not exist
+// until this fix — both WO cancel-reason pickers were previously bare, un-creatable Comboboxes.
+export function deriveWoCancellationReasonCode(label: string): string {
+  const code = label
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+  return /^[A-Z]/.test(code) ? code : `REASON_${code}`.slice(0, 80);
+}
+
+export async function createWoCancellationReason(reasonLabel: string) {
+  const created = await apiRequest<{ reason: WoCancellationReason }>("/api/v1/catalogs/wo-cancellation-reasons", {
+    method: "POST",
+    body: {
+      reason_code: deriveWoCancellationReasonCode(reasonLabel),
+      reason_label: reasonLabel.trim(),
+    },
+  });
+  return created.reason;
+}
+
 export async function cancelWorkOrderConsole(
   workOrderId: string,
   operatingCompanyId: string,
