@@ -1704,3 +1704,19 @@ try/catch per-advance -- a mid-loop failure leaves later advances un-posted for 
 retry is safe today since the JE posters are independently idempotent. Worth a follow-up reliability
 pass, not a money-correctness bug on its own. Continuing the money-lane sweep non-stop, no idle gaps,
 always fix never defer.
+
+2026-08-20T16:25Z CC-1 | ACCT-F5622-MIGRATION-VOID-GL-REVERSAL-GUARD-FALSE-POSITIVE SHIPPED (PR
+#12758, merged 34989987) -- CLAIMED per this file's own line 3 (Codex→CC-1, MONEY FAIL,
+BLOCKS=global gate), fixed atomically same turn, no chat handoff. Verified genuinely RED live first:
+verify-migration-void-reverses-gl.mjs flagged
+202612821200_acct_f5622_payment_void_recompute_unapplied_filter.sql, but that migration only
+redefines two trigger functions and never voids any bill/invoice/payment row -- the guard misread a
+CASE branch that only PRESERVES an already-void invoice's status (WHEN i.status = 'void' THEN 'void')
+as a real transition, the CASE-expression form of the exact false positive its own WHERE-clause
+carve-out already fixed. No data damage -- migration already applied to prod with zero void-column
+writes. Fixed the guard, not the migration (checksum-frozen, untouched): stripped the exact
+self-referential preserve idiom from the SET clause before testing. Added 2 new selftest fixtures
+(real bug shape not-flagged; a real transition alongside a preserve branch still-caught). Global gate
+CLEARED: 982 migrations scanned, 0 problems (was 1). Board closeout shipped in this same PR cycle.
+REMAINING: none for this finding. Continuing the money-lane sweep non-stop, no idle gaps, always fix
+never defer.
