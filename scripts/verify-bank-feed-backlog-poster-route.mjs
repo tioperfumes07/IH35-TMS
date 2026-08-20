@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ACCT-F5660 — the CHAIN-05 backlog poster route must exist and stay correctly shaped.
+ * ACCT-F5669 — the CHAIN-05 backlog poster route must exist and stay correctly shaped.
  *
  * Every other invocation of maybePostBankCategorizationToGl fires only AT categorize time, so a
  * transaction categorized while BANK_FEED_GL_POSTING_ENABLED was OFF (or whose best-effort post
@@ -32,7 +32,7 @@ export function analyze(src) {
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
   const routeIdx = code.indexOf('"/api/v1/banking/transactions/post-categorized-backlog"');
   if (routeIdx < 0) {
-    failures.push(`${FILE}: the post-categorized-backlog route is missing (ACCT-F5660) — stuck categorized rows can never gain their JE.`);
+    failures.push(`${FILE}: the post-categorized-backlog route is missing (ACCT-F5669) — stuck categorized rows can never gain their JE.`);
     return failures;
   }
   const nextRouteIdx = code.indexOf("app.post(", routeIdx + 1);
