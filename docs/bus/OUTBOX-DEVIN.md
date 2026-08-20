@@ -4746,3 +4746,5 @@ Espanol (preview)
 tioperfumes07@gmail.com
 Module
 In active development | NEXT=leaf=lists:lists.modal.posting_template:connectivity
+Devin-A | LIVE PASS | leaf=lists:lists.modal.posting_template:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=9eda465 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.quick_create_entity:connectivity
+Devin-A | LIVE PASS | leaf=lists:lists.modal.posting_template:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists | healthz=9eda465 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists marker 'lists' | NEXT=leaf=lists:lists.modal.quick_create_entity:connectivity
