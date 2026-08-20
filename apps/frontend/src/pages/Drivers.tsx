@@ -814,13 +814,15 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               </div>
               {/* LINK-F5187 (drivers:cash_advances) -- the real driver_finance.driver_liabilities ids
                   were already fetched by liabilitiesQuery and carried through into the Liability column. */}
+              {/* No separate search input on this tab (unlike the roster's server-bound listDrivers
+                  search) — ParityTable's own built-in toolbar search stays enabled so the debt-alert
+                  rows are still searchable, matching the real chrome.toolbar_search leaf requirement. */}
               <ParityTable
                 rows={debtAlertRows}
                 storageKey="drivers-cash-advances-debt-alert"
                 rowKey={(row) => row.driver_id}
                 columns={debtAlertColumns}
                 emptyText="No outstanding cash advance, repair, damage, or late-arrival debt."
-                suppressToolbarSearch
               />
             </div>
           ) : null}
