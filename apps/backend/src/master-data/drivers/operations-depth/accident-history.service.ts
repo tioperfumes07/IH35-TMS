@@ -5,8 +5,11 @@ export type AccidentHistoryRow = {
   driver_id: string;
   operating_company_id: string;
   unit_id: string | null;
+  unit_number: string | null;
   load_id: string | null;
+  load_number: string | null;
   vendor_id: string | null;
+  vendor_name: string | null;
   occurred_at: string | null;
   description: string | null;
   at_fault: string | null;
@@ -44,20 +47,32 @@ export async function getDriverAccidentHistory(
   const res = await client.query<AccidentHistoryRow>(
     `
       SELECT
-        id::text AS uuid,
-        driver_id::text,
-        operating_company_id::text,
-        unit_id::text,
-        load_id::text,
-        vendor_id::text,
-        accident_at::text AS occurred_at,
-        description,
-        at_fault,
-        preventable
-      FROM safety.accident_reports
-      WHERE driver_id = $1::uuid
-        AND operating_company_id = $2::uuid
-      ORDER BY accident_at DESC NULLS LAST
+        ar.id::text AS uuid,
+        ar.driver_id::text,
+        ar.operating_company_id::text,
+        ar.unit_id::text,
+        NULLIF(TRIM(u.unit_number), '') AS unit_number,
+        ar.load_id::text,
+        NULLIF(TRIM(l.load_number), '') AS load_number,
+        ar.vendor_id::text,
+        NULLIF(TRIM(v.vendor_name), '') AS vendor_name,
+        ar.accident_at::text AS occurred_at,
+        ar.description,
+        ar.at_fault,
+        ar.preventable
+      FROM safety.accident_reports ar
+      LEFT JOIN mdata.units u
+        ON u.id = ar.unit_id
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+      LEFT JOIN mdata.loads l
+        ON l.id = ar.load_id
+       AND l.operating_company_id = $2::uuid
+      LEFT JOIN mdata.vendors v
+        ON v.id = ar.vendor_id
+       AND v.operating_company_id = $2::uuid
+      WHERE ar.driver_id = $1::uuid
+        AND ar.operating_company_id = $2::uuid
+      ORDER BY ar.accident_at DESC NULLS LAST
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]
