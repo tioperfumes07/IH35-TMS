@@ -12293,3 +12293,35 @@ Devin-A | LIVE STARVED | leaf=customers:detail.billing:customer | USMCA | URL=ht
 Devin-A | LIVE STARVED | leaf=customers:detail.billing:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=billing | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=billing healthz=unknown head Checking session... | NEXT=leaf=customers:detail.billing.record_payment:customer
 Devin-A | LIVE STARVED | leaf=customers:detail.billing:reverse_link | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=billing | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=billing healthz=unknown head Checking session... | NEXT=leaf=customers:detail.billing.record_payment:customer
 Devin-A | LIVE STARVED | leaf=customers:detail.billing:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id?tab=billing | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id?tab=billing healthz=unknown head Checking session... | NEXT=leaf=customers:detail.billing.record_payment:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:customer | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:picker_law | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=customers:detail.coi:customer
+Devin-A | LIVE STARVED | leaf=customers:detail.billing.record_payment:connectivity | USMCA | URL=https://app.ih35dispatch.com/customers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/customers/:id healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=customers:detail.coi:customer
