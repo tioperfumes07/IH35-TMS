@@ -8,9 +8,18 @@ import { QBOSyncDriftDashboard } from "../QBOSyncDriftDashboard";
 
 const apiRequestMock = vi.fn();
 
-vi.mock("../../../api/client", () => ({
-  apiRequest: (...args: unknown[]) => apiRequestMock(...args),
-}));
+// Preserve the real ApiError export (importOriginal) — userFacingApiError (lib/api-error-message.ts)
+// does `err instanceof ApiError`, and a mock that dropped ApiError entirely made that check throw
+// ("No ApiError export is defined on the mock") INSIDE the mutation's onError handler, so the
+// resolve-rejects-with-a-toast path never got as far as pushToast — it died on an unhandled
+// rejection instead, and the toast this test asserts on never rendered.
+vi.mock("../../../api/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/client")>();
+  return {
+    ...actual,
+    apiRequest: (...args: unknown[]) => apiRequestMock(...args),
+  };
+});
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),

@@ -10,6 +10,7 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("react-router-dom", () => ({
   Link: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  useSearchParams: () => [new URLSearchParams()],
 }));
 
 vi.mock("../../../contexts/CompanyContext", () => ({

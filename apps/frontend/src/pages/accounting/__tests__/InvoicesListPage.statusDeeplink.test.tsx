@@ -198,6 +198,9 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
     const user = await openFilters();
     const statusSelect = await screen.findByDisplayValue("With balance");
     await user.selectOptions(statusSelect, "sent");
+    // Filters are staged (useStagedListFilters) — a draft change only commits to the URL/query
+    // once Apply is clicked, matching the shared CollapsedListFilters Apply/Cancel/Reset chrome.
+    await user.click(screen.getByRole("button", { name: "Apply" }));
 
     await waitFor(() => {
       const q = screen.getByTestId("location-search").textContent ?? "";

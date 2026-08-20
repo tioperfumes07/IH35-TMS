@@ -19,6 +19,9 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("react-router-dom", () => ({
   Link: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   useNavigate: () => vi.fn(),
+  // SalesTaxPage reads ?return_id= to highlight the deep-linked row (EntityLink
+  // kind="sales_tax_return" drill-through) — no highlight target in these tests.
+  useSearchParams: () => [new URLSearchParams()],
 }));
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -173,6 +176,13 @@ describe("Accounting Wave A query error states", () => {
     const failure = failedQuery(message.includes("customers") ? "customers unavailable" : "invoices unavailable");
     queryResults.set(keyOf(failedKey), failure);
     queryResults.set(keyOf(otherKey), queryResult(otherData));
+    // depositCatalogQuery (RecordPaymentModal.tsx) — a real third query added since this harness
+    // was last updated; not under test here, so a plain successful empty result in its real
+    // shape ({ bankAccounts, coaAccounts, undepositedFundsAccountId }, not a bare array).
+    queryResults.set(
+      keyOf(["record-payment", "deposit-catalog", "company-1"]),
+      queryResult({ bankAccounts: [], coaAccounts: [], undepositedFundsAccountId: null })
+    );
 
     render(
       <RecordPaymentModal
@@ -191,7 +201,11 @@ describe("Accounting Wave A query error states", () => {
 
   it("renders the CoA validation failure and retries validateQuery", () => {
     queryResults.set(keyOf(["coa-roles", "company-1"]), queryResult({ rows: [] }));
-    queryResults.set(keyOf(["coa-roles", "accounts"]), queryResult({ accounts: [] }));
+    // Real key is company-scoped (CoaRolesPage.tsx: ["coa-roles", "accounts", companyId]).
+    // A non-empty accounts list, not [] — an empty result now renders its own honest "No
+    // postable accounts" ListErrorBanner (a real, separate improvement), which would add a
+    // second "Refresh" button and break this test's single-failure assertion below.
+    queryResults.set(keyOf(["coa-roles", "accounts", "company-1"]), queryResult({ accounts: [{ id: "a1", name: "Checking" }] }));
     const failure = failedQuery("validation unavailable");
     queryResults.set(keyOf(["coa-roles", "validate", "company-1"]), failure);
 

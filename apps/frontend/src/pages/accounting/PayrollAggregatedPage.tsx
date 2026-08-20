@@ -85,6 +85,7 @@ export function PayrollAggregatedPage() {
 
   return (
     <AccountingSubNavWrapper title="Payroll (aggregated)" subtitle="Option B — driver settlements in TMS + W-2 runs mirrored from QBO Payroll">
+      <div data-testid="payroll-aggregated-page" className="contents">
       {aggregatedQuery.isError ? <ListErrorBanner message="Failed to load aggregated payroll view." /> : null}
       <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <span>
@@ -124,6 +125,7 @@ export function PayrollAggregatedPage() {
             tableTestId="payroll-aggregated-qbo-w2-runs-table"
           />
         </section>
+      </div>
       </div>
     </AccountingSubNavWrapper>
   );

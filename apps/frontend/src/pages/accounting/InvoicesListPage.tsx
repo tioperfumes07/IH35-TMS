@@ -126,41 +126,26 @@ export function InvoicesListPage() {
     );
   }, [searchParams, setSearchParams]);
 
-  function setCustomerId(next: string) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next) params.set("customer_id", next);
-        else params.delete("customer_id");
-        return params;
-      },
-      { replace: true }
-    );
-  }
-  // LST-F5199 — source_load reverse filter writes URL.
-  function setSourceLoadId(next: string) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next) params.set("source_load_id", next);
-        else params.delete("source_load_id");
-        return params;
-      },
-      { replace: true }
-    );
-  }
-
-  function setStatus(next: InvoiceListFilter) {
+  // LST-F5199 — source_load reverse filter writes URL (folded into the single combined write below).
+  // LV-INVOICES-FILTER-APPLY-DROPS-FIELDS — react-router's setSearchParams closes over the
+  // `searchParams` snapshot from the CURRENT render (chunk-7XGYIT3M.js:729-738), it does not chain
+  // like React's useState updater across multiple synchronous calls. Calling setStatus, then
+  // setCustomerId, then setSourceLoadId back-to-back each recomputed from the SAME pre-Apply prev,
+  // so only the last call's diff survived — Apply silently dropped every field but one. One combined
+  // write fixes it; setFromDate/setToDate stay separate since they are plain local useState (not
+  // searchParams), which React's own batching composes correctly.
+  function applyUrlFilters(next: { status: InvoiceListFilter; customerId: string; sourceLoadId: string }) {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
         params.delete("status");
         params.delete("has_balance");
-        if (next === "with_balance") {
-          params.set("has_balance", "true");
-        } else if (next) {
-          params.set("status", next);
-        }
+        if (next.status === "with_balance") params.set("has_balance", "true");
+        else if (next.status) params.set("status", next.status);
+        if (next.customerId) params.set("customer_id", next.customerId);
+        else params.delete("customer_id");
+        if (next.sourceLoadId) params.set("source_load_id", next.sourceLoadId);
+        else params.delete("source_load_id");
         return params;
       },
       { replace: true }
@@ -170,11 +155,9 @@ export function InvoicesListPage() {
     applied: { status, customerId, fromDate, toDate, sourceLoadId: deepLinkSourceLoadId || "" },
     empty: { status: "" as InvoiceListFilter, customerId: "", fromDate: "", toDate: "", sourceLoadId: "" },
     onApply: (next) => {
-      setStatus(next.status);
-      setCustomerId(next.customerId);
+      applyUrlFilters({ status: next.status, customerId: next.customerId, sourceLoadId: next.sourceLoadId });
       setFromDate(next.fromDate);
       setToDate(next.toDate);
-      setSourceLoadId(next.sourceLoadId);
     },
   });
 

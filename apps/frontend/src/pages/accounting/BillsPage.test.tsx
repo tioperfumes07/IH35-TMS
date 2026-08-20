@@ -110,7 +110,9 @@ describe("BillsPage", () => {
     await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
 
     const banner = await screen.findByTestId("bills-deeplink-banner");
-    expect(banner).toHaveTextContent("bill-par");
+    // Banner now shows the human-readable bill_number ("B-100"), not a raw id substring — the
+    // same never-show-a-raw-id honesty pattern used everywhere else in this codebase.
+    expect(banner).toHaveTextContent("B-100");
     expect(banner).toHaveTextContent(/highlighted and selected/i);
     // Allocate button for the deep-linked row flips to Selected
     expect(await screen.findByRole("button", { name: /^Selected$/i })).toBeInTheDocument();
