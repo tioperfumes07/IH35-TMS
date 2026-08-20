@@ -1941,3 +1941,5 @@ Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:vendor | USMCA | URL=
 Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668
 Devin-A | LIVE STARVED | leaf=vendors:list.export_csv:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors healthz=unknown head  | NEXT=leaf=vendors:md.transaction_list:vendor
 Devin-A | LIVE STARVED | leaf=vendors:list.export_csv:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors healthz=unknown head  | NEXT=leaf=vendors:md.transaction_list:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.tasks:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668
+Devin-A | LIVE STARVED | leaf=vendors:detail.tasks:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668
