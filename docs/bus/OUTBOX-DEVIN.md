@@ -1890,3 +1890,25 @@ Devin-A | LIVE STARVED | leaf=vendors:detail.documents:vendor | USMCA | URL=http
 Devin-A | LIVE STARVED | leaf=vendors:detail.documents:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id?tab=ap healthz=3316668 head Checking session... | NEXT=leaf=vendors:detail.audit_history:vendor
 Devin-A | LIVE STARVED | leaf=vendors:list.segment.all:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=all | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?listTab=all healthz=unknown head Checking session... | NEXT=leaf=vendors:list.segment.active:vendor
 Devin-A | LIVE STARVED | leaf=vendors:list.segment.all:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?listTab=all | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?listTab=all healthz=unknown head Checking session... | NEXT=leaf=vendors:list.segment.active:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.tasks:vendor
+Devin-A | LIVE STARVED | leaf=vendors:detail.audit_history:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=3316668 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=vendors:detail.tasks:vendor
