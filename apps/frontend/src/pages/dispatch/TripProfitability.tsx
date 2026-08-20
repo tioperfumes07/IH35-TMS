@@ -9,7 +9,6 @@
  * Aggregates NB + SB per driver_settlement (load_bookended model).
  * Read-only. No new financial code.
  */
-import { entityLabel } from "../../lib/entity-label";
 import { useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { formatUsdCents } from "../../lib/money";
 
 function money(cents: number) {
@@ -68,7 +67,7 @@ export function TripProfitability() {
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs">
-          <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")} />
+          <EntityLinkOrTombstone kind="settlement" id={row.settlement_id} name={row.settlement_display_id} noun="Settlement" />
         </span>
       ),
     },
@@ -76,7 +75,7 @@ export function TripProfitability() {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />,
+      render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
     },
     {
       key: "nb_load_number",
@@ -84,7 +83,7 @@ export function TripProfitability() {
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs">
-          <EntityLink kind="load" id={row.nb_load_id} label={entityLabel(row.nb_load_number, row.nb_load_id, "Load")} />
+          <EntityLinkOrTombstone kind="load" id={row.nb_load_id} name={row.nb_load_number} noun="Load" />
         </span>
       ),
     },
@@ -94,7 +93,7 @@ export function TripProfitability() {
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs">
-          <EntityLink kind="load" id={row.sb_load_id} label={entityLabel(row.sb_load_number, row.sb_load_id, "Load")} />
+          <EntityLinkOrTombstone kind="load" id={row.sb_load_id} name={row.sb_load_number} noun="Load" />
         </span>
       ),
     },

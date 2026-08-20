@@ -694,7 +694,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
     bad: /nb_load_number\s*\?\?\s*"—"|sb_load_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*row\.nb_load_number\s*,\s*row\.nb_load_id\s*,\s*"Load"\s*\)/,
+    good: /EntityLinkOrTombstone kind="load" id=\{row\.nb_load_id\} name=\{row\.nb_load_number\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx",
@@ -766,7 +766,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
     bad: /row\.driver_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
@@ -1154,7 +1154,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/components/MaintenanceDamageRegisterTab.tsx",
     bad: /render: \(row\) => row\.unit_number \|\| "—"/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
+    good: /EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/MaintenanceAlertsCard.tsx",

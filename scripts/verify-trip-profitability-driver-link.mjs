@@ -12,7 +12,7 @@ const checks = [
   ["profitability projection driver FK", "service", /t\.driver_id/, false],
   ["serializer driver FK", "service", /driver_id:\s*r\.driver_id \? String\(r\.driver_id\) : null/, false],
   ["client driver FK type", "api", /driver_id:\s*string \| null/, false],
-  ["report driver drill", "page", /<EntityLink kind="driver" id=\{row\.driver_id\}/, false],
+  ["report driver tombstone-safe drill", "page", /<EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/, false],
   ["report does not discard driver FK", "page", /entityLabel\(row\.driver_name, null, "Driver"\)/, true],
 ];
 const original = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
