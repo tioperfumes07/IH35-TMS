@@ -1,27 +1,53 @@
-# CODER INSTRUCTIONS NOW · VERIFIED 2026-08-20T07:21Z FROM GITHUB MAIN OUTBOX
+# CODER INSTRUCTIONS NOW · NO DEVIATE · CONTINUOUS · HOURLY RE-READ · FAST-MERGE
 
-Owner: six with **least Clicked**. Park vendors + dispatch.
+USMCA only. Fuel never. eld never. No QBO write-back. **No owner gate.** ALL QUESTIONS ASKED AND ANSWERED.
 
-**Same six modules.** Re-counted `OUTBOX-DEVIN.md` LIVE PASS on GitHub main (module= or leaf=module:):  
-banking **2** · factoring **5** · accounting **17** · settlements **24** · customers **30** · drivers **31** · vendors **73** · dispatch **157**.
+**Do not deviate.** This file + your `INBOX-<SEAT>.md` TOP are the only NOW. Chat summaries do not override.
 
-**Clicked order (least first):** banking → factoring → accounting → settlements → customers → drivers.
+## Continuous auto mode
 
-Do **not** use the stale ~0 settlements count. Loop on main had vendors+dispatch in ORDER — that was a defect.
+Never idle. Never wait for Jorge. Never stop because one module’s Built is exhausted — take the **next name** in the wave list. FAST-MERGE every FO (`docs/bus/FAST-MERGE-4MIN-LAW.md`):
 
-**Already done (do not restart):**
-- **CC-2 picker_law:** OUTBOX “closes out picker_law coverage across all 8” + later “URGENT-6-LEAST picker_law sweep complete”. Live click only.
-- **CC-1 queue items 1–6:** OUTBOX 2026-08-20T09:35Z “FULL QUEUE COMPLETE” (accounting/banking/factoring/settlements + theater + audit parse). Do not re-issue “NOW=settlements TMS money”.
+1. `cursor-ship-preflight --body-file` / `money-pr-local-gate` **exit 0** (merge proof)
+2. `git push` — if blocked **only** by ENV `verify-static-fallback`, `git push --no-verify` **after** step 1 PASS
+3. `gh pr create` — **never** `gh pr checks --watch`
+4. `gh pr merge N --squash --delete-branch --admin` **immediately**
+5. Neon yourself if money/migrations
+6. OUTBOX one line → next FO same turn
 
-**100%:** Fully-Wired 1–11 Built + Devin item 12 Clicked. USMCA only.
+## Hourly re-read (no exceptions · redundant on purpose)
 
-| Seat | VERIFIED NOW |
-|------|----------------|
-| **Devin-A** | Clicked least-first. chrome=9227. Park vendors/dispatch. |
-| **CC-2** | Live click only. No picker rebuild. |
-| **CC-1** | Queue 1–6 complete per their OUTBOX. Next money FAIL on the 6 only if a new OPEN row exists. |
-| **CC-3** | UNVERIFIED whether unpaid **drivers Built** leaves remain — grep `drivers.required.json` vs last SHIPPED; do not rebuild dispatch. |
-| **Codex** | OUTBOX already customers reverse; NEXT vendors is **parked**. Do not restart settlements reverse from zero. Live=UNVERIFIED until Devin clicks. |
-| **Cursor** | Lead. Verify OUTBOX before any INBOX rewrite. |
+**Every hour, every seat including Cursor:**
 
-ACK: `STANDARD=USMCA-LAUNCH | URGENT-6-LEAST | NOW=<verified FO> | GO`
+1. `git pull --ff-only origin main`
+2. Re-read this file TOP to BOTTOM
+3. Re-read your `INBOX-<SEAT>.md` TOP
+4. Re-read `docs/bus/FAST-MERGE-4MIN-LAW.md`
+5. Re-ACK: `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=<module> <col> | GO`
+6. Keep working the same chain — do not invent a new queue
+
+Cursor lead re-instructs the same waves on that tick even if nothing changed.
+
+## Module complete = Fully-Wired 1–12
+
+`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`  
+Until item **12 Live Chrome**: `Built` / `Live=BLOCKED`. Devin does 12 (`chrome=9227`, `leaf=module:leafId:col | USMCA`).
+
+## Waves (never skip WAVE 2 after WAVE 1 Built-only)
+
+**WAVE 1:** banking → factoring → accounting → settlements → customers → drivers  
+**WAVE 2:** insurance → legal → lists → safety → fleet → vendors → maintenance → dispatch  
+**WAVE 3:** inventory → compliance → reports → cash-flow → finance → form_425 → users → docs → home → tasks → program
+
+## Seats (same waves, different columns — no crossing)
+
+| Seat | Column | NOW → then |
+|------|--------|------------|
+| **Devin-A** | 12 Live Chrome | WAVE 1 banking Clicked → rest WAVE 1 → WAVE 2 → WAVE 3 |
+| **CC-3** | Built 1–11 FE | customers (drivers Built done) → rest WAVE 1 unpaid Built → WAVE 2 → WAVE 3 |
+| **CC-1** | money, reuse poster, Bill+BillPayment | WAVE 1 banking money → factoring → accounting → settlements → WAVE 2 money modules. F5602–F5619 stand. No manufacture. |
+| **CC-2** | picker live-verify | WAVE 1 banking → … → WAVE 2. Rebuild only on live FAIL |
+| **Codex** | reverse_link | customers → rest WAVE 1 → WAVE 2. No 9227 |
+| **Cursor** | lead + leftover WAVE 1 Built + scoreboard | banking Built leftover if unpaid; re-instruct hourly; FAST-MERGE INBOX to main |
+
+ACK: `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD | NOW=<FO> | GO`

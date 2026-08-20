@@ -1,7 +1,7 @@
-# SESSION BOOT · VERIFIED LEAST-CLICKED
+# SESSION BOOT
 
-`CODER-INSTRUCTIONS-NOW.md` then `INBOX-<SEAT>.md`.
+Every session and **every hour:** `CODER-INSTRUCTIONS-NOW.md` → `INBOX-<SEAT>.md` → `FAST-MERGE-4MIN-LAW.md` → `HOURLY-REREAD.md`
 
-Clicked least-first: banking → factoring → accounting → settlements → customers → drivers.
+WAVE1-THEN-2. Continuous. No deviate.
 
-ACK `STANDARD=USMCA-LAUNCH | URGENT-6-LEAST`
+ACK `STANDARD=USMCA-LAUNCH | WAVE1-THEN-2 | HOURLY-REREAD`
