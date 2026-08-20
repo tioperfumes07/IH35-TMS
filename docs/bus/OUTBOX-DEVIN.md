@@ -1550,3 +1550,8 @@ Idioma
 Ingles
 Espanol (preview)
 t | healthz=4e73f49 | mutation=none | NEXT=dispatch.dispatch.modal.equipment_transfer
+Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.panel.pre_settlement | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
+
+Use your Google account or email and password.
+
+Sign in with | healthz=4e73f49 | mutation=none | NEXT=dispatch.dispatch.modal.abandonment_report
