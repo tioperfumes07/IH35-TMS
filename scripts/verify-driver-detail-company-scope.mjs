@@ -46,8 +46,21 @@ if (failures.length) {
 }
 
 if (process.argv.includes("--selftest")) {
+  const replaceOrFail = (text, pattern, replacement, label) => {
+    const mutated = text.replace(pattern, replacement);
+    if (mutated === text) throw new Error(`[${LABEL}] SELFTEST FIXTURE DRIFT — ${label}`);
+    return mutated;
+  };
   const mutations = [
-    { key: "detail", text: source.detail.replace("getDriver(id, companyId)", "getDriver(id)") },
+    {
+      key: "detail",
+      text: replaceOrFail(
+        source.detail,
+        /getDriver\(id, companyId(?:, signal)?\)/,
+        "getDriver(id)",
+        "scoped DriverDetail read",
+      ),
+    },
     { key: "api", text: source.api.replace("const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;", "const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}&aggregate=true`;") },
     { key: "api", text: source.api.replace('operating_company_id: operatingCompanyId, aggregate: "true"', "operating_company_id: operatingCompanyId") },
     { key: "profile", text: source.profile.replace(', aggregate: "true"', "") },
