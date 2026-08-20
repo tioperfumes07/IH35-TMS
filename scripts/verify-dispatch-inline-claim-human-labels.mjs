@@ -100,7 +100,9 @@ function assertAll(srcs) {
     problems.push("ClaimCreateModal: accident selector must render the human accident-date label");
   }
   const exactConsumers = [
-    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /entityLabel\(null, id, "Load"\)/, "load breadcrumb"],
+    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /getLoad\(id as string, companyId\)/, "company-scoped load label read"],
+    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /entityLabel\(loadNumber, id, "Load"\)/, "load breadcrumb"],
+    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /<EntityLinkOrTombstone[\s\S]{0,180}?kind="load"[\s\S]{0,180}?name=\{loadNumber\}/, "load-number reverse drill"],
     ["apps/frontend/src/components/home/RevenueDiscrepancyDrill.tsx", /entityLabel\(inv\.display_id, inv\.invoice_id, "Invoice"\)/, "invoice display ID"],
     ["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx", /EntityLinkOrTombstone kind="driver" id=\{selectedPending\.driver_id\} name=\{selectedPending\.driver_name\}/, "unresolved-safe deduction driver name"],
     ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", /EntityLinkOrTombstone kind="load" id=\{String\(currentLoad\.load_id\)\} name=\{currentLoad\.load_number\}/, "unresolved-safe current load number"],
@@ -129,6 +131,8 @@ if (SELFTEST) {
     ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", 'label: `Accident — ${when}`', 'label: value', "claim accident label"],
     ["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx", 'name={selectedPending.driver_name}', 'name={null}', "deduction driver human label"],
     ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", 'name={currentLoad.load_number}', 'name={null}', "current load human label"],
+    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", 'getLoad(id as string, companyId)', 'getLoad(id as string)', "load label company scope"],
+    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", 'name={loadNumber}', 'name={null}', "load banking reverse label"],
   ];
   for (const [file, needle, replacement, label] of mutations) {
     const planted = { ...srcs, [file]: srcs[file].replace(needle, replacement) };

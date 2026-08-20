@@ -1,9 +1,11 @@
 import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { getLoad } from "../../api/loads";
 
 /**
  * Reverse Law §9 for a load — bank feed rows tagged to this load.
@@ -16,6 +18,12 @@ export function LoadBankingLinkagePage() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const loadQuery = useQuery({
+    queryKey: ["load-banking-linkage-label", companyId, id],
+    queryFn: () => getLoad(id as string, companyId),
+    enabled: Boolean(id && companyId),
+  });
+  const loadNumber = loadQuery.data?.load_number ?? null;
 
   if (!id) {
     return (
@@ -32,12 +40,13 @@ export function LoadBankingLinkagePage() {
     <div className="space-y-4 p-4" data-testid="load-banking-linkage-page">
       <PageHeader
         title="Load · bank feed linkage"
-        breadcrumb={["Dispatch", "Loads", entityLabel(null, id, "Load"), "Banking"]}
+        breadcrumb={["Dispatch", "Loads", entityLabel(loadNumber, id, "Load"), "Banking"]}
         actions={
-          <EntityLink
+          <EntityLinkOrTombstone
             kind="load"
             id={id}
-            label="Open on Dispatch board"
+            name={loadNumber}
+            noun="Load"
             className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
           />
         }

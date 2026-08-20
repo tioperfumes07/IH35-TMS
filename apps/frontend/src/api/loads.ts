@@ -254,8 +254,11 @@ export function listLoads(filters: LoadsListFilters) {
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }
 
-export function getLoad(id: string) {
-  return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}`);
+export function getLoad(id: string, operatingCompanyId?: string) {
+  const query = new URLSearchParams();
+  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  const qs = query.toString();
+  return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}${qs ? `?${qs}` : ""}`);
 }
 
 export function getLoadAudit(id: string) {
