@@ -1678,3 +1678,23 @@ Ingles
 Espanol (preview)
 6
 tioperfume | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.current_load
+Devin-A | LIVE PASS | module=fleet | leaf=roster.filter.status_inshop | URL=https://app.ih35dispatch.com/fleet?status=InMaintenance | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+FLEET›UNIT LOADING…
+Unit Loa | healthz=1d0eee9 | mutation=none | NEXT=fleet.roster.filter.status_oos
+Devin-A | LIVE PASS | module=fleet | leaf=unit.profile.current_load | URL=https://app.ih35dispatch.com/fleet/units/:id | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/fleet/units/:id ; marker 'fleet' present ; body head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes07@gmail.com
+FLEET›UNIT LOADING…
+Unit Loa | healthz=unknown | mutation=none | NEXT=fleet.unit.profile.trip_cost
