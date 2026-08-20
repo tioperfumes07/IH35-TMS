@@ -109,6 +109,7 @@ function run(root = ROOT) {
         /kind="work_order" id=\{row\.id\} name=\{row\.display_id\} noun="Work order"/,
         /kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit"/,
         /kind="unit" id=\{selected\.unit_id\} name=\{selected\.unit_number\} noun="Unit"/,
+        /kind="unit" id=\{deepLinkUnitId\} name=\{deepLinkUnitName\} noun="Unit"/,
         /kind="work_order"[\s\S]{0,80}id=\{selected\.id\}/,
       ]) if (!pattern.test(src)) fails.push(`${c.name}: exact list/modal reverse identity coupling missing`);
     }

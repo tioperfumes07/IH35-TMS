@@ -107,6 +107,9 @@ export function FaultDraftsPage() {
     if (!effectiveUnitId) return all;
     return all.filter((d) => d.unit_id === effectiveUnitId);
   }, [draftsQuery.data?.drafts, effectiveUnitId]);
+  const deepLinkUnitName = deepLinkUnitId
+    ? (draftsQuery.data?.drafts ?? []).find((draft) => draft.unit_id === deepLinkUnitId)?.unit_number ?? null
+    : null;
   const selected = drafts.find((d) => d.id === selectedId) ?? null;
 
   const columns = useMemo<ParityColumn<FaultDraft>[]>(
@@ -205,7 +208,7 @@ export function FaultDraftsPage() {
       {deepLinkUnitId ? (
         <p className="text-xs text-slate-600" data-testid="fault-drafts-unit-reverse-banner">
           Showing fault-driven drafts for the selected unit ·{" "}
-          <EntityLink kind="unit" id={deepLinkUnitId} label="Open unit profile" />
+          <EntityLinkOrTombstone kind="unit" id={deepLinkUnitId} name={deepLinkUnitName} noun="Unit" />
         </p>
       ) : null}
 
