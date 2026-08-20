@@ -41,7 +41,10 @@ export function collectProblems(root = ROOT) {
     );
   }
   // Explicit allowCreate near the load picker (not only the default) so regressions stay visible.
-  const loadBlock = code.match(/kind=["']load["'][\s\S]{0,600}dataTestId=["']accident-load["']/);
+  // Window widened 600 -> 900 (2026-08-20, CC-3): the real block is 764 chars (selectedOption's
+  // multi-line fallback + the allowCreate history comment pushed it past 600) — code is correct
+  // (bare `allowCreate`, no `={false}`), the window was just too narrow to reach dataTestId.
+  const loadBlock = code.match(/kind=["']load["'][\s\S]{0,900}dataTestId=["']accident-load["']/);
   if (!loadBlock || !/\ballowCreate\b/.test(loadBlock[0]) || /allowCreate=\{false\}/.test(loadBlock[0])) {
     problems.push(`${FILE}: CREATE Load EntityPicker (accident-load) must set allowCreate (not false)`);
   }

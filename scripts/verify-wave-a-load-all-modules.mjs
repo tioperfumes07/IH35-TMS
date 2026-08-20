@@ -32,9 +32,16 @@ export function auditLoadColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
   if (p10.length < 97) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
-  // LINK-F5169 classified the final blanket Required tail leaf-by-leaf. Navigation-only hops and
-  // aggregate reports do not own a row-level load identity, leaving 134 genuine load leaves.
-  if (leaves.length < 134) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
+  // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
+  // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
+  // dropped `load`+`reverse_link` from unit.profile.trip_cost (a ZIP-only estimator with no
+  // load select/create/reverse drill — the leaf never should have claimed a load dependency it
+  // didn't have). Re-verified against the live required.json files, not board prose: 131 total /
+  // 97 P10 / 18 modules, all three floors now hold exactly at the honest count. This floor may
+  // only ever go DOWN for a documented un-inflation like #9817 — never UP without a genuinely new
+  // load leaf actually being built.
+  if (leaves.length < 131) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   if (new Set(leaves.map((leaf) => leaf.module)).size < 18) failures.push("load module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical load FK/link contract missing`);
