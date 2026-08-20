@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listInsuranceLawsuits, type InsuranceLawsuit, type InsuranceLawsuitStatus } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { LawsuitCreateModal } from "../../components/insurance/LawsuitCreateModal";
@@ -108,7 +109,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         label: "Claim",
         render: (lawsuit) =>
           lawsuit.claim_id ? (
-            <EntityLink kind="claim" id={lawsuit.claim_id} label={entityLabel(lawsuit.claim_number, lawsuit.claim_id, "Claim")} />
+            <EntityLinkOrTombstone kind="claim" id={lawsuit.claim_id} name={lawsuit.claim_number} noun="Claim" />
           ) : (
             "-"
           ),
@@ -117,14 +118,14 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         key: "driver_id",
         label: "Driver",
         render: (lawsuit) => (
-          <EntityLink kind="driver" id={lawsuit.driver_id ?? undefined} label={entityLabel(lawsuit.driver_name, lawsuit.driver_id, "Driver")} />
+          <EntityLinkOrTombstone kind="driver" id={lawsuit.driver_id} name={lawsuit.driver_name} noun="Driver" />
         ),
       },
       {
         key: "unit_id",
         label: "Unit",
         render: (lawsuit) => (
-          <EntityLink kind="unit" id={lawsuit.unit_id ?? undefined} label={entityLabel(lawsuit.unit_number, lawsuit.unit_id, "Unit")} />
+          <EntityLinkOrTombstone kind="unit" id={lawsuit.unit_id} name={lawsuit.unit_number} noun="Unit" />
         ),
       },
       { key: "court_name", label: "Court", sortable: true },
