@@ -1456,3 +1456,14 @@ USMCA Freight
 Create
 Tasks
 P | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.modal.cancel_load
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.modal.cancel_load | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=3bd02c9 | mutation=none | NEXT=dispatch.dispatch.modal.load_create
