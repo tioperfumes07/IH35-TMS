@@ -4362,3 +4362,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=lists:catalog.fuel.stop_reason_codes.create:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.fuel.stop_reason_codes.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/stop-reason-codes | healthz=de2c126 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/stop-reason-codes marker 'lists' | NEXT=leaf=lists:catalog.fuel.stop_reason_codes.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.fuel.stop_reason_codes.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/stop-reason-codes | healthz=de2c126 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/stop-reason-codes marker 'lists' | NEXT=leaf=lists:catalog.fuel.stop_reason_codes.list:picker_law
+Devin-A | LIVE PASS | leaf=lists:catalog.fuel.stop_reason_codes.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/stop-reason-codes | healthz=de2c126 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/stop-reason-codes marker 'lists' | NEXT=leaf=lists:catalog.fuel.stop_reason_codes.list:picker_law
