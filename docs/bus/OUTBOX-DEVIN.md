@@ -1362,3 +1362,14 @@ Tasks
 P | healthz=62c3947 | mutation=none | NEXT=dispatch.settings.dispatch
 Devin-A | LIVE STARVED | module=dispatch | leaf=settings.dispatch | URL=https://app.ih35dispatch.com/dispatch/settings | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/settings ; body head Checking session... | healthz=62c3947 | mutation=none | NEXT=dispatch.settings.notify
 Devin-A | LIVE STARVED | module=dispatch | leaf=settings.notify | URL=https://app.ih35dispatch.com/dispatch/notify-preferences | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/notify-preferences ; body head Checking session... | healthz=62c3947 | mutation=none | NEXT=dispatch.misc.trip_profit
+Devin-A | LIVE PASS | module=dispatch | leaf=misc.trip_profit | URL=https://app.ih35dispatch.com/dispatch/trip-profitability | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch/trip-profitability ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=unknown | mutation=none | NEXT=dispatch.misc.geofence_history
