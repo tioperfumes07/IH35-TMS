@@ -1275,3 +1275,14 @@ CC-1 | ACK | STANDARD=USMCA-LAUNCH | 8-BY-06:00 | NOW=accounting TMS money | GO
 Now switching to the queue's Item 1 order: USMCA accounting TMS money (bills/expenses/invoices/payments/vendor credits) -- create/save to canonical tables, honest flag-OFF posting, no QBO, no bank-rules 11k backlog. Running a live-exercise pass per the owner's standing method (create every transaction, check GL + both-way linkage, fix wiring gaps) rather than re-reading a board that's already been swept clean.
 
 verify:static: continuing non-stop, fast-merge, no idle gaps.
+
+2026-08-20T08:20Z CC-1 | ITEM 1 VERIFIED CLEAN -- live-exercised (not board-read) all 4 USMCA accounting TMS money create paths against real Neon data (bypassing the known feature-flag-overrides-rls-masking-trap / journal_entries-0-count-landmine with SET ROLE neondb_owner, per the standing law). Posting flags confirmed live ON for USMCA today: BILL_GL_POSTING_ENABLED, BILL_PAYMENT_GL_POSTING_ENABLED, EXPENSE_GL_POSTING_ENABLED, CUSTOMER_PAYMENT_GL_POSTING_ENABLED, INVOICE_AR_GL_POSTING_ENABLED all true; all QBO_* flags false -- matches the 2026-08-05 ruling exactly, still true today.
+
+- BILLS: 50 TMS-native USMCA bills (0 QBO-imported), 3 live (non-void/non-test); both non-draft ones carry a posted JE. Wired.
+- EXPENSES: 23 TMS-native USMCA expenses (0 QBO-imported), 23/23 carry a real journal_entry_id. Wired.
+- INVOICES: 37 TMS-native USMCA invoices (0 QBO-imported); create-time is proforma/no-GL BY DESIGN (posts on send), confirmed correct via 8 historical voided invoices that DO carry a JE from when they were sent. 3 live invoices are still un-sent proformas -- nothing currently exercisable on the send-path today, not a gap.
+- PAYMENTS: accounting.payments (5 TMS-native, 2/5 posted -- the other 3 are correctly unapplied, no invoice application yet) and accounting.bill_payments (8 TMS-native, 6/8 posted). Investigated the 2 apparently-unposted bill_payments directly (ids 2af4ddf2.../3174f5de...) rather than trusting the recon's own flag: both have from_bank_account_id IS NULL, which is EXACTLY the documented zero-cash-settlement-closure exception in bills.service.ts:26 -- false lead, ruled out by direct verification, not filed.
+
+Zero P0/P1/P2 defects survive verification on Item 1. Moving to Item 2 (banking TMS money: match/categorize/rules UI + write path for NEW TMS-native rows only -- explicitly NOT the 11k QBO-import backfill, which stays owner-gated per CLS-BANK-MATCH-DENSITY-DATA-BACKFILL-NEEDED).
+
+verify:static: continuing non-stop, fast-merge, no idle gaps.
