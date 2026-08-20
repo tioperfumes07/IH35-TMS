@@ -1361,3 +1361,4 @@ Create
 Tasks
 P | healthz=62c3947 | mutation=none | NEXT=dispatch.settings.dispatch
 Devin-A | LIVE STARVED | module=dispatch | leaf=settings.dispatch | URL=https://app.ih35dispatch.com/dispatch/settings | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/settings ; body head Checking session... | healthz=62c3947 | mutation=none | NEXT=dispatch.settings.notify
+Devin-A | LIVE STARVED | module=dispatch | leaf=settings.notify | URL=https://app.ih35dispatch.com/dispatch/notify-preferences | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch/notify-preferences ; body head Checking session... | healthz=62c3947 | mutation=none | NEXT=dispatch.misc.trip_profit
