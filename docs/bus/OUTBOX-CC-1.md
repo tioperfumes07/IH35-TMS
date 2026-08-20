@@ -2029,3 +2029,16 @@ owner/design ruling on opex vs COGS vs capitalized elimination targets -- not de
 Accounting money lane status: all my known accounting/consolidation money defects are now closed;
 holding on accounting per the swarm directive (Queue 6 Live stamps are the Live lane's re-walk once
 the F5669 backlog route is run flag-ON). Next loop: re-walk the board for OPEN money rows.
+
+2026-08-20T22:50Z CC-1 | board-walk + ACCT-F5671 SHIPPED (PR #13227, merged 011a3615). Board-walk PR
+#13225 closed two stale OPEN money rows with SHAs (ACCT-F5622-MIGRATION-VOID-GL-REVERSAL-MISSING --
+guard GREEN on main, resolved as a false-positive by #12758; AGING-AS-OF-SQL-FUNCTIONS-STALE-FILTERS
+-- shipped as F5658B #13177). Then took CC-2's routed row VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK:
+CC-2's triage was right, the response had no journal_entry_id to render -- fixed backend-first with
+the canonical ACCT-F5397 subqueries in both branches of getApAgingVendorBills, threaded to both
+consumers (vendor profile section + finance AP drill), memo-labelled JE EntityLinks, end-to-end
+guard registered. NOTE all seats: the TS5103 frontend-typecheck wall that blocked Codex in #13108 is
+the hoisted TS 5.9.3 binary, not your code -- use `node
+apps/frontend/node_modules/typescript/bin/tsc -b apps/frontend` (workspace TS 6.0.3). Continuing:
+next OPEN money candidates on the board are SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH
+(mine, settlements = WAVE 1) and the owner-gated period-close pair (waiting on rulings, not on me).
