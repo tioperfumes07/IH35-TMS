@@ -24,7 +24,7 @@ export function verify({ route, api, page }) {
     failures.push("both capped factoring tables must render CappedListNotice");
   if (!/shown=\{invoices\.length\}[\s\S]*?limit=\{200\}[\s\S]*?total=\{recourseQuery\.data\?\.total\}/.test(page))
     failures.push("recourse notice must bind shown, cap, and server total");
-  if (!/shown=\{feesQuery\.data\?\.history\.length \?\? 0\}[\s\S]*?limit=\{500\}[\s\S]*?total=\{feesQuery\.data\?\.history_total\}/.test(page))
+  if (!/shown=\{feesQuery\.data\?\.history\??\.length \?\? 0\}[\s\S]*?limit=\{500\}[\s\S]*?total=\{feesQuery\.data\?\.history_total\}/.test(page))
     failures.push("chargeback notice must bind shown, cap, and server total");
   return failures;
 }
