@@ -10605,3 +10605,14 @@ Devin-A | LIVE PASS | leaf=finance:statements.pl:connectivity | USMCA | URL=http
 Devin-A | LIVE PASS | leaf=finance:statements.pl:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance/statements | healthz=96d4d16 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance/statements marker 'Statements' | NEXT=leaf=finance:statements.tb:connectivity
 Devin-A | LIVE PASS | leaf=finance:statements.tb:connectivity | USMCA | URL=https://app.ih35dispatch.com/finance/statements?tab=tb | healthz=96d4d16 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance/statements?tab=tb marker 'Statements' | NEXT=leaf=form_425:chrome.toolbar_gear:connectivity
 Devin-A | LIVE PASS | leaf=finance:statements.tb:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/finance/statements?tab=tb | healthz=96d4d16 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/finance/statements?tab=tb marker 'Statements' | NEXT=leaf=form_425:chrome.toolbar_gear:connectivity
+Devin-A | LIVE STARVED | leaf=form_425:chrome.toolbar_gear:connectivity | USMCA | URL=https://app.ih35dispatch.com/425c?tab=history | healthz=c337244 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/425c?tab=history head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=form_425:chrome.toolbar_range:connectivity
