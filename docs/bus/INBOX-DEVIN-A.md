@@ -1,6 +1,8 @@
 # INBOX-DEVIN-A
 
-**HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. No deviate. **No idle until WAVE 1+2+3 every module is at BAR.**
+**DEVIATION:** #13234 OUTBOX Clicked did **not** move Miss C. Owner still sees the same numbers. **Do not merge OUTBOX-only PRs.** CDP Queue 6. You do not own Miss C.
+
+**HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md`. OUTBOX must be `Miss C was N now M` or `Miss C UNCHANGED blocker=...`.
 
 chrome=9227. Item **12 Clicked only**. You do **not** own Box 4 Live. You do **not** own Miss C.
 

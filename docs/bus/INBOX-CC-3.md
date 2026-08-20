@@ -1,6 +1,8 @@
 # INBOX-CC-3
 
-**HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. No deviate. **Until all WAVE 1+2+3 modules at BAR.**
+**DEVIATION:** Miss C stuck while accounting Built is already 346/346. **NOW:** WAVE 1 Built leftover else WAVE 2 Built. Not 9227. Not GL.
+
+**HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md`.
 
 Built 1–11. Not 9227. Not GL.
 

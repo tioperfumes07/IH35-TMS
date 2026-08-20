@@ -936,6 +936,7 @@ const CSS = `
 @media(min-width:900px){.ih35mm .metrics-ribbon:not(.metrics-boxes){grid-template-columns:repeat(3,1fr)}}
 @media(min-width:1200px){.ih35mm .metrics-ribbon:not(.metrics-boxes){grid-template-columns:repeat(6,1fr)}}
 .ih35mm .metrics-secondary{grid-template-columns:repeat(3,1fr);margin-top:-6px}
+.ih35mm .miss-c-stale-work{grid-column:1/-1;margin:0 0 4px;font-size:12.5px;line-height:1.45;color:var(--slate)}
 .ih35mm .metric .box-tag{font-size:10px;font-weight:800;letter-spacing:.35px;text-transform:uppercase;color:var(--slate-lt);margin-bottom:4px}
 .ih35mm .box-tracker{margin:0 0 16px}
 .ih35mm .box-changes{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:10px}

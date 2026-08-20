@@ -6,11 +6,15 @@ USMCA only. No QBO write-back. **No owner gate.** ALL QUESTIONS ASKED AND ANSWER
 
 ## STOP (only this)
 
-Work **until every WAVE 1 + WAVE 2 + WAVE 3 module** is at the BAR (four boxes 100% **including money**, Miss C = Frozen − Box 4 Live = 0 on that module). Then the next name. **eld never.**
+Work **until every WAVE 1 + WAVE 2 + WAVE 3 module** is at the BAR.
 
-**Not a stop:** Clicked keys full · `--rebuild-only` 0 or 2 leaves · no new `required.json` cells · “no FAST-MERGE this cycle” · Miss C from Devin `LIVE PASS` counts · accounting chrome 0✕ while money Live still open.
+**Owner 2026-08-20 17:18 CT: same numbers, no change = DEVIATION.**
 
-**Devin idle is a defect.** Queue 6 showing **2 leaves** is unpaid Clicked on those two screens — CDP them. Do not wait for a new `required.json`. After accounting BAR, Clicked starts on **WAVE 1 next name (banking)** without a new required file.
+**Forbidden:** OUTBOX “CLEAR” / chrome 0✕ as done · Clicked keys full as drained · OUTBOX-only FAST-MERGE · “no FAST-MERGE this cycle.” **Clicked does not lower Miss C.**
+
+**Required proof every hour:** OUTBOX `Miss C was N now M` from `/program` matrix **or** `Miss C UNCHANGED blocker=<named missing money event>`.
+
+**Not a stop:** Clicked keys full · `--rebuild-only` 0 or 2 leaves · no new `required.json` · Miss C from Devin `LIVE PASS` counts.
 
 ## Method
 

@@ -129,6 +129,14 @@ export function missCLiveProblems(svc) {
   return problems;
 }
 
+export function missCStaleWorkProblems(view) {
+  const problems = [];
+  if (!/module-matrix-miss-c-stale-work/.test(view) || !/Clicked-only work does not lower Miss C/.test(view)) {
+    problems.push("system matrix must tell operators that Clicked-only merges do not lower Miss C");
+  }
+  return problems;
+}
+
 export function moneyParkProblems(svc, view) {
   const problems = [];
   if (/\(\s*group\s*\|\|\s*"other"\s*\)\s*!==\s*"money"/.test(svc) || /excludes money-group/.test(svc)) {
@@ -229,6 +237,7 @@ function repoProblems() {
     if (!/unpaid Live of frozen/.test(view) || !/ops Clicked of frozen cells/.test(view)) {
       problems.push("Frozen KPI = Clicked of frozen; Miss C KPI = unpaid Live of frozen (Clicked 100% must not zero Miss C)");
     }
+    problems.push(...missCStaleWorkProblems(view));
     if (/MONEY parked/.test(view) || /Miss C ignore MONEY/.test(view)) {
       problems.push("system matrix must not park money out of Frozen/Miss C/READY");
     }
@@ -334,6 +343,11 @@ if (SELFTEST) {
   }
   if (!missCLiveProblems(plantedMissClicked).some((p) => p.includes("frozen minus Live"))) {
     console.error(`${LABEL} selftest: Miss C Clicked-zero mutation escaped`);
+    process.exit(1);
+  }
+  const plantedStaleHint = systemView.replace("Clicked-only work does not lower Miss C", "merge always lowers Miss C");
+  if (!missCStaleWorkProblems(plantedStaleHint).some((p) => p.includes("Clicked-only"))) {
+    console.error(`${LABEL} selftest: Miss C stale-work hint mutation escaped`);
     process.exit(1);
   }
   const repo = repoProblems();

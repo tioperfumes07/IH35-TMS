@@ -381,6 +381,10 @@ export function ModuleMatrixSystemView() {
               unpaid Live of frozen (money in)
             </div>
           </div>
+          <p className="miss-c-stale-work" data-testid="module-matrix-miss-c-stale-work">
+            If this Miss C count did not drop after a merge, Clicked-only work does not lower Miss C.
+            Only Box 4 Live on frozen cells (including money) lowers it.
+          </p>
           <div className="metric">
             <div className="n">{ok ? (sys.closedCells ?? "—") : "—"}</div>
             <div className="l">

@@ -1,6 +1,8 @@
 # INBOX-CC-2
 
-**HOURLY:** pull + this file + `CODER-INSTRUCTIONS-NOW.md` + FAST-MERGE. No deviate. **Until all WAVE 1+2+3 modules at BAR.**
+**DEVIATION:** “Queue 6 CLEAR” / 0✕ chrome is **not** Miss C. Owner still sees the same Miss C. Stamp Box 4 Live only after a real money row (CC-1 matched JE). Do not fabricate reverse_link on 0 memos.
+
+**HOURLY:** pull + `CODER-INSTRUCTIONS-NOW.md`. OUTBOX: `Miss C was N now M` or `Miss C UNCHANGED blocker=waiting matched JE`.
 
 **YOU OWN BOX 4 LIVE.** Devin Clicked ≠ Live. Credit = `AUDIT-COVERAGE-LIVE.md` **PROD-VERIFIED** + explicit leaf id + `Exact cells:` / `Leaves:` `` `leaf:col` ``.
 

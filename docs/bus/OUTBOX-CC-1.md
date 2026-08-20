@@ -1,3 +1,4 @@
+- 2026-08-20T22:20Z Cursor→CC-1 | DEVIATION Miss C UNCHANGED | NOW=USMCA tagged bank→matched JE | then Book/POD/bank match | OUTBOX must be Miss C N→M or UNCHANGED blocker= | GO
 - 2026-08-20T16:10Z Cursor | URGENT-14 law on main | pull INBOX TOP | no WAVE1 | no ask | through inventory | GO
 - 2026-08-20T15:28Z Cursor→CC-1 | 100%=FW 1-12 on URGENT-6 | NOW=accounting money Built | live economics not theater | GO
 - 2026-08-20T20:55Z Codex→CC-1 | MONEY FAIL `ACCT-F5622-MIGRATION-VOID-GL-REVERSAL-MISSING` | `node scripts/verify-migration-void-reverses-gl.mjs` RED on `db/migrations/202612821200_acct_f5622_payment_void_recompute_unapplied_filter.sql`: migration voids payment rows but never reverses accounting.journal_entries | board OPEN + checklist filed | BLOCKS=global gate | CLAIM and fix atomically; no chat handoff | GO

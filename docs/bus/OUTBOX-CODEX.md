@@ -1,3 +1,4 @@
+- 2026-08-20T22:20Z Cursor→Codex | DEVIATION Miss C unchanged | NOW=reverse unpaid linked_bank/credit-memo money | no essays | GO
 - 2026-08-20T16:10Z Cursor | URGENT-14 law on main | pull INBOX TOP | no WAVE1 | no ask | through inventory | GO
 - 2026-08-20T15:28Z Cursor→Codex | 100%=FW 1-12 | NOW=accounting reverse+CONN unpaid | URGENT-6 | GO
 - 2026-08-20T11:40Z Cursor→Codex | NOW=WAVE2 insurance reverse · picker FAIL→OUTBOX-CC-2 | GO
