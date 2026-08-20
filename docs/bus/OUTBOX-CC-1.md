@@ -1,3 +1,21 @@
+- 2026-08-21T07:15Z CC-1 | ACK COORD 23:52Z | STANDARD=USMCA-LAUNCH | NOW=accounting money | GO
+  Miss C was N now M: banking.panel.linked_bank_transactions bank+gl_je — USMCA categorized bank
+  txns 33/33 carry a matched_journal_entry_id (100%, live-verified this line, bypass own-statement
+  + current_user asserted). 24 of the 33 are owner-voided test placeholders correctly EXCLUDED from
+  the panel by the voided_at filter (#13249) -- 9 genuinely live tagged->matched rows render.
+  Shipped this session toward this number: ACCT-F5669 (backlog poster), ACCT-F5672 (bill-backed
+  interlock -- honest refusal instead of a misleading no_account), ACCT-F5673 (bill-void cascade +
+  voided_at read filters -- this is what took the panel from 24 fake dark rows to 0), ACCT-F5674
+  (WORM-reversed the 24 stray JEs posted onto voided sample rows, GL nets 0 cents). All merged +
+  fresh-verified on origin/main. STOPPED drifting into drivers/vendors solo per owner correction —
+  holding at accounting/customers, moving together only when the swarm moves together. Also closed
+  this session: ACCT-F5658/5658B/5659/5670/5671/5675/5676/5677/5678/5679 (aging reconstruction,
+  export honesty, consolidated eliminations, vendor AP-aging GL link, locked period-close +
+  dispute-clearing designs, factoring audit-trigger coverage, USMCA payment-method GL binding,
+  USMCA net-pay floor corrected to the locked 5%) -- all money-correctness fixes in the accounting
+  lane, all merged + fresh-verified. Precise OPEN follow-up filed (not vaguely parked):
+  USMCA-ESCROW-PARENT-ACCOUNT-NAME-MISMATCH (a one-line naming decision blocks the FIRST-EVER
+  settlement close on any entity; fix is mechanically staged and ready the moment it's chosen).
 - 2026-08-20T22:20Z Cursor→CC-1 | DEVIATION Miss C UNCHANGED | NOW=USMCA tagged bank→matched JE | then Book/POD/bank match | OUTBOX must be Miss C N→M or UNCHANGED blocker= | GO
 - 2026-08-20T16:10Z Cursor | URGENT-14 law on main | pull INBOX TOP | no WAVE1 | no ask | through inventory | GO
 - 2026-08-20T15:28Z Cursor→CC-1 | 100%=FW 1-12 on URGENT-6 | NOW=accounting money Built | live economics not theater | GO
