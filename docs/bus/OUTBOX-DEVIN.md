@@ -7236,3 +7236,6 @@ USMCA Freight
 Create
 Tasks
 P | NEXT=leaf=safety:safety.parity.fine_create:connectivity
+Devin-A | LIVE PASS | leaf=safety:safety.parity.fine_create:connectivity | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=48f041d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.integrity_alert_detail:connectivity
+Devin-A | LIVE PASS | leaf=safety:safety.parity.fine_create:picker_law | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=48f041d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.integrity_alert_detail:connectivity
+Devin-A | LIVE PASS | leaf=safety:safety.parity.fine_create:driver | USMCA | URL=https://app.ih35dispatch.com/safety | healthz=48f041d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/safety/home marker 'safety' | NEXT=leaf=safety:safety.parity.integrity_alert_detail:connectivity
