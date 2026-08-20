@@ -2100,3 +2100,31 @@ Devin-A | LIVE STARVED | leaf=vendors:list.bulk:vendor | USMCA | URL=https://app
 Devin-A | LIVE STARVED | leaf=vendors:list.bulk:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/login healthz=unknown head Checking session... | NEXT=leaf=vendors:list.export_csv:vendor
 Devin-A | LIVE PASS | leaf=vendors:list.export_csv:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ea93cd | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:md.transaction_list:vendor
 Devin-A | LIVE PASS | leaf=vendors:list.export_csv:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors | healthz=4ea93cd | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors marker 'vendors' | NEXT=leaf=vendors:md.transaction_list:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?tab=transaction_list healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:md.vendor_details:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?tab=transaction_list healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:md.vendor_details:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?tab=transaction_list healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:md.vendor_details:vendor
+Devin-A | LIVE STARVED | leaf=vendors:md.transaction_list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors?tab=transaction_list healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=vendors:md.vendor_details:vendor
