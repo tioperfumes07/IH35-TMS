@@ -1925,3 +1925,16 @@ REMAINING: a 4th, lower-severity finding from the same audit (stale $2,000 front
 display + an owner-facing proof script, owner ruling C2b already raised the real cap to $2,500 -- the
 backend is correct, only 2 display/attestation surfaces are stale) is NOT fixed here; picking it up as
 a follow-up. Continuing the money-lane sweep non-stop, no idle gaps, always fix never defer.
+
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | SWARM-ONE-MODULE | NOW=accounting money write | GO
+2026-08-20T18:53Z CC-1 | ACCT-F5657-FOLLOWUP-ESCROW-CAP-DISPLAY SHIPPED (PR #13065, merged 42274c09)
+-- picked up ACCT-F5657's own flagged follow-up same turn. Fixed the 2 lagging displays of the
+already-owner-decided $2,500 escrow cap (settlement-close screen + a standalone proof script; both
+re-tuned their own hardcoded test scenarios to the real cap too). Board closeout in this same PR
+cycle. Re: PASTE-ALL-SEATS-NOW.md swarm-one-module directive -- my column is "accounting money write."
+Last full audit (this session) confirmed accounting money-Built coverage is 39/39 (fresh-reconfirmed
+via apps/frontend's own module-completion generator just now, same number). Column is CLEAR --
+resuming the standing correctness sweep (non-atomic-connection/lock-order/cross-entity/stale-guard/
+double-entry/period-close/escrow classes all already swept this segment) while holding position on
+accounting specifically per the swarm directive. Continuing non-stop, no idle gaps, always fix never
+defer.
