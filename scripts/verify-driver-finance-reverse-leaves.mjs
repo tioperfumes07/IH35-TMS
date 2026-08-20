@@ -17,7 +17,16 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
-  if (!/subnavTab === "cash_advances"[\s\S]{0,550}<EntityLink kind="driver"/.test(s.drivers) || !/list\(selectedCompanyId!\)/.test(s.drivers)) failures.push("cash-advance driver reverse/scope missing");
+  // The driver drill is defined in debtAlertColumns and consumed by the cash-advance
+  // ParityTable. Keep these as separate structural assertions: a proximity window from
+  // the tab branch to the column renderer breaks whenever harmless table chrome grows.
+  if (
+    !/cashAdvanceRequestsOfficeApi\.list\(selectedCompanyId!\)/.test(s.drivers) ||
+    !/subnavTab === "cash_advances"[\s\S]{0,1200}columns=\{debtAlertColumns\}/.test(s.drivers) ||
+    !/const debtAlertColumns:[\s\S]{0,700}<EntityLink kind="driver"/.test(s.drivers)
+  ) {
+    failures.push("cash-advance driver reverse/scope missing");
+  }
   if (!/listSettlementDeductions\(selectedCompanyId!/.test(s.deductions) || !/<EntityLink kind="driver" id=\{row\.driver_id\}/.test(s.deductions)) failures.push("deduction driver reverse/scope missing");
   if (!/query\.isError/.test(s.deductions) || !/No pending settlement deductions\./.test(s.deductions)) failures.push("deduction honest states missing");
   // LST-F5163M + LST-F5187: CappedListNotice promised a driver filter — URL-only / local-only is not enough.
@@ -46,7 +55,8 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["advance-drill", "drivers", /kind="driver"/g, 'kind="vendor"'],
-    ["advance-scope", "drivers", /list\(selectedCompanyId!\)/g, "list('')"],
+    ["advance-scope", "drivers", /cashAdvanceRequestsOfficeApi\.list\(selectedCompanyId!\)/g, "cashAdvanceRequestsOfficeApi.list('')"],
+    ["advance-table-binding", "drivers", /columns=\{debtAlertColumns\}/g, "columns={[]}"],
     ["deduction-drill", "deductions", /kind="driver"/g, 'kind="vendor"'],
     ["deduction-state", "deductions", /No pending settlement deductions\./g, "Loading"],
     ["deduction-list-filter", "deductions", /dataTestId="settlement-deductions-filter-driver"/g, 'dataTestId="x"'],
