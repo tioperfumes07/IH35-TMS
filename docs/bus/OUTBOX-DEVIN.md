@@ -9293,3 +9293,27 @@ Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.work_order_statuses.list
 Devin-A | LIVE STARVED | leaf=lists:catalog.maintenance.work_order_statuses.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/maintenance/work-order-statuses | healthz=27db04d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/maintenance/work-order-statuses healthz=27db04d head Checking session... | NEXT=leaf=lists:catalog.safety.accident_types.create:qbo_chrome
 Devin-A | LIVE STARVED | leaf=lists:catalog.safety.accident_types.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/safety/accident-types | healthz=27db04d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/safety/accident-types healthz=27db04d head Checking session... | NEXT=leaf=lists:catalog.safety.internal_fine_reasons.list:picker_law
 Devin-A | LIVE STARVED | leaf=lists:catalog.safety.accident_types.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/safety/accident-types | healthz=27db04d | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/safety/accident-types healthz=27db04d head Checking session... | NEXT=leaf=lists:catalog.safety.internal_fine_reasons.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.safety.internal_fine_reasons.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/safety/internal-fine-reasons | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/safety/internal-fine-reasons healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
+Devin-A | LIVE STARVED | leaf=lists:catalog.safety.internal_fine_reasons.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/safety/internal-fine-reasons | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/safety/internal-fine-reasons healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
+Devin-A | LIVE STARVED | leaf=lists:catalog.safety.internal_fine_reasons.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/safety/internal-fine-reasons | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/safety/internal-fine-reasons healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+tioperfumes0 | NEXT=leaf=lists:lists.modal.driver_catalog:connectivity
