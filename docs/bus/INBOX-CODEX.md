@@ -7,5 +7,5 @@
 **NOW:** **accounting** reverse+CONN → customers → drivers → vendors → dispatch → safety. Then fleet→…→inventory.
 
 ```text
-Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=accounting reverse+connectivity | GO
+Codex | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=accounting reverse+connectivity | GO
 ```

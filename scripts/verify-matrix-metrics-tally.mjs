@@ -165,6 +165,9 @@ function repoProblems() {
     if (!/clickedCells/.test(svc)) {
       problems.push("module-matrix.service.ts must expose clickedCells (Chrome click, not Box 4)");
     }
+    if (!/bu: mClicked, li: mClicked/.test(svc) || /bu: 0, li: mClicked/.test(svc)) {
+      problems.push("fw12 Clicked rollup must set Built=Clicked (never bu:0 which paints Built always red)");
+    }
     if (!/frozenOps/.test(svc) || !/readyAbl/.test(svc) || !/isOpsReadyColumn/.test(svc)) {
       problems.push("module-matrix.service.ts must expose frozen ops READY (non-money, USMCA Clicked)");
     }

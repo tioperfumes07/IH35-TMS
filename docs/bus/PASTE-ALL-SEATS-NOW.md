@@ -1,16 +1,13 @@
-# PASTE ALL SEATS · URGENT-6 NOW · THEN 7–14 · FAST-MERGE
+# PASTE ALL SEATS · URGENT-6 = 100% (Fully-Wired 1–12) · FAST-MERGE
 
 `git pull --ff-only origin main`
-
 Read `CODER-INSTRUCTIONS-NOW.md` TOP.
 
-**URGENT-6 (chat 2026-08-19):** accounting → customers → drivers → vendors → dispatch → safety  
-**THEN 7–14 (skip fuel):** fleet → maintenance → lists → settlements → factoring → banking → inventory
+**100%** = Fully-Wired 1–12 on URGENT-6. Clicked total (e.g. 3012) is not 100%. 12 Clicked column is green only when Clicked = every Required cell on that module.
 
-4/4 boxes on `columns.shared.json` ids only (25 columns). No invented payment/factor/escrow cols. No 31 CLS board.
+**URGENT-6:** accounting → customers → drivers → vendors → dispatch → safety  
+**THEN 7–14:** fleet → maintenance → lists → settlements → factoring → banking → inventory (no fuel)
 
-Picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`.
+CC-1 money Built. CC-3 qbo_chrome Built. Codex reverse+CONN. CC-2 LIVE-CHECK pickers in the app. Devin Clicked `leaf=module:leafId:col` + `gh pr merge --admin`. FAST-MERGE.
 
-Devin = Box 4 `leaf=module:leafId:col`. Gate → push → create → `gh pr merge --admin`. Never `gh pr checks --watch`.
-
-ACK: `STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=<module> <col> | GO`
+ACK: `STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=<module> <col> | GO`

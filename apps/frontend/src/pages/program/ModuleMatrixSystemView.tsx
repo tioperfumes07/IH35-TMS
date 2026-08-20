@@ -315,10 +315,12 @@ export function ModuleMatrixSystemView() {
         </div>
       ) : ok ? (
         <div className="banner live" data-testid="module-matrix-system-live">
-          <b>FROZEN MAP. READY is the 100.</b> Do not add leaves. Ignore Box 4 Live. MONEY parked.
-          READY Live✓ only when Miss C = 0 on frozen ops (non-money) USMCA Clicked+Built. Miss C = true
-          unpaid. LINK/MONEY/CHROME/WIRE/PROC kept. Urgent 16 A–Z first ({URGENT_16_MODULE_IDS.length}), then
-          remainder A–Z ({restRows.length}). Clicked / 12 Clicked = Chrome USMCA, not Box 4.
+          <b>Clicked count ≠ 12 Clicked green.</b> The big Clicked number is credited cells.
+          Column <b>12 Clicked</b> is ✓ on Built+Live only when Clicked = every Required cell on that
+          module (same 4-box, all four follow Clicked/Required). Partial Clicked = yellow/red until 100%.
+          Urgent-6 100% = Fully-Wired 1–12 on accounting→customers→drivers→vendors→dispatch→safety.
+          Do not add leaves. Ignore Box 4 keyword fan-out. MONEY parked. READY Live✓ when Miss C = 0.
+          Urgent 16 A–Z first ({URGENT_16_MODULE_IDS.length}), then remainder A–Z ({restRows.length}).
           {tip ? (
             <>
               {" "}

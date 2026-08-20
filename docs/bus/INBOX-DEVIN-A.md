@@ -9,5 +9,5 @@
 **NOW:** **accounting** Clicked → customers → drivers → vendors → dispatch → safety. Then fleet→maintenance→lists→settlements→factoring→banking→inventory. Never fuel/eld.
 
 ```text
-Devin-A | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | chrome=9227 | NOW=accounting Clicked | ONTO-MAIN-OUTBOX-ONLY | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | chrome=9227 | NOW=accounting Clicked | ONTO-MAIN-OUTBOX-ONLY | GO
 ```

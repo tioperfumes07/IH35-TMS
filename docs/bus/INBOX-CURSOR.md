@@ -7,5 +7,5 @@
 **NOW:** unpaid Built on **accounting** then customers → drivers → vendors → dispatch → safety.
 
 ```text
-Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=accounting leftover Built | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=accounting leftover Built | GO
 ```

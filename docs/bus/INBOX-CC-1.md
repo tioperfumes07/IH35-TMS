@@ -7,5 +7,5 @@
 **NOW:** **accounting** unpaid money cells → customers → drivers → vendors → dispatch → safety. Then settlements → factoring → banking → inventory.
 
 ```text
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 4BOX-COMPLETE | HOURLY-REREAD | NOW=accounting money | GO
+CC-1 | ACK | STANDARD=USMCA-LAUNCH | URGENT-6 | 100PCT-FW12 | HOURLY-REREAD | NOW=accounting money | GO
 ```

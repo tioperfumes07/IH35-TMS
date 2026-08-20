@@ -61,6 +61,8 @@ Never fuel. Never eld. Do not park vendors or dispatch — they are in the 6.
 
 Unpaid 4/4 cell in URGENT-6 in your column → that cell. Do not wander to insurance/WAVE-2 leftovers while URGENT-6 unpaid exists in your lane.
 
+**100% on an urgent module** = Fully-Wired items **1–12**: honest Built on Required cells **and** column **12 Clicked** green (Clicked = every Required cell on that module). The board’s big Clicked total is not 100%.
+
 ## Seats (columns you own — fill boxes 2–3; Devin fills box 4)
 
 | Seat | Boxes + columns | NOW → then |
@@ -68,7 +70,7 @@ Unpaid 4/4 cell in URGENT-6 in your column → that cell. Do not wander to insur
 | **Devin-A** | **Box 4 Live** every Required `leaf:col` | **accounting** Clicked → customers → drivers → vendors → dispatch → safety. Then fleet→…→inventory. `leaf=module:leafId:col`. `shipClickedOntoMain`. chrome=9227. Picker FAIL → OUTBOX-CC-2. |
 | **CC-3** | **Box 3 Built** FE: `qbo_chrome` + surface-bar | **accounting** unpaid Built → customers → drivers → vendors → dispatch → safety |
 | **CC-1** | **Box 3 Built** money columns | **accounting** money unpaid → customers/drivers/vendors/dispatch/safety money cells. Reuse poster. Keep hop.bank. Then settlements→factoring→banking→inventory. |
-| **CC-2** | **Box 2/4** picker_law live-verify | Unpaid **picker_law** on URGENT-6 (accounting first). Rebuild only live FAIL. Read OUTBOX-CC-2. No poll. No 25/25 re-loop. |
+| **CC-2** | **Live-check** picker_law | Open URGENT-6 pickers live. Rebuild only on FAIL. Do not skip live-check. No 25/25 re-loop of already PASS. |
 | **Codex** | **Box 3 Built** `reverse_link` + `connectivity` | **accounting** reverse+CONN → customers → drivers → vendors → dispatch → safety. No 9227. |
 | **Cursor** | Lead + leftover Built | Hourly INBOX; leftover URGENT-6 Built; FAST-MERGE this file to main |
 
