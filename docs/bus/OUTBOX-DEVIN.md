@@ -1321,3 +1321,4 @@ Devin-A | LIVE STARVED | module=dispatch | leaf=queues.factoring_queue | URL=htt
 Use your Google account or email and password.
 
 Sign in with | healthz=unknown | mutation=none | NEXT=dispatch.planning.timeline
+Devin-A | LIVE STARVED | module=dispatch | leaf=planning.timeline | URL=https://app.ih35dispatch.com/dispatch/planners/timeline | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head Checking session... | healthz=unknown | mutation=none | NEXT=dispatch.planning.driver
