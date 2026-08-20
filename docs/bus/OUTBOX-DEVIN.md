@@ -10262,3 +10262,21 @@ Devin-A | LIVE STARVED | leaf=reports:report.cash_flow:connectivity | USMCA | UR
 Devin-A | LIVE STARVED | leaf=reports:report.cash_flow:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/cash-flow | healthz=6d0f411 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/cash-flow healthz=6d0f411 head Checking session... | NEXT=leaf=reports:report.cash_flow_overview:connectivity
 Devin-A | LIVE PASS | leaf=reports:report.cash_flow_overview:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/cash-flow-overview | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/cash-flow-overview marker 'reports' | NEXT=leaf=reports:report.cash_flow_statement:connectivity
 Devin-A | LIVE PASS | leaf=reports:report.cash_flow_overview:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/cash-flow-overview | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/cash-flow-overview marker 'reports' | NEXT=leaf=reports:report.cash_flow_statement:connectivity
+Devin-A | LIVE STARVED | leaf=reports:report.cash_flow_statement:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/cash-flow-statement | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/cash-flow-statement healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=reports:report.customer_profitability:customer
+Devin-A | LIVE STARVED | leaf=reports:report.cash_flow_statement:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/cash-flow-statement | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/reports/cash-flow-statement healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=reports:report.customer_profitability:customer
