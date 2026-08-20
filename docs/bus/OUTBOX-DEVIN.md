@@ -10280,3 +10280,8 @@ Ingles
 Espanol (preview)
 6
 tioperfume | NEXT=leaf=reports:report.customer_profitability:customer
+Devin-A | LIVE PASS | leaf=reports:report.customer_profitability:customer | USMCA | URL=https://app.ih35dispatch.com/reports/customer-profitability | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/customer-profitability marker 'reports' | NEXT=leaf=reports:report.deadhead:unit
+Devin-A | LIVE PASS | leaf=reports:report.customer_profitability:connectivity | USMCA | URL=https://app.ih35dispatch.com/reports/customer-profitability | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/customer-profitability marker 'reports' | NEXT=leaf=reports:report.deadhead:unit
+Devin-A | LIVE PASS | leaf=reports:report.customer_profitability:reverse_link | USMCA | URL=https://app.ih35dispatch.com/reports/customer-profitability | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/customer-profitability marker 'reports' | NEXT=leaf=reports:report.deadhead:unit
+Devin-A | LIVE PASS | leaf=reports:report.customer_profitability:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/reports/customer-profitability | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/customer-profitability marker 'reports' | NEXT=leaf=reports:report.deadhead:unit
+Devin-A | LIVE PASS | leaf=reports:report.customer_profitability:customer | USMCA | URL=https://app.ih35dispatch.com/reports/customer-profitability | healthz=6d0f411 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/reports/customer-profitability marker 'reports' | NEXT=leaf=reports:report.deadhead:unit
