@@ -2297,3 +2297,48 @@ Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:reve
 Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:driver | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=10483ac | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/settlements healthz=10483ac head Checking session... | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
 Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:load | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=10483ac | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/settlements healthz=10483ac head Checking session... | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
 Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:settlement | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=10483ac | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/settlements healthz=10483ac head Checking session... | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:connectivity | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:reverse_link | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:driver | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:load | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
+Devin-A | LIVE STARVED | leaf=settlements:settlements.drawer.advance_detail:settlement | USMCA | URL=https://app.ih35dispatch.com/settlements | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/driver-finance/settlements healthz=unknown head IH 35 DISPATCH
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6
+tioperfume | NEXT=leaf=settlements:settlements.drawer.liability_detail:connectivity
