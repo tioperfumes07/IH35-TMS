@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { driverSchedulerOfficeApi } from "../../api/driver-scheduler";
 import { formatDateUS } from "../../lib/formatDate";
 
@@ -20,7 +21,7 @@ export function DriverTempCoverReverseSection({ operatingCompanyId, driverId }: 
     {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No active temporary assignments are linked to this driver.</p> : null}
     {rows.length ? <ul className="space-y-2">{rows.map((row) => <li key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs text-slate-700">
       <span className="font-semibold">{row.primary_driver_id === driverId ? "Primary driver" : "Cover driver"}</span>
-      <span> · Unit {row.unit_number || "unlabeled"}</span>
+      <span> · Unit <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /></span>
       <div className="text-gray-500">{formatDateUS(row.start_date)} – {formatDateUS(row.end_date)}</div>
     </li>)}</ul> : null}
   </section>;

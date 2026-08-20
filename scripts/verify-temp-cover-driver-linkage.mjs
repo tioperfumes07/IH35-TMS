@@ -20,6 +20,7 @@ function audit(s) {
   if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.routes) || !/driverId: parsed\.data\.driver_id/.test(s.routes)) failures.push("route driver filter contract missing");
   if (!/listTempAssignments\(operatingCompanyId: string, filters: \{ driver_id\?: string(?:; unit_id\?: string)? \}/.test(s.api) || !/driver_id: driverId/.test(s.creator)) failures.push("frontend filtered list contract missing");
   if (!/listTempAssignments\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No active temporary assignments are linked to this driver/.test(s.reverse)) failures.push("honest driver reverse missing");
+  if (!/<EntityLinkOrTombstone kind="unit" id=\{row\.unit_id\} name=\{row\.unit_number\} noun="Unit" \/>/.test(s.reverse)) failures.push("temporary assignment unit canonical drill missing");
   if (!(/kind="driver_scheduler_driver"/.test(s.reverse) || /safety\/driver-scheduler\?driver_id=/.test(s.reverse))) {
     failures.push("canonical filtered scheduler drill missing");
   }
@@ -36,6 +37,7 @@ if (process.argv.includes("--selftest")) {
     ["filter", "service", /\(\$2::uuid IS NULL OR t\.primary_driver_id = \$2::uuid OR t\.cover_driver_id = \$2::uuid\)/, "TRUE"],
     ["route", "routes", /driverId: parsed\.data\.driver_id/, "driverId: undefined"],
     ["reverse", "reverse", /driver_id: driverId/, "driver_id: operatingCompanyId"],
+    ["unit-drill", "reverse", /<EntityLinkOrTombstone kind="unit"/, '<EntityLinkOrTombstone kind="driver"'],
     ["profile", "profile", /DriverTempCoverReverseSection/g, "MissingTempCoverReverse"],
     ["detail", "detail", /DriverTempCoverReverseSection/g, "MissingTempCoverReverse"],
   ];
