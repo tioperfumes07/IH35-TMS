@@ -6700,3 +6700,36 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=drivers:profiles.drawer.medical_card:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.drawer.medical_card:driver | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:profiles.drawer.safety_event:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.drawer.medical_card:connectivity | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:profiles.drawer.safety_event:driver
+Devin-A | LIVE STARVED | leaf=drivers:profiles.drawer.medical_card:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/drivers/:id | healthz=7a9e19f | mutation=none | evidence=No marker at https://app.ih35dispatch.com/drivers/:id head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+6 | NEXT=leaf=drivers:profiles.drawer.safety_event:driver
