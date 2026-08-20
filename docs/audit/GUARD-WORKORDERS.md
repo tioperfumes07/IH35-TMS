@@ -2980,3 +2980,11 @@ leaves already real elsewhere). **Still open: fleet (21 leaves) and maintenance 
 proven pattern (confirm the real mounted component via route manifest + grep, assert its real chrome
 shape, mutation-tested selftest), not yet attempted. URGENT-6's qbo_chrome sequence
 (accounting→customers→drivers→vendors→dispatch→safety) is now fully closed as of this update.
+
+**RESOLVED (CC-3, 2026-08-20 evening):** `QBO-CHROME-THEATER-COVERAGE-5-MODULES` — closed. Maintenance
+(last remaining module, 37 leaves: 33 real via `scripts/verify-maintenance-qbo-chrome-leaves.mjs` PR#TBD7
++ 4 already real via CLS-FILTER-GEAR-APPLY/CODEX-ZERO-REMAINDER-PROTECTED-CHROME-7) is now real. All 5
+modules named in the original finding (safety, fleet, vendors, maintenance, dispatch) are closed as of
+this update — the theater-Built qbo_chrome gap this finding tracked, across every module CC-3 audited
+this session (insurance, legal, accounting, customers, drivers, vendors, dispatch, safety, fleet,
+maintenance), is fully remediated.
