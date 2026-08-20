@@ -51,6 +51,7 @@ import { MedicalCardsHistorySection } from "../components/safety/MedicalCardsHis
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLink } from "../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
@@ -1220,7 +1221,23 @@ export function DriverDetailPage() {
             ) : null}
           </div>
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
-            <div>Current Vendor: <EntityLink kind="vendor" id={driver.qbo_vendor_id} label={entityLabel(null, driver.qbo_vendor_id, "Vendor")} className="font-semibold text-gray-900" /></div>
+            <div>
+              Current Vendor:{" "}
+              {driver.qbo_vendor_local_id ? (
+                <EntityLinkOrTombstone
+                  kind="vendor"
+                  id={driver.qbo_vendor_local_id}
+                  name={driver.qbo_vendor_name}
+                  noun="Vendor"
+                  className="font-semibold text-gray-900"
+                  data-testid="driver-qbo-vendor-link"
+                />
+              ) : (
+                <span className="font-semibold text-gray-500" data-testid="driver-qbo-vendor-tombstone">
+                  {driver.qbo_vendor_id ? "Vendor — not visible" : "Unassigned"}
+                </span>
+              )}
+            </div>
             <div>Linked At: <span className="font-semibold text-gray-900">{driver.qbo_vendor_linked_at ? new Date(driver.qbo_vendor_linked_at).toLocaleString() : "-"}</span></div>
           </div>
           <div>

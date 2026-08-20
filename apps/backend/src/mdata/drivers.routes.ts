@@ -1387,7 +1387,20 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                AND prior.operating_company_id = mdata.drivers.operating_company_id
              LIMIT 1) AS prior_driver_name,
           operating_company_id,
-            qbo_vendor_id, qbo_class_id,
+            qbo_vendor_id,
+            (SELECT v.id::text
+             FROM mdata.vendors v
+             WHERE v.operating_company_id = mdata.drivers.operating_company_id
+               AND v.qbo_vendor_id = mdata.drivers.qbo_vendor_id
+               AND v.deactivated_at IS NULL
+             LIMIT 1) AS qbo_vendor_local_id,
+            (SELECT v.vendor_name
+             FROM mdata.vendors v
+             WHERE v.operating_company_id = mdata.drivers.operating_company_id
+               AND v.qbo_vendor_id = mdata.drivers.qbo_vendor_id
+               AND v.deactivated_at IS NULL
+             LIMIT 1) AS qbo_vendor_name,
+            qbo_class_id,
             default_expense_account_id,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers

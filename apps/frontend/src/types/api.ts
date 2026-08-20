@@ -111,6 +111,9 @@ export type Driver = {
   emergency_contact_notes: string | null;
   preferred_language: PreferredLanguage;
   qbo_vendor_id: string | null;
+  /** Canonical local vendor resolved company-safely through mdata.vendors.qbo_vendor_id. */
+  qbo_vendor_local_id?: string | null;
+  qbo_vendor_name?: string | null;
   qbo_vendor_linked_at: string | null;
   qbo_vendor_linked_by_user_id: string | null;
   qbo_class_id?: string | null;
