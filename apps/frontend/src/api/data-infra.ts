@@ -7,7 +7,6 @@ function q(companyId: string) {
 export type DriverVendorMergeRow = {
   id: string;
   driver_id: string;
-  driver_name?: string | null;
   from_qbo_vendor_id: string;
   to_qbo_vendor_id: string;
   merge_reason: string;
