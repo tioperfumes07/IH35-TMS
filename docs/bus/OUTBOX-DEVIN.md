@@ -11944,3 +11944,17 @@ Devin-A | LIVE PASS | leaf=maintenance:wo.console.list:connectivity | USMCA | UR
 Devin-A | LIVE PASS | leaf=maintenance:wo.console.list:reverse_link | USMCA | URL=https://app.ih35dispatch.com/maintenance/work-orders | healthz=e87bd2e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/maintenance/work-orders marker 'Work Orders' | NEXT=leaf=dispatch:chrome.toolbar_range:qbo_chrome
 Devin-A | LIVE PASS | leaf=dispatch:chrome.toolbar_range:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=e87bd2e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.modal.abandonment_report:connectivity
 Devin-A | LIVE PASS | leaf=dispatch:chrome.toolbar_range:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=e87bd2e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/dispatch marker 'dispatch' | NEXT=leaf=dispatch:dispatch.modal.abandonment_report:connectivity
+Devin-A | LIVE STARVED | leaf=dispatch:dispatch.modal.abandonment_report:connectivity | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/dispatch healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=dispatch:dispatch.modal.load_reassign:connectivity
+Devin-A | LIVE STARVED | leaf=dispatch:dispatch.modal.abandonment_report:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/dispatch | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/dispatch healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=dispatch:dispatch.modal.load_reassign:connectivity
