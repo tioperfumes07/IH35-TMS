@@ -23,6 +23,7 @@ type FixedAssetRow = {
   prior_accumulated_depr_cents: string;
   asset_account_id: string | null;
   accum_depr_account_id: string | null;
+  owner_operating_company_id: string | null;
 };
 
 export class OwnedAssetDisposalError extends Error {
@@ -33,7 +34,8 @@ export class OwnedAssetDisposalError extends Error {
       | "DISPOSAL_ALREADY_EXISTS"
       | "ACCOUNT_MISSING"
       | "ACCOUNT_ROLE_MAPPING_MISSING"
-      | "PERIOD_LOCKED",
+      | "PERIOD_LOCKED"
+      | "OWNER_BOOKS_MISSING",
     message: string,
     public readonly details?: Record<string, unknown>
   ) {
@@ -102,7 +104,8 @@ export async function postOwnedAssetDisposal(
 
     const assetRes = await client.query<FixedAssetRow>(
       `SELECT id::text, name, unit_uuid::text, status, purchase_price_cents::text,
-              prior_accumulated_depr_cents::text, asset_account_id::text, accum_depr_account_id::text
+              prior_accumulated_depr_cents::text, asset_account_id::text, accum_depr_account_id::text,
+              owner_operating_company_id::text
          FROM accounting.fixed_assets
         WHERE operating_company_id = $1::uuid AND id = $2::uuid AND is_active = true
         LIMIT 1 FOR UPDATE`,
@@ -122,6 +125,24 @@ export async function postOwnedAssetDisposal(
         `Fixed asset ${input.assetId} is missing asset_account_id and/or accum_depr_account_id`
       );
     }
+    // ACCT-F5642 — FLT-04/FLT-05: postDepreciation (amortization-posting.service.ts) already books
+    // every depreciation JE on the TITLE-HOLDER (owner_operating_company_id), not the asset's own
+    // home/operating company, whenever the two differ (a leased/cross-entity fixed asset) — and this
+    // asset row's own asset_account_id/accum_depr_account_id were set up to resolve in THAT owner
+    // company's chart of accounts, the same way depreciation already posts against them there. This
+    // disposal function posted its own JE under input.operatingCompanyId unconditionally, which for a
+    // cross-entity asset would create journal_entry_postings rows scoped to the WRONG company
+    // referencing account_ids that live in a DIFFERENT company's catalogs.accounts — a cross-entity
+    // data-integrity violation (or an outright failed insert, depending on FK enforcement), not merely
+    // a missing-reversal gap. Resolve the SAME booksCompanyId postDepreciation/reverseSchedule
+    // (ACCT-F5641) resolve, before any account-role resolution or JE posting below.
+    const booksCompanyId = asset.owner_operating_company_id;
+    if (!booksCompanyId) {
+      throw new OwnedAssetDisposalError(
+        "OWNER_BOOKS_MISSING",
+        `Fixed asset ${input.assetId} is missing owner_operating_company_id; disposal cannot resolve the title-holder's books`
+      );
+    }
 
     const existingDisposal = await client.query<{ disposal_je_id: string | null }>(
       `SELECT disposal_je_id::text
@@ -136,10 +157,9 @@ export async function postOwnedAssetDisposal(
       throw new OwnedAssetDisposalError("DISPOSAL_ALREADY_EXISTS", `Fixed asset ${input.assetId} already has an active disposal`);
     }
 
-    await ensureOpenPeriod(client as never, input.operatingCompanyId, input.disposalDate).catch((error: unknown) => {
-      throw new OwnedAssetDisposalError("PERIOD_LOCKED", error instanceof Error ? error.message : "Disposal period is closed");
-    });
-
+    // depreciation_schedule_rows and fixed_asset_disposals both live under the asset's own home
+    // company (matching their own WHERE operating_company_id = input.operatingCompanyId scoping
+    // elsewhere in this file) — read them BEFORE switching the GUC to the title-holder's books below.
     const scheduleRes = await client.query<{ posted_depr_cents: string }>(
       `SELECT COALESCE(SUM(depreciation_amount_cents), 0)::text AS posted_depr_cents
          FROM accounting.depreciation_schedule_rows
@@ -155,9 +175,18 @@ export async function postOwnedAssetDisposal(
     const bookValue = cost - accumulatedDepr;
     const proceeds = Math.max(0, Math.round(input.proceedsCents));
     const gainLoss = proceeds - bookValue;
-    const gainLossAccount = gainLoss === 0 ? null : await resolveRequiredRole(client, input.operatingCompanyId, "gain_loss_on_disposal");
-    const proceedsAccount = proceeds === 0 ? null : await resolveCashLike(client, input.operatingCompanyId);
     const label = `Owned asset ${asset.name} disposal (${asset.id})`;
+
+    // ACCT-F5642 — switch to the title-holder's books for everything that lands in/checks against
+    // the disposal JE itself: the open-period lock, the role-based account resolution (gain/loss,
+    // cash-like proceeds), the JE header + postings, and the source links — mirroring
+    // postDepreciation's own forward-switch (amortization-posting.service.ts) exactly.
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [booksCompanyId]);
+    await ensureOpenPeriod(client as never, booksCompanyId, input.disposalDate).catch((error: unknown) => {
+      throw new OwnedAssetDisposalError("PERIOD_LOCKED", error instanceof Error ? error.message : "Disposal period is closed");
+    });
+    const gainLossAccount = gainLoss === 0 ? null : await resolveRequiredRole(client, booksCompanyId, "gain_loss_on_disposal");
+    const proceedsAccount = proceeds === 0 ? null : await resolveCashLike(client, booksCompanyId);
 
     const postings = [
       ...(accumulatedDepr > 0
@@ -177,7 +206,7 @@ export async function postOwnedAssetDisposal(
     const journalEntry = await createJournalEntryOnClient(
       client,
       {
-        operating_company_id: input.operatingCompanyId,
+        operating_company_id: booksCompanyId,
         entry_date: input.disposalDate,
         memo: `${label} — gain/loss disposition`,
         source: "auto",
@@ -190,11 +219,11 @@ export async function postOwnedAssetDisposal(
       `SELECT id::text FROM accounting.journal_entry_postings
         WHERE operating_company_id = $1::uuid AND journal_entry_uuid = $2::uuid
         ORDER BY line_sequence`,
-      [input.operatingCompanyId, journalEntry.id]
+      [booksCompanyId, journalEntry.id]
     );
     for (const posting of postingRows.rows) {
       await writeTransactionSourceLink(client as never, {
-        operating_company_id: input.operatingCompanyId,
+        operating_company_id: booksCompanyId,
         journal_entry_posting_id: posting.id,
         linked_object_type: "fixed_asset",
         linked_object_id: input.assetId,
@@ -202,7 +231,7 @@ export async function postOwnedAssetDisposal(
       });
       if (asset.unit_uuid) {
         await writeTransactionSourceLink(client as never, {
-          operating_company_id: input.operatingCompanyId,
+          operating_company_id: booksCompanyId,
           journal_entry_posting_id: posting.id,
           linked_object_type: "unit",
           linked_object_id: asset.unit_uuid,
@@ -210,6 +239,10 @@ export async function postOwnedAssetDisposal(
         });
       }
     }
+
+    // Restore the asset-home GUC before touching fixed_asset_disposals / fixed_assets, both scoped to
+    // input.operatingCompanyId (matching every other query against these two tables in this file).
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
     const disposalRes = await client.query<{ id: string }>(
       `INSERT INTO accounting.fixed_asset_disposals
