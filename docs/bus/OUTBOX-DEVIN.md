@@ -12835,3 +12835,5 @@ Idioma
 Ingles
 Espanol (preview)
 6 | NEXT=leaf=fleet:trailer.status_change:trailer
+Devin-A | LIVE PASS | leaf=fleet:trailer.status_change:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=vendors:detail.ap:vendor
+Devin-A | LIVE PASS | leaf=fleet:trailer.status_change:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=1cbe5e2 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=vendors:detail.ap:vendor
