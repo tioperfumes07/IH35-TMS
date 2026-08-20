@@ -172,8 +172,8 @@ if (SELFTEST) {
     {
       ...live,
       route: live.route.replace(
-        "FROM safety.safety_events\n              WHERE operating_company_id = $1 AND status = 'open'",
-        "FROM views.safety_dashboard_kpis WHERE operating_company_id = $1"
+        "FROM safety.safety_events\n              WHERE operating_company_id = $1::uuid AND status = 'open'",
+        "FROM views.safety_dashboard_kpis WHERE operating_company_id = $1::uuid"
       ),
     },
     "views.safety_dashboard_kpis"
