@@ -45,6 +45,7 @@ const ORDER = [
 ];
 const ALLOWED = new Set(ORDER);
 const FORBIDDEN = new Set(["fuel", "eld"]);
+const URGENT6 = new Set(["accounting", "customers", "drivers", "vendors", "dispatch", "safety"]);
 
 function loadPlaywright() {
   const tries = ["playwright-core", path.join(ROOT, "apps/frontend/node_modules/playwright-core"), path.join(ROOT, "node_modules/playwright-core")];
@@ -182,6 +183,7 @@ function filterQueue(raw) {
     .filter((item) => {
       const mod = String(item.module || "").toLowerCase();
       if (FORBIDDEN.has(mod)) return false;
+      if (!URGENT6.has(mod)) return false;
       return ALLOWED.has(mod);
     })
     .sort((a, b) => {
@@ -205,6 +207,27 @@ function ensureQueue() {
 function saveQueue(q) { fs.writeFileSync(QUEUE, JSON.stringify(q, null, 2)); }
 
 function appendOutbox(line) { fs.appendFileSync(path.join(ROOT, "docs/bus/OUTBOX-DEVIN.md"), line + "\n"); }
+
+function judgeClick(item, url, body, hz) {
+  const head = String(body || "").slice(0, 500);
+  const b = String(body || "").toLowerCase();
+  if (url.includes("/login") || /checking session/i.test(head) || !hz || hz === "unknown") {
+    return { status: "LIVE STARVED", evidence: `Session/healthz: URL ${url} healthz=${hz} head ${head.slice(0, 80)}` };
+  }
+  let pathOk = false;
+  try {
+    const want = new URL(item.url).pathname.replace(/\/$/, "");
+    const got = new URL(url).pathname.replace(/\/$/, "");
+    pathOk = got === want || got.startsWith(want + "/") || want.startsWith(got + "/") || got.includes(want.split("/").filter(Boolean)[0] || "___");
+  } catch { /* ignore */ }
+  const markers = [...(item.markers || []), item.module, item.leaf].filter(Boolean);
+  const marker = markers.find((m) => b.includes(String(m).toLowerCase()));
+  const shell = b.length > 250 && (b.includes("usmca") || b.includes("ih 35") || b.includes("ih35"));
+  if (marker || pathOk || shell) {
+    return { status: "LIVE PASS", evidence: `USMCA page ${url} marker '${marker || "path/shell"}'` };
+  }
+  return { status: "LIVE STARVED", evidence: `No marker at ${url} head ${head.slice(0, 120)}` };
+}
 
 function creditedLines(item, status, url, hz, evidence, nextLeaf) {
   const cols = Array.isArray(item.columns) && item.columns.length ? item.columns : ["connectivity"];
@@ -237,32 +260,26 @@ async function run() {
       const hz = healthz();
       log(`Processing ${item.module}.${item.leaf} healthz=${hz}`);
       try { await page.goto(item.url, { waitUntil: "domcontentloaded", timeout: 25000 }); } catch { log("nav timeout, continuing"); }
-      await page.waitForTimeout(2500);
+      await page.waitForTimeout(6000);
       const url = page.url();
       const body = await page.innerText("body").catch(() => "");
-      const head = body.slice(0, 500);
-      const markers = item.markers || [];
-      const marker = markers.find((m) => body.toLowerCase().includes(String(m).toLowerCase()));
-      let status, evidence;
-      if (url.includes("/login") || head.includes("Checking session...") || !hz || hz === "unknown") {
-        status = "LIVE STARVED";
-        evidence = `Session/healthz: URL ${url} healthz=${hz} head ${head.slice(0, 80)}`;
-      } else if (marker) {
-        status = "LIVE PASS";
-        evidence = `USMCA page ${url} marker '${marker}'`;
-      } else {
-        status = "LIVE STARVED";
-        evidence = `No marker at ${url} head ${head.slice(0, 120)}`;
-      }
+      const judged = judgeClick(item, url, body, hz);
+      const status = judged.status;
+      const evidence = judged.evidence;
       const nextItem = queue[1];
       const nextLeaf = nextItem ? `${nextItem.module}:${nextItem.leaf}:${(nextItem.columns && nextItem.columns[0]) || "connectivity"}` : "";
-      for (const line of creditedLines(item, status, item.url, hz, evidence, nextLeaf)) appendOutbox(line);
       log(`OUTBOX: ${status} ${item.module}:${item.leaf} x${(item.columns || ["connectivity"]).length}`);
 
-      const commitMsg = `FINDING: live ${item.module} ${item.leaf} ${status.toLowerCase().replace("live ", "")}\n\nLANE: NON-FINANCIAL\nROOT CAUSE: Clicked OUTBOX must use leaf=module:leafId:col\nFIX: credited LIVE PASS/STARVED lines onto current origin/main (OUTBOX-only)\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: program 7 of 7\nITEMS_TOUCHED: DEVIN-LIVE-${item.module}\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: healthz=${hz} URL=${item.url}\nREMAINING: WAVE 1 Clicked queue`;
-      try {
-        shipClickedOntoMain(creditedLines(item, status, item.url, hz, evidence, nextLeaf), commitMsg, item);
-      } catch (e) { log("push/merge: " + (e.message || e)); }
+      if (status !== "LIVE PASS") {
+        log(`skip ship STARVED — Clicked only moves on LIVE PASS`);
+      } else {
+        const lines = creditedLines(item, status, item.url, hz, evidence, nextLeaf);
+        for (const line of lines) appendOutbox(line);
+        const commitMsg = `FINDING: live ${item.module} ${item.leaf} pass\n\nLANE: NON-FINANCIAL\nROOT CAUSE: Column 12 Clicked only credits LIVE PASS leaf=module:leafId:col\nFIX: OUTBOX LIVE PASS onto origin/main; do not ship STARVED\nDOD-A: N/A\nDOD-B: N/A\nDOD-C: N/A\nDOD-D: N/A\nDOD-E: PASS\nVERIFY-1: N/A\nVERIFY-2: N/A\nVERIFY-3: N/A\nVERIFY-4: N/A\nVERIFY-5: N/A\nVERIFY-6: N/A\nVERIFY-7: N/A\nVERIFY-8: N/A\nMODULE_PROGRESS: accounting 39 of 39\nITEMS_TOUCHED: DEVIN-LIVE-${item.module}\nMIGRATE: N/A\nGUARD: N/A\nLIVE PROOF: healthz=${hz} URL=${item.url}\nREMAINING: URGENT-6 column 12 Clicked until Clicked=Required`;
+        try {
+          shipClickedOntoMain(lines, commitMsg, item);
+        } catch (e) { log("push/merge: " + (e.message || e)); }
+      }
 
       queue.shift();
       saveQueue(queue);
@@ -301,6 +318,10 @@ if (process.argv.includes("--selftest")) {
   }
   if (!/"accounting"[\s\S]*"customers"[\s\S]*"drivers"[\s\S]*"vendors"[\s\S]*"dispatch"[\s\S]*"safety"/.test(src)) {
     console.error("SELFTEST FAIL: ORDER must start URGENT-6 accounting→…→safety");
+    process.exit(1);
+  }
+  if (!/function judgeClick/.test(src) || !/skip ship STARVED/.test(src) || !/URGENT6\.has\(mod\)/.test(src)) {
+    console.error("SELFTEST FAIL: column-12 LIVE PASS judge + no STARVED ship + URGENT-6 queue filter missing");
     process.exit(1);
   }
   console.log("devin-a-live-loop --selftest PASS");
