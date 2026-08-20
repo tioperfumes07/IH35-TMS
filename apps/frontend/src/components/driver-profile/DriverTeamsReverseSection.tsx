@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { driverTeamMemberName, listMdataDriverTeams } from "../../api/driver-teams";
+import { listMdataDriverTeams } from "../../api/driver-teams";
 import { EntityLink } from "../shared/EntityLink";
+import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 export function DriverTeamsReverseSection({ driverId, operatingCompanyId }: { driverId: string; operatingCompanyId: string }) {
   const query = useQuery({
@@ -22,9 +23,15 @@ export function DriverTeamsReverseSection({ driverId, operatingCompanyId }: { dr
       ) : null}
       <ul className="divide-y divide-gray-100">
         {teams.map((team) => {
-          const teammate = team.primary_driver_id === driverId
-            ? driverTeamMemberName(team, "secondary")
-            : driverTeamMemberName(team, "primary");
+          const teammateSlot = team.primary_driver_id === driverId ? "secondary" : "primary";
+          const teammateId = teammateSlot === "primary" ? team.primary_driver_id : team.secondary_driver_id;
+          const teammateFirstName = teammateSlot === "primary"
+            ? team.primary_driver_first_name
+            : team.secondary_driver_first_name;
+          const teammateLastName = teammateSlot === "primary"
+            ? team.primary_driver_last_name
+            : team.secondary_driver_last_name;
+          const teammateName = [teammateFirstName, teammateLastName].filter(Boolean).join(" ").trim() || null;
           return (
             <li key={team.id} className="flex items-center justify-between gap-3 py-2 text-xs">
               <EntityLink
@@ -33,7 +40,15 @@ export function DriverTeamsReverseSection({ driverId, operatingCompanyId }: { dr
                 label={team.team_name}
                 className="font-semibold text-slate-700 hover:underline"
               />
-              <span className="text-gray-500">Teammate: {teammate}</span>
+              <span className="text-gray-500">
+                Teammate:{" "}
+                <EntityLinkOrTombstone
+                  kind="driver"
+                  id={teammateId}
+                  name={teammateName}
+                  noun="Driver"
+                />
+              </span>
             </li>
           );
         })}

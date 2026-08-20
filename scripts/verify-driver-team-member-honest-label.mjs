@@ -26,7 +26,10 @@ function failures(candidate = files) {
   if (!candidate.modal.includes("new_driver_id: replacementDriverId") || !candidate.modal.includes("driver_slot: replaceSlot")) found.push("replacement no longer submits the canonical driver FK and slot");
   if (!candidate.reverse.includes('listMdataDriverTeams({ operating_company_id: operatingCompanyId, is_active: "true" })')) found.push("Driver profile reverse roster is no longer company scoped");
   if (!candidate.reverse.includes('kind="driver_team"') || !candidate.reverse.includes("id={team.id}")) found.push("Driver profile loses exact team drill");
-  if (!candidate.reverse.includes('driverTeamMemberName(team, "secondary")') || !candidate.reverse.includes('driverTeamMemberName(team, "primary")')) found.push("Driver profile does not resolve both teammate slots");
+  if (!candidate.reverse.includes('const teammateSlot = team.primary_driver_id === driverId ? "secondary" : "primary"')) found.push("Driver profile does not resolve the opposite teammate slot");
+  if (!candidate.reverse.includes('teammateSlot === "primary" ? team.primary_driver_id : team.secondary_driver_id')) found.push("Driver profile teammate drill loses the canonical driver id");
+  if (!candidate.reverse.includes('team.primary_driver_first_name') || !candidate.reverse.includes('team.secondary_driver_first_name') || !candidate.reverse.includes('team.primary_driver_last_name') || !candidate.reverse.includes('team.secondary_driver_last_name')) found.push("Driver profile teammate drill loses its scoped human name");
+  if (!candidate.reverse.includes('<EntityLinkOrTombstone') || !candidate.reverse.includes('kind="driver"') || !candidate.reverse.includes('id={teammateId}') || !candidate.reverse.includes('name={teammateName}') || !candidate.reverse.includes('noun="Driver"')) found.push("Driver profile teammate remains dead text or loses unresolved-driver tombstone policy");
   if (!candidate.profile.includes('<DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId}')) found.push("Driver profile loses mounted team reverse section");
   return found;
 }
@@ -42,6 +45,9 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     ["modal", "new_driver_id: replacementDriverId", "new_driver_id: team.id", "replacement driver FK"],
     ["reverse", 'operating_company_id: operatingCompanyId', 'operating_company_id: ""', "reverse company scope"],
     ["reverse", 'kind="driver_team"', 'kind="driver"', "exact team drill"],
+    ["reverse", 'id={teammateId}', 'id={team.id}', "teammate canonical driver FK"],
+    ["reverse", 'name={teammateName}', 'name={teammateId}', "teammate human label"],
+    ["reverse", '<EntityLinkOrTombstone', '<EntityLink', "teammate unresolved tombstone"],
     ["profile", '<DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId}', '<DriverTeamsReverseSection driverId={id} operatingCompanyId=""', "profile reverse mount scope"],
   ];
   const escaped = [];
