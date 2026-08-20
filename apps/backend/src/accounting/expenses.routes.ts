@@ -121,6 +121,13 @@ const createExpenseBodySchema = z.object({
   // treatment as unit_id above.
   trailer_id: z.string().uuid().optional().nullable(),
   insurance_claim_id: z.string().uuid().optional().nullable(),
+  // ACCT-F5629 — legal.matters carries only CLAIM amounts (what is being fought over) and had no way
+  // to see what a matter has COST, because accounting.expenses (unlike accounting.bills, ACCT-F5043)
+  // had no legal_matter_id column at all — a filing fee, court reporter, or expert-witness invoice
+  // paid via company card as a plain expense was invisible to listLegalMatterLinkedCosts, which
+  // silently summed bills only. Same optional/columnExists-guarded treatment as insurance_claim_id
+  // above; no posting change (the existing expense poster is unchanged, this is a pointer).
+  legal_matter_id: z.string().uuid().optional().nullable(),
   // WAVE-H2: optional explicit load FK (TMS create). When set, stamped on INSERT; attribution only fills when absent.
   load_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
@@ -677,6 +684,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (hasInsuranceClaimId) {
           columns.push(`insurance_claim_id`);
           values.push(body.insurance_claim_id ?? null);
+        }
+
+        // ACCT-F5629 — same column-gated treatment as insurance_claim_id above; see migration
+        // 202612821300 and listLegalMatterLinkedCosts (bills.service.ts) for the reverse-drill half.
+        const hasLegalMatterId = await columnExists(client, "accounting", "expenses", "legal_matter_id");
+        if (hasLegalMatterId) {
+          columns.push(`legal_matter_id`);
+          values.push(body.legal_matter_id ?? null);
         }
 
         // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half): the audit-trigger half of this
