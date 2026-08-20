@@ -110,6 +110,15 @@ export function checkAll(readFile) {
       failures.push(`${c.name}: ${c.file} no longer matches expected shape`);
     }
   }
+  const expenseRoutes = readFile("apps/backend/src/accounting/expenses.routes.ts");
+  if (expenseRoutes === null) {
+    failures.push("accounting: expenses.routes.ts not found");
+  } else {
+    const scopedWoJoins = expenseRoutes.match(/wo\.id = e\.linked_work_order_uuid(?:\s|\")+AND wo\.operating_company_id = e\.operating_company_id/g) ?? [];
+    if (scopedWoJoins.length < 2) {
+      failures.push(`accounting: expense list/detail work-order joins must both be company-scoped (found ${scopedWoJoins.length}/2)`);
+    }
+  }
   return failures;
 }
 
@@ -124,6 +133,10 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/components/expenses/RecordExpenseForm.tsx": 'data-testid="record-expense-driver-picker"',
     "apps/frontend/src/components/expenses/recordExpenseSubmit.ts": "values.driverId && UUID_RE.test(values.driverId)",
     "apps/frontend/src/components/drivers/EarningsTab.tsx": 'data-testid="driver-earnings-expenses"',
+    "apps/backend/src/accounting/expenses.routes.ts": `
+      wo.id = e.linked_work_order_uuid AND wo.operating_company_id = e.operating_company_id
+      wo.id = e.linked_work_order_uuid AND wo.operating_company_id = e.operating_company_id
+    `,
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {
@@ -131,7 +144,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const regressedFailures = checkAll(() => "nothing matches here");
-  if (regressedFailures.length !== CHECKS.length) {
+  if (regressedFailures.length !== CHECKS.length + 1) {
     console.error(`[${LABEL}] selftest FAIL: regressed fixture (all-empty) should fail every check`);
     process.exit(1);
   }

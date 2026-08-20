@@ -1011,3 +1011,4 @@ Codex | WORKING | FINDING=DISPATCH-EQUIPMENT-TRANSFER-ADHOC-REVERSE-DRILL | leaf
 Codex | WORKING | FINDING=SETTLEMENTS-DRIVER-RECORD-DEAD-TOMBSTONE-DRILLS | leaf=settlements:{list,panel.pre_settlements}:reverse_link | guards=green+selftest | typecheck=exit0 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=CUSTOMER-FACTOR-READ-JOIN-TENANT-UNSCOPED | leaf=customers:detail.factoring:{connectivity,reverse_link} | guard=normal+16-selftest | typecheck=root | NEXT=fast-merge then drivers | GO
 Codex | WORKING | FINDING=DRIVER-USER-IDENTITY-DEAD-TOMBSTONE-DRILLS | leaves=drivers:{audit.history,detail.footer}:reverse_link | guards=2 normal+selftest | typecheck=frontend | NEXT=fast-merge then accounting | GO
+Codex | WORKING | FINDING=ACCOUNTING-EXPENSE-WORK-ORDER-READ-JOINS-UNSCOPED | leaf=accounting:expenses.reverse:work_order/connectivity | guard=normal+selftest | typecheck=root | NEXT=fast-merge then reread inbox | GO
