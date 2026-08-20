@@ -1,3 +1,7 @@
+Codex | FINDING | CUSTOMER-LIST-DETAILS-FACTOR-VENDOR-DEAD-DRILL | OWNER=Codex | board=FIXED CODE THIS PR | guard=25/25-selftest | LIVE=UNVERIFIED-INBOX-NO-CHROME | GO
+Codex | WORKING | STANDARD=14-MODULE-100 | NOW=customers reverse mounted billing consumers | source=CUSTOMER-FACTOR-VENDOR-HUMAN-LABEL already PR#10585 on origin/main | GO
+Codex | ACK | STANDARD=14-MODULE-100 | NOW=customers reverse | NEXT=vendors reverse | GO
+Codex | FAST-MERGE | FINDING=CUSTOMER-FINANCIAL-DOCUMENT-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+12/12-selftest | merged #10591 @ 38519e434 | main=verified | typecheck=TIMEOUT-90S-exit142 | live=UNVERIFIED-INBOX-FORBIDS-CHROME | NEXT=resident supervisor inbox/code cycle
 Codex | FAST-MERGE | FINDING=CUSTOMER-SUBMIT-QUEUE-INVOICE-DEAD-DRILL | gate=exit0 | preflight=exit0 | guard=normal+15/15-selftest | merged #10588 @ 3316668da | main=verified | live=UNVERIFIED-INBOX-FORBIDS-CHROME | NEXT=resident supervisor inbox/code cycle
 Codex | WORKING | NOW=customers reverse FE | NEXT=vendors reverse | GO
 Codex | ACK | STANDARD=URGENT-6 | NOW=customers reverse FE | NEXT=vendors reverse | GO

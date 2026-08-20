@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customers-reverse-link-detail";
 const DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
+const LIST_MASTER_DETAIL = "apps/frontend/src/pages/Customers.tsx";
 const LOADS_ROUTE = "apps/backend/src/mdata/loads.routes.ts";
 const INVOICES_PAGE = "apps/frontend/src/pages/accounting/InvoicesListPage.tsx";
 const INVOICES_ROUTE = "apps/backend/src/accounting/invoices.routes.ts";
@@ -46,6 +47,11 @@ const CHECKS = [
     name: "billing factor vendor drill consumes canonical producer label",
     file: DETAIL,
     pattern: /id=\{billingSummary\.factoring_company_vendor_id\}[\s\S]{0,180}name=\{billingSummary\.factoring_company_vendor_name\}[\s\S]{0,120}noun="Vendor"/,
+  },
+  {
+    name: "list master-detail factor vendor drill consumes canonical producer label",
+    file: LIST_MASTER_DETAIL,
+    pattern: /label="Factoring company"[\s\S]{0,320}<EntityLinkOrTombstone[\s\S]{0,160}kind="vendor"[\s\S]{0,160}id=\{summary\.factoring_company_vendor_id\}[\s\S]{0,160}name=\{summary\.factoring_company_vendor_name\}[\s\S]{0,120}noun="Vendor"/,
   },
   {
     name: "billing producer returns factor vendor human label",
@@ -105,6 +111,11 @@ const CHECKS = [
     pattern: /path="\/customers\/:id"[\s\S]{0,180}<CustomerDetailPage \/>/,
   },
   {
+    name: "customer list master-detail source is mounted",
+    file: ROUTE_MANIFEST,
+    pattern: /path="\/customers"[\s\S]{0,180}<CustomersPage \/>/,
+  },
+  {
     name: "invoice list destination is mounted",
     file: ROUTE_MANIFEST,
     pattern: /path="\/accounting\/invoices"[\s\S]{0,180}<InvoicesListPage \/>/,
@@ -113,7 +124,7 @@ const CHECKS = [
 
 function readSources() {
   return Object.fromEntries(
-    [DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, MDATA_API, ROUTE_MANIFEST].map((file) => [
+    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, MDATA_API, ROUTE_MANIFEST].map((file) => [
       file,
       fs.readFileSync(path.join(ROOT, file), "utf8"),
     ]),
