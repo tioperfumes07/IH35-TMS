@@ -1014,3 +1014,4 @@ Ingles
 Espanol (preview)
 t | healthz=69d7810 | mutation=none | NEXT=system.tab.qbo_sync
 Devin-A | LIVE STARVED | module=system | leaf=tab.qbo_sync | URL=https://app.ih35dispatch.com/system?tab=qbo-sync | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/system?tab=qbo-sync ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.program
+Devin-A | LIVE STARVED | module=system | leaf=tab.qbo_sync | URL=https://app.ih35dispatch.com/system?tab=qbo-sync | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/system?tab=qbo-sync ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.program
