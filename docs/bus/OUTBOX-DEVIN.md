@@ -2383,3 +2383,24 @@ Devin-A | LIVE PASS | leaf=accounting:accounting.panel.leakage:reverse_link | US
 Devin-A | LIVE PASS | leaf=accounting:accounting.panel.leakage:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/revenue-recognition | healthz=7ba771a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/revenue-recognition marker 'accounting' | NEXT=leaf=accounting:accounting.panel.period_status:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.panel.period_status:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/my-accountant | healthz=7ba771a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/my-accountant marker 'accounting' | NEXT=leaf=accounting:accounting.panel.reallocate:connectivity
 Devin-A | LIVE PASS | leaf=accounting:accounting.panel.period_status:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/my-accountant | healthz=7ba771a | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/my-accountant marker 'accounting' | NEXT=leaf=accounting:accounting.panel.reallocate:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.panel.reallocate:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/allocations | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/allocations healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:accounting.panel.receipt_detail:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.panel.reallocate:reverse_link | USMCA | URL=https://app.ih35dispatch.com/accounting/allocations | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/allocations healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:accounting.panel.receipt_detail:connectivity
+Devin-A | LIVE STARVED | leaf=accounting:accounting.panel.reallocate:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/allocations | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting/allocations healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=accounting:accounting.panel.receipt_detail:connectivity
