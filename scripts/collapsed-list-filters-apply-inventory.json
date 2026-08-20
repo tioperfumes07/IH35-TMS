@@ -19,7 +19,7 @@
     "accounting": { "status": "COVERED", "evidence": "apps/frontend/src/pages/accounting/BillsPage.tsx" },
     "bank": { "status": "COVERED", "evidence": "apps/frontend/src/pages/banking/TransfersListPage.tsx" },
     "factoring": { "status": "COVERED", "evidence": "apps/frontend/src/pages/accounting/FactoringListPage.tsx" },
-    "finance": { "status": "COVERED", "evidence": "apps/frontend/src/pages/profitability/FilterBar.tsx" },
+    "finance": { "status": "COVERED", "evidence": "apps/frontend/src/pages/finance/ArApAgingPage.tsx" },
     "customers": { "status": "COVERED", "evidence": "apps/frontend/src/pages/customers/CustomersListView.tsx" },
     "vendors": { "status": "COVERED", "evidence": "apps/frontend/src/pages/vendors/VendorsListView.tsx" },
     "inventory": { "status": "N/A", "reason": "No CollapsedListFilters consumer" },
