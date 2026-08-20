@@ -128,6 +128,38 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
     expect(link.getAttribute("href")).toBe("/customers/00000000-0000-4000-8000-0000000000cc");
   });
 
+  it("renders the list producer's trailer id and human label as a canonical reverse drill", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const loadId = "00000000-0000-4000-8000-0000000000aa";
+    const trailerId = "00000000-0000-4000-8000-000000000099";
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ToastProvider>
+            <DispatchBoard
+              loads={[mockLoad({ id: loadId, trailer_id: trailerId, trailer_number: "TR-99" })]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={vi.fn()}
+              onExportCsv={vi.fn()}
+              operatingCompanyId="00000000-0000-4000-8000-0000000000bb"
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    const link = (await screen.findAllByTestId(`inline-trailer-link-${loadId}`))[0];
+    expect(link.textContent).toContain("TR-99");
+    expect(link.getAttribute("href")).toBe(`/fleet/trailers/${trailerId}`);
+  });
+
   it("books an awaiting-assignment unit row instead of silently ignoring the click", async () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const onBookForUnit = vi.fn();

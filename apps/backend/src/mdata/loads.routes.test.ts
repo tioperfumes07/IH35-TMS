@@ -198,6 +198,25 @@ describe("mdata loads routes", () => {
     expect(listCall?.[0]).not.toContain("ORDER BY sp.scheduled_arrival_at");
   });
 
+  it("GET /api/v1/mdata/loads projects the latest entity-scoped trailer for the mounted dispatch board", async () => {
+    const app = await buildApp();
+    const companyId = "11111111-1111-4111-8111-111111111111";
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/mdata/loads?operating_company_id=${companyId}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const listCall = queryMock.mock.calls.find(([sql]) => String(sql).includes("tr.id AS trailer_id"));
+    expect(listCall).toBeDefined();
+    const sql = String(listCall?.[0]);
+    expect(sql).toContain("tr.equipment_number AS trailer_number");
+    expect(sql).toContain("FROM dispatch.load_assignment_history lah");
+    expect(sql).toContain("AND lah.operating_company_id = l.operating_company_id");
+    expect(sql).toContain("COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id");
+    expect(sql).toContain("ORDER BY lah.assigned_at DESC, lah.created_at DESC");
+  });
+
   it("PATCH /api/v1/mdata/loads/:id/status blocks non-Owner cancel when reason requires owner approval", async () => {
     const loadId = "22222222-2222-4222-8222-222222222222";
     queryMock.mockImplementation(async (sql: string, params?: unknown[]) => {

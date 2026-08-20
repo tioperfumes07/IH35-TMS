@@ -11,6 +11,8 @@ import fs from "node:fs";
 const LABEL = "verify-dispatch-primary-inline-reverse-links";
 const paths = {
   board: "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+  api: "apps/frontend/src/api/loads.ts",
+  backend: "apps/backend/src/mdata/loads.routes.ts",
   driver: "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx",
   unit: "apps/frontend/src/components/dispatch/InlineUnitPicker.tsx",
   trailer: "apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx",
@@ -19,6 +21,7 @@ const source = Object.fromEntries(Object.entries(paths).map(([key, file]) => [ke
 
 function audit(candidate = source) {
   const failures = [];
+  const listContract = candidate.api.match(/export type DispatchLoadRow = \{([\s\S]*?)\n\};/)?.[1] ?? "";
   for (const [key, kind, id, noun] of [
     ["driver", "driver", "driverId", "Driver"],
     ["unit", "unit", "unitId", "Unit"],
@@ -34,6 +37,22 @@ function audit(candidate = source) {
     if (!candidate.board.includes(`<${component}`)) failures.push(`board: ${component} is not mounted`);
   }
   if (!candidate.board.includes("const inlineQuicksaveEnabled = true")) failures.push("board: guard no longer traces the always-mounted quick-save branch");
+  if (!listContract.includes("trailer_id?: string | null;") || !listContract.includes("trailer_number?: string | null;")) {
+    failures.push("api: dispatch list contract omits canonical trailer id/label");
+  }
+  for (const needle of [
+    "tr.id AS trailer_id",
+    "tr.equipment_number AS trailer_number",
+    "FROM dispatch.load_assignment_history lah",
+    "AND lah.operating_company_id = l.operating_company_id",
+    "COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id",
+    "ORDER BY lah.assigned_at DESC, lah.created_at DESC",
+  ]) {
+    if (!candidate.backend.includes(needle)) failures.push(`backend: mounted list producer missing ${needle}`);
+  }
+  if (!candidate.board.includes("id={load.trailer_id}") || !candidate.board.includes('name={load.trailer_number}')) {
+    failures.push("board: trailer reverse drill does not consume the typed list id/label");
+  }
   return failures;
 }
 
@@ -44,6 +63,10 @@ if (process.argv.includes("--selftest")) {
     ["trailer", '<EntityLinkOrTombstone\n            kind="trailer"', '<span\n            data-kind="trailer"', "trailer drill"],
     ["driver", "{driverId ? \"Change\" : \"Assign\"}", "Change", "driver change action"],
     ["board", "<InlineTrailerPicker", "<RemovedInlineTrailerPicker", "mounted trailer control"],
+    ["api", "assigned_unit_number: string | null;\n  trailer_id?: string | null;", "assigned_unit_number: string | null;", "trailer id response contract"],
+    ["backend", "tr.id AS trailer_id", "NULL::uuid AS trailer_id", "trailer id projection"],
+    ["backend", "AND lah.operating_company_id = l.operating_company_id", "", "assignment-history entity scope"],
+    ["board", "id={load.trailer_id}", "id={null}", "mounted trailer id consumer"],
   ];
   const escaped = [];
   for (const [key, needle, replacement, name] of mutations) {
