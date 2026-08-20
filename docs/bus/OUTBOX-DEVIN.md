@@ -7500,3 +7500,17 @@ Devin-A | LIVE PASS | leaf=fleet:trailer.profile.maintenance:connectivity | USMC
 Devin-A | LIVE PASS | leaf=fleet:trailer.profile.maintenance:reverse_link | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=67aeae7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/fleet/trailers/:id marker 'Trailer Profile' | NEXT=leaf=fleet:trailer.profile.reefer:trailer
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.reefer:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head Checking session... | NEXT=leaf=fleet:trailer.profile.specs:trailer
 Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.reefer:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head Checking session... | NEXT=leaf=fleet:trailer.profile.specs:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.specs:trailer | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:trailer.status_change:trailer
+Devin-A | LIVE STARVED | leaf=fleet:trailer.profile.specs:connectivity | USMCA | URL=https://app.ih35dispatch.com/fleet/trailers/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/fleet/trailers/:id healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=fleet:trailer.status_change:trailer
