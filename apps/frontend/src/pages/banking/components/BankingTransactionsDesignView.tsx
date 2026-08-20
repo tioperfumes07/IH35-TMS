@@ -1085,7 +1085,7 @@ export function BankingTransactionsDesignView({
                       <EntityLink
                         kind="settlement"
                         id={tx.matched_settlement_id}
-                        label={entityLabel(null, tx.matched_settlement_id, "Settlement")}
+                        label={entityLabel(tx.matched_settlement_display_id ?? null, tx.matched_settlement_id, "Settlement")}
                       />
                     ) : null}
                     {/* ACCT-F5153: matched_bill_id was selected server-side but never rendered — the
