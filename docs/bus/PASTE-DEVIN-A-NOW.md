@@ -1,8 +1,10 @@
-# PASTE DEVIN-A · 2026-08-20T04:30Z
+# PASTE DEVIN-A
 
-Keep credited `leaf=`. After Wave A, Wave B of the 14. Not fuel.
+`git pull --ff-only origin main`
+
+USMCA only. chrome=9227. Every line:
+`Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | USMCA | URL=… | healthz=<sha> | mutation=none`
 
 ```text
-git pull --ff-only origin main
-Devin-A | ACK | STANDARD=14-MODULE-100 | NOW=Clicked Wave A then B | chrome=9227 | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | ENTITY=USMCA | chrome=9227 | GO
 ```

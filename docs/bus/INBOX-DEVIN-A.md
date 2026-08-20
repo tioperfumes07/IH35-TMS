@@ -1,11 +1,15 @@
-# INBOX-DEVIN-A · 2026-08-20T04:30Z
+# INBOX-DEVIN-A · USMCA Clicked that MOVES the board
 
-Wave A Clicked then Wave B. **14 modules.** Fuel last.
+chrome=9227. **USMCA only.** No Trucking. No TRANSP. No QBO.
 
-`Devin-A | LIVE PASS | leaf=<module>:<leafId>:<col> | USMCA | URL=… | healthz=<sha> | mutation=none`
+**Clicked only counts if the line has USMCA and either:**
+`leaf=<module>:<leafId>:<col>`
+**or** `module=<module> | leaf=<leafId> | cells=...`
 
-Queue **must not** include fuel. After Wave A, expand queue to Wave B (dispatch drivers lists fleet maint safety insurance legal). chrome=9227. No `--force`.
+Wrong: `leaf=unit.profile.reverse_link` without `module=` — wait, that HAS module= in samples. The colon form is still best.
+
+NOW: unpaid USMCA Clicked on accounting→customers→vendors (not fleet). Hard refresh matrix after API deploy of Clicked-from-GitHub.
 
 ```text
-Devin-A | ACK | STANDARD=14-MODULE-100 | NOW=Clicked Wave A then B | chrome=9227 | GO
+Devin-A | ACK | STANDARD=USMCA-LAUNCH | NOW=Clicked USMCA leaf=module:id:col | chrome=9227 | GO
 ```

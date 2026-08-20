@@ -1,7 +1,7 @@
-# INBOX-CURSOR · 2026-08-20T04:30Z
+# INBOX-CURSOR · Clicked scoreboard fix
 
-Lead. **You own** customers/vendors leftover LVs (filter Apply, detail `?tab=`, vendor by-category if still OPEN on main). Then Wave A Built → Wave B Built. Keep INBOX/OUTBOX current. 14-module 100%. Fuel last.
+Lead. USMCA only. After Clicked-from-GitHub ships, hard-refresh All-modules. Keep seats on Fully-Wired 1–12 USMCA. No TRK/TRANSP. No QBO sync.
 
 ```text
-Cursor | ACK | STANDARD=14-MODULE-100 | NOW=customers/vendors LV leftovers | GO
+Cursor | ACK | STANDARD=USMCA-LAUNCH | NOW=Clicked GitHub OUTBOX on API | GO
 ```
