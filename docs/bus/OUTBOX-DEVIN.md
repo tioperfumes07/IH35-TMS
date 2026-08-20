@@ -1073,3 +1073,4 @@ tioperfumes07@gmail.com
 Overview
 Projections
 Scenari | healthz=e4d97a9 | mutation=none | NEXT=finance.nav.statements
+Devin-A | LIVE STARVED | module=finance | leaf=statements.bs | URL=https://app.ih35dispatch.com/finance/statements?tab=bs | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/finance/statements?tab=bs ; body head Checking session... | healthz=e4d97a9 | mutation=none | NEXT=finance.statements.tb
