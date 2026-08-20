@@ -10737,3 +10737,14 @@ Devin-A | LIVE PASS | leaf=home:hub.driver:driver | USMCA | URL=https://app.ih35
 Devin-A | LIVE PASS | leaf=home:hub.driver:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-hub | healthz=47f67d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-hub marker 'Driver hub' | NEXT=leaf=home:hub.driver_reporting:driver
 Devin-A | LIVE PASS | leaf=home:hub.driver_reporting:driver | USMCA | URL=https://app.ih35dispatch.com/driver-hub/reporting | healthz=47f67d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-hub/reporting marker 'Driver' | NEXT=leaf=home:role.accountant:connectivity
 Devin-A | LIVE PASS | leaf=home:hub.driver_reporting:connectivity | USMCA | URL=https://app.ih35dispatch.com/driver-hub/reporting | healthz=47f67d7 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/driver-hub/reporting marker 'Driver' | NEXT=leaf=home:role.accountant:connectivity
+Devin-A | LIVE STARVED | leaf=home:role.accountant:connectivity | USMCA | URL=https://app.ih35dispatch.com/home | healthz=47f67d7 | mutation=none | evidence=No marker at https://app.ih35dispatch.com/home head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | NEXT=leaf=home:role.default:connectivity
