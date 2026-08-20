@@ -33,8 +33,15 @@ export function audit(src) {
   if (!/LEFT JOIN accounting\.bills bill[\s\S]{0,80}ON bill\.id = bt\.matched_bill_id[\s\S]{0,80}bill\.operating_company_id = bt\.operating_company_id/.test(src.route)) {
     failures.push(`${ROUTE_FILE}: missing entity-scoped LEFT JOIN accounting.bills on matched_bill_id`);
   }
-  if (!/settlement\.display_id AS matched_settlement_display_id/.test(src.route) || !/LEFT JOIN driver_finance\.settlements settlement[\s\S]{0,100}settlement\.id = bt\.matched_settlement_id[\s\S]{0,100}settlement\.operating_company_id = bt\.operating_company_id/.test(src.route)) {
-    failures.push(`${ROUTE_FILE}: missing entity-scoped matched settlement label`);
+  // BANK-F5627 — driver_finance.settlements is a phantom table that has never existed; the real
+  // table is driver_finance.driver_settlements (created by migration 0124). BANK-F5153's own code
+  // shipped with this exact typo and took down the whole Banking > Transactions tab in prod (every
+  // call to /api/v1/banking/plaid/company-transactions threw "relation does not exist"); BANK-F5627
+  // fixed the route to the real table name, but this guard's own regex was never updated to match —
+  // leaving it demanding the BROKEN table name forever, ready to steer a future "fix" straight back
+  // into the same outage. Match the real, currently-shipped table name here.
+  if (!/settlement\.display_id AS matched_settlement_display_id/.test(src.route) || !/LEFT JOIN driver_finance\.driver_settlements settlement[\s\S]{0,100}settlement\.id = bt\.matched_settlement_id[\s\S]{0,100}settlement\.operating_company_id = bt\.operating_company_id/.test(src.route)) {
+    failures.push(`${ROUTE_FILE}: missing entity-scoped matched settlement label (must join driver_finance.driver_settlements, not the phantom driver_finance.settlements — BANK-F5627)`);
   }
 
   if (!/matched_bill_number\??:\s*string \| null/.test(src.api)) {
