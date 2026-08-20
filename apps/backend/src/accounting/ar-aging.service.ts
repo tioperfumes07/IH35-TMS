@@ -74,8 +74,17 @@ export async function getArAgingReport(input: {
     // as-of-aware (an invoice voided AFTER the as_of date was still a receivable ON it), mirroring
     // the A/P sibling's own revoked_at treatment.
     // ACCT-F223 — 'proforma' exclusion retained: a proforma posts NO journal entry; counting it made
-    // A/R aging disagree with the GL by $22,720.00 on USMCA alone. 'draft' likewise. 'factored'
-    // treatment unchanged from this service's prior behavior (included).
+    // A/R aging disagree with the GL by $22,720.00 on USMCA alone. 'draft' likewise.
+    // ACCT-F5659 — 'factored' EXCLUDED. The chargeback poster's own comment
+    // (factoring-posting/poster.service.ts, applyChargebackSubledgerRelief) states the status exists
+    // precisely "so the invoice leaves the ar_aging sent/partial pool without being misreported as
+    // collected": its A/R-relief leg (Dr factoring_recoursed_ar / Cr ar_control) has already moved
+    // the receivable OFF trade A/R at the GL, and amount_paid_cents is intentionally untouched (no
+    // cash arrived) — so counting it here reconstructed the FULL face value into the oldest bucket.
+    // Every sibling surface already excludes it (views.ar_aging allow-lists sent/partial;
+    // ar_aging_as_of and fin20-aging both exclude 'factored'); this service was the lone dissenter,
+    // making the Export PDF/weekly A/R email disagree with the on-screen table by the whole
+    // factored-and-recoursed balance and dunning customers for invoices the factor already recoursed.
     const res = await client.query<ArAgingInvoiceRowDb>(
       `
         SELECT
@@ -113,7 +122,7 @@ export async function getArAgingReport(input: {
           AND i.issue_date <= $2::date
           AND i.total_cents IS NOT NULL
           AND (i.voided_at IS NULL OR i.voided_at::date > $2::date)
-          AND i.status NOT IN ('void', 'voided', 'draft', 'proforma')
+          AND i.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
           AND GREATEST(
             COALESCE(i.total_cents, 0)
               - COALESCE((

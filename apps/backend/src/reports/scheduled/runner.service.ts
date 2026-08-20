@@ -2,6 +2,8 @@ import { enqueueEmail } from "../../email/queue.service.js";
 import type { EmailAttachment } from "../../email/provider.js";
 import { getArAgingReport } from "../../accounting/ar-aging.service.js";
 import { getProfitLossReport } from "../../accounting/profit-loss.service.js";
+import { formatUsdFromCents } from "../../accounting/statement-export.helpers.js";
+import { withCurrentUser } from "../../auth/db.js";
 import { renderStatementPdf } from "../../accounting/statement-export-pdf.service.js";
 import { renderStatementXlsx } from "../../accounting/statement-export-xlsx.service.js";
 import { cashArDailyHtml, cashArDailyText } from "../../notifications/templates/reports/cash-ar-daily.js";
@@ -71,6 +73,26 @@ async function generateWeeklyArAging60(operatingCompanyId: string): Promise<Gene
   };
 }
 
+// ACCT-F5659 — the seeded monthly-pnl PDF subscription (delivered to the OWNER) previously handed
+// RAW CENTS integers straight to the Handlebars template ($12,345.67 printed as `1234567` — the
+// XLSX branch three lines below divided by 100, so PDF and XLSX subscribers to the SAME report
+// disagreed by 100x), passed none of the three footer totals (blank cells), and hardcoded
+// company_code to the literal string "COMPANY" (no entity identity on a multi-entity system's own
+// P&L of record). The canonical exporter (statement-export.service.ts) already formats every
+// amount via formatUsdFromCents and resolves the real org.companies.code — this now mirrors that
+// viewModel exactly.
+async function fetchCompanyCode(operatingCompanyId: string): Promise<string> {
+  const row = await withCurrentUser(SYSTEM_ACTOR_ID, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const res = await client.query<{ code: string | null }>(
+      `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
+      [operatingCompanyId]
+    );
+    return res.rows[0] ?? null;
+  });
+  return row?.code ?? "COMPANY";
+}
+
 async function generateMonthlyPnl(
   operatingCompanyId: string,
   format: "pdf" | "xlsx" | "html"
@@ -104,13 +126,31 @@ async function generateMonthlyPnl(
           templateName: "profit-loss",
           viewModel: {
             title: "Profit and Loss",
-            company_code: "COMPANY",
+            company_code: await fetchCompanyCode(operatingCompanyId),
             period_label: `${startIso} to ${endIso}`,
-            revenue_lines: report.revenue.lines,
-            cogs_lines: report.cogs.lines,
-            operating_expense_lines: report.operating_expenses.lines,
-            gross_profit: report.gross_profit,
-            net_income: report.net_income,
+            revenue_lines: report.revenue.lines.map((line) => ({
+              account_code: line.account_code,
+              account_name: line.account_name,
+              account_type: line.account_type,
+              amount: formatUsdFromCents(line.amount),
+            })),
+            cogs_lines: report.cogs.lines.map((line) => ({
+              account_code: line.account_code,
+              account_name: line.account_name,
+              account_type: line.account_type,
+              amount: formatUsdFromCents(line.amount),
+            })),
+            operating_expense_lines: report.operating_expenses.lines.map((line) => ({
+              account_code: line.account_code,
+              account_name: line.account_name,
+              account_type: line.account_type,
+              amount: formatUsdFromCents(line.amount),
+            })),
+            revenue_total: formatUsdFromCents(report.revenue.total),
+            cogs_total: formatUsdFromCents(report.cogs.total),
+            gross_profit: formatUsdFromCents(report.gross_profit),
+            operating_expense_total: formatUsdFromCents(report.operating_expenses.total),
+            net_income: formatUsdFromCents(report.net_income),
           },
         })
       : await renderStatementXlsx({

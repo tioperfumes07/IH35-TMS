@@ -27,7 +27,9 @@ describe("getArAgingReport — proforma exclusion (ACCT-F223 regression)", () =>
     // ACCT-F5658 — 'paid' was deliberately REMOVED from this tuple: the service now reconstructs
     // paid-as-of from dated payment applications, so an invoice paid AFTER the as_of date still
     // (correctly) appears on a historical statement. The never-a-receivable statuses remain.
-    expect(invoiceSql).toMatch(/i\.status\s+NOT\s+IN\s*\(\s*['"]void['"]\s*,\s*['"]voided['"]\s*,\s*['"]draft['"]\s*,\s*['"]proforma['"]\s*\)/i);
+    // ACCT-F5659 — 'factored' added: the chargeback poster moves the receivable off trade A/R and
+    // stamps this status precisely so the invoice leaves the aging pool.
+    expect(invoiceSql).toMatch(/i\.status\s+NOT\s+IN\s*\(\s*['"]void['"]\s*,\s*['"]voided['"]\s*,\s*['"]draft['"]\s*,\s*['"]proforma['"]\s*,\s*['"]factored['"]\s*\)/i);
     const tuple = /i\.status NOT IN \(([^)]*)\)/.exec(invoiceSql)?.[1] ?? "";
     expect(tuple).not.toMatch(/'paid'/);
   });

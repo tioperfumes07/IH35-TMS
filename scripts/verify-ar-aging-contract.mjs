@@ -77,12 +77,44 @@ try {
   if (!statusExclusion) {
     throw new Error("AR Aging must include a status safety-net exclusion (i.status NOT IN (...))");
   }
-  for (const required of ["void", "draft", "proforma"]) {
+  for (const required of ["void", "draft", "proforma", "factored"]) {
     if (!new RegExp(`'${required}'`).test(statusExclusion[1])) {
       throw new Error(
         `AR Aging status exclusion is missing '${required}'. Found: ${statusExclusion[0]}. ` +
           `Note 'void' is the ONLY spelling accounting.invoices.status can hold — ` +
-          `invoices_status_check forbids 'voided', so excluding that alone excludes nothing (ACCT-F171).`,
+          `invoices_status_check forbids 'voided', so excluding that alone excludes nothing (ACCT-F171). ` +
+          `'factored' is stamped by the chargeback poster precisely so the invoice leaves the aging pool (ACCT-F5659).`,
+      );
+    }
+  }
+  // ACCT-F5659 — ENGINE PARITY: the TS service and the last-declaring migration of
+  // accounting.ar_aging_as_of must exclude the SAME status set. ACCT-F5658 converged their date
+  // basis but a lone differing literal ('factored') survived, so the Export PDF and the on-screen
+  // historical table disagreed by the whole factored-and-recoursed balance. Per-engine presence
+  // checks cannot catch a set difference — compare the sets directly.
+  {
+    const migDir = "db/migrations";
+    const migFiles = fs
+      .readdirSync(migDir)
+      .filter((n) => n.endsWith(".sql"))
+      .sort();
+    let lastTuple = null;
+    for (const name of migFiles) {
+      const text = fs.readFileSync(`${migDir}/${name}`, "utf8");
+      if (!text.includes("CREATE OR REPLACE FUNCTION accounting.ar_aging_as_of(")) continue;
+      const m = /i\.status NOT IN \(([^)]*)\)/.exec(text);
+      if (m) lastTuple = { name, tuple: m[1] };
+    }
+    if (!lastTuple) throw new Error("no migration declares ar_aging_as_of with a status exclusion — re-check this guard");
+    const setOf = (t) => new Set([...t.matchAll(/'(\w+)'/g)].map((x) => x[1]));
+    const svcSet = setOf(statusExclusion[1]);
+    const migSet = setOf(lastTuple.tuple);
+    const diff = [...svcSet].filter((s) => !migSet.has(s)).concat([...migSet].filter((s) => !svcSet.has(s)));
+    if (diff.length) {
+      throw new Error(
+        `AR Aging engine parity broken: ar-aging.service.ts excludes {${[...svcSet].sort().join(",")}} but ` +
+          `${lastTuple.name} excludes {${[...migSet].sort().join(",")}} — differing: ${diff.join(", ")}. ` +
+          `The export and the on-screen historical table must count the same invoice set (ACCT-F5659).`,
       );
     }
   }
