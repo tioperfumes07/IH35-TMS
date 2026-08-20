@@ -181,6 +181,10 @@
     "202612821200": {
       "claimed_by": "cc-1",
       "purpose": "acct_f5622_payment_void_recompute_unapplied_filter"
+    },
+    "202612821300": {
+      "claimed_by": "cc-1",
+      "purpose": "acct_f5629_expenses_legal_matter_linkage"
     }
   }
 }
