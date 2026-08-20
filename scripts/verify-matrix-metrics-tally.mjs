@@ -13,6 +13,7 @@ const SELFTEST = process.argv.includes("--selftest");
 const TALLY_TS = path.join(ROOT, "apps/backend/src/program/matrix-metrics-tally.ts");
 const MATRIX_SVC = path.join(ROOT, "apps/backend/src/program/module-matrix.service.ts");
 const SYSTEM_VIEW = path.join(ROOT, "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx");
+const PREVIEW = path.join(ROOT, "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx");
 const CATALOG = path.join(ROOT, "apps/frontend/src/pages/program/moduleMatrixCatalog.ts");
 
 export function emptyTierBucket() {
@@ -103,6 +104,23 @@ export function simulateBoard(cells) {
   return finalizeTierMetrics(bucket);
 }
 
+export function matrixPreviewRecentProblems(preview) {
+  const problems = [];
+  if (!/module-matrix-recent-activity/.test(preview)) {
+    problems.push("ModuleMatrixPreviewPage must show last-10 merged PRs (module-matrix-recent-activity)");
+  }
+  if (!/resolveApiUrl\(\s*[`'"]\/api\/v1\/program\/audit-scoreboard/.test(preview)) {
+    problems.push("matrix last-10 feed must fetch resolveApiUrl(\"/api/v1/program/audit-scoreboard\")");
+  }
+  if (!/mergedAtCt/.test(preview) || !/America\/Chicago/.test(preview)) {
+    problems.push("matrix last-10 must display merge times in CT (America/Chicago mergedAtCt)");
+  }
+  if (!/slice\(0,\s*10\)/.test(preview)) {
+    problems.push("matrix last-10 must cap recentActivity at 10 rows");
+  }
+  return problems;
+}
+
 export function exactSystemTrackerProblems(source) {
   const problems = [];
   if (!/const live = sys\.liveCells;/.test(source)) {
@@ -168,6 +186,8 @@ function repoProblems() {
       problems.push("Frozen/Miss C KPI labels must be X of frozen (not Box 4)");
     }
   }
+  if (!fs.existsSync(PREVIEW)) problems.push(`MISSING ${PREVIEW}`);
+  else problems.push(...matrixPreviewRecentProblems(fs.readFileSync(PREVIEW, "utf8")));
   if (!fs.existsSync(CATALOG)) problems.push(`MISSING ${CATALOG}`);
   else {
     const cat = fs.readFileSync(CATALOG, "utf8");
@@ -241,6 +261,12 @@ if (SELFTEST) {
   const repo = repoProblems();
   if (repo.length) {
     console.error(`${LABEL} selftest repo wiring:`, repo);
+    process.exit(1);
+  }
+  const previewLive = fs.readFileSync(PREVIEW, "utf8");
+  const plantedNoRecent = previewLive.replace("module-matrix-recent-activity", "module-matrix-kpi-only");
+  if (!matrixPreviewRecentProblems(plantedNoRecent).some((p) => p.includes("last-10 merged"))) {
+    console.error(`${LABEL} selftest: last-10 strip mutation escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);

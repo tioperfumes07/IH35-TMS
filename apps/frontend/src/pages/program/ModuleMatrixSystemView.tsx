@@ -320,7 +320,15 @@ export function ModuleMatrixSystemView() {
           {dataUpdatedAt ? (
             <>
               {" "}
-              · refreshed {new Date(dataUpdatedAt).toLocaleTimeString()}
+              · refreshed{" "}
+              {new Intl.DateTimeFormat("en-US", {
+                timeZone: "America/Chicago",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              }).format(new Date(dataUpdatedAt))}{" "}
+              CT
               {isFetching ? " (polling…)" : null}
             </>
           ) : null}
