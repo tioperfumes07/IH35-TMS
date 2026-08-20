@@ -1005,3 +1005,4 @@ Codex | WORKING | FINDING=DISPATCH-BOOK-LOAD-SELECTED-ENTITIES-NAMELESS | leaf=d
 Codex | WORKING | FINDING=DISPATCH-DEADHEAD-OPTIMIZER-UNIT-NAMELESS | leaf=dispatch:panel.deadhead_optimizer:unit/reverse_link | guard=normal+3-selftest | tests=3/3 | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=DRIVER-SATELLITE-PROFILE-FALSE-HUMAN-LABELS | leaves=drivers:{hos.detail,layover.history}:driver/reverse_link | guard=normal+24-selftest | NEXT=fast-merge | GO
 Codex | WORKING | FINDING=DISPATCH-LOAD-BANKING-UNSCOPED-FALSE-HUMAN-LABEL | leaf=dispatch:load.banking:{load,connectivity,reverse_link} | guard=normal+selftest | tests=3/3 | NEXT=fast-merge | GO
+Codex | WORKING | FINDING=CUSTOMER-COI-REQUESTER-POLICY-DEAD-TOMBSTONE-DRILLS | leaf=customers:detail.coi:{connectivity,reverse_link} | guard=normal+selftest | typecheck=exit0 | NEXT=fast-merge | GO
