@@ -4341,3 +4341,24 @@ Devin-A | LIVE PASS | leaf=lists:catalog.fuel.station_brands.list:connectivity |
 Devin-A | LIVE PASS | leaf=lists:catalog.fuel.station_states.create:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/station-states | healthz=de2c126 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/station-states marker 'lists' | NEXT=leaf=lists:catalog.fuel.station_states.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.fuel.station_states.create:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/station-states | healthz=de2c126 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/station-states marker 'lists' | NEXT=leaf=lists:catalog.fuel.station_states.list:picker_law
 Devin-A | LIVE PASS | leaf=lists:catalog.fuel.station_states.create:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/station-states | healthz=de2c126 | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/lists/fuel/station-states marker 'lists' | NEXT=leaf=lists:catalog.fuel.station_states.list:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.station_states.list:picker_law | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/station-states | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/station-states healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fuel.stop_reason_codes.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.station_states.list:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/station-states | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/station-states healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fuel.stop_reason_codes.create:picker_law
+Devin-A | LIVE STARVED | leaf=lists:catalog.fuel.station_states.list:connectivity | USMCA | URL=https://app.ih35dispatch.com/lists/fuel/station-states | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/lists/fuel/station-states healthz=unknown head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+P | NEXT=leaf=lists:catalog.fuel.stop_reason_codes.create:picker_law
