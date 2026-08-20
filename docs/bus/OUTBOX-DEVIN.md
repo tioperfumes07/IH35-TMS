@@ -1516,3 +1516,14 @@ tioperfumes07@gmail.com
 Dispatch
 Loads, stops, assig | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.panel.pre_dispatch_validation
 Devin-A | LIVE STARVED | module=dispatch | leaf=dispatch.panel.pre_dispatch_validation | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/dispatch ; body head Checking session... | healthz=52efe82 | mutation=none | NEXT=dispatch.dispatch.panel.rate_con_upload
+Devin-A | LIVE PASS | module=dispatch | leaf=dispatch.panel.rate_con_upload | URL=https://app.ih35dispatch.com/dispatch | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/dispatch ; marker 'dispatch' present ; body head IH 35 DISPATCH
+USMCA Freight Solutions Inc
+Current:
+USMCA Freight
+Create
+Tasks
+Program
+Idioma
+Ingles
+Espanol (preview)
+t | healthz=unknown | mutation=none | NEXT=dispatch.dispatch.wizard.border_crossing_wizard_page
