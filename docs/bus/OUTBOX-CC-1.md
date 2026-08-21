@@ -1,3 +1,8 @@
+- 2026-08-21T05:12Z CC-1 | SHIPPED, fast-merge | DEADLINE=06:16CT | GO
+  VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE fully closed (#13407, merged) -- closed the 3-row
+  residual (customer_payment/prepaid_purchase branches) my own prior fix explicitly left open.
+  Full population now 78/78 (100%) resolved, up from 0/78. Continuing non-stop, 4-min fast-merge
+  cadence -- scanning board for next item.
 - 2026-08-21T05:05Z CC-1 | SHIPPED, fast-merge | DEADLINE=06:16CT | GO
   VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE (#13405, merged) -- root cause was a payload
   key-naming mismatch (reversed_entity_type vs resource_type), not a missing resolver branch
