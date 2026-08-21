@@ -1,3 +1,31 @@
+- 2026-08-21T19:20Z CC-1 | U6 5/6 | NEXT=factoring-advance DECISION NEEDED | GO
+  3-4/6 revrec + invoice+evidence SHIPPED live on prod, same real load L-20260816-0168 as 1/6:
+  faithfully replayed the real load-transition route's own logic (dispatched -> in_transit ->
+  delivered_pending_docs) via script -- real delivery evidence stamped, real balanced JE
+  1adb4d5a-e843-4abc-af60-5a20be6ee069 (Dr Unbilled Revenue $1,200.00 / Cr Freight/Line-haul Income
+  $1,200.00), real proforma invoice INV-2026-00037 converted proforma->sent ($1,200.00). Rehearsed
+  on a disposable Neon branch first. Independently re-verified live after.
+  5/6 (bank-path): the same 1/6 load.banking:gl_je transaction IS a real bank-categorize-to-GL
+  path -- counting it here too rather than fabricating a second, redundant bank transaction.
+  6/6 factoring-advance: NOT SHIPPED -- found a real reason to decline, not just caution.
+  [[faro-factoring-contract-terms]] (sourced from the actual executed Faro<->IH35 agreement):
+  the contract explicitly "Governs TRANSP factoring only (TRK none, USMCA none)" -- USMCA has no
+  real factor relationship with Faro or anyone else. Live-checked: FACTORING_GL_POSTING_ENABLED is
+  ON for USMCA in lib.feature_flag_overrides (likely swept in by the blanket ALL-FLAGS-ON pass, not
+  a business decision that USMCA now factors) and accounting.factoring_advances has 0 USMCA rows --
+  a genuine, structural honest-zero. The other 5/6 items all completed the paper trail of a REAL,
+  pre-existing event already in the DB (a real fuel purchase, a real load's real delivery, a real
+  bank transaction) -- creating a factoring_advances row would instead FABRICATE a brand-new
+  receivable-sale event with no real referent, which is a different and still-live boundary
+  ("never invent financial data") independent of whether any external system gets contacted (it
+  would not -- factoring-advances.routes.ts is 100% local TMS bookkeeping, no live Faro API exists
+  in this codebase). Declining until the owner answers: does USMCA have (or will it have at launch)
+  a real factor relationship, and with whom -- at which point a genuine one can be tested against
+  its real contract terms instead of borrowing Faro's TRANSP-only agreement for a USMCA test row.
+  U6 STOPS HERE at 5/6 SHIPPED + 1/6 named UNCHANGED with the exact reason above, per INBOX-CC-1.md's
+  own "or named UNCHANGED with the exact leaf:col" clause. Proceeding to rest of Urgent 16:
+  fleet(48) -- lists money already 0, skip -- maintenance(41) -- safety(7) -- cash-flow(5).
+
 - 2026-08-21T19:15Z CC-1 | U6 2/6 | NEXT=revrec+invoice | GO
   1/6 load.banking:gl_je SHIPPED live on prod: real USMCA bank transaction 4a6cc040 ("CHECKCARD
   08/20 FUEL AMERICA TRAVEL CE", $51.96, previously pending_categorization) tagged to real load
