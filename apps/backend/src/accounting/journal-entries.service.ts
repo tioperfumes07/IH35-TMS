@@ -801,9 +801,19 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
     // Both id columns are TEXT (verified live: information_schema.columns), never uuid — accounting.
     // invoices.id / accounting.bills.id ARE uuid, so every join below casts the uuid side ::text
     // (never the reverse), per this session's established uuid=text safe-cast direction. Scoped to
-    // invoice + bill only — the other ~15 linked_object_type values observed live (fuel_event,
-    // depreciation_schedule_row, loan_amortization_row, etc.) need their own per-table verification
-    // before a display column is added for them; this is not a corner cut, it is the guarded scope.
+    // invoice + bill + (ACCT-F5682) bank_categorization — the other ~14 linked_object_type values
+    // observed live (fuel_event, depreciation_schedule_row, loan_amortization_row, etc.) need their
+    // own per-table verification before a display column is added for them; this is not a corner
+    // cut, it is the guarded scope.
+    //
+    // ACCT-F5682 — LV-BANK-CATEGORIZE-REVERSE-LINK-IS-A-MEMO-STRING re-verified: the row's own
+    // premise ("the ONLY row-level pointer back is a UUID inside free-text memo prose") is FALSE
+    // against current live data — jep.source_transaction_type='bank_categorization' AND
+    // source_transaction_id=<bank_transactions.id> already exist as a structured column pair
+    // (maybePostBankCategorizationToGl's own postSourceTransaction call sets them), no memo parsing
+    // required. The real remaining gap this closes is narrower: bank_categorization never got a
+    // resolved DISPLAY NAME here, same class as the other unresolved linked_object_types.
+    // banking.bank_transactions.id is uuid — cast ::text on the uuid side, same direction as above.
     const res = await client.query(
       `
         SELECT
@@ -818,7 +828,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           tsl.linked_object_id,
           tsl.relationship_role,
           tsl.created_at::text AS source_link_created_at,
-          COALESCE(src_inv.display_id, src_bill.display_id) AS source_transaction_display_id,
+          COALESCE(src_inv.display_id, src_bill.display_id, src_banktx.display_label) AS source_transaction_display_id,
           COALESCE(link_inv.display_id, link_bill.display_id) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
@@ -830,6 +840,14 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           ON jep.source_transaction_type = 'bill'
           AND src_bill.id::text = jep.source_transaction_id
           AND src_bill.operating_company_id = $2::uuid
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(bt.merchant_name, bt.description, 'Bank transaction') AS display_label
+          FROM banking.bank_transactions bt
+          WHERE jep.source_transaction_type = 'bank_categorization'
+            AND bt.id::text = jep.source_transaction_id
+            AND bt.operating_company_id = $2::uuid
+          LIMIT 1
+        ) src_banktx ON true
         LEFT JOIN accounting.invoices link_inv
           ON tsl.linked_object_type = 'invoice'
           AND link_inv.id::text = tsl.linked_object_id
