@@ -14,8 +14,6 @@
     "apps/backend/src/accounting/role-home/accounting-home.service.ts: b.payment_terms_id — column \"payment_terms_id\" does not exist on accounting.bills",
     "apps/backend/src/admin/sync-health.routes.ts: c.display_name — column \"display_name\" does not exist on org.companies",
     "apps/backend/src/banking/integrity/account-company-audit.service.ts: ba.bank_name — column \"bank_name\" does not exist on banking.bank_accounts",
-    "apps/backend/src/border-crossing/border-crossing-history.routes.ts: v.name — column \"name\" does not exist on mdata.vendors",
-    "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts: v.name — column \"name\" does not exist on mdata.vendors",
     "apps/backend/src/compliance/compliance-aggregate.service.ts: p.unit_id — column \"unit_id\" does not exist on mdata.equipment_plates",
     "apps/backend/src/dispatch/customer-notify.service.ts: l.latest_eta_prediction — column \"latest_eta_prediction\" does not exist on mdata.loads",
     "apps/backend/src/dispatch/dispatch-sheet.routes.ts: loc.name — column \"name\" does not exist on mdata.locations",

@@ -87,12 +87,12 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT id::text, name, vendor_category
+          SELECT id::text, vendor_name AS name, vendor_category
           FROM mdata.vendors
           WHERE operating_company_id = $1::uuid
             AND deactivated_at IS NULL
             AND vendor_category = 'customs_broker'
-          ORDER BY name
+          ORDER BY vendor_name
         `,
         [query.data.operating_company_id]
       );
@@ -261,7 +261,7 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
                  u.unit_number,
                  d.first_name || ' ' || d.last_name AS driver_name,
                  l.load_number,
-                 v.name AS customs_broker_name
+                 v.vendor_name AS customs_broker_name
           FROM mdata.unit_border_crossings ubc
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
