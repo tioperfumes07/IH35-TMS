@@ -200,6 +200,7 @@ export function DispatchFlagColorsCatalog() {
         open={editOpen}
         catalogName={CATALOG_NAME}
         displayName={DISPLAY_NAME}
+        companyId={companyId}
         row={editRow}
         fields={FIELDS}
         onClose={() => setEditOpen(false)}

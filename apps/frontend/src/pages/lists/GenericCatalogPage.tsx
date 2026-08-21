@@ -161,6 +161,7 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
         open={editOpen}
         catalogName={catalogName}
         displayName={definition.displayName}
+        companyId={companyId}
         row={editRow}
         fields={definition.fields}
         readOnly={readOnly}
