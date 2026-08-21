@@ -3305,3 +3305,23 @@ migrations) now passes 12/12 — closes the CI-red-baseline-drift ACCT-F5697's o
 PR #13563, squash-merged `86c5ec7d`; live db.test.ts run before/after (3 failures -> 0); fresh-verify
 `git show origin/main:apps/backend/src/accounting/bills.service.ts` greps `ACCT-F5698` | **FIXED —
 merged + fresh-verified live on origin/main; OWNER-GATED=no** |
+
+| **FIXED (CC-1, 2026-08-21):** `ACCT-F5697-DATA-REPAIR` — the actual duplicate GL data left on
+`S-2026-0002` (USMCA) by the `ACCT-F5697` double-post is now reversed, live on prod. | `scripts/run-acct-f5697-reverse-duplicate-settlement-bill-payment-once.mts` (new, run-once
+exerciser) | C | closed | Rehearsed FIRST on a disposable Neon branch (`br-square-lake-ak4e239q`,
+forked from prod, deleted after): called `reverseSettlementBillPayment` — the poster's OWN existing,
+tested reversal primitive, never a hand-written UPDATE/DELETE — to reverse ONLY the earlier,
+escrow-unaware `postSettlementBillPayment` chain (JEs `b7575a45`+`8bc9947e`), leaving the correct,
+escrow-aware `closeSettlementPayRun` JE (`5a652f56`) untouched. WORM-safe: nothing deleted or edited,
+an equal-and-opposite reversing JE posted for each original, both original JEs now carry
+`reversed_by_je_id` (never `voided_at` — a reversal, not a void). Verified on the rehearsal branch the
+result nets to EXACTLY the correct real figures — `6890 Cost of Labor` $297.60 (was $595.20), `1000
+Bank` credit $47.60 (was $345.20), `2100-00-004 Driver Escrow` credit $250.00 (unchanged, correct),
+`2000 A/P` nets to $0 — then applied the IDENTICAL script live on prod with the identical result,
+independently re-verified via a fresh live Neon read after. `driver_finance.driver_settlement_gl_runs`
+row `c5caca25` (the reversed poster's own anchor) now correctly reads `status='reversed'`. | rehearsal
+branch before/after (deleted after use); live prod before/after via
+`scripts/run-acct-f5697-reverse-duplicate-settlement-bill-payment-once.mts --commit`; independent live
+Neon re-verify of the 4 affected GL accounts' net balances | **FIXED — live on prod, independently
+re-verified; OWNER-GATED=no; this closes the full ACCT-F5697 arc (interlock + cascade-bug fix +
+duplicate-data reversal), all three parts merged and live** |
