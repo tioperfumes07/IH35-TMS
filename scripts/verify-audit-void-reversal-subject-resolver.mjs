@@ -20,11 +20,11 @@
  *
  * Live-verified against prod (Neon, bypass_rls=lucia, entity-agnostic since journal entries span
  * both USMCA and TRANSP for this event class): of 78 real accounting.journal_entry.reversed
- * rows, 48 resolve via the new journal_entry branch, 8 via the pre-existing invoice branch (now
- * reachable), 19 via the pre-existing bill branch (now reachable) -- 75 of 78 (96%). The
- * remaining 3 rows carry a distinct, tiny-volume subject_type shape
- * (customer_payment/prepaid_purchase) with no resolver branch at all -- a separate, smaller gap,
- * explicitly out of this finding's scope, not silently claimed as fixed here.
+ * rows, 48 resolve via the journal_entry branch, 8 via the invoice branch, 19 via the bill
+ * branch, 2 via the customer_payment branch, 1 via the prepaid_purchase branch -- 78 of 78
+ * (100%). The customer_payment/prepaid_purchase branches (accounting.payments.display_id,
+ * accounting.prepaid_assets COALESCE(asset_number, description)) close the 3-row residual gap
+ * this guard's first pass explicitly left open rather than silently claiming covered.
  */
 import { readFileSync } from "node:fs";
 
@@ -50,6 +50,25 @@ function analyze(src) {
   // pattern — an unscoped join here would be a cross-entity leak, not just a label bug.
   if (!/audit_je\.operating_company_id = \$\{alias\}\.operating_company_id/.test(src)) {
     failures.push(`${routesPath}: journal_entry join is not entity-scoped (operating_company_id) — cross-entity leak risk`);
+  }
+
+  if (!/WHEN \$\{alias\}\.subject_type = 'customer_payment' THEN NULLIF\(TRIM\(audit_customer_payment\.display_id\), ''\)/.test(src)) {
+    failures.push(`${routesPath}: shared auditSubjectProjection() no longer has a customer_payment branch`);
+  }
+  if (!/WHEN \$\{alias\}\.subject_type = 'prepaid_purchase' THEN NULLIF\(TRIM\(COALESCE\(audit_prepaid\.asset_number, audit_prepaid\.description\)\), ''\)/.test(src)) {
+    failures.push(`${routesPath}: shared auditSubjectProjection() no longer has a prepaid_purchase branch`);
+  }
+  if (!/LEFT JOIN accounting\.payments audit_customer_payment\s*\n\s*ON \$\{alias\}\.subject_type = 'customer_payment'/.test(src)) {
+    failures.push(`${routesPath}: shared auditSubjectJoins() no longer joins accounting.payments for customer_payment`);
+  }
+  if (!/LEFT JOIN accounting\.prepaid_assets audit_prepaid\s*\n\s*ON \$\{alias\}\.subject_type = 'prepaid_purchase'/.test(src)) {
+    failures.push(`${routesPath}: shared auditSubjectJoins() no longer joins accounting.prepaid_assets for prepaid_purchase`);
+  }
+  if (!/audit_customer_payment\.operating_company_id = \$\{alias\}\.operating_company_id/.test(src)) {
+    failures.push(`${routesPath}: customer_payment join is not entity-scoped — cross-entity leak risk`);
+  }
+  if (!/audit_prepaid\.operating_company_id = \$\{alias\}\.operating_company_id/.test(src)) {
+    failures.push(`${routesPath}: prepaid_purchase join is not entity-scoped — cross-entity leak risk`);
   }
 
   return failures;
@@ -93,7 +112,22 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log("verify-audit-void-reversal-subject-resolver --selftest: OK (good file clean, both targeted mutations caught)");
+  // Mutation 3: drop the customer_payment projection branch entirely.
+  const mutated3 = src.replace(
+    "      WHEN ${alias}.subject_type = 'customer_payment' THEN NULLIF(TRIM(audit_customer_payment.display_id), '')\n",
+    ""
+  );
+  if (mutated3 === src) {
+    console.error("verify-audit-void-reversal-subject-resolver --selftest: mutation 3 setup failed — anchor not found");
+    process.exit(1);
+  }
+  const failures3 = analyze(mutated3);
+  if (failures3.length === 0) {
+    console.error("verify-audit-void-reversal-subject-resolver --selftest: mutation 3 (drop customer_payment projection branch) was not caught");
+    process.exit(1);
+  }
+
+  console.log("verify-audit-void-reversal-subject-resolver --selftest: OK (good file clean, all three targeted mutations caught)");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -105,5 +139,5 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("verify-audit-void-reversal-subject-resolver: OK — reversed_entity_type fallback present, journal_entry subject branch wired end-to-end, entity-scoped");
+  console.log("verify-audit-void-reversal-subject-resolver: OK — reversed_entity_type fallback present, journal_entry/customer_payment/prepaid_purchase subject branches wired end-to-end, entity-scoped");
 }

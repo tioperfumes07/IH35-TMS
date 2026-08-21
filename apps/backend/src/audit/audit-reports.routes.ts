@@ -50,6 +50,8 @@ function auditSubjectProjection(alias: string) {
       WHEN ${alias}.subject_type = 'invoice' THEN NULLIF(TRIM(audit_invoice.display_id), '')
       WHEN ${alias}.subject_type = 'bill' THEN NULLIF(TRIM(COALESCE(audit_bill.display_id, audit_bill.bill_number)), '')
       WHEN ${alias}.subject_type = 'journal_entry' THEN NULLIF(TRIM(audit_je.memo), '')
+      WHEN ${alias}.subject_type = 'customer_payment' THEN NULLIF(TRIM(audit_customer_payment.display_id), '')
+      WHEN ${alias}.subject_type = 'prepaid_purchase' THEN NULLIF(TRIM(COALESCE(audit_prepaid.asset_number, audit_prepaid.description)), '')
       WHEN ${alias}.subject_type = 'task' THEN CASE ${alias}.source_table
         WHEN 'maintenance.work_orders' THEN NULLIF(TRIM(audit_wo.display_id), '')
         WHEN 'accounting.invoices' THEN NULLIF(TRIM(audit_invoice.display_id), '')
@@ -100,7 +102,15 @@ function auditSubjectJoins(alias: string) {
     LEFT JOIN accounting.journal_entries audit_je
       ON ${alias}.subject_type = 'journal_entry'
      AND audit_je.id = ${alias}.subject_id
-     AND audit_je.operating_company_id = ${alias}.operating_company_id`;
+     AND audit_je.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.payments audit_customer_payment
+      ON ${alias}.subject_type = 'customer_payment'
+     AND audit_customer_payment.id = ${alias}.subject_id
+     AND audit_customer_payment.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.prepaid_assets audit_prepaid
+      ON ${alias}.subject_type = 'prepaid_purchase'
+     AND audit_prepaid.id = ${alias}.subject_id
+     AND audit_prepaid.operating_company_id = ${alias}.operating_company_id`;
 }
 
 export async function registerAuditReportRoutes(app: FastifyInstance) {
