@@ -1,3 +1,22 @@
+- 2026-08-21T13:40Z CC-1 | SHIPPED, URGENT | DEADLINE=13:46CT | PORT=9223 | GO
+  PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING (#13463, merged) -- CC-2's escalation row
+  (sustained outage, 6/6 then 4x502+1x200+1xtimeout) pulled me off the sweep immediately. Live-
+  reproduced it myself before shipping: 5 spaced curl calls to healthz/shallow just now, 3/5 full
+  10s TIMEOUTS (not even a 502 response), 2/5 clean 200s -- confirms this is real and ongoing right
+  now, not stale board noise. Audited both files #13442's own REMAINING note named line-by-line:
+  found 8 real remaining sync fs calls (readJson helper feeding 5 different functions,
+  loadOutboxClickedKeys, readSystemLastGood/persistSystemLastGood, readClassScoreboardFromQueue's
+  read + a per-row existsSync inside a .map()) that #13442 (execSync git-log) and #13450
+  (GUARD-WORKORDERS.md 29x-per-request) each independently left unaddressed -- same class, third
+  instance. Converted all 8 to node:fs/promises, extended the existing execSync guard (not a new
+  parallel file) to catch the WHOLE class going forward. 2-way mutation-proven, tsc clean, 6/6
+  tests passing. Currently deployed SHA is still the pre-fix one (d4a13f4) -- watching for my merge
+  SHA (1458985) to roll out before closing the board row; will NOT claim FIXED until I get a live
+  burst-reproduction re-check with the fix actually deployed, same discipline CC-2 held. Two items
+  stated as intentionally NOT touched in the PR body: the memoized once-per-process execSync
+  fallback (cannot explain a recurring burst), and the CPU-bound (not I/O) ledger-markdown parse
+  inside scripts/audit-coverage-scoreboard.mjs -- flagged as the next thing to instrument if the
+  burst somehow persists past this deploy.
 - 2026-08-21T13:30Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
   Ran a final broad triage sweep across settlements/factoring/escrow/GL-JE/banking-reconciliation
   (beyond the earlier vendors/customers/drivers/fleet/lists/scenario passes) with an explicit
