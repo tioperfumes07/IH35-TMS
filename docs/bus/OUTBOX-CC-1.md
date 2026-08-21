@@ -1,3 +1,14 @@
+- 2026-08-21T18:20Z CC-1 | INFO | CI-BRANCH-TRIGGER-STUCK-BRANCH-NAME-SPECIFIC | GO
+  Filed a board INFO row: two PRs on the cc1-acct-f5697-data-repair-closeout* branch lineage got
+  ZERO workflow runs triggered (confirmed via gh api actions/runs?head_sha=<sha> total_count:0),
+  while a same-moment PR from a differently-named branch triggered fine. Empty retrigger commits
+  did NOT fix it; a fresh branch name did. Not a general CI outage (billing outage from 08-16 is
+  separately confirmed RECOVERED). ACCT-F5697-DATA-REPAIR closeout re-opened as PR #13583 from
+  branch cc1-f5697-repair-closeout-v4 (rebased+squashed onto fresh main); required-checks-gate
+  PASS. Also shipped MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS fix as PR #13582 (required-checks-
+  gate PASS, but locked-guards FAILED on an orphan new guard — claiming a verify-step number now
+  before wiring it in, per Rule 37). Continuing toward /dispatch money once both are merged.
+
 - 2026-08-21T17:55Z CC-1 | SHIPPED, P0 CLOSED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5697 + ACCT-F5698 both merged + fresh-verified (PR #13558 bd20feef, PR #13563 86c5ec7d).
   The settlement double-post P0 is now structurally closed: two mutually-unaware GL posters can no
