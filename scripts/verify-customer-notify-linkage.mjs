@@ -17,6 +17,7 @@ function audit(s) {
   if (!/kind="load" id=\{entry\.load_id\} name=\{entry\.load_number\} noun="Load"/.test(s.page)) failures.push("notify log load must couple canonical id to human load number");
   if (!/kind="customer"[\s\S]{0,100}id=\{entry\.customer_id\}[\s\S]{0,100}name=\{entry\.customer_name\}[\s\S]{0,60}noun="Customer"/.test(s.page)) failures.push("notify log customer must couple canonical id to human name");
   if (!/customerBelongsToCompany[\s\S]{0,420}FROM mdata\.customers[\s\S]{0,160}operating_company_id = \$1::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.service)) failures.push("active tenant customer validation missing");
+  if ((s.service.match(/FROM views\.dispatch_load_with_driver_status l/g) ?? []).length < 2) failures.push("ETA context and notification scan must read the canonical latest-prediction view");
   if ((s.service.match(/E_CUSTOMER_NOT_FOUND/g) ?? []).length < 2 || !/customer_not_found/.test(s.routes)) failures.push("read/write missing-customer contract missing");
   if (!/getCustomerNotifyPreferences\(customerId, operatingCompanyId\)/.test(s.reverse) || !/getCustomerNotifyLog\(operatingCompanyId, customerId\)/.test(s.reverse)) failures.push("exact customer reverse reads missing");
   if (!/preferences\.isError \|\| log\.isError/.test(s.reverse) || !/No delivery confirmations logged yet/.test(s.reverse)) failures.push("honest reverse states missing");
@@ -34,6 +35,7 @@ if (process.argv.includes("--selftest")) {
     ["customer-label", "page", /name=\{entry\.customer_name\}/, "name={entry.customer_id}"],
     ["scope", "service", /(customerBelongsToCompany[\s\S]{0,420})operating_company_id = \$1::uuid/, "$1TRUE"],
     ["active", "service", /(customerBelongsToCompany[\s\S]{0,420})deactivated_at IS NULL/, "$1TRUE"],
+    ["eta-view", "service", /FROM views\.dispatch_load_with_driver_status l/, "FROM mdata.loads l"],
     ["missing", "service", /E_CUSTOMER_NOT_FOUND/g, "E_WRONG"],
     ["prefs", "reverse", /getCustomerNotifyPreferences\(customerId, operatingCompanyId\)/, "getCustomerNotifyPreferences(operatingCompanyId, customerId)"],
     ["log", "reverse", /getCustomerNotifyLog\(operatingCompanyId, customerId\)/, "getCustomerNotifyLog(operatingCompanyId)"],

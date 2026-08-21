@@ -232,7 +232,7 @@ async function fetchLoadNotifyContext(client: DbClient, loadId: string, operatin
         sd.city AS delivery_city,
         sd.state AS delivery_state,
         l.latest_eta_prediction
-      FROM mdata.loads l
+      FROM views.dispatch_load_with_driver_status l
       JOIN mdata.customers c ON c.id = l.customer_id
                           AND c.operating_company_id = l.operating_company_id
       LEFT JOIN LATERAL (
@@ -472,7 +472,7 @@ export async function processEtaUpdateNotifications(
         l.id::text AS load_id,
         l.latest_eta_prediction->>'confidence_class' AS confidence_class,
         l.latest_eta_prediction->>'predicted_arrival_at' AS predicted_at
-      FROM mdata.loads l
+      FROM views.dispatch_load_with_driver_status l
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
