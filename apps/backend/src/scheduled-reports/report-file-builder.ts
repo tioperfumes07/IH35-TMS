@@ -42,15 +42,43 @@ function envelopeToRows(envelope: ReportDataEnvelope<unknown>): Array<[string, s
   ];
 }
 
+// PROD-OUTAGE-SCHEDULED-REPORTS-PUPPETEER-ROOT-CAUSE-CONFIRMED (2026-08-21) — a stuck
+// reporting.scheduled_reports row drove this function into a state that killed the whole Node
+// process rather than throwing a catchable exception, and the worker's own next_run_at bookkeeping
+// only advances on a JS-catchable failure — so the SAME poisoned row retried every tick forever,
+// crash-looping production. Two independent hardenings, since either alone leaves a gap:
+//   1. Container-safe launch args — headless Chrome commonly SIGSEGVs (not throws) on a
+//      resource-constrained host without --disable-dev-shm-usage (tiny /dev/shm) or a sandbox that
+//      the container's seccomp profile refuses; both are unrelated to this app's own code.
+//   2. A hard wall-clock timeout via Promise.race — a hang (not a crash) inside Puppeteer would
+//      otherwise block this call, and the process-level bookkeeping fix in
+//      scheduled-reports-worker.ts's pessimistic next_run_at bump is the actual backstop for the
+//      "kills the process outright" case this timeout cannot catch by definition.
+const PDF_GENERATION_TIMEOUT_MS = 25_000;
+
 export async function htmlToPdfBuffer(html: string): Promise<Buffer> {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+  });
+  let timeoutHandle: NodeJS.Timeout | undefined;
   try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "load" });
-    const pdf = await page.pdf({ format: "Letter", printBackground: true });
-    return Buffer.from(pdf);
+    const generate = (async () => {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: "load" });
+      const pdf = await page.pdf({ format: "Letter", printBackground: true });
+      return Buffer.from(pdf);
+    })();
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(
+        () => reject(new Error(`pdf_generation_timeout_after_${PDF_GENERATION_TIMEOUT_MS}ms`)),
+        PDF_GENERATION_TIMEOUT_MS
+      );
+    });
+    return await Promise.race([generate, timeout]);
   } finally {
-    await browser.close();
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+    await browser.close().catch(() => undefined);
   }
 }
 
