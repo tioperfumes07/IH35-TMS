@@ -205,6 +205,10 @@
     "202612870000": {
       "claimed_by": "cc-1",
       "purpose": "acct_f5683_refuse_load_soft_delete_with_open_driver_bill"
+    },
+    "202612880000": {
+      "claimed_by": "cc-1",
+      "purpose": "acct_f5685_usmca_fixed_asset_coa_roles_deferred_bind"
     }
   }
 }
