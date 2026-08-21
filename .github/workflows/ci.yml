@@ -543,6 +543,9 @@ jobs:
       - name: Verify mobile responsive audit contract
         run: npm run verify:mobile-responsive-audit
 
+      - name: Verify no native browser dialogs added (freezes Live Chrome verification)
+        run: npm run verify:no-native-browser-dialogs
+
       - name: Verify no raw relative frontend /api fetch (cross-origin base-URL guard)
         run: npm run verify:no-raw-frontend-api-fetch
 
