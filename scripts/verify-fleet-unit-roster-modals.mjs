@@ -28,7 +28,7 @@ export function audit(src) {
   const failures = [];
   const required = JSON.parse(src.required);
   const reverseAudit = required.honesty_audit?.reverse_link_column_2026_08_14;
-  const clientFilterIds = [
+  const nonEntityReverseIds = [
     "roster.kind.all",
     "roster.kind.trucks",
     "roster.kind.trailers",
@@ -36,11 +36,12 @@ export function audit(src) {
     "roster.filter.status_active",
     "roster.filter.status_inshop",
     "roster.filter.status_oos",
+    "unit.edit.reefer",
   ];
-  if (reverseAudit?.leaves_touched !== 32) {
-    failures.push(`${FILES.required}: reverse-link audit must enumerate 32 corrected leaves`);
+  if (reverseAudit?.leaves_touched !== 33) {
+    failures.push(`${FILES.required}: reverse-link audit must enumerate 33 corrected leaves`);
   }
-  for (const id of clientFilterIds) {
+  for (const id of nonEntityReverseIds) {
     const leaf = required.leaves?.find((entry) => entry.id === id);
     if (leaf?.required?.includes("reverse_link")) {
       failures.push(`${FILES.required}: ${id} must not require reverse_link`);
@@ -103,8 +104,9 @@ if (process.argv.includes("--selftest")) {
     ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(unitId!, patchPayload)"],
     ["quick-assign-kind", "quickAssign", /equipmentKind: "truck" \| "trailer"/, 'equipmentKind: "trailer"'],
     ["filter-reverse-applicability", "required", /"id": "roster\.filter\.type",\n\s+"removed": \[\n\s+"reverse_link"\n\s+\]/, '"id": "roster.filter.type",\n          "removed": []'],
-    ["filter-reverse-count", "required", /"leaves_touched": 32/, '"leaves_touched": 25'],
+    ["filter-reverse-count", "required", /"leaves_touched": 33/, '"leaves_touched": 25'],
     ["filter-reverse-reinflation", "required", /("id": "roster\.kind\.trucks"[\s\S]*?"required": \[\n\s+"unit")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],
+    ["reefer-edit-reverse-reinflation", "required", /("id": "unit\.edit\.reefer"[\s\S]*?"required": \[\n\s+"unit",\n\s+"connectivity")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
