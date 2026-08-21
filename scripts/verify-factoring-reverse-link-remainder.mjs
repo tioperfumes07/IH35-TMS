@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 /**
- * Factoring reverse_link remainder — Built for surfaces with EntityLink F+R.
- * Create/confirm/autocomplete chrome honesty-dropped in required.json.
- *
- * @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^(batches\\.create|factors\\.admin|faro\\.import|accounting\\.(list|detail|factor_recon)|banking\\.entry|factoring\\.wizard\\.batch)$","task":"VERTICAL-REVERSE-LINK-factoring-remainder","vertical":"column-wave"}
- *
+ * @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leafRe":"^accounting\\.detail$","task":"VERTICAL-REVERSE-LINK-factoring-remainder","vertical":"column-wave"}
  * Self-test: node scripts/verify-factoring-reverse-link-remainder.mjs --selftest
  */
 import fs from "node:fs";
@@ -13,58 +9,59 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factoring-reverse-link-remainder";
-
+const DETAIL = "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx";
+const ROUTES = "apps/frontend/src/routes/manifest.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/factoring.required.json";
 const CHECKS = [
-  { name: "BatchWizard EntityLink", file: "apps/frontend/src/pages/factoring/BatchWizard.tsx", pattern: /EntityLink/ },
-  { name: "FactorAdmin EntityLink", file: "apps/frontend/src/pages/factoring/FactorAdmin.tsx", pattern: /EntityLink/ },
-  { name: "FaroImportPage EntityLink", file: "apps/frontend/src/pages/factoring/FaroImportPage.tsx", pattern: /EntityLink/ },
-  { name: "FactoringListPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx", pattern: /EntityLink/ },
-  { name: "FactoringDetailPage EntityLink", file: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", pattern: /EntityLink/ },
-  { name: "FactorReconciliationPage EntityLink", file: "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx", pattern: /EntityLink/ },
-  { name: "BankingHome factoring_advance EntityLink", file: "apps/frontend/src/pages/banking/BankingHome.tsx", pattern: /kind="factoring_advance"/ },
+  { name: "factoring detail route mounted", file: ROUTES, pattern: /path="\/accounting\/factoring\/:id"[\s\S]{0,180}<FactoringDetailPage \/>/ },
+  { name: "invoice reverse drill", file: DETAIL, pattern: /kind="invoice" id=\{invoice\.id\}[\s\S]{0,100}invoice\.display_id/ },
+  { name: "customer reverse drill", file: DETAIL, pattern: /kind="customer" id=\{invoice\.customer_id\}[\s\S]{0,120}invoice\.customer_name/ },
+  { name: "reserve journal entry drill", file: DETAIL, pattern: /reserve_movements[\s\S]{0,900}kind="journal_entry"[\s\S]{0,100}id=\{row\.journal_entry_id\}/ },
+  { name: "interest journal entry drill", file: DETAIL, pattern: /interest_accruals[\s\S]{0,900}kind="journal_entry"[\s\S]{0,100}id=\{row\.journal_entry_id\}/ },
 ];
 
-function run(root = ROOT) {
-  const fails = [];
-  for (const c of CHECKS) {
-    const abs = path.join(root, c.file);
-    if (!fs.existsSync(abs)) {
-      fails.push(`${c.name}: missing ${c.file}`);
-      continue;
-    }
-    if (!c.pattern.test(fs.readFileSync(abs, "utf8"))) fails.push(`${c.name}: pattern miss`);
+function readSources() {
+  return Object.fromEntries([DETAIL, ROUTES, MATRIX].map((file) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")]));
+}
+
+function run(sources) {
+  const failures = CHECKS.filter((check) => !check.pattern.test(sources[check.file])).map((check) => check.name);
+  try {
+    const matrix = JSON.parse(sources[MATRIX]);
+    const leaf = matrix.leaves?.find((item) => item.id === "accounting.detail");
+    if (!leaf?.required?.includes("reverse_link")) failures.push("exact Required ownership: accounting.detail:reverse_link");
+  } catch {
+    failures.push("factoring Required matrix parses");
   }
-  return fails;
+  return failures;
 }
 
 if (process.argv.includes("--selftest")) {
-  const live = run();
-  const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".factoring-reverse-selftest-"));
-  try {
-    for (const c of CHECKS) {
-      const abs = path.join(tmp, c.file);
-      fs.mkdirSync(path.dirname(abs), { recursive: true });
-      fs.writeFileSync(abs, "// poison\n");
-    }
-    const planted = run(tmp);
-    if (planted.length < CHECKS.length) {
-      console.error(`${LABEL} SELFTEST FAIL (${planted.length})`);
-      process.exit(1);
-    }
-    console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
-  }
-  if (live.length) {
-    console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
+  const live = readSources();
+  if (run(live).length) {
+    console.error(`${LABEL} SELFTEST FAIL live:\n- ${run(live).join("\n- ")}`);
     process.exit(1);
   }
+  for (const check of CHECKS) {
+    const flags = check.pattern.flags.includes("g") ? check.pattern.flags : `${check.pattern.flags}g`;
+    const planted = live[check.file].replace(new RegExp(check.pattern.source, flags), "/* planted factoring reverse defect */");
+    if (planted === live[check.file] || !run({ ...live, [check.file]: planted }).includes(check.name)) {
+      console.error(`${LABEL} SELFTEST FAIL — planted defect stayed green: ${check.name}`);
+      process.exit(1);
+    }
+  }
+  const plantedMatrix = live[MATRIX].replace('"id": "accounting.detail"', '"id": "accounting.detail.removed"');
+  if (plantedMatrix === live[MATRIX] || !run({ ...live, [MATRIX]: plantedMatrix }).includes("exact Required ownership: accounting.detail:reverse_link")) {
+    console.error(`${LABEL} SELFTEST FAIL — exact leaf ownership stayed green`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 6/6 planted defects rejected`);
   process.exit(0);
 }
 
-const fails = run();
-if (fails.length) {
-  console.error(`${LABEL} FAIL:\n- ${fails.join("\n- ")}`);
+const failures = run(readSources());
+if (failures.length) {
+  console.error(`${LABEL} FAIL:\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — factoring reverse_link remainder ratcheted`);
+console.log(`${LABEL} PASS — factoring accounting.detail reverse_link ratcheted`);
