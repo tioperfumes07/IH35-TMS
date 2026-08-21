@@ -349,7 +349,9 @@ export function TasksChatPage() {
                               ? "added a comment"
                               : a.event_type === "status_change"
                                 ? "changed the status"
-                                : "changed the assignment"}
+                                : a.event_type === "link_added"
+                                  ? "linked a record"
+                                  : "changed the assignment"}
                           </span>
                           <span className="text-[10px] text-slate-400">{formatCompanyTime(a.created_at)}</span>
                         </li>
