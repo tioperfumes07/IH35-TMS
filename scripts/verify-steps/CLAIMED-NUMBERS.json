@@ -3029,6 +3029,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-cash-flow-adjustment-add-chrome-law"
   },
+  "4192": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-accounting-vendor-link-not-misleading-create"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
