@@ -79,12 +79,44 @@ const QUAL = "([a-z_][a-z0-9_]*)\\.([a-z_][a-z0-9_]*)"; // schema.table → grou
 // set-returning function calls e.g. FROM accounting.fn_x(...).
 const ALIASED = new RegExp(`\\b(?:FROM|JOIN)\\s+${QUAL}\\b(?!\\s*\\()(?:\\s+(?:AS\\s+)?(?!ON\\b|USING\\b|WHERE\\b|LEFT\\b|RIGHT\\b|INNER\\b|JOIN\\b|GROUP\\b|ORDER\\b|LIMIT\\b|ON\\b)([a-z_][a-z0-9_]*))?`, "gi");
 const COLREF = /\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)/g;
+const CTE = /\b([a-z_][a-z0-9_]*)\s+AS\s*\(/gi;
+const DERIVED_FROM = /\b(?:FROM|JOIN)\s+([a-z_][a-z0-9_]*)\s+(?:AS\s+)?([a-z_][a-z0-9_]*)/gi;
 
 function maskSqlComments(sql) {
   const blank = (text) => text.replace(/[^\n]/g, " ");
   return sql
     .replace(/\/\*[\s\S]*?\*\//g, blank)
     .replace(/--[^\n]*/g, blank);
+}
+
+function classifyDerivedAndAmbiguousAliases(block) {
+  const cteNames = new Set([...block.matchAll(CTE)].map((m) => m[1].toLowerCase()));
+  const derivedAliases = new Set(
+    [...block.matchAll(DERIVED_FROM)]
+      .filter((m) => cteNames.has(m[1].toLowerCase()))
+      .map((m) => m[2].toLowerCase())
+  );
+  const qualifiedByAlias = new Map();
+  const ambiguousAliases = new Set();
+  for (const m of block.matchAll(ALIASED)) {
+    const alias = (m[3] || m[2]).toLowerCase();
+    const qual = `${m[1].toLowerCase()}.${m[2].toLowerCase()}`;
+    if (qualifiedByAlias.has(alias) && qualifiedByAlias.get(alias) !== qual) ambiguousAliases.add(alias);
+    qualifiedByAlias.set(alias, qual);
+  }
+  return { derivedAliases, ambiguousAliases };
+}
+
+if (process.argv.includes("--selftest")) {
+  const fixture = `WITH active_drivers AS (SELECT d.id FROM mdata.drivers d), latest AS (SELECT s.created_at FROM mdata.load_stops s)
+    SELECT d.driver_id, s.latest_at FROM active_drivers d JOIN latest s ON true
+    LEFT JOIN LATERAL (SELECT s.suggested_at FROM dispatch.auto_status_suggestions s) x ON true`;
+  const classified = classifyDerivedAndAmbiguousAliases(fixture);
+  if (!classified.derivedAliases.has("d") || !classified.derivedAliases.has("s") || !classified.ambiguousAliases.has("s")) {
+    fail(["selftest failed to classify CTE output and nested alias reuse"]);
+  }
+  console.log("verify-sql-read-targets SELFTEST PASS — CTE output + nested alias reuse classified as non-attributable");
+  process.exit(0);
 }
 
 const problems = [];
@@ -101,6 +133,7 @@ for (const file of walk(BACKEND)) {
     blocks++;
     // alias map for THIS block: alias -> "schema.table" (schema-qualified, tracked tables only)
     const alias2table = {};
+    const { derivedAliases, ambiguousAliases } = classifyDerivedAndAmbiguousAliases(block);
     for (const m of block.matchAll(ALIASED)) {
       const schema = m[1].toLowerCase(), table = m[2].toLowerCase(), alias = (m[3] || table).toLowerCase();
       const qual = `${schema}.${table}`;
@@ -118,6 +151,10 @@ for (const file of walk(BACKEND)) {
     if (!Object.keys(alias2table).length) continue;
     for (const m of block.matchAll(COLREF)) {
       const alias = m[1].toLowerCase(), col = m[2].toLowerCase();
+      // A flat template-level alias map cannot safely attribute references when an alias is reused
+      // in nested scopes, or when the outer reference belongs to a CTE result. Skip those ambiguous
+      // references instead of charging derived columns to whichever base table happened to parse last.
+      if (ambiguousAliases.has(alias) || derivedAliases.has(alias)) continue;
       const qual = alias2table[alias];
       if (!qual) continue; // alias not bound to a tracked schema.table (CTE/subquery/other) → skip
       if (col === "*") continue;
