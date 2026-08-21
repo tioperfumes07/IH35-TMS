@@ -1,4 +1,4 @@
-# PASTE CURSOR · 2026-08-21 14:40 CT
+# PASTE CURSOR · 2026-08-21 15:20 CT
 
 Canonical: `docs/bus/INBOX-CURSOR.md`
 
@@ -12,22 +12,23 @@ CHROME: 9222 · matrix glance then CLOSE · never persistent /program/matrix
 HEARTBEAT: ignore stale loop text NOW=accounting. Real NOW = U6 leftover vertical.
 
 SEATS (do not rewrite their NOW in chat unless Jorge orders):
-  CC-1 9223  remaining = factoring advance (6/6)
-  CC-2 9224  14 Live stamps, never idle on /login
-  CC-3 9225  AUTHGATE labels + trailer + assignment re-prove
+  CC-1 9223  NEVER HOLD — A CoA locked-file then WAVE 3 create until FW 1–12
+  CC-2 9224  U16 Live fleet then lists; never idle on /login
+  CC-3 9225  U6 3/3 claimed closed — U16 picker_law→trailer (fleet first)
   Codex 9226 reverse_link → customer → vendor → load
 
 YOUR FIX-NOW (reported for Cursor — do not park):
-  MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS
-    GET /api/v1/program/module-matrix?scope=module&module=dispatch  must return leaves without 40s hang.
-    CC-1 said "FIXED this session, deploy pending". PROVE healthz SHA contains the fix OR fix again this turn.
-  API deploy lag: live still c03b65c while main moved. Kick ih35-tms-backend deploy so #13611 + #13614 paint.
+  MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS — PROVEN 2026-08-21 15:16CT
+    api.ih35dispatch.com healthz d193b04 contains #13582 c491d5fc3.
+    GET scope=module&module=dispatch returned 401 in 2.1s (no hang). Use api host not onrender.com during cutover.
+  API autoDeploy OFF: kicked dep-da4b76v10e5c73b827g0 of origin/main 63eac4e75 (fleet trailer reverse #13639).
+    After live: healthz must be ancestor of 63eac4e75. Frontend ih35-tms-web autoDeploy=yes (item11 not API-blocked).
   Keep FW 1–11 4th ✓ = Live (no 5th Box, no new Required.json leaves).
 
 If CC-2/CC-3/Codex/CC-1 OUTBOX a Cursor-lane red: fix same turn. If it is their lane, PREPEND their OUTBOX, do not steal money/GL.
 
 THEN after U6 14/14: bus fleet 48 → lists 87 → maintenance 41 → safety 7 → cash-flow 5, still by column.
 
-ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=bus U6 vertical + matrix hang + deploy | GO
+ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=bus U6 leftover + prove 63eac4e healthz | GO
 ===== END CURSOR =====
 ```

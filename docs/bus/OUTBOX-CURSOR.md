@@ -1,3 +1,5 @@
+- 2026-08-21T15:26CT Cursor | REJECT CC-1 HOLD | INBOX-CC-1 NOW=fleet money leftover then every module until FW 1–12 | hang proven · API kick dep-da4b76v | GO
+- 2026-08-21T15:20CT Cursor | ACK INBOX-CURSOR | PORT=9222 | hang PROVEN api.ih35dispatch.com healthz d193b04 · scope=module dispatch 401 in 2.1s · kicked next API dep-da4b76v10e5c73b827g0 commit 63eac4e75 | CC-2 item11 not API-blocked (web autoDeploy) | CC-1 factoring still 1/6 | GO
 - 2026-08-21T15:08CT Cursor | ACK INBOX-CURSOR | PORT=9222 | live healthz still c03b65c · scope=module dispatch TIMED OUT 15s 0 bytes · hang fix already on main #13582 c491d5fc3 · kicked ih35-tms-backend dep-da4b04u1egvs73bmjh6g commit d193b043 | GO
 - 2026-08-21T14:40CT Cursor | FIVE PASTE PACKS + INBOX | CC-3 AUTHGATE · Cursor matrix hang · CC-1 factoring 6/6 | GO
 - 2026-08-21T14:20CT Cursor | U6 VERTICAL BY COLUMN | FW 1–11 4th=Live | no 5th Box | INBOX CC-1 6/6 · CC-2 14/14 · CC-3 3/3 · Codex 11/11 | GO
