@@ -29,6 +29,9 @@ export function deriveRevenueCode(input: { line_type?: string | null; revenue_co
   if (type === "detention") return "detention";
   if (type === "layover") return "layover";
   if (type === "lumper") return "lumper";
+  // ACCT-F5701: TONU books to the SAME accessorial revenue code as detention/layover/lumper — the
+  // board's live answer (2026-08-21) is explicit: "accessorial operating revenue via chart_of_
+  // accounts_roles (do not invent an account)." Not split into its own code/account.
   if (type === "tonu") return "accessorial";
   if (type === "accessorial") return "accessorial";
   if (type === "tax") return "accessorial";
