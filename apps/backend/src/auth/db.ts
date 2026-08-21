@@ -19,6 +19,21 @@ function skipPoolAppRole(): boolean {
 let poolInstance: pg.Pool | null = null;
 let luciaPoolInstance: pg.Pool | null = null;
 
+// Render runs two API instances and this module owns two independent pools per
+// instance. A default of 10 therefore demanded 40 Neon connections and could
+// exhaust the production endpoint (30 observed), making every authenticated
+// route hang while shallow health stayed green. Keep the aggregate default at
+// 20 and allow an explicit, bounded override for capacity changes.
+function poolMax(name: "DATABASE_POOL_MAX" | "DATABASE_DIRECT_POOL_MAX"): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return 5;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 10) {
+    throw new Error(`${name} must be an integer from 1 to 10`);
+  }
+  return parsed;
+}
+
 function requireDatabaseUrl() {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) {
@@ -44,7 +59,7 @@ function buildLuciaConnString(baseUrl: string): string {
 function buildPool(): pg.Pool {
   const client = new Pool(
     buildPgPoolConfig(requireDatabaseUrl(), {
-      max: 10,
+      max: poolMax("DATABASE_POOL_MAX"),
     }),
   );
   client.on("connect", async (conn) => {
@@ -64,7 +79,7 @@ function buildPool(): pg.Pool {
 function buildLuciaPool(): pg.Pool {
   const client = new Pool(
     buildPgPoolConfig(buildLuciaConnString(requireDatabaseDirectUrl()), {
-      max: 10,
+      max: poolMax("DATABASE_DIRECT_POOL_MAX"),
       idleTimeoutMillis: 30_000,
     }),
   );
