@@ -5,8 +5,10 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-const { mockAudit } = vi.hoisted(() => ({
+const { mockAudit, mockIsEnabled, mockPostInClientTx } = vi.hoisted(() => ({
   mockAudit: vi.fn(),
+  mockIsEnabled: vi.fn(),
+  mockPostInClientTx: vi.fn(),
 }));
 
 vi.mock("../../bills/bill-line-account-resolution.service.js", () => ({
@@ -15,8 +17,16 @@ vi.mock("../../bills/bill-line-account-resolution.service.js", () => ({
 vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: mockAudit,
 }));
+vi.mock("../../lib/feature-flags/service.js", () => ({
+  isEnabled: mockIsEnabled,
+}));
+vi.mock("../../accounting/posting-engine.service.js", () => ({
+  postSourceTransactionInClientTx: mockPostInClientTx,
+  PostingEngineError: class PostingEngineError extends Error {},
+}));
 
 import { autoCreateExpenseFromWO } from "../two-section-service.js";
+import { PostingEngineError } from "../../accounting/posting-engine.service.js";
 
 function makeClient(opts?: { hasUnitId?: boolean; hasLoadId?: boolean }) {
   const hasUnitId = opts?.hasUnitId !== false;
@@ -52,6 +62,7 @@ function makeClient(opts?: { hasUnitId?: boolean; hasLoadId?: boolean }) {
       return { rows: [{ requires_load: false }] };
     }
     if (sql.includes("INSERT INTO accounting.expenses")) return { rows: [{ id: "exp-1" }] };
+    if (sql.includes("UPDATE accounting.expenses")) return { rows: [] };
     if (sql.includes("FROM maintenance.work_order_lines")) return { rows: [] };
     return { rows: [] };
   });
@@ -89,5 +100,85 @@ describe("autoCreateExpenseFromWO — unit_id stamp (Law §9)", () => {
     expect(expenseInsert!.sql).toMatch(/\bcreated_by_user_id\b/);
     expect(expenseInsert!.sql).not.toMatch(/[^_]\btotal_amount\b(?!_cents)/);
     expect(expenseInsert!.params).toContain("user-1");
+  });
+
+  // MAINT-F5697-CLASS — a "paid same day" WO expense used to stop at the INSERT: real, status=
+  // 'posted' (document lifecycle), but never actually reached the GL. Reuses the canonical POST
+  // /api/v1/expenses route's own gate (EXPENSE_GL_POSTING_ENABLED -> postSourceTransactionInClientTx),
+  // in the caller's own open transaction (not postSourceTransaction's separate connection, which hit
+  // the identical READ-COMMITTED visibility bug for the revenue latch this same session).
+  describe("MAINT-F5697-CLASS — GL posting on paid_same_day WO expenses", () => {
+    it("posts to GL when a payment account is given and the flag is ON", async () => {
+      mockAudit.mockResolvedValue(undefined);
+      mockIsEnabled.mockResolvedValue(true);
+      mockPostInClientTx.mockResolvedValue({ journal_entry_id: "je-1" });
+      const { client, calls } = makeClient();
+
+      const res = await autoCreateExpenseFromWO(client, "user-1", "wo-1", "payment-acct-1", null);
+      expect(res).toEqual({ uuid: "exp-1" });
+
+      expect(mockIsEnabled).toHaveBeenCalledWith(
+        client,
+        "EXPENSE_GL_POSTING_ENABLED",
+        expect.objectContaining({ operating_company_id: "oc-1" })
+      );
+      expect(mockPostInClientTx).toHaveBeenCalledWith(
+        client,
+        expect.objectContaining({
+          operating_company_id: "oc-1",
+          source_transaction_type: "expense",
+          source_transaction_id: "exp-1",
+        }),
+        expect.objectContaining({ userId: "user-1" })
+      );
+      const update = calls.find((c) => c.sql.includes("UPDATE accounting.expenses") && c.sql.includes("posting_status"));
+      expect(update, "posting_status UPDATE must run").toBeTruthy();
+      expect(update!.sql).toMatch(/posting_status\s*=\s*'posted'/);
+      expect(update!.params).toEqual(expect.arrayContaining(["exp-1", "je-1", "oc-1"]));
+    });
+
+    it("does NOT attempt GL posting when no payment account was given (in_house/vendor_invoice callers pass null)", async () => {
+      mockAudit.mockResolvedValue(undefined);
+      mockIsEnabled.mockClear();
+      mockPostInClientTx.mockClear();
+      const { client } = makeClient();
+
+      await autoCreateExpenseFromWO(client, "user-1", "wo-1", null, null);
+
+      expect(mockIsEnabled).not.toHaveBeenCalled();
+      expect(mockPostInClientTx).not.toHaveBeenCalled();
+    });
+
+    it("does NOT post when the flag is OFF, but still returns the expense uuid", async () => {
+      mockAudit.mockResolvedValue(undefined);
+      mockIsEnabled.mockResolvedValue(false);
+      mockPostInClientTx.mockClear();
+      const { client } = makeClient();
+
+      const res = await autoCreateExpenseFromWO(client, "user-1", "wo-1", "payment-acct-1", null);
+      expect(res).toEqual({ uuid: "exp-1" });
+      expect(mockPostInClientTx).not.toHaveBeenCalled();
+    });
+
+    it("swallows a PostingEngineError (non-fatal, matches the canonical route's contract) and still returns the expense uuid", async () => {
+      mockAudit.mockResolvedValue(undefined);
+      mockIsEnabled.mockResolvedValue(true);
+      mockPostInClientTx.mockRejectedValue(new PostingEngineError("ACCOUNT_MAPPING_MISSING"));
+      const { client } = makeClient();
+
+      const res = await autoCreateExpenseFromWO(client, "user-1", "wo-1", "payment-acct-1", null);
+      expect(res).toEqual({ uuid: "exp-1" });
+    });
+
+    it("does NOT swallow a non-PostingEngineError (a real bug must still surface)", async () => {
+      mockAudit.mockResolvedValue(undefined);
+      mockIsEnabled.mockResolvedValue(true);
+      mockPostInClientTx.mockRejectedValue(new Error("unexpected_db_error"));
+      const { client } = makeClient();
+
+      await expect(autoCreateExpenseFromWO(client, "user-1", "wo-1", "payment-acct-1", null)).rejects.toThrow(
+        "unexpected_db_error"
+      );
+    });
   });
 });

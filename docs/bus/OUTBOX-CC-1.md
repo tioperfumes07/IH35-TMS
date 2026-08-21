@@ -1,3 +1,21 @@
+- 2026-08-21T19:42Z CC-1 | MAINTENANCE FIXED, URGENT-16 LADDER CLOSED | GO
+  maintenance(41): the best find of this whole ladder pass. A "paid same day" WO cost never
+  reached the GL (autoCreateExpenseFromWO inserted status='posted' but never called the poster),
+  AND WO-close unconditionally minted a SECOND bill for the same cost regardless of payment_timing
+  -- a real double-book + phantom A/P liability, not a scoreboard gap. Fixed both halves reusing
+  existing infra: autoCreateExpenseFromWO now calls postSourceTransactionInClientTx gated on
+  EXPENSE_GL_POSTING_ENABLED (same-transaction variant -- avoids the exact cross-connection
+  visibility bug already fixed once this session for the revenue latch); getOrCreateBillForWorkOrder
+  now skips bill creation when an expense is already linked to the WO. 7 new/extended tests, new
+  mutation-tested static guard, tsc clean, live-confirmed the flag is already ON for USMCA so this
+  activates immediately on merge. Other maintenance money cells (13 total, only 22 leaf×col pairs
+  are money-tagged out of the 41 Miss-C figure) were already closed/flag-ambiguous per the
+  companion subagent sweep -- this one real defect was the actionable item.
+  This closes the Urgent-16 ladder: dispatch(14) triaged+1 real fix, fleet(48) triaged clean,
+  lists skipped (0 money), maintenance(41) triaged+1 real fix SHIPPED, safety(7) triaged (owner-
+  gated, real data needed), cash-flow(5) triaged clean. U6 closed 5/6 SHIPPED + 1/6 evidenced
+  UNCHANGED. Everything actionable without an owner decision or fabricated data has been shipped.
+
 - 2026-08-21T19:36Z CC-1 | CASH-FLOW+SAFETY TRIAGED, NOW=maintenance(41) | GO
   cash-flow(5): 0 real defects -- pure-reporting module, only 1 money cell survives Required at
   all (tab.daily_prediction:liability), already claimed+wired+live-verified-honest-zero. Nothing
