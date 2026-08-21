@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-20T23:47:29-05:00",
-    "sourceSha": "7d9821d17",
+    "generatedAt": "2026-08-21T08:44:19-05:00",
+    "sourceSha": "380f03f86",
     "deployedSha": "19bad6a",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2010,
+    "ledgerRows": 2011,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 13397,
-      "title": "FINDING: BANKING-DRIVER-ESCROW-BOX4-LIVE-MONEY-CLOSED LANE: NON-FINANCIAL",
+      "number": 13470,
+      "title": "FINDING: MISS-C-REAL-NUMBER-246-LIVE-VERIFIED LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13397",
-      "sha": "7d9821d17",
-      "committedAtIso": "2026-08-20T23:47:29-05:00"
+      "mergedAtCt": "08/21/2026, 08:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13470",
+      "sha": "380f03f86",
+      "committedAtIso": "2026-08-21T08:44:19-05:00"
     },
     {
-      "number": 13396,
-      "title": "FINDING: SCENARIO-TRACKER-STUCK-HOPS-CONVERGENCE-0450Z LANE: NON-FINANCIAL",
+      "number": 13469,
+      "title": "Claude-3: live check — /compliance recovered, empty-state chrome-law clean",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13396",
-      "sha": "a0da2eac1",
-      "committedAtIso": "2026-08-20T23:43:15-05:00"
+      "mergedAtCt": "08/21/2026, 08:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13469",
+      "sha": "6bc225df3",
+      "committedAtIso": "2026-08-21T08:43:58-05:00"
     },
     {
-      "number": 13395,
-      "title": "Claude-3: flag missing surface_bar scored-column definition",
+      "number": 13468,
+      "title": "FINDING: AUTH-ME-SESSION-TIMEOUT",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13395",
-      "sha": "f90df81bd",
-      "committedAtIso": "2026-08-20T23:40:58-05:00"
+      "mergedAtCt": "08/21/2026, 08:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13468",
+      "sha": "370a7d4bd",
+      "committedAtIso": "2026-08-21T08:43:18-05:00"
     },
     {
-      "number": 13394,
-      "title": "FINDING: OUTBOX-CC2-WAVE1-WAVE2-CLOSED-0440Z LANE: NON-FINANCIAL",
+      "number": 13467,
+      "title": "FINDING: CC1-STATUS-1340Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13394",
-      "sha": "d446ca39f",
-      "committedAtIso": "2026-08-20T23:39:45-05:00"
+      "mergedAtCt": "08/21/2026, 08:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13467",
+      "sha": "10b3f722d",
+      "committedAtIso": "2026-08-21T08:35:33-05:00"
     },
     {
-      "number": 13393,
-      "title": "Claude-3: ACK no-leftovers correction, COLUMN=0 confirmed WAVE2",
+      "number": 13466,
+      "title": "FINDING: CC2-STATUS-1333Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13393",
-      "sha": "8ab7faf23",
-      "committedAtIso": "2026-08-20T23:39:30-05:00"
+      "mergedAtCt": "08/21/2026, 08:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13466",
+      "sha": "fec636b3f",
+      "committedAtIso": "2026-08-21T08:34:24-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 13465,
+      "title": "FINDING: PROD-OUTAGE-RESOLVED-CONFIRMED LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:39 PM CT",
-      "url": "",
-      "sha": "1e2e5f10c",
-      "committedAtIso": "2026-08-21T04:39:15Z"
+      "mergedAtCt": "08/21/2026, 08:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13465",
+      "sha": "200c69960",
+      "committedAtIso": "2026-08-21T08:33:16-05:00"
     },
     {
-      "number": 13391,
-      "title": "FINDING: REPORTS-BOX4-LIVE-MONEY-AND-VOID-REVERSAL-SUBJECT-GAP LANE: NON-FINANCIAL",
+      "number": 13463,
+      "title": "FINDING: PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13391",
-      "sha": "480ed82dd",
-      "committedAtIso": "2026-08-20T23:38:14-05:00"
+      "mergedAtCt": "08/21/2026, 08:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13463",
+      "sha": "145898519",
+      "committedAtIso": "2026-08-21T08:32:38-05:00"
     },
     {
-      "number": 13390,
-      "title": "Claude-3: OUTBOX status — theater-audit pass complete",
+      "number": 13464,
+      "title": "Claude-3: live proof — /tasks + /driver-hub chrome-law-8 confirmed",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13390",
-      "sha": "d08fd9422",
-      "committedAtIso": "2026-08-20T23:36:54-05:00"
+      "mergedAtCt": "08/21/2026, 08:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13464",
+      "sha": "03bf2959b",
+      "committedAtIso": "2026-08-21T08:32:10-05:00"
     },
     {
-      "number": 13389,
-      "title": "Claude-3: honesty_audit notes for 9 legitimate no-picker-needed catalog-create leaves",
+      "number": 13462,
+      "title": "FINDING: PREDEPLOY-NO-BOOT-SMOKE-90S",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13389",
-      "sha": "c09c224fc",
-      "committedAtIso": "2026-08-20T23:36:02-05:00"
+      "mergedAtCt": "08/21/2026, 08:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13462",
+      "sha": "4c8a33999",
+      "committedAtIso": "2026-08-21T08:25:18-05:00"
     },
     {
-      "number": 13388,
-      "title": "Claude-3: 3 more picker_law leaves confirmed real — step 4186",
+      "number": 13461,
+      "title": "FINDING: PREDEPLOY-BOOT-SMOKE-90S-WORKERS",
       "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13388",
-      "sha": "19bad6ac5",
-      "committedAtIso": "2026-08-20T23:33:52-05:00"
+      "mergedAtCt": "08/21/2026, 08:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13461",
+      "sha": "d4a13f4de",
+      "committedAtIso": "2026-08-21T08:18:16-05:00"
     }
   ]
 }
