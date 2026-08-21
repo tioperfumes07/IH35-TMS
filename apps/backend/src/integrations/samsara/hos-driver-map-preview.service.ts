@@ -169,7 +169,10 @@ export async function previewDriverSamsaraMap(client: PgClient, operatingCompany
     client.query(
       `SELECT count(DISTINCT d.id)::int AS n
          FROM mdata.drivers d
-         JOIN telematics.vehicle_driver_assignments a ON a.driver_id = d.id AND a.ended_at IS NULL
+         JOIN telematics.vehicle_driver_assignments a
+           ON a.driver_id = d.id
+          AND a.operating_company_id = $1::uuid
+          AND a.ended_at IS NULL
         WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL AND d.deactivated_at IS NULL`,
       [operatingCompanyId]
     ),

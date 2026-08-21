@@ -49,6 +49,7 @@ export function verify(source) {
 
   need("service", "FROM mdata.drivers", "preview must read canonical driver records");
   need("service", "WHERE operating_company_id = $1::uuid", "driver read must be explicitly company scoped");
+  need("service", "a.operating_company_id = $1::uuid", "assignment join must carry its own company predicate");
   need("service", "local_driver_id: r.id as string", "canonical driver FK must survive projection");
   need("service", "current_samsara_driver_id", "stored mapping must be projected for reconciliation");
   need("service", "proposed_samsara_driver_id", "proposed mapping must be projected for reconciliation");
@@ -80,6 +81,7 @@ if (process.argv.includes("--self-test")) {
     ["route", 'app.get("/api/v1/telematics/hos-driver-map/preview"'], ["route", "querySchema.safeParse"], ["route", "withCurrentUser(user.uuid"],
     ["route", "set_config('app.operating_company_id', $1::text, true)"], ["service", "FROM mdata.drivers"],
     ["service", "WHERE operating_company_id = $1::uuid"], ["service", "local_driver_id: r.id as string"],
+    ["service", "a.operating_company_id = $1::uuid"],
     ["service", "current_samsara_driver_id"], ["service", "proposed_samsara_driver_id"], ["service", "ambiguous"],
     ["routeTest", "expect(scopeCall?.values).toEqual([OCI])"], ["resolver", 'case "driver"'],
   ]) mutations.push(() => ({ ...source, [key]: source[key].replaceAll(token, "BROKEN_DRIVER_CONTRACT") }));
