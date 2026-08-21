@@ -24,6 +24,8 @@ const SUBJECT_ENTITY_KINDS: Readonly<Record<string, EntityKind>> = {
   work_order: "work_order",
   invoice: "invoice",
   bill: "bill",
+  journal_entry: "journal_entry",
+  customer_payment: "payment",
   claim: "claim",
   safety_event: "safety_event",
 };
@@ -54,6 +56,7 @@ const SOURCE_ROUTES: Readonly<Record<string, (id: string) => string>> = {
   "accounting.bill_payments": (id) => `/accounting/bill-payments/${id}`,
   "accounting.payments": (id) => `/accounting/payments/${id}`,
   "accounting.expenses": (id) => `/accounting/expenses/${id}`,
+  "accounting.journal_entries": (id) => `/accounting/journal-entries/${id}`,
   "accounting.fixed_assets": (id) => `/accounting/fixed-assets?asset_id=${id}`,
   "banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`,
   "banking.transfers": (id) => `/banking/transfers?transfer_id=${id}`,
