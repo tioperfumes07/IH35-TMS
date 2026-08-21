@@ -60,8 +60,8 @@ type LiveMatrix = {
   };
 };
 
-const MATRIX_POLL_MS = 3000;
-const SCOREBOARD_POLL_MS = 3000;
+const MATRIX_POLL_MS = 30_000;
+const SCOREBOARD_POLL_MS = 30_000;
 
 type MatrixRecentPr = {
   number: number;
@@ -424,7 +424,7 @@ export function ModuleMatrixPreviewPage() {
     queryKey: ["program", "audit-scoreboard", "matrix-recent"],
     queryFn: fetchMatrixRecentMerged,
     refetchInterval: SCOREBOARD_POLL_MS,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     staleTime: 0,
     retry: 1,
   });
@@ -445,7 +445,7 @@ export function ModuleMatrixPreviewPage() {
     queryKey: ["program", "module-matrix", "module", moduleId],
     queryFn: () => fetchModuleMatrix(moduleId),
     refetchInterval: MATRIX_POLL_MS,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     staleTime: 0,
     placeholderData: (prev) => prev ?? undefined,
     enabled: !showSystem,
