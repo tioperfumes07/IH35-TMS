@@ -1,7 +1,15 @@
 # STATUS-NOW
 
-**COORD 23:52Z:** seat comms protocol reset — orders on INBOX TOP, ACK on that seat's own OUTBOX first line, same hour, same NOW module. Job unchanged: close **accounting** to Fully-Wired 1–12 + Box 4 Live (money in Miss C), then **customers** together.
+**URGENT 10:** accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists (Items). **Not inventory.**
 
-**NOW:** URGENT-14 = Fully-Wired 1–12. Sequence in `CODER-INSTRUCTIONS-NOW.md`. Jorge is not the messenger.
+**No defer** on money, wiring, linkage, or any Required cell.
 
-Seats: Devin-A parked · CC-1 accounting money · CC-2 accounting Box4 Live · CC-3 accounting Built leftover · Codex accounting reverse+CONN · Cursor lead.
+| Seat | NOW |
+|------|-----|
+| CC-3 | banking Built |
+| CC-1 | accounting leftover (escrow §9.4) then banking money |
+| CC-2 | accounting Box4 leftover then banking |
+| Codex | accounting reverse then banking reverse |
+| Cursor | Clicked leftover then banking |
+
+WAVE 2 includes inventory/fuel/safety/maintenance after the 10.

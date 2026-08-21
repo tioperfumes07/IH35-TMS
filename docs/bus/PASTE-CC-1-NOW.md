@@ -1,4 +1,8 @@
-# PASTE CC-1 NOW
+# PASTE CC-1 · NO DEFER · ACCOUNTING THEN BANKING MONEY
+
+```text
 git pull --ff-only origin main
-DEVIATION: Miss C unchanged. NOW=USMCA tagged bank txn → matched JE (linked_bank gl_je). Then Book Load + POD + bank match. Reuse poster. No CDP. OUTBOX: Miss C was N now M or UNCHANGED blocker=no matched JE.
-CC-1 | ACK | STANDARD=USMCA-LAUNCH | MISS-C-MUST-MOVE | NOW=bank→JE | GO
+Read docs/bus/PASTE-ALL-SEATS-NOW.md
+Escrow liability §9.4 NOW. Then banking money. Never park. Never inventory. PREPEND ACK. FAST-MERGE.
+ACK: CC-1 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=banking money | GO
+```
