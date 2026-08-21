@@ -47,8 +47,8 @@ export function audit(src) {
   if (!/return createUnit\(\{/.test(src.createUnit)) {
     failures.push(`${FILES.createUnit}: fleet.modal.create_unit must call the canonical createUnit`);
   }
-  if (!/patchUnit\(unitId!, patchPayload\)/.test(src.editVehicle)) {
-    failures.push(`${FILES.editVehicle}: fleet.modal.edit_vehicle must patch the real edited unit`);
+  if (!/patchUnit\(unitId!, operatingCompanyId, patchPayload\)/.test(src.editVehicle)) {
+    failures.push(`${FILES.editVehicle}: fleet.modal.edit_vehicle must patch the real edited unit in the selected company`);
   }
   if (!/equipmentKind: "truck" \| "trailer"/.test(src.quickAssign)) {
     failures.push(`${FILES.quickAssign}: fleet.modal.quick_assign must genuinely support truck (unit) targets`);
@@ -75,7 +75,7 @@ if (process.argv.includes("--selftest")) {
     ["profile-path-fn", "table", /function fleetProfilePath\(row: FleetRow\): string \{/, "function fleetProfilePathUnused(row: FleetRow): string {"],
     ["edit-unit-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, "open={false}"],
     ["create-unit-call", "createUnit", /return createUnit\(\{/, "return createSomethingElse({"],
-    ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, patchPayload\)/, "patchUnit(undefined, patchPayload)"],
+    ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(unitId!, patchPayload)"],
     ["quick-assign-kind", "quickAssign", /equipmentKind: "truck" \| "trailer"/, 'equipmentKind: "trailer"'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
