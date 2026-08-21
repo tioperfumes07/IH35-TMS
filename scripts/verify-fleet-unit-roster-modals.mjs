@@ -20,11 +20,36 @@ const FILES = {
   createUnit: "apps/frontend/src/components/fleet/CreateUnitModal.tsx",
   editVehicle: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   quickAssign: "apps/frontend/src/components/fleet/QuickAssignModal.tsx",
+  required: "docs/specs/scoreboard/modules/fleet.required.json",
 };
 const LABEL = "verify-fleet-unit-roster-modals";
 
 export function audit(src) {
   const failures = [];
+  const required = JSON.parse(src.required);
+  const reverseAudit = required.honesty_audit?.reverse_link_column_2026_08_14;
+  const clientFilterIds = [
+    "roster.kind.all",
+    "roster.kind.trucks",
+    "roster.kind.trailers",
+    "roster.filter.type",
+    "roster.filter.status_active",
+    "roster.filter.status_inshop",
+    "roster.filter.status_oos",
+  ];
+  if (reverseAudit?.leaves_touched !== 32) {
+    failures.push(`${FILES.required}: reverse-link audit must enumerate 32 corrected leaves`);
+  }
+  for (const id of clientFilterIds) {
+    const leaf = required.leaves?.find((entry) => entry.id === id);
+    if (leaf?.required?.includes("reverse_link")) {
+      failures.push(`${FILES.required}: ${id} must not require reverse_link`);
+    }
+    const drop = reverseAudit?.drops?.find((entry) => entry.id === id);
+    if (!drop?.removed?.includes("reverse_link") || !/not an FK-bearing entity/.test(drop?.reason ?? "")) {
+      failures.push(`${FILES.required}: ${id} must retain its explicit non-FK reverse_link applicability drop`);
+    }
+  }
   if (!/const kindFilter = searchParams\.get\("kind"\) \?\? ""/.test(src.tablePage)) {
     failures.push(`${FILES.tablePage}: roster.kind.trucks must filter real rows by a real kindFilter`);
   }
@@ -77,6 +102,9 @@ if (process.argv.includes("--selftest")) {
     ["create-unit-call", "createUnit", /return createUnit\(\{/, "return createSomethingElse({"],
     ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(unitId!, patchPayload)"],
     ["quick-assign-kind", "quickAssign", /equipmentKind: "truck" \| "trailer"/, 'equipmentKind: "trailer"'],
+    ["filter-reverse-applicability", "required", /"id": "roster\.filter\.type",\n\s+"removed": \[\n\s+"reverse_link"\n\s+\]/, '"id": "roster.filter.type",\n          "removed": []'],
+    ["filter-reverse-count", "required", /"leaves_touched": 32/, '"leaves_touched": 25'],
+    ["filter-reverse-reinflation", "required", /("id": "roster\.kind\.trucks"[\s\S]*?"required": \[\n\s+"unit")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const mutated = { ...good, [key]: good[key].replace(pattern, replacement) };
