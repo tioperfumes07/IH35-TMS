@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T08:44:19-05:00",
-    "sourceSha": "380f03f86",
-    "deployedSha": "19bad6a",
+    "generatedAt": "2026-08-21T09:32:39-05:00",
+    "sourceSha": "25dfe757d",
+    "deployedSha": "d3c33b1",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2011,
+    "ledgerRows": 2012,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 13470,
-      "title": "FINDING: MISS-C-REAL-NUMBER-246-LIVE-VERIFIED LANE: NON-FINANCIAL",
+      "number": 13484,
+      "title": "FINDING: SAMSARA-DRIVER-SYNC-CLOBBER-TMS-EDITS",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13470",
-      "sha": "380f03f86",
-      "committedAtIso": "2026-08-21T08:44:19-05:00"
+      "mergedAtCt": "08/21/2026, 09:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13484",
+      "sha": "e800ea2aa",
+      "committedAtIso": "2026-08-21T09:32:45-05:00"
     },
     {
-      "number": 13469,
-      "title": "Claude-3: live check — /compliance recovered, empty-state chrome-law clean",
+      "number": 13483,
+      "title": "FINDING: SCENARIO-TRACKER-LIVE-DOTS-CROSSCHECK LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13469",
-      "sha": "6bc225df3",
-      "committedAtIso": "2026-08-21T08:43:58-05:00"
+      "mergedAtCt": "08/21/2026, 09:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13483",
+      "sha": "25dfe757d",
+      "committedAtIso": "2026-08-21T09:32:39-05:00"
     },
     {
-      "number": 13468,
-      "title": "FINDING: AUTH-ME-SESSION-TIMEOUT",
+      "number": 13482,
+      "title": "Claude-3: fix maintenance Roadside WO no-verb button — step 4190",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13468",
-      "sha": "370a7d4bd",
-      "committedAtIso": "2026-08-21T08:43:18-05:00"
+      "mergedAtCt": "08/21/2026, 09:28 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13482",
+      "sha": "41ddeaac3",
+      "committedAtIso": "2026-08-21T09:28:57-05:00"
     },
     {
-      "number": 13467,
-      "title": "FINDING: CC1-STATUS-1340Z LANE: NON-FINANCIAL",
+      "number": 13481,
+      "title": "Claude-3: claim-reserve step 4190 for maintenance Roadside WO guard",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13467",
-      "sha": "10b3f722d",
-      "committedAtIso": "2026-08-21T08:35:33-05:00"
+      "mergedAtCt": "08/21/2026, 09:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13481",
+      "sha": "d349f482d",
+      "committedAtIso": "2026-08-21T09:27:49-05:00"
     },
     {
-      "number": 13466,
-      "title": "FINDING: CC2-STATUS-1333Z LANE: NON-FINANCIAL",
+      "number": 13480,
+      "title": "FINDING: CC1-STATUS-1410Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13466",
-      "sha": "fec636b3f",
-      "committedAtIso": "2026-08-21T08:34:24-05:00"
+      "mergedAtCt": "08/21/2026, 09:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13480",
+      "sha": "42a9ececa",
+      "committedAtIso": "2026-08-21T09:15:45-05:00"
     },
     {
-      "number": 13465,
-      "title": "FINDING: PROD-OUTAGE-RESOLVED-CONFIRMED LANE: NON-FINANCIAL",
+      "number": 13479,
+      "title": "FINDING: ENV-VERIFY-STATIC-TASKS-AUTH-QUERYFN-SIGNAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13465",
-      "sha": "200c69960",
-      "committedAtIso": "2026-08-21T08:33:16-05:00"
+      "mergedAtCt": "08/21/2026, 09:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13479",
+      "sha": "358f7f110",
+      "committedAtIso": "2026-08-21T09:09:30-05:00"
     },
     {
-      "number": 13463,
-      "title": "FINDING: PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING LANE: NON-FINANCIAL",
+      "number": 13478,
+      "title": "FINDING: CC1-CLOSEOUT-1405Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13463",
-      "sha": "145898519",
-      "committedAtIso": "2026-08-21T08:32:38-05:00"
+      "mergedAtCt": "08/21/2026, 09:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13478",
+      "sha": "bf0bbeeb8",
+      "committedAtIso": "2026-08-21T09:08:59-05:00"
     },
     {
-      "number": 13464,
-      "title": "Claude-3: live proof — /tasks + /driver-hub chrome-law-8 confirmed",
+      "number": 13477,
+      "title": "FINDING: ACCT-F5691 LANE: FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13464",
-      "sha": "03bf2959b",
-      "committedAtIso": "2026-08-21T08:32:10-05:00"
+      "mergedAtCt": "08/21/2026, 09:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13477",
+      "sha": "8a39fb8a5",
+      "committedAtIso": "2026-08-21T09:05:53-05:00"
     },
     {
-      "number": 13462,
-      "title": "FINDING: PREDEPLOY-NO-BOOT-SMOKE-90S",
+      "number": 13471,
+      "title": "FINDING: CC1-STATUS-1350Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13462",
-      "sha": "4c8a33999",
-      "committedAtIso": "2026-08-21T08:25:18-05:00"
+      "mergedAtCt": "08/21/2026, 08:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13471",
+      "sha": "74b0d9385",
+      "committedAtIso": "2026-08-21T08:56:30-05:00"
     },
     {
-      "number": 13461,
-      "title": "FINDING: PREDEPLOY-BOOT-SMOKE-90S-WORKERS",
+      "number": 13476,
+      "title": "Codex-1- chore(bus): ENV-VERIFY-STATIC-CODEX-HANDOFF — route current-main FE failures",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 08:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13461",
-      "sha": "d4a13f4de",
-      "committedAtIso": "2026-08-21T08:18:16-05:00"
+      "mergedAtCt": "08/21/2026, 08:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13476",
+      "sha": "c662a82cf",
+      "committedAtIso": "2026-08-21T08:52:58-05:00"
     }
   ]
 }
