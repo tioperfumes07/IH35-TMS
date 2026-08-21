@@ -1,6 +1,6 @@
 # INBOX-CC-2 · 22:27 CT · NEVER IDLE
 
-Port **9224**. Pull `origin/main`. PREPEND ACK.
+Port **9224**. Pull `origin/main`. PREPEND ACK. **CLOSE `/program/matrix` now.** Use CDP 9224, not the Chrome extension.
 
 **NOW=settlements Box 4 Live.** Then factoring Box 4 → rest of URGENT 6 → 10 → WAVE 2. Never idle. Stamp only PROD-VERIFIED live. FAST-MERGE.
 
