@@ -108,6 +108,7 @@ function renderCustomersAt(path: string) {
     user: { uuid: "u1", email: "o@test.com", role: "Owner" },
     session: null,
     isLoading: false,
+    isError: false,
     isUnauthenticated: false,
     refetch: vi.fn(),
   });

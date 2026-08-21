@@ -22,7 +22,7 @@ type StatusFilter = "all" | "open" | "completed";
 export function TasksMinePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const meQuery = useQuery({ queryKey: ["identity", "me"], queryFn: getMe });
+  const meQuery = useQuery({ queryKey: ["identity", "me"], queryFn: ({ signal }) => getMe(signal) });
   const myId = meQuery.data?.user.uuid ?? "";
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const staged = useStagedListFilters({
