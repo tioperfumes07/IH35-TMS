@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-20T23:38:14-05:00",
-    "sourceSha": "480ed82dd",
+    "generatedAt": "2026-08-20T23:47:29-05:00",
+    "sourceSha": "7d9821d17",
     "deployedSha": "19bad6a",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2009,
+    "ledgerRows": 2010,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,60 @@
   },
   "recentActivity": [
     {
+      "number": 13397,
+      "title": "FINDING: BANKING-DRIVER-ESCROW-BOX4-LIVE-MONEY-CLOSED LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13397",
+      "sha": "7d9821d17",
+      "committedAtIso": "2026-08-20T23:47:29-05:00"
+    },
+    {
+      "number": 13396,
+      "title": "FINDING: SCENARIO-TRACKER-STUCK-HOPS-CONVERGENCE-0450Z LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13396",
+      "sha": "a0da2eac1",
+      "committedAtIso": "2026-08-20T23:43:15-05:00"
+    },
+    {
+      "number": 13395,
+      "title": "Claude-3: flag missing surface_bar scored-column definition",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13395",
+      "sha": "f90df81bd",
+      "committedAtIso": "2026-08-20T23:40:58-05:00"
+    },
+    {
+      "number": 13394,
+      "title": "FINDING: OUTBOX-CC2-WAVE1-WAVE2-CLOSED-0440Z LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13394",
+      "sha": "d446ca39f",
+      "committedAtIso": "2026-08-20T23:39:45-05:00"
+    },
+    {
+      "number": 13393,
+      "title": "Claude-3: ACK no-leftovers correction, COLUMN=0 confirmed WAVE2",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13393",
+      "sha": "8ab7faf23",
+      "committedAtIso": "2026-08-20T23:39:30-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:39 PM CT",
+      "url": "",
+      "sha": "1e2e5f10c",
+      "committedAtIso": "2026-08-21T04:39:15Z"
+    },
+    {
       "number": 13391,
       "title": "FINDING: REPORTS-BOX4-LIVE-MONEY-AND-VOID-REVERSAL-SUBJECT-GAP LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2155,60 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13388",
       "sha": "19bad6ac5",
       "committedAtIso": "2026-08-20T23:33:52-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:33 PM CT",
-      "url": "",
-      "sha": "36809d117",
-      "committedAtIso": "2026-08-21T04:33:05Z"
-    },
-    {
-      "number": 13387,
-      "title": "Claude-3: claim-reserve step 4186 for picker_law deep-child batch guard",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13387",
-      "sha": "0fcc1bc83",
-      "committedAtIso": "2026-08-20T23:31:55-05:00"
-    },
-    {
-      "number": 13386,
-      "title": "FINDING: CC1-CLOSEOUT-BATCH-0430Z LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13386",
-      "sha": "3a288f4a1",
-      "committedAtIso": "2026-08-20T23:31:28-05:00"
-    },
-    {
-      "number": 13385,
-      "title": "FINDING: INVENTORY-PARTS-ROSTER-BOX4-LIVE-MONEY LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13385",
-      "sha": "ad4224a3f",
-      "committedAtIso": "2026-08-20T23:31:19-05:00"
-    },
-    {
-      "number": 13384,
-      "title": "FINDING: PROGRAM-REQUIRED-MAPS-EXTRACTION-GUARD-DRIFT",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13384",
-      "sha": "9510b0b54",
-      "committedAtIso": "2026-08-20T23:30:36-05:00"
-    },
-    {
-      "number": 13383,
-      "title": "FINDING: BUS-CC3-NO-LEFTOVERS",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13383",
-      "sha": "38105089e",
-      "committedAtIso": "2026-08-20T23:29:31-05:00"
     }
   ]
 }
