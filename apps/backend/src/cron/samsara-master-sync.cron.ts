@@ -94,6 +94,34 @@ export function initializeSamsaraMasterSyncCron(app: FastifyInstance) {
                 });
                 continue;
               }
+              // Owner 2026-08-21: USMCA shares TRANSP's Samsara org/GPS until USMCA buys its own.
+              // Master pull on a follower tenant would INSERT duplicate mdata.drivers / equipment.
+              // HOS/positions crons still run per tenant against already-linked samsara_* ids.
+              const follower = await client.query<{ follower: boolean }>(
+                `
+                  SELECT EXISTS (
+                    SELECT 1
+                    FROM integrations.samsara_config self
+                    JOIN integrations.samsara_config peer
+                      ON peer.samsara_org_id IS NOT DISTINCT FROM self.samsara_org_id
+                     AND peer.is_enabled = true
+                     AND peer.disconnected_at IS NULL
+                     AND peer.operating_company_id <> self.operating_company_id
+                     AND peer.created_at < self.created_at
+                    WHERE self.operating_company_id = $1::uuid
+                      AND self.is_enabled = true
+                      AND NULLIF(trim(self.samsara_org_id), '') IS NOT NULL
+                  ) AS follower
+                `,
+                [operatingCompanyId]
+              );
+              if (follower.rows[0]?.follower) {
+                await appendCronAuditEvent(client, "cron_skipped_samsara_shared_org_follower", "info", {
+                  cron_name: CRON_NAME,
+                  operating_company_id: operatingCompanyId,
+                });
+                continue;
+              }
               // The whole tick runs inside one withLuciaBypass BEGIN..COMMIT, so a DB
               // error in any single sync (e.g. a VIN collision in the vehicle upsert)
               // would abort the transaction and skip the rest. Isolate each sync in a

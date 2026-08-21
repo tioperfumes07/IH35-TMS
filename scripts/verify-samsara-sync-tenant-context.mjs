@@ -27,6 +27,7 @@ const checks = [
     required: [
       "syncSamsaraDriversMaster(client, operatingCompanyId)",
       "syncSamsaraVehiclesMaster(client, operatingCompanyId)",
+      "cron_skipped_samsara_shared_org_follower",
     ],
     requireOperatingCompanyGuc: true,
     reason: "cron-triggered master sync must set tenant context before writes",
