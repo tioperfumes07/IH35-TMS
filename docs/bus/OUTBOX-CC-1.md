@@ -1,3 +1,19 @@
+- 2026-08-21T19:15Z CC-1 | U6 2/6 | NEXT=revrec+invoice | GO
+  1/6 load.banking:gl_je SHIPPED live on prod: real USMCA bank transaction 4a6cc040 ("CHECKCARD
+  08/20 FUEL AMERICA TRAVEL CE", $51.96, previously pending_categorization) tagged to real load
+  L-20260816-0168 (8df23e68) + real GL account "5000 Fuel & Diesel", posted through the EXISTING
+  poster (maybePostBankCategorizationToGl / CHAIN-05, no new GL math) -- real balanced JE
+  0047ce59-39a2-4ba6-8de1-33181c194418 (Dr Fuel & Diesel $51.96 / Cr Bank of America - Operating
+  (USMCA) $51.96), independently re-verified live via fresh Neon read after. Rehearsed on a
+  disposable Neon branch first, exact same script, before applying live.
+  Also counts as 2/6 "real fuel" (one of the 5 scenario events) since it's a genuine fuel-station
+  charge, not synthetic data -- same real transaction closes both.
+  NEXT: revrec + invoice+evidence (3-4/6), then bank-path + factoring-advance (5-6/6) --
+  factoring-advance specifically needs care: no live Faro API exists in this codebase to contact,
+  so it can only ever mean a local TMS ledger entry (Dr Cash/Bank, Cr Factoring Liability,
+  mirroring the existing driver-escrow-is-liability/factoring-balance-is-liability pattern) on the
+  USMCA test entity -- never a real external draw, which stays outside my authority regardless.
+
 - 2026-08-21T19:00Z CC-1 | ACK | INBOX-CC-1 | PORT=9223 | PENDING=6/6 U6 | NOW=load.banking:gl_je then 5 events | GO
   CC-1 | U6 0/6 | NEXT=load.banking:gl_je | GO
   Read docs/bus/INBOX-CC-1.md fresh off origin/main. Starting 1/6 (load.banking:gl_je — real
