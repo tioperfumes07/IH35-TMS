@@ -44,7 +44,9 @@ Jorge is **not** the messenger.
 | **5 · Neon** | after | Money/migrations: **you** apply on Neon · prove one query |
 | **6 · Next** | same turn | OUTBOX one line → start next ☐ in INBOX |
 
-**Total wall clock: ~4–5 minutes.** Forbidden: babysitting 20 checks · asking Jorge to merge · idle after merge.
+**Total wall clock: ~4–5 minutes.** Forbidden: babysitting 20 checks · asking Jorge to merge · idle after merge · **kicking Render after each merge**.
+
+**Production deploy is not in this loop.** autoDeploy is OFF on purpose. Merging every 4 minutes is fine. Deploying every 4 minutes 502s the API for the whole deploy (~3 min). Measured 2026-08-21: 9 deploys / 90 min, median gap 5.9 min — shorter than a deploy. **Deploy main every 30–60 min or on demand (Jorge / Cursor lead, one kick per batch).** Law: `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`. Never `trigger_deploy` because healthz SHA lags `origin/main`.
 
 ---
 
@@ -69,7 +71,8 @@ You may fast-merge **only when ALL are true:**
 - Merge with **local gate FAIL**
 - `--no-verify` because **your** guard/selftest failed
 - `--no-verify` **before** step 1 PASS
-- Claim deploy without healthz · skip OUTBOX · idle after merge
+- Claim a live SHA without healthz JSON 200 · skip OUTBOX · idle after merge
+- **Call Render deploy / `trigger_deploy` / “kick ih35-tms” after a merge** (`docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`)
 
 ---
 

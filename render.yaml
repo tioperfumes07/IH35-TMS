@@ -14,7 +14,8 @@ services:
     # d4a13f4 (#13461) went live and healthz/shallow returned JSON 200 version d4a13f4.
     preDeployCommand: npm run db:migrate && npm run db:verify:critical-runtime
     startCommand: npm run start
-    healthCheckPath: /api/v1/healthz/shallow
+    # HTTP ready check (not TCP-only). Live dashboard must match. Do not kick prod per merge.
+    healthCheckPath: /api/v1/healthz/readyz
     envVars:
       - key: ENABLE_QBO_CDC_POLL
         value: "false"

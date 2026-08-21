@@ -1,6 +1,6 @@
 # INBOX-CURSOR · 9222 · BUS · CERTIFY URGENT 6 NOW
 
-Keep other INBOX files as their only NOW. You are the bus. FAST-MERGE 4–5 min. Deploy API when healthz lags.
+Keep other INBOX files as their only NOW. You are the bus. FAST-MERGE 4–5 min. Do not deploy production after each merge.
 
 **Owner 2026-08-21 16:05 CT: CERTIFY the Urgent 6 modules RIGHT NOW.** Rest of urgent after.
 
@@ -21,7 +21,7 @@ FAST-MERGE 4–5 MIN (ON — every seat, do not deviate):
   3) gh pr create — NEVER gh pr checks --watch
   4) Merge NOW: gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash
      (local main is occupied — do not gh pr merge checkout)
-  5) Kick ih35-tms API when healthz SHA lags origin/main (autoDeploy OFF)
+  5) Do NOT kick Render / trigger_deploy after merge (NO-PER-MERGE-PROD-DEPLOY-LAW)
   6) OUTBOX one line → next SAME TURN
 
 U6 MODULES (certify first, VERTICAL, then rest of urgent):
@@ -35,8 +35,7 @@ SEATS (do not rewrite unless Jorge orders — they pull INBOX files):
   Codex 9226 CERTIFY U6 reverse_link → customer → vendor → load
 
 YOUR FIX-NOW:
-  Bus + INBOX this turn. API kick dep-da4brou7bikc73cl7s30 (main ee163657).
-  After live: healthz ancestor of origin/main. Use api.ih35dispatch.com.
+  Bus + INBOX this turn. Do not trigger a prod deploy. Wait for the 30–60 min batch deploy.
   Cursor-lane overflow only if a U6 chrome red lands in OUTBOX.
   EventSource relative URL = AFTER U6 certify, not instead of.
   FW 1–11 4th ✓ = Live. No 5th Box. No new Required.json leaves.

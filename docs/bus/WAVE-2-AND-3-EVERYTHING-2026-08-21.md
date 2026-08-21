@@ -54,7 +54,7 @@ Maps frozen. No new leaves.
 | **CC-2** | 9224 | Next unpaid frozen `` `leaf:col` `` on **dispatch** (14). OUTBOX `Miss C 241→M`. Skip `/login`. | fleet 49 → lists 87 → maintenance 41 → … |
 | **CC-3** | 9225 | Box 3 is **100%** on the live scoreboard. Do **not** hunt “unpaid Built.” Chrome-law / picker / Save→reload on **dispatch** (module not launch-complete). No status-only PRs. | Same order as Miss C leftover list. |
 | **Codex** | 9226 | Unpaid `connectivity`/`reverse_link` on **dispatch**, then fleet, then lists. No fake Checking-session PASS. | maintenance then WAVE 2 leftover list. |
-| **Cursor** | 9222 | Frozen Clicked is **3363/3363** on this feed. Do **not** pretend Clicked leftovers are the gap. Bus: keep seats on the Miss C leftover list. Deploy API when healthz SHA is behind Live ledger stamps. | Item-12 only if a cell is actually unpaid Clicked after the next deploy. |
+| **Cursor** | 9222 | Frozen Clicked is **3363/3363** on this feed. Do **not** pretend Clicked leftovers are the gap. Bus: keep seats on the Miss C leftover list. **Do not** kick Render after each merge — batch-deploy 30–60 min (`docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`). | Item-12 only if a cell is actually unpaid Clicked after a **batch** deploy. |
 
 ACK: `<SEAT> | ACK | LIVE-MATRIX | MISS-C-241 | PORT=<n> | NOW=<module> | GO`
 

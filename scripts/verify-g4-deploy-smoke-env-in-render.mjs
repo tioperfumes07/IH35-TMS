@@ -13,6 +13,7 @@
  *   3. docs/testing/boot-aggregate-smoke-env.md is missing or does not name both keys.
  *   4. render.yaml preDeployCommand still runs ci:boot-*-smoke (those belong in GitHub CI).
  *   5. .github/workflows/ci.yml is missing ci:boot-api-smoke or ci:boot-aggregate-smoke.
+ *   6. FAST-MERGE / Cursor INBOX still orders a Render kick after every merge (prod 502 window).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -68,6 +69,27 @@ function assertConfigured() {
     const keyPattern = new RegExp(`-\\s*key:\\s*${key}\\b`);
     if (!keyPattern.test(backendBlock)) {
       errors.push(`render.yaml ih35-tms-backend envVars missing key: ${key}`);
+    }
+  }
+  const busFiles = [
+    "docs/bus/FAST-MERGE-4MIN-LAW.md",
+    "docs/bus/INBOX-CURSOR.md",
+    "docs/bus/PASTE-CURSOR-NOW.md",
+    "docs/bus/CODER-INSTRUCTIONS-NOW.md",
+    "docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md",
+  ];
+  const kickRe = /Kick ih35-tms API when healthz SHA lags|Deploy API when healthz lags/i;
+  for (const rel of busFiles) {
+    const p = path.join(ROOT, rel);
+    if (!fs.existsSync(p)) {
+      errors.push(`${rel} missing`);
+      continue;
+    }
+    const text = fs.readFileSync(p, "utf8");
+    if (kickRe.test(text)) {
+      errors.push(
+        `${rel} still orders a per-merge prod deploy (forbidden: docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md)`,
+      );
     }
   }
   if (!fs.existsSync(DOC)) {
