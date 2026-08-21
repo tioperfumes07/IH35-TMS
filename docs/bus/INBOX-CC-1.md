@@ -1,17 +1,11 @@
-# INBOX-CC-1 · 06:46 CT · 7 HOURS · NO IDLE
+# INBOX-CC-1 · 09:36 CT · NEVER IDLE · NO POLL
 
-**Deadline: 13:46 CT 2026-08-21.** Pull `origin/main`. PREPEND ACK. **Work now.**
+**Do not settle idle-but-alert. Do not poll deploys.** Cursor owns Render. Your money SHA will roll when the queue finishes (`d3c33b1` → `e800ea2` / `d3db631` / follower skip).
 
-**USMCA ONLY.** No Trucking. No Transportation. **No QBO sync / no write-back.** Reuse poster. Flags OFF until already-on for USMCA test.
+**NOW=factoring money** (USMCA) after settlements is clean. Then dispatch money. FAST-MERGE. Close tab after each leaf.
 
-Port **9223** debug Chrome. One money leaf → prove on prod/Neon → **close tab**. FAST-MERGE 4-min. Never idle.
-
-**Bar:** Fully-Wired items 3+6 (money) on each module you touch. Do not stamp module 100% from a green CI.
-
-**NOW=settlements money** (GL/JE · settlement · escrow · liability · payment, USMCA). Paid → **factoring money** → dispatch → vendors → customers → drivers → fleet → lists. Then scenario hops: `scenario.settlement` / `scenario.advance` / `scenario.escrow` / `scenario.ap` (USMCA predicates only).
-
-If a picker FAIL: prepend `OUTBOX-CC-2.md`. Findings → `GUARD-WORKORDERS.md` same turn.
+Miss C 246 is CC-2 Live-gap (scenario 5 slices Merged+honest zeros). Do not treat that as a money-poster task unless a named GL FAIL appears.
 
 ```text
-CC-1 | ACK | NEVER-IDLE | PORT=9223 | DEADLINE=13:46CT | NOW=settlements money | USMCA-ONLY | FAST-MERGE | GO
+CC-1 | ACK | NEVER-IDLE | PORT=9223 | NOW=factoring money | USMCA-ONLY | GO
 ```
