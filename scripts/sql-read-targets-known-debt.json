@@ -57,7 +57,6 @@
     "apps/backend/src/safety/dot-inspection-events.routes.ts: f.latest_at — column \"latest_at\" does not exist on compliance.dot_inspection_event_followups",
     "apps/backend/src/safety/dot-inspection-events.routes.ts: f.latest_state — column \"latest_state\" does not exist on compliance.dot_inspection_event_followups",
     "apps/backend/src/safety/dot-inspection-events.routes.ts: f.latest_user_uuid — column \"latest_user_uuid\" does not exist on compliance.dot_inspection_event_followups",
-    "apps/backend/src/safety/events/safety-events.routes.ts: i.name — column \"name\" does not exist on identity.users",
     "apps/backend/src/settlements/trip-link.engine.ts: l.delivery_appointment_end — column \"delivery_appointment_end\" does not exist on mdata.loads",
     "apps/backend/src/settlements/trip-link.engine.ts: l.delivery_appointment_start — column \"delivery_appointment_start\" does not exist on mdata.loads",
     "apps/backend/src/settlements/trip-link.engine.ts: l.pickup_appointment_start — column \"pickup_appointment_start\" does not exist on mdata.loads",

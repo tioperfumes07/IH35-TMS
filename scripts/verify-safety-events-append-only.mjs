@@ -18,6 +18,21 @@ for (const file of [migrationPath, routesPath]) {
 const migration = fs.readFileSync(migrationPath, "utf8");
 const routes = fs.readFileSync(routesPath, "utf8");
 
+function verifyNoteAuthorLabel(source) {
+  if (!/COALESCE\(NULLIF\(TRIM\(CONCAT_WS\(' ', i\.first_name, i\.last_name\)\), ''\), i\.email\) AS created_by_name/.test(source)) {
+    throw new Error("note history must resolve a human author label from canonical identity.users columns");
+  }
+  if (/i\.name AS created_by_name/.test(source)) throw new Error("note history must not read nonexistent identity.users.name");
+}
+
+if (process.argv.includes("--selftest")) {
+  let caught = false;
+  try { verifyNoteAuthorLabel(routes.replace(/COALESCE\(NULLIF\(TRIM\(CONCAT_WS\(' ', i\.first_name, i\.last_name\)\), ''\), i\.email\) AS created_by_name/, "i.name AS created_by_name")); } catch { caught = true; }
+  if (!caught) fail("planted phantom author-name regression was not caught");
+  console.log("verify:safety-events-append-only — SELFTEST OK");
+  process.exit(0);
+}
+
 const requiredMigrationSnippets = [
   "safety.safety_events is append-only",
   "safety.safety_event_notes is append-only",
@@ -41,5 +56,6 @@ if (routes.includes("app.patch(\"/api/v1/safety/events-log")) {
 if (routes.includes("app.delete(\"/api/v1/safety/events-log")) {
   fail("routes must not expose DELETE endpoints for safety events");
 }
+try { verifyNoteAuthorLabel(routes); } catch (error) { fail(error instanceof Error ? error.message : String(error)); }
 
 console.log("verify:safety-events-append-only — OK");

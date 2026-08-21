@@ -275,7 +275,7 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             n.note,
             n.created_by::text,
             n.created_at::text,
-            i.name AS created_by_name
+            COALESCE(NULLIF(TRIM(CONCAT_WS(' ', i.first_name, i.last_name)), ''), i.email) AS created_by_name
           FROM safety.safety_event_notes n
           LEFT JOIN identity.users i ON i.id = n.created_by
           WHERE n.safety_event_id = $1::uuid
