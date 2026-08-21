@@ -1,4 +1,13 @@
 # FINAL CODER INSTRUCTIONS — UNTIL THE SCOREBOARD IS CLOSED
+**Owner 2026-08-21 06:46 CT · 7 HOURS · DEADLINE 13:46 CT 2026-08-21 · URGENT 6 THEN 14 THEN ALL + SCENARIOS**  
+**USMCA ONLY. No Trucking. No Transportation. No QBO sync / no TMS→QBO write-back.**  
+**06:16 CT deadline SUPERSEDED.** Never idle. Never wait for Jorge. This header wins.
+
+**Bar:** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` items **1–12**. McLeod / QBO-chrome / NetSuite-controls / Alvys-workflow **quality**. CI-green · Box 3 unpaid=0 · matrix skeleton **≠** 100%.
+
+---
+
+# FINAL CODER INSTRUCTIONS — UNTIL THE SCOREBOARD IS CLOSED
 **Owner 2026-08-20 23:16 CT · 7 HOURS · DEADLINE 06:16 CT 2026-08-21 · URGENT 10 100% + SCENARIOS**  
 **USMCA ONLY. No Trucking. No Transportation. No QBO sync / no TMS→QBO write-back.**  
 **Never idle. Never wait for Jorge. This header wins.**

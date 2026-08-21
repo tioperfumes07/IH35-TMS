@@ -1,13 +1,17 @@
-# INBOX-CC-1 · 23:16 CT · 7 HOURS · NO IDLE
+# INBOX-CC-1 · 06:46 CT · 7 HOURS · NO IDLE
 
-**Deadline: 06:16 CT 2026-08-21.** Urgent 10 **100% Fully-Wired** (money **in**) + scenarios. Pull `origin/main`. PREPEND ACK. **Work now.**
+**Deadline: 13:46 CT 2026-08-21.** Pull `origin/main`. PREPEND ACK. **Work now.**
 
-**USMCA ONLY.** No Trucking. No Transportation. **No QBO** (no sync, no write-back). Reuse poster. Flags OFF until already-on for USMCA test.
+**USMCA ONLY.** No Trucking. No Transportation. **No QBO sync / no write-back.** Reuse poster. Flags OFF until already-on for USMCA test.
 
-Port **9223**. CLOSE `/program/matrix`. FAST-MERGE.
+Port **9223** debug Chrome. One money leaf → prove on prod/Neon → **close tab**. FAST-MERGE 4-min. Never idle.
 
-**NOW=settlements money.** Unpaid GL/JE · settlement · escrow · liability · payment on **USMCA**. If that column is paid on settlements → **factoring money** immediately → dispatch → vendors → customers → drivers → fleet → lists. Then **scenario hops** that owe money (`scenario.settlement` / `scenario.advance` / `scenario.escrow` / `scenario.ap` — USMCA predicates only).
+**Bar:** Fully-Wired items 3+6 (money) on each module you touch. Do not stamp module 100% from a green CI.
+
+**NOW=settlements money** (GL/JE · settlement · escrow · liability · payment, USMCA). Paid → **factoring money** → dispatch → vendors → customers → drivers → fleet → lists. Then scenario hops: `scenario.settlement` / `scenario.advance` / `scenario.escrow` / `scenario.ap` (USMCA predicates only).
+
+If a picker FAIL: prepend `OUTBOX-CC-2.md`. Findings → `GUARD-WORKORDERS.md` same turn.
 
 ```text
-CC-1 | ACK | NEVER-IDLE | PORT=9223 | DEADLINE=06:16CT | NOW=settlements money | USMCA-ONLY | GO
+CC-1 | ACK | NEVER-IDLE | PORT=9223 | DEADLINE=13:46CT | NOW=settlements money | USMCA-ONLY | FAST-MERGE | GO
 ```
