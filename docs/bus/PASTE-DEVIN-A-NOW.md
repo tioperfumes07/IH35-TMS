@@ -1,3 +1,8 @@
+# STALE — DO NOT FOLLOW · 2026-08-20 22:27 CT
+Use `docs/bus/CODER-INSTRUCTIONS-NOW.md` + `CHROME-PORTS-LOCKED.md` + `INBOX-<SEAT>.md`.
+Devin PARKED. URGENT-14 / 8H / autostart / no-CDP Codex are void.
+
+---
 # PASTE DEVIN-A · PARKED
 
 ```text

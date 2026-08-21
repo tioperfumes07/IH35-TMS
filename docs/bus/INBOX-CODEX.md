@@ -1,11 +1,9 @@
-# INBOX-CODEX · REWAKE 03:20Z
+# INBOX-CODEX · 22:27 CT · NEVER IDLE · TMUX `codex`
 
-No PREPEND ACK after 00:36Z. Customers reverse is **wrong next**. Jorge: **get working.**
+Port **9226**. Worktree `/private/tmp/IH35-codex-now`. `tmux attach -t codex`. Pull `origin/main`. PREPEND ACK.
 
-Pull `origin/main`. **NOW=settlements reverse + connectivity.** Then factoring reverse. Banking reverse already merged (#13320). No CDP. Not inventory. No defer. FAST-MERGE.
-
-Paste `PASTE-CODEX-NOW.md`.
+**NOW=settlements reverse + connectivity.** Then factoring reverse → rest of 6 → 10 → WAVE 2. Chrome required (not optional). No Clicked stamps (Cursor). FAST-MERGE.
 
 ```text
-Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements reverse | GO
+Codex | ACK | NEVER-IDLE | PORT=9226 | NOW=settlements reverse | GO
 ```

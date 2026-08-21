@@ -4,4 +4,4 @@
 
 Seats do not write their own INBOX (Cursor lead only). Status in OUTBOX first line. Picker FAIL → `OUTBOX-CC-2.md`. Money FAIL → `OUTBOX-CC-1.md`. Plus `OUTBOX-CURSOR.md`.
 
-Until WAVE 1 hits the BAR, INBOX TOPs already contain the ladder — Cursor does not invent a new NOW after every merge. Hourly pull is enough. Devin queue 0 is not a new queue; it is a re-walk of accounting Queue 6.
+INBOX TOP names the current module on **your column**. After that module’s your-column bar, **you** advance to the next name in URGENT 6 → rest of 10 → WAVE 2 — do not idle waiting for a new INBOX. Cursor rewrites INBOX when seats stall. Devin is PARKED.

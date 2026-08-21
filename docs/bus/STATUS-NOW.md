@@ -1,15 +1,13 @@
-# STATUS-NOW
+# STATUS-NOW · 2026-08-20 22:27 CT
 
-**URGENT 10:** accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists (Items). **Not inventory.**
+Never idle. URGENT 6 → rest of 10 → WAVE 2. Chrome ports locked.
 
-**No defer.** Seats idle since ~00:36Z is a process defect. **NOW=settlements** (accounting+banking leftover is shipped; do not loop it).
+| Seat | Port | NOW |
+|------|------|-----|
+| CC-1 | 9223 | settlements money |
+| CC-2 | 9224 | settlements Box 4 |
+| CC-3 | 9225 | settlements Built |
+| Codex | 9226 | settlements reverse |
+| Cursor | 9222 | settlements Clicked + lead |
 
-| Seat | NOW |
-|------|-----|
-| CC-1 | **settlements money** then factoring money |
-| CC-2 | **settlements Box 4** (banking leftover only if a real unpaid Live cell remains) |
-| CC-3 | **settlements Built** then factoring Built |
-| Codex | **settlements reverse + connectivity** then factoring reverse |
-| Cursor | unpaid **Clicked** on settlements then factoring |
-
-Devin PARKED. WAVE 2 = inventory/fuel/safety/maintenance after the 10.
+Devin PARKED. tmux `codex` = `/private/tmp/IH35-codex-now`.

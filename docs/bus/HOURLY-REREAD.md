@@ -1,13 +1,11 @@
-# HOURLY RE-READ · EVERY SEAT INCLUDING CURSOR
-
-Owner 2026-08-20: every hour without exception, re-read instructions (redundant on purpose). Continuous auto + FAST-MERGE between ticks.
+# HOURLY RE-READ
 
 ```text
 git pull --ff-only origin main
 ```
 
-Read: `CODER-INSTRUCTIONS-NOW.md` · `INBOX-<SEAT>.md` · `FAST-MERGE-4MIN-LAW.md`
+Read: `CODER-INSTRUCTIONS-NOW.md` · `CHROME-PORTS-LOCKED.md` · `INBOX-<SEAT>.md` · `FAST-MERGE-4MIN-LAW.md`
 
-ACK: `STANDARD=USMCA-LAUNCH | WAVE1-BAR-100 | HOURLY-REREAD | NOW=<module> <col> | GO`
+ACK: `NEVER-IDLE | URGENT-6-THEN-10-THEN-ALL | PORT=<n> | NOW=<module> <col> | GO`
 
-Do not deviate. Do not idle.
+Do not idle. Do not pause after a module.

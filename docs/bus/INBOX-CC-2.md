@@ -1,11 +1,9 @@
-# INBOX-CC-2 · REWAKE 03:20Z
+# INBOX-CC-2 · 22:27 CT · NEVER IDLE
 
-Idle since 00:25Z. Jorge: **get working.** Pull `origin/main`. PREPEND ACK this hour.
+Port **9224**. Pull `origin/main`. PREPEND ACK.
 
-**NOW=settlements Box 4 Live.** Stamp real unpaid Live cells only. Banking leftover only if a named unpaid cell still exists — do not re-audit closed boards. Not inventory. No defer. FAST-MERGE.
-
-Paste `PASTE-CC-2-NOW.md`.
+**NOW=settlements Box 4 Live.** Then factoring Box 4 → rest of URGENT 6 → 10 → WAVE 2. Never idle. Stamp only PROD-VERIFIED live. FAST-MERGE.
 
 ```text
-CC-2 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements Box4 | GO
+CC-2 | ACK | NEVER-IDLE | PORT=9224 | NOW=settlements Box4 | GO
 ```
