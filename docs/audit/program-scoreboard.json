@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-20T23:31:19-05:00",
-    "sourceSha": "ad4224a3f",
-    "deployedSha": "60fff7e",
+    "generatedAt": "2026-08-20T23:38:14-05:00",
+    "sourceSha": "480ed82dd",
+    "deployedSha": "19bad6a",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2008,
+    "ledgerRows": 2009,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,51 @@
   },
   "recentActivity": [
     {
+      "number": 13391,
+      "title": "FINDING: REPORTS-BOX4-LIVE-MONEY-AND-VOID-REVERSAL-SUBJECT-GAP LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13391",
+      "sha": "480ed82dd",
+      "committedAtIso": "2026-08-20T23:38:14-05:00"
+    },
+    {
+      "number": 13390,
+      "title": "Claude-3: OUTBOX status — theater-audit pass complete",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13390",
+      "sha": "d08fd9422",
+      "committedAtIso": "2026-08-20T23:36:54-05:00"
+    },
+    {
+      "number": 13389,
+      "title": "Claude-3: honesty_audit notes for 9 legitimate no-picker-needed catalog-create leaves",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13389",
+      "sha": "c09c224fc",
+      "committedAtIso": "2026-08-20T23:36:02-05:00"
+    },
+    {
+      "number": 13388,
+      "title": "Claude-3: 3 more picker_law leaves confirmed real — step 4186",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13388",
+      "sha": "19bad6ac5",
+      "committedAtIso": "2026-08-20T23:33:52-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/20/2026, 11:33 PM CT",
+      "url": "",
+      "sha": "36809d117",
+      "committedAtIso": "2026-08-21T04:33:05Z"
+    },
+    {
       "number": 13387,
       "title": "Claude-3: claim-reserve step 4186 for picker_law deep-child batch guard",
       "state": "merged",
@@ -2164,51 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13383",
       "sha": "38105089e",
       "committedAtIso": "2026-08-20T23:29:31-05:00"
-    },
-    {
-      "number": 13382,
-      "title": "Claude-3: fix dispatch.modal.load_create picker_law surface_path + real guard (step 4185)",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13382",
-      "sha": "b04397d94",
-      "committedAtIso": "2026-08-20T23:28:53-05:00"
-    },
-    {
-      "number": 13381,
-      "title": "FINDING: FINANCE-STATEMENTS-BOX4-LIVE-MONEY LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13381",
-      "sha": "7c3e4b956",
-      "committedAtIso": "2026-08-20T23:28:44-05:00"
-    },
-    {
-      "number": 13380,
-      "title": "FINDING: DISPATCH-DRIVER-PAY-BILL-DRIVER-HUMAN-LABEL-MISSING LANE: FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13380",
-      "sha": "60fff7ec2",
-      "committedAtIso": "2026-08-20T23:27:44-05:00"
-    },
-    {
-      "number": 13379,
-      "title": "FINDING: SYSTEM-PROGRAM-CONFIG-CONNECTIVITY-GUARD-DRIFT",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13379",
-      "sha": "2cbb66f86",
-      "committedAtIso": "2026-08-20T23:26:40-05:00"
-    },
-    {
-      "number": 13378,
-      "title": "Claude-3: claim-reserve step 4185 for dispatch load_create picker_law guard",
-      "state": "merged",
-      "mergedAtCt": "08/20/2026, 11:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13378",
-      "sha": "03389b4aa",
-      "committedAtIso": "2026-08-20T23:25:57-05:00"
     }
   ]
 }
