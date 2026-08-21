@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T18:07:31-05:00",
-    "sourceSha": "993ac7823",
+    "generatedAt": "2026-08-21T18:09:32-05:00",
+    "sourceSha": "58476f60c",
     "deployedSha": "fe62c92",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2048,
+    "ledgerRows": 2049,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,33 @@
   },
   "recentActivity": [
     {
+      "number": 13713,
+      "title": "FINDING: CERTIFY-SETTLEMENTS-OPEN-DRIVER-BILLS-REVERSE-LINK LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13713",
+      "sha": "58476f60c",
+      "committedAtIso": "2026-08-21T18:09:32-05:00"
+    },
+    {
+      "number": 13712,
+      "title": "FINDING: BUS-SEAT-NEXT-1802",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13712",
+      "sha": "0b80de29f",
+      "committedAtIso": "2026-08-21T18:08:32-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:08 PM CT",
+      "url": "",
+      "sha": "9469641f8",
+      "committedAtIso": "2026-08-21T23:08:29Z"
+    },
+    {
       "number": 13711,
       "title": "FINDING: CERTIFY-BANK-TRANSACTIONS-PICKER-LAW-REVERSE-LINK LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2182,33 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13705",
       "sha": "c907d18a0",
       "committedAtIso": "2026-08-21T17:56:57-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 05:56 PM CT",
-      "url": "",
-      "sha": "9f2fafed6",
-      "committedAtIso": "2026-08-21T22:56:08Z"
-    },
-    {
-      "number": 13704,
-      "title": "FINDING: CERTIFY-ACCT-REVERSE-LINK-COLUMN-CLOSE LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 05:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13704",
-      "sha": "2e85c8e36",
-      "committedAtIso": "2026-08-21T17:55:01-05:00"
-    },
-    {
-      "number": 13703,
-      "title": "FINDING: ACCT-F5705-CLAIM LANE: FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 05:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13703",
-      "sha": "967187b4c",
-      "committedAtIso": "2026-08-21T17:51:07-05:00"
     }
   ]
 }
