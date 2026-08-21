@@ -146,8 +146,8 @@ export function getUser(id: string) {
   return apiRequest<IdentityUser>(`/api/v1/identity/users/${id}`);
 }
 
-export function getUserDetail(id: string) {
-  return apiRequest<IdentityUserDetail>(`/api/v1/identity/users/${id}/detail`);
+export function getUserDetail(id: string, signal?: AbortSignal) {
+  return apiRequest<IdentityUserDetail>(`/api/v1/identity/users/${id}/detail`, { signal });
 }
 
 export function createUser(body: {
