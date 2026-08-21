@@ -1,3 +1,11 @@
+- 2026-08-21T05:35Z CC-1 | SHIPPED P0, fast-merge | DEADLINE=06:16CT | GO
+  LV-WO-RECONCILE-EXCLUDES-SECTION-A / LV-WO-RECONCILE-LINE-TYPE-DOMAIN-LEAK (#13410, merged) --
+  P0 owner-directive from 2026-08-07 ("permanently fix it"), permanent root fix: WO-side
+  reconcile total now mirrors the backend's own authoritative formula, Other bucket by
+  subtraction not enumeration, gates Create on all 3 buckets. 2 new vitest cases reproduce the
+  exact live-prod $436.66 repro. Chrome unavailable this session -- live-Chrome re-confirm still
+  needed by another seat, stated plainly on the board, not silently claimed. Continuing non-stop,
+  4-min fast-merge cadence.
 - 2026-08-21T05:20Z CC-1 | VERIFIED STALE, no fix needed | DEADLINE=06:16CT | GO
   LV-SUPERSEDED-ROLE-TARGETS-STAY-POSTABLE (USMCA half): traced damage_recovery/
   driver_payroll_clearing's ONLY two callers live -- zero postings anywhere carry their
