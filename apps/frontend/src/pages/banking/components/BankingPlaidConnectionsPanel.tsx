@@ -11,6 +11,7 @@ import {
 } from "../../../api/banking";
 import { ApiError } from "../../../api/client";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useAuth } from "../../../auth/useAuth";
 import { PlaidReconnectButton } from "./PlaidReconnectButton";
 import { PlaidItemCard } from "./PlaidItemCard";
@@ -84,6 +85,9 @@ export function BankingPlaidConnectionsPanel({
   const [syncingItemId, setSyncingItemId] = useState<string | null>(null);
   const [reconnectHighlightItemId, setReconnectHighlightItemId] = useState<string | null>(null);
   const [showInactive, setShowInactive] = useState(false);
+  // NO-NATIVE-DIALOGS-U6 — window.confirm freezes Live Chrome browser automation; ConfirmModal
+  // (in-app yes/no shell) replaces it, same disconnect contract.
+  const [disconnectTarget, setDisconnectTarget] = useState<string | null>(null);
   const plaidQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", companyId],
     queryFn: () => getPlaidBankAccounts(companyId),
@@ -198,15 +202,7 @@ export function BankingPlaidConnectionsPanel({
                         <ActionButton
                           type="button"
                           className="border border-red-200 bg-red-50 text-red-800 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600"
-                          onClick={() => {
-                            if (!window.confirm("Disconnect this bank item and deactivate its accounts locally?")) return;
-                            void disconnectPlaidItem(companyId, itemId)
-                              .then(() => {
-                                pushToast("Item disconnected", "success");
-                                void queryClient.invalidateQueries({ queryKey: ["banking"] });
-                              })
-                              .catch((e: unknown) => pushToast(String((e as Error).message || "Disconnect failed"), "error"));
-                          }}
+                          onClick={() => setDisconnectTarget(itemId)}
                         >
                           Disconnect
                         </ActionButton>
@@ -239,6 +235,24 @@ export function BankingPlaidConnectionsPanel({
         Show disconnected history (include inactive)
       </label>
       {!canConnect ? <p className="mt-2 text-xs text-gray-500">Connect and reconnect actions are limited to Owner/Admin.</p> : null}
+      <ConfirmModal
+        open={Boolean(disconnectTarget)}
+        title="Disconnect bank item"
+        message="Disconnect this bank item and deactivate its accounts locally?"
+        confirmLabel="Disconnect"
+        danger
+        onClose={() => setDisconnectTarget(null)}
+        onConfirm={async () => {
+          if (!disconnectTarget) return;
+          try {
+            await disconnectPlaidItem(companyId, disconnectTarget);
+            pushToast("Item disconnected", "success");
+            void queryClient.invalidateQueries({ queryKey: ["banking"] });
+          } catch (e: unknown) {
+            pushToast(String((e as Error).message || "Disconnect failed"), "error");
+          }
+        }}
+      />
     </div>
   );
 }

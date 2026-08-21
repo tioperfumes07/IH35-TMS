@@ -29,6 +29,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
 import { entityLabel } from "../../lib/entity-label";
 import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
@@ -134,6 +135,10 @@ export function FactorAdmin() {
   const [showNoaModal, setShowNoaModal] = useState(false);
   const [showLorModal, setShowLorModal] = useState(false);
   const [selectedFactor, setSelectedFactor] = useState<Factor | null>(null);
+  // NO-NATIVE-DIALOGS-U6 — window.confirm freezes Live Chrome browser automation; reuses the same
+  // typed-confirmation shell FactoringHome.tsx already uses for the sibling "deactivate active
+  // factor" action, same danger class.
+  const [showDeactivateFactorModal, setShowDeactivateFactorModal] = useState(false);
   const [detailCustomerId, setDetailCustomerId] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [assignCustomerId, setAssignCustomerId] = useState("");
@@ -431,10 +436,7 @@ export function FactorAdmin() {
                   size="sm"
                   variant="secondary"
                   loading={deactivateFactorMutation.isPending}
-                  onClick={() => {
-                    if (!window.confirm(`Deactivate "${selectedFactor.name}"? A Letter of Release is required if the factor has active customer assignments.`)) return;
-                    void deactivateFactorMutation.mutateAsync();
-                  }}
+                  onClick={() => setShowDeactivateFactorModal(true)}
                 >
                   Deactivate
                 </Button>
@@ -788,6 +790,17 @@ export function FactorAdmin() {
           </div>
         </div>
       ) : null}
+      <DeactivateFactorConfirmModal
+        open={showDeactivateFactorModal}
+        loading={deactivateFactorMutation.isPending}
+        onClose={() => setShowDeactivateFactorModal(false)}
+        onConfirm={() => {
+          void deactivateFactorMutation
+            .mutateAsync()
+            .then(() => setShowDeactivateFactorModal(false))
+            .catch(() => undefined); // onError above already surfaces the toast; avoid an unhandled rejection
+        }}
+      />
     </div>
   );
 }

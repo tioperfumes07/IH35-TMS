@@ -14,6 +14,7 @@ import {
 import { listVendors } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -64,6 +65,9 @@ export function VendorsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [draft, setDraft] = useState<VendorDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState<MaintenanceVendorRow | null>(null);
+  // NO-NATIVE-DIALOGS-U6 — window.prompt freezes Live Chrome browser automation; VoidReasonModal
+  // (in-app required-reason shell) replaces it, same archive-reason contract.
+  const [archiveTarget, setArchiveTarget] = useState<MaintenanceVendorRow | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   // SAF-B29 / LST-PICKER-01: AP link must server-search — silent limit:1000 dropped vendors past page 1.
   const [apVendorSearch, setApVendorSearch] = useState("");
@@ -232,13 +236,7 @@ export function VendorsPage() {
         type="button"
         className="text-red-600 underline"
         disabled={!row.is_active}
-        onClick={async () => {
-          const reason = window.prompt("Archive reason");
-          if (!reason) return;
-          await archiveMaintenanceVendor(row.id, companyId, reason);
-          await refresh();
-          pushToast("Vendor archived", "success");
-        }}
+        onClick={() => setArchiveTarget(row)}
       >
         Archive
       </button>
@@ -386,6 +384,21 @@ export function VendorsPage() {
           </div>
         ) : null}
       </Modal>
+      <VoidReasonModal
+        open={Boolean(archiveTarget)}
+        title="Archive vendor"
+        entityRef={archiveTarget?.display_name ?? undefined}
+        minLength={1}
+        postsReversingEntry={false}
+        submitLabel="Archive"
+        onClose={() => setArchiveTarget(null)}
+        onSubmit={async (reason) => {
+          if (!archiveTarget) return;
+          await archiveMaintenanceVendor(archiveTarget.id, companyId, reason);
+          await refresh();
+          pushToast("Vendor archived", "success");
+        }}
+      />
     </div>
   );
 }
