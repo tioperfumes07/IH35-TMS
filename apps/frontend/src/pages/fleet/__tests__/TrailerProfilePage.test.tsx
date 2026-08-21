@@ -87,4 +87,13 @@ describe("TrailerProfilePage", () => {
     await screen.findByTestId("tp-section-1-identity");
     expect(screen.queryByTestId("tp-reefer-a19-slot")).toBeNull();
   });
+
+  it("shows an actionable retry state when the trailer aggregate fails", async () => {
+    vi.spyOn(clientApi, "apiRequest").mockRejectedValueOnce(new Error("aggregate unavailable"));
+    renderPage();
+    expect(await screen.findByText("Couldn't load trailer profile")).toBeTruthy();
+    expect(screen.getByText("aggregate unavailable")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /retry/i })).toBeTruthy();
+    expect(screen.queryByText("Loading trailer profile…")).toBeNull();
+  });
 });

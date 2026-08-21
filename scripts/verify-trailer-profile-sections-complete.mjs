@@ -35,6 +35,15 @@ export function problems(
     if (!page.includes(id)) failures.push(`missing ${id}`);
   }
 
+  // LV-FLEET-TRAILER-PROFILE-HUNG — the production aggregate can stall; never leave operators on
+  // an infinite loading card. Match the unit profile's bounded read + actionable retry contract.
+  if (!/AbortSignal\.timeout\(15_000\)/.test(page) || !/signal: ctrl\.signal/.test(page)) {
+    failures.push("trailer profile aggregate must use a bounded abort signal");
+  }
+  if (!/profileQ\.isError/.test(page) || !/Couldn't load trailer profile/.test(page) || !/onRetry=\{\(\) => void profileQ\.refetch\(\)\}/.test(page)) {
+    failures.push("trailer profile must replace failed loading with an actionable retry state");
+  }
+
   // P31: a trailer's reverse history must use the persisted assignment FK, include inactive
   // historical loads, and render a canonical link back to the load drawer.
   if (!/FROM dispatch\.load_assignment_history lah[\s\S]{0,500}?lah\.new_trailer_id = \$1::uuid/.test(service)) {
@@ -125,6 +134,8 @@ function selftest() {
     ["current-load unit FK regressed", page, service.replace("l.assigned_unit_id = $1::uuid", "l.assigned_primary_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
     ["wo expense reverse removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail.replace(/ExpensesReverseSection/g, "GoneExpense"), 1],
     ["wo list filter removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes.replace(/if \(filters\.workOrderId\) \{/g, "if (false) {"), woDetail, 1],
+    ["aggregate timeout removed", page.replace("AbortSignal.timeout(15_000)", "undefined"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
+    ["retry state removed", page.replace("Couldn't load trailer profile", "Trailer unavailable"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
   ];
   for (const [name, p, s, d, l, v, e, w, minimum] of cases) {
     const count = problems(p, s, d, l, v, e, w).length;
