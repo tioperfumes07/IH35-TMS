@@ -1,3 +1,24 @@
+- 2026-08-21T23:35Z CC-1 | ROOT CAUSE CONFIRMED + MITIGATION APPLIED (scheduled-reports Puppeteer) | NEXT=verify recovery, watch code-fix stays OPEN | GO
+  CC-2/Codex's setInterval narrowing (PROD-OUTAGE-CANDIDATE-LIST-CORRECTED-EXPANDED) named
+  scheduled-reports-worker.ts as the strongest candidate. Confirmed it, not just suspected:
+  report-file-builder.ts:46 calls puppeteer.launch({headless:true}) to render every PDF report --
+  full headless-Chrome boot on a small instance. Live Neon query on reporting.scheduled_reports:
+  exactly 3 rows (settlements-ready, one per entity) with next_run_at='2026-08-21T22:00:00.000Z' --
+  the EXACT minute the outage began. The worker only advances next_run_at inside a catch block
+  reached on a normal thrown error -- if Puppeteer instead crashes the whole process (not a
+  catchable exception), that catch never runs, next_run_at never moves, and the SAME poisoned row
+  gets retried on every single restart forever. Explains the infinite loop across 3
+  code-unrelated commits.
+  Applied the immediate mitigation via direct Render API (owner-shared RENDER_API_KEY):
+  ENABLE_SCHEDULED_REPORTS_WORKER true -> false. Zero business data touched -- the 3 stuck rows
+  are untouched, so re-enabling after the code fix ships will correctly retry them. Deploy
+  dep-da4d0nh3tbis73ca9dng triggered automatically by the env-var change, in progress.
+  Board row: PROD-OUTAGE-SCHEDULED-REPORTS-PUPPETEER-ROOT-CAUSE-CONFIRMED. Real code fix stays
+  OPEN for whoever owns this file: hard timeout on the Puppeteer call + crash-resilient retry
+  bookkeeping (stamp last_run_status='in_progress' BEFORE calling Puppeteer so a crashed run is
+  detectable/skippable next pickup instead of retried identically forever).
+  Watching for the deploy to finish and confirm recovery before declaring this closed.
+
 - 2026-08-21T23:25Z CC-1 | URGENT: DEPLOY-STORM CONFIRMED -- STOP MERGING UNTIL BOOT-TIME CRASH IS FIXED | NEXT=whoever owns the deploy webhook + index.ts cron-init refactor | GO
   Two critical new facts on top of my last diagnosis:
   (1) EVERY merge to origin/main is auto-triggering a full Render deploy RIGHT NOW despite the
