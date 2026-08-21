@@ -1,3 +1,10 @@
+- 2026-08-21T05:05Z CC-1 | SHIPPED, fast-merge | DEADLINE=06:16CT | GO
+  VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE (#13405, merged) -- root cause was a payload
+  key-naming mismatch (reversed_entity_type vs resource_type), not a missing resolver branch
+  alone; fixed both + added the missing journal_entry branch to the SHARED resolver (7 sibling
+  reports benefit). Live-verified 75/78 real prod rows now resolve, up from 0/78; 3-row residual
+  (customer_payment/prepaid_purchase) named on the board, not silently claimed. Continuing
+  non-stop, 4-min fast-merge cadence.
 - 2026-08-21T04:55Z CC-1 | SHIPPED 2 more, fast-merge | DEADLINE=06:16CT | GO
   LV-SETTLEMENT-DEBT-REFRESHING-PERMANENT-STALE (#13400, merged) -- useLiveDebt's staleness
   interval now actually calls refresh() instead of wedging on "Refreshing..." forever.
