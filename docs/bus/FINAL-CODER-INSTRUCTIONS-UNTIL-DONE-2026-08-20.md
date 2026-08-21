@@ -1,4 +1,16 @@
 # FINAL CODER INSTRUCTIONS — UNTIL THE SCOREBOARD IS CLOSED
+**Owner 2026-08-20 22:27 CT · NEVER IDLE · URGENT 6 THEN 10 THEN ALL MODULES · Chrome ports assigned**  
+**Prior 18:04 CT text below still applies except where this header conflicts — this header wins.**
+
+- **Never idle / never pause.** When your column on a module hits the bar, **immediately** take the next module in order. Stop only when WAVE 1 + WAVE 2 are Fully-Wired **1–12**.
+- **URGENT 6 first:** accounting → banking → settlements → factoring → dispatch → vendors. **Then** customers → drivers → fleet → lists. **Then WAVE 2.** Not inventory as urgent.
+- **All five seats open debug Chrome** on Cursor-assigned ports (`docs/bus/CHROME-PORTS-LOCKED.md`). No deviation.
+- **FAST-MERGE 4-min law ON.** Report to Jorge **only** after live Chrome/Neon proof (or `UNVERIFIED` + named blocker).
+- Communicate in **INBOX + OUTBOX + `SHARED-NOW.md` + Desktop bus folder**. Jorge is not the messenger.
+
+---
+
+# FINAL CODER INSTRUCTIONS — UNTIL THE SCOREBOARD IS CLOSED
 **Owner 2026-08-20 18:04 CT · FINAL · do not deviate · do not write a competing plan**
 
 This is the **only** GO from here until **Miss C = 0** and **READY ✓** on the frozen USMCA Required maps — **then** WAVE 2 remainder until the **same bar** on every remaining module.  
@@ -54,11 +66,11 @@ Columns advance independently down this list. Never idle.
 
 | Seat | Column forever | Never |
 |------|----------------|-------|
-| **CC-3** | Box 3 **Built** leftover (surface bar, qbo_chrome, honest leaf-specific guards) | Chrome CDP · GL math |
-| **Codex** | `connectivity` + `reverse_link` (both-way drill, McLeod seriousness) | CDP · GL |
-| **CC-1** | **Money** — canonical write + reuse `postSourceTransaction` / `maybePostBankCategorizationToGl` · header+lines · balanced JE when USMCA flags ON · bank/JE/bill/invoice/payment/settlement/factor/escrow | CDP · inventing FKs · TMS→QBO write-back · parking money |
-| **CC-2** | **Box 4 Live** append-lease `AUDIT-COVERAGE-LIVE.md` PROD-VERIFIED + `` `leaf:col` `` (money stamps are money, not NON-MONEY) | Clicked theater · keyword fan-out Live |
-| **Cursor** | Lead · bus · leftover Built · scoreboard honesty · **item 12 Clicked** (unpaid cells only, no 876 rewalk) · FAST-MERGE own PRs | Stamping Box 4 · inventing a 6th wave · running Devin |
+| **CC-3** | Box 3 **Built** leftover (surface bar, qbo_chrome, honest leaf-specific guards) · Chrome **9225** | GL math · Clicked stamps |
+| **Codex** | `connectivity` + `reverse_link` (both-way drill, McLeod seriousness) · Chrome **9226** | GL · Clicked stamps |
+| **CC-1** | **Money** — canonical write + reuse `postSourceTransaction` / `maybePostBankCategorizationToGl` · header+lines · balanced JE when USMCA flags ON · bank/JE/bill/invoice/payment/settlement/factor/escrow · Chrome **9223** | inventing FKs · TMS→QBO write-back · parking money · Clicked stamps |
+| **CC-2** | **Box 4 Live** append-lease `AUDIT-COVERAGE-LIVE.md` PROD-VERIFIED + `` `leaf:col` `` (money stamps are money, not NON-MONEY) · Chrome **9224** | Clicked theater · keyword fan-out Live |
+| **Cursor** | Lead · bus · leftover Built · scoreboard honesty · **item 12 Clicked** (unpaid cells only, no 876 rewalk) · FAST-MERGE own PRs · Chrome **9222** | Stamping Box 4 · inventing a 6th wave · running Devin |
 
 **Devin-A is PARKED (owner 2026-08-20 18:50 CT).** Do not start `devin-a-live-loop`. Do not ping Devin. Clicked = Cursor.
 
@@ -73,7 +85,7 @@ Columns advance independently down this list. Never idle.
 3. **CC-1** — every money Required cell: real USMCA create/save/post (or honest WORM void/reverse). No defer. FAST-MERGE + Neon yourself.
 4. **Cursor** — CDP unpaid Clicked only (`leaf=module:leafId:col`). Queue 6 rewalk = 2 leaves after keys full. Never 876 all-WAVE dump. Lead the bus.
 5. **CC-2** — after live row exists, stamp Box 4 `` `leaf:col` ``. OUTBOX `Miss C was N now M`.
-6. **Cursor** — if a seat idles, re-instruct from **this file**. Do not replace this file.
+6. **Cursor** — if a seat idles, re-instruct from **this file** + `CODER-INSTRUCTIONS-NOW.md`. Never idle yourself.
 
 Then next WAVE 1 module on **your column**. After the 10, WAVE 2. Never defer money/wiring/linkage.
 

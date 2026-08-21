@@ -1,0 +1,18 @@
+# CHROME DEBUG PORTS · CURSOR ASSIGNS · NO DEVIATION
+**Owner 2026-08-20 22:27 CT · Cursor lead controls ports.**
+
+Every working seat **must** attach a debug Chrome (MCP / CDP) on **its assigned port**. Do not steal another seat’s port. If yours is taken, use the spare listed — then PREPEND OUTBOX `PORT=<used>`.
+
+| Seat | Port | Use |
+|------|------|-----|
+| **Cursor** | **9222** | Lead + item-12 Clicked |
+| **CC-1** | **9223** | Money live create/post proof |
+| **CC-2** | **9224** | Box 4 Live stamps (PROD-VERIFIED) |
+| **CC-3** | **9225** | Built / qbo_chrome / picker live |
+| **Codex** | **9226** | Reverse + connectivity live drill |
+| Devin-A | 9227 | **PARKED — do not start** |
+| Spare | 9228 · 9229 | Overflow only; announce on OUTBOX |
+
+Target: `https://app.ih35dispatch.com` · USMCA entity. Matrix: `/program/matrix?scope=system`.
+
+**Law:** Jorge is not told a cell is done until that seat proved it **live** on this Chrome (or named UNVERIFIED + blocker). CI-green is not Live.

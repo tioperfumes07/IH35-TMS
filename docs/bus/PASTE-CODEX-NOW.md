@@ -1,8 +1,8 @@
-# PASTE CODEX · REWAKE · SETTLEMENTS REVERSE
+# PASTE CODEX · TMUX `codex` · PORT 9226
 
 ```text
-git pull --ff-only origin main
-Read docs/bus/INBOX-CODEX.md TOP
-STOP customers reverse. NOW=settlements reverse. Then factoring. No CDP. Never inventory. PREPEND ACK. FAST-MERGE.
-ACK: Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements reverse | GO
+tmux attach -t codex
+cd /private/tmp/IH35-codex-now && git pull --ff-only origin main
+Chrome debug **9226**. NOW=settlements reverse. Never idle. FAST-MERGE.
+ACK: Codex | ACK | NEVER-IDLE | PORT=9226 | NOW=settlements reverse | GO
 ```

@@ -1,11 +1,9 @@
-# INBOX-CC-3 · REWAKE 03:20Z
+# INBOX-CC-3 · 22:27 CT · NEVER IDLE
 
-No PREPEND ACK since Cursor 00:36Z. That is idle. Jorge: **get working.**
+Port **9225**. Pull `origin/main`. PREPEND ACK.
 
-Pull `origin/main`. **NOW=settlements Built** (qbo_chrome + picker on settlements leaves). Then factoring Built. Banking Built is not an idle loop. Not inventory. No defer. FAST-MERGE.
-
-Paste `PASTE-CC-3-NOW.md`.
+**NOW=settlements Built** (qbo_chrome + picker + surface bar). Then factoring Built → rest of 6 → 10 → WAVE 2. Never idle. FAST-MERGE.
 
 ```text
-CC-3 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements Built | GO
+CC-3 | ACK | NEVER-IDLE | PORT=9225 | NOW=settlements Built | GO
 ```

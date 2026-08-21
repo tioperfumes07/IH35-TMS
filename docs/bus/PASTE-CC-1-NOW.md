@@ -1,8 +1,7 @@
-# PASTE CC-1 · REWAKE · SETTLEMENTS MONEY
+# PASTE CC-1
 
 ```text
 git pull --ff-only origin main
-Read docs/bus/INBOX-CC-1.md TOP
-NOW=settlements money. Then factoring. Never idle. Never inventory. PREPEND ACK. FAST-MERGE.
-ACK: CC-1 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements money | GO
+Chrome debug **9223**. NOW=settlements money. Never idle. FAST-MERGE.
+ACK: CC-1 | ACK | NEVER-IDLE | PORT=9223 | NOW=settlements money | GO
 ```
