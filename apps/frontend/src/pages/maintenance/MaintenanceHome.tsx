@@ -352,12 +352,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             />
             <InTransitTriageBand
               issues={triageQuery.data?.issues ?? []}
-              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues.length ?? 0}
+              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues?.length ?? 0}
               onTriage={(issue) => setTriageIssue(issue)}
             />
             <SevereAlertsBand
               alerts={severeAlertsQuery.data?.alerts ?? []}
-              totalCount={severeAlertsQuery.data?.total_count ?? severeAlertsQuery.data?.alerts.length ?? 0}
+              totalCount={severeAlertsQuery.data?.total_count ?? severeAlertsQuery.data?.alerts?.length ?? 0}
             />
           </aside>
           </div>
@@ -402,7 +402,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           : (
             <InTransitIssuesTable
               issues={triageQuery.data?.issues ?? []}
-              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues.length ?? 0}
+              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues?.length ?? 0}
               loading={
                 triageQuery.isPending ||
                 (triageQuery.isFetching && (triageQuery.data?.issues?.length ?? 0) === 0)
@@ -512,8 +512,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       <RecentActivityRow
         recent={recentQuery.data?.recent ?? []}
         completed={recentQuery.data?.completed ?? []}
-        recentTotalCount={recentQuery.data?.recent_total_count ?? recentQuery.data?.recent.length ?? 0}
-        completedTotalCount={recentQuery.data?.completed_total_count ?? recentQuery.data?.completed.length ?? 0}
+        recentTotalCount={recentQuery.data?.recent_total_count ?? recentQuery.data?.recent?.length ?? 0}
+        completedTotalCount={recentQuery.data?.completed_total_count ?? recentQuery.data?.completed?.length ?? 0}
         onOpen={(id) => setSelectedWorkOrderId(id)}
       />
 
