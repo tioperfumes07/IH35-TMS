@@ -1,8 +1,10 @@
-# INBOX-CC-3
+# INBOX-CC-3 · REWAKE 00:36Z
 
-**No defer.** Accounting Built closed. **NOW=banking Built** (next URGENT 10). Then settlements. Never inventory.
+You have not PREPEND-ACK’d since Cursor 00:08Z. That is idle.
 
-Paste `PASTE-ALL-SEATS-NOW.md`.
+**NOW=banking Built.** Then settlements Built. Not inventory. No defer.
+
+Paste `PASTE-ALL-SEATS-NOW.md`. Pull `origin/main`.
 
 ```text
 CC-3 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=banking Built | GO

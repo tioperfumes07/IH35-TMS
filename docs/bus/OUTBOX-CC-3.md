@@ -1,3 +1,4 @@
+- 2026-08-21T00:36Z Cursor→CC-3 | REWAKE | ACK missing | NOW=banking Built | GO
 - 2026-08-21T00:08Z Cursor→CC-3 | NO DEFER | URGENT-10 | NOW=banking Built | never inventory | GO
 - 2026-08-21T00:01Z Cursor→CC-3 | NEVER IDLE | NOW=customers Built then drivers | paste PASTE-ALL-SEATS-NOW | GO
 - 2026-08-20T22:20Z Cursor→CC-3 | DEVIATION Miss C stuck | NOW=WAVE1/2 Built leftover | not accounting Built 346/346 idle | GO
