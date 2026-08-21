@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T12:16:01-05:00",
-    "sourceSha": "6e53e080d",
-    "deployedSha": "77f7844",
+    "generatedAt": "2026-08-21T12:49:10-05:00",
+    "sourceSha": "e2642f425",
+    "deployedSha": "c03b65c",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2017,
+    "ledgerRows": 2018,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 13552,
-      "title": "FINDING: TRAILER-EXPENSE-REVERSE-LIVE-PLUS-LABEL-DEFECT LANE: NON-FINANCIAL",
+      "number": 13565,
+      "title": "FINDING: AUTHGATE-CONNECTIVITY-LIVE-PLUS-ROOT-CAUSED-LABEL-BUG LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13552",
-      "sha": "6e53e080d",
-      "committedAtIso": "2026-08-21T12:16:01-05:00"
+      "mergedAtCt": "08/21/2026, 12:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13565",
+      "sha": "e2642f425",
+      "committedAtIso": "2026-08-21T12:49:10-05:00"
     },
     {
-      "number": 13551,
-      "title": "FINDING: CC2-ACK-LIVEMATRIX-1700Z LANE: NON-FINANCIAL",
+      "number": 13564,
+      "title": "FINDING: ACCT-F5697-F5698-BOARD-CLOSEOUT LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13551",
-      "sha": "d19f59f38",
-      "committedAtIso": "2026-08-21T12:11:29-05:00"
+      "mergedAtCt": "08/21/2026, 12:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13564",
+      "sha": "a91269a63",
+      "committedAtIso": "2026-08-21T12:44:33-05:00"
     },
     {
-      "number": 13550,
-      "title": "FINDING: CC2-HOLD-CODEX-CI-NOT-LIVE",
+      "number": 13563,
+      "title": "FINDING: ACCT-F5698 LANE: FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13550",
-      "sha": "3c16312e4",
-      "committedAtIso": "2026-08-21T12:09:44-05:00"
+      "mergedAtCt": "08/21/2026, 12:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13563",
+      "sha": "86c5ec7d2",
+      "committedAtIso": "2026-08-21T12:40:04-05:00"
     },
     {
-      "number": 13549,
-      "title": "Claude-3: WAVE1 live chrome pass — 2 more defects fixed",
+      "number": 13562,
+      "title": "FINDING: CC2-AUTHGATE-INVESTIGATION-1755Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13549",
-      "sha": "6261cd5c4",
-      "committedAtIso": "2026-08-21T12:07:54-05:00"
+      "mergedAtCt": "08/21/2026, 12:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13562",
+      "sha": "c03b65c1b",
+      "committedAtIso": "2026-08-21T12:37:57-05:00"
     },
     {
-      "number": 13548,
-      "title": "Codex-1- test(urgent): reverify connectivity and reverse modules 1-6",
+      "number": 13561,
+      "title": "FINDING: LV-ORG-ME-COMPANIES-AUTH-DOUBLE-SEND",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13548",
-      "sha": "4185a3301",
-      "committedAtIso": "2026-08-21T12:06:29-05:00"
+      "mergedAtCt": "08/21/2026, 12:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13561",
+      "sha": "54fd85231",
+      "committedAtIso": "2026-08-21T12:37:05-05:00"
     },
     {
-      "number": 0,
-      "title": "Cursor- docs(bus): LIVE-MATRIX-INBOX-NOT-VERIFIED — INBOX from live Miss C 241 not cash-flow",
+      "number": 13560,
+      "title": "Claude-3- FINDING: CC3-DISPATCH-PICKER-LAW-LIVE-RECONFIRM-TASKS-SAFETY-CLEAN",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:06 PM CT",
-      "url": "",
-      "sha": "1a419f8fe",
-      "committedAtIso": "2026-08-21T12:06:08-05:00"
+      "mergedAtCt": "08/21/2026, 12:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13560",
+      "sha": "96ee9be06",
+      "committedAtIso": "2026-08-21T12:34:01-05:00"
     },
     {
-      "number": 13546,
-      "title": "FINDING: CC2-STATUS-1652Z LANE: NON-FINANCIAL",
+      "number": 13559,
+      "title": "FINDING: OWNER-NOT-MESSENGER-ONE-INBOX",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13546",
-      "sha": "d28746b01",
-      "committedAtIso": "2026-08-21T12:02:18-05:00"
+      "mergedAtCt": "08/21/2026, 12:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13559",
+      "sha": "a4353c29c",
+      "committedAtIso": "2026-08-21T12:33:33-05:00"
     },
     {
-      "number": 13545,
-      "title": "Claude-3: fix banking bare-plus accessibility — BANK-F5663",
+      "number": 13558,
+      "title": "FINDING: ACCT-F5697 LANE: FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13545",
-      "sha": "a7e4c5d76",
-      "committedAtIso": "2026-08-21T12:02:13-05:00"
+      "mergedAtCt": "08/21/2026, 12:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13558",
+      "sha": "bd20feefe",
+      "committedAtIso": "2026-08-21T12:33:20-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 13557,
+      "title": "FINDING: CC2-DISPATCH-BLOCKER-1740Z LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:01 PM CT",
-      "url": "",
-      "sha": "3c6aad570",
-      "committedAtIso": "2026-08-21T17:01:54Z"
+      "mergedAtCt": "08/21/2026, 12:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13557",
+      "sha": "ea298943b",
+      "committedAtIso": "2026-08-21T12:29:27-05:00"
     },
     {
-      "number": 13544,
-      "title": "FINDING: FLEET-UNIT-FINANCE-LINKAGE-GLJE-LIVE LANE: NON-FINANCIAL",
+      "number": 13556,
+      "title": "FINDING: MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "08/21/2026, 12:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13544",
-      "sha": "64352e15c",
-      "committedAtIso": "2026-08-21T12:00:50-05:00"
+      "mergedAtCt": "08/21/2026, 12:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13556",
+      "sha": "cc08247ff",
+      "committedAtIso": "2026-08-21T12:28:00-05:00"
     }
   ]
 }
