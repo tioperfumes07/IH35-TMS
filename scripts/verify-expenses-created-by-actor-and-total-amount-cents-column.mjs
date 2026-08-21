@@ -24,8 +24,16 @@
  *  2. two-section-service.ts's autoCreateExpenseFromWO stamps created_by_user_id in all 4 branches,
  *     and none of its 4 INSERT branches reference the non-existent "total_amount" column.
  *  3. lumper-cash-advance-split.ts's lumper-expense leg stamps created_by_user_id.
+ *  4. ACCT-F5694 — the historical-backfill half. Live-verified 2026-08-21: 23 TMS-native expenses
+ *     predating the going-forward fix above still carried created_by_user_id = NULL, each resolvable
+ *     to exactly one actor via its own posted JE. Migration 202612920000 backfills them dynamically
+ *     (UPDATE...FROM a JOIN on the expense's own journal_entry_postings/journal_entries, never a
+ *     hardcoded id list) so it also self-heals any future orphan of the identical shape. This guard
+ *     only proves the migration file exists and still contains that dynamic join shape — it cannot
+ *     assert "0 orphan rows remain live" statically (CI runs against a fresh DB with no such rows to
+ *     begin with); the live count is proven in the ACCT-F5694 PR's own evidence block instead.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
 const failures = [];
 
@@ -76,6 +84,31 @@ if (!/actorUserUuid\],\s*\n\s*\);/.test(lumperSrc) && !/loadSample\.rows\[0\]\?\
   failures.push(`${lumperPath}: lumper-expense leg's INSERT no longer passes actorUserUuid as a value`);
 }
 
+const migrationsDir = "db/migrations";
+const backfillFile = readdirSync(migrationsDir).find((f) =>
+  /^\d+_acct_f5694_expenses_backfill_created_by_user_id_from_je\.sql$/.test(f)
+);
+if (!backfillFile) {
+  failures.push(`${migrationsDir}: no ACCT-F5694 backfill migration file found — historical actor-less rows unrepaired`);
+} else {
+  const migrationSrc = readFileSync(`${migrationsDir}/${backfillFile}`, "utf8");
+  if (!/UPDATE accounting\.expenses e/.test(migrationSrc) || !/SET created_by_user_id = je\.created_by_user_id/.test(migrationSrc)) {
+    failures.push(`${migrationsDir}/${backfillFile}: no longer updates expenses.created_by_user_id from the JE actor`);
+  }
+  if (!/source_transaction_type = 'expense'/.test(migrationSrc)) {
+    failures.push(`${migrationsDir}/${backfillFile}: no longer joins via source_transaction_type='expense' — could match the wrong source rows`);
+  }
+  if (!/e\.created_by_user_id IS NULL/.test(migrationSrc)) {
+    failures.push(`${migrationsDir}/${backfillFile}: WHERE clause no longer scopes to created_by_user_id IS NULL — would re-stamp already-attributed rows every run (not idempotent)`);
+  }
+  if (!/e\.qbo_purchase_id IS NULL/.test(migrationSrc)) {
+    failures.push(`${migrationsDir}/${backfillFile}: WHERE clause no longer excludes QBO-origin rows — a NULL actor there is EXPECTED STATE, not a defect (imported-history law)`);
+  }
+  if (!/count\(DISTINCT je2\.created_by_user_id\)/.test(migrationSrc)) {
+    failures.push(`${migrationsDir}/${backfillFile}: no longer guards against ambiguous multi-actor JE matches — could silently backfill a guessed actor`);
+  }
+}
+
 if (failures.length > 0) {
   console.error("verify-expenses-created-by-actor-and-total-amount-cents-column: FAIL");
   for (const f of failures) console.error(`  - ${f}`);
@@ -83,5 +116,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "verify-expenses-created-by-actor-and-total-amount-cents-column: OK — all 3 human-actor expense writers stamp created_by_user_id; the non-existent total_amount column reference is gone"
+  "verify-expenses-created-by-actor-and-total-amount-cents-column: OK — all 3 human-actor expense writers stamp created_by_user_id; the non-existent total_amount column reference is gone; ACCT-F5694 historical backfill migration present and correctly shaped"
 );
