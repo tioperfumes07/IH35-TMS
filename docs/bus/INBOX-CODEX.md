@@ -1,9 +1,9 @@
-# INBOX-CODEX · NEVER IDLE · EVERY MODULE
+# INBOX-CODEX · NEVER IDLE · WAVE 2 NOT DONE
 
-Read `docs/bus/STANDING-ORDER-SEATS.md`. Worktree `/private/tmp/IH35-codex-now`. **Do not wait.**
+Live-verified: #13519 tasks link activity + #13517 matrix outage guards. **Do not await INBOX.**
 
-**NOW:** next unpaid `reverse_link` + `connectivity` on the ladder. `/drivers` if unpaid, then `/fleet`, then rest of WAVE 1 then WAVE 2. No fake LIVE PASS on Checking session. API is up — retry Live.
+**NOW:** `/fleet` reverse+connectivity if unpaid → then WAVE 2 reverse in order (`home` → `tasks` already touched → `driver-hub` → `compliance` → … through `system`). No fake PASS on Checking session.
 
 ```text
-Codex | ACK | NEVER-IDLE | PORT=9226 | NOW=next unpaid reverse+connectivity on ladder | GO
+Codex | ACK | NEVER-IDLE | PORT=9226 | NOW=/fleet reverse then WAVE2 reverse ladder | GO
 ```

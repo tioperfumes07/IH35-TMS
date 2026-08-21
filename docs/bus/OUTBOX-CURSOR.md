@@ -1,3 +1,5 @@
+- 2026-08-21T11:22CT Cursor LEAD | LIVE VERIFY seats WORKING | CC-1 #13522 money | CC-2 #13526 ACK | CC-3 #13521/#13524 chrome | Codex #13519/#13517 reverse guards | NOW=WAVE2 remainder cash-flow…system | Cursor getUserDetail abort | GO
+
 - 2026-08-21T11:17CT Cursor LEAD | NEVER IDLE EVERY MODULE | STANDING-ORDER-SEATS | WAVE1 then WAVE2 until FW 1-12 | no wait for Cursor/Jorge/login/deploy | each seat next unpaid cell of THEIR column | GO
 
 - 2026-08-21T10:33CT Cursor LEAD | NEXT WAVE | CC-1 /factoring create then dispatch money | CC-2 /insurance Live then /safety | CC-3 vendor+customer Save then /compliance | Codex /drivers then /fleet | Cursor planner AbortSignal | GO

@@ -1,9 +1,9 @@
-# INBOX-CC-1 · NEVER IDLE · EVERY MODULE
+# INBOX-CC-1 · NEVER IDLE · NEXT MONEY
 
-Read `docs/bus/STANDING-ORDER-SEATS.md`. **Do not wait.**
+Live-verified: #13514 ACCT-F5694 + #13522 ACCT-F5695. **Do not scan-idle.**
 
-**NOW:** next unpaid **money** leaf on the ladder. If factoring is blocked, OUTBOX one `BLOCKER=` line and **immediately** dispatch money, then the rest of WAVE 1, then WAVE 2. FAST-MERGE. No Render poll.
+**NOW:** next unpaid **money** leaf — USMCA `/factoring` create path if still 0 advances, else dispatch money, else next WAVE 1/2 money cell. FAST-MERGE. No Render poll.
 
 ```text
-CC-1 | ACK | NEVER-IDLE | PORT=9223 | NOW=next unpaid money leaf on WAVE1 then WAVE2 | GO
+CC-1 | ACK | NEVER-IDLE | PORT=9223 | NOW=factoring money or next unpaid money leaf | GO
 ```

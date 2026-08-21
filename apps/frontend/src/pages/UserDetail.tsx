@@ -122,7 +122,7 @@ export function UserDetailPage() {
   const userDetailQuery = useQuery({
     queryKey: ["user-detail", userId],
     enabled: Boolean(userId),
-    queryFn: () => getUserDetail(userId),
+    queryFn: ({ signal }) => getUserDetail(userId, signal),
   });
 
   const reasonsQuery = useQuery({
