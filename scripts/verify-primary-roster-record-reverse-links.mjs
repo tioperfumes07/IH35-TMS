@@ -17,8 +17,9 @@ function verify(source) {
   need("advances", 'id={String(row.id)}', "cash advance roster must drill through by canonical row id");
   need("advances", 'data-testid="cash-advance-roster-record-link"', "cash advance roster link must stay mounted");
   need("vendors", 'data-testid="vendor-payment-bill-link"', "vendor payment application bill identity must drill through");
-  need("workOrders", 'data-testid="work-order-console-record-link"', "work-order console primary identity must drill through");
-  need("workOrders", 'id={String(row.id)}', "work-order console must normalize its canonical row id");
+  if (!/<EntityLink\b(?=[^>]*kind="work_order")(?=[^>]*id=\{String\(row\.id\)\})(?=[^>]*data-testid="work-order-console-record-link")[^>]*\/>/.test(source.workOrders)) {
+    failures.push("work-order console primary identity must drill through by its canonical normalized row id");
+  }
   let matrix;
   try { matrix = JSON.parse(source.maintenanceMatrix); } catch (error) { failures.push(`maintenance matrix must parse: ${error.message}`); }
   const leaf = matrix?.leaves?.find((candidate) => candidate.id === "wo.console.list");

@@ -241,7 +241,7 @@ export function assertExpensesListRoute({
 
   const createTargets = [
     ["Topbar", topbar, /create_expense[^]*?["']\/accounting\/expenses\?create=1["']/],
-    ["QboStyleHomePage CREATE_ACTIONS", home, /label:\s*["']Record expense["'],\s*to:\s*["']\/accounting\/expenses["']/],
+    ["QboStyleHomePage CREATE_ACTIONS", home, /label:\s*["']\+ Create Expense["'],\s*to:\s*["']\/accounting\/expenses["']/],
     ["AccountingSubNavWrapper CREATE_MENU", subnavWrapper, /label:\s*["']Expense["'],\s*to:\s*["']\/accounting\/expenses["']/],
   ];
   for (const [name, src, okRe] of createTargets) {
@@ -257,7 +257,7 @@ export function assertExpensesListRoute({
       );
     }
     if (/create_expense[^]*?["']\/accounting\/expenses\/new["']/.test(src)
-      || /label:\s*["'](?:Record expense|Expense)["'],\s*to:\s*["']\/accounting\/expenses\/new["']/.test(src)) {
+      || /label:\s*["'](?:\+ Create Expense|Expense)["'],\s*to:\s*["']\/accounting\/expenses\/new["']/.test(src)) {
       errors.push(`${name}: create entry must not use the /new wizard deep-link`);
     }
   }
@@ -364,7 +364,7 @@ function selftest() {
   const good = {
     manifest: goodManifest,
     topbar: `[t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"]`,
-    home: `{ label: "Record expense", to: "/accounting/expenses" } <Link to="/accounting/expenses/list">View →</Link>`,
+    home: `{ label: "+ Create Expense", to: "/accounting/expenses" } <Link to="/accounting/expenses/list">View →</Link>`,
     subnavWrapper: `{ label: "Expense", to: "/accounting/expenses" }`,
     subnavManifest: `${childrenBlock}${flatBlock}${groupEntry}`,
     accountingHub: `{ id: "expenses", label: "Expenses", to: "/accounting/expenses/list" }`,
