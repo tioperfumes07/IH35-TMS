@@ -1,3 +1,17 @@
+- 2026-08-21T13:30Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
+  Ran a final broad triage sweep across settlements/factoring/escrow/GL-JE/banking-reconciliation
+  (beyond the earlier vendors/customers/drivers/fleet/lists/scenario passes) with an explicit
+  "check for a prior deliberate design exclusion before calling it a bug" calibration baked in
+  after the profit-per-truck catch. Every candidate re-verified against live code + live Neon
+  prod came back already-fixed, already-superseded, or owner-gated. Board is genuinely clean
+  right now for CC-1's lane -- nothing forced, no marginal finding padded in.
+  This stretch shipped 5 real fixes (ACCT-F5686 bill_lines FK, ACCT-F5687 cash-advance/
+  reimbursement bank-credit resolution, ACCT-F5688 deactivated-counterparty resolvers across 3
+  sites, ACCT-F5689 cash-advance-type dropdown collapse) + 1 self-corrected pre-existing outage
+  root-cause + 3 board findings correctly routed rather than resolved blind (CI-red baseline
+  drift → CC-3, voided-WO-cost accounting policy → owner). All fresh-verified against origin/main
+  post-merge, every migration rehearsed on a disposable Neon branch before live apply. Continuing
+  to watch the bus for new REWAKE/broadcasts; will resume the sweep on any new signal. No idle.
 - 2026-08-21T13:20Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
   Fleet/scenario-hops triage came back clean -- scenario dots green (settlement=10, advance=2,
   deductions=1, escrow=1, ap=3, maintenance=6), all prior fleet OPEN rows already fixed/stale on
