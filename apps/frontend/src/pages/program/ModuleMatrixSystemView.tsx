@@ -74,7 +74,7 @@ type SystemPayload = {
   meta?: { tipSha?: string; probeSource?: string; honesty?: string };
 };
 
-const POLL_MS = 5000;
+const POLL_MS = 30_000;
 const EMPTY_ABL: AblPct = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
 
 class SystemMatrixHttpError extends Error {
@@ -270,7 +270,8 @@ export function ModuleMatrixSystemView() {
     queryKey: ["program", "module-matrix", "scope", "system"],
     queryFn: fetchSystemMatrix,
     placeholderData: buildSystemMatrixRequiredFallback,
-    refetchInterval: (q) => (q.state.status === "error" ? 30_000 : POLL_MS),
+    refetchInterval: (q) => (q.state.status === "error" ? 60_000 : POLL_MS),
+    refetchIntervalInBackground: false,
     staleTime: 0,
     retry: 1,
   });
