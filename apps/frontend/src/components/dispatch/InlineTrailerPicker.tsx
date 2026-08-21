@@ -50,6 +50,10 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
 
   return (
     <div className="relative z-20 min-w-[180px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
+      {/* DISPATCH-F-QUICKSAVE-ASSIGN-500 (2026-08-21): see InlineUnitPicker's twin comment — `error`
+          was only ever rendered in the !open branch above, but a failed onChange leaves `open` true,
+          so a rejected pick was completely silent. Surfacing it here too. */}
+      {error ? <p className="mb-1 rounded-sm bg-red-100 px-1 py-0.5 text-[10px] text-red-700">{error}</p> : null}
       <EntityPicker
         kind="trailer"
         operatingCompanyId={operatingCompanyId}

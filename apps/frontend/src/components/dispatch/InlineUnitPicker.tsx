@@ -51,6 +51,12 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
 
   return (
     <div className="relative z-20 min-w-[180px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
+      {/* DISPATCH-F-QUICKSAVE-ASSIGN-500 (2026-08-21): `error` was only ever rendered in the !open
+          branch above, but a failed onChange leaves `open` true (no setOpen(false) on failure) so
+          the picker stays open for retry — meaning any assignment failure was completely silent to
+          the operator. Surfacing it here too so a rejected pick (OOS, dispatch-blocked, or any other
+          server error) is actually visible while the picker is still open. */}
+      {error ? <p className="mb-1 rounded-sm bg-red-100 px-1 py-0.5 text-[10px] text-red-700">{error}</p> : null}
       <EntityPicker
         kind="unit"
         operatingCompanyId={operatingCompanyId}
