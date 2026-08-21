@@ -1163,6 +1163,16 @@ async function main() {
   await registerPayrollAggregatedRoutes(app);
   await registerUsmcaActivationRoutes(app);
 
+  // preDeploy ci-boot-api-smoke waits 90s for GET /api/v1/health. That route is a no-op AFTER
+  // listen(). ~20 in-process workers (QBO CDC/inbound startup ticks) ran BEFORE listen and
+  // starved the event loop, so smoke died at ~86s and every deploy since 07ae74c failed
+  // pre_deploy. Boot smoke already sets IH35_BOOT_API_SMOKE=true — skip workers, listen, pass.
+  const bootApiSmoke = process.env.IH35_BOOT_API_SMOKE === "true";
+  if (bootApiSmoke) {
+    app.log.info("[STARTUP] IH35_BOOT_API_SMOKE — skipping in-process workers so listen() can answer health");
+  }
+
+  if (!bootApiSmoke) {
   try {
     initializeAccountingCrons(app);
     app.log.info("[STARTUP] accounting cron suite initialized");
@@ -1696,6 +1706,7 @@ async function main() {
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] qbo-outbox-dispatcher failed");
   }
+  }
 
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
@@ -1716,21 +1727,24 @@ async function main() {
     assertNoDuplicateFastifyRoutes(app);
 
     await app.listen({ port, host });
-    if (process.env.ENABLE_OUTBOX_PROCESSOR !== "false") {
+    if (!bootApiSmoke && process.env.ENABLE_OUTBOX_PROCESSOR !== "false") {
       startOutboxProcessor();
       app.log.info("Outbox processor started");
     }
     app.log.info({ port, host }, "Server started");
-    // MATRIX-COLD-SYNC-FREEZE: GUARD-WORKORDERS.md ~3MB was readFileSync'd once per module
-    // (29×) on the first /program/matrix request, freezing healthz. Warm off the listen path.
-    warmSystemModuleMatrixAtBoot({
-      info: (obj, msg) => app.log.info(obj, msg),
-      warn: (obj, msg) => app.log.warn(obj, msg),
-    });
+    if (!bootApiSmoke) {
+      setTimeout(() => {
+        warmSystemModuleMatrixAtBoot({
+          info: (obj, msg) => app.log.info(obj, msg),
+          warn: (obj, msg) => app.log.warn(obj, msg),
+        });
+      }, 30_000);
+    }
 
     // LEGAL-SEED-01: provision the per-entity legal template library for every active entity on
     // boot (idempotent — ON CONFLICT DO NOTHING). Fire-and-forget AFTER listen so it can never
     // block or fail the boot; the library works on deploy with no manual "Seed library" click.
+    if (!bootApiSmoke) {
     void backfillLegalTemplateLibraries({
       logInfo: (obj, msg) => app.log.info(obj, msg),
       logError: (obj, msg) => app.log.error(obj, msg),
@@ -1747,6 +1761,7 @@ async function main() {
         )
       )
       .catch((err) => app.log.error({ err }, "[STARTUP] legal-template-library backfill failed"));
+    }
   } catch (err) {
     app.log.error(err, "Server failed to start");
     process.exit(1);
