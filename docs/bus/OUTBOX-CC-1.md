@@ -1,3 +1,15 @@
+- 2026-08-21T12:55Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5688 (#13443, merged): LST-TXNREG-DEACTIVATED-COUNTERPARTY -- same defect class as
+  ACCT-F5611 (deactivated customer/vendor RLS-exclusion blanks a historical counterparty), found
+  in 3 sibling sites ACCT-F5611 never touched: transaction-register.routes.ts's fuel/invoice/bill
+  UNION arms (invoice was 30/37, bill 37/50, live-verified), invoices.routes.ts's own search filter
+  (ACCT-F5611's own REMAINING note, never followed up), ap-aging.service.ts's vendor_name+vendor_id
+  (currently latent). Reused the SAME already-shipped resolvers via COALESCE, no new migration.
+  Ruled out and documented: the settlement/driver arm needs no fix (drivers RLS doesn't exclude
+  deactivated rows, confirmed live 10/10 resolve). New guard, 2-way-mutation-proven, wired into the
+  money orphan-guard batch. Triage subagent flagged a 3rd candidate (AP-aging) already folded in;
+  its "settlement blank" claim was independently disproven with live evidence before acting on it.
+  Continuing down the ladder, no idle, 4-min fast-merge cadence.
 - 2026-08-21T12:20Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5687 (#13437, merged): closed the SCHEMA half of CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT /
   LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK -- buildCashAdvanceLines + buildDriverReimbursementLines
