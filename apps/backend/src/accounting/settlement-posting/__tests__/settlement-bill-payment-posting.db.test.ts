@@ -30,6 +30,7 @@ import {
 } from "../../../../test-helpers/db-fixture.js";
 import { TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
 import { postSettlementBillPayment, reverseSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
+import { SettlementBillPaymentError } from "../settlement-bill-payment.math.js";
 import { upsertDriverEscrowAccountLink, upsertDriverAdvanceAccountLink } from "../../driver-subaccount-provision.service.js";
 import { companyBusinessDate } from "../../../lib/company-business-date.js";
 import { executeVoidCancel } from "../../../governance/void-cancel-executors.js";
@@ -828,5 +829,54 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       [companyId, settlementId]
     );
     expect(Number(reversalEvents[0]!.count)).toBe(2);
+  });
+
+  // ACCT-F5697 — the mutual-exclusion interlock with the OTHER settlement GL poster
+  // (driver-finance/settlement-payrun-close.service.ts's closeSettlementPayRun). Live-verified on
+  // prod: S-2026-0002 was posted by BOTH posters (this one on 2026-08-11, pay-run close on
+  // 2026-08-21) — Cost of Labor booked twice, operating bank overcredited by the full gross a second
+  // time. Real DB, real anchor-table shape (not a mock) — a driver_finance.payrun_gl_runs row exactly
+  // as closeSettlementPayRun's own claim INSERT would leave it.
+  it("(f) ACCT-F5697: refuses when payrun_gl_runs already shows this settlement posted by the OTHER poster", async () => {
+    await setFlag(true);
+    // Standalone settlement (not seedSettlement() — this check fires before any bills/deductions are
+    // read, and seedSettlement()'s fixed display_id would collide on a second call).
+    const interlockSettlementId = randomUUID();
+    const otherPosterJeId = randomUUID();
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO driver_finance.driver_settlements
+           (id, operating_company_id, display_id, driver_id, period_start, period_end, status, locked_at,
+            gross_pay, deductions_total, reimbursements_total, net_pay)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'locked',now(),297.60,0,0,297.60)`,
+        [interlockSettlementId, companyId, `S-INTERLOCK-${suffix}`, driverId]
+      );
+      // A minimal but real journal_entries row so the FK on payrun_gl_runs.journal_entry_id resolves —
+      // the interlock query only checks status/journal_entry_id presence, not JE content.
+      await db.query(
+        `INSERT INTO accounting.journal_entries (id, operating_company_id, entry_date, memo, status, source, is_sample_data)
+         VALUES ($1::uuid,$2::uuid,CURRENT_DATE,'ACCT-F5697 test fixture — other poster','posted','auto',true)`,
+        [otherPosterJeId, companyId]
+      );
+      await db.query(
+        `INSERT INTO driver_finance.payrun_gl_runs (id, operating_company_id, settlement_id, journal_entry_id, status, created_by_user_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,'posted',$5::uuid)`,
+        [randomUUID(), companyId, interlockSettlementId, otherPosterJeId, userId]
+      );
+    });
+
+    await expect(
+      postSettlementBillPayment({ operatingCompanyId: companyId, settlementId: interlockSettlementId }, { userId })
+    ).rejects.toMatchObject({ code: "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER" });
+    await expect(
+      postSettlementBillPayment({ operatingCompanyId: companyId, settlementId: interlockSettlementId }, { userId })
+    ).rejects.toBeInstanceOf(SettlementBillPaymentError);
+
+    // The whole point: refusing must mean NOTHING hit the ledger from THIS poster.
+    const runs = await read<{ c: string }>(
+      `SELECT count(*)::text AS c FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id=$1::uuid`,
+      [interlockSettlementId]
+    );
+    expect(Number(runs[0]!.c)).toBe(0);
   });
 });

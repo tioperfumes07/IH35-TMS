@@ -315,6 +315,36 @@ export async function postSettlementBillPayment(
       );
     }
 
+    // ACCT-F5697 — THE OTHER settlement GL poster. `driver-finance/settlement-payrun-close.service.ts`'s
+    // closeSettlementPayRun() independently claims driver_finance.payrun_gl_runs and posts a single
+    // balanced JE (per-driver escrow LIABILITY + advance_recovery ASSET) for the SAME settlement, with
+    // no awareness of driver_settlement_gl_runs and no awareness of this function. Both existed in prod
+    // at once: S-2026-0002 was posted by BOTH — this poster on 2026-08-11 (Dr 6890 Cost of Labor
+    // $297.60 / Cr 1000 Bank $297.60, no escrow withheld) and pay-run close on 2026-08-21 (Dr 6890
+    // $297.60 / Cr Escrow $250.00 / Cr Bank $47.60) — Cost of Labor booked twice and the operating bank
+    // credited $297.60 too much while payment_state stayed 'unpaid' the whole time. Mirrors the ACCT-F59
+    // invoice↔revrec-latch interlock shape exactly: neither poster is retired here (that is a bigger
+    // architecture call), each just refuses when the OTHER has demonstrably already posted.
+    const otherPoster = await client.query<{ id: string }>(
+      `
+        SELECT id::text
+          FROM driver_finance.payrun_gl_runs
+         WHERE operating_company_id = $1::uuid
+           AND settlement_id = $2::uuid
+           AND status = 'posted'
+           AND journal_entry_id IS NOT NULL
+         LIMIT 1
+      `,
+      [opco, settlementId]
+    );
+    if ((otherPoster.rowCount ?? 0) > 0) {
+      throw new SettlementBillPaymentError(
+        "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER",
+        `Settlement ${settlement.display_id ?? settlement.id} was already posted by pay-run close (payrun_gl_runs ${otherPoster.rows[0]!.id}) — refusing to double-post via bill-payment`,
+        { payrun_gl_run_id: otherPoster.rows[0]!.id }
+      );
+    }
+
     // Existing run? (already_posted short-circuit)
     const existingRun = await client.query<{ id: string; status: string }>(
       `SELECT id::text, status FROM driver_finance.driver_settlement_gl_runs
