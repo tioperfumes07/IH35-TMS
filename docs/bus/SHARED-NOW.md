@@ -2,7 +2,7 @@
 **Folder (repo):** `docs/bus/`  
 **Folder (Desktop):** `~/Desktop/IH35-CURSOR-AUDIT/USMCA-WEEKEND-LEAD-2026-08-07/`
 
-Jorge is **not** the messenger. Write here, not only chat.
+Jorge is **not** the messenger. Write here, not only chat. **Close `/program/matrix` — see `NO-PERSISTENT-MATRIX-TAB.md`.**
 
 | Write | File | Who |
 |-------|------|-----|

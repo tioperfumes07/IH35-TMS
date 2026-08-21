@@ -5,6 +5,8 @@ Ports: `docs/bus/CHROME-PORTS-LOCKED.md` · Shared: `docs/bus/SHARED-NOW.md`
 
 **Never idle. Never pause.** Finish a module’s **your column** → next module **same turn**. Do not wait for Jorge.
 
+**HARD:** `docs/bus/NO-PERSISTENT-MATRIX-TAB.md` — close `/program/matrix` and leftover app tabs. Do not park Live Chrome. One leaf, then close.
+
 ### Order (law)
 
 **URGENT 6 first:** `accounting` → `banking` → `settlements` → `factoring` → `dispatch` → `vendors`  

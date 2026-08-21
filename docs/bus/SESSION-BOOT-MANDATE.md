@@ -1,6 +1,6 @@
 # SESSION BOOT
 
-Every hour: `FINAL-CODER-INSTRUCTIONS-UNTIL-DONE-2026-08-20.md` → `INBOX-<SEAT>.md` → `CHROME-PORTS-LOCKED.md` → `FAST-MERGE-4MIN-LAW.md`
+Every hour: `FINAL-CODER-INSTRUCTIONS-UNTIL-DONE-2026-08-20.md` → `INBOX-<SEAT>.md` → `CHROME-PORTS-LOCKED.md` → `NO-PERSISTENT-MATRIX-TAB.md` → `FAST-MERGE-4MIN-LAW.md`
 
 **URGENT 6:** accounting → banking → settlements → factoring → dispatch → vendors.  
 **Then URGENT 10 remainder:** customers → drivers → fleet → lists. **Not inventory.**  
