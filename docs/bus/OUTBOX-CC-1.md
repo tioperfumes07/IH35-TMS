@@ -2187,3 +2187,17 @@ S-2026-0002 for real. STOPPED the in-progress vendor-payment-methods build per d
 files left uncommitted in the worktree, nothing pushed to main). Drivers-money WAVE 1 item is now
 as far as it can go without the naming decision. Moving to WAVE 1's next module: vendors money
 (the AP-side sweep, not the payment-methods feature).
+
+2026-08-21T08:30Z CC-1 | Miss C was N now M -- ACCT-F5681 SHIPPED (PR #13312, merged 0b198f446),
+executing owner directive "Escrow name Section 9.4 if still open" -- IT IS NOW CLOSED, END TO END.
+Root cause: the escrow-grandparent resolver's exact-name match used TRANSP's QBO label
+"Damage Claim Escrow" as if universal; USMCA's real Liability escrow account carries a different
+name ("Driver Escrow - Held in Trust") for the identical Section-9.4 concept. Fixed with a narrow,
+entity-scoped, primary-name-first alias (never renamed the real account, never touched the shared
+generic resolver). LIVE-EXERCISED completely: ran the driver-subaccount backfill live (11/11 USMCA
+drivers provisioned), then closed S-2026-0002 FOR REAL -- JE 5a652f56 posted and balanced, driver
+escrow accrued $250.00 (first live accrual on any entity, ever), payrun_gl_runs posted. This is
+the FIRST settlement ever closed on any entity since the system existed. Per the owner's "no
+holding" directive: NOT stopping here. Moving now to customers money (no idle), then drivers money
+(continuing sweep for any live gap missed in the earlier customers/drivers passes), no waiting for
+Miss C=0 or the rest of the swarm.
