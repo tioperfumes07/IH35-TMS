@@ -1,4 +1,21 @@
-- 2026-08-21T16:35Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+CC-1 | ACK | LIVE-MATRIX | MISS-C-241 | PORT=9223 | NOW=/dispatch money | GO
+
+- 2026-08-21T16:52Z CC-1 | ACK + P0 FOUND | DEADLINE=13:46CT | PORT=9223 | GO
+  ACK'd the live-matrix directive above. Before pivoting to /dispatch money, a fresh board-independent
+  accounting-correctness audit (just completed) found a P0: TWO mutually-unaware settlement GL
+  posters (settlement-bill-payment-posting.service.ts's postSettlementBillPayment + settlement-
+  payrun-close.service.ts's closeSettlementPayRun) double-posted the ONLY settlement ever GL-posted
+  (S-2026-0002, live prod). Cost of Labor booked twice ($595.20 for a $297.60 settlement), operating
+  bank credited $345.20 for a settlement whose real net is $47.60 (payment_state still 'unpaid' the
+  whole time -- no cash actually moved). This directly involves my own ACCT-F5681 exercise today
+  (the payrun-close JE), which I shipped without checking the OTHER poster's anchor table first --
+  my own miss, fixing it now. This is live-corrupting real prod P&L on every settlement close and
+  gets worse with each one, so per the money-lane law (fix now, never defer) I'm finishing this
+  BEFORE moving to dispatch-money matrix leaves: (1) mutual-exclusion guard so neither poster can
+  ever double-fire again (mirrors the existing ACCT-F59 invoice/revrec-latch interlock shape), (2)
+  WORM-safe reversal of the incorrect duplicate chain (the pre-escrow-aware bill+bill_payment pair),
+  keeping the correct escrow-aware payrun-close JE. Then /dispatch money -> /fleet -> /lists ->
+  /maintenance -> the five scenario events, per the directive. No idle.
   ACCT-F5696 merged (#13529, 572cf68a): fixed the subledger-GL tie-out's escrow rollup gap.
   USMCA's escrow hierarchy is 3 levels deep (grandparent -> "Driver Escrow" middle parent ->
   per-driver leaf); the tie-out read only the resolved grandparent's own postings (always $0) while
