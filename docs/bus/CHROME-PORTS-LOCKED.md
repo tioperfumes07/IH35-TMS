@@ -13,6 +13,6 @@ Every working seat **must** attach a debug Chrome (MCP / CDP) on **its assigned 
 | Devin-A | 9227 | **PARKED — do not start** |
 | Spare | 9228 · 9229 | Overflow only; announce on OUTBOX |
 
-Target: `https://app.ih35dispatch.com` · USMCA entity. Matrix: `/program/matrix?scope=system`.
+Target: `https://app.ih35dispatch.com` · USMCA. **Open one leaf URL, prove it, CLOSE THE TAB.** Never leave `/program/matrix` open. Never `refetchIntervalInBackground` Live-Chrome on the scoreboard. Unattended matrix polling starved prod (Mac 24.162.56.21, ~223 KB/response). Client fix #13335; seats must still close old tabs.
 
-**Law:** Jorge is not told a cell is done until that seat proved it **live** on this Chrome (or named UNVERIFIED + blocker). CI-green is not Live.
+**Law:** Jorge is not told a cell is done until that seat proved it **live** on this Chrome (or named UNVERIFIED + blocker). CI-green is not Live. Live Chrome is **not** a parked matrix tab.
