@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(disputes|liabilities\\.list)$","task":"LINK-F5173-driver-settlement-finance-reverse"} */
+/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(settlements\\.disputes|liabilities\\.list)$","task":"LINK-F5173-driver-settlement-finance-reverse"} */
 /**
  * GUARD: the driver's own profile shows settlement disputes and liabilities charged to them
  * (LINK-F5171 reverse_link sweep gaps settlements:disputes / settlements:liabilities.list).
@@ -26,7 +26,9 @@ const SECTION = "apps/frontend/src/components/driver-profile/DriverSettlementFin
 const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const DISPUTES_TAB = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
-const FILES = [SECTION, DRIVER_PROFILE, ENTITY_LINK, DISPUTES_TAB];
+const MATRIX = "docs/specs/scoreboard/modules/settlements.required.json";
+const CLAIMED_LEAVES = ["settlements.disputes", "liabilities.list"];
+const FILES = [SECTION, DRIVER_PROFILE, ENTITY_LINK, DISPUTES_TAB, MATRIX];
 const LABEL = "verify-driver-settlement-finance-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -40,6 +42,15 @@ export function assertDriverSettlementFinanceReverse(sources) {
   const profile = src[DRIVER_PROFILE];
   const entityLink = src[ENTITY_LINK];
   const disputesTab = src[DISPUTES_TAB];
+  try {
+    const matrix = JSON.parse(src[MATRIX]);
+    for (const id of CLAIMED_LEAVES) {
+      const leaf = matrix.leaves?.find((item) => item.id === id);
+      if (!leaf?.required?.includes("reverse_link")) problems.push(`${MATRIX}: exact Required ownership missing ${id}:reverse_link`);
+    }
+  } catch {
+    problems.push(`${MATRIX}: settlements Required matrix must parse`);
+  }
 
   if (!/listSettlementDisputes\(\s*operatingCompanyId\s*,\s*\{[^}]*driver_id:\s*driverId/.test(section)) {
     problems.push(`${SECTION}: must call listSettlementDisputes scoped to driver_id: driverId`);
@@ -99,6 +110,7 @@ function selftest() {
       const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
       useEffect(() => { if (driverIdFromUrl) setDriverId(driverIdFromUrl); }, [driverIdFromUrl]);
     `,
+    [MATRIX]: JSON.stringify({ leaves: CLAIMED_LEAVES.map((id) => ({ id, required: ["reverse_link"] })) }),
   };
   const goodProblems = assertDriverSettlementFinanceReverse(good);
   if (goodProblems.length) {
@@ -123,6 +135,7 @@ function selftest() {
     { ...good, [DISPUTES_TAB]: good[DISPUTES_TAB].replace('searchParams.get("driver_id")', 'searchParams.get("x")') },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("import { DriverSettlementFinanceReverseSection }", "// removed import") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("<DriverSettlementFinanceReverseSection operatingCompanyId={companyId} driverId={id} />", "") },
+    ...CLAIMED_LEAVES.map((id) => ({ ...good, [MATRIX]: good[MATRIX].replace(`"id":"${id}"`, `"id":"${id}.removed"`) })),
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertDriverSettlementFinanceReverse(mutated).length === 0) {
