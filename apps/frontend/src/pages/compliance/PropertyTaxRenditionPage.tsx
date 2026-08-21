@@ -406,7 +406,8 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         </div>
       </section>
 
-      {/* + Add asset line */}
+      {/* CLS-CHROME-LAW-8: line-add button relabeled from "+ Add" (forbidden verb) to "+ Create
+          Line", matching InvoiceDetailPage.tsx's identical add-a-row-to-a-list pattern. */}
       <section className="rounded-sm border border-slate-200 bg-white p-3">
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700">Taxable Assets Rendered</h2>
         <div className="flex flex-wrap items-end gap-2">
@@ -439,7 +440,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
             onClick={() => addLineM.mutate(chosen)}
             className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
           >
-            + Add
+            + Create Line
           </button>
         </div>
       </section>
