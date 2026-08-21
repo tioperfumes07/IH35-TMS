@@ -8,5 +8,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-no-nested-modal-frames.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-no-nested-modal-frames.mjs"]);
+    ctx.run("node", ["scripts/verify-secondary-nav-tabs-overflow-hit-target.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-secondary-nav-tabs-overflow-hit-target.mjs"]);
   },
 };
