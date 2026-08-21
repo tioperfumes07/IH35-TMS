@@ -13,6 +13,7 @@ import process from "node:process";
 const LABEL = "verify-sys-edi-picker-applicability";
 const REQ = "docs/specs/scoreboard/modules/system.required.json";
 const WIZ = "apps/frontend/src/pages/integrations/edi/EdiSetupWizard.tsx";
+const SERVICE = "apps/backend/src/integrations/edi/setup.service.ts";
 const LEAF = "system.wizard.edi_setup";
 
 function read(rel) {
@@ -50,6 +51,17 @@ function analyze() {
   if (!/partnerName|partner_name|isa_id|gs_id|connectionType/.test(wiz)) {
     failures.push("EdiSetupWizard must still expose partner name / ISA / GS / connection fields");
   }
+  if (!wiz.includes('aria-labelledby="configured-edi-partners"') || !wiz.includes("partnersQuery.isError")) {
+    failures.push("EdiSetupWizard must render configured partners and honest reload errors outside the create step");
+  }
+  if (!wiz.includes("Validate configuration") || wiz.includes("Test connection")) {
+    failures.push("EDI configuration validation must not claim a live transport connection test");
+  }
+  const service = read(SERVICE);
+  const listBody = service.match(/export async function listPartners[\s\S]*?export async function getPartnerByUuid/)?.[0] ?? "";
+  if (!listBody || listBody.includes("connection_config,")) {
+    failures.push("public EDI partner list must not return connection_config secrets");
+  }
   return failures;
 }
 
@@ -60,7 +72,11 @@ function fail(msg) {
 
 function selftest() {
   const reqPath = path.join(process.cwd(), REQ);
+  const wizPath = path.join(process.cwd(), WIZ);
+  const servicePath = path.join(process.cwd(), SERVICE);
   const original = fs.readFileSync(reqPath, "utf8");
+  const originalWizard = fs.readFileSync(wizPath, "utf8");
+  const originalService = fs.readFileSync(servicePath, "utf8");
   try {
     const j = JSON.parse(original);
     const leaf = (j.leaves ?? []).find((l) => l.id === LEAF);
@@ -73,6 +89,16 @@ function selftest() {
     }
   } finally {
     fs.writeFileSync(reqPath, original);
+  }
+  try {
+    fs.writeFileSync(wizPath, originalWizard.replace('aria-labelledby="configured-edi-partners"', 'aria-labelledby="broken"'));
+    if (!analyze().some((m) => /render configured partners/.test(m))) fail("selftest expected reload visibility mutation to fail");
+    fs.writeFileSync(wizPath, originalWizard);
+    fs.writeFileSync(servicePath, originalService.replace("supported_transactions,", "connection_config,\n        supported_transactions,"));
+    if (!analyze().some((m) => /must not return connection_config/.test(m))) fail("selftest expected secret projection mutation to fail");
+  } finally {
+    fs.writeFileSync(wizPath, originalWizard);
+    fs.writeFileSync(servicePath, originalService);
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);

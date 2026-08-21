@@ -153,28 +153,32 @@ export function EdiSetupWizard() {
 
         {step === 3 && (
           <div className="space-y-3">
-            <p className="text-sm text-green-700">Partner configured. Test connectivity or add another broker.</p>
-            <ul className="divide-y rounded-sm border">
-              {(partnersQuery.data ?? []).map((p) => (
-                <li key={p.uuid} className="flex items-center justify-between px-3 py-2 text-sm">
-                  <span>
-                    {p.partner_name} · {p.connection_type.toUpperCase()}
-                  </span>
-                  <button
-                    type="button"
-                    className="text-slate-700 underline"
-                    onClick={() => testMutation.mutate(p.uuid)}
-                  >
-                    Test connection
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm text-green-700">Partner configured.</p>
             <button type="button" className="rounded-sm border px-4 py-2" onClick={() => setStep(1)}>
               Add another partner
             </button>
           </div>
         )}
+
+        <section aria-labelledby="configured-edi-partners" className="space-y-2 pt-4">
+          <h2 id="configured-edi-partners" className="text-sm font-semibold">Configured partners</h2>
+          {partnersQuery.isError ? (
+            <p className="text-sm text-red-700">Configured partners could not be loaded.</p>
+          ) : (partnersQuery.data ?? []).length === 0 ? (
+            <p className="text-sm text-gray-600">No EDI partners configured.</p>
+          ) : (
+            <ul className="divide-y rounded-sm border">
+              {(partnersQuery.data ?? []).map((partner) => (
+                <li key={partner.uuid} className="flex items-center justify-between px-3 py-2 text-sm">
+                  <span>{partner.partner_name} · {partner.connection_type.toUpperCase()}</span>
+                  <button type="button" className="text-slate-700 underline" onClick={() => testMutation.mutate(partner.uuid)}>
+                    Validate configuration
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ describe("EDI setup service (GAP-70)", () => {
     const partners = await listPartners(client as never, "co-1");
     expect(partners).toHaveLength(1);
     expect(client.query.mock.calls[0]?.[1]).toEqual(["co-1"]);
+    expect(client.query.mock.calls[0]?.[0]).not.toContain("connection_config");
   });
 
   it("testConnection validates API endpoint config", async () => {
