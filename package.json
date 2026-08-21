@@ -567,6 +567,7 @@
     "verify:cert-expiry-tracking": "node scripts/verify-cert-expiry-tracking.mjs",
     "verify:cmd-k-quick-switcher": "node scripts/verify-cmd-k-quick-switcher.mjs",
     "verify:mobile-responsive-audit": "node scripts/verify-mobile-responsive-audit.mjs",
+    "verify:no-native-browser-dialogs": "node scripts/verify-no-native-browser-dialogs-ratchet.mjs",
     "verify:no-raw-frontend-api-fetch": "node scripts/verify-no-raw-frontend-api-fetch.mjs",
     "verify:frontend-api-routes": "node scripts/verify-frontend-api-routes-exist.mjs",
     "verify:legal-matters-role-gate": "node scripts/verify-legal-matters-role-gate.mjs",
