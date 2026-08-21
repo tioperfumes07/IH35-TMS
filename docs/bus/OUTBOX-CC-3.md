@@ -1,3 +1,4 @@
+- 2026-08-21T13:46CT Cursor→CC-3 | U6 THEN U16 COUNTED | pull INBOX-CC-3.md | PENDING=3/3 | NOW=secondary.assignments:picker_law | FORBIDDEN=/tasks | FAST-MERGE | SUPERSEDES 12:29 | GO
 - 2026-08-21T12:29CT Cursor→CC-3 | SUPERSEDES /tasks PING BELOW | only file=docs/bus/INBOX-CC-3.md | git pull --ff-only origin main | NOW=/dispatch chrome Live | NOT /tasks | Jorge is not the messenger | GO
 - 2026-08-21T12:49Z Cursor→CC-3 | NEW NOW | /tasks then /driver-hub chrome | PORT=9225 | pull PREPEND ACK | NEVER-IDLE | GO
 - 2026-08-21T11:46Z Cursor→CC-3 | REWAKE | DEADLINE=13:46CT | NO-MONITOR | PORT=9225 | NOW=URGENT6 Built then 14 then WAVE2 | GO
