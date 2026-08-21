@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   convertOcrIntakeToBookLoad,
+  finalizeOcrIntakeConversion,
   getOcrIntakeQueue,
   reprocessOcrIntakeItem,
   type OcrIntakeQueueItem,
@@ -66,12 +67,12 @@ function RowActions({
 }: {
   item: OcrIntakeQueueItem;
   companyId: string;
-  onConvert: (prefill: Record<string, unknown>) => void;
+  onConvert: (itemId: string, prefill: Record<string, unknown>) => void;
   onReprocessed: () => void;
 }) {
   const convertM = useMutation({
     mutationFn: () => convertOcrIntakeToBookLoad(item.id, { operating_company_id: companyId }),
-    onSuccess: (res) => onConvert(res.book_load_prefill),
+    onSuccess: (res) => onConvert(item.id, res.book_load_prefill),
   });
   const reprocessM = useMutation({
     mutationFn: () => reprocessOcrIntakeItem(item.id, companyId),
@@ -80,6 +81,9 @@ function RowActions({
 
   return (
     <div className="flex flex-wrap gap-2">
+      {item.converted_load_id ? (
+        <EntityLinkOrTombstone kind="load" id={item.converted_load_id} name={null} noun="Load" />
+      ) : null}
       {item.status === "ready_review" ? (
         <button
           type="button"
@@ -112,6 +116,7 @@ export function OcrQueuePage() {
   const queryClient = useQueryClient();
   const [bookOpen, setBookOpen] = useState(false);
   const [bookPrefill, setBookPrefill] = useState<Record<string, unknown> | null>(null);
+  const [bookSourceItemId, setBookSourceItemId] = useState<string | null>(null);
 
   const queueQ = useQuery({
     queryKey: ["dispatch", "ocr-intake-queue", companyId],
@@ -127,7 +132,8 @@ export function OcrQueuePage() {
   const items = queueQ.data?.items ?? [];
   type OcrRow = (typeof items)[number];
 
-  const handleConvert = (prefill: Record<string, unknown>) => {
+  const handleConvert = (itemId: string, prefill: Record<string, unknown>) => {
+    setBookSourceItemId(itemId);
     setBookPrefill(prefill);
     setBookOpen(true);
     void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
@@ -233,11 +239,19 @@ export function OcrQueuePage() {
         onClose={() => {
           setBookOpen(false);
           setBookPrefill(null);
+          setBookSourceItemId(null);
         }}
-        onCreated={() => {
-          setBookOpen(false);
-          setBookPrefill(null);
-          void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+        onCreated={(created) => {
+          if (!created?.id || !bookSourceItemId) return;
+          void finalizeOcrIntakeConversion(bookSourceItemId, {
+            operating_company_id: companyId,
+            load_id: created.id,
+          }).then(() => {
+            setBookOpen(false);
+            setBookPrefill(null);
+            setBookSourceItemId(null);
+            void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+          });
         }}
       />
     </div>

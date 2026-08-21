@@ -12,9 +12,11 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 }));
 
 vi.mock("../components/BookLoadModal", () => ({
-  BookLoadModal: (props: { open: boolean; templatePrefillJson?: Record<string, unknown> | null }) =>
+  BookLoadModal: (props: { open: boolean; templatePrefillJson?: Record<string, unknown> | null; onCreated?: (created: { id: string; label?: string }) => void }) =>
     props.open ? (
-      <div data-testid="book-load-modal-open" data-prefill={props.templatePrefillJson ? "yes" : "no"} />
+      <div data-testid="book-load-modal-open" data-prefill={props.templatePrefillJson ? "yes" : "no"}>
+        <button type="button" onClick={() => props.onCreated?.({ id: "load-created", label: "L-TEST" })}>Complete Book Load</button>
+      </div>
     ) : null,
 }));
 
@@ -40,6 +42,7 @@ const readyItem: dispatchApi.OcrIntakeQueueItem = {
   },
   confidence_score: 0.82,
   error_message: null,
+  converted_load_id: null,
   created_at: "2026-06-03T12:00:00.000Z",
 };
 
@@ -56,8 +59,11 @@ describe("OcrQueuePage (B21-D7)", () => {
   beforeEach(() => {
     vi.spyOn(dispatchApi, "getOcrIntakeQueue").mockResolvedValue({ items: [readyItem] });
     vi.spyOn(dispatchApi, "convertOcrIntakeToBookLoad").mockResolvedValue({
-      item: { ...readyItem, status: "converted" },
+      item: readyItem,
       book_load_prefill: { customer_name: "Acme Freight", linehaul_cents: 250000 },
+    });
+    vi.spyOn(dispatchApi, "finalizeOcrIntakeConversion").mockResolvedValue({
+      item: { ...readyItem, status: "converted", converted_load_id: "load-created" },
     });
   });
 
@@ -96,6 +102,17 @@ describe("OcrQueuePage (B21-D7)", () => {
     await userEvent.click(await screen.findByTestId("ocr-convert-q1"));
     expect(await screen.findByTestId("book-load-modal-open")).toBeTruthy();
     expect(screen.getByTestId("book-load-modal-open").getAttribute("data-prefill")).toBe("yes");
+  });
+
+  it("finalizes the OCR reverse link only after canonical Book Load creation", async () => {
+    const finalizeSpy = vi.spyOn(dispatchApi, "finalizeOcrIntakeConversion");
+    wrap(<OcrQueuePage />);
+    await userEvent.click(await screen.findByTestId("ocr-convert-q1"));
+    await userEvent.click(await screen.findByRole("button", { name: "Complete Book Load" }));
+    expect(finalizeSpy).toHaveBeenCalledWith("q1", {
+      operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+      load_id: "load-created",
+    });
   });
 
   it("shows processing hint for pending OCR status", async () => {
