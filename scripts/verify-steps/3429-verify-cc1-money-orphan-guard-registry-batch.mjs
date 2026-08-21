@@ -37,6 +37,7 @@ const guards = [
   "verify-categorize-field-existence-checked.mjs",
   "verify-customer-payment-apply-nets-credit-memos.mjs",
   "verify-customer-payment-write-role-gated.mjs",
+  "verify-deactivated-counterparty-resolver-coverage.mjs",
   "verify-deductions-write-role-gated.mjs",
   "verify-deprecated-settlement-escrow-deposit-atomic.mjs",
   "verify-coa-asymmetry-account-entitylink.mjs",

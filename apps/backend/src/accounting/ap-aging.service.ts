@@ -238,8 +238,29 @@ export function resolveDisplayGroup(row: {
  */
 export const AP_AGING_OPEN_BILLS_SQL = `
         SELECT
-          v.id::text AS vendor_id,
-          COALESCE(v.vendor_name, 'Unknown Vendor') AS vendor_name,
+          -- ACCT-AP-AGING-DEACTIVATED-VENDOR-NAME-GAP — mdata.vendors' RLS excludes
+          -- deactivated_at IS NOT NULL rows for a non-bypass reader, so the joined v.* row (id
+          -- included) goes entirely NULL once a bill's vendor is deactivated -- not just the name,
+          -- the GROUP-BY key too, which would silently collapse that vendor's aging into the
+          -- "__unknown_vendor__" bucket instead of its own row. b.vendor_uuid (the same safe-cast
+          -- the JOIN predicate below already uses) is the real, always-present FK; prefer it over
+          -- the possibly-RLS-excluded v.id. Currently latent on USMCA (every bill tied to a
+          -- deactivated vendor is also voided and excluded by this query's own filters below) but
+          -- a real code gap in the same class as LST-TXNREG-DEACTIVATED-COUNTERPARTY.
+          COALESCE(
+            v.id::text,
+            CASE WHEN b.vendor_uuid ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+              THEN b.vendor_uuid ELSE NULL END
+          ) AS vendor_id,
+          COALESCE(
+            v.vendor_name,
+            mdata.resolve_vendor_label_same_company(
+              CASE WHEN b.vendor_uuid ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                THEN b.vendor_uuid::uuid ELSE NULL END,
+              b.operating_company_id
+            ),
+            'Unknown Vendor'
+          ) AS vendor_name,
           COALESCE(b.due_date, b.bill_date)::text AS due_date,
           GREATEST(
             COALESCE(b.amount_cents, 0)
