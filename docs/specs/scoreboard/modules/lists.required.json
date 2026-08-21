@@ -7953,6 +7953,10 @@
         { "id": "catalog.fleet.equipment_types.list", "removed": ["picker_law"], "reason": "live-verified sibling (selected-USMCA /lists/fleet/equipment-types and /catalogs/equipment-types both checked): only list control is the Active/Inactive/All status filter, no FK picker" },
         { "id": "catalog.maintenance.vendors.list", "removed": ["picker_law"], "reason": "live-verified sibling (selected-USMCA /lists/maintenance/vendors): curated preferred-vendor label catalog, same as its .create sibling, no FK picker anywhere on the page" }
       ]
+    },
+    "picker_law_new_catalog_entry_exemption_2026_08_21": {
+      "finding": "CC-3-PICKER-LAW-NEW-CATALOG-ENTRY-CANDIDATES",
+      "note": "5 lists picker_law leaves audited via direct component read, all zero-picker by design: lists.drawer.new_vendor_drawer_form (NewVendorDrawerForm.tsx -> VendorCreateModal, creating a new vendor), lists.drawer.inline_create (InlineCreateDrawer.tsx, a router shell over the same New*DrawerForm catalog-create family), lists.modal.civil_fine_type and lists.modal.internal_fine_reason (CivilFineTypeModal.tsx / InternalFineReasonModal.tsx, plain code/display_name/description catalog-row forms), and lists.modal.quick_create_entity (QuickCreateEntityModal.tsx — its customer/part kinds are a plain create form for a NEW entity; its vendor/item/class kinds already delegate to the real pickers/catalog modals covered elsewhere). Same class as maintenance's documented parts.vendor_default exemption — creating a new catalog row has nothing to pick. Currently credited only by broad module-loop sweeps; this note documents why that is an acceptable non-gap, not a guessed removal of picker_law."
     }
   }
 }

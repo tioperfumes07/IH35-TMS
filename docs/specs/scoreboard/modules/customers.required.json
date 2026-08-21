@@ -1092,6 +1092,10 @@
           ]
         }
       ]
+    },
+    "picker_law_edit_own_fields_exemption_2026_08_21": {
+      "finding": "CC-3-PICKER-LAW-EDIT-OWN-FIELDS-CANDIDATE",
+      "note": "customers.modal.customer_edit audited via direct component read (CustomerEditModal.tsx -> CustomerProfileForm.tsx). It edits an EXISTING customer's own profile fields (name, contact, payment terms) \u2014 there is no other entity to reference/pick from this surface, so no EntityPicker/ReferenceSelect/Combobox is expected by design. Currently credited only by the broad verify-cursor-vertical-qbo-picker-modules.mjs module-loop sweep (theater-shape, never opens this file) \u2014 this note documents why that is an acceptable non-gap, not a guessed removal of the picker_law requirement."
     }
   }
 }

@@ -1765,6 +1765,10 @@
           ]
         }
       ]
+    },
+    "picker_law_new_catalog_entry_exemption_2026_08_21": {
+      "finding": "CC-3-PICKER-LAW-NEW-CATALOG-ENTRY-CANDIDATES",
+      "note": "3 accounting picker_law leaves \u2014 accounting.drawer.new_account_drawer_form, new_class_drawer_form, new_service_drawer_form \u2014 audited via direct component read (NewAccountDrawerForm.tsx / NewClassDrawerForm.tsx / NewServiceDrawerForm.tsx). Each creates a NEW chart-of-accounts/class/service catalog row (name, type, code fields); there is no existing entity to reference, so no EntityPicker/ReferenceSelect/Combobox is expected by design, same class as maintenance's documented parts.vendor_default exemption ('Parts are NOT a linkable entity'). Currently credited only by the broad verify-cursor-vertical-qbo-picker-modules.mjs module-loop sweep (theater-shape, never opens these files) \u2014 this note documents WHY that is an acceptable non-gap, not a guessed removal of the picker_law requirement from these leaves."
     }
   }
 }
