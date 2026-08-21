@@ -20,10 +20,10 @@ SEATS THIS TICK:
   Codex system reverse (NO CDP)
 
 YOUR NOW:
-  1) Keep INBOX/OUTBOX this order.
+  1) Live Chrome = honest+wired (labels, pickers, F+R). Categorize is not a coder function.
   2) Do not trigger_deploy this turn.
-  3) Next batch deploy only after 30–60 min quiet + healthz JSON 200 (picks up #13708).
+  3) Next batch deploy only after 30–60 min quiet + healthz JSON 200.
 
-ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=bus NO KICK | GO
+ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=certify honesty/wiring | GO
 ===== END CURSOR =====
 ```
