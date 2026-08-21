@@ -1,29 +1,34 @@
-# INBOX-CC-1 · URGENT 6 VERTICAL MONEY + FIVE EVENTS
+# INBOX-CC-1 · 9223 · URGENT 6 MONEY + FIVE HOPS
 
-`git pull --ff-only origin main` then execute **this file**. FAST-MERGE (local gate PASS → push → PR → squash `--admin` ~4 min). Never idle. Never `/tasks`. Never Trucking/TRANSP. No TMS→QBO. USMCA only. Reuse poster.
+`git pull --ff-only origin main`. Execute this file. FAST-MERGE. Never idle. Never `/tasks`. Never Trucking/TRANSP. **No TMS→QBO.** USMCA only. Reuse the existing poster. No new GL math. Flags stay OFF unless Jorge already said turn on.
 
-**U6 leftover (matrix):** dispatch unpaid Live includes **one money column cell**. accounting/banking/settlements/factoring/vendors Miss C **0** — still do the five events.
-
-## YOUR PENDING
-
-**Urgent 6: 1 of 1 money column + 5 of 5 scenario events = 6 of 6**
-
-### COL `gl_je` (1)
-
-1/1 `load.banking:gl_je` — create a real USMCA load-tagged bank path + balanced JE (reuse poster) **or** OUTBOX `UNCHANGED blocker=load.banking:gl_je honest-zero`.
-
-### Five named hops (not a 5th Box; not new Required.json leaves)
-
-2–6/6: revrec · invoice+evidence · bank-path · real fuel · factoring advance.
-
-These do **not** sit in Box 1–4 money columns. They are Program hops. Do not skip because Miss C is 0.
-
-**STOP leaving U6** until 6/6 are SHIPPED or named UNCHANGED with the exact `leaf:col` / hop name.
-
-**Then rest of Urgent 16 `gl_je` and money columns first:** fleet **48** → maintenance **41** → safety **7** → cash-flow **5**. Skip lists money. Skip Miss C 0 modules except the 5 events.
-
-OUTBOX every ship: `CC-1 | U6  k/6 | COL=gl_je|events | NEXT=<leaf:col or hop> | GO`
+## PASTE BOX (copy everything in the fence)
 
 ```text
-CC-1 | ACK | INBOX-CC-1 | PORT=9223 | PENDING=6/6 U6 | NOW=COL gl_je load.banking then 5 events | GO
+===== CC-1 / CLAUDE CODER 1 · PORT 9223 · URGENT 6 =====
+PULL: git pull --ff-only origin main
+FILE: docs/bus/INBOX-CC-1.md  (this is the only NOW)
+LAW: USMCA only · no QBO write-back · reuse poster · FAST-MERGE · fix instantly · never defer · never HOLD
+CHROME: 9223 · app.ih35dispatch.com · one leaf → prove → CLOSE TAB · never leave /program/matrix open
+
+YOUR N/M: Urgent 6 money+hops = 6 of 6. OUTBOX claims 5/6 SHIPPED + factoring UNCHANGED. Factoring advance is **not** owner-gated — do TMS-internal USMCA JE (Dr cash/bank, Cr factoring liability). That is 6/6. Do not restart 1–5.
+
+NOW:
+  6/6  factoring advance — TMS-internal only. NO Faro/external draw. Do not leave U6 until this ships or a named UNCHANGED with a real blocker (not "owner-gated").
+
+CC-2 still owes Live stamp on load.banking:gl_je. You do not wait for the stamp. You do not leave U6 for fleet until 6/6 SHIPPED or named UNCHANGED with hop name.
+
+REPORTED FOR YOU: factoring was wrongly parked as owner-gated. It is not. Ship 6/6 this turn.
+
+IF YOU FIND a chrome/picker/reverse bug: PREPEND OUTBOX-CC-3 or OUTBOX-CODEX + board OPEN same turn. Keep 6/6.
+
+THEN Urgent 16 money leftover that is still unpaid Live (do not call the ladder closed while safety/cash-flow still have Miss C): fleet → maintenance already touched — next unpaid money cells only. Skip lists money.
+
+OUTBOX every ship: CC-1 | U6 k/6 | NEXT=<hop> | GO
+ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | PENDING=1/6 | NOW=factoring advance TMS-internal | GO
+===== END CC-1 =====
 ```
+
+## AFTER PASTE
+
+Same rules as the fence. STOP leaving U6 until 6/6.

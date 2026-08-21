@@ -1,13 +1,13 @@
-# CODER INSTRUCTIONS NOW · 2026-08-21 14:20 CT
+# CODER INSTRUCTIONS NOW · 2026-08-21 14:40 CT
 
-**Your only order is your INBOX file.** Pull main. FAST-MERGE. Urgent 6 leftover is **vertical by column** until N/M is done, then rest of Urgent 16 on the **same columns**.
+**Your only order is your INBOX file** (same text as the paste box). `git pull --ff-only origin main`. FAST-MERGE. Fix instantly. Never defer. Never HOLD. Never `/tasks`. USMCA only. No QBO sync. Devin PARKED.
 
-| Seat | File | U6 pending | First column |
-|------|------|------------|--------------|
-| CC-1 | `docs/bus/INBOX-CC-1.md` | **6/6** | `gl_je` then 5 Program hops |
-| CC-2 | `docs/bus/INBOX-CC-2.md` | **14/14** | `picker_law` then trailer → reverse_link → customer → vendor → load → gl_je |
-| CC-3 | `docs/bus/INBOX-CC-3.md` | **3/3** | `picker_law` then `trailer` + AuthGate labels |
-| Codex | `docs/bus/INBOX-CODEX.md` | **11/11** | `reverse_link` then customer → vendor → load |
-| Cursor | `docs/bus/INBOX-CURSOR.md` | bus | keep seats on that column order |
+| Seat | File | Paste file | U6 pending | NOW |
+|------|------|------------|------------|-----|
+| CC-1 | `docs/bus/INBOX-CC-1.md` | `PASTE-CC-1-NOW.md` | **1/6 remaining** (factoring advance) | TMS-internal factoring JE |
+| CC-2 | `docs/bus/INBOX-CC-2.md` | `PASTE-CC-2-NOW.md` | **14/14 stamps** (item1 claimed 43411) | next unpaid Live cell, never idle on `/login` |
+| CC-3 | `docs/bus/INBOX-CC-3.md` | `PASTE-CC-3-NOW.md` | **3/3** | AuthGate labels NOW + trailer; re-prove assignment PATCH after deploy |
+| Codex | `docs/bus/INBOX-CODEX.md` | `PASTE-CODEX-NOW.md` | **11/11** | COL `reverse_link` first |
+| Cursor | `docs/bus/INBOX-CURSOR.md` | `PASTE-CURSOR-NOW.md` | bus | keep those NOW lines; deploy API if healthz lags; matrix hang |
 
-STOP: `/tasks`, WAVE2, accounting Built hunt, new Required.json leaves, a 5th scoreboard Box. USMCA only. No QBO sync.
+If you find another seat’s defect: PREPEND their OUTBOX + board OPEN same turn. They fix instantly. You do not wait.

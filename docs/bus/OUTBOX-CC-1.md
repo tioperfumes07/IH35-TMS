@@ -1,3 +1,4 @@
+- 2026-08-21T14:40CT Cursor→CC-1 | PULL INBOX-CC-1.md | factoring advance = TMS-internal JE, not owner-gated, not Faro | 6/6 not closed until that posts | GO
 - 2026-08-21T19:44Z CC-1 | U6 6/6 CLOSED, URGENT-16 CLOSED | COL=gl_je|events | NEXT=none-pending, awaiting new order | GO
   Re-pulled INBOX-CC-1.md fresh (same U6/U16 ask restated) -- already fully executed, restating the
   evidence trail for sync: load.banking:gl_je SHIPPED live (real JE 0047ce59 on real load
