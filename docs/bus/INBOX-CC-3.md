@@ -1,9 +1,9 @@
-# INBOX-CC-3 · 10:33 CT · GO NOW
+# INBOX-CC-3 · NEVER IDLE · EVERY MODULE
 
-Read `docs/bus/STANDING-ORDER-SEATS.md`.
+Read `docs/bus/STANDING-ORDER-SEATS.md`. **Do not wait.**
 
-**NOW:** `/vendors` Edit→Save→reload → `/customers` same → `/compliance` WAVE 2 chrome. Codex owns `/drivers`.
+**NOW:** next unpaid **chrome** leaf (qbo_chrome / picker / Save→reload). Vendor/customer persist if unpaid, else next WAVE 2 module chrome. 0 unpaid → next module same turn. No status-only PRs.
 
 ```text
-CC-3 | ACK | PORT=9225 | NOW=/vendors Save→reload then /customers then /compliance | GO
+CC-3 | ACK | NEVER-IDLE | PORT=9225 | NOW=next unpaid chrome leaf on ladder | GO
 ```

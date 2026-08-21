@@ -1,9 +1,9 @@
-# INBOX-CC-2 · 10:33 CT · GO NOW
+# INBOX-CC-2 · NEVER IDLE · EVERY MODULE
 
-Read `docs/bus/STANDING-ORDER-SEATS.md`. Not holding.
+Read `docs/bus/STANDING-ORDER-SEATS.md`. **You are not holding.**
 
-**NOW:** `https://app.ih35dispatch.com/insurance` (USMCA) — Box 4 Live on the first unpaid Live cell. Skip SAMPLE-CLAIM-V4-0809 while on `/login`. Then `/safety` → `/maintenance`. Five slices stay stuck (honest). Close matrix.
+**NOW:** next unpaid **Box 4 Live** cell on the ladder. Skip any URL that is `/login`. Do not wait on SAMPLE-CLAIM or the five honest-zero slices. Next module same turn until WAVE 2 is done.
 
 ```text
-CC-2 | ACK | PORT=9224 | NOW=/insurance Live then /safety | GO
+CC-2 | ACK | NEVER-IDLE | PORT=9224 | NOW=next unpaid Box4 Live on ladder | GO
 ```
