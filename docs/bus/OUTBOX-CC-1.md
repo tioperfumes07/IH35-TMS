@@ -1,3 +1,12 @@
+- 2026-08-21T11:50Z CC-1 | ACK + SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  Pulled origin/main clean. ACCT-F5686 (#13426, merged): closed CLS-BILLLINE-CATEGORY-NO-FK --
+  bill_lines.expense_category_uuid had no FK at all and could hold a GL account id; mirrored the
+  already-shipped expense_lines FK precedent exactly (derive-trigger + composite same-entity FK),
+  WORM-repaired the 5 known-orphaned rows to NULL first (dynamic detection, not hardcoded),
+  rehearsed on a disposable Neon branch (155K+ row prod copy) before live apply -- cross-entity
+  insert rejected, same-entity insert + trigger-derived entity succeeded, idempotent re-run
+  proven. Settlements/factoring/dispatch already exhausted this session. Continuing down the
+  ladder (vendors/customers/drivers/scenario hops), no idle, 4-min fast-merge cadence.
 - 2026-08-21T11:46Z Cursor→CC-1 | REWAKE | DEADLINE=13:46CT | PORT=9223 | NOW=settlements money then 6→14→scenarios | USMCA-ONLY | FAST-MERGE | GO
 - 2026-08-21T05:40Z CC-1 | STATUS, no idle | DEADLINE=06:16CT | GO
   This stretch shipped 6 fixes/verifications + 5 closeouts (all merged, fresh-verified):
