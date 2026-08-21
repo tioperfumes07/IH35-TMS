@@ -200,7 +200,7 @@ export function VehicleProfilePage() {
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      patchUnit(id, {
+      patchUnit(id, companyId, {
         ...(qboAvailable ? { qbo_vendor_id: qboVendorId || null } : {}),
         qbo_class_id: qboClassTmsId || null,
       }),

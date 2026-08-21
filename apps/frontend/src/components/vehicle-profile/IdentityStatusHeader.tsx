@@ -56,7 +56,7 @@ export function IdentityStatusHeader({
                 const next = e.target.value as (typeof STATUSES)[number];
                 if (next === currentStatus) return;
                 if (next === "InService") {
-                  void patchUnit(unitId, { status: "InService" }).then(onStatusSaved);
+                  void patchUnit(unitId, companyId, { status: "InService" }).then(onStatusSaved);
                   return;
                 }
                 setModalStatus(next);
@@ -94,6 +94,7 @@ export function IdentityStatusHeader({
         open={modalStatus !== null}
         targetStatus={modalStatus ?? "InService"}
         unitId={unitId}
+        companyId={companyId}
         onClose={() => setModalStatus(null)}
         onSaved={onStatusSaved}
       />

@@ -12,12 +12,14 @@ export function StatusChangeModal({
   open,
   targetStatus,
   unitId,
+  companyId,
   onClose,
   onSaved,
 }: {
   open: boolean;
   targetStatus: Status;
   unitId: string;
+  companyId: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -72,7 +74,7 @@ export function StatusChangeModal({
     }
     setPending(true);
     try {
-      await patchUnit(unitId, body);
+      await patchUnit(unitId, companyId, body);
       onSaved();
       onClose();
     } catch (err) {

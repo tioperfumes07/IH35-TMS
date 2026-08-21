@@ -225,7 +225,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
 
   const { pushToast } = useToast();
   const saveMutation = useMutation({
-    mutationFn: () => patchUnit(unitId!, patchPayload),
+    mutationFn: () => patchUnit(unitId!, operatingCompanyId, patchPayload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
       void queryClient.invalidateQueries({ queryKey: ["edit-vehicle-modal", unitId, operatingCompanyId] });
