@@ -26,9 +26,22 @@ type Props = {
   deadheadAfterAt?: string;
   deadheadDropCity?: string;
   deadheadDropState?: string;
+  /**
+   * AUTHGATE-PANEL-MISSING-ENTITY-LABELS (2026-08-21): this section owns the ONLY place BookLoadModalV4
+   * ever learns a picked unit/trailer/driver's real display name (EntityPickerOption.label) — the form's
+   * own watch()'d fields hold IDs only. BookLoadModalV4 renders its own <AuthGatePanel> sibling further
+   * down the tree with the same unitUuid/trailerUuid/driverUuid but had no way to also pass
+   * unitLabel/trailerLabel/driverLabel, so AuthGatePanel's EntityLinkOrTombstone always fell back to
+   * "Unit — not visible" (id-only) even though the label was known right here. Lifting it up.
+   */
+  onOptionsResolved?: (options: {
+    unit: EntityPickerOption | null;
+    trailer: EntityPickerOption | null;
+    primaryDriver: EntityPickerOption | null;
+  }) => void;
 };
 
-export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId, deadheadAfterAt, deadheadDropCity, deadheadDropState }: Props) {
+export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId, deadheadAfterAt, deadheadDropCity, deadheadDropState, onOptionsResolved }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
   const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "") : "";
   const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "") : "";
@@ -38,6 +51,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const [secondaryDriverOption, setSecondaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [unitOption, setUnitOption] = useState<EntityPickerOption | null>(null);
   const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
+  // AUTHGATE-PANEL-MISSING-ENTITY-LABELS: lift the resolved labels up so BookLoadModalV4's separate
+  // <AuthGatePanel> can pass real names instead of leaving EntityLinkOrTombstone id-only.
+  useEffect(() => {
+    onOptionsResolved?.({ unit: unitOption, trailer: trailerOption, primaryDriver: primaryDriverOption });
+  }, [unitOption, trailerOption, primaryDriverOption, onOptionsResolved]);
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   const temperatureType = watch ? String(watch("temperature_type") ?? "") : ""; // W-FIX-1 Frozen/Fresh segmented
