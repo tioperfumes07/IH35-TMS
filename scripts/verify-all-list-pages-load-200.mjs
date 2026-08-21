@@ -35,6 +35,18 @@ function fail(msg) {
   process.exit(1);
 }
 
+function verifyCompanyAuthReturns(source) {
+  const routeCount = (source.match(/const user = currentAuthUser\(req, reply\);/g) ?? []).length;
+  const safeReturnCount = (source.match(/if \(!user\) return reply;/g) ?? []).length;
+  if (routeCount === 0 || safeReturnCount !== routeCount) {
+    return [`org company auth exits must return the already-sent Fastify reply (${safeReturnCount}/${routeCount})`];
+  }
+  if (/if \(!user\) return;(?!\s*reply)/.test(source)) {
+    return ["org company route has a bare auth return that can double-send a 401"];
+  }
+  return [];
+}
+
 function readBackendSources() {
   const dir = path.join(ROOT, "apps/backend/src");
   const chunks = [];
@@ -73,6 +85,19 @@ async function main() {
   if (missing.length > 0) {
     fail(`list routes not registered: ${missing.join(", ")}`);
   }
+
+  const companyRoutesPath = path.join(ROOT, "apps/backend/src/org/companies.routes.ts");
+  const companyRoutes = fs.readFileSync(companyRoutesPath, "utf8");
+  if (process.argv.includes("--selftest")) {
+    const mutated = companyRoutes.replace("if (!user) return reply;", "if (!user) return;");
+    if (mutated === companyRoutes || verifyCompanyAuthReturns(mutated).length === 0) {
+      fail("SELFTEST: planted bare auth return escaped");
+    }
+    console.log("verify:all-list-pages-load-200 SELFTEST PASS — planted Fastify double-send rejected");
+    return;
+  }
+  const companyAuthFailures = verifyCompanyAuthReturns(companyRoutes);
+  if (companyAuthFailures.length > 0) fail(companyAuthFailures.join("; "));
 
   const baseUrl = process.env.API_BASE_URL?.replace(/\/$/, "") ?? process.env.FRONTEND_BASE_URL?.replace(/\/$/, "");
   const sessionCookie = process.env.VERIFY_LIST_PAGES_SESSION_COOKIE?.trim();
