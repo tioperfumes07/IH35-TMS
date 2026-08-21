@@ -2,6 +2,8 @@
 
 **Governed by `docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md` (TRIPLE-LOCK, owner-locked 2026-08-11):** a finding is not real until it is filed here + in the register + in routing; FIXED requires register sign-off and five proofs in the same turn as merge.
 
+| **FIXED (this PR · Codex):** `LV-ORG-ME-COMPANIES-AUTH-DOUBLE-SEND` — both production instances emitted `FST_ERR_REP_ALREADY_SENT` / `ERR_HTTP_HEADERS_SENT` for unauthenticated `GET /api/v1/org/me/companies`; fresh Chrome tabs lost company context and could not mount Dispatch. | `apps/backend/src/org/companies.routes.ts`; `scripts/verify-all-list-pages-load-200.mjs`; Render logs 2026-08-21 17:20–17:21Z; `BLOCKS=dispatch Miss C 14 Live Chrome` | B | **Codex — mechanical connectivity lane** | Every company route now returns the already-sent Fastify reply on auth failure; the existing list-route guard mutation-kills restoration of a bare return. | current main only | **FIXED (this PR) · normal+selftest+backend typecheck PASS · Live deploy recheck pending · OWNER-GATED=no** |
+
 | **FIXED (PR #13479):** `ENV-VERIFY-STATIC-CUSTOMERS-AUTH-MOCK-MISSING-ISERROR` — Customers tabs `useAuth` mock includes `isError: false`. | `apps/frontend/src/pages/customers/__tests__/CustomersPage.tabs.test.tsx` | C | **Cursor** | Auth mock matches `useAuth` contract. | #13479 | **FIXED (PR #13479)** |
 
 | **FIXED (PR #13479 / #13511 / this PR):** `ENV-VERIFY-STATIC-TASKS-AUTH-QUERYFN-SIGNAL` — TasksMine `getMe(signal)`; planner + chat comments/activity + assignable-users forward AbortSignal. | TasksMinePage · fetchPlannerTasks · listAssignableUsers | C | **Cursor** | queryFn `({ signal }) => …` | #13479 #13511 this PR | **FIXED (PR #13479 / #13511 / this PR)** |

@@ -12,6 +12,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 // Flip USMCA_ACTIVE=1 at launch to expose it. Entity ids are share-nothing; this only hides USMCA.
 export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const USMCA_ACTIVE = process.env.USMCA_ACTIVE === "1";
+const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
+const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;
 // Exported so every company-list surface (e.g. identity/company-context.routes switch-company)
 // applies the SAME pre-launch gate and can't disagree with this picker. Reads USMCA_ACTIVE at import.
 export function filterPreLaunchEntities<T extends { id: string }>(rows: T[]): T[] {
@@ -54,9 +56,12 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerCompanyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/org/companies", async (req, reply) => {
+  app.get("/api/v1/org/companies", RL_READ, async (req, reply) => {
     const user = currentAuthUser(req, reply);
-    if (!user) return;
+    // Fastify must receive the reply that requireAuth already sent. Returning bare undefined here
+    // can make the async handler auto-complete a second response after the 401, producing
+    // FST_ERR_REP_ALREADY_SENT and breaking the company-context bootstrap for fresh app tabs.
+    if (!user) return reply;
 
     return withCurrentUser(user.uuid, async (client) => {
       const res = await client.query(
@@ -83,9 +88,9 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get<{ Params: { id: string } }>("/api/v1/org/companies/:id", async (req, reply) => {
+  app.get<{ Params: { id: string } }>("/api/v1/org/companies/:id", RL_READ, async (req, reply) => {
     const user = currentAuthUser(req, reply);
-    if (!user) return;
+    if (!user) return reply;
 
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -106,9 +111,9 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch<{ Params: { id: string } }>("/api/v1/org/companies/:id", async (req, reply) => {
+  app.patch<{ Params: { id: string } }>("/api/v1/org/companies/:id", RL_WRITE, async (req, reply) => {
     const user = currentAuthUser(req, reply);
-    if (!user) return;
+    if (!user) return reply;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -159,9 +164,9 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/org/user-company-access", async (req, reply) => {
+  app.post("/api/v1/org/user-company-access", RL_WRITE, async (req, reply) => {
     const user = currentAuthUser(req, reply);
-    if (!user) return;
+    if (!user) return reply;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
 
     const parsedBody = grantAccessSchema.safeParse(req.body ?? {});
@@ -193,9 +198,9 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/org/me/companies", async (req, reply) => {
+  app.get("/api/v1/org/me/companies", RL_READ, async (req, reply) => {
     const user = currentAuthUser(req, reply);
-    if (!user) return;
+    if (!user) return reply;
 
     return withCurrentUser(user.uuid, async (client) => {
       const res = await client.query(
@@ -222,9 +227,9 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch("/api/v1/org/me/default-company", async (req, reply) => {
+  app.patch("/api/v1/org/me/default-company", RL_WRITE, async (req, reply) => {
     const user = currentAuthUser(req, reply);
-    if (!user) return;
+    if (!user) return reply;
 
     const parsedBody = setDefaultCompanySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
