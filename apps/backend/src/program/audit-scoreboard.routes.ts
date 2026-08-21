@@ -17,6 +17,51 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
+import { resolveClientIp } from "../config/client-ip.js";
+
+/**
+ * PROD-OUTAGE-MATRIX-POLL-STORM (2026-08-21): a hard, self-contained per-IP cap on the
+ * expensive scoreboard projections.
+ *
+ * Six agent-driven browsers left open on the matrix page drove ~71 req/s of a 223 KB payload
+ * (~15 MB/s) at production. That starved the Node event loop, so the trivial
+ * `/api/v1/_healthcheck` (which only returns {status:"ok"}) took 25.9s against Render's 5s
+ * timeout. Render SIGTERM-killed every instance (29 server_failed, nonZeroExit 143,
+ * evicted:false = not OOM) and the API was down for hours.
+ *
+ * These routes ALREADY declare `config: { rateLimit: { max: 60, timeWindow: "1 minute" } }`,
+ * but that never fired: 150 parallel requests against the deployed service returned 150
+ * responses and ZERO 429s. Until that plugin-level failure is root-caused separately, the
+ * endpoint that can take production down must not depend on it. This gate is in the handler,
+ * so it cannot be bypassed by plugin encapsulation or hook-ordering.
+ *
+ * Normal cost: the page polls every 30s => 2 req/min. 20/min leaves 10x headroom for a human
+ * reloading, while capping a runaway client at 20/min instead of 4,260/min.
+ */
+const MATRIX_MAX_PER_MIN = 20;
+const MATRIX_WINDOW_MS = 60_000;
+const matrixHits = new Map<string, { count: number; windowStart: number }>();
+
+function matrixThrottleExceeded(ip: string, now: number): boolean {
+  // Bound the map so a spoofed-header flood cannot grow it without limit.
+  if (matrixHits.size > 5_000) {
+    for (const [k, v] of matrixHits) {
+      if (now - v.windowStart > MATRIX_WINDOW_MS) matrixHits.delete(k);
+    }
+  }
+  const cur = matrixHits.get(ip);
+  if (!cur || now - cur.windowStart >= MATRIX_WINDOW_MS) {
+    matrixHits.set(ip, { count: 1, windowStart: now });
+    return false;
+  }
+  cur.count += 1;
+  return cur.count > MATRIX_MAX_PER_MIN;
+}
+
+/** Exported for the guard/selftest. */
+export function __matrixThrottleForTest(ip: string, now: number): boolean {
+  return matrixThrottleExceeded(ip, now);
+}
 import { formatCt } from "./program-board.service.js";
 import { buildModuleMatrix, buildSystemModuleMatrix } from "./module-matrix.service.js";
 import { existsSync, readFileSync } from "node:fs";
@@ -714,6 +759,15 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       if (!requireAuth(req, reply)) return;
+      const clientIp = resolveClientIp(req as never);
+      if (matrixThrottleExceeded(clientIp, Date.now())) {
+        reply.header("retry-after", "60");
+        return reply.code(429).send({
+          error: "rate_limited",
+          message:
+            "Module matrix is capped at 20 requests per minute per client. Close duplicate/automated tabs; the board polls every 30s.",
+        });
+      }
       const q = (req.query ?? {}) as { module?: unknown; scope?: unknown };
       const scope = typeof q.scope === "string" ? q.scope.trim().toLowerCase() : "";
       if (scope === "system" || scope === "all") {
