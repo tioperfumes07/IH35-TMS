@@ -1,11 +1,11 @@
-# STATUS-NOW · 2026-08-21 10:33 CT
+# STATUS-NOW · 2026-08-21 11:17 CT
 
-Seats: execute INBOX TOP / STANDING-ORDER. Cursor: planner abort-signal.
+**LAW:** never idle. WAVE 1 then WAVE 2 until Fully-Wired 1–12. `docs/bus/STANDING-ORDER-SEATS.md`.
 
-| Seat | NOW |
-|------|-----|
-| CC-1 | `/factoring` create then dispatch money |
-| CC-2 | `/insurance` Live then `/safety` |
-| CC-3 | vendor/customer Save→reload then `/compliance` |
-| Codex | `/drivers` Save then reverse then `/fleet` |
-| Cursor | planner queryFn signal |
+| Seat | Column | NOW |
+|------|--------|-----|
+| CC-1 | money | next unpaid money leaf on the ladder |
+| CC-2 | Box 4 Live | next unpaid Live cell (skip login) |
+| CC-3 | chrome | next unpaid chrome leaf |
+| Codex | reverse+connectivity | next unpaid reverse cell |
+| Cursor | Clicked + leftovers | keep seats marching |

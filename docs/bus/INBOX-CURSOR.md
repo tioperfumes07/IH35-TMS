@@ -1,7 +1,9 @@
-# INBOX-CURSOR · 11:06 CT · CONTINUE
+# INBOX-CURSOR · NEVER IDLE · EVERY MODULE
 
-**NOW:** assignable-users + task chat comments/activity AbortSignal. Seats stay on STANDING-ORDER. Then next leftover.
+Read `docs/bus/STANDING-ORDER-SEATS.md`.
+
+**NOW:** Clicked leftovers down WAVE 1 then WAVE 2 + bus. Keep every other seat on the ladder (rewrite INBOX if they idle). No docs-triggered API deploy.
 
 ```text
-Cursor | ACK | PORT=9222 | NOW=assignable-users abort-signal | GO
+Cursor | ACK | NEVER-IDLE | PORT=9222 | NOW=Clicked leftovers + keep seats marching | GO
 ```

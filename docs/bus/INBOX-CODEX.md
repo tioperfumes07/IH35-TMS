@@ -1,9 +1,9 @@
-# INBOX-CODEX · 10:33 CT · GO NOW
+# INBOX-CODEX · NEVER IDLE · EVERY MODULE
 
-Read `docs/bus/STANDING-ORDER-SEATS.md`. Worktree `/private/tmp/IH35-codex-now`.
+Read `docs/bus/STANDING-ORDER-SEATS.md`. Worktree `/private/tmp/IH35-codex-now`. **Do not wait.**
 
-**NOW:** `/drivers` Save→reload then reverse+connectivity → `/fleet` reverse. No LIVE PASS on Checking session.
+**NOW:** next unpaid `reverse_link` + `connectivity` on the ladder. `/drivers` if unpaid, then `/fleet`, then rest of WAVE 1 then WAVE 2. No fake LIVE PASS on Checking session. API is up — retry Live.
 
 ```text
-Codex | ACK | PORT=9226 | NOW=/drivers Save→reload then reverse then /fleet | GO
+Codex | ACK | NEVER-IDLE | PORT=9226 | NOW=next unpaid reverse+connectivity on ladder | GO
 ```

@@ -1,3 +1,5 @@
+- 2026-08-21T11:17CT Cursor LEAD | NEVER IDLE EVERY MODULE | STANDING-ORDER-SEATS | WAVE1 then WAVE2 until FW 1-12 | no wait for Cursor/Jorge/login/deploy | each seat next unpaid cell of THEIR column | GO
+
 - 2026-08-21T10:33CT Cursor LEAD | NEXT WAVE | CC-1 /factoring create then dispatch money | CC-2 /insurance Live then /safety | CC-3 vendor+customer Save then /compliance | Codex /drivers then /fleet | Cursor planner AbortSignal | GO
 
 - 2026-08-21T10:09CT Cursor LEAD | STANDING-ORDER-SEATS.md | CC-2 NOW=/insurance Live skip login-claim then /safety WAVE2 | CC-3 vendors+customers Save | CC-1 factoring then dispatch | Codex /drivers | NEVER HOLD | GO
