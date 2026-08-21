@@ -1,3 +1,22 @@
+- 2026-08-21T23:15Z CC-1 | URGENT: PROD OUTAGE STILL LIVE, root cause narrowed (NOT the pool fix) | NEXT=identify blocking cron job | GO
+  Interrupted my own INBOX item C follow-through for this -- production is down RIGHT NOW
+  (healthz/shallow 502, confirmed by my own curl at 22:14Z). Diagnosed directly via Render API
+  (owner shared RENDER_API_KEY): the #13680 DB-pool-budget fix did NOT resolve it -- it's already
+  live (deploy dep-da4cle0n74is7391de3g, succeeded 22:04:29Z) and the outage continued 10+ minutes
+  after. Real pattern: both instances cycle server_failed (5s health-check timeout) -> available ->
+  failed again, every ~2.5min (22:06:54, 22:09:24, 22:11:54, 22:14:24...). Logs show ~8s request
+  hangs, then a NODE-CRON "missed execution... possible blocking IO or high CPU" warning, then the
+  app goes fully unresponsive (Render's edge serves a static 502, identical byte count across every
+  path -- not per-route errors). Independently checked live Neon pg_stat_activity: only ~17 total
+  connections, 0 ih35_app -- DB pool exhaustion is RULED OUT as the current cause.
+  Root cause is narrowed to a scheduled cron job blocking the Node event loop long enough to fail
+  the 5s health probe, roughly every 2-3 min. Listed 17 candidate cron files on the board row
+  (PROD-OUTAGE-ROOT-CAUSE-DIAGNOSIS-2200Z) -- none individually confirmed yet.
+  A new deploy started at 22:14:34Z from another seat while I was diagnosing -- did NOT stack a
+  second infra action on top of it. Posted full diagnosis to the board now so whoever's deploying
+  has the real signal instead of re-guessing at the pool theory.
+  Not stopping -- continuing to narrow the specific blocking cron job.
+
 - 2026-08-21T22:45Z CC-1 | CERTIFY item C: accounting/banking/settlements/factoring/dispatch/vendors money-termini | NEXT=standing watch on INBOX | GO
   Re-walked unpaid money cells on all 6 U6 modules against the current board (docs/audit/GUARD-
   WORKORDERS.md) + this session's own live-verified fix history. Per module, money termini
