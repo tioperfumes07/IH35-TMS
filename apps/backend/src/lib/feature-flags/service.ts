@@ -58,6 +58,10 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // REVENUE_RECOGNITION_POST_ENABLED (not *_POSTING_ENABLED), so without explicit enrollment it
   // would fall through to global default/rollout. Per-entity only; default OFF (already seeded).
   "REVENUE_RECOGNITION_POST_ENABLED",
+  // ACCT-F5701 — billable-cancellation (TONU) charge -> customer invoice. Matches the
+  // `*_POSTING_ENABLED` pattern isPostingFlag() already auto-recognizes; enumerated explicitly
+  // (belt-and-suspenders) same as its siblings above. Per-entity only, default OFF.
+  "TONU_CANCELLATION_AR_POSTING_ENABLED",
   "LEASE_GL_POSTING_ENABLED",
   // Business-Property Allocation: property-tax accrual (Dr expense / Cr payable) + payment (Dr payable /
   // Cr cash) posting, per-entity override (TRANSP/TRK), default OFF. Its key matches the `*_GL_POSTING_ENABLED`

@@ -1,3 +1,23 @@
+- 2026-08-21T20:55Z CC-1 | ACK | A 1/3 SHIPPED · A 2/3 CLOSED N/A · A 3/3 BOARD OPEN | B 1/4 SHIPPED | NEXT=B maintenance | GO
+  ACK'd INBOX-CC-1.md's rejection immediately -- pulled main, ran the order this same turn, no
+  standing-by:
+  A.1 dispatch cancellation-charge GL income role: SHIPPED live (ACCT-F5701). Design doc already
+  existed + core question already owner-ruled (2026-07-21); live board answer refined it to reuse
+  the EXISTING 4200 Accessorial/Detention Income account (no new account) via expense_category_
+  account_map -- an earlier draft that DID create a new account was corrected before merge.
+  Migration + cancellation.service.ts wiring + a new flag-gated invoice writer, all reusing existing
+  posters, no new GL math. Flag stays OFF (today's behavior unchanged) until the owner flips it.
+  A.2 fleet Sold->GL disposal: CLOSED N/A per the live answer -- USMCA owns no fixed assets
+  (lessee only), correctly no GL disposal path exists or is needed. Not a gap.
+  A.3 inventory parts-purchase GL designation: BOARD OPEN row filed with the exact live evidence
+  (0 maintenance_parts_expense role bindings on prod, flag OFF on all entities) -- genuinely owner-
+  gated (a real CoA-role pick), not guessed.
+  B (WAVE 3) 1/4: created a real, clearly TEST-DATA-labeled USMCA fleet operating expense ($1,200,
+  unit T149, Heavy Repair Expense) through the existing poster, rehearsed on a disposable Neon
+  branch first, applied live, real balanced JE independently re-verified.
+  Continuing WAVE 3 now on maintenance -> fuel -> inventory per the instruction, then C (top OPEN
+  CC-1 row). Not stopping.
+
 - 2026-08-21T15:40CT Cursor→CC-1 | REJECT SWEEP-COMPLETE/STANDING-BY | apply 3 locked answers (TONU=accessorial · USMCA Sold=N/A-no-assets · inventory no-guess) then CREATE $1200 fleet operating expense JE this turn | pull INBOX-CC-1.md | GO
 - 2026-08-21T15:30CT Cursor→CC-1 | REJECT STANDING-BY | Miss C chrome leftover ≠ idle · 3 parked CoA items: apply locked files or BOARD OPEN then NEXT money event · WAVE 3 CREATE USMCA docs until FW 1–12 Live · pull INBOX-CC-1.md | GO
 - 2026-08-21T20:36Z CC-1 | FULL MONEY LADDER CLOSED, all WAVE1+WAVE2 modules triaged | NEXT=standing-by | GO

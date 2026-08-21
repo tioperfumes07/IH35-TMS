@@ -1,6 +1,8 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { createTonuInvoiceForCancellation, TONU_CANCELLATION_AR_POSTING_FLAG_KEY } from "./cancellation-tonu-invoice.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 function isOwner(role: string) {
   return role === "Owner";
@@ -162,6 +164,39 @@ export async function cancelLoad(
         // cancellation is still "requested" and genuinely awaiting the separate approveCancellation().
         approved_by_user_id: pendingOwnerApproval ? null : userId,
       });
+
+      // ACCT-F5701 — a billable cancellation charge (TONU) used to stop at "captured and displayed"
+      // (dispatch.load_cancellations.cancellation_charge_cents) with no path to an invoice / A/R / GL
+      // — the money silently evaporated. Reuses the existing revenue resolution + invoice totals
+      // machinery (no new GL math); books to the SAME existing Accessorial/Detention Income account
+      // every other accessorial line already resolves to (owner ruling, TONU = operating revenue,
+      // 2026-07-21; live board answer 2026-08-21: no new account). Flag-gated OFF by default — with
+      // the flag off this is a strict no-op, today's behaviour exactly.
+      if (!pendingOwnerApproval && resolvedBillable && input.cancellation_charge_cents != null) {
+        const tonuFlagOn = await isEnabled(client, TONU_CANCELLATION_AR_POSTING_FLAG_KEY, {
+          operating_company_id: input.operating_company_id,
+          user_uuid: userId,
+        });
+        if (tonuFlagOn) {
+          const tonuInvoice = await createTonuInvoiceForCancellation(client, {
+            operatingCompanyId: input.operating_company_id,
+            loadId: input.load_id,
+            cancellationChargeCents: input.cancellation_charge_cents,
+            actorUserId: userId,
+          });
+          await client.query(
+            `
+              UPDATE dispatch.load_cancellations
+                 SET charge_invoice_id = $2::uuid,
+                     charge_invoice_line_id = $3::uuid,
+                     charged_at = now(),
+                     charged_by_user_id = $4
+               WHERE id = $1
+            `,
+            [row.rows[0]?.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId]
+          );
+        }
+      }
 
       if (!pendingOwnerApproval) {
         await client.query(

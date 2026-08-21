@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
-  "generated_by": "db:ledger:snapshot",
-  "migration_count": 956,
+  "generated_by": "db:migrate",
+  "migration_count": 989,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -3040,6 +3040,14 @@
       "checksum": "eed894ae16b3a680d8fdcb7abe1265fa803634a3d32973ba79f674bc7ce57dbc"
     },
     {
+      "filename": "202608180900_usmca_fixed_asset_depr_coa_roles.sql",
+      "checksum": "1f6fa0f8930df1610ea4776903cef9521b002d24a945582edb3fb91c8eb8d156"
+    },
+    {
+      "filename": "202608190630_integrity_anomalies_runtime_grants.sql",
+      "checksum": "6f0d59388ccc0677b19bafae58485a465900f8f36270308122815d1c7db230d2"
+    },
+    {
       "filename": "202609010000_fact_02_factoring_recourse_window_95d.sql",
       "checksum": "ef89806f4f9b736ab17d53ae66a12ca6d7ef5f6de728ec5cdd3f2a36226c1a0a"
     },
@@ -3826,6 +3834,130 @@
     {
       "filename": "202612710000_usmca_archive_test_driver_vendor_customer_fixtures.sql",
       "checksum": "67be0d2b1e590b664953bc6c220655e37d17d6c52a3dbb6fe77646fae93fa3b0"
+    },
+    {
+      "filename": "202612720000_usmca_categorization_rules_fuel_maintenance_reach.sql",
+      "checksum": "e2691c3f8c1b01f6468f55ca0227569693f50cf4d9c6e707a68d308f45108ebf"
+    },
+    {
+      "filename": "202612730000_liabilities_dashboard_kpis_real_view.sql",
+      "checksum": "37f3cc7c2750f50c5e50f6a2112c962296bf6ba871bcb1ed35c41a37abff038a"
+    },
+    {
+      "filename": "202612740000_settlement_manual_paid_reopen_correction.sql",
+      "checksum": "8cffde55be88ee6526a91d98bacac425b960d39c0e346634f46612de0574759a"
+    },
+    {
+      "filename": "202612750000_cash_advances_with_context_load_link.sql",
+      "checksum": "1aa5e1ec2679cbe4f9032dbda4c696fa977003aa232e75d7ed7ffe8067bc112f"
+    },
+    {
+      "filename": "202612760000_fuel_loves_prices_daily.sql",
+      "checksum": "2b76fe70107fe3ef4abd59a4bb12ec023c3e88c1d3ce1a863e8fd1992f18f8d0"
+    },
+    {
+      "filename": "202612770000_audit_trigger_coverage_remaining_55_tables.sql",
+      "checksum": "436d188b381bd172032cca303b4aacc15bfea4333741a2e5f7eceea6daa9703e"
+    },
+    {
+      "filename": "202612780000_vendor_historical_label_resolver.sql",
+      "checksum": "0a08a760d4e3b671ccfb82d6397c25ca12bfa90c184953bc307fbcd85446ff49"
+    },
+    {
+      "filename": "202612781400_coi_request_operating_company_id_write.sql",
+      "checksum": "6808b9a5ceeda8e322f58689e128bf9b64ffd2f0a0ef9cde29b6ce13d45a721d"
+    },
+    {
+      "filename": "202612791800_worm_attach_vendor_payment_methods.sql",
+      "checksum": "d1fe5efc2ef0186795ba13b600a5098332aa6fbb83d4fd58749bd7919184e582"
+    },
+    {
+      "filename": "202612801800_banking_schema_parity_gaps.sql",
+      "checksum": "e9c0d7e73cd195989532e306c7feb6646bee722bdddbbb7aca50bbfedf513952"
+    },
+    {
+      "filename": "202612811300_acct_f5606_credit_memo_applications.sql",
+      "checksum": "f78f7b55214cc146260d84bf63bd8baf7e7c29717cf652e36f2756d4301d15e8"
+    },
+    {
+      "filename": "202612811500_acct_f5611_customer_historical_label_resolver.sql",
+      "checksum": "57b8f4df170b99e8d1362a9c3d14924171cbcf51e714d179e835468d6a0ffe20"
+    },
+    {
+      "filename": "202612811700_acct_f5616_settlement_dispute_correction_coa_role.sql",
+      "checksum": "899425ed07e22b1b82f5acf403642749641b69ad412293696d2b60045061133b"
+    },
+    {
+      "filename": "202612811900_acct_f5621_bank_transaction_attachable_type.sql",
+      "checksum": "c5b67f0efe1a428f923a1b30e048556703bca4a8d22616266521b7afd7dd0a3a"
+    },
+    {
+      "filename": "202612820000_customer_type_fk.sql",
+      "checksum": "55589fa24a81b86efca4108539c0dffae8b0d085213413d18e67a1a625e13671"
+    },
+    {
+      "filename": "202612820100_customer_types_seed_backfill.sql",
+      "checksum": "9549b6d7bbaede4155ebbbae7a2cb3dd035aca7d3e7ca6be7006903be2623f0f"
+    },
+    {
+      "filename": "202612821200_acct_f5622_payment_void_recompute_unapplied_filter.sql",
+      "checksum": "07232ec477948ac2299a220e21e6bf971deef513bb421218126891dd06695ff5"
+    },
+    {
+      "filename": "202612821300_acct_f5629_expenses_legal_matter_linkage.sql",
+      "checksum": "a46c4a3bea0545317e4dd26f7232e1ef691693b426c75a05da2aa0c90e0c69b7"
+    },
+    {
+      "filename": "202612830000_acct_f5658_aging_as_of_stale_filters.sql",
+      "checksum": "d0e1c614f481883e2875a5cad45729a3a4c8faaf414c2fb7fc0c976743e7056f"
+    },
+    {
+      "filename": "202612840000_acct_f5677_factoring_audit_trigger_coverage.sql",
+      "checksum": "4768d2ea0188955806a8d9dd0835c33f8b407b5d9f96731e741b525e944aa241"
+    },
+    {
+      "filename": "202612850000_acct_f5678_usmca_payment_method_gl_binding.sql",
+      "checksum": "ed6f23b774aed3ab6df3b394f49f2c914a1a698d75e06690710d609fe0b33472"
+    },
+    {
+      "filename": "202612860000_acct_f5679_usmca_net_pay_floor_locked_5pct.sql",
+      "checksum": "907b19063f107d7930a71da016e49d6dd8d16659383e49f2686b79c11462fd67"
+    },
+    {
+      "filename": "202612870000_acct_f5683_refuse_load_soft_delete_with_open_driver_bill.sql",
+      "checksum": "f8755732651308d5483457d8593af3308c143ffafc409b1865146d6fd82852a3"
+    },
+    {
+      "filename": "202612880000_acct_f5685_usmca_fixed_asset_coa_roles_deferred_bind.sql",
+      "checksum": "001bb2495b8cd0478d415f8d33003b0131dde9080af2587696061b788f2492b5"
+    },
+    {
+      "filename": "202612890000_acct_f5686_bill_lines_expense_category_same_entity_fk.sql",
+      "checksum": "8f717a76a8d0950710765d180af3621da51494bae049ccf5f05ed5e3483d5723"
+    },
+    {
+      "filename": "202612900000_acct_f5687_cash_advance_reimbursement_from_bank_account_id.sql",
+      "checksum": "3e5ff9bfecf641ba3806757fff043334d1ba613399b6a3446b1be2cc7a64fc57"
+    },
+    {
+      "filename": "202612900100_tasks_activity_link_added_event.sql",
+      "checksum": "aae138246f0199d200f33ce2732349ed6e6cd86fe6cba727afd87679aae29ef8"
+    },
+    {
+      "filename": "202612920000_acct_f5694_expenses_backfill_created_by_user_id_from_je.sql",
+      "checksum": "80a8b12dc28bb24dcc8c86c90e3f2275f6c6a013706beb6038a1f04f876d2110"
+    },
+    {
+      "filename": "202612931300_lists_recent_activity_catalog_key_action_from_event_class.sql",
+      "checksum": "e3ee1034bf5bc2d2491060917f323ed48674cecdf024ba570f6d3cc9217083c8"
+    },
+    {
+      "filename": "202612941300_dispatch_quicksave_assignment_method_check_extend.sql",
+      "checksum": "2d1c19f8dc33c40582d71cb65aac567f6e1ad34846bed7e8092b3c4a3c110b4f"
+    },
+    {
+      "filename": "202612950000_acct_f5701_tonu_income_account_and_cancellation_invoice_linkage.sql",
+      "checksum": "e2181761e595697e44f1e0a94de1828f5cf8ba74fd23c13144e00452f899ad02"
     }
   ]
 }
