@@ -252,7 +252,7 @@ export function SafetyHomeTab() {
           ) : (
             <div className="flex items-center gap-2">
               <span className="text-xl font-semibold text-slate-900">
-                {activeDriversQuery.data?.active_driver_uuids.length ?? 0}
+                {activeDriversQuery.data?.active_driver_uuids?.length ?? 0}
               </span>
               <span className="text-xs text-slate-500">
                 of {activeDriversQuery.data?.total_driver_count ?? 0} drivers
