@@ -39,7 +39,7 @@ type ClosePostingInput = {
 
 type ClosePostingResult = {
   bill_id: string | null;
-  bill_action: "created" | "reused" | "skipped_no_vendor" | "skipped_no_lines";
+  bill_action: "created" | "reused" | "skipped_no_vendor" | "skipped_no_lines" | "skipped_already_expensed";
   ledger_posting: "posted" | "already_posted" | "skipped";
   posting_batch_id: string | null;
 };
@@ -108,7 +108,7 @@ async function listBillLineColumns(client: DbClient): Promise<Set<string>> {
 async function getOrCreateBillForWorkOrder(
   client: DbClient,
   input: ClosePostingInput
-): Promise<{ bill_id: string | null; action: "created" | "reused" | "skipped_no_vendor" }> {
+): Promise<{ bill_id: string | null; action: "created" | "reused" | "skipped_no_vendor" | "skipped_already_expensed" }> {
   const woRes = await client.query<{
     id: string;
     status: string | null;
@@ -140,6 +140,29 @@ async function getOrCreateBillForWorkOrder(
   }
   const vendorKey = String(wo.external_vendor_id ?? wo.vendor_id ?? "").trim();
   if (!vendorKey) return { bill_id: null, action: "skipped_no_vendor" };
+
+  // MAINT-F5697-CLASS — a WO created with payment_timing='paid_same_day' already went through
+  // autoCreateExpenseFromWO (two-section-service.ts), which stamps linked_work_order_uuid on a real
+  // accounting.expenses row for this same cost. WO-close ran unconditionally regardless, creating a
+  // SECOND, redundant accounting.bills row for the identical total_actual_cost with hardcoded
+  // status='unpaid' — a real A/P liability to a vendor who was already paid in cash at creation
+  // time, on top of the cash expense already posted. Mirrors the existing-bill reuse check three
+  // lines below (same shape: check for an already-real record before minting a new one).
+  const alreadyExpensed = await client.query<{ id: string }>(
+    `
+      SELECT id::text AS id
+      FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid
+        AND linked_work_order_uuid = $2::uuid
+        AND status <> 'void'
+      ORDER BY created_at DESC
+      LIMIT 1
+    `,
+    [input.operating_company_id, input.work_order_id]
+  );
+  if (alreadyExpensed.rows[0]?.id) {
+    return { bill_id: null, action: "skipped_already_expensed" };
+  }
 
   const existing = await client.query<{ id: string }>(
     `

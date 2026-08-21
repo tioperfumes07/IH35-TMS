@@ -2,6 +2,13 @@ import { resolveExpenseCategoryById } from "../accounting/expense-category-catal
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveBillLineAccountId } from "../bills/bill-line-account-resolution.service.js";
 import { resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+
+// Same flag key as accounting/expenses.routes.ts's own EXPENSE_GL_POSTING_FLAG_KEY, redefined here
+// (not imported) to avoid a service->routes import — mirrors the same pattern already used by
+// fuel-posting/maybe-post-from-fuel-transaction.service.ts's FUEL_EXPENSE_GL_POSTING_FLAG_KEY.
+const WO_EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -919,6 +926,51 @@ export async function autoCreateExpenseFromWO(
     "info",
     "P3-T11.17-TWO-SECTION-V5"
   );
+
+  // MAINT-F5697-CLASS — a "paid same day" WO expense used to stop here: it was inserted
+  // status='posted' (document lifecycle) but never actually reached the GL, because the canonical
+  // POST /api/v1/expenses route's own gated posting call (EXPENSE_GL_POSTING_ENABLED ->
+  // postSourceTransaction) has no equivalent here. Reuses the SAME flag + the SAME posting engine
+  // entry point the canonical route uses — no new GL math. Runs IN THE CALLER'S OWN OPEN
+  // TRANSACTION via postSourceTransactionInClientTx (not postSourceTransaction's own connection) —
+  // the exact cross-connection READ-COMMITTED visibility bug already fixed once this session for
+  // the revenue latch (LV-REVREC-NOT-FIRING) would otherwise silently no-op here too, since this
+  // expense row is not yet committed on any other connection.
+  if (paymentAccountUuid) {
+    const flagOn = await isEnabled(client as never, WO_EXPENSE_GL_POSTING_FLAG_KEY, {
+      operating_company_id: wo.operating_company_id,
+      user_uuid: userId,
+    });
+    if (flagOn) {
+      try {
+        const posting = await postSourceTransactionInClientTx(
+          client as never,
+          { operating_company_id: wo.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
+          { userId }
+        );
+        await client.query(
+          `
+            UPDATE accounting.expenses
+               SET posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
+             WHERE id = $1::uuid AND operating_company_id = $3::uuid
+          `,
+          [expenseId, posting.journal_entry_id, wo.operating_company_id]
+        );
+        await appendCrudAudit(
+          client as never,
+          userId,
+          "expense.posted",
+          { expense_id: expenseId, journal_entry_id: posting.journal_entry_id, source: "auto_created_from_wo" },
+          "info"
+        );
+      } catch (err) {
+        // Same non-fatal contract as the canonical route: the expense already exists and is valid
+        // even unposted (re-postable later via /:id/post); a WO create must never 500 on this.
+        if (!(err instanceof PostingEngineError)) throw err;
+      }
+    }
+  }
+
   return { uuid: expenseId };
 }
 
