@@ -1,7 +1,9 @@
 # SESSION BOOT
 
-Every session and **every hour:** `CODER-INSTRUCTIONS-NOW.md` → `INBOX-<SEAT>.md` → `FAST-MERGE-4MIN-LAW.md` → `HOURLY-REREAD.md`
+Every hour: `FINAL-CODER-INSTRUCTIONS-UNTIL-DONE-2026-08-20.md` → `INBOX-<SEAT>.md` → `FAST-MERGE-4MIN-LAW.md`
 
-**Until ALL modules:** WAVE 1 BAR-100 → WAVE 2 → WAVE 3. Swarm columns. Continuous. No deviate. Devin “keys full / no new required.json / no FAST-MERGE this cycle” is **idle** — forbidden.
+URGENT 10: accounting → banking → settlements → factoring → dispatch → vendors → customers → drivers → fleet → lists. **Not inventory.** No defer.
 
-ACK `STANDARD=USMCA-LAUNCH | ALL-MODULES | WAVE1-BAR-100 | HOURLY-REREAD`
+Seats: Codex · CC-1 · CC-2 · CC-3 · Cursor. Devin PARKED.
+
+ACK `STANDARD=SCOREBOARD-100 | WAVE1-URGENT-10 | NO-DEFER | HOURLY-REREAD`

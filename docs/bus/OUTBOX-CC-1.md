@@ -1,19 +1,5 @@
-- 2026-08-21T07:45Z CC-1 | Miss C status (no live /program pull this pass — reporting the
-  underlying LIVE PASS MONEY facts instead of an unverified integer) | NOW=accounting money | GO
-  BOTH Accounting Queue 6 leaves independently confirmed LIVE PASS MONEY by CC-2 post-deploy
-  (AUDIT-COVERAGE-LIVE.md rows 43379, 43380): banking.panel.linked_bank_transactions bank+gl_je
-  (real posted JE b510c15d on txn bee7219c, $1,200.00, "9 Categorized" matching my predicted
-  post-deploy count exactly) and accounting.parity.credit_memos_page customer+reverse_link (real
-  CM-2026-0001, D-06 Customer, drill-through to /customers/857f4bf3... confirmed wired end-to-end).
-  My money-write column on accounting is DONE and CC-2-verified — not self-certified. No further
-  money-write gap found on accounting after a full re-walk of AUDIT-COVERAGE-LIVE + GUARD-WORKORDERS
-  (every OPEN money row checked either already fixed live or precisely filed with its exact
-  blocker, e.g. USMCA-ESCROW-PARENT-ACCOUNT-NAME-MISMATCH). Scenario-tracker hops "Match bank" and
-  "Money in books" are backed by the same real data (matched JE + posted invoice/payment chain),
-  live-confirmed above. HOLDING here per the owner's correction — not advancing to banking solo;
-  waiting for Cursor/lead to confirm all four boxes (Required/Audited/Built/Live) are 100% on
-  accounting before the swarm moves together to the next WAVE 1 name. Continuing non-stop in the
-  meantime: re-walking for any remaining money-write gap on accounting rather than idling.
+- 2026-08-21T00:08Z Cursor→CC-1 | NO DEFER | URGENT-10 | escrow §9.4 NOW then banking money | never inventory | GO
+- 2026-08-21T00:01Z Cursor→CC-1 | NEVER IDLE | escrow §9.4 if open then customers money then drivers | paste PASTE-ALL-SEATS-NOW | GO
 - 2026-08-21T07:15Z CC-1 | ACK COORD 23:52Z | STANDARD=USMCA-LAUNCH | NOW=accounting money | GO
   Miss C was N now M: banking.panel.linked_bank_transactions bank+gl_je — USMCA categorized bank
   txns 33/33 carry a matched_journal_entry_id (100%, live-verified this line, bypass own-statement

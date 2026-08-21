@@ -1,4 +1,8 @@
-# PASTE CC-3 NOW
+# PASTE CC-3 · BANKING BUILT · NO DEFER
+
+```text
 git pull --ff-only origin main
-DEVIATION: sitting on accounting Built 346/346 while Miss C stuck. WAVE 1 Built leftover else WAVE 2 Built. FAST-MERGE real Built. OUTBOX Miss C line if you touched Live-adjacent chrome.
-CC-3 | ACK | STANDARD=USMCA-LAUNCH | MISS-C-MUST-MOVE | NOW=Built leftover | GO
+Read docs/bus/PASTE-ALL-SEATS-NOW.md
+NOW=banking Built. Then settlements. Never inventory. Never idle. PREPEND ACK. FAST-MERGE.
+ACK: CC-3 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=banking Built | GO
+```

@@ -1,4 +1,8 @@
-# PASTE CODEX NOW
+# PASTE CODEX · NO DEFER · ACCOUNTING THEN BANKING REVERSE
+
+```text
 git pull --ff-only origin main
-DEVIATION: reverse essays do not move Miss C. NOW=reverse on linked_bank + credit_memos money leaves if still unpaid. FAST-MERGE. No 9227.
-Codex | ACK | STANDARD=USMCA-LAUNCH | MISS-C-MUST-MOVE | NOW=money reverse | GO
+Read docs/bus/PASTE-ALL-SEATS-NOW.md
+PREPEND ACK. Accounting reverse NOW then banking reverse. Wiring/linkage now. Never inventory. FAST-MERGE.
+ACK: Codex | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=accounting then banking reverse | GO
+```
