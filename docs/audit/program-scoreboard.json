@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T18:23:41-05:00",
-    "sourceSha": "4da648f81",
+    "generatedAt": "2026-08-21T18:31:01-05:00",
+    "sourceSha": "9f69e4756",
     "deployedSha": "fe62c92",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2055,
+    "ledgerRows": 2057,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,51 @@
   },
   "recentActivity": [
     {
+      "number": 13729,
+      "title": "FINDING: CERTIFY-FACTORING-VENDOR-MERGES-RECOURSE-PIPELINE LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13729",
+      "sha": "9f69e4756",
+      "committedAtIso": "2026-08-21T18:31:01-05:00"
+    },
+    {
+      "number": 13728,
+      "title": "FINDING: FACTORING-RECOURSE-VIEW-DEAD-JSONB-LOOKUP LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13728",
+      "sha": "238994a4e",
+      "committedAtIso": "2026-08-21T18:28:30-05:00"
+    },
+    {
+      "number": 13727,
+      "title": "FINDING: BUS-REJECT-CC3-HOLD",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13727",
+      "sha": "7a4105f2f",
+      "committedAtIso": "2026-08-21T18:27:17-05:00"
+    },
+    {
+      "number": 13726,
+      "title": "FINDING: CC2-ACK-SETTLEMENTS-FACTORING-PROGRESS LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13726",
+      "sha": "336848c38",
+      "committedAtIso": "2026-08-21T18:25:09-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 06:25 PM CT",
+      "url": "",
+      "sha": "99fee7738",
+      "committedAtIso": "2026-08-21T23:25:03Z"
+    },
+    {
       "number": 13725,
       "title": "FINDING: CERTIFY-FACTORING-PICKERLAW-BATCHWIZARD LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2164,51 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13721",
       "sha": "5a225a07d",
       "committedAtIso": "2026-08-21T18:18:06-05:00"
-    },
-    {
-      "number": 13720,
-      "title": "FINDING: CERTIFY-SETTLEMENTS-REVERSE-LINK-COLUMN-CLOSE LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 06:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13720",
-      "sha": "c229c80b5",
-      "committedAtIso": "2026-08-21T18:15:57-05:00"
-    },
-    {
-      "number": 13719,
-      "title": "FINDING: U6-NATIVE-DIALOGS-DRAIN-COMPLETE LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 06:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13719",
-      "sha": "b76c1c446",
-      "committedAtIso": "2026-08-21T18:15:32-05:00"
-    },
-    {
-      "number": 13718,
-      "title": "FINDING: JE-BILL-NUMBER-CLAIM LANE: FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 06:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13718",
-      "sha": "50ee4f02b",
-      "committedAtIso": "2026-08-21T18:14:53-05:00"
-    },
-    {
-      "number": 13717,
-      "title": "FINDING: ACCT-F5707-U6-NATIVE-DIALOGS-DRAIN LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 06:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13717",
-      "sha": "363a640d8",
-      "committedAtIso": "2026-08-21T18:14:07-05:00"
-    },
-    {
-      "number": 13716,
-      "title": "FINDING: BUS-REJECT-CC2-PAUSE",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 06:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13716",
-      "sha": "2c91828dc",
-      "committedAtIso": "2026-08-21T18:13:21-05:00"
     }
   ]
 }
