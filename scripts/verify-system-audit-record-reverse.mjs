@@ -55,6 +55,8 @@ function failures(s = files) { return [
   ["unit source drill", s.page.includes('"mdata.units": (id) => `/fleet/units/${id}`')],
   ["source routes never infer entity kind from table substrings", s.page.includes("const SOURCE_ROUTES") && !s.page.includes('t.includes("bill")') && !s.page.includes('t.includes("payment")')],
   ["bill-payment source uses its canonical record route", s.page.includes('"accounting.bill_payments": (id) => `/accounting/bill-payments/${id}`')],
+  ["journal-entry subject and source use the canonical record route", s.page.includes('journal_entry: "journal_entry"') && s.page.includes('"accounting.journal_entries": (id) => `/accounting/journal-entries/${id}`')],
+  ["customer-payment subject uses the canonical payment route", s.page.includes('customer_payment: "payment"')],
   ["bank transaction and settlement sources use canonical query targets", s.page.includes('"banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`') && s.page.includes('"driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`')],
   ["all canonical history mounts remain", [s.driver, s.unit, s.trailer, s.vendor, s.customer, s.workOrder, s.load].every((source) => source.includes("<EntityAuditHistoryTab"))],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
@@ -88,11 +90,14 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, page: files.page.replace('"mdata.units":', '"mdata.units_unused":') }).includes("unit source drill"),
     failures({ ...files, page: files.page.replace("const SOURCE_ROUTES", 'const BROKEN_SOURCE_ROUTES').replace("SOURCE_ROUTES[ev.source_table]", 'BROKEN_SOURCE_ROUTES[ev.source_table]').concat('\n// t.includes("bill")') }).includes("source routes never infer entity kind from table substrings"),
     failures({ ...files, page: files.page.replace('/accounting/bill-payments/${id}', '/accounting/bills/${id}') }).includes("bill-payment source uses its canonical record route"),
+    failures({ ...files, page: files.page.replace('journal_entry: "journal_entry"', 'journal_entry: "bill"') }).includes("journal-entry subject and source use the canonical record route"),
+    failures({ ...files, page: files.page.replace('customer_payment: "payment"', 'customer_payment: "bill"') }).includes("customer-payment subject uses the canonical payment route"),
+    failures({ ...files, page: files.page.replace('/accounting/journal-entries/${id}', '/accounting/bills/${id}') }).includes("journal-entry subject and source use the canonical record route"),
     failures({ ...files, page: files.page.replace('/banking/transactions?txn_id=${id}', '/banking/transactions') }).includes("bank transaction and settlement sources use canonical query targets"),
     failures({ ...files, load: "" }).includes("all canonical history mounts remain"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 30/30 filter/profile/emitter/target/state/source-route mutations red"); process.exit(0);
+  console.log("verify-system-audit-record-reverse selftest PASS — 33/33 filter/profile/emitter/target/state/source-route mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
