@@ -226,6 +226,11 @@
       "claimed_by": "cc-3",
       "claimed_at": "2026-08-21",
       "purpose": "catalogs_recent_activity view derive catalog_key/action from event_class"
+    },
+    "202612941300": {
+      "claimed_by": "cc-3",
+      "claimed_at": "2026-08-21",
+      "purpose": "quicksave inline assignment_method CHECK constraint extension"
     }
   }
 }
