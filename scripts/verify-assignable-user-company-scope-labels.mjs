@@ -23,17 +23,17 @@ const sources = Object.fromEntries(
 );
 
 const checks = [
-  ["api", /listAssignableUsers\(operatingCompanyId\?: string\)[\s\S]{0,240}operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}/, "shared client forwards optional company scope"],
+  ["api", /listAssignableUsers\(operatingCompanyId\?: string, signal\?: AbortSignal\)[\s\S]{0,240}operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}[\s\S]{0,180}\{ signal \}/, "shared client forwards optional company scope and cancellation"],
   ["backend", /users\/assignable[\s\S]{0,1800}if \(parsedQuery\.data\.operating_company_id\)[\s\S]{0,700}uca\.company_id = \$\$?\{values\.length\}::uuid/, "backend enforces requested company membership"],
-  ["createTask", /queryKey: \["identity", "users", "assignable", operatingCompanyId\][\s\S]{0,120}listAssignableUsers\(operatingCompanyId\)[\s\S]{0,100}enabled: open && Boolean\(operatingCompanyId\)/, "Create Task scopes and keys its assignee roster"],
+  ["createTask", /queryKey: \["identity", "users", "assignable", operatingCompanyId\][\s\S]{0,140}listAssignableUsers\(operatingCompanyId, signal\)[\s\S]{0,100}enabled: open && Boolean\(operatingCompanyId\)/, "Create Task scopes and keys its assignee roster"],
   ["createTask", /return entityLabel\(u\.name \|\| full \|\| u\.email, u\.id, "User"\)/, "Create Task rejects raw user UUID labels"],
-  ["chat", /queryKey: \["identity", "users", "assignable", companyId\][\s\S]{0,100}listAssignableUsers\(companyId\)[\s\S]{0,80}enabled: Boolean\(companyId\)/, "Tasks Chat scopes and keys its mention roster"],
+  ["chat", /queryKey: \["identity", "users", "assignable", companyId\][\s\S]{0,120}listAssignableUsers\(companyId, signal\)[\s\S]{0,80}enabled: Boolean\(companyId\)/, "Tasks Chat scopes and keys its mention roster"],
   ["daily", /import \{ listAssignableUsers \} from "\.\.\/\.\.\/api\/identity"/, "Daily Tasks uses the office-role assignable directory"],
-  ["daily", /queryKey: \["daily-tasks", "users", companyId\][\s\S]{0,100}listAssignableUsers\(companyId\)[\s\S]{0,100}enabled: Boolean\(auth\.user && companyId\)/, "Daily Tasks scopes and keys its assignee roster"],
+  ["daily", /queryKey: \["daily-tasks", "users", companyId\][\s\S]{0,120}listAssignableUsers\(companyId, signal\)[\s\S]{0,100}enabled: Boolean\(auth\.user && companyId\)/, "Daily Tasks scopes and keys its assignee roster"],
   ["daily", /entityLabel\(user\.name \|\| user\.email, user\.id, "User"\)/, "Daily Tasks rejects raw user UUID labels"],
-  ["maintenance", /queryKey: \["identity", "users", "wo-authorized-by", operatingCompanyId\][\s\S]{0,120}listAssignableUsers\(operatingCompanyId\)[\s\S]{0,80}enabled: Boolean\(operatingCompanyId\)/, "Maintenance WO scopes and keys its authorized-by roster"],
+  ["maintenance", /queryKey: \["identity", "users", "wo-authorized-by", operatingCompanyId\][\s\S]{0,140}listAssignableUsers\(operatingCompanyId, signal\)[\s\S]{0,80}enabled: Boolean\(operatingCompanyId\)/, "Maintenance WO scopes and keys its authorized-by roster"],
   ["users", /entityLabel\(user\.name \?\? user\.email, user\.id, "User"\)/, "Users role approver rejects raw UUID labels"],
-  ["safety", /listAssignableUsers\(companyId\)/, "Safety complaint roster remains company-scoped"],
+  ["safety", /queryKey: \["identity", "assignable-users", "complaints", companyId\][\s\S]{0,120}listAssignableUsers\(companyId, signal\)[\s\S]{0,80}enabled: canCreate && Boolean\(companyId\)/, "Safety complaint roster remains company-keyed and scoped"],
 ];
 
 function productionTsxFiles(dir) {
@@ -66,15 +66,15 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   const mutations = [
     ["api", "operating_company_id=${encodeURIComponent(operatingCompanyId)}", "company_scope_removed=true"],
     ["backend", "if (parsedQuery.data.operating_company_id) {", "if (parsedQuery.data.company_scope_removed) {"],
-    ["createTask", "listAssignableUsers(operatingCompanyId)", "listAssignableUsers()"],
+    ["createTask", "listAssignableUsers(operatingCompanyId, signal)", "listAssignableUsers(undefined, signal)"],
     ["createTask", 'return entityLabel(u.name || full || u.email, u.id, "User");', "return u.name || full || u.email || u.id;"],
-    ["chat", "listAssignableUsers(companyId)", "listAssignableUsers()"],
+    ["chat", "listAssignableUsers(companyId, signal)", "listAssignableUsers(undefined, signal)"],
     ["daily", 'import { listAssignableUsers } from "../../api/identity";', 'import { listUsers } from "../../api/identity";'],
-    ["daily", "listAssignableUsers(companyId)", "listUsers(true)"],
+    ["daily", "listAssignableUsers(companyId, signal)", "listUsers(true)"],
     ["daily", 'entityLabel(user.name || user.email, user.id, "User")', "user.email ?? user.id"],
-    ["maintenance", "listAssignableUsers(operatingCompanyId)", "listAssignableUsers()"],
+    ["maintenance", "listAssignableUsers(operatingCompanyId, signal)", "listAssignableUsers(undefined, signal)"],
     ["users", 'entityLabel(user.name ?? user.email, user.id, "User")', "user.name ?? user.email ?? user.id"],
-    ["safety", "listAssignableUsers(companyId)", "listAssignableUsers()"],
+    ["safety", '["identity", "assignable-users", "complaints", companyId]', '["identity", "assignable-users", "complaints"]'],
   ];
   const escaped = [];
   const production = productionTsxFiles("apps/frontend/src").map((file) => [file, fs.readFileSync(file, "utf8")]);
