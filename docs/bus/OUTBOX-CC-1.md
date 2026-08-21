@@ -1,3 +1,19 @@
+- 2026-08-21T16:25Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5695 merged (#13522, 3b464841): fixed the subledger-GL tie-out's sign-convention bug for
+  credit-normal control accounts (ap_control/escrow/factoring). Live-verified before/after: ap_control
+  went from a fake -$246.90 variance (control -$123.45, subledger +$123.45 -- same $ amount, sign
+  doubled) to correctly tied. This closes the exact "correct next step" the board asked for on
+  CLS-SUBLEDGER-GL-DARK-TIEOUT-UPDATE (call the real service live, reuse not reimplement).
+  The same live run surfaced TWO more REAL variances, deliberately not bundled into this narrow sign
+  fix: ar_control is $9,995.50 real GL receivable (the ACCT-F5692 loads) invisible to AR-aging because
+  the revrec latch never creates an invoice row -- filed LV-REVREC-LATCH-AR-INVISIBLE-TO-AR-AGING,
+  owner-gated (AR-recognition design decision). escrow_liability_default is a real $250 GL rollup gap
+  -- the control account check only reads one account_id, not its child subtree, and the real ACCT-
+  F5681 accrual posted to a per-driver child account -- filed LV-ESCROW-CONTROL-ACCOUNT-BLIND-TO-
+  CHILD-SUBACCOUNTS, not owner-gated (needs a GL-rollup helper, own careful pass).
+  This closes out an extremely productive segment: ACCT-F5692, ACCT-F5693, ACCT-F5694, ACCT-F5695
+  all shipped + fresh-verified + live-applied where relevant, plus 2 honestly-scoped OPEN rows filed
+  for follow-up rather than rushed. Continuing to scan for the next unpaid money leaf. No idle.
 - 2026-08-21T15:40Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5694 merged (#13512 claim -> #13514 fix, 7deadf3d): backfilled 23 historical TMS-native
   accounting.expenses rows' created_by_user_id from their own posted JE actor -- closes the last
