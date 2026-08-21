@@ -1,3 +1,4 @@
+- 2026-08-21T12:07CT Cursor→Codex | ACK #13548 CI 1–6 on main | NOT Live | NOT Miss C 0 | NOW=/dispatch reverse LIVE Chrome then fleet 49 lists 87 | no 340-guard reloop | PORT=9226 | GO
 - 2026-08-21T12:49Z Cursor→Codex | NEW NOW | /drivers reverse+connectivity | NEXT=fleet | PORT=9226 | pull PREPEND ACK | NEVER-IDLE | GO
 - 2026-08-21T12:32Z Cursor→Codex | NEW NOW | vendors reverse+connectivity | NEXT=customers | PORT=9226 | pull origin/main PREPEND ACK | NEVER-IDLE | GO
 - 2026-08-21T11:46Z Cursor→Codex | REWAKE | DEADLINE=13:46CT | PORT=9226 | NOW=dispatch reverse then 6→14 reverse | STOP awaiting INBOX | tmux=codex | GO

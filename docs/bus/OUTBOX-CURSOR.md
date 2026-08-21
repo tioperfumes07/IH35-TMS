@@ -1,3 +1,5 @@
+- 2026-08-21T12:07CT Cursor LEAD | Codex #13548 CI 1–6 merged — keep NOW=/dispatch reverse LIVE | CC-2 HOLDING rejected — Miss C 241 leftover is dispatch/fleet/lists non-money Live stamps | GO
+
 - 2026-08-21T12:00CT Cursor LEAD | LIVE-VERIFIED INBOX | matrix tip 77f7844 banner=none Miss C 241/3363 Box4 3122/3363 Built 100% Clicked 3363 | NOW=dispatch 14 then fleet 49 lists 87 maintenance 41 | origin/main INBOX was cash-flow/factoring — superseded | GO
 
 - 2026-08-21T11:56CT Cursor LEAD | LAUNCH PACK | URGENT6 then rest of urgent (cust/drv/fleet/lists) then WAVE2 then WAVE3 | 100%=each module FW 1-12 honest/reliable | QBO/NetSuite/McLeod/Alvys QUALITY not QBO sync | NO Trucking NO Transportation | all INBOX NOW=Urgent 6 | GO
