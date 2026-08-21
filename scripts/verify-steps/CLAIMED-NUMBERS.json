@@ -3014,6 +3014,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-tasks-board-single-create-button-chrome-law"
   },
+  "4189": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-compliance-property-tax-add-line-chrome-law"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
