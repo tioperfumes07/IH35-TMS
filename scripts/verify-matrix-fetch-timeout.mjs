@@ -75,6 +75,19 @@ function failures(sources) {
     }
   }
   const system = sources[SYSTEM_VIEW];
+  if (!/POLL_MS\s*=\s*300_000/.test(system)) {
+    out.push("ModuleMatrixSystemView: POLL_MS must be 300_000 (5 min) — 30s polls abort scope=system before JSON");
+  }
+  if (!/staleTime:\s*300_000/.test(system)) {
+    out.push("ModuleMatrixSystemView: useQuery staleTime must be 300_000 so the feed is not refetch-starved");
+  }
+  const svc = fs.readFileSync("apps/backend/src/program/module-matrix.service.ts", "utf8");
+  if (!/moduleMatrixCache\s*=\s*new Map/.test(svc)) {
+    out.push("module-matrix.service: per-module Map cache required (single-slot cache blew the system rollup)");
+  }
+  if (!/Promise\.all\(/.test(svc) || !/computeSystemModuleMatrix/.test(svc)) {
+    out.push("module-matrix.service: system rollup must Promise.all modules + computeSystemModuleMatrix");
+  }
   if (!/function buildSystemMatrixRequiredFallback/.test(system)) {
     out.push("ModuleMatrixSystemView: missing buildSystemMatrixRequiredFallback (API 502 must still paint Required)");
   }
@@ -87,11 +100,18 @@ function failures(sources) {
 const live = { [PREVIEW]: fs.readFileSync(PREVIEW, "utf8"), [SYSTEM_VIEW]: fs.readFileSync(SYSTEM_VIEW, "utf8") };
 
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
-  const mutations = SITES.map(({ file, fn }) => ({
-    name: `${fn} loses its timeout`,
-    file,
-    mutate: (text) => text.replace(/,?\s*signal:\s*AbortSignal\.timeout\(\d+_?\d*\)/, ""),
-  }));
+  const mutations = [
+    ...SITES.map(({ file, fn }) => ({
+      name: `${fn} loses its timeout`,
+      file,
+      mutate: (text) => text.replace(/,?\s*signal:\s*AbortSignal\.timeout\(\d+_?\d*\)/, ""),
+    })),
+    {
+      name: "system poll back to 30s",
+      file: SYSTEM_VIEW,
+      mutate: (text) => text.replace("POLL_MS = 300_000", "POLL_MS = 30_000"),
+    },
+  ];
   const escaped = [];
   for (const { name, file, mutate } of mutations) {
     const mutated = mutate(live[file]);
