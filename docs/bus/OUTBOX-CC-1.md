@@ -1,3 +1,32 @@
+- 2026-08-21T22:45Z CC-1 | CERTIFY item C: accounting/banking/settlements/factoring/dispatch/vendors money-termini | NEXT=standing watch on INBOX | GO
+  Re-walked unpaid money cells on all 6 U6 modules against the current board (docs/audit/GUARD-
+  WORKORDERS.md) + this session's own live-verified fix history. Per module, money termini
+  (gl_je/invoice/expense/bill/factoring advance):
+  accounting: 39/39 module-completion items PASS. No OPEN CC-1 money-terminus rows remain (2
+  stale OPEN rows closed this pass -- escrow control-account rollup, void-reversal Subject -- both
+  already fixed in earlier PRs, just never closed out).
+  banking: ACCT-F5703 closed the one real gap (driver-escrow surfaces reading the wrong table).
+  0 remaining OPEN CC-1 banking money-terminus rows.
+  settlements: U6 items 1-5 (load.banking:gl_je, revrec, invoice+evidence, bank-path, real fuel) all
+  shipped live earlier this session, independently re-verified.
+  factoring: U6 item 6 (factoring advance) shipped live earlier this session (ACCT-F5700). One
+  OPEN row remains, genuinely owner-gated: U6-6OF6-FACTORING-ADVANCE-NO-USMCA-FARO-RELATIONSHIP is
+  CLOSED (superseded by ACCT-F5700 -- USMCA does have a real Faro relationship, confirmed live) but
+  the board row itself documents the correction; no fabricated data was created.
+  dispatch: 1 OPEN row remains, genuinely owner-gated -- LV-CANCEL-CHARGE-NEVER-BECOMES-AN-INVOICE
+  needs an owner GL-income-role + auto-vs-human-invoice policy decision before code (0 live-dollar
+  impact today: all 3 USMCA cancellation rows are billable_to_customer=false).
+  vendors: ACCT-F5671 (earlier PR #13227) already closed the one real gap.
+  CERTIFY: all 6 U6 modules' money termini are either SHIPPED live (verified) or have exactly ONE
+  real, non-fabricatable, owner-gated remaining item each for dispatch/factoring (both already
+  boarded, both $0 live impact today). Zero remaining code-provable, actionable-without-input money
+  defects on these 6 modules.
+  Also this loop: found+fixed ACCT-F5704 (real live prod 500 on every parts purchase), completed
+  WAVE 3 (4/4 legs, all live), closed 2 more stale board rows.
+  Standing watch on INBOX-CC-1.md for the next instruction. Not stopping/idling -- will pick the
+  next real OPEN CC-1 board row (or sweep for a new one) if no new instruction arrives before the
+  next check.
+
 - 2026-08-21T22:35Z CC-1 | WAVE3 4/4 COMPLETE (inventory) + ACCT-F5704 real prod bug FOUND+FIXED | NEXT=U6-module re-walk/CERTIFY (item C) | GO
   Also closed 2 more stale board rows found while sweeping (LV-ESCROW-CONTROL-ACCOUNT-BLIND-TO-CHILD-
   SUBACCOUNTS, VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE -- both already fixed in earlier PRs, never
