@@ -210,8 +210,8 @@ export type TaskActivity = {
   actor_name: string | null;
 };
 
-export async function fetchTaskComments(task_id: string) {
-  return apiRequest<{ comments: TaskComment[] }>(`/api/v1/tasks/${task_id}/comments`);
+export async function fetchTaskComments(task_id: string, signal?: AbortSignal) {
+  return apiRequest<{ comments: TaskComment[] }>(`/api/v1/tasks/${task_id}/comments`, { signal });
 }
 
 export async function createTaskComment(task_id: string, body: string, mentions: string[]) {
@@ -222,6 +222,6 @@ export async function createTaskComment(task_id: string, body: string, mentions:
   });
 }
 
-export async function fetchTaskActivity(task_id: string) {
-  return apiRequest<{ activity: TaskActivity[] }>(`/api/v1/tasks/${task_id}/activity`);
+export async function fetchTaskActivity(task_id: string, signal?: AbortSignal) {
+  return apiRequest<{ activity: TaskActivity[] }>(`/api/v1/tasks/${task_id}/activity`, { signal });
 }

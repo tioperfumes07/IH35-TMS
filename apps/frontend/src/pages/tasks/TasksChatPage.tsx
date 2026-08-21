@@ -86,7 +86,7 @@ export function TasksChatPage() {
 
   const usersQuery = useQuery({
     queryKey: ["identity", "users", "assignable", companyId],
-    queryFn: () => listAssignableUsers(companyId),
+    queryFn: ({ signal }) => listAssignableUsers(companyId, signal),
     enabled: Boolean(companyId),
   });
   const employees: Employee[] = useMemo(
@@ -110,12 +110,12 @@ export function TasksChatPage() {
 
   const commentsQuery = useQuery({
     queryKey: ["tasks", "comments", activeTaskId],
-    queryFn: () => fetchTaskComments(activeTaskId),
+    queryFn: ({ signal }) => fetchTaskComments(activeTaskId, signal),
     enabled: Boolean(activeTaskId),
   });
   const activityQuery = useQuery({
     queryKey: ["tasks", "activity", activeTaskId],
-    queryFn: () => fetchTaskActivity(activeTaskId),
+    queryFn: ({ signal }) => fetchTaskActivity(activeTaskId, signal),
     enabled: Boolean(activeTaskId),
   });
 

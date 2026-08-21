@@ -37,7 +37,7 @@ export function CreateWOSectionRenderV5Header({
   const operatingCompanyId = selectedCompanyId ?? "";
   const usersQuery = useQuery({
     queryKey: ["identity", "users", "wo-authorized-by", operatingCompanyId],
-    queryFn: () => listAssignableUsers(operatingCompanyId),
+    queryFn: ({ signal }) => listAssignableUsers(operatingCompanyId, signal),
     enabled: Boolean(operatingCompanyId),
   });
   const users = usersQuery.data?.users ?? [];

@@ -117,7 +117,7 @@ export function ComplaintsTab() {
 
   const usersQuery = useQuery({
     queryKey: ["identity", "assignable-users", "complaints"],
-    queryFn: () => listAssignableUsers(companyId),
+    queryFn: ({ signal }) => listAssignableUsers(companyId, signal),
     enabled: canCreate,
     staleTime: 60_000,
   });
