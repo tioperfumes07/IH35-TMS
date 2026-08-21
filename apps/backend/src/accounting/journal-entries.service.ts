@@ -828,8 +828,15 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           tsl.linked_object_id,
           tsl.relationship_role,
           tsl.created_at::text AS source_link_created_at,
-          COALESCE(src_inv.display_id, src_bill.display_id, src_banktx.display_label) AS source_transaction_display_id,
-          COALESCE(link_inv.display_id, link_bill.display_id) AS linked_object_display_id
+          -- JE-SOURCE-LINKS-BILL-USES-WRONG-COLUMN: accounting.bills.display_id is a near-dead
+          -- column (12 of 16,298 rows populated, 0.07%) — the real bill identity is bill_number
+          -- (15,750 of 16,298, 96.6%), same convention every other bill-label call site in this repo
+          -- already uses (audit-reports.routes.ts, spine-events.routes.ts, transaction-register.routes.ts,
+          -- bank-recon/match.service.ts). Reading display_id alone meant this JE source-link resolver
+          -- tombstoned "Source — not visible" for essentially every bill-sourced journal entry, even
+          -- though the href it builds from source_transaction_id was already correct.
+          COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label) AS source_transaction_display_id,
+          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
         LEFT JOIN accounting.invoices src_inv
