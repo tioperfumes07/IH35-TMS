@@ -2,22 +2,21 @@
 /**
  * verify-settlements-load-ids-reverse-link.mjs
  *
+ * @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leafRe":"^(settlements\\.list|pre_settlements|settlements\\.panel\\.pre_settlements)$","task":"SETL-LIST-LOAD-REVERSE"}
+ *
  * P14 Box4 gap: settlements.panel.pre_settlements's `load`/`reverse_link` cells were unpaid because
  * SettlementListRow only ever carried `load_count` (a number), never the actual load ids — the
  * pre-settlements panel rendered "N load(s)" as plain text, no drill target existed.
  *
- * Fixed by adding a sibling `array_agg(...)` subquery next to the existing `load_count` COUNT
- * subquery in both settlements.routes.ts list endpoints (general list + driver reverse-drill),
- * using the IDENTICAL COALESCE(db.load_id, sl.load_id) rule so the two can never disagree — same
- * discipline the existing ACCT-F275 comment already established for load_count itself. The FE now
- * renders a real EntityLink kind="load" per id when present, falling back to the honest plain count
- * only if an older cached response lacks load_ids.
+ * The same API already returns load_ids on the main Settlements list, but SettlementsTable's Loads
+ * column still printed only the count — McLeod/Alvys reverse drill from the list was dead.
  *
  * Guards:
  *  1. Both settlements.routes.ts list queries select a load_ids array_agg alongside load_count,
  *     using the same COALESCE/JOIN/WHERE shape (copy-paste drift would silently disagree).
  *  2. Both response-mapping blocks include load_ids in the returned row.
  *  3. PreSettlementsPanel.tsx renders a real EntityLink kind="load" per id, not just the count.
+ *  4. SettlementsTable Loads column drills kind="load" from load_ids (honest count fallback).
  */
 import { readFileSync } from "node:fs";
 
@@ -45,6 +44,26 @@ if (!/settlement\.load_ids/.test(panelSrc)) {
   failures.push(`${panelPath}: no longer reads settlement.load_ids`);
 }
 
+const tablePath = "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx";
+const tableSrc = readFileSync(tablePath, "utf8");
+if (!/kind="load"/.test(tableSrc) || !/row\.load_ids/.test(tableSrc)) {
+  failures.push(`${tablePath}: Loads column must EntityLink kind="load" from row.load_ids (not count-only)`);
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = tableSrc.replace(/kind="load"/g, 'kind="settlement"');
+  if (/kind="load"/.test(planted)) {
+    console.error("verify-settlements-load-ids-reverse-link SELFTEST FAILED: plant did not remove load EntityLink");
+    process.exit(1);
+  }
+  const wouldFail = !/kind="load"/.test(planted) || !/row\.load_ids/.test(planted);
+  if (!wouldFail) {
+    console.error("verify-settlements-load-ids-reverse-link SELFTEST FAILED: planted table would still pass");
+    process.exit(1);
+  }
+  console.log("verify-settlements-load-ids-reverse-link selftest: planted count-only Loads column fails");
+}
+
 const apiTypePath = "apps/frontend/src/api/driverFinance.ts";
 const apiTypeSrc = readFileSync(apiTypePath, "utf8");
 if (!/load_ids\?:\s*string\[\]/.test(apiTypeSrc)) {
@@ -58,5 +77,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "verify-settlements-load-ids-reverse-link: OK — both settlement list queries return real load ids alongside the count, and PreSettlementsPanel renders a real per-load EntityLink"
+  "verify-settlements-load-ids-reverse-link: OK — both settlement list queries return real load ids alongside the count; PreSettlementsPanel and SettlementsTable drill kind=load"
 );

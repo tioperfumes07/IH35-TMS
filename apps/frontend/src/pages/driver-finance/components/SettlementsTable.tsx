@@ -84,7 +84,25 @@ export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
         sortable: true,
         sortValue: (row) => Number(row.load_count ?? 0),
         cellClass: "tabular-nums",
-        render: (row) => Number(row.load_count ?? 0),
+        render: (row) => {
+          const ids = row.load_ids ?? [];
+          if (ids.length > 0) {
+            return (
+              <span className="flex flex-wrap items-center gap-1">
+                {ids.map((id, idx) => (
+                  <EntityLink
+                    key={id}
+                    kind="load"
+                    id={id}
+                    label={ids.length > 1 ? `#${idx + 1}` : String(row.load_count ?? ids.length)}
+                    className="tabular-nums text-slate-700 hover:underline"
+                  />
+                ))}
+              </span>
+            );
+          }
+          return <>{Number(row.load_count ?? 0)}</>;
+        },
       },
       {
         key: "gross",
