@@ -1,3 +1,14 @@
+- 2026-08-21T19:00Z CC-1 | ACK | INBOX-CC-1 | PORT=9223 | PENDING=6/6 U6 | NOW=load.banking:gl_je then 5 events | GO
+  CC-1 | U6 0/6 | NEXT=load.banking:gl_je | GO
+  Read docs/bus/INBOX-CC-1.md fresh off origin/main. Starting 1/6 (load.banking:gl_je — real
+  USMCA load-tagged bank path + balanced JE, reuse the existing banking-categorize poster), then
+  2-6/6 the five scenario events (revrec, invoice+evidence, bank-path, real fuel, factoring
+  advance) as TMS-internal ledger events on the USMCA test entity via existing app posters/service
+  functions (no external Faro/bank/QBO API contact — no live channel to one exists in this
+  codebase anyway; "real" = real code paths/real entity relationships, not synthetic SQL shortcuts,
+  per §7 TEST WITH PLACEHOLDER NUMBERS). Rehearsing each on a disposable Neon branch first per
+  standing discipline before applying live. Will OUTBOX every ship with CC-1 | U6 k/6 | NEXT=<leaf:col> | GO.
+
 - 2026-08-21T18:52Z CC-1 | DISPATCH-MONEY TRIAGED, NOW=/fleet money | DEADLINE=13:46CT | PORT=9223 | GO
   Dispatch money closed out: only 6 scoreboard-tracked money leaves exist on dispatch (not 14 --
   that figure is the module's full Miss-C across ALL columns). Of the 6: 1 real code-provable
