@@ -302,6 +302,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   >([]);
   const [invoicePartsInput, setInvoicePartsInput] = useState("");
   const [invoiceLaborInput, setInvoiceLaborInput] = useState("");
+  // LV-WO-RECONCILE-EXCLUDES-SECTION-A / LV-WO-RECONCILE-LINE-TYPE-DOMAIN-LEAK — third bucket for
+  // whatever the Parts/Labor enumeration cannot see (Section A category lines, and any sub-row
+  // whose line_type isn't 'parts'/'part'/'labor' — 'disposal', 'other', or any future value).
+  const [invoiceOtherInput, setInvoiceOtherInput] = useState("");
   const form = useForm<CreateWOFormValues>({
     defaultValues: {
       wo_type: initialType,
@@ -444,14 +448,45 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   // Block 8 gap 1 — two-sided reconcile. WO parts/labor come from the Section B item sub-rows by line_type;
   // the invoice side is the captured vendor-invoice totals. Create is HARD-GATED until both tie (vendor
   // invoices only — in-house / paid-same-day have no separate invoice to reconcile against).
+  //
+  // LV-WO-RECONCILE-EXCLUDES-SECTION-A / LV-WO-RECONCILE-LINE-TYPE-DOMAIN-LEAK — the original version
+  // of this computation filtered sub-rows by an EXACT string match on `line_type === "parts"|"labor"`,
+  // which silently dropped: (1) every Section A category line (a live prod case showed a $436.66
+  // shortfall this way), (2) the `'part'` singular alias (DB-valid, near-miss of `'parts'`), and (3)
+  // `'disposal'`/`'other'` sub-rows — all fully included in the WO total and the A/P bill, none visible
+  // to the tie-out, while the panel still printed "Reconciled." The fix: stop enumerating what the WO
+  // side of the reconcile COVERS. Compute the WO's own authoritative grand total using the EXACT SAME
+  // formula the backend uses to compute the number that actually posts to the A/P bill
+  // (`two-section-service.ts` createWorkOrderWithLines: sectionATotal + sectionBTotal, where
+  // sectionBTotal per line is max(line.amount, Σ its own sub_rows) — same established alias precedent
+  // as severe-repair-estimate.service.ts's `line_type IN ('part','parts')` treatment), then bucket
+  // Parts and Labor OUT of that total by their own literal type (collapsing 'part'→'parts', matching
+  // the same codebase-established alias), and let EVERYTHING ELSE — Section A, 'disposal', 'other', any
+  // future 6th type — fall into a third "Other / Category" residual bucket by subtraction, not
+  // enumeration. Nothing can silently vanish from the WO side again: WO grand total − parts − labor −
+  // other = 0 by construction, and reconcileOk now requires every bucket to independently tie.
   const sectionBSubRows = lines.filter((l) => l.section === "B").flatMap((l) => l.sub_rows ?? []);
-  const woPartsDollars = sectionBSubRows.filter((r) => r.line_type === "parts").reduce((s, r) => s + Number(r.amount || 0), 0);
+  const woPartsDollars = sectionBSubRows
+    .filter((r) => r.line_type === "parts" || (r.line_type as string) === "part")
+    .reduce((s, r) => s + Number(r.amount || 0), 0);
   const woLaborDollars = sectionBSubRows.filter((r) => r.line_type === "labor").reduce((s, r) => s + Number(r.amount || 0), 0);
+  const woGrandTotalDollars =
+    lines
+      .filter((l) => l.section === "A")
+      .reduce((s, l) => s + Number(l.unit_cost || 0) * Math.max(1, Number(l.quantity || 0)), 0) +
+    lines
+      .filter((l) => l.section === "B")
+      .reduce((s, l) => {
+        const subTotal = (l.sub_rows ?? []).reduce((acc, r) => acc + Number(r.amount || 0), 0);
+        return s + Math.max(Number(l.amount || 0), subTotal);
+      }, 0);
+  const woOtherDollars = Math.max(0, woGrandTotalDollars - woPartsDollars - woLaborDollars);
   const reconcileRequired = paymentTiming === "vendor_invoice";
   const reconcileOk =
     !reconcileRequired ||
     (Math.round(woPartsDollars * 100) === Math.round((Number(invoicePartsInput) || 0) * 100) &&
-      Math.round(woLaborDollars * 100) === Math.round((Number(invoiceLaborInput) || 0) * 100));
+      Math.round(woLaborDollars * 100) === Math.round((Number(invoiceLaborInput) || 0) * 100) &&
+      Math.round(woOtherDollars * 100) === Math.round((Number(invoiceOtherInput) || 0) * 100));
 
   // C1 (live 2026-08-02): hoisted ABOVE the pre-save checks so the cost-line rule can count the lines
   // that are actually submitted. These are the exact arrays sent in the create payload, so the
@@ -1193,17 +1228,20 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         </div>
 
         {/* ===================== D — VENDOR INVOICE & PAYMENT ===================== */}
-        <SectionCard badge="D" title="Vendor invoice & payment" right="parts & labor each tie to the invoice" testid="wo-invoice-payment">
+        <SectionCard badge="D" title="Vendor invoice & payment" right="every WO dollar ties to the invoice" testid="wo-invoice-payment">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               {reconcileRequired ? (
                 <CreateWOSectionReconcile
                   woPartsDollars={woPartsDollars}
                   woLaborDollars={woLaborDollars}
+                  woOtherDollars={woOtherDollars}
                   invoicePartsInput={invoicePartsInput}
                   invoiceLaborInput={invoiceLaborInput}
+                  invoiceOtherInput={invoiceOtherInput}
                   onInvoicePartsChange={setInvoicePartsInput}
                   onInvoiceLaborChange={setInvoiceLaborInput}
+                  onInvoiceOtherChange={setInvoiceOtherInput}
                 />
               ) : (
                 <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] text-slate-600">
