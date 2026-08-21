@@ -91,8 +91,27 @@ function failures(sources) {
   if (!/function buildSystemMatrixRequiredFallback/.test(system)) {
     out.push("ModuleMatrixSystemView: missing buildSystemMatrixRequiredFallback (API 502 must still paint Required)");
   }
-  if (!/placeholderData:\s*buildSystemMatrixRequiredFallback/.test(system)) {
-    out.push("ModuleMatrixSystemView: useQuery must placeholderData the Required fallback so first paint is not blank");
+  if (!/readClientLastGood/.test(system) || !/CLIENT_LAST_GOOD_KEY/.test(system)) {
+    out.push("ModuleMatrixSystemView: sessionStorage last-good required so 502 does not wipe Built/Live");
+  }
+  if (!/placeholderData:\s*\(\)\s*=>\s*readClientLastGood\(\)\s*\?\?\s*buildSystemMatrixRequiredFallback\(\)/.test(system)) {
+    out.push("ModuleMatrixSystemView: placeholderData must prefer session last-good then Required fallback");
+  }
+  if (!/ih35-system-matrix-last\.json/.test(svc) || !/readSystemLastGood/.test(svc)) {
+    out.push("module-matrix.service: persist/read /tmp last-good so cold start is not GitHub-blocked zeros");
+  }
+  const ledgerFn = svc.slice(svc.indexOf("async function loadLedgerRows"), svc.indexOf("function loadGuardHits"));
+  const diskIdx = ledgerFn.indexOf("existsSync(LEDGER_MD)");
+  const ghIdx = ledgerFn.indexOf("loadOutboxTextFromGithub(LEDGER_REL)");
+  if (diskIdx === -1 || ghIdx === -1 || diskIdx > ghIdx) {
+    out.push("module-matrix.service: loadLedgerRows must read disk BEFORE GitHub (GitHub-first 502s healthz)");
+  }
+  const renderYaml = fs.readFileSync("render.yaml", "utf8");
+  if (!renderYaml.includes("docs/bus/**")) {
+    out.push("render.yaml: ignoredPaths must be docs/bus/** not all docs/** (scoreboard maps must ship)");
+  }
+  if (/- docs\/\*\*/.test(renderYaml)) {
+    out.push("render.yaml: must not ignore docs/** (that forced GitHub-first matrix)");
   }
   return out;
 }
@@ -110,6 +129,15 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       name: "system poll back to 30s",
       file: SYSTEM_VIEW,
       mutate: (text) => text.replace("POLL_MS = 300_000", "POLL_MS = 30_000"),
+    },
+    {
+      name: "last-good placeholder dropped",
+      file: SYSTEM_VIEW,
+      mutate: (text) =>
+        text.replace(
+          "placeholderData: () => readClientLastGood() ?? buildSystemMatrixRequiredFallback()",
+          "placeholderData: buildSystemMatrixRequiredFallback",
+        ),
     },
   ];
   const escaped = [];

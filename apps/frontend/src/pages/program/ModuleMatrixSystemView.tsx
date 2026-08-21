@@ -75,7 +75,31 @@ type SystemPayload = {
 };
 
 const POLL_MS = 300_000;
+const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v1";
 const EMPTY_ABL: AblPct = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
+
+function readClientLastGood(): SystemPayload | undefined {
+  try {
+    const raw = sessionStorage.getItem(CLIENT_LAST_GOOD_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as SystemPayload;
+    if (parsed?.scope === "system" && parsed.system && Array.isArray(parsed.modules) && parsed.modules.length > 0) {
+      return parsed;
+    }
+  } catch {
+    /* quota / private mode */
+  }
+  return undefined;
+}
+
+function writeClientLastGood(payload: SystemPayload): void {
+  try {
+    if (payload.meta?.honesty?.includes("REQUIRED-FALLBACK")) return;
+    sessionStorage.setItem(CLIENT_LAST_GOOD_KEY, JSON.stringify(payload));
+  } catch {
+    /* quota */
+  }
+}
 
 class SystemMatrixHttpError extends Error {
   status: number;
@@ -119,6 +143,7 @@ async function fetchSystemMatrix(): Promise<SystemPayload> {
   if (!json || json.scope !== "system" || !json.system) {
     throw new SystemMatrixHttpError(502, "Malformed system matrix payload");
   }
+  writeClientLastGood(json);
   return json;
 }
 
@@ -269,19 +294,23 @@ export function ModuleMatrixSystemView() {
   const { data, error, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
     queryKey: ["program", "module-matrix", "scope", "system"],
     queryFn: fetchSystemMatrix,
-    placeholderData: buildSystemMatrixRequiredFallback,
+    placeholderData: () => readClientLastGood() ?? buildSystemMatrixRequiredFallback(),
     refetchInterval: (q) => (q.state.status === "error" ? 60_000 : POLL_MS),
     refetchIntervalInBackground: false,
     staleTime: 300_000,
     retry: 1,
   });
 
+  const sys = data?.system;
+  const hasLastGoodNumbers = Boolean(
+    sys && ((sys.builtCells ?? 0) > 0 || (sys.liveCells ?? 0) > 0 || (sys.boxAbl?.builtPct ?? 0) > 0),
+  );
   const fallbackFeed =
-    data?.meta?.probeSource === "committed_fallback" ||
-    data?.meta?.honesty?.includes("REQUIRED-FALLBACK") === true;
+    !hasLastGoodNumbers &&
+    (data?.meta?.probeSource === "committed_fallback" ||
+      data?.meta?.honesty?.includes("REQUIRED-FALLBACK") === true);
   const apiLive = Boolean(data?.system) && !fallbackFeed && !isError;
   const ok = Boolean(data?.system);
-  const sys = data?.system;
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
   const tip = data?.meta?.tipSha || httpErr?.tipSha || undefined;
 
@@ -416,7 +445,7 @@ export function ModuleMatrixSystemView() {
 
   return (
     <>
-      {fallbackFeed || (isFetched && isError) ? (
+      {fallbackFeed || (isFetched && isError && !hasLastGoodNumbers) ? (
         <div className="banner" data-testid="module-matrix-system-unavailable">
           <b>API FEED UNAVAILABLE — showing Required skeleton.</b> Could not load{" "}
           <code>GET /api/v1/program/module-matrix?scope=system</code>

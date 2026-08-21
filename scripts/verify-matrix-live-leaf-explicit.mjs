@@ -162,7 +162,7 @@ function assertServiceWiring(src) {
     }
     if (!/loadOutboxTextFromGithub/.test(loadLedger[0]) || !/LEDGER_REL/.test(loadLedger[0])) {
       errs.push(
-        "loadLedgerRows must GitHub-fetch AUDIT-COVERAGE-LIVE.md (Render docs/** ignore)",
+        "loadLedgerRows must keep GitHub fallback for AUDIT-COVERAGE-LIVE.md when disk is empty",
       );
     }
   }

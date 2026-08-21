@@ -11,7 +11,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
@@ -55,7 +55,7 @@ const OUTBOX_CLICKED_FILES = [
   "docs/bus/OUTBOX-CODEX.md",
   "docs/bus/OUTBOX-CURSOR.md",
 ];
-/** Render buildFilter ignores docs/** — Clicked must read origin/main OUTBOX at request time. */
+/** Clicked: disk first; GitHub raw only when docs/bus is missing from the image. */
 const GITHUB_OUTBOX_CONTENTS =
   "https://api.github.com/repos/tioperfumes07/IH35-TMS/contents/";
 const CLICKED_COL_IDS = new Set([
@@ -104,6 +104,9 @@ const MATRIX_CACHE_MS = 300_000;
  * fast and stale. Public success + FE poll = overlapping multi-MB downloads on the Node event loop,
  * module-matrix never completes, healthz/502 during deploy. Cap OUTBOX reads; ledger stays full. */
 const GITHUB_OUTBOX_HEAD_BYTES = 131072;
+/** Survives in-process cache miss / SIGTERM restart so /program/matrix does not paint zeros. */
+const SYSTEM_LAST_GOOD_PATH =
+  process.env.IH35_MATRIX_LAST_GOOD?.trim() || "/tmp/ih35-system-matrix-last.json";
 
 export type MatrixCellState = "live" | "built" | "audited" | "unaudited" | "na" | "done";
 
@@ -554,17 +557,20 @@ async function loadLedgerRows(): Promise<LedgerRow[]> {
     const mod = (await import(pathToFileURL(SCOREBOARD_SCRIPT).href)) as {
       parseFindings: (md: string) => LedgerRow[];
     };
+    // Disk FIRST. GitHub-first downloaded the full ledger (no Range) on every cold cache,
+    // starved the event loop, and 502'd healthz while the FE painted Built=0.
+    const diskMd = existsSync(LEDGER_MD) ? readFileSync(LEDGER_MD, "utf8") : "";
+    const diskOk = diskMd.includes("| # | Module |");
+    if (diskOk) {
+      const rows = mod.parseFindings(diskMd);
+      ledgerCache = { atMs: Date.now(), rows };
+      return rows;
+    }
     const remote = await loadOutboxTextFromGithub(LEDGER_REL);
-    const md =
-      remote && remote.includes("| # | Module |")
-        ? remote
-        : existsSync(LEDGER_MD)
-          ? readFileSync(LEDGER_MD, "utf8")
-          : "";
+    const md = remote && remote.includes("| # | Module |") ? remote : "";
     if (!md) {
-      throw new Error(
-        "AUDIT-COVERAGE-LIVE.md missing on disk and GitHub origin/main fetch failed",
-      );
+      ledgerCache = { atMs: Date.now(), rows: [] };
+      return [];
     }
     const rows = mod.parseFindings(md);
     ledgerCache = { atMs: Date.now(), rows };
@@ -1199,6 +1205,10 @@ async function loadOutboxClickedKeys(): Promise<Set<string>> {
         for (const k of parseOutboxClickedKeys(text)) keys.add(k);
       }
     }
+    if (keys.size > 0) {
+      clickedOutboxCache = { atMs: Date.now(), keys };
+      return keys;
+    }
     const remote = await Promise.all(OUTBOX_CLICKED_FILES.map((rel) => loadOutboxTextFromGithub(rel)));
     for (const text of remote) {
       if (!text) continue;
@@ -1690,6 +1700,27 @@ function addCounts(
 let systemCache: { atMs: number; probeScope: string; payload: SystemModuleMatrixPayload } | null = null;
 let systemInflight: Promise<SystemModuleMatrixPayload> | null = null;
 
+function readSystemLastGood(): SystemModuleMatrixPayload | null {
+  try {
+    if (!existsSync(SYSTEM_LAST_GOOD_PATH)) return null;
+    const parsed = JSON.parse(readFileSync(SYSTEM_LAST_GOOD_PATH, "utf8")) as SystemModuleMatrixPayload;
+    if (parsed?.scope === "system" && parsed.system && Array.isArray(parsed.modules) && parsed.modules.length > 0) {
+      return parsed;
+    }
+  } catch {
+    /* corrupt last-good is not a 503 */
+  }
+  return null;
+}
+
+function persistSystemLastGood(payload: SystemModuleMatrixPayload): void {
+  try {
+    writeFileSync(SYSTEM_LAST_GOOD_PATH, JSON.stringify(payload));
+  } catch {
+    /* Render ephemeral FS — in-memory cache still holds */
+  }
+}
+
 function emptyModuleMetrics(): ModuleMatrixPayload["metrics"] {
   const base = finalizeTierMetrics(emptyTierBucket());
   return {
@@ -1734,6 +1765,16 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
       });
     }
     return systemCache.payload;
+  }
+  const lastGood = readSystemLastGood();
+  if (lastGood) {
+    systemCache = { atMs: now - MATRIX_CACHE_MS, probeScope, payload: lastGood };
+    if (!systemInflight) {
+      systemInflight = computeSystemModuleMatrix(userUuid).finally(() => {
+        systemInflight = null;
+      });
+    }
+    return lastGood;
   }
   if (systemInflight) return systemInflight;
   systemInflight = computeSystemModuleMatrix(userUuid).finally(() => {
@@ -1945,12 +1986,13 @@ async function computeSystemModuleMatrix(userUuid?: string): Promise<SystemModul
       tipSha: tipSha(),
       orderSource: "docs/specs/scoreboard/matrix-module-order.json",
       honesty:
-        "Clicked reads origin/main OUTBOX (GitHub) because Render ignores docs/**. USMCA LIVE PASS. Prefer leaf=module:leafId:col; also credits module= + leaf= + cells=. Box 4 is not launch. TRANSP clicks do not count.",
+        "Disk-first ledger + last-good JSON. GitHub OUTBOX only when bus files are missing on disk. USMCA LIVE PASS. Box 4 is not launch. TRANSP clicks do not count.",
       probeSource,
     },
   };
 
   systemCache = { atMs: now, probeScope, payload };
+  persistSystemLastGood(payload);
   return payload;
 }
 
