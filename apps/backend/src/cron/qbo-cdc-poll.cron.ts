@@ -6,6 +6,13 @@ import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 /** Poll QuickBooks CDC every 5 minutes for configured TRK/TRANSP realms (see env QBO_REALM_ID_*). */
 export function initializeQboCdcPollCron(app: FastifyInstance) {
+  // USMCA-ONLY-UNTIL-LAUNCH: QBO sync is parked. Opt-in only — default-on + startup tick
+  // blocked the Node event loop (invalid_grant token refresh) and Render SIGTERM'd healthz.
+  if (process.env.ENABLE_QBO_CDC_POLL !== "true") {
+    app.log.info("[qbo_cdc_poll] disabled unless ENABLE_QBO_CDC_POLL=true");
+    return;
+  }
+
   markRunnerInitialized("qbo_cdc_poll");
 
   const tick = async () => {
@@ -37,9 +44,6 @@ export function initializeQboCdcPollCron(app: FastifyInstance) {
     );
   };
 
-  // Startup tick: setInterval alone leaves a post-deploy gap of up to one period; /healthz
-  // maxStaleMinutes=30 then flips stale_jobs after redeploys or event-loop stalls.
-  void tick();
   setInterval(() => {
     void tick();
   }, 5 * 60 * 1000);

@@ -6,6 +6,11 @@ import { processInboundSyncBatch } from "../integrations/qbo/sync-inbound.worker
 let timer: ReturnType<typeof setInterval> | undefined;
 
 export function initializeQboInboundSyncCron(app: FastifyInstance) {
+  if (process.env.ENABLE_QBO_INBOUND_SYNC !== "true") {
+    app.log.info("[qbo_inbound_sync] disabled unless ENABLE_QBO_INBOUND_SYNC=true");
+    return;
+  }
+
   markRunnerInitialized("qbo_inbound_sync");
   if (timer) clearInterval(timer);
 
@@ -21,8 +26,6 @@ export function initializeQboInboundSyncCron(app: FastifyInstance) {
     );
   };
 
-  // Startup tick: same class as qbo_cdc_poll — interval-only leaves a post-deploy health gap.
-  void tick();
   timer = setInterval(() => {
     void tick();
   }, 15_000);

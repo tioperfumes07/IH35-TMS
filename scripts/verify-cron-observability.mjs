@@ -70,22 +70,48 @@ check(/initDriverPwaSentry\s*\(\s*\)/.test(pwaMain), "apps/driver-pwa/src/main.t
 const pwaEb = read("apps/driver-pwa/src/components/ErrorBoundary.tsx");
 check(/capturePwaError\s*\(/.test(pwaEb), "driver-pwa ErrorBoundary.tsx: componentDidCatch must report to Sentry via capturePwaError().");
 
-// 5. QBO interval crons must fire an immediate startup tick (not setInterval-only).
-// Prod 2026-08-16: integrations.qbo_cdc_poll went stale_jobs after redeploy because the first
-// wrapBackgroundJobTick waited a full 5m period while /healthz maxStaleMinutes=30.
+// 5. QBO interval crons are OPT-IN (USMCA no-QBO-sync). A default-on startup tick
+// blocked the event loop on invalid_grant refresh and Render killed healthz (502).
+const qboCdc = read("apps/backend/src/cron/qbo-cdc-poll.cron.ts");
+check(
+  /ENABLE_QBO_CDC_POLL\s*!==\s*"true"/.test(qboCdc),
+  "qbo-cdc-poll.cron.ts: must no-op unless ENABLE_QBO_CDC_POLL=true."
+);
+check(
+  !/void\s+tick\s*\(\s*\)\s*;\s*\n\s*setInterval/.test(qboCdc),
+  "qbo-cdc-poll.cron.ts: must not fire a startup tick before setInterval."
+);
+const qboIn = read("apps/backend/src/cron/qbo-inbound-sync.cron.ts");
+check(
+  /ENABLE_QBO_INBOUND_SYNC\s*!==\s*"true"/.test(qboIn),
+  "qbo-inbound-sync.cron.ts: must no-op unless ENABLE_QBO_INBOUND_SYNC=true."
+);
+check(
+  !/void\s+tick\s*\(\s*\)\s*;\s*\n\s*timer\s*=\s*setInterval/.test(qboIn),
+  "qbo-inbound-sync.cron.ts: must not fire a startup tick before setInterval."
+);
 for (const f of [
   "apps/backend/src/cron/qbo-cdc-poll.cron.ts",
   "apps/backend/src/cron/qbo-inbound-sync.cron.ts",
 ]) {
   const src = read(f);
-  check(/void\s+tick\s*\(\s*\)/.test(src), `${f}: must void tick() at initialize (startup tick before setInterval).`);
-  check(/setInterval\s*\(/.test(src), `${f}: must retain setInterval cadence.`);
+  check(/setInterval\s*\(/.test(src), `${f}: must retain setInterval cadence when enabled.`);
   check(/wrapBackgroundJobTick\s*\(/.test(src), `${f}: tick must run through wrapBackgroundJobTick.`);
 }
+
+const idxSrc = read("apps/backend/src/index.ts");
+check(
+  /IH35_BOOT_API_SMOKE === "true"/.test(idxSrc) && /skipping in-process workers/.test(idxSrc),
+  "index.ts: IH35_BOOT_API_SMOKE must skip in-process workers before listen (preDeploy 90s gate)."
+);
+check(
+  idxSrc.includes("setTimeout") && idxSrc.includes("warmSystemModuleMatrixAtBoot"),
+  "index.ts: matrix boot warm must be delayed after listen, not called inline."
+);
 
 if (errors.length > 0) {
   console.error("verify-cron-observability FAIL:");
   for (const e of errors) console.error(`  • ${e}`);
   process.exit(1);
 }
-console.log("verify-cron-observability OK — cron entrypoints init Sentry + record jobs; qbo-sync/email reclaim stale locks; recon healthz rules + FE/PWA Sentry wired; QBO interval crons have startup ticks.");
+console.log("verify-cron-observability OK — cron entrypoints init Sentry + record jobs; qbo-sync/email reclaim stale locks; recon healthz rules + FE/PWA Sentry wired; QBO interval crons opt-in (no startup tick).");
