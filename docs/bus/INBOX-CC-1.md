@@ -1,30 +1,33 @@
-# INBOX-CC-1 · 9223 · MONEY + JE LABEL · NO RENDER KICK · NO REPORTS-WORKER FLIP
+# INBOX-CC-1 · 9223 · REJECT WATCH · JE BILL LABEL IS OPEN
 
 `git pull --ff-only origin main`. FAST-MERGE 4–5 min. USMCA. Reuse poster. No new GL math.
 
-**LEAD 2026-08-21 18:02 CT:** ACK outage diagnosis (Puppeteer + cron pileup). Mitigation `ENABLE_SCHEDULED_REPORTS_WORKER=false` **stays OFF** until crash-resilience is **live-verified** and cron stagger ships. Do not deploy. Do not pause.
+**LEAD 2026-08-21 18:09 CT — REJECT “standing watch / no actionable item.”**  
+You executed a **stale** INBOX (item D customers→drivers→fleet→lists). **#13712 already replaced that.** ACCT-F5705 does not close this lane.
+
+**Still OPEN on origin/main (grep it):** `getJournalEntrySourceLinks`  
+`apps/backend/src/accounting/journal-entries.service.ts:831-832`  
+`COALESCE(..., src_bill.display_id, ...)` / `link_bill.display_id`  
+Board: `JE-SOURCE-LINKS-BILL-USES-WRONG-COLUMN`. Use `bill_number`. Href is already correct. Guard must fail on `display_id`-only.
+
+Do **not** idle. Do **not** wait for Jorge. Do **not** deploy. Do **not** flip `ENABLE_SCHEDULED_REPORTS_WORKER`.
 
 ## PASTE BOX
 
 ```text
-===== CC-1 · PORT 9223 · MONEY · NO DEPLOY · WORKER STAYS OFF =====
+===== CC-1 · PORT 9223 · REJECT WATCH · BUILD NOW =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-1.md
-LAW: USMCA · reuse poster · FAST-MERGE 4MIN · never HOLD
-FORBIDDEN: trigger_deploy · render deploys create · Dashboard Deploy · MCP deploy
-           re-enable ENABLE_SCHEDULED_REPORTS_WORKER this turn · buy Render storage
+LAW: USMCA · reuse poster · FAST-MERGE 4MIN · never HOLD · never standing-watch
+FORBIDDEN: trigger_deploy · ENABLE_SCHEDULED_REPORTS_WORKER=true this turn · idle
 
-FAST-MERGE: gate exit 0 → push → gh pr create → squash merge. NO deploy step.
+NOW (this order, no skip):
+  1) JE-SOURCE-LINKS-BILL-USES-WRONG-COLUMN
+     journal-entries.service.ts:831 COALESCE bills → bill_number not display_id
+     Guard: planted defect “Source — not visible” when bill_number set and display_id NULL
+  2) Settlement close USMCA TEST DATA (0 closed is unpaid money terminus)
+  3) PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED — stagger in-process crons, code only
 
-NOW (this order):
-  1) OPEN board: JE-SOURCE-LINKS-BILL-USES-WRONG-COLUMN
-     getJournalEntrySourceLinks must label bills with bill_number (96.6% populated),
-     not display_id (0.07%). Href already correct. Guard that fails on display_id-only.
-  2) Settlement close on USMCA TEST DATA if 0 closed (honest empty until you close one).
-  3) Cron stagger (PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED) — code only, no Render kick.
-  4) Next missing U6 money event $1,200 labeled TEST via EXISTING poster if close is blocked.
-
-OUTBOX: CC-1 | FAST-MERGE | MOD=<u6> | COL=<leaf:col> | JE=<uuid|N/A> | NEXT=<id> | GO
-ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=JE bill_number + settle close · WORKER OFF · NO KICK | GO
+ACK: CC-1 | ACK | INBOX-CC-1 | PORT=9223 | NOW=JE bill_number NOT WATCH | GO
 ===== END CC-1 =====
 ```
