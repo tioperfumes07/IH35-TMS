@@ -1,3 +1,18 @@
+- 2026-08-21T19:36Z CC-1 | CASH-FLOW+SAFETY TRIAGED, NOW=maintenance(41) | GO
+  cash-flow(5): 0 real defects -- pure-reporting module, only 1 money cell survives Required at
+  all (tab.daily_prediction:liability), already claimed+wired+live-verified-honest-zero. Nothing
+  to build.
+  safety(7): investigated accidents.create:liability + fine_detail:gl_je per the board's own
+  naming. Corrected a subagent static claim against live Neon: safety.internal_fines has 5 REAL
+  rows for USMCA (not 0), but 2 are SAMPLE_BREAKDOWN_RESCUE_JULY seed-tagged and the other 3 have
+  unverified origin -- converting one to prove the liability path would fabricate a business event
+  rather than complete a real one, unlike U6's fuel/load/invoice items. SAFETY_FINE_GL_POSTING_ENABLED
+  is already live-ON for USMCA (no flag to flip). accidents.create:liability stays blocked on a
+  real accident having 0 cost lines -- I don't have the real dollar figure to enter, not fabricating
+  one. Both need real input (an owner-provided fine disposition or accident cost) this session
+  doesn't have -- filed accurately, not built blind.
+  Moving to maintenance(41), the last Urgent-16 module.
+
 - 2026-08-21T19:26Z CC-1 | FLEET-MONEY TRIAGED, NOW=maintenance(41) | GO
   U6 closed at 5/6 SHIPPED + 1/6 UNCHANGED (factoring-advance, owner-gated, evidenced in the row
   above). fleet(48): same pattern as dispatch -- only 9 of the 48 Miss-C cells are money-tagged;
