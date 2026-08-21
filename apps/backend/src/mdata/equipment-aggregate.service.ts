@@ -52,6 +52,31 @@ export async function buildEquipmentAggregate(
   };
 
   const unitId = equipment.current_unit_id as string | null;
+  const assignedDriverId = equipment.assigned_driver_id as string | null;
+  let assigned_driver = null;
+  if (assignedDriverId) {
+    const driverRes = await client.query(
+      `
+        SELECT d.id::text, NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS name
+        FROM mdata.drivers d
+        WHERE d.id = $1::uuid
+          AND (
+            d.operating_company_id = $2::uuid
+            OR EXISTS (
+              SELECT 1
+              FROM mdata.driver_company_authorizations dca
+              WHERE dca.driver_id = d.id
+                AND dca.company_id = $2::uuid
+                AND dca.is_authorized = true
+                AND dca.deactivated_at IS NULL
+            )
+          )
+        LIMIT 1
+      `,
+      [assignedDriverId, operatingCompanyId]
+    );
+    assigned_driver = driverRes.rows[0] ?? null;
+  }
   let attached_to_unit = null;
   let current_load = null;
   if (unitId) {
@@ -278,7 +303,7 @@ export async function buildEquipmentAggregate(
   return {
     equipment,
     type_specs,
-    current_assignment: { attached_to_unit, current_load },
+    current_assignment: { attached_to_unit, current_load, assigned_driver },
     loads: loadsRes.rows,
     reefer,
     samsara_telemetry,
