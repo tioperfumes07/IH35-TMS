@@ -1,34 +1,43 @@
-# INBOX-CC-3 · 9225 · URGENT 16 CHROME — NEVER PAUSE
+# INBOX-CC-3 · 9225 · CERTIFY URGENT 6 CHROME NOW
 
-**FORBIDDEN:** `/tasks`, `/driver-hub`, WAVE2 tour, Built hunt, status-only PRs, “natural pause / holding for INBOX.” Built is 100%. FAST-MERGE. Never idle.
+**FORBIDDEN:** `/tasks`, `/driver-hub`, fleet/lists before U6 certify, Built hunt, pause.
+
+**Owner 2026-08-21 16:05 CT: CERTIFY the Urgent 6 modules RIGHT NOW.**
 
 ## PASTE BOX (copy everything in the fence)
 
 ```text
-===== CC-3 / MECHANICAL+CHROME · PORT 9225 · NEVER HOLD =====
+===== CC-3 / MECHANICAL+CHROME · PORT 9225 · CERTIFY U6 NOW =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CC-3.md
-LAW: USMCA · FAST-MERGE · never HOLD · no new Required.json leaves · no 5th Box
+LAW: USMCA · FAST-MERGE 4MIN · never HOLD · no new Required.json leaves · no 5th Box
 CHROME: 9225 · one surface → prove → CLOSE TAB · never leave /program/matrix open
 
-U6 3/3 CLOSED. Registry honesty on cargo_claim_reason / complaint_type / dot_violation_type ACCEPTED.
-Escape-eats-modal negative result ACCEPTED — do not re-litigate.
+FAST-MERGE 4–5 MIN (ON — do not deviate):
+  LAW: docs/bus/FAST-MERGE-4MIN-LAW.md
+  1) node scripts/money-pr-local-gate.mjs MUST exit 0
+  2) git push; if ONLY ENV verify-static AFTER gate PASS → git push --no-verify
+  3) gh pr create — NEVER gh pr checks --watch
+  4) gh pr merge N --squash --delete-branch --admin NOW
+     if checkout-main fails: gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash
+  5) OUTBOX one line → next cell SAME TURN
 
-YOUR “natural pause / holding for next INBOX” IS REJECTED.
+U6 3/3 dispatch chrome CLOSED. Do not re-litigate Escape/AuthGate.
 
-NOW = unpaid chrome `leaf:col` vertical, first unpaid, live click:
-  COL picker_law then trailer
-  /fleet (48) then /lists (87) then /maintenance (41) then /safety (7) then /cash-flow (5)
-  Skip company-enum picker_law (Create/Edit Unit Identity + Create/Edit Trailer company Combobox).
-  Skip /tasks. Skip Built. Skip another Escape hunt unless a live leaf fails.
+CERTIFY = FW 1–12. You own picker_law + trailer + Save→reload on U6 modules.
 
-On /lists: after zero-picker registry rows, take the NEXT real combobox that still lacks
-inline + Add new as first row OR Save→reload. OUTBOX `leaf:col`. Honest-zero catalogs:
-UNCHANGED blocker=<leaf:col> then NEXT same turn.
+U6 MODULES IN ORDER (first unpaid chrome, VERTICAL):
+  accounting → banking → settlements → factoring → dispatch → vendors
+COLUMNS: picker_law then trailer (then next unpaid chrome on that module)
+
+Skip company-enum picker_law (closed 3-entity company Combobox — Cursor honesty).
+Skip /tasks. Skip Built. Skip fleet/lists until U6 chrome leftover is 0.
+
+THEN rest of urgent: customers → drivers → fleet → lists.
 
 IF money/JE: OUTBOX-CC-1. Reverse: OUTBOX-CODEX. Live stamp: OUTBOX-CC-2.
 
-OUTBOX: CC-3 | U16 | COL=<leaf:col> | NEXT=<leaf:col> | GO
-ACK: CC-3 | ACK | INBOX-CC-3 | PORT=9225 | NOW=fleet then lists picker_law live | NEVER HOLD | GO
+OUTBOX: CC-3 | FAST-MERGE | U6 | COL=<leaf:col> | NEXT=<leaf:col> | GO
+ACK: CC-3 | ACK | INBOX-CC-3 | PORT=9225 | NOW=CERTIFY U6 chrome accounting→…→vendors | NEVER HOLD | GO
 ===== END CC-3 =====
 ```

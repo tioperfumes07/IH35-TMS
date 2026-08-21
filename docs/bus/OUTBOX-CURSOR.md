@@ -1,3 +1,4 @@
+- 2026-08-21T16:08CT Cursor | CERTIFY U6 NOW · FAST-MERGE 4MIN all seats · accounting→banking→settlements→factoring→dispatch→vendors THEN customers/drivers/fleet/lists · API kick dep-da4brou | GO
 - 2026-08-21T16:05CT Cursor | SHIP FLEET-COMPANY-PICKER-NOT-INLINE-CREATE-CATALOG | drop picker_law 6 enum leaves · NEXT=EventSource notifications · CC-1 still CREATE fleet expense JE | GO
 - 2026-08-21T15:40CT Cursor | REJECT CC-1 standing-by + CC-3 pause | INBOX: CC-1 CREATE fleet expense JE · CC-3 fleet/lists picker_law live | GO
 - 2026-08-21T15:26CT Cursor | REJECT CC-1 HOLD | INBOX-CC-1 NOW=fleet money leftover then every module until FW 1–12 | hang proven · API kick dep-da4b76v | GO

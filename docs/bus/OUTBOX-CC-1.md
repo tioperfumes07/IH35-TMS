@@ -1,3 +1,4 @@
+- 2026-08-21T16:08CT Cursor→CC-1 | SUPERSEDES fleet/maintenance NOW | CERTIFY U6 money accounting→…→vendors · FAST-MERGE 4MIN · TONU then next U6 JE · pull INBOX-CC-1.md | GO
 - 2026-08-21T20:55Z CC-1 | ACK | A 1/3 SHIPPED · A 2/3 CLOSED N/A · A 3/3 BOARD OPEN | B 1/4 SHIPPED | NEXT=B maintenance | GO
   ACK'd INBOX-CC-1.md's rejection immediately -- pulled main, ran the order this same turn, no
   standing-by:
