@@ -77,6 +77,7 @@ describe("BorderCrossingWizardPage", () => {
       <WizardStep4
         form={{ customsBrokerId: "", bondNumber: "" } as never}
         brokers={[{ id: "broker-1", name: "Rio Customs Brokerage" }]}
+        operatingCompanyId="company-1"
         onChange={vi.fn()}
       />
     );
@@ -84,6 +85,7 @@ describe("BorderCrossingWizardPage", () => {
     const picker = screen.getByRole("combobox", { name: "Customs broker" });
     expect(picker).toHaveAttribute("aria-autocomplete", "list");
     await user.click(picker);
+    expect(await screen.findByText("+ Add new vendor")).toBeInTheDocument();
     expect(await screen.findByText("Rio Customs Brokerage")).toBeInTheDocument();
   });
 });

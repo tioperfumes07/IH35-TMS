@@ -160,7 +160,14 @@ export function BorderCrossingWizardPage() {
           {step === 0 && <WizardStep1 form={form} onChange={patch} operatingCompanyId={selectedCompanyId ?? ""} />}
           {step === 1 && <WizardStep2 form={form} ports={ports} onChange={patch} />}
           {step === 2 && <WizardStep3 form={form} onChange={patch} />}
-          {step === 3 && <WizardStep4 form={form} brokers={brokers} onChange={patch} />}
+          {step === 3 && (
+            <WizardStep4
+              form={form}
+              brokers={brokers}
+              operatingCompanyId={selectedCompanyId ?? ""}
+              onChange={patch}
+            />
+          )}
           {step === 4 && (
             <WizardStep5
               driverId={form.driverId}
