@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** Ratchet the canonical task-link activity event across schema, writer, and reader. */
+/**
+ * Ratchet the canonical task-link activity event across schema, writer, and reader.
+ * @matrix-built leaf:tasks.nav.chat col:connectivity
+ */
 import fs from "node:fs";
 import process from "node:process";
 
