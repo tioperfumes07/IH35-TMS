@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { CreateTaskModal } from "../../components/tasks/CreateTaskModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { TaskPlannerGrid } from "./TaskPlannerGrid";
@@ -8,7 +6,6 @@ import { TaskPlannerGrid } from "./TaskPlannerGrid";
 export function TaskBoardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [createOpen, setCreateOpen] = useState(false);
 
   if (!companyId) {
     return (
@@ -24,29 +21,17 @@ export function TaskBoardPage() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="shrink-0 space-y-0">
-        <PageHeader
-          title="Task Board"
-          actions={
-            <button
-              type="button"
-              disabled={!companyId}
-              onClick={() => setCreateOpen(true)}
-              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              + Create Task
-            </button>
-          }
-        />
+        {/* CLS-CHROME-LAW-8 (item 8, "no box-in-box"): this page's own "+ Create Task" PageHeader
+            action + local CreateTaskModal instance were removed — TasksModuleTabs (mounted right
+            below) already renders the single canonical "+ Create Task" affordance shared across
+            every Tasks tab (TASKS-6), so Task Board previously showed TWO independent create-task
+            buttons/modals stacked on top of each other. */}
+        <PageHeader title="Task Board" />
         <TasksModuleTabs />
       </div>
       <div className="flex-1 overflow-hidden">
         <TaskPlannerGrid />
       </div>
-      <CreateTaskModal
-        open={createOpen}
-        operatingCompanyId={companyId}
-        onClose={() => setCreateOpen(false)}
-      />
     </div>
   );
 }
