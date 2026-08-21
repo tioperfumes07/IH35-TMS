@@ -73,7 +73,13 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
   SELECT 'fuel' AS source, ft.id::text AS id, ft.purchased_at::date AS txn_date,
          COALESCE('Fuel' || CASE WHEN NULLIF(ft.location_city, '') IS NOT NULL
                                  THEN ' — ' || ft.location_city ELSE '' END, 'Fuel purchase') AS description,
-         v.vendor_name AS counterparty,
+         -- LST-TXNREG-DEACTIVATED-COUNTERPARTY — mdata.vendors' own RLS policy excludes
+         -- deactivated_at IS NOT NULL rows for a non-bypass reader, so a plain v.vendor_name goes
+         -- NULL (renders "—", unsearchable) the moment a cited vendor is later deactivated. The FK
+         -- is still valid; only the vendor's selectable-for-new-work status changed. Same fix class
+         -- already shipped for invoices.routes.ts (ACCT-F5611); mdata.resolve_vendor_label_same_company
+         -- (202612780000) is the canonical, already-proven, same-company-scoped resolver.
+         COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(ft.vendor_id, ft.operating_company_id)) AS counterparty,
          'Fuel' AS type,
          0::bigint AS amount_in_cents,
          ROUND(COALESCE(ft.total_cost, 0) * 100)::bigint AS amount_out_cents,
@@ -88,7 +94,10 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
 
   SELECT 'invoice' AS source, i.id::text AS id, i.issue_date AS txn_date,
          COALESCE(i.display_id, 'Invoice') AS description,
-         c.customer_name AS counterparty,
+         -- LST-TXNREG-DEACTIVATED-COUNTERPARTY — same class, customer side; mirrors
+         -- mdata.resolve_customer_label_same_company's own already-proven use in invoices.routes.ts
+         -- (ACCT-F5611).
+         COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) AS counterparty,
          'Invoice (AR)' AS type,
          COALESCE(i.total_cents, 0)::bigint AS amount_in_cents,
          0::bigint AS amount_out_cents,
@@ -103,7 +112,16 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
 
   SELECT 'bill' AS source, b.id::text AS id, b.bill_date AS txn_date,
          COALESCE(NULLIF(b.bill_number, ''), b.display_id, 'Bill') AS description,
-         v.vendor_name AS counterparty,
+         -- LST-TXNREG-DEACTIVATED-COUNTERPARTY — same class, vendor side (bill_uuid is TEXT; the
+         -- same safe-cast used by the join predicate below feeds the resolver, never a raw ::uuid cast).
+         COALESCE(
+           v.vendor_name,
+           mdata.resolve_vendor_label_same_company(
+             CASE WHEN b.vendor_uuid ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+               THEN b.vendor_uuid::uuid ELSE NULL END,
+             b.operating_company_id
+           )
+         ) AS counterparty,
          'Bill (AP)' AS type,
          0::bigint AS amount_in_cents,
          COALESCE(b.amount_cents, ROUND(COALESCE(b.total_amount, 0) * 100)::bigint, 0)::bigint AS amount_out_cents,
@@ -116,6 +134,12 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
 
   UNION ALL
 
+  -- LST-TXNREG-DEACTIVATED-COUNTERPARTY — the driver arm needs NO resolver: mdata.drivers'
+  -- drivers_select RLS policy (unlike customers/vendors) does not exclude deactivated_at IS NOT
+  -- NULL rows at all, so a deactivated driver's name still resolves here for a normal
+  -- non-bypass session. Live-verified as ih35_app/Owner on USMCA: 10 of 10 settlements resolve a
+  -- driver name, including 2 tied to a deactivated driver. Stated explicitly so this isn't
+  -- re-investigated as a false negative later.
   SELECT 'settlement' AS source, s.id::text AS id, s.period_end AS txn_date,
          COALESCE(s.display_id, 'Settlement')
            || CASE WHEN TRIM(CONCAT_WS(' ', d.first_name, d.last_name)) <> ''

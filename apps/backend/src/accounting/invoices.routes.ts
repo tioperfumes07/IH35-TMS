@@ -261,7 +261,14 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (q.search) {
         values.push(`%${q.search}%`);
         const idx = values.length;
-        extraWhere.push(`(i.display_id ILIKE $${idx} OR c.customer_name ILIKE $${idx})`);
+        // ACCT-F5611 REMAINDER — this used to match only the plain-JOIN c.customer_name, so a
+        // deactivated customer's real invoices could never be found by name search even after the
+        // row-visibility half of ACCT-F5611 fixed the row from vanishing outright (that fix's own
+        // row explicitly left this open). COALESCE with the same same-company resolver the SELECT
+        // below already uses so search and display agree on what a customer is named.
+        extraWhere.push(
+          `(i.display_id ILIKE $${idx} OR COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) ILIKE $${idx})`
+        );
       }
       if (q.from_date) {
         values.push(q.from_date);
@@ -284,9 +291,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       // so an INNER JOIN silently dropped every invoice whose customer was later deactivated from
       // BOTH the count and the list -- confirmed live: 7 of USMCA's 37 invoices, exactly matching the
       // reported "shows 30 of 37" gap. The customer_id FK is still valid; only the customer's
-      // selectable-for-new-work status changed. c.customer_name in the search filter below still
-      // works against a LEFT JOIN (NULL-safe ILIKE simply never matches on the joined-out rows,
-      // narrowing search results correctly rather than hiding whole invoices).
+      // selectable-for-new-work status changed. UPDATE (same finding's own REMAINING note, closed
+      // below): the search filter used to match only the plain c.customer_name and silently never
+      // found a deactivated customer's invoices by name -- it now COALESCEs with the same resolver
+      // the SELECT uses, so search and display agree.
       const countRes = await client.query(
         `
           SELECT COUNT(*)::int AS total
