@@ -161,6 +161,7 @@
       "line_sequence",
       "linked_wo_line_uuid",
       "load_id",
+      "operating_company_id",
       "parent_line_uuid",
       "part_location_codes",
       "part_uuid",
