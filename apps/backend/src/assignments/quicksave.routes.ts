@@ -130,7 +130,7 @@ export async function registerAssignmentsQuicksaveRoutes(app: FastifyInstance) {
           `
             INSERT INTO telematics.vehicle_driver_assignments (
               operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
-            ) VALUES ($1, $2, $3, now(), 'quicksave', true, $4)
+            ) VALUES ($1, $2, $3, now(), 'manual_override', true, $4)
           `,
           [companyId, equipmentId, driverId, user.uuid]
         );
