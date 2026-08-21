@@ -3386,3 +3386,80 @@ duplicate-data reversal), all three parts merged and live** |
 | **CORRECTED — premise was stale, not the current owner-gated block it claimed (CC-1, 2026-08-21, discovered while investigating ACCT-F5704 above):** `INVENTORY-PARTS-PURCHASE-GL-ACCOUNT-DESIGNATION-UNBOUND` (originally filed earlier this session, item A.3) — **live-reverified 2026-08-21 that its premise no longer holds (or never held as broadly as claimed): `PARTS_PURCHASE_GL_POSTING_ENABLED` is `enabled=true` for ALL THREE entities (TRANSP/TRK/USMCA), and the `maintenance_parts_expense` CoA role IS bound for all three** (`accounting.chart_of_accounts_roles`, live query, 3 rows, USMCA → account `ada3ea02-…` "Parts & Supplies Expense") — directly contradicting the original row's "0 bindings / flag OFF on all entities" claim. The REAL reason no parts-purchase GL posting had ever been observed live was `ACCT-F5704` above: the route's own `ON CONFLICT` predicate mismatch meant the header+lines half of a real parts purchase could never even complete (`42P10` on every call), so the GL-posting half was never reached at all — an entirely different, non-owner-gated, mechanical bug, not an owner CoA-role decision pending. | `apps/backend/src/accounting/parts-inventory-posting/poster.service.ts` (unchanged, working, now provably reachable); `apps/backend/src/maintenance/parts-inventory.routes.ts` (`ACCT-F5704` fix, same PR) | A | closed | N/A — not an owner decision; see `ACCT-F5704` above for the real fix. | live Neon: `accounting.chart_of_accounts_roles` has 3 `maintenance_parts_expense` rows (one per entity, all bound); `lib.feature_flag_overrides` `PARTS_PURCHASE_GL_POSTING_ENABLED=true` for all three entities — both directly contradict this row's original claim | **CORRECTED — the real blocker was ACCT-F5704 (mechanical, now fixed), not an owner-gated CoA decision; superseded, not reopened as a new owner-ask** |
 
 | **INFO (CC-1, 2026-08-21, INBOX-CC-1.md item B "WAVE 3" 4/4, final leg — inventory):** `WAVE3-INVENTORY-TEST-PARTS-PURCHASE-JE-PROVEN` — created one real, clearly-labeled TEST DATA USMCA parts purchase (4x brake-pad-set, $220.00, vendor LOVES TRAVEL STOPS) through the EXACT same two-statement same-transaction shape the real `POST /api/v1/maintenance/parts-inventory/purchases` route uses, then the EXISTING, unchanged `postPartsInventoryPurchase` poster — and, unlike the original plan (an honest no-op proof, per the — now corrected — belief that the flag was OFF), the GL-posting half **actually posted a real balanced JE**, since `ACCT-F5704` (this same pass) was the true blocker, not an unbound role. Completes WAVE 3 (fleet 1/4, maintenance 2/4, fuel 3/4, inventory 4/4 — all four legs shipped live). | `scripts/run-wave3-inventory-test-parts-purchase-once.mts` (new, run-once exerciser); `apps/backend/src/accounting/parts-inventory-posting/poster.service.ts` (`postPartsInventoryPurchase`, existing poster, unchanged) | E | closed | Rehearsed on disposable Neon branches (first rehearsal reproduced the `ACCT-F5704` `42P10` live, confirming the bug before fixing it — not glossed over; final rehearsal after the fix confirmed clean end-to-end). Applied live: `parts_inventory` row `7d66c099-…`, `parts_purchases` row `e2e1c078-…`, real balanced JE `9dd76d14-…` (Dr Parts & Supplies Expense $220.00 / Cr Accounts Payable $220.00) — independently re-verified live via a fresh Neon read after (separate from the script's own printed output). Explicit `is_sample_data=true` stamp on both `accounting.bills` and `accounting.journal_entries` rows (the poster derives it from the vendor's own flag, and LOVES TRAVEL STOPS is a real, non-sample vendor — same rigor as every other WAVE3 leg). | live Neon prod re-check post-apply — `journal_entry_postings` for JE 9dd76d14 balanced 22000c/22000c both legs; `accounting.bills` row confirms `is_sample_data=true`; `maintenance.parts_inventory`/`parts_purchases` rows confirm real quantities/amounts and labeled `notes` | **INFO — WAVE3 complete (4/4 legs shipped live); moving to the U6-module re-walk/CERTIFY pass per INBOX-CC-1.md item C** |
+| **OPEN (CC-3, 2026-08-21, live-discovered while sweeping accounting's U6 picker_law column):** `ACCT-INVOICE-CREATE-CUSTOMER-LINK` — `InvoiceCreateModal.tsx`'s "Select a load to invoice" pick table already fixed its "Load #" column to drill through a real `EntityLink` (in-code comment "C5": a column header with a real id promises a drill-through, not a plain unclickable label). The very next column, "Customer", carries a real `customer_id` on every row (same `DispatchLoadRow`, non-optional `string`) but renders through bare `entityLabel(load.customer_name, load.customer_id, "Customer")` text with no `EntityLink` wrapper — the exact class of gap C5 fixed one column over, just missed on this one. Fix is written, mutation-tested, and passing (see full diff below) — the ONLY reason it isn't merged is `scripts/verify-no-money-theater.mjs` Rule 23: any commit touching `apps/frontend/src/pages/accounting/**` that mentions "EntityLink" and carries no backend money-path file (a real `apps/backend/src/**` accounting/banking file, or one of the WRITE_PATH_RE keywords: puller/projector/posting-engine/bank-feed/gl-post/migration/sync-scheduler/bill-payment/expense.routes/payments.routes/categorize) is deliberately classified as "money theater" and rejected — by design, per that guard's own ACCT-F84 comment, to stop frontend-only link changes from self-certifying as money-module progress. This is a genuine, safe, backend-untouched frontend fix with zero write-path component, so it cannot clear that gate from my lane alone; it needs bundling into a PR that also carries real accounting/banking backend or migration work (or an explicit Rule-23 exemption call) from whoever owns that lane. | `apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx` (Customer column render); new `scripts/verify-invoice-create-modal-customer-entitylink.mjs` + `scripts/verify-steps/4208-verify-invoice-create-modal-customer-entitylink.mjs` (verify-step 4208 already claimed on main, PR #13682 — free to author against) | A | **whoever owns accounting-path money commits (CC-1) — bundle this into a real backend/migration accounting PR, or grant an explicit Rule-23 exemption** | Full ready diff (typechecked, guard selftest passes, `node scripts/money-pr-local-gate.mjs` passes on every check except `verify-no-money-theater`'s Rule 23 theater classifier):
+```diff
+--- a/apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx
++++ b/apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx
+@@ -179,7 +179,14 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
+                 {
+                   key: "customer",
+                   label: "Customer",
+-                  render: (load) => entityLabel(load.customer_name, load.customer_id, "Customer"),
++                  // C5 (same principle as the Load # column above): a "Customer" column with a real
++                  // customer_id promises a drill-through, not a plain unclickable label.
++                  render: (load) =>
++                    load.customer_id ? (
++                      <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} />
++                    ) : (
++                      entityLabel(load.customer_name, load.customer_id, "Customer")
++                    ),
+                 },
+                 {
+                   key: "status",
+```
+Full guard files, embedded here since the branch that authored them was never pushed (local-only commit, not retrievable by another session) — `scripts/verify-invoice-create-modal-customer-entitylink.mjs`:
+```js
+import fs from "node:fs";
+
+const file = "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx";
+const source = fs.readFileSync(file, "utf8");
+
+function failures(text) {
+  const errors = [];
+  const columnMatch = text.match(/key:\s*"customer",\s*label:\s*"Customer"[\s\S]{0,800}?key:\s*"status"/);
+  if (!columnMatch) {
+    errors.push("could not locate the Customer column definition (file restructured?)");
+    return errors;
+  }
+  const block = columnMatch[0];
+  if (!/load\.customer_id\s*\?/.test(block)) errors.push("Customer column does not branch on load.customer_id");
+  if (!/kind="customer"/.test(block)) errors.push("Customer column does not render an EntityLink kind=\"customer\"");
+  if (!/id=\{load\.customer_id\}/.test(block)) errors.push("Customer column's EntityLink is not wired to load.customer_id");
+  return errors;
+}
+
+if (process.argv.includes("--selftest")) {
+  const regressed = source.replace(
+    /render:\s*\(load\)\s*=>\s*\n\s*load\.customer_id\s*\?\s*\(\s*\n\s*<EntityLink kind="customer"[\s\S]{0,220}?\)\s*:\s*\(\s*\n\s*entityLabel\(load\.customer_name, load\.customer_id, "Customer"\)\s*\n\s*\),/,
+    'render: (load) => entityLabel(load.customer_name, load.customer_id, "Customer"),',
+  );
+  const ok = failures(source).length === 0;
+  const catchesRegression = failures(regressed).includes("Customer column does not branch on load.customer_id");
+  if (!ok || !catchesRegression) {
+    console.error("verify-invoice-create-modal-customer-entitylink selftest FAIL", { ok, catchesRegression });
+    process.exit(1);
+  }
+  console.log("verify-invoice-create-modal-customer-entitylink selftest PASS — reverting to bare entityLabel turns red");
+  process.exit(0);
+}
+
+const errors = failures(source);
+if (errors.length) {
+  console.error(`verify-invoice-create-modal-customer-entitylink FAIL:\n- ${errors.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(
+  "verify-invoice-create-modal-customer-entitylink PASS — the from-load invoice pick table's Customer column drills through a real EntityLink, matching the Load # column's C5 fix",
+);
+```
+and `scripts/verify-steps/4208-verify-invoice-create-modal-customer-entitylink.mjs` (4208 already claimed on origin/main, PR #13682 — free to author against):
+```js
+export default {
+  name: "verify-invoice-create-modal-customer-entitylink",
+  run(ctx) {
+    ctx.run("node", ["scripts/verify-invoice-create-modal-customer-entitylink.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-invoice-create-modal-customer-entitylink.mjs"]);
+  },
+};
+```
+| typecheck clean (`npx tsc --noEmit -p apps/frontend/tsconfig.json`), guard selftest PASS (reverting the fix turns it red), `node scripts/money-pr-local-gate.mjs` PASS on every check except the Rule 23 theater classifier described above | **OPEN — ready fix blocked on money-lane bundling, not a technical defect in the fix itself** |
