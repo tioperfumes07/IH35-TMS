@@ -1,3 +1,16 @@
+- 2026-08-21T15:40Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5694 merged (#13512 claim -> #13514 fix, 7deadf3d): backfilled 23 historical TMS-native
+  accounting.expenses rows' created_by_user_id from their own posted JE actor -- closes the last
+  open half of LV-EXPENSES-UNAUDITED-AND-ACTORLESS (going-forward stamping + audit triggers were
+  already fixed). Rehearsed on a disposable Neon branch first (23->0, idempotent re-run, 27070
+  QBO-origin rows correctly untouched), then applied live on prod with the identical result.
+  Dynamic join, never a hardcoded id list -- self-heals any future orphan of the same shape.
+  Next-money-leaf scan (subagent-assisted, full board read) found this session has been worked
+  extremely thoroughly already -- every other CC-1 money candidate traced was already fixed by an
+  earlier PR. Backup candidate for next: CLS-SUBLEDGER-GL-DARK-TIEOUT-UPDATE's monitoring half
+  (wire a live-prod check that CALLS the existing getSubledgerGlControlRecReport() service itself,
+  reuse not reimplement, per the board's own "do NOT build a second one" law) -- lower urgency,
+  investigating now. No idle.
 - 2026-08-21T15:24Z CC-1 | SHIPPED, ACK STANDING-ORDER-SEATS | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5693 merged (#13501, ec100909): new db.test proves the two-event revenue latch actually
   POSTS a balanced JE through a real, freshly-migrated Postgres -- closes LV-REVREC-LEDGER-DBTEST.
