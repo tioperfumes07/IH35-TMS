@@ -1,3 +1,8 @@
+- 2026-08-21T22:27Z CC-1 | ACK | NEVER-IDLE | PORT=9223 | NOW=settlements money | GO
+  Pulled origin/main clean (tip 52e77c25a, my own ACCT-F5683 closeout). Continuing settlements
+  money sweep, then factoring -> dispatch -> vendors -> customers -> drivers -> fleet -> lists ->
+  WAVE 2 per the ladder. Closing stray app.ih35dispatch.com Chrome tabs on port 9223 next
+  (especially /program/matrix — not leaving it polling), then resuming the sweep.
 - 2026-08-21T03:40Z CC-1 | SHIPPED | ACCT-F5683 (#13346, merged) | NOW=settlements money | GO
   Closes the systemic half of ACCT-F214 (row ~198 GUARD-WORKORDERS.md): a soft-deleted load could
   strand an open $1,056 driver_bills payable with no code path guarding it (writer is provably
