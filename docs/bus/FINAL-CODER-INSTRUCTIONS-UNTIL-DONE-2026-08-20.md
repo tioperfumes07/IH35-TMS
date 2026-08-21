@@ -1,4 +1,8 @@
 # FINAL CODER INSTRUCTIONS — UNTIL THE SCOREBOARD IS CLOSED
+**Owner 2026-08-20 23:16 CT · 7 HOURS · DEADLINE 06:16 CT 2026-08-21 · URGENT 10 100% + SCENARIOS**  
+**USMCA ONLY. No Trucking. No Transportation. No QBO sync / no TMS→QBO write-back.**  
+**Never idle. Never wait for Jorge. This header wins.**
+
 **Owner 2026-08-20 22:27 CT · NEVER IDLE · URGENT 6 THEN 10 THEN ALL MODULES · Chrome ports assigned**  
 **Prior 18:04 CT text below still applies except where this header conflicts — this header wins.**
 
