@@ -465,11 +465,17 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       // Same gate, same skip-audit, same poster as the sibling route — no new GL math (locked rule:
       // reuse the existing poster). Flag OFF still writes the payment and applications and records the
       // skip append-only, so a skip can never read as a silent success.
+      //
+      // ACCT-F5705: same fix as the sibling customer-payments.routes.ts route — the
+      // `applicationsCount > 0` gate blocked the post-or-skip-audit pair entirely for a zero-
+      // application payment (customer credit / unapplied cash), which buildCustomerPaymentLines never
+      // needed gated (it posts purely from accounting.payments.amount_cents). Removed to match
+      // apply.service.ts's ungated reference shape.
       const customerPaymentPostingEnabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
         operating_company_id: query.data.operating_company_id,
         user_uuid: user.uuid,
       });
-      if (applicationsCount > 0 && customerPaymentPostingEnabled) {
+      if (customerPaymentPostingEnabled) {
         // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
         // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
         // runs inside an open transaction and the payment row above is NOT yet committed.
@@ -488,7 +494,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           },
           { userId: user.uuid }
         );
-      } else if (applicationsCount > 0) {
+      } else {
         await recordPostingFlagSkip(client, user.uuid, {
           flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
           postingDomain: "customer_payment",
