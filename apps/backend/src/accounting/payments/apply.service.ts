@@ -4,6 +4,7 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 import { recordPostingFlagSkip, POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { backlinkBankTransactionToInvoice } from "./bank-invoice-backlink.service.js";
+import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents } from "../bills.service.js";
 
 // CHAIN-06 — per-entity GL-posting kill switch for the customer-payment (A/R receipt) JE. The payment and
 // its applications (AR reduced at the payment_applications level) are always written; posting the balanced
@@ -236,9 +237,18 @@ async function applyToBill(
   if (bill.customer_id && String(bill.customer_id) !== String(payment.customer_id)) {
     throw new ApplyPaymentError("bill_customer_mismatch", "bill customer does not match payment customer");
   }
+  // ACCT-F5691 — bills.paid_cents alone is not the whole picture: it never learns about
+  // non-voided vendor credits (ACCT-F5623) or PRIOR accounting.payment_applications rows on this
+  // same bill (this cap check's own write target) — bills.paid_cents must never gain a fifth
+  // writer for either (see APPLIED_BILL_PAYMENT_APPLICATIONS_SQL in bills.service.ts for why).
+  // Without netting both, a second application to the same bill via this path ignored the first
+  // entirely (the cap check re-read the SAME stale paid_cents every time), and a bill already
+  // settled by a vendor credit could still be double-discharged here too.
   const billTotal = Number(bill.amount_cents ?? 0);
   const billPaid = Number(bill.paid_cents ?? 0);
-  const billOpen = Math.max(0, billTotal - billPaid);
+  const appliedCreditsCents = await getAppliedVendorCreditsCents(client, row.target_id, operatingCompanyId);
+  const appliedPaymentApplicationsCents = await getAppliedBillPaymentApplicationsCents(client, row.target_id, operatingCompanyId);
+  const billOpen = Math.max(0, billTotal - billPaid - appliedCreditsCents - appliedPaymentApplicationsCents);
   if (row.amount_cents > billOpen) {
     throw new ApplyPaymentError("amount_exceeds_bill_open", "application amount exceeds bill open amount");
   }
