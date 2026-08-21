@@ -42,21 +42,27 @@ function fmtDate(iso: string) {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
 }
 
+const SOURCE_ROUTES: Readonly<Record<string, (id: string) => string>> = {
+  "mdata.loads": (id) => `/dispatch/loads/${id}`,
+  "mdata.customers": (id) => `/customers/${id}`,
+  "mdata.vendors": (id) => `/vendors/${id}`,
+  "mdata.drivers": (id) => `/drivers/${id}`,
+  "mdata.units": (id) => `/fleet/units/${id}`,
+  "maintenance.work_orders": (id) => `/maintenance/work-orders/${id}`,
+  "accounting.invoices": (id) => `/accounting/invoices/${id}`,
+  "accounting.bills": (id) => `/accounting/bills/${id}`,
+  "accounting.bill_payments": (id) => `/accounting/bill-payments/${id}`,
+  "accounting.payments": (id) => `/accounting/payments/${id}`,
+  "accounting.expenses": (id) => `/accounting/expenses/${id}`,
+  "accounting.fixed_assets": (id) => `/accounting/fixed-assets?asset_id=${id}`,
+  "banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`,
+  "banking.transfers": (id) => `/banking/transfers?transfer_id=${id}`,
+  "driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`,
+};
+
 function sourceLink(ev: SpineEvent): string | null {
   if (!ev.source_table || !ev.source_reference_id) return null;
-  const t = ev.source_table;
-  const id = ev.source_reference_id;
-  if (t.includes("load")) return `/dispatch/loads/${id}`;
-  if (t.includes("invoice")) return `/accounting/invoices/${id}`;
-  if (t.includes("bill")) return `/accounting/bills/${id}`;
-  if (t.includes("work_order")) return `/maintenance/work-orders/${id}`;
-  if (t === "mdata.customers") return `/customers/${id}`;
-  if (t === "mdata.vendors") return `/vendors/${id}`;
-  if (t === "mdata.drivers") return `/drivers/${id}`;
-  if (t === "mdata.units") return `/fleet/units/${id}`;
-  if (t.includes("transfer")) return `/banking/transfers/${id}`;
-  if (t.includes("payment")) return `/accounting/payments/${id}`;
-  return null;
+  return SOURCE_ROUTES[ev.source_table]?.(ev.source_reference_id) ?? null;
 }
 
 function downloadCSV(events: SpineEvent[]) {

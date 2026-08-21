@@ -49,10 +49,13 @@ function failures(s = files) { return [
   ["unit create emits spine with effective company", s.unitRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.unitRoute.includes("String(resolvedLeasedId ?? resolvedOwnerId)") && s.unitRoute.includes('subject_type: "unit"')],
   ["customer subject same-company label", s.spine.includes("c.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(c.customer_name), '')")],
   ["vendor subject same-company label", s.spine.includes("v.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(v.vendor_name), '')")],
-  ["customer source drill", s.page.includes('t === "mdata.customers"') && s.page.includes('return `/customers/${id}`')],
-  ["vendor source drill", s.page.includes('t === "mdata.vendors"') && s.page.includes('return `/vendors/${id}`')],
-  ["driver source drill", s.page.includes('t === "mdata.drivers"') && s.page.includes('return `/drivers/${id}`')],
-  ["unit source drill", s.page.includes('t === "mdata.units"') && s.page.includes('return `/fleet/units/${id}`')],
+  ["customer source drill", s.page.includes('"mdata.customers": (id) => `/customers/${id}`')],
+  ["vendor source drill", s.page.includes('"mdata.vendors": (id) => `/vendors/${id}`')],
+  ["driver source drill", s.page.includes('"mdata.drivers": (id) => `/drivers/${id}`')],
+  ["unit source drill", s.page.includes('"mdata.units": (id) => `/fleet/units/${id}`')],
+  ["source routes never infer entity kind from table substrings", s.page.includes("const SOURCE_ROUTES") && !s.page.includes('t.includes("bill")') && !s.page.includes('t.includes("payment")')],
+  ["bill-payment source uses its canonical record route", s.page.includes('"accounting.bill_payments": (id) => `/accounting/bill-payments/${id}`')],
+  ["bank transaction and settlement sources use canonical query targets", s.page.includes('"banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`') && s.page.includes('"driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`')],
   ["all canonical history mounts remain", [s.driver, s.unit, s.trailer, s.vendor, s.customer, s.workOrder, s.load].every((source) => source.includes("<EntityAuditHistoryTab"))],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
@@ -79,14 +82,17 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, unitRoute: files.unitRoute.replace("String(resolvedLeasedId ?? resolvedOwnerId)", "String(resolvedOwnerId)") }).includes("unit create emits spine with effective company"),
     failures({ ...files, spine: files.spine.replace("c.operating_company_id = el.operating_company_id", "TRUE") }).includes("customer subject same-company label"),
     failures({ ...files, spine: files.spine.replace("v.operating_company_id = el.operating_company_id", "TRUE") }).includes("vendor subject same-company label"),
-    failures({ ...files, page: files.page.replace('t === "mdata.customers"', 't === "mdata.customers_unused"') }).includes("customer source drill"),
-    failures({ ...files, page: files.page.replace('t === "mdata.vendors"', 't === "mdata.vendors_unused"') }).includes("vendor source drill"),
-    failures({ ...files, page: files.page.replace('t === "mdata.drivers"', 't === "mdata.drivers_unused"') }).includes("driver source drill"),
-    failures({ ...files, page: files.page.replace('t === "mdata.units"', 't === "mdata.units_unused"') }).includes("unit source drill"),
+    failures({ ...files, page: files.page.replace('"mdata.customers":', '"mdata.customers_unused":') }).includes("customer source drill"),
+    failures({ ...files, page: files.page.replace('"mdata.vendors":', '"mdata.vendors_unused":') }).includes("vendor source drill"),
+    failures({ ...files, page: files.page.replace('"mdata.drivers":', '"mdata.drivers_unused":') }).includes("driver source drill"),
+    failures({ ...files, page: files.page.replace('"mdata.units":', '"mdata.units_unused":') }).includes("unit source drill"),
+    failures({ ...files, page: files.page.replace("const SOURCE_ROUTES", 'const BROKEN_SOURCE_ROUTES').replace("SOURCE_ROUTES[ev.source_table]", 'BROKEN_SOURCE_ROUTES[ev.source_table]').concat('\n// t.includes("bill")') }).includes("source routes never infer entity kind from table substrings"),
+    failures({ ...files, page: files.page.replace('/accounting/bill-payments/${id}', '/accounting/bills/${id}') }).includes("bill-payment source uses its canonical record route"),
+    failures({ ...files, page: files.page.replace('/banking/transactions?txn_id=${id}', '/banking/transactions') }).includes("bank transaction and settlement sources use canonical query targets"),
     failures({ ...files, load: "" }).includes("all canonical history mounts remain"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 27/27 filter/profile/emitter/target/state/subject-label mutations red"); process.exit(0);
+  console.log("verify-system-audit-record-reverse selftest PASS — 30/30 filter/profile/emitter/target/state/source-route mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
