@@ -1,3 +1,5 @@
+- 2026-08-21T08:48CT Codex HANDOFF | OPEN ENV-VERIFY-STATIC-CUSTOMERS-AUTH-MOCK-MISSING-ISERROR + ENV-VERIFY-STATIC-TASKS-AUTH-QUERYFN-SIGNAL | files=CustomersPage.tabs.test.tsx:107,TasksMinePage.tsx:25-26 | dependency=#13474 gate PASS | BLOCKS=#13474-push-hook-only | owner=Cursor FE | GO
+
 - 2026-08-21T13:38Z Cursor | AUTH-ME-SESSION-TIMEOUT | 8s abort on /auth/me | no Checking session forever | Codex NO fake reverse PASS | GO
 
 - 2026-08-21T12:32Z Cursor | INBOX FIXED | seat=Codex | NOW=vendors reverse+connectivity | NEXT=customers | GO
