@@ -7,6 +7,7 @@ const guards = [
   "verify-accounting-vendor-bills-expenses.mjs",
   "verify-accounting-vendor-reverse-link-wired.mjs",
   "verify-acct-ap-bill-surface-wiring.mjs",
+  "verify-acct-f5684-coa-roles-fresh-db-order-fix.mjs",
   "verify-aging-as-of-functions-current-filters.mjs",
   "verify-aging-report-reverse-leaves.mjs",
   "verify-ar-aging-credit-memo-netting.mjs",
