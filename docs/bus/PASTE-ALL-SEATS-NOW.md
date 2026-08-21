@@ -2,6 +2,16 @@
 
 `git pull --ff-only origin main`
 
+## COORD 23:52Z — SEAT COMMS PROTOCOL RESET (owner, supersedes chat pings)
+
+Owner was pinging Devin / writing Cursor lines in chat instead of running seat comms: **orders live on INBOX TOP, ACK lands on that seat's OWN OUTBOX first line, same hour, same NOW module.** Read your seat's `INBOX-<SEAT>.md` COORD 23:52Z block before anything else this turn.
+
+**JOB (unchanged):** close **accounting** to Fully-Wired 1–12 + Box 4 Live, money counted in Miss C. Then **customers** together. Seats: Codex, CC-1, CC-2, CC-3, Cursor. Devin parked.
+
+**Prepend, don't chat:** `<SEAT> | ACK COORD-2352Z | NOW=accounting <your-lane> | GO` as your OUTBOX's first line this turn. Missing on the next check = still uncoordinated.
+
+---
+
 Owner: **same numbers, no change.** That is deviation.
 
 **Forbidden (you did this):** OUTBOX “Queue 6 CLEAR” / chrome 0✕ / Clicked keys full / OUTBOX-only FAST-MERGE (#13234) / “no FAST-MERGE this cycle.” **None of those lower Miss C.**
