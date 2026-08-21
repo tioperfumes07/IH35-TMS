@@ -6,6 +6,7 @@ import { ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { EditTrailerModal } from "../../components/fleet/EditTrailerModal";
 import { ActionBar } from "../../components/trailer-profile/ActionBar";
 import { ComplianceSection } from "../../components/trailer-profile/ComplianceSection";
@@ -116,10 +117,10 @@ export function TrailerProfilePage() {
     onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to archive trailer", "error"),
   });
 
-  const handleArchive = () => {
-    if (!window.confirm("Archive this trailer? This soft-deletes it (reversible) — the record is retained.")) return;
-    archiveMutation.mutate();
-  };
+  // NO-NATIVE-DIALOGS-U6 — window.confirm freezes Live Chrome browser automation; ConfirmModal
+  // (in-app yes/no shell) replaces it, same soft-delete/reversible contract.
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const handleArchive = () => setArchiveConfirmOpen(true);
 
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
@@ -315,6 +316,17 @@ export function TrailerProfilePage() {
           });
           invalidateProfile();
           pushToast("Driver assigned", "success");
+        }}
+      />
+      <ConfirmModal
+        open={archiveConfirmOpen}
+        title="Archive trailer"
+        message="Archive this trailer? This soft-deletes it (reversible) — the record is retained."
+        confirmLabel="Archive"
+        danger
+        onClose={() => setArchiveConfirmOpen(false)}
+        onConfirm={async () => {
+          await archiveMutation.mutateAsync().catch(() => undefined); // onError above already toasts
         }}
       />
     </div>
