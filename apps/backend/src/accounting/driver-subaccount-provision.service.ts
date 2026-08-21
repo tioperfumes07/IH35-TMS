@@ -32,6 +32,22 @@ export const DRIVER_ADVANCE_PARENT_NAME = "Driver Cash Advance";
 export const DRIVER_ESCROW_GRANDPARENT_NAME = "Damage Claim Escrow";
 export const DRIVER_ESCROW_PARENT_NAME = "Driver Escrow";
 
+// ACCT-F5681 (owner directive, 00_LOCKED_DECISIONS §9.4) — "Damage Claim Escrow" is TRANSP's
+// QBO-mirrored label for the SAME locked concept §9.4 names generically: "every escrow draw debits
+// the Driver Escrow liability (QBO-1150040187), never an expense." USMCA is TMS-native (no
+// QuickBooks) and carries the real, owner-created Liability account for that identical concept
+// under a DIFFERENT name: "Driver Escrow - Held in Trust" (2100) — arguably closer to §9.4's own
+// generic wording than TRANSP's QBO-derived label is. resolveCanonicalParentAccount's exact-name
+// match previously found nothing on USMCA and treated it as "chart without an escrow liability at
+// all" (the same graceful no-op correctly designed for TRK, which legitimately owns none) — but
+// USMCA is NOT chart-less, it is differently-named, so every USMCA driver's escrow sub-account
+// provisioning silently no-opped. Fixing this WITHOUT renaming the real account (Rule 19: never
+// reclassify/rename an owner-created reserve account unilaterally) — this list is an ADDITIVE,
+// per-entity alias set, resolved by the SAME entity-scoped, name+type+top-level lookup as the
+// primary name; TRANSP/TRK are untouched (TRANSP already resolves via the primary name; TRK has
+// no escrow chart at all and correctly keeps resolving null).
+const DRIVER_ESCROW_GRANDPARENT_ALIASES: readonly string[] = ["Driver Escrow - Held in Trust"];
+
 export type ProvisionResult =
   | { created: true; accountId: string; accountName: string }
   | { created: false; reason: "parent_not_found" | "already_exists"; accountId?: string };
@@ -129,11 +145,20 @@ export async function resolveDriverEscrowParentId(
   client: DbClient,
   args: { operatingCompanyId: string }
 ): Promise<{ grandparentId: string | null; parentId: string | null }> {
-  const grandparentId = await resolveCanonicalParentAccount(client, {
+  let grandparentId = await resolveCanonicalParentAccount(client, {
     accountName: DRIVER_ESCROW_GRANDPARENT_NAME,
     accountType: "Liability",
     operatingCompanyId: args.operatingCompanyId,
   });
+  // ACCT-F5681 — the primary name found nothing; try this entity's documented alias(es) for the
+  // SAME locked §9.4 concept before concluding "chart without an escrow liability at all".
+  for (let i = 0; !grandparentId && i < DRIVER_ESCROW_GRANDPARENT_ALIASES.length; i += 1) {
+    grandparentId = await resolveCanonicalParentAccount(client, {
+      accountName: DRIVER_ESCROW_GRANDPARENT_ALIASES[i]!,
+      accountType: "Liability",
+      operatingCompanyId: args.operatingCompanyId,
+    });
+  }
   if (!grandparentId) return { grandparentId: null, parentId: null };
   const parentId = await resolveChildAccountId(client, {
     subAccountName: DRIVER_ESCROW_PARENT_NAME,
