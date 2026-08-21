@@ -1,0 +1,18 @@
+---
+description: PERMANENT — never deploy production after each FAST-MERGE; timer or on-demand only
+alwaysApply: true
+---
+
+# NO PER-MERGE PRODUCTION DEPLOY (owner 2026-08-21)
+
+**Canonical:** `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`
+
+FAST-MERGE every 4–5 minutes is allowed. **Calling Render’s deploy API after each merge is forbidden.**
+
+Measured 2026-08-21: 9 prod deploys in 90 minutes; each deploy ~3 min; API returns **502 for the entire deploy**. That was the “API is down” outage. autoDeploy is already OFF.
+
+**Never:** `trigger_deploy` · `render deploys create` · Dashboard Deploy now · “kick ih35-tms because healthz SHA lags main”.
+
+**Deploy:** timer 30–60 min **or** on demand (Jorge / Cursor lead **once per batch**). One in-flight deploy. Wait until live + `healthz/shallow` JSON 200.
+
+Keep `healthCheckPath=/api/v1/healthz/readyz`. Boot smokes stay in GitHub CI, not Render pre-deploy.

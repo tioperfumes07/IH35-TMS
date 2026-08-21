@@ -10,6 +10,6 @@
 | CC-2 | `INBOX-CC-2.md` | CERTIFY Live | same 6 modules, first unpaid Live |
 | CC-3 | `INBOX-CC-3.md` | CERTIFY chrome | picker_law then trailer on those 6 |
 | Codex | `INBOX-CODEX.md` | CERTIFY reverse | reverse_link→customer→vendor→load on those 6 |
-| Cursor | `INBOX-CURSOR.md` | bus | FAST-MERGE + API kick; seats never idle |
+| Cursor | `INBOX-CURSOR.md` | bus | FAST-MERGE · **no per-merge prod deploy** | seats never idle |
 
 THEN rest of urgent: customers → drivers → fleet → lists. Not WAVE2 until U6 certified.
