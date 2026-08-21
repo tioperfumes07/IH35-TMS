@@ -15,11 +15,14 @@
  * unconditional fallback to resolveCashLikeAccountForCompany / resolveDisbursementCashAccountForCompany
  * — so a bank-named disbursement can never silently land on a company-level or clearing account.
  *
- * OUT OF SCOPE, stated rather than silently passed: buildCashAdvanceLines (driver_finance.
- * cash_advance_requests) and buildDriverReimbursementLines (driver_finance.driver_reimbursements) are a
- * SEPARATE, SCHEMA-level gap — neither source table has a bank column to resolve from at all, so no
- * posting-logic change can close this for them. This guard does not check them; closing that half of
- * the class needs an additive migration first (tracked as its own follow-up on the board).
+ * ACCT-F5687 — closes the remaining two thirds of the class. buildCashAdvanceLines
+ * (driver_finance.cash_advance_requests) and buildDriverReimbursementLines
+ * (driver_finance.driver_reimbursements) were a SEPARATE, SCHEMA-level gap: neither source table had a
+ * bank column to resolve from at all, so no posting-logic change alone could close them. Migration
+ * 202612900000 adds from_bank_account_id to both tables (additive, nullable — every existing row is
+ * unaffected), and both builders now follow the SAME precedence as buildDriverAdvanceLines: explicit
+ * credit_account_id override, then the row's own from_bank_account_id via the bridge (fail loud), then
+ * the ACCT-F345 fail-closed company default. All four bank-sourced builders now covered.
  *
  * Self-test: node scripts/verify-driver-advance-bank-credit-resolution.mjs --selftest
  */
@@ -138,7 +141,7 @@ if (isEntryPoint) {
   const src = fs.readFileSync(filePath, "utf8");
   const code = stripComments(src);
 
-  const BUILDERS = ["buildBillPaymentLines", "buildDriverAdvanceLines"];
+  const BUILDERS = ["buildBillPaymentLines", "buildDriverAdvanceLines", "buildCashAdvanceLines", "buildDriverReimbursementLines"];
   const failures = [];
   for (const name of BUILDERS) {
     const body = extractFunctionBody(code, name);
