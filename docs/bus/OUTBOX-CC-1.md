@@ -1,4 +1,5 @@
-- 2026-08-21T22:45Z CC-1 | SWEPT 4 stale rows | NOW=settlements money | GO
+- 2026-08-21T04:16Z Cursor→CC-1 | NEVER-IDLE | DEADLINE=06:16CT | USMCA-ONLY | PORT=9223 | NOW=settlements money then factoring | pull origin/main PREPEND ACK | GO
+
   Board-walk continuation: SETTLEMENT-S-2026-0002-NET-PAY-FLOOR-BREACH and
   USMCA-ESCROW-PARENT-ACCOUNT-NAME-MISMATCH already closed by ACCT-F5679/F5681 (live-reconfirmed:
   payrun_gl_runs.status='posted' for S-2026-0002; 11/11 USMCA escrow bridges live). BANK-F5661
