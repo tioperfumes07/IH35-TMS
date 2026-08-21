@@ -1,10 +1,10 @@
 {
   "meta": {
-    "generatedAt": "2026-08-21T15:52:42-05:00",
-    "sourceSha": "4daa248f9",
+    "generatedAt": "2026-08-21T16:05:21-05:00",
+    "sourceSha": "76115d970",
     "deployedSha": "63eac4e",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2037,
+    "ledgerRows": 2039,
     "failOpen": 1,
     "defects": 17
   },
@@ -2121,6 +2121,78 @@
   },
   "recentActivity": [
     {
+      "number": 13660,
+      "title": "FINDING: FLEET-U16-4-TRAILER-SAFETY-REVERSE-HONEST-ZERO LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 04:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13660",
+      "sha": "76115d970",
+      "committedAtIso": "2026-08-21T16:05:21-05:00"
+    },
+    {
+      "number": 13659,
+      "title": "Cursor- fix(fleet): FLEET-COMPANY-PICKER-NOT-INLINE-CREATE-CATALOG — closed 3-entity company enum is not picker_law",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 04:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13659",
+      "sha": "72b82dc54",
+      "committedAtIso": "2026-08-21T16:04:52-05:00"
+    },
+    {
+      "number": 13658,
+      "title": "FINDING: ACCT-F5701 LANE: FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 04:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13658",
+      "sha": "99997e3ff",
+      "committedAtIso": "2026-08-21T16:01:38-05:00"
+    },
+    {
+      "number": 13657,
+      "title": "FINDING: FLEET-U16-3-TRAILER-ASSIGNMENT-REVERSE-LINK-LIVE LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 04:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13657",
+      "sha": "8146a62a7",
+      "committedAtIso": "2026-08-21T16:01:06-05:00"
+    },
+    {
+      "number": 13656,
+      "title": "FINDING: CC-3-PICKER-LAW-GENERIC-CATALOG-CLASS-CONFIRMED-FLAT LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 04:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13656",
+      "sha": "47eb53804",
+      "committedAtIso": "2026-08-21T16:00:50-05:00"
+    },
+    {
+      "number": 13654,
+      "title": "FINDING: NATIVE-BROWSER-DIALOGS-FREEZE-LIVE-CHROME-VERIFICATION LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13654",
+      "sha": "8dd830661",
+      "committedAtIso": "2026-08-21T15:57:20-05:00"
+    },
+    {
+      "number": 13655,
+      "title": "FINDING: CC2-U16-FLEET-2OF48-STATUS LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13655",
+      "sha": "56eb63a31",
+      "committedAtIso": "2026-08-21T15:57:14-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/21/2026, 03:53 PM CT",
+      "url": "",
+      "sha": "c91272e4d",
+      "committedAtIso": "2026-08-21T20:53:46Z"
+    },
+    {
       "number": 13653,
       "title": "FINDING: FLEET-U16-2-QUICK-ASSIGN-DRIVER-PICKER-LIVE LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2137,78 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13652",
       "sha": "b5b7e6e47",
       "committedAtIso": "2026-08-21T15:45:43-05:00"
-    },
-    {
-      "number": 13651,
-      "title": "FINDING: CC2-U16-FLEET-1OF48-STATUS LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13651",
-      "sha": "e894d3eb0",
-      "committedAtIso": "2026-08-21T15:44:52-05:00"
-    },
-    {
-      "number": 13650,
-      "title": "FINDING: CURSOR-BUS-REJECT-DUAL-HOLD",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13650",
-      "sha": "d187b4e74",
-      "committedAtIso": "2026-08-21T15:44:36-05:00"
-    },
-    {
-      "number": 13649,
-      "title": "FINDING: FLEET-COMPANY-PICKER-NOT-INLINE-CREATE-CATALOG LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13649",
-      "sha": "59fc3a99a",
-      "committedAtIso": "2026-08-21T15:42:58-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:42 PM CT",
-      "url": "",
-      "sha": "fd5d6b146",
-      "committedAtIso": "2026-08-21T20:42:50Z"
-    },
-    {
-      "number": 13648,
-      "title": "FINDING: FLEET-U16-1-UNIT-QUICK-AVAILABILITY-DRIVER-PICKER-LIVE LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13648",
-      "sha": "5cda3acc3",
-      "committedAtIso": "2026-08-21T15:41:40-05:00"
-    },
-    {
-      "number": 13647,
-      "title": "FINDING: CURSOR-BUS-CC1-NEVER-HOLD",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13647",
-      "sha": "7c14eadd6",
-      "committedAtIso": "2026-08-21T15:38:13-05:00"
-    },
-    {
-      "number": 13646,
-      "title": "Claude-3- FINDING: CC3-USEESCAPEKEY-AUDIT-CONFIRMED-SAFE",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13646",
-      "sha": "8f6ef61fe",
-      "committedAtIso": "2026-08-21T15:34:16-05:00"
-    },
-    {
-      "number": 13645,
-      "title": "FINDING: CC2-U6-COMPLETE-14OF14-STATUS LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/21/2026, 03:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/13645",
-      "sha": "352d603f3",
-      "committedAtIso": "2026-08-21T15:34:05-05:00"
     }
   ]
 }
