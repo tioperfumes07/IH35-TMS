@@ -44,6 +44,24 @@ vi.mock("../../../components/drivers/CreateDriverModal", () => ({
   CreateDriverModal: () => null,
 }));
 
+// ECON-014 — 4 owner-seeded catalog codes (ROUTE/EQUIPMENT/MEDICAL/OTHER) all map to the SAME
+// coarse `purpose` enum value ("other"); this mock reproduces that exact live shape so the test
+// below proves they still render as 4 distinct, independently-selectable options.
+const CATALOG_ROWS = [
+  { id: "t1", code: "FUEL", display_name: "Fuel deposit", description: null },
+  { id: "t2", code: "EMERGENCY", display_name: "Family emergency", description: null },
+  { id: "t3", code: "ROUTE", display_name: "Route advance", description: null },
+  { id: "t4", code: "EQUIPMENT", display_name: "Equipment advance", description: null },
+  { id: "t5", code: "MEDICAL", display_name: "Medical advance", description: null },
+  { id: "t6", code: "OTHER", display_name: "Other advance", description: null },
+];
+
+vi.mock("../../../api/catalogs-driver", () => ({
+  cashAdvanceTypesCatalogClient: {
+    list: vi.fn(async () => ({ rows: CATALOG_ROWS, total: CATALOG_ROWS.length })),
+  },
+}));
+
 function renderModal() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -88,5 +106,28 @@ describe("CreateAdvanceModal — recovery mode UX", () => {
     expect(await screen.findByText("Expense on load (not personal amortize)")).toBeTruthy();
     expect(document.querySelector('[data-section="lumper-economics"]')).toBeTruthy();
     expect(screen.queryByText(/Next settlement — deduct in full/i)).toBeNull();
+  });
+
+  // ECON-014 — regression: ROUTE/EQUIPMENT/MEDICAL/OTHER all map to the same coarse `purpose`
+  // value ("other"). Before the fix, purposeOptions deduped BY that mapped value and kept only
+  // the first catalog row that mapped to "other" — the other 3 real, office-seeded catalog types
+  // never rendered as options at all. This proves all 6 distinct catalog rows stay selectable.
+  it("keeps every catalog row selectable even when several codes share the same purpose bucket", async () => {
+    renderModal();
+    const purposeBox = within(screen.getByTestId("advance-purpose")).getByRole("combobox");
+    fireEvent.focus(purposeBox);
+    expect(await screen.findByRole("option", { name: "Route advance" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Equipment advance" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Medical advance" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Other advance" })).toBeTruthy();
+
+    // Selecting a specific "other"-bucket catalog row must track its OWN code, not silently
+    // collapse to whichever "other" row happened to load first.
+    fireEvent.click(screen.getByRole("option", { name: "Medical advance" }));
+    expect(await screen.findByTestId("advance-type-code")).toHaveTextContent("MEDICAL");
+
+    fireEvent.focus(purposeBox);
+    fireEvent.click(await screen.findByRole("option", { name: "Equipment advance" }));
+    expect(await screen.findByTestId("advance-type-code")).toHaveTextContent("EQUIPMENT");
   });
 });
