@@ -3069,6 +3069,16 @@
     "claimed_by": "cc-3",
     "purpose": "verify-book-load-authgate-entity-labels"
   },
+  "4201": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-1",
+    "purpose": "verify-tonu-cancellation-ar-linkage"
+  },
+  "4205": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-1",
+    "purpose": "verify-tonu-coa-additive-and-flag-gated"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -5057,5 +5067,5 @@
       "4127-verify-wo-cancellation-reason-picker-law.mjs"
     ]
   },
-  "total_claimed": 1211
+  "total_claimed": 1213
 }
