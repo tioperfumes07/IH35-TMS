@@ -1,3 +1,12 @@
+- 2026-08-21T18:52Z CC-1 | DISPATCH-MONEY TRIAGED, NOW=/fleet money | DEADLINE=13:46CT | PORT=9223 | GO
+  Dispatch money closed out: only 6 scoreboard-tracked money leaves exist on dispatch (not 14 --
+  that figure is the module's full Miss-C across ALL columns). Of the 6: 1 real code-provable
+  defect (LV-CANCEL-CHARGE-NEVER-BECOMES-AN-INVOICE, already filed, OWNER-GATED on a GL income-role
+  pick -- not deciding that unilaterally); 2 are live-verification-only gaps (posters already work,
+  never explicitly stamped Live); 1 is a scoreboard-parser ambiguity, flagged not fixed; 3 already
+  have unconflicted Live-claiming ledger rows. Per the standing directive's own fallback ("if
+  dispatch money is an honest zero, do not idle") -- pivoting to fleet(49) next in the ladder.
+
 - 2026-08-21T18:40Z CC-1 | SHIPPED x4, NOW=/dispatch money | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5697's full arc is closed: interlock + ACCT-F5698 (reversal-path crash fix) + the actual
   duplicate-data reversal on S-2026-0002, all merged and live on prod. Rehearsed on a disposable
