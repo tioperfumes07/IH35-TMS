@@ -13,6 +13,7 @@ import { Button } from "../../components/Button";
 import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MaintenanceAlertsBanner } from "../../components/vehicle-profile/MaintenanceAlertsBanner";
 import { IdentityStatusHeader } from "../../components/vehicle-profile/IdentityStatusHeader";
@@ -238,10 +239,10 @@ export function VehicleProfilePage() {
     onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to archive unit", "error"),
   });
 
-  const handleArchive = () => {
-    if (!window.confirm("Archive this unit? This soft-deletes it (reversible) — the record is retained.")) return;
-    archiveMutation.mutate();
-  };
+  // NO-NATIVE-DIALOGS-U6 — window.confirm freezes Live Chrome browser automation; ConfirmModal
+  // (in-app yes/no shell) replaces it, same soft-delete/reversible contract.
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const handleArchive = () => setArchiveConfirmOpen(true);
 
   const telemetry = telemetryQuery.data ?? profile;
   const financial = profile?.financial_ytd as Record<string, unknown> | undefined;
@@ -574,6 +575,17 @@ export function VehicleProfilePage() {
         operatingCompanyId={companyId}
         onClose={() => setEditModalOpen(false)}
         onSaved={invalidateProfile}
+      />
+      <ConfirmModal
+        open={archiveConfirmOpen}
+        title="Archive unit"
+        message="Archive this unit? This soft-deletes it (reversible) — the record is retained."
+        confirmLabel="Archive"
+        danger
+        onClose={() => setArchiveConfirmOpen(false)}
+        onConfirm={async () => {
+          await archiveMutation.mutateAsync().catch(() => undefined); // onError above already toasts
+        }}
       />
     </div>
   );
