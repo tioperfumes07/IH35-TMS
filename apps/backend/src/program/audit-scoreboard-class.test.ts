@@ -38,9 +38,9 @@ describe("by-class scoreboard — served from the live queue", () => {
   const original = readFileSync(QUEUE, "utf8");
   afterEach(() => writeFileSync(QUEUE, original));
 
-  it("returns one row per wave in the committed queue", () => {
+  it("returns one row per wave in the committed queue", async () => {
     const queue = JSON.parse(original) as { waves: Array<{ id: string; status: string }> };
-    const board = readClassScoreboardFromQueue();
+    const board = await readClassScoreboardFromQueue();
     expect(board).not.toBeNull();
     expect(board!.rows).toHaveLength(queue.waves.length);
     expect(board!.summary.total).toBe(queue.waves.length);
@@ -49,7 +49,7 @@ describe("by-class scoreboard — served from the live queue", () => {
     for (const w of queue.waves) expect(rendered.has(w.id)).toBe(true);
   });
 
-  it("counts drained only when the named guard file exists on disk", () => {
+  it("counts drained only when the named guard file exists on disk", async () => {
     const queue = JSON.parse(original) as {
       waves: Array<{ status: string; guard?: string }>;
     };
@@ -59,7 +59,7 @@ describe("by-class scoreboard — served from the live queue", () => {
       return classCellVerified(String(w.status ?? ""), guard, guardExists).code === "CC";
     }).length;
     const count = (s: string) => queue.waves.filter((w) => w.status === s).length;
-    const board = readClassScoreboardFromQueue()!;
+    const board = (await readClassScoreboardFromQueue())!;
     expect(board.summary.drained).toBe(verifiedDrained);
     expect(board.summary.building).toBeGreaterThanOrEqual(count("draining"));
     expect(board.summary.notStarted).toBeLessThanOrEqual(queue.waves.length);
@@ -67,8 +67,8 @@ describe("by-class scoreboard — served from the live queue", () => {
 
   // THE REACTIVITY PROPERTY, and the reason this is a request-time read rather than a build artifact:
   // editing the queue must change the next read with no rebuild, no regeneration and no redeploy.
-  it("reflects a status change on the very next read", () => {
-    const before = readClassScoreboardFromQueue()!;
+  it("reflects a status change on the very next read", async () => {
+    const before = (await readClassScoreboardFromQueue())!;
     const target = before.rows.find((r) => r.code === "NN");
     expect(target, "expected at least one open class to flip").toBeTruthy();
 
@@ -81,7 +81,7 @@ describe("by-class scoreboard — served from the live queue", () => {
     wave.guard = "scripts/verify-no-silent-list-caps.mjs";
     writeFileSync(QUEUE, `${JSON.stringify(queue, null, 2)}\n`);
 
-    const after = readClassScoreboardFromQueue()!;
+    const after = (await readClassScoreboardFromQueue())!;
     const flipped = after.rows.find((r) => r.id === target!.id)!;
     expect(flipped.code).toBe("CC");
     expect(flipped.tone).toBe("green");
@@ -89,13 +89,13 @@ describe("by-class scoreboard — served from the live queue", () => {
     expect(after.summary.notStarted).toBe(before.summary.notStarted - 1);
   });
 
-  it("does not colour a cell red just because the class is money-critical", () => {
+  it("does not colour a cell red just because the class is money-critical", async () => {
     const queue = JSON.parse(original) as { waves: Array<{ id: string; status: string; drain_proof?: Record<string, unknown> }> };
     const wave = queue.waves.find((w) => w.status === "open")!;
     wave.drain_proof = { ...(wave.drain_proof ?? {}), money_critical: true };
     writeFileSync(QUEUE, `${JSON.stringify(queue, null, 2)}\n`);
 
-    const row = readClassScoreboardFromQueue()!.rows.find((r) => r.id === wave.id)!;
+    const row = (await readClassScoreboardFromQueue())!.rows.find((r) => r.id === wave.id)!;
     // Neutral cell, but the signal is not lost — it rides on its own flag.
     expect(row.tone).toBe("grey");
     expect(row.code).toBe("NN");

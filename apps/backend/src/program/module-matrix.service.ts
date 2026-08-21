@@ -11,8 +11,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
@@ -338,10 +337,13 @@ export type ModuleMatrixPayload = {
   groupRollups: MatrixGroupRollup[];
 };
 
-function readJson<T>(p: string): T | null {
+// PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING (2026-08-21) — was existsSync + readFileSync.
+// A synchronous fs call blocks the ENTIRE Node event loop for every request being served, not just
+// the caller's own — the same class of bug #13442 fixed for the request-time `git log` call. Async
+// fs.promises.readFile off the hot path; a missing/corrupt file still resolves null (never throws).
+async function readJson<T>(p: string): Promise<T | null> {
   try {
-    if (!existsSync(p)) return null;
-    return JSON.parse(readFileSync(p, "utf8")) as T;
+    return JSON.parse(await readFile(p, "utf8")) as T;
   } catch {
     return null;
   }
@@ -356,7 +358,7 @@ function isValidRequiredMap(map: unknown): map is RequiredMap {
 async function loadRequiredMap(moduleId: string): Promise<RequiredMap> {
   const rel = `docs/specs/scoreboard/modules/${moduleId}.required.json`;
   const full = path.join(REPO_ROOT, rel);
-  const disk = readJson<RequiredMap>(full);
+  const disk = await readJson<RequiredMap>(full);
   if (isValidRequiredMap(disk)) return disk;
   // Render ignores docs/** — same GitHub raw path as AUDIT-COVERAGE-LIVE.md.
   const remote = await loadOutboxTextFromGithub(rel);
@@ -397,8 +399,8 @@ function tipSha(): string | undefined {
   return tipShaMemo;
 }
 
-function reconAsOf(): string | null {
-  const j = readJson<{ generated_at?: string; as_of?: string; snapshot_at?: string }>(RECON_JSON);
+async function reconAsOf(): Promise<string | null> {
+  const j = await readJson<{ generated_at?: string; as_of?: string; snapshot_at?: string }>(RECON_JSON);
   return j?.generated_at ?? j?.as_of ?? j?.snapshot_at ?? null;
 }
 
@@ -574,7 +576,9 @@ async function loadLedgerRows(): Promise<LedgerRow[]> {
     };
     // Disk FIRST. GitHub-first downloaded the full ledger (no Range) on every cold cache,
     // starved the event loop, and 502'd healthz while the FE painted Built=0.
-    const diskMd = existsSync(LEDGER_MD) ? await readFile(LEDGER_MD, "utf8") : "";
+    // PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING — the existsSync pre-check was itself a
+    // sync fs call; try/catch on the async read alone drops it (a missing file just throws ENOENT).
+    const diskMd = await readFile(LEDGER_MD, "utf8").catch(() => "");
     const diskOk = diskMd.includes("| # | Module |");
     if (diskOk) {
       const rows = mod.parseFindings(diskMd);
@@ -650,9 +654,9 @@ async function loadWaveHits(moduleId: string): Promise<string[]> {
   }
 }
 
-function loadCompletion(moduleId: string): { items: CompletionItem[]; complete: boolean } {
+async function loadCompletion(moduleId: string): Promise<{ items: CompletionItem[]; complete: boolean }> {
   const p = path.join(REPO_ROOT, `docs/module-completion/${moduleId}.json`);
-  const j = readJson<{ items?: CompletionItem[]; complete?: boolean }>(p);
+  const j = await readJson<{ items?: CompletionItem[]; complete?: boolean }>(p);
   return { items: Array.isArray(j?.items) ? j!.items! : [], complete: Boolean(j?.complete) };
 }
 
@@ -670,10 +674,10 @@ type ModuleProbePack = {
   probeSource: "neon_live" | "committed_stale";
 };
 
-function loadModuleProbes(moduleId: string): ModuleProbePack {
+async function loadModuleProbes(moduleId: string): Promise<ModuleProbePack> {
   const out: ModuleProbe[] = [];
   let progress: number | null = null;
-  const board = readJson<{
+  const board = await readJson<{
     live_scenario_probe?: {
       modules?: Record<string, { slices?: ProbeSlice[]; progress?: number }>;
     };
@@ -712,7 +716,7 @@ function loadModuleProbes(moduleId: string): ModuleProbePack {
   }
 
   for (const mod of ["maintenance", "insurance", moduleId]) {
-    const j = readJson<{ live_scenario_probe?: { slices?: ProbeSlice[] } }>(
+    const j = await readJson<{ live_scenario_probe?: { slices?: ProbeSlice[] } }>(
       path.join(REPO_ROOT, `docs/module-completion/${mod}.json`),
     );
     for (const slice of j?.live_scenario_probe?.slices ?? []) {
@@ -1234,8 +1238,9 @@ async function loadOutboxClickedKeys(): Promise<Set<string>> {
     const keys = new Set<string>();
     for (const rel of OUTBOX_CLICKED_FILES) {
       const full = path.join(REPO_ROOT, rel);
-      if (existsSync(full)) {
-        const raw = readFileSync(full, "utf8");
+      // PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING — was existsSync + readFileSync.
+      const raw = await readFile(full, "utf8").catch(() => null);
+      if (raw != null) {
         const text = isBusOutboxRel(rel) ? raw.slice(0, GITHUB_OUTBOX_HEAD_BYTES) : raw;
         for (const k of parseOutboxClickedKeys(text)) keys.add(k);
       }
@@ -1311,8 +1316,8 @@ export async function buildModuleMatrix(
   const required = await loadRequiredMap(moduleId);
   const [ledger, completion, probePack, guardHits, waveHits, outboxClicked] = await Promise.all([
     loadLedgerRows(),
-    Promise.resolve(loadCompletion(moduleId)),
-    Promise.resolve(loadModuleProbes(moduleId)),
+    loadCompletion(moduleId),
+    loadModuleProbes(moduleId),
     loadGuardHits(moduleId),
     loadWaveHits(moduleId),
     loadOutboxClickedKeys(),
@@ -1427,7 +1432,7 @@ export async function buildModuleMatrix(
   );
 
   const sha = tipSha();
-  const recon = reconAsOf();
+  const recon = await reconAsOf();
 
   const payload: ModuleMatrixPayload = {
     module: required.module,
@@ -1735,22 +1740,25 @@ function addCounts(
 let systemCache: { atMs: number; probeScope: string; payload: SystemModuleMatrixPayload } | null = null;
 let systemInflight: Promise<SystemModuleMatrixPayload> | null = null;
 
-function readSystemLastGood(): SystemModuleMatrixPayload | null {
+// PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING — was existsSync + readFileSync.
+async function readSystemLastGood(): Promise<SystemModuleMatrixPayload | null> {
   try {
-    if (!existsSync(SYSTEM_LAST_GOOD_PATH)) return null;
-    const parsed = JSON.parse(readFileSync(SYSTEM_LAST_GOOD_PATH, "utf8")) as SystemModuleMatrixPayload;
+    const raw = await readFile(SYSTEM_LAST_GOOD_PATH, "utf8");
+    const parsed = JSON.parse(raw) as SystemModuleMatrixPayload;
     if (parsed?.scope === "system" && parsed.system && Array.isArray(parsed.modules) && parsed.modules.length > 0) {
       return parsed;
     }
   } catch {
-    /* corrupt last-good is not a 503 */
+    /* corrupt/missing last-good is not a 503 */
   }
   return null;
 }
 
-function persistSystemLastGood(payload: SystemModuleMatrixPayload): void {
+// PROD-API-INTERMITTENT-502-BURST-STILL-RECURRING — was writeFileSync. Callers fire this without
+// awaiting (never on the request path); a rejected write is swallowed identically to the old catch.
+async function persistSystemLastGood(payload: SystemModuleMatrixPayload): Promise<void> {
   try {
-    writeFileSync(SYSTEM_LAST_GOOD_PATH, JSON.stringify(payload));
+    await writeFile(SYSTEM_LAST_GOOD_PATH, JSON.stringify(payload));
   } catch {
     /* Render ephemeral FS — in-memory cache still holds */
   }
@@ -1772,7 +1780,7 @@ function emptyModuleMetrics(): ModuleMatrixPayload["metrics"] {
 }
 
 async function loadMatrixModuleOrder(): Promise<Array<{ id: string; label: string }>> {
-  const disk = readJson<{ modules?: Array<{ id: string; label: string }> }>(MATRIX_ORDER_JSON);
+  const disk = await readJson<{ modules?: Array<{ id: string; label: string }> }>(MATRIX_ORDER_JSON);
   if (Array.isArray(disk?.modules) && disk.modules.length > 0) return disk.modules;
   const remote = await loadOutboxTextFromGithub("docs/specs/scoreboard/matrix-module-order.json");
   if (remote) {
@@ -1801,7 +1809,7 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     }
     return systemCache.payload;
   }
-  const lastGood = readSystemLastGood();
+  const lastGood = await readSystemLastGood();
   if (lastGood) {
     systemCache = { atMs: now - MATRIX_CACHE_MS, probeScope, payload: lastGood };
     if (!systemInflight) {
@@ -2027,7 +2035,8 @@ async function computeSystemModuleMatrix(userUuid?: string): Promise<SystemModul
   };
 
   systemCache = { atMs: now, probeScope, payload };
-  persistSystemLastGood(payload);
+  // Fire-and-forget: never delay the response for the last-good disk write.
+  void persistSystemLastGood(payload);
   return payload;
 }
 
