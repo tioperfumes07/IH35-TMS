@@ -13,6 +13,7 @@ vi.mock("../../../auth/useAuth", () => ({
     user: { role: "Owner", uuid: "81111181-1111-4111-8111-111111111111" },
     session: null,
     isLoading: false,
+    isError: false,
     isUnauthenticated: false,
     refetch: vi.fn(),
   }),
