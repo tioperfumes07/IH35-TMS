@@ -1,3 +1,26 @@
+- 2026-08-21T22:35Z CC-1 | WAVE3 4/4 COMPLETE (inventory) + ACCT-F5704 real prod bug FOUND+FIXED | NEXT=U6-module re-walk/CERTIFY (item C) | GO
+  Also closed 2 more stale board rows found while sweeping (LV-ESCROW-CONTROL-ACCOUNT-BLIND-TO-CHILD-
+  SUBACCOUNTS, VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE -- both already fixed in earlier PRs, never
+  closed out).
+  WAVE3 inventory leg hit a REAL, live, currently-broken production bug mid-rehearsal (not the
+  planned honest-no-op proof): POST /api/v1/maintenance/parts-inventory/purchases' ON CONFLICT
+  predicate ("part_number <> ''") didn't textually match the live unique index's predicate
+  ("btrim(part_number) <> ''") -- Postgres requires an exact match to infer an arbiter, so this route
+  500'd (42P10) on EVERY real call with a non-null part_number. Confirmed live via a rolled-back
+  EXPLAIN on prod before touching anything. One-line fix (ACCT-F5704), guard verify-step 4213.
+  This also revealed the earlier INVENTORY-PARTS-PURCHASE-GL-ACCOUNT-DESIGNATION-UNBOUND board row's
+  premise was stale/wrong: PARTS_PURCHASE_GL_POSTING_ENABLED is live-confirmed ON and
+  maintenance_parts_expense IS bound for all 3 entities (contradicting "0 bindings / flag OFF").
+  Corrected that row on the board -- not an owner decision after all, just the ACCT-F5704 mechanical
+  bug blocking the whole flow before it could ever reach the GL step.
+  With the fix live, ran the real WAVE3 inventory proof end-to-end for real: real parts purchase
+  ($220, 4x brake pads, vendor LOVES TRAVEL STOPS) + real balanced JE (Dr Parts & Supplies Expense
+  $220 / Cr A/P $220), independently re-verified. is_sample_data=true on bill+JE.
+  WAVE 3 status: 4/4 legs shipped live (fleet, maintenance, fuel, inventory).
+  Moving to INBOX-CC-1.md item C: re-walk unpaid money cells on the 6 U6 modules (accounting,
+  banking, settlements, factoring, dispatch, vendors), OUTBOX CERTIFY when no remaining unpaid money
+  terminus. Not stopping.
+
 - 2026-08-21T22:25Z CC-1 | WAVE3 3/4 SHIPPED (fuel) | NEXT=inventory (flag-OFF, will report honestly) | GO
   Created one real, clearly TEST-DATA-labeled USMCA fuel transaction (120gal diesel @ $4.00, unit
   T150, $480.00) through the EXISTING postFuelExpenseFromEvent poster and proved a real balanced JE

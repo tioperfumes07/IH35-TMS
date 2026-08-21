@@ -173,7 +173,12 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
               last_purchase_amount, last_purchase_date, on_hand_qty, location, operating_company_id
             )
             VALUES ($1,$2,$3,$4,$5,now()::date,$6,$7,$8)
-            ON CONFLICT (operating_company_id, part_number) WHERE part_number IS NOT NULL AND part_number <> ''
+            -- ACCT-F5704: the ON CONFLICT target's WHERE predicate must textually match the live
+            -- unique index (uq_parts_inventory_company_part_number, 202612560000 section 2) exactly
+            -- for Postgres to infer it as the arbiter — the index predicate wraps part_number in
+            -- btrim(), this clause didn't, so Postgres could never match an arbiter index and every
+            -- purchase with a non-null part_number 500'd with 42P10 (confirmed live on prod).
+            ON CONFLICT (operating_company_id, part_number) WHERE part_number IS NOT NULL AND btrim(part_number) <> ''
             DO UPDATE SET
               on_hand_qty = maintenance.parts_inventory.on_hand_qty + EXCLUDED.on_hand_qty,
               last_purchase_invoice_number = EXCLUDED.last_purchase_invoice_number,
