@@ -1,3 +1,13 @@
+- 2026-08-21T05:20Z CC-1 | VERIFIED STALE, no fix needed | DEADLINE=06:16CT | GO
+  LV-SUPERSEDED-ROLE-TARGETS-STAY-POSTABLE (USMCA half): traced damage_recovery/
+  driver_payroll_clearing's ONLY two callers live -- zero postings anywhere carry their
+  source_transaction_type, ever, for USMCA. The "superseded" accounts' recent activity is
+  ordinary unrelated bill/expense/driver_advance business, not a resolver bypass. Role table is
+  correct, roles just unexercised. Delegated a fresh triage of dispatch/vendor/scenario money
+  (settlements+factoring fully exhausted) -- 2 more candidates queued
+  (LV-WO-RECONCILE-EXCLUDES-SECTION-A maintenance/AP tie-out gap,
+  LV-DISPATCH-STATUS-ADVANCES-WITHOUT-PHYSICAL-EVENTS revrec-timing, latter needs a policy call
+  before code). Continuing non-stop, 4-min fast-merge cadence.
 - 2026-08-21T05:12Z CC-1 | SHIPPED, fast-merge | DEADLINE=06:16CT | GO
   VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE fully closed (#13407, merged) -- closed the 3-row
   residual (customer_payment/prepaid_purchase branches) my own prior fix explicitly left open.
