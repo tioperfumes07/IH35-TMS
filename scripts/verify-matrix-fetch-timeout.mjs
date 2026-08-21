@@ -111,7 +111,7 @@ function failures(sources) {
     out.push("index.ts: must call warmSystemModuleMatrixAtBoot after listen");
   }
   const ledgerFn = svc.slice(svc.indexOf("async function loadLedgerRows"), svc.indexOf("function loadGuardHits"));
-  const diskIdx = ledgerFn.indexOf("existsSync(LEDGER_MD)");
+  const diskIdx = Math.max(ledgerFn.indexOf("existsSync(LEDGER_MD)"), ledgerFn.indexOf("readFile(LEDGER_MD"));
   const ghIdx = ledgerFn.indexOf("loadOutboxTextFromGithub(LEDGER_REL)");
   if (diskIdx === -1 || ghIdx === -1 || diskIdx > ghIdx) {
     out.push("module-matrix.service: loadLedgerRows must read disk BEFORE GitHub (GitHub-first 502s healthz)");
@@ -122,6 +122,18 @@ function failures(sources) {
   }
   if (/- docs\/\*\*/.test(renderYaml)) {
     out.push("render.yaml: must not ignore docs/** (that forced GitHub-first matrix)");
+  }
+  const identity = fs.readFileSync("apps/frontend/src/api/identity.ts", "utf8");
+  const getMeSlice = identity.slice(identity.indexOf("export async function getMe"), identity.indexOf("export function getIdentityProfile"));
+  if (!/AbortSignal\.timeout\(/.test(getMeSlice) || !/AUTH_ME_TIMEOUT_MS/.test(identity)) {
+    out.push("identity.ts getMe must AbortSignal.timeout auth/me (Checking session hang)");
+  }
+  const authHook = fs.readFileSync("apps/frontend/src/auth/useAuth.ts", "utf8");
+  if (!/queryFn:\s*\(\{\s*signal\s*\}\)\s*=>\s*getMe\(signal\)/.test(authHook)) {
+    out.push("useAuth must pass React Query signal into getMe");
+  }
+  if (!/error\.status === 408/.test(authHook)) {
+    out.push("useAuth must not retry 408 session timeouts");
   }
   return out;
 }

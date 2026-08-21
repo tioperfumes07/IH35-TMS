@@ -5,9 +5,9 @@ import { ApiError } from "../api/client";
 export function useAuth() {
   const query = useQuery({
     queryKey: ["auth", "me"],
-    queryFn: getMe,
+    queryFn: ({ signal }) => getMe(signal),
     retry: (count, error) => {
-      if (error instanceof ApiError && error.status === 401) return false;
+      if (error instanceof ApiError && (error.status === 401 || error.status === 408)) return false;
       return count < 1;
     },
   });
@@ -16,6 +16,7 @@ export function useAuth() {
     user: query.data?.user ?? null,
     session: query.data?.session ?? null,
     isLoading: query.isLoading,
+    isError: query.isError,
     isUnauthenticated: query.error instanceof ApiError && query.error.status === 401,
     refetch: query.refetch,
   };

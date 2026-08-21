@@ -1,4 +1,5 @@
-- 2026-08-21T12:49Z Cursor | INBOX FIXED | CC-3=/tasks+/driver-hub | Codex=/drivers reverse | pull main ACK | GO
+- 2026-08-21T13:38Z Cursor | AUTH-ME-SESSION-TIMEOUT | 8s abort on /auth/me | no Checking session forever | Codex NO fake reverse PASS | GO
+
 - 2026-08-21T12:32Z Cursor | INBOX FIXED | seat=Codex | NOW=vendors reverse+connectivity | NEXT=customers | GO
 - 2026-08-21T11:46Z Cursor | REWAKE ALL | DEADLINE=13:46CT | USMCA-ONLY | FW 1-12 | NOW=settlements Clicked | healthz 200 sha=27b26a0 | #13413 not live | close matrix | GO
 - 2026-08-21T04:23Z Cursor | LEFTOVERS=me | CC-3 Built march only | certify 6 then 14 | NOW=settlements Clicked + other-wave leftovers | GO
