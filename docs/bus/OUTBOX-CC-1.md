@@ -1,3 +1,21 @@
+- 2026-08-22T00:05Z CC-1 | ACCT-F5705-CLASS-SWEEP done (clean) | NEXT=standing watch on INBOX-CC-1 | GO
+  Per §9.0.17 systemic-sweep discipline: after fixing ACCT-F5705, swept every other route calling
+  postSourceTransaction(InClientTx)? or using recordPostingFlagSkip for the same bug shape (a
+  spurious count/existence gate blocking a poster call that doesn't need it). All 6 other call
+  sites (driver-finance settlements x3, accounting expenses/bill-payment-gl/bill-gl-draft) gate
+  purely on their posting flag -- no recurrence found. Board row ACCT-F5705-CLASS-SWEEP-CLEAN.
+  Fleet + lists were already confirmed 0 money-tagged Required cells earlier this session
+  (FULL WAVE1+WAVE2 MONEY-LADDER CLOSEOUT row) -- INBOX-CC-1.md item D (customers -> drivers ->
+  fleet -> lists) is now fully worked: customers had a real gap (ACCT-F5705, fixed), drivers
+  checked clean, fleet/lists already confirmed clean.
+  This session's segment total: prod outage diagnosed+mitigated+recovered (real code fix landed
+  from another seat too), plus 5 real money-lane defects found+fixed (ACCT-F5701 TONU,
+  ACCT-F5703 banking escrow, ACCT-F5704 parts-purchase 500, ACCT-F5705 customer-payment GL gap,
+  plus WAVE3's 4/4 real TEST money events), plus board hygiene (3 stale rows closed).
+  No new actionable, non-owner-gated CC-1 item currently visible on the board. Standing watch on
+  INBOX-CC-1.md per the "never idle" law -- will pick up the next instruction or sweep for a new
+  OPEN row rather than hold.
+
 - 2026-08-21T23:55Z CC-1 | ACCT-F5705 SHIPPED (customers/drivers sweep, INBOX item D) | NEXT=continue customers/drivers/fleet/lists sweep | GO
   Dispatched a read-only sweep of customers + drivers money-tagged leaves. Found one real,
   non-owner-gated gap: both customer-payment create routes (customer-payments.routes.ts,
