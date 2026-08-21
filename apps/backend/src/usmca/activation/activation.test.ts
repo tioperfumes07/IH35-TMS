@@ -2,7 +2,17 @@
  * CLOSURE-13 — USMCA activation state machine unit tests.
  */
 import { describe, it, expect } from "vitest";
-import { canTransition, validateTransition, isChecklistComplete, CHECKLIST_ITEMS } from "./activation-state-machine.js";
+import { canTransition, validateTransition, isChecklistComplete, parseChecklistCompleted, CHECKLIST_ITEMS } from "./activation-state-machine.js";
+
+describe("parseChecklistCompleted", () => {
+  it("preserves canonical booleans returned as JSONB objects and rejects foreign keys", () => {
+    expect(parseChecklistCompleted({ tms_entity_scope: true, arbitrary_key: true, admin_users: "yes" })).toEqual({ tms_entity_scope: true });
+    expect(parseChecklistCompleted('{"tms_entity_scope":true,"admin_users":false}')).toEqual({
+      tms_entity_scope: true,
+      admin_users: false,
+    });
+  });
+});
 
 describe("canTransition", () => {
   it("allows hidden → soft_launch", () => expect(canTransition("hidden", "soft_launch")).toBe(true));

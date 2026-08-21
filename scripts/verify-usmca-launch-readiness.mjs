@@ -46,8 +46,26 @@ function activationContractFailures(source) {
   return failures;
 }
 
+function activationRouteFailures(source) {
+  const failures = [];
+  const required = [
+    "CHECKLIST_ITEM_IDS.includes(id)",
+    "parseChecklistCompleted(row.checklist_completed)",
+    "getSingletonActivationState(client, true)",
+    'throw new Error("USMCA activation state singleton invariant violated")',
+    "WHERE id = $3",
+  ];
+  for (const token of required) if (!source.includes(token)) failures.push(`activation routes must retain ${token}`);
+  if (source.includes("UPDATE usmca_ops.activation_state SET state = $1, activated_at = now(), activated_by_user_id = $2, updated_at = now()\",")) {
+    failures.push("activation transition must never update every state row");
+  }
+  return failures;
+}
+
 const activationFailures = activationContractFailures(stateMachine);
 if (activationFailures.length) fail(activationFailures.join("; "));
+const activationRoutesFailures = activationRouteFailures(routes);
+if (activationRoutesFailures.length) fail(activationRoutesFailures.join("; "));
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
@@ -58,7 +76,16 @@ if (process.argv.includes("--selftest")) {
   mutations.forEach((mutated, index) => {
     if (!activationContractFailures(mutated).length) fail(`selftest mutation ${index + 1} survived`);
   });
-  console.log(`[${LABEL}] SELFTEST PASS — ${mutations.length} stale launch-contract mutations rejected`);
+  const routeMutations = [
+    routes.replace("CHECKLIST_ITEM_IDS.includes(id)", "true"),
+    routes.replace("parseChecklistCompleted(row.checklist_completed)", "{}"),
+    routes.replace('throw new Error("USMCA activation state singleton invariant violated")', "return result.rows[0]"),
+    routes.replaceAll("WHERE id = $3", ""),
+  ];
+  routeMutations.forEach((mutated, index) => {
+    if (!activationRouteFailures(mutated).length) fail(`route selftest mutation ${index + 1} survived`);
+  });
+  console.log(`[${LABEL}] SELFTEST PASS — ${mutations.length + routeMutations.length} launch-contract mutations rejected`);
 }
 
 // Migration checks
