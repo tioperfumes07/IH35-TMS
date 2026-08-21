@@ -100,6 +100,16 @@ function failures(sources) {
   if (!/ih35-system-matrix-last\.json/.test(svc) || !/readSystemLastGood/.test(svc)) {
     out.push("module-matrix.service: persist/read /tmp last-good so cold start is not GitHub-blocked zeros");
   }
+  if (!/loadGuardLines/.test(svc) || /readFileSync\(GUARD_MD\)/.test(svc)) {
+    out.push("module-matrix.service: GUARD-WORKORDERS.md must be async-cached once (not 29× readFileSync)");
+  }
+  if (!/warmSystemModuleMatrixAtBoot/.test(svc)) {
+    out.push("module-matrix.service: boot warm required so first matrix request is not a cold 4.5MB freeze");
+  }
+  const indexSrc = fs.readFileSync("apps/backend/src/index.ts", "utf8");
+  if (!/warmSystemModuleMatrixAtBoot/.test(indexSrc)) {
+    out.push("index.ts: must call warmSystemModuleMatrixAtBoot after listen");
+  }
   const ledgerFn = svc.slice(svc.indexOf("async function loadLedgerRows"), svc.indexOf("function loadGuardHits"));
   const diskIdx = ledgerFn.indexOf("existsSync(LEDGER_MD)");
   const ghIdx = ledgerFn.indexOf("loadOutboxTextFromGithub(LEDGER_REL)");

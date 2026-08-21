@@ -171,29 +171,43 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
   const purposeOptions = useMemo((): PurposeOption[] => {
     const rows = advanceTypesQuery.data?.rows ?? [];
     if (rows.length === 0) return FALLBACK_PURPOSE_OPTIONS;
+    // ECON-014 — every catalog row is a DISTINCT selectable option, even though several codes
+    // (ROUTE/EQUIPMENT/MEDICAL/OTHER) share the same coarse `purpose` economic bucket ("other") —
+    // catalogCode (unique per row) is a distinct dimension from purpose (a closed 6-value backend
+    // enum). Previously this deduped BY purpose value and kept only the first catalog row that
+    // mapped to "other", so office-seeded types like "Medical advance"/"Equipment advance" never
+    // rendered as options at all — not a display truncation, they were unreachable. Catalog rows
+    // are already unique by code (a real Postgres uniqueness the catalog itself enforces), so no
+    // dedup is needed here; only the append of economic-only extras (lumper/border_fee/
+    // vendor_payment, none of which any catalog code maps to) still needs to avoid a collision.
     const fromCatalog: PurposeOption[] = rows.map((row) => ({
       value: purposeFromCatalogCode(row.code),
       label: row.display_name,
       hint: row.description?.trim() || `Catalog type ${row.code}`,
       catalogCode: row.code,
     }));
-    // Deduplicate by purpose value while keeping first catalog label; append economic extras.
-    const seen = new Set<string>();
-    const merged: PurposeOption[] = [];
-    for (const opt of fromCatalog) {
-      if (seen.has(opt.value)) continue;
-      seen.add(opt.value);
-      merged.push(opt);
-    }
+    const seenPurpose = new Set(fromCatalog.map((o) => o.value));
+    const merged: PurposeOption[] = [...fromCatalog];
     for (const opt of ECONOMIC_PURPOSE_OPTIONS) {
-      if (seen.has(opt.value)) continue;
-      seen.add(opt.value);
+      if (seenPurpose.has(opt.value)) continue;
+      seenPurpose.add(opt.value);
       merged.push(opt);
     }
     return merged;
   }, [advanceTypesQuery.data?.rows]);
 
-  const purposeMeta = purposeOptions.find((p) => p.value === purpose);
+  // ECON-014 — the widget's selection key is catalogCode when the option came from the catalog
+  // (unique per row) and purpose otherwise (unique among the 3 economic-only extras); this is a
+  // DIFFERENT dimension from the submitted `purpose` enum, which several distinct catalog rows can
+  // legitimately share. advanceTypeCode already tracks this for catalog rows; reuse it directly so
+  // there is exactly one source of truth for "which option is selected", not two that can drift.
+  const selectedOptionKey =
+    purposeOptions.find((o) => o.catalogCode === advanceTypeCode)?.catalogCode ??
+    purposeOptions.find((o) => !o.catalogCode && o.value === purpose)?.value ??
+    purpose;
+  const purposeMeta = purposeOptions.find(
+    (p) => (p.catalogCode ?? p.value) === selectedOptionKey
+  );
   const showRecovery = isDriverOwedPurpose(purpose);
   const showOpsLinks = requiresLoad(purpose) || purpose === "border_fee" || purpose === "other" || Boolean(loadId);
 
@@ -347,20 +361,19 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
               <span className="font-medium text-gray-700">Purpose</span>
               <SelectCombobox
                 className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                value={purpose}
+                value={selectedOptionKey}
                 onChange={(e) => {
-                  const next = e.target.value as CashAdvancePurpose;
-                  setPurpose(next);
-                  const match = purposeOptions.find((o) => o.value === next);
-                  if (match?.catalogCode) {
-                    setAdvanceTypeCode(match.catalogCode);
-                  }
+                  const key = e.target.value;
+                  const match = purposeOptions.find((o) => (o.catalogCode ?? o.value) === key);
+                  if (!match) return;
+                  setPurpose(match.value);
+                  setAdvanceTypeCode(match.catalogCode ?? "");
                 }}
               >
                 {purposeOptions.map((option) => (
                   <option
-                    key={`${option.value}-${option.catalogCode ?? option.label}`}
-                    value={option.value}
+                    key={`${option.catalogCode ?? option.value}-${option.label}`}
+                    value={option.catalogCode ?? option.value}
                   >
                     {option.label}
                   </option>

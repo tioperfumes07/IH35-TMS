@@ -12,6 +12,7 @@
 
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
@@ -573,10 +574,11 @@ async function loadLedgerRows(): Promise<LedgerRow[]> {
     };
     // Disk FIRST. GitHub-first downloaded the full ledger (no Range) on every cold cache,
     // starved the event loop, and 502'd healthz while the FE painted Built=0.
-    const diskMd = existsSync(LEDGER_MD) ? readFileSync(LEDGER_MD, "utf8") : "";
+    const diskMd = existsSync(LEDGER_MD) ? await readFile(LEDGER_MD, "utf8") : "";
     const diskOk = diskMd.includes("| # | Module |");
     if (diskOk) {
       const rows = mod.parseFindings(diskMd);
+      await new Promise<void>((r) => setImmediate(r));
       ledgerCache = { atMs: Date.now(), rows };
       return rows;
     }
@@ -595,27 +597,46 @@ async function loadLedgerRows(): Promise<LedgerRow[]> {
   return ledgerInflight;
 }
 
-function loadGuardHits(moduleId: string): string[] {
+let guardLinesCache: { atMs: number; lines: string[] } | null = null;
+let waveQueueCache: { atMs: number; parsed: { waves?: Array<Record<string, unknown>> } } | null = null;
+
+async function loadGuardLines(): Promise<string[]> {
+  const now = Date.now();
+  if (guardLinesCache && now - guardLinesCache.atMs < MATRIX_CACHE_MS) {
+    return guardLinesCache.lines;
+  }
   try {
-    const md = readFileSync(GUARD_MD, "utf8");
-    const touch = moduleTouchRe(moduleId);
-    const hits: string[] = [];
-    for (const line of md.split("\n")) {
-      if (!/\bOPEN\b/i.test(line) && !/\bFIXED\b/i.test(line) && !/\bDONE\b/i.test(line)) continue;
-      if (!touch.test(line)) continue;
-      hits.push(line);
-    }
-    return hits;
+    const md = await readFile(GUARD_MD, "utf8");
+    const lines = md.split("\n");
+    guardLinesCache = { atMs: now, lines };
+    return lines;
   } catch {
     return [];
   }
 }
 
-function loadWaveHits(moduleId: string): string[] {
+async function loadGuardHits(moduleId: string): Promise<string[]> {
+  const lines = await loadGuardLines();
+  const touch = moduleTouchRe(moduleId);
+  const hits: string[] = [];
+  for (const line of lines) {
+    if (!/\bOPEN\b/i.test(line) && !/\bFIXED\b/i.test(line) && !/\bDONE\b/i.test(line)) continue;
+    if (!touch.test(line)) continue;
+    hits.push(line);
+  }
+  return hits;
+}
+
+async function loadWaveHits(moduleId: string): Promise<string[]> {
   try {
-    const parsed = JSON.parse(readFileSync(WAVE_QUEUE_JSON, "utf8")) as {
-      waves?: Array<Record<string, unknown>>;
-    };
+    const now = Date.now();
+    if (!waveQueueCache || now - waveQueueCache.atMs >= MATRIX_CACHE_MS) {
+      const parsed = JSON.parse(await readFile(WAVE_QUEUE_JSON, "utf8")) as {
+        waves?: Array<Record<string, unknown>>;
+      };
+      waveQueueCache = { atMs: now, parsed };
+    }
+    const parsed = waveQueueCache.parsed;
     const modRe = new RegExp(moduleId === "maintenance" ? "maint|maintenance" : moduleId, "i");
     const hits: string[] = [];
     for (const w of parsed.waves ?? []) {
@@ -1292,8 +1313,8 @@ export async function buildModuleMatrix(
     loadLedgerRows(),
     Promise.resolve(loadCompletion(moduleId)),
     Promise.resolve(loadModuleProbes(moduleId)),
-    Promise.resolve(loadGuardHits(moduleId)),
-    Promise.resolve(loadWaveHits(moduleId)),
+    loadGuardHits(moduleId),
+    loadWaveHits(moduleId),
     loadOutboxClickedKeys(),
   ]);
 
@@ -2010,6 +2031,16 @@ async function computeSystemModuleMatrix(userUuid?: string): Promise<SystemModul
   return payload;
 }
 
+/** Fire after listen — never await on the request path. Fills last-good so /program/matrix is not a cold 4.5MB sync freeze. */
+export function warmSystemModuleMatrixAtBoot(log?: {
+  info?: (obj: unknown, msg: string) => void;
+  warn?: (obj: unknown, msg: string) => void;
+}): void {
+  void buildSystemModuleMatrix()
+    .then(() => log?.info?.({}, "[matrix] boot cache warm"))
+    .catch((err: unknown) => log?.warn?.({ err }, "[matrix] boot cache warm failed"));
+}
+
 /** Test helper — clear request cache between assertions. */
 export function clearModuleMatrixCache(): void {
   moduleMatrixCache.clear();
@@ -2017,4 +2048,6 @@ export function clearModuleMatrixCache(): void {
   systemInflight = null;
   ledgerCache = null;
   clickedOutboxCache = null;
+  guardLinesCache = null;
+  waveQueueCache = null;
 }
