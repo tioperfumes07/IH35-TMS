@@ -3059,6 +3059,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-catalog-foreign-key-field-uses-picker"
   },
+  "4199": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-quicksave-assignment-method-check-constraint"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
