@@ -1,15 +1,17 @@
-# INBOX-CC-3 · 06:46 CT · 7 HOURS · NO IDLE · NO MONITOR
+# INBOX-CC-3 · 07:49 CT · CONCRETE NOW · NEVER IDLE
 
-**Deadline: 13:46 CT 2026-08-21.** Pull `origin/main`. PREPEND ACK. Port **9225**. USMCA only.
+**Deadline: 13:46 CT.** `git pull --ff-only origin main`. PREPEND ACK on `OUTBOX-CC-3.md`. Port **9225**. One URL → prove → **close tab**. FAST-MERGE.
 
-**Locked:** no `surface_bar` column. Item 7 inventory = Cursor. Your column = `qbo_chrome` + `picker_law` + item-8 chrome law.
+**USMCA ONLY.** No Trucking. No Transportation. No QBO. No monitor. No new scoreboard column. Leftovers = Cursor.
 
-**Forbidden:** monitoring · waiting for a new column · leftovers (Cursor) · status-only PRs · Trucking/TRANSP/QBO sync.
+**NOW (do this, not a ladder essay):**
 
-**NOW:** Built march **URGENT 6** first. If chrome/picker unpaid=0 on a module, **next module same turn**. After vendors: customers→legal (URGENT 14). Then WAVE 2: `home` item-8 chrome (no box-in-box, `+ Create`/`+ Book`) → `tasks` → `driver-hub` → `compliance` → rest.
+1. Open `https://app.ih35dispatch.com/tasks` (USMCA). Item-8 chrome: **exactly one** primary `+ Create` (not `+ New`/`+ Add`). Fix + leaf-specific guard if two buttons or box-in-box.
+2. Same turn: `https://app.ih35dispatch.com/driver-hub` — same chrome law.
+3. Then `/compliance` → rest of WAVE 2. Never stop after one module.
 
-Open debug Chrome 9225, one surface, prove chrome/picker, close tab. FAST-MERGE. Picker FAIL → `OUTBOX-CC-2.md`.
+Picker FAIL → first line of `OUTBOX-CC-2.md`.
 
 ```text
-CC-3 | ACK | NEVER-IDLE | NO-MONITOR | PORT=9225 | DEADLINE=13:46CT | NOW=URGENT6 Built then 14 then WAVE2 | GO
+CC-3 | ACK | NEVER-IDLE | PORT=9225 | NOW=/tasks then /driver-hub chrome | DEADLINE=13:46CT | GO
 ```

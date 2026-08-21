@@ -34,8 +34,8 @@ Then remaining WAVE 2 (`home` → `tasks` → …).
 |------|-----|
 | CC-1 | settlements money → next of 6 |
 | CC-2 | unpaid Live on URGENT 6 if Miss C > 0; else WAVE 2 + scenarios |
-| CC-3 | home item-8 chrome if 6/14 chrome paid; else first unpaid of 6 |
-| Codex | **vendors reverse+connectivity** → customers |
+| CC-3 | **`/tasks` then `/driver-hub` chrome** |
+| Codex | **`/drivers` reverse+connectivity** → fleet |
 | Cursor | settlements Clicked → factoring Clicked |
 
 PREPEND ACK on your OUTBOX. Jorge is not the messenger. Open debug Chrome on **your** port, one leaf, prove, **close the tab**.
