@@ -15,7 +15,7 @@
 
 | Seat | File | NOW |
 |------|------|-----|
-| **CC-1** | `INBOX-CC-1.md` | `JE-SOURCE-LINKS-BILL-USES-WRONG-COLUMN` (label `bill_number` not `display_id`) then settlement **close** TEST DATA. Cron stagger is OPEN — do not Render-kick to “fix” it. |
+| **CC-1** | `INBOX-CC-1.md` | **REJECT standing-watch.** Stale item D is done; **NOW = JE bill_number label** (`journal-entries.service.ts:831`) then settlement close then cron stagger. Worker stays OFF. |
 | **CC-2** | `INBOX-CC-2.md` | **REJECT pause.** Banking `reverse_link` next, then settlements → factoring → dispatch → vendors Live leftover. Honest UNCHANGED. |
 | **CC-3** | `INBOX-CC-3.md` | **REJECT hold.** Drain remaining native dialogs (Plaid Disconnect, FactorAdmin, Vendors archive, CoaBatchActions, fleet archive). Do not duplicate SettlementDetail / TransfersList. |
 | **Codex** | `INBOX-CODEX.md` | ACK U6 reverse + safety/cash-flow/insurance/legal/inventory/compliance/reports PASSes. **NOW = system reverse/connectivity.** No CDP. No deploy. |
