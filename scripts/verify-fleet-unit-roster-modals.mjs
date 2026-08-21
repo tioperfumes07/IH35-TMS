@@ -20,6 +20,8 @@ const FILES = {
   createUnit: "apps/frontend/src/components/fleet/CreateUnitModal.tsx",
   editVehicle: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   quickAssign: "apps/frontend/src/components/fleet/QuickAssignModal.tsx",
+  quickAssignRoute: "apps/backend/src/assignments/quicksave.routes.ts",
+  assignmentSchema: "db/migrations/0221_cap9_vehicle_driver_assignments.sql",
   required: "docs/specs/scoreboard/modules/fleet.required.json",
 };
 const LABEL = "verify-fleet-unit-roster-modals";
@@ -79,6 +81,15 @@ export function audit(src) {
   if (!/equipmentKind: "truck" \| "trailer"/.test(src.quickAssign)) {
     failures.push(`${FILES.quickAssign}: fleet.modal.quick_assign must genuinely support truck (unit) targets`);
   }
+  if (!/VALUES \(\$1, \$2, \$3, now\(\), 'manual_override', true, \$4\)/.test(src.quickAssignRoute)) {
+    failures.push(`${FILES.quickAssignRoute}: truck quick-assign must persist the schema-approved manual_override source`);
+  }
+  if (!/source text NOT NULL CHECK \(source IN \('samsara_webhook', 'manual_override', 'reconciled'\)\)/.test(src.assignmentSchema)) {
+    failures.push(`${FILES.assignmentSchema}: assignment source contract changed; reconcile the writer and guard`);
+  }
+  if (!/setError\(cause instanceof Error \? cause\.message : "Couldn't assign this driver\. Try again\."\)/.test(src.quickAssign)) {
+    failures.push(`${FILES.quickAssign}: quick-assign failures must be visible to the operator`);
+  }
   return failures;
 }
 
@@ -103,6 +114,9 @@ if (process.argv.includes("--selftest")) {
     ["create-unit-call", "createUnit", /return createUnit\(\{/, "return createSomethingElse({"],
     ["edit-vehicle-patch", "editVehicle", /patchUnit\(unitId!, operatingCompanyId, patchPayload\)/, "patchUnit(unitId!, patchPayload)"],
     ["quick-assign-kind", "quickAssign", /equipmentKind: "truck" \| "trailer"/, 'equipmentKind: "trailer"'],
+    ["quick-assign-source", "quickAssignRoute", /'manual_override'/, "'quicksave'"],
+    ["quick-assign-source-contract", "assignmentSchema", /'manual_override'/, "'removed_override'"],
+    ["quick-assign-visible-error", "quickAssign", /setError\(cause instanceof Error \? cause\.message : "Couldn't assign this driver\. Try again\."\)/, "setError(null)"],
     ["filter-reverse-applicability", "required", /"id": "roster\.filter\.type",\n\s+"removed": \[\n\s+"reverse_link"\n\s+\]/, '"id": "roster.filter.type",\n          "removed": []'],
     ["filter-reverse-count", "required", /"leaves_touched": 33/, '"leaves_touched": 25'],
     ["filter-reverse-reinflation", "required", /("id": "roster\.kind\.trucks"[\s\S]*?"required": \[\n\s+"unit")\n\s+\]/, '$1,\n        "reverse_link"\n      ]'],

@@ -20,6 +20,7 @@ type Props = {
 export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }: Props) {
   const [driverId, setDriverId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!target) return null;
 
@@ -31,10 +32,13 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
           event.preventDefault();
           if (!driverId) return;
           setLoading(true);
+          setError(null);
           try {
             await onConfirm(driverId);
             setDriverId("");
             onClose();
+          } catch (cause) {
+            setError(cause instanceof Error ? cause.message : "Couldn't assign this driver. Try again.");
           } finally {
             setLoading(false);
           }
@@ -53,6 +57,7 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
           allowClear={false}
           // Standalone Modal chrome → default shell="modal".
         />
+        {error ? <p role="alert" className="text-xs text-red-700">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <Button type="button" size="sm" variant="secondary" onClick={onClose}>
             Cancel
