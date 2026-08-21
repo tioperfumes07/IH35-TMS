@@ -343,14 +343,28 @@ function readJson<T>(p: string): T | null {
   }
 }
 
-function loadRequiredMap(moduleId: string): RequiredMap {
+function isValidRequiredMap(map: unknown): map is RequiredMap {
+  if (!map || typeof map !== "object") return false;
+  const m = map as RequiredMap;
+  return Array.isArray(m.columns) && Array.isArray(m.leaves);
+}
+
+async function loadRequiredMap(moduleId: string): Promise<RequiredMap> {
   const rel = `docs/specs/scoreboard/modules/${moduleId}.required.json`;
   const full = path.join(REPO_ROOT, rel);
-  const map = readJson<RequiredMap>(full);
-  if (!map || !Array.isArray(map.columns) || !Array.isArray(map.leaves)) {
-    throw new Error(`Missing or invalid required map: ${rel}`);
+  const disk = readJson<RequiredMap>(full);
+  if (isValidRequiredMap(disk)) return disk;
+  // Render ignores docs/** — same GitHub raw path as AUDIT-COVERAGE-LIVE.md.
+  const remote = await loadOutboxTextFromGithub(rel);
+  if (remote) {
+    try {
+      const parsed = JSON.parse(remote) as unknown;
+      if (isValidRequiredMap(parsed)) return parsed;
+    } catch {
+      /* fall through */
+    }
   }
-  return map;
+  throw new Error(`Missing or invalid required map: ${rel}`);
 }
 
 function tipSha(): string | undefined {
@@ -1247,7 +1261,7 @@ export async function buildModuleMatrix(
     return cache.payload;
   }
 
-  const required = loadRequiredMap(moduleId);
+  const required = await loadRequiredMap(moduleId);
   const [ledger, completion, probePack, guardHits, waveHits, outboxClicked] = await Promise.all([
     loadLedgerRows(),
     Promise.resolve(loadCompletion(moduleId)),
@@ -1688,9 +1702,19 @@ function emptyModuleMetrics(): ModuleMatrixPayload["metrics"] {
   };
 }
 
-function loadMatrixModuleOrder(): Array<{ id: string; label: string }> {
-  const doc = readJson<{ modules?: Array<{ id: string; label: string }> }>(MATRIX_ORDER_JSON);
-  return doc?.modules ?? [];
+async function loadMatrixModuleOrder(): Promise<Array<{ id: string; label: string }>> {
+  const disk = readJson<{ modules?: Array<{ id: string; label: string }> }>(MATRIX_ORDER_JSON);
+  if (Array.isArray(disk?.modules) && disk.modules.length > 0) return disk.modules;
+  const remote = await loadOutboxTextFromGithub("docs/specs/scoreboard/matrix-module-order.json");
+  if (remote) {
+    try {
+      const doc = JSON.parse(remote) as { modules?: Array<{ id: string; label: string }> };
+      if (Array.isArray(doc.modules) && doc.modules.length > 0) return doc.modules;
+    } catch {
+      /* fall through */
+    }
+  }
+  return [];
 }
 
 export async function buildSystemModuleMatrix(userUuid?: string): Promise<SystemModuleMatrixPayload> {
@@ -1704,7 +1728,7 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
   await loadLedgerRows();
   await loadOutboxClickedKeys();
 
-  const order = loadMatrixModuleOrder();
+  const order = await loadMatrixModuleOrder();
   const modules: SystemModuleMatrixRow[] = [];
   const systemBucket = emptyTierBucket();
   const groupBuckets = new Map<string, ReturnType<typeof emptyTierBucket>>();
