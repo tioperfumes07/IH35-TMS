@@ -37,7 +37,13 @@ describe("bills-bulk.routes", () => {
   // governance/void-cancel-executors.ts's executeBill already calls) instead of reimplementing a
   // partial duplicate.
   it("set_status(voided) reuses voidBillInClientTx for GL reversal, not a bare status-flip UPDATE", () => {
-    expect(routes).toContain('import { getAppliedVendorCreditsCents, voidBillInClientTx, type BillMutationClient } from "./bills.service.js"');
+    // ACCT-F5691 added a sibling import (getAppliedBillPaymentApplicationsCents) to the same line —
+    // asserting the import SOURCE + the two symbols this test actually cares about, not the exact
+    // line text, so this test does not brittle-break every time bills.service.js grows another export.
+    expect(routes).toContain('from "./bills.service.js"');
+    expect(routes).toContain("getAppliedVendorCreditsCents");
+    expect(routes).toContain("voidBillInClientTx");
+    expect(routes).toContain("type BillMutationClient");
     expect(routes).toContain("await voidBillInClientTx(client as unknown as BillMutationClient");
     expect(routes).toContain("currentBusinessDate: companyBusinessDate()");
   });

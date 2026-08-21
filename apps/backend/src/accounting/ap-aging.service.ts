@@ -280,6 +280,18 @@ export const AP_AGING_OPEN_BILLS_SQL = `
                     AND vca.voided_at IS NULL
                     AND (vca.applied_at AT TIME ZONE 'UTC')::date <= $2::date
                 ), 0)
+              -- ACCT-F5691 — accounting.payment_applications (target_kind='bill'), a separate
+              -- cash-application path (apply.service.ts's applyToBill) that also never updates
+              -- bills.paid_cents; same netting shape as vendor credits immediately above.
+              - COALESCE((
+                  SELECT SUM(pa.amount_cents)
+                  FROM accounting.payment_applications pa
+                  WHERE pa.target_kind = 'bill'
+                    AND pa.target_id = b.id
+                    AND pa.operating_company_id = $1::uuid
+                    AND pa.unapplied_at IS NULL
+                    AND (pa.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+                ), 0)
           , 0)::bigint AS outstanding_cents,
           v.vendor_type AS vendor_type,
           COALESCE((
@@ -333,6 +345,17 @@ export const AP_AGING_OPEN_BILLS_SQL = `
                     AND vca.operating_company_id = $1::uuid
                     AND vca.voided_at IS NULL
                     AND (vca.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+                ), 0)
+              -- ACCT-F5691 — same netting as the SELECT projection above, so a bill this WHERE
+              -- clause excludes as "settled" (outstanding <= 0) matches what the row itself reports.
+              - COALESCE((
+                  SELECT SUM(pa.amount_cents)
+                  FROM accounting.payment_applications pa
+                  WHERE pa.target_kind = 'bill'
+                    AND pa.target_id = b.id
+                    AND pa.operating_company_id = $1::uuid
+                    AND pa.unapplied_at IS NULL
+                    AND (pa.applied_at AT TIME ZONE 'UTC')::date <= $2::date
                 ), 0)
           , 0) > 0
         ORDER BY COALESCE(v.vendor_name, 'Unknown Vendor') ASC, COALESCE(b.due_date, b.bill_date) ASC NULLS LAST

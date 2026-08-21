@@ -199,3 +199,133 @@ describe("applyPayment nets non-voided credit-memo applications off the invoice 
     ).resolves.toBeDefined();
   });
 });
+
+// ACCT-F5691 — applyToBill's cap check read bills.paid_cents alone. bills.paid_cents has four
+// independent writers, NONE of which is applyToBill's own INSERT into
+// accounting.payment_applications (target_kind='bill') — so a SECOND application to the same bill
+// via this path re-read the SAME stale paid_cents every time and ignored the first application
+// entirely, letting cumulative applications overshoot the bill's real open balance with no bound.
+// Same class of gap ACCT-F5623 already fixed for vendor credits on this exact cap check.
+describe("applyPayment nets prior payment_applications (and vendor credits) off the bill cap", () => {
+  it("refuses a second bill application that would overshoot the TRUE remaining balance (amount minus a prior application)", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("FROM accounting.payments p")) {
+        return {
+          rows: [
+            {
+              id: "payment-4",
+              customer_id: null,
+              payment_date: "2026-05-23",
+              amount_unapplied_cents: 100000,
+              voided_at: null,
+            },
+          ],
+        };
+      }
+      // Idempotency pre-check for THIS payment_id — no prior application under this exact payment.
+      if (sql.includes("FROM accounting.payment_applications") && sql.includes("payment_id = $1::uuid")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FROM accounting.bills b")) {
+        // amount_cents=$1,000, paid_cents=$0 -- a naive check against these alone would let the
+        // full $1,000 through, ignoring the $600 a PRIOR (different-payment) application already covered.
+        return {
+          rows: [
+            {
+              id: "bill-1",
+              customer_id: null,
+              amount_cents: 100000,
+              paid_cents: 0,
+              status: "unpaid",
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM accounting.vendor_credit_applications vca")) return { rows: [{ applied_cents: "0" }] };
+      // The new bill-side sibling of getAppliedVendorCreditsCents -- a PRIOR $600 application
+      // (from some other payment) already on this exact bill.
+      if (sql.includes("FROM accounting.payment_applications pa") && sql.includes("pa.target_kind = 'bill'")) {
+        return { rows: [{ applied_cents: "60000" }] };
+      }
+      return { rows: [] };
+    });
+
+    await expect(
+      applyPayment(
+        { query },
+        {
+          operating_company_id: "00000000-0000-4000-8000-000000000001",
+          payment_id: "00000000-0000-4000-8000-000000000099",
+          applications: [
+            {
+              target_kind: "bill",
+              // 500.00 -- exceeds the TRUE remaining ($1,000 - $600 prior application = $400).
+              target_id: "00000000-0000-4000-8000-000000000058",
+              amount_cents: 50000,
+            },
+          ],
+        },
+        { user_id: "00000000-0000-4000-8000-000000000042" }
+      )
+    ).rejects.toMatchObject({ code: "amount_exceeds_bill_open" });
+
+    expect(
+      query.mock.calls.some(
+        ([sql]) => String(sql).includes("FROM accounting.payment_applications pa") && String(sql).includes("pa.target_kind = 'bill'")
+      )
+    ).toBe(true);
+  });
+
+  it("allows a bill application within the TRUE remaining balance", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("FROM accounting.payments p")) {
+        return {
+          rows: [
+            {
+              id: "payment-5",
+              customer_id: null,
+              payment_date: "2026-05-23",
+              amount_unapplied_cents: 100000,
+              voided_at: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM accounting.payment_applications") && sql.includes("payment_id = $1::uuid")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FROM accounting.bills b")) {
+        return {
+          rows: [
+            {
+              id: "bill-2",
+              customer_id: null,
+              amount_cents: 100000,
+              paid_cents: 0,
+              status: "unpaid",
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM accounting.vendor_credit_applications vca")) return { rows: [{ applied_cents: "0" }] };
+      if (sql.includes("FROM accounting.payment_applications pa") && sql.includes("pa.target_kind = 'bill'")) {
+        return { rows: [{ applied_cents: "60000" }] };
+      }
+      if (sql.includes("INSERT INTO accounting.payment_applications")) return { rows: [{ id: "app-3" }] };
+      return { rows: [] };
+    });
+
+    // 400.00 -- exactly the true remaining balance ($1,000 - $600 prior application). Must succeed.
+    await expect(
+      applyPayment(
+        { query },
+        {
+          operating_company_id: "00000000-0000-4000-8000-000000000001",
+          payment_id: "00000000-0000-4000-8000-000000000099",
+          applications: [{ target_kind: "bill", target_id: "00000000-0000-4000-8000-000000000059", amount_cents: 40000 }],
+        },
+        { user_id: "00000000-0000-4000-8000-000000000042" }
+      )
+    ).resolves.toBeDefined();
+  });
+});

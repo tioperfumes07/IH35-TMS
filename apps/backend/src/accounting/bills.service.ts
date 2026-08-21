@@ -364,8 +364,24 @@ const APPLIED_VENDOR_CREDITS_SQL = `COALESCE((
           AND vca.voided_at IS NULL
       ), 0)`;
 
-/** Open balance net of payments AND non-voided vendor credits. */
-const BILL_OPEN_BALANCE_SQL = `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0) - ${APPLIED_VENDOR_CREDITS_SQL})`;
+// ACCT-F5691 — accounting.payment_applications rows with target_kind='bill' (written by
+// apps/backend/src/accounting/payments/apply.service.ts's applyToBill, a SEPARATE cash-application
+// path from the three WRITE paths below) never update bills.paid_cents — and per ACCT-F5623's own
+// documented reasoning immediately above, they must NOT: paid_cents already has four independent
+// writers including a void path that does an INCREMENTAL MAX(0, paid - amount) adjustment, so a
+// fifth writer doing a full recompute would fight those writers and corrupt on the next void. Same
+// fix shape as vendor credits: net on the READ side, never fold into paid_cents.
+const APPLIED_BILL_PAYMENT_APPLICATIONS_SQL = `COALESCE((
+        SELECT SUM(pa.amount_cents)
+        FROM accounting.payment_applications pa
+        WHERE pa.target_kind = 'bill'
+          AND pa.target_id = b.id
+          AND pa.operating_company_id = b.operating_company_id
+          AND pa.unapplied_at IS NULL
+      ), 0)`;
+
+/** Open balance net of payments AND non-voided vendor credits AND non-unapplied payment_applications. */
+const BILL_OPEN_BALANCE_SQL = `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0) - ${APPLIED_VENDOR_CREDITS_SQL} - ${APPLIED_BILL_PAYMENT_APPLICATIONS_SQL})`;
 
 /**
  * ACCT-F5623 — the sum of non-voided accounting.vendor_credit_applications for ONE bill, for callers
@@ -386,6 +402,32 @@ export async function getAppliedVendorCreditsCents(
       WHERE vca.bill_id = $1::uuid
         AND vca.operating_company_id = $2::uuid
         AND vca.voided_at IS NULL
+    `,
+    [billId, operatingCompanyId]
+  );
+  const row = res.rows[0] as { applied_cents?: unknown } | undefined;
+  return Number(row?.applied_cents ?? 0);
+}
+
+/**
+ * ACCT-F5691 — sibling to getAppliedVendorCreditsCents, for accounting.payment_applications rows
+ * with target_kind='bill'. Same reasoning: bills.paid_cents must never learn about this path (see
+ * APPLIED_BILL_PAYMENT_APPLICATIONS_SQL above), so every cap check that needs the true remaining
+ * balance in application code calls this instead of reading paid_cents alone.
+ */
+export async function getAppliedBillPaymentApplicationsCents(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }> },
+  billId: string,
+  operatingCompanyId: string
+): Promise<number> {
+  const res = await client.query(
+    `
+      SELECT COALESCE(SUM(pa.amount_cents), 0)::bigint AS applied_cents
+      FROM accounting.payment_applications pa
+      WHERE pa.target_kind = 'bill'
+        AND pa.target_id = $1::uuid
+        AND pa.operating_company_id = $2::uuid
+        AND pa.unapplied_at IS NULL
     `,
     [billId, operatingCompanyId]
   );
@@ -2275,8 +2317,12 @@ export async function payBill(input: PayBillInput, userId: string) {
     // BILL_OPEN_BALANCE_SQL already does on the read side (AP aging / bills list / Pay-Bill picker).
     // Without this, a bill already partly or fully settled by a vendor credit could still be paid in
     // cash up to its full face amount, double-discharging the same liability.
+    // ACCT-F5691 — same reasoning for accounting.payment_applications (target_kind='bill'), a
+    // separate cash-application path (apply.service.ts's applyToBill) that also never touches
+    // paid_cents. Currently 0 live rows, but the cap must be correct the first time it is used.
     const appliedCreditsCents = await getAppliedVendorCreditsCents(client, input.billId, input.operatingCompanyId);
-    const remaining = Number(bill.amount_cents) - Number(bill.paid_cents) - appliedCreditsCents;
+    const appliedPaymentApplicationsCents = await getAppliedBillPaymentApplicationsCents(client, input.billId, input.operatingCompanyId);
+    const remaining = Number(bill.amount_cents) - Number(bill.paid_cents) - appliedCreditsCents - appliedPaymentApplicationsCents;
     if (input.amountCents > remaining) throw new Error("payment_exceeds_remaining_balance");
 
     const paymentRes = await client.query<BillPaymentRow>(
