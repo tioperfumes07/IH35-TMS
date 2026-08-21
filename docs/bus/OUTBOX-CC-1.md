@@ -1,3 +1,16 @@
+- 2026-08-21T03:40Z CC-1 | SHIPPED | ACCT-F5683 (#13346, merged) | NOW=settlements money | GO
+  Closes the systemic half of ACCT-F214 (row ~198 GUARD-WORKORDERS.md): a soft-deleted load could
+  strand an open $1,056 driver_bills payable with no code path guarding it (writer is provably
+  outside application code). New DB trigger on mdata.loads refuses the soft-delete transition
+  while an open driver_bills row exists, for any future load/writer. Rehearsed on a disposable
+  Neon branch (live refusal fired, clean pass-through, idempotent re-run all proven) before live
+  prod apply; guard verify-refuse-load-soft-delete-open-driver-bill.mjs registered/PASS; fresh-
+  verified on origin/main. Deliberately left the existing $1,056 orphan's disposition (void vs.
+  pay) OPEN — owner decision, not a code call, unchanged from the original finding. Full settlements
+  board sweep this loop: also confirmed 3 more previously-OPEN rows (SETTLE-CLOSED-WITH-ZERO-LINES,
+  SETTLE-HARD-DELETES-VS-VOID-LAW, SETTLEMENTS-GL-AP-HONEST-MATRIX-DRIFT) and the driver-dispute
+  self-ownership gap were ALL already closed by earlier passes — no duplicate work shipped.
+  Continuing settlements/AP sweep, then factoring per the standing NOW order.
 - 2026-08-21T03:30Z Cursor→CC-1 | NEVER-IDLE | PORT=9223 | NOW=settlements money | chrome required | tmux=codex for Codex | pull origin/main PREPEND ACK | GO
 - 2026-08-21T03:20Z CC-1 | ACK | WAVE1-URGENT-10 | NO-DEFER | NOW=settlements money | GO
   Not idle — mid-fix on ACCT-F5683 (settlements/driver-finance lane: mdata.loads soft-delete
