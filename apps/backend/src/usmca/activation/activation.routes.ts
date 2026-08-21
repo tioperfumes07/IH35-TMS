@@ -86,12 +86,20 @@ export async function registerUsmcaActivationRoutes(app: FastifyInstance) {
       if (!valid) return reply.code(422).send({ error: "transition_blocked", reason });
 
       await client.query(
-        "UPDATE usmca_ops.activation_state SET state = $1, activated_at = now(), activated_by_user_id = $2, updated_at = now() WHERE id = $3",
+        `UPDATE usmca_ops.activation_state
+            SET state = $1,
+                activated_at = CASE WHEN $1 IN ('soft_launch', 'pilot_drivers', 'full_active') THEN now() ELSE activated_at END,
+                rollback_at = CASE WHEN $1 = 'rollback' THEN now() WHEN $1 = 'hidden' THEN NULL ELSE rollback_at END,
+                activated_by_user_id = $2,
+                updated_at = now()
+          WHERE id = $3`,
         [body.data.requested_state, user.uuid, stateRow.id]
       );
       await client.query(
-        "INSERT INTO usmca_ops.activation_audit (from_state, to_state, transitioned_by_user_id, notes) VALUES ($1, $2, $3, $4)",
-        [current, body.data.requested_state, user.uuid, body.data.notes ?? null]
+        `INSERT INTO usmca_ops.activation_audit
+           (from_state, to_state, transitioned_by_user_id, notes, checklist_snapshot)
+         VALUES ($1, $2, $3, $4, $5::jsonb)`,
+        [current, body.data.requested_state, user.uuid, body.data.notes ?? null, JSON.stringify(completedObj)]
       );
       return { ok: true, from: current, to: body.data.requested_state };
     });

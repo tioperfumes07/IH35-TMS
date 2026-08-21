@@ -54,6 +54,9 @@ function activationRouteFailures(source) {
     "getSingletonActivationState(client, true)",
     'throw new Error("USMCA activation state singleton invariant violated")',
     "WHERE id = $3",
+    "checklist_snapshot)",
+    "JSON.stringify(completedObj)",
+    "rollback_at = CASE WHEN $1 = 'rollback' THEN now()",
   ];
   for (const token of required) if (!source.includes(token)) failures.push(`activation routes must retain ${token}`);
   if (source.includes("UPDATE usmca_ops.activation_state SET state = $1, activated_at = now(), activated_by_user_id = $2, updated_at = now()\",")) {
@@ -81,6 +84,9 @@ if (process.argv.includes("--selftest")) {
     routes.replace("parseChecklistCompleted(row.checklist_completed)", "{}"),
     routes.replace('throw new Error("USMCA activation state singleton invariant violated")', "return result.rows[0]"),
     routes.replaceAll("WHERE id = $3", ""),
+    routes.replace("checklist_snapshot)", "notes)"),
+    routes.replace("JSON.stringify(completedObj)", "'{}'"),
+    routes.replace("rollback_at = CASE WHEN $1 = 'rollback' THEN now()", "rollback_at = rollback_at"),
   ];
   routeMutations.forEach((mutated, index) => {
     if (!activationRouteFailures(mutated).length) fail(`route selftest mutation ${index + 1} survived`);
