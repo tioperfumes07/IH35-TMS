@@ -549,20 +549,23 @@ export function ModuleMatrixSystemView() {
             </tr>
           </thead>
           <tbody>
-            {[...URGENT_6_MODULE_IDS, ...REST_OF_URGENT_MODULE_IDS].map((id, i) => {
-              const row = orderedRows.find((r) => r.module === id);
+            {[...URGENT_6_MODULE_IDS, ...REST_OF_URGENT_MODULE_IDS].map((mod, i) => {
+              const row = orderedRows.find((r) => r.module === mod);
               const missC = moduleMissC(row);
-              const wave = launchWaveForModule(id);
               const builtPct = row?.boxAbl?.builtPct ?? 0;
               const livePct = row?.boxAbl?.livePct ?? 0;
               const certify = apiLive && missC === 0;
+              const band = launchWaveForModule(mod);
               return (
-                <tr key={id} data-testid={`launch-ladder-row-${id}`}>
+                <tr key={mod} data-testid={`launch-ladder-row-${mod}`}>
                   <td>{i + 1}</td>
-                  <td className={wave === "U6" ? "wave-u6" : "wave-rest"}>{wave}</td>
+                  <td className={band === "U6" ? "wave-u6" : "wave-rest"}>{band}</td>
                   <td>
-                    <b>{row?.label ?? id}</b>
-                    <span className="mod-id">{id}</span>
+                    <b>{row?.label ?? mod}</b>
+                    <span className="mod-id">{mod}</span>
+                    {row ? (
+                      <EntityLink kind="program_matrix_module" id={row.module} label="Board →" className="board-link" />
+                    ) : null}
                   </td>
                   <td className="vert-col">{VERTICAL_CERTIFY_COL_LABEL}</td>
                   <td>ON · 4min</td>
