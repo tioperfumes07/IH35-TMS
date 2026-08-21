@@ -1797,6 +1797,10 @@
           ]
         }
       ]
+    },
+    "picker_law_master_data_create_exemption_2026_08_21": {
+      "finding": "CC-3-PICKER-LAW-MASTER-DATA-CREATE-CANDIDATES",
+      "note": "master.drivers.create and master.vehicles.create audited via direct component read (DriversMasterDataPage.tsx / VehiclesMasterDataPage.tsx, createMaintenanceDriver / the vehicle-master equivalent). These create a NEW row in the maintenance-specific 'master data' reference tables (first_name/last_name/cdl_number/... for drivers; the vehicle equivalent) \u2014 a separate, narrower reference list from the real driver/unit roster, not an edit-or-link-to-an-existing-entity surface, so no EntityPicker/ReferenceSelect/Combobox is expected by design. Same class as this module's own already-documented parts.vendor_default exemption. Currently credited only by the broad module-loop sweep; this note documents why that is an acceptable non-gap, not a guessed removal of picker_law."
     }
   }
 }
