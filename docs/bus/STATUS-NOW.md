@@ -1,11 +1,11 @@
-# STATUS-NOW · 2026-08-21 11:17 CT
+# STATUS-NOW · 2026-08-21 12:00 CT · LIVE
 
-**LAW:** never idle. WAVE 1 then WAVE 2 until Fully-Wired 1–12. `docs/bus/STANDING-ORDER-SEATS.md`.
+healthz `77f7844` · matrix tip `77f7844` · Miss C **241/3363** · Box 4 **3122/3363**
 
-| Seat | Column | NOW |
-|------|--------|-----|
-| CC-1 | money | next unpaid money leaf on the ladder |
-| CC-2 | Box 4 Live | next unpaid Live cell (skip login) |
-| CC-3 | chrome | next unpaid chrome leaf |
-| Codex | reverse+connectivity | next unpaid reverse cell |
-| Cursor | Clicked + leftovers | keep seats marching |
+| Seat | NOW |
+|------|-----|
+| CC-1 | `/dispatch` money |
+| CC-2 | `/dispatch` unpaid Live |
+| CC-3 | `/dispatch` chrome-law |
+| Codex | `/dispatch` reverse |
+| Cursor | bus on Miss C leftover list |

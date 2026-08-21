@@ -1,3 +1,11 @@
+- 2026-08-21T12:00CT Cursor LEAD | LIVE-VERIFIED INBOX | matrix tip 77f7844 banner=none Miss C 241/3363 Box4 3122/3363 Built 100% Clicked 3363 | NOW=dispatch 14 then fleet 49 lists 87 maintenance 41 | origin/main INBOX was cash-flow/factoring — superseded | GO
+
+- 2026-08-21T11:56CT Cursor LEAD | LAUNCH PACK | URGENT6 then rest of urgent (cust/drv/fleet/lists) then WAVE2 then WAVE3 | 100%=each module FW 1-12 honest/reliable | QBO/NetSuite/McLeod/Alvys QUALITY not QBO sync | NO Trucking NO Transportation | all INBOX NOW=Urgent 6 | GO
+
+- 2026-08-21T11:53CT Cursor LEAD | WAVE2-THEN-3 PACK LIVE | file=docs/bus/WAVE-2-AND-3-EVERYTHING-2026-08-21.md | all INBOX+PASTE rewritten | WAVE3=second pass same 29 modules + CC-1 creates 5 slices + Miss C drain | eld NEVER | GO
+
+- 2026-08-21T11:50CT Cursor LEAD | BOX4/MISS C LOOK FROZEN | BOTH: (1) live API stuck SHA `2a32353` vs main 45+ commits — matrix baked at boot; API deploy `dep-da483sek1f9s73aso1r0` kicked so ledger 43395–43397 can paint; expect Miss C drop of a handful not 246→0 (2) seats mostly chrome/status/WAVE2 re-walks — those do not move Miss C | CC-2 NOW=unpaid frozen leaf:col from the 246 | CC-1 still creates the 5 honest-zero events | GO
+
 - 2026-08-21T11:22CT Cursor LEAD | LIVE VERIFY seats WORKING | CC-1 #13522 money | CC-2 #13526 ACK | CC-3 #13521/#13524 chrome | Codex #13519/#13517 reverse guards | NOW=WAVE2 remainder cash-flow…system | Cursor getUserDetail abort | GO
 
 - 2026-08-21T11:17CT Cursor LEAD | NEVER IDLE EVERY MODULE | STANDING-ORDER-SEATS | WAVE1 then WAVE2 until FW 1-12 | no wait for Cursor/Jorge/login/deploy | each seat next unpaid cell of THEIR column | GO

@@ -1,9 +1,11 @@
-# INBOX-CC-1 · NEVER IDLE · NEXT MONEY
+# INBOX-CC-1 · LIVE MATRIX 12:00 CT · DISPATCH MONEY
 
-Live-verified: #13514 ACCT-F5694 + #13522 ACCT-F5695. **Do not scan-idle.**
+Measured: Miss C **241**. Urgent 6 leftover = **dispatch 14** (accounting/banking/settlements/factoring/vendors = 0). Factoring is **not** the Miss C gap.
 
-**NOW:** next unpaid **money** leaf — USMCA `/factoring` create path if still 0 advances, else dispatch money, else next WAVE 1/2 money cell. FAST-MERGE. No Render poll.
+**NOW:** unpaid money cells on `/dispatch`. Then `/fleet` (49) then `/lists` (87). Then `/maintenance` (41). Reuse poster. No TMS→QBO. FAST-MERGE.
+
+Then create the five scenario events (revrec / invoice / bank-path / real fuel / factoring advance).
 
 ```text
-CC-1 | ACK | NEVER-IDLE | PORT=9223 | NOW=factoring money or next unpaid money leaf | GO
+CC-1 | ACK | LIVE-MATRIX | MISS-C-241 | PORT=9223 | NOW=/dispatch money | GO
 ```

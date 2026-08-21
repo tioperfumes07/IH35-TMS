@@ -1,16 +1,18 @@
-# PASTE ALL SEATS · 11:17 CT · NEVER IDLE · EVERY MODULE
+# PASTE ALL SEATS · 12:00 CT · LIVE MATRIX · MISS C 241
 
 `git pull --ff-only origin main`  
-Read `docs/bus/STANDING-ORDER-SEATS.md` — that is the order until WAVE 1 + WAVE 2 are Fully-Wired **1–12**.
+Read **`docs/bus/WAVE-2-AND-3-EVERYTHING-2026-08-21.md`** (live-measured).
 
-**Do not wait** for Cursor, Jorge, deploy, login, or another seat. Your column → next module **same turn**.
+Live `/program/matrix`: Box 4 **3122/3363** · Miss C **241/3363** · Built **100%** · Clicked **3363/3363** · tip `77f7844`. **No QBO sync. No Trucking. No Transportation.**
 
-| Seat | Port | Start here if you were idle |
-|------|------|-----------------------------|
-| CC-1 | 9223 | Next unpaid **money** cell on the ladder (factoring → dispatch → rest of WAVE 1 then WAVE 2) |
-| CC-2 | 9224 | Next unpaid **Box 4 Live** cell (skip `/login`; then insurance → safety → maintenance → rest of WAVE 2) |
-| CC-3 | 9225 | Next unpaid **chrome** cell (vendor/customer Save if unpaid, else next WAVE 2 chrome) |
-| Codex | 9226 | Next unpaid **reverse+connectivity** (`/drivers` then `/fleet` then ladder) |
-| Cursor | 9222 | Clicked leftovers + next unpaid leftover |
+**NOW order:** `/dispatch` (14) → `/fleet` (49) → `/lists` (87) → `/maintenance` (41) → then remaining Miss C > 0.
 
-ACK: `<SEAT> | ACK | NEVER-IDLE | PORT=<n> | NOW=<module> <your column> | GO`
+| Seat | Port | NOW |
+|------|------|-----|
+| CC-1 | 9223 | `/dispatch` money |
+| CC-2 | 9224 | `/dispatch` unpaid `leaf:col` · OUTBOX Miss C 241→M |
+| CC-3 | 9225 | `/dispatch` chrome-law (Built is already 100%) |
+| Codex | 9226 | `/dispatch` reverse |
+| Cursor | 9222 | Bus this list (Clicked-of-frozen is full) |
+
+ACK: `<SEAT> | ACK | LIVE-MATRIX | MISS-C-241 | PORT=<n> | NOW=/dispatch | GO`
