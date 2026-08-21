@@ -149,6 +149,9 @@ export function assertScoreboardContract(sources) {
 
   const matrixPageRel = "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx";
   const matrixPage = sources?.[matrixPageRel] ?? (fs.existsSync(path.join(ROOT, matrixPageRel)) ? read(matrixPageRel) : "");
+  const requiredMapsRel = "apps/frontend/src/pages/program/moduleMatrixRequiredMaps.ts";
+  const requiredMaps =
+    sources?.[requiredMapsRel] ?? (fs.existsSync(path.join(ROOT, requiredMapsRel)) ? read(requiredMapsRel) : "");
   if (matrixPage) {
     if (!/resolveApiUrl\(\s*[`'"]\/api\/v1\/program\/module-matrix/.test(matrixPage)) {
       problems.push(
@@ -164,39 +167,42 @@ export function assertScoreboardContract(sources) {
     if (/showSampleBanner|module-matrix-sample-banner|SAMPLE banner/.test(matrixPage)) {
       problems.push(`${matrixPageRel}: unavailable feed state must not be labeled SAMPLE`);
     }
+    if (!/REQUIRED_BY_MODULE/.test(matrixPage) || !/moduleMatrixRequiredMaps/.test(matrixPage)) {
+      problems.push(`${matrixPageRel}: must consume REQUIRED_BY_MODULE from moduleMatrixRequiredMaps`);
+    }
     if (
-      !/safety\.required\.json/.test(matrixPage) ||
-      !/maintenance\.required\.json/.test(matrixPage) ||
-      !/insurance\.required\.json/.test(matrixPage) ||
-      !/legal\.required\.json/.test(matrixPage) ||
-      !/accounting\.required\.json/.test(matrixPage) ||
-      !/banking\.required\.json/.test(matrixPage) ||
-      !/dispatch\.required\.json/.test(matrixPage) ||
-      !/fuel\.required\.json/.test(matrixPage) ||
-      !/drivers\.required\.json/.test(matrixPage) ||
-      !/fleet\.required\.json/.test(matrixPage) ||
-      !/customers\.required\.json/.test(matrixPage) ||
-      !/vendors\.required\.json/.test(matrixPage) ||
-      !/settlements\.required\.json/.test(matrixPage) ||
-      !/lists\.required\.json/.test(matrixPage) ||
-      !/factoring\.required\.json/.test(matrixPage) ||
-      !/reports\.required\.json/.test(matrixPage) ||
-      !/inventory\.required\.json/.test(matrixPage) ||
-      !/compliance\.required\.json/.test(matrixPage) ||
-      !/cash-flow\.required\.json/.test(matrixPage) ||
-      !/home\.required\.json/.test(matrixPage) ||
-      !/program\.required\.json/.test(matrixPage) ||
-      !/tasks\.required\.json/.test(matrixPage) ||
-      !/form_425\.required\.json/.test(matrixPage) ||
-      !/finance\.required\.json/.test(matrixPage) ||
-      !/docs\.required\.json/.test(matrixPage) ||
-      !/system\.required\.json/.test(matrixPage) ||
-      !/users\.required\.json/.test(matrixPage) ||
-      !/help\.required\.json/.test(matrixPage) ||
-      !/driver-hub\.required\.json/.test(matrixPage)
+      !/safety\.required\.json/.test(requiredMaps) ||
+      !/maintenance\.required\.json/.test(requiredMaps) ||
+      !/insurance\.required\.json/.test(requiredMaps) ||
+      !/legal\.required\.json/.test(requiredMaps) ||
+      !/accounting\.required\.json/.test(requiredMaps) ||
+      !/banking\.required\.json/.test(requiredMaps) ||
+      !/dispatch\.required\.json/.test(requiredMaps) ||
+      !/fuel\.required\.json/.test(requiredMaps) ||
+      !/drivers\.required\.json/.test(requiredMaps) ||
+      !/fleet\.required\.json/.test(requiredMaps) ||
+      !/customers\.required\.json/.test(requiredMaps) ||
+      !/vendors\.required\.json/.test(requiredMaps) ||
+      !/settlements\.required\.json/.test(requiredMaps) ||
+      !/lists\.required\.json/.test(requiredMaps) ||
+      !/factoring\.required\.json/.test(requiredMaps) ||
+      !/reports\.required\.json/.test(requiredMaps) ||
+      !/inventory\.required\.json/.test(requiredMaps) ||
+      !/compliance\.required\.json/.test(requiredMaps) ||
+      !/cash-flow\.required\.json/.test(requiredMaps) ||
+      !/home\.required\.json/.test(requiredMaps) ||
+      !/program\.required\.json/.test(requiredMaps) ||
+      !/tasks\.required\.json/.test(requiredMaps) ||
+      !/form_425\.required\.json/.test(requiredMaps) ||
+      !/finance\.required\.json/.test(requiredMaps) ||
+      !/docs\.required\.json/.test(requiredMaps) ||
+      !/system\.required\.json/.test(requiredMaps) ||
+      !/users\.required\.json/.test(requiredMaps) ||
+      !/help\.required\.json/.test(requiredMaps) ||
+      !/driver-hub\.required\.json/.test(requiredMaps)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/form_425/finance/docs/system/users/help/driver-hub/settlements`,
+        `${requiredMapsRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/form_425/finance/docs/system/users/help/driver-hub/settlements`,
       );
     }
     if (
@@ -924,11 +930,13 @@ export function assertScoreboardContract(sources) {
 
 if (SELFTEST) {
   const matrixPageRel = "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx";
+  const requiredMapsRel = "apps/frontend/src/pages/program/moduleMatrixRequiredMaps.ts";
   const live = {
     [PAGE]: read(PAGE),
     [DATA]: read(DATA),
     [FE_PKG]: read(FE_PKG),
     [matrixPageRel]: read(matrixPageRel),
+    [requiredMapsRel]: read(requiredMapsRel),
     ["apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"]: read("apps/frontend/src/pages/program/moduleMatrixBoxes.tsx"),
     ["apps/backend/src/program/audit-scoreboard.routes.ts"]: read("apps/backend/src/program/audit-scoreboard.routes.ts"),
   };
@@ -939,6 +947,17 @@ if (SELFTEST) {
       failures.push(`${name}: NOT caught (got: ${problems.join(" | ") || "none"})`);
     }
   };
+  expect(
+    "required-map-omission",
+    {
+      ...live,
+      [requiredMapsRel]: live[requiredMapsRel].replace(
+        'import settlementsRequired from "@scoreboard/modules/settlements.required.json";',
+        "/* planted missing settlements Required map */",
+      ),
+    },
+    "must import all live Required maps",
+  );
   expect(
     "bare-fetch",
     {
