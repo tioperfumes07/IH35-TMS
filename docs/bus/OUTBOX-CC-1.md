@@ -2209,3 +2209,15 @@ guard that would have otherwise regressed on the new 3-arg COALESCE. Banking-mon
 triaged this loop: LV-BANK-TWO-SIGN-CONVENTIONS (already fixed, ACCT-F5605), LV-BANKFLAG-STALE
 (already fixed, ACCT-F176 banner reads the real per-entity flag) -- both stale, verified live,
 no code needed. Continuing per no-holding directive.
+
+2026-08-21T10:05Z CC-1 | Miss C UNCHANGED blocker=none-found-this-pass (banking-money sweep
+complete for this loop) | NOW=banking money -> settlements next | GO. Verified CLS-SILENT-CAP's 3
+CC-1-owned money-path instances (BillsPage/VendorCreditsPage/RecurringBillCreate vendor pickers,
+1,836-of-2,836-vendors-hidden defect) are already fixed live -- CappedListNotice wired with real
+totals on all 3, no action needed. Remaining genuine banking-money item:
+P23-BANKING-RAW-UUID-BACKEND-GAPS (BankReconciliationPage manualLedgerId + ManualJEModal
+entity_uuid) needs a real new backend endpoint (entity-scoped ledger-entry lookup +
+entity_type discriminator) -- correctly scoped to me, sized as its own build, not a quick verify.
+Banking-money sweep this loop: ACCT-F5682 shipped (JE reverse-drill label), LV-BANK-TWO-SIGN-
+CONVENTIONS/LV-BANKFLAG-STALE/CLS-SILENT-CAP(3) verified already-fixed. Moving to settlements money
+per PASTE-CC-1-NOW's order (escrow -> banking -> settlements), no holding.
