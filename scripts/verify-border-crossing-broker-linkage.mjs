@@ -20,6 +20,8 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function audit(s) {
   const failures = [];
   if (!/id="border-crossing-broker-picker"[\s\S]{0,300}value=\{form\.customsBrokerId/.test(s.picker)) failures.push("category-scoped broker picker missing");
+  if (!/allowAddNew=\{\{\s*label:\s*["']\+ Add new vendor["']/.test(s.picker)) failures.push("broker picker must offer canonical + Add new vendor first row");
+  if (!/<InlineCreateDrawer[\s\S]{0,240}kind="vendor"[\s\S]{0,240}operatingCompanyId=\{operatingCompanyId\}/.test(s.picker)) failures.push("broker picker must open canonical company-scoped vendor creator");
   if (!/customs_broker_id:\s*form\.customsBrokerId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward broker vendor FK");
   if (!/SELECT id::text, vendor_name AS name, vendor_category[\s\S]{0,240}ORDER BY vendor_name/.test(s.writer)) failures.push("broker picker must read the canonical vendor_name column and preserve its name API contract");
   if (!/v\.vendor_name AS customs_broker_name/.test(s.writer)) failures.push("wizard result must resolve the canonical broker vendor_name");
@@ -34,6 +36,8 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "picker", /id="border-crossing-broker-picker"/, 'id="wrong-picker"'],
+    ["picker-create-row", "picker", /label:\s*["']\+ Add new vendor["']/, 'label: "No create"'],
+    ["picker-canonical-creator", "picker", /(<InlineCreateDrawer[\s\S]{0,120})kind="vendor"/, '$1kind="customer"'],
     ["payload", "submit", /customs_broker_id:\s*form\.customsBrokerId \|\| undefined/, "customs_broker_id: undefined"],
     ["picker-label", "writer", /vendor_name AS name/, "name"],
     ["picker-order", "writer", /ORDER BY vendor_name/, "ORDER BY name"],
