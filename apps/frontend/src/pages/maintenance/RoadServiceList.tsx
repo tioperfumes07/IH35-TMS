@@ -137,8 +137,10 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
         </CollapsedListFilters>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-600">Rollup: {money(totalCost)}</span>
+          {/* CLS-CHROME-LAW-8: "+ Roadside WO" had no verb at all — relabeled to match the "+
+              Create Work Order" convention already used elsewhere on this module. */}
           <Button type="button" onClick={() => setCreateOpen(true)}>
-            + Roadside WO
+            + Create Roadside WO
           </Button>
         </div>
       </div>

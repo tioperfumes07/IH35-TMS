@@ -107,12 +107,14 @@ export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceSt
     <div className="space-y-2" data-testid="rm-buckets-grid">
       {onCreateRoadside ? (
         <div className="flex justify-end">
+          {/* CLS-CHROME-LAW-8: "+ Roadside WO" had no verb at all — relabeled to match the "+
+              Create Work Order" convention already used elsewhere on this module. */}
           <button
             type="button"
             onClick={onCreateRoadside}
             className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-900"
           >
-            + Roadside WO
+            + Create Roadside WO
           </button>
         </div>
       ) : null}
