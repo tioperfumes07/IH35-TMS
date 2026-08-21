@@ -1056,3 +1056,4 @@ Codex | WORKING | FO=ACCT-F5666 | leaf=safety.(drawer|parity).integrity_alert_de
 Codex | WORKING | FO=ACCT-F5667 | leaf=maintenance:damage_reports.intake:{unit,connectivity,reverse_link} | guard=4/4+selftest | NEXT=fast-merge then dispatch reverse | GO
 Codex | WORKING | FO=ACCT-F5668 | leaf=reports:report.trip_profitability:{driver,load,connectivity,reverse_link} | guard=5/5+selftest | NEXT=fast-merge then inventory reverse | GO
 Codex | FINDING OPEN | FO=CODEX-LOAD-COLUMN-DOCS-MAP-SELFTEST-ANCHOR-DRIFT | file=scripts/verify-load-column-all-modules.mjs:78 | BLOCKS=ACCT-F5668-followup | OWNER=Codex | NEXT=ship ACCT-F5668 then fix guard atomically | GO
+Codex | WORKING | merged customers #13317 @ 5c7e88a51b | NOW=banking transactions reverse exact guard | NEXT=settlements reverse | GO

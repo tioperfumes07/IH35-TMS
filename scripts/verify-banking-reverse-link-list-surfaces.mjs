@@ -3,7 +3,7 @@
  * Banking reverse_link — leaf-specific Built for surfaces with EntityLink drills.
  * Create-only modals honesty-dropped in required.json (same PR).
  *
- * @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^(accounts|transactions\\.(list|categorize)|reconciliation|factoring|banking\\.drawer\\.match|banking\\.panel\\.banking_plaid_connections|banking\\.parity\\.match)$","task":"VERTICAL-REVERSE-LINK-banking-lists","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^transactions\\.(list|categorize)$","task":"VERTICAL-REVERSE-LINK-banking-lists","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-banking-reverse-link-list-surfaces.mjs --selftest
  */
@@ -13,64 +13,78 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-banking-reverse-link-list-surfaces";
+const VIEW = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
+const HOME = "apps/frontend/src/pages/banking/BankingHome.tsx";
+const ROUTES = "apps/frontend/src/routes/manifest.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
+const CLAIMED_LEAVES = ["transactions.list", "transactions.categorize"];
 
 const CHECKS = [
-  { name: "BankingHome EntityLink", file: "apps/frontend/src/pages/banking/BankingHome.tsx", pattern: /EntityLink/ },
-  { name: "BankAccountDetail EntityLink", file: "apps/frontend/src/pages/banking/BankAccountDetail.tsx", pattern: /EntityLink/ },
-  { name: "Transactions design EntityLink", file: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", pattern: /EntityLink/ },
-  { name: "BankReconciliation EntityLink", file: "apps/frontend/src/pages/banking/BankReconciliationPage.tsx", pattern: /EntityLink/ },
-  { name: "ReconciliationWorkspace EntityLink", file: "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", pattern: /EntityLink/ },
-  { name: "MatchDrawer EntityLink", file: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx", pattern: /EntityLink/ },
-  { name: "Plaid panel EntityLink", file: "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx", pattern: /EntityLink/ },
+  { name: "transactions route mounted", file: ROUTES, pattern: /path="\/banking\/transactions"[\s\S]{0,180}<BankingHomePage initialTab="transactions" \/>/ },
+  { name: "transactions view mounted", file: HOME, pattern: /<BankingTransactionsDesignView[\s\S]{0,160}companyId=\{companyId\}/ },
+  { name: "categorization reverse read company scoped", file: VIEW, pattern: /getBankTransactionCategorizationLinks\(String\(expandedTxId\), companyId\)/ },
+  { name: "persisted linkage panel", file: VIEW, pattern: /data-testid="banking-tx-categorization-links-panel"/ },
+  { name: "list driver drill", file: VIEW, pattern: /kind="driver"\s+id=\{tx\.categorization_driver_id\}[\s\S]{0,160}tx\.categorization_driver_name/ },
+  { name: "list unit drill", file: VIEW, pattern: /kind="unit"\s+id=\{tx\.categorization_unit_id\}[\s\S]{0,160}tx\.categorization_unit_number/ },
+  { name: "list load drill", file: VIEW, pattern: /kind="load"\s+id=\{tx\.categorization_load_id \|\| tx\.matched_load_id\}/ },
+  { name: "list settlement drill", file: VIEW, pattern: /kind="settlement"\s+id=\{tx\.matched_settlement_id\}/ },
+  { name: "list bill drill", file: VIEW, pattern: /kind="bill"\s+id=\{tx\.matched_bill_id\}/ },
+  { name: "list journal entry drill", file: VIEW, pattern: /kind="journal_entry"\s+id=\{tx\.matched_journal_entry_id\}/ },
+  { name: "categorize driver drill", file: VIEW, pattern: /kind="driver" id=\{links\.driver_id\}[\s\S]{0,120}links\.driver_name/ },
+  { name: "categorize unit drill", file: VIEW, pattern: /kind="unit" id=\{links\.unit_id\}[\s\S]{0,120}links\.unit_number/ },
+  { name: "categorize load drill", file: VIEW, pattern: /kind="load" id=\{links\.load_id\}[\s\S]{0,120}links\.load_number/ },
+  { name: "categorize vendor drill", file: VIEW, pattern: /kind="vendor" id=\{links\.vendor_id\}[\s\S]{0,120}links\.vendor_name/ },
+  { name: "categorize customer drill", file: VIEW, pattern: /kind="customer" id=\{links\.customer_id\}[\s\S]{0,120}links\.customer_name/ },
 ];
 
-function run(root = ROOT) {
-  const fails = [];
-  for (const c of CHECKS) {
-    const abs = path.join(root, c.file);
-    if (!fs.existsSync(abs)) {
-      fails.push(`${c.name}: missing ${c.file}`);
-      continue;
+function readSources() {
+  return Object.fromEntries([...new Set([...CHECKS.map((check) => check.file), MATRIX])].map((file) => [
+    file,
+    fs.readFileSync(path.join(ROOT, file), "utf8"),
+  ]));
+}
+
+function run(sources) {
+  const fails = CHECKS.filter((check) => !check.pattern.test(sources[check.file])).map((check) => check.name);
+  try {
+    const matrix = JSON.parse(sources[MATRIX]);
+    for (const id of CLAIMED_LEAVES) {
+      const leaf = matrix.leaves?.find((item) => item.id === id);
+      if (!leaf?.required?.includes("reverse_link")) fails.push(`exact Required ownership: ${id}:reverse_link`);
     }
-    if (!c.pattern.test(fs.readFileSync(abs, "utf8"))) fails.push(`${c.name}: no EntityLink`);
-  }
-  // Factoring virtual bank tile lives on BankingHome — assert route + home
-  const home = path.join(root, "apps/frontend/src/pages/banking/BankingHome.tsx");
-  if (fs.existsSync(home)) {
-    const src = fs.readFileSync(home, "utf8");
-    if (!/factoring|Factoring|virtual/i.test(src) && !/EntityLink/.test(src)) {
-      fails.push("BankingHome: expected factoring/virtual bank surface or EntityLink");
-    }
+  } catch {
+    fails.push("banking Required matrix parses");
   }
   return fails;
 }
 
 if (process.argv.includes("--selftest")) {
-  const live = run();
-  const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".bank-reverse-selftest-"));
-  try {
-    for (const c of CHECKS) {
-      const abs = path.join(tmp, c.file);
-      fs.mkdirSync(path.dirname(abs), { recursive: true });
-      fs.writeFileSync(abs, "// poison\n");
-    }
-    const planted = run(tmp);
-    if (planted.length < CHECKS.length) {
-      console.error(`${LABEL} SELFTEST FAIL (${planted.length})`);
-      process.exit(1);
-    }
-    console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
-  }
-  if (live.length) {
-    console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
+  const live = readSources();
+  if (run(live).length) {
+    console.error(`${LABEL} SELFTEST FAIL live:\n- ${run(live).join("\n- ")}`);
     process.exit(1);
   }
+  for (const check of CHECKS) {
+    const flags = check.pattern.flags.includes("g") ? check.pattern.flags : `${check.pattern.flags}g`;
+    const plantedSource = live[check.file].replace(new RegExp(check.pattern.source, flags), "/* planted banking reverse defect */");
+    if (plantedSource === live[check.file] || !run({ ...live, [check.file]: plantedSource }).includes(check.name)) {
+      console.error(`${LABEL} SELFTEST FAIL — planted defect stayed green: ${check.name}`);
+      process.exit(1);
+    }
+  }
+  for (const id of CLAIMED_LEAVES) {
+    const plantedMatrix = live[MATRIX].replace(`"id": "${id}"`, `"id": "${id}.removed"`);
+    if (plantedMatrix === live[MATRIX] || !run({ ...live, [MATRIX]: plantedMatrix }).includes(`exact Required ownership: ${id}:reverse_link`)) {
+      console.error(`${LABEL} SELFTEST FAIL — exact leaf ownership stayed green: ${id}`);
+      process.exit(1);
+    }
+  }
+  const mutationCount = CHECKS.length + CLAIMED_LEAVES.length;
+  console.log(`${LABEL} SELFTEST PASS — ${mutationCount}/${mutationCount} planted defects rejected`);
   process.exit(0);
 }
 
-const fails = run();
+const fails = run(readSources());
 if (fails.length) {
   console.error(`${LABEL} FAIL:\n- ${fails.join("\n- ")}`);
   process.exit(1);
