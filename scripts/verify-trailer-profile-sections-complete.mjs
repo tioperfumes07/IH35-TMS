@@ -54,6 +54,12 @@ export function problems(
   if (!/kind="driver"[\s\S]{0,160}?name=\{driver\.name\}[\s\S]{0,100}?noun="Driver"/.test(assignment)) {
     failures.push("trailer profile must render its assigned driver as a canonical reverse drill");
   }
+  if (!/onQuickAssign=\{\(\) => setQuickAssignOpen\(true\)\}/.test(page) || !/equipmentKind: "trailer"/.test(page)) {
+    failures.push("trailer profile must expose the canonical trailer driver quick-assign creator");
+  }
+  if (!/quicksaveEquipmentAssignment\(\{[\s\S]{0,180}?operating_company_id: companyId[\s\S]{0,180}?driver_id: driverId/.test(page)) {
+    failures.push("trailer quick assign must persist the selected driver through the canonical scoped endpoint");
+  }
 
   // P31: a trailer's reverse history must use the persisted assignment FK, include inactive
   // historical loads, and render a canonical link back to the load drawer.
@@ -151,6 +157,8 @@ function selftest() {
     ["assigned driver scope removed", page, service.replace("dca.company_id = $2::uuid", "TRUE"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
     ["assigned driver payload removed", page, service.replace("current_assignment: { attached_to_unit, current_load, assigned_driver }", "current_assignment: { attached_to_unit, current_load }"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
     ["assigned driver drill removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment.replace('kind="driver"', 'kind="vendor"'), 1],
+    ["trailer quick assign trigger removed", page.replace("onQuickAssign={() => setQuickAssignOpen(true)}", ""), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
+    ["trailer quick assign kind regressed", page.replace('equipmentKind: "trailer"', 'equipmentKind: "truck"'), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, assignment, 1],
   ];
   for (const [name, p, s, d, l, v, e, w, a, minimum] of cases) {
     const count = problems(p, s, d, l, v, e, w, a).length;
