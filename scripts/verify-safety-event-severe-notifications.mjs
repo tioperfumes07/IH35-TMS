@@ -17,6 +17,7 @@ const LABEL = "verify-safety-event-severe-notifications";
 const FILES = {
   routes: "apps/backend/src/safety/events/safety-events.routes.ts",
   notification: "apps/backend/src/safety/events/notification.service.ts",
+  dispatcher: "apps/backend/src/notifications/dispatcher.ts",
   workflow: ".github/workflows/locked-guards.yml",
   pkg: "package.json",
 };
@@ -29,6 +30,7 @@ export function assertGuard(sources) {
   const errors = [];
   const routes = stripComments(sources.routes);
   const notification = stripComments(sources.notification);
+  const dispatcher = stripComments(sources.dispatcher);
   const workflow = sources.workflow;
   const pkg = sources.pkg;
 
@@ -54,6 +56,9 @@ export function assertGuard(sources) {
   }
   if (!/0278-safety-gap3-auto-notifications/.test(notification)) {
     errors.push(`${FILES.notification}: source_block must tag 0278-safety-gap3-auto-notifications`);
+  }
+  if (!/SELECT DISTINCT u\.id[\s\S]{0,160}uca\.user_id = u\.id/.test(dispatcher) || /\bu\.uuid\b/.test(dispatcher)) {
+    errors.push(`${FILES.dispatcher}: company role recipients must resolve canonical identity.users.id`);
   }
 
   if (!/from\s+"\.\/notification\.service\.js"/.test(routes)) {
@@ -96,6 +101,7 @@ function selftest() {
         await sendEmail({});
       }
     `,
+    dispatcher: `SELECT DISTINCT u.id FROM identity.users u JOIN org.user_company_access uca ON uca.user_id = u.id`,
     workflow: 'run: npm run verify:safety-event-severe-notifications\nverify-safety-event-severe-notifications.mjs',
     pkg: '"verify:safety-event-severe-notifications": "node scripts/verify-safety-event-severe-notifications.mjs"',
   };
@@ -107,9 +113,9 @@ function selftest() {
 
   const bad = {
     ...good,
-    routes: good.routes.replace("await notifySevereSafetyEvent(client", "await /* removed */(client"),
+    dispatcher: good.dispatcher.replaceAll("u.id", "u.uuid"),
   };
-  if (!assertGuard(bad).some((e) => e.includes("notifySevereSafetyEvent"))) {
+  if (!assertGuard(bad).some((e) => e.includes("identity.users.id"))) {
     console.error(`[${LABEL}] --selftest FAIL: bad fixture not rejected`, assertGuard(bad));
     process.exit(1);
   }
@@ -122,7 +128,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-for (const rel of [FILES.routes, FILES.notification, FILES.workflow, FILES.pkg]) {
+for (const rel of [FILES.routes, FILES.notification, FILES.dispatcher, FILES.workflow, FILES.pkg]) {
   if (!fs.existsSync(path.join(ROOT, rel))) {
     console.error(`[${LABEL}] FAILED — missing ${rel}`);
     process.exit(1);
@@ -132,6 +138,7 @@ for (const rel of [FILES.routes, FILES.notification, FILES.workflow, FILES.pkg])
 const errs = assertGuard({
   routes: read(FILES.routes),
   notification: read(FILES.notification),
+  dispatcher: read(FILES.dispatcher),
   workflow: read(FILES.workflow),
   pkg: read(FILES.pkg),
 });
