@@ -107,6 +107,9 @@ const MATRIX_CACHE_MS = 300_000;
 /** Survives in-process cache miss / SIGTERM restart so /program/matrix does not paint zeros. */
 const SYSTEM_LAST_GOOD_PATH =
   process.env.IH35_MATRIX_LAST_GOOD?.trim() || "/tmp/ih35-system-matrix-last.json";
+/** MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS — same disk-survives-restart directory used for the
+ * per-module last-good snapshot (one file per moduleId+probeScope), mirroring SYSTEM_LAST_GOOD_PATH. */
+const MODULE_LAST_GOOD_DIR = process.env.IH35_MATRIX_LAST_GOOD_DIR?.trim() || "/tmp";
 
 export type MatrixCellState = "live" | "built" | "audited" | "unaudited" | "na" | "done";
 
@@ -1301,10 +1304,47 @@ function leafColumnDoneReason(
   return leafColumnBuiltReason(leaf, colId, moduleId);
 }
 
-export async function buildModuleMatrix(
-  moduleId: string,
-  userUuid?: string,
-): Promise<ModuleMatrixPayload> {
+const moduleMatrixInflight = new Map<string, Promise<ModuleMatrixPayload>>();
+
+function moduleLastGoodPath(cacheKey: string): string {
+  // cacheKey is `${moduleId}:${probeScope}` — both segments are already slug-safe (SUPPORTED set /
+  // "neon_live" | "committed_stale"), so a direct filename join is safe.
+  return path.join(MODULE_LAST_GOOD_DIR, `ih35-module-matrix-last-${cacheKey}.json`);
+}
+
+async function readModuleLastGood(cacheKey: string): Promise<ModuleMatrixPayload | null> {
+  try {
+    const raw = await readFile(moduleLastGoodPath(cacheKey), "utf8");
+    const parsed = JSON.parse(raw) as ModuleMatrixPayload;
+    if (parsed && Array.isArray(parsed.leaves) && Array.isArray(parsed.columns)) {
+      return parsed;
+    }
+  } catch {
+    /* corrupt/missing last-good is not a 503 */
+  }
+  return null;
+}
+
+async function persistModuleLastGood(cacheKey: string, payload: ModuleMatrixPayload): Promise<void> {
+  try {
+    await writeFile(moduleLastGoodPath(cacheKey), JSON.stringify(payload));
+  } catch {
+    /* Render ephemeral FS — in-memory cache still holds */
+  }
+}
+
+/**
+ * MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS — `scope=module&module=<x>` used to await the full
+ * synchronous leaf×column projection directly on the request path with only a plain 5-min TTL
+ * cache and NO fallback: a cold cache (fresh deploy, or simply idle >5 min with no `scope=system`
+ * poll to piggyback on) meant every request blocked on the entire computation, with no inflight
+ * dedup either (a thundering herd of concurrent requests for the same module each redid the full
+ * work). `buildSystemModuleMatrix` already solved this exact class of problem for itself
+ * (`systemCache`/`systemInflight`/`SYSTEM_LAST_GOOD_PATH`, see the "cold 4.5MB sync freeze" comment
+ * on `warmSystemModuleMatrixAtBoot`) — this wrapper applies the identical stale-while-revalidate +
+ * inflight-dedup + disk-persisted-last-good pattern per module instead of leaving it unprotected.
+ */
+export async function buildModuleMatrix(moduleId: string, userUuid?: string): Promise<ModuleMatrixPayload> {
   const now = Date.now();
   const cacheKey = `${moduleId}:${userUuid ? "neon_live" : "committed_stale"}`;
   const hit = moduleMatrixCache.get(cacheKey);
@@ -1312,6 +1352,40 @@ export async function buildModuleMatrix(
     return hit.payload;
   }
 
+  const runCompute = (): Promise<ModuleMatrixPayload> => {
+    let inflight = moduleMatrixInflight.get(cacheKey);
+    if (!inflight) {
+      inflight = computeModuleMatrixUncached(moduleId, cacheKey).finally(() => {
+        moduleMatrixInflight.delete(cacheKey);
+      });
+      moduleMatrixInflight.set(cacheKey, inflight);
+    }
+    return inflight;
+  };
+
+  // Stale-while-revalidate: an in-memory hit just expired (still holds the last payload we ever
+  // computed for this key) — serve it immediately and refresh in the background instead of
+  // blocking this request on a fresh computation.
+  if (hit) {
+    void runCompute();
+    return hit.payload;
+  }
+
+  // No in-memory cache at all (fresh deploy / restarted process) — fall back to the disk-persisted
+  // last-good snapshot so a cold process doesn't block the FIRST request on the full computation.
+  const lastGood = await readModuleLastGood(cacheKey);
+  if (lastGood) {
+    moduleMatrixCache.set(cacheKey, { atMs: now - MATRIX_CACHE_MS, payload: lastGood });
+    void runCompute();
+    return lastGood;
+  }
+
+  // Genuinely nothing cached anywhere (first-ever request for this module on this box) — no choice
+  // but to await the real computation, same as before, but deduped against concurrent callers.
+  return runCompute();
+}
+
+async function computeModuleMatrixUncached(moduleId: string, cacheKey: string): Promise<ModuleMatrixPayload> {
   const required = await loadRequiredMap(moduleId);
   const [ledger, completion, probePack, guardHits, waveHits, outboxClicked] = await Promise.all([
     loadLedgerRows(),
@@ -1490,7 +1564,10 @@ export async function buildModuleMatrix(
     },
   };
 
-  moduleMatrixCache.set(cacheKey, { atMs: now, payload });
+  moduleMatrixCache.set(cacheKey, { atMs: Date.now(), payload });
+  // Fire-and-forget: never delay the response for the last-good disk write (same pattern as
+  // persistSystemLastGood).
+  void persistModuleLastGood(cacheKey, payload);
   return payload;
 }
 
@@ -2052,6 +2129,7 @@ export function warmSystemModuleMatrixAtBoot(log?: {
 /** Test helper — clear request cache between assertions. */
 export function clearModuleMatrixCache(): void {
   moduleMatrixCache.clear();
+  moduleMatrixInflight.clear();
   systemCache = null;
   systemInflight = null;
   ledgerCache = null;

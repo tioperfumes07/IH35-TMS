@@ -920,7 +920,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         });
       }
       try {
-        const payload = await buildModuleMatrix(moduleId);
+        const payload = await buildModuleMatrix(moduleId, req.user?.uuid);
         const { prodReadAt, prodReadSource } = await stampProdReadAt(req);
         reply.header("cache-control", "no-store");
         return reply.send({
