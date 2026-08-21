@@ -9,6 +9,7 @@ const REQUIRED = [
   "verify-cash-forecast-driver-linkage.mjs", "verify-compliance-driver-wiring.mjs",
   "verify-da-test-driver-linkage.mjs", "verify-dispatch-driver-wiring.mjs",
   "verify-driver-compliance-history-double-route.mjs", "verify-driver-customer-hidden-surface-reverse-links.mjs",
+  "verify-driver-edit-save-reload-cache-key.mjs",
   "verify-driver-incidents-reverse.mjs", "verify-driver-load-reverse-link-wired.mjs",
   "verify-driver-report-driver-reverse.mjs", "verify-driver-report-load-reverse.mjs",
   "verify-driver-team-profile-reverse.mjs", "verify-driver-team-split-config-reverse.mjs",
@@ -47,4 +48,4 @@ if (problems.length) {
   console.error(`${LABEL} FAIL\n${problems.map((problem) => `  - ${problem}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — 33 driver-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — 34 driver-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);

@@ -8,6 +8,7 @@ const guards = [
   "verify-dispatch-driver-wiring.mjs",
   "verify-driver-compliance-history-double-route.mjs",
   "verify-driver-customer-hidden-surface-reverse-links.mjs",
+  "verify-driver-edit-save-reload-cache-key.mjs",
   "verify-driver-incidents-reverse.mjs",
   "verify-driver-load-reverse-link-wired.mjs",
   "verify-driver-report-driver-reverse.mjs",
