@@ -70,13 +70,19 @@ const BUSINESS_FEED_CARDS: BusinessFeedCard[] = [
   { id: "reconcile", title: "Reconciliation available", body: "Your bank accounts are ready to reconcile for this period.", cta: "Start reconciling", to: "/banking/reconcile" },
 ];
 
+// CLS-CHROME-LAW-8 (item 8, "no box-in-box... Primary buttons: + Create / + Book only (never +
+// New / + Add)"): these were bare verbs with no "+ " prefix, and one used the forbidden "Add"
+// verb. Relabeled to match each destination's own canonical create-button text (ExpensesListPage
+// "+ Create", PaymentsListPage "+ Record Payment", BillPaymentsListPage "+ Record Bill Payment",
+// AccountingHubPage "+ Create Manual JE") so Home's quick-actions say the same thing the page they
+// navigate to says.
 const CREATE_ACTIONS = [
-  { label: "Create invoice", to: "/accounting/invoices" },
-  { label: "Record expense", to: "/accounting/expenses" },
-  { label: "Receive payment", to: "/accounting/payments" },
-  { label: "Create bill", to: "/accounting/bills/vendor" },
-  { label: "Add bank deposit", to: "/banking/transactions" },
-  { label: "Journal entry", to: "/accounting/journal-entries" },
+  { label: "+ Create Invoice", to: "/accounting/invoices" },
+  { label: "+ Create Expense", to: "/accounting/expenses" },
+  { label: "+ Record Payment", to: "/accounting/payments" },
+  { label: "+ Create Bill", to: "/accounting/bills/vendor" },
+  { label: "+ Record Deposit", to: "/banking/transactions" },
+  { label: "+ Create Manual JE", to: "/accounting/journal-entries" },
 ];
 
 type Props = {
