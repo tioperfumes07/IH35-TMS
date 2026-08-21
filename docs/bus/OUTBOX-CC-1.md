@@ -1,3 +1,15 @@
+- 2026-08-21T13:20Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
+  Fleet/scenario-hops triage came back clean -- scenario dots green (settlement=10, advance=2,
+  deductions=1, escrow=1, ap=3, maintenance=6), all prior fleet OPEN rows already fixed/stale on
+  re-verify. One candidate surfaced: profit-per-truck.routes.ts + maintenance-cost-per-unit.routes.ts
+  sum work_orders.total_actual_cost with no voided_at filter, unlike 10 sibling maintenance
+  queries. Drafted the mechanical fix, then CAUGHT AND REVERTED it before shipping: the existing
+  guard that enforces this pattern elsewhere (verify-work-order-queries-exclude-voided.mjs)
+  explicitly scopes profitability/historical-cost reports OUT of its own enforcement with a
+  comment calling it "an accounting judgement, not a bug" -- shipping my fix would have silently
+  overridden a prior considered decision. Filed OPEN (#13454, merged) with the tension stated
+  plainly, routed for a one-sentence owner call rather than resolved either direction blind.
+  Continuing down the ladder, no idle, 4-min fast-merge cadence.
 - 2026-08-21T13:15Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5689 (#13449, merged): ECON-014-CASH-ADVANCE-TYPE-PURPOSE-COLLAPSE -- Create Advance
   modal's purposeOptions deduped catalog rows BY their mapped purpose value, so 4 of USMCA's 6 real
