@@ -1653,6 +1653,7 @@ async function buildCashAdvanceLines(
     status: string;
     posting_date: string;
     display_id: string | null;
+    from_bank_account_id: string | null;
   }>(
     `
       SELECT
@@ -1660,7 +1661,8 @@ async function buildCashAdvanceLines(
         requested_amount_cents::bigint,
         status::text,
         COALESCE(reviewed_at, submitted_at, created_at)::date::text AS posting_date,
-        display_id
+        display_id,
+        from_bank_account_id::text
       FROM driver_finance.cash_advance_requests
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1681,13 +1683,29 @@ async function buildCashAdvanceLines(
   const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
   const debitAccountId = mapped.account_id;
 
-  // ACCT-F5653 — validate a caller-supplied credit_account_id belongs to THIS company's chart of
-  // accounts before it is ever written into journal_entry_postings; see verifyCreditAccountBelongsToCompany.
-  const creditAccount = creditAccountId
-    ? await verifyCreditAccountBelongsToCompany(client, operatingCompanyId, creditAccountId)
-    : await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
-  if (!creditAccount) {
-    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for cash advance is missing");
+  // ACCT-F5687 — same precedence as buildDriverAdvanceLines' CHAIN-04 fix (ACCT-F358): an explicit
+  // caller-supplied credit_account_id still overrides, THEN the request's own from_bank_account_id
+  // resolves via the bank->GL bridge (banking.bank_accounts.ledger_account_id) — fail LOUD if that
+  // bank has no bridge, never a silent clearing-account fallback — and only when the request names
+  // no bank at all does the ACCT-F345 fail-closed company default apply.
+  let creditAccount: string | null;
+  if (creditAccountId) {
+    // ACCT-F5653 — validate a caller-supplied credit_account_id belongs to THIS company's chart of
+    // accounts before it is ever written into journal_entry_postings; see verifyCreditAccountBelongsToCompany.
+    creditAccount = await verifyCreditAccountBelongsToCompany(client, operatingCompanyId, creditAccountId);
+  } else if (request.from_bank_account_id) {
+    creditAccount = await resolveBankLedgerAccountId(client, operatingCompanyId, request.from_bank_account_id);
+    if (!creditAccount) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${request.from_bank_account_id}`
+      );
+    }
+  } else {
+    creditAccount = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
+    if (!creditAccount) {
+      throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for cash advance is missing");
+    }
   }
 
   const amount = Number(request.requested_amount_cents);
@@ -1853,10 +1871,11 @@ async function buildDriverReimbursementLines(
     posting_date: string | null;
     paid_at: string | null;
     created_at: string;
+    from_bank_account_id: string | null;
   }>(
     `
       SELECT id::text, amount_cents::text, status::text, reimbursement_type::text,
-             posting_date::text, paid_at::text, created_at::text
+             posting_date::text, paid_at::text, created_at::text, from_bank_account_id::text
       FROM driver_finance.driver_reimbursements
       WHERE operating_company_id = $1::uuid AND id::text = $2
       LIMIT 1
@@ -1881,13 +1900,29 @@ async function buildDriverReimbursementLines(
   if (!debitAccountId) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role designation for driver reimbursement");
   }
-  // ACCT-F5653 — validate a caller-supplied credit_account_id belongs to THIS company's chart of
-  // accounts before it is ever written into journal_entry_postings; see verifyCreditAccountBelongsToCompany.
-  const creditAccount = creditAccountId
-    ? await verifyCreditAccountBelongsToCompany(client, operatingCompanyId, creditAccountId)
-    : await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
-  if (!creditAccount) {
-    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver reimbursement is missing");
+  // ACCT-F5687 — same precedence as buildDriverAdvanceLines' CHAIN-04 fix (ACCT-F358): an explicit
+  // caller-supplied credit_account_id still overrides, THEN the reimbursement's own
+  // from_bank_account_id resolves via the bank->GL bridge — fail LOUD if that bank has no bridge,
+  // never a silent clearing-account fallback — and only when the reimbursement names no bank at all
+  // does the ACCT-F345 fail-closed company default apply.
+  let creditAccount: string | null;
+  if (creditAccountId) {
+    // ACCT-F5653 — validate a caller-supplied credit_account_id belongs to THIS company's chart of
+    // accounts before it is ever written into journal_entry_postings; see verifyCreditAccountBelongsToCompany.
+    creditAccount = await verifyCreditAccountBelongsToCompany(client, operatingCompanyId, creditAccountId);
+  } else if (reimb.from_bank_account_id) {
+    creditAccount = await resolveBankLedgerAccountId(client, operatingCompanyId, reimb.from_bank_account_id);
+    if (!creditAccount) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${reimb.from_bank_account_id}`
+      );
+    }
+  } else {
+    creditAccount = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
+    if (!creditAccount) {
+      throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver reimbursement is missing");
+    }
   }
 
   const postingDate =

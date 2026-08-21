@@ -16,7 +16,8 @@ import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isOwnerOrAdmin } from "../bulk/bulk-update.factory.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { postSourceTransaction } from "../accounting/posting-engine.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { updateBankBalance } from "../accounting/bills.service.js";
 import { logger } from "../observability/structured-logger.js";
 
 /** Per-entity money-posting flag (auto-classified per-entity-only by the `_GL_POSTING_ENABLED` pattern). */
@@ -36,6 +37,10 @@ export type CreateDriverReimbursementInput = {
   load_id?: string | null;
   pay_mode?: "immediate" | "settlement";
   evidence_doc_id?: string | null;
+  // ACCT-F5687 — the bank the 'immediate' pay-out will credit at post time (resolved via the same
+  // bank->GL bridge every other bank-facing poster uses). Optional/nullable: a reimbursement that
+  // never names a bank still posts, via the ACCT-F345 fail-closed company default.
+  from_bank_account_id?: string | null;
 };
 
 export type CreateDriverReimbursementResult =
@@ -69,9 +74,9 @@ export async function createDriverReimbursementCore(
     `
       INSERT INTO driver_finance.driver_reimbursements (
         operating_company_id, driver_id, load_id, reimbursement_type, amount_cents, reason, pay_mode,
-        status, evidence_doc_id, created_by_user_id
+        status, evidence_doc_id, created_by_user_id, from_bank_account_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
       RETURNING id
     `,
     [
@@ -84,6 +89,7 @@ export async function createDriverReimbursementCore(
       body.pay_mode ?? "settlement",
       body.evidence_doc_id ?? null,
       actorUserUuid,
+      body.from_bank_account_id ?? null,
     ]
   );
   const reimbursementId = String(res.rows[0]?.id ?? "");
@@ -135,7 +141,8 @@ export async function payDriverReimbursementImmediately(
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     const cur = await client.query(
       `
-        SELECT id::text, status::text, posting_date::text, journal_entry_id::text
+        SELECT id::text, status::text, posting_date::text, journal_entry_id::text,
+               amount_cents::text, from_bank_account_id::text
         FROM driver_finance.driver_reimbursements
         WHERE operating_company_id = $1::uuid AND id::text = $2
         LIMIT 1
@@ -143,8 +150,12 @@ export async function payDriverReimbursementImmediately(
       `,
       [companyId, input.reimbursement_id]
     );
-    const row = cur.rows[0] as { status?: string; posting_date?: string | null; journal_entry_id?: string | null } | undefined;
+    const row = cur.rows[0] as
+      | { status?: string; posting_date?: string | null; journal_entry_id?: string | null; amount_cents?: string; from_bank_account_id?: string | null }
+      | undefined;
     if (!row) return { ok: false as const, code: 404, error: "reimbursement_not_found" };
+    const amountCents = Math.round(Number(row.amount_cents ?? "0"));
+    const fromBankAccountId = row.from_bank_account_id ?? null;
 
     // Idempotent: already paid -> return current state (allow the GL retry below to fill a missing JE).
     if (String(row.status) === "paid") {
@@ -152,6 +163,8 @@ export async function payDriverReimbursementImmediately(
         ok: true as const,
         postingDate: String(row.posting_date ?? new Date().toISOString().slice(0, 10)),
         alreadyPaid: true,
+        amountCents,
+        fromBankAccountId,
       };
     }
     if (String(row.status) !== "pending") {
@@ -187,7 +200,7 @@ export async function payDriverReimbursementImmediately(
       AUDIT_TAG
     );
 
-    return { ok: true as const, postingDate, alreadyPaid: false };
+    return { ok: true as const, postingDate, alreadyPaid: false, amountCents, fromBankAccountId };
   });
 
   if (!phase1.ok) return phase1;
@@ -205,15 +218,28 @@ export async function payDriverReimbursementImmediately(
     return { ok: true, reimbursementId: input.reimbursement_id, posted: false, journalEntryId: null, postingDate: phase1.postingDate };
   }
 
-  const posting = await postSourceTransaction(
-    {
-      operating_company_id: companyId,
-      source_transaction_type: "driver_reimbursement",
-      source_transaction_id: input.reimbursement_id,
-      credit_account_id: input.credit_account_id ?? null,
-    },
-    { userId: actorUserUuid }
-  );
+  // ACCT-F5687 — bank-cache decrement is ATOMIC with the JE post (postSourceTransactionInClientTx runs
+  // on THIS client), same shape as ACCT-F358's driver-advance disburse: the bank-balance cache and the
+  // GL cash account are separate stores, so recording -amount in both is cache coherence, not double
+  // counting, and a posting failure now rolls back the decrement with it. Only decrement when the
+  // reimbursement names its own bank AND the caller did not override the credit account at pay time
+  // (an explicit credit_account_id is not guaranteed to be a banking.bank_accounts row).
+  const posting = await withCurrentUser(actorUserUuid, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+    if (!input.credit_account_id && phase1.fromBankAccountId) {
+      await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
+    }
+    return postSourceTransactionInClientTx(
+      client,
+      {
+        operating_company_id: companyId,
+        source_transaction_type: "driver_reimbursement",
+        source_transaction_id: input.reimbursement_id,
+        credit_account_id: input.credit_account_id ?? null,
+      },
+      { userId: actorUserUuid }
+    );
+  });
 
   try {
     await withCurrentUser(actorUserUuid, async (client) => {
