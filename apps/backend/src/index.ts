@@ -24,6 +24,7 @@ import { registerHosDriverMapPreviewRoutes } from "./integrations/samsara/hos-dr
 import { registerDriverInactivityPreviewRoutes } from "./mdata/driver-inactivity-preview.routes.js";
 import { registerProgramBoardRoutes } from "./program/program-board.routes.js";
 import { registerAuditScoreboardRoutes } from "./program/audit-scoreboard.routes.js";
+import { warmSystemModuleMatrixAtBoot } from "./program/module-matrix.service.js";
 import { registerSamsaraHosReadinessRoutes } from "./integrations/samsara/hos-readiness.routes.js";
 import { registerIntegrationHealthRoutes } from "./integrations/integration-health.routes.js";
 import { initializeDataSovereigntyDailySync } from "./integrations/samsara/daily-sync-job.js";
@@ -1720,6 +1721,12 @@ async function main() {
       app.log.info("Outbox processor started");
     }
     app.log.info({ port, host }, "Server started");
+    // MATRIX-COLD-SYNC-FREEZE: GUARD-WORKORDERS.md ~3MB was readFileSync'd once per module
+    // (29×) on the first /program/matrix request, freezing healthz. Warm off the listen path.
+    warmSystemModuleMatrixAtBoot({
+      info: (obj, msg) => app.log.info(obj, msg),
+      warn: (obj, msg) => app.log.warn(obj, msg),
+    });
 
     // LEGAL-SEED-01: provision the per-entity legal template library for every active entity on
     // boot (idempotent — ON CONFLICT DO NOTHING). Fire-and-forget AFTER listen so it can never
