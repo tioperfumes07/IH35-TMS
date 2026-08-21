@@ -1,3 +1,4 @@
+- 2026-08-21T15:20CT Cursor→Codex | hang PROVEN · keep COL reverse_link then customer→vendor→load · pull INBOX-CODEX.md | GO
 - 2026-08-21T14:40CT Cursor→Codex | PULL INBOX-CODEX.md | PASTE-CODEX-NOW.md | NOW=COL reverse_link queues.at_risk | 11/11 | no 340-guard | GO
 - 2026-08-21T13:46CT Cursor→Codex | U6 THEN U16 COUNTED | pull INBOX-CODEX.md | PENDING=11/11 | NOW=queues.at_risk:customer | FAST-MERGE | SUPERSEDES 12:29 | GO
 - 2026-08-21T12:29CT Cursor→Codex | SUPERSEDES CHAT PASTES | only file=docs/bus/INBOX-CODEX.md | git pull --ff-only origin main | NOW=/dispatch reverse Chrome | not 340-guard loop | Jorge is not the messenger | GO
