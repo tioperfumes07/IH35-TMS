@@ -17,6 +17,11 @@ export function useLiveDebt(driverId: string | null, operatingCompanyId: string 
     error: null,
   });
   const timerRef = useRef<number | null>(null);
+  // LV-SETTLEMENT-DEBT-REFRESHING-PERMANENT-STALE — the interval below used to only FLIP isStale
+  // to true and never actually re-fetch, so the UI stuck on "Refreshing..." forever. This guards
+  // against firing an overlapping refresh() while one is already in flight (the 5s interval is
+  // itself the retry backoff on failure — no separate timer needed).
+  const refreshingRef = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!driverId || !operatingCompanyId) return;
@@ -45,13 +50,22 @@ export function useLiveDebt(driverId: string | null, operatingCompanyId: string 
         if (!computedAtRaw) return current;
         const computedAt = new Date(computedAtRaw).getTime();
         const stale = Date.now() - computedAt > 5000;
+        // LV-SETTLEMENT-DEBT-REFRESHING-PERMANENT-STALE — actually trigger the refresh a stale
+        // reading implies, instead of only flagging staleness and leaving the UI stuck showing
+        // "Refreshing..." with no request ever in flight to resolve it.
+        if (stale && !refreshingRef.current) {
+          refreshingRef.current = true;
+          void refresh().finally(() => {
+            refreshingRef.current = false;
+          });
+        }
         return stale !== current.isStale ? { ...current, isStale: stale } : current;
       });
     }, 5000);
     return () => {
       if (timerRef.current !== null) window.clearInterval(timerRef.current);
     };
-  }, []);
+  }, [refresh]);
 
   const displayDebt = useMemo(() => {
     if (state.isStale) return "?";

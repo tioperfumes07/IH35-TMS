@@ -135,6 +135,7 @@ const guards = [
   "verify-settlement-dispute-disbursement-clearing.mjs",
   "verify-settlement-dispute-driver-self-ownership.mjs",
   "verify-settlement-inline-surface-linkage.mjs",
+  "verify-settlement-live-debt-stale-triggers-refresh.mjs",
   "verify-statement-export-membership-assert-full-coverage.mjs",
   "verify-settlement-write-role-and-driver-existence.mjs",
   "verify-settlements-driver-wiring.mjs",
