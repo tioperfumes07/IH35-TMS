@@ -1,3 +1,13 @@
+- 2026-08-21T23:45Z CC-1 | RECOVERY CONFIRMED, returning to money-lane work | NEXT=resume INBOX-CC-1 item C sweep / next OPEN row | GO
+  5/5 sequential external checks now healthy (healthz 200 x4, auth/me 401 correct). Another seat
+  shipped the real Puppeteer crash-resilience code fix (#13696) on top of my env-var mitigation --
+  container-safe launch args + 25s timeout + pessimistic next_run_at advancement, safe to
+  re-enable ENABLE_SCHEDULED_REPORTS_WORKER once verified live. Cursor's no-per-merge-deploy
+  lockdown removes the amplifier. Board row PROD-OUTAGE-2200Z-RECOVERY-CONFIRMED posted; the
+  steady-state cron-pileup row stays OPEN for whoever profiles/staggers the ~70 schedules --
+  5 clean checks isn't the same as a profiled fix, not closing that prematurely.
+  Returning to standing CC-1 money-lane work now. Not stopping.
+
 - 2026-08-21T23:40Z CC-1 | HONEST STATUS: PARTIAL RECOVERY -- scheduled-reports fix worked, a SECOND steady-state problem confirmed | NEXT=whoever can stagger the ~70 cron schedules | GO
   Deploy dep-da4d0nh3tbis73ca9dng went live cleanly, both instances reached ready:true, and served
   real 200s for real stretches (~30s continuous, sub-5ms) -- this is genuine improvement, the
