@@ -1,28 +1,43 @@
-# CODER INSTRUCTIONS NOW · 2026-08-20 22:27 CT
+# CODER INSTRUCTIONS NOW · 2026-08-20 23:23 CT
 
 **Do not deviate.** Full text: `docs/bus/FINAL-CODER-INSTRUCTIONS-UNTIL-DONE-2026-08-20.md`  
 Ports: `docs/bus/CHROME-PORTS-LOCKED.md` · Shared: `docs/bus/SHARED-NOW.md`
 
-**Never idle. Never pause.** Finish a module’s **your column** → next module **same turn**. Do not wait for Jorge.
+**Never idle.** Finish **your column** on the current certify module → next module same turn.
 
-**HARD:** `docs/bus/NO-PERSISTENT-MATRIX-TAB.md` — close `/program/matrix` and leftover app tabs. Do not park Live Chrome. One leaf, then close.
+**HARD:** `docs/bus/NO-PERSISTENT-MATRIX-TAB.md`
 
-### Order (law)
+### Certify order (owner 23:23 CT)
 
-**URGENT 6 first:** `accounting` → `banking` → `settlements` → `factoring` → `dispatch` → `vendors`  
-**Then rest of URGENT 10:** `customers` → `drivers` → `fleet` → `lists` (Items — **not inventory**)  
-**Then WAVE 2 (all remaining modules)** until system Miss C = 0 and READY ✓.
+**URGENT 6 (certify first, swarm):**  
+`accounting` → `banking` → `settlements` → `factoring` → `dispatch` → `vendors`
 
-Complete bar = Fully-Wired **1–12** (create→canonical · money when owed · F+R · surface bar · chrome · pickers · RLS · guard · **Live Chrome last**). McLeod + QBO + NetSuite + Alvys quality. No TMS→QBO write-back.
+**URGENT 14 (after the 6):** those 6 plus  
+`customers` → `drivers` → `fleet` → `lists` → `safety` → `maintenance` → `insurance` → `legal`  
+**Not inventory.** Not Trucking. Not Transportation. No QBO.
 
-### This hour NOW (columns share the module)
+Then remaining WAVE 2.
+
+Complete bar = Fully-Wired **1–12**. Box 3 tags ≠ certified.
+
+### Seat split (owner 23:23 CT)
+
+| Seat | Owns | Does **not** own |
+|------|------|------------------|
+| **CC-3** | Built **march** down 6 → 14 → WAVE 2 (`qbo_chrome` / `picker_law` / surface on **this** module). If 0 unpaid, **next module**. | Leftovers, other-wave residue, “monitor” |
+| **Cursor** | Clicked + **leftovers** + other modules/waves CC-3 already zeroed + lead + scenarios FE | — |
+| CC-1 | money on 6 then 14 | — |
+| CC-2 | Box 4 Live / Miss C | — |
+| Codex | reverse + connectivity on 6 then 14 | Clicked |
+
+### This hour NOW
 
 | Seat | Port | NOW |
 |------|------|-----|
-| CC-1 | 9223 | **settlements money** then factoring money · then remaining 6→10→WAVE2 |
-| CC-2 | 9224 | **settlements Box 4 Live** then factoring · same ladder |
-| CC-3 | 9225 | **settlements Built** then factoring Built · same ladder |
-| Codex | 9226 | **settlements reverse + connectivity** then factoring · same ladder |
-| Cursor | 9222 | Lead + **settlements Clicked** · FAST-MERGE bus · same ladder |
+| CC-1 | 9223 | settlements money → next of 6 |
+| CC-2 | 9224 | WAVE 2 Box 4 + scenarios |
+| CC-3 | 9225 | WAVE 2 Built march — **no leftovers** |
+| Codex | 9226 | dispatch reverse |
+| Cursor | 9222 | settlements Clicked + leftovers/other waves |
 
-FAST-MERGE 4-min law ON. PREPEND ACK. Report to Jorge **only** with live proof (or UNVERIFIED + named blocker).
+FAST-MERGE ON. PREPEND ACK. Jorge is not the messenger.

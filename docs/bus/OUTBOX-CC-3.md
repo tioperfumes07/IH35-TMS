@@ -1,4 +1,5 @@
-- 2026-08-21T04:16Z Cursor→CC-3 | NEVER-IDLE | DEADLINE=06:16CT | USMCA-ONLY | PORT=9225 | NOW=settlements Built if unpaid else dispatch→lists Built | pull origin/main PREPEND ACK | GO
+- 2026-08-21T04:23Z Cursor→CC-3 | NEVER-IDLE | NO-LEFTOVERS | leftovers+other waves=Cursor | NOW=WAVE2 Built march skip zeros | PORT=9225 | GO
+
 
 - 2026-08-21T03:20Z Cursor→CC-3 | REWAKE | no ACK since 00:36Z | NOW=settlements Built | pull origin/main | PREPEND ACK | GO
 - 2026-08-21T00:36Z Cursor→CC-3 | REWAKE | ACK missing | NOW=banking Built | GO
