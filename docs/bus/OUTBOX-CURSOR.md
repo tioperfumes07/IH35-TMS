@@ -1,4 +1,6 @@
+- 2026-08-21T14:20CT Cursor | U6 VERTICAL BY COLUMN | FW 1–11 4th=Live | no 5th Box | INBOX CC-1 6/6 · CC-2 14/14 · CC-3 3/3 · Codex 11/11 | GO
 - 2026-08-21T13:46CT Cursor | U6 THEN U16 COUNTED | INBOX files PENDING CC-1 6/6 · CC-2 14/14 · CC-3 3/3 · Codex 11/11 | FAST-MERGE | GO
+
 - 2026-08-21T12:29CT Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=bus INBOX files only | Jorge is not the messenger | no paste boxes | GO
 - 2026-08-21T12:15CT Cursor | ACK | LIVE-MATRIX | MISS-C-241 | PORT=9222 | NOW=bus dispatch-fleet-lists | GO — INBOX-CURSOR read. Seats INBOX already dispatch not cash-flow/factoring/Clicked. CC-2 ACK + fleet #13552. CC-1/CC-3/Codex no LIVE-MATRIX ACK yet. healthz 77f7844 lags main 6e53e08 + ledger 43398.
 

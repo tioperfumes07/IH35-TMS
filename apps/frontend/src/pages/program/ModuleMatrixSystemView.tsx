@@ -468,12 +468,19 @@ export function ModuleMatrixSystemView() {
         </div>
       ) : apiLive ? (
         <div className="banner live" data-testid="module-matrix-system-live">
-          <b>Clicked count ≠ 12 Clicked green.</b> The big Clicked number is credited cells.
-          Columns <b>1–11</b> 4th ✓ = Chrome Clicked on that item's mapped Required cells (not keyword
-          Live). Column <b>12 Clicked</b> is 4/4 only when Clicked = every Required cell. Partial =
-          yellow/red until 100%.
-          Urgent-6 100% = Fully-Wired 1–12 on accounting→customers→drivers→vendors→dispatch→safety.
-          Do not add leaves. Ignore Box 4 keyword fan-out. Money cells count in Frozen / Miss C / READY. Miss C = Required cells that are not Box 4 Live (Clicked 100% does not zero Miss C). READY Live✓ when Miss C = 0.
+          <b>Clicked count ≠ Fully-Wired launch.</b> The big Clicked number is credited cells.
+          Columns <b>1 Place … 11 Guard</b> already exist on this board — 4th ✓ = Box 4 Live on that
+          item's mapped Required cells (same as Miss C). Column <b>12 Clicked</b> is 4/4 only when
+          Clicked = every Required cell. Partial = yellow/red until 100%.
+          Urgent 6 = accounting → banking → settlements → factoring → dispatch → vendors. Finish leftover
+          dispatch Live cells <b>vertically by column</b> (picker_law → trailer → reverse_link → customer →
+          vendor → load → gl_je), then rest of Urgent 16.
+          Five scenario events are not a 5th Box and not new Required.json leaves (maps
+          frozen). They are named hops on Program: revrec · invoice+evidence · bank-path · real fuel ·
+          factoring advance. CC-1 still owes them when Miss C is 0.
+          Do not add Required leaves. Do not add a 5th Verified Box. Ignore Box 4 keyword fan-out. Money
+          cells count in Frozen / Miss C / READY. Miss C = Required cells that are not Box 4 Live (Clicked
+          100% does not zero Miss C). READY Live✓ when Miss C = 0.
           Urgent 16 A–Z first ({URGENT_16_MODULE_IDS.length}), then remainder A–Z ({restRows.length}).
           {tip ? (
             <>
