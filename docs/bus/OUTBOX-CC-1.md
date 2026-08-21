@@ -1,3 +1,21 @@
+- 2026-08-21T14:05Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5691 (#13477, merged): applyToBill's cap check (apply.service.ts's separate
+  payment_applications/target_kind='bill' cash-application path) never netted its own prior
+  applications -- bills.paid_cents never learns about this path at all, so a second application to
+  the same bill silently overshot with no bound. Self-caught a WRONG fix mid-flight: drafted a
+  trigger-based write to bills.paid_cents, then read ACCT-F5623's own comment on that exact column
+  ("four independent writers... folding credits in would fight those writers and corrupt on the
+  next void") and realized I was about to reproduce the class of bug that comment exists to
+  prevent. Deleted the migration, closed the claim PR, redesigned as pure read-side netting
+  mirroring ACCT-F5623 exactly -- no migration needed. Threaded through every bill-open-balance
+  reader (payBill, bulk mark_paid, vendor bill-payments route, AP aging x2), not just the one
+  defect that was reported, so the class is closed consistently. 2 new mutation-proven regression
+  tests, extended (not replaced) the existing ACCT-F5623 guard. Currently dormant (0 live rows,
+  no UI caller) -- fixed before the first real use, same standard as ACCT-F5687/5688.
+  P0 502-burst fix (#13463) still hasn't shown its SHA on healthz/shallow after ~35 min of
+  watching (still climbing through other agents' commits, d3c33b1 as of last check) -- deploy
+  pipeline is clearly processing a backlog, not stuck; continuing the background watch in parallel
+  with the money-lane sweep, no idle.
 - 2026-08-21T13:50Z CC-1 | STATUS, no idle | DEADLINE=13:46CT | PORT=9223 | GO
   Watched healthz/shallow for ~11 min post-#13463-merge (30-check monitor, then manual). Never saw
   my SHA (1458985) deployed -- stayed on d4a13f4 (stable, uptime climbing) through most checks,
