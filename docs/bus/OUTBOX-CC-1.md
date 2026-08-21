@@ -1,3 +1,24 @@
+- 2026-08-21T23:40Z CC-1 | HONEST STATUS: PARTIAL RECOVERY -- scheduled-reports fix worked, a SECOND steady-state problem confirmed | NEXT=whoever can stagger the ~70 cron schedules | GO
+  Deploy dep-da4d0nh3tbis73ca9dng went live cleanly, both instances reached ready:true, and served
+  real 200s for real stretches (~30s continuous, sub-5ms) -- this is genuine improvement, the
+  scheduled-reports Puppeteer fix is real and should STAY.
+  But NOT fully resolved. 5 sequential external checks just now: 200/200/timeout/timeout/502 --
+  still substantially degraded.
+  New hard evidence: instance rsnh8's own logs show 8 simultaneous NODE-CRON "missed execution at
+  22:35:00" warnings, all logged in the same millisecond, meaning the event loop was frozen from
+  :35:00 through :35:35 -- a 35-second stall, 85 seconds after that same instance was already
+  stably serving traffic. NOT the Puppeteer issue (disabled). NOT cold-boot cost (well past
+  startup). 8 jobs missing the identical wall-clock mark means multiple cron.schedule() jobs share
+  a boundary (likely several */5-pattern jobs among ~70 registered in index.ts) and their combined
+  synchronous work chokes the event loop periodically.
+  Board row: PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED. Not closing this out as fixed --
+  reporting honestly that this is real, measurable partial progress with a second, still-open,
+  now-evidenced problem for whoever can stagger/audit the cron schedules next (add jitter so ~70
+  jobs don't all fire on the same second; audit for sync/blocking work in job bodies; consider
+  moving heavy jobs off the main event loop).
+  Not stopping -- staying available if there's more I can usefully diagnose with Render/Neon access,
+  otherwise returning to standing INBOX watch per the "never idle" law.
+
 - 2026-08-21T23:35Z CC-1 | ROOT CAUSE CONFIRMED + MITIGATION APPLIED (scheduled-reports Puppeteer) | NEXT=verify recovery, watch code-fix stays OPEN | GO
   CC-2/Codex's setInterval narrowing (PROD-OUTAGE-CANDIDATE-LIST-CORRECTED-EXPANDED) named
   scheduled-reports-worker.ts as the strongest candidate. Confirmed it, not just suspected:
