@@ -19,78 +19,51 @@
 -- TRANSP or TRK (each entity's fixed-asset CoA roles are bound independently; TRK's own
 -- accum_depr_default gap is a separate, already-tracked item).
 --
--- ACCT-F5684 (checksum-override edit, applied file unchanged in EFFECT on prod) — §0 below is a
--- NEW, additive-only defensive pre-widen of accounting.chart_of_accounts_roles_role_check. Added
--- because this file's own §3 INSERT below writes role values ('depr_expense_default',
--- 'accum_depr_default') that the CHECK constraint did not yet permit at the time this migration
--- FIRST ran on prod on 2026-08-18 — it only succeeded there because a LATER-NUMBERED file,
--- 202609100050_fa_archive_fixed_assets_schema_coa_roles.sql (a HELD financial-cluster migration
--- per db/migrations/.held-migrations.json), had already been Neon-applied by the owner OUT OF
--- FILENAME ORDER on 2026-07-28 (three weeks before this file's own 2026-08-18 apply date),
--- pre-widening the constraint. A FRESH database replay (CI, local dev, a disposable Neon
--- rehearsal branch) applies files in strict filename-sort order and never sees that manual
--- out-of-order apply — so on a fresh DB, THIS file (202608180900) reaches its own INSERT before
--- the later, held 202609100050 file ever runs and widens the constraint, and the fresh-DB migrate
--- step fails on a CHECK violation every time (confirmed live via `gh run view` on origin/main,
--- 2026-08-21). §0 makes this file self-sufficient on any replay order by hardcoding the SAME
--- full role list 202609100050 documents as "TRUE SUPERSET of live prod Neon 2026-07-28" (verified
--- again directly against the live prod constraint before writing this, 2026-08-21 — identical).
--- On a database where 202609100050 has already run (prod, and any fresh replay ordering that
--- happens to reach it first), §0's DROP+ADD is a pure no-op (same constraint, same values) or is
--- itself immediately superseded when 202609100050 later runs its own DROP+ADD — either way the
--- final constraint state converges to the same superset regardless of order. §0 does not touch
--- fixed_asset_default (not needed by this file's own INSERT) beyond including it in the same
--- superset list, for the same no-op-or-converge reason. This file's checksum on prod (recorded
--- 2026-08-18) is registered in scripts/lib/migration-checksum-overrides.json so db:migrate does
--- NOT attempt to re-run this changed content against prod — prod already has the correct
--- end-state and this edit changes nothing about what already ran there.
+-- ACCT-F5684/ACCT-F5685 (checksum-override edit, SECOND pass — corrects ACCT-F5684's own first
+-- attempt, both edits registered in scripts/lib/migration-checksum-overrides.json) — §3's two
+-- role-binding INSERTs below are now wrapped in exception handlers that catch a CHECK-constraint
+-- violation and skip gracefully (RAISE NOTICE) instead of aborting the whole migration.
+--
+-- On PROD, this file's INSERTs succeeded on first apply (2026-08-18T21:16:37Z) because a
+-- LATER-FILENAMED, HELD migration — 202609100050_fa_archive_fixed_assets_schema_coa_roles.sql —
+-- had already been Neon-applied by the owner OUT OF FILENAME ORDER on 2026-07-28, three weeks
+-- earlier, widening accounting.chart_of_accounts_roles_role_check to admit
+-- 'depr_expense_default'/'accum_depr_default'. A FRESH database replay (CI, local dev, a
+-- rehearsal branch) applies strictly in filename-sort order and reaches this file BEFORE that
+-- later widen ever runs, so the original (unwrapped) INSERTs failed there every time — confirmed
+-- live via `gh run view` on origin/main, 2026-08-21.
+--
+-- ACCT-F5684's FIRST attempt hardcoded a full-superset constraint pre-widen directly in this
+-- file. That was WRONG and made things WORSE: it broke the very next constraint-touching
+-- migration in filename order, 202609010020_fact_05_factor_wire_fee_role.sql, whose OWN
+-- DROP+ADD CHECK constraint carries a smaller, independently-authored role list (self-consistent
+-- with ITS OWN real prod apply time, 2026-07-27 — this whole class of migration authors its own
+-- role list against whatever the constraint actually was at the moment IT was written, not
+-- against filename order — confirmed live: every constraint-touching migration's real prod
+-- applied_at timestamp, in chronological order, is internally self-consistent EXCEPT for this
+-- one file, which is the sole outlier — applied 2026-08-18, three weeks after every other file
+-- in this whole cluster). Once this file's widen let the depr_expense_default/accum_depr_default
+-- rows insert early, 202609010020's later, narrower ADD CONSTRAINT failed validating those
+-- existing rows against its own list — the exact same failure class, just relocated one file
+-- downstream. Confirmed live the same way, moved to a fresh Neon rehearsal branch and
+-- reproduced/fixed both directions before writing this comment, 2026-08-21.
+--
+-- THE CORRECT FIX (this version): make this file's own binding fail SOFT and build no constraint
+-- knowledge into it at all. On prod, nothing changes — the try succeeds immediately, exactly as
+-- it always has (this content is never re-run against prod; only db:migrate's checksum-override
+-- registry changes, which is data about the migrator, not the database). On a fresh replay where
+-- this file runs before the constraint permits these two role values, the INSERT is skipped with
+-- a NOTICE rather than aborting the whole chain, so every other file — including
+-- 202609010020's own list — proceeds completely unaffected, exactly as it does today. The
+-- deferred bind a fresh database still needs is completed by a NEW migration, 202612880000
+-- (acct_f5685_usmca_fixed_asset_coa_roles_deferred_bind.sql), which runs at the very end of the
+-- migration chain — after every constraint-touching file, including the HELD one — and performs
+-- the identical bind, idempotently, only if not already done. Proven end-to-end on a disposable
+-- Neon rehearsal branch: narrow constraint -> this file's INSERTs skip gracefully with no error
+-- -> every intervening file's own DROP+ADD (202609010020's included) succeeds unmodified -> the
+-- final widen (202609100050) succeeds -> the new deferred migration completes the bind.
 
 BEGIN;
-
--- §0 — ACCT-F5684 defensive pre-widen (see header). Idempotent; safe to run before or after
--- 202609100050 has run; converges to the identical final constraint either way.
-DO $$
-BEGIN
-  IF to_regclass('accounting.chart_of_accounts_roles') IS NOT NULL THEN
-    ALTER TABLE accounting.chart_of_accounts_roles
-      DROP CONSTRAINT IF EXISTS chart_of_accounts_roles_role_check;
-    ALTER TABLE accounting.chart_of_accounts_roles
-      ADD CONSTRAINT chart_of_accounts_roles_role_check
-      CHECK (role IN (
-        'ar_control','ap_control','cash_clearing','undeposited_funds','revenue_default',
-        'expense_default','factor_reserve_default','escrow_liability_default','sales_tax_payable',
-        'cash_basis_adjustment_equity','retained_earnings','uncategorized_expense',
-        'rental_income','lease_receivable','interest_income','gain_loss_on_disposal',
-        'factoring_advance_liability','ar_assigned_to_factor','factoring_recoursed_ar',
-        'default_interest_expense','factor_reserve_held','factor_fee_expense',
-        'property_tax_expense','property_tax_payable',
-        'driver_pay_expense','driver_payroll_clearing','reimbursement_expense',
-        'advance_recovery','damage_recovery','lease_recovery','insurance_recovery',
-        'fuel_advance_recovery','other_recovery',
-        'abandonment_chargeback_recovery',
-        'cash_dip',
-        'civil_fines_expense',
-        'maintenance_parts_expense',
-        'warranty_recovery',
-        'fuel_overage_receivable',
-        'factor_wire_fee',
-        'insurance_expense',
-        'unbilled_revenue',
-        'fixed_asset_default',
-        'accum_depr_default',
-        'depr_expense_default',
-        'heavy_repair_expense',
-        'prepaid_asset_default',
-        'amortization_expense_default',
-        'broker_customer_advance_liability',
-        'rent_expense',
-        'related_party_interest_expense',
-        'operating_bank',
-        'settlement_dispute_correction_recovery'
-      ));
-  END IF;
-END
-$$;
 
 DO $$
 DECLARE
@@ -166,21 +139,33 @@ BEGIN
     RAISE EXCEPTION 'ACCT-F5434: missing Accumulated Depreciation (1600) account for USMCA';
   END IF;
 
-  INSERT INTO accounting.chart_of_accounts_roles (
-    operating_company_id, role, account_id, is_active, created_at, updated_at
-  )
-  VALUES (v_usmca, 'depr_expense_default', v_depr_expense_acct, true, now(), now())
-  ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE
-    SET account_id = EXCLUDED.account_id, updated_at = now();
+  -- ACCT-F5685 — fail-soft: on a fresh/rehearsal DB where this migration runs before the CHECK
+  -- constraint has been widened elsewhere (202609100050, a HELD migration applied out of
+  -- filename order on real prod), skip gracefully rather than abort the whole chain. The
+  -- deferred bind runs to completion later via 202612880000_acct_f5685_..._deferred_bind.sql.
+  BEGIN
+    INSERT INTO accounting.chart_of_accounts_roles (
+      operating_company_id, role, account_id, is_active, created_at, updated_at
+    )
+    VALUES (v_usmca, 'depr_expense_default', v_depr_expense_acct, true, now(), now())
+    ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE
+      SET account_id = EXCLUDED.account_id, updated_at = now();
+  EXCEPTION WHEN check_violation THEN
+    RAISE NOTICE 'ACCT-F5685: chart_of_accounts_roles_role_check does not yet permit depr_expense_default on this DB — skipping; 202612880000 completes this bind once the constraint widens.';
+  END;
 
-  INSERT INTO accounting.chart_of_accounts_roles (
-    operating_company_id, role, account_id, is_active, created_at, updated_at
-  )
-  VALUES (v_usmca, 'accum_depr_default', v_accum_depr_acct, true, now(), now())
-  ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE
-    SET account_id = EXCLUDED.account_id, updated_at = now();
+  BEGIN
+    INSERT INTO accounting.chart_of_accounts_roles (
+      operating_company_id, role, account_id, is_active, created_at, updated_at
+    )
+    VALUES (v_usmca, 'accum_depr_default', v_accum_depr_acct, true, now(), now())
+    ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE
+      SET account_id = EXCLUDED.account_id, updated_at = now();
+  EXCEPTION WHEN check_violation THEN
+    RAISE NOTICE 'ACCT-F5685: chart_of_accounts_roles_role_check does not yet permit accum_depr_default on this DB — skipping; 202612880000 completes this bind once the constraint widens.';
+  END;
 
-  RAISE NOTICE 'ACCT-F5434: USMCA depr_expense_default=% accum_depr_default=% bound',
+  RAISE NOTICE 'ACCT-F5434: USMCA depr_expense_default=% accum_depr_default=% seed/tag complete (role binds may be deferred, see ACCT-F5685)',
     v_depr_expense_acct, v_accum_depr_acct;
 END
 $$;
