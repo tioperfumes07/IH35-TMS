@@ -119,6 +119,7 @@ const guards = [
   "verify-load-liability-scenario-dispatch-honest.mjs",
   "verify-maint-bill-factoring-liab-built.mjs",
   "verify-maintenance-wo-create-bill.mjs",
+  "verify-mobile-audit-table-rule-skips-print-templates.mjs",
   "verify-refuse-load-soft-delete-open-driver-bill.mjs",
   "verify-report-management-ap-aging.mjs",
   "verify-reports-analytics-gl-je-honest.mjs",
