@@ -9,6 +9,8 @@ import {
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Button } from "../../components/Button";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -44,6 +46,11 @@ export function BankAccountVisibilityPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
+  // NO-NATIVE-DIALOGS-U6 — window.prompt/window.confirm freeze Live Chrome browser automation.
+  // In-app shells (VoidReasonModal for the required-reason Hide, ConfirmModal for the plain Unhide
+  // confirm) replace them, same audited-reason contract, no native dialog anywhere on this page.
+  const [hideTarget, setHideTarget] = useState<BankAccountVisibilityRow | null>(null);
+  const [unhideTarget, setUnhideTarget] = useState<BankAccountVisibilityRow | null>(null);
 
   const { enabled: flagEnabled, loading: flagLoading } = useFeatureFlag(BANK_ACCOUNT_HIDE_FLAG_KEY, companyId);
 
@@ -81,21 +88,9 @@ export function BankAccountVisibilityPage() {
   const accountLabel = (account: BankAccountVisibilityRow) =>
     entityLabel(account.account_name ?? account.display_name, account.id, "Account");
 
-  const onHide = (account: BankAccountVisibilityRow) => {
-    const reason = window.prompt(
-      `Hide "${accountLabel(account)}" for this company (required reason, min 3 chars):`,
-      "",
-    );
-    if (!reason || reason.trim().length < 3) return;
-    setBusyId(account.id);
-    hideMutation.mutate({ id: account.id, reason: reason.trim() });
-  };
+  const onHide = (account: BankAccountVisibilityRow) => setHideTarget(account);
 
-  const onUnhide = (account: BankAccountVisibilityRow) => {
-    if (!window.confirm(`Unhide "${accountLabel(account)}" for this company?`)) return;
-    setBusyId(account.id);
-    unhideMutation.mutate({ id: account.id });
-  };
+  const onUnhide = (account: BankAccountVisibilityRow) => setUnhideTarget(account);
 
   const columns = useMemo<ParityColumn<BankAccountVisibilityRow>[]>(
     () => [
@@ -215,6 +210,32 @@ export function BankAccountVisibilityPage() {
           tableTestId="bank-account-visibility-table"
         />
       )}
+      <VoidReasonModal
+        open={Boolean(hideTarget)}
+        title="Hide bank account"
+        entityRef={hideTarget ? accountLabel(hideTarget) : undefined}
+        minLength={3}
+        postsReversingEntry={false}
+        submitLabel="Hide"
+        onClose={() => setHideTarget(null)}
+        onSubmit={async (reason) => {
+          if (!hideTarget) return;
+          setBusyId(hideTarget.id);
+          await hideMutation.mutateAsync({ id: hideTarget.id, reason });
+        }}
+      />
+      <ConfirmModal
+        open={Boolean(unhideTarget)}
+        title="Unhide bank account"
+        message={unhideTarget ? `Unhide "${accountLabel(unhideTarget)}" for this company?` : ""}
+        confirmLabel="Unhide"
+        onClose={() => setUnhideTarget(null)}
+        onConfirm={async () => {
+          if (!unhideTarget) return;
+          setBusyId(unhideTarget.id);
+          await unhideMutation.mutateAsync({ id: unhideTarget.id });
+        }}
+      />
     </div>
   );
 }

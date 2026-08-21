@@ -7,6 +7,7 @@ import {
 } from "../../../api/coa-list";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import type { CoaListRow } from "./coa-list-utils";
 
 type Props = {
@@ -22,6 +23,9 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergeTargetId, setMergeTargetId] = useState("");
   const [mergeReason, setMergeReason] = useState("");
+  // NO-NATIVE-DIALOGS-U6 — window.confirm freezes Live Chrome browser automation; ConfirmModal
+  // (in-app yes/no shell) replaces it, same make-inactive contract.
+  const [makeInactiveOpen, setMakeInactiveOpen] = useState(false);
 
   const selectedRows = useMemo(
     () => rows.filter((row) => selectedIds.includes(row.id)),
@@ -53,10 +57,6 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
 
   const handleMakeInactive = async () => {
     if (selectedIds.length === 0) return;
-    const confirmed = window.confirm(
-      `Make ${selectedIds.length} account${selectedIds.length === 1 ? "" : "s"} inactive? Archived accounts are never deleted.`
-    );
-    if (!confirmed) return;
 
     setBusy(true);
     setError("");
@@ -105,7 +105,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
   return (
     <>
       <div className="flex items-center gap-2">
-        <Button type="button" disabled={busy || selectedIds.length === 0} onClick={() => void handleMakeInactive()}>
+        <Button type="button" disabled={busy || selectedIds.length === 0} onClick={() => setMakeInactiveOpen(true)}>
           Make inactive
         </Button>
         <Button
@@ -193,6 +193,15 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
           </div>
         </div>
       </Modal>
+
+      <ConfirmModal
+        open={makeInactiveOpen}
+        title="Make accounts inactive"
+        message={`Make ${selectedIds.length} account${selectedIds.length === 1 ? "" : "s"} inactive? Archived accounts are never deleted.`}
+        confirmLabel="Make inactive"
+        onClose={() => setMakeInactiveOpen(false)}
+        onConfirm={handleMakeInactive}
+      />
     </>
   );
 }
