@@ -91,7 +91,7 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
                  u.unit_number,
                  d.first_name || ' ' || d.last_name AS driver_name,
                  l.load_number,
-                 v.name AS customs_broker_name,
+                 v.vendor_name AS customs_broker_name,
                  p.short_name AS port_short_name,
                  p.cbp_port_code
           FROM mdata.unit_border_crossings ubc

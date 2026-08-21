@@ -21,6 +21,9 @@ function audit(s) {
   const failures = [];
   if (!/id="border-crossing-broker-picker"[\s\S]{0,300}value=\{form\.customsBrokerId/.test(s.picker)) failures.push("category-scoped broker picker missing");
   if (!/customs_broker_id:\s*form\.customsBrokerId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward broker vendor FK");
+  if (!/SELECT id::text, vendor_name AS name, vendor_category[\s\S]{0,240}ORDER BY vendor_name/.test(s.writer)) failures.push("broker picker must read the canonical vendor_name column and preserve its name API contract");
+  if (!/v\.vendor_name AS customs_broker_name/.test(s.writer)) failures.push("wizard result must resolve the canonical broker vendor_name");
+  if (!/SELECT ubc\.\*[\s\S]{0,240}v\.vendor_name AS customs_broker_name/.test(s.historyRoute)) failures.push("history detail must resolve the canonical broker vendor_name");
   if (!/FROM mdata\.vendors[\s\S]{0,260}operating_company_id = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL[\s\S]{0,100}vendor_category = 'customs_broker'/.test(s.writer)) failures.push("writer active tenant customs-broker validation missing");
   if (!/customs_broker_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.customs_broker_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact broker history filter missing");
   if (!/customs_broker_id: vendorId/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("vendor reverse must request exact broker and show errors");
@@ -32,6 +35,10 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "picker", /id="border-crossing-broker-picker"/, 'id="wrong-picker"'],
     ["payload", "submit", /customs_broker_id:\s*form\.customsBrokerId \|\| undefined/, "customs_broker_id: undefined"],
+    ["picker-label", "writer", /vendor_name AS name/, "name"],
+    ["picker-order", "writer", /ORDER BY vendor_name/, "ORDER BY name"],
+    ["wizard-label", "writer", /v\.vendor_name AS customs_broker_name/, "v.name AS customs_broker_name"],
+    ["history-label", "historyRoute", /(SELECT ubc\.\*[\s\S]{0,240})v\.vendor_name AS customs_broker_name/, "$1v.name AS customs_broker_name"],
     ["scope", "writer", /(FROM mdata\.vendors[\s\S]{0,260})operating_company_id = \$2::uuid/, "$1TRUE"],
     ["active", "writer", /(if \(data\.customs_broker_id\)[\s\S]{0,500})deactivated_at IS NULL/, "$1TRUE"],
     ["category", "writer", /(if \(data\.customs_broker_id\)[\s\S]{0,600})vendor_category = 'customs_broker'/, "$1TRUE"],
