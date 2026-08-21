@@ -22,6 +22,7 @@ const CHECKS = [
   ["apps/frontend/src/components/tasks/TaskSubjectLink.tsx", /unit: "unit",/],
   ["apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx", /<TaskSubjectLink subjectType=\{task\.subject_type\} subjectId=\{task\.subject_id\}(?: subjectLabel=\{task\.subject_label\})? \/>/],
   ["apps/frontend/src/pages/tasks/TasksMinePage.tsx", /<TaskSubjectLink subjectType=\{row\.subject_type\} subjectId=\{row\.subject_id\}(?: subjectLabel=\{row\.subject_label\})? \/>/],
+  ["apps/frontend/src/pages/tasks/TasksChatPage.tsx", /<TaskSubjectLink\s+subjectType=\{selectedTask\.subject_type\}\s+subjectId=\{selectedTask\.subject_id\}\s+subjectLabel=\{selectedTask\.subject_label\}\s+\/>/],
   ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "customer" \| "vendor" \| "driver" \| "unit" \| "load"\}/],
 ];
 
