@@ -3,7 +3,7 @@
  * Customers reverse_link — Built for detail leaves with EntityLink on CustomerDetail.
  * Create/sync/edit/chrome honesty-dropped in required.json.
  *
- * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^detail\\.(profile|contacts|billing|quality|lanes|pnl)$","task":"VERTICAL-REVERSE-LINK-customers-detail","vertical":"column-wave"}
+ * @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^detail\\.(profile|billing|quality)$","task":"VERTICAL-REVERSE-LINK-customers-detail","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-customers-reverse-link-detail.mjs --selftest
  */
@@ -21,6 +21,8 @@ const INVOICES_ROUTE = "apps/backend/src/accounting/invoices.routes.ts";
 const BILLING_ROUTE = "apps/backend/src/mdata/customer-billing.routes.ts";
 const MDATA_API = "apps/frontend/src/api/mdata.ts";
 const ROUTE_MANIFEST = "apps/frontend/src/routes/manifest.tsx";
+const MATRIX = "docs/specs/scoreboard/modules/customers.required.json";
+const CLAIMED_LEAVES = ["detail.profile", "detail.billing", "detail.quality"];
 
 const CHECKS = [
   { name: "load EntityLink", file: DETAIL, pattern: /kind="load"/ },
@@ -128,7 +130,7 @@ const CHECKS = [
 
 function readSources() {
   return Object.fromEntries(
-    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, MDATA_API, ROUTE_MANIFEST].map((file) => [
+    [DETAIL, LIST_MASTER_DETAIL, LOADS_ROUTE, INVOICES_PAGE, INVOICES_ROUTE, BILLING_ROUTE, MDATA_API, ROUTE_MANIFEST, MATRIX].map((file) => [
       file,
       fs.readFileSync(path.join(ROOT, file), "utf8"),
     ]),
@@ -136,7 +138,17 @@ function readSources() {
 }
 
 function run(sources) {
-  return CHECKS.filter((c) => !c.pattern.test(sources[c.file])).map((c) => c.name);
+  const failures = CHECKS.filter((c) => !c.pattern.test(sources[c.file])).map((c) => c.name);
+  try {
+    const matrix = JSON.parse(sources[MATRIX]);
+    for (const id of CLAIMED_LEAVES) {
+      const leaf = matrix.leaves?.find((item) => item.id === id);
+      if (!leaf?.required?.includes("reverse_link")) failures.push(`exact Required ownership: ${id}:reverse_link`);
+    }
+  } catch {
+    failures.push("customers Required matrix parses");
+  }
+  return failures;
 }
 
 if (process.argv.includes("--selftest")) {
@@ -154,7 +166,15 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${CHECKS.length}/${CHECKS.length} planted defects rejected`);
+  for (const id of CLAIMED_LEAVES) {
+    const plantedMatrix = live[MATRIX].replace(`"id": "${id}"`, `"id": "${id}.removed"`);
+    if (plantedMatrix === live[MATRIX] || !run({ ...live, [MATRIX]: plantedMatrix }).includes(`exact Required ownership: ${id}:reverse_link`)) {
+      console.error(`${LABEL} SELFTEST FAIL — exact leaf ownership stayed green: ${id}`);
+      process.exit(1);
+    }
+  }
+  const mutationCount = CHECKS.length + CLAIMED_LEAVES.length;
+  console.log(`${LABEL} SELFTEST PASS — ${mutationCount}/${mutationCount} planted defects rejected`);
   process.exit(0);
 }
 
