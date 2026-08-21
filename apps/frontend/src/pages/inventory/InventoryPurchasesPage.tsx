@@ -180,7 +180,7 @@ export function InventoryPurchasesPage() {
 
       <div className="flex justify-end">
         <Link
-          className="inline-flex h-8 items-center rounded-sm bg-slate-800 px-3 text-sm font-semibold text-white hover:bg-slate-700"
+          className="inline-flex min-h-11 items-center rounded-sm bg-slate-800 px-3 text-sm font-semibold text-white hover:bg-slate-700 sm:min-h-[32px]"
           to="/maintenance/parts-inventory?create=purchase"
         >
           + Record Purchase
