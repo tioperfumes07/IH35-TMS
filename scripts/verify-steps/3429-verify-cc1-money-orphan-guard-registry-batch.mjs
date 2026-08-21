@@ -43,6 +43,7 @@ const guards = [
   "verify-depreciation-reversal-cross-entity-books.mjs",
   "verify-detention-billing-bridge-resyncs-invoice.mjs",
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
+  "verify-driver-escrow-grandparent-alias-resolution.mjs",
   "verify-driver-finance-reverse-leaves.mjs",
   "verify-escrow-cap-display-not-stale.mjs",
   "verify-escrow-release-atomic.mjs",
