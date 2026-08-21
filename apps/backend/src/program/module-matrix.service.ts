@@ -370,16 +370,30 @@ async function loadRequiredMap(moduleId: string): Promise<RequiredMap> {
   throw new Error(`Missing or invalid required map: ${rel}`);
 }
 
+/**
+ * PROD-OUTAGE-EXECSYNC-EVENT-LOOP-BLOCK: was execSync per request. The deployed SHA cannot change
+ * during a process lifetime, and Render provides RENDER_GIT_COMMIT, so git normally never runs.
+ * execSync here blocked the whole event loop on every matrix request.
+ */
+let tipShaMemo: string | undefined | null = null;
 function tipSha(): string | undefined {
+  if (tipShaMemo !== null) return tipShaMemo;
+  const env = String(process.env.RENDER_GIT_COMMIT ?? process.env.GITHUB_SHA ?? "").trim();
+  if (env) {
+    tipShaMemo = env.slice(0, 9);
+    return tipShaMemo;
+  }
   try {
-    return execSync("git rev-parse --short HEAD", {
+    tipShaMemo = execSync("git rev-parse --short HEAD", {
       cwd: REPO_ROOT,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
+      timeout: 3_000,
     }).trim();
   } catch {
-    return undefined;
+    tipShaMemo = undefined;
   }
+  return tipShaMemo;
 }
 
 function reconAsOf(): string | null {

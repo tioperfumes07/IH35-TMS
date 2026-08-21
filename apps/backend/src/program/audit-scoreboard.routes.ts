@@ -9,7 +9,35 @@
 // NON-FINANCIAL. Light Neon `SELECT now()` stamps meta.prodReadAt (honest "live prod
 // read"). Never query accounting.*.
 
-import { execSync } from "node:child_process";
+import { execSync, execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * Deployed SHA is CONSTANT for a process lifetime, so running git per request was pure waste on
+ * the event loop. Render supplies RENDER_GIT_COMMIT, so git normally never runs at all.
+ */
+let tipShaMemo: string | undefined | null = null;
+export function resolveTipShaCached(): string | undefined {
+  if (tipShaMemo !== null) return tipShaMemo;
+  const env = String(process.env.RENDER_GIT_COMMIT ?? process.env.GITHUB_SHA ?? "").trim();
+  if (env) {
+    tipShaMemo = env.slice(0, 9);
+    return tipShaMemo;
+  }
+  try {
+    tipShaMemo = execSync("git rev-parse --short HEAD", {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      timeout: 3_000,
+    }).trim();
+  } catch {
+    tipShaMemo = undefined;
+  }
+  return tipShaMemo;
+}
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -197,22 +225,24 @@ function readRecentActivityFromLedger(limit: number): RecentPr[] {
  * Request-time `git log` — same shape as scripts/audit-coverage-scoreboard.mjs ledgerRecentActivity,
  * but computed NOW so the panel moves when main moves (no waiting for a scoreboard JSON regenerate).
  */
-export function readRecentActivityFromGitLog(limit = 10): RecentPr[] {
+/**
+ * PROD-OUTAGE-EXECSYNC-EVENT-LOOP-BLOCK (2026-08-21): this used to run `git log` with execSync
+ * INSIDE the request handler. execSync blocks the entire Node event loop — while it runs, no other
+ * request can be served, including the trivial GET /api/v1/_healthcheck (`return {status:"ok"}`).
+ * Its own `timeout: 8_000` guaranteed the failure: an 8s block against Render's 5s health-check
+ * timeout. Render marked every instance unhealthy and SIGTERM-killed it (nonZeroExit 143,
+ * evicted:false = not OOM), producing hours of 502s with ZERO application error logs and ZERO
+ * database activity — because requests never got far enough to touch either.
+ *
+ * The git call now runs OFF the request path: the handler returns whatever is cached and kicks a
+ * background refresh at most once per TTL. Nothing on the hot path blocks the loop.
+ */
+const RECENT_GIT_TTL_MS = 60_000;
+let recentGitCache: { atMs: number; items: RecentPr[] } = { atMs: 0, items: [] };
+let recentGitRefreshing = false;
+
+function parseGitLogRecent(raw: string, limit: number): RecentPr[] {
   const SEP = "\u001f";
-  let raw = "";
-  for (const ref of ["origin/main", "HEAD"]) {
-    try {
-      raw = execSync(`git log ${ref} -n ${Math.max(limit, 10)} --format=%h${SEP}%cI${SEP}%s`, {
-        cwd: REPO_ROOT,
-        encoding: "utf8",
-        timeout: 8_000,
-      }).trim();
-      if (raw) break;
-    } catch {
-      /* shallow / missing ref — try next */
-    }
-  }
-  if (!raw) return [];
   const items: RecentPr[] = [];
   for (const line of raw.split("\n")) {
     const [sha, iso, ...rest] = line.split(SEP);
@@ -230,6 +260,43 @@ export function readRecentActivityFromGitLog(limit = 10): RecentPr[] {
     if (items.length >= limit) break;
   }
   return items;
+}
+
+/** Non-blocking: spawns git asynchronously, never on the request path. */
+function refreshRecentGitCache(limit: number): void {
+  if (recentGitRefreshing) return;
+  if (Date.now() - recentGitCache.atMs < RECENT_GIT_TTL_MS) return;
+  recentGitRefreshing = true;
+  const SEP = "\u001f";
+  void (async () => {
+    try {
+      for (const ref of ["origin/main", "HEAD"]) {
+        try {
+          const { stdout } = await execFileAsync(
+            "git",
+            ["log", ref, "-n", String(Math.max(limit, 10)), `--format=%h${SEP}%cI${SEP}%s`],
+            { cwd: REPO_ROOT, encoding: "utf8", timeout: 8_000, maxBuffer: 4 * 1024 * 1024 },
+          );
+          const raw = String(stdout).trim();
+          if (raw) {
+            recentGitCache = { atMs: Date.now(), items: parseGitLogRecent(raw, Math.max(limit, 10)) };
+            return;
+          }
+        } catch {
+          /* shallow / missing ref — try next */
+        }
+      }
+      // Nothing usable: stamp the attempt so we do not respawn git on every request.
+      recentGitCache = { atMs: Date.now(), items: recentGitCache.items };
+    } finally {
+      recentGitRefreshing = false;
+    }
+  })();
+}
+
+export function readRecentActivityFromGitLog(limit = 10): RecentPr[] {
+  refreshRecentGitCache(limit);
+  return recentGitCache.items.slice(0, limit);
 }
 
 async function fetchRecentActivityFromGitHubApi(limit: number): Promise<RecentPr[]> {
@@ -786,11 +853,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
           req.log?.error?.({ err }, "[program] module-matrix system rollup failed");
           let tip: string | undefined;
           try {
-            tip = execSync("git rev-parse --short HEAD", {
-              cwd: REPO_ROOT,
-              encoding: "utf8",
-              stdio: ["ignore", "pipe", "ignore"],
-            }).trim();
+            tip = resolveTipShaCached();
           } catch {
             tip = undefined;
           }
