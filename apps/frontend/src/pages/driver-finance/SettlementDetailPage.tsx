@@ -48,6 +48,7 @@ import { useLiveDebt } from "./hooks/useLiveDebt";
 import { PayRunClosePanel } from "./components/PayRunClosePanel";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   return lines
@@ -88,6 +89,7 @@ export function SettlementDetailPage() {
   const [disputeCategory, setDisputeCategory] = useState("missing_pay");
   const [disputeAmount, setDisputeAmount] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
+  const [pendingConfirm, setPendingConfirm] = useState<"mark_paid" | "reopen" | null>(null);
 
   const detailQuery = useQuery({
     queryKey: ["driver-finance", "settlement-detail", settlementId, companyId],
@@ -541,26 +543,9 @@ export function SettlementDetailPage() {
                       className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       onClick={() => {
                         if (!companyId) return;
-                        // ACCT-F5401: manual_paid is a terminal state — confirm before firing so a
-                        // stale prefilled payment method / stray click can't silently mark the
-                        // wrong settlement paid with no way back except the Owner/Admin-only
-                        // reopen-correction action.
-                        if (
-                          !window.confirm(
-                            `Mark ${settlement?.settlement_no ?? "this settlement"} paid manually via "${manualPaymentMethod || "(blank)"}"? This is a terminal payment status — reopening it afterward requires an Owner/Admin correction with a written reason.`
-                          )
-                        ) {
-                          return;
-                        }
-                        void markSettlementPaidManually(settlementId, companyId, {
-                          payment_method: manualPaymentMethod,
-                          reference: manualReference || undefined,
-                        })
-                          .then(() => {
-                            pushToast("Marked paid manually", "success");
-                            void refreshSettlementViews();
-                          })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"));
+                        // ACCT-F5401: manual_paid is a terminal state — in-app confirm (not window.confirm)
+                        // so Live Chrome / Claude-in-Chrome does not freeze on a native JS dialog.
+                        setPendingConfirm("mark_paid");
                       }}
                     >
                       Mark Paid Manually
@@ -675,26 +660,9 @@ export function SettlementDetailPage() {
                       className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                       onClick={() => {
                         if (!companyId) return;
-                        // ACCT-F5401: manual_paid is a terminal state — confirm before firing so a
-                        // stale prefilled payment method / stray click can't silently mark the
-                        // wrong settlement paid with no way back except the Owner/Admin-only
-                        // reopen-correction action.
-                        if (
-                          !window.confirm(
-                            `Mark ${settlement?.settlement_no ?? "this settlement"} paid manually via "${manualPaymentMethod || "(blank)"}"? This is a terminal payment status — reopening it afterward requires an Owner/Admin correction with a written reason.`
-                          )
-                        ) {
-                          return;
-                        }
-                        void markSettlementPaidManually(settlementId, companyId, {
-                          payment_method: manualPaymentMethod,
-                          reference: manualReference || undefined,
-                        })
-                          .then(() => {
-                            pushToast("Marked paid manually", "success");
-                            void refreshSettlementViews();
-                          })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"));
+                        // ACCT-F5401: manual_paid is a terminal state — in-app confirm (not window.confirm)
+                        // so Live Chrome / Claude-in-Chrome does not freeze on a native JS dialog.
+                        setPendingConfirm("mark_paid");
                       }}
                     >
                       Mark Paid Manually
@@ -733,20 +701,7 @@ export function SettlementDetailPage() {
                               pushToast("Reopen reason must be at least 3 characters", "error");
                               return;
                             }
-                            if (
-                              !window.confirm(
-                                `Reopen this manual-paid settlement back to unpaid? Reason: "${reason}"`
-                              )
-                            ) {
-                              return;
-                            }
-                            void reopenSettlementManualPaid(settlementId, companyId, reason)
-                              .then(() => {
-                                pushToast("Settlement reopened to unpaid", "success");
-                                setReopenReason("");
-                                void refreshSettlementViews();
-                              })
-                              .catch((error) => pushToast(userFacingApiError(error, "Reopen failed"), "error"));
+                            setPendingConfirm("reopen");
                           }}
                         >
                           Reopen (correction)
@@ -819,6 +774,48 @@ export function SettlementDetailPage() {
         onClose={() => setHoldTarget(null)}
         onHeld={() => {
           void queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] });
+        }}
+      />
+      <ConfirmModal
+        open={pendingConfirm === "mark_paid"}
+        title="Mark paid manually"
+        message={`Mark ${String(settlement.settlement_no ?? "this settlement")} paid manually via "${manualPaymentMethod || "(blank)"}"? This is a terminal payment status — reopening it afterward requires an Owner/Admin correction with a written reason.`}
+        confirmLabel="Mark paid"
+        danger
+        onClose={() => setPendingConfirm(null)}
+        onConfirm={async () => {
+          if (!companyId || !settlementId) return;
+          try {
+            await markSettlementPaidManually(settlementId, companyId, {
+              payment_method: manualPaymentMethod,
+              reference: manualReference || undefined,
+            });
+            pushToast("Marked paid manually", "success");
+            void refreshSettlementViews();
+          } catch (error) {
+            pushToast(userFacingApiError(error, "Mark manual failed"), "error");
+            throw error;
+          }
+        }}
+      />
+      <ConfirmModal
+        open={pendingConfirm === "reopen"}
+        title="Reopen settlement"
+        message={`Reopen this manual-paid settlement back to unpaid? Reason: "${reopenReason.trim()}"`}
+        confirmLabel="Reopen"
+        danger
+        onClose={() => setPendingConfirm(null)}
+        onConfirm={async () => {
+          if (!companyId || !settlementId) return;
+          try {
+            await reopenSettlementManualPaid(settlementId, companyId, reopenReason.trim());
+            pushToast("Settlement reopened to unpaid", "success");
+            setReopenReason("");
+            void refreshSettlementViews();
+          } catch (error) {
+            pushToast(userFacingApiError(error, "Reopen failed"), "error");
+            throw error;
+          }
         }}
       />
     </div>

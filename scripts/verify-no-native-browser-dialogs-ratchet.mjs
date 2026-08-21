@@ -40,7 +40,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps", "frontend", "src");
 
 /** Baseline = the count on main when this guard landed (measured, comments and strings excluded). May only go DOWN. */
-const BASELINE = 35;
+const BASELINE = 29;
 
 const DIALOG_RE = /(?:^|[^.\w$])window\s*\.\s*(confirm|alert|prompt)\s*\(/g;
 
