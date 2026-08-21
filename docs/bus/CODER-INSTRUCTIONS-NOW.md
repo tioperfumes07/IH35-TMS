@@ -1,25 +1,24 @@
-# CODER INSTRUCTIONS NOW · 2026-08-21 17:39 CT
+# CODER INSTRUCTIONS NOW · 2026-08-21 18:02 CT
 
 **Your only order is your INBOX file.** `git pull --ff-only origin main`. **FAST-MERGE 4–5 min.** Never HOLD. Never `/tasks`. USMCA only.
 
-**Owner: FIX the 502 storm + CERTIFY Urgent 6 RIGHT NOW**, then rest of urgent. Vertical.
+**Owner: CERTIFY Urgent 6 then rest of urgent.** Vertical. **Product Live remains BLOCKED** until remaining cells are honestly stamped — reverse PASSes ≠ Fully-Wired 1–12.
 
-## HARD — every seat (read before you code)
+## HARD — every seat
 
-1. **Do NOT call Render deploy.** No `trigger_deploy`, no `render deploys create`, no Dashboard Deploy, no MCP deploy, no “kick ih35-tms because SHA lags.” Law: `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`.
-2. **Do NOT buy Render storage / upgrade the plan.** Measured: Pro, 2 instances, CPU ~40% of limit, RAM ~25% of 4GB. 502 = overlapping deploys (~3 min each), not disk.
-3. **Merge every 4–5 min is allowed. Deploy is not in that loop.** One prod deploy every 30–60 min, Cursor lead only, and only when the previous deploy is **live** AND `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` is JSON `{ok:true,version}`.
-4. **Native `window.confirm/alert/prompt` freeze Chrome.** Use `ConfirmModal` / `VoidReasonModal`. Do not click Void/Revoke/Disconnect until that surface is in-app.
-5. **USMCA only.** No QBO write-back. No Trucking / Transportation work.
+1. **Do NOT call Render deploy.** Law: `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`.
+2. **Do NOT buy Render storage.**
+3. **Do NOT re-enable `ENABLE_SCHEDULED_REPORTS_WORKER` this turn.** Puppeteer poison-row + cron pileup still OPEN on the board. Flip only after Cursor lead verifies healthz JSON 200 for a quiet window **and** stagger/crash-resilience is live. Owner “all non-QBO flags ON” yields to **protect the API**.
+4. **Do NOT pause for Jorge.** CC-2 keep banking. CC-3 keep unpaid chrome. Codex keep system reverse.
+5. Native `window.confirm` freeze: ConfirmModal / VoidReasonModal. Settlements+transfers already #13708 (not on live SHA `fe62c92` until batch deploy).
+6. **USMCA only.** No QBO write-back.
 
-| Seat | File | NOW (do this, nothing else) |
-|------|------|------------------------------|
-| **CC-1** | `INBOX-CC-1.md` | U6 **money**: accounting→banking→settlements→factoring→dispatch→vendors. Settlement **close** TEST DATA if 0 closed. Reuse poster. **No Render kick.** |
-| **CC-2** | `INBOX-CC-2.md` | U6 **Live stamp** in this order while healthz JSON 200. **If healthz 502 HTML: do not deploy — wait, work next unpaid cell that does not need API.** Never kick Render. |
-| **CC-3** | `INBOX-CC-3.md` | U6 **picker_law + trailer + Save→reload**. Drain remaining `window.confirm/prompt` on U6 surfaces. **No Render kick.** |
-| **Codex** | `INBOX-CODEX.md` | U6 **reverse_link → customer → vendor → load**. Code reverse only. **No Render kick. No Chrome CDP.** |
-| **Cursor** | `INBOX-CURSOR.md` | Bus + **live certify** U6 then customers→drivers→fleet→lists. Native-dialog freeze PR. **Only seat that may batch-deploy, and not until 30–60 min / owner demand / previous live.** |
+| Seat | File | NOW |
+|------|------|-----|
+| **CC-1** | `INBOX-CC-1.md` | `JE-SOURCE-LINKS-BILL-USES-WRONG-COLUMN` (label `bill_number` not `display_id`) then settlement **close** TEST DATA. Cron stagger is OPEN — do not Render-kick to “fix” it. |
+| **CC-2** | `INBOX-CC-2.md` | **REJECT pause.** Banking `reverse_link` next, then settlements → factoring → dispatch → vendors Live leftover. Honest UNCHANGED. |
+| **CC-3** | `INBOX-CC-3.md` | **REJECT hold.** Drain remaining native dialogs (Plaid Disconnect, FactorAdmin, Vendors archive, CoaBatchActions, fleet archive). Do not duplicate SettlementDetail / TransfersList. |
+| **Codex** | `INBOX-CODEX.md` | ACK U6 reverse + safety/cash-flow/insurance/legal/inventory/compliance/reports PASSes. **NOW = system reverse/connectivity.** No CDP. No deploy. |
+| **Cursor** | `INBOX-CURSOR.md` | Bus. Batch-deploy only 30–60 min / previous live. Native-dialog #13708 waits for that batch. |
 
-THEN rest of urgent: customers → drivers → fleet → lists. **Not WAVE2 until U6 certified.**
-
-**Dashboard (whoever has Render UI, do not click Deploy after):** Pre-Deploy must be only `npm run db:migrate && npm run db:verify:critical-runtime`. Strip `ci:boot-api-smoke` / `ci:boot-aggregate-smoke` (those stay in GitHub CI). Live dashboard still had them 2026-08-21 17:36 CT.
+**Honest:** Codex reverse Live PASSes and CC-3 picker/Save→reload do **not** certify modules COMPLETE. Money termini + Live Chrome item 12 remaining cells still unpaid.
