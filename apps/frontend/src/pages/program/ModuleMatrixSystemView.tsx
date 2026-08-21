@@ -16,6 +16,7 @@ import {
   sortModulesPriority10First,
   FULLY_WIRED_SYSTEM_COLS,
 } from "./moduleMatrixCatalog";
+import { REQUIRED_BY_MODULE } from "./moduleMatrixRequiredMaps";
 import {
   MatrixBoxTracker,
   MatrixCell4,
@@ -96,8 +97,15 @@ async function fetchSystemMatrix(): Promise<SystemPayload> {
   // rejection instead of hanging.
   const r = await fetch(resolveApiUrl("/api/v1/program/module-matrix?scope=system"), {
     credentials: "include",
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(12_000),
   });
+  const ct = r.headers.get("content-type") || "";
+  if (!ct.includes("json")) {
+    throw new SystemMatrixHttpError(
+      r.status || 502,
+      `non-JSON matrix response (${ct || "no content-type"}) — proxy 502 HTML will not parse`,
+    );
+  }
   const json = (await r.json().catch(() => null)) as
     | (SystemPayload & { error?: string; message?: string; tipSha?: string; meta?: { tipSha?: string } })
     | null;
@@ -132,6 +140,112 @@ const EMPTY_METRICS: TierMetrics = {
   leafCount: 0,
 };
 
+function isModalishLeaf(id: string, tab: string, sub?: string): boolean {
+  return /create|modal|drawer|wizard|popup/i.test(`${id} ${tab} ${sub ?? ""}`);
+}
+
+/** Instant paint when the API 502s/hangs — Required counts only; Built/Live/Clicked stay 0. */
+export function buildSystemMatrixRequiredFallback(): SystemPayload {
+  const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "other"];
+  const colMeta = new Map<string, SystemColumn>();
+  const modules: SystemModuleRow[] = [];
+  let sysReq = 0;
+  let sysLeaves = 0;
+  let sysModals = 0;
+  const sysCol = new Map<string, number>();
+
+  for (const entry of MATRIX_MODULES_SIDEBAR_ORDER) {
+    const map = REQUIRED_BY_MODULE[entry.id];
+    if (!map) continue;
+    const columnAbl: Record<string, AblPct> = {};
+    let req = 0;
+    for (const col of map.columns) {
+      if (!colMeta.has(col.id)) {
+        colMeta.set(col.id, { id: col.id, label: col.label, group: col.group || "other" });
+      }
+      const n = map.leaves.reduce((acc, lf) => acc + (lf.required.includes(col.id) ? 1 : 0), 0);
+      columnAbl[col.id] = { requiredCells: n, auditedPct: 0, builtPct: 0, livePct: 0 };
+      sysCol.set(col.id, (sysCol.get(col.id) ?? 0) + n);
+      req += n;
+    }
+    const leaves = map.leaves.length;
+    const modals = map.leaves.filter((lf) => isModalishLeaf(lf.id, lf.tab, lf.sub)).length;
+    sysReq += req;
+    sysLeaves += leaves;
+    sysModals += modals;
+    const metrics: TierMetrics = {
+      ...EMPTY_METRICS,
+      requiredCells: req,
+      unauditedCells: req,
+      leafCount: leaves,
+      requiredPct: req === 0 ? 0 : 100,
+      buildQueue: req,
+    };
+    modules.push({
+      module: entry.id,
+      label: entry.label,
+      available: true,
+      metrics,
+      boxAbl: { requiredCells: req, auditedPct: 0, builtPct: 0, livePct: 0 },
+      columnAbl,
+      closedCells: 0,
+      leafCount: leaves,
+      modalLeafCount: modals,
+      clickedCells: 0,
+      frozenOps: 0,
+      opsClicked: 0,
+      missOpsClicked: 0,
+      readyAbl: EMPTY_ABL,
+      fwAbl: Object.fromEntries(FULLY_WIRED_SYSTEM_COLS.map((fw) => [fw.id, EMPTY_ABL])),
+    });
+  }
+
+  const columns = [...colMeta.values()].sort((a, b) => {
+    const ga = GROUP_ORDER.indexOf(a.group);
+    const gb = GROUP_ORDER.indexOf(b.group);
+    if (ga !== gb) return (ga === -1 ? 99 : ga) - (gb === -1 ? 99 : gb);
+    return a.id.localeCompare(b.id);
+  });
+  const columnAbl: Record<string, AblPct> = {};
+  for (const c of columns) {
+    columnAbl[c.id] = { requiredCells: sysCol.get(c.id) ?? 0, auditedPct: 0, builtPct: 0, livePct: 0 };
+  }
+  const boxAbl: AblPct = { requiredCells: sysReq, auditedPct: 0, builtPct: 0, livePct: 0 };
+  const emptyFw = Object.fromEntries(FULLY_WIRED_SYSTEM_COLS.map((fw) => [fw.id, EMPTY_ABL]));
+
+  return {
+    sample: false,
+    scope: "system",
+    columns,
+    modules,
+    columnAbl,
+    system: {
+      ...EMPTY_METRICS,
+      requiredCells: sysReq,
+      unauditedCells: sysReq,
+      leafCount: sysLeaves,
+      requiredPct: sysReq === 0 ? 0 : 100,
+      buildQueue: sysReq,
+      moduleCount: modules.length,
+      modulesAvailable: modules.length,
+      boxAbl,
+      closedCells: 0,
+      modalLeafCount: sysModals,
+      clickedCells: 0,
+      frozenOps: 0,
+      opsClicked: 0,
+      missOpsClicked: 0,
+      readyAbl: EMPTY_ABL,
+      fwAbl: emptyFw,
+    },
+    meta: {
+      probeSource: "committed_fallback",
+      honesty:
+        "REQUIRED-FALLBACK — API did not return JSON. Box 1 from committed required.json; Built/Live/Clicked are 0 until the API recovers. Not launch truth.",
+    },
+  };
+}
+
 function ablTitle(abl: AblPct): string {
   if (abl.requiredCells <= 0) return "N/A — column not required on this module";
   return `Req ${abl.requiredCells} · Audited ${abl.auditedPct}% · Built ${abl.builtPct}% · Live ${abl.livePct}%`;
@@ -155,11 +269,16 @@ export function ModuleMatrixSystemView() {
   const { data, error, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
     queryKey: ["program", "module-matrix", "scope", "system"],
     queryFn: fetchSystemMatrix,
-    refetchInterval: POLL_MS,
+    placeholderData: buildSystemMatrixRequiredFallback,
+    refetchInterval: (q) => (q.state.status === "error" ? 30_000 : POLL_MS),
     staleTime: 0,
     retry: 1,
   });
 
+  const fallbackFeed =
+    data?.meta?.probeSource === "committed_fallback" ||
+    data?.meta?.honesty?.includes("REQUIRED-FALLBACK") === true;
+  const apiLive = Boolean(data?.system) && !fallbackFeed && !isError;
   const ok = Boolean(data?.system);
   const sys = data?.system;
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
@@ -247,7 +366,7 @@ export function ModuleMatrixSystemView() {
           const abl = row.columnAbl?.[c.id] ?? EMPTY_ABL;
           return (
             <td key={c.id} className="gc">
-              <AblCell4 abl={abl} liveOk={ok && row.available} testId={`system-${row.module}-${c.id}-cell4`} />
+              <AblCell4 abl={abl} liveOk={row.available} testId={`system-${row.module}-${c.id}-cell4`} />
             </td>
           );
         })}
@@ -274,7 +393,7 @@ export function ModuleMatrixSystemView() {
           {row.available ? (
             <AblCell4
               abl={row.readyAbl ?? EMPTY_ABL}
-              liveOk={ok && row.available}
+              liveOk={row.available}
               testId={`system-${row.module}-ready-cell4`}
             />
           ) : (
@@ -285,7 +404,7 @@ export function ModuleMatrixSystemView() {
           <td key={fw.id} className="gc">
             <AblCell4
               abl={row.fwAbl?.[fw.id] ?? EMPTY_ABL}
-              liveOk={ok && row.available}
+              liveOk={row.available}
               testId={`system-${row.module}-${fw.id}-cell4`}
             />
           </td>
@@ -296,9 +415,9 @@ export function ModuleMatrixSystemView() {
 
   return (
     <>
-      {isFetched && (!ok || isError) ? (
+      {fallbackFeed || (isFetched && isError) ? (
         <div className="banner" data-testid="module-matrix-system-unavailable">
-          <b>SYSTEM ROLLUP UNAVAILABLE.</b> Could not load{" "}
+          <b>API FEED UNAVAILABLE — showing Required skeleton.</b> Could not load{" "}
           <code>GET /api/v1/program/module-matrix?scope=system</code>
           {httpErr ? (
             <>
@@ -306,7 +425,9 @@ export function ModuleMatrixSystemView() {
               · HTTP {httpErr.status}
               {httpErr.message ? <> · {httpErr.message}</> : null}
             </>
-          ) : null}
+          ) : (
+            <> · waiting for JSON (proxy 502 / hang). Box 1 is committed maps. Built/Live/Clicked stay 0 until the API recovers — not launch truth.</>
+          )}
           {tip ? (
             <>
               {" "}
@@ -315,7 +436,7 @@ export function ModuleMatrixSystemView() {
           ) : null}
           .
         </div>
-      ) : ok ? (
+      ) : apiLive ? (
         <div className="banner live" data-testid="module-matrix-system-live">
           <b>Clicked count ≠ 12 Clicked green.</b> The big Clicked number is credited cells.
           Columns <b>1–11</b> 4th ✓ = Chrome Clicked on that item's mapped Required cells (not keyword
@@ -361,7 +482,7 @@ export function ModuleMatrixSystemView() {
 
       {sys ? (
         <div className="metrics metrics-secondary" data-testid="module-matrix-system-ready-kpis">
-          <div className={`metric ${ok && (sys.missOpsClicked ?? 0) === 0 ? "good" : "amb"}`}>
+          <div className={`metric ${apiLive && (sys.missOpsClicked ?? 0) === 0 ? "good" : "amb"}`}>
             <div className="n" data-testid="module-matrix-kpi-frozen">
               {ok ? `${sys.opsClicked ?? 0} of ${sys.frozenOps ?? 0}` : "—"}
             </div>
@@ -371,7 +492,7 @@ export function ModuleMatrixSystemView() {
               ops Clicked of frozen cells
             </div>
           </div>
-          <div className={`metric ${ok && (sys.missOpsClicked ?? 0) > 0 ? "big" : "good"}`}>
+          <div className={`metric ${apiLive && (sys.missOpsClicked ?? 0) > 0 ? "big" : apiLive ? "good" : "amb"}`}>
             <div className="n" data-testid="module-matrix-kpi-miss-c">
               {ok ? `${sys.missOpsClicked ?? 0} of ${sys.frozenOps ?? 0}` : "—"}
             </div>

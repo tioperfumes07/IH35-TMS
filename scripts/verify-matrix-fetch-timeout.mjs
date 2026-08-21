@@ -66,6 +66,20 @@ function failures(sources) {
     if (!/signal:\s*AbortSignal\.timeout\(\d+/.test(body)) {
       out.push(`${fn} (${file}): fetch() call is missing signal: AbortSignal.timeout(<ms>) — a hung connection will never settle`);
     }
+    const timeoutMs = body.match(/AbortSignal\.timeout\((\d[\d_]*)\)/);
+    if (timeoutMs) {
+      const ms = Number(String(timeoutMs[1]).replace(/_/g, ""));
+      if (fn === "fetchSystemMatrix" && (ms < 8_000 || ms > 20_000)) {
+        out.push(`${fn}: system matrix timeout must be 8–20s (was ${ms}) — 60s looks like PENDING FEED`);
+      }
+    }
+  }
+  const system = sources[SYSTEM_VIEW];
+  if (!/function buildSystemMatrixRequiredFallback/.test(system)) {
+    out.push("ModuleMatrixSystemView: missing buildSystemMatrixRequiredFallback (API 502 must still paint Required)");
+  }
+  if (!/placeholderData:\s*buildSystemMatrixRequiredFallback/.test(system)) {
+    out.push("ModuleMatrixSystemView: useQuery must placeholderData the Required fallback so first paint is not blank");
   }
   return out;
 }
