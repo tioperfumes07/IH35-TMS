@@ -1,3 +1,13 @@
+- 2026-08-21T18:05Z CC-1 | SHIPPED, DATA REPAIRED, NOW=/dispatch money | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5697's full arc is closed: interlock (blocks future double-posts) + ACCT-F5698 (fixed the
+  reversal path's own crash) + the actual duplicate-data reversal on S-2026-0002, all three merged
+  and live on prod. Rehearsed on a disposable Neon branch first, then applied live via the poster's
+  own reverseSettlementBillPayment primitive (WORM-safe, no hand-rolled SQL) -- independently
+  re-verified after: Cost of Labor $297.60 (was double-booked $595.20), Bank credit $47.60 (was
+  $345.20), Escrow $250.00, A/P nets to $0. All real numbers now correct.
+  This closes the entire arc that started with the live-money audit finding this session. Pivoting
+  to /dispatch money now per the standing directive (already ACK'd) -- factoring/dispatch/tie-out
+  sweeps are done, this P0 is closed, moving to the live-matrix ladder.
 - 2026-08-21T17:55Z CC-1 | SHIPPED, P0 CLOSED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5697 + ACCT-F5698 both merged + fresh-verified (PR #13558 bd20feef, PR #13563 86c5ec7d).
   The settlement double-post P0 is now structurally closed: two mutually-unaware GL posters can no
