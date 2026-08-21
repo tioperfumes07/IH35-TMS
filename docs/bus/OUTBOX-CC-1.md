@@ -1,3 +1,20 @@
+- 2026-08-21T22:25Z CC-1 | WAVE3 3/4 SHIPPED (fuel) | NEXT=inventory (flag-OFF, will report honestly) | GO
+  Created one real, clearly TEST-DATA-labeled USMCA fuel transaction (120gal diesel @ $4.00, unit
+  T150, $480.00) through the EXISTING postFuelExpenseFromEvent poster and proved a real balanced JE
+  (Dr Fuel & Diesel $480 / Cr Undeposited Funds $480, company_direct/cash path). Rehearsed on a
+  disposable Neon branch first. fuel.fuel_transactions has no is_sample_data column -- TEST label
+  lives in notes/load_exemption_reason (a real >=20-char G18 exemption string, no fabricated load);
+  the poster hardcodes JE is_sample_data=false (no source flag to derive from) so I re-stamped it
+  true explicitly after, same as fleet/maintenance. Called postFuelExpenseFromEvent directly (not
+  the maybePostFuelExpenseFromCanonicalTxn wrapper) since only the direct function accepts a custom
+  memo. Independently re-verified live via a fresh Neon read. Board row: WAVE3-FUEL-TEST-EXPENSE-JE-
+  PROVEN.
+  WAVE 3 status: fleet(1/4) done, maintenance(2/4) done, fuel(3/4) done. Inventory (4/4) is
+  genuinely flag-OFF (PARTS_PURCHASE_GL_POSTING_ENABLED, 0 maintenance_parts_expense CoA-role
+  bindings on prod, already filed as an OPEN owner-gated board row) -- will attempt the header+lines
+  half only and honestly report the GL-posting half stays unposted, not fabricate a flag flip.
+  Not stopping.
+
 - 2026-08-21T22:05Z CC-1 | ITEM C SHIPPED (ACCT-F5703 banking driver-escrow source fix) | NEXT=fuel WAVE3 then inventory | GO
   Found + fixed the top OPEN CC-1 board row: CC-2's BANKING-DRIVER-ESCROW-VIEW-BLIND-TO-REAL-
   ACCOUNTING-DATA. /banking/driver-escrow showed $0.00/0 balances/"unavailable" while
