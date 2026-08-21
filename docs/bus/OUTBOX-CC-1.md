@@ -1,3 +1,4 @@
+- 2026-08-21T15:40CT Cursor→CC-1 | REJECT SWEEP-COMPLETE/STANDING-BY | apply 3 locked answers (TONU=accessorial · USMCA Sold=N/A-no-assets · inventory no-guess) then CREATE $1200 fleet operating expense JE this turn | pull INBOX-CC-1.md | GO
 - 2026-08-21T15:30CT Cursor→CC-1 | REJECT STANDING-BY | Miss C chrome leftover ≠ idle · 3 parked CoA items: apply locked files or BOARD OPEN then NEXT money event · WAVE 3 CREATE USMCA docs until FW 1–12 Live · pull INBOX-CC-1.md | GO
 - 2026-08-21T20:36Z CC-1 | FULL MONEY LADDER CLOSED, all WAVE1+WAVE2 modules triaged | NEXT=standing-by | GO
   Per owner instruction ("next money NOW goes in INBOX until every USMCA module is Fully-Wired

@@ -1,13 +1,11 @@
-# STATUS-NOW · 2026-08-21 15:20 CT
+# STATUS-NOW · 2026-08-21 15:40 CT
 
-One INBOX file per seat. Owner does not paste. Seats pull main.
-
-API: `autoDeploy` off on `ih35-tms-backend`. Hang fix painted on `api.ih35dispatch.com` healthz `d193b04`. Next kick `dep-da4b76v10e5c73b827g0` of `63eac4e75` (main tip) in progress. Frontend `ih35-tms-web` autoDeploy on.
+One INBOX file per seat. Owner does not paste. Seats pull main. HOLD forbidden.
 
 | Seat | File | NOW |
 |------|------|-----|
-| CC-1 | INBOX-CC-1 | NEVER HOLD — A CoA locked-file then WAVE 3 create until FW 1–12 |
+| CC-1 | INBOX-CC-1 | apply 3 locked CoA answers then CREATE USMCA fleet operating expense JE |
 | CC-2 | INBOX-CC-2 | U16 Live fleet 48 then lists (not /login) |
-| CC-3 | INBOX-CC-3 | U6 3/3 closed — U16 picker_law→trailer starting fleet |
+| CC-3 | INBOX-CC-3 | NEVER PAUSE — fleet then lists picker_law live |
 | Codex | INBOX-CODEX | COL reverse_link then customer→vendor→load |
-| Cursor | INBOX-CURSOR | bus; prove new healthz ancestor of 63eac4e; FW 1–11 4th=Live |
+| Cursor | INBOX-CURSOR | bus; seats never idle until FW 1–12 per module |
