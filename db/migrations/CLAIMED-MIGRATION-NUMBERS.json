@@ -221,6 +221,11 @@
     "202612890000": {
       "claimed_by": "cc-1",
       "purpose": "acct_f5686_bill_lines_expense_category_same_entity_fk"
+    },
+    "202612931300": {
+      "claimed_by": "cc-3",
+      "claimed_at": "2026-08-21",
+      "purpose": "catalogs_recent_activity view derive catalog_key/action from event_class"
     }
   }
 }
