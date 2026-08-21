@@ -231,6 +231,11 @@
       "claimed_by": "cc-3",
       "claimed_at": "2026-08-21",
       "purpose": "quicksave inline assignment_method CHECK constraint extension"
+    },
+    "202612950000": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-21",
+      "purpose": "acct_f5701_tonu_income_account_and_cancellation_invoice_linkage"
     }
   }
 }
