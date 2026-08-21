@@ -71,22 +71,39 @@ export function buildSubledgerGlControlRecRow(input: {
   };
 }
 
+// ACCT-F5695 — fn_account_balances_as_of.closing_balance_cents is DEBIT-POSITIVE by construction
+// (SUM(debit) − SUM(credit), see 202606072356), regardless of the account's own normal_balance. A
+// credit-normal control account (ap_control / escrow_liability_default / factoring_advance_liability
+// — all Liability) with a real $X owed therefore reports closing_balance_cents = −X, while every
+// subledger source in this report (AR/AP aging totals, escrow_accounts.balance_cents, factoring
+// linkage) expresses its figure as a POSITIVE magnitude. Comparing the two directly for a
+// credit-normal role doubles the apparent variance instead of proving tie-out — live-verified on
+// USMCA 2026-08-21: ap_control read control=-$123.45 / subledger=$123.45, i.e. exactly the same
+// dollar amount with the sign that this exact bug predicts, not a real $246.90 gap. Only ar_control
+// (Asset, debit-normal) was ever comparable as-is. Fix: read the function's OWN already-computed
+// normal_balance (never re-derive the Asset/Liability CASE a second time — reuse, don't duplicate)
+// and flip sign for a credit-normal account so this function always returns the balance in the SAME
+// "positive = real economic amount in that account's natural direction" convention every subledger
+// source already uses.
 async function loadControlBalanceCents(
   client: DbClient,
   operatingCompanyId: string,
   asOfDate: string,
   controlAccountId: string
 ): Promise<number> {
-  const res = await client.query<{ closing_balance_cents: string | number }>(
+  const res = await client.query<{ closing_balance_cents: string | number; normal_balance: string }>(
     `
-      SELECT closing_balance_cents::bigint AS closing_balance_cents
+      SELECT closing_balance_cents::bigint AS closing_balance_cents, normal_balance
       FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL::date)
       WHERE account_id = $3::uuid
       LIMIT 1
     `,
     [operatingCompanyId, asOfDate, controlAccountId]
   );
-  return Number(res.rows[0]?.closing_balance_cents ?? 0);
+  const row = res.rows[0];
+  if (!row) return 0;
+  const raw = Number(row.closing_balance_cents ?? 0);
+  return row.normal_balance === "credit" ? -raw : raw;
 }
 
 async function sumEscrowSubledgerCents(client: DbClient, operatingCompanyId: string): Promise<number> {

@@ -141,6 +141,25 @@ function runStaticGuard() {
   if (!/varianceCents === 0|variance_cents === 0/.test(service)) {
     failures.push("service must use exact-zero tie (RECON-01 — no dollar threshold)");
   }
+  // ACCT-F5695 — fn_account_balances_as_of.closing_balance_cents is DEBIT-POSITIVE regardless of
+  // the account's own normal_balance; a credit-normal control account (Liability: ap_control,
+  // escrow_liability_default, factoring_advance_liability) must have its sign flipped before being
+  // compared against a subledger figure expressed as a positive magnitude, or every credit-normal
+  // row reports a variance double the real dollar amount, sign-inverted. Live-verified on USMCA:
+  // ap_control read control=-$123.45 vs subledger=+$123.45, the exact signature this bug predicts.
+  if (!/normal_balance/.test(service)) {
+    failures.push(
+      "service must read normal_balance from fn_account_balances_as_of and flip sign for " +
+        "credit-normal control accounts (ACCT-F5695) — comparing raw debit-positive closing_balance_cents " +
+        "to a positive-magnitude subledger figure doubles the apparent variance for every Liability control role"
+    );
+  }
+  if (!/normal_balance === "credit"[\s\S]{0,40}-raw|-raw[\s\S]{0,40}normal_balance === "credit"/.test(service)) {
+    failures.push(
+      "service defines normal_balance handling but does not actually flip sign for a credit-normal " +
+        "account (ACCT-F5695) — a dead check leaves the sign bug live"
+    );
+  }
 
   if (!routes.includes('app.get("/api/v1/accounting/subledger-gl-control-rec"')) {
     failures.push("route must be GET /api/v1/accounting/subledger-gl-control-rec");
