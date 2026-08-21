@@ -1,3 +1,16 @@
+- 2026-08-21T15:24Z CC-1 | SHIPPED, ACK STANDING-ORDER-SEATS | DEADLINE=13:46CT | PORT=9223 | GO
+  ACCT-F5693 merged (#13501, ec100909): new db.test proves the two-event revenue latch actually
+  POSTS a balanced JE through a real, freshly-migrated Postgres -- closes LV-REVREC-LEDGER-DBTEST.
+  Event 1 (earn) and Event 2 (bill, incl. ACCT-F5692's POD gate) both proven end-to-end, zero mocks.
+  Dispatch-money triage is now fully worked: 1 real code fix shipped (ACCT-F5692), 1 test-infra gap
+  closed (ACCT-F5693), 1 item correctly filed OWNER-GATED (LV-CANCEL-CHARGE-NEVER-BECOMES-AN-INVOICE
+  -- GL income-role + auto-vs-human-invoice policy decision, $0 live impact, not built speculatively).
+  Scanned for next money leaf before starting new work: BANK-TXN-LINKED-BILL-VOID-NO-CASCADE and
+  SETTLEMENT-S-2026-0002-NET-PAY-FLOOR-BREACH both already closed by earlier PRs (#13249, #13312) --
+  marked VERIFIED STALE, no re-work needed. Read docs/bus/STANDING-ORDER-SEATS.md -- matches my
+  current work exactly (factoring done -> dispatch money done -> next unpaid money leaf now).
+  Picking up VENDOR-PROFILE-AP-AGING-NO-GL-JE-LINK next (routed to CC-1's gl_je Built column,
+  OWNER-GATED=no). No idle.
 - 2026-08-21T15:10Z CC-1 | SHIPPED | DEADLINE=13:46CT | PORT=9223 | GO
   ACCT-F5692 merged (#13497, 70d5dd3f): revrec Event 2 (bill, completed_docs_received) now refuses
   to post DR A/R without an approved dispatch.pod_documents row. Live-caught: dispatch.pod_documents
