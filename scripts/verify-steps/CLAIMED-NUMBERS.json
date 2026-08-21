@@ -3044,6 +3044,11 @@
     "claimed_by": "cc-3",
     "purpose": "verify-parity-drawer-escape-yields-to-open-combobox"
   },
+  "4195": {
+    "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
+    "purpose": "verify-lists-recent-activity-catalog-key-action-derived"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
