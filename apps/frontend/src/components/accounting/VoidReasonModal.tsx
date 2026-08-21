@@ -34,6 +34,8 @@ type Props = {
   onClose: () => void;
   /** Perform the void with the captured reason. Reject to surface an error and keep the form open. */
   onSubmit: (reason: string) => Promise<void>;
+  /** Footer submit label. Default Void; Revoke/Dismiss/Archive reuse the same reason shell. */
+  submitLabel?: string;
 };
 
 /**
@@ -55,6 +57,7 @@ export function VoidReasonModal({
   postsReversingEntry = true,
   onClose,
   onSubmit,
+  submitLabel = "Void",
 }: Props) {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -80,7 +83,7 @@ export function VoidReasonModal({
             Cancel
           </Button>
           <Button type="submit" form="void-reason-form" variant="danger" loading={submitting} disabled={!valid}>
-            Void
+            {submitLabel}
           </Button>
         </div>
       }

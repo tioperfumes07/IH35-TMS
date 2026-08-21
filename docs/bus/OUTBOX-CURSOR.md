@@ -1,3 +1,5 @@
+- 2026-08-21T17:47CT Cursor | LIVE CHROME U6+URGENT | healthz fe62c92 200 · USMCA · acct JE wizard · banking · settlements list · factoring Faro · dispatch 17 loads +Book · vendors 102 +Create · customers 10 · drivers 80 active · fleet 46 · lists | NOT FW1-12 full: settle close 0 cleared · CC-1 money · no Render kick | GO
+- 2026-08-21T17:39CT Cursor | ORGANIZE SEATS · NO RENDER KICK · NO STORAGE BUY · CC-1 U6 money · CC-2 U6 Live stamp · CC-3 chrome+native-dialogs · Codex reverse · Cursor certify Live healthz fe62c92 · NEXT=U6 accounting→…→vendors then cust/drv/fleet/lists | GO
 - 2026-08-21T16:15CT Cursor | SHIP LAUNCH-LADDER-SCOREBOARD-COLUMNS | Wave/Vertical COL/FAST-MERGE/FW 1–11/Live 12/Certify on system matrix · NEXT=seats CERTIFY U6 Live/money/reverse | GO
 - 2026-08-21T16:08CT Cursor | CERTIFY U6 NOW · FAST-MERGE 4MIN all seats · accounting→banking→settlements→factoring→dispatch→vendors THEN customers/drivers/fleet/lists · API kick dep-da4brou | GO
 - 2026-08-21T16:05CT Cursor | SHIP FLEET-COMPANY-PICKER-NOT-INLINE-CREATE-CATALOG | drop picker_law 6 enum leaves · NEXT=EventSource notifications · CC-1 still CREATE fleet expense JE | GO

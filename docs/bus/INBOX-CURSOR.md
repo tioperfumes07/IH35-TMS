@@ -1,48 +1,29 @@
-# INBOX-CURSOR · 9222 · BUS · CERTIFY URGENT 6 NOW
+# INBOX-CURSOR · 9222 · BUS + CERTIFY U6 LIVE
 
-Keep other INBOX files as their only NOW. You are the bus. FAST-MERGE 4–5 min. Do not deploy production after each merge.
+You are the bus. FAST-MERGE 4–5 min. **You certify Live Chrome.** You are the **only** seat allowed to batch-deploy, and only every 30–60 min after previous is live + healthz JSON 200.
 
-**Owner 2026-08-21 16:05 CT: CERTIFY the Urgent 6 modules RIGHT NOW.** Rest of urgent after.
+**LEAD 2026-08-21 17:39 CT:** Instruct seats (this file set). Healthz was `{ok:true,version:fe62c92}`. Certify U6 then rest of urgent. Do not stack another deploy.
 
-## PASTE BOX (copy everything in the fence)
+## PASTE BOX
 
 ```text
-===== CURSOR · PORT 9222 · BUS · CERTIFY U6 NOW =====
+===== CURSOR · PORT 9222 · BUS + CERTIFY =====
 PULL: git pull --ff-only origin main
 FILE: docs/bus/INBOX-CURSOR.md
-LAW: USMCA only · no QBO sync · FAST-MERGE 4MIN · never HOLD
-     Jorge is not the messenger except when he writes here.
-CHROME: 9222 · matrix glance then CLOSE · never persistent /program/matrix
+LAW: USMCA · FAST-MERGE 4MIN · NO-PER-MERGE-PROD-DEPLOY
+CHROME: 9222 · certify each U6 module (open +Create or a real row) then CLOSE matrix
 
-FAST-MERGE 4–5 MIN (ON — every seat, do not deviate):
-  LAW: docs/bus/FAST-MERGE-4MIN-LAW.md
-  1) cursor-ship-preflight --body-file /tmp/pr-body.txt MUST exit 0
-  2) git push; if ONLY ENV verify-static AFTER gate PASS → git push --no-verify
-  3) gh pr create — NEVER gh pr checks --watch
-  4) Merge NOW: gh api -X PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash
-     (local main is occupied — do not gh pr merge checkout)
-  5) Do NOT kick Render / trigger_deploy after merge (NO-PER-MERGE-PROD-DEPLOY-LAW)
-  6) OUTBOX one line → next SAME TURN
+SEATS:
+  CC-1 money U6   CC-2 Live stamp   CC-3 chrome+native-dialogs   Codex reverse
+  ALL: no Render kick. No storage upgrade.
 
-U6 MODULES (certify first, VERTICAL, then rest of urgent):
-  accounting → banking → settlements → factoring → dispatch → vendors
-THEN: customers → drivers → fleet → lists. NOT WAVE2 until U6 certified.
+YOUR NOW:
+  1) Keep INBOX/OUTBOX this order.
+  2) Live certify: accounting → banking → settlements → factoring → dispatch → vendors
+     THEN customers → drivers → fleet → lists.
+  3) Finish native-dialog PR (settlements ConfirmModal + transfers VoidReasonModal).
+  4) Do not trigger_deploy this turn.
 
-SEATS (do not rewrite unless Jorge orders — they pull INBOX files):
-  CC-1 9223  CERTIFY U6 money · FAST-MERGE 4MIN · TONU then next U6 JE
-  CC-2 9224  CERTIFY U6 Live · dispatch Miss C 0 then other U6 · not fleet yet
-  CC-3 9225  CERTIFY U6 chrome picker_law then trailer · not fleet yet
-  Codex 9226 CERTIFY U6 reverse_link → customer → vendor → load
-
-YOUR FIX-NOW:
-  Bus + INBOX this turn. Do not trigger a prod deploy. Wait for the 30–60 min batch deploy.
-  Cursor-lane overflow only if a U6 chrome red lands in OUTBOX.
-  EventSource relative URL = AFTER U6 certify, not instead of.
-  FW 1–11 4th ✓ = Live. No 5th Box. No new Required.json leaves.
-
-ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=bus CERTIFY U6 FAST-MERGE 4MIN | GO
+ACK: Cursor | ACK | INBOX-CURSOR | PORT=9222 | NOW=CERTIFY U6 Live + bus NO KICK | GO
 ===== END CURSOR =====
 ```
-
-Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` · launch-ladder columns on `/program/matrix?scope=system` (not a 5th Box).
-

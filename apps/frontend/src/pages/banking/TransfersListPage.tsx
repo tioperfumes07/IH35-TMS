@@ -20,6 +20,8 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { TransferModal } from "./TransferModal";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { Modal } from "../../components/Modal";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 const PAGE_SIZE = 50;
 
@@ -53,6 +55,8 @@ export function TransfersListPage() {
   const [offset, setOffset] = useState(0);
   const [revokingId, setRevokingId] = useState("");
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [infoModal, setInfoModal] = useState<{ title: string; body: string } | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<Transfer | null>(null);
 
   const canRevoke = auth.user?.role === "Owner";
 
@@ -182,7 +186,10 @@ export function TransfersListPage() {
                           )} · ${formatMoney(Number(leg.amount_cents))} · ${entityLabel(null, leg.id, "Leg")}`
                       )
                       .join("\n");
-                    window.alert(`Intercompany group ${detail.group_id}\n${lines || "(no legs)"}`);
+                    setInfoModal({
+                      title: `Intercompany group ${detail.group_id}`,
+                      body: lines || "(no legs)",
+                    });
                   })
                   .catch((error) => pushToast(userFacingApiError(error, "Failed to load intercompany legs"), "error"));
               }}
@@ -218,13 +225,20 @@ export function TransfersListPage() {
                 if (!companyId) return;
                 void getTransfer(row.id, companyId)
                   .then((detail) => {
-                    window.alert(
-                      `Transfer ${detail.transfer.id}\nType: ${detail.transfer.transfer_type}\nAmount: ${formatMoney(
-                        Number(detail.transfer.amount_cents)
-                      )}\nMemo: ${detail.transfer.memo || "-"}\nTMS JE: ${
-                        detail.transfer.journal_entry_id || "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"
-                      }\nBank txn: ${detail.transfer.matched_bank_transaction_id || "none"}\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
-                    );
+                    setInfoModal({
+                      title: `Transfer ${detail.transfer.id}`,
+                      body: [
+                        `Type: ${detail.transfer.transfer_type}`,
+                        `Amount: ${formatMoney(Number(detail.transfer.amount_cents))}`,
+                        `Memo: ${detail.transfer.memo || "-"}`,
+                        `TMS JE: ${
+                          detail.transfer.journal_entry_id ||
+                          "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"
+                        }`,
+                        `Bank txn: ${detail.transfer.matched_bank_transaction_id || "none"}`,
+                        `QBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`,
+                      ].join("\n"),
+                    });
                   })
                   .catch((error) => pushToast(userFacingApiError(error, "Failed to load transfer detail"), "error"));
               }}
@@ -237,19 +251,8 @@ export function TransfersListPage() {
                 className="text-xs text-red-700 hover:underline disabled:opacity-60"
                 disabled={revokingId === row.id}
                 onClick={() => {
-                  const reason = window.prompt("Revocation reason");
-                  if (!reason || !companyId) return;
-                  setRevokingId(row.id);
-                  void revokeTransfer(row.id, companyId, reason)
-                    .then(() => {
-                      pushToast("Transfer revoked", "success");
-                      return Promise.all([
-                        queryClient.invalidateQueries({ queryKey: ["banking", "transfers"] }),
-                        queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts"] }),
-                      ]);
-                    })
-                    .catch((error) => pushToast(userFacingApiError(error, "Failed to revoke transfer"), "error"))
-                    .finally(() => setRevokingId(""));
+                  if (!companyId) return;
+                  setRevokeTarget(row);
                 }}
               >
                 Revoke
@@ -450,6 +453,39 @@ export function TransfersListPage() {
         onSaved={() => {
           void queryClient.invalidateQueries({ queryKey: ["banking", "transfers", companyId] });
           setTransferModalOpen(false);
+        }}
+      />
+      <Modal open={Boolean(infoModal)} onClose={() => setInfoModal(null)} title={infoModal?.title ?? "Detail"}>
+        <pre className="whitespace-pre-wrap text-xs text-slate-800">{infoModal?.body}</pre>
+      </Modal>
+      <VoidReasonModal
+        open={Boolean(revokeTarget)}
+        title="Revoke transfer"
+        entityRef={
+          revokeTarget
+            ? `${typeLabel(revokeTarget.transfer_type)} · ${formatMoney(Number(revokeTarget.amount_cents))}`
+            : undefined
+        }
+        minLength={3}
+        postsReversingEntry={false}
+        submitLabel="Revoke"
+        onClose={() => setRevokeTarget(null)}
+        onSubmit={async (reason) => {
+          if (!revokeTarget || !companyId) return;
+          setRevokingId(revokeTarget.id);
+          try {
+            await revokeTransfer(revokeTarget.id, companyId, reason);
+            pushToast("Transfer revoked", "success");
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ["banking", "transfers"] }),
+              queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts"] }),
+            ]);
+          } catch (error) {
+            pushToast(userFacingApiError(error, "Failed to revoke transfer"), "error");
+            throw error;
+          } finally {
+            setRevokingId("");
+          }
         }}
       />
     </div>
