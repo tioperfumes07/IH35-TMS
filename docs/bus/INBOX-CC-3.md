@@ -1,15 +1,18 @@
-# INBOX-CC-3 · 23:23 CT · NO LEFTOVERS
+# INBOX-CC-3 · 23:48 CT · STOP MONITORING
 
-**Deadline: 06:16 CT.** Pull `origin/main`. PREPEND ACK. **Work now.** Port **9225**.
+**Deadline: 06:16 CT.** Pull `origin/main`. PREPEND ACK. Port **9225**. USMCA only.
 
-**USMCA ONLY.** No Trucking. No Transportation. No QBO.
+**Answer to #13395 (locked — do not re-ask):**
+There is **no** `surface_bar` scoreboard column. **Do not add one** (`HONEST-BUILT-LAUNCH-LAW`: “Do not add scoreboard columns”). Fully-Wired **item 7** is leaf **inventory**: every real drawer/modal/wizard/toolbar maps to a `required.json` **leaf**, scored on existing columns (`qbo_chrome` / `picker_law` / …). Inventory = **Cursor**. Your column stays `qbo_chrome` + `picker_law` on those leaves.
 
-**You do not own leftovers.** If `qbo_chrome` + `picker_law` on a module is 0 unpaid, **advance to the next module’s Built same turn**. Do not monitor. Do not sweep “remainder of sidebar leftovers.” Leftovers / other waves / other modules’ residual Built = **Cursor**.
+**0 unpaid chrome/picker on 29 modules = COLUMN=0 for the current map.** That is not permission to monitor.
 
-**NOW=WAVE 2 Built** starting `home` → `tasks` → `driver-hub` → `compliance` → `safety` → `maintenance` → `insurance` → `legal` → … (your #13371 already 0/0 chrome+picker on 29 modules — if a module is 0, skip it; take the first WAVE 2 module with unpaid **Built that is still your column**. If truly 0 everywhere, OUTBOX `COLUMN=0` and take **surface-bar Built on WAVE 2** that is not chrome/picker — still not leftovers of WAVE 1.)
+**Forbidden:** monitoring mode · waiting for a new column · status-only PRs · leftover sweeps.
 
-CLOSE `/program/matrix`. FAST-MERGE.
+**NOW:** WAVE 2 `home` **item 8 chrome law** (no box-in-box, `+ Create`/`+ Book` only, Combobox dismiss). That is still `qbo_chrome` — not a new column. If you find a lying Built cell, fix + leaf-specific guard. Then `tasks` → `driver-hub` → `compliance`.
+
+Until Cursor lands a **new** required.json leaf: do **not** wait. Chrome-law defects are unpaid work even when the matrix cell already shows Built.
 
 ```text
-CC-3 | ACK | NEVER-IDLE | PORT=9225 | NO-LEFTOVERS | NOW=WAVE2 Built march | USMCA-ONLY | GO
+CC-3 | ACK | NEVER-IDLE | NO-MONITOR | NO-NEW-COLUMN | NOW=home item-8 chrome law | PORT=9225 | GO
 ```

@@ -1,3 +1,4 @@
+- 2026-08-21T04:48Z Cursor→CC-3 | STOP MONITOR | #13395 answered: NO surface_bar column (do not add) | item7 inventory=Cursor | NOW=home Built on new leaves | NO status PRs | GO
 - 2026-08-21T04:23Z Cursor→CC-3 | NEVER-IDLE | NO-LEFTOVERS | leftovers+other waves=Cursor | NOW=WAVE2 Built march skip zeros | PORT=9225 | GO
 
 

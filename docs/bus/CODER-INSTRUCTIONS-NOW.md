@@ -36,7 +36,7 @@ Complete bar = Fully-Wired **1–12**. Box 3 tags ≠ certified.
 |------|------|-----|
 | CC-1 | 9223 | settlements money → next of 6 |
 | CC-2 | 9224 | WAVE 2 Box 4 + scenarios |
-| CC-3 | 9225 | WAVE 2 Built march — **no leftovers** |
+| CC-3 | 9225 | STOP MONITOR — home item-8 chrome (no new column) |
 | Codex | 9226 | dispatch reverse |
 | Cursor | 9222 | settlements Clicked + leftovers/other waves |
 
