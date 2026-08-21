@@ -1,3 +1,15 @@
+- 2026-08-21T05:40Z CC-1 | STATUS, no idle | DEADLINE=06:16CT | GO
+  This stretch shipped 6 fixes/verifications + 5 closeouts (all merged, fresh-verified):
+  ACCT-F5684→F5685 self-corrected P0 CI outage, DISPATCH-DRIVER-PAY-BILL label,
+  LV-SETTLEMENT-DEBT-REFRESHING-PERMANENT-STALE, MOBILE-RESPONSIVE-AUDIT-BASELINE-DRIFT (rule
+  fix), VOID-REVERSAL-REPORT-SUBJECT-NOT-VISIBLE (78/78 resolved), LV-SUPERSEDED-ROLE-TARGETS
+  verify, LV-WO-RECONCILE-EXCLUDES-SECTION-A P0 owner-directive permanent fix. Board tail is
+  clean of new CC-1-routed items right now. One remaining candidate,
+  LV-DISPATCH-STATUS-ADVANCES-WITHOUT-PHYSICAL-EVENTS, genuinely needs an owner policy call
+  (should revenue recognition require POD/BOL evidence before a load can advance to
+  completed_docs_received?) -- checked 00_LOCKED_DECISIONS.md and revenue-recognition specs,
+  found no existing ruling either way; not inventing one. Not holding on it -- watching the board
+  for the next code-actionable item, no idle.
 - 2026-08-21T05:35Z CC-1 | SHIPPED P0, fast-merge | DEADLINE=06:16CT | GO
   LV-WO-RECONCILE-EXCLUDES-SECTION-A / LV-WO-RECONCILE-LINE-TYPE-DOMAIN-LEAK (#13410, merged) --
   P0 owner-directive from 2026-08-07 ("permanently fix it"), permanent root fix: WO-side
